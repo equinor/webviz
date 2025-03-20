@@ -1,10 +1,8 @@
 import React from "react";
 
-import { View as DeckGlView } from "@deck.gl/core";
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
-import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Rect2D } from "@lib/utils/geometry";
 import { outerRectContainsInnerRect } from "@lib/utils/geometry";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
@@ -12,12 +10,11 @@ import { PreferredViewLayout } from "@modules/2DViewer/types";
 import type { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
 import { LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
 import type { BoundingBox } from "@modules/_shared/LayerFramework/interfaces";
-import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import type { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
-import type { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
+import type { BoundingBox2D } from "@webviz/subsurface-viewer";
 
+import type { ViewPortTypeExt, ViewsTypeExt } from "./SubsurfaceViewerWrapper";
 import { SubsurfaceViewerWrapper } from "./SubsurfaceViewerWrapper";
 
 import { PlaceholderLayer } from "../customDeckGlLayers/PlaceholderLayer";
@@ -33,18 +30,15 @@ export type LayersWrapperProps = {
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<BoundingBox | null>(null);
 
-    const mainDivRef = React.useRef<HTMLDivElement>(null);
-    const mainDivSize = useElementSize(mainDivRef);
     const statusWriter = useViewStatusWriter(props.viewContext);
 
     usePublishSubscribeTopicValue(props.layerManager, LayerManagerTopic.LAYER_DATA_REVISION);
 
-    const viewports: ViewportType[] = [];
+    const viewports: ViewPortTypeExt[] = [];
     const viewerLayers: DeckGlLayerWithPosition[] = [];
-    const viewportAnnotations: React.ReactNode[] = [];
-    const globalColorScales: ColorScaleWithId[] = [];
+    const colorScales: ColorScaleWithId[] = [];
 
-    const views: ViewsType = {
+    const views: ViewsTypeExt = {
         layout: [1, 1],
         viewports: viewports,
         showLabel: false,
@@ -67,38 +61,23 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     views.layout = [numCols, numRows];
 
     viewerLayers.push(...viewsAndLayers.layers);
-    globalColorScales.push(...viewsAndLayers.colorScales);
+    colorScales.push(...viewsAndLayers.colorScales);
+
     const globalLayerIds = viewsAndLayers.layers.map((layer) => layer.layer.id);
+    const globalColorScaleIds = viewsAndLayers.colorScales.map((c) => c.id);
 
     for (const view of viewsAndLayers.views) {
         viewports.push({
             id: view.id,
             name: view.name,
+            color: view.color,
             isSync: true,
             layerIds: [...globalLayerIds, ...view.layers.map((layer) => layer.layer.id), "placeholder"],
+            colorScaleIds: [...globalColorScaleIds, ...view.colorScales.map((scale) => scale.id)],
         });
-        viewerLayers.push(...view.layers);
 
-        viewportAnnotations.push(
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            /* @ts-expect-error */
-            <DeckGlView key={view.id} id={view.id}>
-                <ColorLegendsContainer
-                    colorScales={[...view.colorScales, ...globalColorScales]}
-                    height={((mainDivSize.height / 3) * 2) / numCols - 20}
-                    position="left"
-                />
-                <div className="font-bold text-lg flex gap-2 justify-center items-center">
-                    <div className="flex gap-2 items-center bg-white/50 p-2 backdrop-blur-sm rounded-sm">
-                        <div
-                            className="rounded-full h-3 w-3 border border-white"
-                            style={{ backgroundColor: view.color ?? undefined }}
-                        />
-                        <div className="">{view.name}</div>
-                    </div>
-                </div>
-            </DeckGlView>,
-        );
+        viewerLayers.push(...view.layers);
+        colorScales.push(...view.colorScales);
     }
 
     if (viewsAndLayers.boundingBox !== null) {
@@ -141,17 +120,8 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     layers.push(new PlaceholderLayer({ id: "placeholder" }));
 
     return (
-        <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
-            <PendingWrapper isPending={numLoadingLayers > 0}>
-                <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
-                    <ReadoutWrapper
-                        views={views}
-                        viewportAnnotations={viewportAnnotations}
-                        layers={layers}
-                        bounds={bounds}
-                    />
-                </div>
-            </PendingWrapper>
-        </div>
+        <PendingWrapper className="w-full h-full flex flex-col" isPending={numLoadingLayers > 0}>
+            <SubsurfaceViewerWrapper views={views} layers={layers} bounds={bounds} colorScales={colorScales} />
+        </PendingWrapper>
     );
 }
