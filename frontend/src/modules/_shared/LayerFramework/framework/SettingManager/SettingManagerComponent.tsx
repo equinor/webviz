@@ -4,19 +4,19 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Link, Warning } from "@mui/icons-material";
 
-import type { SettingManager} from "./SettingManager";
+import type { SettingManager } from "./SettingManager";
 import { OverriddenValueProviderType, SettingTopic } from "./SettingManager";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import type { SettingComponentProps as SettingComponentPropsInterface } from "../../interfacesAndTypes/customSettingImplementation";
 import type { Setting, SettingCategories, SettingTypes } from "../../settings/settingsDefinitions";
-import type { DataLayerManager} from "../DataLayerManager/DataLayerManager";
+import type { DataLayerManager } from "../DataLayerManager/DataLayerManager";
 import { LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 
 export type SettingComponentProps<
     TSetting extends Setting,
     TValue extends SettingTypes[TSetting],
-    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting]
+    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
 > = {
     setting: SettingManager<TSetting, TValue, TCategory>;
     manager: DataLayerManager;
@@ -26,10 +26,10 @@ export type SettingComponentProps<
 export function SettingComponent<
     TSetting extends Setting,
     TValue extends SettingTypes[TSetting] = SettingTypes[TSetting],
-    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting]
+    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
 >(props: SettingComponentProps<TSetting, TValue, TCategory>): React.ReactNode {
     const componentRef = React.useRef<(props: SettingComponentPropsInterface<TValue, TCategory>) => React.ReactNode>(
-        props.setting.makeComponent()
+        props.setting.makeComponent(),
     );
     const value = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE_CHANGED);
     const isValid = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALIDITY_CHANGED);
@@ -38,7 +38,7 @@ export function SettingComponent<
     const overriddenValue = usePublishSubscribeTopicValue(props.setting, SettingTopic.OVERRIDDEN_VALUE_CHANGED);
     const overriddenValueProvider = usePublishSubscribeTopicValue(
         props.setting,
-        SettingTopic.OVERRIDDEN_VALUE_PROVIDER_CHANGED
+        SettingTopic.OVERRIDDEN_VALUE_PROVIDER_CHANGED,
     );
     const isLoading = usePublishSubscribeTopicValue(props.setting, SettingTopic.LOADING_STATE_CHANGED);
     const isInitialized = usePublishSubscribeTopicValue(props.setting, SettingTopic.INIT_STATE_CHANGED);
@@ -69,7 +69,7 @@ export function SettingComponent<
         const valueAsString = props.setting.valueToRepresentation(
             overriddenValue,
             props.manager.getWorkbenchSession(),
-            props.manager.getWorkbenchSettings()
+            props.manager.getWorkbenchSettings(),
         );
 
         return (
@@ -95,7 +95,7 @@ export function SettingComponent<
                     <div className="flex flex-col gap-1 min-w-0">
                         <div
                             className={resolveClassNames({
-                                "outline outline-red-500 outline-1": !isValid && !actuallyLoading,
+                                "outline outline-red-500": !isValid && !actuallyLoading,
                             })}
                         >
                             <componentRef.current

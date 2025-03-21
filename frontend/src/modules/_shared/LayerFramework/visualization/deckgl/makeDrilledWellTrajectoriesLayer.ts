@@ -4,10 +4,10 @@ import type { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import type { Feature, GeoJsonProperties, GeometryCollection, LineString, Point } from "geojson";
 
-import type { VisualizationFunctionArgs } from "../VisualizationFactory";
+import type { FactoryFunctionArgs } from "../VisualizationFactory";
 
 function wellTrajectoryToGeojson(
-    wellTrajectory: WellboreTrajectory_api
+    wellTrajectory: WellboreTrajectory_api,
 ): Feature<GeometryCollection, GeoJsonProperties> {
     const point: Point = {
         type: "Point",
@@ -55,7 +55,7 @@ function zipCoords(xArr: number[], yArr: number[], zArr: number[]): number[][] {
 export function makeDrilledWellTrajectoriesLayer({
     id,
     getData,
-}: VisualizationFunctionArgs<any, WellboreTrajectory_api[]>): WellsLayer | null {
+}: FactoryFunctionArgs<any, WellboreTrajectory_api[], any>): WellsLayer | null {
     const fieldWellboreTrajectoriesData = getData();
 
     if (!fieldWellboreTrajectoriesData) {
@@ -64,7 +64,7 @@ export function makeDrilledWellTrajectoriesLayer({
 
     // Filter out some wellbores that are known to be not working - this is a temporary solution
     const tempWorkingWellsData = fieldWellboreTrajectoriesData.filter(
-        (el) => el.uniqueWellboreIdentifier !== "NO 34/4-K-3 AH"
+        (el) => el.uniqueWellboreIdentifier !== "NO 34/4-K-3 AH",
     );
 
     const wellLayerDataFeatures = tempWorkingWellsData.map((well) => wellTrajectoryToGeojson(well));

@@ -5,7 +5,7 @@ import * as bbox from "@lib/utils/bbox";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 
 import type { GroupDelegate } from "../delegates/GroupDelegate";
-import { DataLayer, LayerStatus } from "../framework/DataLayer/DataLayer";
+import { DataLayer, DataLayerStatus } from "../framework/DataLayer/DataLayer";
 import type { DataLayerManager } from "../framework/DataLayerManager/DataLayerManager";
 import { DeltaSurface } from "../framework/DeltaSurface/DeltaSurface";
 import { Group } from "../framework/Group/Group";
@@ -22,33 +22,20 @@ export enum VisualizationTarget {
     // VIDEX = "videx",
 }
 
-export type VisualizationFunctionArgs<
+export type FactoryFunctionArgs<
     TSettings extends Settings,
     TData,
-    TCustomData extends Record<string, any> = never
+    TInjectedData extends Record<string, any> = never,
 > = DataLayerInformationAccessors<TSettings, TData> & {
     id: string;
     name: string;
     isLoading: boolean;
-    customData?: TCustomData;
+    getInjectedData: () => TInjectedData;
 };
 
 export type TargetReturnTypes = {
     [VisualizationTarget.DECK_GL]: DeckGlLayer<any>;
     [VisualizationTarget.ESV]: EsvLayer<any>;
-};
-
-export type MakeLayerBoundingBoxFunctionArgs<TSettings extends Settings, TData> = DataLayerInformationAccessors<
-    TSettings,
-    TData
->;
-
-export type MakeAnnotationsFunctionArgs<TSettings extends Settings, TData> = DataLayerInformationAccessors<
-    TSettings,
-    TData
-> & {
-    id: string;
-    name: string;
 };
 
 export type Annotation = ColorScaleWithId; // Add more possible annotation types here, e.g. ColorSets etc.
@@ -57,33 +44,41 @@ export type LayerVisualizationFunctions<
     TSettings extends Settings,
     TData,
     TTarget extends VisualizationTarget,
-    TCustomData extends Record<string, any> = never,
-    TAccumulatedData extends Record<string, any> = never
+    TInjectedData extends Record<string, any> = never,
+    TAccumulatedData extends Record<string, any> = never,
 > = {
-    visualizationFunction: MakeVisualizationFunction<TSettings, TData, TTarget, TCustomData>;
-    boundingBoxCalculationFunction?: MakeLayerBoundingBoxFunction<TSettings, TData>;
-    makeAnnotationsFunction?: MakeAnnotationsFunction<TSettings, TData>;
-    hoverVisualizationFunction?: MakeVisualizationFunction<TSettings, TData, TTarget>;
-    accumulateDataFunction?: (
-        args: VisualizationFunctionArgs<TSettings, TData, TCustomData>,
-        accumulatedData: TAccumulatedData
-    ) => TAccumulatedData;
+    makeVisualizationFunction: MakeVisualizationFunction<TSettings, TData, TTarget, TInjectedData>;
+    calculateBoundingBoxFunction?: CalculateBoundingBoxFunction<TSettings, TData, TInjectedData>;
+    makeAnnotationsFunction?: MakeAnnotationsFunction<TSettings, TData, TInjectedData>;
+    makeHoverVisualizationFunction?: MakeVisualizationFunction<TSettings, TData, TTarget, TInjectedData>;
+    reduceAccumulatedDataFunction?: ReduceAccumulatedDataFunction<TSettings, TData, TAccumulatedData, TInjectedData>;
 };
 
 export type MakeVisualizationFunction<
-    TSettingTypes extends Settings,
+    TSettings extends Settings,
     TData,
     TTarget extends VisualizationTarget,
-    TCustomData extends Record<string, any> = never
-> = (args: VisualizationFunctionArgs<TSettingTypes, TData, TCustomData>) => TargetReturnTypes[TTarget] | null;
+    TInjectedData extends Record<string, any> = never,
+> = (args: FactoryFunctionArgs<TSettings, TData, TInjectedData>) => TargetReturnTypes[TTarget] | null;
 
-export type MakeLayerBoundingBoxFunction<TSettings extends Settings, TData> = (
-    args: MakeLayerBoundingBoxFunctionArgs<TSettings, TData>
-) => bbox.BBox | null;
+export type CalculateBoundingBoxFunction<
+    TSettings extends Settings,
+    TData,
+    TInjectedData extends Record<string, any> = never,
+> = (args: FactoryFunctionArgs<TSettings, TData, TInjectedData>) => bbox.BBox | null;
 
-export type MakeAnnotationsFunction<TSettings extends Settings, TData> = (
-    args: MakeAnnotationsFunctionArgs<TSettings, TData>
-) => Annotation[];
+export type MakeAnnotationsFunction<
+    TSettings extends Settings,
+    TData,
+    TInjectedData extends Record<string, any> = never,
+> = (args: FactoryFunctionArgs<TSettings, TData, TInjectedData>) => Annotation[];
+
+export type ReduceAccumulatedDataFunction<
+    TSettings extends Settings,
+    TData,
+    TAccumulatedData,
+    TInjectedData extends Record<string, any> = never,
+> = (accumulatedData: TAccumulatedData, args: FactoryFunctionArgs<TSettings, TData, TInjectedData>) => TAccumulatedData;
 
 export type LayerWithPosition<TTarget extends VisualizationTarget> = {
     layer: TargetReturnTypes[TTarget];
@@ -100,7 +95,7 @@ export type VisualizationView<TTarget extends VisualizationTarget> = {
 
 export type FactoryProduct<
     TTarget extends VisualizationTarget,
-    TAccumulatedData extends Record<string, any> = never
+    TAccumulatedData extends Record<string, any> = never,
 > = {
     views: VisualizationView<TTarget>[];
     layers: LayerWithPosition<TTarget>[];
@@ -113,12 +108,12 @@ export type FactoryProduct<
 
 export class VisualizationFactory<
     TTarget extends VisualizationTarget,
-    TCustomData extends Record<string, any> = never,
-    TAccumulatedData extends Record<string, any> = never
+    TInjectedData extends Record<string, any> = never,
+    TAccumulatedData extends Record<string, any> = never,
 > {
     private _visualizationFunctions: Map<
         string,
-        LayerVisualizationFunctions<any, any, TTarget, TCustomData, TAccumulatedData>
+        LayerVisualizationFunctions<any, any, TTarget, TInjectedData, TAccumulatedData>
     > = new Map();
 
     registerLayerFunctions<TSettings extends Settings, TData>(
@@ -126,7 +121,7 @@ export class VisualizationFactory<
         layerCtor: {
             new (...params: any[]): CustomDataLayerImplementation<TSettings, TData, any>;
         },
-        funcs: LayerVisualizationFunctions<TSettings, TData, TTarget, TCustomData, TAccumulatedData>
+        funcs: LayerVisualizationFunctions<TSettings, TData, TTarget, TInjectedData, TAccumulatedData>,
     ): void {
         if (this._visualizationFunctions.has(layerCtor.name)) {
             throw new Error(`Visualization function for layer ${layerCtor.name} already registered`);
@@ -134,15 +129,25 @@ export class VisualizationFactory<
         this._visualizationFunctions.set(layerName, funcs);
     }
 
-    make(layerManager: DataLayerManager, customData?: TCustomData): FactoryProduct<TTarget, TAccumulatedData> {
-        return this.makeRecursively(layerManager.getGroupDelegate(), {} as TAccumulatedData, customData);
+    make(
+        layerManager: DataLayerManager,
+        options?: {
+            injectedData?: TInjectedData;
+            initialAccumulatedData?: TAccumulatedData;
+        },
+    ): FactoryProduct<TTarget, TAccumulatedData> {
+        return this.makeRecursively(
+            layerManager.getGroupDelegate(),
+            options?.initialAccumulatedData ?? ({} as TAccumulatedData),
+            options?.injectedData,
+        );
     }
 
     private makeRecursively(
         groupDelegate: GroupDelegate,
         accumulatedData: TAccumulatedData,
-        customData?: TCustomData,
-        numCollectedLayers: number = 0
+        injectedData?: TInjectedData,
+        numCollectedLayers: number = 0,
     ): FactoryProduct<TTarget, TAccumulatedData> {
         const collectedViews: VisualizationView<TTarget>[] = [];
         const collectedLayers: LayerWithPosition<TTarget>[] = [];
@@ -177,8 +182,8 @@ export class VisualizationFactory<
                 } = this.makeRecursively(
                     child.getGroupDelegate(),
                     accumulatedData,
-                    customData,
-                    numCollectedLayers + collectedLayers.length
+                    injectedData,
+                    numCollectedLayers + collectedLayers.length,
                 );
 
                 accumulatedData = newAccumulatedData;
@@ -205,11 +210,11 @@ export class VisualizationFactory<
             }
 
             if (child instanceof DataLayer) {
-                if (child.getStatus() === LayerStatus.LOADING) {
+                if (child.getStatus() === DataLayerStatus.LOADING) {
                     collectedNumLoadingLayers++;
                 }
 
-                if (child.getStatus() === LayerStatus.ERROR) {
+                if (child.getStatus() === DataLayerStatus.ERROR) {
                     const error = child.getError();
                     if (error) {
                         collectedErrorMessages.push(error);
@@ -221,7 +226,7 @@ export class VisualizationFactory<
                     continue;
                 }
 
-                const layer = this.makeLayer(child, customData);
+                const layer = this.makeLayer(child, injectedData);
 
                 if (!layer) {
                     continue;
@@ -246,60 +251,66 @@ export class VisualizationFactory<
         };
     }
 
-    private makeLayer(layer: DataLayer<any, any, any>, customData?: TCustomData): TargetReturnTypes[TTarget] | null {
-        const func = this._visualizationFunctions.get(layer.getType())?.visualizationFunction;
+    private makeFactoryFunctionArgs<TSettings extends Settings, TData>(
+        layer: DataLayer<TSettings, TData, any>,
+        injectedData?: TInjectedData,
+    ): FactoryFunctionArgs<TSettings, TData, TInjectedData> {
+        function getInjectedData() {
+            if (!injectedData) {
+                throw new Error("No injected data provided. Did you forget to pass it to the factory?");
+            }
+            return injectedData;
+        }
+
+        return {
+            id: layer.getItemDelegate().getId(),
+            name: layer.getItemDelegate().getName(),
+            isLoading: layer.getStatus() === DataLayerStatus.LOADING,
+            getInjectedData: getInjectedData.bind(this),
+            ...layer.makeAccessors(),
+        };
+    }
+
+    private makeLayer(
+        layer: DataLayer<any, any, any>,
+        injectedData?: TInjectedData,
+    ): TargetReturnTypes[TTarget] | null {
+        const func = this._visualizationFunctions.get(layer.getType())?.makeVisualizationFunction;
         if (!func) {
             throw new Error(`No visualization function found for layer ${layer.getType()}`);
         }
 
-        return func({
-            id: layer.getItemDelegate().getId(),
-            name: layer.getItemDelegate().getName(),
-            isLoading: layer.getStatus() === LayerStatus.LOADING,
-            ...layer.makeAccessors(),
-            customData,
-        });
+        return func(this.makeFactoryFunctionArgs(layer, injectedData));
     }
 
-    private makeLayerBoundingBox(layer: DataLayer<any, any, any>): bbox.BBox | null {
-        const func = this._visualizationFunctions.get(layer.getType())?.boundingBoxCalculationFunction;
+    private makeLayerBoundingBox(layer: DataLayer<any, any, any>, injectedData?: TInjectedData): bbox.BBox | null {
+        const func = this._visualizationFunctions.get(layer.getType())?.calculateBoundingBoxFunction;
         if (!func) {
             return null;
         }
 
-        return func(layer.makeAccessors());
+        return func(this.makeFactoryFunctionArgs(layer, injectedData));
     }
 
-    private makeLayerAnnotations(layer: DataLayer<any, any, any>): Annotation[] {
+    private makeLayerAnnotations(layer: DataLayer<any, any, any>, injectedData?: TInjectedData): Annotation[] {
         const func = this._visualizationFunctions.get(layer.getType())?.makeAnnotationsFunction;
         if (!func) {
             return [];
         }
 
-        return func({
-            id: layer.getItemDelegate().getId(),
-            name: layer.getItemDelegate().getName(),
-            ...layer.makeAccessors(),
-        });
+        return func(this.makeFactoryFunctionArgs(layer, injectedData));
     }
 
     private accumulateLayerData(
         layer: DataLayer<any, any, any>,
-        accumulatedData: TAccumulatedData
+        accumulatedData: TAccumulatedData,
+        injectedData?: TInjectedData,
     ): TAccumulatedData | null {
-        const func = this._visualizationFunctions.get(layer.getType())?.accumulateDataFunction;
+        const func = this._visualizationFunctions.get(layer.getType())?.reduceAccumulatedDataFunction;
         if (!func) {
             return null;
         }
 
-        return func(
-            {
-                id: layer.getItemDelegate().getId(),
-                name: layer.getItemDelegate().getName(),
-                isLoading: layer.getStatus() === LayerStatus.LOADING,
-                ...layer.makeAccessors(),
-            },
-            accumulatedData
-        );
+        return func(accumulatedData, this.makeFactoryFunctionArgs(layer, injectedData));
     }
 }

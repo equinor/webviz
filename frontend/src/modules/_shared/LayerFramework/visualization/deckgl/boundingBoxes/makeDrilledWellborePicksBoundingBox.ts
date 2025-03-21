@@ -1,11 +1,11 @@
 import type { BBox } from "@lib/utils/bbox";
-import type { MakeLayerBoundingBoxFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 
 import type { Data, DrilledWellborePicksSettings } from "../../../layers/implementations/DrilledWellborePicksLayer";
 
 export function makeDrilledWellborePicksBoundingBox({
     getData,
-}: MakeLayerBoundingBoxFunctionArgs<DrilledWellborePicksSettings, Data>): BBox | null {
+}: FactoryFunctionArgs<DrilledWellborePicksSettings, Data>): BBox | null {
     const data = getData();
     if (!data) {
         return null;

@@ -6,9 +6,8 @@ import {
 } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorPaletteType } from "@framework/WorkbenchSettings";
-import type { IntersectionPolyline} from "@framework/userCreatedItems/IntersectionPolylines";
+import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
-import { GlobalLog } from "@lib/utils/GlobalLog";
 import type { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
@@ -20,15 +19,10 @@ import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import "../../groups/registerAllGroups";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
-import type { SerializedLayerManager} from "../../interfacesAndTypes/serialization";
+import type { SerializedLayerManager } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
 import "../../layers/registerAllLayers";
 import "../../settings/registerAllSettings";
-
-export const log = GlobalLog.registerLog("LayerManager");
-export enum LogLevel {
-    UPDATE_FLOW = 1,
-}
 
 export enum LayerManagerTopic {
     ITEMS = "ITEMS_CHANGED",
@@ -64,7 +58,6 @@ export type GlobalSettings = {
  * The LayerManager class is also responsible for serializing/deserializing the state of itself and all its descendants.
  * It does also serve as a provider of the QueryClient and WorkbenchSession.
  */
-
 export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManagerTopicPayload> {
     private _workbenchSession: WorkbenchSession;
     private _workbenchSettings: WorkbenchSettings;
@@ -115,7 +108,7 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
                 .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(() => {
                 this.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
                 this.publishTopic(LayerManagerTopic.ITEMS);
-            })
+            }),
         );
 
         this._groupColorGenerator = this.makeGroupColorGenerator();
@@ -135,12 +128,6 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
         }
 
         this._globalSettings[key] = value;
-
-        log.probe(
-            LogLevel.UPDATE_FLOW,
-            `LayerManager: Global settings updated. Current global settings: ${this._globalSettings}`
-        );
-
         this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS);
     }
 
@@ -156,8 +143,6 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
         if (topic === LayerManagerTopic.LAYER_DATA_REVISION) {
             this._layerDataRevision++;
         }
-
-        log.log(LogLevel.UPDATE_FLOW, `LayerManager: publishing topic ${topic}`)();
 
         this._publishSubscribeDelegate.notifySubscribers(topic);
     }

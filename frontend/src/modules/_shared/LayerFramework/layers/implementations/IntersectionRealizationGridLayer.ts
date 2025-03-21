@@ -6,10 +6,9 @@ import {
 } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import type { IntersectionSettingValue } from "@modules/_shared/LayerFramework/settings/implementations/IntersectionSetting";
-import type { MakeSettingTypesMap} from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import type { MakeSettingTypesMap } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import type {
-    PolylineIntersection_trans} from "@modules/_shared/utils/wellbore";
+import type { PolylineIntersection_trans } from "@modules/_shared/utils/wellbore";
 import {
     calcExtendedSimplifiedWellboreTrajectoryInXYPlane,
     transformPolylineIntersection,
@@ -47,14 +46,8 @@ export class IntersectionRealizationGridLayer
 {
     settings = intersectionRealizationGridSettings;
 
-    getDefaultSettingsValues(): MakeSettingTypesMap<IntersectionRealizationGridSettings> {
+    getDefaultSettingsValues() {
         return {
-            [Setting.INTERSECTION]: null,
-            [Setting.ENSEMBLE]: null,
-            [Setting.REALIZATION]: null,
-            [Setting.ATTRIBUTE]: null,
-            [Setting.GRID_NAME]: null,
-            [Setting.TIME_OR_INTERVAL]: null,
             [Setting.SHOW_GRID_LINES]: false,
         };
     }
@@ -244,8 +237,8 @@ export class IntersectionRealizationGridLayer
                     new Set(
                         gridAttributeArr
                             .filter((attr) => attr.property_name === gridAttribute)
-                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME")
-                    )
+                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
+                    ),
                 ),
             ];
 
@@ -316,15 +309,15 @@ export class IntersectionRealizationGridLayer
                                 ...calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
                                     path,
                                     0,
-                                    5
-                                ).simplifiedWellboreTrajectoryXy.flat()
+                                    5,
+                                ).simplifiedWellboreTrajectoryXy.flat(),
                             );
 
                             resolve(polylineUtmXy);
                         });
                 } else {
                     const intersectionPolyline = getGlobalSetting("intersectionPolylines").find(
-                        (polyline) => polyline.id === intersection.uuid
+                        (polyline) => polyline.id === intersection.uuid,
                     );
                     if (!intersectionPolyline) {
                         resolve([]);
@@ -355,7 +348,7 @@ export class IntersectionRealizationGridLayer
                         },
                         body: { polyline_utm_xy },
                     }),
-                })
+                }),
             )
             .then(transformPolylineIntersection);
 

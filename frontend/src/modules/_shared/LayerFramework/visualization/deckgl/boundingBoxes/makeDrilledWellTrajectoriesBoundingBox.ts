@@ -1,10 +1,10 @@
 import type { WellboreTrajectory_api } from "@api";
 import type { BBox } from "@lib/utils/bbox";
-import type { MakeLayerBoundingBoxFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 
 export function makeDrilledWellTrajectoriesBoundingBox({
     getData,
-}: MakeLayerBoundingBoxFunctionArgs<any, WellboreTrajectory_api[]>): BBox | null {
+}: FactoryFunctionArgs<any, WellboreTrajectory_api[]>): BBox | null {
     const data = getData();
     if (!data) {
         return null;

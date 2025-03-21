@@ -24,7 +24,7 @@ export class Dependency<
     TReturnValue,
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
-    TKey extends SettingsKeysFromTuple<TSettings>
+    TKey extends SettingsKeysFromTuple<TSettings>,
 > {
     private _updateFunc: UpdateFunc<TReturnValue, TSettings, TSettingTypes, TKey>;
     private _dependencies: Set<(value: Awaited<TReturnValue> | null) => void> = new Set();
@@ -240,12 +240,12 @@ export class Dependency<
     }
 
     private applyNewValue(newValue: Awaited<TReturnValue> | null) {
-        this.setLoadingState(false);
         if (!isEqual(newValue, this._cachedValue) || newValue === null) {
             this._cachedValue = newValue;
             for (const callback of this._dependencies) {
                 callback(newValue);
             }
         }
+        this.setLoadingState(false);
     }
 }

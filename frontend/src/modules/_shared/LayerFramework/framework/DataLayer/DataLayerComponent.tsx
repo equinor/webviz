@@ -7,12 +7,11 @@ import { SortableListItem } from "@lib/components/SortableList";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
 
-import type { DataLayer} from "./DataLayer";
-import { LayerDelegateTopic, LayerStatus } from "./DataLayer";
+import type { DataLayer } from "./DataLayer";
+import { DataLayerStatus, LayerDelegateTopic } from "./DataLayer";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { SettingsContextDelegateTopic, SettingsContextLoadingState } from "../../delegates/SettingsContextDelegate";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";
@@ -87,10 +86,6 @@ type EndActionProps = {
 
 function EndActions(props: EndActionProps): React.ReactNode {
     const status = usePublishSubscribeTopicValue(props.layer, LayerDelegateTopic.STATUS);
-    const settingsStatus = usePublishSubscribeTopicValue(
-        props.layer.getSettingsContextDelegate(),
-        SettingsContextDelegateTopic.LOADING_STATE
-    );
     const isSubordinated = usePublishSubscribeTopicValue(props.layer, LayerDelegateTopic.SUBORDINATED);
 
     function makeStatus(): React.ReactNode {
@@ -101,14 +96,14 @@ function EndActions(props: EndActionProps): React.ReactNode {
                 </div>
             );
         }
-        if (status === LayerStatus.LOADING) {
+        if (status === DataLayerStatus.LOADING) {
             return (
                 <div title="Loading">
                     <CircularProgress size="extra-small" />
                 </div>
             );
         }
-        if (status === LayerStatus.ERROR) {
+        if (status === DataLayerStatus.ERROR) {
             const error = props.layer.getError();
             if (typeof error === "string") {
                 return (
@@ -125,14 +120,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
                 );
             }
         }
-        if (status === LayerStatus.SUCCESS) {
-            return (
-                <div title="Successfully loaded">
-                    <CheckCircle className="text-green-700 p-0.5" fontSize="small" />
-                </div>
-            );
-        }
-        if (settingsStatus === SettingsContextLoadingState.FAILED) {
+        if (status === DataLayerStatus.INVALID_SETTINGS) {
             return (
                 <div
                     title={`Invalid settings: ${props.layer
@@ -141,6 +129,13 @@ function EndActions(props: EndActionProps): React.ReactNode {
                         .join(", ")}`}
                 >
                     <Block className="text-red-700 p-0.5" fontSize="small" />
+                </div>
+            );
+        }
+        if (status === DataLayerStatus.SUCCESS) {
+            return (
+                <div title="Successfully loaded">
+                    <CheckCircle className="text-green-700 p-0.5" fontSize="small" />
                 </div>
             );
         }

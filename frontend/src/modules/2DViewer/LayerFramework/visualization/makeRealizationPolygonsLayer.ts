@@ -1,6 +1,6 @@
 import type { PolygonData_api } from "@api";
 import { GeoJsonLayer } from "@deck.gl/layers";
-import type { VisualizationFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 
 import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
 
@@ -31,7 +31,7 @@ export function makeRealizationPolygonsLayer({
     id,
     name,
     getData,
-}: VisualizationFunctionArgs<RealizationPolygonsSettings, Data>): GeoJsonLayer | null {
+}: FactoryFunctionArgs<RealizationPolygonsSettings, Data>): GeoJsonLayer | null {
     const polygonsData = getData();
 
     if (!polygonsData) {

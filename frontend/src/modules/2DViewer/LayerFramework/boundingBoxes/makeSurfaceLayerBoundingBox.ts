@@ -1,11 +1,11 @@
 import type { SurfaceDataPng_api } from "@api";
 import type { BBox } from "@lib/utils/bbox";
-import type { MakeLayerBoundingBoxFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
 
 export function makeSurfaceLayerBoundingBox({
     getData,
-}: MakeLayerBoundingBoxFunctionArgs<any, SurfaceDataFloat_trans | SurfaceDataPng_api>): BBox | null {
+}: FactoryFunctionArgs<any, SurfaceDataFloat_trans | SurfaceDataPng_api>): BBox | null {
     const data = getData();
     if (!data) {
         return null;

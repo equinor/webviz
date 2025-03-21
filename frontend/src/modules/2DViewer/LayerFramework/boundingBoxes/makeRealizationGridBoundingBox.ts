@@ -1,9 +1,9 @@
 import type { BBox } from "@lib/utils/bbox";
-import type { MakeLayerBoundingBoxFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 
 import type { Data } from "../customLayerImplementations/RealizationGridLayer";
 
-export function makeRealizationGridBoundingBox({ getData }: MakeLayerBoundingBoxFunctionArgs<any, Data>): BBox | null {
+export function makeRealizationGridBoundingBox({ getData }: FactoryFunctionArgs<any, Data>): BBox | null {
     const data = getData();
     if (!data) {
         return null;

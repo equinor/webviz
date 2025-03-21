@@ -1,39 +1,37 @@
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 import { Dependency } from "./_utils/Dependency";
 
-import type { PublishSubscribe} from "../../utils/PublishSubscribeDelegate";
+import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import type { DataLayer } from "../framework/DataLayer/DataLayer";
-import type { DataLayerManager, GlobalSettings} from "../framework/DataLayerManager/DataLayerManager";
+import type { DataLayerManager, GlobalSettings } from "../framework/DataLayerManager/DataLayerManager";
 import { LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
 import { Group } from "../framework/Group/Group";
-import type { SettingManager} from "../framework/SettingManager/SettingManager";
+import type { SettingManager } from "../framework/SettingManager/SettingManager";
 import { SettingTopic } from "../framework/SettingManager/SettingManager";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
 import type { CustomSettingsHandler, UpdateFunc } from "../interfacesAndTypes/customSettingsHandler";
-import type { SharedSettingsProvider} from "../interfacesAndTypes/entitites";
+import type { SharedSettingsProvider } from "../interfacesAndTypes/entitites";
 import { instanceofSharedSettingsProvider } from "../interfacesAndTypes/entitites";
 import type { SerializedSettingsState } from "../interfacesAndTypes/serialization";
 import type { NullableStoredData, StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { AvailableValuesType, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { MakeSettingTypesMap, SettingTypes, Settings } from "../settings/settingsDefinitions";
 
-export enum SettingsContextLoadingState {
+export enum SettingsContextStatus {
+    VALID_SETTINGS = "VALID_SETTINGS",
     LOADING = "LOADING",
-    LOADED = "LOADED",
-    FAILED = "FAILED",
+    INVALID_SETTINGS = "INVALID_SETTINGS",
 }
 
 export enum SettingsContextDelegateTopic {
     SETTINGS_CHANGED = "SETTINGS_CHANGED",
-    LAYER_MANAGER_CHANGED = "LAYER_MANAGER_CHANGED",
-    LOADING_STATE = "LOADING_STATE_CHANGED",
+    STATUS = "LOADING_STATE_CHANGED",
 }
 
 export type SettingsContextDelegatePayloads = {
     [SettingsContextDelegateTopic.SETTINGS_CHANGED]: void;
-    [SettingsContextDelegateTopic.LAYER_MANAGER_CHANGED]: void;
-    [SettingsContextDelegateTopic.LOADING_STATE]: SettingsContextLoadingState;
+    [SettingsContextDelegateTopic.STATUS]: SettingsContextStatus;
 };
 
 export interface FetchDataFunction<TSettings extends Settings, TKey extends keyof TSettings> {
@@ -58,7 +56,7 @@ export class SettingsContextDelegate<
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TStoredData extends StoredData = Record<string, never>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-    TStoredDataKey extends keyof TStoredData = keyof TStoredData
+    TStoredDataKey extends keyof TStoredData = keyof TStoredData,
 > implements PublishSubscribe<SettingsContextDelegatePayloads>
 {
     private _owner: DataLayer<TSettings, any, TStoredData, TSettingTypes, TSettingKey>;
@@ -75,7 +73,7 @@ export class SettingsContextDelegate<
     };
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingsContextDelegatePayloads>();
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
-    private _loadingState: SettingsContextLoadingState = SettingsContextLoadingState.LOADING;
+    private _status: SettingsContextStatus = SettingsContextStatus.LOADING;
     private _storedData: NullableStoredData<TStoredData> = {} as NullableStoredData<TStoredData>;
 
     constructor(
@@ -88,7 +86,7 @@ export class SettingsContextDelegate<
             TStoredDataKey
         >,
         layerManager: DataLayerManager,
-        settings: { [K in TSettingKey]: SettingManager<K> }
+        settings: { [K in TSettingKey]: SettingManager<K> },
     ) {
         this._owner = owner;
         this._customSettingsHandler = customSettingsHandler;
@@ -106,8 +104,8 @@ export class SettingsContextDelegate<
                 settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.LOADING_STATE_CHANGED)(
                     () => {
                         this.handleSettingsLoadingStateChanged();
-                    }
-                )
+                    },
+                ),
             );
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "layer-manager",
@@ -115,14 +113,14 @@ export class SettingsContextDelegate<
                     .getPublishSubscribeDelegate()
                     .makeSubscriberFunction(LayerManagerTopic.SHARED_SETTINGS_CHANGED)(() => {
                     this.handleSharedSettingsChanged();
-                })
+                }),
             );
 
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "layer-manager",
                 layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.ITEMS)(() => {
                     this.handleSharedSettingsChanged();
-                })
+                }),
             );
         }
 
@@ -133,6 +131,10 @@ export class SettingsContextDelegate<
 
     getLayerManager(): DataLayerManager {
         return this._layerManager;
+    }
+
+    getStatus(): SettingsContextStatus {
+        return this._status;
     }
 
     getValues(): { [K in TSettingKey]?: TSettingTypes[K] } {
@@ -157,11 +159,11 @@ export class SettingsContextDelegate<
         }
 
         const sharedSettingsProviders: SharedSettingsProvider[] = parentGroup.getAncestorAndSiblingItems(
-            (item) => item instanceof SharedSetting
+            (item) => item instanceof SharedSetting,
         ) as unknown as SharedSettingsProvider[];
 
         const ancestorGroups: SharedSettingsProvider[] = parentGroup.getAncestors(
-            (item) => item instanceof Group && instanceofSharedSettingsProvider(item)
+            (item) => item instanceof Group && instanceofSharedSettingsProvider(item),
         ) as unknown as SharedSettingsProvider[];
         sharedSettingsProviders.push(...ancestorGroups);
 
@@ -250,11 +252,8 @@ export class SettingsContextDelegate<
             if (topic === SettingsContextDelegateTopic.SETTINGS_CHANGED) {
                 return;
             }
-            if (topic === SettingsContextDelegateTopic.LAYER_MANAGER_CHANGED) {
-                return;
-            }
-            if (topic === SettingsContextDelegateTopic.LOADING_STATE) {
-                return this._loadingState;
+            if (topic === SettingsContextDelegateTopic.STATUS) {
+                return this._status;
             }
         };
 
@@ -299,8 +298,8 @@ export class SettingsContextDelegate<
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "dependencies",
                 this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(
-                    handleChange
-                )
+                    handleChange,
+                ),
             );
 
             this._unsubscribeHandler.registerUnsubscribeFunction(
@@ -325,7 +324,7 @@ export class SettingsContextDelegate<
                 "dependencies",
                 this.getLayerManager()
                     .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(LayerManagerTopic.GLOBAL_SETTINGS)(handleChange)
+                    .makeSubscriberFunction(LayerManagerTopic.GLOBAL_SETTINGS)(handleChange),
             );
 
             return handleChange;
@@ -333,13 +332,13 @@ export class SettingsContextDelegate<
 
         const availableSettingsUpdater = <K extends TSettingKey>(
             settingKey: K,
-            updateFunc: UpdateFunc<AvailableValuesType<K>, TSettings, TSettingTypes, TSettingKey>
+            updateFunc: UpdateFunc<AvailableValuesType<K>, TSettings, TSettingTypes, TSettingKey>,
         ): Dependency<AvailableValuesType<K>, TSettings, TSettingTypes, TSettingKey> => {
             const dependency = new Dependency<AvailableValuesType<K>, TSettings, TSettingTypes, TSettingKey>(
                 this,
                 updateFunc,
                 makeLocalSettingGetter,
-                makeGlobalSettingGetter
+                makeGlobalSettingGetter,
             );
             dependencies.push(dependency);
 
@@ -368,7 +367,7 @@ export class SettingsContextDelegate<
 
         const storedDataUpdater = <K extends TStoredDataKey>(
             key: K,
-            updateFunc: UpdateFunc<NullableStoredData<TStoredData>[K], TSettings, TSettingTypes, TSettingKey>
+            updateFunc: UpdateFunc<NullableStoredData<TStoredData>[K], TSettings, TSettingTypes, TSettingKey>,
         ): Dependency<NullableStoredData<TStoredData>[K], TSettings, TSettingTypes, TSettingKey> => {
             const dependency = new Dependency<
                 NullableStoredData<TStoredData>[K],
@@ -392,7 +391,7 @@ export class SettingsContextDelegate<
                 getLocalSetting: <T extends TSettingKey>(settingName: T) => TSettingTypes[T];
                 getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
                 getHelperDependency: <TDep>(
-                    dep: Dependency<TDep, TSettings, TSettingTypes, TSettingKey>
+                    dep: Dependency<TDep, TSettings, TSettingTypes, TSettingKey>,
                 ) => TDep | null;
                 abortSignal: AbortSignal;
             }) => T,
@@ -401,7 +400,7 @@ export class SettingsContextDelegate<
                 this,
                 update,
                 makeLocalSettingGetter,
-                makeGlobalSettingGetter
+                makeGlobalSettingGetter,
             );
             dependencies.push(dependency);
 
@@ -426,38 +425,38 @@ export class SettingsContextDelegate<
         this._unsubscribeHandler.unsubscribeAll();
     }
 
-    private setLoadingState(loadingState: SettingsContextLoadingState) {
-        if (this._loadingState === loadingState) {
+    private setStatus(status: SettingsContextStatus) {
+        if (this._status === status) {
             return;
         }
 
-        this._loadingState = loadingState;
-        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.LOADING_STATE);
+        this._status = status;
+        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.STATUS);
     }
 
     private handleSettingChanged() {
         if (!this.areAllSettingsLoaded() || !this.areAllSettingsInitialized()) {
-            this.setLoadingState(SettingsContextLoadingState.LOADING);
+            this.setStatus(SettingsContextStatus.LOADING);
             return;
         }
 
         if (this.isSomePersistedSettingNotValid() || !this.areCurrentSettingsValid()) {
-            this.setLoadingState(SettingsContextLoadingState.FAILED);
+            this.setStatus(SettingsContextStatus.INVALID_SETTINGS);
             return;
         }
 
-        this.setLoadingState(SettingsContextLoadingState.LOADED);
+        this.setStatus(SettingsContextStatus.VALID_SETTINGS);
         this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
     }
 
     private handleSettingsLoadingStateChanged() {
         for (const key in this._settings) {
             if (this._settings[key].isLoading()) {
-                this.setLoadingState(SettingsContextLoadingState.LOADING);
+                this.setStatus(SettingsContextStatus.LOADING);
                 return;
             }
         }
 
-        this.setLoadingState(SettingsContextLoadingState.LOADED);
+        this.handleSettingChanged();
     }
 }

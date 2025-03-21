@@ -1,28 +1,32 @@
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
-import type { PublishSubscribe} from "@modules/_shared/utils/PublishSubscribeDelegate";
+import type { PublishSubscribe } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import type { QueryClient} from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import { isCancelledError } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
 import { ItemDelegate } from "../../delegates/ItemDelegate";
-import { SettingsContextDelegate, SettingsContextDelegateTopic } from "../../delegates/SettingsContextDelegate";
+import {
+    SettingsContextDelegate,
+    SettingsContextDelegateTopic,
+    SettingsContextStatus,
+} from "../../delegates/SettingsContextDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import type {
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
 } from "../../interfacesAndTypes/customDataLayerImplementation";
 import type { Item } from "../../interfacesAndTypes/entitites";
-import type { SerializedLayer} from "../../interfacesAndTypes/serialization";
+import type { SerializedLayer } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
 import type { StoredData } from "../../interfacesAndTypes/sharedTypes";
 import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
-import type { DataLayerManager} from "../DataLayerManager/DataLayerManager";
-import { LayerManagerTopic, log } from "../DataLayerManager/DataLayerManager";
+import type { DataLayerManager } from "../DataLayerManager/DataLayerManager";
+import { LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 import { makeSettings } from "../utils/makeSettings";
 
 export enum LayerDelegateTopic {
@@ -31,15 +35,16 @@ export enum LayerDelegateTopic {
     SUBORDINATED = "SUBORDINATED",
 }
 
-export enum LayerStatus {
+export enum DataLayerStatus {
     IDLE = "IDLE",
     LOADING = "LOADING",
     ERROR = "ERROR",
+    INVALID_SETTINGS = "INVALID_SETTINGS",
     SUCCESS = "SUCCESS",
 }
 
 export type LayerDelegatePayloads<TData> = {
-    [LayerDelegateTopic.STATUS]: LayerStatus;
+    [LayerDelegateTopic.STATUS]: DataLayerStatus;
     [LayerDelegateTopic.DATA]: TData;
     [LayerDelegateTopic.SUBORDINATED]: boolean;
 };
@@ -49,7 +54,7 @@ export type DataLayerParams<
     TData,
     TStoredData extends StoredData = Record<string, never>,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > = {
     type: string;
     layerManager: DataLayerManager;
@@ -69,12 +74,13 @@ export type DataLayerParams<
  * It also manages the status of the layer (loading, success, error).
  */
 export class DataLayer<
-    TSettings extends Settings,
-    TData,
-    TStoredData extends StoredData = Record<string, never>,
-    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
-> implements Item, PublishSubscribe<LayerDelegatePayloads<TData>>
+        TSettings extends Settings,
+        TData,
+        TStoredData extends StoredData = Record<string, never>,
+        TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+        TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
+    >
+    implements Item, PublishSubscribe<LayerDelegatePayloads<TData>>
 {
     private _type: string;
     private _customDataLayerImpl: CustomDataLayerImplementation<
@@ -91,7 +97,7 @@ export class DataLayer<
     private _cancellationPending: boolean = false;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<LayerDelegatePayloads<TData>>();
     private _queryKeys: unknown[][] = [];
-    private _status: LayerStatus = LayerStatus.IDLE;
+    private _status: DataLayerStatus = DataLayerStatus.IDLE;
     private _data: TData | null = null;
     private _error: StatusMessage | string | null = null;
     private _valueRange: [number, number] | null = null;
@@ -108,14 +114,14 @@ export class DataLayer<
             layerManager,
             makeSettings<TSettings, TSettingTypes, TSettingKey>(
                 customDataLayerImplementation.settings,
-                customDataLayerImplementation.getDefaultSettingsValues?.() ?? {}
-            )
+                customDataLayerImplementation.getDefaultSettingsValues?.() ?? {},
+            ),
         );
         this._customDataLayerImpl = customDataLayerImplementation;
         this._itemDelegate = new ItemDelegate(
             instanceName ?? customDataLayerImplementation.getDefaultName(),
             1,
-            layerManager
+            layerManager,
         );
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
@@ -128,10 +134,19 @@ export class DataLayer<
         );
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
+            "settings-context",
+            this._settingsContextDelegate
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingsContextDelegateTopic.STATUS)(() => {
+                this.handleSettingsStatusChange();
+            }),
+        );
+
+        this._unsubscribeHandler.registerUnsubscribeFunction(
             "layer-manager",
             layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.GLOBAL_SETTINGS)(() => {
                 this.handleSettingsChange();
-            })
+            }),
         );
     }
 
@@ -144,30 +159,51 @@ export class DataLayer<
     }
 
     handleSettingsChange(): void {
+        if (!this.areCurrentSettingsValid()) {
+            this._error = "Invalid settings";
+            this.setStatus(DataLayerStatus.INVALID_SETTINGS);
+            return;
+        }
+
         const refetchRequired =
             this._customDataLayerImpl.doSettingsChangesRequireDataRefetch?.(
                 this._prevSettings,
                 this._settingsContextDelegate.getValues() as TSettingTypes,
-                this.makeAccessors()
+                this.makeAccessors(),
             ) ?? !isEqual(this._prevSettings, this._settingsContextDelegate.getValues() as TSettingTypes);
 
         if (!refetchRequired) {
-            this._itemDelegate.getLayerManager().publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
+            this._publishSubscribeDelegate.notifySubscribers(LayerDelegateTopic.DATA);
+            this._layerManager.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
+            this.setStatus(DataLayerStatus.SUCCESS);
             return;
         }
 
         this._cancellationPending = true;
+        this._prevSettings = this._settingsContextDelegate.getValues() as TSettingTypes;
         this.maybeCancelQuery().then(() => {
             this.maybeRefetchData();
-            this._prevSettings = this._settingsContextDelegate.getValues() as TSettingTypes;
         });
+    }
+
+    handleSettingsStatusChange(): void {
+        const status = this._settingsContextDelegate.getStatus();
+        if (status === SettingsContextStatus.INVALID_SETTINGS) {
+            this._error = "Invalid settings";
+            this.setStatus(DataLayerStatus.INVALID_SETTINGS);
+            return;
+        }
+        if (status === SettingsContextStatus.LOADING) {
+            this.setStatus(DataLayerStatus.LOADING);
+            return;
+        }
     }
 
     registerQueryKey(queryKey: unknown[]): void {
         this._queryKeys.push(queryKey);
     }
 
-    getStatus(): LayerStatus {
+    getStatus(): DataLayerStatus {
         return this._status;
     }
 
@@ -276,13 +312,7 @@ export class DataLayer<
 
         this.invalidateValueRange();
 
-        this.setStatus(LayerStatus.LOADING);
-
-        log.log(
-            `Refetching data for layer ${this.getItemDelegate().getName()}. Settings: ${JSON.stringify(
-                this._settingsContextDelegate.getValues()
-            )}`
-        )();
+        this.setStatus(DataLayerStatus.LOADING);
 
         try {
             this._data = await this._customDataLayerImpl.fetchData({
@@ -301,7 +331,7 @@ export class DataLayer<
             this._queryKeys = [];
             this._publishSubscribeDelegate.notifySubscribers(LayerDelegateTopic.DATA);
             this._layerManager.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
-            this.setStatus(LayerStatus.SUCCESS);
+            this.setStatus(DataLayerStatus.SUCCESS);
         } catch (error: any) {
             if (isCancelledError(error)) {
                 return;
@@ -312,7 +342,7 @@ export class DataLayer<
             } else {
                 this._error = "An error occurred";
             }
-            this.setStatus(LayerStatus.ERROR);
+            this.setStatus(DataLayerStatus.ERROR);
         }
     }
 
@@ -336,7 +366,7 @@ export class DataLayer<
         this._unsubscribeHandler.unsubscribeAll();
     }
 
-    private setStatus(status: LayerStatus): void {
+    private setStatus(status: DataLayerStatus): void {
         if (this._status === status) {
             return;
         }

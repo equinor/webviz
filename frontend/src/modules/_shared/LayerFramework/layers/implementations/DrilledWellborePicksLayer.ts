@@ -1,11 +1,10 @@
-import type {
-    WellborePick_api} from "@api";
+import type { WellborePick_api } from "@api";
 import {
     getDrilledWellboreHeadersOptions,
     getWellborePickIdentifiersOptions,
     getWellborePicksForPickIdentifierOptions,
 } from "@api";
-import type { MakeSettingTypesMap} from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import type { MakeSettingTypesMap } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 
 import { isEqual } from "lodash";
@@ -27,16 +26,8 @@ type SettingsWithTypes = MakeSettingTypesMap<DrilledWellborePicksSettings>;
 export class DrilledWellborePicksLayer implements CustomDataLayerImplementation<DrilledWellborePicksSettings, Data> {
     settings = drilledWellborePicksSettings;
 
-    getDefaultSettingsValues() {
-        return {
-            [Setting.ENSEMBLE]: null,
-            [Setting.SMDA_WELLBORE_HEADERS]: null,
-            [Setting.SURFACE_NAME]: null,
-        };
-    }
-
     getDefaultName() {
-        return "Drilled Well Picks";
+        return "Drilled Wellbore Picks";
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {

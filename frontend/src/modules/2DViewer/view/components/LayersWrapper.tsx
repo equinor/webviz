@@ -23,21 +23,17 @@ import { makeRealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/vi
 import { makeStatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/visualization/makeStatisticalSurfaceLayer";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
-import type {
-    DataLayerManager} from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
-import {
-    LayerManagerTopic,
-} from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
+import type { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
+import { LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
 import type {
     Annotation,
     LayerWithPosition,
-    VisualizationTarget} from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
-import {
-    VisualizationFactory
+    VisualizationTarget,
 } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import { VisualizationFactory } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
 import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
@@ -59,38 +55,39 @@ export type LayersWrapperProps = {
 };
 
 const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.DECK_GL>();
+
 VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.OBSERVED_SURFACE, ObservedSurfaceLayer, {
-    visualizationFunction: makeObservedSurfaceLayer,
-    boundingBoxCalculationFunction: makeSurfaceLayerBoundingBox,
+    makeVisualizationFunction: makeObservedSurfaceLayer,
+    calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
 VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_SURFACE, RealizationSurfaceLayer, {
-    visualizationFunction: makeRealizationSurfaceLayer,
-    boundingBoxCalculationFunction: makeSurfaceLayerBoundingBox,
+    makeVisualizationFunction: makeRealizationSurfaceLayer,
+    calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
 VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.STATISTICAL_SURFACE, StatisticalSurfaceLayer, {
-    visualizationFunction: makeStatisticalSurfaceLayer,
-    boundingBoxCalculationFunction: makeSurfaceLayerBoundingBox,
+    makeVisualizationFunction: makeStatisticalSurfaceLayer,
+    calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
 VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_POLYGONS, RealizationPolygonsLayer, {
-    visualizationFunction: makeRealizationPolygonsLayer,
-    boundingBoxCalculationFunction: makePolygonDataBoundingBox,
+    makeVisualizationFunction: makeRealizationPolygonsLayer,
+    calculateBoundingBoxFunction: makePolygonDataBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
 VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_GRID, RealizationGridLayer, {
-    visualizationFunction: makeRealizationGridLayer,
-    boundingBoxCalculationFunction: makeRealizationGridBoundingBox,
+    makeVisualizationFunction: makeRealizationGridLayer,
+    calculateBoundingBoxFunction: makeRealizationGridBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
 VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.DRILLED_WELLBORE_PICKS, DrilledWellborePicksLayer, {
-    visualizationFunction: makeDrilledWellborePicksLayer,
-    boundingBoxCalculationFunction: makeDrilledWellborePicksBoundingBox,
+    makeVisualizationFunction: makeDrilledWellborePicksLayer,
+    calculateBoundingBoxFunction: makeDrilledWellborePicksBoundingBox,
 });
 VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.DRILLED_WELL_TRAJECTORIES, DrilledWellTrajectoriesLayer, {
-    visualizationFunction: makeDrilledWellTrajectoriesLayer,
-    boundingBoxCalculationFunction: makeDrilledWellTrajectoriesBoundingBox,
+    makeVisualizationFunction: makeDrilledWellTrajectoriesLayer,
+    calculateBoundingBoxFunction: makeDrilledWellTrajectoriesBoundingBox,
 });
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
@@ -118,10 +115,10 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     let numLoadingLayers = 0;
 
-    const viewsAndLayers = VISUALIZATION_FACTORY.make(props.layerManager);
+    const factoryProduct = VISUALIZATION_FACTORY.make(props.layerManager);
 
-    numCols = Math.ceil(Math.sqrt(viewsAndLayers.views.length));
-    numRows = Math.ceil(viewsAndLayers.views.length / numCols);
+    numCols = Math.ceil(Math.sqrt(factoryProduct.views.length));
+    numRows = Math.ceil(factoryProduct.views.length / numCols);
 
     if (props.preferredViewLayout === PreferredViewLayout.HORIZONTAL) {
         [numCols, numRows] = [numRows, numCols];
@@ -129,11 +126,11 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     views.layout = [numCols, numRows];
 
-    viewerLayers.push(...viewsAndLayers.layers);
-    globalAnnotations.push(...viewsAndLayers.annotations);
-    const globalLayerIds = viewsAndLayers.layers.map((layer) => layer.layer.id);
+    viewerLayers.push(...factoryProduct.layers);
+    globalAnnotations.push(...factoryProduct.annotations);
+    const globalLayerIds = factoryProduct.layers.map((layer) => layer.layer.id);
 
-    for (const view of viewsAndLayers.views) {
+    for (const view of factoryProduct.views) {
         viewports.push({
             id: view.id,
             name: view.name,
@@ -164,20 +161,20 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         );
     }
 
-    if (viewsAndLayers.combinedBoundingBox !== null) {
+    if (factoryProduct.combinedBoundingBox !== null) {
         if (prevBoundingBox !== null) {
-            if (!bbox.outerBoxcontainsInnerBox(prevBoundingBox, viewsAndLayers.combinedBoundingBox)) {
-                setPrevBoundingBox(viewsAndLayers.combinedBoundingBox);
+            if (!bbox.outerBoxcontainsInnerBox(prevBoundingBox, factoryProduct.combinedBoundingBox)) {
+                setPrevBoundingBox(factoryProduct.combinedBoundingBox);
             }
         } else {
-            setPrevBoundingBox(viewsAndLayers.combinedBoundingBox);
+            setPrevBoundingBox(factoryProduct.combinedBoundingBox);
         }
     }
 
-    numLoadingLayers = viewsAndLayers.numLoadingLayers;
-    statusWriter.setLoading(viewsAndLayers.numLoadingLayers > 0);
+    numLoadingLayers = factoryProduct.numLoadingLayers;
+    statusWriter.setLoading(factoryProduct.numLoadingLayers > 0);
 
-    for (const message of viewsAndLayers.errorMessages) {
+    for (const message of factoryProduct.errorMessages) {
         statusWriter.addError(message);
     }
 

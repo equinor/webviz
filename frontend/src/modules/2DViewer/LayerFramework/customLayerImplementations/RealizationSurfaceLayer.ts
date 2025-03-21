@@ -1,16 +1,16 @@
-import type { SurfaceDataPng_api} from "@api";
-import { SurfaceTimeType_api, getRealizationSurfacesMetadataOptions , getSurfaceDataOptions } from "@api";
+import type { SurfaceDataPng_api } from "@api";
+import { SurfaceTimeType_api, getRealizationSurfacesMetadataOptions, getSurfaceDataOptions } from "@api";
 import type {
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
     FetchDataParams,
 } from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap} from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import type { MakeSettingTypesMap } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import type { FullSurfaceAddress} from "@modules/_shared/Surface";
+import type { FullSurfaceAddress } from "@modules/_shared/Surface";
 import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
-import type { SurfaceDataFloat_trans} from "@modules/_shared/Surface/queryDataTransforms";
+import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
@@ -42,7 +42,7 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
                 ...prevSettings,
                 colorScale: null,
             },
-            { ...newSettings, colorScale: null }
+            { ...newSettings, colorScale: null },
         );
     }
 
@@ -145,8 +145,8 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
             const availableSurfaceNames = [
                 ...Array.from(
                     new Set(
-                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name)
-                    )
+                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name),
+                    ),
                 ),
             ];
 
@@ -168,8 +168,8 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
                     new Set(
                         data.surfaces
                             .filter((surface) => surface.attribute_name === attribute && surface.name === surfaceName)
-                            .map((el) => el.time_type)
-                    )
+                            .map((el) => el.time_type),
+                    ),
                 ),
             ];
 
@@ -212,6 +212,8 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
             }
 
             surfaceAddress = addrBuilder.buildRealizationAddress();
+        } else {
+            console.debug("RealizationSurfaceLayer: Missing required settings for fetching data");
         }
 
         const surfAddrStr = surfaceAddress ? encodeSurfAddrStr(surfaceAddress) : null;
