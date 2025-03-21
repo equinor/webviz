@@ -323,7 +323,6 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
         },
         [
             inputBoundingRect,
-            dropdownVisible,
             filteredOptionsWithSeparators,
             selection,
             dropdownRect.width,
