@@ -6,65 +6,68 @@ import { elementIsVisible } from "@lib/utils/htmlElementUtils";
 export function useElementBoundingRect(ref: React.RefObject<HTMLElement | SVGSVGElement>): DOMRect {
     const [rect, setRect] = React.useState<DOMRect>(new DOMRect(0, 0, 0, 0));
 
-    React.useEffect(() => {
-        let isHidden = false;
-        let currentRect = new DOMRect(0, 0, 0, 0);
+    React.useEffect(
+        function onMountEffect() {
+            let isHidden = false;
+            let currentRect = new DOMRect(0, 0, 0, 0);
+            let intersectionObserver: IntersectionObserver | null = null;
 
-        const handleResizeAndScroll = (): void => {
-            if (ref.current) {
-                // If element is not visible do not change size as it might be expensive to render
-                if (!isHidden && !elementIsVisible(ref.current)) {
-                    isHidden = true;
-                    return;
-                }
+            function handleRectChange() {
+                intersectionObserver?.disconnect();
+                if (ref.current) {
+                    const rect = ref.current.getBoundingClientRect();
+                    const margins = `${-Math.round(rect.top)}px ${-Math.round(rect.right)}px ${-Math.round(rect.bottom)}px ${-Math.round(rect.left)}px`;
 
-                const newRect = ref.current.getBoundingClientRect();
+                    intersectionObserver = new IntersectionObserver(handleRectChange, {
+                        root: document.body,
+                        rootMargin: margins,
+                    });
 
-                if (domRectsAreEqual(currentRect, newRect)) {
+                    intersectionObserver.observe(ref.current);
+
+                    // If element is not visible do not change size as it might be expensive to render
+                    if (!isHidden && !elementIsVisible(ref.current)) {
+                        isHidden = true;
+                        return;
+                    }
+
                     isHidden = false;
-                    return;
+
+                    if (domRectsAreEqual(currentRect, rect)) {
+                        return;
+                    }
+
+                    currentRect = rect;
+                    setRect(rect);
                 }
-
-                currentRect = newRect;
-
-                setRect(newRect);
             }
-        };
 
-        function handleMutations(): void {
+            const resizeObserver = new ResizeObserver(handleRectChange);
+            const mutationObserver = new MutationObserver(handleRectChange);
+            window.addEventListener("resize", handleRectChange, true);
+            window.addEventListener("scroll", handleRectChange, true);
+
             if (ref.current) {
-                const newRect = ref.current.getBoundingClientRect();
-
-                if (!domRectsAreEqual(currentRect, newRect)) {
-                    currentRect = newRect;
-                    setRect(newRect);
-                }
+                resizeObserver.observe(document.body);
+                mutationObserver.observe(ref.current, {
+                    attributes: true,
+                    subtree: false,
+                    childList: false,
+                    attributeFilter: ["style", "class"],
+                });
+                handleRectChange();
             }
-        }
 
-        const resizeObserver = new ResizeObserver(handleResizeAndScroll);
-        const mutationObserver = new MutationObserver(handleMutations);
-        window.addEventListener("resize", handleResizeAndScroll, true);
-        window.addEventListener("scroll", handleResizeAndScroll, true);
-
-        if (ref.current) {
-            handleResizeAndScroll();
-            resizeObserver.observe(ref.current);
-            mutationObserver.observe(ref.current, {
-                attributes: true,
-                subtree: false,
-                childList: false,
-                attributeFilter: ["style", "class"],
-            });
-        }
-
-        return () => {
-            resizeObserver.disconnect();
-            mutationObserver.disconnect();
-            window.removeEventListener("resize", handleResizeAndScroll, true);
-            window.removeEventListener("scroll", handleResizeAndScroll, true);
-        };
-    }, [ref]);
+            return function onUnmount() {
+                resizeObserver.disconnect();
+                intersectionObserver?.disconnect();
+                mutationObserver.disconnect();
+                window.removeEventListener("resize", handleRectChange, true);
+                window.removeEventListener("scroll", handleRectChange, true);
+            };
+        },
+        [ref],
+    );
 
     return rect;
 }

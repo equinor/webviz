@@ -539,7 +539,6 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 modal
                 width={"75%"}
                 minWidth={800}
-                // minHeight={600}
                 height={"75"}
                 actions={
                     <div className="flex gap-4">
