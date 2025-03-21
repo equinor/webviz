@@ -282,50 +282,43 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
 
     React.useEffect(
         function computeDropdownRectEffect() {
-            if (dropdownVisible) {
-                const bodyClientBoundingRect = document.body.getBoundingClientRect();
+            const bodyClientBoundingRect = document.body.getBoundingClientRect();
 
-                const preferredHeight =
-                    Math.min(
-                        MIN_HEIGHT,
-                        Math.max(filteredOptionsWithSeparators.length * OPTION_HEIGHT, OPTION_HEIGHT),
-                    ) + 2;
+            const preferredHeight =
+                Math.min(MIN_HEIGHT, Math.max(filteredOptionsWithSeparators.length * OPTION_HEIGHT, OPTION_HEIGHT)) + 2;
 
-                if (inputBoundingRect && bodyClientBoundingRect) {
-                    const newDropdownRect: DropdownRect = {
-                        minWidth: inputBoundingRect.width,
-                        width: dropdownRect.width,
-                        height: preferredHeight,
-                    };
+            if (inputBoundingRect && bodyClientBoundingRect) {
+                const newDropdownRect: DropdownRect = {
+                    minWidth: inputBoundingRect.width,
+                    width: dropdownRect.width,
+                    height: preferredHeight,
+                };
 
-                    if (inputBoundingRect.y + inputBoundingRect.height + preferredHeight > window.innerHeight) {
-                        const height = Math.min(inputBoundingRect.y, preferredHeight);
-                        newDropdownRect.top = inputBoundingRect.y - height;
-                        newDropdownRect.height = height;
-                    } else {
-                        newDropdownRect.top = inputBoundingRect.y + inputBoundingRect.height;
-                        newDropdownRect.height = Math.min(
-                            preferredHeight,
-                            window.innerHeight - inputBoundingRect.y - inputBoundingRect.height,
-                        );
-                    }
-                    if (inputBoundingRect.x + inputBoundingRect.width > window.innerWidth / 2) {
-                        newDropdownRect.right = window.innerWidth - (inputBoundingRect.x + inputBoundingRect.width);
-                    } else {
-                        newDropdownRect.left = inputBoundingRect.x;
-                    }
-
-                    setDropdownRect((prev) => ({ ...newDropdownRect, width: prev.width }));
-
-                    const selectedIndex = filteredOptionsWithSeparators.findIndex((opt) =>
-                        isOptionOfValue(opt, selection),
+                if (inputBoundingRect.y + inputBoundingRect.height + preferredHeight > window.innerHeight) {
+                    const height = Math.min(inputBoundingRect.y, preferredHeight);
+                    newDropdownRect.top = inputBoundingRect.y - height;
+                    newDropdownRect.height = height;
+                } else {
+                    newDropdownRect.top = inputBoundingRect.y + inputBoundingRect.height;
+                    newDropdownRect.height = Math.min(
+                        preferredHeight,
+                        window.innerHeight - inputBoundingRect.y - inputBoundingRect.height,
                     );
-                    const selectedIndexOrDefault = selectedIndex !== -1 ? selectedIndex : 0;
-                    const visibleOptions = Math.round(preferredHeight / OPTION_HEIGHT / 2);
-
-                    setStartIndex(Math.max(0, selectedIndexOrDefault - visibleOptions));
-                    setOptionIndexWithFocusToCurrentSelection();
                 }
+                if (inputBoundingRect.x + inputBoundingRect.width > window.innerWidth / 2) {
+                    newDropdownRect.right = window.innerWidth - (inputBoundingRect.x + inputBoundingRect.width);
+                } else {
+                    newDropdownRect.left = inputBoundingRect.x;
+                }
+
+                setDropdownRect((prev) => ({ ...newDropdownRect, width: prev.width }));
+
+                const selectedIndex = filteredOptionsWithSeparators.findIndex((opt) => isOptionOfValue(opt, selection));
+                const selectedIndexOrDefault = selectedIndex !== -1 ? selectedIndex : 0;
+                const visibleOptions = Math.round(preferredHeight / OPTION_HEIGHT / 2);
+
+                setStartIndex(Math.max(0, selectedIndexOrDefault - visibleOptions));
+                setOptionIndexWithFocusToCurrentSelection();
             }
         },
         [

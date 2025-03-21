@@ -61,8 +61,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     "pointer-events-auto",
                 )}
                 style={{
-                    marginLeft: -dialogSize.width / 2,
-                    marginTop: -dialogSize.height / 2,
+                    transform: `translate(-50%, -50%)`,
                     height: props.height,
                     width: props.width,
                     minWidth: props.minWidth,
