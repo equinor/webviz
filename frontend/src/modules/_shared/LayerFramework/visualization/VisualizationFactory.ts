@@ -1,6 +1,7 @@
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
 import type { Layer as EsvLayer } from "@equinor/esv-intersection";
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
 import * as bbox from "@lib/utils/bbox";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 
@@ -50,7 +51,7 @@ export type LayerVisualizationFunctions<
     makeVisualizationFunction: MakeVisualizationFunction<TSettings, TData, TTarget, TInjectedData>;
     calculateBoundingBoxFunction?: CalculateBoundingBoxFunction<TSettings, TData, TInjectedData>;
     makeAnnotationsFunction?: MakeAnnotationsFunction<TSettings, TData, TInjectedData>;
-    makeHoverVisualizationFunction?: MakeVisualizationFunction<TSettings, TData, TTarget, TInjectedData>;
+    makeHoverVisualizationFunction?: MakeHoverVisualizationFunction<TSettings, TData, TTarget, TInjectedData>;
     reduceAccumulatedDataFunction?: ReduceAccumulatedDataFunction<TSettings, TData, TAccumulatedData, TInjectedData>;
 };
 
@@ -60,6 +61,16 @@ export type MakeVisualizationFunction<
     TTarget extends VisualizationTarget,
     TInjectedData extends Record<string, any> = never,
 > = (args: FactoryFunctionArgs<TSettings, TData, TInjectedData>) => TargetReturnTypes[TTarget] | null;
+
+// This does likely require a refactor as soon as we have tested against a use case
+export type MakeHoverVisualizationFunction<
+    TSettings extends Settings,
+    TData,
+    TTarget extends VisualizationTarget,
+    TInjectedData extends Record<string, any> = never,
+> = (
+    args: FactoryFunctionArgs<TSettings, TData, TInjectedData> & { hoverInfo: Partial<GlobalTopicDefinitions> },
+) => TargetReturnTypes[TTarget] | null;
 
 export type CalculateBoundingBoxFunction<
     TSettings extends Settings,
@@ -104,6 +115,7 @@ export type FactoryProduct<
     numLoadingLayers: number;
     annotations: Annotation[];
     accumulatedData: TAccumulatedData;
+    makeHoverVisualizationsFunction: (hoverInfo: Partial<GlobalTopicDefinitions>) => LayerWithPosition<TTarget>[];
 };
 
 export class VisualizationFactory<
@@ -153,6 +165,9 @@ export class VisualizationFactory<
         const collectedLayers: LayerWithPosition<TTarget>[] = [];
         const collectedAnnotations: Annotation[] = [];
         const collectedErrorMessages: (StatusMessage | string)[] = [];
+        const collectedMakeHoverVisualizationFunctions: ((
+            hoverInfo: Partial<GlobalTopicDefinitions>,
+        ) => LayerWithPosition<TTarget>[])[] = [];
         let collectedNumLoadingLayers = 0;
         let globalBoundingBox: bbox.BBox | null = null;
 
@@ -179,6 +194,7 @@ export class VisualizationFactory<
                     errorMessages,
                     annotations,
                     accumulatedData: newAccumulatedData,
+                    makeHoverVisualizationsFunction,
                 } = this.makeRecursively(
                     child.getGroupDelegate(),
                     accumulatedData,
@@ -189,6 +205,7 @@ export class VisualizationFactory<
                 accumulatedData = newAccumulatedData;
 
                 collectedErrorMessages.push(...errorMessages);
+                collectedMakeHoverVisualizationFunctions.push(makeHoverVisualizationsFunction);
                 collectedNumLoadingLayers += numLoadingLayers;
                 maybeApplyBoundingBox(boundingBox);
 
@@ -248,6 +265,13 @@ export class VisualizationFactory<
             annotations: collectedAnnotations,
             numLoadingLayers: collectedNumLoadingLayers,
             accumulatedData,
+            makeHoverVisualizationsFunction: (hoverInfo: Partial<GlobalTopicDefinitions>) => {
+                const collectedHoverVisualizations: LayerWithPosition<TTarget>[] = [];
+                for (const makeHoverVisualizationFunction of collectedMakeHoverVisualizationFunctions) {
+                    collectedHoverVisualizations.push(...makeHoverVisualizationFunction(hoverInfo));
+                }
+                return collectedHoverVisualizations;
+            },
         };
     }
 
@@ -281,6 +305,20 @@ export class VisualizationFactory<
         }
 
         return func(this.makeFactoryFunctionArgs(layer, injectedData));
+    }
+
+    private makeHoverLayer(
+        layer: DataLayer<any, any, any>,
+        injectedData?: TInjectedData,
+    ): (hoverInfo: Partial<GlobalTopicDefinitions>) => TargetReturnTypes[TTarget] | null {
+        const func = this._visualizationFunctions.get(layer.getType())?.makeHoverVisualizationFunction;
+        if (!func) {
+            return () => null;
+        }
+
+        return (hoverInfo: Partial<GlobalTopicDefinitions>) => {
+            return func({ ...this.makeFactoryFunctionArgs(layer, injectedData), hoverInfo });
+        };
     }
 
     private makeLayerBoundingBox(layer: DataLayer<any, any, any>, injectedData?: TInjectedData): bbox.BBox | null {
