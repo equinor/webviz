@@ -1,8 +1,8 @@
 import { PreferredViewLayout } from "@modules/2DViewer/types";
-import type { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
+import type { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 
 import { atom } from "jotai";
 
 export const userSelectedFieldIdentifierAtom = atom<string | null>(null);
-export const layerManagerAtom = atom<LayerManager | null>(null);
+export const layerManagerAtom = atom<DataLayerManager | null>(null);
 export const preferredViewLayoutAtom = atom<PreferredViewLayout>(PreferredViewLayout.VERTICAL);

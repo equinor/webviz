@@ -20,6 +20,7 @@ export type SortableListGroupProps = {
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
     headerStyle?: React.CSSProperties;
+    content?: React.ReactNode;
     contentStyle?: React.CSSProperties;
     contentWhenEmpty?: React.ReactNode;
     children?: React.ReactElement<SortableListItemProps>[];
@@ -33,6 +34,7 @@ export type SortableListGroupProps = {
  * @param {boolean} props.expanded Whether the group should be expanded.
  * @param {React.ReactNode} props.startAdornment Start adornment to display to the left of the title.
  * @param {React.ReactNode} props.endAdornment End adornment to display to the right of the title.
+ * @param {React.ReactNode} props.content Optional content to display before actual children.
  * @param {React.ReactNode} props.contentWhenEmpty Content to display when the group is empty.
  * @param {React.ReactNode} props.children Child components to display as the content of the list item.
  *
@@ -117,6 +119,7 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
                     )}
                     style={props.contentStyle}
                 >
+                    {props.content}
                     {hasContent ? props.children : props.contentWhenEmpty}
                 </div>
             </div>

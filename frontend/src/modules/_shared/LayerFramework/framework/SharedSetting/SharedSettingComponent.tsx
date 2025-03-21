@@ -10,10 +10,10 @@ import type { SharedSetting } from "./SharedSetting";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { SettingComponent } from "../../settings/SettingComponent";
+import { SettingComponent } from "../SettingManager/SettingManagerComponent";
 
 export type SharedSettingComponentProps = {
-    sharedSetting: SharedSetting;
+    sharedSetting: SharedSetting<any>;
 };
 
 export function SharedSettingComponent(props: SharedSettingComponentProps): React.ReactNode {
@@ -63,7 +63,7 @@ export function SharedSettingComponent(props: SharedSettingComponentProps): Reac
 }
 
 type ActionProps = {
-    sharedSetting: SharedSetting;
+    sharedSetting: SharedSetting<any>;
 };
 
 function Actions(props: ActionProps): React.ReactNode {

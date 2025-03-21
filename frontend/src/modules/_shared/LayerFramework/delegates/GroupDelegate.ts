@@ -1,23 +1,27 @@
 import { ItemDelegateTopic } from "./ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
-import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
+import type { PublishSubscribe} from "../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import { LayerManagerTopic } from "../framework/LayerManager/LayerManager";
+import { DataLayer } from "../framework/DataLayer/DataLayer";
+import { LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
+import { Group } from "../framework/Group/Group";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
 import { DeserializationFactory } from "../framework/utils/DeserializationFactory";
-import type { Item, SerializedItem } from "../interfaces";
-import { instanceofGroup, instanceofLayer } from "../interfaces";
+import type { Item } from "../interfacesAndTypes/entitites";
+import type { SerializedItem } from "../interfacesAndTypes/serialization";
 
 export enum GroupDelegateTopic {
     CHILDREN = "CHILDREN",
     TREE_REVISION_NUMBER = "TREE_REVISION_NUMBER",
+    COLOR = "COLOR",
     CHILDREN_EXPANSION_STATES = "CHILDREN_EXPANSION_STATES",
 }
 
 export type GroupDelegateTopicPayloads = {
     [GroupDelegateTopic.CHILDREN]: Item[];
     [GroupDelegateTopic.TREE_REVISION_NUMBER]: number;
+    [GroupDelegateTopic.COLOR]: string | null;
     [GroupDelegateTopic.CHILDREN_EXPANSION_STATES]: { [id: string]: boolean };
 };
 
@@ -45,16 +49,25 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
 
     setColor(color: string | null) {
         this._color = color;
+        this.publishTopic(GroupDelegateTopic.COLOR);
+        this.incrementTreeRevisionNumber();
     }
 
     prependChild(child: Item) {
-        this._children = [child, ...this._children];
+        const childOrder = child.getItemDelegate().getOrder();
+        const [startIndex] = this.getRangeOfChildrenWithOrder(childOrder);
+        if (startIndex === -1) {
+            this.insertChild(child, 0);
+        } else {
+            this.insertChild(child, startIndex);
+        }
         this.takeOwnershipOfChild(child);
     }
 
     appendChild(child: Item) {
-        this._children = [...this._children, child];
-        this.takeOwnershipOfChild(child);
+        const childOrder = child.getItemDelegate().getOrder();
+        const [, endIndex] = this.getRangeOfChildrenWithOrder(childOrder);
+        this.insertChild(child, endIndex + 1);
     }
 
     insertChild(child: Item, index: number) {
@@ -104,7 +117,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
                 return child;
             }
 
-            if (instanceofGroup(child)) {
+            if (child instanceof Group) {
                 const descendant = child.getGroupDelegate().findDescendantById(id);
                 if (descendant) {
                     return descendant;
@@ -113,6 +126,22 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         }
 
         return undefined;
+    }
+
+    getAncestors(predicate: (group: Item) => boolean): Item[] {
+        const items: Item[] = [];
+        if (this._owner) {
+            if (predicate(this._owner)) {
+                items.push(this._owner);
+            }
+
+            const parentGroup = this._owner?.getItemDelegate().getParentGroup();
+            if (parentGroup) {
+                items.push(...parentGroup.getAncestors(predicate));
+            }
+        }
+
+        return items;
     }
 
     getAncestorAndSiblingItems(predicate: (item: Item) => boolean): Item[] {
@@ -137,7 +166,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
                 items.push(child);
             }
 
-            if (instanceofGroup(child)) {
+            if (child instanceof Group) {
                 items.push(...child.getGroupDelegate().getDescendantItems(predicate));
             }
         }
@@ -156,11 +185,14 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
             if (topic === GroupDelegateTopic.CHILDREN_EXPANSION_STATES) {
                 const expansionState: { [id: string]: boolean } = {};
                 for (const child of this._children) {
-                    if (instanceofGroup(child)) {
+                    if (child instanceof Group) {
                         expansionState[child.getItemDelegate().getId()] = child.getItemDelegate().isExpanded();
                     }
                 }
                 return expansionState;
+            }
+            if (topic === GroupDelegateTopic.COLOR) {
+                return this._color;
             }
         };
 
@@ -199,7 +231,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
 
         this._unsubscribeHandlerDelegate.unsubscribe(child.getItemDelegate().getId());
 
-        if (instanceofLayer(child)) {
+        if (child instanceof DataLayer) {
             this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
                 child.getItemDelegate().getId(),
                 child
@@ -211,7 +243,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
             );
         }
 
-        if (instanceofGroup(child)) {
+        if (child instanceof Group) {
             this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
                 child.getItemDelegate().getId(),
                 child
@@ -252,5 +284,31 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         }
 
         this.publishTopic(GroupDelegateTopic.CHILDREN);
+    }
+
+    private getRangeOfChildrenWithOrder(order: number): [number, number] {
+        let startIndex = -1;
+        let endIndex = -1;
+        for (let i = 0; i < this._children.length; i++) {
+            if (this._children[i].getItemDelegate().getOrder() < order) {
+                startIndex = i + 1;
+                endIndex = i + 1;
+            }
+            if (this._children[i].getItemDelegate().getOrder() > order) {
+                if (startIndex === -1) {
+                    startIndex = i - 1;
+                }
+                endIndex = i - 1;
+                break;
+            }
+            if (this._children[i].getItemDelegate().getOrder() === order) {
+                if (startIndex === -1) {
+                    startIndex = i;
+                }
+                endIndex = i;
+            }
+        }
+
+        return [startIndex, endIndex];
     }
 }

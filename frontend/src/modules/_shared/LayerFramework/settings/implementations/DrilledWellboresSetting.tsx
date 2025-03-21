@@ -6,33 +6,26 @@ import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { Deselect, SelectAll } from "@mui/icons-material";
 
-import { SettingDelegate } from "../../delegates/SettingDelegate";
-import type { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
-import { SettingRegistry } from "../SettingRegistry";
-import { SettingType } from "../settingsTypes";
+import type {
+    CustomSettingImplementation,
+    SettingComponentProps,
+} from "../../interfacesAndTypes/customSettingImplementation";
+import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
+import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = WellboreHeader_api[] | null;
 
-export class DrilledWellboresSetting implements Setting<ValueType> {
-    private _delegate: SettingDelegate<ValueType>;
-
-    constructor() {
-        this._delegate = new SettingDelegate<ValueType>(null, this);
-    }
-
-    getType(): SettingType {
-        return SettingType.SMDA_WELLBORE_HEADERS;
-    }
+export class DrilledWellboresSetting implements CustomSettingImplementation<ValueType, SettingCategory.MULTI_OPTION> {
+    defaultValue: ValueType = null;
 
     getLabel(): string {
         return "Drilled wellbores";
     }
 
-    getDelegate(): SettingDelegate<ValueType> {
-        return this._delegate;
-    }
-
-    fixupValue(availableValues: AvailableValuesType<ValueType>, currentValue: ValueType): ValueType {
+    fixupValue(
+        currentValue: ValueType,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_OPTION>
+    ): ValueType {
         if (!currentValue) {
             return availableValues;
         }
@@ -46,26 +39,26 @@ export class DrilledWellboresSetting implements Setting<ValueType> {
         return matchingValues;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
-        return function DrilledWellbores(props: SettingComponentProps<ValueType>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.MULTI_OPTION>) => React.ReactNode {
+        return function DrilledWellbores(props: SettingComponentProps<ValueType, SettingCategory.MULTI_OPTION>) {
+            const availableValues = React.useMemo(() => props.availableValues ?? [], [props.availableValues]);
+
             const options: SelectOption[] = React.useMemo(
                 () =>
-                    props.availableValues.map((ident) => ({
+                    availableValues.map((ident) => ({
                         value: ident.wellboreUuid,
                         label: ident.uniqueWellboreIdentifier,
                     })),
-                [props.availableValues],
+                [availableValues]
             );
 
             function handleChange(selectedUuids: string[]) {
-                const selectedWellbores = props.availableValues.filter((ident) =>
-                    selectedUuids.includes(ident.wellboreUuid),
-                );
+                const selectedWellbores = availableValues.filter((ident) => selectedUuids.includes(ident.wellboreUuid));
                 props.onValueChange(selectedWellbores);
             }
 
             function selectAll() {
-                const allUuids = props.availableValues.map((ident) => ident.wellboreUuid);
+                const allUuids = availableValues.map((ident) => ident.wellboreUuid);
                 handleChange(allUuids);
             }
 
@@ -104,5 +97,3 @@ export class DrilledWellboresSetting implements Setting<ValueType> {
         };
     }
 }
-
-SettingRegistry.registerSetting(DrilledWellboresSetting);

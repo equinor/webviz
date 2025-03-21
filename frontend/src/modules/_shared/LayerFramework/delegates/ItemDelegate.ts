@@ -3,11 +3,11 @@ import { v4 } from "uuid";
 
 import type { GroupDelegate } from "./GroupDelegate";
 
-import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
+import type { PublishSubscribe} from "../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import type { LayerManager } from "../framework/LayerManager/LayerManager";
-import { LayerManagerTopic } from "../framework/LayerManager/LayerManager";
-import type { SerializedItem } from "../interfaces";
+import type { DataLayerManager} from "../framework/DataLayerManager/DataLayerManager";
+import { LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
+import type { SerializedItem } from "../interfacesAndTypes/serialization";
 
 export enum ItemDelegateTopic {
     NAME = "NAME",
@@ -30,14 +30,16 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
     private _name: string;
     private _visible: boolean = true;
     private _expanded: boolean = true;
+    private _order: number = 0;
     private _parentGroup: GroupDelegate | null = null;
-    private _layerManager: LayerManager;
+    private _layerManager: DataLayerManager;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<ItemDelegatePayloads>();
 
-    constructor(name: string, layerManager: LayerManager) {
+    constructor(name: string, order: number, layerManager: DataLayerManager) {
         this._id = v4();
         this._layerManager = layerManager;
         this._name = this.makeUniqueName(name);
+        this._order = order;
     }
 
     setId(id: string): void {
@@ -64,6 +66,10 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
         }
     }
 
+    getOrder(): number {
+        return this._order;
+    }
+
     getParentGroup(): GroupDelegate | null {
         return this._parentGroup;
     }
@@ -72,7 +78,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
         this._parentGroup = parentGroup;
     }
 
-    getLayerManager(): LayerManager {
+    getLayerManager(): DataLayerManager {
         return this._layerManager;
     }
 

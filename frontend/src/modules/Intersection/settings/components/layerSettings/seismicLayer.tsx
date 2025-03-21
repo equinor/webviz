@@ -3,9 +3,11 @@ import React from "react";
 import { getSeismicCubeMetaListOptions } from "@api";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSession} from "@framework/WorkbenchSession";
 import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { ColorScaleSelector } from "@framework/components/ColorScaleSelector";
+import type { ColorScaleConfig } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { isIsoStringInterval } from "@framework/utils/timestampUtils";
 import type { DropdownOption } from "@lib/components/Dropdown";
@@ -14,11 +16,14 @@ import { Input } from "@lib/components/Input";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
-import type { ColorScale } from "@lib/utils/ColorScale";
 import { useLayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
-import type { SeismicLayer, SeismicLayerSettings } from "@modules/Intersection/utils/layers/SeismicLayer";
-import { SeismicDataType, SeismicSurveyType } from "@modules/Intersection/utils/layers/SeismicLayer";
-import { ColorScaleSelector } from "@modules/_shared/components/ColorScaleSelector/colorScaleSelector";
+import type {
+    SeismicLayer,
+    SeismicLayerSettings} from "@modules/Intersection/utils/layers/SeismicLayer";
+import {
+    SeismicDataType,
+    SeismicSurveyType,
+} from "@modules/Intersection/utils/layers/SeismicLayer";
 import { isoIntervalStringToDateLabel, isoStringToDateLabel } from "@modules/_shared/utils/isoDatetimeStringFormatting";
 import { useQuery } from "@tanstack/react-query";
 
@@ -184,9 +189,9 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
         setNewSettings((prev) => ({ ...prev, resolution: parseFloat(e.target.value) }));
     }
 
-    function handleColorScaleChange(newColorScale: ColorScale, areBoundariesUserDefined: boolean) {
-        props.layer.setUseCustomColorScaleBoundaries(areBoundariesUserDefined);
-        props.layer.setColorScale(newColorScale);
+    function handleColorScaleChange(newColorScale: ColorScaleConfig) {
+        props.layer.setUseCustomColorScaleBoundaries(newColorScale.areBoundariesUserDefined);
+        props.layer.setColorScale(newColorScale.colorScale);
     }
 
     return (
@@ -305,8 +310,10 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
                 <div className="table-cell align-top">Color scale</div>
                 <div className="table-cell">
                     <ColorScaleSelector
-                        colorScale={props.layer.getColorScale()}
-                        areBoundariesUserDefined={props.layer.getUseCustomColorScaleBoundaries()}
+                        colorScaleConfig={{
+                            colorScale: props.layer.getColorScale(),
+                            areBoundariesUserDefined: props.layer.getUseCustomColorScaleBoundaries(),
+                        }}
                         workbenchSettings={props.workbenchSettings}
                         onChange={handleColorScaleChange}
                     />
