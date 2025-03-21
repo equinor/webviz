@@ -1,6 +1,5 @@
 import React from "react";
 
-import { useElementSize } from "@lib/hooks/useElementSize";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Close } from "@mui/icons-material";
@@ -22,8 +21,6 @@ export type DialogProps = {
 export const Dialog: React.FC<DialogProps> = (props) => {
     const wrapperRef = React.useRef<HTMLDivElement>(null);
     const dialogRef = React.useRef<HTMLDivElement>(null);
-
-    const dialogSize = useElementSize(dialogRef);
 
     const handleClose = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         props.onClose?.(e);
