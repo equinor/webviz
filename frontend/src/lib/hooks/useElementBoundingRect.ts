@@ -12,13 +12,18 @@ export function useElementBoundingRect(ref: React.RefObject<HTMLElement | SVGSVG
             let currentRect = new DOMRect(0, 0, 0, 0);
             let intersectionObserver: IntersectionObserver | null = null;
 
-            function handleRectChange() {
+            function handlePotentialRectChange() {
+                // Anytime the element's position is changing, the intersection observer must be reinitialized
+                // in order to get the new correct root margin
+                // https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API#rootmargin
                 intersectionObserver?.disconnect();
+
                 if (ref.current) {
+                    // Using the browser's viewport as the root for the intersection observer and calculating the root margin based on the element's position
                     const rect = ref.current.getBoundingClientRect();
                     const margins = `${-Math.round(rect.top)}px ${-Math.round(rect.right)}px ${-Math.round(rect.bottom)}px ${-Math.round(rect.left)}px`;
 
-                    intersectionObserver = new IntersectionObserver(handleRectChange, {
+                    intersectionObserver = new IntersectionObserver(handlePotentialRectChange, {
                         root: document.body,
                         rootMargin: margins,
                     });
@@ -42,10 +47,12 @@ export function useElementBoundingRect(ref: React.RefObject<HTMLElement | SVGSVG
                 }
             }
 
-            const resizeObserver = new ResizeObserver(handleRectChange);
-            const mutationObserver = new MutationObserver(handleRectChange);
-            window.addEventListener("resize", handleRectChange, true);
-            window.addEventListener("scroll", handleRectChange, true);
+            // Anytime the element's position might change, the intersection observer must be reinitialized with the correct root margin.
+            // Hence, we listen to resize, scroll, and mutation events.
+            const resizeObserver = new ResizeObserver(handlePotentialRectChange);
+            const mutationObserver = new MutationObserver(handlePotentialRectChange);
+            window.addEventListener("resize", handlePotentialRectChange, true);
+            window.addEventListener("scroll", handlePotentialRectChange, true);
 
             if (ref.current) {
                 resizeObserver.observe(document.body);
@@ -55,15 +62,15 @@ export function useElementBoundingRect(ref: React.RefObject<HTMLElement | SVGSVG
                     childList: false,
                     attributeFilter: ["style", "class"],
                 });
-                handleRectChange();
+                handlePotentialRectChange();
             }
 
             return function onUnmount() {
                 resizeObserver.disconnect();
                 intersectionObserver?.disconnect();
                 mutationObserver.disconnect();
-                window.removeEventListener("resize", handleRectChange, true);
-                window.removeEventListener("scroll", handleRectChange, true);
+                window.removeEventListener("resize", handlePotentialRectChange, true);
+                window.removeEventListener("scroll", handlePotentialRectChange, true);
             };
         },
         [ref],
