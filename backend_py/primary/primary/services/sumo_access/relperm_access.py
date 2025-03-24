@@ -1,8 +1,7 @@
-from enum import Enum
 import logging
 from io import BytesIO
-import asyncio
-from typing import List, Optional, Dict, Sequence, Any
+
+from typing import List, Sequence, Any
 from dataclasses import dataclass
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 import polars as pl
@@ -12,17 +11,13 @@ import pyarrow.compute as pc
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from .sumo_client_factory import create_sumo_client
-from ..service_exceptions import (
-    Service,
-    NoDataError,
-    InvalidDataError,
-)
+from ..service_exceptions import Service, NoDataError
 
 from .queries.relperm import (
     get_relperm_table_names_and_columns,
     get_relperm_realization_table_blob_uuids,
 )
-from .relperm_types import RelPermTableInfo, RealizationBlobid
+from .relperm_types import RealizationBlobid
 from ._arrow_table_loader import ArrowTableLoader
 
 SATURATIONS = ["SW", "SO", "SG", "SL"]
@@ -76,6 +71,9 @@ class RelPermAccess:
         realization_blob_ids = await get_relperm_realization_table_blob_uuids(
             self._sumo_client, self._case_uuid, self._iteration_name, table_name
         )
+        if len(realization_blob_ids) == 0:
+            raise NoDataError(f"No realizations found for table '{table_name}'", Service.SUMO)
+
         single_realization_blob_id = realization_blob_ids[0]
         res = await self.fetch_realization_table_async(single_realization_blob_id)
         blob = BytesIO(res.content)
@@ -95,6 +93,8 @@ class RelPermAccess:
             uuid=self._case_uuid, iteration=self._iteration_name, content="relperm"
         )
         table_names = await table_context.names_async
+        if table_name not in table_names:
+            raise NoDataError(f"Table '{table_name}' not found in iteration '{self._iteration_name}'", Service.SUMO)
 
         columns = await table_context.columns_async
         arrow_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
@@ -107,6 +107,7 @@ class RelPermAccess:
             mask = pc.is_in(arrow_table["REAL"], value_set=requested_reals_arr)
             arrow_table = arrow_table.filter(mask)
         pl_table = pl.DataFrame(arrow_table)
+        LOGGER.debug(f"Loaded relperm table '{table_name}'. {perf_metrics.to_string_s()}")
         return pl_table
 
     async def fetch_realization_table_async(self, realization_blob_id: RealizationBlobid) -> Any:

@@ -1,9 +1,8 @@
 from enum import Enum
-from typing import List, Callable, Dict, Optional, Sequence
+from typing import List, Optional, Sequence
 import logging
 from dataclasses import dataclass
 import numpy as np
-from scipy.interpolate import interp1d
 import polars as pl
 from primary.services.sumo_access.relperm_access import RelPermAccess
 from primary.services.service_exceptions import (

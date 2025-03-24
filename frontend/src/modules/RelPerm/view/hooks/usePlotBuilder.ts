@@ -42,7 +42,7 @@ export function usePlotBuilder(
 
     // const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
     const subplotOwner = SubplotOwner.ENSEMBLE;
-    const scatterType = "scattergl";
+
     // visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
     // visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
 
@@ -55,7 +55,6 @@ export function usePlotBuilder(
         colorSet,
         wrapperDivSize.width,
         wrapperDivSize.height,
-        scatterType,
     );
 
     // Add traces based on visualization mode

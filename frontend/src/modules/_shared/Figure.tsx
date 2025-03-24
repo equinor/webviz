@@ -193,9 +193,7 @@ export class Figure {
 
     makePlot(plotArgs?: Omit<PlotParams, "data" | "layout">): React.ReactNode {
         const config = plotArgs?.config ?? {
-            displaylogo: false,
-            responsive: true,
-            modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "resetScale2d"],
+            displayModeBar: false,
         };
 
         return (
@@ -203,7 +201,7 @@ export class Figure {
                 key={this._plotData.length} // Note: Temporary to trigger re-render and remove legends when plotData is empty
                 data={this._plotData}
                 layout={this.makeLayout()}
-                config={config}
+                config={config as any}
                 {...plotArgs}
             />
         );

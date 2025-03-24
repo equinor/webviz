@@ -16,11 +16,6 @@ export enum SubplotOwner {
     SATNUM = "SatNum",
 }
 
-/**
-    Helper class to build wanted plot component by use of plot figure, with subplot per selected vector
-    or per selected ensemble according to grouping selection.
-
- */
 export class PlotBuilder {
     private _ensembleSet: EnsembleSet;
     private _relPermSpecs: RelPermSpec[];
@@ -46,7 +41,6 @@ export class PlotBuilder {
         colorSet: ColorSet,
         width: number,
         height: number,
-        scatterType: "scatter" | "scattergl" = "scatter",
     ) {
         this._ensembleSet = ensembleSet;
         this._relPermSpecs = _relPermSpecs;
@@ -73,39 +67,56 @@ export class PlotBuilder {
         relPermRealizationData: { relPermSpecification: RelPermSpec; data: RelPermRealizationData_api[] }[],
     ): void {
         const plotData: Partial<PlotData>[] = [];
+        const showLegendMapper = new Map<string, boolean>();
+        relPermRealizationData.forEach((relPermSpecAndData) => {
+            const ensemble = this._ensembleSet.getEnsemble(relPermSpecAndData.relPermSpecification.ensembleIdent);
+            const satNum = relPermSpecAndData.relPermSpecification.satNum;
 
-        relPermRealizationData.forEach((relPermSpec) => {
-            const ensemble = this._ensembleSet.getEnsemble(relPermSpec.relPermSpecification.ensembleIdent);
-
-            relPermSpec.data.forEach((realizationData) => {
+            relPermSpecAndData.data.forEach((realizationData) => {
                 realizationData.curve_data_arr.forEach((curve) => {
                     const hoverLabel = createRelPermRealizationTraceHovertext(
                         ensemble.getDisplayName(),
-                        relPermSpec.relPermSpecification.satNum.toString(),
+                        satNum.toString(),
                         curve.curve_name,
                         realizationData.realization_id,
                     );
+                    let showLegend = false;
+                    let name = "";
                     let rgbColor: Rgb | undefined = undefined;
                     if (ColorBy.ENSEMBLE === this._colorBy) {
                         rgbColor = this._ensColors.get(ensemble.getDisplayName());
+                        showLegend = !showLegendMapper.has(ensemble.getDisplayName());
+                        showLegendMapper.set(ensemble.getDisplayName(), true);
+                        name = ensemble.getDisplayName();
                     }
                     if (ColorBy.CURVE === this._colorBy) {
                         rgbColor = this._curveColors.get(curve.curve_name);
+                        showLegend = !showLegendMapper.has(curve.curve_name);
+                        showLegendMapper.set(curve.curve_name, true);
+                        name = curve.curve_name;
                     }
                     if (ColorBy.SATNUM === this._colorBy) {
-                        rgbColor = this._satNumColors.get(relPermSpec.relPermSpecification.satNum);
+                        rgbColor = this._satNumColors.get(satNum - 1);
+                        // console.log(this._satNumColors.get(satNum));
+                        showLegend = !showLegendMapper.has(satNum.toString());
+                        showLegendMapper.set(satNum.toString(), true);
+                        name = satNum.toString();
                     }
 
                     plotData.push(
-                        createRelPermRealizationTrace(
-                            hoverLabel,
-                            realizationData.saturation_values,
-                            curve.curve_values,
-                            true,
-                            this._visualizationSettings.opacity,
-                            this._visualizationSettings.lineWidth,
-                            rgbColor || (parseHex("#000000") as Rgb),
-                        ),
+                        createRelPermRealizationTrace({
+                            hoverLabel: hoverLabel,
+                            saturationValues: realizationData.saturation_values,
+                            curveValues: curve.curve_values,
+                            useGl: true,
+                            name: name,
+                            showLegend: showLegend,
+                            legendGroupTitle: this._colorBy,
+                            legendGroup: this._colorBy,
+                            opacity: this._visualizationSettings.opacity,
+                            lineWidth: this._visualizationSettings.lineWidth,
+                            rgbColor: rgbColor ? rgbColor : (parseHex("#000000") as Rgb),
+                        }),
                     );
                 });
             });
@@ -122,8 +133,6 @@ export class PlotBuilder {
     private updateLayout() {
         const numRows = this._figure.getNumRows();
         const numCols = this._figure.getNumColumns();
-        console.log("numRows", numRows);
-        console.log("numCols", numCols);
         for (let row = 1; row <= numRows; row++) {
             for (let col = 1; col <= numCols; col++) {
                 const axisIndex = this._figure.getAxisIndex(row, col);
@@ -142,7 +151,8 @@ export class PlotBuilder {
         }
     }
     private getRGBColorFromColorSet(index: number): Rgb {
-        const validIndex = index % this._colorSet.getColorArray().length;
+        const validIndex = index + (1 % this._colorSet.getColorArray().length);
+
         return parseHex(this._colorSet.getColor(validIndex)) as Rgb;
     }
     private makeColorMaps(): void {
@@ -154,6 +164,7 @@ export class PlotBuilder {
         satNums.forEach((satNum) => {
             this._satNumColors.set(satNum, this.getRGBColorFromColorSet(satNum));
         });
+        console.log(satNums);
         curveNames.forEach((curveName) => {
             this._curveColors.set(curveName, this.getRGBColorFromColorSet(curveNames.indexOf(curveName)));
         });
@@ -164,6 +175,7 @@ export class PlotBuilder {
 
     build(handleOnClick?: ((event: Readonly<Plotly.PlotMouseEvent>) => void) | undefined): React.ReactNode {
         this.updateLayout();
+
         return this._figure.makePlot({ onClick: handleOnClick });
     }
 }

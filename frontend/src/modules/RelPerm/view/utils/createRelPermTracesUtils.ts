@@ -1,30 +1,52 @@
 import { EnsembleIdentWithRealizations } from "@modules/_shared/InplaceVolumetrics/queryHooks";
+import { s } from "@tanstack/query-core/build/legacy/hydration-DpBMnFDT";
 
 import { Rgb } from "culori";
 import { PlotData } from "plotly.js";
 
-export function createRelPermRealizationTrace(
-    hoverLabel: string,
-    saturationValues: number[],
-    curveValues: number[],
-    useGl: boolean,
-    opacity: number,
-    lineWidth: number,
-    rgbColor: Rgb,
-): Partial<PlotData> {
+export type createRelPermRealizationTraceOptions = {
+    hoverLabel: string;
+    saturationValues: number[];
+    curveValues: number[];
+    useGl: boolean;
+    opacity: number;
+    lineWidth: number;
+    rgbColor: Rgb;
+    showLegend: boolean;
+    legendGroupTitle: string;
+    legendGroup: string;
+    name: string;
+};
+export function createRelPermRealizationTrace({
+    hoverLabel,
+    saturationValues,
+    curveValues,
+    useGl,
+    opacity,
+    lineWidth,
+    rgbColor,
+    showLegend,
+    name,
+    legendGroupTitle,
+    legendGroup,
+}: createRelPermRealizationTraceOptions): Partial<PlotData> {
     const trace: Partial<PlotData> = {
         x: saturationValues,
         y: curveValues,
 
         type: useGl ? "scattergl" : "scatter",
         mode: "lines",
-        showlegend: false,
+        showlegend: showLegend,
         line: {
             width: lineWidth,
         },
+        legendgrouptitle: { text: legendGroupTitle },
+        legendgroup: legendGroup,
+        name,
         marker: {
             color: `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${opacity})`,
         },
+
         hovertext: hoverLabel,
     };
     return trace;
