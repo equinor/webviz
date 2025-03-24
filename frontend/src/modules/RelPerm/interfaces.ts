@@ -2,7 +2,7 @@ import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponen
 
 import { selectedColorByAtom, selectedLineWidthAtom, selectedOpacityAtom } from "./settings/atoms/baseAtoms";
 import { relPermSpecificationsAtom } from "./settings/atoms/derivedAtoms";
-import { ColorBy, RelPermSpec, VisualizationSettings, VisualizationType } from "./typesAndEnums";
+import { ColorBy, RelPermSpec, VisualizationSettings } from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
     relPermSpecifications: RelPermSpec[];

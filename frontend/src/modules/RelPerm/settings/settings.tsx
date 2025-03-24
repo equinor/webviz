@@ -1,30 +1,24 @@
 import React from "react";
 
 import { CircularProgress } from "@equinor/eds-core-react";
-import { DeltaEnsemble } from "@framework/DeltaEnsemble";
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
-import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { QueriesErrorCriteria, QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 import { Slider } from "@lib/components/Slider";
-import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
     selectedColorByAtom,
+    selectedCurveTypeAtom,
     selectedLineWidthAtom,
     selectedOpacityAtom,
     userSelectedEnsembleIdentsAtom,
@@ -47,7 +41,7 @@ import {
 import { relPermTableInfoQueriesAtom, relPermTableNamesQueriesAtom } from "./atoms/queryAtoms";
 
 import { Interfaces } from "../interfaces";
-import { ColorBy, VisualizationType } from "../typesAndEnums";
+import { ColorBy, CurveType } from "../typesAndEnums";
 
 //Helpers to populate dropdowns
 const stringToOptions = (strings: string[]): SelectOption[] => {
@@ -62,7 +56,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const setUserSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
 
     const [selectedColorBy, setSelectedColorBy] = useAtom(selectedColorByAtom);
-
+    const [selectedCurveType, setSelectedCurveType] = useAtom(selectedCurveTypeAtom);
     const relPermTableNamesQuery = useAtomValue(relPermTableNamesQueriesAtom);
     const relPermTableInfoQuery = useAtomValue(relPermTableInfoQueriesAtom);
     const availableRelPermTableNames = useAtomValue(availableRelPermTableNamesAtom);
@@ -83,44 +77,29 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
 
     const [selectedOpacity, setSelectedOpacity] = useAtom(selectedOpacityAtom);
     const [selectedLineWidth, setSelectedLineWidth] = useAtom(selectedLineWidthAtom);
-    // const relPermTableNamesQueryErrorMessage =
-    //     usePropagateApiErrorToStatusWriter(relPermTableNamesQuery, statusWriter) ?? "";
-    // const relPermTableInfoQueryErrorMessage =
-    //     usePropagateApiErrorToStatusWriter(relPermTableInfoQuery, statusWriter) ?? "";
 
     function handleEnsembleSelectChange(ensembleIdentArray: RegularEnsembleIdent[]) {
         setUserSelectedEnsembleIdents(ensembleIdentArray);
     }
 
-    const [selectedMultiSatNums, setSelectedMultiSatNums] = React.useState<number[]>(selectedSatNums);
-
     function handleSatNumsChange(values: string[]) {
         const newSatNums = values.map((value) => parseInt(value) as number);
         setUserSelectedSatNums(newSatNums);
-        setSelectedMultiSatNums(newSatNums);
     }
     function handleColorByChange(_: React.ChangeEvent<HTMLInputElement>, colorBy: ColorBy) {
         setSelectedColorBy(colorBy);
-        if (colorBy === ColorBy.SATNUM) {
-            setUserSelectedSatNums(selectedMultiSatNums);
-        } else {
-            setUserSelectedSatNums([selectedMultiSatNums[0]]);
-        }
-
-        //     setSelectedEnsembleIdents([selectedMultiEnsembleIdents[0]]);
-        //     setSelectedRealizations([selectedMultiRealizations[0]]);
-        //     setSelectedPvtNums(selectedMultiPvtNums);
-        // } else {
-        //     setSelectedEnsembleIdents(selectedMultiEnsembleIdents);
-        //     setSelectedRealizations(selectedMultiRealizations);
-        //     setSelectedPvtNums([selectedMultiPvtNums[0]]);
-        // }
+    }
+    function handleCurveTypeChange(_: React.ChangeEvent<HTMLInputElement>, curveType: CurveType) {
+        setSelectedCurveType(curveType);
     }
     function handleOpacityChange(event: Event, value: number | number[]) {
         setSelectedOpacity(value as number);
     }
     function handleLineWidthChange(event: Event, value: number | number[]) {
         setSelectedLineWidth(value as number);
+    }
+    function handleSaturationAxisChange(_: React.ChangeEvent<HTMLInputElement>, axisname: string) {
+        setUserSelectedRelPermSaturationAxis(axisname);
     }
     return (
         <div>
@@ -129,7 +108,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                     ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={selectedEnsembleIdents}
                     allowDeltaEnsembles={false}
-                    size={5}
+                    size={Math.min(ensembleSet.getRegularEnsembleArray().length, 5)}
                     onChange={handleEnsembleSelectChange}
                 />
             </CollapsibleGroup>
@@ -153,11 +132,31 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                 showErrorWhen={QueriesErrorCriteria.ALL_QUERIES_HAVE_ERROR}
                 errorComponent={"Could not load relperm tables"}
             >
+                <CollapsibleGroup expanded={true} title="Curve type">
+                    <RadioGroup
+                        options={[
+                            { label: "Relative Permeability", value: CurveType.RELPERM },
+                            { label: "Capillary Pressure", value: CurveType.CAP_PRESSURE },
+                        ]}
+                        value={selectedCurveType}
+                        onChange={handleCurveTypeChange}
+                    />
+                </CollapsibleGroup>
                 <CollapsibleGroup expanded={true} title="Saturation axis">
-                    <Dropdown
+                    <RadioGroup
                         options={stringToOptions(availableRelPermSaturationAxes)}
                         value={selectedRelPermSaturationAxis ?? ""}
-                        onChange={setUserSelectedRelPermSaturationAxis}
+                        onChange={handleSaturationAxisChange}
+                        direction="horizontal"
+                    />
+                </CollapsibleGroup>
+                <CollapsibleGroup expanded={true} title="Curves">
+                    <Select
+                        options={stringToOptions(availableRelPermCurveNames)}
+                        value={selectedRelPermCurveNames ?? []}
+                        onChange={setUserSelectedRelPermCurveNames}
+                        size={3}
+                        multiple
                     />
                 </CollapsibleGroup>
                 <CollapsibleGroup expanded={true} title="Color by">
@@ -171,15 +170,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                         onChange={handleColorByChange}
                     />
                 </CollapsibleGroup>
-                <CollapsibleGroup expanded={true} title="Curves">
-                    <Select
-                        options={stringToOptions(availableRelPermCurveNames)}
-                        value={selectedRelPermCurveNames ?? []}
-                        onChange={setUserSelectedRelPermCurveNames}
-                        size={3}
-                        multiple
-                    />
-                </CollapsibleGroup>
+
                 <CollapsibleGroup expanded={true} title="Satnums">
                     <Select
                         options={stringToOptions(availableSatNums.map((num) => num.toString()))}

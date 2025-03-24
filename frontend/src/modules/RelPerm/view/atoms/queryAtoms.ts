@@ -1,13 +1,7 @@
-import { getRelpermRealizationsCurveData, getRelpermRealizationsCurveDataOptions } from "@api";
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import { getRelpermRealizationsCurveData } from "@api";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
-import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
-import { VisualizationType } from "@modules/RelPerm/typesAndEnums";
-
-import { Getter } from "jotai";
 
 import { relPermSpecificationsAtom } from "./baseAtoms";
 

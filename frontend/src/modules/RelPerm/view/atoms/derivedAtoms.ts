@@ -11,3 +11,15 @@ export const loadedRelPermSpecificationsAndRealizationDataAtom = atom((get) => {
 
     return createLoadedRelPermSpecificationAndDataArray(relPermSpecifications, relPermDataQueries);
 });
+
+export const queryIsFetchingAtom = atom((get) => {
+    const relPermRealizationDataQueries = get(relPermRealizationDataQueryAtom);
+    const realizationDataIsFetching = relPermRealizationDataQueries.some((query) => query.isFetching);
+
+    return realizationDataIsFetching;
+});
+export const realizationsQueryHasErrorAtom = atom((get) => {
+    const realizationDataQueries = get(relPermRealizationDataQueryAtom);
+
+    return realizationDataQueries.some((query) => query.isError);
+});

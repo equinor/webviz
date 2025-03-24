@@ -6,7 +6,10 @@ export enum ColorBy {
     CURVE = "curve",
     SATNUM = "satnum",
 }
-
+export enum CurveType {
+    RELPERM = "relperm",
+    CAP_PRESSURE = "cap_pressure",
+}
 export enum VisualizationType {
     STATISTICAL_FANCHART = "statisticalFanchart",
     INDIVIDUAL_REALIZATIONS = "individualRealizations",

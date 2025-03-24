@@ -6,6 +6,7 @@ import { RelPermSpec } from "@modules/RelPerm/typesAndEnums";
 import { atom } from "jotai";
 
 import {
+    selectedCurveTypeAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedRelPermCurveNamesAtom,
     userSelectedSatNumsAtom,
@@ -61,7 +62,8 @@ export const selectedRelPermTableNameAtom = atom<string | null>((get) => {
 
 export const relPermTablesInfoHelperAtom = atom<relPermTablesInfoHelper>((get) => {
     const tableInfoQueries = get(relPermTableInfoQueriesAtom);
-    return new relPermTablesInfoHelper(tableInfoQueries);
+    const selectedCurveType = get(selectedCurveTypeAtom);
+    return new relPermTablesInfoHelper(tableInfoQueries, selectedCurveType);
 });
 export const availableRelPermSaturationAxesAtom = atom<string[]>((get) => {
     const relPermTablesInfoHelper = get(relPermTablesInfoHelperAtom);
@@ -77,7 +79,7 @@ export const selectedRelPermSaturationAxisAtom = atom<string | null>((get) => {
 export const availableRelPermCurveNamesAtom = atom<string[]>((get) => {
     const relPermTablesInfoHelper = get(relPermTablesInfoHelperAtom);
     const selectedSaturationAxis = get(selectedRelPermSaturationAxisAtom);
-    return relPermTablesInfoHelper.relPermCurveNamesIntersection(selectedSaturationAxis);
+    return relPermTablesInfoHelper.curveNamesForSaturationAxisIntersection(selectedSaturationAxis);
 });
 
 export const selectedRelPermCurveNamesAtom = atom<string[] | null>((get) => {
