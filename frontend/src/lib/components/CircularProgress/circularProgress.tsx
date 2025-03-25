@@ -21,15 +21,11 @@ export const CircularProgress = withDefaults<CircularProgressProps>()(defaultPro
         <div
             className={resolveClassNames(
                 {
-                    "w-3": props.size === "extra-small",
-                    "w-4": props.size === "small",
-                    "w-5": props.size === "medium-small",
-                    "w-8": props.size === "medium",
-                    "w-12": props.size === "large",
-                    "h-3": props.size === "extra-small",
-                    "h-4": props.size === "small",
-                    "h-8": props.size === "medium",
-                    "h-12": props.size === "large",
+                    "w-3 h-3": props.size === "extra-small",
+                    "w-4 h-4": props.size === "small",
+                    "w-5 h-5": props.size === "medium-small",
+                    "w-8 h-8": props.size === "medium",
+                    "w-12 h-12": props.size === "large",
                 },
                 "relative",
                 props.className ?? "",
@@ -37,7 +33,7 @@ export const CircularProgress = withDefaults<CircularProgressProps>()(defaultPro
         >
             <svg
                 aria-hidden="true"
-                className="w-full h-full text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+                className="w-full h-full text-gray-200 animate-spin fill-blue-600"
                 viewBox="0 0 100 101"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
