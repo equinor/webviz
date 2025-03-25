@@ -80,6 +80,7 @@ export function createVectorRealizationTrace({
     // TODO:
     // - type: "scattergl" or "scatter"? Maximum 8 WebGL contexts in Chrome gives issues?
     //         "scattergl" hides traces when zooming and panning for Ruben on work computer.
+
     return {
         x: vectorRealizationData.timestampsUtcMs,
         y: vectorRealizationData.values,

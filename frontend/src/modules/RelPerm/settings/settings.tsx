@@ -3,7 +3,6 @@ import type React from "react";
 import { CircularProgress } from "@equinor/eds-core-react";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -52,7 +51,6 @@ const stringToOptions = (strings: string[]): SelectOption[] => {
 
 export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const statusWriter = useSettingsStatusWriter(settingsContext);
 
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
     const setUserSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);

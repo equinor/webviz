@@ -1,9 +1,9 @@
-import { RelPermSpec } from "@modules/RelPerm/typesAndEnums";
-import { UseQueryResult } from "@tanstack/react-query";
+import type { RelPermSpec } from "@modules/RelPerm/typesAndEnums";
+import type { UseQueryResult } from "@tanstack/react-query";
 
 export function createLoadedRelPermSpecificationAndDataArray<T>(
     relPermSpecifications: RelPermSpec[],
-    queryResults: UseQueryResult<T | null | undefined>[]
+    queryResults: UseQueryResult<T | null | undefined>[],
 ): { relPermSpecification: RelPermSpec; data: T }[] {
     if (relPermSpecifications.length !== queryResults.length) {
         throw new Error(
@@ -11,7 +11,7 @@ export function createLoadedRelPermSpecificationAndDataArray<T>(
                 relPermSpecifications.length +
                 " and query results: " +
                 queryResults.length +
-                "."
+                ".",
         );
     }
 
