@@ -5,6 +5,7 @@ from typing import List, Sequence, Any
 from dataclasses import dataclass
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 import polars as pl
+from polars.exceptions import ComputeError
 import pyarrow as pa
 import pyarrow.compute as pc
 
@@ -77,7 +78,11 @@ class RelPermAccess:
         single_realization_blob_id = realization_blob_ids[0]
         res = await self.fetch_realization_table_async(single_realization_blob_id)
         blob = BytesIO(res.content)
-        real_df = pl.read_parquet(blob)
+        try:
+            real_df = pl.read_parquet(blob)
+        except ComputeError as exp:
+            raise NoDataError(f"Error reading parquet file: {exp}", Service.SUMO) from exp
+
         # Add realization id to the dataframe
         real_df = real_df.with_columns(pl.lit(single_realization_blob_id.realization_id).alias("REAL"))
         return real_df

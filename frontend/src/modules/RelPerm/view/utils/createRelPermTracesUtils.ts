@@ -1,6 +1,3 @@
-import { EnsembleIdentWithRealizations } from "@modules/_shared/InplaceVolumetrics/queryHooks";
-import { s } from "@tanstack/query-core/build/legacy/hydration-DpBMnFDT";
-
 import { Rgb } from "culori";
 import { PlotData } from "plotly.js";
 

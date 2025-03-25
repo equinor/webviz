@@ -1,4 +1,3 @@
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 export enum ColorBy {
@@ -6,12 +5,16 @@ export enum ColorBy {
     CURVE = "curve",
     SATNUM = "satnum",
 }
+export enum GroupBy {
+    NONE = "none",
+    ENSEMBLE = "ensemble",
+    SATNUM = "satnum",
+}
 export enum CurveType {
     RELPERM = "relperm",
     CAP_PRESSURE = "cap_pressure",
 }
 export enum VisualizationType {
-    STATISTICAL_FANCHART = "statisticalFanchart",
     INDIVIDUAL_REALIZATIONS = "individualRealizations",
 }
 export interface RelPermSpec {
@@ -24,6 +27,7 @@ export interface RelPermSpec {
 
 export interface VisualizationSettings {
     colorBy: ColorBy;
+    groupBy: GroupBy;
     opacity: number;
     lineWidth: number;
 }

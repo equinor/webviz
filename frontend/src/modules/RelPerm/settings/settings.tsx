@@ -19,6 +19,7 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import {
     selectedColorByAtom,
     selectedCurveTypeAtom,
+    selectedGroupByAtom,
     selectedLineWidthAtom,
     selectedOpacityAtom,
     userSelectedEnsembleIdentsAtom,
@@ -41,7 +42,7 @@ import {
 import { relPermTableInfoQueriesAtom, relPermTableNamesQueriesAtom } from "./atoms/queryAtoms";
 
 import { Interfaces } from "../interfaces";
-import { ColorBy, CurveType } from "../typesAndEnums";
+import { ColorBy, CurveType, GroupBy } from "../typesAndEnums";
 
 //Helpers to populate dropdowns
 const stringToOptions = (strings: string[]): SelectOption[] => {
@@ -56,6 +57,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const setUserSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
 
     const [selectedColorBy, setSelectedColorBy] = useAtom(selectedColorByAtom);
+    const [selectedGroupBy, setSelectedGroupBy] = useAtom(selectedGroupByAtom);
     const [selectedCurveType, setSelectedCurveType] = useAtom(selectedCurveTypeAtom);
     const relPermTableNamesQuery = useAtomValue(relPermTableNamesQueriesAtom);
     const relPermTableInfoQuery = useAtomValue(relPermTableInfoQueriesAtom);
@@ -88,6 +90,9 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     }
     function handleColorByChange(_: React.ChangeEvent<HTMLInputElement>, colorBy: ColorBy) {
         setSelectedColorBy(colorBy);
+    }
+    function handleGroupByChange(_: React.ChangeEvent<HTMLInputElement>, groupBy: string) {
+        setSelectedGroupBy(groupBy as any);
     }
     function handleCurveTypeChange(_: React.ChangeEvent<HTMLInputElement>, curveType: CurveType) {
         setSelectedCurveType(curveType);
@@ -132,7 +137,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                 showErrorWhen={QueriesErrorCriteria.ALL_QUERIES_HAVE_ERROR}
                 errorComponent={"Could not load relperm tables"}
             >
-                <CollapsibleGroup expanded={true} title="Curve type">
+                <CollapsibleGroup expanded={true} title="Curves and saturation">
                     <RadioGroup
                         options={[
                             { label: "Relative Permeability", value: CurveType.RELPERM },
@@ -140,6 +145,13 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                         ]}
                         value={selectedCurveType}
                         onChange={handleCurveTypeChange}
+                    />
+                    <Select
+                        options={stringToOptions(availableRelPermCurveNames)}
+                        value={selectedRelPermCurveNames ?? []}
+                        onChange={setUserSelectedRelPermCurveNames}
+                        size={2}
+                        multiple
                     />
                 </CollapsibleGroup>
                 <CollapsibleGroup expanded={true} title="Saturation axis">
@@ -150,15 +162,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                         direction="horizontal"
                     />
                 </CollapsibleGroup>
-                <CollapsibleGroup expanded={true} title="Curves">
-                    <Select
-                        options={stringToOptions(availableRelPermCurveNames)}
-                        value={selectedRelPermCurveNames ?? []}
-                        onChange={setUserSelectedRelPermCurveNames}
-                        size={3}
-                        multiple
-                    />
-                </CollapsibleGroup>
+
                 <CollapsibleGroup expanded={true} title="Color by">
                     <RadioGroup
                         options={[
@@ -170,7 +174,17 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                         onChange={handleColorByChange}
                     />
                 </CollapsibleGroup>
-
+                <CollapsibleGroup expanded={true} title="Group by">
+                    <RadioGroup
+                        options={[
+                            { label: "None", value: GroupBy.NONE },
+                            { label: "Ensemble", value: GroupBy.ENSEMBLE },
+                            { label: "Satnum", value: GroupBy.SATNUM },
+                        ]}
+                        value={selectedGroupBy}
+                        onChange={handleGroupByChange}
+                    />
+                </CollapsibleGroup>
                 <CollapsibleGroup expanded={true} title="Satnums">
                     <Select
                         options={stringToOptions(availableSatNums.map((num) => num.toString()))}

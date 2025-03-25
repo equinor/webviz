@@ -1,5 +1,6 @@
 import { RelPermRealizationData_api } from "@api";
 import { EnsembleSet } from "@framework/EnsembleSet";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { Figure, makeSubplots } from "@modules/_shared/Figure";
 
@@ -8,20 +9,21 @@ import { Axis, PlotData } from "plotly.js";
 
 import { createRelPermRealizationTrace, createRelPermRealizationTraceHovertext } from "./createRelPermTracesUtils";
 
-import { ColorBy, RelPermSpec, VisualizationSettings } from "../../typesAndEnums";
+import { ColorBy, GroupBy, RelPermSpec, VisualizationSettings } from "../../typesAndEnums";
 
-export enum SubplotOwner {
-    CURVE = "Curve",
-    ENSEMBLE = "Ensemble",
-    SATNUM = "SatNum",
+export enum SubplotLimitDirection {
+    NONE = "none",
+    COLUMNS = "columns",
+    ROWS = "rows",
 }
-
 export class PlotBuilder {
     private _ensembleSet: EnsembleSet;
     private _relPermSpecs: RelPermSpec[];
     private _visualizationSettings: VisualizationSettings;
+    private _uniqueEnsembleIdents: RegularEnsembleIdent[] = [];
+    private _uniqueSatNums: number[] = [];
     private _numberOfSubplots: number = 0;
-    private _subplotOwner: SubplotOwner;
+    private _subplotOwner: GroupBy;
     private _colorSet: ColorSet;
     private _colorBy: ColorBy;
     private _figure: Figure;
@@ -33,8 +35,10 @@ export class PlotBuilder {
     private _satNumColors: Map<number, Rgb> = new Map<number, Rgb>();
     private _curveColors: Map<string, Rgb> = new Map<string, Rgb>();
     private _axesOptions: { x: Partial<Axis> | null; y: Partial<Axis> | null } = { x: null, y: null };
+    private _limitDirection: SubplotLimitDirection = SubplotLimitDirection.NONE;
+    private _limitDirectionMaxElements = 0;
+
     constructor(
-        subplotOwner: SubplotOwner,
         _relPermSpecs: RelPermSpec[],
         ensembleSet: EnsembleSet,
         visualizationSettings: VisualizationSettings,
@@ -44,12 +48,29 @@ export class PlotBuilder {
     ) {
         this._ensembleSet = ensembleSet;
         this._relPermSpecs = _relPermSpecs;
+        this._uniqueEnsembleIdents = Array.from(new Set(_relPermSpecs.map((spec) => spec.ensembleIdent)));
+        this._uniqueSatNums = Array.from(new Set(_relPermSpecs.map((spec) => spec.satNum)));
+        this._subplotOwner = visualizationSettings.groupBy;
+
+        if (this._subplotOwner === GroupBy.ENSEMBLE) {
+            this._numberOfSubplots = this._uniqueEnsembleIdents.length;
+        } else if (this._subplotOwner === GroupBy.SATNUM) {
+            this._numberOfSubplots = this._uniqueSatNums.length;
+        } else if (this._subplotOwner === GroupBy.NONE) {
+            this._numberOfSubplots = 1;
+        }
         this._visualizationSettings = visualizationSettings;
-        this._subplotOwner = subplotOwner;
         this._colorSet = colorSet;
         this._colorBy = visualizationSettings.colorBy;
         this._width = width;
         this._height = height;
+
+        ({ numRows: this._numRows, numCols: this._numCols } = this.calcNumRowsAndCols(
+            this._numberOfSubplots,
+            this._limitDirection,
+            this._limitDirectionMaxElements,
+        ));
+
         this._figure = makeSubplots({
             numCols: this._numCols,
             numRows: this._numRows,
@@ -66,12 +87,17 @@ export class PlotBuilder {
     addRealizationsTraces(
         relPermRealizationData: { relPermSpecification: RelPermSpec; data: RelPermRealizationData_api[] }[],
     ): void {
-        const plotData: Partial<PlotData>[] = [];
         const showLegendMapper = new Map<string, boolean>();
-        relPermRealizationData.forEach((relPermSpecAndData) => {
+        for (const relPermSpecAndData of relPermRealizationData) {
             const ensemble = this._ensembleSet.getEnsemble(relPermSpecAndData.relPermSpecification.ensembleIdent);
             const satNum = relPermSpecAndData.relPermSpecification.satNum;
+            const subplotIndex = this.getSubplotIndexFromSpec(relPermSpecAndData.relPermSpecification);
+            if (subplotIndex === -1) {
+                continue;
+            }
+            const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
 
+            const plotData: Partial<PlotData>[] = [];
             relPermSpecAndData.data.forEach((realizationData) => {
                 realizationData.curve_data_arr.forEach((curve) => {
                     const hoverLabel = createRelPermRealizationTraceHovertext(
@@ -96,8 +122,7 @@ export class PlotBuilder {
                         name = curve.curve_name;
                     }
                     if (ColorBy.SATNUM === this._colorBy) {
-                        rgbColor = this._satNumColors.get(satNum - 1);
-                        // console.log(this._satNumColors.get(satNum));
+                        rgbColor = this._satNumColors.get(satNum);
                         showLegend = !showLegendMapper.has(satNum.toString());
                         showLegendMapper.set(satNum.toString(), true);
                         name = satNum.toString();
@@ -120,8 +145,8 @@ export class PlotBuilder {
                     );
                 });
             });
-        });
-        this._figure.addTraces(plotData);
+            this._figure.addTraces(plotData, row, col);
+        }
     }
     setXAxisOptions(options: Partial<Axis>): void {
         this._axesOptions.x = options;
@@ -129,6 +154,77 @@ export class PlotBuilder {
 
     setYAxisOptions(options: Partial<Axis>): void {
         this._axesOptions.y = options;
+    }
+    private calcNumRowsAndCols(
+        numSubplots: number,
+        limitDirection: SubplotLimitDirection,
+        maxDirectionElements: number,
+    ): { numRows: number; numCols: number } {
+        if (numSubplots === 1) {
+            return { numRows: 1, numCols: 1 };
+        }
+
+        if (limitDirection === SubplotLimitDirection.ROWS && maxDirectionElements > 0) {
+            const numRows = Math.min(maxDirectionElements, numSubplots);
+            const numCols = Math.ceil(numSubplots / numRows);
+            return { numRows, numCols };
+        }
+        if (limitDirection === SubplotLimitDirection.COLUMNS && maxDirectionElements > 0) {
+            const numCols = Math.min(maxDirectionElements, numSubplots);
+            const numRows = Math.ceil(numSubplots / numCols);
+            return { numRows, numCols };
+        }
+
+        // No direction limitation or invalid direction
+        const numRows = Math.ceil(Math.sqrt(numSubplots));
+        const numCols = Math.ceil(numSubplots / numRows);
+        return { numRows, numCols };
+    }
+    private getSubplotIndexFromSpec(relPermSpec: RelPermSpec) {
+        if (this._subplotOwner === GroupBy.SATNUM) {
+            return this._uniqueSatNums.indexOf(relPermSpec.satNum);
+        } else if (this._subplotOwner === GroupBy.ENSEMBLE) {
+            return this._uniqueEnsembleIdents.findIndex((elm) => elm.equals(relPermSpec.ensembleIdent));
+        } else if (this._subplotOwner === GroupBy.NONE) {
+            return 0;
+        }
+        return -1;
+    }
+    private getSubplotRowAndColFromIndex(subplotIndex: number): { row: number; col: number } {
+        let col = 1;
+        let row = 1;
+        if (this._limitDirection === SubplotLimitDirection.ROWS) {
+            col = Math.floor(subplotIndex / this._numRows) + 1;
+            row = (subplotIndex % this._numRows) + 1;
+        } else {
+            // Columns or no limit
+            row = Math.floor(subplotIndex / this._numCols) + 1;
+            col = (subplotIndex % this._numCols) + 1;
+        }
+
+        if (row > this._numRows || col > this._numCols) {
+            throw new Error("Subplot index out of bounds");
+        }
+
+        return { row, col };
+    }
+    private updateSubplotTitles(): void {
+        if (this._subplotOwner === GroupBy.ENSEMBLE) {
+            this._uniqueEnsembleIdents.forEach((ensembleIdent, index) => {
+                const newSubplotTitle = `${ensembleIdent.getEnsembleName()}`;
+                const { row, col } = this.getSubplotRowAndColFromIndex(index);
+
+                this._figure.updateSubplotTitle(newSubplotTitle, row, col);
+            });
+        }
+        if (this._subplotOwner === GroupBy.SATNUM) {
+            this._uniqueSatNums.forEach((satNum, index) => {
+                const newSubplotTitle = `Satnum: ${satNum}`;
+                const { row, col } = this.getSubplotRowAndColFromIndex(index);
+
+                this._figure.updateSubplotTitle(newSubplotTitle, row, col);
+            });
+        }
     }
     private updateLayout() {
         const numRows = this._figure.getNumRows();
@@ -151,7 +247,7 @@ export class PlotBuilder {
         }
     }
     private getRGBColorFromColorSet(index: number): Rgb {
-        const validIndex = index + (1 % this._colorSet.getColorArray().length);
+        const validIndex = index % this._colorSet.getColorArray().length;
 
         return parseHex(this._colorSet.getColor(validIndex)) as Rgb;
     }
@@ -164,7 +260,7 @@ export class PlotBuilder {
         satNums.forEach((satNum) => {
             this._satNumColors.set(satNum, this.getRGBColorFromColorSet(satNum));
         });
-        console.log(satNums);
+
         curveNames.forEach((curveName) => {
             this._curveColors.set(curveName, this.getRGBColorFromColorSet(curveNames.indexOf(curveName)));
         });
@@ -175,7 +271,7 @@ export class PlotBuilder {
 
     build(handleOnClick?: ((event: Readonly<Plotly.PlotMouseEvent>) => void) | undefined): React.ReactNode {
         this.updateLayout();
-
+        this.updateSubplotTitles();
         return this._figure.makePlot({ onClick: handleOnClick });
     }
 }
