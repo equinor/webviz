@@ -49,7 +49,7 @@ const stringToOptions = (strings: string[]): SelectOption[] => {
     return strings.map((string) => ({ label: string, value: string }));
 };
 
-export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
+export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
 
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
