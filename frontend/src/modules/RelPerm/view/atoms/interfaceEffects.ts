@@ -1,8 +1,8 @@
-import { InterfaceEffects } from "@framework/Module";
+import type { InterfaceEffects } from "@framework/Module";
 
 import { relPermSpecificationsAtom, visualizationSettingsAtom } from "./baseAtoms";
 
-import { SettingsToViewInterface } from "../../interfaces";
+import type { SettingsToViewInterface } from "../../interfaces";
 
 export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInterface> = [
     (getInterfaceValue, setAtomValue) => {

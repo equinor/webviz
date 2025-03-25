@@ -1,4 +1,4 @@
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
     selectedColorByAtom,
@@ -7,7 +7,7 @@ import {
     selectedOpacityAtom,
 } from "./settings/atoms/baseAtoms";
 import { relPermSpecificationsAtom } from "./settings/atoms/derivedAtoms";
-import { RelPermSpec, VisualizationSettings } from "./typesAndEnums";
+import type { RelPermSpec, VisualizationSettings } from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
     relPermSpecifications: RelPermSpec[];

@@ -1,4 +1,5 @@
-import { ColorBy, GroupBy, RelPermSpec, VisualizationSettings } from "@modules/RelPerm/typesAndEnums";
+import { ColorBy, GroupBy, VisualizationSettings } from "@modules/RelPerm/typesAndEnums";
+import type { RelPermSpec } from "@modules/RelPerm/typesAndEnums";
 
 import { atom } from "jotai";
 

@@ -1,8 +1,9 @@
 import type React from "react";
 
 import type { ViewContext } from "@framework/ModuleContext";
-import { WorkbenchSession, useEnsembleSet } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import type { Size2D } from "@lib/utils/geometry";
 
 import { useAtomValue } from "jotai";

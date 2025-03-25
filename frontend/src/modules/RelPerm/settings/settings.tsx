@@ -1,8 +1,8 @@
-import React from "react";
+import type React from "react";
 
 import { CircularProgress } from "@equinor/eds-core-react";
-import { ModuleSettingsProps } from "@framework/Module";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ModuleSettingsProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
@@ -11,7 +11,8 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { QueriesErrorCriteria, QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Select, SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 import { Slider } from "@lib/components/Slider";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -41,7 +42,7 @@ import {
 } from "./atoms/derivedAtoms";
 import { relPermTableInfoQueriesAtom, relPermTableNamesQueriesAtom } from "./atoms/queryAtoms";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import { ColorBy, CurveType, GroupBy } from "../typesAndEnums";
 
 //Helpers to populate dropdowns

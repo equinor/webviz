@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ModuleViewProps } from "@framework/Module";
+import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
@@ -10,7 +10,7 @@ import { useAtomValue } from "jotai";
 import { queryIsFetchingAtom, realizationsQueryHasErrorAtom } from "./atoms/derivedAtoms";
 import { usePlotBuilder } from "./hooks/usePlotBuilder";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 
 export const View = ({ viewContext, workbenchSettings, workbenchSession }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);

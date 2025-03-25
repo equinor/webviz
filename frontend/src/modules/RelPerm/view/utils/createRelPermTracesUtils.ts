@@ -1,5 +1,5 @@
-import { Rgb } from "culori";
-import { PlotData } from "plotly.js";
+import type { Rgb } from "culori";
+import type { PlotData } from "plotly.js";
 
 export type createRelPermRealizationTraceOptions = {
     hoverLabel: string;

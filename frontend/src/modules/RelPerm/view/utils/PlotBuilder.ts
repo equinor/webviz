@@ -1,15 +1,18 @@
-import { RelPermRealizationData_api } from "@api";
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { ColorSet } from "@lib/utils/ColorSet";
-import { Figure, makeSubplots } from "@modules/_shared/Figure";
+import type { RelPermRealizationData_api } from "@api";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ColorSet } from "@lib/utils/ColorSet";
+import type { Figure } from "@modules/_shared/Figure";
+import { makeSubplots } from "@modules/_shared/Figure";
 
-import { Rgb, parseHex } from "culori";
-import { Axis, PlotData } from "plotly.js";
+import type { Rgb } from "culori";
+import { parseHex } from "culori";
+import type { Axis, PlotData } from "plotly.js";
 
 import { createRelPermRealizationTrace, createRelPermRealizationTraceHovertext } from "./createRelPermTracesUtils";
 
-import { ColorBy, GroupBy, RelPermSpec, VisualizationSettings } from "../../typesAndEnums";
+import { ColorBy, GroupBy } from "../../typesAndEnums";
+import type { RelPermSpec, VisualizationSettings } from "../../typesAndEnums";
 
 export enum SubplotLimitDirection {
     NONE = "none",

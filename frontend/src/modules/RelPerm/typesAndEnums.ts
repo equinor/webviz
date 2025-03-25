@@ -1,4 +1,4 @@
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 export enum ColorBy {
     ENSEMBLE = "ensemble",
