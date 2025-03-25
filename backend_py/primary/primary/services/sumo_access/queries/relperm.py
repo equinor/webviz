@@ -10,7 +10,7 @@ class TableInfo:
     column_names: List[str]
 
 
-async def get_relperm_table_names_and_columns(
+async def get_relperm_table_names_and_columns_async(
     sumo_client: SumoClient, case_id: str, iteration_name: str
 ) -> List[TableInfo]:
     query = {
@@ -46,7 +46,7 @@ async def get_relperm_table_names_and_columns(
     return table_infos
 
 
-async def get_relperm_realization_table_blob_uuids(
+async def get_relperm_realization_table_blob_uuids_async(
     sumo_client: SumoClient, case_id: str, iteration_name: str, table_name: str
 ) -> List[RealizationBlobid]:
     query = {

@@ -15,8 +15,8 @@ from .sumo_client_factory import create_sumo_client
 from ..service_exceptions import Service, NoDataError
 
 from .queries.relperm import (
-    get_relperm_table_names_and_columns,
-    get_relperm_realization_table_blob_uuids,
+    get_relperm_table_names_and_columns_async,
+    get_relperm_realization_table_blob_uuids_async,
 )
 from .relperm_types import RealizationBlobid
 from ._arrow_table_loader import ArrowTableLoader
@@ -59,7 +59,7 @@ class RelPermAccess:
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_relperm_table_names_async(self) -> List[str]:
-        table_names_and_columns = await get_relperm_table_names_and_columns(
+        table_names_and_columns = await get_relperm_table_names_and_columns_async(
             self._sumo_client, self._case_uuid, self._iteration_name
         )
         table_names: List[str] = []
@@ -69,7 +69,7 @@ class RelPermAccess:
         return table_names
 
     async def get_single_realization_table_async(self, table_name: str) -> pl.DataFrame:
-        realization_blob_ids = await get_relperm_realization_table_blob_uuids(
+        realization_blob_ids = await get_relperm_realization_table_blob_uuids_async(
             self._sumo_client, self._case_uuid, self._iteration_name, table_name
         )
         if len(realization_blob_ids) == 0:

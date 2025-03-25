@@ -60,7 +60,7 @@ class RelPermAssembler:
     def __init__(self, relperm_access: RelPermAccess):
         self._relperm_access = relperm_access
 
-    async def get_relperm_table_info_async(self, relperm_table_name: str):
+    async def get_relperm_table_info_async(self, relperm_table_name: str) -> RelPermTableInfo:
         single_realization_table = await self._relperm_access.get_single_realization_table_async(relperm_table_name)
         table_columns = single_realization_table.columns
         satnums = extract_satnums_from_relperm_table(single_realization_table)
