@@ -20,8 +20,8 @@ numpy = "^1.24.1"
 orjson = "^3.8.10"
 pandas = {version = "2.0.1", extras = ["performance"]}
 httpx = "^0.24.0"
-fmu-sumo = "1.2.5"
-sumo-wrapper-python = "1.0.23"
+fmu-sumo = "2.3.6"
+sumo-wrapper-python = "1.0.24"
 azure-monitor-opentelemetry = "1.1.0"
 requests-toolbelt = "^1.0.0"
 pottery = "^3.0.0"
@@ -40,6 +40,7 @@ types-requests = "^2.31.0.1"
 types-redis = "^4.6.0"
 pytest-timeout = "^2.3.1"
 pytest-asyncio = "^0.24.0"
+astroid = "^2.0.0"
 
 
 [build-system]
@@ -52,7 +53,9 @@ line-length = 120
 [tool.pylint]
 disable = ["missing-docstring", "line-too-long", "logging-fstring-interpolation", "duplicate-code"]
 extension-pkg-whitelist = "pydantic"
-ignored-modules = "pyarrow.compute"
+init-hook='import sys; sys.path.append("./pylint/plugins")'
+load-plugins="async_suffix_checker"
+ignored-modules = ["pyarrow.compute"]
 good-names = ["i", "x", "df", "xy", "tg"]
 min-public-methods = 0
 max-args = 9

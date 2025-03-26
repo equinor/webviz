@@ -1,4 +1,4 @@
-import { Controller, Layer } from "@equinor/esv-intersection";
+import type { Controller, Layer } from "@equinor/esv-intersection";
 
 import {
     isFanchartIntersectionResult,
@@ -22,7 +22,7 @@ import {
 } from "./layers";
 
 import { FanchartIntersectionCalculator } from "../interaction/FanchartIntersectionCalculator";
-import { IntersectionHandlerOptions } from "../interaction/IntersectionHandler";
+import type { IntersectionHandlerOptions } from "../interaction/IntersectionHandler";
 import { LineIntersectionCalculator } from "../interaction/LineIntersectionCalculator";
 import { LineSetIntersectionCalculator } from "../interaction/LineSetIntersectionCalculator";
 import { PointIntersectionCalculator } from "../interaction/PointIntersectionCalculator";
@@ -30,20 +30,19 @@ import { PolygonIntersectionCalculator } from "../interaction/PolygonIntersectio
 import { PolygonsIntersectionCalculator } from "../interaction/PolygonsIntersectionCalculator";
 import { RectangleIntersectionCalculator } from "../interaction/RectangleIntersectionCalculator";
 import { WellborePathIntersectionCalculator } from "../interaction/WellborePathIntersectionCalculator";
-import {
+import type {
     HighlightItem,
-    HighlightItemShape,
     IntersectedItem,
     IntersectionCalculator,
     IntersectionItem,
-    IntersectionItemShape,
     ReadoutItem,
 } from "../types/types";
+import { HighlightItemShape, IntersectionItemShape } from "../types/types";
 
 export function makeIntersectionCalculatorFromIntersectionItem(
     intersectionItem: IntersectionItem,
     options: IntersectionHandlerOptions,
-    controller: Controller
+    controller: Controller,
 ): IntersectionCalculator {
     switch (intersectionItem.shape) {
         case IntersectionItemShape.POINT:
@@ -62,7 +61,7 @@ export function makeIntersectionCalculatorFromIntersectionItem(
             return new FanchartIntersectionCalculator(
                 intersectionItem.data.lines,
                 intersectionItem.data.hull,
-                options.threshold
+                options.threshold,
             );
         case IntersectionItemShape.RECTANGLE:
             return new RectangleIntersectionCalculator(intersectionItem.data);
@@ -110,7 +109,7 @@ export function getColorFromLayerData(layer: Layer<unknown>, index: number): str
 export function makeHighlightItemFromIntersectionResult(
     intersectionResult: IntersectedItem,
     layer: Layer<unknown>,
-    index: number
+    index: number,
 ): HighlightItem {
     const color = getColorFromLayerData(layer, index);
     if (isPointIntersectionResult(intersectionResult)) {
@@ -193,7 +192,7 @@ export function makeHighlightItemFromIntersectionResult(
 export function makeReadoutItemFromIntersectionResult(
     intersectionResult: IntersectedItem,
     layer: Layer<unknown>,
-    index: number
+    index: number,
 ): ReadoutItem {
     if (isPointIntersectionResult(intersectionResult)) {
         return {

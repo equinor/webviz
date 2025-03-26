@@ -32,6 +32,10 @@ client.setConfig({
 
 // --------------------------------------------------------------------
 
+/*
+    Render the application.
+*/
+
 const container = document.getElementById("root");
 
 if (!container) {

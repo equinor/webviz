@@ -1,20 +1,21 @@
-import { Layer as DeckGlLayer } from "@deck.gl/core";
-import { Layer as EsvLayer } from "@equinor/esv-intersection";
-import { StatusMessage } from "@framework/ModuleInstanceStatusController";
-import { defaultColorPalettes, defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
-import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
-import * as bbox from "@lib/utils/boundingBox";
-import { Geometry } from "@lib/utils/geometry";
-import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
-import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
+import type { Layer as DeckGlLayer } from "@deck.gl/core";
+import type { Layer as EsvLayer } from "@equinor/esv-intersection";
+import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
+import * as bbox from "@lib/utils/bbox";
+import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 
-import { GroupDelegate } from "../delegates/GroupDelegate";
-import { LayerColoringType, LayerStatus } from "../delegates/LayerDelegate";
-import { ColorScale } from "../framework/ColorScale/ColorScale";
+import type { GroupDelegate } from "../delegates/GroupDelegate";
+import { DataLayer, DataLayerStatus } from "../framework/DataLayer/DataLayer";
+import type { DataLayerManager } from "../framework/DataLayerManager/DataLayerManager";
 import { DeltaSurface } from "../framework/DeltaSurface/DeltaSurface";
-import { LayerManager } from "../framework/LayerManager/LayerManager";
-import { View } from "../framework/View/View";
-import { Layer, Settings, instanceofGroup, instanceofLayer } from "../interfaces";
+import { Group } from "../framework/Group/Group";
+import type {
+    CustomDataLayerImplementation,
+    DataLayerInformationAccessors,
+} from "../interfacesAndTypes/customDataLayerImplementation";
+import { instanceofItemGroup } from "../interfacesAndTypes/entitites";
+import type { Settings } from "../settings/settingsDefinitions";
 
 export enum VisualizationTarget {
     DECK_GL = "deck_gl",
@@ -22,15 +23,15 @@ export enum VisualizationTarget {
     // VIDEX = "videx",
 }
 
-export type VisualizationFunctionArgs<TSettings extends Settings, TData> = {
+export type FactoryFunctionArgs<
+    TSettings extends Settings,
+    TData,
+    TInjectedData extends Record<string, any> = never
+> = DataLayerInformationAccessors<TSettings, TData> & {
     id: string;
     name: string;
-    data: TData;
-    colorScale: ColorScaleWithName;
-    settings: TSettings;
     isLoading: boolean;
-    boundingBox: bbox.BBox | null;
-    predictedGeometry: Geometry | null;
+    getInjectedData: () => TInjectedData;
 };
 
 export type TargetReturnTypes = {
@@ -38,9 +39,57 @@ export type TargetReturnTypes = {
     [VisualizationTarget.ESV]: EsvLayer<any>;
 };
 
-export type MakeVisualizationFunction<TSettings extends Settings, TData, TTarget extends VisualizationTarget> = (
-    args: VisualizationFunctionArgs<TSettings, TData>
-) => TargetReturnTypes[TTarget];
+export type Annotation = ColorScaleWithId; // Add more possible annotation types here, e.g. ColorSets etc.
+
+export type LayerVisualizationFunctions<
+    TSettings extends Settings,
+    TData,
+    TTarget extends VisualizationTarget,
+    TInjectedData extends Record<string, any> = never,
+    TAccumulatedData extends Record<string, any> = never
+> = {
+    makeVisualizationFunction: MakeVisualizationFunction<TSettings, TData, TTarget, TInjectedData>;
+    calculateBoundingBoxFunction?: CalculateBoundingBoxFunction<TSettings, TData, TInjectedData>;
+    makeAnnotationsFunction?: MakeAnnotationsFunction<TSettings, TData, TInjectedData>;
+    makeHoverVisualizationFunction?: MakeHoverVisualizationFunction<TSettings, TData, TTarget, TInjectedData>;
+    reduceAccumulatedDataFunction?: ReduceAccumulatedDataFunction<TSettings, TData, TAccumulatedData, TInjectedData>;
+};
+
+export type MakeVisualizationFunction<
+    TSettings extends Settings,
+    TData,
+    TTarget extends VisualizationTarget,
+    TInjectedData extends Record<string, any> = never
+> = (args: FactoryFunctionArgs<TSettings, TData, TInjectedData>) => TargetReturnTypes[TTarget] | null;
+
+// This does likely require a refactor as soon as we have tested against a use case
+export type MakeHoverVisualizationFunction<
+    TSettings extends Settings,
+    TData,
+    TTarget extends VisualizationTarget,
+    TInjectedData extends Record<string, any> = never
+> = (
+    args: FactoryFunctionArgs<TSettings, TData, TInjectedData> & { hoverInfo: Partial<GlobalTopicDefinitions> }
+) => TargetReturnTypes[TTarget][];
+
+export type CalculateBoundingBoxFunction<
+    TSettings extends Settings,
+    TData,
+    TInjectedData extends Record<string, any> = never
+> = (args: FactoryFunctionArgs<TSettings, TData, TInjectedData>) => bbox.BBox | null;
+
+export type MakeAnnotationsFunction<
+    TSettings extends Settings,
+    TData,
+    TInjectedData extends Record<string, any> = never
+> = (args: FactoryFunctionArgs<TSettings, TData, TInjectedData>) => Annotation[];
+
+export type ReduceAccumulatedDataFunction<
+    TSettings extends Settings,
+    TData,
+    TAccumulatedData,
+    TInjectedData extends Record<string, any> = never
+> = (accumulatedData: TAccumulatedData, args: FactoryFunctionArgs<TSettings, TData, TInjectedData>) => TAccumulatedData;
 
 export type LayerWithPosition<TTarget extends VisualizationTarget> = {
     layer: TargetReturnTypes[TTarget];
@@ -52,40 +101,73 @@ export type VisualizationView<TTarget extends VisualizationTarget> = {
     color: string | null;
     name: string;
     layers: LayerWithPosition<TTarget>[];
-    colorScales: ColorScaleWithId[];
+    annotations: Annotation[];
 };
 
-export type FactoryProduct<TTarget extends VisualizationTarget> = {
+export type FactoryProduct<
+    TTarget extends VisualizationTarget,
+    TAccumulatedData extends Record<string, any> = never
+> = {
     views: VisualizationView<TTarget>[];
     layers: LayerWithPosition<TTarget>[];
     errorMessages: (StatusMessage | string)[];
-    boundingBox: bbox.BBox | null;
-    colorScales: ColorScaleWithId[];
+    combinedBoundingBox: bbox.BBox | null;
     numLoadingLayers: number;
+    annotations: Annotation[];
+    accumulatedData: TAccumulatedData;
+    makeHoverVisualizationsFunction: (hoverInfo: Partial<GlobalTopicDefinitions>) => TargetReturnTypes[TTarget][];
 };
 
-export class VisualizationFactory<TTarget extends VisualizationTarget> {
-    private _visualizationFunctions: Map<string, MakeVisualizationFunction<any, any, TTarget>> = new Map();
+export class VisualizationFactory<
+    TTarget extends VisualizationTarget,
+    TInjectedData extends Record<string, any> = never,
+    TAccumulatedData extends Record<string, any> = never
+> {
+    private _visualizationFunctions: Map<
+        string,
+        LayerVisualizationFunctions<any, any, TTarget, TInjectedData, TAccumulatedData>
+    > = new Map();
 
-    registerVisualizationFunction<TSettings extends Settings, TData>(
-        layerCtor: { new (layerManager: LayerManager): Layer<TSettings, TData, any> },
-        func: MakeVisualizationFunction<TSettings, TData, TTarget>
+    registerLayerFunctions<TSettings extends Settings, TData>(
+        layerName: string,
+        layerCtor: {
+            new (...params: any[]): CustomDataLayerImplementation<TSettings, TData, any>;
+        },
+        funcs: LayerVisualizationFunctions<TSettings, TData, TTarget, TInjectedData, TAccumulatedData>
     ): void {
         if (this._visualizationFunctions.has(layerCtor.name)) {
             throw new Error(`Visualization function for layer ${layerCtor.name} already registered`);
         }
-        this._visualizationFunctions.set(layerCtor.name, func);
+        this._visualizationFunctions.set(layerName, funcs);
     }
 
-    make(layerManager: LayerManager): FactoryProduct<TTarget> {
-        return this.makeRecursively(layerManager.getGroupDelegate());
+    make(
+        layerManager: DataLayerManager,
+        options?: {
+            injectedData?: TInjectedData;
+            initialAccumulatedData?: TAccumulatedData;
+        }
+    ): FactoryProduct<TTarget, TAccumulatedData> {
+        return this.makeRecursively(
+            layerManager.getGroupDelegate(),
+            options?.initialAccumulatedData ?? ({} as TAccumulatedData),
+            options?.injectedData
+        );
     }
 
-    private makeRecursively(groupDelegate: GroupDelegate, numCollectedLayers: number = 0): FactoryProduct<TTarget> {
+    private makeRecursively(
+        groupDelegate: GroupDelegate,
+        accumulatedData: TAccumulatedData,
+        injectedData?: TInjectedData,
+        numCollectedLayers: number = 0
+    ): FactoryProduct<TTarget, TAccumulatedData> {
         const collectedViews: VisualizationView<TTarget>[] = [];
         const collectedLayers: LayerWithPosition<TTarget>[] = [];
-        const collectedColorScales: ColorScaleWithId[] = [];
+        const collectedAnnotations: Annotation[] = [];
         const collectedErrorMessages: (StatusMessage | string)[] = [];
+        const collectedMakeHoverVisualizationFunctions: ((
+            hoverInfo: Partial<GlobalTopicDefinitions>
+        ) => TargetReturnTypes[TTarget][])[] = [];
         let collectedNumLoadingLayers = 0;
         let globalBoundingBox: bbox.BBox | null = null;
 
@@ -94,7 +176,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
         const maybeApplyBoundingBox = (boundingBox: bbox.BBox | null) => {
             if (boundingBox) {
                 globalBoundingBox =
-                    globalBoundingBox === null ? boundingBox : this.makeNewBoundingBox(boundingBox, globalBoundingBox);
+                    globalBoundingBox === null ? boundingBox : bbox.combine(boundingBox, globalBoundingBox);
             }
         };
 
@@ -103,21 +185,37 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
                 continue;
             }
 
-            if (instanceofGroup(child) && !(child instanceof DeltaSurface)) {
-                const { views, layers, boundingBox, colorScales, numLoadingLayers, errorMessages } =
-                    this.makeRecursively(child.getGroupDelegate(), numCollectedLayers + collectedLayers.length);
+            if (instanceofItemGroup(child) && !(child instanceof DeltaSurface)) {
+                const {
+                    views,
+                    layers,
+                    combinedBoundingBox: boundingBox,
+                    numLoadingLayers,
+                    errorMessages,
+                    annotations,
+                    accumulatedData: newAccumulatedData,
+                    makeHoverVisualizationsFunction,
+                } = this.makeRecursively(
+                    child.getGroupDelegate(),
+                    accumulatedData,
+                    injectedData,
+                    numCollectedLayers + collectedLayers.length
+                );
+
+                accumulatedData = newAccumulatedData;
 
                 collectedErrorMessages.push(...errorMessages);
+                collectedMakeHoverVisualizationFunctions.push(makeHoverVisualizationsFunction);
                 collectedNumLoadingLayers += numLoadingLayers;
                 maybeApplyBoundingBox(boundingBox);
 
-                if (child instanceof View) {
+                if (child instanceof Group) {
                     const view: VisualizationView<TTarget> = {
                         id: child.getItemDelegate().getId(),
                         color: child.getGroupDelegate().getColor(),
                         name: child.getItemDelegate().getName(),
-                        layers: layers,
-                        colorScales,
+                        layers,
+                        annotations,
                     };
 
                     collectedViews.push(view);
@@ -128,38 +226,35 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
                 collectedViews.push(...views);
             }
 
-            if (instanceofLayer(child)) {
-                if (child.getLayerDelegate().getStatus() === LayerStatus.LOADING) {
+            if (child instanceof DataLayer) {
+                if (child.getStatus() === DataLayerStatus.LOADING) {
                     collectedNumLoadingLayers++;
                 }
 
-                if (child.getLayerDelegate().getStatus() === LayerStatus.ERROR) {
-                    const error = child.getLayerDelegate().getError();
+                if (child.getStatus() === DataLayerStatus.ERROR) {
+                    const error = child.getError();
                     if (error) {
                         collectedErrorMessages.push(error);
                     }
                     continue;
                 }
 
-                if (child.getLayerDelegate().getData() === null) {
+                if (child.getData() === null) {
                     continue;
                 }
 
-                const colorScale = this.findColorScale(child);
-
-                const layer = this.makeLayer(child, colorScale?.colorScale ?? undefined);
+                const layer = this.makeLayer(child, injectedData);
 
                 if (!layer) {
                     continue;
                 }
 
-                if (colorScale) {
-                    collectedColorScales.push(colorScale);
-                }
-
-                const boundingBox = child.getLayerDelegate().getBoundingBox();
-                maybeApplyBoundingBox(boundingBox);
+                const layerBoundingBox = this.makeLayerBoundingBox(child);
+                maybeApplyBoundingBox(layerBoundingBox);
                 collectedLayers.push({ layer, position: numCollectedLayers + collectedLayers.length });
+                collectedAnnotations.push(...this.makeLayerAnnotations(child));
+                collectedMakeHoverVisualizationFunctions.push(this.makeHoverLayerFunction(child, injectedData));
+                accumulatedData = this.accumulateLayerData(child, accumulatedData) ?? accumulatedData;
             }
         }
 
@@ -167,87 +262,94 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
             views: collectedViews,
             layers: collectedLayers,
             errorMessages: collectedErrorMessages,
-            boundingBox: globalBoundingBox,
-            colorScales: collectedColorScales,
+            combinedBoundingBox: globalBoundingBox,
+            annotations: collectedAnnotations,
             numLoadingLayers: collectedNumLoadingLayers,
+            accumulatedData,
+            makeHoverVisualizationsFunction: (hoverInfo: Partial<GlobalTopicDefinitions>) => {
+                const collectedHoverVisualizations: TargetReturnTypes[TTarget][] = [];
+                for (const makeHoverVisualizationFunction of collectedMakeHoverVisualizationFunctions) {
+                    collectedHoverVisualizations.push(...makeHoverVisualizationFunction(hoverInfo));
+                }
+                return collectedHoverVisualizations;
+            },
         };
     }
 
-    private makeLayer(layer: Layer<any, any>, colorScale?: ColorScaleWithName): TargetReturnTypes[TTarget] {
-        const func = this._visualizationFunctions.get(layer.constructor.name);
-        if (!func) {
-            throw new Error(`No visualization function found for layer ${layer.constructor.name}`);
-        }
-
-        if (colorScale === undefined) {
-            colorScale = new ColorScaleWithName({
-                colorPalette: defaultColorPalettes[0],
-                gradientType: ColorScaleGradientType.Sequential,
-                name: "Default",
-                type: ColorScaleType.Continuous,
-                steps: 10,
-            });
-        }
-
-        return func({
-            id: layer.getItemDelegate().getId(),
-            name: layer.getItemDelegate().getName(),
-            data: layer.getLayerDelegate().getData(),
-            colorScale,
-            settings: layer.getLayerDelegate().getSettingsContext().getDelegate().getValues(),
-            isLoading: layer.getLayerDelegate().getStatus() === LayerStatus.LOADING,
-            boundingBox: layer.getLayerDelegate().getBoundingBox(),
-            predictedGeometry: layer.getLayerDelegate().getPredictedGeometry(),
-        });
-    }
-
-    private makeNewBoundingBox(newBoundingBox: bbox.BBox, oldBoundingBox: bbox.BBox): bbox.BBox {
-        return bbox.combine(newBoundingBox, oldBoundingBox);
-    }
-
-    private findColorScale(layer: Layer<any, any>): { id: string; colorScale: ColorScaleWithName } | null {
-        if (layer.getLayerDelegate().getColoringType() !== LayerColoringType.COLORSCALE) {
-            return null;
-        }
-
-        let colorScaleWithName = new ColorScaleWithName({
-            colorPalette: defaultContinuousSequentialColorPalettes[0],
-            gradientType: ColorScaleGradientType.Sequential,
-            name: layer.getItemDelegate().getName(),
-            type: ColorScaleType.Continuous,
-            steps: 10,
-        });
-
-        const range = layer.getLayerDelegate().getValueRange();
-        if (range) {
-            colorScaleWithName.setRangeAndMidPoint(range[0], range[1], (range[0] + range[1]) / 2);
-        }
-
-        const colorScaleItemArr = layer
-            .getItemDelegate()
-            .getParentGroup()
-            ?.getAncestorAndSiblingItems((item) => item instanceof ColorScale);
-
-        if (colorScaleItemArr && colorScaleItemArr.length > 0) {
-            const colorScaleItem = colorScaleItemArr[0];
-            if (colorScaleItem instanceof ColorScale) {
-                colorScaleWithName = ColorScaleWithName.fromColorScale(
-                    colorScaleItem.getColorScale(),
-                    layer.getItemDelegate().getName()
-                );
-
-                if (!colorScaleItem.getAreBoundariesUserDefined()) {
-                    const range = layer.getLayerDelegate().getValueRange();
-                    if (range) {
-                        colorScaleWithName.setRangeAndMidPoint(range[0], range[1], (range[0] + range[1]) / 2);
-                    }
-                }
+    private makeFactoryFunctionArgs<TSettings extends Settings, TData>(
+        layer: DataLayer<TSettings, TData, any>,
+        injectedData?: TInjectedData
+    ): FactoryFunctionArgs<TSettings, TData, TInjectedData> {
+        function getInjectedData() {
+            if (!injectedData) {
+                throw new Error("No injected data provided. Did you forget to pass it to the factory?");
             }
+            return injectedData;
         }
 
         return {
             id: layer.getItemDelegate().getId(),
-            colorScale: colorScaleWithName,
+            name: layer.getItemDelegate().getName(),
+            isLoading: layer.getStatus() === DataLayerStatus.LOADING,
+            getInjectedData: getInjectedData.bind(this),
+            ...layer.makeAccessors(),
         };
+    }
+
+    private makeLayer(
+        layer: DataLayer<any, any, any>,
+        injectedData?: TInjectedData
+    ): TargetReturnTypes[TTarget] | null {
+        const func = this._visualizationFunctions.get(layer.getType())?.makeVisualizationFunction;
+        if (!func) {
+            throw new Error(`No visualization function found for layer ${layer.getType()}`);
+        }
+
+        return func(this.makeFactoryFunctionArgs(layer, injectedData));
+    }
+
+    private makeHoverLayerFunction(
+        layer: DataLayer<any, any, any>,
+        injectedData?: TInjectedData
+    ): (hoverInfo: Partial<GlobalTopicDefinitions>) => TargetReturnTypes[TTarget][] {
+        const func = this._visualizationFunctions.get(layer.getType())?.makeHoverVisualizationFunction;
+        if (!func) {
+            return () => [];
+        }
+
+        return (hoverInfo: Partial<GlobalTopicDefinitions>) => {
+            return func({ ...this.makeFactoryFunctionArgs(layer, injectedData), hoverInfo });
+        };
+    }
+
+    private makeLayerBoundingBox(layer: DataLayer<any, any, any>, injectedData?: TInjectedData): bbox.BBox | null {
+        const func = this._visualizationFunctions.get(layer.getType())?.calculateBoundingBoxFunction;
+        if (!func) {
+            return null;
+        }
+
+        return func(this.makeFactoryFunctionArgs(layer, injectedData));
+    }
+
+    private makeLayerAnnotations(layer: DataLayer<any, any, any>, injectedData?: TInjectedData): Annotation[] {
+        const func = this._visualizationFunctions.get(layer.getType())?.makeAnnotationsFunction;
+        if (!func) {
+            return [];
+        }
+
+        return func(this.makeFactoryFunctionArgs(layer, injectedData));
+    }
+
+    private accumulateLayerData(
+        layer: DataLayer<any, any, any>,
+        accumulatedData: TAccumulatedData,
+        injectedData?: TInjectedData
+    ): TAccumulatedData | null {
+        const func = this._visualizationFunctions.get(layer.getType())?.reduceAccumulatedDataFunction;
+        if (!func) {
+            return null;
+        }
+
+        return func(accumulatedData, this.makeFactoryFunctionArgs(layer, injectedData));
     }
 }

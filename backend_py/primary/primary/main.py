@@ -32,13 +32,13 @@ from primary.routers.timeseries.router import router as timeseries_router
 from primary.routers.vfp.router import router as vfp_router
 from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
+from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
 from primary.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
 
 from . import config
-from .httpx_client import httpx_async_client
 
 ensure_console_log_handler_is_configured()
 setup_normal_log_levels()
@@ -49,6 +49,7 @@ logging.getLogger("primary.services.sumo_access").setLevel(logging.DEBUG)
 logging.getLogger("primary.services.smda_access").setLevel(logging.DEBUG)
 logging.getLogger("primary.services.ssdl_access").setLevel(logging.DEBUG)
 logging.getLogger("primary.services.user_grid3d_service").setLevel(logging.DEBUG)
+logging.getLogger("primary.services.surface_query_service").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
@@ -76,13 +77,13 @@ else:
 
 # Start the httpx client on startup and stop it on shutdown of the app
 @app.on_event("startup")
-async def startup_event() -> None:
-    httpx_async_client.start()
+async def startup_event_async() -> None:
+    HTTPX_ASYNC_CLIENT_WRAPPER.start()
 
 
 @app.on_event("shutdown")
-async def shutdown_event() -> None:
-    await httpx_async_client.stop()
+async def shutdown_event_async() -> None:
+    await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()
 
 
 # The tags we add here will determine the name of the frontend api service for our endpoints as well as

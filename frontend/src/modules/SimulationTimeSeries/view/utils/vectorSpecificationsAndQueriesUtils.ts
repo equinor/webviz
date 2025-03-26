@@ -1,7 +1,9 @@
-import { StatisticFunction_api, VectorStatisticData_api } from "@api";
-import { UseQueryResult } from "@tanstack/react-query";
+import type { VectorStatisticData_api } from "@api";
+import { StatisticFunction_api } from "@api";
+import type { UseQueryResult } from "@tanstack/react-query";
 
-import { FanchartStatisticOption, VectorSpec } from "../../typesAndEnums";
+import type { VectorSpec } from "../../typesAndEnums";
+import { FanchartStatisticOption } from "../../typesAndEnums";
 
 /**
     Helper function to create an array with pair of vector specification and loaded query data
@@ -11,7 +13,7 @@ import { FanchartStatisticOption, VectorSpec } from "../../typesAndEnums";
  */
 export function createLoadedVectorSpecificationAndDataArray<T>(
     vectorSpecifications: VectorSpec[],
-    queryResults: UseQueryResult<T | null | undefined>[]
+    queryResults: UseQueryResult<T | null | undefined>[],
 ): { vectorSpecification: VectorSpec; data: T }[] {
     if (vectorSpecifications.length !== queryResults.length) {
         throw new Error(
@@ -19,7 +21,7 @@ export function createLoadedVectorSpecificationAndDataArray<T>(
                 vectorSpecifications.length +
                 " and query results: " +
                 queryResults.length +
-                "."
+                ".",
         );
     }
 
@@ -39,7 +41,7 @@ export function createLoadedVectorSpecificationAndDataArray<T>(
  */
 export function filterVectorSpecificationAndIndividualStatisticsDataArray(
     vectorSpecificationAndStatisticsData: { vectorSpecification: VectorSpec; data: VectorStatisticData_api }[],
-    selectedIndividualStatisticOptions: StatisticFunction_api[]
+    selectedIndividualStatisticOptions: StatisticFunction_api[],
 ): { vectorSpecification: VectorSpec; data: VectorStatisticData_api }[] {
     if (selectedIndividualStatisticOptions.length === 0) return [];
 
@@ -57,7 +59,7 @@ export function filterVectorSpecificationAndIndividualStatisticsDataArray(
  */
 export function filterVectorSpecificationAndFanchartStatisticsDataArray(
     vectorSpecificationAndStatisticsData: { vectorSpecification: VectorSpec; data: VectorStatisticData_api }[],
-    selectedFanchartStatisticOptions: FanchartStatisticOption[]
+    selectedFanchartStatisticOptions: FanchartStatisticOption[],
 ): { vectorSpecification: VectorSpec; data: VectorStatisticData_api }[] {
     const includeStatisticFunctions: StatisticFunction_api[] = [];
     if (selectedFanchartStatisticOptions.includes(FanchartStatisticOption.MEAN))

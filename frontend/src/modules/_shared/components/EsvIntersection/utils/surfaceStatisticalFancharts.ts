@@ -1,4 +1,4 @@
-import { SurfaceStatisticalFanchart } from "../layers/SurfaceStatisticalFanchartCanvasLayer";
+import type { SurfaceStatisticalFanchart } from "../layers/SurfaceStatisticalFanchartCanvasLayer";
 
 export type StratigraphyColorMap = { [name: string]: string };
 
@@ -32,7 +32,7 @@ export function makeSurfaceStatisticalFanchartFromRealizationSurface(
         minMax: boolean;
         p10p90: boolean;
         p50: boolean;
-    }
+    },
 ): SurfaceStatisticalFanchart {
     const numPoints = realizationSamplePoints[0]?.length || 0;
 

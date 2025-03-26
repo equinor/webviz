@@ -1,37 +1,23 @@
-import React from "react";
+import type React from "react";
 
 import { SurfaceStatisticFunction_api } from "@api";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 
-import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { Setting, SettingComponentProps } from "../../interfaces";
-import { SettingRegistry } from "../SettingRegistry";
-import { SettingType } from "../settingsTypes";
+import type {
+    CustomSettingImplementation,
+    SettingComponentProps,
+} from "../../interfacesAndTypes/customSettingImplementation";
+import type { SettingCategory } from "../settingsDefinitions";
 
-export class StatisticFunctionSetting implements Setting<SurfaceStatisticFunction_api> {
-    private _delegate: SettingDelegate<SurfaceStatisticFunction_api>;
+type ValueType = SurfaceStatisticFunction_api;
 
-    constructor() {
-        this._delegate = new SettingDelegate<SurfaceStatisticFunction_api>(SurfaceStatisticFunction_api.MEAN, this);
-    }
-
-    getType(): SettingType {
-        return SettingType.STATISTIC_FUNCTION;
-    }
-
-    getLabel(): string {
-        return "Statistic function";
-    }
-
-    getDelegate(): SettingDelegate<SurfaceStatisticFunction_api> {
-        return this._delegate;
-    }
-
+export class StatisticFunctionSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
     isValueValid(): boolean {
         return true;
     }
 
-    makeComponent(): (props: SettingComponentProps<SurfaceStatisticFunction_api>) => React.ReactNode {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
         const itemArr: DropdownOption[] = [
             { value: SurfaceStatisticFunction_api.MEAN, label: "Mean" },
             { value: SurfaceStatisticFunction_api.STD, label: "Std" },
@@ -42,12 +28,12 @@ export class StatisticFunctionSetting implements Setting<SurfaceStatisticFunctio
             { value: SurfaceStatisticFunction_api.P50, label: "P50" },
         ];
 
-        return function StatisticFunction(props: SettingComponentProps<SurfaceStatisticFunction_api>) {
+        return function StatisticFunction(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
             return (
                 <Dropdown
                     options={itemArr}
                     value={!props.isOverridden ? props.value?.toString() : props.overriddenValue?.toString()}
-                    onChange={(newVal: string) => props.onValueChange(newVal as SurfaceStatisticFunction_api)}
+                    onChange={(newVal: string) => props.onValueChange(newVal as ValueType)}
                     disabled={props.isOverridden}
                     showArrows
                 />
@@ -55,5 +41,3 @@ export class StatisticFunctionSetting implements Setting<SurfaceStatisticFunctio
         };
     }
 }
-
-SettingRegistry.registerSetting(StatisticFunctionSetting);

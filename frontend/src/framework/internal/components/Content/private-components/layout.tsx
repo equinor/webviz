@@ -1,26 +1,16 @@
 import React from "react";
 
-import { GuiEvent, GuiEventPayloads } from "@framework/GuiMessageBroker";
-import { LayoutElement, Workbench } from "@framework/Workbench";
-import { LayoutBox, LayoutBoxComponents, makeLayoutBoxes } from "@framework/components/LayoutBox";
+import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
+import { GuiEvent } from "@framework/GuiMessageBroker";
+import type { LayoutElement, Workbench } from "@framework/Workbench";
+import type { LayoutBox } from "@framework/components/LayoutBox";
+import { LayoutBoxComponents, makeLayoutBoxes } from "@framework/components/LayoutBox";
 import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import {
-    MANHATTAN_LENGTH,
-    Rect2D,
-    Size2D,
-    addMarginToRect,
-    pointRelativeToDomRect,
-    rectContainsPoint,
-} from "@lib/utils/geometry";
-import {
-    Vec2,
-    multiplyElementWiseVec2,
-    point2Distance,
-    scaleVec2NonUniform,
-    subtractVec2,
-    vec2FromPointerEvent,
-} from "@lib/utils/vec2";
+import type { Rect2D, Size2D } from "@lib/utils/geometry";
+import { MANHATTAN_LENGTH, addMarginToRect, pointRelativeToDomRect, rectContainsPoint } from "@lib/utils/geometry";
+import type { Vec2 } from "@lib/utils/vec2";
+import { multiplyVec2, point2Distance, scaleVec2NonUniform, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
 
 import { v4 } from "uuid";
 
@@ -81,7 +71,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     relativePointerPosition,
                     layoutDivSize,
                     moduleInstanceId,
-                    isNewModule
+                    isNewModule,
                 );
                 if (preview) {
                     currentLayout = preview.toLayout();
@@ -98,8 +88,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                         multiplyElementWiseVec2(relativePointerToElementDiff, {
                             x: draggedElementSize.width,
                             y: 1,
-                        })
-                    )
+                        }),
+                    ),
                 );
             }
             delayTimer = null;
@@ -182,7 +172,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     relativePointerToElementDiff = scaleVec2NonUniform(
                         subtractVec2(pointerDownPoint, pointerDownElementPosition),
                         factorX,
-                        1
+                        1,
                     );
                     lastTimeStamp = e.timeStamp;
                     lastMovePosition = vec2FromPointerEvent(e);
@@ -200,8 +190,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                         multiplyElementWiseVec2(relativePointerToElementDiff, {
                             x: draggedElementSize.width,
                             y: 1,
-                        })
-                    )
+                        }),
+                    ),
                 );
                 setPointer(subtractVec2(vec2FromPointerEvent(e), rect));
                 const speed = point2Distance(vec2FromPointerEvent(e), lastMovePosition) / (e.timeStamp - lastTimeStamp);
@@ -275,7 +265,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             document.addEventListener("pointermove", handlePointerMove);
             document.addEventListener("keydown", handleButtonClick);
             document.addEventListener("pointercancel", handlePointerUp);
-            document.addEventListener("blur", handlePointerUp);
+            document.addEventListener("blur-sm", handlePointerUp);
         }
 
         function removeDraggingEventListeners() {
@@ -283,7 +273,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             document.removeEventListener("pointermove", handlePointerMove);
             document.removeEventListener("keydown", handleButtonClick);
             document.removeEventListener("pointercancel", handlePointerUp);
-            document.removeEventListener("blur", handlePointerUp);
+            document.removeEventListener("blur-sm", handlePointerUp);
         }
 
         function handleModuleHeaderPointerDown(payload: GuiEventPayloads[GuiEvent.ModuleHeaderPointerDown]) {
@@ -308,15 +298,15 @@ export const Layout: React.FC<LayoutProps> = (props) => {
 
         const removeModuleHeaderPointerDownSubscriber = guiMessageBroker.subscribeToEvent(
             GuiEvent.ModuleHeaderPointerDown,
-            handleModuleHeaderPointerDown
+            handleModuleHeaderPointerDown,
         );
         const removeNewModulePointerDownSubscriber = guiMessageBroker.subscribeToEvent(
             GuiEvent.NewModulePointerDown,
-            handleNewModulePointerDown
+            handleNewModulePointerDown,
         );
         const removeRemoveModuleInstanceRequestSubscriber = guiMessageBroker.subscribeToEvent(
             GuiEvent.RemoveModuleInstanceRequest,
-            handleRemoveModuleInstanceRequest
+            handleRemoveModuleInstanceRequest,
         );
 
         return () => {
@@ -353,7 +343,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
 
     return (
         <div ref={mainRef} className="relative flex h-full w-full">
-            <div ref={ref} className="h-full flex-grow">
+            <div ref={ref} className="h-full grow">
                 {layoutBoxRef.current && draggedModuleInstanceId !== null && (
                     <LayoutBoxComponents
                         active={draggedModuleInstanceId}

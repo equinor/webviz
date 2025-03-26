@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ModuleViewProps } from "@framework/Module";
+import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -16,7 +16,7 @@ import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriter
 import { useBuildPlotAndTable } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -45,7 +45,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         divBoundingRect.height,
         hoveredRegion?.regionName ?? null,
         hoveredZone?.zoneName ?? null,
-        hoveredFacies?.faciesName ?? null
+        hoveredFacies?.faciesName ?? null,
     );
 
     const table = plotAndTableData?.table;

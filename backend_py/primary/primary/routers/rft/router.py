@@ -22,8 +22,8 @@ async def get_table_definition(
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
 ) -> schemas.RftTableDefinition:
-    access = await RftAccess.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    rft_table_def = await access.get_rft_info()
+    access = RftAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    rft_table_def = await access.get_rft_info_async()
 
     return converters.to_api_table_definition(rft_table_def)
 
@@ -47,8 +47,8 @@ async def get_realization_data(
     if realizations_encoded_as_uint_list_str:
         realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
-    access = await RftAccess.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    data = await access.get_rft_well_realization_data(
+    access = RftAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    data = await access.get_rft_well_realization_data_async(
         well_name=well_name,
         response_name=response_name,
         timestamps_utc_ms=timestamps_utc_ms,

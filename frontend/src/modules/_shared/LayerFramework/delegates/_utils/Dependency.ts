@@ -2,9 +2,12 @@ import { isCancelledError } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
-import { GlobalSettings } from "../../framework/LayerManager/LayerManager";
-import { Settings, UpdateFunc } from "../../interfaces";
-import { SettingsContextDelegate } from "../SettingsContextDelegate";
+import type { GlobalSettings } from "../../framework/DataLayerManager/DataLayerManager";
+import { SettingTopic } from "../../framework/SettingManager/SettingManager";
+import type { UpdateFunc } from "../../interfacesAndTypes/customSettingsHandler";
+import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
+import type { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
+import type { SettingsContextDelegate } from "../SettingsContextDelegate";
 
 /*
  * Dependency class is used to represent a node in the dependency graph of a layer settings context.
@@ -17,21 +20,27 @@ import { SettingsContextDelegate } from "../SettingsContextDelegate";
  * not when they are accessed.
  * The dependency can be subscribed to, and will notify its subscribers whenever its value changes.
  */
-export class Dependency<TReturnValue, TSettings extends Settings, TKey extends keyof TSettings> {
-    private _updateFunc: UpdateFunc<TReturnValue, TSettings, TKey>;
+export class Dependency<
+    TReturnValue,
+    TSettings extends Settings,
+    TSettingTypes extends MakeSettingTypesMap<TSettings>,
+    TKey extends SettingsKeysFromTuple<TSettings>
+> {
+    private _updateFunc: UpdateFunc<TReturnValue, TSettings, TSettingTypes, TKey>;
     private _dependencies: Set<(value: Awaited<TReturnValue> | null) => void> = new Set();
     private _loadingDependencies: Set<(loading: boolean, hasDependencies: boolean) => void> = new Set();
+    private _isLoading = false;
 
-    private _contextDelegate: SettingsContextDelegate<TSettings, any, TKey, any>;
+    private _contextDelegate: SettingsContextDelegate<TSettings, any, TSettingTypes, TKey, any>;
 
-    private _makeSettingGetter: <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => void;
+    private _makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[K]) => void) => void;
     private _makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
         key: K,
         handler: (value: GlobalSettings[K]) => void
     ) => void;
     private _cachedSettingsMap: Map<string, any> = new Map();
     private _cachedGlobalSettingsMap: Map<string, any> = new Map();
-    private _cachedDependenciesMap: Map<Dependency<any, TSettings, any>, any> = new Map();
+    private _cachedDependenciesMap: Map<Dependency<any, TSettings, TSettingTypes, any>, any> = new Map();
     private _cachedValue: Awaited<TReturnValue> | null = null;
     private _abortController: AbortController | null = null;
     private _isInitialized = false;
@@ -39,9 +48,9 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
     private _numChildDependencies = 0;
 
     constructor(
-        contextDelegate: SettingsContextDelegate<TSettings, any, TKey, any>,
-        updateFunc: UpdateFunc<TReturnValue, TSettings, TKey>,
-        makeSettingGetter: <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => void,
+        contextDelegate: SettingsContextDelegate<TSettings, TSettingTypes, any, TKey, any>,
+        updateFunc: UpdateFunc<TReturnValue, TSettings, TSettingTypes, TKey>,
+        makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[K]) => void) => void,
         makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
             key: K,
             handler: (value: GlobalSettings[K]) => void
@@ -49,7 +58,7 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
     ) {
         this._contextDelegate = contextDelegate;
         this._updateFunc = updateFunc;
-        this._makeSettingGetter = makeSettingGetter;
+        this._makeLocalSettingGetter = makeLocalSettingGetter;
         this._makeGlobalSettingGetter = makeGlobalSettingGetter;
 
         this.getGlobalSetting = this.getGlobalSetting.bind(this);
@@ -63,6 +72,10 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
 
     getValue(): Awaited<TReturnValue> | null {
         return this._cachedValue;
+    }
+
+    getIsLoading(): boolean {
+        return this._isLoading;
     }
 
     subscribe(callback: (value: Awaited<TReturnValue> | null) => void, childDependency: boolean = false): () => void {
@@ -88,28 +101,41 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
         };
     }
 
-    private getLocalSetting<K extends TKey>(settingName: K): TSettings[K] {
+    private getLocalSetting<K extends TKey>(settingName: K): TSettingTypes[K] {
         if (!this._isInitialized) {
             this._numParentDependencies++;
         }
 
+        // If the dependency has already subscribed to this setting, return the cached value
+        // that is updated when the setting changes
         if (this._cachedSettingsMap.has(settingName as string)) {
             return this._cachedSettingsMap.get(settingName as string);
         }
 
-        this._makeSettingGetter(settingName, (value) => {
+        const setting = this._contextDelegate.getSettings()[settingName];
+        const value = setting.getValue();
+        this._cachedSettingsMap.set(settingName as string, value);
+
+        this._makeLocalSettingGetter(settingName, (value) => {
             this._cachedSettingsMap.set(settingName as string, value);
             this.callUpdateFunc();
         });
 
-        this._cachedSettingsMap.set(
-            settingName as string,
-            this._contextDelegate.getSettings()[settingName].getDelegate().getValue()
-        );
+        setting.getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_LOADING)(() => {
+            const loading = setting.isLoading();
+            if (loading) {
+                this.setLoadingState(true);
+            }
+            // Not subscribing to loading state false as it will
+            // be set when this dependency is updated
+            // #Waterfall
+        });
+
         return this._cachedSettingsMap.get(settingName as string);
     }
 
     private setLoadingState(loading: boolean) {
+        this._isLoading = loading;
         for (const callback of this._loadingDependencies) {
             callback(loading, this.hasChildDependencies());
         }
@@ -136,7 +162,7 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
         return this._cachedGlobalSettingsMap.get(settingName as string);
     }
 
-    private getHelperDependency<TDep>(dep: Dependency<TDep, TSettings, TKey>): Awaited<TDep> | null {
+    private getHelperDependency<TDep>(dep: Dependency<TDep, TSettings, TSettingTypes, TKey>): Awaited<TDep> | null {
         if (!this._isInitialized) {
             this._numParentDependencies++;
         }
@@ -214,12 +240,12 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
     }
 
     private applyNewValue(newValue: Awaited<TReturnValue> | null) {
-        this.setLoadingState(false);
         if (!isEqual(newValue, this._cachedValue) || newValue === null) {
             this._cachedValue = newValue;
             for (const callback of this._dependencies) {
                 callback(newValue);
             }
         }
+        this.setLoadingState(false);
     }
 }

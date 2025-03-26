@@ -4,7 +4,7 @@ from typing import List, Optional
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary import config
-from primary.httpx_client import httpx_async_client
+from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from primary.services.service_exceptions import (
     Service,
     InvalidDataError,
@@ -15,7 +15,7 @@ from primary.services.service_exceptions import (
 LOGGER = logging.getLogger(__name__)
 
 
-async def ssdl_get_request(access_token: str, endpoint: str, params: Optional[dict] = None) -> List[dict]:
+async def ssdl_get_request_async(access_token: str, endpoint: str, params: Optional[dict] = None) -> List[dict]:
     """
     Generic GET request to SSDL API.
     Uses `next` pagination to get all results.
@@ -29,7 +29,7 @@ async def ssdl_get_request(access_token: str, endpoint: str, params: Optional[di
     }
     timer = PerfTimer()
 
-    response = await httpx_async_client.client.get(urlstring, params=params, headers=headers, timeout=60)
+    response = await HTTPX_ASYNC_CLIENT_WRAPPER.client.get(urlstring, params=params, headers=headers, timeout=60)
     results = []
     if response.status_code == 200:
         results = response.json()

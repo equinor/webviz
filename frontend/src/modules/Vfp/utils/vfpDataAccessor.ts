@@ -1,4 +1,5 @@
-import { Alq_api, FlowRateType_api, Gfr_api, VfpInjTable_api, VfpProdTable_api, Wfr_api } from "@api";
+import type { Gfr_api, VfpInjTable_api, VfpProdTable_api, Wfr_api } from "@api";
+import { Alq_api, FlowRateType_api } from "@api";
 
 import { isInjTable, isProdTable } from "./vfpTableClassifier";
 

@@ -22,7 +22,7 @@ export const vfpTableQueryAtom = atomWithQuery((get) => {
             selectedEnsembleIdent?.getCaseUuid() &&
                 selectedEnsembleIdent?.getEnsembleName() &&
                 selectedRealizationNumber !== null &&
-                selectedVfpTableName
+                selectedVfpTableName,
         ),
     };
     return query;
@@ -43,7 +43,7 @@ export const vfpTableNamesQueryAtom = atomWithQuery((get) => {
         enabled: Boolean(
             selectedEnsembleIdent?.getCaseUuid() &&
                 selectedEnsembleIdent?.getEnsembleName() &&
-                selectedRealizationNumber !== null
+                selectedRealizationNumber !== null,
         ),
     };
     return query;

@@ -9,7 +9,7 @@ import { isEqual } from "lodash";
 
 import { HoveredArea, SortableListContext } from "./sortableList";
 import { SortableListDropIndicator } from "./sortableListDropIndicator";
-import { SortableListItemProps } from "./sortableListItem";
+import type { SortableListItemProps } from "./sortableListItem";
 
 import { DenseIconButton } from "../DenseIconButton";
 
@@ -20,6 +20,7 @@ export type SortableListGroupProps = {
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
     headerStyle?: React.CSSProperties;
+    content?: React.ReactNode;
     contentStyle?: React.CSSProperties;
     contentWhenEmpty?: React.ReactNode;
     children?: React.ReactElement<SortableListItemProps>[];
@@ -33,6 +34,7 @@ export type SortableListGroupProps = {
  * @param {boolean} props.expanded Whether the group should be expanded.
  * @param {React.ReactNode} props.startAdornment Start adornment to display to the left of the title.
  * @param {React.ReactNode} props.endAdornment End adornment to display to the right of the title.
+ * @param {React.ReactNode} props.content Optional content to display before actual children.
  * @param {React.ReactNode} props.contentWhenEmpty Content to display when the group is empty.
  * @param {React.ReactNode} props.children Child components to display as the content of the list item.
  *
@@ -92,7 +94,7 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
                     createPortal(
                         <div
                             className={resolveClassNames(
-                                "flex h-8 bg-blue-50 text-sm items-center gap-1 border-b border-b-gray-300 absolute z-50 opacity-75"
+                                "flex h-8 bg-blue-50 text-sm items-center gap-1 border-b border-b-gray-300 absolute z-50 opacity-75",
                             )}
                             style={{
                                 left: dragPosition.x,
@@ -106,17 +108,18 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
                                 hovered={isHeaderHovered}
                                 {...props}
                             />
-                        </div>
+                        </div>,
                     )}
                 <div
                     className={resolveClassNames(
                         "sortable-list-group-content pl-1 bg-white shadow-inner border-b border-b-gray-300",
                         {
                             hidden: !isExpanded,
-                        }
+                        },
                     )}
                     style={props.contentStyle}
                 >
+                    {props.content}
                     {hasContent ? props.children : props.contentWhenEmpty}
                 </div>
             </div>
@@ -143,9 +146,9 @@ function Header(props: HeaderProps): React.ReactNode {
             className={resolveClassNames(
                 "sortable-list-item-header flex w-full items-center gap-1 h-8 text-sm border-b border-b-gray-400 px-2",
                 {
-                    "!bg-blue-300": props.hovered,
+                    "bg-blue-300!": props.hovered,
                     "bg-slate-300": !props.hovered,
-                }
+                },
             )}
             style={props.headerStyle}
         >
@@ -160,9 +163,9 @@ function Header(props: HeaderProps): React.ReactNode {
                     {props.expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
                 </DenseIconButton>
             )}
-            <div className="flex items-center gap-2 flex-grow min-w-0">
+            <div className="flex items-center gap-2 grow min-w-0">
                 {props.startAdornment}
-                <div className="flex-grow font-bold min-w-0">{props.title}</div>
+                <div className="grow font-bold min-w-0">{props.title}</div>
                 {props.endAdornment}
             </div>
         </div>

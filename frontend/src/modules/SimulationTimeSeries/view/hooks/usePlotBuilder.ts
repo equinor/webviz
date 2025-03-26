@@ -1,16 +1,17 @@
-import React from "react";
+import type React from "react";
 
-import { SummaryVectorObservations_api } from "@api";
-import { ViewContext } from "@framework/ModuleContext";
-import { ColorSet } from "@lib/utils/ColorSet";
-import { Size2D } from "@lib/utils/geometry";
-import { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
+import type { SummaryVectorObservations_api } from "@api";
+import type { ViewContext } from "@framework/ModuleContext";
+import type { ColorSet } from "@lib/utils/ColorSet";
+import type { Size2D } from "@lib/utils/geometry";
+import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
 import { useAtomValue } from "jotai";
 
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
-import { GroupBy, VectorSpec, VisualizationMode } from "../../typesAndEnums";
+import type { VectorSpec } from "../../typesAndEnums";
+import { GroupBy, VisualizationMode } from "../../typesAndEnums";
 import { resampleFrequencyAtom } from "../atoms/baseAtoms";
 import {
     activeTimestampUtcMsAtom,
@@ -20,7 +21,7 @@ import {
 } from "../atoms/derivedAtoms";
 import { vectorObservationsQueriesAtom } from "../atoms/queryAtoms";
 import { PlotBuilder, SubplotOwner } from "../utils/PlotBuilder";
-import { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
+import type { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
 import {
     filterVectorSpecificationAndFanchartStatisticsDataArray,
     filterVectorSpecificationAndIndividualStatisticsDataArray,
@@ -31,7 +32,7 @@ export function usePlotBuilder(
     wrapperDivSize: Size2D,
     colorSet: ColorSet,
     ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null,
-    handlePlotOnClick?: ((event: Readonly<Plotly.PlotMouseEvent>) => void) | undefined
+    handlePlotOnClick?: ((event: Readonly<Plotly.PlotMouseEvent>) => void) | undefined,
 ): React.ReactNode {
     const groupBy = viewContext.useSettingsToViewInterfaceValue("groupBy");
     const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
@@ -46,7 +47,7 @@ export function usePlotBuilder(
     const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
     const loadedVectorSpecificationsAndStatisticsData = useAtomValue(loadedVectorSpecificationsAndStatisticsDataAtom);
     const loadedRegularEnsembleVectorSpecificationsAndHistoricalData = useAtomValue(
-        loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom
+        loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     );
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
@@ -84,7 +85,7 @@ export function usePlotBuilder(
         ensemblesParameterColoring ?? undefined,
         subplotLimitation.direction,
         subplotLimitation.maxDirectionElements,
-        scatterType
+        scatterType,
     );
 
     // Add traces based on visualization mode
@@ -102,7 +103,7 @@ export function usePlotBuilder(
     if (visualizationMode === VisualizationMode.STATISTICAL_FANCHART) {
         const selectedVectorsFanchartStatisticData = filterVectorSpecificationAndFanchartStatisticsDataArray(
             loadedVectorSpecificationsAndStatisticsData,
-            statisticsSelection.FanchartStatisticsSelection
+            statisticsSelection.FanchartStatisticsSelection,
         );
         plotBuilder.addFanchartTraces(selectedVectorsFanchartStatisticData);
     }
@@ -110,7 +111,7 @@ export function usePlotBuilder(
         const highlightStatistics = false;
         const selectedVectorsIndividualStatisticData = filterVectorSpecificationAndIndividualStatisticsDataArray(
             loadedVectorSpecificationsAndStatisticsData,
-            statisticsSelection.IndividualStatisticsSelection
+            statisticsSelection.IndividualStatisticsSelection,
         );
         plotBuilder.addStatisticsTraces(selectedVectorsIndividualStatisticData, highlightStatistics);
     }
@@ -119,7 +120,7 @@ export function usePlotBuilder(
         const highlightStatistics = true;
         const selectedVectorsIndividualStatisticData = filterVectorSpecificationAndIndividualStatisticsDataArray(
             loadedVectorSpecificationsAndStatisticsData,
-            statisticsSelection.IndividualStatisticsSelection
+            statisticsSelection.IndividualStatisticsSelection,
         );
         plotBuilder.addRealizationsTraces(loadedVectorSpecificationsAndRealizationData, useIncreasedBrightness);
         plotBuilder.addStatisticsTraces(selectedVectorsIndividualStatisticData, highlightStatistics);

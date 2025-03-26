@@ -1,13 +1,13 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-import { ModuleViewProps } from "@framework/Module";
+import type { ModuleViewProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleType } from "@lib/utils/ColorScale";
 
-import { PlotData } from "plotly.js";
+import type { PlotData } from "plotly.js";
 
-import { Interfaces } from "./interfaces";
+import type { Interfaces } from "./interfaces";
 
 const countryData = [
     "Belarus",

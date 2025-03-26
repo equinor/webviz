@@ -1,20 +1,23 @@
 import React from "react";
 
-import { Layer, PickingInfo } from "@deck.gl/core";
+import type { Layer, PickingInfo } from "@deck.gl/core";
 import { ColumnLayer, SolidPolygonLayer } from "@deck.gl/layers";
-import { IntersectionPolyline, IntersectionPolylineWithoutId } from "@framework/userCreatedItems/IntersectionPolylines";
+import type {
+    IntersectionPolyline,
+    IntersectionPolylineWithoutId,
+} from "@framework/userCreatedItems/IntersectionPolylines";
 import { Button } from "@lib/components/Button";
 import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
-import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
+import type { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { Add, FilterCenterFocus, Polyline, Remove } from "@mui/icons-material";
-import { LayerPickInfo, ViewStateType } from "@webviz/subsurface-viewer";
-import { MapMouseEvent } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
-import { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
+import type { LayerPickInfo, ViewStateType } from "@webviz/subsurface-viewer";
+import type { MapMouseEvent } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
+import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
 
-import { Feature } from "geojson";
+import type { Feature } from "geojson";
 import { isEqual } from "lodash";
 
 import { PolylineEditingPanel } from "./PolylineEditingPanel";
@@ -89,7 +92,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
 
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<BoundingBox2D | BoundingBox3D | undefined>(undefined);
     const [prevIntersectionPolyline, setPrevIntersectionPolyline] = React.useState<IntersectionPolyline | undefined>(
-        undefined
+        undefined,
     );
 
     const internalRef = React.useRef<HTMLDivElement>(null);
@@ -210,7 +213,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
             zExtension,
             polylineEditPointsModusActive ? selectedPolylinePointIndex : -1,
             hoveredPolylinePointIndex,
-            [255, 255, 255, 255]
+            [255, 255, 255, 255],
         );
 
         const userPolylinePolygonsData = currentlyEditedPolylineData.polygonData;
@@ -384,7 +387,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 });
             }
         },
-        [selectedPolylinePointIndex]
+        [selectedPolylinePointIndex],
     );
 
     const handleCurrentlySelectedPointChange = React.useCallback(
@@ -403,7 +406,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 });
             }
         },
-        [selectedPolylinePointIndex]
+        [selectedPolylinePointIndex],
     );
 
     React.useEffect(() => {
@@ -458,7 +461,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 return newVerticalScale;
             });
         },
-        [onVerticalScaleChange]
+        [onVerticalScaleChange],
     );
 
     const handleVerticalScaleDecrease = React.useCallback(
@@ -471,7 +474,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 return newVerticalScale;
             });
         },
-        [onVerticalScaleChange]
+        [onVerticalScaleChange],
     );
 
     function makeTooltip(info: PickingInfo): string | null {
@@ -522,21 +525,21 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
             nodes.push(
                 <div>
                     Press <KeyboardButton text="Delete" /> to remove selected point
-                </div>
+                </div>,
             );
         } else if (selectedPolylinePointIndex === 0) {
             nodes.push(<div>Click on map to add new point to start of polyline</div>);
             nodes.push(
                 <div>
                     Press <KeyboardButton text="Delete" /> to remove selected point
-                </div>
+                </div>,
             );
         } else {
             nodes.push(<div>Select either end of polyline to add new point</div>);
             nodes.push(
                 <div>
                     Press <KeyboardButton text="Delete" /> to remove selected point
-                </div>
+                </div>,
             );
         }
 
@@ -643,9 +646,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 verticalScale={verticalScale}
                 pickingRadius={10}
             />
-            <div className="absolute bottom-0 right-0 z-30 bg-white bg-opacity-50 p-2 pointer-events-none">
-                {makeHelperText()}
-            </div>
+            <div className="absolute bottom-0 right-0 z-30 bg-white/50 p-2 pointer-events-none">{makeHelperText()}</div>
         </div>
     );
 }
@@ -656,7 +657,7 @@ type KeyboardButtonProps = {
 
 function KeyboardButton(props: KeyboardButtonProps): React.ReactNode {
     return (
-        <span className="bg-gray-200 p-1 m-2 rounded text-sm text-gray-800 border border-gray-400 shadow inline-flex items-center justify-center">
+        <span className="bg-gray-200 p-1 m-2 rounded-sm text-sm text-gray-800 border border-gray-400 shadow-sm inline-flex items-center justify-center">
             {props.text}
         </span>
     );
@@ -693,7 +694,7 @@ function SubsurfaceViewerToolbar(props: SubsurfaceViewerToolbarProps): React.Rea
     }
 
     return (
-        <div className="absolute left-0 top-0 bg-white p-1 rounded border-gray-300 border shadow z-30 text-sm flex flex-col gap-1 items-center">
+        <div className="absolute left-0 top-0 bg-white p-1 rounded-sm border-gray-300 border shadow-sm z-30 text-sm flex flex-col gap-1 items-center">
             <Button onClick={handleAddPolylineClick} title="Add new custom intersection polyline">
                 <Polyline fontSize="inherit" />
             </Button>
@@ -719,7 +720,7 @@ function SubsurfaceViewerToolbar(props: SubsurfaceViewerToolbarProps): React.Rea
 }
 
 function ToolBarDivider(): React.ReactNode {
-    return <div className="w-full h-[1px] bg-gray-300" />;
+    return <div className="w-full h-px bg-gray-300" />;
 }
 
 function makePolylineData(
@@ -728,7 +729,7 @@ function makePolylineData(
     zExtension: number,
     selectedPolylineIndex: number | null,
     hoveredPolylineIndex: number | null,
-    color: [number, number, number, number]
+    color: [number, number, number, number],
 ): {
     polygonData: { polygon: number[][]; color: number[] }[];
     columnData: { index: number; centroid: number[]; color: number[] }[];

@@ -1,4 +1,4 @@
-import { SurfaceDef_api, PolygonData_api, WellboreTrajectory_api } from "@api";
+import type { PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
 
 export type SurfaceMeshLayerSettings = {
     contours?: boolean | number[];
@@ -27,7 +27,7 @@ export function createNorthArrowLayer(visible?: boolean): Record<string, unknown
 }
 export function createAxesLayer(
     bounds: [number, number, number, number, number, number],
-    visible?: boolean
+    visible?: boolean,
 ): Record<string, unknown> {
     return {
         "@@type": "AxesLayer",
@@ -40,7 +40,7 @@ export function createSurfaceMeshLayer(
     surfaceDef: SurfaceDef_api,
     mesh_data: Float32Array,
     surfaceSettings?: SurfaceMeshLayerSettings | null,
-    property_data?: Float32Array | null
+    property_data?: Float32Array | null,
 ): Record<string, unknown> {
     surfaceSettings = surfaceSettings || defaultSurfaceSettings;
     return {
@@ -148,7 +148,7 @@ export function createWellBoreHeaderLayer(wellTrajectories: WellboreTrajectory_a
             wellTrajectory.northingArr[0],
             -wellTrajectory.tvdMslArr[0],
             wellTrajectory.uniqueWellboreIdentifier,
-            wellTrajectory.wellboreUuid
+            wellTrajectory.wellboreUuid,
         );
     });
 
@@ -171,7 +171,7 @@ function wellHeaderMarkerToGeojson(
     y: number,
     z: number,
     uwi: string,
-    uuid: string
+    uuid: string,
 ): Record<string, unknown> {
     // let data: Record<string, unknown> = {
     //     type: "Feature",

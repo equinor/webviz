@@ -44,19 +44,19 @@ class RealizationSurfQueries:
         self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
 
-    async def find_surf_info(self, time_type: SurfTimeType) -> list[SurfInfo]:
+    async def find_surf_info_async(self, time_type: SurfTimeType) -> list[SurfInfo]:
         query_dict = _build_realization_surfs_query_dict(self._case_uuid, self._iteration_name, time_type)
-        ret_arr = await _run_query_and_aggregate_surf_info(self._sumo_client, query_dict=query_dict)
+        ret_arr = await _run_query_and_aggregate_surf_info_async(self._sumo_client, query_dict=query_dict)
         return ret_arr
 
-    async def find_surf_time_points(self) -> list[TimePoint]:
+    async def find_surf_time_points_async(self) -> list[TimePoint]:
         query_dict = _build_realization_surfs_query_dict(self._case_uuid, self._iteration_name, SurfTimeType.TIME_POINT)
-        ret_arr = await _run_query_and_aggregate_time_points(self._sumo_client, query_dict=query_dict)
+        ret_arr = await _run_query_and_aggregate_time_points_async(self._sumo_client, query_dict=query_dict)
         return ret_arr
 
-    async def find_surf_time_intervals(self) -> list[TimeInterval]:
+    async def find_surf_time_intervals_async(self) -> list[TimeInterval]:
         query_dict = _build_realization_surfs_query_dict(self._case_uuid, self._iteration_name, SurfTimeType.INTERVAL)
-        ret_arr = await _run_query_and_aggregate_time_intervals(self._sumo_client, query_dict=query_dict)
+        ret_arr = await _run_query_and_aggregate_time_intervals_async(self._sumo_client, query_dict=query_dict)
         return ret_arr
 
 
@@ -65,19 +65,19 @@ class ObservedSurfQueries:
         self._sumo_client: SumoClient = sumo_client
         self._case_uuid: str = case_uuid
 
-    async def find_surf_info(self, time_type: SurfTimeType) -> list[SurfInfo]:
+    async def find_surf_info_async(self, time_type: SurfTimeType) -> list[SurfInfo]:
         query_dict = _build_observed_surfs_query_dict(self._case_uuid, time_type)
-        ret_arr = await _run_query_and_aggregate_surf_info(self._sumo_client, query_dict=query_dict)
+        ret_arr = await _run_query_and_aggregate_surf_info_async(self._sumo_client, query_dict=query_dict)
         return ret_arr
 
-    async def find_surf_time_points(self) -> list[TimePoint]:
+    async def find_surf_time_points_async(self) -> list[TimePoint]:
         query_dict = _build_observed_surfs_query_dict(self._case_uuid, SurfTimeType.TIME_POINT)
-        ret_arr = await _run_query_and_aggregate_time_points(self._sumo_client, query_dict=query_dict)
+        ret_arr = await _run_query_and_aggregate_time_points_async(self._sumo_client, query_dict=query_dict)
         return ret_arr
 
-    async def find_surf_time_intervals(self) -> list[TimeInterval]:
+    async def find_surf_time_intervals_async(self) -> list[TimeInterval]:
         query_dict = _build_observed_surfs_query_dict(self._case_uuid, SurfTimeType.INTERVAL)
-        ret_arr = await _run_query_and_aggregate_time_intervals(self._sumo_client, query_dict=query_dict)
+        ret_arr = await _run_query_and_aggregate_time_intervals_async(self._sumo_client, query_dict=query_dict)
         return ret_arr
 
 
@@ -152,7 +152,7 @@ def _build_observed_surfs_query_dict(case_uuid: str, time_type: SurfTimeType) ->
 
 
 # --------------------------------------------------------------------------------------
-async def _run_query_and_aggregate_surf_info(sumo_client: SumoClient, query_dict: dict) -> list[SurfInfo]:
+async def _run_query_and_aggregate_surf_info_async(sumo_client: SumoClient, query_dict: dict) -> list[SurfInfo]:
     search_payload = {
         "track_total_hits": True,
         "query": query_dict,
@@ -247,7 +247,9 @@ async def _run_query_and_aggregate_surf_info(sumo_client: SumoClient, query_dict
 
 
 # --------------------------------------------------------------------------------------
-async def _run_query_and_aggregate_time_intervals(sumo_client: SumoClient, query_dict: dict) -> list[TimeInterval]:
+async def _run_query_and_aggregate_time_intervals_async(
+    sumo_client: SumoClient, query_dict: dict
+) -> list[TimeInterval]:
     search_payload = {
         "track_total_hits": True,
         "query": query_dict,
@@ -294,7 +296,7 @@ async def _run_query_and_aggregate_time_intervals(sumo_client: SumoClient, query
 
 
 # --------------------------------------------------------------------------------------
-async def _run_query_and_aggregate_time_points(sumo_client: SumoClient, query_dict: dict) -> list[TimePoint]:
+async def _run_query_and_aggregate_time_points_async(sumo_client: SumoClient, query_dict: dict) -> list[TimePoint]:
     search_payload = {
         "track_total_hits": True,
         "query": query_dict,

@@ -1,7 +1,14 @@
-import { Grid3dGeometry_api, Grid3dMappedProperty_api } from "@api";
-import { FenceMeshSection_api, PolylineIntersection_api } from "@api";
-import { b64DecodeFloatArrayToFloat32 } from "@modules_shared/base64";
-import { b64DecodeUintArrayToUint32, b64DecodeUintArrayToUint32OrLess } from "@modules_shared/base64";
+import type {
+    FenceMeshSection_api,
+    Grid3dGeometry_api,
+    Grid3dMappedProperty_api,
+    PolylineIntersection_api,
+} from "@api";
+import {
+    b64DecodeFloatArrayToFloat32,
+    b64DecodeUintArrayToUint32,
+    b64DecodeUintArrayToUint32OrLess,
+} from "@modules_shared/base64";
 
 // Data structure for the transformed GridSurface data
 // Removes the base64 encoded data and replaces them with typed arrays

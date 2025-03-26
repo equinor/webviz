@@ -1,3 +1,4 @@
+import tailwindPlugin from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 
 import jotaiDebugLabel from "jotai/babel/plugin-debug-label";
@@ -29,6 +30,7 @@ export default defineConfig(({ mode }) => {
 
     return {
         plugins: [
+            tailwindPlugin(),
             {
                 name: "isolation",
                 configureServer(server) {
@@ -62,10 +64,10 @@ export default defineConfig(({ mode }) => {
                     ...prev,
                     [current.replace("/*", "")]: path.resolve(
                         __dirname,
-                        aliases.compilerOptions.paths[current][0].replace("/*", "")
+                        aliases.compilerOptions.paths[current][0].replace("/*", ""),
                     ),
                 }),
-                {}
+                {},
             ),
         },
         server: {

@@ -1,47 +1,45 @@
-import {
-    Item,
-    SerializedColorScale,
+import { GroupRegistry } from "../../groups/GroupRegistry";
+import type { Item } from "../../interfacesAndTypes/entitites";
+import type {
+    SerializedGroup,
     SerializedItem,
     SerializedLayer,
     SerializedSettingsGroup,
-    SerializedSharedSetting,
+    SerializedSharedSetting} from "../../interfacesAndTypes/serialization";
+import {
     SerializedType,
-    SerializedView,
-} from "../../interfaces";
+} from "../../interfacesAndTypes/serialization";
 import { LayerRegistry } from "../../layers/LayerRegistry";
-import { SettingRegistry } from "../../settings/SettingRegistry";
-import { ColorScale } from "../ColorScale/ColorScale";
-import { LayerManager } from "../LayerManager/LayerManager";
+import type { DataLayerManager } from "../DataLayerManager/DataLayerManager";
 import { SettingsGroup } from "../SettingsGroup/SettingsGroup";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
-import { View } from "../View/View";
 
 export class DeserializationFactory {
-    private _layerManager: LayerManager;
+    private _layerManager: DataLayerManager;
 
-    constructor(layerManager: LayerManager) {
+    constructor(layerManager: DataLayerManager) {
         this._layerManager = layerManager;
     }
 
     makeItem(serialized: SerializedItem): Item {
         if (serialized.type === SerializedType.LAYER_MANAGER) {
             throw new Error(
-                "Cannot deserialize a LayerManager in DeserializationFactory. A LayerManager can never be a descendant of a LayerManager."
+                "Cannot deserialize a LayerManager in DeserializationFactory. A LayerManager can never be a descendant of a LayerManager.",
             );
         }
 
         if (serialized.type === SerializedType.LAYER) {
             const serializedLayer = serialized as SerializedLayer<any>;
-            const layer = LayerRegistry.makeLayer(serializedLayer.layerClass, this._layerManager);
-            layer.getLayerDelegate().deserializeState(serializedLayer);
+            const layer = LayerRegistry.makeLayer(serializedLayer.layerType, this._layerManager, serializedLayer.name);
+            layer.deserializeState(serializedLayer);
             layer.getItemDelegate().setId(serializedLayer.id);
             layer.getItemDelegate().setName(serializedLayer.name);
             return layer;
         }
 
-        if (serialized.type === SerializedType.VIEW) {
-            const serializedView = serialized as SerializedView;
-            const view = new View(serializedView.name, this._layerManager, serializedView.color);
+        if (serialized.type === SerializedType.GROUP) {
+            const serializedView = serialized as SerializedGroup;
+            const view = GroupRegistry.makeGroup(serializedView.groupType, this._layerManager);
             view.deserializeState(serializedView);
             return view;
         }
@@ -53,20 +51,13 @@ export class DeserializationFactory {
             return settingsGroup;
         }
 
-        if (serialized.type === SerializedType.COLOR_SCALE) {
-            const serializedColorScale = serialized as SerializedColorScale;
-            const colorScale = new ColorScale(serializedColorScale.name, this._layerManager);
-            colorScale.deserializeState(serializedColorScale);
-            return colorScale;
-        }
-
         if (serialized.type === SerializedType.SHARED_SETTING) {
             const serializedSharedSetting = serialized as SerializedSharedSetting;
-            const wrappedSetting = SettingRegistry.makeSetting(
-                serializedSharedSetting.wrappedSettingClass,
-                serializedSharedSetting.wrappedSettingCtorParams
+            const setting = new SharedSetting(
+                serializedSharedSetting.wrappedSettingType,
+                serializedSharedSetting.value,
+                this._layerManager
             );
-            const setting = new SharedSetting(wrappedSetting, this._layerManager);
             setting.deserializeState(serializedSharedSetting);
             return setting;
         }

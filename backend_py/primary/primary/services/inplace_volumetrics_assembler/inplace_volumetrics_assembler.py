@@ -81,9 +81,7 @@ class InplaceVolumetricsAssembler:
 
         async def get_named_inplace_volumetrics_table_async(table_name: str) -> dict[str, pa.Table]:
             return {
-                table_name: await self._inplace_volumetrics_access.get_inplace_volumetrics_table_async(
-                    table_name, column_names=None
-                )
+                table_name: await self._inplace_volumetrics_access.get_inplace_volumetrics_columns_async(table_name)
             }
 
         tasks = [
@@ -91,16 +89,16 @@ class InplaceVolumetricsAssembler:
             for vol_table_name in vol_table_names
         ]
         tables = await asyncio.gather(*tasks)
-        print(tables, len(tables))
 
         tables_info: list[InplaceVolumetricsTableDefinition] = []
         for table_result in tables:
-            table_name, table = list(table_result.items())[0]
+            table_name, column_names_and_values = list(table_result.items())[0]
+            column_names = list(column_names_and_values.keys())
 
             non_volume_columns = self._inplace_volumetrics_access.get_possible_selector_columns()
 
             # Get raw volume names
-            raw_volumetric_column_names = [name for name in table.column_names if name not in non_volume_columns]
+            raw_volumetric_column_names = [name for name in column_names if name not in non_volume_columns]
 
             fluid_zones = get_fluid_zones(raw_volumetric_column_names)
             volume_names = get_volume_names_from_raw_volumetric_column_names(raw_volumetric_column_names)
@@ -111,8 +109,8 @@ class InplaceVolumetricsAssembler:
             identifiers_with_values = []
             for identifier_name in self._inplace_volumetrics_access.get_possible_identifier_columns():
                 identifier = get_identifier_from_string(identifier_name)
-                if identifier is not None and identifier_name in table.column_names:
-                    identifier_values = table[identifier_name].unique().to_pylist()
+                if identifier is not None and identifier_name in column_names:
+                    identifier_values = column_names_and_values[identifier_name]
                     filtered_identifier_values = [
                         value for value in identifier_values if value not in IGNORED_IDENTIFIER_COLUMN_VALUES
                     ]
@@ -266,7 +264,7 @@ class InplaceVolumetricsAssembler:
 
         Calculation of volume names and properties, and creation of the results is handled outside this function.
         """
-        # Check for empty identifier selection lists
+        # Check for empty identifier selections
         has_empty_identifier_selection = any(
             not identifier_with_values.values for identifier_with_values in identifiers_with_values
         )
@@ -523,9 +521,9 @@ class InplaceVolumetricsAssembler:
         # NOTE:
         # Soft vs hard fail depends on detail level when building the volumetric columns from retrieved result names + fluid zones
         # - Soft fail: get_inplace_volumetrics_table_no_throw_async() does not require matching volumetric column names
-        # - Hard fail: get_inplace_volumetrics_table_async() throws an exception if requested column names are not found
+        # - Hard fail: get_inplace_volumetrics_aggregated_table_async() throws an exception if requested column names are not found
         inplace_volumetrics_table: pa.Table = (
-            await self._inplace_volumetrics_access.get_inplace_volumetrics_table_no_throw_async(
+            await self._inplace_volumetrics_access.get_inplace_volumetrics_aggregated_table_async(
                 table_name=table_name, column_names=volumetric_columns
             )
         )

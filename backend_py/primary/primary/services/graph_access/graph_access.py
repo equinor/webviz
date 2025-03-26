@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 
 import httpx
 
-from primary.httpx_client import httpx_async_client
+from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 
 
 class GraphApiAccess:
@@ -17,7 +17,7 @@ class GraphApiAccess:
 
     async def _request(self, url: str) -> httpx.Response:
 
-        response = await httpx_async_client.client.get(
+        response = await HTTPX_ASYNC_CLIENT_WRAPPER.client.get(
             url,
             headers=self._make_headers(),
         )

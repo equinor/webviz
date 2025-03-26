@@ -20,7 +20,7 @@ export class InitialSettings {
 
     get<T extends keyof InitialSettingsSupportedTypes>(
         settingName: string,
-        type: T
+        type: T,
     ): InitialSettingsSupportedTypes[T] | undefined {
         const setting = this._initialSettings[settingName];
 
@@ -64,7 +64,7 @@ export function useApplyInitialSettingsToState(
     initialSettings: InitialSettings | undefined,
     settingName: string,
     type: keyof InitialSettingsSupportedTypes,
-    stateSetter: (value: any) => void
+    stateSetter: (value: any) => void,
 ): void {
     React.useEffect(() => {
         if (initialSettings) {

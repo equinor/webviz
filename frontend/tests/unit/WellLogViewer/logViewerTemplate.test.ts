@@ -1,9 +1,10 @@
-import { WellLogCurveSourceEnum_api, WellLogCurveTypeEnum_api, WellboreLogCurveHeader_api } from "@api";
-import { TemplatePlotConfig, TemplateTrackConfig } from "@modules/WellLogViewer/types";
+import type { WellboreLogCurveHeader_api } from "@api";
+import { WellLogCurveSourceEnum_api, WellLogCurveTypeEnum_api } from "@api";
+import type { TemplatePlotConfig, TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { createLogTemplate, makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { MAIN_AXIS_CURVE } from "@modules/WellLogViewer/utils/queryDataTransform";
 import { configToJsonDataBlob, jsonFileToTrackConfigs } from "@modules/WellLogViewer/utils/settingsImport";
-import { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import type { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import { describe, expect, it, vi } from "vitest";
 
@@ -265,7 +266,7 @@ describe("Other utilities", () => {
                     ],
                 },
             ],
-            nonUniqueNames
+            nonUniqueNames,
         );
 
         const plot1 = result.tracks[0].plots[0];
@@ -372,7 +373,7 @@ describe("settings import export tests", () => {
                     plots: [{ name: "Curve 1", type: "line", color: "#123456" }],
                 },
             ],
-            "text/plain"
+            "text/plain",
         );
 
         await expect(jsonFileToTrackConfigs(input as unknown as File)).rejects.toThrow("Invalid file extension");

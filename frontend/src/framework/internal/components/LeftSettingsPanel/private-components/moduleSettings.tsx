@@ -1,14 +1,10 @@
-import React from "react";
+import type React from "react";
 
 import { ImportState } from "@framework/Module";
-import {
-    ModuleInstance,
-    ModuleInstanceState,
-    ModuleInstanceTopic,
-    useModuleInstanceTopicValue,
-} from "@framework/ModuleInstance";
+import type { ModuleInstance } from "@framework/ModuleInstance";
+import { ModuleInstanceState, ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
-import { Workbench } from "@framework/Workbench";
+import type { Workbench } from "@framework/Workbench";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -70,7 +66,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
             key={props.moduleInstance.getId()}
             className={resolveClassNames(
                 props.activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "hidden",
-                "flex-col h-full w-full relative"
+                "flex-col h-full w-full relative",
             )}
             style={{ contain: "content" }}
         >
@@ -79,13 +75,13 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                     <SettingsIcon fontSize="small" className="mr-2" />{" "}
                     <span
                         title={props.moduleInstance.getTitle()}
-                        className="font-bold flex-grow p-0 text-ellipsis whitespace-nowrap overflow-hidden text-sm"
+                        className="font-bold grow p-0 text-ellipsis whitespace-nowrap overflow-hidden text-sm"
                     >
                         {props.moduleInstance.getTitle()}
                     </span>
                 </div>
-                <div className="flex flex-col gap-4 overflow-auto flex-grow">
-                    <div className="p-2 flex-grow">
+                <div className="flex flex-col gap-4 overflow-auto grow">
+                    <div className="p-2 grow">
                         <DebugProfiler
                             id={`${props.moduleInstance.getId()}-settings`}
                             source={StatusSource.Settings}

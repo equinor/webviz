@@ -1,6 +1,6 @@
-import { DatedFlowNetwork_api, FlowNetworkMetadata_api } from "@api";
+import type { DatedFlowNetwork_api, FlowNetworkMetadata_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 
 import { atom } from "jotai";

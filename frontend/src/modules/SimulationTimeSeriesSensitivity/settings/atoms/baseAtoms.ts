@@ -1,5 +1,5 @@
 import { Frequency_api } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 
 import { atom } from "jotai";
@@ -22,14 +22,14 @@ export const showHistoricalAtom = atom<boolean>(true);
 
 export const userSelectedRegularEnsembleIdentAtom = atomWithCompare<RegularEnsembleIdent | null>(
     null,
-    areRegularEnsembleIdentsEqual
+    areRegularEnsembleIdentsEqual,
 );
 export const userSelectedVectorNameAndTagAtom = atomWithCompare<{ name: string | null; tag: string | null }>(
     {
         name: null,
         tag: null,
     },
-    isEqual
+    isEqual,
 );
 
 // Note: Default value of null, to detect uninitialized state, and select all sensitivities on first render
