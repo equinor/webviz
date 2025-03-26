@@ -101,7 +101,7 @@ export class SettingsContextDelegate<
             );
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "settings",
-                settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.LOADING_STATE)(() => {
+                settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_LOADING)(() => {
                     this.handleSettingsLoadingStateChanged();
                 })
             );

@@ -40,8 +40,8 @@ export function SettingComponent<
         props.setting,
         SettingTopic.OVERRIDDEN_VALUE_PROVIDER
     );
-    const isLoading = usePublishSubscribeTopicValue(props.setting, SettingTopic.LOADING_STATE);
-    const isInitialized = usePublishSubscribeTopicValue(props.setting, SettingTopic.INIT_STATE);
+    const isLoading = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_LOADING);
+    const isInitialized = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_INITIALIZED);
     const globalSettings = usePublishSubscribeTopicValue(props.manager, LayerManagerTopic.GLOBAL_SETTINGS);
 
     let actuallyLoading = isLoading || !isInitialized;

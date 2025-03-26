@@ -121,7 +121,7 @@ export class Dependency<
             this.callUpdateFunc();
         });
 
-        setting.getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.LOADING_STATE)(() => {
+        setting.getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_LOADING)(() => {
             const loading = setting.isLoading();
             if (loading) {
                 this.setLoadingState(true);

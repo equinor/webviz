@@ -19,8 +19,8 @@ export enum SettingTopic {
     AVAILABLE_VALUES = "AVAILABLE_VALUES",
     OVERRIDDEN_VALUE = "OVERRIDDEN_VALUE",
     OVERRIDDEN_VALUE_PROVIDER = "OVERRIDDEN_VALUE_PROVIDER",
-    LOADING_STATE = "LOADING_STATE",
-    INIT_STATE = "INIT_STATE",
+    IS_LOADING = "IS_LOADING",
+    IS_INITIALIZED = "IS_INITIALIZED",
     IS_PERSISTED = "IS_PERSISTED",
 }
 
@@ -30,8 +30,8 @@ export type SettingTopicPayloads<TValue, TCategory extends SettingCategory> = {
     [SettingTopic.AVAILABLE_VALUES]: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> | null;
     [SettingTopic.OVERRIDDEN_VALUE]: TValue | undefined;
     [SettingTopic.OVERRIDDEN_VALUE_PROVIDER]: OverriddenValueProviderType | undefined;
-    [SettingTopic.LOADING_STATE]: boolean;
-    [SettingTopic.INIT_STATE]: boolean;
+    [SettingTopic.IS_LOADING]: boolean;
+    [SettingTopic.IS_INITIALIZED]: boolean;
     [SettingTopic.IS_PERSISTED]: boolean;
 };
 
@@ -185,7 +185,7 @@ export class SettingManager<
             return;
         }
         this._loading = loading;
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.LOADING_STATE);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
     }
 
     initialize(): void {
@@ -193,7 +193,7 @@ export class SettingManager<
             return;
         }
         this._initialized = true;
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INIT_STATE);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_INITIALIZED);
     }
 
     isInitialized(): boolean {
@@ -301,11 +301,11 @@ export class SettingManager<
                     return this._overriddenValue;
                 case SettingTopic.OVERRIDDEN_VALUE_PROVIDER:
                     return this._overriddenValueProviderType;
-                case SettingTopic.LOADING_STATE:
+                case SettingTopic.IS_LOADING:
                     return this.isLoading();
                 case SettingTopic.IS_PERSISTED:
                     return this.isPersistedValue();
-                case SettingTopic.INIT_STATE:
+                case SettingTopic.IS_INITIALIZED:
                     return this.isInitialized();
                 default:
                     throw new Error(`Unknown topic: ${topic}`);
