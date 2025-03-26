@@ -1,7 +1,7 @@
 import type { BBox } from "@lib/utils/bbox";
 import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 
-import type { RealizationGridData } from "../customLayerImplementations/RealizationGridLayer";
+import type { RealizationGridData } from "../../../layers/implementations/RealizationGridLayer";
 
 export function makeRealizationGridBoundingBox({
     getData,

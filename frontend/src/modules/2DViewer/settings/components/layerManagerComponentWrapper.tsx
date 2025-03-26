@@ -8,10 +8,6 @@ import { Menu } from "@lib/components/Menu";
 import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
-import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
-import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
-import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
-import { CustomLayerType } from "@modules/2DViewer/LayerFramework/customLayerImplementations/layerTypes";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import type { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions";
 import type { GroupDelegate } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
@@ -27,6 +23,9 @@ import { GroupRegistry } from "@modules/_shared/LayerFramework/groups/GroupRegis
 import type { Item, ItemGroup } from "@modules/_shared/LayerFramework/interfacesAndTypes/entitites";
 import { instanceofItemGroup } from "@modules/_shared/LayerFramework/interfacesAndTypes/entitites";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
+import { ObservedSurfaceLayer } from "@modules/_shared/LayerFramework/layers/implementations/ObservedSurfaceLayer";
+import { RealizationSurfaceLayer } from "@modules/_shared/LayerFramework/layers/implementations/RealizationSurfaceLayer";
+import { StatisticalSurfaceLayer } from "@modules/_shared/LayerFramework/layers/implementations/StatisticalSurfaceLayer";
 import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
 import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
@@ -72,39 +71,29 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 groupDelegate.appendChild(new SharedSetting(Setting.COLOR_SCALE, null, props.layerManager));
                 return;
             case "observed-surface":
-                groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.OBSERVED_SURFACE, props.layerManager)
-                );
+                groupDelegate.prependChild(LayerRegistry.makeLayer(LayerType.OBSERVED_SURFACE, props.layerManager));
                 return;
             case "statistical-surface":
-                groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.STATISTICAL_SURFACE, props.layerManager)
-                );
+                groupDelegate.prependChild(LayerRegistry.makeLayer(LayerType.STATISTICAL_SURFACE, props.layerManager));
                 return;
             case "realization-surface":
-                groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_SURFACE, props.layerManager)
-                );
+                groupDelegate.prependChild(LayerRegistry.makeLayer(LayerType.REALIZATION_SURFACE, props.layerManager));
                 return;
             case "realization-polygons":
-                groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_POLYGONS, props.layerManager)
-                );
+                groupDelegate.prependChild(LayerRegistry.makeLayer(LayerType.REALIZATION_POLYGONS, props.layerManager));
                 return;
             case "drilled-wellbore-trajectories":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(LayerType.DRILLED_WELL_TRAJECTORIES, props.layerManager)
+                    LayerRegistry.makeLayer(LayerType.DRILLED_WELL_TRAJECTORIES, props.layerManager),
                 );
                 return;
             case "drilled-wellbore-picks":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(LayerType.DRILLED_WELLBORE_PICKS, props.layerManager)
+                    LayerRegistry.makeLayer(LayerType.DRILLED_WELLBORE_PICKS, props.layerManager),
                 );
                 return;
             case "realization-grid":
-                groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_GRID, props.layerManager)
-                );
+                groupDelegate.prependChild(LayerRegistry.makeLayer(LayerType.REALIZATION_GRID, props.layerManager));
                 return;
             case "ensemble":
                 groupDelegate.appendChild(new SharedSetting(Setting.ENSEMBLE, null, props.layerManager));

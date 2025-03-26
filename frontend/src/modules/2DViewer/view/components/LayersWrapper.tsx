@@ -7,26 +7,17 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import * as bbox from "@lib/utils/bbox";
 import { makeColorScaleAnnotation } from "@modules/2DViewer/LayerFramework/annotations/makeColorScaleAnnotation";
-import { makePolygonDataBoundingBox } from "@modules/2DViewer/LayerFramework/boundingBoxes/makePolygonDataBoundingBox";
-import { makeRealizationGridBoundingBox } from "@modules/2DViewer/LayerFramework/boundingBoxes/makeRealizationGridBoundingBox";
-import { makeSurfaceLayerBoundingBox } from "@modules/2DViewer/LayerFramework/boundingBoxes/makeSurfaceLayerBoundingBox";
-import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
-import { RealizationGridLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationGridLayer";
-import { RealizationPolygonsLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationPolygonsLayer";
-import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
-import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
-import { CustomLayerType } from "@modules/2DViewer/LayerFramework/customLayerImplementations/layerTypes";
-import { makeObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/visualization/makeObservedSurfaceLayer";
-import { makeRealizationGridLayer } from "@modules/2DViewer/LayerFramework/visualization/makeRealizationGridLayer";
-import { makeRealizationPolygonsLayer } from "@modules/2DViewer/LayerFramework/visualization/makeRealizationPolygonsLayer";
-import { makeRealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/visualization/makeRealizationSurfaceLayer";
-import { makeStatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/visualization/makeStatisticalSurfaceLayer";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import type { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import { LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
+import { ObservedSurfaceLayer } from "@modules/_shared/LayerFramework/layers/implementations/ObservedSurfaceLayer";
+import { RealizationGridLayer } from "@modules/_shared/LayerFramework/layers/implementations/RealizationGridLayer";
+import { RealizationPolygonsLayer } from "@modules/_shared/LayerFramework/layers/implementations/RealizationPolygonsLayer";
+import { RealizationSurfaceLayer } from "@modules/_shared/LayerFramework/layers/implementations/RealizationSurfaceLayer";
+import { StatisticalSurfaceLayer } from "@modules/_shared/LayerFramework/layers/implementations/StatisticalSurfaceLayer";
 import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
 import type {
     Annotation,
@@ -36,8 +27,16 @@ import type {
 import { VisualizationFactory } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
+import { makePolygonDataBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makePolygonDataBoundingBox";
+import { makeRealizationGridBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeRealizationGridBoundingBox";
+import { makeSurfaceLayerBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeSurfaceLayerBoundingBox";
 import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import { makeDrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
+import { makeObservedSurfaceLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeObservedSurfaceLayer";
+import { makeRealizationGridLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeRealizationGridLayer";
+import { makeRealizationPolygonsLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeRealizationPolygonsLayer";
+import { makeRealizationSurfaceLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeRealizationSurfaceLayer";
+import { makeStatisticalSurfaceLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeStatisticalSurfaceLayer";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import type { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
@@ -46,7 +45,6 @@ import type { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer"
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
-import "../../LayerFramework/customLayerImplementations/registerAllLayers";
 
 export type LayersWrapperProps = {
     layerManager: DataLayerManager;
@@ -56,27 +54,27 @@ export type LayersWrapperProps = {
 
 const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.DECK_GL>();
 
-VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.OBSERVED_SURFACE, ObservedSurfaceLayer, {
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.OBSERVED_SURFACE, ObservedSurfaceLayer, {
     makeVisualizationFunction: makeObservedSurfaceLayer,
     calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_SURFACE, RealizationSurfaceLayer, {
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.REALIZATION_SURFACE, RealizationSurfaceLayer, {
     makeVisualizationFunction: makeRealizationSurfaceLayer,
     calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.STATISTICAL_SURFACE, StatisticalSurfaceLayer, {
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.STATISTICAL_SURFACE, StatisticalSurfaceLayer, {
     makeVisualizationFunction: makeStatisticalSurfaceLayer,
     calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_POLYGONS, RealizationPolygonsLayer, {
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.REALIZATION_POLYGONS, RealizationPolygonsLayer, {
     makeVisualizationFunction: makeRealizationPolygonsLayer,
     calculateBoundingBoxFunction: makePolygonDataBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_GRID, RealizationGridLayer, {
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.REALIZATION_GRID, RealizationGridLayer, {
     makeVisualizationFunction: makeRealizationGridLayer,
     calculateBoundingBoxFunction: makeRealizationGridBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
@@ -157,7 +155,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                         <div className="">{view.name}</div>
                     </div>
                 </div>
-            </DeckGlView>
+            </DeckGlView>,
         );
     }
 

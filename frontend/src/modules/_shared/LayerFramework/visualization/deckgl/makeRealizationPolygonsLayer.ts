@@ -7,7 +7,7 @@ import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "ge
 import type {
     RealizationPolygonsData,
     RealizationPolygonsSettings,
-} from "../customLayerImplementations/RealizationPolygonsLayer";
+} from "../../layers/implementations/RealizationPolygonsLayer";
 
 function zipCoords(xArr: number[], yArr: number[], zArr: number[]): number[][] {
     const coords: number[][] = [];

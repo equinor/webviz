@@ -7,33 +7,47 @@ import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import * as bbox from "@lib/utils/boundingBox";
-import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
+import { makeColorScaleAnnotation } from "@modules/2DViewer/LayerFramework/annotations/makeColorScaleAnnotation";
 import { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
-import { IntersectionRealizationGridLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/IntersectionRealizationGridLayer";
-import { RealizationGridLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationGridLayer";
 import { RealizationSeismicCrosslineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicCrosslineLayer";
-import { RealizationSeismicDepthSliceLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicDepthSliceLayer";
+import { RealizationSeismicDepthSliceLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicDepthLayer";
 import { RealizationSeismicInlineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicInlineLayer";
-import { makeGrid3DLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeGrid3dLayer";
-import { makeIntersectionLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeIntersectionGrid3dLayer";
 import { makeRealizationSurfaceLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeRealizationSurfaceLayer";
 import {
     Plane,
     makeSeismicFenceMeshLayerFunction,
 } from "@modules/3DViewerNew/LayerFramework/visualization/makeSeismicFenceMeshLayer";
-import { LayerManager, LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
+import {
+    type DataLayerManager,
+    LayerManagerTopic,
+} from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
+import { ObservedSurfaceLayer } from "@modules/_shared/LayerFramework/layers/implementations/ObservedSurfaceLayer";
+import { RealizationGridLayer } from "@modules/_shared/LayerFramework/layers/implementations/RealizationGridLayer";
+import { RealizationPolygonsLayer } from "@modules/_shared/LayerFramework/layers/implementations/RealizationPolygonsLayer";
+import { RealizationSurfaceLayer } from "@modules/_shared/LayerFramework/layers/implementations/RealizationSurfaceLayer";
+import { StatisticalSurfaceLayer } from "@modules/_shared/LayerFramework/layers/implementations/StatisticalSurfaceLayer";
+import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
 import {
+    type Annotation,
     LayerWithPosition,
     VisualizationFactory,
     VisualizationTarget,
 } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
-import { makeWellborePicksLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeWellborePicksLayer";
-import { makeWellsLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeWellsLayer";
+import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
+import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
+import { makePolygonDataBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makePolygonDataBoundingBox";
+import { makeRealizationGridBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeRealizationGridBoundingBox";
+import { makeSurfaceLayerBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeSurfaceLayerBoundingBox";
+import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
+import { makeDrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
+import { makeObservedSurfaceLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeObservedSurfaceLayer";
+import { makeRealizationGridLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeRealizationGridLayer";
+import { makeRealizationPolygonsLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeRealizationPolygonsLayer";
+import { makeStatisticalSurfaceLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeStatisticalSurfaceLayer";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
-import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { BoundingBox3D, ViewportType } from "@webviz/subsurface-viewer";
 import { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
@@ -44,26 +58,60 @@ import { InteractionWrapper } from "./InteractionWrapper";
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
 const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.DECK_GL>();
-VISUALIZATION_FACTORY.registerVisualizationFunction(DrilledWellborePicksLayer, makeWellborePicksLayer);
-VISUALIZATION_FACTORY.registerVisualizationFunction(DrilledWellTrajectoriesLayer, makeWellsLayer);
-VISUALIZATION_FACTORY.registerVisualizationFunction(RealizationGridLayer, makeGrid3DLayer);
-VISUALIZATION_FACTORY.registerVisualizationFunction(IntersectionRealizationGridLayer, makeIntersectionLayer);
-VISUALIZATION_FACTORY.registerVisualizationFunction(
-    RealizationSeismicCrosslineLayer,
-    makeSeismicFenceMeshLayerFunction(Plane.CROSSLINE)
-);
-VISUALIZATION_FACTORY.registerVisualizationFunction(
-    RealizationSeismicInlineLayer,
-    makeSeismicFenceMeshLayerFunction(Plane.INLINE)
-);
-VISUALIZATION_FACTORY.registerVisualizationFunction(
+
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.OBSERVED_SURFACE, ObservedSurfaceLayer, {
+    makeVisualizationFunction: makeObservedSurfaceLayer,
+    calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
+    makeAnnotationsFunction: makeColorScaleAnnotation,
+});
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.REALIZATION_SURFACE, RealizationSurfaceLayer, {
+    makeVisualizationFunction: makeRealizationSurfaceLayer,
+    calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
+    makeAnnotationsFunction: makeColorScaleAnnotation,
+});
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.STATISTICAL_SURFACE, StatisticalSurfaceLayer, {
+    makeVisualizationFunction: makeStatisticalSurfaceLayer,
+    calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
+    makeAnnotationsFunction: makeColorScaleAnnotation,
+});
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.REALIZATION_POLYGONS, RealizationPolygonsLayer, {
+    makeVisualizationFunction: makeRealizationPolygonsLayer,
+    calculateBoundingBoxFunction: makePolygonDataBoundingBox,
+    makeAnnotationsFunction: makeColorScaleAnnotation,
+});
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.REALIZATION_GRID, RealizationGridLayer, {
+    makeVisualizationFunction: makeRealizationGridLayer,
+    calculateBoundingBoxFunction: makeRealizationGridBoundingBox,
+    makeAnnotationsFunction: makeColorScaleAnnotation,
+});
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.DRILLED_WELLBORE_PICKS, DrilledWellborePicksLayer, {
+    makeVisualizationFunction: makeDrilledWellborePicksLayer,
+    calculateBoundingBoxFunction: makeDrilledWellborePicksBoundingBox,
+});
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.DRILLED_WELL_TRAJECTORIES, DrilledWellTrajectoriesLayer, {
+    makeVisualizationFunction: makeDrilledWellTrajectoriesLayer,
+    calculateBoundingBoxFunction: makeDrilledWellTrajectoriesBoundingBox,
+});
+VISUALIZATION_FACTORY.registerLayerFunctions(
+    LayerType.REALIZATION_SEISMIC_DEPTH_SLICE,
     RealizationSeismicDepthSliceLayer,
-    makeSeismicFenceMeshLayerFunction(Plane.DEPTH)
+    {
+        makeVisualizationFunction: makeSeismicFenceMeshLayerFunction(Plane.DEPTH),
+    },
 );
-VISUALIZATION_FACTORY.registerVisualizationFunction(RealizationSurfaceLayer, makeRealizationSurfaceLayer);
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.REALIZATION_SEISMIC_INLINE, RealizationSeismicInlineLayer, {
+    makeVisualizationFunction: makeSeismicFenceMeshLayerFunction(Plane.INLINE),
+});
+VISUALIZATION_FACTORY.registerLayerFunctions(
+    LayerType.REALIZATION_SEISMIC_CROSSLINE,
+    RealizationSeismicCrosslineLayer,
+    {
+        makeVisualizationFunction: makeSeismicFenceMeshLayerFunction(Plane.CROSSLINE),
+    },
+);
 
 export type LayersWrapperProps = {
-    layerManager: LayerManager;
+    layerManager: DataLayerManager;
     preferredViewLayout: PreferredViewLayout;
     viewContext: ViewContext<Interfaces>;
     workbenchSession: WorkbenchSession;
@@ -82,7 +130,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const viewports: ViewportType[] = [];
     const viewerLayers: LayerWithPosition<VisualizationTarget.DECK_GL>[] = [];
     const viewportAnnotations: React.ReactNode[] = [];
-    const globalColorScales: ColorScaleWithId[] = [];
+    const globalAnnotations: Annotation[] = [];
 
     const views: ViewsType = {
         layout: [1, 1],
@@ -93,10 +141,10 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     let numCols = 0;
     let numRows = 0;
 
-    const viewsAndLayers = VISUALIZATION_FACTORY.make(props.layerManager);
+    const factoryProduct = VISUALIZATION_FACTORY.make(props.layerManager);
 
-    numCols = Math.ceil(Math.sqrt(viewsAndLayers.views.length));
-    numRows = Math.ceil(viewsAndLayers.views.length / numCols);
+    numCols = Math.ceil(Math.sqrt(factoryProduct.views.length));
+    numRows = Math.ceil(factoryProduct.views.length / numCols);
 
     if (props.preferredViewLayout === PreferredViewLayout.HORIZONTAL) {
         [numCols, numRows] = [numRows, numCols];
@@ -104,11 +152,11 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     views.layout = [numCols, numRows];
 
-    viewerLayers.push(...viewsAndLayers.layers);
-    globalColorScales.push(...viewsAndLayers.colorScales);
-    const globalLayerIds = viewsAndLayers.layers.map((layer) => layer.layer.id);
+    viewerLayers.push(...factoryProduct.layers);
+    globalAnnotations.push(...factoryProduct.annotations);
+    const globalLayerIds = factoryProduct.layers.map((layer) => layer.layer.id);
 
-    for (const view of viewsAndLayers.views) {
+    for (const view of factoryProduct.views) {
         viewports.push({
             id: view.id,
             name: view.name,
@@ -131,12 +179,12 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
             /* @ts-expect-error */
             <DeckGlView key={view.id} id={view.id}>
                 <ColorLegendsContainer
-                    colorScales={[...view.colorScales, ...globalColorScales]}
+                    colorScales={[...view.annotations.filter((el) => "colorScale" in el), ...globalAnnotations]}
                     height={((mainDivSize.height / 3) * 2) / numCols - 20}
                     position="left"
                 />
                 <div className="font-bold text-lg flex gap-2 justify-center items-center">
-                    <div className="flex gap-2 items-center bg-white p-2 backdrop-blur bg-opacity-50 rounded">
+                    <div className="flex gap-2 items-center bg-white/50 p-2 backdrop-blur-sm rounded-sm">
                         <div
                             className="rounded-full h-3 w-3 border border-white"
                             style={{ backgroundColor: view.color ?? undefined }}
@@ -144,23 +192,23 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                         <div className="">{view.name}</div>
                     </div>
                 </div>
-            </DeckGlView>
+            </DeckGlView>,
         );
     }
 
-    if (viewsAndLayers.boundingBox !== null) {
+    if (factoryProduct.combinedBoundingBox !== null) {
         if (prevBoundingBox !== null) {
-            if (!bbox.outerBoxcontainsInnerBox(prevBoundingBox, viewsAndLayers.boundingBox)) {
-                setPrevBoundingBox(viewsAndLayers.boundingBox);
+            if (!bbox.outerBoxcontainsInnerBox(prevBoundingBox, factoryProduct.combinedBoundingBox)) {
+                setPrevBoundingBox(factoryProduct.combinedBoundingBox);
             }
         } else {
-            setPrevBoundingBox(viewsAndLayers.boundingBox);
+            setPrevBoundingBox(factoryProduct.combinedBoundingBox);
         }
     }
 
-    statusWriter.setLoading(viewsAndLayers.numLoadingLayers > 0);
+    statusWriter.setLoading(factoryProduct.numLoadingLayers > 0);
 
-    for (const message of viewsAndLayers.errorMessages) {
+    for (const message of factoryProduct.errorMessages) {
         statusWriter.addError(message);
     }
 

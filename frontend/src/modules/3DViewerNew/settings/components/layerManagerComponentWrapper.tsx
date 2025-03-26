@@ -8,28 +8,28 @@ import { Menu } from "@lib/components/Menu";
 import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
-import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
-import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
-import { IntersectionRealizationGridLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/IntersectionRealizationGridLayer";
-import { RealizationSeismicCrosslineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicCrosslineLayer";
-import { RealizationSeismicDepthSliceLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicDepthSliceLayer";
-import { EnsembleSetting } from "@modules//_shared/LayerFramework/settings/implementations/EnsembleSetting";
 import { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions";
 import { GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
-import { ColorScale } from "@modules/_shared/LayerFramework/framework/ColorScale/ColorScale";
+import { DataLayer } from "@modules/_shared/LayerFramework/framework/DataLayer/DataLayer";
+import type { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
+import { LayerManagerComponent } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManagerComponent";
 import { DeltaSurface } from "@modules/_shared/LayerFramework/framework/DeltaSurface/DeltaSurface";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { LayerManagerComponent } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManagerComponent";
+import { Group } from "@modules/_shared/LayerFramework/framework/Group/Group";
 import { SettingsGroup } from "@modules/_shared/LayerFramework/framework/SettingsGroup/SettingsGroup";
 import { SharedSetting } from "@modules/_shared/LayerFramework/framework/SharedSetting/SharedSetting";
-import { View } from "@modules/_shared/LayerFramework/framework/View/View";
-import { Group, Item, instanceofGroup, instanceofLayer } from "@modules/_shared/LayerFramework/interfaces";
-import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
-import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
-import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/AttributeSetting";
-import { RealizationSetting } from "@modules/_shared/LayerFramework/settings/implementations/RealizationSetting";
-import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
+import { GroupRegistry } from "@modules/_shared/LayerFramework/groups/GroupRegistry";
+import {
+    type Item,
+    type ItemGroup,
+    instanceofItemGroup,
+} from "@modules/_shared/LayerFramework/interfacesAndTypes/entitites";
+import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
+import { ObservedSurfaceLayer } from "@modules/_shared/LayerFramework/layers/implementations/ObservedSurfaceLayer";
+import { RealizationSurfaceLayer } from "@modules/_shared/LayerFramework/layers/implementations/RealizationSurfaceLayer";
+import { StatisticalSurfaceLayer } from "@modules/_shared/LayerFramework/layers/implementations/StatisticalSurfaceLayer";
+import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
+import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { Dropdown } from "@mui/base";
 import {
@@ -43,13 +43,10 @@ import {
 
 import { useAtom } from "jotai";
 
-import { RealizationGridLayer } from "../../LayerFramework/customLayerImplementations/RealizationGridLayer";
-import { RealizationSeismicInlineLayer } from "../../LayerFramework/customLayerImplementations/RealizationSeismicInlineLayer/RealizationSeismicInlineLayer";
-import { RealizationSurfaceLayer } from "../../LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 
 export type LayerManagerComponentWrapperProps = {
-    layerManager: LayerManager;
+    layerManager: DataLayerManager;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
 };
@@ -62,71 +59,81 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
     usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
     function handleLayerAction(identifier: string, groupDelegate: GroupDelegate) {
-        const numSharedSettings = groupDelegate.findChildren((item) => {
-            return item instanceof SharedSetting;
-        }).length;
-
-        const numViews = groupDelegate.getDescendantItems((item) => item instanceof View).length;
-
         switch (identifier) {
             case "view":
-                groupDelegate.appendChild(
-                    new View(numViews > 0 ? `View (${numViews})` : "View", props.layerManager, colorSet.getNextColor())
-                );
+                groupDelegate.appendChild(GroupRegistry.makeGroup("View", props.layerManager, colorSet.getNextColor()));
                 return;
             case "delta-surface":
-                groupDelegate.insertChild(new DeltaSurface("Delta surface", props.layerManager), numSharedSettings);
+                groupDelegate.appendChild(new DeltaSurface("Delta surface", props.layerManager));
                 return;
             case "settings-group":
-                groupDelegate.insertChild(new SettingsGroup("Settings group", props.layerManager), numSharedSettings);
+                groupDelegate.appendChild(new SettingsGroup("Settings group", props.layerManager));
                 return;
             case "color-scale":
-                groupDelegate.prependChild(new ColorScale("Color scale", props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(Setting.COLOR_SCALE, null, props.layerManager));
                 return;
-            case "intersection-realization-grid":
-                groupDelegate.insertChild(new IntersectionRealizationGridLayer(props.layerManager), numSharedSettings);
+            case "observed-surface":
+                groupDelegate.prependChild(LayerRegistry.makeLayer(LayerType.OBSERVED_SURFACE, props.layerManager));
                 return;
-            case "realization-grid":
-                groupDelegate.insertChild(new RealizationGridLayer(props.layerManager), numSharedSettings);
+            case "statistical-surface":
+                groupDelegate.prependChild(LayerRegistry.makeLayer(LayerType.STATISTICAL_SURFACE, props.layerManager));
                 return;
             case "realization-surface":
-                groupDelegate.insertChild(new RealizationSurfaceLayer(props.layerManager), numSharedSettings);
+                groupDelegate.prependChild(LayerRegistry.makeLayer(LayerType.REALIZATION_SURFACE, props.layerManager));
                 return;
-            case "realization-seismic-inline":
-                groupDelegate.insertChild(new RealizationSeismicInlineLayer(props.layerManager), numSharedSettings);
-                return;
-            case "realization-seismic-crossline":
-                groupDelegate.insertChild(new RealizationSeismicCrosslineLayer(props.layerManager), numSharedSettings);
-                return;
-            case "realization-seismic-depth-slice":
-                groupDelegate.insertChild(new RealizationSeismicDepthSliceLayer(props.layerManager), numSharedSettings);
+            case "realization-polygons":
+                groupDelegate.prependChild(LayerRegistry.makeLayer(LayerType.REALIZATION_POLYGONS, props.layerManager));
                 return;
             case "drilled-wellbore-trajectories":
-                groupDelegate.insertChild(new DrilledWellTrajectoriesLayer(props.layerManager), numSharedSettings);
+                groupDelegate.prependChild(
+                    LayerRegistry.makeLayer(LayerType.DRILLED_WELL_TRAJECTORIES, props.layerManager),
+                );
                 return;
-
             case "drilled-wellbore-picks":
-                groupDelegate.insertChild(new DrilledWellborePicksLayer(props.layerManager), numSharedSettings);
+                groupDelegate.prependChild(
+                    LayerRegistry.makeLayer(LayerType.DRILLED_WELLBORE_PICKS, props.layerManager),
+                );
+                return;
+            case "realization-grid":
+                groupDelegate.prependChild(LayerRegistry.makeLayer(LayerType.REALIZATION_GRID, props.layerManager));
+                return;
+            case "realization-seismic-inline":
+                groupDelegate.prependChild(
+                    LayerRegistry.makeLayer(LayerType.REALIZATION_SEISMIC_INLINE, props.layerManager),
+                );
+                return;
+            case "realization-seismic-crossline":
+                groupDelegate.prependChild(
+                    LayerRegistry.makeLayer(LayerType.REALIZATION_SEISMIC_CROSSLINE, props.layerManager),
+                );
+                return;
+            case "realization-seismic-depth-slice":
+                groupDelegate.prependChild(
+                    LayerRegistry.makeLayer(LayerType.REALIZATION_SEISMIC_DEPTH_SLICE, props.layerManager),
+                );
                 return;
             case "ensemble":
-                groupDelegate.prependChild(new SharedSetting(new EnsembleSetting(), props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(Setting.ENSEMBLE, null, props.layerManager));
                 return;
             case "realization":
-                groupDelegate.prependChild(new SharedSetting(new RealizationSetting(), props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(Setting.REALIZATION, null, props.layerManager));
+                return;
+            case "surface-name":
+                groupDelegate.appendChild(new SharedSetting(Setting.SURFACE_NAME, null, props.layerManager));
                 return;
             case "attribute":
-                groupDelegate.prependChild(new SharedSetting(new AttributeSetting(), props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(Setting.ATTRIBUTE, null, props.layerManager));
                 return;
             case "Date":
-                groupDelegate.prependChild(new SharedSetting(new TimeOrIntervalSetting(), props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_OR_INTERVAL, null, props.layerManager));
                 return;
         }
     }
 
-    function checkIfItemMoveAllowed(movedItem: Item, destinationItem: Group): boolean {
+    function checkIfItemMoveAllowed(movedItem: Item, destinationItem: ItemGroup): boolean {
         if (destinationItem instanceof DeltaSurface) {
             if (
-                instanceofLayer(movedItem) &&
+                movedItem instanceof DataLayer &&
                 !(
                     movedItem instanceof RealizationSurfaceLayer ||
                     movedItem instanceof StatisticalSurfaceLayer ||
@@ -136,11 +143,11 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 return false;
             }
 
-            if (instanceofGroup(movedItem)) {
+            if (instanceofItemGroup(movedItem)) {
                 return false;
             }
 
-            if (destinationItem.getGroupDelegate().findChildren((item) => instanceofLayer(item)).length >= 2) {
+            if (destinationItem.getGroupDelegate().findChildren((item) => item instanceof DataLayer).length >= 2) {
                 return false;
             }
         }
@@ -148,7 +155,8 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
         return true;
     }
 
-    const hasView = groupDelegate.getDescendantItems((item) => item instanceof View).length > 0;
+    const hasView =
+        groupDelegate.getDescendantItems((item) => item instanceof Group && item.getGroupType() === "View").length > 0;
     const adjustedLayerActions = hasView ? LAYER_ACTIONS : INITIAL_LAYER_ACTIONS;
 
     return (

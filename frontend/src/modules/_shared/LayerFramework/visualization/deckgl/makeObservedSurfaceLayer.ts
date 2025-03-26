@@ -11,7 +11,7 @@ import {
     type ObservedSurfaceData,
     type ObservedSurfaceSettings,
     SurfaceDataFormat,
-} from "../customLayerImplementations/ObservedSurfaceLayer";
+} from "../../layers/implementations/ObservedSurfaceLayer";
 
 function calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [number, number, number, number] {
     const width = (surfDef.npoints_x - 1) * surfDef.inc_x;
@@ -54,7 +54,7 @@ export function makeObservedSurfaceLayer({
             colorMapFunction: makeColorMapFunctionFromColorScale(
                 colorScale,
                 data.surfaceData.value_min,
-                data.surfaceData.value_max
+                data.surfaceData.value_max,
             ),
         });
     }
@@ -74,7 +74,7 @@ export function makeObservedSurfaceLayer({
         colorMapFunction: makeColorMapFunctionFromColorScale(
             colorScale,
             data.surfaceData.value_min,
-            data.surfaceData.value_max
+            data.surfaceData.value_max,
         ),
     });
 }

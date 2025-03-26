@@ -14,7 +14,7 @@ import { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewe
 
 import { isEqual } from "lodash";
 
-export type WellborePickLayerData = {
+export type WellborePicksLayerData = {
     easting: number;
     northing: number;
     wellBoreUwi: string;
@@ -25,7 +25,7 @@ export type WellborePickLayerData = {
 
 export interface WellBorePicksLayerProps extends ExtendedLayerProps {
     id: string;
-    data: WellborePickLayerData[];
+    data: WellborePicksLayerData[];
     zIncreaseDownwards?: boolean;
 
     // Non public properties:

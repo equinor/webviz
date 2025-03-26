@@ -8,10 +8,10 @@ import { makeColorMapFunctionFromColorScale } from "@modules/_shared/LayerFramew
 import { ColormapLayer, Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import {
-    type RealizationSurfaceData,
-    type RealizationSurfaceSettings,
+    type StatisticalSurfaceData,
+    type StatisticalSurfaceSettings,
     SurfaceDataFormat,
-} from "../customLayerImplementations/RealizationSurfaceLayer";
+} from "../../layers/implementations/StatisticalSurfaceLayer";
 
 function calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [number, number, number, number] {
     const width = (surfDef.npoints_x - 1) * surfDef.inc_x;
@@ -30,12 +30,12 @@ function calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [n
     return bounds;
 }
 
-export function makeRealizationSurfaceLayer({
+export function makeStatisticalSurfaceLayer({
     id,
     name,
     getData,
     getSetting,
-}: FactoryFunctionArgs<RealizationSurfaceSettings, RealizationSurfaceData>): ColormapLayer | Grid3DLayer | null {
+}: FactoryFunctionArgs<StatisticalSurfaceSettings, StatisticalSurfaceData>): ColormapLayer | Grid3DLayer | null {
     const data = getData();
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
 
@@ -54,7 +54,7 @@ export function makeRealizationSurfaceLayer({
             colorMapFunction: makeColorMapFunctionFromColorScale(
                 colorScale,
                 data.surfaceData.value_min,
-                data.surfaceData.value_max
+                data.surfaceData.value_max,
             ),
         });
     }
@@ -74,7 +74,7 @@ export function makeRealizationSurfaceLayer({
         colorMapFunction: makeColorMapFunctionFromColorScale(
             colorScale,
             data.surfaceData.value_min,
-            data.surfaceData.value_max
+            data.surfaceData.value_max,
         ),
     });
 }

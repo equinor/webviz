@@ -17,7 +17,9 @@ const realizationGridSettings = [
     Setting.REALIZATION,
     Setting.ATTRIBUTE,
     Setting.GRID_NAME,
-    Setting.GRID_LAYER_K,
+    Setting.GRID_LAYER_I_RANGE,
+    Setting.GRID_LAYER_J_RANGE,
+    Setting.GRID_LAYER_K_RANGE,
     Setting.TIME_OR_INTERVAL,
     Setting.SHOW_GRID_LINES,
     Setting.COLOR_SCALE,
@@ -30,16 +32,8 @@ export type RealizationGridData = {
     gridParameterData: GridMappedProperty_trans;
 };
 
-type StoredData = {
-    availableGridDimensions: {
-        i: number;
-        j: number;
-        k: number;
-    };
-};
-
 export class RealizationGridLayer
-    implements CustomDataLayerImplementation<RealizationGridSettings, RealizationGridData, StoredData>
+    implements CustomDataLayerImplementation<RealizationGridSettings, RealizationGridData>
 {
     settings = realizationGridSettings;
 
@@ -73,7 +67,7 @@ export class RealizationGridLayer
         getStoredData,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<RealizationGridSettings, RealizationGridData, StoredData>): Promise<{
+    }: FetchDataParams<RealizationGridSettings, RealizationGridData>): Promise<{
         gridSurfaceData: GridSurface_trans;
         gridParameterData: GridMappedProperty_trans;
     }> {
@@ -85,14 +79,9 @@ export class RealizationGridLayer
         if (timeOrInterval === "NO_TIME") {
             timeOrInterval = null;
         }
-        const availableDimensions = getStoredData("availableGridDimensions");
-        const layerIndex = getSetting(Setting.GRID_LAYER_K);
-        const iMin = 0;
-        const iMax = availableDimensions?.i ?? 0;
-        const jMin = 0;
-        const jMax = availableDimensions?.j ?? 0;
-        const kMin = layerIndex || 0;
-        const kMax = layerIndex || 0;
+        const [iMin, iMax] = getSetting(Setting.GRID_LAYER_I_RANGE) ?? [0, 0];
+        const [jMin, jMax] = getSetting(Setting.GRID_LAYER_J_RANGE) ?? [0, 0];
+        const [kMin, kMax] = getSetting(Setting.GRID_LAYER_K_RANGE) ?? [0, 0];
         const queryKey = [
             "gridParameter",
             ensembleIdent,
@@ -163,7 +152,9 @@ export class RealizationGridLayer
             getSetting(Setting.REALIZATION) !== null &&
             getSetting(Setting.GRID_NAME) !== null &&
             getSetting(Setting.ATTRIBUTE) !== null &&
-            getSetting(Setting.GRID_LAYER_K) !== null &&
+            getSetting(Setting.GRID_LAYER_K_RANGE) !== null &&
+            getSetting(Setting.GRID_LAYER_I_RANGE) !== null &&
+            getSetting(Setting.GRID_LAYER_J_RANGE) !== null &&
             getSetting(Setting.TIME_OR_INTERVAL) !== null
         );
     }
@@ -173,7 +164,7 @@ export class RealizationGridLayer
         availableSettingsUpdater,
         storedDataUpdater,
         queryClient,
-    }: DefineDependenciesArgs<RealizationGridSettings, StoredData>) {
+    }: DefineDependenciesArgs<RealizationGridSettings>) {
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -247,7 +238,41 @@ export class RealizationGridLayer
             return availableGridAttributes;
         });
 
-        availableSettingsUpdater(Setting.GRID_LAYER_K, ({ getLocalSetting, getHelperDependency }) => {
+        availableSettingsUpdater(Setting.GRID_LAYER_I_RANGE, ({ getLocalSetting, getHelperDependency }) => {
+            const gridName = getLocalSetting(Setting.GRID_NAME);
+            const data = getHelperDependency(realizationGridDataDep);
+
+            if (!gridName || !data) {
+                return [0, 0];
+            }
+
+            const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
+            const availableGridLayers: [number, number] = [0, 0];
+            if (gridDimensions) {
+                availableGridLayers[1] = gridDimensions.i_count;
+            }
+
+            return availableGridLayers;
+        });
+
+        availableSettingsUpdater(Setting.GRID_LAYER_J_RANGE, ({ getLocalSetting, getHelperDependency }) => {
+            const gridName = getLocalSetting(Setting.GRID_NAME);
+            const data = getHelperDependency(realizationGridDataDep);
+
+            if (!gridName || !data) {
+                return [0, 0];
+            }
+
+            const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
+            const availableGridLayers: [number, number] = [0, 0];
+            if (gridDimensions) {
+                availableGridLayers[1] = gridDimensions.j_count;
+            }
+
+            return availableGridLayers;
+        });
+
+        availableSettingsUpdater(Setting.GRID_LAYER_K_RANGE, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(Setting.GRID_NAME);
             const data = getHelperDependency(realizationGridDataDep);
 
@@ -287,26 +312,6 @@ export class RealizationGridLayer
             ];
 
             return availableTimeOrIntervals;
-        });
-
-        storedDataUpdater("availableGridDimensions", ({ getHelperDependency }) => {
-            const data = getHelperDependency(realizationGridDataDep);
-
-            if (!data) {
-                return {
-                    i: 0,
-                    j: 0,
-                    k: 0,
-                };
-            }
-
-            const gridDimensions = data[0].dimensions;
-
-            return {
-                i: gridDimensions.i_count,
-                j: gridDimensions.j_count,
-                k: gridDimensions.k_count,
-            };
         });
     }
 }

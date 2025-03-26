@@ -1,7 +1,7 @@
 import type { BBox } from "@lib/utils/bbox";
 import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 
-import type { RealizationSurfaceData } from "../customLayerImplementations/RealizationSurfaceLayer";
+import type { RealizationSurfaceData } from "../../../layers/implementations/RealizationSurfaceLayer";
 
 export function makeSurfaceLayerBoundingBox({
     getData,

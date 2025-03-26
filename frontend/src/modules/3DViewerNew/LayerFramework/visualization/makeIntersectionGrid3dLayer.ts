@@ -1,10 +1,10 @@
-import { VisualizationFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import type { IntersectionRealizationGridSettings } from "@modules/_shared/LayerFramework/layers/implementations/IntersectionRealizationGridLayer";
+import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/LayerFramework/visualization/utils/colors";
 import { FenceMeshSection_trans, PolylineIntersection_trans } from "@modules/_shared/utils/wellbore";
 import { TGrid3DColoringMode } from "@webviz/subsurface-viewer";
 import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
-
-import { IntersectionRealizationGridSettings } from "../customLayerImplementations/IntersectionRealizationGridLayer/types";
 
 interface PolyDataVtk {
     points: Float32Array;
@@ -77,10 +77,16 @@ function buildVtkStylePolyDataFromFenceSections(fenceSections: FenceMeshSection_
 export function makeIntersectionLayer({
     id,
     name,
-    data,
-    colorScale,
-    settings,
-}: VisualizationFunctionArgs<IntersectionRealizationGridSettings, PolylineIntersection_trans>): Grid3DLayer {
+    getData,
+    getSetting,
+}: FactoryFunctionArgs<IntersectionRealizationGridSettings, PolylineIntersection_trans>): Grid3DLayer | null {
+    const data = getData();
+    const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
+    const showGridLines = getSetting(Setting.SHOW_GRID_LINES);
+
+    if (!data) {
+        return null;
+    }
     const polyData = buildVtkStylePolyDataFromFenceSections(data.fenceMeshSections);
 
     const grid3dIntersectionLayer = new Grid3DLayer({
@@ -96,10 +102,10 @@ export function makeIntersectionLayer({
         colorMapFunction: makeColorMapFunctionFromColorScale(
             colorScale,
             data.min_grid_prop_value,
-            data.max_grid_prop_value
+            data.max_grid_prop_value,
         ),
         ZIncreasingDownwards: false,
-        gridLines: settings.showGridLines,
+        gridLines: showGridLines,
         material: { ambient: 0.4, diffuse: 0.7, shininess: 8, specularColor: [25, 25, 25] },
         pickable: true,
     });
