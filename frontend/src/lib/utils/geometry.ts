@@ -129,3 +129,11 @@ export function isDOMRectContained(inner: DOMRect, outer: DOMRect): boolean {
 export function domRectsAreEqual(rect1: DOMRect, rect2: DOMRect): boolean {
     return rect1.x === rect2.x && rect1.y === rect2.y && rect1.width === rect2.width && rect1.height === rect2.height;
 }
+
+export function degreesToRadians(degrees: number): number {
+    return (degrees * Math.PI) / 180;
+}
+
+export function radiansToDegrees(radians: number): number {
+    return (radians * 180) / Math.PI;
+}

@@ -7,6 +7,8 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { ColorScaleSelector } from "@framework/components/ColorScaleSelector";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { Intersection } from "@framework/types/intersection";
 import { IntersectionType } from "@framework/types/intersection";
@@ -22,9 +24,7 @@ import { Select } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
 import type { TableSelectOption } from "@lib/components/TableSelect";
 import { TableSelect } from "@lib/components/TableSelect";
-import type { ColorScale } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { ColorScaleSelector } from "@modules/_shared/components/ColorScaleSelector/colorScaleSelector";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { isoIntervalStringToDateLabel, isoStringToDateLabel } from "@modules/_shared/utils/isoDatetimeStringFormatting";
 import { Delete, Edit } from "@mui/icons-material";
@@ -161,7 +161,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
         syncHelper.publishValue(
             SyncSettingKey.ENSEMBLE,
             "global.syncValue.ensembles",
-            ensembleIdent ? [ensembleIdent] : [],
+            ensembleIdent ? [ensembleIdent] : []
         );
     }
 
@@ -241,9 +241,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
         setCustomPolylineFilterText(e.target.value);
     }
 
-    function handleColorScaleChange(colorScale: ColorScale, areBoundariesUserDefined: boolean) {
-        setColorScale(colorScale);
-        setUseCustomBounds(areBoundariesUserDefined);
+    function handleColorScaleChange(colorScaleSpecification: ColorScaleSpecification) {
+        setColorScale(colorScaleSpecification.colorScale);
+        setUseCustomBounds(colorScaleSpecification.areBoundariesUserDefined);
     }
 
     const realizationOptions = makeRealizationOptions(availableRealizations);
@@ -333,9 +333,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                     <Label text="Color scale">
                         <ColorScaleSelector
                             workbenchSettings={props.workbenchSettings}
-                            colorScale={colorScale ?? undefined}
+                            colorScaleSpecification={
+                                colorScale
+                                    ? { colorScale: colorScale, areBoundariesUserDefined: useCustomBounds }
+                                    : undefined
+                            }
                             onChange={handleColorScaleChange}
-                            areBoundariesUserDefined={useCustomBounds}
                         />
                     </Label>
                 </div>
@@ -430,7 +433,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                                     >
                                         <Delete fontSize="small" />
                                     </div>
-                                </div>,
+                                </div>
                             )}
                             value={selectedCustomIntersectionPolylineId ? [selectedCustomIntersectionPolylineId] : []}
                             headerLabels={["Polyline name", "Actions"]}
@@ -513,7 +516,7 @@ function makeCustomIntersectionPolylineOptions(
     polylines: IntersectionPolyline[],
     selectedId: string | null,
     filter: string,
-    actions: React.ReactNode,
+    actions: React.ReactNode
 ): TableSelectOption[] {
     return polylines
         .filter((polyline) => polyline.name.includes(filter))

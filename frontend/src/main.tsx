@@ -32,6 +32,10 @@ client.setConfig({
 
 // --------------------------------------------------------------------
 
+/*
+    Render the application.
+*/
+
 const container = document.getElementById("root");
 
 if (!container) {
@@ -49,5 +53,5 @@ root.render(
                 </CustomQueryClientProvider>
             </AuthProvider>
         </GlobalErrorBoundary>
-    </React.StrictMode>,
+    </React.StrictMode>
 );

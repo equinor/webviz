@@ -66,7 +66,7 @@ export class WorkbenchSettings {
         };
     }
 
-    protected getSelectedColorPalette(type: ColorPaletteType): ColorPalette {
+    getSelectedColorPalette(type: ColorPaletteType): ColorPalette {
         const colorPalette = this._colorPalettes[type].find((el) => el.getId() === this._selectedColorPalettes[type]);
         if (!colorPalette) {
             throw new Error("Could not find selected color palette");

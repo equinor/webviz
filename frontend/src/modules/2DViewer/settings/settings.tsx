@@ -13,7 +13,10 @@ import { layerManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierA
 import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 import { LayerManagerComponentWrapper } from "./components/layerManagerComponentWrapper";
 
-import { LayerManager, LayerManagerTopic } from "../../_shared/LayerFramework/framework/LayerManager/LayerManager";
+import {
+    DataLayerManager,
+    LayerManagerTopic,
+} from "../../_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -45,7 +48,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     );
 
     const applyPersistedState = React.useCallback(
-        function applyPersistedState(layerManager: LayerManager) {
+        function applyPersistedState(layerManager: DataLayerManager) {
             const serializedState = window.localStorage.getItem(
                 `${props.settingsContext.getInstanceIdString()}-settings`,
             );
@@ -73,7 +76,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
 
     React.useEffect(
         function onMountEffect() {
-            const newLayerManager = new LayerManager(props.workbenchSession, props.workbenchSettings, queryClient);
+            const newLayerManager = new DataLayerManager(props.workbenchSession, props.workbenchSettings, queryClient);
             setLayerManager(newLayerManager);
 
             applyPersistedState(newLayerManager);

@@ -7,16 +7,16 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { ColorScaleSelector } from "@framework/components/ColorScaleSelector";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Switch } from "@lib/components/Switch";
-import type { ColorScale } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { useLayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
 import type { GridLayer, GridLayerSettings } from "@modules/Intersection/utils/layers/GridLayer";
-import { ColorScaleSelector } from "@modules/_shared/components/ColorScaleSelector/colorScaleSelector";
 import { isoIntervalStringToDateLabel, isoStringToDateLabel } from "@modules/_shared/utils/isoDatetimeStringFormatting";
 import { useQuery } from "@tanstack/react-query";
 
@@ -48,7 +48,7 @@ export function GridLayerSettingsComponent(props: GridLayerSettingsComponentProp
     const fixupEnsembleIdent = fixupSetting(
         "ensembleIdent",
         props.ensembleSet.getRegularEnsembleArray().map((el) => el.getIdent()),
-        newSettings,
+        newSettings
     );
     if (!isEqual(fixupEnsembleIdent, newSettings.ensembleIdent)) {
         setNewSettings((prev) => ({ ...prev, ensembleIdent: fixupEnsembleIdent }));
@@ -73,7 +73,7 @@ export function GridLayerSettingsComponent(props: GridLayerSettingsComponentProp
         const fixupGridModelName = fixupSetting(
             "gridModelName",
             gridModelInfosQuery.data.map((el) => el.grid_name),
-            newSettings,
+            newSettings
         );
         if (!isEqual(fixupGridModelName, newSettings.gridModelName)) {
             setNewSettings((prev) => ({ ...prev, gridModelName: fixupGridModelName }));
@@ -83,7 +83,7 @@ export function GridLayerSettingsComponent(props: GridLayerSettingsComponentProp
             const fixupParameterName = fixupSetting(
                 "parameterName",
                 gridModelInfo.property_info_arr.map((el) => el.property_name),
-                newSettings,
+                newSettings
             );
             if (!isEqual(fixupParameterName, newSettings.parameterName)) {
                 setNewSettings((prev) => ({ ...prev, parameterName: fixupParameterName }));
@@ -92,7 +92,7 @@ export function GridLayerSettingsComponent(props: GridLayerSettingsComponentProp
             const fixupParameterDateOrInterval = fixupSetting(
                 "parameterDateOrInterval",
                 datesOrIntervalsForSelectedParameter,
-                newSettings,
+                newSettings
             );
             if (!isEqual(fixupParameterDateOrInterval, newSettings.parameterDateOrInterval)) {
                 setNewSettings((prev) => ({ ...prev, parameterDateOrInterval: fixupParameterDateOrInterval }));
@@ -104,7 +104,7 @@ export function GridLayerSettingsComponent(props: GridLayerSettingsComponentProp
         function propagateSettingsChange() {
             props.layer.maybeUpdateSettings(cloneDeep(newSettings));
         },
-        [newSettings, props.layer],
+        [newSettings, props.layer]
     );
 
     React.useEffect(
@@ -114,7 +114,7 @@ export function GridLayerSettingsComponent(props: GridLayerSettingsComponentProp
                 props.layer.maybeRefetchData();
             }
         },
-        [gridModelInfosQuery.isFetching, props.layer, newSettings],
+        [gridModelInfosQuery.isFetching, props.layer, newSettings]
     );
 
     function handleEnsembleChange(ensembleIdent: RegularEnsembleIdent | null) {
@@ -142,9 +142,9 @@ export function GridLayerSettingsComponent(props: GridLayerSettingsComponentProp
         setNewSettings((prev) => ({ ...prev, showMesh }));
     }
 
-    function handleColorScaleChange(newColorScale: ColorScale, areBoundariesUserDefined: boolean) {
-        props.layer.setColorScale(newColorScale);
-        props.layer.setUseCustomColorScaleBoundaries(areBoundariesUserDefined);
+    function handleColorScaleChange(newColorScale: ColorScaleSpecification) {
+        props.layer.setColorScale(newColorScale.colorScale);
+        props.layer.setUseCustomColorScaleBoundaries(newColorScale.areBoundariesUserDefined);
     }
 
     const availableRealizations: number[] = [];
@@ -153,7 +153,7 @@ export function GridLayerSettingsComponent(props: GridLayerSettingsComponentProp
     }
 
     const gridModelParameterDateOrIntervalOptions = makeGridParameterDateOrIntervalOptions(
-        datesOrIntervalsForSelectedParameter,
+        datesOrIntervalsForSelectedParameter
     );
 
     let gridModelInfosQueryErrorMessage = "";
@@ -254,8 +254,10 @@ export function GridLayerSettingsComponent(props: GridLayerSettingsComponentProp
                 <div className="table-cell max-w-0 align-top">Color scale</div>
                 <div className="table-cell">
                     <ColorScaleSelector
-                        colorScale={props.layer.getColorScale()}
-                        areBoundariesUserDefined={props.layer.getUseCustomColorScaleBoundaries()}
+                        colorScaleSpecification={{
+                            colorScale: props.layer.getColorScale(),
+                            areBoundariesUserDefined: props.layer.getUseCustomColorScaleBoundaries(),
+                        }}
                         workbenchSettings={props.workbenchSettings}
                         onChange={handleColorScaleChange}
                     />
@@ -291,20 +293,17 @@ function makeGridParameterNameOptions(gridModelInfo: Grid3dInfo_api | null): Dro
 }
 
 function makeGridParameterDateOrIntervalOptions(datesOrIntervals: (string | null)[]): DropdownOption[] {
-    const reduced = datesOrIntervals.reduce(
-        (acc, info) => {
-            if (info === null) {
-                return acc;
-            } else if (!acc.map((el) => el.value).includes(info)) {
-                acc.push({
-                    value: info,
-                    label: info.includes("/") ? isoIntervalStringToDateLabel(info) : isoStringToDateLabel(info),
-                });
-            }
+    const reduced = datesOrIntervals.reduce((acc, info) => {
+        if (info === null) {
             return acc;
-        },
-        [] as { label: string; value: string }[],
-    );
+        } else if (!acc.map((el) => el.value).includes(info)) {
+            acc.push({
+                value: info,
+                label: info.includes("/") ? isoIntervalStringToDateLabel(info) : isoStringToDateLabel(info),
+            });
+        }
+        return acc;
+    }, [] as { label: string; value: string }[]);
 
     return reduced;
 }
