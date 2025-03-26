@@ -1,3 +1,4 @@
+from enum import StrEnum
 import logging
 from typing import List
 from dataclasses import dataclass
@@ -28,6 +29,22 @@ class WellIdentifier:
     eclipse_well_name: str
 
 
+class FlowVector(StrEnum):
+    OIL_PRODUCTION = "oil_production"
+    GAS_PRODUCTION = "gas_production"
+    WATER_PRODUCTION = "water_production"
+    WATER_INJECTION = "water_injection"
+    GAS_INJECTION = "gas_injection"
+    CO2_INJECTION = "co2_injection"
+
+
+flow_vectors_eclipse_mapping = {
+    FlowVector.OIL_PRODUCTION: "WOPTH",
+    FlowVector.GAS_PRODUCTION: "WGPTH",
+    FlowVector.WATER_PRODUCTION: "WWPTH",
+}
+
+
 class ProductionDataAssembler:
     """ """
 
@@ -35,6 +52,13 @@ class ProductionDataAssembler:
         self._field_identifier = field_identifier
         self._summary_access = summary_access
         self._smda_access = smda_access
+
+    async def get_production_and_injection_info_async(
+        self,
+    ) -> List[WellProductionData]:
+        smry_realization_data = await self._summary_access.get_available_vectors_async()
+        prod_data: List[WellProductionData] = []
+        return []
 
     async def get_production_data_in_interval_async(
         self,
