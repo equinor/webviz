@@ -1,6 +1,6 @@
 from enum import StrEnum
 import logging
-from typing import List
+from typing import List, Dict, Optional
 from dataclasses import dataclass
 
 from primary.services.sumo_access.summary_access import SummaryAccess
@@ -25,7 +25,6 @@ class WellProductionData:
 @dataclass
 class WellIdentifier:
     smda_well_uwi: str
-    smda_well_uuid: str
     eclipse_well_name: str
 
 
@@ -45,6 +44,12 @@ flow_vectors_eclipse_mapping = {
 }
 
 
+@dataclass
+class FlowVectorInfo:
+    flow_vector: FlowVector
+    well_identifiers: List[WellIdentifier]
+
+
 class ProductionDataAssembler:
     """ """
 
@@ -52,12 +57,38 @@ class ProductionDataAssembler:
         self._field_identifier = field_identifier
         self._summary_access = summary_access
         self._smda_access = smda_access
+        self._smda_uwis: Optional[List[str]] = None
+
+    async def _get_smda_well_uwis_async(self) -> List[str]:
+        if self._smda_uwis is None:
+            wellbore_headers = await self._smda_access.get_wellbore_headers_async(
+                field_identifier=self._field_identifier
+            )
+            self._smda_uwis = [header.unique_wellbore_identifier for header in wellbore_headers]
+        return self._smda_uwis
 
     async def get_production_and_injection_info_async(
         self,
     ) -> List[WellProductionData]:
-        smry_realization_data = await self._summary_access.get_available_vectors_async()
-        prod_data: List[WellProductionData] = []
+        available_summary_column_names = await self._summary_access.get_all_available_column_names_async()
+        well_names_ecl_to_smda_mapping: Dict[str, str] = {}
+        smda_uwis = await self._get_smda_well_uwis_async()
+
+        flow_vectors: List[FlowVectorInfo] = []
+        well_identifiers: List[WellIdentifier] = []
+        for flowvec, eclkey in flow_vectors_eclipse_mapping.items():
+            matching_columns = [col for col in available_summary_column_names if eclkey in col]
+            ecl_well_names = [col.split(":")[1] for col in matching_columns]
+            for ecl_well_name in ecl_well_names:
+                if ecl_well_name not in well_names_ecl_to_smda_mapping:
+                    well_names_ecl_to_smda_mapping[ecl_well_name] = _eclipse_well_name_to_smda_uwi(
+                        ecl_well_name, smda_uwis
+                    )
+                smda_uwi = well_names_ecl_to_smda_mapping[ecl_well_name]
+                well_identifiers.append(WellIdentifier(smda_well_uwi=smda_uwi, eclipse_well_name=ecl_well_name))
+
+            flow_vectors.append(FlowVectorInfo(flow_vector=flowvec, well_identifiers=well_identifiers))
+        print(flow_vectors)
         return []
 
     async def get_production_data_in_interval_async(
@@ -76,7 +107,5 @@ class ProductionDataAssembler:
         return prod_data
 
 
-def _eclipse_well_name_to_smda_well(
-    eclipse_well_name: str, smda_wellbore_headers: List[WellboreHeader]
-) -> WellIdentifier:
-    ...
+def _eclipse_well_name_to_smda_uwi(eclipse_well_name: str, smda_uwi_arr: List[str]) -> str:
+    return eclipse_well_name

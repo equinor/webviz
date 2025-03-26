@@ -19,6 +19,34 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
+@router.get("/production_data_info")
+async def get_production_data_info(
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    field_identifier: Annotated[str, Query(description="Field identifier")],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+) -> list[schemas.WellProductionData]:
+
+    perf_metrics = ResponsePerfMetrics(response)
+
+    smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
+
+    sumo_summary_access = SummaryAccess.from_iteration_name(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+
+    prod_data_assembler = ProductionDataAssembler(
+        field_identifier=field_identifier, summary_access=sumo_summary_access, smda_access=smda_access
+    )
+
+    well_production_data = await prod_data_assembler.get_production_and_injection_info_async()
+
+    perf_metrics.record_lap("get_production_data_info")
+
+    return []
+
+
 @router.get("/production_data_in_time_interval/")
 async def get_production_data_in_time_interval(
     response: Response,

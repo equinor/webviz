@@ -23,6 +23,7 @@ from primary.routers.flow_network.router import router as flow_network_router
 from primary.routers.inplace_volumetrics.router import router as inplace_volumetrics_router
 from primary.routers.observations.router import router as observations_router
 from primary.routers.parameters.router import router as parameters_router
+from primary.routers.production_data.router import router as production_data_router
 from primary.routers.polygons.router import router as polygons_router
 from primary.routers.pvt.router import router as pvt_router
 from primary.routers.rft.router import router as rft_router
@@ -100,6 +101,7 @@ app.include_router(well_completions_router, prefix="/well_completions", tags=["w
 app.include_router(well_router, prefix="/well", tags=["well"])
 app.include_router(seismic_router, prefix="/seismic", tags=["seismic"])
 app.include_router(polygons_router, prefix="/polygons", tags=["polygons"])
+app.include_router(production_data_router, prefix="/production_data", tags=["production_data"])
 app.include_router(graph_router, prefix="/graph", tags=["graph"])
 app.include_router(observations_router, prefix="/observations", tags=["observations"])
 app.include_router(rft_router, prefix="/rft", tags=["rft"])
