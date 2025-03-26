@@ -27,16 +27,21 @@ export function usePlotBuilder(
     );
     const colorSet = workbenchSettings.useColorSet();
 
-    const plotBuilder = new PlotBuilder(
-        relPermSpecs,
-        ensembleSet,
-        visualizationSettings,
-        colorSet,
-        wrapperDivSize.width,
-        wrapperDivSize.height,
-    );
+    const plotBuilder = new PlotBuilder({
+        relPermSpecs: relPermSpecs,
+        ensembleSet: ensembleSet,
+        groupBy: visualizationSettings.groupBy,
+        colorBy: visualizationSettings.colorBy,
+        colorSet: colorSet,
+        width: wrapperDivSize.width,
+        height: wrapperDivSize.height,
+    });
 
-    plotBuilder.addRealizationsTraces(loadedRelPermSpecificationsAndRealizationData);
+    plotBuilder.addRealizationsTraces(
+        loadedRelPermSpecificationsAndRealizationData,
+        visualizationSettings.opacity,
+        visualizationSettings.lineWidth,
+    );
 
     plotBuilder.setXAxisOptions({
         title: { text: "Sw", standoff: 0 },

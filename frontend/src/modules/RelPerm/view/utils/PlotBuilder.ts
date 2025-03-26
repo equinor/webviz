@@ -12,17 +12,26 @@ import type { Axis, PlotData } from "plotly.js";
 import { createRelPermRealizationTrace, createRelPermRealizationTraceHovertext } from "./createRelPermTracesUtils";
 
 import { ColorBy, GroupBy } from "../../typesAndEnums";
-import type { RelPermSpec, VisualizationSettings } from "../../typesAndEnums";
+import type { RelPermSpec } from "../../typesAndEnums";
 
 export enum SubplotLimitDirection {
     NONE = "none",
     COLUMNS = "columns",
     ROWS = "rows",
 }
+export type PlotBuilderOptions = {
+    relPermSpecs: RelPermSpec[];
+    ensembleSet: EnsembleSet;
+    groupBy: GroupBy;
+    colorBy: ColorBy;
+    colorSet: ColorSet;
+    width: number;
+    height: number;
+};
+
 export class PlotBuilder {
     private _ensembleSet: EnsembleSet;
     private _relPermSpecs: RelPermSpec[];
-    private _visualizationSettings: VisualizationSettings;
     private _uniqueEnsembleIdents: RegularEnsembleIdent[] = [];
     private _uniqueSatNums: number[] = [];
     private _numberOfSubplots: number = 0;
@@ -42,18 +51,15 @@ export class PlotBuilder {
     private _limitDirectionMaxElements = 0;
 
     constructor(
-        _relPermSpecs: RelPermSpec[],
-        ensembleSet: EnsembleSet,
-        visualizationSettings: VisualizationSettings,
-        colorSet: ColorSet,
-        width: number,
-        height: number,
+        { relPermSpecs, ensembleSet, groupBy, colorBy, colorSet, width, height }: PlotBuilderOptions,
+        limitDirection: SubplotLimitDirection = SubplotLimitDirection.NONE,
+        limitDirectionMaxElements: number = 0,
     ) {
         this._ensembleSet = ensembleSet;
-        this._relPermSpecs = _relPermSpecs;
-        this._uniqueEnsembleIdents = Array.from(new Set(_relPermSpecs.map((spec) => spec.ensembleIdent)));
-        this._uniqueSatNums = Array.from(new Set(_relPermSpecs.map((spec) => spec.satNum)));
-        this._subplotOwner = visualizationSettings.groupBy;
+        this._relPermSpecs = relPermSpecs;
+        this._uniqueEnsembleIdents = Array.from(new Set(this._relPermSpecs.map((spec) => spec.ensembleIdent)));
+        this._uniqueSatNums = Array.from(new Set(this._relPermSpecs.map((spec) => spec.satNum)));
+        this._subplotOwner = groupBy;
 
         if (this._subplotOwner === GroupBy.ENSEMBLE) {
             this._numberOfSubplots = this._uniqueEnsembleIdents.length;
@@ -62,9 +68,9 @@ export class PlotBuilder {
         } else if (this._subplotOwner === GroupBy.NONE) {
             this._numberOfSubplots = 1;
         }
-        this._visualizationSettings = visualizationSettings;
+
         this._colorSet = colorSet;
-        this._colorBy = visualizationSettings.colorBy;
+        this._colorBy = colorBy;
         this._width = width;
         this._height = height;
 
@@ -89,6 +95,8 @@ export class PlotBuilder {
     }
     addRealizationsTraces(
         relPermRealizationData: { relPermSpecification: RelPermSpec; data: RelPermRealizationData_api[] }[],
+        opacity: number,
+        lineWidth: number,
     ): void {
         const showLegendMapper = new Map<string, boolean>();
         for (const relPermSpecAndData of relPermRealizationData) {
@@ -141,8 +149,8 @@ export class PlotBuilder {
                             showLegend: showLegend,
                             legendGroupTitle: this._colorBy,
                             legendGroup: this._colorBy,
-                            opacity: this._visualizationSettings.opacity,
-                            lineWidth: this._visualizationSettings.lineWidth,
+                            opacity: opacity,
+                            lineWidth: lineWidth,
                             rgbColor: rgbColor ? rgbColor : (parseHex("#000000") as Rgb),
                         }),
                     );

@@ -26,6 +26,7 @@ export const View = ({ viewContext, workbenchSettings, workbenchSession }: Modul
     if (hasRealizationDataQueryError) {
         statusWriter.addError("One or more realization data queries have an error state.");
     }
+
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
             {!hasRealizationDataQueryError ? (
