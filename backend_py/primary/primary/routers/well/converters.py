@@ -20,6 +20,14 @@ from . import schemas
 from . import utils
 
 
+def to_api_stratigraphic_column(column: StratigraphicColumn) -> schemas.StratigraphicColumn:
+    return schemas.StratigraphicColumn(
+        identifier=column.strat_column_identifier,
+        areaType=column.strat_column_area_type,
+        status=column.strat_column_status,
+        type=column.strat_column_type,
+    )
+
 def convert_wellbore_pick_to_schema(wellbore_pick: WellborePick) -> schemas.WellborePick:
     return schemas.WellborePick(
         northing=wellbore_pick.northing,

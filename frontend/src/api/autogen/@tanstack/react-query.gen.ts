@@ -47,7 +47,6 @@ import {
     getWellTrajectories,
     getWellborePickIdentifiers,
     getWellborePicksForPickIdentifier,
-    getWellborePicksForWellbore,
     getWellborePicksInStratColumn,
     getWellboreCompletions,
     getWellboreCasings,
@@ -129,7 +128,6 @@ import type {
     GetWellTrajectoriesData_api,
     GetWellborePickIdentifiersData_api,
     GetWellborePicksForPickIdentifierData_api,
-    GetWellborePicksForWellboreData_api,
     GetWellborePicksInStratColumnData_api,
     GetWellboreCompletionsData_api,
     GetWellboreCasingsData_api,
@@ -165,13 +163,13 @@ type QueryKey<TOptions extends Options> = [
     Pick<TOptions, "baseURL" | "body" | "headers" | "path" | "query"> & {
         _id: string;
         _infinite?: boolean;
-    },
+    }
 ];
 
 const createQueryKey = <TOptions extends Options>(
     id: string,
     options?: TOptions,
-    infinite?: boolean,
+    infinite?: boolean
 ): QueryKey<TOptions>[0] => {
     const params: QueryKey<TOptions>[0] = {
         _id: id,
@@ -323,11 +321,11 @@ export const getRealizationsVectorDataOptions = (options: Options<GetRealization
 };
 
 export const getDeltaEnsembleRealizationsVectorDataQueryKey = (
-    options: Options<GetDeltaEnsembleRealizationsVectorDataData_api>,
+    options: Options<GetDeltaEnsembleRealizationsVectorDataData_api>
 ) => [createQueryKey("getDeltaEnsembleRealizationsVectorData", options)];
 
 export const getDeltaEnsembleRealizationsVectorDataOptions = (
-    options: Options<GetDeltaEnsembleRealizationsVectorDataData_api>,
+    options: Options<GetDeltaEnsembleRealizationsVectorDataData_api>
 ) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
@@ -401,11 +399,11 @@ export const getStatisticalVectorDataOptions = (options: Options<GetStatisticalV
 };
 
 export const getDeltaEnsembleStatisticalVectorDataQueryKey = (
-    options: Options<GetDeltaEnsembleStatisticalVectorDataData_api>,
+    options: Options<GetDeltaEnsembleStatisticalVectorDataData_api>
 ) => [createQueryKey("getDeltaEnsembleStatisticalVectorData", options)];
 
 export const getDeltaEnsembleStatisticalVectorDataOptions = (
-    options: Options<GetDeltaEnsembleStatisticalVectorDataData_api>,
+    options: Options<GetDeltaEnsembleStatisticalVectorDataData_api>
 ) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
@@ -422,11 +420,11 @@ export const getDeltaEnsembleStatisticalVectorDataOptions = (
 };
 
 export const getStatisticalVectorDataPerSensitivityQueryKey = (
-    options: Options<GetStatisticalVectorDataPerSensitivityData_api>,
+    options: Options<GetStatisticalVectorDataPerSensitivityData_api>
 ) => [createQueryKey("getStatisticalVectorDataPerSensitivity", options)];
 
 export const getStatisticalVectorDataPerSensitivityOptions = (
-    options: Options<GetStatisticalVectorDataPerSensitivityData_api>,
+    options: Options<GetStatisticalVectorDataPerSensitivityData_api>
 ) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
@@ -481,11 +479,11 @@ export const getTableDefinitionsOptions = (options: Options<GetTableDefinitionsD
 };
 
 export const postGetAggregatedPerRealizationTableDataQueryKey = (
-    options: Options<PostGetAggregatedPerRealizationTableDataData_api>,
+    options: Options<PostGetAggregatedPerRealizationTableDataData_api>
 ) => [createQueryKey("postGetAggregatedPerRealizationTableData", options)];
 
 export const postGetAggregatedPerRealizationTableDataOptions = (
-    options: Options<PostGetAggregatedPerRealizationTableDataData_api>,
+    options: Options<PostGetAggregatedPerRealizationTableDataData_api>
 ) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
@@ -502,7 +500,7 @@ export const postGetAggregatedPerRealizationTableDataOptions = (
 };
 
 export const postGetAggregatedPerRealizationTableDataMutation = (
-    options?: Partial<Options<PostGetAggregatedPerRealizationTableDataData_api>>,
+    options?: Partial<Options<PostGetAggregatedPerRealizationTableDataData_api>>
 ) => {
     const mutationOptions: UseMutationOptions<
         PostGetAggregatedPerRealizationTableDataResponse_api,
@@ -522,11 +520,11 @@ export const postGetAggregatedPerRealizationTableDataMutation = (
 };
 
 export const postGetAggregatedStatisticalTableDataQueryKey = (
-    options: Options<PostGetAggregatedStatisticalTableDataData_api>,
+    options: Options<PostGetAggregatedStatisticalTableDataData_api>
 ) => [createQueryKey("postGetAggregatedStatisticalTableData", options)];
 
 export const postGetAggregatedStatisticalTableDataOptions = (
-    options: Options<PostGetAggregatedStatisticalTableDataData_api>,
+    options: Options<PostGetAggregatedStatisticalTableDataData_api>
 ) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
@@ -543,7 +541,7 @@ export const postGetAggregatedStatisticalTableDataOptions = (
 };
 
 export const postGetAggregatedStatisticalTableDataMutation = (
-    options?: Partial<Options<PostGetAggregatedStatisticalTableDataData_api>>,
+    options?: Partial<Options<PostGetAggregatedStatisticalTableDataData_api>>
 ) => {
     const mutationOptions: UseMutationOptions<
         PostGetAggregatedStatisticalTableDataResponse_api,
@@ -728,44 +726,6 @@ export const getMisfitSurfaceDataOptions = (options: Options<GetMisfitSurfaceDat
             return data;
         },
         queryKey: getMisfitSurfaceDataQueryKey(options),
-    });
-};
-
-export const getWellboreStratigraphicColumnsQueryKey = (options: Options<GetWellboreStratigraphicColumnsData_api>) => [
-    createQueryKey("getWellboreStratigraphicColumns", options),
-];
-
-export const getWellboreStratigraphicColumnsOptions = (options: Options<GetWellboreStratigraphicColumnsData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getWellboreStratigraphicColumns({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getWellboreStratigraphicColumnsQueryKey(options),
-    });
-};
-
-export const getStratigraphicUnitsQueryKey = (options: Options<GetStratigraphicUnitsData_api>) => [
-    createQueryKey("getStratigraphicUnits", options),
-];
-
-export const getStratigraphicUnitsOptions = (options: Options<GetStratigraphicUnitsData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getStratigraphicUnits({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getStratigraphicUnitsQueryKey(options),
     });
 };
 
@@ -1087,25 +1047,6 @@ export const getWellborePicksForPickIdentifierOptions = (options: Options<GetWel
     });
 };
 
-export const getWellborePicksForWellboreQueryKey = (options: Options<GetWellborePicksForWellboreData_api>) => [
-    createQueryKey("getWellborePicksForWellbore", options),
-];
-
-export const getWellborePicksForWellboreOptions = (options: Options<GetWellborePicksForWellboreData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getWellborePicksForWellbore({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getWellborePicksForWellboreQueryKey(options),
-    });
-};
-
 export const getWellborePicksInStratColumnQueryKey = (options: Options<GetWellborePicksInStratColumnData_api>) => [
     createQueryKey("getWellborePicksInStratColumn", options),
 ];
@@ -1122,6 +1063,25 @@ export const getWellborePicksInStratColumnOptions = (options: Options<GetWellbor
             return data;
         },
         queryKey: getWellborePicksInStratColumnQueryKey(options),
+    });
+};
+
+export const getWellboreStratigraphicColumnsQueryKey = (options: Options<GetWellboreStratigraphicColumnsData_api>) => [
+    createQueryKey("getWellboreStratigraphicColumns", options),
+];
+
+export const getWellboreStratigraphicColumnsOptions = (options: Options<GetWellboreStratigraphicColumnsData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getWellboreStratigraphicColumns({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getWellboreStratigraphicColumnsQueryKey(options),
     });
 };
 
