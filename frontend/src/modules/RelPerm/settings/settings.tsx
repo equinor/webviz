@@ -196,10 +196,24 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
             </QueryStateWrapper>
             <CollapsibleGroup expanded={true} title="Visualization">
                 <Label text="Opacity" key="opacity">
-                    <Slider min={0.05} max={1} step={0.001} value={selectedOpacity} onChange={handleOpacityChange} />
+                    <Slider
+                        min={0.05}
+                        max={1}
+                        step={0.001}
+                        debounceTimeMs={200}
+                        value={selectedOpacity}
+                        onChange={handleOpacityChange}
+                    />
                 </Label>
                 <Label text="Line width" key="line-width">
-                    <Slider min={1} max={20} step={0.1} value={selectedLineWidth} onChange={handleLineWidthChange} />
+                    <Slider
+                        min={1}
+                        max={20}
+                        step={0.1}
+                        debounceTimeMs={200}
+                        value={selectedLineWidth}
+                        onChange={handleLineWidthChange}
+                    />
                 </Label>
             </CollapsibleGroup>
         </div>
