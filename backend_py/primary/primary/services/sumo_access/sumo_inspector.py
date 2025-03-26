@@ -31,7 +31,7 @@ class SumoInspector:
         """Get list of fields"""
         timer = PerfMetrics()
         search_context = SearchContext(self._sumo_client)
-        field_names = await search_context.get_field_values_async("masterdata.smda.field.identifier.keyword")
+        field_names = await search_context.fieldidentifiers_async
         timer.record_lap("get_fields")
         field_idents = sorted(list(set(field_names)))
         LOGGER.debug(timer.to_string())
