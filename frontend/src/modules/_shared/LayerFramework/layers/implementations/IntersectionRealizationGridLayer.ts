@@ -35,14 +35,15 @@ const intersectionRealizationGridSettings = [
 type IntersectionRealizationGridSettings = typeof intersectionRealizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<IntersectionRealizationGridSettings>;
 
-type Data = PolylineIntersection_trans;
+export type IntersectionRealizationGridData = PolylineIntersection_trans;
 
 type StoredData = {
     polyline: number[];
 };
 
 export class IntersectionRealizationGridLayer
-    implements CustomDataLayerImplementation<IntersectionRealizationGridSettings, Data, StoredData>
+    implements
+        CustomDataLayerImplementation<IntersectionRealizationGridSettings, IntersectionRealizationGridData, StoredData>
 {
     settings = intersectionRealizationGridSettings;
 
@@ -62,7 +63,9 @@ export class IntersectionRealizationGridLayer
 
     makeValueRange({
         getData,
-    }: DataLayerInformationAccessors<IntersectionRealizationGridSettings, Data>): [number, number] | null {
+    }: DataLayerInformationAccessors<IntersectionRealizationGridSettings, IntersectionRealizationGridData>):
+        | [number, number]
+        | null {
         const data = getData();
         if (!data) {
             return null;
@@ -77,7 +80,7 @@ export class IntersectionRealizationGridLayer
 
     areCurrentSettingsValid({
         getSetting,
-    }: DataLayerInformationAccessors<IntersectionRealizationGridSettings, Data>): boolean {
+    }: DataLayerInformationAccessors<IntersectionRealizationGridSettings, IntersectionRealizationGridData>): boolean {
         return (
             getSetting(Setting.INTERSECTION) !== null &&
             getSetting(Setting.ENSEMBLE) !== null &&
@@ -237,8 +240,8 @@ export class IntersectionRealizationGridLayer
                     new Set(
                         gridAttributeArr
                             .filter((attr) => attr.property_name === gridAttribute)
-                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
-                    ),
+                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME")
+                    )
                 ),
             ];
 
@@ -251,7 +254,10 @@ export class IntersectionRealizationGridLayer
         getGlobalSetting,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<IntersectionRealizationGridSettings, Data>): Promise<Data> {
+    }: FetchDataParams<
+        IntersectionRealizationGridSettings,
+        IntersectionRealizationGridData
+    >): Promise<IntersectionRealizationGridData> {
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         const realizationNum = getSetting(Setting.REALIZATION);
         const intersection = getSetting(Setting.INTERSECTION);
@@ -309,15 +315,15 @@ export class IntersectionRealizationGridLayer
                                 ...calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
                                     path,
                                     0,
-                                    5,
-                                ).simplifiedWellboreTrajectoryXy.flat(),
+                                    5
+                                ).simplifiedWellboreTrajectoryXy.flat()
                             );
 
                             resolve(polylineUtmXy);
                         });
                 } else {
                     const intersectionPolyline = getGlobalSetting("intersectionPolylines").find(
-                        (polyline) => polyline.id === intersection.uuid,
+                        (polyline) => polyline.id === intersection.uuid
                     );
                     if (!intersectionPolyline) {
                         resolve([]);
@@ -348,7 +354,7 @@ export class IntersectionRealizationGridLayer
                         },
                         body: { polyline_utm_xy },
                     }),
-                }),
+                })
             )
             .then(transformPolylineIntersection);
 

@@ -26,7 +26,7 @@ export enum VisualizationTarget {
 export type FactoryFunctionArgs<
     TSettings extends Settings,
     TData,
-    TInjectedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = never
 > = DataLayerInformationAccessors<TSettings, TData> & {
     id: string;
     name: string;
@@ -46,7 +46,7 @@ export type LayerVisualizationFunctions<
     TData,
     TTarget extends VisualizationTarget,
     TInjectedData extends Record<string, any> = never,
-    TAccumulatedData extends Record<string, any> = never,
+    TAccumulatedData extends Record<string, any> = never
 > = {
     makeVisualizationFunction: MakeVisualizationFunction<TSettings, TData, TTarget, TInjectedData>;
     calculateBoundingBoxFunction?: CalculateBoundingBoxFunction<TSettings, TData, TInjectedData>;
@@ -59,7 +59,7 @@ export type MakeVisualizationFunction<
     TSettings extends Settings,
     TData,
     TTarget extends VisualizationTarget,
-    TInjectedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = never
 > = (args: FactoryFunctionArgs<TSettings, TData, TInjectedData>) => TargetReturnTypes[TTarget] | null;
 
 // This does likely require a refactor as soon as we have tested against a use case
@@ -67,28 +67,28 @@ export type MakeHoverVisualizationFunction<
     TSettings extends Settings,
     TData,
     TTarget extends VisualizationTarget,
-    TInjectedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = never
 > = (
-    args: FactoryFunctionArgs<TSettings, TData, TInjectedData> & { hoverInfo: Partial<GlobalTopicDefinitions> },
-) => TargetReturnTypes[TTarget] | null;
+    args: FactoryFunctionArgs<TSettings, TData, TInjectedData> & { hoverInfo: Partial<GlobalTopicDefinitions> }
+) => TargetReturnTypes[TTarget][];
 
 export type CalculateBoundingBoxFunction<
     TSettings extends Settings,
     TData,
-    TInjectedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = never
 > = (args: FactoryFunctionArgs<TSettings, TData, TInjectedData>) => bbox.BBox | null;
 
 export type MakeAnnotationsFunction<
     TSettings extends Settings,
     TData,
-    TInjectedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = never
 > = (args: FactoryFunctionArgs<TSettings, TData, TInjectedData>) => Annotation[];
 
 export type ReduceAccumulatedDataFunction<
     TSettings extends Settings,
     TData,
     TAccumulatedData,
-    TInjectedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = never
 > = (accumulatedData: TAccumulatedData, args: FactoryFunctionArgs<TSettings, TData, TInjectedData>) => TAccumulatedData;
 
 export type LayerWithPosition<TTarget extends VisualizationTarget> = {
@@ -106,7 +106,7 @@ export type VisualizationView<TTarget extends VisualizationTarget> = {
 
 export type FactoryProduct<
     TTarget extends VisualizationTarget,
-    TAccumulatedData extends Record<string, any> = never,
+    TAccumulatedData extends Record<string, any> = never
 > = {
     views: VisualizationView<TTarget>[];
     layers: LayerWithPosition<TTarget>[];
@@ -115,13 +115,13 @@ export type FactoryProduct<
     numLoadingLayers: number;
     annotations: Annotation[];
     accumulatedData: TAccumulatedData;
-    makeHoverVisualizationsFunction: (hoverInfo: Partial<GlobalTopicDefinitions>) => LayerWithPosition<TTarget>[];
+    makeHoverVisualizationsFunction: (hoverInfo: Partial<GlobalTopicDefinitions>) => TargetReturnTypes[TTarget][];
 };
 
 export class VisualizationFactory<
     TTarget extends VisualizationTarget,
     TInjectedData extends Record<string, any> = never,
-    TAccumulatedData extends Record<string, any> = never,
+    TAccumulatedData extends Record<string, any> = never
 > {
     private _visualizationFunctions: Map<
         string,
@@ -133,7 +133,7 @@ export class VisualizationFactory<
         layerCtor: {
             new (...params: any[]): CustomDataLayerImplementation<TSettings, TData, any>;
         },
-        funcs: LayerVisualizationFunctions<TSettings, TData, TTarget, TInjectedData, TAccumulatedData>,
+        funcs: LayerVisualizationFunctions<TSettings, TData, TTarget, TInjectedData, TAccumulatedData>
     ): void {
         if (this._visualizationFunctions.has(layerCtor.name)) {
             throw new Error(`Visualization function for layer ${layerCtor.name} already registered`);
@@ -146,12 +146,12 @@ export class VisualizationFactory<
         options?: {
             injectedData?: TInjectedData;
             initialAccumulatedData?: TAccumulatedData;
-        },
+        }
     ): FactoryProduct<TTarget, TAccumulatedData> {
         return this.makeRecursively(
             layerManager.getGroupDelegate(),
             options?.initialAccumulatedData ?? ({} as TAccumulatedData),
-            options?.injectedData,
+            options?.injectedData
         );
     }
 
@@ -159,15 +159,15 @@ export class VisualizationFactory<
         groupDelegate: GroupDelegate,
         accumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
-        numCollectedLayers: number = 0,
+        numCollectedLayers: number = 0
     ): FactoryProduct<TTarget, TAccumulatedData> {
         const collectedViews: VisualizationView<TTarget>[] = [];
         const collectedLayers: LayerWithPosition<TTarget>[] = [];
         const collectedAnnotations: Annotation[] = [];
         const collectedErrorMessages: (StatusMessage | string)[] = [];
         const collectedMakeHoverVisualizationFunctions: ((
-            hoverInfo: Partial<GlobalTopicDefinitions>,
-        ) => LayerWithPosition<TTarget>[])[] = [];
+            hoverInfo: Partial<GlobalTopicDefinitions>
+        ) => TargetReturnTypes[TTarget][])[] = [];
         let collectedNumLoadingLayers = 0;
         let globalBoundingBox: bbox.BBox | null = null;
 
@@ -199,7 +199,7 @@ export class VisualizationFactory<
                     child.getGroupDelegate(),
                     accumulatedData,
                     injectedData,
-                    numCollectedLayers + collectedLayers.length,
+                    numCollectedLayers + collectedLayers.length
                 );
 
                 accumulatedData = newAccumulatedData;
@@ -253,6 +253,7 @@ export class VisualizationFactory<
                 maybeApplyBoundingBox(layerBoundingBox);
                 collectedLayers.push({ layer, position: numCollectedLayers + collectedLayers.length });
                 collectedAnnotations.push(...this.makeLayerAnnotations(child));
+                collectedMakeHoverVisualizationFunctions.push(this.makeHoverLayerFunction(child, injectedData));
                 accumulatedData = this.accumulateLayerData(child, accumulatedData) ?? accumulatedData;
             }
         }
@@ -266,7 +267,7 @@ export class VisualizationFactory<
             numLoadingLayers: collectedNumLoadingLayers,
             accumulatedData,
             makeHoverVisualizationsFunction: (hoverInfo: Partial<GlobalTopicDefinitions>) => {
-                const collectedHoverVisualizations: LayerWithPosition<TTarget>[] = [];
+                const collectedHoverVisualizations: TargetReturnTypes[TTarget][] = [];
                 for (const makeHoverVisualizationFunction of collectedMakeHoverVisualizationFunctions) {
                     collectedHoverVisualizations.push(...makeHoverVisualizationFunction(hoverInfo));
                 }
@@ -277,7 +278,7 @@ export class VisualizationFactory<
 
     private makeFactoryFunctionArgs<TSettings extends Settings, TData>(
         layer: DataLayer<TSettings, TData, any>,
-        injectedData?: TInjectedData,
+        injectedData?: TInjectedData
     ): FactoryFunctionArgs<TSettings, TData, TInjectedData> {
         function getInjectedData() {
             if (!injectedData) {
@@ -297,7 +298,7 @@ export class VisualizationFactory<
 
     private makeLayer(
         layer: DataLayer<any, any, any>,
-        injectedData?: TInjectedData,
+        injectedData?: TInjectedData
     ): TargetReturnTypes[TTarget] | null {
         const func = this._visualizationFunctions.get(layer.getType())?.makeVisualizationFunction;
         if (!func) {
@@ -307,13 +308,13 @@ export class VisualizationFactory<
         return func(this.makeFactoryFunctionArgs(layer, injectedData));
     }
 
-    private makeHoverLayer(
+    private makeHoverLayerFunction(
         layer: DataLayer<any, any, any>,
-        injectedData?: TInjectedData,
-    ): (hoverInfo: Partial<GlobalTopicDefinitions>) => TargetReturnTypes[TTarget] | null {
+        injectedData?: TInjectedData
+    ): (hoverInfo: Partial<GlobalTopicDefinitions>) => TargetReturnTypes[TTarget][] {
         const func = this._visualizationFunctions.get(layer.getType())?.makeHoverVisualizationFunction;
         if (!func) {
-            return () => null;
+            return () => [];
         }
 
         return (hoverInfo: Partial<GlobalTopicDefinitions>) => {
@@ -342,7 +343,7 @@ export class VisualizationFactory<
     private accumulateLayerData(
         layer: DataLayer<any, any, any>,
         accumulatedData: TAccumulatedData,
-        injectedData?: TInjectedData,
+        injectedData?: TInjectedData
     ): TAccumulatedData | null {
         const func = this._visualizationFunctions.get(layer.getType())?.reduceAccumulatedDataFunction;
         if (!func) {

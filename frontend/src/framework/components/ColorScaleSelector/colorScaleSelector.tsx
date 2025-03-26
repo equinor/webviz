@@ -22,34 +22,37 @@ import { point2Distance } from "@lib/utils/vec2";
 
 import { isEqual } from "lodash";
 
-export type ColorScaleConfig = {
+export type ColorScaleSpecification = {
     colorScale: ColorScale;
     areBoundariesUserDefined: boolean;
 };
 
 export type ColorScaleSelectorProps = {
     workbenchSettings: WorkbenchSettings;
-    colorScaleConfig?: ColorScaleConfig;
-    onChange?: (colorScaleConfig: ColorScaleConfig) => void;
+    colorScaleSpecification?: ColorScaleSpecification;
+    onChange?: (colorScaleSpecification: ColorScaleSpecification) => void;
 };
 
 export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactNode {
     const id = React.useId();
 
-    const [colorScaleConfig, setColorScaleConfig] = React.useState<ColorScaleConfig>({
+    const [colorScaleSpecification, setColorScaleSpecification] = React.useState<ColorScaleSpecification>({
         colorScale: props.workbenchSettings.useContinuousColorScale({
             gradientType: ColorScaleGradientType.Sequential,
         }),
         areBoundariesUserDefined: false,
     });
-    const [tempColorScaleConfig, setTempColorScaleConfig] = React.useState<ColorScaleConfig>(colorScaleConfig);
-    const [prevColorScaleConfig, setPrevColorScaleConfig] = React.useState<ColorScaleConfig | undefined>(undefined);
+    const [tempColorScaleSpecification, setTempColorScaleSpecification] =
+        React.useState<ColorScaleSpecification>(colorScaleSpecification);
+    const [prevColorScaleSpecification, setPrevColorScaleSpecification] = React.useState<
+        ColorScaleSpecification | undefined
+    >(undefined);
     const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
 
-    if (!isEqual(props.colorScaleConfig, prevColorScaleConfig)) {
-        setPrevColorScaleConfig(props.colorScaleConfig);
-        if (props.colorScaleConfig) {
-            setColorScaleConfig(props.colorScaleConfig);
+    if (!isEqual(props.colorScaleSpecification, prevColorScaleSpecification)) {
+        setPrevColorScaleSpecification(props.colorScaleSpecification);
+        if (props.colorScaleSpecification) {
+            setColorScaleSpecification(props.colorScaleSpecification);
         }
     }
 
@@ -58,34 +61,34 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
     }
 
     function handleAcceptChanges() {
-        setColorScaleConfig(tempColorScaleConfig);
+        setColorScaleSpecification(tempColorScaleSpecification);
         setDialogOpen(false);
-        props.onChange?.(tempColorScaleConfig);
+        props.onChange?.(tempColorScaleSpecification);
     }
 
     function handleDiscardChanges() {
-        setTempColorScaleConfig(colorScaleConfig);
+        setTempColorScaleSpecification(colorScaleSpecification);
         setDialogOpen(false);
     }
 
-    function handleColorScaleChange(colorScaleConfig: ColorScaleConfig) {
-        setTempColorScaleConfig(colorScaleConfig);
+    function handleColorScaleChange(colorScaleSpecification: ColorScaleSpecification) {
+        setTempColorScaleSpecification(colorScaleSpecification);
     }
 
     return (
         <>
             <div
-                className="flex-grow cursor-pointer border border-slate-400 hover:outline hover:outline-1 hover:outline-blue-300 rounded overflow-hidden"
+                className="flex-grow cursor-pointer border border-slate-400 hover:outline hover:outline-blue-300 rounded overflow-hidden"
                 onClick={handleClick}
             >
                 <ColorScalePreview
-                    colorPalette={colorScaleConfig.colorScale.getColorPalette()}
-                    gradientType={colorScaleConfig.colorScale.getGradientType()}
-                    discrete={colorScaleConfig.colorScale.getType() === ColorScaleType.Discrete}
-                    steps={colorScaleConfig.colorScale.getNumSteps()}
-                    min={colorScaleConfig.colorScale.getMin()}
-                    max={colorScaleConfig.colorScale.getMax()}
-                    divMidPoint={colorScaleConfig.colorScale.getDivMidPoint()}
+                    colorPalette={colorScaleSpecification.colorScale.getColorPalette()}
+                    gradientType={colorScaleSpecification.colorScale.getGradientType()}
+                    discrete={colorScaleSpecification.colorScale.getType() === ColorScaleType.Discrete}
+                    steps={colorScaleSpecification.colorScale.getNumSteps()}
+                    min={colorScaleSpecification.colorScale.getMin()}
+                    max={colorScaleSpecification.colorScale.getMax()}
+                    divMidPoint={colorScaleSpecification.colorScale.getDivMidPoint()}
                     id={id}
                 />
             </div>
@@ -108,7 +111,7 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
             >
                 <ColorScaleSelectorDialog
                     {...props}
-                    colorScaleConfig={tempColorScaleConfig}
+                    colorScaleSpecification={tempColorScaleSpecification}
                     onChange={handleColorScaleChange}
                 />
             </Dialog>
@@ -121,43 +124,45 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
 
     const id = React.useId();
 
-    const [colorScaleConfig, setColorScaleConfig] = React.useState<ColorScaleConfig>({
+    const [colorScaleSpecification, setColorScaleSpecification] = React.useState<ColorScaleSpecification>({
         colorScale: props.workbenchSettings.useContinuousColorScale({
             gradientType: ColorScaleGradientType.Sequential,
         }),
         areBoundariesUserDefined: false,
     });
-    const [prevColorScaleConfig, setPrevColorScaleConfig] = React.useState<ColorScaleConfig | undefined>(undefined);
+    const [prevColorScaleSpecification, setPrevColorScaleSpecification] = React.useState<
+        ColorScaleSpecification | undefined
+    >(undefined);
 
     const [lastSelectedSequentialColorPalette, setLastSelectedSequentialColorPalette] = React.useState<ColorPalette>(
-        props.colorScaleConfig?.colorScale.getGradientType() === ColorScaleGradientType.Sequential
-            ? props.colorScaleConfig?.colorScale.getColorPalette()
-            : (props.workbenchSettings.getColorPalettes()[ColorPaletteType.ContinuousSequential][0] ?? ""),
+        props.colorScaleSpecification?.colorScale.getGradientType() === ColorScaleGradientType.Sequential
+            ? props.colorScaleSpecification?.colorScale.getColorPalette()
+            : props.workbenchSettings.getColorPalettes()[ColorPaletteType.ContinuousSequential][0] ?? ""
     );
     const [lastSelectedDivergingColorPalette, setLastSelectedDivergingColorPalette] = React.useState<ColorPalette>(
-        props.colorScaleConfig?.colorScale.getGradientType() === ColorScaleGradientType.Diverging
-            ? props.colorScaleConfig?.colorScale.getColorPalette()
-            : (props.workbenchSettings.getColorPalettes()[ColorPaletteType.ContinuousDiverging][0] ?? ""),
+        props.colorScaleSpecification?.colorScale.getGradientType() === ColorScaleGradientType.Diverging
+            ? props.colorScaleSpecification?.colorScale.getColorPalette()
+            : props.workbenchSettings.getColorPalettes()[ColorPaletteType.ContinuousDiverging][0] ?? ""
     );
 
-    if (!isEqual(props.colorScaleConfig, prevColorScaleConfig)) {
-        setPrevColorScaleConfig(props.colorScaleConfig);
-        if (props.colorScaleConfig) {
-            setColorScaleConfig(props.colorScaleConfig);
+    if (!isEqual(props.colorScaleSpecification, prevColorScaleSpecification)) {
+        setPrevColorScaleSpecification(props.colorScaleSpecification);
+        if (props.colorScaleSpecification) {
+            setColorScaleSpecification(props.colorScaleSpecification);
         }
     }
 
     function toggleDiscrete(e: React.ChangeEvent<HTMLInputElement>) {
         const checked = e.target.checked;
         makeAndPropagateColorScale(
-            colorScaleConfig.colorScale.getColorPalette(),
+            colorScaleSpecification.colorScale.getColorPalette(),
             checked ? ColorScaleType.Discrete : ColorScaleType.Continuous,
-            colorScaleConfig.colorScale.getGradientType(),
-            colorScaleConfig.colorScale.getMin(),
-            colorScaleConfig.colorScale.getMax(),
-            colorScaleConfig.colorScale.getNumSteps(),
-            colorScaleConfig.colorScale.getDivMidPoint(),
-            colorScaleConfig.areBoundariesUserDefined,
+            colorScaleSpecification.colorScale.getGradientType(),
+            colorScaleSpecification.colorScale.getMin(),
+            colorScaleSpecification.colorScale.getMax(),
+            colorScaleSpecification.colorScale.getNumSteps(),
+            colorScaleSpecification.colorScale.getDivMidPoint(),
+            colorScaleSpecification.areBoundariesUserDefined
         );
     }
 
@@ -169,44 +174,44 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
                 : lastSelectedDivergingColorPalette;
         makeAndPropagateColorScale(
             lastSelectedColorPalette,
-            colorScaleConfig.colorScale.getType(),
+            colorScaleSpecification.colorScale.getType(),
             newGradientType,
-            colorScaleConfig.colorScale.getMin(),
-            colorScaleConfig.colorScale.getMax(),
-            colorScaleConfig.colorScale.getNumSteps(),
-            colorScaleConfig.colorScale.getDivMidPoint(),
-            colorScaleConfig.areBoundariesUserDefined,
+            colorScaleSpecification.colorScale.getMin(),
+            colorScaleSpecification.colorScale.getMax(),
+            colorScaleSpecification.colorScale.getNumSteps(),
+            colorScaleSpecification.colorScale.getDivMidPoint(),
+            colorScaleSpecification.areBoundariesUserDefined
         );
     }
 
     function handleColorPaletteChange(colorPalette: ColorPalette) {
-        if (colorScaleConfig.colorScale.getGradientType() === ColorScaleGradientType.Sequential) {
+        if (colorScaleSpecification.colorScale.getGradientType() === ColorScaleGradientType.Sequential) {
             setLastSelectedSequentialColorPalette(colorPalette);
         } else {
             setLastSelectedDivergingColorPalette(colorPalette);
         }
         makeAndPropagateColorScale(
             colorPalette,
-            colorScaleConfig.colorScale.getType(),
-            colorScaleConfig.colorScale.getGradientType(),
-            colorScaleConfig.colorScale.getMin(),
-            colorScaleConfig.colorScale.getMax(),
-            colorScaleConfig.colorScale.getNumSteps(),
-            colorScaleConfig.colorScale.getDivMidPoint(),
-            colorScaleConfig.areBoundariesUserDefined,
+            colorScaleSpecification.colorScale.getType(),
+            colorScaleSpecification.colorScale.getGradientType(),
+            colorScaleSpecification.colorScale.getMin(),
+            colorScaleSpecification.colorScale.getMax(),
+            colorScaleSpecification.colorScale.getNumSteps(),
+            colorScaleSpecification.colorScale.getDivMidPoint(),
+            colorScaleSpecification.areBoundariesUserDefined
         );
     }
 
     function setNumSteps(numSteps: number) {
         makeAndPropagateColorScale(
-            colorScaleConfig.colorScale.getColorPalette(),
-            colorScaleConfig.colorScale.getType(),
-            colorScaleConfig.colorScale.getGradientType(),
-            colorScaleConfig.colorScale.getMin(),
-            colorScaleConfig.colorScale.getMax(),
+            colorScaleSpecification.colorScale.getColorPalette(),
+            colorScaleSpecification.colorScale.getType(),
+            colorScaleSpecification.colorScale.getGradientType(),
+            colorScaleSpecification.colorScale.getMin(),
+            colorScaleSpecification.colorScale.getMax(),
             numSteps,
-            colorScaleConfig.colorScale.getDivMidPoint(),
-            colorScaleConfig.areBoundariesUserDefined,
+            colorScaleSpecification.colorScale.getDivMidPoint(),
+            colorScaleSpecification.areBoundariesUserDefined
         );
     }
 
@@ -219,7 +224,7 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
             max: number,
             numSteps: number,
             divMid: number,
-            areBoundariesUserDefined: boolean,
+            areBoundariesUserDefined: boolean
         ) {
             const colorScale = new ColorScale({
                 colorPalette,
@@ -232,51 +237,51 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
             } else {
                 colorScale.setRange(min, max);
             }
-            const colorScaleConfig = { colorScale, areBoundariesUserDefined };
-            setColorScaleConfig(colorScaleConfig);
+            const colorScaleSpecification = { colorScale, areBoundariesUserDefined };
+            setColorScaleSpecification(colorScaleSpecification);
             if (onChange) {
-                onChange(colorScaleConfig);
+                onChange(colorScaleSpecification);
             }
         },
-        [onChange],
+        [onChange]
     );
 
     const handleMinMaxDivMidPointChange = React.useCallback(
         function handleMinMaxDivMidPointChange(min: number, max: number, divMidPoint?: number) {
             makeAndPropagateColorScale(
-                colorScaleConfig.colorScale.getColorPalette(),
-                colorScaleConfig.colorScale.getType(),
-                colorScaleConfig.colorScale.getGradientType(),
+                colorScaleSpecification.colorScale.getColorPalette(),
+                colorScaleSpecification.colorScale.getType(),
+                colorScaleSpecification.colorScale.getGradientType(),
                 min,
                 max,
-                colorScaleConfig.colorScale.getNumSteps(),
-                divMidPoint ?? colorScaleConfig.colorScale.getDivMidPoint(),
-                colorScaleConfig.areBoundariesUserDefined,
+                colorScaleSpecification.colorScale.getNumSteps(),
+                divMidPoint ?? colorScaleSpecification.colorScale.getDivMidPoint(),
+                colorScaleSpecification.areBoundariesUserDefined
             );
         },
-        [colorScaleConfig, makeAndPropagateColorScale],
+        [colorScaleSpecification, makeAndPropagateColorScale]
     );
 
     const handleAreBoundariesUserDefinedChange = React.useCallback(
         function handleAreBoundariesUserDefinedChange(areBoundariesUserDefined: boolean) {
             makeAndPropagateColorScale(
-                colorScaleConfig.colorScale.getColorPalette(),
-                colorScaleConfig.colorScale.getType(),
-                colorScaleConfig.colorScale.getGradientType(),
-                colorScaleConfig.colorScale.getMin(),
-                colorScaleConfig.colorScale.getMax(),
-                colorScaleConfig.colorScale.getNumSteps(),
-                colorScaleConfig.colorScale.getDivMidPoint(),
-                areBoundariesUserDefined,
+                colorScaleSpecification.colorScale.getColorPalette(),
+                colorScaleSpecification.colorScale.getType(),
+                colorScaleSpecification.colorScale.getGradientType(),
+                colorScaleSpecification.colorScale.getMin(),
+                colorScaleSpecification.colorScale.getMax(),
+                colorScaleSpecification.colorScale.getNumSteps(),
+                colorScaleSpecification.colorScale.getDivMidPoint(),
+                areBoundariesUserDefined
             );
         },
-        [colorScaleConfig, makeAndPropagateColorScale],
+        [colorScaleSpecification, makeAndPropagateColorScale]
     );
 
     return (
         <div className="flex flex-col gap-4">
             <RadioGroup
-                value={colorScaleConfig.colorScale.getGradientType()}
+                value={colorScaleSpecification.colorScale.getGradientType()}
                 onChange={handleGradientTypeChange}
                 options={[
                     {
@@ -294,34 +299,34 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
                 <div className="flex gap-2 items-center">
                     <div className="h-6">
                         <Switch
-                            checked={colorScaleConfig.colorScale.getType() === ColorScaleType.Discrete}
+                            checked={colorScaleSpecification.colorScale.getType() === ColorScaleType.Discrete}
                             onChange={toggleDiscrete}
                         />
                     </div>
                     <Input
                         type="number"
-                        value={colorScaleConfig.colorScale.getNumSteps()}
+                        value={colorScaleSpecification.colorScale.getNumSteps()}
                         onChange={(e) => setNumSteps(parseInt(e.target.value, 10))}
-                        disabled={colorScaleConfig.colorScale.getType() !== ColorScaleType.Discrete}
+                        disabled={colorScaleSpecification.colorScale.getType() !== ColorScaleType.Discrete}
                         min={2}
                     />
                 </div>
             </Label>
             <ColorScaleSetter
                 id={id}
-                selectedColorPalette={colorScaleConfig.colorScale.getColorPalette()}
+                selectedColorPalette={colorScaleSpecification.colorScale.getColorPalette()}
                 colorPalettes={
                     props.workbenchSettings.getColorPalettes()[
-                        getPaletteTypeFromColorScale(colorScaleConfig.colorScale)
+                        getPaletteTypeFromColorScale(colorScaleSpecification.colorScale)
                     ]
                 }
-                type={colorScaleConfig.colorScale.getType()}
-                gradientType={colorScaleConfig.colorScale.getGradientType()}
-                min={colorScaleConfig.colorScale.getMin()}
-                max={colorScaleConfig.colorScale.getMax()}
-                divMidPoint={colorScaleConfig.colorScale.getDivMidPoint()}
-                steps={colorScaleConfig.colorScale.getNumSteps()}
-                areBoundariesUserDefined={colorScaleConfig.areBoundariesUserDefined}
+                type={colorScaleSpecification.colorScale.getType()}
+                gradientType={colorScaleSpecification.colorScale.getGradientType()}
+                min={colorScaleSpecification.colorScale.getMin()}
+                max={colorScaleSpecification.colorScale.getMax()}
+                divMidPoint={colorScaleSpecification.colorScale.getDivMidPoint()}
+                steps={colorScaleSpecification.colorScale.getNumSteps()}
+                areBoundariesUserDefined={colorScaleSpecification.areBoundariesUserDefined}
                 onChangeColorPalette={handleColorPaletteChange}
                 onChangeMinMaxDivMidPoint={handleMinMaxDivMidPointChange}
                 onChangeAreBoundariesUserDefined={handleAreBoundariesUserDefinedChange}
@@ -381,14 +386,15 @@ function ColorScaleSetter(props: ColorScaleSetterProps): React.ReactNode {
     const handleMinMaxDivMidPointChange = React.useCallback(function handleMinMaxDivMidPointChange(
         min: number,
         max: number,
-        divMidPoint?: number,
+        divMidPoint?: number
     ) {
         setMin(min);
         setMax(max);
         if (divMidPoint !== undefined) {
             setDivMidPoint(divMidPoint);
         }
-    }, []);
+    },
+    []);
 
     return (
         <div>
@@ -432,10 +438,10 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
     const [divMidPoint, setDivMidPoint] = React.useState<number>(props.divMidPoint);
     const [prevDivMidPoint, setPrevDivMidPoint] = React.useState<number>(props.divMidPoint);
     const [areBoundariesUserDefined, setAreBoundariesUserDefined] = React.useState<boolean>(
-        props.areBoundariesUserDefined,
+        props.areBoundariesUserDefined
     );
     const [prevAreBoundariesUserDefined, setPrevAreBoundariesUserDefined] = React.useState<boolean>(
-        props.areBoundariesUserDefined,
+        props.areBoundariesUserDefined
     );
 
     const [isDragging, setIsDragging] = React.useState<boolean>(false);
@@ -513,7 +519,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
 
                 const newRelativeDivMidPoint = Math.min(
                     Math.max((dx + convertRemToPixels(0.75) - containerRect.left) / containerRect.width, 0),
-                    1,
+                    1
                 );
 
                 newDivMidPoint = min + newRelativeDivMidPoint * (max - min);
@@ -543,7 +549,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
                 document.removeEventListener("pointerup", handlePointerUp);
             };
         },
-        [onChange, onChangePreview, min, max],
+        [onChange, onChangePreview, min, max]
     );
 
     function handleMinChange(value: string) {
@@ -602,7 +608,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
                             "z-50": isDragging,
                             hidden:
                                 props.gradientType === ColorScaleGradientType.Sequential || !areBoundariesUserDefined,
-                        },
+                        }
                     )}
                     style={{ left: `${(Math.abs(divMidPoint - min) / Math.abs(max - min)) * 100}%` }}
                     ref={divMidPointRef}
@@ -670,7 +676,7 @@ const ColorScalePaletteSelector: React.FC<ColorScalePaletteSelectorProps> = (pro
     const [open, setOpen] = React.useState<boolean>(false);
     const [selectedColorPalette, setSelectedColorPalette] = React.useState<ColorPalette>(props.selectedColorPalette);
     const [prevSelectedColorPalette, setPrevSelectedColorPalette] = React.useState<ColorPalette>(
-        props.selectedColorPalette,
+        props.selectedColorPalette
     );
 
     if (prevSelectedColorPalette.getId() !== props.selectedColorPalette.getId()) {
@@ -738,7 +744,7 @@ const ColorScalePaletteSelector: React.FC<ColorScalePaletteSelectorProps> = (pro
 
     return (
         <div className="bg-slate-100 rounded-sm flex items-center" ref={ref}>
-            <div className="grow cursor-pointer" onClick={handleClick}>
+            <div className="grow cursor-pointer hover:outline hover:outline-blue-300" onClick={handleClick}>
                 <ColorScalePreview
                     {...props}
                     colorPalette={props.selectedColorPalette}
@@ -762,7 +768,7 @@ const ColorScalePaletteSelector: React.FC<ColorScalePaletteSelectorProps> = (pro
                         >
                             {renderColorPalettes()}
                         </div>
-                    </>,
+                    </>
                 )}
         </div>
     );

@@ -1,11 +1,11 @@
-import type { SurfaceDataPng_api } from "@api";
 import type { BBox } from "@lib/utils/bbox";
 import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
-import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
+
+import { RealizationSurfaceData } from "../customLayerImplementations/RealizationSurfaceLayer";
 
 export function makeSurfaceLayerBoundingBox({
     getData,
-}: FactoryFunctionArgs<any, SurfaceDataFloat_trans | SurfaceDataPng_api>): BBox | null {
+}: FactoryFunctionArgs<any, RealizationSurfaceData>): BBox | null {
     const data = getData();
     if (!data) {
         return null;
@@ -13,13 +13,13 @@ export function makeSurfaceLayerBoundingBox({
 
     return {
         min: {
-            x: data.transformed_bbox_utm.min_x,
-            y: data.transformed_bbox_utm.min_y,
+            x: data.surfaceData.transformed_bbox_utm.min_x,
+            y: data.surfaceData.transformed_bbox_utm.min_y,
             z: 0,
         },
         max: {
-            x: data.transformed_bbox_utm.max_x,
-            y: data.transformed_bbox_utm.max_y,
+            x: data.surfaceData.transformed_bbox_utm.max_x,
+            y: data.surfaceData.transformed_bbox_utm.max_y,
             z: 0,
         },
     };

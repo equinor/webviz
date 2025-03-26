@@ -1,11 +1,14 @@
 import type { BBox } from "@lib/utils/bbox";
 import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 
-import type { Data, DrilledWellborePicksSettings } from "../../../layers/implementations/DrilledWellborePicksLayer";
+import type {
+    DrilledWellborePicksData,
+    DrilledWellborePicksSettings,
+} from "../../../layers/implementations/DrilledWellborePicksLayer";
 
 export function makeDrilledWellborePicksBoundingBox({
     getData,
-}: FactoryFunctionArgs<DrilledWellborePicksSettings, Data>): BBox | null {
+}: FactoryFunctionArgs<DrilledWellborePicksSettings, DrilledWellborePicksData>): BBox | null {
     const data = getData();
     if (!data) {
         return null;

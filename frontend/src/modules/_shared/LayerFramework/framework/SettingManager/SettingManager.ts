@@ -1,6 +1,6 @@
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import type { PublishSubscribe} from "@modules/_shared/utils/PublishSubscribeDelegate";
+import type { PublishSubscribe } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
 import { isEqual } from "lodash";
@@ -9,37 +9,30 @@ import { v4 } from "uuid";
 import type { CustomSettingImplementation } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SharedSettingsProvider } from "../../interfacesAndTypes/entitites";
 import type { AvailableValuesType, MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
-import type {
-    Setting,
-    SettingCategories,
-    SettingCategory,
-    SettingTypes} from "../../settings/settingsDefinitions";
-import {
-    settingCategoryFixupMap,
-    settingCategoryIsValueValidMap,
-} from "../../settings/settingsDefinitions";
+import type { Setting, SettingCategories, SettingCategory, SettingTypes } from "../../settings/settingsDefinitions";
+import { settingCategoryFixupMap, settingCategoryIsValueValidMap } from "../../settings/settingsDefinitions";
 import { Group } from "../Group/Group";
 
 export enum SettingTopic {
-    VALUE_CHANGED = "VALUE_CHANGED",
-    VALIDITY_CHANGED = "VALIDITY_CHANGED",
-    AVAILABLE_VALUES_CHANGED = "AVAILABLE_VALUES_CHANGED",
-    OVERRIDDEN_VALUE_CHANGED = "OVERRIDDEN_VALUE_CHANGED",
-    OVERRIDDEN_VALUE_PROVIDER_CHANGED = "OVERRIDDEN_VALUE_PROVIDER_CHANGED",
-    LOADING_STATE_CHANGED = "LOADING_STATE_CHANGED",
-    INIT_STATE_CHANGED = "INIT_STATE_CHANGED",
-    PERSISTED_STATE_CHANGED = "PERSISTED_STATE_CHANGED",
+    VALUE = "VALUE",
+    IS_VALID = "IS_VALID",
+    AVAILABLE_VALUES = "AVAILABLE_VALUES",
+    OVERRIDDEN_VALUE = "OVERRIDDEN_VALUE",
+    OVERRIDDEN_VALUE_PROVIDER = "OVERRIDDEN_VALUE_PROVIDER",
+    LOADING_STATE = "LOADING_STATE",
+    INIT_STATE = "INIT_STATE",
+    IS_PERSISTED = "IS_PERSISTED",
 }
 
 export type SettingTopicPayloads<TValue, TCategory extends SettingCategory> = {
-    [SettingTopic.VALUE_CHANGED]: TValue;
-    [SettingTopic.VALIDITY_CHANGED]: boolean;
-    [SettingTopic.AVAILABLE_VALUES_CHANGED]: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> | null;
-    [SettingTopic.OVERRIDDEN_VALUE_CHANGED]: TValue | undefined;
-    [SettingTopic.OVERRIDDEN_VALUE_PROVIDER_CHANGED]: OverriddenValueProviderType | undefined;
-    [SettingTopic.LOADING_STATE_CHANGED]: boolean;
-    [SettingTopic.INIT_STATE_CHANGED]: boolean;
-    [SettingTopic.PERSISTED_STATE_CHANGED]: boolean;
+    [SettingTopic.VALUE]: TValue;
+    [SettingTopic.IS_VALID]: boolean;
+    [SettingTopic.AVAILABLE_VALUES]: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> | null;
+    [SettingTopic.OVERRIDDEN_VALUE]: TValue | undefined;
+    [SettingTopic.OVERRIDDEN_VALUE_PROVIDER]: OverriddenValueProviderType | undefined;
+    [SettingTopic.LOADING_STATE]: boolean;
+    [SettingTopic.INIT_STATE]: boolean;
+    [SettingTopic.IS_PERSISTED]: boolean;
 };
 
 export type SettingManagerParams<
@@ -176,7 +169,7 @@ export class SettingManager<
 
         this.setValueValid(this.checkIfValueIsValid(this._value));
 
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
     }
 
     setValueValid(isValueValid: boolean): void {
@@ -184,7 +177,7 @@ export class SettingManager<
             return;
         }
         this._isValueValid = isValueValid;
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALIDITY_CHANGED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_VALID);
     }
 
     setLoading(loading: boolean): void {
@@ -192,7 +185,7 @@ export class SettingManager<
             return;
         }
         this._loading = loading;
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.LOADING_STATE_CHANGED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.LOADING_STATE);
     }
 
     initialize(): void {
@@ -200,7 +193,7 @@ export class SettingManager<
             return;
         }
         this._initialized = true;
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INIT_STATE_CHANGED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INIT_STATE);
     }
 
     isInitialized(): boolean {
@@ -262,7 +255,7 @@ export class SettingManager<
 
         this.setOverriddenValue(overriddenValue);
         this._overriddenValueProviderType = overriddenValueProviderType;
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.OVERRIDDEN_VALUE_PROVIDER_CHANGED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.OVERRIDDEN_VALUE_PROVIDER);
     }
 
     setOverriddenValue(overriddenValue: TValue | undefined): void {
@@ -272,7 +265,7 @@ export class SettingManager<
 
         const prevValue = this._overriddenValue;
         this._overriddenValue = overriddenValue;
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.OVERRIDDEN_VALUE_CHANGED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.OVERRIDDEN_VALUE);
 
         if (overriddenValue === undefined) {
             // Keep overridden value, if invalid fix it
@@ -292,27 +285,27 @@ export class SettingManager<
             return;
         }
 
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
     }
 
     makeSnapshotGetter<T extends SettingTopic>(topic: T): () => SettingTopicPayloads<TValue, TCategory>[T] {
         const snapshotGetter = (): any => {
             switch (topic) {
-                case SettingTopic.VALUE_CHANGED:
+                case SettingTopic.VALUE:
                     return this.getValue();
-                case SettingTopic.VALIDITY_CHANGED:
+                case SettingTopic.IS_VALID:
                     return this._isValueValid;
-                case SettingTopic.AVAILABLE_VALUES_CHANGED:
+                case SettingTopic.AVAILABLE_VALUES:
                     return this._availableValues;
-                case SettingTopic.OVERRIDDEN_VALUE_CHANGED:
+                case SettingTopic.OVERRIDDEN_VALUE:
                     return this._overriddenValue;
-                case SettingTopic.OVERRIDDEN_VALUE_PROVIDER_CHANGED:
+                case SettingTopic.OVERRIDDEN_VALUE_PROVIDER:
                     return this._overriddenValueProviderType;
-                case SettingTopic.LOADING_STATE_CHANGED:
+                case SettingTopic.LOADING_STATE:
                     return this.isLoading();
-                case SettingTopic.PERSISTED_STATE_CHANGED:
+                case SettingTopic.IS_PERSISTED:
                     return this.isPersistedValue();
-                case SettingTopic.INIT_STATE_CHANGED:
+                case SettingTopic.INIT_STATE:
                     return this.isInitialized();
                 default:
                     throw new Error(`Unknown topic: ${topic}`);
@@ -362,8 +355,8 @@ export class SettingManager<
             this._value = this._currentValueFromPersistence;
             this._currentValueFromPersistence = null;
             this.setValueValid(true);
-            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);
-            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.PERSISTED_STATE_CHANGED);
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED);
             return true;
         }
 
@@ -384,9 +377,9 @@ export class SettingManager<
         this.setValueValid(this.checkIfValueIsValid(this.getValue()));
         this.initialize();
         if (valueChanged || this._isValueValid !== prevIsValid) {
-            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
         }
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.AVAILABLE_VALUES_CHANGED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.AVAILABLE_VALUES);
     }
 
     makeComponent() {

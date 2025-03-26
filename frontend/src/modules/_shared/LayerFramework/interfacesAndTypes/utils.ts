@@ -1,4 +1,10 @@
-import type { Setting, SettingCategories, SettingCategory, SettingTypes, Settings } from "../settings/settingsDefinitions";
+import type {
+    Setting,
+    SettingCategories,
+    SettingCategory,
+    SettingTypes,
+    Settings,
+} from "../settings/settingsDefinitions";
 
 // Required when making "AvailableValuesType" for all settings in an object ("TSettings")
 export type EachAvailableValuesType<TSetting> = TSetting extends Setting ? AvailableValuesType<TSetting> : never;
@@ -10,16 +16,16 @@ export type AvailableValuesType<TSetting extends Setting> = MakeAvailableValuesT
 >;
 
 export type MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory extends SettingCategory> = TCategory extends
-    | SettingCategory.SINGLE_OPTION
-    | SettingCategory.MULTI_OPTION
+    | SettingCategory.SINGLE_SELECT
+    | SettingCategory.MULTI_SELECT
     ? RemoveUnknownFromArray<MakeArrayIfNotArray<TValue>>
     : TCategory extends SettingCategory.NUMBER
-    ? [Exclude<TValue, null>, Exclude<TValue, null>]
-    : TCategory extends SettingCategory.NUMBER_WITH_STEP
-    ? [Exclude<TValue, null>, Exclude<TValue, null>, Exclude<TValue, null>]
-    : TCategory extends SettingCategory.RANGE
-    ? Exclude<TValue, null>
-    : never;
+      ? [Exclude<TValue, null>, Exclude<TValue, null>]
+      : TCategory extends SettingCategory.NUMBER_WITH_STEP
+        ? [Exclude<TValue, null>, Exclude<TValue, null>, Exclude<TValue, null>]
+        : TCategory extends SettingCategory.RANGE
+          ? Exclude<TValue, null>
+          : never;
 
 export type TupleIndices<T extends readonly any[]> = Extract<keyof T, `${number}`>;
 export type SettingsKeysFromTuple<TSettings extends Settings> = TSettings[TupleIndices<TSettings>];

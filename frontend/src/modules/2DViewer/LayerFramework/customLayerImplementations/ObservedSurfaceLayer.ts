@@ -1,21 +1,16 @@
-import type {
-    SurfaceDataPng_api} from "@api";
-import {
-    SurfaceTimeType_api,
-    getObservedSurfacesMetadataOptions,
-    getSurfaceDataOptions,
-} from "@api";
+import type { SurfaceDataPng_api } from "@api";
+import { SurfaceTimeType_api, getObservedSurfacesMetadataOptions, getSurfaceDataOptions } from "@api";
 import type {
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
     FetchDataParams,
 } from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap} from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import type { MakeSettingTypesMap } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import type { FullSurfaceAddress} from "@modules/_shared/Surface";
+import type { FullSurfaceAddress } from "@modules/_shared/Surface";
 import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
-import type { SurfaceDataFloat_trans} from "@modules/_shared/Surface/queryDataTransforms";
+import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
@@ -31,10 +26,25 @@ const observedSurfaceSettings = [
 export type ObservedSurfaceSettings = typeof observedSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<ObservedSurfaceSettings>;
 
-export type Data = SurfaceDataFloat_trans | SurfaceDataPng_api;
+export enum SurfaceDataFormat {
+    FLOAT = "float",
+    PNG = "png",
+}
 
-export class ObservedSurfaceLayer implements CustomDataLayerImplementation<ObservedSurfaceSettings, Data> {
+export type ObservedSurfaceData =
+    | { format: SurfaceDataFormat.FLOAT; surfaceData: SurfaceDataFloat_trans }
+    | { format: SurfaceDataFormat.PNG; surfaceData: SurfaceDataPng_api };
+
+export class ObservedSurfaceLayer
+    implements CustomDataLayerImplementation<ObservedSurfaceSettings, ObservedSurfaceData>
+{
     settings = observedSurfaceSettings;
+
+    private _dataFormat: SurfaceDataFormat;
+
+    constructor(dataFormat?: SurfaceDataFormat) {
+        this._dataFormat = dataFormat ?? SurfaceDataFormat.PNG;
+    }
 
     getDefaultName() {
         return "Observed Surface";
@@ -44,8 +54,10 @@ export class ObservedSurfaceLayer implements CustomDataLayerImplementation<Obser
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeValueRange({ getData }: DataLayerInformationAccessors<ObservedSurfaceSettings, Data>): [number, number] | null {
-        const data = getData();
+    makeValueRange({
+        getData,
+    }: DataLayerInformationAccessors<ObservedSurfaceSettings, ObservedSurfaceData>): [number, number] | null {
+        const data = getData()?.surfaceData;
         if (!data) {
             return null;
         }
@@ -159,7 +171,7 @@ export class ObservedSurfaceLayer implements CustomDataLayerImplementation<Obser
         getSetting,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<ObservedSurfaceSettings, Data>): Promise<Data> {
+    }: FetchDataParams<ObservedSurfaceSettings, ObservedSurfaceData>): Promise<ObservedSurfaceData> {
         let surfaceAddress: FullSurfaceAddress | null = null;
         const addrBuilder = new SurfaceAddressBuilder();
 
@@ -188,13 +200,13 @@ export class ObservedSurfaceLayer implements CustomDataLayerImplementation<Obser
                 ...getSurfaceDataOptions({
                     query: {
                         surf_addr_str: surfAddrStr ?? "",
-                        data_format: "png",
+                        data_format: this._dataFormat,
                         resample_to_def_str: null,
                     },
                 }),
             })
-            .then((data) => transformSurfaceData(data));
+            .then((data) => ({ format: this._dataFormat, surfaceData: transformSurfaceData(data) }));
 
-        return promise;
+        return promise as Promise<ObservedSurfaceData>;
     }
 }

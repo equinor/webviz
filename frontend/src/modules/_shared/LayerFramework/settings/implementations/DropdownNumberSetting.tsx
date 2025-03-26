@@ -11,9 +11,9 @@ import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = number | null;
 
-export class DropdownNumberSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_OPTION> {
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) => React.ReactNode {
-        return function DropdownNumberSetting(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) {
+export class DropdownNumberSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
+        return function DropdownNumberSetting(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
             const availableValues = props.availableValues ?? [];
 
             const options: DropdownOption<number>[] = availableValues.map((value) => {

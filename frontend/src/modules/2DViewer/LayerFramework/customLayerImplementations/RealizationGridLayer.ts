@@ -1,18 +1,13 @@
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
-import type {
-    GridMappedProperty_trans,
-    GridSurface_trans} from "@modules/3DViewer/view/queries/queryDataTransforms";
-import {
-    transformGridMappedProperty,
-    transformGridSurface,
-} from "@modules/3DViewer/view/queries/queryDataTransforms";
+import type { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
+import { transformGridMappedProperty, transformGridSurface } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import type {
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
     FetchDataParams,
 } from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap} from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import type { MakeSettingTypesMap } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 
 import { isEqual } from "lodash";
@@ -30,7 +25,7 @@ const realizationGridSettings = [
 export type RealizationGridSettings = typeof realizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationGridSettings>;
 
-export type Data = {
+export type RealizationGridData = {
     gridSurfaceData: GridSurface_trans;
     gridParameterData: GridMappedProperty_trans;
 };
@@ -43,7 +38,9 @@ type StoredData = {
     };
 };
 
-export class RealizationGridLayer implements CustomDataLayerImplementation<RealizationGridSettings, Data, StoredData> {
+export class RealizationGridLayer
+    implements CustomDataLayerImplementation<RealizationGridSettings, RealizationGridData, StoredData>
+{
     settings = realizationGridSettings;
 
     getDefaultSettingsValues() {
@@ -60,7 +57,9 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeValueRange({ getData }: DataLayerInformationAccessors<RealizationGridSettings, Data>): [number, number] | null {
+    makeValueRange({
+        getData,
+    }: DataLayerInformationAccessors<RealizationGridSettings, RealizationGridData>): [number, number] | null {
         const data = getData();
         if (!data) {
             return null;
@@ -74,7 +73,7 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
         getStoredData,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<RealizationGridSettings, Data, StoredData>): Promise<{
+    }: FetchDataParams<RealizationGridSettings, RealizationGridData, StoredData>): Promise<{
         gridSurfaceData: GridSurface_trans;
         gridParameterData: GridMappedProperty_trans;
     }> {
@@ -156,7 +155,9 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
         }));
     }
 
-    areCurrentSettingsValid({ getSetting }: DataLayerInformationAccessors<RealizationGridSettings, Data>): boolean {
+    areCurrentSettingsValid({
+        getSetting,
+    }: DataLayerInformationAccessors<RealizationGridSettings, RealizationGridData>): boolean {
         return (
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&

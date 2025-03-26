@@ -13,15 +13,15 @@ import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = string | null;
 
-export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_OPTION> {
+export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
     defaultValue: ValueType = null;
 
     getLabel(): string {
         return "Date";
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) => React.ReactNode {
-        return function Ensemble(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
+        return function Ensemble(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
             const availableValues = props.availableValues ?? [];
 
             const options: DropdownOption[] = availableValues.map((value) => {

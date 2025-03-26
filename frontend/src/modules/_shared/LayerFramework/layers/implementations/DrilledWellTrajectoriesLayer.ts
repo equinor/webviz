@@ -15,10 +15,10 @@ const drilledWellTrajectoriesSettings = [Setting.ENSEMBLE, Setting.SMDA_WELLBORE
 type DrilledWellTrajectoriesSettings = typeof drilledWellTrajectoriesSettings;
 type SettingsWithTypes = MakeSettingTypesMap<DrilledWellTrajectoriesSettings>;
 
-type Data = WellboreTrajectory_api[];
+type DrilledWellTrajectoriesData = WellboreTrajectory_api[];
 
 export class DrilledWellTrajectoriesLayer
-    implements CustomDataLayerImplementation<DrilledWellTrajectoriesSettings, Data>
+    implements CustomDataLayerImplementation<DrilledWellTrajectoriesSettings, DrilledWellTrajectoriesData>
 {
     settings = drilledWellTrajectoriesSettings;
 
@@ -35,7 +35,10 @@ export class DrilledWellTrajectoriesLayer
         getGlobalSetting,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<DrilledWellTrajectoriesSettings, Data>): Promise<Data> {
+    }: FetchDataParams<
+        DrilledWellTrajectoriesSettings,
+        DrilledWellTrajectoriesData
+    >): Promise<DrilledWellTrajectoriesData> {
         const fieldIdentifier = getGlobalSetting("fieldId");
         const selectedWellboreHeaders = getSetting(Setting.SMDA_WELLBORE_HEADERS);
         let selectedWellboreUuids: string[] = [];
@@ -54,7 +57,7 @@ export class DrilledWellTrajectoriesLayer
                 staleTime: 1800000, // TODO: Both stale and gcTime are set to 30 minutes for now since SMDA is quite slow for fields with many wells - this should be adjusted later
                 gcTime: 1800000,
             })
-            .then((response: Data) => {
+            .then((response: DrilledWellTrajectoriesData) => {
                 return response.filter((trajectory) => selectedWellboreUuids.includes(trajectory.wellboreUuid));
             });
 

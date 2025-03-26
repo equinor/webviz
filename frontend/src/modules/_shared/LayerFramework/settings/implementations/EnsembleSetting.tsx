@@ -11,7 +11,7 @@ import type {
 import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = RegularEnsembleIdent | null;
-export class EnsembleSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_OPTION> {
+export class EnsembleSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
     defaultValue: ValueType = null;
 
     getLabel(): string {
@@ -26,8 +26,8 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, S
         return serializedValue !== "" ? RegularEnsembleIdent.fromString(serializedValue) : null;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) => React.ReactNode {
-        return function EnsembleSelect(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
+        return function EnsembleSelect(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
             const availableValues = props.availableValues ?? [];
 
             const ensembles = props.globalSettings.ensembles.filter((ensemble) =>

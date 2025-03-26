@@ -4,7 +4,10 @@ import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visual
 
 import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
 
-import type { Data, RealizationPolygonsSettings } from "../customLayerImplementations/RealizationPolygonsLayer";
+import type {
+    RealizationPolygonsData,
+    RealizationPolygonsSettings,
+} from "../customLayerImplementations/RealizationPolygonsLayer";
 
 function zipCoords(xArr: number[], yArr: number[], zArr: number[]): number[][] {
     const coords: number[][] = [];
@@ -31,7 +34,7 @@ export function makeRealizationPolygonsLayer({
     id,
     name,
     getData,
-}: FactoryFunctionArgs<RealizationPolygonsSettings, Data>): GeoJsonLayer | null {
+}: FactoryFunctionArgs<RealizationPolygonsSettings, RealizationPolygonsData>): GeoJsonLayer | null {
     const polygonsData = getData();
 
     if (!polygonsData) {

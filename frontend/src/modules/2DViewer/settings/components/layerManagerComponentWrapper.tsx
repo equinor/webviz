@@ -14,7 +14,7 @@ import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/custom
 import { CustomLayerType } from "@modules/2DViewer/LayerFramework/customLayerImplementations/layerTypes";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import type { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions";
-import type { GroupDelegate} from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
+import type { GroupDelegate } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { DataLayer } from "@modules/_shared/LayerFramework/framework/DataLayer/DataLayer";
 import type { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
@@ -24,7 +24,7 @@ import { Group } from "@modules/_shared/LayerFramework/framework/Group/Group";
 import { SettingsGroup } from "@modules/_shared/LayerFramework/framework/SettingsGroup/SettingsGroup";
 import { SharedSetting } from "@modules/_shared/LayerFramework/framework/SharedSetting/SharedSetting";
 import { GroupRegistry } from "@modules/_shared/LayerFramework/groups/GroupRegistry";
-import type { Item, ItemGroup} from "@modules/_shared/LayerFramework/interfacesAndTypes/entitites";
+import type { Item, ItemGroup } from "@modules/_shared/LayerFramework/interfacesAndTypes/entitites";
 import { instanceofItemGroup } from "@modules/_shared/LayerFramework/interfacesAndTypes/entitites";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
@@ -61,16 +61,6 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
         switch (identifier) {
             case "view":
                 groupDelegate.appendChild(GroupRegistry.makeGroup("View", props.layerManager, colorSet.getNextColor()));
-                return;
-            case "intersection-view":
-                groupDelegate.appendChild(
-                    GroupRegistry.makeGroup("IntersectionView", props.layerManager, colorSet.getNextColor())
-                );
-                return;
-            case "realization-view":
-                groupDelegate.appendChild(
-                    GroupRegistry.makeGroup("RealizationView", props.layerManager, colorSet.getNextColor())
-                );
                 return;
             case "delta-surface":
                 groupDelegate.appendChild(new DeltaSurface("Delta surface", props.layerManager));
@@ -238,16 +228,6 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                 identifier: "view",
                 icon: <Panorama fontSize="small" />,
                 label: "View",
-            },
-            {
-                identifier: "intersection-view",
-                icon: <Panorama fontSize="small" />,
-                label: "Intersection view",
-            },
-            {
-                identifier: "realization-view",
-                icon: <Panorama fontSize="small" />,
-                label: "Realization view",
             },
             {
                 identifier: "settings-group",

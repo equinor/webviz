@@ -27,10 +27,25 @@ const realizationSurfaceSettings = [
 export type RealizationSurfaceSettings = typeof realizationSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationSurfaceSettings>;
 
-export type Data = SurfaceDataFloat_trans | SurfaceDataPng_api;
+export enum SurfaceDataFormat {
+    FLOAT = "float",
+    PNG = "png",
+}
 
-export class RealizationSurfaceLayer implements CustomDataLayerImplementation<RealizationSurfaceSettings, Data> {
+export type RealizationSurfaceData =
+    | { format: SurfaceDataFormat.FLOAT; surfaceData: SurfaceDataFloat_trans }
+    | { format: SurfaceDataFormat.PNG; surfaceData: SurfaceDataPng_api };
+
+export class RealizationSurfaceLayer
+    implements CustomDataLayerImplementation<RealizationSurfaceSettings, RealizationSurfaceData>
+{
     settings = realizationSurfaceSettings;
+
+    private _dataFormat: SurfaceDataFormat;
+
+    constructor(dataFormat?: SurfaceDataFormat) {
+        this._dataFormat = dataFormat ?? SurfaceDataFormat.PNG;
+    }
 
     getDefaultName(): string {
         return "Realization Surface";
@@ -42,11 +57,13 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
                 ...prevSettings,
                 colorScale: null,
             },
-            { ...newSettings, colorScale: null },
+            { ...newSettings, colorScale: null }
         );
     }
 
-    areCurrentSettingsValid({ getSetting }: DataLayerInformationAccessors<RealizationSurfaceSettings, Data>): boolean {
+    areCurrentSettingsValid({
+        getSetting,
+    }: DataLayerInformationAccessors<RealizationSurfaceSettings, RealizationSurfaceData>): boolean {
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         const realizationNum = getSetting(Setting.REALIZATION);
         const surfaceName = getSetting(Setting.SURFACE_NAME);
@@ -64,8 +81,8 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
 
     makeValueRange({
         getData,
-    }: DataLayerInformationAccessors<RealizationSurfaceSettings, Data>): [number, number] | null {
-        const data = getData();
+    }: DataLayerInformationAccessors<RealizationSurfaceSettings, RealizationSurfaceData>): [number, number] | null {
+        const data = getData()?.surfaceData;
         if (!data) {
             return null;
         }
@@ -145,8 +162,8 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
             const availableSurfaceNames = [
                 ...Array.from(
                     new Set(
-                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name),
-                    ),
+                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name)
+                    )
                 ),
             ];
 
@@ -168,8 +185,8 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
                     new Set(
                         data.surfaces
                             .filter((surface) => surface.attribute_name === attribute && surface.name === surfaceName)
-                            .map((el) => el.time_type),
-                    ),
+                            .map((el) => el.time_type)
+                    )
                 ),
             ];
 
@@ -191,7 +208,7 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
         getSetting,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<RealizationSurfaceSettings, Data>): Promise<SurfaceDataFloat_trans | SurfaceDataPng_api> {
+    }: FetchDataParams<RealizationSurfaceSettings, RealizationSurfaceData>): Promise<RealizationSurfaceData> {
         let surfaceAddress: FullSurfaceAddress | null = null;
         const addrBuilder = new SurfaceAddressBuilder();
 
@@ -227,13 +244,13 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
                 ...getSurfaceDataOptions({
                     query: {
                         surf_addr_str: surfAddrStr ?? "",
-                        data_format: "png",
+                        data_format: this._dataFormat,
                         resample_to_def_str: null,
                     },
                 }),
             })
-            .then((data) => transformSurfaceData(data));
+            .then((data) => ({ format: this._dataFormat, surfaceData: transformSurfaceData(data) }));
 
-        return promise;
+        return promise as Promise<RealizationSurfaceData>;
     }
 }

@@ -1,6 +1,6 @@
 import type React from "react";
 
-import type { ColorScaleConfig} from "@framework/components/ColorScaleSelector/colorScaleSelector";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { ColorScaleSelector } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScalePreview } from "@lib/components/ColorScalePreview";
@@ -13,7 +13,7 @@ import type {
 } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SettingCategory } from "../settingsDefinitions";
 
-type ValueType = ColorScaleConfig | null;
+type ValueType = ColorScaleSpecification | null;
 
 export class ColorScaleSetting implements CustomSettingImplementation<ValueType, SettingCategory.STATIC> {
     defaultValue: ValueType = {
@@ -58,14 +58,14 @@ export class ColorScaleSetting implements CustomSettingImplementation<ValueType,
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.STATIC>) => React.ReactNode {
         return function ColorScaleSelectorDialog(props: SettingComponentProps<ValueType, SettingCategory.STATIC>) {
-            function handleChange(value: ColorScaleConfig) {
+            function handleChange(value: ColorScaleSpecification) {
                 props.onValueChange(value);
             }
 
             return (
                 <ColorScaleSelector
                     workbenchSettings={props.workbenchSettings}
-                    colorScaleConfig={props.value ?? undefined}
+                    colorScaleSpecification={props.value ?? undefined}
                     onChange={handleChange}
                 />
             );

@@ -25,11 +25,11 @@ import "../../layers/registerAllLayers";
 import "../../settings/registerAllSettings";
 
 export enum LayerManagerTopic {
-    ITEMS = "ITEMS_CHANGED",
+    ITEMS = "ITEMS",
     SETTINGS_CHANGED = "SETTINGS_CHANGED",
     AVAILABLE_SETTINGS_CHANGED = "AVAILABLE_SETTINGS_CHANGED",
     LAYER_DATA_REVISION = "LAYER_DATA_REVISION",
-    GLOBAL_SETTINGS = "GLOBAL_SETTINGS_CHANGED",
+    GLOBAL_SETTINGS = "GLOBAL_SETTINGS",
     SHARED_SETTINGS_CHANGED = "SHARED_SETTINGS_CHANGED",
 }
 
@@ -84,22 +84,22 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
             "workbenchSession",
             this._workbenchSession.subscribe(
                 WorkbenchSessionEvent.EnsembleSetChanged,
-                this.handleEnsembleSetChanged.bind(this),
-            ),
+                this.handleEnsembleSetChanged.bind(this)
+            )
         );
         this._subscriptionsHandler.registerUnsubscribeFunction(
             "workbenchSession",
             this._workbenchSession.subscribe(
                 WorkbenchSessionEvent.RealizationFilterSetChanged,
-                this.handleRealizationFilterSetChanged.bind(this),
-            ),
+                this.handleRealizationFilterSetChanged.bind(this)
+            )
         );
         this._subscriptionsHandler.registerUnsubscribeFunction(
             "workbenchSession",
             this._workbenchSession
                 .getUserCreatedItems()
                 .getIntersectionPolylines()
-                .subscribe(IntersectionPolylinesEvent.CHANGE, this.handleIntersectionPolylinesChanged.bind(this)),
+                .subscribe(IntersectionPolylinesEvent.CHANGE, this.handleIntersectionPolylinesChanged.bind(this))
         );
         this._subscriptionsHandler.registerUnsubscribeFunction(
             "groupDelegate",
@@ -108,7 +108,7 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
                 .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(() => {
                 this.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
                 this.publishTopic(LayerManagerTopic.ITEMS);
-            }),
+            })
         );
 
         this._groupColorGenerator = this.makeGroupColorGenerator();
@@ -240,7 +240,7 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
 
     private handleRealizationFilterSetChanged() {
         this._globalSettings.realizationFilterFunction = createEnsembleRealizationFilterFuncForWorkbenchSession(
-            this._workbenchSession,
+            this._workbenchSession
         );
 
         this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS);

@@ -1,6 +1,6 @@
 import type { SurfaceStatisticFunction_api, WellboreHeader_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { ColorScaleConfig } from "@framework/components/ColorScaleSelector/colorScaleSelector";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import type { ColorSet } from "@lib/utils/ColorSet";
 
 import { isEqual } from "lodash";
@@ -11,8 +11,8 @@ import type { SensitivityNameCasePair } from "./implementations/SensitivitySetti
 import type { AvailableValuesType } from "../interfacesAndTypes/utils";
 
 export enum SettingCategory {
-    SINGLE_OPTION = "singleOption",
-    MULTI_OPTION = "multiOption",
+    SINGLE_SELECT = "singleSelect",
+    MULTI_SELECT = "multiSelect",
     NUMBER = "number",
     RANGE = "range",
     NUMBER_WITH_STEP = "numberWithStep",
@@ -46,28 +46,28 @@ export enum Setting {
 }
 
 export const settingCategories = {
-    [Setting.ATTRIBUTE]: SettingCategory.SINGLE_OPTION,
-    [Setting.ENSEMBLE]: SettingCategory.SINGLE_OPTION,
+    [Setting.ATTRIBUTE]: SettingCategory.SINGLE_SELECT,
+    [Setting.ENSEMBLE]: SettingCategory.SINGLE_SELECT,
     [Setting.COLOR_SCALE]: SettingCategory.STATIC,
     [Setting.COLOR_SET]: SettingCategory.STATIC,
     [Setting.GRID_LAYER_I_RANGE]: SettingCategory.RANGE,
     [Setting.GRID_LAYER_J_RANGE]: SettingCategory.RANGE,
     [Setting.GRID_LAYER_K]: SettingCategory.NUMBER,
     [Setting.GRID_LAYER_K_RANGE]: SettingCategory.RANGE,
-    [Setting.GRID_NAME]: SettingCategory.SINGLE_OPTION,
-    [Setting.INTERSECTION]: SettingCategory.SINGLE_OPTION,
-    [Setting.POLYGONS_ATTRIBUTE]: SettingCategory.SINGLE_OPTION,
-    [Setting.POLYGONS_NAME]: SettingCategory.SINGLE_OPTION,
-    [Setting.REALIZATION]: SettingCategory.SINGLE_OPTION,
+    [Setting.GRID_NAME]: SettingCategory.SINGLE_SELECT,
+    [Setting.INTERSECTION]: SettingCategory.SINGLE_SELECT,
+    [Setting.POLYGONS_ATTRIBUTE]: SettingCategory.SINGLE_SELECT,
+    [Setting.POLYGONS_NAME]: SettingCategory.SINGLE_SELECT,
+    [Setting.REALIZATION]: SettingCategory.SINGLE_SELECT,
     [Setting.SEISMIC_CROSSLINE]: SettingCategory.NUMBER_WITH_STEP,
     [Setting.SEISMIC_DEPTH_SLICE]: SettingCategory.NUMBER_WITH_STEP,
     [Setting.SEISMIC_INLINE]: SettingCategory.NUMBER_WITH_STEP,
-    [Setting.SENSITIVITY]: SettingCategory.SINGLE_OPTION,
+    [Setting.SENSITIVITY]: SettingCategory.SINGLE_SELECT,
     [Setting.SHOW_GRID_LINES]: SettingCategory.BOOLEAN,
-    [Setting.SMDA_WELLBORE_HEADERS]: SettingCategory.MULTI_OPTION,
-    [Setting.STATISTIC_FUNCTION]: SettingCategory.SINGLE_OPTION,
-    [Setting.SURFACE_NAME]: SettingCategory.SINGLE_OPTION,
-    [Setting.TIME_OR_INTERVAL]: SettingCategory.SINGLE_OPTION,
+    [Setting.SMDA_WELLBORE_HEADERS]: SettingCategory.MULTI_SELECT,
+    [Setting.STATISTIC_FUNCTION]: SettingCategory.SINGLE_SELECT,
+    [Setting.SURFACE_NAME]: SettingCategory.SINGLE_SELECT,
+    [Setting.TIME_OR_INTERVAL]: SettingCategory.SINGLE_SELECT,
 } as const;
 
 export type SettingCategories = typeof settingCategories;
@@ -75,7 +75,7 @@ export type SettingCategories = typeof settingCategories;
 export type SettingTypes = {
     [Setting.ATTRIBUTE]: string | null;
     [Setting.ENSEMBLE]: RegularEnsembleIdent | null;
-    [Setting.COLOR_SCALE]: ColorScaleConfig | null;
+    [Setting.COLOR_SCALE]: ColorScaleSpecification | null;
     [Setting.COLOR_SET]: ColorSet | null;
     [Setting.GRID_LAYER_I_RANGE]: [number, number] | null;
     [Setting.GRID_LAYER_J_RANGE]: [number, number] | null;
@@ -139,7 +139,7 @@ type SettingCategoryAvailableValuesIntersectionReducerMap = {
 };
 
 export const settingCategoryFixupMap: SettingCategoryFixupMap = {
-    [SettingCategory.SINGLE_OPTION]: (value, availableValues) => {
+    [SettingCategory.SINGLE_SELECT]: (value, availableValues) => {
         if (availableValues.length === 0) {
             return null;
         }
@@ -154,7 +154,7 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
 
         return availableValues[0];
     },
-    [SettingCategory.MULTI_OPTION]: (value, availableValues) => {
+    [SettingCategory.MULTI_SELECT]: (value, availableValues) => {
         if (availableValues.length === 0) {
             return [];
         }
@@ -222,13 +222,13 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
 };
 
 export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
-    [SettingCategory.SINGLE_OPTION]: (value, availableValues) => {
+    [SettingCategory.SINGLE_SELECT]: (value, availableValues) => {
         if (value === null) {
             return false;
         }
         return availableValues.some((v) => isEqual(v, value));
     },
-    [SettingCategory.MULTI_OPTION]: (value, availableValues) => {
+    [SettingCategory.MULTI_SELECT]: (value, availableValues) => {
         if (value === null) {
             return false;
         }
@@ -261,7 +261,7 @@ export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
 
 export const settingCategoryAvailableValuesIntersectionReducerMap: SettingCategoryAvailableValuesIntersectionReducerMap =
     {
-        [SettingCategory.SINGLE_OPTION]: {
+        [SettingCategory.SINGLE_SELECT]: {
             reducer: (accumulator, currentAvailableValues) => {
                 if (accumulator.length === 0) {
                     return currentAvailableValues;
@@ -270,7 +270,7 @@ export const settingCategoryAvailableValuesIntersectionReducerMap: SettingCatego
             },
             startingValue: [],
         },
-        [SettingCategory.MULTI_OPTION]: {
+        [SettingCategory.MULTI_SELECT]: {
             reducer: (accumulator, currentAvailableValues) => {
                 if (accumulator.length === 0) {
                     return currentAvailableValues;

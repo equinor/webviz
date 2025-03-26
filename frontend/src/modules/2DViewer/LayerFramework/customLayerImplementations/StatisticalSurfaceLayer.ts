@@ -1,5 +1,4 @@
-import type {
-    SurfaceDataPng_api} from "@api";
+import type { SurfaceDataPng_api } from "@api";
 import {
     SurfaceStatisticFunction_api,
     SurfaceTimeType_api,
@@ -13,11 +12,11 @@ import type {
 } from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
 import type { SensitivityNameCasePair } from "@modules/_shared/LayerFramework/settings/implementations/SensitivitySetting";
-import type { MakeSettingTypesMap} from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import type { MakeSettingTypesMap } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import type { FullSurfaceAddress} from "@modules/_shared/Surface";
+import type { FullSurfaceAddress } from "@modules/_shared/Surface";
 import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
-import type { SurfaceDataFloat_trans} from "@modules/_shared/Surface/queryDataTransforms";
+import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
@@ -35,10 +34,25 @@ const statisicalSurfaceSettings = [
 export type StatisticalSurfaceSettings = typeof statisicalSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<StatisticalSurfaceSettings>;
 
-export type Data = SurfaceDataFloat_trans | SurfaceDataPng_api;
+export enum SurfaceDataFormat {
+    FLOAT = "float",
+    PNG = "png",
+}
 
-export class StatisticalSurfaceLayer implements CustomDataLayerImplementation<StatisticalSurfaceSettings, Data> {
+export type StatisticalSurfaceData =
+    | { format: SurfaceDataFormat.FLOAT; surfaceData: SurfaceDataFloat_trans }
+    | { format: SurfaceDataFormat.PNG; surfaceData: SurfaceDataPng_api };
+
+export class StatisticalSurfaceLayer
+    implements CustomDataLayerImplementation<StatisticalSurfaceSettings, StatisticalSurfaceData>
+{
     settings = statisicalSurfaceSettings;
+
+    private _dataFormat: SurfaceDataFormat;
+
+    constructor(dataFormat?: SurfaceDataFormat) {
+        this._dataFormat = dataFormat ?? SurfaceDataFormat.PNG;
+    }
 
     getDefaultSettingsValues() {
         return {
@@ -56,8 +70,8 @@ export class StatisticalSurfaceLayer implements CustomDataLayerImplementation<St
 
     makeValueRange({
         getData,
-    }: DataLayerInformationAccessors<StatisticalSurfaceSettings, Data>): [number, number] | null {
-        const data = getData();
+    }: DataLayerInformationAccessors<StatisticalSurfaceSettings, StatisticalSurfaceData>): [number, number] | null {
+        const data = getData()?.surfaceData;
         if (!data) {
             return null;
         }
@@ -196,7 +210,7 @@ export class StatisticalSurfaceLayer implements CustomDataLayerImplementation<St
         getWorkbenchSession,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<StatisticalSurfaceSettings, Data>): Promise<SurfaceDataFloat_trans | SurfaceDataPng_api> {
+    }: FetchDataParams<StatisticalSurfaceSettings, StatisticalSurfaceData>): Promise<StatisticalSurfaceData> {
         let surfaceAddress: FullSurfaceAddress | null = null;
         const addrBuilder = new SurfaceAddressBuilder();
 
@@ -255,7 +269,7 @@ export class StatisticalSurfaceLayer implements CustomDataLayerImplementation<St
         const queryOptions = getSurfaceDataOptions({
             query: {
                 surf_addr_str: surfAddrStr ?? "",
-                data_format: "png",
+                data_format: this._dataFormat,
                 resample_to_def_str: null,
             },
         });
@@ -266,8 +280,8 @@ export class StatisticalSurfaceLayer implements CustomDataLayerImplementation<St
             .fetchQuery({
                 ...queryOptions,
             })
-            .then((data) => transformSurfaceData(data));
+            .then((data) => ({ format: this._dataFormat, surfaceData: transformSurfaceData(data) }));
 
-        return promise;
+        return promise as Promise<StatisticalSurfaceData>;
     }
 }

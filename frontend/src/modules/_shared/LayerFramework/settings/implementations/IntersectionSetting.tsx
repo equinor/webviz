@@ -19,10 +19,10 @@ export type IntersectionSettingValue = {
 
 type ValueType = IntersectionSettingValue | null;
 
-export class IntersectionSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_OPTION> {
+export class IntersectionSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
     isValueValid(
         value: IntersectionSettingValue | null,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_OPTION>
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_SELECT>
     ): boolean {
         if (value === null) {
             return false;
@@ -33,7 +33,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
 
     fixupValue(
         currentValue: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_OPTION>
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_SELECT>
     ): ValueType {
         if (currentValue === null) {
             return availableValues.find((v) => v.type === "wellbore") ?? null;
@@ -46,8 +46,8 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
         return availableValues.find((v) => v.type === currentValue.type) ?? null;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) => React.ReactNode {
-        return function Realization(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
+        return function Realization(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
             const availableValues = props.availableValues ?? [];
 
             const [type, setType] = React.useState<IntersectionSettingValue["type"]>(props.value?.type ?? "wellbore");

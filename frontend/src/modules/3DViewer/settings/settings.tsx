@@ -8,7 +8,7 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { ColorScaleSelector } from "@framework/components/ColorScaleSelector";
-import type { ColorScaleConfig } from "@framework/components/ColorScaleSelector/colorScaleSelector";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { Intersection } from "@framework/types/intersection";
 import { IntersectionType } from "@framework/types/intersection";
@@ -161,7 +161,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
         syncHelper.publishValue(
             SyncSettingKey.ENSEMBLE,
             "global.syncValue.ensembles",
-            ensembleIdent ? [ensembleIdent] : [],
+            ensembleIdent ? [ensembleIdent] : []
         );
     }
 
@@ -241,9 +241,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
         setCustomPolylineFilterText(e.target.value);
     }
 
-    function handleColorScaleChange(colorScaleConfig: ColorScaleConfig) {
-        setColorScale(colorScaleConfig.colorScale);
-        setUseCustomBounds(colorScaleConfig.areBoundariesUserDefined);
+    function handleColorScaleChange(colorScaleSpecification: ColorScaleSpecification) {
+        setColorScale(colorScaleSpecification.colorScale);
+        setUseCustomBounds(colorScaleSpecification.areBoundariesUserDefined);
     }
 
     const realizationOptions = makeRealizationOptions(availableRealizations);
@@ -333,7 +333,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                     <Label text="Color scale">
                         <ColorScaleSelector
                             workbenchSettings={props.workbenchSettings}
-                            colorScaleConfig={
+                            colorScaleSpecification={
                                 colorScale
                                     ? { colorScale: colorScale, areBoundariesUserDefined: useCustomBounds }
                                     : undefined
@@ -433,7 +433,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                                     >
                                         <Delete fontSize="small" />
                                     </div>
-                                </div>,
+                                </div>
                             )}
                             value={selectedCustomIntersectionPolylineId ? [selectedCustomIntersectionPolylineId] : []}
                             headerLabels={["Polyline name", "Actions"]}
@@ -516,7 +516,7 @@ function makeCustomIntersectionPolylineOptions(
     polylines: IntersectionPolyline[],
     selectedId: string | null,
     filter: string,
-    actions: React.ReactNode,
+    actions: React.ReactNode
 ): TableSelectOption[] {
     return polylines
         .filter((polyline) => polyline.name.includes(filter))

@@ -1,4 +1,5 @@
 import type { SurfaceDef_api } from "@api";
+import { degreesToRadians } from "@lib/utils/geometry";
 import type { Vec2 } from "@lib/utils/vec2";
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
@@ -6,7 +7,11 @@ import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visual
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/LayerFramework/visualization/utils/colors";
 import { ColormapLayer, Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import type { Data, RealizationSurfaceSettings } from "../customLayerImplementations/RealizationSurfaceLayer";
+import {
+    type RealizationSurfaceData,
+    type RealizationSurfaceSettings,
+    SurfaceDataFormat,
+} from "../customLayerImplementations/RealizationSurfaceLayer";
 
 function calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [number, number, number, number] {
     const width = (surfDef.npoints_x - 1) * surfDef.inc_x;
@@ -14,7 +19,7 @@ function calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [n
     const orgRotPoint: Vec2 = { x: surfDef.origin_utm_x, y: surfDef.origin_utm_y };
     const orgTopLeft: Vec2 = { x: surfDef.origin_utm_x, y: surfDef.origin_utm_y + height };
 
-    const transTopLeft: Vec2 = rotatePoint2Around(orgTopLeft, orgRotPoint, (surfDef.rot_deg * Math.PI) / 180);
+    const transTopLeft: Vec2 = rotatePoint2Around(orgTopLeft, orgRotPoint, degreesToRadians(surfDef.rot_deg));
     const tLeft = transTopLeft.x;
     const tBottom = transTopLeft.y - height;
     const tRight = transTopLeft.x + width;
@@ -30,7 +35,7 @@ export function makeRealizationSurfaceLayer({
     name,
     getData,
     getSetting,
-}: FactoryFunctionArgs<RealizationSurfaceSettings, Data>): ColormapLayer | Grid3DLayer | null {
+}: FactoryFunctionArgs<RealizationSurfaceSettings, RealizationSurfaceData>): ColormapLayer | Grid3DLayer | null {
     const data = getData();
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
 
@@ -38,29 +43,38 @@ export function makeRealizationSurfaceLayer({
         return null;
     }
 
-    if ("valuesFloat32Arr" in data) {
+    if (data.format === SurfaceDataFormat.FLOAT) {
         return new Grid3DLayer({
             id,
             name,
-            data: data.valuesFloat32Arr,
+            data: data.surfaceData.valuesFloat32Arr,
             parameters: {
                 depthWriteEnabled: false,
             },
-            colorMapFunction: makeColorMapFunctionFromColorScale(colorScale, data.value_min, data.value_max),
+            colorMapFunction: makeColorMapFunctionFromColorScale(
+                colorScale,
+                data.surfaceData.value_min,
+                data.surfaceData.value_max
+            ),
         });
     }
+
     return new ColormapLayer({
         id,
         name,
-        image: `data:image/png;base64,${data.png_image_base64}`,
-        bounds: calcBoundsForRotationAroundUpperLeftCorner(data.surface_def),
-        rotDeg: data.surface_def.rot_deg,
-        valueRange: [data.value_min, data.value_max],
-        colorMapRange: [data.value_min, data.value_max],
+        image: `data:image/png;base64,${data.surfaceData.png_image_base64}`,
+        bounds: calcBoundsForRotationAroundUpperLeftCorner(data.surfaceData.surface_def),
+        rotDeg: data.surfaceData.surface_def.rot_deg,
+        valueRange: [data.surfaceData.value_min, data.surfaceData.value_max],
+        colorMapRange: [data.surfaceData.value_min, data.surfaceData.value_max],
         colorMapName: "Physics",
         parameters: {
             depthWriteEnabled: false,
         },
-        colorMapFunction: makeColorMapFunctionFromColorScale(colorScale, data.value_min, data.value_max),
+        colorMapFunction: makeColorMapFunctionFromColorScale(
+            colorScale,
+            data.surfaceData.value_min,
+            data.surfaceData.value_max
+        ),
     });
 }

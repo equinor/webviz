@@ -26,6 +26,9 @@ export function create(x: number, y: number, z: number): Vec3 {
  * @returns A new 3D vector.
  */
 export function fromArray(array: ArrayLike<number> | [number, number, number]): Vec3 {
+    if (array.length !== 3) {
+        throw new Error("The array must contain exactly three elements.");
+    }
     return { x: array[0], y: array[1], z: array[2] };
 }
 

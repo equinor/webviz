@@ -15,10 +15,10 @@ export type SensitivityNameCasePair = {
 };
 
 type ValueType = SensitivityNameCasePair | null;
-export class SensitivitySetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_OPTION> {
+export class SensitivitySetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
     isValueValid(
         value: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_OPTION>
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_SELECT>
     ): boolean {
         if (availableValues.length === 0) {
             return true;
@@ -31,12 +31,12 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
             .some(
                 (sensitivity) =>
                     sensitivity?.sensitivityName === value.sensitivityName &&
-                    sensitivity?.sensitivityCase === value.sensitivityCase,
+                    sensitivity?.sensitivityCase === value.sensitivityCase
             );
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) => React.ReactNode {
-        return function Sensitivity(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
+        return function Sensitivity(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
             const availableValues = props.availableValues ?? [];
 
             const availableSensitivityNames: string[] = [
@@ -50,7 +50,7 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
 
             const currentSensitivityCase = fixupSensitivityCase(
                 props.value?.sensitivityCase || null,
-                availableSensitiveCases,
+                availableSensitiveCases
             );
 
             const sensitivityNameOptions = availableSensitivityNames.map((sensitivityName) => ({

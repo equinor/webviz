@@ -16,7 +16,7 @@ import { LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 export type SettingComponentProps<
     TSetting extends Setting,
     TValue extends SettingTypes[TSetting],
-    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
+    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting]
 > = {
     setting: SettingManager<TSetting, TValue, TCategory>;
     manager: DataLayerManager;
@@ -26,22 +26,22 @@ export type SettingComponentProps<
 export function SettingComponent<
     TSetting extends Setting,
     TValue extends SettingTypes[TSetting] = SettingTypes[TSetting],
-    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
+    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting]
 >(props: SettingComponentProps<TSetting, TValue, TCategory>): React.ReactNode {
     const componentRef = React.useRef<(props: SettingComponentPropsInterface<TValue, TCategory>) => React.ReactNode>(
-        props.setting.makeComponent(),
+        props.setting.makeComponent()
     );
-    const value = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE_CHANGED);
-    const isValid = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALIDITY_CHANGED);
-    const isPersisted = usePublishSubscribeTopicValue(props.setting, SettingTopic.PERSISTED_STATE_CHANGED);
-    const availableValues = usePublishSubscribeTopicValue(props.setting, SettingTopic.AVAILABLE_VALUES_CHANGED);
-    const overriddenValue = usePublishSubscribeTopicValue(props.setting, SettingTopic.OVERRIDDEN_VALUE_CHANGED);
+    const value = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE);
+    const isValid = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_VALID);
+    const isPersisted = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED);
+    const availableValues = usePublishSubscribeTopicValue(props.setting, SettingTopic.AVAILABLE_VALUES);
+    const overriddenValue = usePublishSubscribeTopicValue(props.setting, SettingTopic.OVERRIDDEN_VALUE);
     const overriddenValueProvider = usePublishSubscribeTopicValue(
         props.setting,
-        SettingTopic.OVERRIDDEN_VALUE_PROVIDER_CHANGED,
+        SettingTopic.OVERRIDDEN_VALUE_PROVIDER
     );
-    const isLoading = usePublishSubscribeTopicValue(props.setting, SettingTopic.LOADING_STATE_CHANGED);
-    const isInitialized = usePublishSubscribeTopicValue(props.setting, SettingTopic.INIT_STATE_CHANGED);
+    const isLoading = usePublishSubscribeTopicValue(props.setting, SettingTopic.LOADING_STATE);
+    const isInitialized = usePublishSubscribeTopicValue(props.setting, SettingTopic.INIT_STATE);
     const globalSettings = usePublishSubscribeTopicValue(props.manager, LayerManagerTopic.GLOBAL_SETTINGS);
 
     let actuallyLoading = isLoading || !isInitialized;
@@ -69,7 +69,7 @@ export function SettingComponent<
         const valueAsString = props.setting.valueToRepresentation(
             overriddenValue,
             props.manager.getWorkbenchSession(),
-            props.manager.getWorkbenchSettings(),
+            props.manager.getWorkbenchSettings()
         );
 
         return (

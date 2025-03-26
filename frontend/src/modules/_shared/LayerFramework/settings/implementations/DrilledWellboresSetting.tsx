@@ -15,7 +15,7 @@ import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = WellboreHeader_api[] | null;
 
-export class DrilledWellboresSetting implements CustomSettingImplementation<ValueType, SettingCategory.MULTI_OPTION> {
+export class DrilledWellboresSetting implements CustomSettingImplementation<ValueType, SettingCategory.MULTI_SELECT> {
     defaultValue: ValueType = null;
 
     getLabel(): string {
@@ -24,14 +24,14 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
 
     fixupValue(
         currentValue: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_OPTION>
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_SELECT>
     ): ValueType {
         if (!currentValue) {
             return availableValues;
         }
 
         const matchingValues = currentValue.filter((value) =>
-            availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid),
+            availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid)
         );
         if (matchingValues.length === 0) {
             return availableValues;
@@ -39,18 +39,14 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
         return matchingValues;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.MULTI_OPTION>) => React.ReactNode {
-        return function DrilledWellbores(props: SettingComponentProps<ValueType, SettingCategory.MULTI_OPTION>) {
-            const availableValues = React.useMemo(() => props.availableValues ?? [], [props.availableValues]);
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) => React.ReactNode {
+        return function DrilledWellbores(props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) {
+            const availableValues = props.availableValues ?? [];
 
-            const options: SelectOption[] = React.useMemo(
-                () =>
-                    availableValues.map((ident) => ({
-                        value: ident.wellboreUuid,
-                        label: ident.uniqueWellboreIdentifier,
-                    })),
-                [availableValues]
-            );
+            const options: SelectOption[] = availableValues?.map((ident) => ({
+                value: ident.wellboreUuid,
+                label: ident.uniqueWellboreIdentifier,
+            }));
 
             function handleChange(selectedUuids: string[]) {
                 const selectedWellbores = availableValues.filter((ident) => selectedUuids.includes(ident.wellboreUuid));
@@ -68,7 +64,7 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
 
             const selectedValues = React.useMemo(
                 () => props.value?.map((ident) => ident.wellboreUuid) ?? [],
-                [props.value],
+                [props.value]
             );
 
             return (

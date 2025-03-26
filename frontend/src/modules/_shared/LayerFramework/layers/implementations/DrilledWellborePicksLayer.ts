@@ -19,11 +19,13 @@ import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSett
 const drilledWellborePicksSettings = [Setting.ENSEMBLE, Setting.SMDA_WELLBORE_HEADERS, Setting.SURFACE_NAME] as const;
 export type DrilledWellborePicksSettings = typeof drilledWellborePicksSettings;
 
-export type Data = WellborePick_api[];
+export type DrilledWellborePicksData = WellborePick_api[];
 
 type SettingsWithTypes = MakeSettingTypesMap<DrilledWellborePicksSettings>;
 
-export class DrilledWellborePicksLayer implements CustomDataLayerImplementation<DrilledWellborePicksSettings, Data> {
+export class DrilledWellborePicksLayer
+    implements CustomDataLayerImplementation<DrilledWellborePicksSettings, DrilledWellborePicksData>
+{
     settings = drilledWellborePicksSettings;
 
     getDefaultName() {
@@ -39,7 +41,7 @@ export class DrilledWellborePicksLayer implements CustomDataLayerImplementation<
         getGlobalSetting,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<DrilledWellborePicksSettings, Data>): Promise<WellborePick_api[]> {
+    }: FetchDataParams<DrilledWellborePicksSettings, DrilledWellborePicksData>): Promise<WellborePick_api[]> {
         const selectedWellboreHeaders = getSetting(Setting.SMDA_WELLBORE_HEADERS);
         let selectedWellboreUuids: string[] = [];
         if (selectedWellboreHeaders) {
@@ -69,7 +71,7 @@ export class DrilledWellborePicksLayer implements CustomDataLayerImplementation<
 
     areCurrentSettingsValid({
         getSetting,
-    }: DataLayerInformationAccessors<DrilledWellborePicksSettings, Data>): boolean {
+    }: DataLayerInformationAccessors<DrilledWellborePicksSettings, DrilledWellborePicksData>): boolean {
         const smdaWellboreHeaders = getSetting(Setting.SMDA_WELLBORE_HEADERS);
         return (
             getSetting(Setting.ENSEMBLE) !== null &&

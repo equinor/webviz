@@ -3,16 +3,12 @@ import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 import { DataLayer } from "../framework/DataLayer/DataLayer";
 import { LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
 import { Group } from "../framework/Group/Group";
-import type { SettingManager} from "../framework/SettingManager/SettingManager";
+import type { SettingManager } from "../framework/SettingManager/SettingManager";
 import { SettingTopic } from "../framework/SettingManager/SettingManager";
 import type { Item } from "../interfacesAndTypes/entitites";
 import type { AvailableValuesType, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
-import type {
-    SettingTypes,
-    Settings} from "../settings/settingsDefinitions";
-import {
-    settingCategoryAvailableValuesIntersectionReducerMap,
-} from "../settings/settingsDefinitions";
+import type { SettingTypes, Settings } from "../settings/settingsDefinitions";
+import { settingCategoryAvailableValuesIntersectionReducerMap } from "../settings/settingsDefinitions";
 
 export class SharedSettingsDelegate<
     TSettings extends Settings,
@@ -36,11 +32,9 @@ export class SharedSettingsDelegate<
         for (const key in wrappedSettings) {
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "setting",
-                wrappedSettings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(
-                    () => {
-                        this.publishValueChange();
-                    }
-                )
+                wrappedSettings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(() => {
+                    this.publishValueChange();
+                })
             );
         }
 

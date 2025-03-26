@@ -1,11 +1,11 @@
-import type { PolygonData_api} from "@api";
+import type { PolygonData_api } from "@api";
 import { getPolygonsDataOptions, getPolygonsDirectoryOptions } from "@api";
 import type {
     CustomDataLayerImplementation,
     FetchDataParams,
 } from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap} from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import type { MakeSettingTypesMap } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 
 import { isEqual } from "lodash";
@@ -19,8 +19,10 @@ const realizationPolygonsSettings = [
 export type RealizationPolygonsSettings = typeof realizationPolygonsSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationPolygonsSettings>;
 
-export type Data = PolygonData_api[];
-export class RealizationPolygonsLayer implements CustomDataLayerImplementation<RealizationPolygonsSettings, Data> {
+export type RealizationPolygonsData = PolygonData_api[];
+export class RealizationPolygonsLayer
+    implements CustomDataLayerImplementation<RealizationPolygonsSettings, RealizationPolygonsData>
+{
     settings = realizationPolygonsSettings;
 
     getDefaultName(): string {
@@ -116,7 +118,7 @@ export class RealizationPolygonsLayer implements CustomDataLayerImplementation<R
         getSetting,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<RealizationPolygonsSettings, Data>): Promise<PolygonData_api[]> {
+    }: FetchDataParams<RealizationPolygonsSettings, RealizationPolygonsData>): Promise<PolygonData_api[]> {
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         const realizationNum = getSetting(Setting.REALIZATION);
         const polygonsName = getSetting(Setting.POLYGONS_NAME);
