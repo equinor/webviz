@@ -40,6 +40,7 @@ export enum Setting {
     SENSITIVITY = "sensitivity",
     SHOW_GRID_LINES = "showGridLines",
     SMDA_WELLBORE_HEADERS = "smdaWellboreHeaders",
+    SMDA_WELLBORE_PICKS = "smdaWellborePicks",
     STATISTIC_FUNCTION = "statisticFunction",
     SURFACE_NAME = "surfaceName",
     TIME_OR_INTERVAL = "timeOrInterval",
@@ -65,6 +66,7 @@ export const settingCategories = {
     [Setting.SENSITIVITY]: SettingCategory.SINGLE_SELECT,
     [Setting.SHOW_GRID_LINES]: SettingCategory.BOOLEAN,
     [Setting.SMDA_WELLBORE_HEADERS]: SettingCategory.MULTI_SELECT,
+    [Setting.SMDA_WELLBORE_PICKS]: SettingCategory.MULTI_SELECT,
     [Setting.STATISTIC_FUNCTION]: SettingCategory.SINGLE_SELECT,
     [Setting.SURFACE_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.TIME_OR_INTERVAL]: SettingCategory.SINGLE_SELECT,
@@ -92,6 +94,7 @@ export type SettingTypes = {
     [Setting.SENSITIVITY]: SensitivityNameCasePair | null;
     [Setting.SHOW_GRID_LINES]: boolean;
     [Setting.SMDA_WELLBORE_HEADERS]: WellboreHeader_api[] | null;
+    [Setting.SMDA_WELLBORE_PICKS]: string[] | null;
     [Setting.STATISTIC_FUNCTION]: SurfaceStatisticFunction_api;
     [Setting.SURFACE_NAME]: string | null;
     [Setting.TIME_OR_INTERVAL]: string | null;
@@ -103,7 +106,7 @@ export type PossibleSettingsForCategory<TCategory extends SettingCategory> = {
 
 interface FixupCategoryValue<
     TCategory extends SettingCategory,
-    TValue = SettingTypes[PossibleSettingsForCategory<TCategory>]
+    TValue = SettingTypes[PossibleSettingsForCategory<TCategory>],
 > {
     (value: TValue, availableValues: AvailableValuesType<PossibleSettingsForCategory<TCategory>>): TValue;
 }
@@ -114,7 +117,7 @@ type SettingCategoryFixupMap = {
 
 interface CheckIfCategoryValueIsValid<
     TCategory extends SettingCategory,
-    TValue = SettingTypes[PossibleSettingsForCategory<TCategory>]
+    TValue = SettingTypes[PossibleSettingsForCategory<TCategory>],
 > {
     (value: TValue, availableValues: AvailableValuesType<PossibleSettingsForCategory<TCategory>>): boolean;
 }
@@ -127,7 +130,7 @@ interface AvailableValuesIntersectionReducer<TCategory extends SettingCategory> 
     (
         accumulator: AvailableValuesType<PossibleSettingsForCategory<TCategory>>,
         currentAvailableValues: AvailableValuesType<PossibleSettingsForCategory<TCategory>>,
-        currentIndex: number
+        currentIndex: number,
     ): AvailableValuesType<PossibleSettingsForCategory<TCategory>>;
 }
 
@@ -139,7 +142,10 @@ type SettingCategoryAvailableValuesIntersectionReducerMap = {
 };
 
 export const settingCategoryFixupMap: SettingCategoryFixupMap = {
-    [SettingCategory.SINGLE_SELECT]: (value, availableValues) => {
+    [SettingCategory.SINGLE_SELECT]: <TSetting extends PossibleSettingsForCategory<SettingCategory.SINGLE_SELECT>>(
+        value: SettingTypes[TSetting],
+        availableValues: AvailableValuesType<TSetting>,
+    ) => {
         if (availableValues.length === 0) {
             return null;
         }
@@ -154,7 +160,10 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
 
         return availableValues[0];
     },
-    [SettingCategory.MULTI_SELECT]: (value, availableValues) => {
+    [SettingCategory.MULTI_SELECT]: <TSetting extends PossibleSettingsForCategory<SettingCategory.MULTI_SELECT>>(
+        value: SettingTypes[TSetting],
+        availableValues: AvailableValuesType<TSetting>,
+    ) => {
         if (availableValues.length === 0) {
             return [];
         }
@@ -165,7 +174,10 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
 
         return value.filter((v) => availableValues.some((av) => isEqual(av, v)));
     },
-    [SettingCategory.NUMBER]: (value, availableValues) => {
+    [SettingCategory.NUMBER]: <TSetting extends PossibleSettingsForCategory<SettingCategory.NUMBER>>(
+        value: SettingTypes[TSetting],
+        availableValues: AvailableValuesType<TSetting>,
+    ) => {
         if (value === null) {
             return availableValues[0];
         }
@@ -182,7 +194,12 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
 
         return value;
     },
-    [SettingCategory.NUMBER_WITH_STEP]: (value, availableValues) => {
+    [SettingCategory.NUMBER_WITH_STEP]: <
+        TSetting extends PossibleSettingsForCategory<SettingCategory.NUMBER_WITH_STEP>,
+    >(
+        value: SettingTypes[TSetting],
+        availableValues: AvailableValuesType<TSetting>,
+    ) => {
         if (value === null) {
             return availableValues[0];
         }
@@ -200,7 +217,10 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
         const steps = Math.round((value - min) / step);
         return min + steps * step;
     },
-    [SettingCategory.RANGE]: (value, availableValues) => {
+    [SettingCategory.RANGE]: <TSetting extends PossibleSettingsForCategory<SettingCategory.RANGE>>(
+        value: SettingTypes[TSetting],
+        availableValues: AvailableValuesType<TSetting>,
+    ) => {
         if (value === null) {
             return availableValues;
         }
@@ -308,13 +328,11 @@ type UnionForAny<T> = T extends never ? "A" : "B";
 // Returns true if type is any, or false for any other type.
 type IsStrictlyAny<T> = UnionToIntersection<UnionForAny<T>> extends never ? true : false;
 
-export type MakeSettingTypesMap<
-    T extends readonly (keyof SettingTypes)[],
-    AllowNull extends boolean = false
-> = IsStrictlyAny<T> extends true
-    ? any
-    : {
-          [K in T[number]]: AllowNull extends false ? SettingTypes[K] : SettingTypes[K] | null;
-      };
+export type MakeSettingTypesMap<T extends readonly (keyof SettingTypes)[], AllowNull extends boolean = false> =
+    IsStrictlyAny<T> extends true
+        ? any
+        : {
+              [K in T[number]]: AllowNull extends false ? SettingTypes[K] : SettingTypes[K] | null;
+          };
 
 export type Settings = ReadonlyArray<Setting> & { __brand?: "MyType" };

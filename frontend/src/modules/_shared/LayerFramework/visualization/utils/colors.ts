@@ -13,9 +13,12 @@ export function makeColorMapFunctionFromColorScale(
         return undefined;
     }
 
+    const localColorScale = colorScale.clone();
+    localColorScale.setRange(valueMin, valueMax);
+
     return (value: number) => {
         const nonNormalizedValue = unnormalize ? value * (valueMax - valueMin) + valueMin : value;
-        const interpolatedColor = colorScale.getColorForValue(nonNormalizedValue);
+        const interpolatedColor = localColorScale.getColorForValue(nonNormalizedValue);
         const color = parse(interpolatedColor) as Rgb;
         if (color === undefined) {
             return [0, 0, 0];
