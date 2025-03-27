@@ -157,7 +157,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                         <div className="">{view.name}</div>
                     </div>
                 </div>
-            </DeckGlView>
+            </DeckGlView>,
         );
     }
 
