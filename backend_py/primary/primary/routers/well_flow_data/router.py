@@ -8,7 +8,7 @@ from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.services.sumo_access.summary_access import SummaryAccess
 from primary.services.smda_access import SmdaAccess
-from primary.services.production_data_assembler.production_data_assembler import ProductionDataAssembler
+from primary.services.well_flow_data_assembler.well_flow_data_assembler import WellFlowDataAssembler
 
 
 from . import schemas, converters
@@ -19,14 +19,14 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/production_data_info")
-async def get_production_data_info(
+@router.get("/flow_data_info")
+async def get_flow_data_info(
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     field_identifier: Annotated[str, Query(description="Field identifier")],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
-) -> list[schemas.WellProductionData]:
+) -> list[schemas.WellFlowDataInfo]:
 
     perf_metrics = ResponsePerfMetrics(response)
 
@@ -36,19 +36,17 @@ async def get_production_data_info(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
-    prod_data_assembler = ProductionDataAssembler(
+    well_flow_data_assembler = WellFlowDataAssembler(
         field_identifier=field_identifier, summary_access=sumo_summary_access, smda_access=smda_access
     )
+    perf_metrics.record_lap("get_well_flow_data_info")
+    well_info = await well_flow_data_assembler.get_well_flow_data_info_async()
 
-    well_production_data = await prod_data_assembler.get_production_and_injection_info_async()
-
-    perf_metrics.record_lap("get_production_data_info")
-
-    return []
+    return converters.to_api_well_flow_data_info(well_info)
 
 
-@router.get("/production_data_in_time_interval/")
-async def get_production_data_in_time_interval(
+@router.get("/flow_data_in_time_interval/")
+async def get_flow_data_in_time_interval(
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     field_identifier: Annotated[str, Query(description="Field identifier")],
@@ -58,7 +56,7 @@ async def get_production_data_in_time_interval(
     volume_limit: Annotated[float, Query(description="Minimum volume limit")],
     start_timestamp_utc_ms: Annotated[int, Query(description="Start timestamp in UTC milliseconds")],
     end_timestamp_utc_ms: Annotated[int, Query(description="End timestamp in UTC milliseconds")],
-) -> list[schemas.WellProductionData]:
+) -> list[schemas.WellFlowData]:
 
     perf_metrics = ResponsePerfMetrics(response)
 
@@ -68,11 +66,11 @@ async def get_production_data_in_time_interval(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
-    prod_data_assembler = ProductionDataAssembler(
+    well_flow_data_assembler = WellFlowDataAssembler(
         field_identifier=field_identifier, summary_access=sumo_summary_access, smda_access=smda_access
     )
 
-    well_production_data = await prod_data_assembler.get_production_data_in_interval_async(
+    well_production_data = await well_flow_data_assembler.get_well_flow_data_in_interval_async(
         realization=realization,
         minimum_volume_limit=volume_limit,
         start_timestamp_utc_ms=start_timestamp_utc_ms,
@@ -81,4 +79,4 @@ async def get_production_data_in_time_interval(
 
     perf_metrics.record_lap("get_production_data_for_interval")
 
-    return converters.to_api_well_production_data(well_production_data)
+    return converters.to_api_well_flow_data(well_production_data)
