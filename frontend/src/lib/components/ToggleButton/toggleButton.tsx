@@ -14,6 +14,12 @@ export type ToggleButtonProps = ButtonUnstyledProps & {
 function ToggleButtonComponent(props: ToggleButtonProps, ref: React.ForwardedRef<HTMLDivElement>) {
     const { active, onToggle, ...other } = props;
     const [isActive, setIsActive] = React.useState<boolean>(active);
+    const [prevActive, setPrevActive] = React.useState<boolean>(active);
+
+    if (active !== prevActive) {
+        setIsActive(active);
+        setPrevActive(active);
+    }
 
     const buttonRef = React.useRef<HTMLButtonElement>(null);
     React.useImperativeHandle<HTMLButtonElement | null, HTMLButtonElement | null>(

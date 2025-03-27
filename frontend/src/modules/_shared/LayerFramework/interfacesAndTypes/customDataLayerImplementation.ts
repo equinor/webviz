@@ -16,9 +16,9 @@ import type { MakeSettingTypesMap, Settings } from "../settings/settingsDefiniti
 export type DataLayerInformationAccessors<
     TSettings extends Settings,
     TData,
-    TStoredData extends StoredData = Record<string, unknown>,
+    TStoredData extends StoredData = Record<string, never>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>
+    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
 > = {
     /**
      * Access the data that the layer is currently storing.
@@ -96,7 +96,7 @@ export type DataLayerInformationAccessors<
 export type FetchDataParams<
     TSettings extends Settings,
     TData,
-    TStoredData extends StoredData = Record<string, unknown>
+    TStoredData extends StoredData = Record<string, never>,
 > = {
     queryClient: QueryClient;
     registerQueryKey: (key: unknown[]) => void;
@@ -108,7 +108,7 @@ export interface CustomDataLayerImplementation<
     TStoredData extends StoredData = Record<string, never>,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-    TStoredDataKey extends keyof TStoredData = keyof TStoredData
+    TStoredDataKey extends keyof TStoredData = keyof TStoredData,
 > extends CustomSettingsHandler<TSettings, TStoredData, TSettingTypes, TSettingKey, TStoredDataKey> {
     /**
      * The default name of a layer of this type.
@@ -126,7 +126,7 @@ export interface CustomDataLayerImplementation<
     doSettingsChangesRequireDataRefetch(
         prevSettings: TSettingTypes | null,
         newSettings: TSettingTypes,
-        accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>
+        accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>,
     ): boolean;
 
     /**

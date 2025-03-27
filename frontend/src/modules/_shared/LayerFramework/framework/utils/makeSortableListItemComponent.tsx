@@ -14,7 +14,7 @@ import { SharedSettingComponent } from "../SharedSetting/SharedSettingComponent"
 export function makeSortableListItemComponent(
     item: Item,
     layerActions?: LayersActionGroup[],
-    onActionClick?: (identifier: string, group: ItemGroup) => void
+    onActionClick?: (identifier: string, group: ItemGroup) => void,
 ): React.ReactElement {
     if (item instanceof DataLayer) {
         return <DataLayerComponent key={item.getItemDelegate().getId()} layer={item} />;

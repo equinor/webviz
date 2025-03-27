@@ -4,6 +4,7 @@ import { isEqual } from "lodash";
 
 import type { GlobalSettings } from "../../framework/DataLayerManager/DataLayerManager";
 import { SettingTopic } from "../../framework/SettingManager/SettingManager";
+import { CancelUpdate } from "../../interfacesAndTypes/customSettingsHandler";
 import type { UpdateFunc } from "../../interfacesAndTypes/customSettingsHandler";
 import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
@@ -24,7 +25,7 @@ export class Dependency<
     TReturnValue,
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
-    TKey extends SettingsKeysFromTuple<TSettings>
+    TKey extends SettingsKeysFromTuple<TSettings>,
 > {
     private _updateFunc: UpdateFunc<TReturnValue, TSettings, TSettingTypes, TKey>;
     private _dependencies: Set<(value: Awaited<TReturnValue> | null) => void> = new Set();
@@ -36,7 +37,7 @@ export class Dependency<
     private _makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[K]) => void) => void;
     private _makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
         key: K,
-        handler: (value: GlobalSettings[K]) => void
+        handler: (value: GlobalSettings[K]) => void,
     ) => void;
     private _cachedSettingsMap: Map<string, any> = new Map();
     private _cachedGlobalSettingsMap: Map<string, any> = new Map();
@@ -53,8 +54,8 @@ export class Dependency<
         makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[K]) => void) => void,
         makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
             key: K,
-            handler: (value: GlobalSettings[K]) => void
-        ) => void
+            handler: (value: GlobalSettings[K]) => void,
+        ) => void,
     ) {
         this._contextDelegate = contextDelegate;
         this._updateFunc = updateFunc;
@@ -157,7 +158,7 @@ export class Dependency<
 
         this._cachedGlobalSettingsMap.set(
             settingName as string,
-            this._contextDelegate.getLayerManager().getGlobalSetting(settingName)
+            this._contextDelegate.getLayerManager().getGlobalSetting(settingName),
         );
         return this._cachedGlobalSettingsMap.get(settingName as string);
     }
@@ -220,7 +221,7 @@ export class Dependency<
 
         this.setLoadingState(true);
 
-        let newValue: Awaited<TReturnValue> | null = null;
+        let newValue: Awaited<TReturnValue> | null | typeof CancelUpdate = null;
         try {
             newValue = await this._updateFunc({
                 getLocalSetting: this.getLocalSetting,
@@ -233,6 +234,10 @@ export class Dependency<
                 this.applyNewValue(null);
                 return;
             }
+            return;
+        }
+
+        if (newValue === CancelUpdate) {
             return;
         }
 

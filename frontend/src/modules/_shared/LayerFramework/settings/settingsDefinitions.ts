@@ -91,7 +91,7 @@ export type SettingTypes = {
     [Setting.SEISMIC_INLINE]: number | null;
     [Setting.SENSITIVITY]: SensitivityNameCasePair | null;
     [Setting.SHOW_GRID_LINES]: boolean;
-    [Setting.SMDA_WELLBORE_HEADERS]: WellboreHeader_api[] | null;
+    [Setting.SMDA_WELLBORE_HEADERS]: Pick<WellboreHeader_api, "wellboreUuid" | "uniqueWellboreIdentifier">[] | null;
     [Setting.STATISTIC_FUNCTION]: SurfaceStatisticFunction_api;
     [Setting.SURFACE_NAME]: string | null;
     [Setting.TIME_OR_INTERVAL]: string | null;
@@ -103,7 +103,7 @@ export type PossibleSettingsForCategory<TCategory extends SettingCategory> = {
 
 interface FixupCategoryValue<
     TCategory extends SettingCategory,
-    TValue = SettingTypes[PossibleSettingsForCategory<TCategory>]
+    TValue = SettingTypes[PossibleSettingsForCategory<TCategory>],
 > {
     (value: TValue, availableValues: AvailableValuesType<PossibleSettingsForCategory<TCategory>>): TValue;
 }
@@ -114,7 +114,7 @@ type SettingCategoryFixupMap = {
 
 interface CheckIfCategoryValueIsValid<
     TCategory extends SettingCategory,
-    TValue = SettingTypes[PossibleSettingsForCategory<TCategory>]
+    TValue = SettingTypes[PossibleSettingsForCategory<TCategory>],
 > {
     (value: TValue, availableValues: AvailableValuesType<PossibleSettingsForCategory<TCategory>>): boolean;
 }
@@ -127,7 +127,7 @@ interface AvailableValuesIntersectionReducer<TCategory extends SettingCategory> 
     (
         accumulator: AvailableValuesType<PossibleSettingsForCategory<TCategory>>,
         currentAvailableValues: AvailableValuesType<PossibleSettingsForCategory<TCategory>>,
-        currentIndex: number
+        currentIndex: number,
     ): AvailableValuesType<PossibleSettingsForCategory<TCategory>>;
 }
 
@@ -308,13 +308,11 @@ type UnionForAny<T> = T extends never ? "A" : "B";
 // Returns true if type is any, or false for any other type.
 type IsStrictlyAny<T> = UnionToIntersection<UnionForAny<T>> extends never ? true : false;
 
-export type MakeSettingTypesMap<
-    T extends readonly (keyof SettingTypes)[],
-    AllowNull extends boolean = false
-> = IsStrictlyAny<T> extends true
-    ? any
-    : {
-          [K in T[number]]: AllowNull extends false ? SettingTypes[K] : SettingTypes[K] | null;
-      };
+export type MakeSettingTypesMap<T extends readonly (keyof SettingTypes)[], AllowNull extends boolean = false> =
+    IsStrictlyAny<T> extends true
+        ? any
+        : {
+              [K in T[number]]: AllowNull extends false ? SettingTypes[K] : SettingTypes[K] | null;
+          };
 
 export type Settings = ReadonlyArray<Setting> & { __brand?: "MyType" };

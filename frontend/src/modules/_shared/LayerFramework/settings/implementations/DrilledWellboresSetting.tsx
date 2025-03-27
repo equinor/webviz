@@ -13,7 +13,7 @@ import type {
 import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
 import type { SettingCategory } from "../settingsDefinitions";
 
-type ValueType = WellboreHeader_api[] | null;
+type ValueType = Pick<WellboreHeader_api, "wellboreUuid" | "uniqueWellboreIdentifier">[] | null;
 
 export class DrilledWellboresSetting implements CustomSettingImplementation<ValueType, SettingCategory.MULTI_SELECT> {
     defaultValue: ValueType = null;
@@ -24,14 +24,14 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
 
     fixupValue(
         currentValue: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_SELECT>
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_SELECT>,
     ): ValueType {
         if (!currentValue) {
             return availableValues;
         }
 
         const matchingValues = currentValue.filter((value) =>
-            availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid)
+            availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid),
         );
         if (matchingValues.length === 0) {
             return availableValues;
@@ -64,7 +64,7 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
 
             const selectedValues = React.useMemo(
                 () => props.value?.map((ident) => ident.wellboreUuid) ?? [],
-                [props.value]
+                [props.value],
             );
 
             return (

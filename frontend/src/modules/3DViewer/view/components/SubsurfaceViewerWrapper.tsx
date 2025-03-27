@@ -370,6 +370,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 props.onAddIntersectionPolyline({
                     name,
                     path: currentlyEditedPolyline,
+                    color: [255, 0, 0],
                 });
             }
             handlePolylineEditingCancel();

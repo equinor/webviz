@@ -6,7 +6,6 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
 import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = [number, number] | null;
@@ -35,50 +34,6 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
             case Direction.K:
                 return "Grid layer K";
         }
-    }
-
-    isValueValid(
-        value: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.RANGE>
-    ): boolean {
-        if (value === null) {
-            return false;
-        }
-
-        if (!availableValues) {
-            return false;
-        }
-
-        const min = availableValues[0];
-        const max = availableValues[1];
-
-        if (max === null || min === null) {
-            return false;
-        }
-
-        return value[0] >= min && value[0] <= max;
-    }
-
-    fixupValue(
-        currentValue: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.RANGE>
-    ): ValueType {
-        if (!availableValues) {
-            return null;
-        }
-
-        const min = availableValues[0];
-        const max = availableValues[1];
-
-        if (max === null) {
-            return null;
-        }
-
-        if (currentValue === null) {
-            return [min, max];
-        }
-
-        return [Math.max(currentValue[0], min), Math.min(currentValue[1], max)];
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.RANGE>) => React.ReactNode {

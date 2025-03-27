@@ -137,6 +137,15 @@ export class DataLayer<
             "settings-context",
             this._settingsContextDelegate
                 .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingsContextDelegateTopic.STORED_DATA_CHANGED)(() => {
+                this.handleSettingsChange();
+            }),
+        );
+
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "settings-context",
+            this._settingsContextDelegate
+                .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(SettingsContextDelegateTopic.STATUS)(() => {
                 this.handleSettingsStatusChange();
             }),

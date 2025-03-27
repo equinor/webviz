@@ -31,8 +31,10 @@ const intersectionRealizationGridSettings = [
     Setting.GRID_NAME,
     Setting.TIME_OR_INTERVAL,
     Setting.SHOW_GRID_LINES,
+    Setting.COLOR_SCALE,
+    Setting.SHOW_GRID_LINES,
 ] as const;
-type IntersectionRealizationGridSettings = typeof intersectionRealizationGridSettings;
+export type IntersectionRealizationGridSettings = typeof intersectionRealizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<IntersectionRealizationGridSettings>;
 
 export type IntersectionRealizationGridData = PolylineIntersection_trans;
@@ -63,9 +65,11 @@ export class IntersectionRealizationGridLayer
 
     makeValueRange({
         getData,
-    }: DataLayerInformationAccessors<IntersectionRealizationGridSettings, IntersectionRealizationGridData>):
-        | [number, number]
-        | null {
+    }: DataLayerInformationAccessors<
+        IntersectionRealizationGridSettings,
+        IntersectionRealizationGridData,
+        StoredData
+    >): [number, number] | null {
         const data = getData();
         if (!data) {
             return null;
@@ -80,7 +84,11 @@ export class IntersectionRealizationGridLayer
 
     areCurrentSettingsValid({
         getSetting,
-    }: DataLayerInformationAccessors<IntersectionRealizationGridSettings, IntersectionRealizationGridData>): boolean {
+    }: DataLayerInformationAccessors<
+        IntersectionRealizationGridSettings,
+        IntersectionRealizationGridData,
+        StoredData
+    >): boolean {
         return (
             getSetting(Setting.INTERSECTION) !== null &&
             getSetting(Setting.ENSEMBLE) !== null &&
@@ -240,8 +248,8 @@ export class IntersectionRealizationGridLayer
                     new Set(
                         gridAttributeArr
                             .filter((attr) => attr.property_name === gridAttribute)
-                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME")
-                    )
+                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
+                    ),
                 ),
             ];
 
@@ -315,15 +323,15 @@ export class IntersectionRealizationGridLayer
                                 ...calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
                                     path,
                                     0,
-                                    5
-                                ).simplifiedWellboreTrajectoryXy.flat()
+                                    5,
+                                ).simplifiedWellboreTrajectoryXy.flat(),
                             );
 
                             resolve(polylineUtmXy);
                         });
                 } else {
                     const intersectionPolyline = getGlobalSetting("intersectionPolylines").find(
-                        (polyline) => polyline.id === intersection.uuid
+                        (polyline) => polyline.id === intersection.uuid,
                     );
                     if (!intersectionPolyline) {
                         resolve([]);
@@ -354,7 +362,7 @@ export class IntersectionRealizationGridLayer
                         },
                         body: { polyline_utm_xy },
                     }),
-                })
+                }),
             )
             .then(transformPolylineIntersection);
 
