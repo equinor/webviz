@@ -54,17 +54,17 @@ export type LayersWrapperProps = {
 
 const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.DECK_GL>();
 
-VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.OBSERVED_SURFACE, ObservedSurfaceLayer, {
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.OBSERVED_SURFACE_2D, ObservedSurfaceLayer, {
     makeVisualizationFunction: makeObservedSurfaceLayer,
     calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.REALIZATION_SURFACE, RealizationSurfaceLayer, {
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.REALIZATION_SURFACE_2D, RealizationSurfaceLayer, {
     makeVisualizationFunction: makeRealizationSurfaceLayer,
     calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.STATISTICAL_SURFACE, StatisticalSurfaceLayer, {
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.STATISTICAL_SURFACE_2D, StatisticalSurfaceLayer, {
     makeVisualizationFunction: makeStatisticalSurfaceLayer,
     calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,

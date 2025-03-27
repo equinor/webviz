@@ -5,10 +5,9 @@ import type {
     SerializedItem,
     SerializedLayer,
     SerializedSettingsGroup,
-    SerializedSharedSetting} from "../../interfacesAndTypes/serialization";
-import {
-    SerializedType,
+    SerializedSharedSetting,
 } from "../../interfacesAndTypes/serialization";
+import { SerializedType } from "../../interfacesAndTypes/serialization";
 import { LayerRegistry } from "../../layers/LayerRegistry";
 import type { DataLayerManager } from "../DataLayerManager/DataLayerManager";
 import { SettingsGroup } from "../SettingsGroup/SettingsGroup";
@@ -38,10 +37,10 @@ export class DeserializationFactory {
         }
 
         if (serialized.type === SerializedType.GROUP) {
-            const serializedView = serialized as SerializedGroup;
-            const view = GroupRegistry.makeGroup(serializedView.groupType, this._layerManager);
-            view.deserializeState(serializedView);
-            return view;
+            const serializedGroup = serialized as SerializedGroup;
+            const group = GroupRegistry.makeGroup(serializedGroup.groupType, this._layerManager);
+            group.deserializeState(serializedGroup);
+            return group;
         }
 
         if (serialized.type === SerializedType.SETTINGS_GROUP) {
@@ -56,7 +55,7 @@ export class DeserializationFactory {
             const setting = new SharedSetting(
                 serializedSharedSetting.wrappedSettingType,
                 serializedSharedSetting.value,
-                this._layerManager
+                this._layerManager,
             );
             setting.deserializeState(serializedSharedSetting);
             return setting;

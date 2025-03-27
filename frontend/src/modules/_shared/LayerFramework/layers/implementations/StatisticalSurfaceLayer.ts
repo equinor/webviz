@@ -1,4 +1,4 @@
-import type { SurfaceDataPng_api } from "@api";
+import type { SurfaceAttributeType_api, SurfaceDataPng_api } from "@api";
 import {
     SurfaceStatisticFunction_api,
     SurfaceTimeType_api,
@@ -49,8 +49,10 @@ export class StatisticalSurfaceLayer
     settings = statisicalSurfaceSettings;
 
     private _dataFormat: SurfaceDataFormat;
+    private _attributeTypesFilter: SurfaceAttributeType_api[] = [];
 
-    constructor(dataFormat?: SurfaceDataFormat) {
+    constructor(attributeTypesFilter?: SurfaceAttributeType_api[], dataFormat?: SurfaceDataFormat) {
+        this._attributeTypesFilter = attributeTypesFilter ?? [];
         this._dataFormat = dataFormat ?? SurfaceDataFormat.PNG;
     }
 
@@ -116,7 +118,7 @@ export class StatisticalSurfaceLayer
                         sensitivityName: sensitivity.name,
                         sensitivityCase: sensitivityCase.name,
                     });
-                })
+                }),
             );
             return availableSensitivityPairs;
         });
@@ -147,7 +149,17 @@ export class StatisticalSurfaceLayer
             }
 
             const availableAttributes = [
-                ...Array.from(new Set(data.surfaces.map((surface) => surface.attribute_name))),
+                ...Array.from(
+                    new Set(
+                        data.surfaces
+                            .filter(
+                                (el) =>
+                                    this._attributeTypesFilter.includes(el.attribute_type) ||
+                                    this._attributeTypesFilter.length === 0,
+                            )
+                            .map((surface) => surface.attribute_name),
+                    ),
+                ),
             ];
 
             return availableAttributes;
@@ -163,8 +175,8 @@ export class StatisticalSurfaceLayer
             const availableSurfaceNames = [
                 ...Array.from(
                     new Set(
-                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name)
-                    )
+                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name),
+                    ),
                 ),
             ];
 
@@ -186,8 +198,8 @@ export class StatisticalSurfaceLayer
                     new Set(
                         data.surfaces
                             .filter((surface) => surface.attribute_name === attribute && surface.name === surfaceName)
-                            .map((el) => el.time_type)
-                    )
+                            .map((el) => el.time_type),
+                    ),
                 ),
             ];
 
@@ -244,7 +256,7 @@ export class StatisticalSurfaceLayer
                 const sensitivityRealizations = sensitivity?.realizations ?? [];
 
                 filteredRealizations = filteredRealizations.filter((realization) =>
-                    sensitivityRealizations.includes(realization)
+                    sensitivityRealizations.includes(realization),
                 );
             }
 

@@ -73,38 +73,52 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     state!: {
         geometry: Geometry;
         isHovered: boolean;
-        isLoaded: boolean;
+        meshCreated: boolean;
+        colorsArrayCreated: boolean;
     };
 
     initializeState(): void {
         this.setState({
-            ...this.state,
             isHovered: false,
-            isLoaded: false,
+            meshCreated: false,
+            colorsArrayCreated: false,
+            geometry: new Geometry({
+                attributes: {
+                    positions: new Float32Array(),
+                },
+                topology: "triangle-list",
+            }),
         });
 
         this.rebuildMesh();
+        this.recolorMesh();
     }
 
     updateState({
         props,
         oldProps,
     }: UpdateParameters<Layer<SeismicFenceMeshLayerProps & Required<CompositeLayerProps>>>) {
-        const updateRequired =
+        const meshRecomputationRequired =
             !isEqual(oldProps.data?.sections.length, props.data?.sections.length) ||
-            !isEqual(oldProps.data?.sections, props.data?.sections);
+            !isEqual(oldProps.data?.sections, props.data?.sections) ||
+            !isEqual(oldProps.zIncreaseDownwards, props.zIncreaseDownwards);
 
-        if (updateRequired) {
-            this.setState({
-                ...this.state,
-                isLoaded: false,
-            });
+        const colorMapFunctionChanged = !isEqual(oldProps.colorMapFunction, props.colorMapFunction);
 
-            if (props.isLoading) {
-                return;
-            }
+        if (!meshRecomputationRequired && !colorMapFunctionChanged) {
+            return;
+        }
 
+        if (props.isLoading) {
+            return;
+        }
+
+        if (meshRecomputationRequired) {
             this.rebuildMesh();
+        }
+
+        if (colorMapFunctionChanged) {
+            this.recolorMesh();
         }
     }
 
@@ -155,28 +169,26 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     }
 
     private maybeUpdateGeometry() {
+        const { geometry } = this.state;
         if (this._numTasks === this._numTasksCompleted) {
-            this.colorMesh().then(() => {
-                const verticesArr = new Float32Array(this._sharedVerticesBuffer!);
-                const indicesArr = new Uint32Array(this._sharedIndicesBuffer!);
-                this.setState({
-                    geometry: new Geometry({
-                        attributes: {
-                            positions: verticesArr,
-                            colors: {
-                                value: this._colorsArray,
-                                size: 4,
-                            },
-                        },
-                        topology: "triangle-list",
-                        indices: indicesArr,
-                    }),
-                    isLoaded: true,
-                });
+            const verticesArr = new Float32Array(this._sharedVerticesBuffer!);
+            const indicesArr = new Uint32Array(this._sharedIndicesBuffer!);
 
-                this.props.reportBoundingBox?.({
-                    layerBoundingBox: this.calcBoundingBox(),
-                });
+            this.setState({
+                ...this.state,
+                geometry: new Geometry({
+                    attributes: {
+                        ...geometry.attributes,
+                        positions: verticesArr,
+                    },
+                    topology: "triangle-list",
+                    indices: indicesArr,
+                }),
+                meshCreated: true,
+            });
+
+            this.props.reportBoundingBox?.({
+                layerBoundingBox: this.calcBoundingBox(),
             });
         }
     }
@@ -199,6 +211,8 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
 
     private rebuildMesh() {
         const { zIncreaseDownwards } = this.props;
+
+        this.setState({ ...this.state, meshCreated: false });
 
         this.initSharedBuffers();
 
@@ -245,11 +259,35 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         }
     }
 
-    private async colorMesh() {
+    private recolorMesh() {
+        const { geometry } = this.state;
+
+        this.setState({ ...this.state, colorsArrayCreated: false });
+
+        this.makeColorsArray().then(() => {
+            this.setState({
+                ...this.state,
+                geometry: new Geometry({
+                    attributes: {
+                        ...geometry.attributes,
+                        colors: {
+                            value: this._colorsArray,
+                            size: 4,
+                        },
+                    },
+                    topology: "triangle-list",
+                    indices: geometry.indices,
+                }),
+                colorsArrayCreated: true,
+            });
+        });
+    }
+
+    private async makeColorsArray() {
         const { data, colorMapFunction } = this.props;
 
         this._colorsArray = new Float32Array(
-            data.sections.reduce((acc, section) => acc + section.properties.length * 4, 0)
+            data.sections.reduce((acc, section) => acc + section.properties.length * 4, 0),
         );
 
         let colorIndex = 0;
@@ -310,19 +348,19 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     }
 
     onHover(pickingInfo: PickingInfo): boolean {
-        this.setState({ isHovered: pickingInfo.index !== -1 });
+        this.setState({ ...this.state, isHovered: pickingInfo.index !== -1 });
         return false;
     }
 
     renderLayers() {
-        const { hoverable, isLoading, data, zIncreaseDownwards, loadingGeometry } = this.props;
-        const { geometry, isHovered, isLoaded } = this.state;
+        const { isLoading, zIncreaseDownwards, loadingGeometry } = this.props;
+        const { geometry, meshCreated, colorsArrayCreated } = this.state;
 
         const origin = this.calcOrigin();
 
         const layers: Layer<any>[] = [];
 
-        if ((isLoading || !isLoaded) && loadingGeometry) {
+        if ((isLoading || !meshCreated || !colorsArrayCreated) && loadingGeometry) {
             layers.push(
                 new PreviewLayer({
                     id: "seismic-fence-mesh-layer-loading",
@@ -330,7 +368,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
                         geometry: loadingGeometry,
                     },
                     zIncreaseDownwards,
-                })
+                }),
             );
         } else {
             layers.push(
@@ -342,10 +380,14 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
                     getColor: [255, 255, 255, 255],
                     material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
                     pickable: true,
-                })
+                }),
             );
         }
 
         return layers;
+    }
+
+    finalize() {
+        this._pool.terminate();
     }
 }

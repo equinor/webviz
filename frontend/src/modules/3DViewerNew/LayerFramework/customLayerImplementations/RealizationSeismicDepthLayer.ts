@@ -1,4 +1,4 @@
-import { type SeismicCubeMeta_api, getInlineSliceOptions, getSeismicCubeMetaListOptions } from "@api";
+import { type SeismicCubeMeta_api, getDepthSliceOptions, getSeismicCubeMetaListOptions } from "@api";
 import {
     type SeismicSliceData_trans,
     transformSeismicSlice,
@@ -76,7 +76,7 @@ export class RealizationSeismicDepthSliceLayer
         const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
         const depthSlice = getSetting(Setting.SEISMIC_DEPTH_SLICE);
 
-        const queryOptions = getInlineSliceOptions({
+        const queryOptions = getDepthSliceOptions({
             query: {
                 case_uuid: ensembleIdent?.getCaseUuid() ?? "",
                 ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
@@ -84,7 +84,7 @@ export class RealizationSeismicDepthSliceLayer
                 seismic_attribute: attribute ?? "",
                 time_or_interval_str: timeOrInterval ?? "",
                 observed: false,
-                inline_no: depthSlice ?? 0,
+                depth_slice_no: depthSlice ?? 0,
             },
         });
 

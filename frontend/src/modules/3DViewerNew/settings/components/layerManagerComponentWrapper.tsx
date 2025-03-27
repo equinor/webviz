@@ -73,13 +73,17 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 groupDelegate.appendChild(new SharedSetting(Setting.COLOR_SCALE, null, props.layerManager));
                 return;
             case "observed-surface":
-                groupDelegate.prependChild(LayerRegistry.makeLayer(LayerType.OBSERVED_SURFACE, props.layerManager));
+                groupDelegate.prependChild(LayerRegistry.makeLayer(LayerType.OBSERVED_SURFACE_2D, props.layerManager));
                 return;
             case "statistical-surface":
-                groupDelegate.prependChild(LayerRegistry.makeLayer(LayerType.STATISTICAL_SURFACE, props.layerManager));
+                groupDelegate.prependChild(
+                    LayerRegistry.makeLayer(LayerType.STATISTICAL_SURFACE_2D, props.layerManager),
+                );
                 return;
             case "realization-surface":
-                groupDelegate.prependChild(LayerRegistry.makeLayer(LayerType.REALIZATION_SURFACE, props.layerManager));
+                groupDelegate.prependChild(
+                    LayerRegistry.makeLayer(LayerType.REALIZATION_SURFACE_2D, props.layerManager),
+                );
                 return;
             case "realization-polygons":
                 groupDelegate.prependChild(LayerRegistry.makeLayer(LayerType.REALIZATION_POLYGONS, props.layerManager));

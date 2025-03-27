@@ -1,3 +1,4 @@
+import { SurfaceAttributeType_api } from "@api";
 import { RealizationSeismicCrosslineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicCrosslineLayer";
 import { RealizationSeismicDepthSliceLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicDepthLayer";
 import { RealizationSeismicInlineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicInlineLayer";
@@ -16,11 +17,17 @@ import { LayerType } from "./layerTypes";
 LayerRegistry.registerLayer(LayerType.DRILLED_WELLBORE_PICKS, DrilledWellborePicksLayer);
 LayerRegistry.registerLayer(LayerType.DRILLED_WELL_TRAJECTORIES, DrilledWellTrajectoriesLayer);
 LayerRegistry.registerLayer(LayerType.INTERSECTION_REALIZATION_GRID, IntersectionRealizationGridLayer);
-LayerRegistry.registerLayer(LayerType.REALIZATION_SURFACE, RealizationSurfaceLayer);
+LayerRegistry.registerLayer(LayerType.REALIZATION_SURFACE_2D, RealizationSurfaceLayer);
 LayerRegistry.registerLayer(LayerType.REALIZATION_POLYGONS, RealizationPolygonsLayer);
 LayerRegistry.registerLayer(LayerType.REALIZATION_SEISMIC_DEPTH_SLICE, RealizationSeismicDepthSliceLayer);
 LayerRegistry.registerLayer(LayerType.REALIZATION_SEISMIC_INLINE, RealizationSeismicInlineLayer);
 LayerRegistry.registerLayer(LayerType.REALIZATION_SEISMIC_CROSSLINE, RealizationSeismicCrosslineLayer);
-LayerRegistry.registerLayer(LayerType.OBSERVED_SURFACE, ObservedSurfaceLayer);
-LayerRegistry.registerLayer(LayerType.STATISTICAL_SURFACE, StatisticalSurfaceLayer);
+LayerRegistry.registerLayer(LayerType.OBSERVED_SURFACE_2D, ObservedSurfaceLayer);
+LayerRegistry.registerLayer(LayerType.STATISTICAL_SURFACE_2D, StatisticalSurfaceLayer);
 LayerRegistry.registerLayer(LayerType.REALIZATION_GRID, RealizationGridLayer);
+LayerRegistry.registerLayer(LayerType.REALIZATION_SURFACE_3D, RealizationSurfaceLayer, [
+    [SurfaceAttributeType_api.DEPTH],
+]);
+LayerRegistry.registerLayer(LayerType.STATISTICAL_SURFACE_3D, StatisticalSurfaceLayer, [
+    [SurfaceAttributeType_api.DEPTH],
+]);

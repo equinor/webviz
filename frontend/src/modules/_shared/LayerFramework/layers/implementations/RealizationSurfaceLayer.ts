@@ -1,4 +1,4 @@
-import type { SurfaceDataPng_api } from "@api";
+import type { SurfaceAttributeType_api, SurfaceDataPng_api } from "@api";
 import { SurfaceTimeType_api, getRealizationSurfacesMetadataOptions, getSurfaceDataOptions } from "@api";
 import type {
     CustomDataLayerImplementation,
@@ -42,8 +42,10 @@ export class RealizationSurfaceLayer
     settings = realizationSurfaceSettings;
 
     private _dataFormat: SurfaceDataFormat;
+    private _attributeTypesFilter: SurfaceAttributeType_api[] = [];
 
-    constructor(dataFormat?: SurfaceDataFormat) {
+    constructor(attributeTypesFilter?: SurfaceAttributeType_api[], dataFormat?: SurfaceDataFormat) {
+        this._attributeTypesFilter = attributeTypesFilter ?? [];
         this._dataFormat = dataFormat ?? SurfaceDataFormat.PNG;
     }
 
@@ -145,7 +147,17 @@ export class RealizationSurfaceLayer
             }
 
             const availableAttributes = [
-                ...Array.from(new Set(data.surfaces.map((surface) => surface.attribute_name))),
+                ...Array.from(
+                    new Set(
+                        data.surfaces
+                            .filter(
+                                (el) =>
+                                    this._attributeTypesFilter.includes(el.attribute_type) ||
+                                    this._attributeTypesFilter.length === 0,
+                            )
+                            .map((surface) => surface.attribute_name),
+                    ),
+                ),
             ];
 
             return availableAttributes;

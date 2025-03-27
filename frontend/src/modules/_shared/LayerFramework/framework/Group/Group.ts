@@ -3,12 +3,11 @@ import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
 import type {
     CustomGroupImplementation,
-    CustomGroupImplementationWithSettings} from "../../interfacesAndTypes/customGroupImplementation";
-import {
-    includesSettings,
+    CustomGroupImplementationWithSettings,
 } from "../../interfacesAndTypes/customGroupImplementation";
+import { includesSettings } from "../../interfacesAndTypes/customGroupImplementation";
 import type { ItemGroup } from "../../interfacesAndTypes/entitites";
-import type { SerializedGroup} from "../../interfacesAndTypes/serialization";
+import type { SerializedGroup } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
 import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { MakeSettingTypesMap, SettingTypes, Settings } from "../../settings/settingsDefinitions";
@@ -18,7 +17,7 @@ import { makeSettings } from "../utils/makeSettings";
 
 export type GroupParams<
     TSettingTypes extends Settings,
-    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>
+    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
 > = {
     layerManager: DataLayerManager;
     color?: string;
@@ -31,7 +30,7 @@ export type GroupParams<
 export class Group<
     TSettings extends Settings = [],
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > implements ItemGroup
 {
     private _itemDelegate: ItemDelegate;
@@ -49,8 +48,8 @@ export class Group<
                 this,
                 makeSettings<TSettings, TSettingTypes, TSettingKey>(
                     customGroupImplementation.settings as unknown as TSettings,
-                    customGroupImplementation.getDefaultSettingsValues() as unknown as TSettingTypes
-                )
+                    customGroupImplementation.getDefaultSettingsValues() as unknown as TSettingTypes,
+                ),
             );
         }
         this._type = type;

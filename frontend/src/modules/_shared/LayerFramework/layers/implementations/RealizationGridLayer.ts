@@ -6,7 +6,10 @@ import type {
     DataLayerInformationAccessors,
     FetchDataParams,
 } from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
+import {
+    CancelUpdate,
+    type DefineDependenciesArgs,
+} from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 
@@ -64,7 +67,6 @@ export class RealizationGridLayer
 
     fetchData({
         getSetting,
-        getStoredData,
         registerQueryKey,
         queryClient,
     }: FetchDataParams<RealizationGridSettings, RealizationGridData>): Promise<{
@@ -162,7 +164,6 @@ export class RealizationGridLayer
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
-        storedDataUpdater,
         queryClient,
     }: DefineDependenciesArgs<RealizationGridSettings>) {
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
@@ -243,7 +244,7 @@ export class RealizationGridLayer
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!gridName || !data) {
-                return [0, 0];
+                return CancelUpdate;
             }
 
             const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
@@ -260,7 +261,7 @@ export class RealizationGridLayer
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!gridName || !data) {
-                return [0, 0];
+                return CancelUpdate;
             }
 
             const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
@@ -277,7 +278,7 @@ export class RealizationGridLayer
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!gridName || !data) {
-                return [0, 0];
+                return CancelUpdate;
             }
 
             const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
@@ -295,7 +296,7 @@ export class RealizationGridLayer
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!gridName || !gridAttribute || !data) {
-                return [];
+                return CancelUpdate;
             }
 
             const gridAttributeArr =
@@ -306,8 +307,8 @@ export class RealizationGridLayer
                     new Set(
                         gridAttributeArr
                             .filter((attr) => attr.property_name === gridAttribute)
-                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME")
-                    )
+                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
+                    ),
                 ),
             ];
 
