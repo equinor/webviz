@@ -24,31 +24,9 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
         this._direction = direction;
     }
 
-    isValueValid(
-        value: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER_WITH_STEP>
-    ): boolean {
-        if (value === null) {
-            return false;
-        }
-
-        if (availableValues.length < 2) {
-            return false;
-        }
-
-        const min = 0;
-        const max = availableValues[1];
-
-        if (max === null) {
-            return false;
-        }
-
-        return value >= min && value <= max;
-    }
-
     fixupValue(
         currentValue: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER_WITH_STEP>
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER_WITH_STEP>,
     ): ValueType {
         if (availableValues.length < 2) {
             return null;
@@ -91,10 +69,10 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                     const step = availableValues[2];
                     const allowedValues = Array.from(
                         { length: Math.floor((max - min) / step) + 1 },
-                        (_, i) => min + i * step
+                        (_, i) => min + i * step,
                     );
                     value = allowedValues.reduce((prev, curr) =>
-                        Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
+                        Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev,
                     );
                 }
 
