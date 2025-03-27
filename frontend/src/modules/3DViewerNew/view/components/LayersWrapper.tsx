@@ -13,6 +13,10 @@ import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { RealizationSeismicCrosslineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicCrosslineLayer";
 import { RealizationSeismicDepthSliceLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicDepthLayer";
 import { RealizationSeismicInlineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicInlineLayer";
+<<<<<<< Updated upstream
+=======
+import { makeDrilledWellTrajectoriesLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeDrilledWellTrajectoriesLayer";
+>>>>>>> Stashed changes
 import { makeRealizationSurfaceLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeRealizationSurfaceLayer";
 import {
     Plane,
@@ -41,7 +45,10 @@ import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/LayerFrame
 import { makePolygonDataBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makePolygonDataBoundingBox";
 import { makeRealizationGridBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeRealizationGridBoundingBox";
 import { makeSurfaceLayerBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeSurfaceLayerBoundingBox";
+<<<<<<< Updated upstream
 import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
+=======
+>>>>>>> Stashed changes
 import { makeDrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
 import { makeObservedSurfaceLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeObservedSurfaceLayer";
 import { makeRealizationGridLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeRealizationGridLayer";
