@@ -84,6 +84,7 @@ export class DrilledWellborePicksLayer
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
+        storedDataUpdater,
         workbenchSession,
         queryClient,
     }: DefineDependenciesArgs<DrilledWellborePicksSettings>) {
@@ -153,7 +154,12 @@ export class DrilledWellborePicksLayer
                 return [];
             }
 
-            return wellboreHeaders;
+            return wellboreHeaders.map((header) => {
+                return {
+                    wellboreUuid: header.wellboreUuid,
+                    uniqueWellboreIdentifier: header.uniqueWellboreIdentifier,
+                };
+            });
         });
 
         availableSettingsUpdater(Setting.SURFACE_NAME, ({ getHelperDependency }) => {

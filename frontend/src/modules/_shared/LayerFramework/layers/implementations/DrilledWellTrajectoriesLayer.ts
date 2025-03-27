@@ -104,6 +104,7 @@ export class DrilledWellTrajectoriesLayer
                 }),
             });
         });
+
         availableSettingsUpdater(Setting.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
 
@@ -111,7 +112,10 @@ export class DrilledWellTrajectoriesLayer
                 return [];
             }
 
-            return wellboreHeaders;
+            return wellboreHeaders.map((header) => ({
+                wellboreUuid: header.wellboreUuid,
+                uniqueWellboreIdentifier: header.uniqueWellboreIdentifier,
+            }));
         });
     }
 }
