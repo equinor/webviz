@@ -23,7 +23,7 @@ class WellboreTrajectory(BaseModel):
     mdArr: List[float]
     eastingArr: List[float]
     northingArr: List[float]
-    
+
 
 class StratigraphicColumn(BaseModel):
     """

@@ -104,7 +104,7 @@ async def get_wellbore_picks_for_pick_identifier(
     # fmt:on
 ) -> List[schemas.WellborePick]:
     """Get picks for wellbores for field and pick identifier
-    
+
     This implies picks for multiple wellbores for given field and pick identifier.
     E.g. picks for all wellbores in a given surface in a field.
     """
