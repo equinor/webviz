@@ -1,22 +1,19 @@
 import React from "react";
 
 import { View as DeckGlView } from "@deck.gl/core";
-import { ViewContext } from "@framework/ModuleContext";
+import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { WorkbenchSession } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import * as bbox from "@lib/utils/boundingBox";
 import { makeColorScaleAnnotation } from "@modules/2DViewer/LayerFramework/annotations/makeColorScaleAnnotation";
-import { Interfaces } from "@modules/2DViewer/interfaces";
+import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { RealizationSeismicCrosslineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicCrosslineLayer";
 import { RealizationSeismicDepthSliceLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicDepthLayer";
 import { RealizationSeismicInlineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicInlineLayer";
-<<<<<<< Updated upstream
-=======
 import { makeDrilledWellTrajectoriesLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeDrilledWellTrajectoriesLayer";
->>>>>>> Stashed changes
 import { makeRealizationSurfaceLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeRealizationSurfaceLayer";
 import {
     Plane,
@@ -28,7 +25,6 @@ import {
 } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
-import { ObservedSurfaceLayer } from "@modules/_shared/LayerFramework/layers/implementations/ObservedSurfaceLayer";
 import { RealizationGridLayer } from "@modules/_shared/LayerFramework/layers/implementations/RealizationGridLayer";
 import { RealizationPolygonsLayer } from "@modules/_shared/LayerFramework/layers/implementations/RealizationPolygonsLayer";
 import { RealizationSurfaceLayer } from "@modules/_shared/LayerFramework/layers/implementations/RealizationSurfaceLayer";
@@ -36,28 +32,22 @@ import { StatisticalSurfaceLayer } from "@modules/_shared/LayerFramework/layers/
 import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
 import {
     type Annotation,
-    LayerWithPosition,
+    type LayerWithPosition,
     VisualizationFactory,
-    VisualizationTarget,
+    type VisualizationTarget,
 } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
 import { makePolygonDataBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makePolygonDataBoundingBox";
 import { makeRealizationGridBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeRealizationGridBoundingBox";
 import { makeSurfaceLayerBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeSurfaceLayerBoundingBox";
-<<<<<<< Updated upstream
-import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
-=======
->>>>>>> Stashed changes
 import { makeDrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
-import { makeObservedSurfaceLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeObservedSurfaceLayer";
 import { makeRealizationGridLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeRealizationGridLayer";
 import { makeRealizationPolygonsLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeRealizationPolygonsLayer";
-import { makeStatisticalSurfaceLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeStatisticalSurfaceLayer";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import { BoundingBox3D, ViewportType } from "@webviz/subsurface-viewer";
-import { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
+import type { BoundingBox3D, ViewportType } from "@webviz/subsurface-viewer";
+import type { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { InteractionWrapper } from "./InteractionWrapper";
@@ -66,25 +56,19 @@ import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/Placeholde
 
 const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.DECK_GL>();
 
-VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.OBSERVED_SURFACE_2D, ObservedSurfaceLayer, {
-    makeVisualizationFunction: makeObservedSurfaceLayer,
-    calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
-    makeAnnotationsFunction: makeColorScaleAnnotation,
-});
-VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.REALIZATION_SURFACE_2D, RealizationSurfaceLayer, {
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.REALIZATION_SURFACE_3D, RealizationSurfaceLayer, {
     makeVisualizationFunction: makeRealizationSurfaceLayer,
     calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.STATISTICAL_SURFACE_2D, StatisticalSurfaceLayer, {
-    makeVisualizationFunction: makeStatisticalSurfaceLayer,
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.STATISTICAL_SURFACE_3D, StatisticalSurfaceLayer, {
+    makeVisualizationFunction: makeRealizationSurfaceLayer,
     calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
 VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.REALIZATION_POLYGONS, RealizationPolygonsLayer, {
     makeVisualizationFunction: makeRealizationPolygonsLayer,
     calculateBoundingBoxFunction: makePolygonDataBoundingBox,
-    makeAnnotationsFunction: makeColorScaleAnnotation,
 });
 VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.REALIZATION_GRID, RealizationGridLayer, {
     makeVisualizationFunction: makeRealizationGridLayer,

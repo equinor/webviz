@@ -12,7 +12,7 @@ import {
 import { Vec3 } from "@lib/utils/vec3";
 import * as vec3 from "@lib/utils/vec3";
 import { Geometry, Model } from "@luma.gl/engine";
-import { phongLighting } from "@luma.gl/shadertools";
+import { phongLighting, phongMaterial } from "@luma.gl/shadertools";
 
 import { isEqual } from "lodash";
 
@@ -110,7 +110,7 @@ export class PipeLayer extends Layer<PipeLayerProps> {
             const model = new Model(context.device, {
                 id: `${this.id}-mesh-${idx}`,
                 geometry: mesh,
-                modules: [project32, phongLighting, picking, pipeUniforms],
+                modules: [project32, phongLighting, picking, pipeUniforms, phongMaterial],
                 vs: vertexShader,
                 fs: fragmentShader,
             });
@@ -159,7 +159,7 @@ export class PipeLayer extends Layer<PipeLayerProps> {
 
             const vertices = new Float32Array((numContours + 2) * numVerticesPerContour * 3 + 2 * 3);
             const indices = new Uint32Array(
-                (numContours - 1) * numVerticesPerContour * 6 + numVerticesPerContour * 2 * 3
+                (numContours - 1) * numVerticesPerContour * 6 + numVerticesPerContour * 2 * 3,
             );
             const normals = new Float32Array((numContours + 2) * numVerticesPerContour * 3 + 2 * 3);
 
@@ -229,8 +229,8 @@ export class PipeLayer extends Layer<PipeLayerProps> {
             const endNormal = vec3.normalize(
                 vec3.cross(
                     pipe.getNormals()[pipe.getNormals().length - 1][0],
-                    pipe.getNormals()[pipe.getNormals().length - 1][1]
-                )
+                    pipe.getNormals()[pipe.getNormals().length - 1][1],
+                ),
             );
             for (let j = 0; j < numVerticesPerContour; j++) {
                 const vertex = pipe.getContours()[numContours - 1][j];
@@ -271,7 +271,7 @@ export class PipeLayer extends Layer<PipeLayerProps> {
                     },
                     indices: indices,
                     id: data[idx].id,
-                })
+                }),
             );
         }
 

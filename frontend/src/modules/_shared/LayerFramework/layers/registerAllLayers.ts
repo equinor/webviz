@@ -10,7 +10,7 @@ import { IntersectionRealizationGridLayer } from "./implementations/Intersection
 import { ObservedSurfaceLayer } from "./implementations/ObservedSurfaceLayer";
 import { RealizationGridLayer } from "./implementations/RealizationGridLayer";
 import { RealizationPolygonsLayer } from "./implementations/RealizationPolygonsLayer";
-import { RealizationSurfaceLayer } from "./implementations/RealizationSurfaceLayer";
+import { RealizationSurfaceLayer, SurfaceDataFormat } from "./implementations/RealizationSurfaceLayer";
 import { StatisticalSurfaceLayer } from "./implementations/StatisticalSurfaceLayer";
 import { LayerType } from "./layerTypes";
 
@@ -27,7 +27,9 @@ LayerRegistry.registerLayer(LayerType.STATISTICAL_SURFACE_2D, StatisticalSurface
 LayerRegistry.registerLayer(LayerType.REALIZATION_GRID, RealizationGridLayer);
 LayerRegistry.registerLayer(LayerType.REALIZATION_SURFACE_3D, RealizationSurfaceLayer, [
     [SurfaceAttributeType_api.DEPTH],
+    SurfaceDataFormat.FLOAT,
 ]);
 LayerRegistry.registerLayer(LayerType.STATISTICAL_SURFACE_3D, StatisticalSurfaceLayer, [
     [SurfaceAttributeType_api.DEPTH],
+    SurfaceDataFormat.FLOAT,
 ]);

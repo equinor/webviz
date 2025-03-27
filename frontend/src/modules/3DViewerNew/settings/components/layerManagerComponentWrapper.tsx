@@ -1,16 +1,16 @@
-import React from "react";
+import type React from "react";
 
 import { Icon } from "@equinor/eds-core-react";
-import { color_palette, grid_layer, settings, surface_layer, wellbore } from "@equinor/eds-icons";
-import { WorkbenchSession } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { color_palette, fault, grid_layer, settings, surface_layer, wellbore } from "@equinor/eds-icons";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { Menu } from "@lib/components/Menu";
 import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
-import { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions";
-import { GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
+import type { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions";
+import { type GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { DataLayer } from "@modules/_shared/LayerFramework/framework/DataLayer/DataLayer";
 import type { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import { LayerManagerComponent } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManagerComponent";
@@ -72,17 +72,14 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
             case "color-scale":
                 groupDelegate.appendChild(new SharedSetting(Setting.COLOR_SCALE, null, props.layerManager));
                 return;
-            case "observed-surface":
-                groupDelegate.prependChild(LayerRegistry.makeLayer(LayerType.OBSERVED_SURFACE_2D, props.layerManager));
-                return;
             case "statistical-surface":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(LayerType.STATISTICAL_SURFACE_2D, props.layerManager),
+                    LayerRegistry.makeLayer(LayerType.STATISTICAL_SURFACE_3D, props.layerManager),
                 );
                 return;
             case "realization-surface":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(LayerType.REALIZATION_SURFACE_2D, props.layerManager),
+                    LayerRegistry.makeLayer(LayerType.REALIZATION_SURFACE_3D, props.layerManager),
                 );
                 return;
             case "realization-polygons":
@@ -288,9 +285,24 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                 label: "Surface",
                 children: [
                     {
+                        identifier: "statistical-surface",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        label: "Statistical Surface",
+                    },
+                    {
                         identifier: "realization-surface",
                         icon: <Icon data={surface_layer} fontSize="small" />,
                         label: "Realization Surface",
+                    },
+                ],
+            },
+            {
+                label: "Polygons",
+                children: [
+                    {
+                        identifier: "realization-polygons",
+                        icon: <Icon data={fault} fontSize="small" />,
+                        label: "Realization Polygons",
                     },
                 ],
             },

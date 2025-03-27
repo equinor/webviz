@@ -110,7 +110,12 @@ export class WellsLayer extends CompositeLayer<WellsLayerProps> {
                         }),
                     };
                 }),
-                material: true,
+                material: {
+                    ambient: 0.2,
+                    diffuse: 0.6,
+                    shininess: 132,
+                    specularColor: [255, 255, 255],
+                },
                 pickable: true,
                 // @ts-expect-error - This is how deck.gl expects the state to be defined
                 parameters: { depthTest: true },
