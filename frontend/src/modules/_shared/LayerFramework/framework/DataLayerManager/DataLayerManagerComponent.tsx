@@ -4,17 +4,17 @@ import type { IsMoveAllowedArgs } from "@lib/components/SortableList";
 import { SortableList } from "@lib/components/SortableList";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import type { GroupDelegate} from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
+import type { GroupDelegate } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { Add } from "@mui/icons-material";
 
 import type { DataLayerManager } from "./DataLayerManager";
 
-import type { LayersActionGroup} from "../../LayersActions";
+import type { LayersActionGroup } from "../../LayersActions";
 import { LayersActions } from "../../LayersActions";
 import { View } from "../../groups/implementations/View";
-import type { Item, ItemGroup} from "../../interfacesAndTypes/entitites";
+import type { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
 import { instanceofItemGroup } from "../../interfacesAndTypes/entitites";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";

@@ -1,20 +1,38 @@
+import { ColorPalette } from "@lib/utils/ColorPalette";
+import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/LayerFramework/visualization/utils/colors";
+import { PreviewLayer } from "@modules/_shared/customDeckGlLayers/PreviewLayer/PreviewLayer";
 import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
+
+import { makeRealizationGridBoundingBox } from "./boundingBoxes/makeRealizationGridBoundingBox";
 
 import type { RealizationGridData, RealizationGridSettings } from "../../layers/implementations/RealizationGridLayer";
 
-export function makeRealizationGridLayer({
-    id,
-    getData,
-    getSetting,
-}: FactoryFunctionArgs<RealizationGridSettings, RealizationGridData>): Grid3DLayer | null {
+export function makeRealizationGridLayer(
+    args: FactoryFunctionArgs<RealizationGridSettings, RealizationGridData>,
+): Grid3DLayer | PreviewLayer | null {
+    const { id, getData, getSetting, isLoading } = args;
     const data = getData();
-    const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
+    let colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
+    const boundingBox = makeRealizationGridBoundingBox(args);
 
-    if (!data) {
+    if (!data || !boundingBox || !colorScale) {
         return null;
+    }
+
+    if (isLoading) {
+        colorScale = new ColorScale({
+            colorPalette: new ColorPalette({
+                name: "ResInsight",
+                colors: ["#EEEEEE", "#EFEFEF"],
+                id: "black-white",
+            }),
+            gradientType: ColorScaleGradientType.Sequential,
+            type: ColorScaleType.Continuous,
+            steps: 100,
+        });
     }
 
     const { gridSurfaceData, gridParameterData } = data;

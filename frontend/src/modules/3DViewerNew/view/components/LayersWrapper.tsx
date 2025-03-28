@@ -7,13 +7,13 @@ import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import * as bbox from "@lib/utils/boundingBox";
-import { makeColorScaleAnnotation } from "@modules/2DViewer/LayerFramework/annotations/makeColorScaleAnnotation";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { RealizationSeismicCrosslineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicCrosslineLayer";
 import { RealizationSeismicDepthSliceLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicDepthLayer";
 import { RealizationSeismicInlineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicInlineLayer";
 import { makeDrilledWellTrajectoriesLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeDrilledWellTrajectoriesLayer";
+import { makeIntersectionLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeIntersectionGrid3dLayer";
 import { makeRealizationSurfaceLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeRealizationSurfaceLayer";
 import {
     Plane,
@@ -23,8 +23,11 @@ import {
     type DataLayerManager,
     LayerManagerTopic,
 } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
+import { GroupType } from "@modules/_shared/LayerFramework/groups/groupTypes";
+import { View } from "@modules/_shared/LayerFramework/groups/implementations/View";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
+import { IntersectionRealizationGridLayer } from "@modules/_shared/LayerFramework/layers/implementations/IntersectionRealizationGridLayer";
 import { RealizationGridLayer } from "@modules/_shared/LayerFramework/layers/implementations/RealizationGridLayer";
 import { RealizationPolygonsLayer } from "@modules/_shared/LayerFramework/layers/implementations/RealizationPolygonsLayer";
 import { RealizationSurfaceLayer } from "@modules/_shared/LayerFramework/layers/implementations/RealizationSurfaceLayer";
@@ -36,11 +39,10 @@ import {
     VisualizationFactory,
     type VisualizationTarget,
 } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import { makeColorScaleAnnotation } from "@modules/_shared/LayerFramework/visualization/deckgl/annotations/makeColorScaleAnnotation";
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
 import { makePolygonDataBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makePolygonDataBoundingBox";
-import { makeRealizationGridBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeRealizationGridBoundingBox";
-import { makeSurfaceLayerBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeSurfaceLayerBoundingBox";
 import { makeDrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
 import { makeRealizationGridLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeRealizationGridLayer";
 import { makeRealizationPolygonsLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeRealizationPolygonsLayer";
@@ -58,21 +60,26 @@ const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.DECK_
 
 VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.REALIZATION_SURFACE_3D, RealizationSurfaceLayer, {
     makeVisualizationFunction: makeRealizationSurfaceLayer,
-    calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
 VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.STATISTICAL_SURFACE_3D, StatisticalSurfaceLayer, {
     makeVisualizationFunction: makeRealizationSurfaceLayer,
-    calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
 VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.REALIZATION_POLYGONS, RealizationPolygonsLayer, {
     makeVisualizationFunction: makeRealizationPolygonsLayer,
     calculateBoundingBoxFunction: makePolygonDataBoundingBox,
 });
+VISUALIZATION_FACTORY.registerLayerFunctions(
+    LayerType.INTERSECTION_REALIZATION_GRID,
+    IntersectionRealizationGridLayer,
+    {
+        makeVisualizationFunction: makeIntersectionLayer,
+        makeAnnotationsFunction: makeColorScaleAnnotation,
+    },
+);
 VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.REALIZATION_GRID, RealizationGridLayer, {
     makeVisualizationFunction: makeRealizationGridLayer,
-    calculateBoundingBoxFunction: makeRealizationGridBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
 VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.DRILLED_WELLBORE_PICKS, DrilledWellborePicksLayer, {
@@ -100,6 +107,8 @@ VISUALIZATION_FACTORY.registerLayerFunctions(
         makeVisualizationFunction: makeSeismicFenceMeshLayerFunction(Plane.CROSSLINE),
     },
 );
+
+VISUALIZATION_FACTORY.registerViewFunction(GroupType.VIEW, View, ({ getSetting }) => ({ test: "test" }));
 
 export type LayersWrapperProps = {
     layerManager: DataLayerManager;

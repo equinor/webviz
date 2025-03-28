@@ -1,6 +1,7 @@
 import { GroupDelegate } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
+import type { GroupType } from "../../groups/groupTypes";
 import type {
     CustomGroupImplementation,
     CustomGroupImplementationWithSettings,
@@ -21,7 +22,7 @@ export type GroupParams<
 > = {
     layerManager: DataLayerManager;
     color?: string;
-    type: string;
+    type: GroupType;
     customGroupImplementation:
         | CustomGroupImplementation
         | CustomGroupImplementationWithSettings<TSettingTypes, TSettings>;
@@ -35,7 +36,7 @@ export class Group<
 {
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
-    private _type: string;
+    private _type: GroupType;
     private _sharedSettingsDelegate: SharedSettingsDelegate<TSettings, TSettingKey> | null = null;
 
     constructor(params: GroupParams<TSettings, TSettingTypes>) {

@@ -64,11 +64,12 @@ function predictDepthSliceGeometry({
     const geometry: Geometry = {
         shapes: [
             {
-                type: ShapeType.RECTANGLE,
+                type: ShapeType.BOX,
                 centerPoint: vec3.create((origin.x + rotatedMaxXY.x) / 2, (origin.y + rotatedMaxXY.y) / 2, zmin),
                 dimensions: {
                     width: Math.abs(rotatedMaxX.x - origin.x),
                     height: Math.abs(rotatedMaxY.y - origin.y),
+                    depth: 0,
                 },
                 normalizedEdgeVectors: {
                     u: vec3.normalize(vec3.create(rotatedMaxX.x - origin.x, rotatedMaxX.y - origin.y, 0)),
@@ -122,7 +123,7 @@ function predictCrosslineGeometry({
     const geometry: Geometry = {
         shapes: [
             {
-                type: ShapeType.RECTANGLE,
+                type: ShapeType.BOX,
                 centerPoint: vec3.create(
                     (rotatedMinXY.x + rotatedMaxXY.x) / 2,
                     (rotatedMinXY.y + rotatedMaxXY.y) / 2,
@@ -133,6 +134,7 @@ function predictCrosslineGeometry({
                         vec3.create(rotatedMaxXY.x - rotatedMinXY.x, rotatedMaxXY.y - rotatedMinXY.y, 0),
                     ),
                     height: Math.abs(zmax - zmin),
+                    depth: 0,
                 },
                 normalizedEdgeVectors: {
                     u: vec3.normalize(vec3.create(rotatedMaxXY.x - rotatedMinXY.x, rotatedMaxXY.y - rotatedMinXY.y, 0)),
@@ -189,7 +191,7 @@ function predictInlineGeometry({
     const geometry: Geometry = {
         shapes: [
             {
-                type: ShapeType.RECTANGLE,
+                type: ShapeType.BOX,
                 centerPoint: vec3.create(
                     (rotatedMinXY.x + rotatedMaxXY.x) / 2,
                     (rotatedMinXY.y + rotatedMaxXY.y) / 2,
@@ -200,6 +202,7 @@ function predictInlineGeometry({
                         vec3.create(rotatedMaxXY.x - rotatedMinXY.x, rotatedMaxXY.y - rotatedMinXY.y, 0),
                     ),
                     height: Math.abs(zmax - zmin),
+                    depth: 0,
                 },
                 normalizedEdgeVectors: {
                     u: vec3.normalize(vec3.create(rotatedMaxXY.x - rotatedMinXY.x, rotatedMaxXY.y - rotatedMinXY.y, 0)),

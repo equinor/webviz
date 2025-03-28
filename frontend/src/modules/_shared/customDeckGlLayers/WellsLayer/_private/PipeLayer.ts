@@ -12,7 +12,7 @@ import {
 import { Vec3 } from "@lib/utils/vec3";
 import * as vec3 from "@lib/utils/vec3";
 import { Geometry, Model } from "@luma.gl/engine";
-import { phongLighting, phongMaterial } from "@luma.gl/shadertools";
+import { phongLighting } from "@luma.gl/shadertools";
 
 import { isEqual } from "lodash";
 
@@ -90,7 +90,7 @@ export class PipeLayer extends Layer<PipeLayerProps> {
     updateState(params: UpdateParameters<Layer<PipeLayerProps>>): void {
         super.updateState(params);
 
-        if (!isEqual(this.props.data, params.props.data)) {
+        if (!isEqual(params.props.data, params.oldProps.data)) {
             this.setState({
                 models: this.makeModels(params.context),
             });
@@ -110,7 +110,7 @@ export class PipeLayer extends Layer<PipeLayerProps> {
             const model = new Model(context.device, {
                 id: `${this.id}-mesh-${idx}`,
                 geometry: mesh,
-                modules: [project32, phongLighting, picking, pipeUniforms, phongMaterial],
+                modules: [project32, phongLighting, picking, pipeUniforms],
                 vs: vertexShader,
                 fs: fragmentShader,
             });

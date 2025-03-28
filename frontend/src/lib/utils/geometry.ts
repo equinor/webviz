@@ -7,6 +7,12 @@ export type Size2D = {
     height: number;
 };
 
+export type Size3D = {
+    width: number;
+    height: number;
+    depth: number;
+};
+
 export type Rect2D = {
     x: number;
     y: number;
@@ -24,13 +30,13 @@ export type Rect3D = {
 };
 
 export enum ShapeType {
-    RECTANGLE = "rectangle",
+    BOX = "box",
 }
 
 export type Shape = {
-    type: ShapeType.RECTANGLE;
+    type: ShapeType.BOX;
     centerPoint: Vec3;
-    dimensions: Size2D;
+    dimensions: Size3D;
     normalizedEdgeVectors: {
         // along width
         u: Vec3;

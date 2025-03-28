@@ -2,7 +2,7 @@ import { CompositeLayer, Layer, LayersList } from "@deck.gl/core";
 import { Geometry, ShapeType } from "@lib/utils/geometry";
 import * as vec3 from "@lib/utils/vec3";
 
-import { RectangleLayer } from "./_private/RectangleLayer";
+import { BoxLayer } from "./_private/BoxLayer";
 
 export type PreviewLayerProps = {
     id: string;
@@ -23,25 +23,29 @@ export class PreviewLayer extends CompositeLayer<PreviewLayerProps> {
         const zFactor = this.props.zIncreaseDownwards ? -1 : 1;
 
         for (const [idx, shape] of data.geometry.shapes.entries()) {
-            if (shape.type === ShapeType.RECTANGLE) {
+            if (shape.type === ShapeType.BOX) {
                 layers.push(
-                    new RectangleLayer({
+                    new BoxLayer({
                         id: `${idx}`,
                         data: {
                             centerPoint: vec3.toArray(
-                                vec3.multiplyElementWise(shape.centerPoint, vec3.create(1, 1, zFactor))
+                                vec3.multiplyElementWise(shape.centerPoint, vec3.create(1, 1, zFactor)),
                             ),
-                            dimensions: [shape.dimensions.width, shape.dimensions.height],
+                            dimensions: [
+                                shape.dimensions.width,
+                                shape.dimensions.height,
+                                shape.dimensions.depth * zFactor,
+                            ],
                             normalizedEdgeVectors: [
                                 vec3.toArray(
-                                    vec3.multiplyElementWise(shape.normalizedEdgeVectors.u, vec3.create(1, 1, zFactor))
+                                    vec3.multiplyElementWise(shape.normalizedEdgeVectors.u, vec3.create(1, 1, zFactor)),
                                 ),
                                 vec3.toArray(
-                                    vec3.multiplyElementWise(shape.normalizedEdgeVectors.v, vec3.create(1, 1, zFactor))
+                                    vec3.multiplyElementWise(shape.normalizedEdgeVectors.v, vec3.create(1, 1, zFactor)),
                                 ),
                             ],
                         },
-                    })
+                    }),
                 );
             }
         }

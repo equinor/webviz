@@ -6,11 +6,12 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import * as bbox from "@lib/utils/bbox";
-import { makeColorScaleAnnotation } from "@modules/2DViewer/LayerFramework/annotations/makeColorScaleAnnotation";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import type { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import { LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
+import { GroupType } from "@modules/_shared/LayerFramework/groups/groupTypes";
+import { View } from "@modules/_shared/LayerFramework/groups/implementations/View";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import { ObservedSurfaceLayer } from "@modules/_shared/LayerFramework/layers/implementations/ObservedSurfaceLayer";
@@ -25,6 +26,7 @@ import type {
     VisualizationTarget,
 } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 import { VisualizationFactory } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import { makeColorScaleAnnotation } from "@modules/_shared/LayerFramework/visualization/deckgl/annotations/makeColorScaleAnnotation";
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
 import { makePolygonDataBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makePolygonDataBoundingBox";
@@ -87,6 +89,8 @@ VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.DRILLED_WELL_TRAJECTORIES
     makeVisualizationFunction: makeDrilledWellTrajectoriesLayer,
     calculateBoundingBoxFunction: makeDrilledWellTrajectoriesBoundingBox,
 });
+
+VISUALIZATION_FACTORY.registerViewFunction(GroupType.VIEW, View, () => ({ test: "test" }));
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<bbox.BBox | null>(null);

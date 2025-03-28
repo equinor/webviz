@@ -119,6 +119,16 @@ export function add(vector1: Vec3, vector2: Vec3): Vec3 {
 }
 
 /**
+ * Concatenates multiple vectors.
+ *
+ * @param vectors The vectors to concatenate.
+ * @returns A new vector that is the result of the concatenation.
+ */
+export function concat(...vectors: Vec3[]): Vec3 {
+    return vectors.reduce((acc, vector) => add(acc, vector), create(0, 0, 0));
+}
+
+/**
  * Normalizes the given vector.
  *
  * @param vector The vector.

@@ -19,6 +19,7 @@ import { Group } from "@modules/_shared/LayerFramework/framework/Group/Group";
 import { SettingsGroup } from "@modules/_shared/LayerFramework/framework/SettingsGroup/SettingsGroup";
 import { SharedSetting } from "@modules/_shared/LayerFramework/framework/SharedSetting/SharedSetting";
 import { GroupRegistry } from "@modules/_shared/LayerFramework/groups/GroupRegistry";
+import { GroupType } from "@modules/_shared/LayerFramework/groups/groupTypes";
 import {
     type Item,
     type ItemGroup,
@@ -61,7 +62,9 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
     function handleLayerAction(identifier: string, groupDelegate: GroupDelegate) {
         switch (identifier) {
             case "view":
-                groupDelegate.appendChild(GroupRegistry.makeGroup("View", props.layerManager, colorSet.getNextColor()));
+                groupDelegate.appendChild(
+                    GroupRegistry.makeGroup(GroupType.VIEW, props.layerManager, colorSet.getNextColor()),
+                );
                 return;
             case "delta-surface":
                 groupDelegate.appendChild(new DeltaSurface("Delta surface", props.layerManager));
@@ -93,6 +96,11 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
             case "drilled-wellbore-picks":
                 groupDelegate.prependChild(
                     LayerRegistry.makeLayer(LayerType.DRILLED_WELLBORE_PICKS, props.layerManager),
+                );
+                return;
+            case "intersection-realization-grid":
+                groupDelegate.prependChild(
+                    LayerRegistry.makeLayer(LayerType.INTERSECTION_REALIZATION_GRID, props.layerManager),
                 );
                 return;
             case "realization-grid":
@@ -157,7 +165,8 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
     }
 
     const hasView =
-        groupDelegate.getDescendantItems((item) => item instanceof Group && item.getGroupType() === "View").length > 0;
+        groupDelegate.getDescendantItems((item) => item instanceof Group && item.getGroupType() === GroupType.VIEW)
+            .length > 0;
     const adjustedLayerActions = hasView ? LAYER_ACTIONS : INITIAL_LAYER_ACTIONS;
 
     return (

@@ -110,8 +110,8 @@ async def _get_grid_model_meta_async(search_context: SearchContext, item_no: int
         subgrids = []
 
     dimensions = Grid3dDimensions(
-        i_count=grid_metadata["data"]["spec"]["nrow"],
-        j_count=grid_metadata["data"]["spec"]["ncol"],
+        i_count=grid_metadata["data"]["spec"]["ncol"],
+        j_count=grid_metadata["data"]["spec"]["nrow"],
         k_count=grid_metadata["data"]["spec"]["nlay"],
         subgrids=subgrids,
     )

@@ -9,6 +9,7 @@ export function makeColorScaleAnnotation({
     getSetting,
     id,
     name,
+    getValueRange,
 }: FactoryFunctionArgs<[Setting.COLOR_SCALE], any>): Annotation[] {
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
 
@@ -16,5 +17,13 @@ export function makeColorScaleAnnotation({
         return [];
     }
 
-    return [{ id, colorScale: ColorScaleWithName.fromColorScale(colorScale, name) }];
+    const range = getValueRange();
+    if (!range) {
+        return [];
+    }
+
+    const localColorScale = colorScale.clone();
+    localColorScale.setRange(range[0], range[1]);
+
+    return [{ id, colorScale: ColorScaleWithName.fromColorScale(localColorScale, name) }];
 }
