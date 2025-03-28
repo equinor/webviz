@@ -10,6 +10,7 @@ import { DataLayer, DataLayerStatus } from "../framework/DataLayer/DataLayer";
 import type { DataLayerManager } from "../framework/DataLayerManager/DataLayerManager";
 import { DeltaSurface } from "../framework/DeltaSurface/DeltaSurface";
 import { Group } from "../framework/Group/Group";
+import type { GroupType } from "../groups/groupTypes";
 import type {
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
@@ -198,7 +199,7 @@ export class VisualizationFactory<
     }
 
     registerViewFunction<TSettings extends Settings>(
-        viewName: string,
+        viewName: GroupType,
         viewCtor: {
             new (...params: any[]): CustomGroupImplementation | CustomGroupImplementationWithSettings<TSettings>;
         },
