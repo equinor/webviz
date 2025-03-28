@@ -25,6 +25,8 @@ import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import type { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import { LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
+import { GroupType } from "@modules/_shared/LayerFramework/groups/groupTypes";
+import { View } from "@modules/_shared/LayerFramework/groups/implementations/View";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
@@ -89,6 +91,8 @@ VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.DRILLED_WELL_TRAJECTORIES
     makeVisualizationFunction: makeDrilledWellTrajectoriesLayer,
     calculateBoundingBoxFunction: makeDrilledWellTrajectoriesBoundingBox,
 });
+
+VISUALIZATION_FACTORY.registerViewFunction(GroupType.VIEW, View, () => ({ test: "test" }));
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<bbox.BBox | null>(null);
