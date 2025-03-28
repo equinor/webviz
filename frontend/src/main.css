@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Change dark mode selector to be class-based, instead of media-query */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Additional tailwind component classes */
 @utility input-comp {
     @apply hover:outline-1 hover:outline-blue-300 focus:outline-1 focus:outline-blue-600;
@@ -20,6 +23,21 @@
     /* Reverts ring default change introduced Tailwind v4 */
     /* ! variable only supported for compatibility reasons, and are not considered idiomatic usage of Tailwind CSS v4.0. */
     --default-ring-color: var(--color-blue-500);
+
+    /* Animations */
+    --animate-linear-indefinite: linear-indefinite 3s cubic-bezier(1, 0.1, 0.1, 1) infinite;
+
+    @keyframes linear-indefinite {
+        0% {
+            transform: translateX(-100%) scaleX(1);
+        }
+        50% {
+            transform: translateX(0%) scaleX(0.25);
+        }
+        100% {
+            transform: translateX(100%);
+        }
+    }
 }
 
 /* Custom CSS styles*/
