@@ -58,7 +58,7 @@ export type EsvView = {
 };
 
 export type TargetViewReturnTypes = {
-    [VisualizationTarget.DECK_GL]: {};
+    [VisualizationTarget.DECK_GL]: Record<string, never>;
     [VisualizationTarget.ESV]: EsvView;
 };
 
