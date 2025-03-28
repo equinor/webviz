@@ -1,25 +1,23 @@
 import type { LayersActionGroup } from "../../LayersActions";
-import type { Group, Item } from "../../interfaces";
-import { instanceofLayer } from "../../interfaces";
-import { LayerComponent } from "../../layers/LayerComponent";
-import { ColorScale } from "../ColorScale/ColorScale";
-import { ColorScaleComponent } from "../ColorScale/ColorScaleComponent";
+import type { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
+import { DataLayer } from "../DataLayer/DataLayer";
+import { DataLayerComponent } from "../DataLayer/DataLayerComponent";
 import { DeltaSurface } from "../DeltaSurface/DeltaSurface";
 import { DeltaSurfaceComponent } from "../DeltaSurface/DeltaSurfaceComponent";
+import { Group } from "../Group/Group";
+import { GroupComponent } from "../Group/GroupComponent";
 import { SettingsGroup } from "../SettingsGroup/SettingsGroup";
 import { SettingsGroupComponent } from "../SettingsGroup/SettingsGroupComponent";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { SharedSettingComponent } from "../SharedSetting/SharedSettingComponent";
-import { View } from "../View/View";
-import { ViewComponent } from "../View/ViewComponent";
 
 export function makeSortableListItemComponent(
     item: Item,
     layerActions?: LayersActionGroup[],
-    onActionClick?: (identifier: string, group: Group) => void,
+    onActionClick?: (identifier: string, group: ItemGroup) => void
 ): React.ReactElement {
-    if (instanceofLayer(item)) {
-        return <LayerComponent key={item.getItemDelegate().getId()} layer={item} />;
+    if (item instanceof DataLayer) {
+        return <DataLayerComponent key={item.getItemDelegate().getId()} layer={item} />;
     }
     if (item instanceof SettingsGroup) {
         return (
@@ -31,9 +29,9 @@ export function makeSortableListItemComponent(
             />
         );
     }
-    if (item instanceof View) {
+    if (item instanceof Group) {
         return (
-            <ViewComponent
+            <GroupComponent
                 key={item.getItemDelegate().getId()}
                 group={item}
                 actions={layerActions ? filterAwayViewActions(layerActions) : undefined}
@@ -53,9 +51,6 @@ export function makeSortableListItemComponent(
     }
     if (item instanceof SharedSetting) {
         return <SharedSettingComponent key={item.getItemDelegate().getId()} sharedSetting={item} />;
-    }
-    if (item instanceof ColorScale) {
-        return <ColorScaleComponent key={item.getItemDelegate().getId()} colorScale={item} />;
     }
 
     throw new Error(`Unsupported item type: ${item.constructor.name}`);

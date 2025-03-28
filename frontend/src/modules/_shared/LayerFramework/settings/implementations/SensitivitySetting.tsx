@@ -2,38 +2,23 @@ import type React from "react";
 
 import { Dropdown } from "@lib/components/Dropdown";
 
-import { SettingDelegate } from "../../delegates/SettingDelegate";
-import type { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
-import { SettingRegistry } from "../SettingRegistry";
-import { SettingType } from "../settingsTypes";
+import type {
+    CustomSettingImplementation,
+    SettingComponentProps,
+} from "../../interfacesAndTypes/customSettingImplementation";
+import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
+import type { SettingCategory } from "../settingsDefinitions";
 
 export type SensitivityNameCasePair = {
     sensitivityName: string;
     sensitivityCase: string;
 };
 
-export class SensitivitySetting implements Setting<SensitivityNameCasePair | null> {
-    private _delegate: SettingDelegate<SensitivityNameCasePair | null>;
-
-    constructor() {
-        this._delegate = new SettingDelegate<SensitivityNameCasePair | null>(null, this);
-    }
-
-    getType(): SettingType {
-        return SettingType.STATISTIC_FUNCTION;
-    }
-
-    getLabel(): string {
-        return "Sensitivity";
-    }
-
-    getDelegate(): SettingDelegate<SensitivityNameCasePair | null> {
-        return this._delegate;
-    }
-
+type ValueType = SensitivityNameCasePair | null;
+export class SensitivitySetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
     isValueValid(
-        availableValues: AvailableValuesType<SensitivityNameCasePair | null>,
-        value: SensitivityNameCasePair | null,
+        value: ValueType,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_SELECT>
     ): boolean {
         if (availableValues.length === 0) {
             return true;
@@ -46,24 +31,26 @@ export class SensitivitySetting implements Setting<SensitivityNameCasePair | nul
             .some(
                 (sensitivity) =>
                     sensitivity?.sensitivityName === value.sensitivityName &&
-                    sensitivity?.sensitivityCase === value.sensitivityCase,
+                    sensitivity?.sensitivityCase === value.sensitivityCase
             );
     }
 
-    makeComponent(): (props: SettingComponentProps<SensitivityNameCasePair | null>) => React.ReactNode {
-        return function Sensitivity(props: SettingComponentProps<SensitivityNameCasePair | null>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
+        return function Sensitivity(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
+            const availableValues = props.availableValues ?? [];
+
             const availableSensitivityNames: string[] = [
-                ...Array.from(new Set(props.availableValues.map((sensitivity) => sensitivity.sensitivityName))),
+                ...Array.from(new Set(availableValues.map((sensitivity) => sensitivity.sensitivityName))),
             ];
 
             const currentSensitivityName = props.value?.sensitivityName;
-            const availableSensitiveCases = props.availableValues
+            const availableSensitiveCases = availableValues
                 .filter((sensitivity) => sensitivity.sensitivityName === currentSensitivityName)
                 .map((sensitivity) => sensitivity.sensitivityCase);
 
             const currentSensitivityCase = fixupSensitivityCase(
                 props.value?.sensitivityCase || null,
-                availableSensitiveCases,
+                availableSensitiveCases
             );
 
             const sensitivityNameOptions = availableSensitivityNames.map((sensitivityName) => ({
@@ -86,7 +73,7 @@ export class SensitivitySetting implements Setting<SensitivityNameCasePair | nul
             }
 
             function handleSensitivityNameChange(selectedValue: string) {
-                const availableSensitiveCases = props.availableValues
+                const availableSensitiveCases = availableValues
                     .filter((sensitivity) => sensitivity.sensitivityName === selectedValue)
                     .map((sensitivity) => sensitivity.sensitivityCase);
 
@@ -106,7 +93,7 @@ export class SensitivitySetting implements Setting<SensitivityNameCasePair | nul
                     sensitivityCase: selectedValue,
                 });
             }
-            if (props.availableValues.length === 0) {
+            if (availableValues.length === 0) {
                 return "No sensitivities available";
             }
             return (
@@ -134,5 +121,3 @@ function fixupSensitivityCase(currentSensitivityCase: string | null, availableSe
 
     return currentSensitivityCase;
 }
-
-SettingRegistry.registerSetting(SensitivitySetting);

@@ -3,42 +3,35 @@ import type React from "react";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 
-import { SettingDelegate } from "../../delegates/SettingDelegate";
-import type { Setting, SettingComponentProps, ValueToStringArgs } from "../../interfaces";
-import { SettingRegistry } from "../SettingRegistry";
-import { SettingType } from "../settingsTypes";
+import type {
+    CustomSettingImplementation,
+    OverriddenValueRepresentationArgs,
+    SettingComponentProps,
+} from "../../interfacesAndTypes/customSettingImplementation";
+import type { SettingCategory } from "../settingsDefinitions";
 
-export class EnsembleSetting implements Setting<RegularEnsembleIdent | null> {
-    private _delegate: SettingDelegate<RegularEnsembleIdent | null>;
-
-    constructor() {
-        this._delegate = new SettingDelegate<RegularEnsembleIdent | null>(null, this);
-    }
-
-    getType(): SettingType {
-        return SettingType.ENSEMBLE;
-    }
+type ValueType = RegularEnsembleIdent | null;
+export class EnsembleSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
+    defaultValue: ValueType = null;
 
     getLabel(): string {
         return "Ensemble";
     }
 
-    getDelegate(): SettingDelegate<RegularEnsembleIdent | null> {
-        return this._delegate;
-    }
-
-    serializeValue(value: RegularEnsembleIdent | null): string {
+    serializeValue(value: ValueType): string {
         return value?.toString() ?? "";
     }
 
-    deserializeValue(serializedValue: string): RegularEnsembleIdent | null {
+    deserializeValue(serializedValue: string): ValueType {
         return serializedValue !== "" ? RegularEnsembleIdent.fromString(serializedValue) : null;
     }
 
-    makeComponent(): (props: SettingComponentProps<RegularEnsembleIdent | null>) => React.ReactNode {
-        return function Ensemble(props: SettingComponentProps<RegularEnsembleIdent | null>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
+        return function EnsembleSelect(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
+            const availableValues = props.availableValues ?? [];
+
             const ensembles = props.globalSettings.ensembles.filter((ensemble) =>
-                props.availableValues.includes(ensemble.getIdent()),
+                availableValues.includes(ensemble.getIdent())
             );
 
             return (
@@ -53,7 +46,7 @@ export class EnsembleSetting implements Setting<RegularEnsembleIdent | null> {
         };
     }
 
-    valueToString(args: ValueToStringArgs<RegularEnsembleIdent | null>): string {
+    overriddenValueRepresentation(args: OverriddenValueRepresentationArgs<ValueType>): React.ReactNode {
         const { value, workbenchSession } = args;
         if (value === null) {
             return "-";
@@ -62,5 +55,3 @@ export class EnsembleSetting implements Setting<RegularEnsembleIdent | null> {
         return workbenchSession.getEnsembleSet().findEnsemble(value)?.getDisplayName() ?? "-";
     }
 }
-
-SettingRegistry.registerSetting(EnsembleSetting);

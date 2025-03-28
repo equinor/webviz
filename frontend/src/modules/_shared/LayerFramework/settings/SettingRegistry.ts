@@ -1,17 +1,62 @@
-import type { Setting } from "../interfaces";
+import type { Setting, SettingCategories, SettingTypes} from "./settingsDefinitions";
+import { settingCategories } from "./settingsDefinitions";
+
+import { SettingManager } from "../framework/SettingManager/SettingManager";
+import type { CustomSettingImplementation } from "../interfacesAndTypes/customSettingImplementation";
 
 export class SettingRegistry {
-    private static _registeredSettings: Record<string, { new (params?: any): Setting<any> }> = {};
+    private static _registeredSettings: Map<
+        Setting,
+        {
+            label: string;
+            customSettingImplementation: {
+                new (customConstructorParameters?: any): CustomSettingImplementation<any, any>;
+            };
+            customConstructorParameters?: any;
+        }
+    > = new Map();
 
-    static registerSetting(ctor: { new (params?: any): Setting<any> }): void {
-        this._registeredSettings[ctor.name] = ctor;
+    static registerSetting<
+        TSetting extends Setting,
+        TValue extends SettingTypes[TSetting] = SettingTypes[TSetting],
+        TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
+        TSettingImpl extends new (...args: any) => CustomSettingImplementation<TValue, TCategory> = {
+            new (params?: any): CustomSettingImplementation<TValue, TCategory>;
+        }
+    >(
+        type: TSetting,
+        label: string,
+        customSettingImplementation: TSettingImpl,
+        options?: {
+            customConstructorParameters?: ConstructorParameters<TSettingImpl>;
+        }
+    ): void {
+        if (this._registeredSettings.has(type)) {
+            throw new Error(`Setting ${type} already registered`);
+        }
+        this._registeredSettings.set(type, {
+            label,
+            customSettingImplementation,
+            customConstructorParameters: options?.customConstructorParameters,
+        });
     }
 
-    static makeSetting(settingName: string, params?: any[]): Setting<any> {
-        const ctor = this._registeredSettings[settingName];
-        if (params) {
-            return new ctor(...params);
+    static makeSetting<TSetting extends Setting>(
+        type: TSetting,
+        defaultValue?: SettingTypes[TSetting]
+    ): SettingManager<TSetting> {
+        const stored = this._registeredSettings.get(type);
+        if (!stored) {
+            throw new Error(`Setting ${type} not found`);
         }
-        return new ctor();
+        const customSettingImpl = new stored.customSettingImplementation(...(stored.customConstructorParameters ?? []));
+
+        return new SettingManager<TSetting>({
+            type,
+            category: settingCategories[type],
+            label: stored.label,
+            defaultValue: defaultValue ?? customSettingImpl.defaultValue ?? null,
+            customSettingImplementation: customSettingImpl,
+        });
     }
 }

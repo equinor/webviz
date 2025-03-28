@@ -5,10 +5,13 @@ import { ColorTile } from "@lib/components/ColorTile";
 import { Dropdown } from "@lib/components/Dropdown";
 import { ExpandMore } from "@mui/icons-material";
 
+import { DenseIconButton } from "../DenseIconButton";
+
 export type ColorSelectProps = {
     value: string;
     onChange: (value: string) => void;
     colors?: string[];
+    dense?: boolean;
 };
 
 export function ColorSelect(props: ColorSelectProps): JSX.Element {
@@ -41,9 +44,15 @@ export function ColorSelect(props: ColorSelectProps): JSX.Element {
         if (props.colors === undefined) {
             return (
                 <>
-                    <Button endIcon={<ExpandMore fontSize="inherit" />} onClick={handleButtonClick}>
-                        <ColorTile color={selectedColor} />
-                    </Button>
+                    {props.dense ? (
+                        <DenseIconButton onClick={handleButtonClick}>
+                            <ColorTile color={selectedColor} />
+                        </DenseIconButton>
+                    ) : (
+                        <Button endIcon={<ExpandMore fontSize="inherit" />} onClick={handleButtonClick}>
+                            <ColorTile color={selectedColor} />
+                        </Button>
+                    )}
                     <input
                         ref={inputRef}
                         type="color"

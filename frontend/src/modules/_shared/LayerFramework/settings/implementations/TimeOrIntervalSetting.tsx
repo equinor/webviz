@@ -4,35 +4,27 @@ import { SurfaceTimeType_api } from "@api";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 
-import { SettingDelegate } from "../../delegates/SettingDelegate";
-import type { Setting, SettingComponentProps, ValueToStringArgs } from "../../interfaces";
-import { SettingRegistry } from "../SettingRegistry";
-import { SettingType } from "../settingsTypes";
+import type {
+    CustomSettingImplementation,
+    OverriddenValueRepresentationArgs,
+    SettingComponentProps,
+} from "../../interfacesAndTypes/customSettingImplementation";
+import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = string | null;
 
-export class TimeOrIntervalSetting implements Setting<ValueType> {
-    private _delegate: SettingDelegate<ValueType>;
-
-    constructor() {
-        this._delegate = new SettingDelegate<ValueType | null>(null, this);
-    }
-
-    getType(): SettingType {
-        return SettingType.TIME_OR_INTERVAL;
-    }
+export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
+    defaultValue: ValueType = null;
 
     getLabel(): string {
         return "Date";
     }
 
-    getDelegate(): SettingDelegate<ValueType> {
-        return this._delegate;
-    }
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
+        return function Ensemble(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
+            const availableValues = props.availableValues ?? [];
 
-    makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
-        return function Ensemble(props: SettingComponentProps<ValueType>) {
-            const options: DropdownOption[] = props.availableValues.map((value) => {
+            const options: DropdownOption[] = availableValues.map((value) => {
                 return {
                     value: value.toString(),
                     label: timeTypeToLabel(value),
@@ -51,7 +43,7 @@ export class TimeOrIntervalSetting implements Setting<ValueType> {
         };
     }
 
-    valueToString(args: ValueToStringArgs<ValueType>): string {
+    overriddenValueRepresentation(args: OverriddenValueRepresentationArgs<ValueType>): React.ReactNode {
         const { value } = args;
         if (value === null) {
             return "-";
@@ -80,5 +72,3 @@ function isoIntervalStringToDateLabel(startIsoDateString: string, endIsoDateStri
     const endDate = endIsoDateString.split("T")[0];
     return `${startDate}/${endDate}`;
 }
-
-SettingRegistry.registerSetting(TimeOrIntervalSetting);
