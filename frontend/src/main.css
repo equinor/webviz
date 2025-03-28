@@ -1,8 +1,5 @@
 @import "tailwindcss";
 
-/* Change dark mode selector to be class-based, instead of media-query */
-@custom-variant dark (&:where(.dark, .dark *));
-
 /* Additional tailwind component classes */
 @utility input-comp {
     @apply hover:outline-1 hover:outline-blue-300 focus:outline-1 focus:outline-blue-600;
