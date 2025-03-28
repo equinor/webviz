@@ -1,10 +1,12 @@
+import type { GroupType } from "./groupTypes";
+
 import type { DataLayerManager } from "../framework/DataLayerManager/DataLayerManager";
 import { Group } from "../framework/Group/Group";
 import type { CustomGroupImplementation } from "../interfacesAndTypes/customGroupImplementation";
 
 export class GroupRegistry {
     private static _registeredGroups: Map<
-        string,
+        GroupType,
         {
             group: { new (customParams?: any): CustomGroupImplementation };
             customParams?: any;
@@ -12,9 +14,9 @@ export class GroupRegistry {
     > = new Map();
 
     static registerGroup<TGroup extends { new (params?: any): CustomGroupImplementation }>(
-        name: string,
+        name: GroupType,
         group: TGroup,
-        customParams?: ConstructorParameters<TGroup>
+        customParams?: ConstructorParameters<TGroup>,
     ): void {
         if (this._registeredGroups.has(name)) {
             throw new Error(`Group ${name} already registered`);
@@ -25,7 +27,7 @@ export class GroupRegistry {
         });
     }
 
-    static makeGroup(type: string, layerManager: DataLayerManager, color?: string): Group<any, any> {
+    static makeGroup(type: GroupType, layerManager: DataLayerManager, color?: string): Group<any, any> {
         const stored = this._registeredGroups.get(type);
         if (!stored) {
             throw new Error(`Group ${type} not found`);

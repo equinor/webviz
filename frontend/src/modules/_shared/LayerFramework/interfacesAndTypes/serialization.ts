@@ -2,6 +2,7 @@ import type { ColorScaleSerialization } from "@lib/utils/ColorScale";
 
 import type { SettingsKeysFromTuple } from "./utils";
 
+import type { GroupType } from "../groups/groupTypes";
 import type { Setting, Settings } from "../settings/settingsDefinitions";
 
 // The following interfaces/types are used to define the structure of the serialized state of the respective items in the data layer framework.
@@ -26,14 +27,14 @@ export interface SerializedItem {
 
 export type SerializedSettingsState<
     TSettings extends Settings,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > = {
     [K in TSettingKey]: string;
 };
 
 export interface SerializedLayer<
     TSettings extends Settings,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > extends SerializedItem {
     type: SerializedType.LAYER;
     layerType: string;
@@ -42,7 +43,7 @@ export interface SerializedLayer<
 
 export interface SerializedGroup extends SerializedItem {
     type: SerializedType.GROUP;
-    groupType: string;
+    groupType: GroupType;
     color: string;
     children: SerializedItem[];
 }
