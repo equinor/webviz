@@ -42,9 +42,7 @@ class SummaryAccess:
         sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    async def get_available_vectors_async(self) -> List[VectorInfo]:
-        timer = PerfTimer()
-
+    async def get_all_available_column_names_async(self) -> List[str]:
         table_context = SearchContext(sumo=self._sumo_client).tables.filter(
             uuid=self._case_uuid, iteration=self._iteration_name, tagname="summary"
         )
@@ -60,6 +58,13 @@ class SummaryAccess:
                 Service.SUMO,
             )
         column_names = await table_context.columns_async
+
+        return column_names
+
+    async def get_available_vectors_async(self) -> List[VectorInfo]:
+        timer = PerfTimer()
+
+        column_names = await self.get_all_available_column_names_async()
         et_get_table_info_ms = timer.lap_ms()
 
         ret_info_arr: List[VectorInfo] = []
@@ -183,6 +188,31 @@ class SummaryAccess:
             )
 
         return ret_arr
+
+    async def get_single_real_full_table_async(
+        self,
+        # resampling_frequency: Optional[Frequency],
+        realization: int,
+    ) -> Tuple[pa.Table, List[VectorMetadata]]:
+        """
+        Get pyarrow.
+        Table containing values for all vectors and the single specified realization.
+        This function will fetch per-realization summary data from Sumo.
+        The returned table will always contain a 'DATE' column in addition to the requested vectors.
+        """
+        timer = PerfTimer()
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader.require_content_type(["timeseries", "simulationtimeseries"])
+        table = await table_loader.get_single_realization_async(realization)
+        et_loading_ms = timer.lap_ms()
+
+        # Verify that we got the expected DATE column
+        if not "DATE" in table.column_names:
+            raise InvalidDataError("Table does not contain a DATE column", Service.SUMO)
+        date_field = table.field("DATE")
+        if date_field.type != pa.timestamp("ms"):
+            raise InvalidDataError(f"Unexpected type for DATE column {date_field.type=}", Service.SUMO)
+        return table
 
     async def get_single_real_vectors_table_async(
         self,
