@@ -1,3 +1,4 @@
+import { deprecatedGetStratigraphicUnitsOptions, deprecatedGetWellborePicksForWellboreOptions } from "@api";
 import { transformFormationData } from "@equinor/esv-intersection";
 import type { QueryClient } from "@tanstack/query-core";
 import { isEqual } from "lodash";
@@ -41,7 +42,7 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
 
     protected doSettingsChangesRequireDataRefetch(
         prevSettings: WellpicksLayerSettings,
-        newSettings: WellpicksLayerSettings,
+        newSettings: WellpicksLayerSettings
     ): boolean {
         return (
             prevSettings.wellboreUuid !== newSettings.wellboreUuid ||
@@ -60,7 +61,7 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
             return {
                 unitPicks: data.unitPicks.filter((pick) => this._settings.selectedUnitPicks.includes(pick.name)),
                 nonUnitPicks: data.nonUnitPicks.filter((pick) =>
-                    this._settings.selectedNonUnitPicks.includes(pick.identifier),
+                    this._settings.selectedNonUnitPicks.includes(pick.identifier)
                 ),
             };
         }
@@ -69,7 +70,7 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
     }
 
     protected async fetchData(queryClient: QueryClient): Promise<WellPicksLayerData> {
-        const wellborePicksQueryOptions = getWellborePicksForWellboreOptions({
+        const wellborePicksQueryOptions = deprecatedGetWellborePicksForWellboreOptions({
             query: {
                 wellbore_uuid: this._settings.wellboreUuid ?? "",
             },
@@ -81,7 +82,7 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
             ...wellborePicksQueryOptions,
         });
 
-        const stratigraphicUnitsQueryOptions = getStratigraphicUnitsOptions({
+        const stratigraphicUnitsQueryOptions = deprecatedGetStratigraphicUnitsOptions({
             query: {
                 case_uuid: this._settings.ensembleIdent?.getCaseUuid() ?? "",
             },
@@ -94,8 +95,7 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
         });
 
         return Promise.all([wellborePicksPromise, stratigraphicUnitsPromise]).then(
-            ([wellborePicks, stratigraphicUnits]) =>
-                transformFormationData(wellborePicks as any, stratigraphicUnits as any),
+            ([wellborePicks, stratigraphicUnits]) => transformFormationData(wellborePicks, stratigraphicUnits as any)
         );
     }
 }

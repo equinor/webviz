@@ -2218,7 +2218,7 @@ export type GetMisfitSurfaceDataResponses_api = {
 
 export type GetMisfitSurfaceDataResponse_api = GetMisfitSurfaceDataResponses_api[keyof GetMisfitSurfaceDataResponses_api];
 
-export type GetStratigraphicUnitsData_api = {
+export type DeprecatedGetStratigraphicUnitsData_api = {
     body?: never;
     path?: never;
     query: {
@@ -2227,26 +2227,28 @@ export type GetStratigraphicUnitsData_api = {
          */
         case_uuid: string;
     };
-    url: "/surface/stratigraphic_units";
+    url: "/surface/DEPRECATED_stratigraphic_units";
 };
 
-export type GetStratigraphicUnitsErrors_api = {
+export type DeprecatedGetStratigraphicUnitsErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type GetStratigraphicUnitsError_api = GetStratigraphicUnitsErrors_api[keyof GetStratigraphicUnitsErrors_api];
+export type DeprecatedGetStratigraphicUnitsError_api =
+    DeprecatedGetStratigraphicUnitsErrors_api[keyof DeprecatedGetStratigraphicUnitsErrors_api];
 
-export type GetStratigraphicUnitsResponses_api = {
+export type DeprecatedGetStratigraphicUnitsResponses_api = {
     /**
      * Successful Response
      */
     200: Array<StratigraphicUnit_api>;
 };
 
-export type GetStratigraphicUnitsResponse_api = GetStratigraphicUnitsResponses_api[keyof GetStratigraphicUnitsResponses_api];
+export type DeprecatedGetStratigraphicUnitsResponse_api =
+    DeprecatedGetStratigraphicUnitsResponses_api[keyof DeprecatedGetStratigraphicUnitsResponses_api];
 
 export type GetParameterNamesAndDescriptionData_api = {
     body?: never;
@@ -2917,7 +2919,7 @@ export type GetWellborePicksForPickIdentifierResponses_api = {
 export type GetWellborePicksForPickIdentifierResponse_api =
     GetWellborePicksForPickIdentifierResponses_api[keyof GetWellborePicksForPickIdentifierResponses_api];
 
-export type GetWellborePicksForWellboreData_api = {
+export type DeprecatedGetWellborePicksForWellboreData_api = {
     body?: never;
     path?: never;
     query: {
@@ -2926,28 +2928,28 @@ export type GetWellborePicksForWellboreData_api = {
          */
         wellbore_uuid: string;
     };
-    url: "/well/wellbore_picks_for_wellbore/";
+    url: "/well/DEPRECATED_wellbore_picks_for_wellbore/";
 };
 
-export type GetWellborePicksForWellboreErrors_api = {
+export type DeprecatedGetWellborePicksForWellboreErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type GetWellborePicksForWellboreError_api =
-    GetWellborePicksForWellboreErrors_api[keyof GetWellborePicksForWellboreErrors_api];
+export type DeprecatedGetWellborePicksForWellboreError_api =
+    DeprecatedGetWellborePicksForWellboreErrors_api[keyof DeprecatedGetWellborePicksForWellboreErrors_api];
 
-export type GetWellborePicksForWellboreResponses_api = {
+export type DeprecatedGetWellborePicksForWellboreResponses_api = {
     /**
      * Successful Response
      */
     200: Array<WellborePick_api>;
 };
 
-export type GetWellborePicksForWellboreResponse_api =
-    GetWellborePicksForWellboreResponses_api[keyof GetWellborePicksForWellboreResponses_api];
+export type DeprecatedGetWellborePicksForWellboreResponse_api =
+    DeprecatedGetWellborePicksForWellboreResponses_api[keyof DeprecatedGetWellborePicksForWellboreResponses_api];
 
 export type GetWellborePicksInStratColumnData_api = {
     body?: never;

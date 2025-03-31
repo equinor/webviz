@@ -6,6 +6,12 @@ import type { AxiosError } from "axios";
 
 import {
     getFields,
+    authorizedCallbackRoute,
+    client,
+    deprecatedGetStratigraphicUnits,
+    deprecatedGetWellborePicksForWellbore,
+    getAlive,
+    getAliveProtected,
     getCases,
     getEnsembles,
     getEnsembleDetails,
@@ -41,13 +47,20 @@ import {
     getGridParameter,
     postGetPolylineIntersection,
     getRealizationFlowNetwork,
+    getRealizationSurfacesMetadata,
+    getRealizationVectorAtTimestamp,
+    getRealizationsVectorData,
+    getSeismicCubeMetaList,
+    getSensitivities,
+    getStatisticalVectorData,
+    getStatisticalVectorDataPerSensitivity,
+    getSurfaceData,
     getTableData,
     getWellCompletionsData,
     getDrilledWellboreHeaders,
     getWellTrajectories,
     getWellborePickIdentifiers,
     getWellborePicksForPickIdentifier,
-    getWellborePicksForWellbore,
     getWellborePicksInStratColumn,
     getWellboreCompletions,
     getWellboreCasings,
@@ -78,6 +91,11 @@ import {
 } from "../sdk.gen";
 import type {
     GetFieldsData_api,
+    AuthorizedCallbackRouteData_api,
+    DeprecatedGetStratigraphicUnitsData_api,
+    DeprecatedGetWellborePicksForWellboreData_api,
+    GetAliveData_api,
+    GetAliveProtectedData_api,
     GetCasesData_api,
     GetEnsemblesData_api,
     GetEnsembleDetailsData_api,
@@ -123,13 +141,20 @@ import type {
     PostGetPolylineIntersectionError_api,
     PostGetPolylineIntersectionResponse_api,
     GetRealizationFlowNetworkData_api,
+    GetRealizationSurfacesMetadataData_api,
+    GetRealizationVectorAtTimestampData_api,
+    GetRealizationsVectorDataData_api,
+    GetSeismicCubeMetaListData_api,
+    GetSensitivitiesData_api,
+    GetStatisticalVectorDataData_api,
+    GetStatisticalVectorDataPerSensitivityData_api,
+    GetSurfaceDataData_api,
     GetTableDataData_api,
     GetWellCompletionsDataData_api,
     GetDrilledWellboreHeadersData_api,
     GetWellTrajectoriesData_api,
     GetWellborePickIdentifiersData_api,
     GetWellborePicksForPickIdentifierData_api,
-    GetWellborePicksForWellboreData_api,
     GetWellborePicksInStratColumnData_api,
     GetWellboreCompletionsData_api,
     GetWellboreCasingsData_api,
@@ -731,14 +756,14 @@ export const getMisfitSurfaceDataOptions = (options: Options<GetMisfitSurfaceDat
     });
 };
 
-export const getStratigraphicUnitsQueryKey = (options: Options<GetStratigraphicUnitsData_api>) => [
-    createQueryKey("getStratigraphicUnits", options),
+export const deprecatedGetStratigraphicUnitsQueryKey = (options: Options<DeprecatedGetStratigraphicUnitsData_api>) => [
+    createQueryKey("deprecatedGetStratigraphicUnits", options),
 ];
 
-export const getStratigraphicUnitsOptions = (options: Options<GetStratigraphicUnitsData_api>) => {
+export const deprecatedGetStratigraphicUnitsOptions = (options: Options<DeprecatedGetStratigraphicUnitsData_api>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getStratigraphicUnits({
+            const { data } = await deprecatedGetStratigraphicUnits({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -746,7 +771,7 @@ export const getStratigraphicUnitsOptions = (options: Options<GetStratigraphicUn
             });
             return data;
         },
-        queryKey: getStratigraphicUnitsQueryKey(options),
+        queryKey: deprecatedGetStratigraphicUnitsQueryKey(options),
     });
 };
 
@@ -1068,14 +1093,16 @@ export const getWellborePicksForPickIdentifierOptions = (options: Options<GetWel
     });
 };
 
-export const getWellborePicksForWellboreQueryKey = (options: Options<GetWellborePicksForWellboreData_api>) => [
-    createQueryKey("getWellborePicksForWellbore", options),
-];
+export const deprecatedGetWellborePicksForWellboreQueryKey = (
+    options: Options<DeprecatedGetWellborePicksForWellboreData_api>
+) => [createQueryKey("deprecatedGetWellborePicksForWellbore", options)];
 
-export const getWellborePicksForWellboreOptions = (options: Options<GetWellborePicksForWellboreData_api>) => {
+export const deprecatedGetWellborePicksForWellboreOptions = (
+    options: Options<DeprecatedGetWellborePicksForWellboreData_api>
+) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getWellborePicksForWellbore({
+            const { data } = await deprecatedGetWellborePicksForWellbore({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -1083,7 +1110,7 @@ export const getWellborePicksForWellboreOptions = (options: Options<GetWellboreP
             });
             return data;
         },
-        queryKey: getWellborePicksForWellboreQueryKey(options),
+        queryKey: deprecatedGetWellborePicksForWellboreQueryKey(options),
     });
 };
 

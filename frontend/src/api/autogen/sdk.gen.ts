@@ -5,6 +5,17 @@ import { createClient, createConfig, type Options } from "@hey-api/client-axios"
 import type {
     GetFieldsData_api,
     GetFieldsResponse_api,
+    AuthorizedCallbackRouteData_api,
+    DeprecatedGetStratigraphicUnitsData_api,
+    DeprecatedGetStratigraphicUnitsError_api,
+    DeprecatedGetStratigraphicUnitsResponse_api,
+    DeprecatedGetWellborePicksForWellboreData_api,
+    DeprecatedGetWellborePicksForWellboreError_api,
+    DeprecatedGetWellborePicksForWellboreResponse_api,
+    GetAliveData_api,
+    GetAliveProtectedData_api,
+    GetAliveProtectedResponse_api,
+    GetAliveResponse_api,
     GetCasesData_api,
     GetCasesResponse_api,
     GetCasesError_api,
@@ -110,6 +121,31 @@ import type {
     GetRealizationFlowNetworkData_api,
     GetRealizationFlowNetworkResponse_api,
     GetRealizationFlowNetworkError_api,
+    GetRealizationFlowNetworkResponse_api,
+    GetRealizationSurfacesMetadataData_api,
+    GetRealizationSurfacesMetadataError_api,
+    GetRealizationSurfacesMetadataResponse_api,
+    GetRealizationVectorAtTimestampData_api,
+    GetRealizationVectorAtTimestampError_api,
+    GetRealizationVectorAtTimestampResponse_api,
+    GetRealizationsVectorDataData_api,
+    GetRealizationsVectorDataError_api,
+    GetRealizationsVectorDataResponse_api,
+    GetSeismicCubeMetaListData_api,
+    GetSeismicCubeMetaListError_api,
+    GetSeismicCubeMetaListResponse_api,
+    GetSensitivitiesData_api,
+    GetSensitivitiesError_api,
+    GetSensitivitiesResponse_api,
+    GetStatisticalVectorDataData_api,
+    GetStatisticalVectorDataError_api,
+    GetStatisticalVectorDataPerSensitivityData_api,
+    GetStatisticalVectorDataPerSensitivityError_api,
+    GetStatisticalVectorDataPerSensitivityResponse_api,
+    GetStatisticalVectorDataResponse_api,
+    GetSurfaceDataData_api,
+    GetSurfaceDataError_api,
+    GetSurfaceDataResponse_api,
     GetTableDataData_api,
     GetTableDataResponse_api,
     GetTableDataError_api,
@@ -131,6 +167,7 @@ import type {
     GetWellborePicksForWellboreData_api,
     GetWellborePicksForWellboreResponse_api,
     GetWellborePicksForWellboreError_api,
+    GetWellborePicksForPickIdentifierResponse_api,
     GetWellborePicksInStratColumnData_api,
     GetWellborePicksInStratColumnResponse_api,
     GetWellborePicksInStratColumnError_api,
@@ -628,14 +665,19 @@ export const getMisfitSurfaceData = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get Stratigraphic Units
+ * Deprecated Get Stratigraphic Units
+ * NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
  */
-export const getStratigraphicUnits = <ThrowOnError extends boolean = false>(
-    options: Options<GetStratigraphicUnitsData_api, ThrowOnError>
+export const deprecatedGetStratigraphicUnits = <ThrowOnError extends boolean = false>(
+    options: Options<DeprecatedGetStratigraphicUnitsData_api, ThrowOnError>
 ) => {
-    return (options?.client ?? client).get<GetStratigraphicUnitsResponse_api, GetStratigraphicUnitsError_api, ThrowOnError>({
+    return (options?.client ?? client).get<
+        DeprecatedGetStratigraphicUnitsResponse_api,
+        DeprecatedGetStratigraphicUnitsError_api,
+        ThrowOnError
+    >({
         ...options,
-        url: "/surface/stratigraphic_units",
+        url: "/surface/DEPRECATED_stratigraphic_units",
     });
 };
 
@@ -875,19 +917,21 @@ export const getWellborePicksForPickIdentifier = <ThrowOnError extends boolean =
 };
 
 /**
- * Get Wellbore Picks For Wellbore
+ * Deprecated Get Wellbore Picks For Wellbore
  * Get wellbore picks for field and pick identifier
+ *
+ * NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
  */
-export const getWellborePicksForWellbore = <ThrowOnError extends boolean = false>(
-    options: Options<GetWellborePicksForWellboreData_api, ThrowOnError>
+export const deprecatedGetWellborePicksForWellbore = <ThrowOnError extends boolean = false>(
+    options: Options<DeprecatedGetWellborePicksForWellboreData_api, ThrowOnError>
 ) => {
     return (options?.client ?? client).get<
-        GetWellborePicksForWellboreResponse_api,
-        GetWellborePicksForWellboreError_api,
+        DeprecatedGetWellborePicksForWellboreResponse_api,
+        DeprecatedGetWellborePicksForWellboreError_api,
         ThrowOnError
     >({
         ...options,
-        url: "/well/wellbore_picks_for_wellbore/",
+        url: "/well/DEPRECATED_wellbore_picks_for_wellbore/",
     });
 };
 

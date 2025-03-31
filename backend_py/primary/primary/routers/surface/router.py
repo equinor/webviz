@@ -296,14 +296,17 @@ async def get_misfit_surface_data(
     raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
 
 
-@router.get("/stratigraphic_units")
-async def get_stratigraphic_units(
+@router.get("/DEPRECATED_stratigraphic_units")
+async def DEPRECATED_get_stratigraphic_units(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     # fmt:on
 ) -> list[schemas.StratigraphicUnit]:
+    """
+    NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
+    """
     perf_metrics = ResponsePerfMetrics(response)
 
     strat_units = await _get_stratigraphic_units_for_case_async(authenticated_user, case_uuid)
