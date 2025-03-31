@@ -2218,38 +2218,6 @@ export type GetMisfitSurfaceDataResponses_api = {
 
 export type GetMisfitSurfaceDataResponse_api = GetMisfitSurfaceDataResponses_api[keyof GetMisfitSurfaceDataResponses_api];
 
-export type GetWellboreStratigraphicColumnsData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Wellbore uuid
-         */
-        wellbore_uuid: string;
-    };
-    url: "/surface/wellbore_stratigraphic_columns/";
-};
-
-export type GetWellboreStratigraphicColumnsErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type GetWellboreStratigraphicColumnsError_api =
-    GetWellboreStratigraphicColumnsErrors_api[keyof GetWellboreStratigraphicColumnsErrors_api];
-
-export type GetWellboreStratigraphicColumnsResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: Array<StratigraphicColumn_api>;
-};
-
-export type GetWellboreStratigraphicColumnsResponse_api =
-    GetWellboreStratigraphicColumnsResponses_api[keyof GetWellboreStratigraphicColumnsResponses_api];
-
 export type GetStratigraphicUnitsData_api = {
     body?: never;
     path?: never;
@@ -2990,9 +2958,9 @@ export type GetWellborePicksInStratColumnData_api = {
          */
         wellbore_uuid: string;
         /**
-         * Optional - Filter by stratigraphic column
+         * Filter by stratigraphic column
          */
-        strat_column: string;
+        strat_column_identifier: string;
     };
     url: "/well/wellbore_picks_in_strat_column";
 };
@@ -3016,6 +2984,38 @@ export type GetWellborePicksInStratColumnResponses_api = {
 
 export type GetWellborePicksInStratColumnResponse_api =
     GetWellborePicksInStratColumnResponses_api[keyof GetWellborePicksInStratColumnResponses_api];
+
+export type GetWellboreStratigraphicColumnsData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Wellbore uuid
+         */
+        wellbore_uuid: string;
+    };
+    url: "/well/wellbore_stratigraphic_columns/";
+};
+
+export type GetWellboreStratigraphicColumnsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetWellboreStratigraphicColumnsError_api =
+    GetWellboreStratigraphicColumnsErrors_api[keyof GetWellboreStratigraphicColumnsErrors_api];
+
+export type GetWellboreStratigraphicColumnsResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<StratigraphicColumn_api>;
+};
+
+export type GetWellboreStratigraphicColumnsResponse_api =
+    GetWellboreStratigraphicColumnsResponses_api[keyof GetWellboreStratigraphicColumnsResponses_api];
 
 export type GetWellboreCompletionsData_api = {
     body?: never;
