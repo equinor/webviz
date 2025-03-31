@@ -5,7 +5,7 @@ import xtgeo
 from numpy.typing import NDArray
 from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32
 
-from primary.services.smda_access.types import StratigraphicSurface, StratigraphicColumn
+from primary.services.smda_access.types import StratigraphicSurface
 from primary.services.sumo_access.surface_types import SurfaceMetaSet
 from primary.services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionPolyline
 from primary.services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionResult
@@ -174,15 +174,6 @@ def to_api_surface_intersection(
         name=xtgeo_surface_intersection.name,
         z_points=xtgeo_surface_intersection.zval,
         cum_lengths=xtgeo_surface_intersection.distance,
-    )
-
-
-def to_api_stratigraphic_column(column: StratigraphicColumn) -> schemas.StratigraphicColumn:
-    return schemas.StratigraphicColumn(
-        identifier=column.strat_column_identifier,
-        areaType=column.strat_column_area_type,
-        status=column.strat_column_status,
-        type=column.strat_column_type,
     )
 
 
