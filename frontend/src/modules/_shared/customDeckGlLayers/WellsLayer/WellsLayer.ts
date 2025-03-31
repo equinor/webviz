@@ -1,10 +1,17 @@
-import { CompositeLayer, GetPickingInfoParams, LayersList, PickingInfo } from "@deck.gl/core";
+import {
+    CompositeLayer,
+    GetPickingInfoParams,
+    LayersList,
+    type Material,
+    PickingInfo,
+    type UpdateParameters,
+} from "@deck.gl/core";
 import * as vec3 from "@lib/utils/vec3";
 import { ExtendedLayerProps, LayerPickInfo } from "@webviz/subsurface-viewer";
 import { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
 
-import { PipeLayer } from "./_private/PipeLayer";
-import { getCoordinateForMd, getMd } from "./_private/wellTrajectoryUtils";
+import { type PipeLayerProps, PipesLayer } from "./_private/PipeLayer";
+import { getMd } from "./_private/wellTrajectoryUtils";
 
 export type WellsLayerData = {
     coordinates: [number, number, number][];
@@ -22,19 +29,50 @@ export interface WellsLayerProps extends ExtendedLayerProps {
     reportBoundingBox?: React.Dispatch<ReportBoundingBoxAction>;
 }
 
+const MATERIAL: Material = {
+    ambient: 0.2,
+    diffuse: 0.6,
+    shininess: 132,
+    specularColor: [255, 255, 255],
+};
+
 export class WellsLayer extends CompositeLayer<WellsLayerProps> {
     static layerName: string = "WellsLayer";
 
     // @ts-expect-error - This is how deck.gl expects the state to be defined
     state!: {
         hoveredPipeIndex: number | null;
-        mdCoordinate: [number, number, number] | null;
+        pipesLayerData: PipeLayerProps["data"];
     };
 
-    updateState(params: any): void {
+    initializeState(): void {
+        this.setState({
+            hoveredPipeIndex: null,
+            pipesLayerData: [],
+        });
+    }
+
+    shouldUpdateState({ changeFlags }: UpdateParameters<WellsLayer>): boolean {
+        return changeFlags.dataChanged !== false;
+    }
+
+    updateState(params: UpdateParameters<WellsLayer>): void {
         super.updateState(params);
 
         const { boundingBox } = this.props;
+
+        if (params.changeFlags.dataChanged) {
+            const pipesLayerData = this.props.data.map((well) => {
+                return {
+                    id: well.properties.uuid,
+                    centerLinePath: well.coordinates.map((coord) => {
+                        return { x: coord[0], y: coord[1], z: coord[2] };
+                    }),
+                };
+            });
+
+            this.setState({ pipesLayerData });
+        }
 
         this.props.reportBoundingBox?.({
             layerBoundingBox: boundingBox,
@@ -42,15 +80,12 @@ export class WellsLayer extends CompositeLayer<WellsLayerProps> {
     }
 
     getPickingInfo({ info }: GetPickingInfoParams): LayerPickInfo {
-        if (!info.sourceLayer?.id.includes("pipe-layer")) {
-            this.setState({ mdCoordinate: null });
-
+        if (!info.sourceLayer?.id.includes("pipes-layer")) {
             return info;
         }
 
         const wellbore = this.props.data[info.index];
         if (!wellbore) {
-            this.setState({ mdCoordinate: null });
             return info;
         }
         info.object = this.props.data[info.index];
@@ -62,12 +97,6 @@ export class WellsLayer extends CompositeLayer<WellsLayerProps> {
         const md = getMd(vec3.fromArray(coordinate), wellbore.properties.mdArray, trajectory);
 
         if (md !== null) {
-            const mdCoordinate = getCoordinateForMd(md, wellbore.properties.mdArray, trajectory);
-            if (mdCoordinate === null) {
-                this.setState({ mdCoordinate: null });
-            } else {
-                this.setState({ mdCoordinate: [mdCoordinate?.x ?? 0, mdCoordinate?.y ?? 0, mdCoordinate?.z ?? 0] });
-            }
             return {
                 ...info,
                 properties: [
@@ -78,7 +107,6 @@ export class WellsLayer extends CompositeLayer<WellsLayerProps> {
                 ],
             };
         }
-        this.setState({ mdCoordinate: null });
 
         return info;
     }
@@ -99,23 +127,12 @@ export class WellsLayer extends CompositeLayer<WellsLayerProps> {
     }
 
     renderLayers(): LayersList {
+        const { pipesLayerData } = this.state;
         return [
-            new PipeLayer({
-                id: "pipe-layer",
-                data: this.props.data.map((well) => {
-                    return {
-                        id: well.properties.uuid,
-                        centerLinePath: well.coordinates.map((coord) => {
-                            return { x: coord[0], y: coord[1], z: coord[2] };
-                        }),
-                    };
-                }),
-                material: {
-                    ambient: 0.2,
-                    diffuse: 0.6,
-                    shininess: 132,
-                    specularColor: [255, 255, 255],
-                },
+            new PipesLayer({
+                id: "pipes-layer",
+                data: pipesLayerData,
+                material: MATERIAL,
                 pickable: true,
                 // @ts-expect-error - This is how deck.gl expects the state to be defined
                 parameters: { depthTest: true },

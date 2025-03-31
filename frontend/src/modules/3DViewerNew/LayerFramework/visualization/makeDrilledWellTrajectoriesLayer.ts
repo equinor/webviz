@@ -8,7 +8,7 @@ import type { WellsLayerData } from "@modules/_shared/customDeckGlLayers/WellsLa
 export function makeDrilledWellTrajectoriesLayer(
     args: FactoryFunctionArgs<any, WellboreTrajectory_api[], any>,
 ): WellsLayer | null {
-    const { id, getData } = args;
+    const { id, getData, name } = args;
 
     const fieldWellboreTrajectoriesData = getData();
 
@@ -37,6 +37,7 @@ export function makeDrilledWellTrajectoriesLayer(
 
     const wellsLayer = new WellsLayer({
         id: id,
+        name,
         data: wellsLayerData,
         zIncreaseDownwards: true,
         boundingBox: bbox.toNumArray(boundingBox),

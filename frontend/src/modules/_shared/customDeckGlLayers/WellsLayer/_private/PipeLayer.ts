@@ -35,7 +35,7 @@ export type PipeLayerProps = {
     material?: Material;
 } & LayerProps;
 
-export class PipeLayer extends Layer<PipeLayerProps> {
+export class PipesLayer extends Layer<PipeLayerProps> {
     static layerName: string = "PipeLayer";
 
     // @ts-expect-error - This is how deck.gl expects the state to be defined
@@ -87,8 +87,16 @@ export class PipeLayer extends Layer<PipeLayerProps> {
         }
     }
 
+    shouldUpdateState({ changeFlags }: UpdateParameters<PipesLayer>): boolean {
+        return changeFlags.dataChanged !== false;
+    }
+
     updateState(params: UpdateParameters<Layer<PipeLayerProps>>): void {
         super.updateState(params);
+
+        if (!params.changeFlags.dataChanged) {
+            return;
+        }
 
         if (!isEqual(params.props.data, params.oldProps.data)) {
             this.setState({
