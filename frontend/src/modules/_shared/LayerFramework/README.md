@@ -3,10 +3,10 @@
 ## Content
 
 - [Data Provider Framework](#data-provider-framework)
-  - [Content](#content)
-  - [Overview](#overview)
-  - [Add new settings](#add-new-settings)
-  - [Add new data provider](#add-new-data-provider)
+    - [Content](#content)
+    - [Overview](#overview)
+    - [Add new settings](#add-new-settings)
+    - [Add new data provider](#add-new-data-provider)
 
 ## Overview
 
@@ -51,3 +51,4 @@ Create a new custom provider file (when shared in the `implementations` folder).
     ```typescript
     type SettingsWithTypes = MakeSettingTypesMap<MyProviderSettings>;
     ```
+3.
