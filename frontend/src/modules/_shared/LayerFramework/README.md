@@ -1,12 +1,18 @@
 # Data Provider Framework
 
+Some first basic documentation of the `Data Provider Framework (DPF)`.
+
+**Note:** In the current implementation, there are no `Data Providers` but `DataLayers`. The files, classes, and other names mentioned in here are not valid yet as everything is still called `DataLayer...`.
+
 ## Content
 
 - [Data Provider Framework](#data-provider-framework)
-    - [Content](#content)
-    - [Overview](#overview)
-    - [Add new settings](#add-new-settings)
-    - [Add new data provider](#add-new-data-provider)
+  - [Content](#content)
+  - [Overview](#overview)
+  - [Add new settings](#add-new-settings)
+  - [Add new data provider](#add-new-data-provider)
+  - [Add new group](#add-new-group)
+  - [Make visualization functions](#make-visualization-functions)
 
 ## Overview
 
@@ -51,4 +57,84 @@ Create a new custom provider file (when shared in the `implementations` folder).
     ```typescript
     type SettingsWithTypes = MakeSettingTypesMap<MyProviderSettings>;
     ```
-3.
+3. Define the data that your provider is providing.
+    ```typescript
+    export type MyProviderData = { ... };
+    ```
+4. Create a class that implements the `CustomDataProviderImplementation` interface.
+
+    ```typescript
+    export class MyDataProvider implements CustomDataProviderImplementation<MyProviderSettings, MyProviderData>
+    {
+        settings = MY_PROVIDER_SETTINGS;
+
+        ...
+    }
+    ```
+
+5. In the base folder, open the file `registerAllProviders.ts` and register your new provider.
+    ```typescript
+    ProviderRegistry.registerProvider(Providers.MY_PROVIDER, MyDataProvider);
+    ```
+
+## Add new group
+
+Base folder: `@modules/_shared/DataProviderFramework/groups`
+
+1. Add new group type to `GroupType` enum in file `groupTypes.ts`.
+2. Create new file in `implementations` and create a class that either implements the interface `CustomGroupImplementation` or `CustomGroupImplementationWithSettings`.
+3. When registering with settings, proceed in the same way as you'd do with a provider.
+4. Register the new group in `GroupRegistry` in file `registerAllGroups.ts`.
+
+## Make visualization functions
+
+In your module's view component, you can create a new instance of `VisualizationFactory` with the required visualization target, e.g. DeckGL.
+```typescript
+const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.DECK_GL>();
+```
+
+Register a set of required functions for each data provider (note: not all the functions below are required)
+```typescript
+VISUALIZATION_FACTORY.registerProviderFunctions(CustomProviderType.MY_PROVIDER, MyProvider, {
+    makeVisualizationFunction: makeMyProviderVisualization,
+    makeHoverVisualizationFunction: makeMyProviderHoverVisualization,
+    calculateBoundingBoxFunction: makeMyProviderBoundingBox,
+    makeAnnotationsFunction: makeMyProviderAnnotations,
+});
+```
+
+and a function to extract data from your groups
+```typescript
+VISUALIZATION_FACTORY.registerViewFunction(GroupType.VIEW, View, () => ({}));
+```
+
+`VisualizationFactory` can be defined as a constant outside your component as it does not change. You can also define data that you want to inject into the factory by defining an `InjectedData` object, e.g.
+
+```typescript
+type MyInjectedData = { myData: string };
+const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.DECK_GL, MyInjectedData>();
+```
+
+Injected data is available in all registered functions.
+
+In your component you can call the factory's `make` function in order to retrieve a factory product that you can use for visualizing all data.
+
+```typescript
+const factoryProduct = VISUALIZATION_FACTORY.make(dataProviderManager [, myInjectedData]);
+```
+
+You can also extract additional data from all providers by accumulating a data object. 
+```typescript
+type MyAccumulationObject = { numberLayers: number };
+const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.DECK_GL, MyInjectedData, MyAccumulationObject>();
+```
+
+Define a function for accumulating data per provider type
+```typescript
+VISUALIZATION_FACTORY.registerProviderFunctions(CustomProviderType.MY_PROVIDER, MyProvider, {
+    ...
+    reduceAccumulatedDataFunction: reduceMyProviderAccData
+});
+```
+
+The accumulated data becomes available in the factory product.
