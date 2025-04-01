@@ -1,13 +1,15 @@
+import React from "react";
+
 import { SortableListGroup } from "@lib/components/SortableList";
 
 import type { DeltaSurface } from "./DeltaSurface";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
-import type { LayersActionGroup } from "../../LayersActions";
-import { LayersActions } from "../../LayersActions";
+import type { ActionGroup } from "../../Actions";
+import { Actions } from "../../Actions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import type { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
+import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { DataLayer } from "../DataLayer/DataLayer";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
@@ -18,14 +20,20 @@ import { makeSortableListItemComponent } from "../utils/makeSortableListItemComp
 
 export type DeltaSurfaceComponentProps = {
     deltaSurface: DeltaSurface;
-    actions?: LayersActionGroup[];
+    makeActionsForGroup: (group: ItemGroup) => ActionGroup[];
     onActionClick?: (actionIdentifier: string, group: ItemGroup) => void;
 };
 
 export function DeltaSurfaceComponent(props: DeltaSurfaceComponentProps): React.ReactNode {
+    const { makeActionsForGroup } = props;
+
     const children = usePublishSubscribeTopicValue(props.deltaSurface.getGroupDelegate(), GroupDelegateTopic.CHILDREN);
     const isExpanded = usePublishSubscribeTopicValue(props.deltaSurface.getItemDelegate(), ItemDelegateTopic.EXPANDED);
     const color = props.deltaSurface.getGroupDelegate().getColor();
+
+    const actions = React.useMemo(() => {
+        return makeActionsForGroup(props.deltaSurface);
+    }, [props.deltaSurface, makeActionsForGroup]);
 
     function handleActionClick(actionIdentifier: string) {
         if (props.onActionClick) {
@@ -35,16 +43,9 @@ export function DeltaSurfaceComponent(props: DeltaSurfaceComponentProps): React.
 
     function makeEndAdornment() {
         const adornment: React.ReactNode[] = [];
-        if (
-            props.actions &&
-            props.deltaSurface.getGroupDelegate().findChildren((item) => item instanceof DataLayer).length < 2
-        ) {
+        if (props.deltaSurface.getGroupDelegate().findChildren((item) => item instanceof DataLayer).length < 2) {
             adornment.push(
-                <LayersActions
-                    key="layers-actions"
-                    layersActionGroups={props.actions}
-                    onActionClick={handleActionClick}
-                />,
+                <Actions key="layers-actions" layersActionGroups={actions} onActionClick={handleActionClick} />,
             );
         }
         adornment.push(<ExpandCollapseAllButton key="expand-collapse" group={props.deltaSurface} />);
@@ -74,7 +75,9 @@ export function DeltaSurfaceComponent(props: DeltaSurfaceComponentProps): React.
             }
             expanded={isExpanded}
         >
-            {children.map((child: Item) => makeSortableListItemComponent(child, props.actions, props.onActionClick))}
+            {children.map((child: Item) =>
+                makeSortableListItemComponent(child, props.makeActionsForGroup, props.onActionClick),
+            )}
         </SortableListGroup>
     );
 }

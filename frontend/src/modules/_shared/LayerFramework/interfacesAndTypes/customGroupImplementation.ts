@@ -9,11 +9,16 @@ export interface CustomGroupImplementation {
      * @returns The default name of a group of this type.
      */
     getDefaultName(): string;
+
+    /**
+     * @returns The empty content message of a group of this type.
+     */
+    getEmptyContentMessage?(): string;
 }
 
 export interface CustomGroupImplementationWithSettings<
     TSettings extends Settings = [],
-    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>
+    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
 > extends CustomGroupImplementation {
     /**
      * The settings that this handler is using/providing.

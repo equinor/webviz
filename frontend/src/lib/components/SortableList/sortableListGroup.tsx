@@ -86,7 +86,6 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
                     {...props}
                     onToggleExpanded={handleToggleExpanded}
                     expanded={isExpanded}
-                    expandable={hasContent}
                     hovered={isHeaderHovered}
                 />
                 {isDragging &&
@@ -102,12 +101,7 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
                                 width: isDragging ? boundingClientRect.width : undefined,
                             }}
                         >
-                            <Header
-                                expanded={isExpanded}
-                                expandable={hasContent}
-                                hovered={isHeaderHovered}
-                                {...props}
-                            />
+                            <Header expanded={isExpanded} hovered={isHeaderHovered} {...props} />
                         </div>,
                     )}
                 <div
@@ -131,7 +125,6 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
 type HeaderProps = {
     title: React.ReactNode;
     expanded: boolean;
-    expandable: boolean;
     hovered: boolean;
     onToggleExpanded?: () => void;
     icon?: React.ReactNode;
@@ -155,14 +148,12 @@ function Header(props: HeaderProps): React.ReactNode {
             <div className={resolveClassNames("sortable-list-element-indicator hover:cursor-grab")}>
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />
             </div>
-            {props.expandable && (
-                <DenseIconButton
-                    onClick={props.onToggleExpanded}
-                    title={props.expanded ? "Hide children" : "Show children"}
-                >
-                    {props.expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
-                </DenseIconButton>
-            )}
+            <DenseIconButton
+                onClick={props.onToggleExpanded}
+                title={props.expanded ? "Hide children" : "Show children"}
+            >
+                {props.expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
+            </DenseIconButton>
             <div className="flex items-center gap-2 grow min-w-0">
                 {props.startAdornment}
                 <div className="grow font-bold min-w-0">{props.title}</div>

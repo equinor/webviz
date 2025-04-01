@@ -8,9 +8,9 @@ import type { Setting, Settings } from "../settings/settingsDefinitions";
 // The following interfaces/types are used to define the structure of the serialized state of the respective items in the data layer framework.
 
 export enum SerializedType {
-    LAYER_MANAGER = "layer-manager",
+    DATA_LAYER_MANAGER = "data-layer-manager",
     GROUP = "group",
-    LAYER = "layer",
+    DATA_LAYER = "data-layer",
     SETTINGS_GROUP = "settings-group",
     COLOR_SCALE = "color-scale",
     DELTA_SURFACE = "delta-surface",
@@ -32,11 +32,11 @@ export type SerializedSettingsState<
     [K in TSettingKey]: string;
 };
 
-export interface SerializedLayer<
+export interface SerializedDataLayer<
     TSettings extends Settings,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > extends SerializedItem {
-    type: SerializedType.LAYER;
+    type: SerializedType.DATA_LAYER;
     layerType: string;
     settings: SerializedSettingsState<TSettings, TSettingKey>;
 }
@@ -65,8 +65,8 @@ export interface SerializedSharedSetting extends SerializedItem {
     value: string;
 }
 
-export interface SerializedLayerManager extends SerializedItem {
-    type: SerializedType.LAYER_MANAGER;
+export interface SerializedDataLayerManager extends SerializedItem {
+    type: SerializedType.DATA_LAYER_MANAGER;
     children: SerializedItem[];
 }
 

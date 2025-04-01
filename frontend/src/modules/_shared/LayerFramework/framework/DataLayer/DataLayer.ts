@@ -19,8 +19,8 @@ import type {
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
 } from "../../interfacesAndTypes/customDataLayerImplementation";
-import type { Item } from "../../interfacesAndTypes/entitites";
-import type { SerializedLayer } from "../../interfacesAndTypes/serialization";
+import type { Item } from "../../interfacesAndTypes/entities";
+import type { SerializedDataLayer } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
 import type { StoredData } from "../../interfacesAndTypes/sharedTypes";
 import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
@@ -48,6 +48,23 @@ export type LayerDelegatePayloads<TData> = {
     [LayerDelegateTopic.DATA]: TData;
     [LayerDelegateTopic.SUBORDINATED]: boolean;
 };
+
+export function isDataLayer(dataLayer: unknown): dataLayer is DataLayer<any, any> {
+    return (
+        (dataLayer as DataLayer<any, any>).constructor.name === "DataLayer" &&
+        (dataLayer as DataLayer<any, any>).getType !== undefined &&
+        (dataLayer as DataLayer<any, any>).getSettingsContextDelegate !== undefined &&
+        (dataLayer as DataLayer<any, any>).getPublishSubscribeDelegate !== undefined &&
+        (dataLayer as DataLayer<any, any>).getItemDelegate !== undefined &&
+        (dataLayer as DataLayer<any, any>).getStatus !== undefined &&
+        (dataLayer as DataLayer<any, any>).getData !== undefined &&
+        (dataLayer as DataLayer<any, any>).getError !== undefined &&
+        (dataLayer as DataLayer<any, any>).getValueRange !== undefined &&
+        (dataLayer as DataLayer<any, any>).getLayerManager !== undefined &&
+        (dataLayer as DataLayer<any, any>).makeAccessors !== undefined &&
+        (dataLayer as DataLayer<any, any>).maybeRefetchData !== undefined
+    );
+}
 
 export type DataLayerParams<
     TSettings extends Settings,
@@ -355,17 +372,17 @@ export class DataLayer<
         }
     }
 
-    serializeState(): SerializedLayer<TSettings, TSettingKey> {
+    serializeState(): SerializedDataLayer<TSettings, TSettingKey> {
         const itemState = this.getItemDelegate().serializeState();
         return {
             ...itemState,
-            type: SerializedType.LAYER,
+            type: SerializedType.DATA_LAYER,
             layerType: this._type,
             settings: this._settingsContextDelegate.serializeSettings(),
         };
     }
 
-    deserializeState(serializedLayer: SerializedLayer<TSettings, TSettingKey>): void {
+    deserializeState(serializedLayer: SerializedDataLayer<TSettings, TSettingKey>): void {
         this.getItemDelegate().deserializeState(serializedLayer);
         this._settingsContextDelegate.deserializeSettings(serializedLayer.settings);
     }
