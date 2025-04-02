@@ -11,7 +11,7 @@ import {
     type StatisticalSurfaceData,
     type StatisticalSurfaceSettings,
     SurfaceDataFormat,
-} from "../customLayerImplementations/StatisticalSurfaceLayer";
+} from "../customDataProviderImplementations/StatisticalSurface";
 
 function calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [number, number, number, number] {
     const width = (surfDef.npoints_x - 1) * surfDef.inc_x;

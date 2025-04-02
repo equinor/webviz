@@ -8,12 +8,13 @@ import { Menu } from "@lib/components/Menu";
 import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
-import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
-import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
-import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
-import { CustomLayerType } from "@modules/2DViewer/LayerFramework/customLayerImplementations/layerTypes";
+import { ObservedSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurface";
+import { RealizationSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationSurface";
+import { StatisticalSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/StatisticalSurface";
+import { CustomLayerType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/layerTypes";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
-import type { LayersActionGroup } from "@modules/_shared/DataProviderFramework/LayersActions";
+import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
+import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { DeltaSurface } from "@modules/_shared/DataProviderFramework/framework/DeltaSurface/DeltaSurface";
@@ -22,14 +23,11 @@ import { SettingsGroup } from "@modules/_shared/DataProviderFramework/framework/
 import { SharedSetting } from "@modules/_shared/DataProviderFramework/framework/SharedSetting/SharedSetting";
 import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
-import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entitites";
-import { instanceofItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entitites";
-import { LayerRegistry } from "@modules/_shared/DataProviderFramework/layers/LayerRegistry";
-import { LayerType } from "@modules/_shared/DataProviderFramework/layers/layerTypes";
+import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
+import { instanceofItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { DataProvider } from "@modules/_shared/LayerFramework/framework/DataProvider/DataProvider";
 import type { DataProviderManager } from "@modules/_shared/LayerFramework/framework/DataProviderManager/DataProviderManager";
-import { LayerManagerComponent } from "@modules/_shared/LayerFramework/framework/DataProviderManager/DataProviderManagerComponent";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { Dropdown } from "@mui/base";
 import {
@@ -76,37 +74,40 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 return;
             case "observed-surface":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.OBSERVED_SURFACE, props.layerManager),
+                    DataProviderRegistry.makeDataProvider(CustomLayerType.OBSERVED_SURFACE, props.layerManager),
                 );
                 return;
             case "statistical-surface":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.STATISTICAL_SURFACE, props.layerManager),
+                    DataProviderRegistry.makeDataProvider(CustomLayerType.STATISTICAL_SURFACE, props.layerManager),
                 );
                 return;
             case "realization-surface":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_SURFACE, props.layerManager),
+                    DataProviderRegistry.makeDataProvider(CustomLayerType.REALIZATION_SURFACE, props.layerManager),
                 );
                 return;
             case "realization-polygons":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_POLYGONS, props.layerManager),
+                    DataProviderRegistry.makeDataProvider(CustomLayerType.REALIZATION_POLYGONS, props.layerManager),
                 );
                 return;
             case "drilled-wellbore-trajectories":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(LayerType.DRILLED_WELL_TRAJECTORIES, props.layerManager),
+                    DataProviderRegistry.makeDataProvider(
+                        DataProviderType.DRILLED_WELL_TRAJECTORIES,
+                        props.layerManager,
+                    ),
                 );
                 return;
             case "drilled-wellbore-picks":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(LayerType.DRILLED_WELLBORE_PICKS, props.layerManager),
+                    DataProviderRegistry.makeDataProvider(DataProviderType.DRILLED_WELLBORE_PICKS, props.layerManager),
                 );
                 return;
             case "realization-grid":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_GRID, props.layerManager),
+                    DataProviderRegistry.makeDataProvider(CustomLayerType.REALIZATION_GRID, props.layerManager),
                 );
                 return;
             case "ensemble":
@@ -132,9 +133,9 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
             if (
                 movedItem instanceof DataProvider &&
                 !(
-                    movedItem instanceof RealizationSurfaceLayer ||
-                    movedItem instanceof StatisticalSurfaceLayer ||
-                    movedItem instanceof ObservedSurfaceLayer
+                    movedItem instanceof RealizationSurface ||
+                    movedItem instanceof StatisticalSurface ||
+                    movedItem instanceof ObservedSurface
                 )
             ) {
                 return false;

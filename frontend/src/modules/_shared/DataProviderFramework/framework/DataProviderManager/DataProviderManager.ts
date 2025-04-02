@@ -14,14 +14,13 @@ import { isEqual } from "lodash";
 
 import type { PublishSubscribe } from "../../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../../utils/PublishSubscribeDelegate";
+import "../../dataProviders/registerAllProviders";
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import "../../groups/registerAllGroups";
-import type { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
-import type { SerializedLayerManager } from "../../interfacesAndTypes/serialization";
-import { SerializedType } from "../../interfacesAndTypes/serialization";
-import "../../layers/registerAllLayers";
+import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
+import { type SerializedDataProviderManager, SerializedType } from "../../interfacesAndTypes/serialization";
 import "../../settings/registerAllSettings";
 
 export enum DataProviderManagerTopic {
@@ -192,16 +191,16 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         this._subscriptionsHandler.unsubscribeAll();
     }
 
-    serializeState(): SerializedLayerManager {
+    serializeState(): SerializedDataProviderManager {
         const itemState = this._itemDelegate.serializeState();
         return {
             ...itemState,
-            type: SerializedType.LAYER_MANAGER,
+            type: SerializedType.DATA_PROVIDER_MANAGER,
             children: this._groupDelegate.serializeChildren(),
         };
     }
 
-    deserializeState(serializedState: SerializedLayerManager): void {
+    deserializeState(serializedState: SerializedDataProviderManager): void {
         this._deserializing = true;
         this._itemDelegate.deserializeState(serializedState);
         this._groupDelegate.deserializeChildren(serializedState.children);

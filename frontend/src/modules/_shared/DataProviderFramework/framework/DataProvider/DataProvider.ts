@@ -19,17 +19,15 @@ import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
-import type { Item } from "../../interfacesAndTypes/entitites";
-import type { SerializedLayer } from "../../interfacesAndTypes/serialization";
-import { SerializedType } from "../../interfacesAndTypes/serialization";
+import type { Item } from "../../interfacesAndTypes/entities";
+import { type SerializedDataProvider, SerializedType } from "../../interfacesAndTypes/serialization";
 import type { StoredData } from "../../interfacesAndTypes/sharedTypes";
 import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
-import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
-import { LayerManagerTopic } from "../DataProviderManager/DataProviderManager";
+import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
 import { makeSettings } from "../utils/makeSettings";
 
-export enum LayerDelegateTopic {
+export enum DataProviderTopic {
     STATUS = "STATUS",
     DATA = "DATA",
     SUBORDINATED = "SUBORDINATED",
@@ -44,10 +42,26 @@ export enum DataProviderStatus {
 }
 
 export type LayerDelegatePayloads<TData> = {
-    [LayerDelegateTopic.STATUS]: DataProviderStatus;
-    [LayerDelegateTopic.DATA]: TData;
-    [LayerDelegateTopic.SUBORDINATED]: boolean;
+    [DataProviderTopic.STATUS]: DataProviderStatus;
+    [DataProviderTopic.DATA]: TData;
+    [DataProviderTopic.SUBORDINATED]: boolean;
 };
+
+export function isDataProvider(object: any): object is DataProvider<any, any> {
+    if (typeof object !== "object" || object === null) {
+        return false;
+    }
+
+    const dataLayer: DataProvider<any, any> = object as DataProvider<any, any>;
+
+    return (
+        Object.hasOwn(dataLayer, "getType") &&
+        Object.hasOwn(dataLayer, "getSettingsContextDelegate") &&
+        Object.hasOwn(dataLayer, "getStatus") &&
+        Object.hasOwn(dataLayer, "getData") &&
+        Object.hasOwn(dataLayer, "getError")
+    );
+}
 
 export type DataProviderParams<
     TSettings extends Settings,
@@ -57,7 +71,7 @@ export type DataProviderParams<
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > = {
     type: string;
-    layerManager: DataProviderManager;
+    dataProviderManager: DataProviderManager;
     instanceName?: string;
     customDataProviderImplementation: CustomDataProviderImplementation<
         TSettings,
@@ -69,9 +83,9 @@ export type DataProviderParams<
 };
 
 /*
- * The LayerDelegate class is responsible for managing the state of a layer.
+ * The DataProvider class is responsible for managing the state of a data provider.
  * It is responsible for (re-)fetching the data whenever changes to settings make it necessary.
- * It also manages the status of the layer (loading, success, error).
+ * It also manages the status of the provider (loading, success, error).
  */
 export class DataProvider<
         TSettings extends Settings,
@@ -92,7 +106,7 @@ export class DataProvider<
     >;
     private _settingsContextDelegate: SettingsContextDelegate<TSettings, TSettingTypes, TStoredData, TSettingKey>;
     private _itemDelegate: ItemDelegate;
-    private _layerManager: DataProviderManager;
+    private _dataProviderManager: DataProviderManager;
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _cancellationPending: boolean = false;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<LayerDelegatePayloads<TData>>();
@@ -105,13 +119,18 @@ export class DataProvider<
     private _prevSettings: TSettingTypes | null = null;
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
-        const { layerManager, type, instanceName, customDataProviderImplementation } = params;
+        const {
+            dataProviderManager: dataProviderManager,
+            type,
+            instanceName,
+            customDataProviderImplementation,
+        } = params;
         this._type = type;
-        this._layerManager = layerManager;
+        this._dataProviderManager = dataProviderManager;
         this._settingsContextDelegate = new SettingsContextDelegate<TSettings, TSettingTypes, TStoredData, TSettingKey>(
             this,
             customDataProviderImplementation,
-            layerManager,
+            dataProviderManager,
             makeSettings<TSettings, TSettingTypes, TSettingKey>(
                 customDataProviderImplementation.settings,
                 customDataProviderImplementation.getDefaultSettingsValues?.() ?? {},
@@ -121,7 +140,7 @@ export class DataProvider<
         this._itemDelegate = new ItemDelegate(
             instanceName ?? customDataProviderImplementation.getDefaultName(),
             1,
-            layerManager,
+            dataProviderManager,
         );
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
@@ -152,8 +171,10 @@ export class DataProvider<
         );
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
-            "layer-manager",
-            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.GLOBAL_SETTINGS)(() => {
+            "data-provider-manager",
+            dataProviderManager
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(DataProviderManagerTopic.GLOBAL_SETTINGS)(() => {
                 this.handleSettingsChange();
             }),
         );
@@ -182,8 +203,8 @@ export class DataProvider<
             ) ?? !isEqual(this._prevSettings, this._settingsContextDelegate.getValues() as TSettingTypes);
 
         if (!refetchRequired) {
-            this._publishSubscribeDelegate.notifySubscribers(LayerDelegateTopic.DATA);
-            this._layerManager.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
+            this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
+            this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
             this.setStatus(DataProviderStatus.SUCCESS);
             return;
         }
@@ -241,7 +262,7 @@ export class DataProvider<
             return;
         }
         this._isSubordinated = isSubordinated;
-        this._publishSubscribeDelegate.notifySubscribers(LayerDelegateTopic.SUBORDINATED);
+        this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.SUBORDINATED);
     }
 
     getValueRange(): [number, number] | null {
@@ -249,18 +270,18 @@ export class DataProvider<
     }
 
     getLayerManager(): DataProviderManager {
-        return this._layerManager;
+        return this._dataProviderManager;
     }
 
-    makeSnapshotGetter<T extends LayerDelegateTopic>(topic: T): () => LayerDelegatePayloads<TData>[T] {
+    makeSnapshotGetter<T extends DataProviderTopic>(topic: T): () => LayerDelegatePayloads<TData>[T] {
         const snapshotGetter = (): any => {
-            if (topic === LayerDelegateTopic.STATUS) {
+            if (topic === DataProviderTopic.STATUS) {
                 return this._status;
             }
-            if (topic === LayerDelegateTopic.DATA) {
+            if (topic === DataProviderTopic.DATA) {
                 return this._data;
             }
-            if (topic === LayerDelegateTopic.SUBORDINATED) {
+            if (topic === DataProviderTopic.SUBORDINATED) {
                 return this._isSubordinated;
             }
         };
@@ -294,11 +315,11 @@ export class DataProvider<
             getSetting: (settingName) => this._settingsContextDelegate.getSettings()[settingName].getValue(),
             getAvailableSettingValues: (settingName) =>
                 this._settingsContextDelegate.getSettings()[settingName].getAvailableValues(),
-            getGlobalSetting: (settingName) => this._layerManager.getGlobalSetting(settingName),
+            getGlobalSetting: (settingName) => this._dataProviderManager.getGlobalSetting(settingName),
             getStoredData: (key: keyof TStoredData) => this._settingsContextDelegate.getStoredData(key),
             getData: () => this._data,
-            getWorkbenchSession: () => this._layerManager.getWorkbenchSession(),
-            getWorkbenchSettings: () => this._layerManager.getWorkbenchSettings(),
+            getWorkbenchSession: () => this._dataProviderManager.getWorkbenchSession(),
+            getWorkbenchSettings: () => this._dataProviderManager.getWorkbenchSettings(),
         };
     }
 
@@ -334,12 +355,12 @@ export class DataProvider<
             }
             if (this._queryKeys.length === null && isDevMode()) {
                 console.warn(
-                    "Did you forget to use 'setQueryKeys' in your layer implementation of 'fetchData'? This will cause the queries to not be cancelled when settings change and might lead to undesired behaviour.",
+                    "Did you forget to use 'setQueryKeys' in your custom provider implementation of 'fetchData'? This will cause the queries to not be cancelled when settings change and might lead to undesired behaviour.",
                 );
             }
             this._queryKeys = [];
-            this._publishSubscribeDelegate.notifySubscribers(LayerDelegateTopic.DATA);
-            this._layerManager.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
+            this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
+            this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
             this.setStatus(DataProviderStatus.SUCCESS);
         } catch (error: any) {
             if (isCancelledError(error)) {
@@ -355,17 +376,17 @@ export class DataProvider<
         }
     }
 
-    serializeState(): SerializedLayer<TSettings, TSettingKey> {
+    serializeState(): SerializedDataProvider<TSettings, TSettingKey> {
         const itemState = this.getItemDelegate().serializeState();
         return {
             ...itemState,
-            type: SerializedType.LAYER,
-            layerType: this._type,
+            type: SerializedType.DATA_PROVIDER,
+            dataProviderType: this._type,
             settings: this._settingsContextDelegate.serializeSettings(),
         };
     }
 
-    deserializeState(serializedLayer: SerializedLayer<TSettings, TSettingKey>): void {
+    deserializeState(serializedLayer: SerializedDataProvider<TSettings, TSettingKey>): void {
         this.getItemDelegate().deserializeState(serializedLayer);
         this._settingsContextDelegate.deserializeSettings(serializedLayer.settings);
     }
@@ -381,12 +402,12 @@ export class DataProvider<
         }
 
         this._status = status;
-        this._layerManager.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
-        this._publishSubscribeDelegate.notifySubscribers(LayerDelegateTopic.STATUS);
+        this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
+        this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.STATUS);
     }
 
     private getQueryClient(): QueryClient | null {
-        return this._layerManager?.getQueryClient() ?? null;
+        return this._dataProviderManager?.getQueryClient() ?? null;
     }
 
     private invalidateValueRange(): void {

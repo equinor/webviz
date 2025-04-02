@@ -35,7 +35,7 @@ export class GroupRegistry {
         const customGroupImplementation = new stored.group(...(stored.customParams ?? []));
         return new Group({
             type,
-            layerManager,
+            dataProviderManager: layerManager,
             customGroupImplementation,
             color,
         });

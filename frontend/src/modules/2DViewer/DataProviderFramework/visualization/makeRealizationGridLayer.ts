@@ -3,7 +3,10 @@ import type { FactoryFunctionArgs } from "@modules/_shared/DataProviderFramework
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import type { RealizationGridData, RealizationGridSettings } from "../customLayerImplementations/RealizationGridLayer";
+import type {
+    RealizationGridData,
+    RealizationGridSettings,
+} from "../customDataProviderImplementations/RealizationGrid";
 
 export function makeRealizationGridLayer({
     id,

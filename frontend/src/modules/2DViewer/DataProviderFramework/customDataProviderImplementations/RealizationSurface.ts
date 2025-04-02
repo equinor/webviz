@@ -36,7 +36,7 @@ export type RealizationSurfaceData =
     | { format: SurfaceDataFormat.FLOAT; surfaceData: SurfaceDataFloat_trans }
     | { format: SurfaceDataFormat.PNG; surfaceData: SurfaceDataPng_api };
 
-export class RealizationSurfaceLayer
+export class RealizationSurface
     implements CustomDataProviderImplementation<RealizationSurfaceSettings, RealizationSurfaceData>
 {
     settings = realizationSurfaceSettings;

@@ -11,7 +11,7 @@ import {
     type ObservedSurfaceData,
     type ObservedSurfaceSettings,
     SurfaceDataFormat,
-} from "../customLayerImplementations/ObservedSurfaceLayer";
+} from "../customDataProviderImplementations/ObservedSurface";
 
 function calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [number, number, number, number] {
     const width = (surfDef.npoints_x - 1) * surfDef.inc_x;

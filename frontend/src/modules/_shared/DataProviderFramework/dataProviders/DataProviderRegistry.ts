@@ -2,8 +2,8 @@ import { DataProvider } from "../framework/DataProvider/DataProvider";
 import type { DataProviderManager } from "../framework/DataProviderManager/DataProviderManager";
 import type { CustomDataProviderImplementation } from "../interfacesAndTypes/customDataProviderImplementation";
 
-export class LayerRegistry {
-    private static _registeredLayers: Map<
+export class DataProviderRegistry {
+    private static _registeredDataProviders: Map<
         string,
         {
             customDataProviderImplementation: {
@@ -13,7 +13,7 @@ export class LayerRegistry {
         }
     > = new Map();
 
-    static registerLayer<
+    static registerDataProvider<
         TDataProvider extends {
             new (...params: any[]): CustomDataProviderImplementation<any, any, any, any, any, any>;
         },
@@ -22,21 +22,21 @@ export class LayerRegistry {
         customDataProviderImplementation: TDataProvider,
         customDataProviderImplementationConstructorParams?: ConstructorParameters<TDataProvider>,
     ): void {
-        if (this._registeredLayers.has(type)) {
+        if (this._registeredDataProviders.has(type)) {
             throw new Error(`Layer ${type} already registered`);
         }
-        this._registeredLayers.set(type, {
+        this._registeredDataProviders.set(type, {
             customDataProviderImplementation,
             customDataProviderImplementationConstructorParams,
         });
     }
 
-    static makeLayer(
+    static makeDataProvider(
         type: string,
-        layerManager: DataProviderManager,
+        dataProviderManager: DataProviderManager,
         instanceName?: string,
     ): DataProvider<any, any, any, any> {
-        const stored = this._registeredLayers.get(type);
+        const stored = this._registeredDataProviders.get(type);
         if (!stored) {
             throw new Error(`Layer ${type} not found`);
         }
@@ -46,7 +46,7 @@ export class LayerRegistry {
 
         return new DataProvider({
             instanceName,
-            layerManager,
+            dataProviderManager,
             customDataProviderImplementation,
             type,
         });

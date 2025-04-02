@@ -1,6 +1,5 @@
 /*
- * This class is used to manage the unsubscribe functions of the subscriptions
- * of the class instances related to the layers.
+ * This class is used to manage the unsubscribe functions..
  *
  * It provides a method for registering one ore more unsubscribe function for a specific
  * topic and two methods for unsubscribing from a specific topic or from all topics, respectively.

@@ -25,14 +25,14 @@ function isActionGroup(action: Action | ActionGroup): action is ActionGroup {
 }
 
 export type ActionsProps = {
-    layersActionGroups: ActionGroup[];
+    actionGroups: ActionGroup[];
     onActionClick: (actionIdentifier: string) => void;
 };
 
 export function Actions(props: ActionsProps): React.ReactNode {
-    function makeContent(layersActionGroups: (ActionGroup | Action)[], indentLevel: number = 0): React.ReactNode[] {
+    function makeContent(actionGroups: (ActionGroup | Action)[], indentLevel: number = 0): React.ReactNode[] {
         const content: React.ReactNode[] = [];
-        for (const [index, item] of layersActionGroups.entries()) {
+        for (const [index, item] of actionGroups.entries()) {
             if (isActionGroup(item)) {
                 if (index > 0) {
                     content.push(<MenuDivider key={index} />);
@@ -73,7 +73,7 @@ export function Actions(props: ActionsProps): React.ReactNode {
                 <ArrowDropDown fontSize="inherit" />
             </MenuButton>
             <Menu anchorOrigin="bottom-end" className="text-sm p-1 max-h-80 overflow-auto">
-                {makeContent(props.layersActionGroups)}
+                {makeContent(props.actionGroups)}
             </Menu>
         </Dropdown>
     );

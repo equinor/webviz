@@ -20,7 +20,7 @@ export type RealizationPolygonsSettings = typeof realizationPolygonsSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationPolygonsSettings>;
 
 export type RealizationPolygonsData = PolygonData_api[];
-export class RealizationPolygonsLayer
+export class RealizationPolygons
     implements CustomDataProviderImplementation<RealizationPolygonsSettings, RealizationPolygonsData>
 {
     settings = realizationPolygonsSettings;

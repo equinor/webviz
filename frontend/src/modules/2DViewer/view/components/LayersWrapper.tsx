@@ -6,28 +6,28 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import * as bbox from "@lib/utils/bbox";
-import { makeColorScaleAnnotation } from "@modules/2DViewer/LayerFramework/annotations/makeColorScaleAnnotation";
-import { makePolygonDataBoundingBox } from "@modules/2DViewer/LayerFramework/boundingBoxes/makePolygonDataBoundingBox";
-import { makeRealizationGridBoundingBox } from "@modules/2DViewer/LayerFramework/boundingBoxes/makeRealizationGridBoundingBox";
-import { makeSurfaceLayerBoundingBox } from "@modules/2DViewer/LayerFramework/boundingBoxes/makeSurfaceLayerBoundingBox";
-import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
-import { RealizationGridLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationGridLayer";
-import { RealizationPolygonsLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationPolygonsLayer";
-import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
-import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
-import { CustomLayerType } from "@modules/2DViewer/LayerFramework/customLayerImplementations/layerTypes";
-import { makeObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/visualization/makeObservedSurfaceLayer";
-import { makeRealizationGridLayer } from "@modules/2DViewer/LayerFramework/visualization/makeRealizationGridLayer";
-import { makeRealizationPolygonsLayer } from "@modules/2DViewer/LayerFramework/visualization/makeRealizationPolygonsLayer";
-import { makeRealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/visualization/makeRealizationSurfaceLayer";
-import { makeStatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/visualization/makeStatisticalSurfaceLayer";
+import { makeColorScaleAnnotation } from "@modules/2DViewer/DataProviderFramework/annotations/makeColorScaleAnnotation";
+import { makePolygonDataBoundingBox } from "@modules/2DViewer/DataProviderFramework/boundingBoxes/makePolygonDataBoundingBox";
+import { makeRealizationGridBoundingBox } from "@modules/2DViewer/DataProviderFramework/boundingBoxes/makeRealizationGridBoundingBox";
+import { makeSurfaceLayerBoundingBox } from "@modules/2DViewer/DataProviderFramework/boundingBoxes/makeSurfaceLayerBoundingBox";
+import { ObservedSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurface";
+import { RealizationGrid } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationGrid";
+import { RealizationPolygons } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationPolygons";
+import { RealizationSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationSurface";
+import { StatisticalSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/StatisticalSurface";
+import { CustomLayerType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/layerTypes";
+import { makeObservedSurfaceLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeObservedSurfaceLayer";
+import { makeRealizationGridLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeRealizationGridLayer";
+import { makeRealizationPolygonsLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeRealizationPolygonsLayer";
+import { makeRealizationSurfaceLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeRealizationSurfaceLayer";
+import { makeStatisticalSurfaceLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeStatisticalSurfaceLayer";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
+import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
+import { DrilledWellTrajectories } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectories";
+import { DrilledWellborePicks } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicks";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import { View } from "@modules/_shared/DataProviderFramework/groups/implementations/View";
-import { DrilledWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/layers/implementations/DrilledWellTrajectoriesLayer";
-import { DrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/layers/implementations/DrilledWellborePicksLayer";
-import { LayerType } from "@modules/_shared/DataProviderFramework/layers/layerTypes";
 import type {
     Annotation,
     LayerWithPosition,
@@ -48,7 +48,7 @@ import type { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer"
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
-import "../../LayerFramework/customLayerImplementations/registerAllLayers";
+import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 
 export type LayersWrapperProps = {
     layerManager: DataProviderManager;
@@ -58,36 +58,36 @@ export type LayersWrapperProps = {
 
 const VISUALIZATION_FACTORY = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
-VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.OBSERVED_SURFACE, ObservedSurfaceLayer, {
+VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.OBSERVED_SURFACE, ObservedSurface, {
     makeVisualizationFunction: makeObservedSurfaceLayer,
     calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_SURFACE, RealizationSurfaceLayer, {
+VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_SURFACE, RealizationSurface, {
     makeVisualizationFunction: makeRealizationSurfaceLayer,
     calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.STATISTICAL_SURFACE, StatisticalSurfaceLayer, {
+VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.STATISTICAL_SURFACE, StatisticalSurface, {
     makeVisualizationFunction: makeStatisticalSurfaceLayer,
     calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_POLYGONS, RealizationPolygonsLayer, {
+VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_POLYGONS, RealizationPolygons, {
     makeVisualizationFunction: makeRealizationPolygonsLayer,
     calculateBoundingBoxFunction: makePolygonDataBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_GRID, RealizationGridLayer, {
+VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_GRID, RealizationGrid, {
     makeVisualizationFunction: makeRealizationGridLayer,
     calculateBoundingBoxFunction: makeRealizationGridBoundingBox,
     makeAnnotationsFunction: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.DRILLED_WELLBORE_PICKS, DrilledWellborePicksLayer, {
+VISUALIZATION_FACTORY.registerLayerFunctions(DataProviderType.DRILLED_WELLBORE_PICKS, DrilledWellborePicks, {
     makeVisualizationFunction: makeDrilledWellborePicksLayer,
     calculateBoundingBoxFunction: makeDrilledWellborePicksBoundingBox,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.DRILLED_WELL_TRAJECTORIES, DrilledWellTrajectoriesLayer, {
+VISUALIZATION_FACTORY.registerLayerFunctions(DataProviderType.DRILLED_WELL_TRAJECTORIES, DrilledWellTrajectories, {
     makeVisualizationFunction: makeDrilledWellTrajectoriesLayer,
     calculateBoundingBoxFunction: makeDrilledWellTrajectoriesBoundingBox,
 });

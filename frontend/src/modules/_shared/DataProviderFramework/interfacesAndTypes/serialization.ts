@@ -5,12 +5,12 @@ import type { SettingsKeysFromTuple } from "./utils";
 import type { GroupType } from "../groups/groupTypes";
 import type { Setting, Settings } from "../settings/settingsDefinitions";
 
-// The following interfaces/types are used to define the structure of the serialized state of the respective items in the data layer framework.
+// The following interfaces/types are used to define the structure of the serialized state of the respective items in the data provider framework.
 
 export enum SerializedType {
-    DATA_LAYER_MANAGER = "data-layer-manager",
+    DATA_PROVIDER_MANAGER = "data-provider-manager",
     GROUP = "group",
-    DATA_LAYER = "data-layer",
+    DATA_PROVIDER = "data-provider",
     SETTINGS_GROUP = "settings-group",
     COLOR_SCALE = "color-scale",
     DELTA_SURFACE = "delta-surface",
@@ -32,12 +32,12 @@ export type SerializedSettingsState<
     [K in TSettingKey]: string;
 };
 
-export interface SerializedDataLayer<
+export interface SerializedDataProvider<
     TSettings extends Settings,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > extends SerializedItem {
-    type: SerializedType.DATA_LAYER;
-    layerType: string;
+    type: SerializedType.DATA_PROVIDER;
+    dataProviderType: string;
     settings: SerializedSettingsState<TSettings, TSettingKey>;
 }
 
@@ -65,8 +65,8 @@ export interface SerializedSharedSetting extends SerializedItem {
     value: string;
 }
 
-export interface SerializedDataLayerManager extends SerializedItem {
-    type: SerializedType.DATA_LAYER_MANAGER;
+export interface SerializedDataProviderManager extends SerializedItem {
+    type: SerializedType.DATA_PROVIDER_MANAGER;
     children: SerializedItem[];
 }
 

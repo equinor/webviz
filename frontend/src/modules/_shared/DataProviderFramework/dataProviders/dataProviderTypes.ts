@@ -1,4 +1,4 @@
-export enum LayerType {
+export enum DataProviderType {
     DRILLED_WELLBORE_PICKS = "DRILLED_WELLBORE_PICKS",
     DRILLED_WELL_TRAJECTORIES = "DRILLED_WELL_TRAJECTORIES",
 }

@@ -38,7 +38,7 @@ type StoredData = {
     };
 };
 
-export class RealizationGridLayer
+export class RealizationGrid
     implements CustomDataProviderImplementation<RealizationGridSettings, RealizationGridData, StoredData>
 {
     settings = realizationGridSettings;

@@ -61,9 +61,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
 
     function makeEndAdornment() {
         const adornments: React.ReactNode[] = [];
-        adornments.push(
-            <Actions key="layers-actions" layersActionGroups={actions} onActionClick={handleActionClick} />,
-        );
+        adornments.push(<Actions key="layers-actions" actionGroups={actions} onActionClick={handleActionClick} />);
         adornments.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);
         adornments.push(<RemoveItemButton key="remove" item={props.group} />);
         return adornments;

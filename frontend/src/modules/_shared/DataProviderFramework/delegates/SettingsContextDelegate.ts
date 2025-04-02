@@ -4,15 +4,17 @@ import { Dependency } from "./_utils/Dependency";
 import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import type { DataProvider } from "../framework/DataProvider/DataProvider";
-import type { DataProviderManager, GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
-import { LayerManagerTopic } from "../framework/DataProviderManager/DataProviderManager";
+import {
+    type DataProviderManager,
+    DataProviderManagerTopic,
+    type GlobalSettings,
+} from "../framework/DataProviderManager/DataProviderManager";
 import { Group } from "../framework/Group/Group";
 import type { SettingManager } from "../framework/SettingManager/SettingManager";
 import { SettingTopic } from "../framework/SettingManager/SettingManager";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
 import type { CustomSettingsHandler, UpdateFunc } from "../interfacesAndTypes/customSettingsHandler";
-import type { SharedSettingsProvider } from "../interfacesAndTypes/entities";
-import { instanceofSharedSettingsProvider } from "../interfacesAndTypes/entities";
+import { type SharedSettingsProvider, instanceofSharedSettingsProvider } from "../interfacesAndTypes/entities";
 import type { SerializedSettingsState } from "../interfacesAndTypes/serialization";
 import type { NullableStoredData, StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { AvailableValuesType, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
@@ -45,12 +47,12 @@ export type SettingsContextDelegateState<TSettings extends Settings, TKey extend
 };
 
 /*
- * The SettingsContextDelegate class is responsible for giving the settings of a layer a common context as
+ * The SettingsContextDelegate class is responsible for giving the settings of a data provider a common context as
  * many settings are interdependent.
  *
  * It creates a dependency graph for all settings and implements dependencies between both themselves and global settings.
  * It also takes care of overriding settings that are set by shared settings.
- * It also takes care of notifying its subscribers (e.g. the respective layer delegate) when the settings change.
+ * It also takes care of notifying its subscribers (e.g. the respective data provider) when the settings change.
  *
  */
 export class SettingsContextDelegate<
@@ -69,7 +71,7 @@ export class SettingsContextDelegate<
         TSettingKey,
         TStoredDataKey
     >;
-    private _layerManager: DataProviderManager;
+    private _dataProviderManager: DataProviderManager;
     private _settings: { [K in TSettingKey]: SettingManager<K, SettingTypes[K]> } = {} as {
         [K in TSettingKey]: SettingManager<K, SettingTypes[K]>;
     };
@@ -87,12 +89,12 @@ export class SettingsContextDelegate<
             TSettingKey,
             TStoredDataKey
         >,
-        layerManager: DataProviderManager,
+        dataProviderManager: DataProviderManager,
         settings: { [K in TSettingKey]: SettingManager<K> },
     ) {
         this._owner = owner;
         this._customSettingsHandler = customSettingsHandler;
-        this._layerManager = layerManager;
+        this._dataProviderManager = dataProviderManager;
 
         for (const key in settings) {
             this._unsubscribeHandler.registerUnsubscribeFunction(
@@ -108,17 +110,19 @@ export class SettingsContextDelegate<
                 }),
             );
             this._unsubscribeHandler.registerUnsubscribeFunction(
-                "layer-manager",
-                layerManager
+                "data-provider-manager",
+                dataProviderManager
                     .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(LayerManagerTopic.SHARED_SETTINGS_CHANGED)(() => {
+                    .makeSubscriberFunction(DataProviderManagerTopic.SHARED_SETTINGS_CHANGED)(() => {
                     this.handleSharedSettingsChanged();
                 }),
             );
 
             this._unsubscribeHandler.registerUnsubscribeFunction(
-                "layer-manager",
-                layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.ITEMS)(() => {
+                "data-provider-manager",
+                dataProviderManager
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(DataProviderManagerTopic.ITEMS)(() => {
                     this.handleSharedSettingsChanged();
                 }),
             );
@@ -130,7 +134,7 @@ export class SettingsContextDelegate<
     }
 
     getLayerManager(): DataProviderManager {
-        return this._layerManager;
+        return this._dataProviderManager;
     }
 
     getStatus(): SettingsContextStatus {
@@ -232,7 +236,7 @@ export class SettingsContextDelegate<
         const settingDelegate = this._settings[key];
         settingDelegate.setAvailableValues(availableValues);
 
-        this.getLayerManager().publishTopic(LayerManagerTopic.AVAILABLE_SETTINGS_CHANGED);
+        this.getLayerManager().publishTopic(DataProviderManagerTopic.AVAILABLE_SETTINGS_CHANGED);
     }
 
     setStoredData<K extends keyof TStoredData>(key: K, data: TStoredData[K] | null): void {
@@ -327,7 +331,7 @@ export class SettingsContextDelegate<
                 "dependencies",
                 this.getLayerManager()
                     .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(LayerManagerTopic.GLOBAL_SETTINGS)(handleChange),
+                    .makeSubscriberFunction(DataProviderManagerTopic.GLOBAL_SETTINGS)(handleChange),
             );
 
             return handleChange;

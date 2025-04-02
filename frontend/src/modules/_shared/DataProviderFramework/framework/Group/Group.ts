@@ -1,3 +1,5 @@
+import { isDevMode } from "@lib/utils/devMode";
+
 import { GroupDelegate } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
@@ -17,6 +19,10 @@ import type { SettingManager } from "../SettingManager/SettingManager";
 import { makeSettings } from "../utils/makeSettings";
 
 export function isGroup(obj: any): obj is Group {
+    if (!isDevMode()) {
+        return obj instanceof Group;
+    }
+
     if (typeof obj !== "object" || obj === null) {
         return false;
     }
@@ -34,7 +40,7 @@ export type GroupParams<
     TSettingTypes extends Settings,
     TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
 > = {
-    layerManager: DataProviderManager;
+    dataProviderManager: DataProviderManager;
     color?: string;
     type: GroupType;
     customGroupImplementation:
@@ -56,10 +62,10 @@ export class Group<
     private _sharedSettingsDelegate: SharedSettingsDelegate<TSettings, TSettingKey> | null = null;
 
     constructor(params: GroupParams<TSettings, TSettingTypes>) {
-        const { layerManager, customGroupImplementation, type } = params;
+        const { dataProviderManager, customGroupImplementation, type } = params;
         this._groupDelegate = new GroupDelegate(this);
-        this._groupDelegate.setColor(layerManager.makeGroupColor());
-        this._itemDelegate = new ItemDelegate(customGroupImplementation.getDefaultName(), 1, layerManager);
+        this._groupDelegate.setColor(dataProviderManager.makeGroupColor());
+        this._itemDelegate = new ItemDelegate(customGroupImplementation.getDefaultName(), 1, dataProviderManager);
         if (includesSettings(customGroupImplementation)) {
             this._sharedSettingsDelegate = new SharedSettingsDelegate<TSettings, TSettingKey>(
                 this,

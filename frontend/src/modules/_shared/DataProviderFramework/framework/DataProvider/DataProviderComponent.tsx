@@ -8,7 +8,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import type { DataProvider } from "./DataProvider";
-import { DataProviderStatus, LayerDelegateTopic } from "./DataProvider";
+import { DataProviderStatus, DataProviderTopic } from "./DataProvider";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
@@ -19,14 +19,14 @@ import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 
 export type DataProviderComponentProps = {
-    layer: DataProvider<any, any>;
+    dataProvider: DataProvider<any, any>;
 };
 
 export function DataProviderComponent(props: DataProviderComponentProps): React.ReactNode {
-    const isExpanded = usePublishSubscribeTopicValue(props.layer.getItemDelegate(), ItemDelegateTopic.EXPANDED);
+    const isExpanded = usePublishSubscribeTopicValue(props.dataProvider.getItemDelegate(), ItemDelegateTopic.EXPANDED);
 
     function makeSetting(setting: SettingManager<any>) {
-        const manager = props.layer.getItemDelegate().getLayerManager();
+        const manager = props.dataProvider.getItemDelegate().getLayerManager();
         if (!manager) {
             return null;
         }
@@ -43,50 +43,50 @@ export function DataProviderComponent(props: DataProviderComponentProps): React.
 
     return (
         <SortableListItem
-            key={props.layer.getItemDelegate().getId()}
-            id={props.layer.getItemDelegate().getId()}
-            title={<EditName item={props.layer} />}
-            startAdornment={<StartActions layer={props.layer} />}
-            endAdornment={<EndActions layer={props.layer} />}
+            key={props.dataProvider.getItemDelegate().getId()}
+            id={props.dataProvider.getItemDelegate().getId()}
+            title={<EditName item={props.dataProvider} />}
+            startAdornment={<StartActions dataProvider={props.dataProvider} />}
+            endAdornment={<EndActions dataProvider={props.dataProvider} />}
         >
             <div
                 className={resolveClassNames("grid grid-cols-[auto_1fr] items-center text-xs border", {
                     hidden: !isExpanded,
                 })}
             >
-                {makeSettings(props.layer.getSettingsContextDelegate().getSettings())}
+                {makeSettings(props.dataProvider.getSettingsContextDelegate().getSettings())}
             </div>
         </SortableListItem>
     );
 }
 
 type StartActionProps = {
-    layer: DataProvider<any, any>;
+    dataProvider: DataProvider<any, any>;
 };
 
 function StartActions(props: StartActionProps): React.ReactNode {
-    const isExpanded = usePublishSubscribeTopicValue(props.layer.getItemDelegate(), ItemDelegateTopic.EXPANDED);
+    const isExpanded = usePublishSubscribeTopicValue(props.dataProvider.getItemDelegate(), ItemDelegateTopic.EXPANDED);
 
     function handleToggleExpanded() {
-        props.layer.getItemDelegate().setExpanded(!isExpanded);
+        props.dataProvider.getItemDelegate().setExpanded(!isExpanded);
     }
     return (
         <div className="flex items-center">
             <DenseIconButton onClick={handleToggleExpanded} title={isExpanded ? "Hide settings" : "Show settings"}>
                 {isExpanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
             </DenseIconButton>
-            <VisibilityToggle item={props.layer} />
+            <VisibilityToggle item={props.dataProvider} />
         </div>
     );
 }
 
 type EndActionProps = {
-    layer: DataProvider<any, any>;
+    dataProvider: DataProvider<any, any>;
 };
 
 function EndActions(props: EndActionProps): React.ReactNode {
-    const status = usePublishSubscribeTopicValue(props.layer, LayerDelegateTopic.STATUS);
-    const isSubordinated = usePublishSubscribeTopicValue(props.layer, LayerDelegateTopic.SUBORDINATED);
+    const status = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.STATUS);
+    const isSubordinated = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.SUBORDINATED);
 
     function makeStatus(): React.ReactNode {
         if (isSubordinated) {
@@ -104,7 +104,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
             );
         }
         if (status === DataProviderStatus.ERROR) {
-            const error = props.layer.getError();
+            const error = props.dataProvider.getError();
             if (typeof error === "string") {
                 return (
                     <div title={error} className="text-red-700 p-0.5">
@@ -123,7 +123,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
         if (status === DataProviderStatus.INVALID_SETTINGS) {
             return (
                 <div
-                    title={`Invalid settings: ${props.layer
+                    title={`Invalid settings: ${props.dataProvider
                         .getSettingsContextDelegate()
                         .getInvalidSettings()
                         .join(", ")}`}
@@ -145,7 +145,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
     return (
         <>
             {makeStatus()}
-            <RemoveItemButton item={props.layer} />
+            <RemoveItemButton item={props.dataProvider} />
         </>
     );
 }

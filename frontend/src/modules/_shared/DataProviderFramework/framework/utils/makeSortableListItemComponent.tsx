@@ -1,40 +1,40 @@
-import type { LayersActionGroup } from "../../LayersActions";
-import type { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
-import { DataProvider } from "../DataProvider/DataProvider";
+import type { ActionGroup } from "../../Actions";
+import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
+import { isDataProvider } from "../DataProvider/DataProvider";
 import { DataProviderComponent } from "../DataProvider/DataProviderComponent";
 import { DeltaSurface } from "../DeltaSurface/DeltaSurface";
 import { DeltaSurfaceComponent } from "../DeltaSurface/DeltaSurfaceComponent";
-import { Group } from "../Group/Group";
+import { isGroup } from "../Group/Group";
 import { GroupComponent } from "../Group/GroupComponent";
-import { SettingsGroup } from "../SettingsGroup/SettingsGroup";
+import { isSettingsGroup } from "../SettingsGroup/SettingsGroup";
 import { SettingsGroupComponent } from "../SettingsGroup/SettingsGroupComponent";
-import { SharedSetting } from "../SharedSetting/SharedSetting";
+import { isSharedSetting } from "../SharedSetting/SharedSetting";
 import { SharedSettingComponent } from "../SharedSetting/SharedSettingComponent";
 
 export function makeSortableListItemComponent(
     item: Item,
-    layerActions?: LayersActionGroup[],
+    makeLayerActionsForGroup: (group: ItemGroup) => ActionGroup[],
     onActionClick?: (identifier: string, group: ItemGroup) => void,
 ): React.ReactElement {
-    if (item instanceof DataProvider) {
-        return <DataProviderComponent key={item.getItemDelegate().getId()} layer={item} />;
+    if (isDataProvider(item)) {
+        return <DataProviderComponent key={item.getItemDelegate().getId()} dataProvider={item} />;
     }
-    if (item instanceof SettingsGroup) {
+    if (isSettingsGroup(item)) {
         return (
             <SettingsGroupComponent
                 key={item.getItemDelegate().getId()}
                 group={item}
-                actions={layerActions}
+                makeActionsForGroup={makeLayerActionsForGroup}
                 onActionClick={onActionClick}
             />
         );
     }
-    if (item instanceof Group) {
+    if (isGroup(item)) {
         return (
             <GroupComponent
                 key={item.getItemDelegate().getId()}
                 group={item}
-                actions={layerActions ? filterAwayViewActions(layerActions) : undefined}
+                makeActionsForGroup={makeLayerActionsForGroup}
                 onActionClick={onActionClick}
             />
         );
@@ -44,44 +44,14 @@ export function makeSortableListItemComponent(
             <DeltaSurfaceComponent
                 key={item.getItemDelegate().getId()}
                 deltaSurface={item}
-                actions={layerActions ? filterAwayNonSurfaceActions(layerActions) : undefined}
+                makeActionsForGroup={makeLayerActionsForGroup}
                 onActionClick={onActionClick}
             />
         );
     }
-    if (item instanceof SharedSetting) {
+    if (isSharedSetting(item)) {
         return <SharedSettingComponent key={item.getItemDelegate().getId()} sharedSetting={item} />;
     }
 
     throw new Error(`Unsupported item type: ${item.constructor.name}`);
-}
-
-function filterAwayViewActions(actions: LayersActionGroup[]): LayersActionGroup[] {
-    return actions.map((group) => ({
-        ...group,
-        children: group.children.filter((child) => child.label !== "View"),
-    }));
-}
-
-function filterAwayNonSurfaceActions(actions: LayersActionGroup[]): LayersActionGroup[] {
-    const result: LayersActionGroup[] = [];
-
-    for (const group of actions) {
-        if (group.label === "Shared Settings") {
-            result.push(group);
-            continue;
-        }
-        if (group.label !== "Layers") {
-            continue;
-        }
-        const children = group.children.filter((child) => child.label.includes("Surface"));
-        if (children.length > 0) {
-            result.push({
-                ...group,
-                children,
-            });
-        }
-    }
-
-    return result;
 }

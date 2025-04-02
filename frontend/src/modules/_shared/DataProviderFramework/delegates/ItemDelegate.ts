@@ -5,8 +5,7 @@ import type { GroupDelegate } from "./GroupDelegate";
 
 import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import type { DataProviderManager } from "../framework/DataProviderManager/DataProviderManager";
-import { LayerManagerTopic } from "../framework/DataProviderManager/DataProviderManager";
+import { DataProviderManager, DataProviderManagerTopic } from "../framework/DataProviderManager/DataProviderManager";
 import type { SerializedItem } from "../interfacesAndTypes/serialization";
 
 export enum ItemDelegateTopic {
@@ -32,12 +31,12 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
     private _expanded: boolean = true;
     private _order: number = 0;
     private _parentGroup: GroupDelegate | null = null;
-    private _layerManager: DataProviderManager;
+    private _dataProviderManager: DataProviderManager;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<ItemDelegatePayloads>();
 
-    constructor(name: string, order: number, layerManager: DataProviderManager) {
+    constructor(name: string, order: number, dataProviderManager: DataProviderManager) {
         this._id = v4();
-        this._layerManager = layerManager;
+        this._dataProviderManager = dataProviderManager;
         this._name = this.makeUniqueName(name);
         this._order = order;
     }
@@ -61,8 +60,8 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
 
         this._name = name;
         this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.NAME);
-        if (this._layerManager) {
-            this._layerManager.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
+        if (this._dataProviderManager) {
+            this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
         }
     }
 
@@ -79,7 +78,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
     }
 
     getLayerManager(): DataProviderManager {
-        return this._layerManager;
+        return this._dataProviderManager;
     }
 
     isVisible(): boolean {
@@ -93,8 +92,8 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
 
         this._visible = visible;
         this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.VISIBILITY);
-        if (this._layerManager) {
-            this._layerManager.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
+        if (this._dataProviderManager) {
+            this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
         }
     }
 
@@ -147,7 +146,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
     }
 
     private makeUniqueName(candidate: string): string {
-        const groupDelegate = this._layerManager?.getGroupDelegate();
+        const groupDelegate = this._dataProviderManager?.getGroupDelegate();
         if (!groupDelegate) {
             return candidate;
         }

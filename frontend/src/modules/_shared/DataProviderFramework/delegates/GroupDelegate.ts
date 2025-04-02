@@ -4,11 +4,11 @@ import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import { DataProvider } from "../framework/DataProvider/DataProvider";
-import { LayerManagerTopic } from "../framework/DataProviderManager/DataProviderManager";
+import { DataProviderManagerTopic } from "../framework/DataProviderManager/DataProviderManager";
 import { Group } from "../framework/Group/Group";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
 import { DeserializationAssistant } from "../framework/utils/DeserializationAssistant";
-import type { Item } from "../interfacesAndTypes/entitites";
+import type { Item } from "../interfacesAndTypes/entities";
 import type { SerializedItem } from "../interfacesAndTypes/serialization";
 
 export enum GroupDelegateTopic {
@@ -280,7 +280,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         child.getItemDelegate().setParentGroup(null);
 
         if (child instanceof SharedSetting) {
-            this._owner?.getItemDelegate().getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
+            this._owner?.getItemDelegate().getLayerManager().publishTopic(DataProviderManagerTopic.SETTINGS_CHANGED);
         }
 
         this.publishTopic(GroupDelegateTopic.CHILDREN);

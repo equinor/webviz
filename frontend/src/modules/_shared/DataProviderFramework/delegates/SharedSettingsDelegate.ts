@@ -1,7 +1,7 @@
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 import { DataProvider } from "../framework/DataProvider/DataProvider";
-import { LayerManagerTopic } from "../framework/DataProviderManager/DataProviderManager";
+import { DataProviderManagerTopic } from "../framework/DataProviderManager/DataProviderManager";
 import { Group } from "../framework/Group/Group";
 import type { SettingManager } from "../framework/SettingManager/SettingManager";
 import { SettingTopic } from "../framework/SettingManager/SettingManager";
@@ -24,9 +24,9 @@ export class SharedSettingsDelegate<
         this._wrappedSettings = wrappedSettings;
         this._parentItem = parentItem;
 
-        const layerManager = parentItem.getItemDelegate().getLayerManager();
-        if (!layerManager) {
-            throw new Error("SharedSettingDelegate must have a parent item with a layer manager.");
+        const dataProviderManager = parentItem.getItemDelegate().getLayerManager();
+        if (!dataProviderManager) {
+            throw new Error("SharedSettingDelegate must have a parent item with a data provider manager.");
         }
 
         for (const key in wrappedSettings) {
@@ -39,24 +39,26 @@ export class SharedSettingsDelegate<
         }
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
-            "layer-manager",
-            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.ITEMS)(() => {
-                this.makeIntersectionOfAvailableValues();
-            }),
-        );
-        this._unsubscribeHandler.registerUnsubscribeFunction(
-            "layer-manager",
-            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.SETTINGS_CHANGED)(
+            "data-provider-manager",
+            dataProviderManager.getPublishSubscribeDelegate().makeSubscriberFunction(DataProviderManagerTopic.ITEMS)(
                 () => {
                     this.makeIntersectionOfAvailableValues();
                 },
             ),
         );
         this._unsubscribeHandler.registerUnsubscribeFunction(
-            "layer-manager",
-            layerManager
+            "data-provider-manager",
+            dataProviderManager
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(LayerManagerTopic.AVAILABLE_SETTINGS_CHANGED)(() => {
+                .makeSubscriberFunction(DataProviderManagerTopic.SETTINGS_CHANGED)(() => {
+                this.makeIntersectionOfAvailableValues();
+            }),
+        );
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "data-provider-manager",
+            dataProviderManager
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(DataProviderManagerTopic.AVAILABLE_SETTINGS_CHANGED)(() => {
                 this.makeIntersectionOfAvailableValues();
             }),
         );
@@ -67,9 +69,9 @@ export class SharedSettingsDelegate<
     }
 
     publishValueChange(): void {
-        const layerManager = this._parentItem.getItemDelegate().getLayerManager();
-        if (layerManager) {
-            layerManager.publishTopic(LayerManagerTopic.SHARED_SETTINGS_CHANGED);
+        const dataProviderManager = this._parentItem.getItemDelegate().getLayerManager();
+        if (dataProviderManager) {
+            dataProviderManager.publishTopic(DataProviderManagerTopic.SHARED_SETTINGS_CHANGED);
         }
     }
 
@@ -83,7 +85,7 @@ export class SharedSettingsDelegate<
             return;
         }
 
-        const layers = parentGroup.getDescendantItems((item) => item instanceof DataProvider) as DataProvider<
+        const providers = parentGroup.getDescendantItems((item) => item instanceof DataProvider) as DataProvider<
             any,
             any
         >[];
@@ -92,12 +94,12 @@ export class SharedSettingsDelegate<
         };
         const indices: { [K in TSettingKey]: number } = {} as { [K in TSettings[number]]: number };
 
-        for (const item of layers) {
+        for (const provider of providers) {
             for (const key in this._wrappedSettings) {
                 const wrappedSetting = this._wrappedSettings[key];
                 const category = wrappedSetting.getCategory();
                 const index = indices[key] ?? 0;
-                const setting = item.getSettingsContextDelegate().getSettings()[wrappedSetting.getType()];
+                const setting = provider.getSettingsContextDelegate().getSettings()[wrappedSetting.getType()];
                 if (setting) {
                     if (setting.isLoading()) {
                         wrappedSetting.setLoading(true);

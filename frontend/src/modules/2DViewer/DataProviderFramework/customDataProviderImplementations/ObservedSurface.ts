@@ -35,9 +35,7 @@ export type ObservedSurfaceData =
     | { format: SurfaceDataFormat.FLOAT; surfaceData: SurfaceDataFloat_trans }
     | { format: SurfaceDataFormat.PNG; surfaceData: SurfaceDataPng_api };
 
-export class ObservedSurfaceLayer
-    implements CustomDataProviderImplementation<ObservedSurfaceSettings, ObservedSurfaceData>
-{
+export class ObservedSurface implements CustomDataProviderImplementation<ObservedSurfaceSettings, ObservedSurfaceData> {
     settings = observedSurfaceSettings;
 
     private _dataFormat: SurfaceDataFormat;

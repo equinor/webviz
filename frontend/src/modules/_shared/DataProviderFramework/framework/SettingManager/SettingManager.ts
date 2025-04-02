@@ -53,7 +53,7 @@ export enum OverriddenValueProviderType {
 }
 
 /*
- * The Setting class is responsible for managing a setting.
+ * The SettingManager class is responsible for managing a setting.
  *
  * It provides a method for setting available values, which are used to validate the setting value or applying a fixup if the value is invalid.
  * It provides methods for setting and getting the value and its states, checking if the value is valid, and setting the value as overridden or persisted.

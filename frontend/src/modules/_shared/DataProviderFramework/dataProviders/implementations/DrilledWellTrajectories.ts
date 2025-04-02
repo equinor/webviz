@@ -17,7 +17,7 @@ type SettingsWithTypes = MakeSettingTypesMap<DrilledWellTrajectoriesSettings>;
 
 type DrilledWellTrajectoriesData = WellboreTrajectory_api[];
 
-export class DrilledWellTrajectoriesLayer
+export class DrilledWellTrajectories
     implements CustomDataProviderImplementation<DrilledWellTrajectoriesSettings, DrilledWellTrajectoriesData>
 {
     settings = drilledWellTrajectoriesSettings;

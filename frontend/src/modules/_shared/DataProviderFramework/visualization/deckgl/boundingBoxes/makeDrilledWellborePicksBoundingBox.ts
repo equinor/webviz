@@ -4,7 +4,7 @@ import type { FactoryFunctionArgs } from "@modules/_shared/DataProviderFramework
 import type {
     DrilledWellborePicksData,
     DrilledWellborePicksSettings,
-} from "../../../layers/implementations/DrilledWellborePicksLayer";
+} from "../../../dataProviders/implementations/DrilledWellborePicks";
 
 export function makeDrilledWellborePicksBoundingBox({
     getData,
