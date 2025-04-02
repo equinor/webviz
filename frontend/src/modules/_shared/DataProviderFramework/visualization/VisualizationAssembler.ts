@@ -193,7 +193,14 @@ export class VisualizationAssembler<
         layerCtor: {
             new (...params: any[]): CustomDataProviderImplementation<TSettings, TData, TStoredData>;
         },
-        funcs: DataProviderVisualizationFunctions<TSettings, TData, TTarget, TStoredData, TInjectedData, TAccumulatedData>,
+        funcs: DataProviderVisualizationFunctions<
+            TSettings,
+            TData,
+            TTarget,
+            TStoredData,
+            TInjectedData,
+            TAccumulatedData
+        >,
     ): void {
         if (this._visualizationFunctions.has(layerCtor.name)) {
             throw new Error(`Visualization function for layer ${layerCtor.name} already registered`);
@@ -368,7 +375,7 @@ export class VisualizationAssembler<
                 id: group.getItemDelegate().getId(),
                 name: group.getItemDelegate().getName(),
                 getSetting: <TKey extends TSettingKey>(setting: TKey) =>
-                    group.getSharedSettingsDelegate()?.getWrappedSettings()[setting],
+                    group.getSharedSettingsDelegate()?.getWrappedSettings()[setting].getValue(),
             }),
         };
     }
