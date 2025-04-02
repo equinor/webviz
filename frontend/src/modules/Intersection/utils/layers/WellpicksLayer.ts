@@ -42,7 +42,7 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
 
     protected doSettingsChangesRequireDataRefetch(
         prevSettings: WellpicksLayerSettings,
-        newSettings: WellpicksLayerSettings
+        newSettings: WellpicksLayerSettings,
     ): boolean {
         return (
             prevSettings.wellboreUuid !== newSettings.wellboreUuid ||
@@ -61,7 +61,7 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
             return {
                 unitPicks: data.unitPicks.filter((pick) => this._settings.selectedUnitPicks.includes(pick.name)),
                 nonUnitPicks: data.nonUnitPicks.filter((pick) =>
-                    this._settings.selectedNonUnitPicks.includes(pick.identifier)
+                    this._settings.selectedNonUnitPicks.includes(pick.identifier),
                 ),
             };
         }
@@ -95,7 +95,7 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
         });
 
         return Promise.all([wellborePicksPromise, stratigraphicUnitsPromise]).then(
-            ([wellborePicks, stratigraphicUnits]) => transformFormationData(wellborePicks, stratigraphicUnits as any)
+            ([wellborePicks, stratigraphicUnits]) => transformFormationData(wellborePicks, stratigraphicUnits as any),
         );
     }
 }

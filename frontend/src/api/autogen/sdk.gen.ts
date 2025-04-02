@@ -270,7 +270,7 @@ export const getCases = <ThrowOnError extends boolean = false>(options: Options<
  * Get list of ensembles for a case
  */
 export const getEnsembles = <ThrowOnError extends boolean = false>(
-    options: Options<GetEnsemblesData_api, ThrowOnError>
+    options: Options<GetEnsemblesData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetEnsemblesResponse_api, GetEnsemblesError_api, ThrowOnError>({
         ...options,
@@ -283,7 +283,7 @@ export const getEnsembles = <ThrowOnError extends boolean = false>(
  * Get more detailed information for an ensemble
  */
 export const getEnsembleDetails = <ThrowOnError extends boolean = false>(
-    options: Options<GetEnsembleDetailsData_api, ThrowOnError>
+    options: Options<GetEnsembleDetailsData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetEnsembleDetailsResponse_api, GetEnsembleDetailsError_api, ThrowOnError>({
         ...options,
@@ -298,7 +298,7 @@ export const getEnsembleDetails = <ThrowOnError extends boolean = false>(
  * Optionally include derived vectors.
  */
 export const getVectorList = <ThrowOnError extends boolean = false>(
-    options: Options<GetVectorListData_api, ThrowOnError>
+    options: Options<GetVectorListData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetVectorListResponse_api, GetVectorListError_api, ThrowOnError>({
         ...options,
@@ -315,7 +315,7 @@ export const getVectorList = <ThrowOnError extends boolean = false>(
  * delta_ensemble = comparison_ensemble - reference_ensemble
  */
 export const getDeltaEnsembleVectorList = <ThrowOnError extends boolean = false>(
-    options: Options<GetDeltaEnsembleVectorListData_api, ThrowOnError>
+    options: Options<GetDeltaEnsembleVectorListData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         GetDeltaEnsembleVectorListResponse_api,
@@ -332,7 +332,7 @@ export const getDeltaEnsembleVectorList = <ThrowOnError extends boolean = false>
  * Get vector data per realization
  */
 export const getRealizationsVectorData = <ThrowOnError extends boolean = false>(
-    options: Options<GetRealizationsVectorDataData_api, ThrowOnError>
+    options: Options<GetRealizationsVectorDataData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         GetRealizationsVectorDataResponse_api,
@@ -353,7 +353,7 @@ export const getRealizationsVectorData = <ThrowOnError extends boolean = false>(
  * delta_ensemble = comparison_ensemble - reference_ensemble
  */
 export const getDeltaEnsembleRealizationsVectorData = <ThrowOnError extends boolean = false>(
-    options: Options<GetDeltaEnsembleRealizationsVectorDataData_api, ThrowOnError>
+    options: Options<GetDeltaEnsembleRealizationsVectorDataData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         GetDeltaEnsembleRealizationsVectorDataResponse_api,
@@ -375,7 +375,7 @@ export const getDeltaEnsembleRealizationsVectorData = <ThrowOnError extends bool
  * time range of all the requested realizations before computing the resampled dates.
  */
 export const getTimestampsList = <ThrowOnError extends boolean = false>(
-    options: Options<GetTimestampsListData_api, ThrowOnError>
+    options: Options<GetTimestampsListData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetTimestampsListResponse_api, GetTimestampsListError_api, ThrowOnError>({
         ...options,
@@ -387,13 +387,13 @@ export const getTimestampsList = <ThrowOnError extends boolean = false>(
  * Get Historical Vector Data
  */
 export const getHistoricalVectorData = <ThrowOnError extends boolean = false>(
-    options: Options<GetHistoricalVectorDataData_api, ThrowOnError>
+    options: Options<GetHistoricalVectorDataData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetHistoricalVectorDataResponse_api, GetHistoricalVectorDataError_api, ThrowOnError>(
         {
             ...options,
             url: "/timeseries/historical_vector_data/",
-        }
+        },
     );
 };
 
@@ -402,7 +402,7 @@ export const getHistoricalVectorData = <ThrowOnError extends boolean = false>(
  * Get statistical vector data for an ensemble
  */
 export const getStatisticalVectorData = <ThrowOnError extends boolean = false>(
-    options: Options<GetStatisticalVectorDataData_api, ThrowOnError>
+    options: Options<GetStatisticalVectorDataData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         GetStatisticalVectorDataResponse_api,
@@ -423,7 +423,7 @@ export const getStatisticalVectorData = <ThrowOnError extends boolean = false>(
  * delta_ensemble = comparison_ensemble - reference_ensemble
  */
 export const getDeltaEnsembleStatisticalVectorData = <ThrowOnError extends boolean = false>(
-    options: Options<GetDeltaEnsembleStatisticalVectorDataData_api, ThrowOnError>
+    options: Options<GetDeltaEnsembleStatisticalVectorDataData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         GetDeltaEnsembleStatisticalVectorDataResponse_api,
@@ -440,7 +440,7 @@ export const getDeltaEnsembleStatisticalVectorData = <ThrowOnError extends boole
  * Get statistical vector data for an ensemble per sensitivity
  */
 export const getStatisticalVectorDataPerSensitivity = <ThrowOnError extends boolean = false>(
-    options: Options<GetStatisticalVectorDataPerSensitivityData_api, ThrowOnError>
+    options: Options<GetStatisticalVectorDataPerSensitivityData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         GetStatisticalVectorDataPerSensitivityResponse_api,
@@ -456,7 +456,7 @@ export const getStatisticalVectorDataPerSensitivity = <ThrowOnError extends bool
  * Get Realization Vector At Timestamp
  */
 export const getRealizationVectorAtTimestamp = <ThrowOnError extends boolean = false>(
-    options: Options<GetRealizationVectorAtTimestampData_api, ThrowOnError>
+    options: Options<GetRealizationVectorAtTimestampData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         GetRealizationVectorAtTimestampResponse_api,
@@ -473,7 +473,7 @@ export const getRealizationVectorAtTimestamp = <ThrowOnError extends boolean = f
  * Get the volumetric tables definitions for a given ensemble.
  */
 export const getTableDefinitions = <ThrowOnError extends boolean = false>(
-    options: Options<GetTableDefinitionsData_api, ThrowOnError>
+    options: Options<GetTableDefinitionsData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetTableDefinitionsResponse_api, GetTableDefinitionsError_api, ThrowOnError>({
         ...options,
@@ -489,7 +489,7 @@ export const getTableDefinitions = <ThrowOnError extends boolean = false>(
  * As the endpoint is post, the identifiers with values object is kept for convenience.
  */
 export const postGetAggregatedPerRealizationTableData = <ThrowOnError extends boolean = false>(
-    options: Options<PostGetAggregatedPerRealizationTableDataData_api, ThrowOnError>
+    options: Options<PostGetAggregatedPerRealizationTableDataData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).post<
         PostGetAggregatedPerRealizationTableDataResponse_api,
@@ -513,7 +513,7 @@ export const postGetAggregatedPerRealizationTableData = <ThrowOnError extends bo
  * As the endpoint is post, the identifiers with values object is kept for convenience.
  */
 export const postGetAggregatedStatisticalTableData = <ThrowOnError extends boolean = false>(
-    options: Options<PostGetAggregatedStatisticalTableDataData_api, ThrowOnError>
+    options: Options<PostGetAggregatedStatisticalTableDataData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).post<
         PostGetAggregatedStatisticalTableDataResponse_api,
@@ -534,7 +534,7 @@ export const postGetAggregatedStatisticalTableData = <ThrowOnError extends boole
  * Get metadata for realization surfaces in a Sumo ensemble
  */
 export const getRealizationSurfacesMetadata = <ThrowOnError extends boolean = false>(
-    options: Options<GetRealizationSurfacesMetadataData_api, ThrowOnError>
+    options: Options<GetRealizationSurfacesMetadataData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         GetRealizationSurfacesMetadataResponse_api,
@@ -551,7 +551,7 @@ export const getRealizationSurfacesMetadata = <ThrowOnError extends boolean = fa
  * Get metadata for observed surfaces in a Sumo case
  */
 export const getObservedSurfacesMetadata = <ThrowOnError extends boolean = false>(
-    options: Options<GetObservedSurfacesMetadataData_api, ThrowOnError>
+    options: Options<GetObservedSurfacesMetadataData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         GetObservedSurfacesMetadataResponse_api,
@@ -588,7 +588,7 @@ export const getObservedSurfacesMetadata = <ThrowOnError extends boolean = false
  * encoded as a `UintListStr` or "*" to include all realizations.
  */
 export const getSurfaceData = <ThrowOnError extends boolean = false>(
-    options: Options<GetSurfaceDataData_api, ThrowOnError>
+    options: Options<GetSurfaceDataData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetSurfaceDataResponse_api, GetSurfaceDataError_api, ThrowOnError>({
         ...options,
@@ -604,7 +604,7 @@ export const getSurfaceData = <ThrowOnError extends boolean = false>(
  * and cumulative lengths, the accumulated length at each z-point in the array.
  */
 export const postGetSurfaceIntersection = <ThrowOnError extends boolean = false>(
-    options: Options<PostGetSurfaceIntersectionData_api, ThrowOnError>
+    options: Options<PostGetSurfaceIntersectionData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).post<
         PostGetSurfaceIntersectionResponse_api,
@@ -624,7 +624,7 @@ export const postGetSurfaceIntersection = <ThrowOnError extends boolean = false>
  * Post Get Sample Surface In Points
  */
 export const postGetSampleSurfaceInPoints = <ThrowOnError extends boolean = false>(
-    options: Options<PostGetSampleSurfaceInPointsData_api, ThrowOnError>
+    options: Options<PostGetSampleSurfaceInPointsData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).post<
         PostGetSampleSurfaceInPointsResponse_api,
@@ -644,7 +644,7 @@ export const postGetSampleSurfaceInPoints = <ThrowOnError extends boolean = fals
  * Get Delta Surface Data
  */
 export const getDeltaSurfaceData = <ThrowOnError extends boolean = false>(
-    options: Options<GetDeltaSurfaceDataData_api, ThrowOnError>
+    options: Options<GetDeltaSurfaceDataData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetDeltaSurfaceDataResponse_api, GetDeltaSurfaceDataError_api, ThrowOnError>({
         ...options,
@@ -656,7 +656,7 @@ export const getDeltaSurfaceData = <ThrowOnError extends boolean = false>(
  * Get Misfit Surface Data
  */
 export const getMisfitSurfaceData = <ThrowOnError extends boolean = false>(
-    options: Options<GetMisfitSurfaceDataData_api, ThrowOnError>
+    options: Options<GetMisfitSurfaceDataData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetMisfitSurfaceDataResponse_api, GetMisfitSurfaceDataError_api, ThrowOnError>({
         ...options,
@@ -669,7 +669,7 @@ export const getMisfitSurfaceData = <ThrowOnError extends boolean = false>(
  * NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
  */
 export const deprecatedGetStratigraphicUnits = <ThrowOnError extends boolean = false>(
-    options: Options<DeprecatedGetStratigraphicUnitsData_api, ThrowOnError>
+    options: Options<DeprecatedGetStratigraphicUnitsData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         DeprecatedGetStratigraphicUnitsResponse_api,
@@ -677,7 +677,7 @@ export const deprecatedGetStratigraphicUnits = <ThrowOnError extends boolean = f
         ThrowOnError
     >({
         ...options,
-        url: "/surface/DEPRECATED_stratigraphic_units",
+        url: "/surface/deprecated_stratigraphic_units",
     });
 };
 
@@ -686,7 +686,7 @@ export const deprecatedGetStratigraphicUnits = <ThrowOnError extends boolean = f
  * Retrieve parameter names and description for an ensemble
  */
 export const getParameterNamesAndDescription = <ThrowOnError extends boolean = false>(
-    options: Options<GetParameterNamesAndDescriptionData_api, ThrowOnError>
+    options: Options<GetParameterNamesAndDescriptionData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         GetParameterNamesAndDescriptionResponse_api,
@@ -703,7 +703,7 @@ export const getParameterNamesAndDescription = <ThrowOnError extends boolean = f
  * Get a parameter in a given Sumo ensemble
  */
 export const getParameter = <ThrowOnError extends boolean = false>(
-    options: Options<GetParameterData_api, ThrowOnError>
+    options: Options<GetParameterData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetParameterResponse_api, GetParameterError_api, ThrowOnError>({
         ...options,
@@ -715,7 +715,7 @@ export const getParameter = <ThrowOnError extends boolean = false>(
  * Get Parameters
  */
 export const getParameters = <ThrowOnError extends boolean = false>(
-    options: Options<GetParametersData_api, ThrowOnError>
+    options: Options<GetParametersData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetParametersResponse_api, GetParametersError_api, ThrowOnError>({
         ...options,
@@ -728,7 +728,7 @@ export const getParameters = <ThrowOnError extends boolean = false>(
  * Check if a given Sumo ensemble is a sensitivity run
  */
 export const getIsSensitivityRun = <ThrowOnError extends boolean = false>(
-    options: Options<GetIsSensitivityRunData_api, ThrowOnError>
+    options: Options<GetIsSensitivityRunData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetIsSensitivityRunResponse_api, GetIsSensitivityRunError_api, ThrowOnError>({
         ...options,
@@ -741,7 +741,7 @@ export const getIsSensitivityRun = <ThrowOnError extends boolean = false>(
  * Get sensitivities in a given Sumo ensemble
  */
 export const getSensitivities = <ThrowOnError extends boolean = false>(
-    options: Options<GetSensitivitiesData_api, ThrowOnError>
+    options: Options<GetSensitivitiesData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetSensitivitiesResponse_api, GetSensitivitiesError_api, ThrowOnError>({
         ...options,
@@ -754,7 +754,7 @@ export const getSensitivities = <ThrowOnError extends boolean = false>(
  * Get metadata for all 3D grid models, including bbox, dimensions and properties
  */
 export const getGridModelsInfo = <ThrowOnError extends boolean = false>(
-    options: Options<GetGridModelsInfoData_api, ThrowOnError>
+    options: Options<GetGridModelsInfoData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetGridModelsInfoResponse_api, GetGridModelsInfoError_api, ThrowOnError>({
         ...options,
@@ -767,7 +767,7 @@ export const getGridModelsInfo = <ThrowOnError extends boolean = false>(
  * Get a grid
  */
 export const getGridSurface = <ThrowOnError extends boolean = false>(
-    options: Options<GetGridSurfaceData_api, ThrowOnError>
+    options: Options<GetGridSurfaceData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetGridSurfaceResponse_api, GetGridSurfaceError_api, ThrowOnError>({
         ...options,
@@ -780,7 +780,7 @@ export const getGridSurface = <ThrowOnError extends boolean = false>(
  * Get a grid parameter
  */
 export const getGridParameter = <ThrowOnError extends boolean = false>(
-    options: Options<GetGridParameterData_api, ThrowOnError>
+    options: Options<GetGridParameterData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetGridParameterResponse_api, GetGridParameterError_api, ThrowOnError>({
         ...options,
@@ -792,7 +792,7 @@ export const getGridParameter = <ThrowOnError extends boolean = false>(
  * Post Get Polyline Intersection
  */
 export const postGetPolylineIntersection = <ThrowOnError extends boolean = false>(
-    options: Options<PostGetPolylineIntersectionData_api, ThrowOnError>
+    options: Options<PostGetPolylineIntersectionData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).post<
         PostGetPolylineIntersectionResponse_api,
@@ -812,7 +812,7 @@ export const postGetPolylineIntersection = <ThrowOnError extends boolean = false
  * Get Realization Flow Network
  */
 export const getRealizationFlowNetwork = <ThrowOnError extends boolean = false>(
-    options: Options<GetRealizationFlowNetworkData_api, ThrowOnError>
+    options: Options<GetRealizationFlowNetworkData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         GetRealizationFlowNetworkResponse_api,
@@ -829,7 +829,7 @@ export const getRealizationFlowNetwork = <ThrowOnError extends boolean = false>(
  * Get pvt table data for a given Sumo ensemble and realization
  */
 export const getTableData = <ThrowOnError extends boolean = false>(
-    options: Options<GetTableDataData_api, ThrowOnError>
+    options: Options<GetTableDataData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetTableDataResponse_api, GetTableDataError_api, ThrowOnError>({
         ...options,
@@ -841,7 +841,7 @@ export const getTableData = <ThrowOnError extends boolean = false>(
  * Get Well Completions Data
  */
 export const getWellCompletionsData = <ThrowOnError extends boolean = false>(
-    options: Options<GetWellCompletionsDataData_api, ThrowOnError>
+    options: Options<GetWellCompletionsDataData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetWellCompletionsDataResponse_api, GetWellCompletionsDataError_api, ThrowOnError>({
         ...options,
@@ -854,7 +854,7 @@ export const getWellCompletionsData = <ThrowOnError extends boolean = false>(
  * Get wellbore headers for all wells in the field
  */
 export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
-    options: Options<GetDrilledWellboreHeadersData_api, ThrowOnError>
+    options: Options<GetDrilledWellboreHeadersData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         GetDrilledWellboreHeadersResponse_api,
@@ -871,7 +871,7 @@ export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
  * Get well trajectories for field
  */
 export const getWellTrajectories = <ThrowOnError extends boolean = false>(
-    options: Options<GetWellTrajectoriesData_api, ThrowOnError>
+    options: Options<GetWellTrajectoriesData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetWellTrajectoriesResponse_api, GetWellTrajectoriesError_api, ThrowOnError>({
         ...options,
@@ -884,7 +884,7 @@ export const getWellTrajectories = <ThrowOnError extends boolean = false>(
  * Get wellbore pick identifiers for field and stratigraphic column
  */
 export const getWellborePickIdentifiers = <ThrowOnError extends boolean = false>(
-    options: Options<GetWellborePickIdentifiersData_api, ThrowOnError>
+    options: Options<GetWellborePickIdentifiersData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         GetWellborePickIdentifiersResponse_api,
@@ -904,7 +904,7 @@ export const getWellborePickIdentifiers = <ThrowOnError extends boolean = false>
  * E.g. picks for all wellbores in a given surface in a field.
  */
 export const getWellborePicksForPickIdentifier = <ThrowOnError extends boolean = false>(
-    options: Options<GetWellborePicksForPickIdentifierData_api, ThrowOnError>
+    options: Options<GetWellborePicksForPickIdentifierData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         GetWellborePicksForPickIdentifierResponse_api,
@@ -923,7 +923,7 @@ export const getWellborePicksForPickIdentifier = <ThrowOnError extends boolean =
  * NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
  */
 export const deprecatedGetWellborePicksForWellbore = <ThrowOnError extends boolean = false>(
-    options: Options<DeprecatedGetWellborePicksForWellboreData_api, ThrowOnError>
+    options: Options<DeprecatedGetWellborePicksForWellboreData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         DeprecatedGetWellborePicksForWellboreResponse_api,
@@ -931,7 +931,7 @@ export const deprecatedGetWellborePicksForWellbore = <ThrowOnError extends boole
         ThrowOnError
     >({
         ...options,
-        url: "/well/DEPRECATED_wellbore_picks_for_wellbore/",
+        url: "/well/deprecated_wellbore_picks_for_wellbore/",
     });
 };
 
@@ -940,7 +940,7 @@ export const deprecatedGetWellborePicksForWellbore = <ThrowOnError extends boole
  * Get wellbore picks for a single wellbore with stratigraphic column identifier
  */
 export const getWellborePicksInStratColumn = <ThrowOnError extends boolean = false>(
-    options: Options<GetWellborePicksInStratColumnData_api, ThrowOnError>
+    options: Options<GetWellborePicksInStratColumnData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         GetWellborePicksInStratColumnResponse_api,
@@ -956,7 +956,7 @@ export const getWellborePicksInStratColumn = <ThrowOnError extends boolean = fal
  * Get Wellbore Stratigraphic Columns
  */
 export const getWellboreStratigraphicColumns = <ThrowOnError extends boolean = false>(
-    options: Options<GetWellboreStratigraphicColumnsData_api, ThrowOnError>
+    options: Options<GetWellboreStratigraphicColumnsData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         GetWellboreStratigraphicColumnsResponse_api,
@@ -973,7 +973,7 @@ export const getWellboreStratigraphicColumns = <ThrowOnError extends boolean = f
  * Get well bore completions for a single well bore
  */
 export const getWellboreCompletions = <ThrowOnError extends boolean = false>(
-    options: Options<GetWellboreCompletionsData_api, ThrowOnError>
+    options: Options<GetWellboreCompletionsData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetWellboreCompletionsResponse_api, GetWellboreCompletionsError_api, ThrowOnError>({
         ...options,
@@ -986,7 +986,7 @@ export const getWellboreCompletions = <ThrowOnError extends boolean = false>(
  * Get well bore casings for a single well bore
  */
 export const getWellboreCasings = <ThrowOnError extends boolean = false>(
-    options: Options<GetWellboreCasingsData_api, ThrowOnError>
+    options: Options<GetWellboreCasingsData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetWellboreCasingsResponse_api, GetWellboreCasingsError_api, ThrowOnError>({
         ...options,
@@ -999,13 +999,13 @@ export const getWellboreCasings = <ThrowOnError extends boolean = false>(
  * Get well bore casing for a single well bore
  */
 export const getWellborePerforations = <ThrowOnError extends boolean = false>(
-    options: Options<GetWellborePerforationsData_api, ThrowOnError>
+    options: Options<GetWellborePerforationsData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetWellborePerforationsResponse_api, GetWellborePerforationsError_api, ThrowOnError>(
         {
             ...options,
             url: "/well/wellbore_perforations/",
-        }
+        },
     );
 };
 
@@ -1015,7 +1015,7 @@ export const getWellborePerforations = <ThrowOnError extends boolean = false>(
  * Logs are available from multiple sources, which can be specificed by the "sources" parameter.
  */
 export const getWellboreLogCurveHeaders = <ThrowOnError extends boolean = false>(
-    options: Options<GetWellboreLogCurveHeadersData_api, ThrowOnError>
+    options: Options<GetWellboreLogCurveHeadersData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
         GetWellboreLogCurveHeadersResponse_api,
@@ -1032,7 +1032,7 @@ export const getWellboreLogCurveHeaders = <ThrowOnError extends boolean = false>
  * Get log curve data
  */
 export const getLogCurveData = <ThrowOnError extends boolean = false>(
-    options: Options<GetLogCurveDataData_api, ThrowOnError>
+    options: Options<GetLogCurveDataData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetLogCurveDataResponse_api, GetLogCurveDataError_api, ThrowOnError>({
         ...options,
@@ -1045,7 +1045,7 @@ export const getLogCurveData = <ThrowOnError extends boolean = false>(
  * Get a list of seismic cube meta.
  */
 export const getSeismicCubeMetaList = <ThrowOnError extends boolean = false>(
-    options: Options<GetSeismicCubeMetaListData_api, ThrowOnError>
+    options: Options<GetSeismicCubeMetaListData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetSeismicCubeMetaListResponse_api, GetSeismicCubeMetaListError_api, ThrowOnError>({
         ...options,
@@ -1058,7 +1058,7 @@ export const getSeismicCubeMetaList = <ThrowOnError extends boolean = false>(
  * Get a seismic inline from a seismic cube.
  */
 export const getInlineSlice = <ThrowOnError extends boolean = false>(
-    options: Options<GetInlineSliceData_api, ThrowOnError>
+    options: Options<GetInlineSliceData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetInlineSliceResponse_api, GetInlineSliceError_api, ThrowOnError>({
         ...options,
@@ -1071,7 +1071,7 @@ export const getInlineSlice = <ThrowOnError extends boolean = false>(
  * Get a seismic crossline from a seismic cube.
  */
 export const getCrosslineSlice = <ThrowOnError extends boolean = false>(
-    options: Options<GetCrosslineSliceData_api, ThrowOnError>
+    options: Options<GetCrosslineSliceData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetCrosslineSliceResponse_api, GetCrosslineSliceError_api, ThrowOnError>({
         ...options,
@@ -1084,7 +1084,7 @@ export const getCrosslineSlice = <ThrowOnError extends boolean = false>(
  * Get a seismic depth slice from a seismic cube.
  */
 export const getDepthSlice = <ThrowOnError extends boolean = false>(
-    options: Options<GetDepthSliceData_api, ThrowOnError>
+    options: Options<GetDepthSliceData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetDepthSliceResponse_api, GetDepthSliceError_api, ThrowOnError>({
         ...options,
@@ -1103,7 +1103,7 @@ export const getDepthSlice = <ThrowOnError extends boolean = false>(
  * A SeismicFenceData object with fence traces in encoded 1D array, metadata for trace array decoding and fence min/max depth.
  */
 export const postGetSeismicFence = <ThrowOnError extends boolean = false>(
-    options: Options<PostGetSeismicFenceData_api, ThrowOnError>
+    options: Options<PostGetSeismicFenceData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).post<PostGetSeismicFenceResponse_api, PostGetSeismicFenceError_api, ThrowOnError>({
         ...options,
@@ -1120,7 +1120,7 @@ export const postGetSeismicFence = <ThrowOnError extends boolean = false>(
  * Get a directory of polygons in a Sumo ensemble
  */
 export const getPolygonsDirectory = <ThrowOnError extends boolean = false>(
-    options: Options<GetPolygonsDirectoryData_api, ThrowOnError>
+    options: Options<GetPolygonsDirectoryData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetPolygonsDirectoryResponse_api, GetPolygonsDirectoryError_api, ThrowOnError>({
         ...options,
@@ -1132,7 +1132,7 @@ export const getPolygonsDirectory = <ThrowOnError extends boolean = false>(
  * Get Polygons Data
  */
 export const getPolygonsData = <ThrowOnError extends boolean = false>(
-    options: Options<GetPolygonsDataData_api, ThrowOnError>
+    options: Options<GetPolygonsDataData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetPolygonsDataResponse_api, GetPolygonsDataError_api, ThrowOnError>({
         ...options,
@@ -1145,7 +1145,7 @@ export const getPolygonsData = <ThrowOnError extends boolean = false>(
  * Get username, display name and avatar from Microsoft Graph API for a given user id
  */
 export const getUserPhoto = <ThrowOnError extends boolean = false>(
-    options: Options<GetUserPhotoData_api, ThrowOnError>
+    options: Options<GetUserPhotoData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetUserPhotoResponse_api, GetUserPhotoError_api, ThrowOnError>({
         ...options,
@@ -1158,7 +1158,7 @@ export const getUserPhoto = <ThrowOnError extends boolean = false>(
  * Retrieve all observations found in sumo case
  */
 export const getObservations = <ThrowOnError extends boolean = false>(
-    options: Options<GetObservationsData_api, ThrowOnError>
+    options: Options<GetObservationsData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetObservationsResponse_api, GetObservationsError_api, ThrowOnError>({
         ...options,
@@ -1170,7 +1170,7 @@ export const getObservations = <ThrowOnError extends boolean = false>(
  * Get Table Definition
  */
 export const getTableDefinition = <ThrowOnError extends boolean = false>(
-    options: Options<GetTableDefinitionData_api, ThrowOnError>
+    options: Options<GetTableDefinitionData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetTableDefinitionResponse_api, GetTableDefinitionError_api, ThrowOnError>({
         ...options,
@@ -1182,7 +1182,7 @@ export const getTableDefinition = <ThrowOnError extends boolean = false>(
  * Get Realization Data
  */
 export const getRealizationData = <ThrowOnError extends boolean = false>(
-    options: Options<GetRealizationDataData_api, ThrowOnError>
+    options: Options<GetRealizationDataData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetRealizationDataResponse_api, GetRealizationDataError_api, ThrowOnError>({
         ...options,
@@ -1194,7 +1194,7 @@ export const getRealizationData = <ThrowOnError extends boolean = false>(
  * Get Vfp Table Names
  */
 export const getVfpTableNames = <ThrowOnError extends boolean = false>(
-    options: Options<GetVfpTableNamesData_api, ThrowOnError>
+    options: Options<GetVfpTableNamesData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetVfpTableNamesResponse_api, GetVfpTableNamesError_api, ThrowOnError>({
         ...options,
@@ -1226,7 +1226,7 @@ export const loginRoute = <ThrowOnError extends boolean = false>(options?: Optio
  *  Authorized Callback Route
  */
 export const authorizedCallbackRoute = <ThrowOnError extends boolean = false>(
-    options?: Options<AuthorizedCallbackRouteData_api, ThrowOnError>
+    options?: Options<AuthorizedCallbackRouteData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<unknown, unknown, ThrowOnError>({
         ...options,
@@ -1248,7 +1248,7 @@ export const getAlive = <ThrowOnError extends boolean = false>(options?: Options
  * Get Alive Protected
  */
 export const getAliveProtected = <ThrowOnError extends boolean = false>(
-    options?: Options<GetAliveProtectedData_api, ThrowOnError>
+    options?: Options<GetAliveProtectedData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetAliveProtectedResponse_api, unknown, ThrowOnError>({
         ...options,
@@ -1270,7 +1270,7 @@ export const postLogout = <ThrowOnError extends boolean = false>(options?: Optio
  * Get Logged In User
  */
 export const getLoggedInUser = <ThrowOnError extends boolean = false>(
-    options?: Options<GetLoggedInUserData_api, ThrowOnError>
+    options?: Options<GetLoggedInUserData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetLoggedInUserResponse_api, GetLoggedInUserError_api, ThrowOnError>({
         ...options,

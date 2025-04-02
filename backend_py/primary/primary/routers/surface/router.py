@@ -296,8 +296,8 @@ async def get_misfit_surface_data(
     raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
 
 
-@router.get("/DEPRECATED_stratigraphic_units")
-async def DEPRECATED_get_stratigraphic_units(
+@router.get("/deprecated_stratigraphic_units")
+async def deprecated_get_stratigraphic_units(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
