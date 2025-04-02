@@ -44,11 +44,10 @@ export type FactoryFunctionArgs<
     getValueRange: () => [number, number] | null;
 };
 
-export type VisualizationViewBasic<TTarget extends VisualizationTarget> = {
+export type VisualizationView<TTarget,  = {
     id: string;
     color: string | null;
     name: string;
-    layers: LayerWithPosition<TTarget>[];
     annotations: Annotation[];
 };
 
@@ -81,7 +80,7 @@ export type TargetLayerReturnTypes = {
 
 export type Annotation = ColorScaleWithId; // Add more possible annotation types here, e.g. ColorSets etc.
 
-export type LayerVisualizationFunctions<
+export type DataProviderVisualizationFunctions<
     TSettings extends Settings,
     TData,
     TTarget extends VisualizationTarget,
@@ -180,7 +179,7 @@ export class VisualizationAssembler<
 > {
     private _visualizationFunctions: Map<
         string,
-        LayerVisualizationFunctions<any, any, TTarget, any, TInjectedData, TAccumulatedData>
+        DataProviderVisualizationFunctions<any, any, TTarget, any, TInjectedData, TAccumulatedData>
     > = new Map();
 
     private _viewFunctions: Map<string, ViewDataCollectorFunction<any, TTarget>> = new Map();
@@ -190,7 +189,7 @@ export class VisualizationAssembler<
         layerCtor: {
             new (...params: any[]): CustomDataProviderImplementation<TSettings, TData, TStoredData>;
         },
-        funcs: LayerVisualizationFunctions<TSettings, TData, TTarget, TStoredData, TInjectedData, TAccumulatedData>,
+        funcs: DataProviderVisualizationFunctions<TSettings, TData, TTarget, TStoredData, TInjectedData, TAccumulatedData>,
     ): void {
         if (this._visualizationFunctions.has(layerCtor.name)) {
             throw new Error(`Visualization function for layer ${layerCtor.name} already registered`);

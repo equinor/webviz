@@ -23,8 +23,8 @@ import { makeSortableListItemComponent } from "../utils/makeSortableListItemComp
 export type LayerManagerComponentProps = {
     layerManager: DataProviderManager;
     additionalHeaderComponents: React.ReactNode;
-    layerActions: LayersActionGroup[];
-    onLayerAction: (identifier: string, groupDelegate: GroupDelegate) => void;
+    actions: LayersActionGroup[];
+    onAction: (identifier: string, groupDelegate: GroupDelegate) => void;
     isMoveAllowed?: (movedItem: Item, destinationGroup: ItemGroup) => boolean;
 };
 
@@ -41,7 +41,7 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
             groupDelegate = group.getGroupDelegate();
         }
 
-        props.onLayerAction(identifier, groupDelegate);
+        props.onAction(identifier, groupDelegate);
     }
 
     function checkIfItemMoveAllowed(args: IsMoveAllowedArgs): boolean {
@@ -133,7 +133,7 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
             <div className="w-full grow flex flex-col min-h-0" ref={layerListRef}>
                 <div className="flex bg-slate-100 h-12 p-2 items-center border-b border-gray-300 gap-2">
                     <div className="grow font-bold text-sm">Layers</div>
-                    <LayersActions layersActionGroups={props.layerActions} onActionClick={handleLayerAction} />
+                    <LayersActions layersActionGroups={props.actions} onActionClick={handleLayerAction} />
                     <ExpandCollapseAllButton group={props.layerManager} />
                     {props.additionalHeaderComponents}
                 </div>
@@ -151,7 +151,7 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
                         }
                     >
                         {items.map((item: Item) =>
-                            makeSortableListItemComponent(item, props.layerActions, handleLayerAction),
+                            makeSortableListItemComponent(item, props.actions, handleLayerAction),
                         )}
                     </SortableList>
                 </div>
