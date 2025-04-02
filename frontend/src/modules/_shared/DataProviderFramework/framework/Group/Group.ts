@@ -7,7 +7,7 @@ import type {
     CustomGroupImplementationWithSettings,
 } from "../../interfacesAndTypes/customGroupImplementation";
 import { includesSettings } from "../../interfacesAndTypes/customGroupImplementation";
-import type { ItemGroup } from "../../interfacesAndTypes/entitites";
+import type { ItemGroup } from "../../interfacesAndTypes/entities";
 import type { SerializedGroup } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
 import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
@@ -15,6 +15,20 @@ import type { MakeSettingTypesMap, SettingTypes, Settings } from "../../settings
 import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { makeSettings } from "../utils/makeSettings";
+
+export function isGroup(obj: any): obj is Group {
+    if (typeof obj !== "object" || obj === null) {
+        return false;
+    }
+
+    if (obj.constructor.name !== "Group") {
+        return false;
+    }
+
+    const group: Group = obj as Group;
+
+    return Object.hasOwn(group, "getGroupType") && Object.hasOwn(group, "getGroupDelegate");
+}
 
 export type GroupParams<
     TSettingTypes extends Settings,
@@ -37,6 +51,8 @@ export class Group<
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
     private _type: GroupType;
+    private _icon: React.ReactNode | null = null;
+    private _emptyContentMessage: string | null = null;
     private _sharedSettingsDelegate: SharedSettingsDelegate<TSettings, TSettingKey> | null = null;
 
     constructor(params: GroupParams<TSettings, TSettingTypes>) {
@@ -54,6 +70,9 @@ export class Group<
             );
         }
         this._type = type;
+        this._emptyContentMessage = customGroupImplementation.getEmptyContentMessage
+            ? customGroupImplementation.getEmptyContentMessage()
+            : null;
     }
 
     getItemDelegate(): ItemDelegate {
@@ -62,6 +81,14 @@ export class Group<
 
     getGroupDelegate(): GroupDelegate {
         return this._groupDelegate;
+    }
+
+    getIcon(): React.ReactNode {
+        return this._icon;
+    }
+
+    getEmptyContentMessage(): string | null {
+        return this._emptyContentMessage;
     }
 
     getSharedSettingsDelegate(): SharedSettingsDelegate<TSettings, TSettingKey> | null {

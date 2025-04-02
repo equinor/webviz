@@ -61,18 +61,18 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
     function handleLayerAction(identifier: string, groupDelegate: GroupDelegate) {
         switch (identifier) {
             case "view":
-                groupDelegate.appendChild(
+                groupDelegate.prependChild(
                     GroupRegistry.makeGroup(GroupType.VIEW, props.layerManager, colorSet.getNextColor()),
                 );
                 return;
             case "delta-surface":
-                groupDelegate.appendChild(new DeltaSurface("Delta surface", props.layerManager));
+                groupDelegate.prependChild(new DeltaSurface("Delta surface", props.layerManager));
                 return;
             case "settings-group":
-                groupDelegate.appendChild(new SettingsGroup("Settings group", props.layerManager));
+                groupDelegate.prependChild(new SettingsGroup("Settings group", props.layerManager));
                 return;
             case "color-scale":
-                groupDelegate.appendChild(new SharedSetting(Setting.COLOR_SCALE, null, props.layerManager));
+                groupDelegate.prependChild(new SharedSetting(Setting.COLOR_SCALE, null, props.layerManager));
                 return;
             case "observed-surface":
                 groupDelegate.prependChild(
@@ -152,14 +152,60 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
         return true;
     }
 
-    const hasView =
-        groupDelegate.getDescendantItems((item) => item instanceof Group && item.getGroupType() === GroupType.VIEW)
-            .length > 0;
-    const adjustedLayerActions = hasView ? LAYER_ACTIONS : INITIAL_LAYER_ACTIONS;
+    function makeActionsForGroup(group: ItemGroup): ActionGroup[] {
+        const hasView =
+            groupDelegate.getDescendantItems((item) => item instanceof Group && item.getGroupType() === GroupType.VIEW)
+                .length > 0;
+
+        const hasViewAncestor =
+            group
+                .getGroupDelegate()
+                .getAncestors((item) => item instanceof Group && item.getGroupType() === GroupType.VIEW).length > 0;
+        const actions: ActionGroup[] = [];
+
+        if (!hasView) {
+            return INITIAL_ACTIONS;
+        }
+
+        const groupActions: ActionGroup = {
+            label: "Groups",
+            children: [],
+        };
+
+        if (group instanceof Group) {
+            if (group.getGroupType() === GroupType.VIEW) {
+                if (!hasViewAncestor) {
+                    groupActions.children.push({
+                        identifier: "view",
+                        icon: <Panorama fontSize="small" />,
+                        label: "View",
+                    });
+                }
+            }
+        } else if (group instanceof SettingsGroup) {
+            groupActions.children.push({
+                identifier: "view",
+                icon: <Panorama fontSize="small" />,
+                label: "View",
+            });
+        }
+
+        groupActions.children.push({
+            identifier: "settings-group",
+            icon: <SettingsApplications fontSize="small" />,
+            label: "Settings group",
+        });
+
+        actions.push(groupActions);
+        actions.push(...ACTIONS);
+
+        return actions;
+    }
 
     return (
-        <LayerManagerComponent
-            layerManager={props.layerManager}
+        <DataLayerManagerComponent
+            title={"Layers"}
+            dataLayerManager={props.layerManager}
             additionalHeaderComponents={
                 <Dropdown>
                     <MenuButton label="Settings">
@@ -182,8 +228,8 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                     </Menu>
                 </Dropdown>
             }
-            layerActions={adjustedLayerActions}
-            onLayerAction={handleLayerAction}
+            groupActions={makeActionsForGroup}
+            onAction={handleLayerAction}
             isMoveAllowed={checkIfItemMoveAllowed}
         />
     );
@@ -206,7 +252,7 @@ function ViewLayoutMenuItem(props: ViewLayoutMenuItemProps): React.ReactNode {
     );
 }
 
-const INITIAL_LAYER_ACTIONS: LayersActionGroup[] = [
+const INITIAL_ACTIONS: ActionGroup[] = [
     {
         label: "Groups",
         children: [
@@ -224,22 +270,7 @@ const INITIAL_LAYER_ACTIONS: LayersActionGroup[] = [
     },
 ];
 
-const LAYER_ACTIONS: LayersActionGroup[] = [
-    {
-        label: "Groups",
-        children: [
-            {
-                identifier: "view",
-                icon: <Panorama fontSize="small" />,
-                label: "View",
-            },
-            {
-                identifier: "settings-group",
-                icon: <SettingsApplications fontSize="small" />,
-                label: "Settings group",
-            },
-        ],
-    },
+const ACTIONS: ActionGroup[] = [
     {
         label: "Layers",
         children: [

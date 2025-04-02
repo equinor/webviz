@@ -1,12 +1,14 @@
+import React from "react";
+
 import { SortableListGroup } from "@lib/components/SortableList";
 import { SettingsApplications } from "@mui/icons-material";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
-import type { LayersActionGroup } from "../../LayersActions";
-import { LayersActions } from "../../LayersActions";
+import type { ActionGroup } from "../../Actions";
+import { Actions } from "../../Actions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import type { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
+import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
@@ -14,14 +16,20 @@ import { makeSortableListItemComponent } from "../utils/makeSortableListItemComp
 
 export type SettingsGroupComponentProps = {
     group: ItemGroup;
-    actions?: LayersActionGroup[];
+    makeActionsForGroup: (group: ItemGroup) => ActionGroup[];
     onActionClick?: (actionIdentifier: string, group: ItemGroup) => void;
 };
 
 export function SettingsGroupComponent(props: SettingsGroupComponentProps): React.ReactNode {
+    const { makeActionsForGroup } = props;
+
     const children = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.CHILDREN);
     const isExpanded = usePublishSubscribeTopicValue(props.group.getItemDelegate(), ItemDelegateTopic.EXPANDED);
     const color = props.group.getGroupDelegate().getColor();
+
+    const actions = React.useMemo(() => {
+        return makeActionsForGroup(props.group);
+    }, [props.group, makeActionsForGroup]);
 
     function handleActionClick(actionIdentifier: string) {
         if (props.onActionClick) {
@@ -31,15 +39,7 @@ export function SettingsGroupComponent(props: SettingsGroupComponentProps): Reac
 
     function makeEndAdornment() {
         const adornment: React.ReactNode[] = [];
-        if (props.actions) {
-            adornment.push(
-                <LayersActions
-                    key="layers-actions"
-                    layersActionGroups={props.actions}
-                    onActionClick={handleActionClick}
-                />,
-            );
-        }
+        adornment.push(<Actions key="layers-actions" layersActionGroups={actions} onActionClick={handleActionClick} />);
         adornment.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);
         adornment.push(<RemoveItemButton key="remove" item={props.group} />);
         return adornment;
@@ -62,12 +62,12 @@ export function SettingsGroupComponent(props: SettingsGroupComponentProps): Reac
             }}
             startAdornment={<SettingsApplications fontSize="inherit" />}
             endAdornment={<>{makeEndAdornment()}</>}
-            contentWhenEmpty={
-                <EmptyContent>Drag a layer or setting inside to add it to this settings group.</EmptyContent>
-            }
+            contentWhenEmpty={<EmptyContent>Drag an item inside to add it to this settings group.</EmptyContent>}
             expanded={isExpanded}
         >
-            {children.map((child: Item) => makeSortableListItemComponent(child, props.actions, props.onActionClick))}
+            {children.map((child: Item) =>
+                makeSortableListItemComponent(child, props.makeActionsForGroup, props.onActionClick),
+            )}
         </SortableListGroup>
     );
 }

@@ -19,7 +19,7 @@ import type {
     CustomGroupImplementation,
     CustomGroupImplementationWithSettings,
 } from "../interfacesAndTypes/customGroupImplementation";
-import { instanceofItemGroup } from "../interfacesAndTypes/entitites";
+import { instanceofItemGroup } from "../interfacesAndTypes/entities";
 import type { StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { IntersectionSettingValue } from "../settings/implementations/IntersectionSetting";

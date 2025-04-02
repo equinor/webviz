@@ -5,7 +5,7 @@ import { LayerManagerTopic } from "../framework/DataProviderManager/DataProvider
 import { Group } from "../framework/Group/Group";
 import type { SettingManager } from "../framework/SettingManager/SettingManager";
 import { SettingTopic } from "../framework/SettingManager/SettingManager";
-import type { Item } from "../interfacesAndTypes/entitites";
+import type { Item } from "../interfacesAndTypes/entities";
 import type { AvailableValuesType, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { SettingTypes, Settings } from "../settings/settingsDefinitions";
 import { settingCategoryAvailableValuesIntersectionReducerMap } from "../settings/settingsDefinitions";
