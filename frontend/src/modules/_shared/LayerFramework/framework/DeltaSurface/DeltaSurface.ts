@@ -2,8 +2,8 @@ import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SettingsContextDelegateTopic } from "../../delegates/SettingsContextDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import type { ItemGroup } from "../../interfacesAndTypes/entitites";
-import type { SerializedDeltaSurface} from "../../interfacesAndTypes/serialization";
+import type { ItemGroup } from "../../interfacesAndTypes/entities";
+import type { SerializedDeltaSurface } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
 import { DataLayer } from "../DataLayer/DataLayer";
 import type { DataLayerManager } from "../DataLayerManager/DataLayerManager";

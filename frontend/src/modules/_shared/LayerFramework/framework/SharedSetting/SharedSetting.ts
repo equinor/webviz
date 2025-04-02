@@ -1,13 +1,25 @@
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
-import type { Item, SharedSettingsProvider } from "../../interfacesAndTypes/entitites";
-import type { SerializedSharedSetting} from "../../interfacesAndTypes/serialization";
+import type { Item, SharedSettingsProvider } from "../../interfacesAndTypes/entities";
+import type { SerializedSharedSetting } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
 import { SettingRegistry } from "../../settings/SettingRegistry";
 import type { Setting, SettingTypes } from "../../settings/settingsDefinitions";
-import type { DataLayerManager} from "../DataLayerManager/DataLayerManager";
+import type { DataLayerManager } from "../DataLayerManager/DataLayerManager";
 import { LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 import type { SettingManager } from "../SettingManager/SettingManager";
+
+export function isSharedSetting(obj: any): obj is SharedSetting<any> {
+    if (typeof obj !== "object" || obj === null) {
+        return false;
+    }
+    if (obj.constructor.name !== "SharedSetting") {
+        return false;
+    }
+
+    const sharedSetting: SharedSetting<any> = obj as SharedSetting<any>;
+    return Object.hasOwn(sharedSetting, "getSharedSettingsDelegate");
+}
 
 export class SharedSetting<TSetting extends Setting> implements Item, SharedSettingsProvider {
     private _sharedSettingsDelegate: SharedSettingsDelegate<[TSetting]>;

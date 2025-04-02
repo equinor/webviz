@@ -4,44 +4,47 @@ import type { IsMoveAllowedArgs } from "@lib/components/SortableList";
 import { SortableList } from "@lib/components/SortableList";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import type { GroupDelegate} from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
+import type { GroupDelegate } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { Add } from "@mui/icons-material";
 
 import type { DataLayerManager } from "./DataLayerManager";
 
-import type { LayersActionGroup} from "../../LayersActions";
-import { LayersActions } from "../../LayersActions";
+import type { ActionGroup } from "../../Actions";
+import { Actions } from "../../Actions";
 import { View } from "../../groups/implementations/View";
-import type { Item, ItemGroup} from "../../interfacesAndTypes/entitites";
-import { instanceofItemGroup } from "../../interfacesAndTypes/entitites";
+import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
+import { instanceofItemGroup } from "../../interfacesAndTypes/entities";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
 export type LayerManagerComponentProps = {
-    layerManager: DataLayerManager;
+    title: string;
+    dataLayerManager: DataLayerManager;
     additionalHeaderComponents: React.ReactNode;
-    layerActions: LayersActionGroup[];
-    onLayerAction: (identifier: string, groupDelegate: GroupDelegate) => void;
+    groupActions: ActionGroup[] | ((group: ItemGroup) => ActionGroup[]);
+    onAction: (identifier: string, groupDelegate: GroupDelegate) => void;
     isMoveAllowed?: (movedItem: Item, destinationGroup: ItemGroup) => boolean;
 };
 
-export function LayerManagerComponent(props: LayerManagerComponentProps): React.ReactNode {
-    const layerListRef = React.useRef<HTMLDivElement>(null);
-    const layerListSize = useElementSize(layerListRef);
+export function DataLayerManagerComponent(props: LayerManagerComponentProps): React.ReactNode {
+    const { groupActions } = props;
 
-    const groupDelegate = props.layerManager.getGroupDelegate();
+    const listRef = React.useRef<HTMLDivElement>(null);
+    const listSize = useElementSize(listRef);
+
+    const groupDelegate = props.dataLayerManager.getGroupDelegate();
     const items = usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
-    function handleLayerAction(identifier: string, group?: ItemGroup) {
-        let groupDelegate = props.layerManager.getGroupDelegate();
+    function handleActionClick(identifier: string, group?: ItemGroup) {
+        let groupDelegate = props.dataLayerManager.getGroupDelegate();
         if (group) {
             groupDelegate = group.getGroupDelegate();
         }
 
-        props.onLayerAction(identifier, groupDelegate);
+        props.onAction(identifier, groupDelegate);
     }
 
     function checkIfItemMoveAllowed(args: IsMoveAllowedArgs): boolean {
@@ -52,7 +55,7 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
 
         const destinationItem = args.destinationId
             ? groupDelegate.findDescendantById(args.destinationId)
-            : props.layerManager;
+            : props.dataLayerManager;
 
         if (!destinationItem || !instanceofItemGroup(destinationItem)) {
             return false;
@@ -103,7 +106,7 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
             return;
         }
 
-        let origin = props.layerManager.getGroupDelegate();
+        let origin = props.dataLayerManager.getGroupDelegate();
         if (originId) {
             const candidate = groupDelegate.findDescendantById(originId);
             if (candidate && instanceofItemGroup(candidate)) {
@@ -111,7 +114,7 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
             }
         }
 
-        let destination = props.layerManager.getGroupDelegate();
+        let destination = props.dataLayerManager.getGroupDelegate();
         if (destinationId) {
             const candidate = groupDelegate.findDescendantById(destinationId);
             if (candidate && instanceofItemGroup(candidate)) {
@@ -128,30 +131,44 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
         destination.insertChild(movedItem, position);
     }
 
+    const actions = React.useMemo(() => {
+        if (typeof groupActions === "function") {
+            return groupActions(props.dataLayerManager);
+        }
+        return groupActions;
+    }, [props.dataLayerManager, groupActions]);
+
+    const makeActionsForGroup = (group: ItemGroup) => {
+        if (typeof groupActions === "function") {
+            return groupActions(group);
+        }
+        return groupActions;
+    };
+
     return (
         <div className="grow flex flex-col min-h-0">
-            <div className="w-full grow flex flex-col min-h-0" ref={layerListRef}>
+            <div className="w-full grow flex flex-col min-h-0" ref={listRef}>
                 <div className="flex bg-slate-100 h-12 p-2 items-center border-b border-gray-300 gap-2">
-                    <div className="grow font-bold text-sm">Layers</div>
-                    <LayersActions layersActionGroups={props.layerActions} onActionClick={handleLayerAction} />
-                    <ExpandCollapseAllButton group={props.layerManager} />
+                    <div className="grow font-bold text-sm">{props.title}</div>
+                    <Actions layersActionGroups={actions} onActionClick={handleActionClick} />
+                    <ExpandCollapseAllButton group={props.dataLayerManager} />
                     {props.additionalHeaderComponents}
                 </div>
                 <div
                     className="w-full grow flex flex-col relative"
-                    style={{ height: layerListSize.height - convertRemToPixels(12) }}
+                    style={{ height: listSize.height - convertRemToPixels(12) }}
                 >
                     <SortableList
                         onItemMoved={handleItemMoved}
                         isMoveAllowed={checkIfItemMoveAllowed}
                         contentWhenEmpty={
                             <div className="flex -mt-1 justify-center text-sm items-center gap-1 h-40">
-                                Click on <Add fontSize="inherit" /> to add a layer.
+                                Click on <Add fontSize="inherit" /> to add an item.
                             </div>
                         }
                     >
                         {items.map((item: Item) =>
-                            makeSortableListItemComponent(item, props.layerActions, handleLayerAction),
+                            makeSortableListItemComponent(item, makeActionsForGroup, handleActionClick),
                         )}
                     </SortableList>
                 </div>

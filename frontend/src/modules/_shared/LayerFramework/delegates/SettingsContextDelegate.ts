@@ -11,8 +11,8 @@ import type { SettingManager } from "../framework/SettingManager/SettingManager"
 import { SettingTopic } from "../framework/SettingManager/SettingManager";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
 import type { CustomSettingsHandler, UpdateFunc } from "../interfacesAndTypes/customSettingsHandler";
-import type { SharedSettingsProvider } from "../interfacesAndTypes/entitites";
-import { instanceofSharedSettingsProvider } from "../interfacesAndTypes/entitites";
+import type { SharedSettingsProvider } from "../interfacesAndTypes/entities";
+import { instanceofSharedSettingsProvider } from "../interfacesAndTypes/entities";
 import type { SerializedSettingsState } from "../interfacesAndTypes/serialization";
 import type { NullableStoredData, StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { AvailableValuesType, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";

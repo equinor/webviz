@@ -1,10 +1,22 @@
 import { GroupDelegate } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
-import type { ItemGroup } from "../../interfacesAndTypes/entitites";
-import type { SerializedSettingsGroup} from "../../interfacesAndTypes/serialization";
+import type { ItemGroup } from "../../interfacesAndTypes/entities";
+import type { SerializedSettingsGroup } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
 import type { DataLayerManager } from "../DataLayerManager/DataLayerManager";
 
+export function isSettingsGroup(obj: any): obj is SettingsGroup {
+    if (typeof obj !== "object" || obj === null) {
+        return false;
+    }
+    if (obj.constructor.name !== "SettingsGroup") {
+        return false;
+    }
+
+    const settingsGroup: SettingsGroup = obj as SettingsGroup;
+
+    return Object.hasOwn(settingsGroup, "getGroupDelegate");
+}
 export class SettingsGroup implements ItemGroup {
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
