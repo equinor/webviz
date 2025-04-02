@@ -92,7 +92,7 @@ VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.DRILLED_WELL_TRAJECTORIES
     calculateBoundingBoxFunction: makeDrilledWellTrajectoriesBoundingBox,
 });
 
-VISUALIZATION_FACTORY.registerViewFunction(GroupType.VIEW, View, () => ({}));
+VISUALIZATION_FACTORY.registerGroupDataCollector(GroupType.VIEW, View, () => ({}));
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<bbox.BBox | null>(null);
@@ -121,8 +121,8 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     const factoryProduct = VISUALIZATION_FACTORY.make(props.layerManager);
 
-    numCols = Math.ceil(Math.sqrt(factoryProduct.views.length));
-    numRows = Math.ceil(factoryProduct.views.length / numCols);
+    numCols = Math.ceil(Math.sqrt(factoryProduct.groups.length));
+    numRows = Math.ceil(factoryProduct.groups.length / numCols);
 
     if (props.preferredViewLayout === PreferredViewLayout.HORIZONTAL) {
         [numCols, numRows] = [numRows, numCols];
@@ -130,18 +130,18 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     views.layout = [numCols, numRows];
 
-    viewerLayers.push(...factoryProduct.layers);
+    viewerLayers.push(...factoryProduct.dataLayers);
     globalAnnotations.push(...factoryProduct.annotations);
-    const globalLayerIds = factoryProduct.layers.map((layer) => layer.layer.id);
+    const globalLayerIds = factoryProduct.dataLayers.map((layer) => layer.layer.id);
 
-    for (const view of factoryProduct.views) {
+    for (const view of factoryProduct.groups) {
         viewports.push({
             id: view.id,
             name: view.name,
             isSync: true,
-            layerIds: [...globalLayerIds, ...view.layers.map((layer) => layer.layer.id), "placeholder"],
+            layerIds: [...globalLayerIds, ...view.children.map((layer) => layer.layer.id), "placeholder"],
         });
-        viewerLayers.push(...view.layers);
+        viewerLayers.push(...view.children);
 
         viewportAnnotations.push(
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -175,10 +175,10 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         }
     }
 
-    numLoadingLayers = factoryProduct.numLoadingLayers;
-    statusWriter.setLoading(factoryProduct.numLoadingLayers > 0);
+    numLoadingLayers = factoryProduct.numLoadingDataLayers;
+    statusWriter.setLoading(factoryProduct.numLoadingDataLayers > 0);
 
-    for (const message of factoryProduct.errorMessages) {
+    for (const message of factoryProduct.aggregatedErrorMessages) {
         statusWriter.addError(message);
     }
 
