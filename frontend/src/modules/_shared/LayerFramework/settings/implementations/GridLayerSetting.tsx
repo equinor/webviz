@@ -40,7 +40,7 @@ export class GridLayerSetting implements CustomSettingImplementation<ValueType, 
 
     isValueValid(
         value: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>,
     ): boolean {
         if (value === null) {
             return false;
@@ -62,7 +62,7 @@ export class GridLayerSetting implements CustomSettingImplementation<ValueType, 
 
     fixupValue(
         currentValue: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>,
     ): ValueType {
         if (!availableValues) {
             return null;
@@ -92,12 +92,16 @@ export class GridLayerSetting implements CustomSettingImplementation<ValueType, 
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.NUMBER>) => React.ReactNode {
         return function Ensemble(props: SettingComponentProps<ValueType, SettingCategory.NUMBER>) {
-            const kRange = [props.availableValues?.[0] ?? 0, props.availableValues?.[1] ?? 0];
+            const start = props.availableValues?.[0] ?? 0;
+            const end = props.availableValues?.[1] ?? 0;
 
-            const options: DropdownOption[] = kRange.map((value) => {
+            const rangeSize = end - start;
+
+            const options: DropdownOption[] = Array.from({ length: rangeSize }, (_, index) => {
+                const value = start + index;
                 return {
                     value: value.toString(),
-                    label: value === null ? "None" : value.toString(),
+                    label: value.toString(),
                 };
             });
 
