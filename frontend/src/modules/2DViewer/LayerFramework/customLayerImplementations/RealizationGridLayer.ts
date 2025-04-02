@@ -59,7 +59,9 @@ export class RealizationGridLayer
 
     makeValueRange({
         getData,
-    }: DataLayerInformationAccessors<RealizationGridSettings, RealizationGridData>): [number, number] | null {
+    }: DataLayerInformationAccessors<RealizationGridSettings, RealizationGridData, StoredData>):
+        | [number, number]
+        | null {
         const data = getData();
         if (!data) {
             return null;
@@ -157,7 +159,7 @@ export class RealizationGridLayer
 
     areCurrentSettingsValid({
         getSetting,
-    }: DataLayerInformationAccessors<RealizationGridSettings, RealizationGridData>): boolean {
+    }: DataLayerInformationAccessors<RealizationGridSettings, RealizationGridData, StoredData>): boolean {
         return (
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&
@@ -281,8 +283,8 @@ export class RealizationGridLayer
                     new Set(
                         gridAttributeArr
                             .filter((attr) => attr.property_name === gridAttribute)
-                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME")
-                    )
+                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
+                    ),
                 ),
             ];
 
