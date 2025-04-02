@@ -2,12 +2,15 @@ name: integration
 
 on:
   push:
+    branches:
+      - "**"
   workflow_dispatch:
   schedule:
     - cron: "0 0 * * *"
 
 jobs:
   sumo_prod:
+    if: github.repository == "equinor/webviz" # Prevent execution on forks
     runs-on: ubuntu-latest
     permissions:
       contents: read
