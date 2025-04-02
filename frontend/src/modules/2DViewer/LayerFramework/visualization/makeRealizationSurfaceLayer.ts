@@ -2,9 +2,9 @@ import type { SurfaceDef_api } from "@api";
 import { degreesToRadians } from "@lib/utils/geometry";
 import type { Vec2 } from "@lib/utils/vec2";
 import { rotatePoint2Around } from "@lib/utils/vec2";
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
-import { makeColorMapFunctionFromColorScale } from "@modules/_shared/LayerFramework/visualization/utils/colors";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { FactoryFunctionArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import { ColormapLayer, Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import {
@@ -54,7 +54,7 @@ export function makeRealizationSurfaceLayer({
             colorMapFunction: makeColorMapFunctionFromColorScale(
                 colorScale,
                 data.surfaceData.value_min,
-                data.surfaceData.value_max
+                data.surfaceData.value_max,
             ),
         });
     }
@@ -74,7 +74,7 @@ export function makeRealizationSurfaceLayer({
         colorMapFunction: makeColorMapFunctionFromColorScale(
             colorScale,
             data.surfaceData.value_min,
-            data.surfaceData.value_max
+            data.surfaceData.value_max,
         ),
     });
 }

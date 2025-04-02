@@ -1,8 +1,8 @@
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type {
     Annotation,
     FactoryFunctionArgs,
-} from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 
 export function makeColorScaleAnnotation({

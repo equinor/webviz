@@ -4,7 +4,7 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
+import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -14,9 +14,9 @@ import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 import { LayerManagerComponentWrapper } from "./components/layerManagerComponentWrapper";
 
 import {
-    DataLayerManager,
+    DataProviderManager,
     LayerManagerTopic,
-} from "../../_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
+} from "../../_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -48,7 +48,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     );
 
     const applyPersistedState = React.useCallback(
-        function applyPersistedState(layerManager: DataLayerManager) {
+        function applyPersistedState(layerManager: DataProviderManager) {
             const serializedState = window.localStorage.getItem(
                 `${props.settingsContext.getInstanceIdString()}-settings`,
             );
@@ -76,7 +76,11 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
 
     React.useEffect(
         function onMountEffect() {
-            const newLayerManager = new DataLayerManager(props.workbenchSession, props.workbenchSettings, queryClient);
+            const newLayerManager = new DataProviderManager(
+                props.workbenchSession,
+                props.workbenchSettings,
+                queryClient,
+            );
             setLayerManager(newLayerManager);
 
             applyPersistedState(newLayerManager);

@@ -1,13 +1,13 @@
 import type { SurfaceDataPng_api } from "@api";
 import { SurfaceTimeType_api, getRealizationSurfacesMetadataOptions, getSurfaceDataOptions } from "@api";
+import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type {
-    CustomDataLayerImplementation,
-    DataLayerInformationAccessors,
+    CustomDataProviderImplementation,
+    DataProviderInformationAccessors,
     FetchDataParams,
-} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { FullSurfaceAddress } from "@modules/_shared/Surface";
 import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
@@ -37,7 +37,7 @@ export type RealizationSurfaceData =
     | { format: SurfaceDataFormat.PNG; surfaceData: SurfaceDataPng_api };
 
 export class RealizationSurfaceLayer
-    implements CustomDataLayerImplementation<RealizationSurfaceSettings, RealizationSurfaceData>
+    implements CustomDataProviderImplementation<RealizationSurfaceSettings, RealizationSurfaceData>
 {
     settings = realizationSurfaceSettings;
 
@@ -57,13 +57,13 @@ export class RealizationSurfaceLayer
                 ...prevSettings,
                 colorScale: null,
             },
-            { ...newSettings, colorScale: null }
+            { ...newSettings, colorScale: null },
         );
     }
 
     areCurrentSettingsValid({
         getSetting,
-    }: DataLayerInformationAccessors<RealizationSurfaceSettings, RealizationSurfaceData>): boolean {
+    }: DataProviderInformationAccessors<RealizationSurfaceSettings, RealizationSurfaceData>): boolean {
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         const realizationNum = getSetting(Setting.REALIZATION);
         const surfaceName = getSetting(Setting.SURFACE_NAME);
@@ -81,7 +81,7 @@ export class RealizationSurfaceLayer
 
     makeValueRange({
         getData,
-    }: DataLayerInformationAccessors<RealizationSurfaceSettings, RealizationSurfaceData>): [number, number] | null {
+    }: DataProviderInformationAccessors<RealizationSurfaceSettings, RealizationSurfaceData>): [number, number] | null {
         const data = getData()?.surfaceData;
         if (!data) {
             return null;
@@ -162,8 +162,8 @@ export class RealizationSurfaceLayer
             const availableSurfaceNames = [
                 ...Array.from(
                     new Set(
-                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name)
-                    )
+                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name),
+                    ),
                 ),
             ];
 
@@ -185,8 +185,8 @@ export class RealizationSurfaceLayer
                     new Set(
                         data.surfaces
                             .filter((surface) => surface.attribute_name === attribute && surface.name === surfaceName)
-                            .map((el) => el.time_type)
-                    )
+                            .map((el) => el.time_type),
+                    ),
                 ),
             ];
 

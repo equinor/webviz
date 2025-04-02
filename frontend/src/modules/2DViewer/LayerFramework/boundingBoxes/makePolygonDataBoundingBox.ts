@@ -1,6 +1,6 @@
 import type { PolygonData_api } from "@api";
 import type { BBox } from "@lib/utils/bbox";
-import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import type { FactoryFunctionArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 export function makePolygonDataBoundingBox({ getData }: FactoryFunctionArgs<any, PolygonData_api[]>): BBox | null {
     const data = getData();

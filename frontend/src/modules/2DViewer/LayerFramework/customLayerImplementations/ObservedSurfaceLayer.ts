@@ -1,13 +1,13 @@
 import type { SurfaceDataPng_api } from "@api";
 import { SurfaceTimeType_api, getObservedSurfacesMetadataOptions, getSurfaceDataOptions } from "@api";
+import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type {
-    CustomDataLayerImplementation,
-    DataLayerInformationAccessors,
+    CustomDataProviderImplementation,
+    DataProviderInformationAccessors,
     FetchDataParams,
-} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { FullSurfaceAddress } from "@modules/_shared/Surface";
 import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
@@ -36,7 +36,7 @@ export type ObservedSurfaceData =
     | { format: SurfaceDataFormat.PNG; surfaceData: SurfaceDataPng_api };
 
 export class ObservedSurfaceLayer
-    implements CustomDataLayerImplementation<ObservedSurfaceSettings, ObservedSurfaceData>
+    implements CustomDataProviderImplementation<ObservedSurfaceSettings, ObservedSurfaceData>
 {
     settings = observedSurfaceSettings;
 
@@ -56,7 +56,7 @@ export class ObservedSurfaceLayer
 
     makeValueRange({
         getData,
-    }: DataLayerInformationAccessors<ObservedSurfaceSettings, ObservedSurfaceData>): [number, number] | null {
+    }: DataProviderInformationAccessors<ObservedSurfaceSettings, ObservedSurfaceData>): [number, number] | null {
         const data = getData()?.surfaceData;
         if (!data) {
             return null;
@@ -125,8 +125,8 @@ export class ObservedSurfaceLayer
             const availableSurfaceNames = [
                 ...Array.from(
                     new Set(
-                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name)
-                    )
+                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name),
+                    ),
                 ),
             ];
 
@@ -148,8 +148,8 @@ export class ObservedSurfaceLayer
                     new Set(
                         data.surfaces
                             .filter((surface) => surface.attribute_name === attribute && surface.name === surfaceName)
-                            .map((el) => el.time_type)
-                    )
+                            .map((el) => el.time_type),
+                    ),
                 ),
             ];
 

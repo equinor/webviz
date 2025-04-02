@@ -23,23 +23,23 @@ import { makeRealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/vi
 import { makeStatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/visualization/makeStatisticalSurfaceLayer";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
-import type { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
-import { LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
-import { GroupType } from "@modules/_shared/LayerFramework/groups/groupTypes";
-import { View } from "@modules/_shared/LayerFramework/groups/implementations/View";
-import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
-import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
-import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
+import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import { View } from "@modules/_shared/DataProviderFramework/groups/implementations/View";
+import { DrilledWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/layers/implementations/DrilledWellTrajectoriesLayer";
+import { DrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/layers/implementations/DrilledWellborePicksLayer";
+import { LayerType } from "@modules/_shared/DataProviderFramework/layers/layerTypes";
 import type {
     Annotation,
     LayerWithPosition,
     VisualizationTarget,
-} from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
-import { VisualizationFactory } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
-import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
-import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
-import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
-import { makeDrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
+} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { VisualizationAssembler } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
+import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
+import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
+import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
+import type { DataProviderManager } from "@modules/_shared/LayerFramework/framework/DataProviderManager/DataProviderManager";
+import { LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/DataProviderManager/DataProviderManager";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import type { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
@@ -51,12 +51,12 @@ import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/Placeholde
 import "../../LayerFramework/customLayerImplementations/registerAllLayers";
 
 export type LayersWrapperProps = {
-    layerManager: DataLayerManager;
+    layerManager: DataProviderManager;
     preferredViewLayout: PreferredViewLayout;
     viewContext: ViewContext<Interfaces>;
 };
 
-const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.DECK_GL>();
+const VISUALIZATION_FACTORY = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
 VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.OBSERVED_SURFACE, ObservedSurfaceLayer, {
     makeVisualizationFunction: makeObservedSurfaceLayer,

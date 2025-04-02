@@ -1,12 +1,12 @@
 import type { PolygonData_api } from "@api";
 import { getPolygonsDataOptions, getPolygonsDirectoryOptions } from "@api";
+import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type {
-    CustomDataLayerImplementation,
+    CustomDataProviderImplementation,
     FetchDataParams,
-} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataProviderImplementation";
 
 import { isEqual } from "lodash";
 
@@ -21,7 +21,7 @@ type SettingsWithTypes = MakeSettingTypesMap<RealizationPolygonsSettings>;
 
 export type RealizationPolygonsData = PolygonData_api[];
 export class RealizationPolygonsLayer
-    implements CustomDataLayerImplementation<RealizationPolygonsSettings, RealizationPolygonsData>
+    implements CustomDataProviderImplementation<RealizationPolygonsSettings, RealizationPolygonsData>
 {
     settings = realizationPolygonsSettings;
 
@@ -105,8 +105,8 @@ export class RealizationPolygonsLayer
             const availableSurfaceNames = [
                 ...Array.from(
                     new Set(
-                        data.filter((polygonsMeta) => polygonsMeta.attribute_name === attribute).map((el) => el.name)
-                    )
+                        data.filter((polygonsMeta) => polygonsMeta.attribute_name === attribute).map((el) => el.name),
+                    ),
                 ),
             ];
 

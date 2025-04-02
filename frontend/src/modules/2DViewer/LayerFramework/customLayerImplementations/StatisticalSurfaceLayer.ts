@@ -5,15 +5,15 @@ import {
     getRealizationSurfacesMetadataOptions,
     getSurfaceDataOptions,
 } from "@api";
+import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { SensitivityNameCasePair } from "@modules/_shared/DataProviderFramework/settings/implementations/SensitivitySetting";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type {
-    CustomDataLayerImplementation,
-    DataLayerInformationAccessors,
+    CustomDataProviderImplementation,
+    DataProviderInformationAccessors,
     FetchDataParams,
-} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import type { SensitivityNameCasePair } from "@modules/_shared/LayerFramework/settings/implementations/SensitivitySetting";
-import type { MakeSettingTypesMap } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { FullSurfaceAddress } from "@modules/_shared/Surface";
 import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
@@ -44,7 +44,7 @@ export type StatisticalSurfaceData =
     | { format: SurfaceDataFormat.PNG; surfaceData: SurfaceDataPng_api };
 
 export class StatisticalSurfaceLayer
-    implements CustomDataLayerImplementation<StatisticalSurfaceSettings, StatisticalSurfaceData>
+    implements CustomDataProviderImplementation<StatisticalSurfaceSettings, StatisticalSurfaceData>
 {
     settings = statisicalSurfaceSettings;
 
@@ -70,7 +70,7 @@ export class StatisticalSurfaceLayer
 
     makeValueRange({
         getData,
-    }: DataLayerInformationAccessors<StatisticalSurfaceSettings, StatisticalSurfaceData>): [number, number] | null {
+    }: DataProviderInformationAccessors<StatisticalSurfaceSettings, StatisticalSurfaceData>): [number, number] | null {
         const data = getData()?.surfaceData;
         if (!data) {
             return null;
@@ -116,7 +116,7 @@ export class StatisticalSurfaceLayer
                         sensitivityName: sensitivity.name,
                         sensitivityCase: sensitivityCase.name,
                     });
-                })
+                }),
             );
             return availableSensitivityPairs;
         });
@@ -163,8 +163,8 @@ export class StatisticalSurfaceLayer
             const availableSurfaceNames = [
                 ...Array.from(
                     new Set(
-                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name)
-                    )
+                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name),
+                    ),
                 ),
             ];
 
@@ -186,8 +186,8 @@ export class StatisticalSurfaceLayer
                     new Set(
                         data.surfaces
                             .filter((surface) => surface.attribute_name === attribute && surface.name === surfaceName)
-                            .map((el) => el.time_type)
-                    )
+                            .map((el) => el.time_type),
+                    ),
                 ),
             ];
 
@@ -244,7 +244,7 @@ export class StatisticalSurfaceLayer
                 const sensitivityRealizations = sensitivity?.realizations ?? [];
 
                 filteredRealizations = filteredRealizations.filter((realization) =>
-                    sensitivityRealizations.includes(realization)
+                    sensitivityRealizations.includes(realization),
                 );
             }
 

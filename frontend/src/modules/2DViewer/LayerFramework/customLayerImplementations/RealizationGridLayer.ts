@@ -1,14 +1,14 @@
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
 import type { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import { transformGridMappedProperty, transformGridSurface } from "@modules/3DViewer/view/queries/queryDataTransforms";
+import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type {
-    CustomDataLayerImplementation,
-    DataLayerInformationAccessors,
+    CustomDataProviderImplementation,
+    DataProviderInformationAccessors,
     FetchDataParams,
-} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataProviderImplementation";
 
 import { isEqual } from "lodash";
 
@@ -39,7 +39,7 @@ type StoredData = {
 };
 
 export class RealizationGridLayer
-    implements CustomDataLayerImplementation<RealizationGridSettings, RealizationGridData, StoredData>
+    implements CustomDataProviderImplementation<RealizationGridSettings, RealizationGridData, StoredData>
 {
     settings = realizationGridSettings;
 
@@ -59,7 +59,7 @@ export class RealizationGridLayer
 
     makeValueRange({
         getData,
-    }: DataLayerInformationAccessors<RealizationGridSettings, RealizationGridData, StoredData>):
+    }: DataProviderInformationAccessors<RealizationGridSettings, RealizationGridData, StoredData>):
         | [number, number]
         | null {
         const data = getData();
@@ -159,7 +159,7 @@ export class RealizationGridLayer
 
     areCurrentSettingsValid({
         getSetting,
-    }: DataLayerInformationAccessors<RealizationGridSettings, RealizationGridData, StoredData>): boolean {
+    }: DataProviderInformationAccessors<RealizationGridSettings, RealizationGridData, StoredData>): boolean {
         return (
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&

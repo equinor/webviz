@@ -1,6 +1,6 @@
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
-import { makeColorMapFunctionFromColorScale } from "@modules/_shared/LayerFramework/visualization/utils/colors";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { FactoryFunctionArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import type { RealizationGridData, RealizationGridSettings } from "../customLayerImplementations/RealizationGridLayer";
@@ -38,7 +38,7 @@ export function makeRealizationGridLayer({
         colorMapFunction: makeColorMapFunctionFromColorScale(
             colorScale,
             gridParameterData.min_grid_prop_value,
-            gridParameterData.max_grid_prop_value
+            gridParameterData.max_grid_prop_value,
         ),
     });
     return grid3dLayer;

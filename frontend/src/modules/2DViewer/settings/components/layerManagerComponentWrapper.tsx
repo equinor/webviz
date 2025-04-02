@@ -13,23 +13,23 @@ import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/custom
 import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
 import { CustomLayerType } from "@modules/2DViewer/LayerFramework/customLayerImplementations/layerTypes";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
-import type { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions";
-import type { GroupDelegate } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
-import { GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
-import { DataLayer } from "@modules/_shared/LayerFramework/framework/DataLayer/DataLayer";
-import type { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
-import { LayerManagerComponent } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManagerComponent";
-import { DeltaSurface } from "@modules/_shared/LayerFramework/framework/DeltaSurface/DeltaSurface";
-import { Group } from "@modules/_shared/LayerFramework/framework/Group/Group";
-import { SettingsGroup } from "@modules/_shared/LayerFramework/framework/SettingsGroup/SettingsGroup";
-import { SharedSetting } from "@modules/_shared/LayerFramework/framework/SharedSetting/SharedSetting";
-import { GroupRegistry } from "@modules/_shared/LayerFramework/groups/GroupRegistry";
-import { GroupType } from "@modules/_shared/LayerFramework/groups/groupTypes";
-import type { Item, ItemGroup } from "@modules/_shared/LayerFramework/interfacesAndTypes/entitites";
-import { instanceofItemGroup } from "@modules/_shared/LayerFramework/interfacesAndTypes/entitites";
-import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
-import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import type { LayersActionGroup } from "@modules/_shared/DataProviderFramework/LayersActions";
+import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
+import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
+import { DeltaSurface } from "@modules/_shared/DataProviderFramework/framework/DeltaSurface/DeltaSurface";
+import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
+import { SettingsGroup } from "@modules/_shared/DataProviderFramework/framework/SettingsGroup/SettingsGroup";
+import { SharedSetting } from "@modules/_shared/DataProviderFramework/framework/SharedSetting/SharedSetting";
+import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
+import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entitites";
+import { instanceofItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entitites";
+import { LayerRegistry } from "@modules/_shared/DataProviderFramework/layers/LayerRegistry";
+import { LayerType } from "@modules/_shared/DataProviderFramework/layers/layerTypes";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { DataProvider } from "@modules/_shared/LayerFramework/framework/DataProvider/DataProvider";
+import type { DataProviderManager } from "@modules/_shared/LayerFramework/framework/DataProviderManager/DataProviderManager";
+import { LayerManagerComponent } from "@modules/_shared/LayerFramework/framework/DataProviderManager/DataProviderManagerComponent";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { Dropdown } from "@mui/base";
 import {
@@ -46,7 +46,7 @@ import { useAtom } from "jotai";
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 
 export type LayerManagerComponentWrapperProps = {
-    layerManager: DataLayerManager;
+    layerManager: DataProviderManager;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
 };
@@ -76,37 +76,37 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 return;
             case "observed-surface":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.OBSERVED_SURFACE, props.layerManager)
+                    LayerRegistry.makeLayer(CustomLayerType.OBSERVED_SURFACE, props.layerManager),
                 );
                 return;
             case "statistical-surface":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.STATISTICAL_SURFACE, props.layerManager)
+                    LayerRegistry.makeLayer(CustomLayerType.STATISTICAL_SURFACE, props.layerManager),
                 );
                 return;
             case "realization-surface":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_SURFACE, props.layerManager)
+                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_SURFACE, props.layerManager),
                 );
                 return;
             case "realization-polygons":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_POLYGONS, props.layerManager)
+                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_POLYGONS, props.layerManager),
                 );
                 return;
             case "drilled-wellbore-trajectories":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(LayerType.DRILLED_WELL_TRAJECTORIES, props.layerManager)
+                    LayerRegistry.makeLayer(LayerType.DRILLED_WELL_TRAJECTORIES, props.layerManager),
                 );
                 return;
             case "drilled-wellbore-picks":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(LayerType.DRILLED_WELLBORE_PICKS, props.layerManager)
+                    LayerRegistry.makeLayer(LayerType.DRILLED_WELLBORE_PICKS, props.layerManager),
                 );
                 return;
             case "realization-grid":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_GRID, props.layerManager)
+                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_GRID, props.layerManager),
                 );
                 return;
             case "ensemble":
@@ -130,7 +130,7 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
     function checkIfItemMoveAllowed(movedItem: Item, destinationItem: ItemGroup): boolean {
         if (destinationItem instanceof DeltaSurface) {
             if (
-                movedItem instanceof DataLayer &&
+                movedItem instanceof DataProvider &&
                 !(
                     movedItem instanceof RealizationSurfaceLayer ||
                     movedItem instanceof StatisticalSurfaceLayer ||
@@ -144,7 +144,7 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 return false;
             }
 
-            if (destinationItem.getGroupDelegate().findChildren((item) => item instanceof DataLayer).length >= 2) {
+            if (destinationItem.getGroupDelegate().findChildren((item) => item instanceof DataProvider).length >= 2) {
                 return false;
             }
         }
