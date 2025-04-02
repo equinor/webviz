@@ -5,14 +5,14 @@ import { LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManage
 import { Group } from "../framework/Group/Group";
 import type { SettingManager } from "../framework/SettingManager/SettingManager";
 import { SettingTopic } from "../framework/SettingManager/SettingManager";
-import type { Item } from "../interfacesAndTypes/entitites";
+import type { Item } from "../interfacesAndTypes/entities";
 import type { AvailableValuesType, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { SettingTypes, Settings } from "../settings/settingsDefinitions";
 import { settingCategoryAvailableValuesIntersectionReducerMap } from "../settings/settingsDefinitions";
 
 export class SharedSettingsDelegate<
     TSettings extends Settings,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > {
     private _parentItem: Item;
     private _wrappedSettings: { [K in TSettingKey]: SettingManager<K, SettingTypes[K]> } = {} as {
@@ -34,7 +34,7 @@ export class SharedSettingsDelegate<
                 "setting",
                 wrappedSettings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(() => {
                     this.publishValueChange();
-                })
+                }),
             );
         }
 
@@ -42,15 +42,15 @@ export class SharedSettingsDelegate<
             "layer-manager",
             layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.ITEMS)(() => {
                 this.makeIntersectionOfAvailableValues();
-            })
+            }),
         );
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "layer-manager",
             layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.SETTINGS_CHANGED)(
                 () => {
                     this.makeIntersectionOfAvailableValues();
-                }
-            )
+                },
+            ),
         );
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "layer-manager",
@@ -58,7 +58,7 @@ export class SharedSettingsDelegate<
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(LayerManagerTopic.AVAILABLE_SETTINGS_CHANGED)(() => {
                 this.makeIntersectionOfAvailableValues();
-            })
+            }),
         );
     }
 
@@ -114,7 +114,7 @@ export class SharedSettingsDelegate<
                         availableValuesMap[key] = reducer(
                             availableValuesMap[key] as any,
                             setting.getAvailableValues(),
-                            index
+                            index,
                         ) as AvailableValuesType<typeof key>;
                     }
                     indices[key] = index + 1;

@@ -7,7 +7,7 @@ import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
 import type { CustomSettingImplementation } from "../../interfacesAndTypes/customSettingImplementation";
-import type { SharedSettingsProvider } from "../../interfacesAndTypes/entitites";
+import type { SharedSettingsProvider } from "../../interfacesAndTypes/entities";
 import type { AvailableValuesType, MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
 import type { Setting, SettingCategories, SettingCategory, SettingTypes } from "../../settings/settingsDefinitions";
 import { settingCategoryFixupMap, settingCategoryIsValueValidMap } from "../../settings/settingsDefinitions";
@@ -38,7 +38,7 @@ export type SettingTopicPayloads<TValue, TCategory extends SettingCategory> = {
 export type SettingManagerParams<
     TSetting extends Setting,
     TValue extends SettingTypes[TSetting] | null,
-    TCategory extends SettingCategories[TSetting]
+    TCategory extends SettingCategories[TSetting],
 > = {
     type: TSetting;
     category: TCategory;
@@ -61,7 +61,7 @@ export enum OverriddenValueProviderType {
 export class SettingManager<
     TSetting extends Setting,
     TValue extends SettingTypes[TSetting] = SettingTypes[TSetting],
-    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting]
+    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
 > implements PublishSubscribe<SettingTopicPayloads<TValue, TCategory>>
 {
     private _id: string;
@@ -207,7 +207,7 @@ export class SettingManager<
     valueToRepresentation(
         value: TValue,
         workbenchSession: WorkbenchSession,
-        workbenchSettings: WorkbenchSettings
+        workbenchSettings: WorkbenchSettings,
     ): React.ReactNode {
         if (this._customSettingImplementation.overriddenValueRepresentation) {
             return this._customSettingImplementation.overriddenValueRepresentation({
@@ -342,12 +342,12 @@ export class SettingManager<
         if (customIsValueValidFunction) {
             isPersistedValueValid = customIsValueValidFunction(
                 this._currentValueFromPersistence,
-                this._availableValues
+                this._availableValues,
             );
         } else {
             isPersistedValueValid = settingCategoryIsValueValidMap[this._category](
                 this._currentValueFromPersistence as any,
-                this._availableValues as any
+                this._availableValues as any,
             );
         }
 
@@ -405,7 +405,7 @@ export class SettingManager<
         } else {
             candidate = settingCategoryFixupMap[this._category](
                 this._value as any,
-                this._availableValues as any
+                this._availableValues as any,
             ) as TValue;
         }
 

@@ -18,8 +18,8 @@ import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import "../../groups/registerAllGroups";
-import type { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
-import type { SerializedLayerManager } from "../../interfacesAndTypes/serialization";
+import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
+import type { SerializedDataLayerManager } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
 import "../../layers/registerAllLayers";
 import "../../settings/registerAllSettings";
@@ -84,22 +84,22 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
             "workbenchSession",
             this._workbenchSession.subscribe(
                 WorkbenchSessionEvent.EnsembleSetChanged,
-                this.handleEnsembleSetChanged.bind(this)
-            )
+                this.handleEnsembleSetChanged.bind(this),
+            ),
         );
         this._subscriptionsHandler.registerUnsubscribeFunction(
             "workbenchSession",
             this._workbenchSession.subscribe(
                 WorkbenchSessionEvent.RealizationFilterSetChanged,
-                this.handleRealizationFilterSetChanged.bind(this)
-            )
+                this.handleRealizationFilterSetChanged.bind(this),
+            ),
         );
         this._subscriptionsHandler.registerUnsubscribeFunction(
             "workbenchSession",
             this._workbenchSession
                 .getUserCreatedItems()
                 .getIntersectionPolylines()
-                .subscribe(IntersectionPolylinesEvent.CHANGE, this.handleIntersectionPolylinesChanged.bind(this))
+                .subscribe(IntersectionPolylinesEvent.CHANGE, this.handleIntersectionPolylinesChanged.bind(this)),
         );
         this._subscriptionsHandler.registerUnsubscribeFunction(
             "groupDelegate",
@@ -108,7 +108,7 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
                 .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(() => {
                 this.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
                 this.publishTopic(LayerManagerTopic.ITEMS);
-            })
+            }),
         );
 
         this._groupColorGenerator = this.makeGroupColorGenerator();
@@ -192,16 +192,16 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
         this._subscriptionsHandler.unsubscribeAll();
     }
 
-    serializeState(): SerializedLayerManager {
+    serializeState(): SerializedDataLayerManager {
         const itemState = this._itemDelegate.serializeState();
         return {
             ...itemState,
-            type: SerializedType.LAYER_MANAGER,
+            type: SerializedType.DATA_LAYER_MANAGER,
             children: this._groupDelegate.serializeChildren(),
         };
     }
 
-    deserializeState(serializedState: SerializedLayerManager): void {
+    deserializeState(serializedState: SerializedDataLayerManager): void {
         this._deserializing = true;
         this._itemDelegate.deserializeState(serializedState);
         this._groupDelegate.deserializeChildren(serializedState.children);
@@ -240,7 +240,7 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
 
     private handleRealizationFilterSetChanged() {
         this._globalSettings.realizationFilterFunction = createEnsembleRealizationFilterFuncForWorkbenchSession(
-            this._workbenchSession
+            this._workbenchSession,
         );
 
         this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS);

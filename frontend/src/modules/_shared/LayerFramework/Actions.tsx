@@ -8,35 +8,32 @@ import { MenuItem } from "@lib/components/MenuItem";
 import { Dropdown } from "@mui/base";
 import { Add, ArrowDropDown } from "@mui/icons-material";
 
-export type LayersAction = {
+export type Action = {
     identifier: string;
     icon?: React.ReactNode;
     label: string;
 };
 
-export type LayersActionGroup = {
+export type ActionGroup = {
     icon?: React.ReactNode;
     label: string;
-    children: (LayersAction | LayersActionGroup)[];
+    children: (Action | ActionGroup)[];
 };
 
-function isLayersActionGroup(action: LayersAction | LayersActionGroup): action is LayersActionGroup {
-    return (action as LayersActionGroup).children !== undefined;
+function isActionGroup(action: Action | ActionGroup): action is ActionGroup {
+    return (action as ActionGroup).children !== undefined;
 }
 
-export type LayersActionsProps = {
-    layersActionGroups: LayersActionGroup[];
+export type ActionsProps = {
+    layersActionGroups: ActionGroup[];
     onActionClick: (actionIdentifier: string) => void;
 };
 
-export function LayersActions(props: LayersActionsProps): React.ReactNode {
-    function makeContent(
-        layersActionGroups: (LayersActionGroup | LayersAction)[],
-        indentLevel: number = 0,
-    ): React.ReactNode[] {
+export function Actions(props: ActionsProps): React.ReactNode {
+    function makeContent(layersActionGroups: (ActionGroup | Action)[], indentLevel: number = 0): React.ReactNode[] {
         const content: React.ReactNode[] = [];
         for (const [index, item] of layersActionGroups.entries()) {
-            if (isLayersActionGroup(item)) {
+            if (isActionGroup(item)) {
                 if (index > 0) {
                     content.push(<MenuDivider key={index} />);
                 }

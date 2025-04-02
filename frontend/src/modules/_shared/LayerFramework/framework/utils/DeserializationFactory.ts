@@ -1,9 +1,9 @@
 import { GroupRegistry } from "../../groups/GroupRegistry";
-import type { Item } from "../../interfacesAndTypes/entitites";
+import type { Item } from "../../interfacesAndTypes/entities";
 import type {
+    SerializedDataLayer,
     SerializedGroup,
     SerializedItem,
-    SerializedLayer,
     SerializedSettingsGroup,
     SerializedSharedSetting,
 } from "../../interfacesAndTypes/serialization";
@@ -21,14 +21,14 @@ export class DeserializationFactory {
     }
 
     makeItem(serialized: SerializedItem): Item {
-        if (serialized.type === SerializedType.LAYER_MANAGER) {
+        if (serialized.type === SerializedType.DATA_LAYER_MANAGER) {
             throw new Error(
                 "Cannot deserialize a LayerManager in DeserializationFactory. A LayerManager can never be a descendant of a LayerManager.",
             );
         }
 
-        if (serialized.type === SerializedType.LAYER) {
-            const serializedLayer = serialized as SerializedLayer<any>;
+        if (serialized.type === SerializedType.DATA_LAYER) {
+            const serializedLayer = serialized as SerializedDataLayer<any>;
             const layer = LayerRegistry.makeLayer(serializedLayer.layerType, this._layerManager, serializedLayer.name);
             layer.deserializeState(serializedLayer);
             layer.getItemDelegate().setId(serializedLayer.id);

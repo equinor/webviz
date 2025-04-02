@@ -13,20 +13,20 @@ import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/custom
 import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
 import { CustomLayerType } from "@modules/2DViewer/LayerFramework/customLayerImplementations/layerTypes";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
-import type { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions";
+import type { ActionGroup } from "@modules/_shared/LayerFramework/Actions";
 import type { GroupDelegate } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { DataLayer } from "@modules/_shared/LayerFramework/framework/DataLayer/DataLayer";
 import type { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
-import { LayerManagerComponent } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManagerComponent";
+import { DataLayerManagerComponent } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManagerComponent";
 import { DeltaSurface } from "@modules/_shared/LayerFramework/framework/DeltaSurface/DeltaSurface";
 import { Group } from "@modules/_shared/LayerFramework/framework/Group/Group";
 import { SettingsGroup } from "@modules/_shared/LayerFramework/framework/SettingsGroup/SettingsGroup";
 import { SharedSetting } from "@modules/_shared/LayerFramework/framework/SharedSetting/SharedSetting";
 import { GroupRegistry } from "@modules/_shared/LayerFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/LayerFramework/groups/groupTypes";
-import type { Item, ItemGroup } from "@modules/_shared/LayerFramework/interfacesAndTypes/entitites";
-import { instanceofItemGroup } from "@modules/_shared/LayerFramework/interfacesAndTypes/entitites";
+import type { Item, ItemGroup } from "@modules/_shared/LayerFramework/interfacesAndTypes/entities";
+import { instanceofItemGroup } from "@modules/_shared/LayerFramework/interfacesAndTypes/entities";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
 import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
@@ -61,52 +61,52 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
     function handleLayerAction(identifier: string, groupDelegate: GroupDelegate) {
         switch (identifier) {
             case "view":
-                groupDelegate.appendChild(
+                groupDelegate.prependChild(
                     GroupRegistry.makeGroup(GroupType.VIEW, props.layerManager, colorSet.getNextColor()),
                 );
                 return;
             case "delta-surface":
-                groupDelegate.appendChild(new DeltaSurface("Delta surface", props.layerManager));
+                groupDelegate.prependChild(new DeltaSurface("Delta surface", props.layerManager));
                 return;
             case "settings-group":
-                groupDelegate.appendChild(new SettingsGroup("Settings group", props.layerManager));
+                groupDelegate.prependChild(new SettingsGroup("Settings group", props.layerManager));
                 return;
             case "color-scale":
-                groupDelegate.appendChild(new SharedSetting(Setting.COLOR_SCALE, null, props.layerManager));
+                groupDelegate.prependChild(new SharedSetting(Setting.COLOR_SCALE, null, props.layerManager));
                 return;
             case "observed-surface":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.OBSERVED_SURFACE, props.layerManager)
+                    LayerRegistry.makeLayer(CustomLayerType.OBSERVED_SURFACE, props.layerManager),
                 );
                 return;
             case "statistical-surface":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.STATISTICAL_SURFACE, props.layerManager)
+                    LayerRegistry.makeLayer(CustomLayerType.STATISTICAL_SURFACE, props.layerManager),
                 );
                 return;
             case "realization-surface":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_SURFACE, props.layerManager)
+                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_SURFACE, props.layerManager),
                 );
                 return;
             case "realization-polygons":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_POLYGONS, props.layerManager)
+                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_POLYGONS, props.layerManager),
                 );
                 return;
             case "drilled-wellbore-trajectories":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(LayerType.DRILLED_WELL_TRAJECTORIES, props.layerManager)
+                    LayerRegistry.makeLayer(LayerType.DRILLED_WELL_TRAJECTORIES, props.layerManager),
                 );
                 return;
             case "drilled-wellbore-picks":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(LayerType.DRILLED_WELLBORE_PICKS, props.layerManager)
+                    LayerRegistry.makeLayer(LayerType.DRILLED_WELLBORE_PICKS, props.layerManager),
                 );
                 return;
             case "realization-grid":
                 groupDelegate.prependChild(
-                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_GRID, props.layerManager)
+                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_GRID, props.layerManager),
                 );
                 return;
             case "ensemble":
@@ -152,14 +152,60 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
         return true;
     }
 
-    const hasView =
-        groupDelegate.getDescendantItems((item) => item instanceof Group && item.getGroupType() === GroupType.VIEW)
-            .length > 0;
-    const adjustedLayerActions = hasView ? LAYER_ACTIONS : INITIAL_LAYER_ACTIONS;
+    function makeActionsForGroup(group: ItemGroup): ActionGroup[] {
+        const hasView =
+            groupDelegate.getDescendantItems((item) => item instanceof Group && item.getGroupType() === GroupType.VIEW)
+                .length > 0;
+
+        const hasViewAncestor =
+            group
+                .getGroupDelegate()
+                .getAncestors((item) => item instanceof Group && item.getGroupType() === GroupType.VIEW).length > 0;
+        const actions: ActionGroup[] = [];
+
+        if (!hasView) {
+            return INITIAL_ACTIONS;
+        }
+
+        const groupActions: ActionGroup = {
+            label: "Groups",
+            children: [],
+        };
+
+        if (group instanceof Group) {
+            if (group.getGroupType() === GroupType.VIEW) {
+                if (!hasViewAncestor) {
+                    groupActions.children.push({
+                        identifier: "view",
+                        icon: <Panorama fontSize="small" />,
+                        label: "View",
+                    });
+                }
+            }
+        } else if (group instanceof SettingsGroup) {
+            groupActions.children.push({
+                identifier: "view",
+                icon: <Panorama fontSize="small" />,
+                label: "View",
+            });
+        }
+
+        groupActions.children.push({
+            identifier: "settings-group",
+            icon: <SettingsApplications fontSize="small" />,
+            label: "Settings group",
+        });
+
+        actions.push(groupActions);
+        actions.push(...ACTIONS);
+
+        return actions;
+    }
 
     return (
-        <LayerManagerComponent
-            layerManager={props.layerManager}
+        <DataLayerManagerComponent
+            title={"Layers"}
+            dataLayerManager={props.layerManager}
             additionalHeaderComponents={
                 <Dropdown>
                     <MenuButton label="Settings">
@@ -182,8 +228,8 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                     </Menu>
                 </Dropdown>
             }
-            layerActions={adjustedLayerActions}
-            onLayerAction={handleLayerAction}
+            groupActions={makeActionsForGroup}
+            onAction={handleLayerAction}
             isMoveAllowed={checkIfItemMoveAllowed}
         />
     );
@@ -206,7 +252,7 @@ function ViewLayoutMenuItem(props: ViewLayoutMenuItemProps): React.ReactNode {
     );
 }
 
-const INITIAL_LAYER_ACTIONS: LayersActionGroup[] = [
+const INITIAL_ACTIONS: ActionGroup[] = [
     {
         label: "Groups",
         children: [
@@ -224,22 +270,7 @@ const INITIAL_LAYER_ACTIONS: LayersActionGroup[] = [
     },
 ];
 
-const LAYER_ACTIONS: LayersActionGroup[] = [
-    {
-        label: "Groups",
-        children: [
-            {
-                identifier: "view",
-                icon: <Panorama fontSize="small" />,
-                label: "View",
-            },
-            {
-                identifier: "settings-group",
-                icon: <SettingsApplications fontSize="small" />,
-                label: "Settings group",
-            },
-        ],
-    },
+const ACTIONS: ActionGroup[] = [
     {
         label: "Layers",
         children: [

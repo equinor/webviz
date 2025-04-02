@@ -4,7 +4,7 @@ import { Edit } from "@mui/icons-material";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import type { Item } from "../../interfacesAndTypes/entitites";
+import type { Item } from "../../interfacesAndTypes/entities";
 
 type EditItemNameProps = {
     item: Item;
