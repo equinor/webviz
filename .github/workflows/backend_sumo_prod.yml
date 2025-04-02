@@ -3,7 +3,9 @@ name: integration
 on:
   push:
     branches:
-      - "**"
+      - main
+      - dev
+      - review
   workflow_dispatch:
   schedule:
     - cron: "0 0 * * *"
