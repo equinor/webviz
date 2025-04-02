@@ -2225,7 +2225,7 @@ export type DeprecatedGetStratigraphicUnitsData_api = {
          */
         case_uuid: string;
     };
-    url: "/surface/DEPRECATED_stratigraphic_units";
+    url: "/surface/deprecated_stratigraphic_units";
 };
 
 export type DeprecatedGetStratigraphicUnitsErrors_api = {
@@ -2926,7 +2926,7 @@ export type DeprecatedGetWellborePicksForWellboreData_api = {
          */
         wellbore_uuid: string;
     };
-    url: "/well/DEPRECATED_wellbore_picks_for_wellbore/";
+    url: "/well/deprecated_wellbore_picks_for_wellbore/";
 };
 
 export type DeprecatedGetWellborePicksForWellboreErrors_api = {
