@@ -6,11 +6,16 @@ import { SerializedType } from "../../interfacesAndTypes/serialization";
 import type { DataLayerManager } from "../DataLayerManager/DataLayerManager";
 
 export function isSettingsGroup(obj: any): obj is SettingsGroup {
-    return (
-        (obj as SettingsGroup).constructor.name === "SettingsGroup" &&
-        (obj as SettingsGroup).getItemDelegate !== undefined &&
-        (obj as SettingsGroup).getGroupDelegate !== undefined
-    );
+    if (typeof obj !== "object" || obj === null) {
+        return false;
+    }
+    if (obj.constructor.name !== "SettingsGroup") {
+        return false;
+    }
+
+    const settingsGroup: SettingsGroup = obj as SettingsGroup;
+
+    return Object.hasOwn(settingsGroup, "getGroupDelegate");
 }
 export class SettingsGroup implements ItemGroup {
     private _itemDelegate: ItemDelegate;

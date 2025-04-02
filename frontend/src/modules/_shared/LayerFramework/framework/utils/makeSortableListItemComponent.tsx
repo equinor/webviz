@@ -8,7 +8,7 @@ import { isGroup } from "../Group/Group";
 import { GroupComponent } from "../Group/GroupComponent";
 import { isSettingsGroup } from "../SettingsGroup/SettingsGroup";
 import { SettingsGroupComponent } from "../SettingsGroup/SettingsGroupComponent";
-import { SharedSetting } from "../SharedSetting/SharedSetting";
+import { isSharedSetting } from "../SharedSetting/SharedSetting";
 import { SharedSettingComponent } from "../SharedSetting/SharedSettingComponent";
 
 export function makeSortableListItemComponent(
@@ -49,7 +49,7 @@ export function makeSortableListItemComponent(
             />
         );
     }
-    if (item instanceof SharedSetting) {
+    if (isSharedSetting(item)) {
         return <SharedSettingComponent key={item.getItemDelegate().getId()} sharedSetting={item} />;
     }
 

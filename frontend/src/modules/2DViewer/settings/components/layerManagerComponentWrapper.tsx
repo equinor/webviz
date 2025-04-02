@@ -228,7 +228,7 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                     </Menu>
                 </Dropdown>
             }
-            makeActionsForGroup={makeActionsForGroup}
+            groupActions={makeActionsForGroup}
             onAction={handleLayerAction}
             isMoveAllowed={checkIfItemMoveAllowed}
         />

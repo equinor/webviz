@@ -24,13 +24,13 @@ export type LayerManagerComponentProps = {
     title: string;
     dataLayerManager: DataLayerManager;
     additionalHeaderComponents: React.ReactNode;
-    makeActionsForGroup: (group: ItemGroup) => ActionGroup[];
+    groupActions: ActionGroup[] | ((group: ItemGroup) => ActionGroup[]);
     onAction: (identifier: string, groupDelegate: GroupDelegate) => void;
     isMoveAllowed?: (movedItem: Item, destinationGroup: ItemGroup) => boolean;
 };
 
 export function DataLayerManagerComponent(props: LayerManagerComponentProps): React.ReactNode {
-    const { makeActionsForGroup } = props;
+    const { groupActions } = props;
 
     const listRef = React.useRef<HTMLDivElement>(null);
     const listSize = useElementSize(listRef);
@@ -131,10 +131,19 @@ export function DataLayerManagerComponent(props: LayerManagerComponentProps): Re
         destination.insertChild(movedItem, position);
     }
 
-    const actions = React.useMemo(
-        () => makeActionsForGroup(props.dataLayerManager),
-        [props.dataLayerManager, makeActionsForGroup],
-    );
+    const actions = React.useMemo(() => {
+        if (typeof groupActions === "function") {
+            return groupActions(props.dataLayerManager);
+        }
+        return groupActions;
+    }, [props.dataLayerManager, groupActions]);
+
+    const makeActionsForGroup = (group: ItemGroup) => {
+        if (typeof groupActions === "function") {
+            return groupActions(group);
+        }
+        return groupActions;
+    };
 
     return (
         <div className="grow flex flex-col min-h-0">
@@ -159,7 +168,7 @@ export function DataLayerManagerComponent(props: LayerManagerComponentProps): Re
                         }
                     >
                         {items.map((item: Item) =>
-                            makeSortableListItemComponent(item, props.makeActionsForGroup, handleActionClick),
+                            makeSortableListItemComponent(item, makeActionsForGroup, handleActionClick),
                         )}
                     </SortableList>
                 </div>

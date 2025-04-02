@@ -9,6 +9,18 @@ import type { DataLayerManager } from "../DataLayerManager/DataLayerManager";
 import { LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 import type { SettingManager } from "../SettingManager/SettingManager";
 
+export function isSharedSetting(obj: any): obj is SharedSetting<any> {
+    if (typeof obj !== "object" || obj === null) {
+        return false;
+    }
+    if (obj.constructor.name !== "SharedSetting") {
+        return false;
+    }
+
+    const sharedSetting: SharedSetting<any> = obj as SharedSetting<any>;
+    return Object.hasOwn(sharedSetting, "getSharedSettingsDelegate");
+}
+
 export class SharedSetting<TSetting extends Setting> implements Item, SharedSettingsProvider {
     private _sharedSettingsDelegate: SharedSettingsDelegate<[TSetting]>;
     private _itemDelegate: ItemDelegate;

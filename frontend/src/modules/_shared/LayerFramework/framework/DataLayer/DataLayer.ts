@@ -49,20 +49,23 @@ export type LayerDelegatePayloads<TData> = {
     [LayerDelegateTopic.SUBORDINATED]: boolean;
 };
 
-export function isDataLayer(dataLayer: unknown): dataLayer is DataLayer<any, any> {
+export function isDataLayer(object: any): object is DataLayer<any, any> {
+    if (typeof object !== "object" || object === null) {
+        return false;
+    }
+
+    if (object.constructor.name !== "DataLayer") {
+        return false;
+    }
+
+    const dataLayer: DataLayer<any, any> = object as DataLayer<any, any>;
+
     return (
-        (dataLayer as DataLayer<any, any>).constructor.name === "DataLayer" &&
-        (dataLayer as DataLayer<any, any>).getType !== undefined &&
-        (dataLayer as DataLayer<any, any>).getSettingsContextDelegate !== undefined &&
-        (dataLayer as DataLayer<any, any>).getPublishSubscribeDelegate !== undefined &&
-        (dataLayer as DataLayer<any, any>).getItemDelegate !== undefined &&
-        (dataLayer as DataLayer<any, any>).getStatus !== undefined &&
-        (dataLayer as DataLayer<any, any>).getData !== undefined &&
-        (dataLayer as DataLayer<any, any>).getError !== undefined &&
-        (dataLayer as DataLayer<any, any>).getValueRange !== undefined &&
-        (dataLayer as DataLayer<any, any>).getLayerManager !== undefined &&
-        (dataLayer as DataLayer<any, any>).makeAccessors !== undefined &&
-        (dataLayer as DataLayer<any, any>).maybeRefetchData !== undefined
+        Object.hasOwn(dataLayer, "getType") &&
+        Object.hasOwn(dataLayer, "getSettingsContextDelegate") &&
+        Object.hasOwn(dataLayer, "getStatus") &&
+        Object.hasOwn(dataLayer, "getData") &&
+        Object.hasOwn(dataLayer, "getError")
     );
 }
 

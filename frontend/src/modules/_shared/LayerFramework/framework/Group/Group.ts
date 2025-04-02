@@ -17,12 +17,17 @@ import type { SettingManager } from "../SettingManager/SettingManager";
 import { makeSettings } from "../utils/makeSettings";
 
 export function isGroup(obj: any): obj is Group {
-    return (
-        obj.constructor.name === "Group" &&
-        (obj as Group<any, any>).getGroupType !== undefined &&
-        (obj as Group<any, any>).getItemDelegate !== undefined &&
-        (obj as Group<any, any>).getGroupDelegate !== undefined
-    );
+    if (typeof obj !== "object" || obj === null) {
+        return false;
+    }
+
+    if (obj.constructor.name !== "Group") {
+        return false;
+    }
+
+    const group: Group = obj as Group;
+
+    return Object.hasOwn(group, "getGroupType") && Object.hasOwn(group, "getGroupDelegate");
 }
 
 export type GroupParams<
