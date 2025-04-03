@@ -1,7 +1,10 @@
-import { InplaceVolumetricResultName_api, InplaceVolumetricStatistic_api } from "@api";
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
-import { SourceAndTableIdentifierUnion, SourceIdentifier, TableType } from "@modules/_shared/InplaceVolumetrics/types";
+import type { InplaceVolumetricResultName_api, InplaceVolumetricStatistic_api } from "@api";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type {
+    SourceAndTableIdentifierUnion,
+    SourceIdentifier,
+    TableType,
+} from "@modules/_shared/InplaceVolumetrics/types";
 
 import { selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./settings/atoms/baseAtoms";
 import {
@@ -14,10 +17,10 @@ import {
     selectedResultNamesAtom,
     selectedTableNamesAtom,
 } from "./settings/atoms/derivedAtoms";
+import type { InplaceVolumetricsFilterSelections } from "./types";
 
 export type SettingsToViewInterface = {
-    filter: InplaceVolumetricsFilter;
-    areSelectedTablesComparable: boolean;
+    filter: InplaceVolumetricsFilterSelections;
     resultNames: InplaceVolumetricResultName_api[];
     accumulationOptions: Omit<SourceAndTableIdentifierUnion, SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME>[];
     tableType: TableType;
@@ -36,9 +39,9 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
             tableNames: get(selectedTableNamesAtom),
             fluidZones: get(selectedFluidZonesAtom),
             identifiersValues: get(selectedIdentifiersValuesAtom),
+            areSelectedTablesComparable: get(areSelectedTablesComparableAtom),
         };
     },
-    areSelectedTablesComparable: (get) => get(areSelectedTablesComparableAtom),
     resultNames: (get) => get(selectedResultNamesAtom),
     accumulationOptions: (get) => get(selectedAccumulationOptionsAtom),
     tableType: (get) => get(selectedTableTypeAtom),

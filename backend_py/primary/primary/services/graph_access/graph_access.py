@@ -2,8 +2,9 @@ import base64
 from typing import Mapping
 from urllib.parse import urljoin
 
-# Using the same http client as sumo
 import httpx
+
+from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 
 
 class GraphApiAccess:
@@ -15,12 +16,12 @@ class GraphApiAccess:
         return {"Authorization": f"Bearer {self._access_token}"}
 
     async def _request(self, url: str) -> httpx.Response:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                url,
-                headers=self._make_headers(),
-            )
-            return response
+
+        response = await HTTPX_ASYNC_CLIENT_WRAPPER.client.get(
+            url,
+            headers=self._make_headers(),
+        )
+        return response
 
     async def get_user_profile_photo(self, user_id: str) -> str | None:
         request_url = urljoin(self.base_url, "me/photo/$value" if user_id == "me" else f"users/{user_id}/photo/$value")

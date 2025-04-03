@@ -1,4 +1,4 @@
-import {
+import type {
     FluidZone_api,
     InplaceStatisticalVolumetricTableDataPerFluidSelection_api,
     InplaceVolumetricResultName_api,
@@ -6,21 +6,19 @@ import {
     InplaceVolumetricsIdentifierWithValues_api,
     InplaceVolumetricsIdentifier_api,
 } from "@api";
-import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import {
+import { postGetAggregatedPerRealizationTableDataOptions, postGetAggregatedStatisticalTableDataOptions } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
+import type {
     InplaceVolumetricsStatisticalTableData,
     InplaceVolumetricsTableData,
 } from "@modules/_shared/InplaceVolumetrics/types";
-import { UseQueryResult } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
 
 export type EnsembleIdentWithRealizations = {
-    ensembleIdent: EnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent;
     realizations: readonly number[];
 };
-
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
 
 export type AggregatedTableDataResults = {
     tablesData: InplaceVolumetricsTableData[];
@@ -46,9 +44,10 @@ export function useGetAggregatedStatisticalTableDataQueries(
     groupByIdentifiers: InplaceVolumetricsIdentifier_api[],
     accumulateFluidZones: boolean,
     identifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[],
-    allowEnable: boolean
+    allowEnable: boolean,
 ) {
-    const uniqueSources: { ensembleIdent: EnsembleIdent; realizations: readonly number[]; tableName: string }[] = [];
+    const uniqueSources: { ensembleIdent: RegularEnsembleIdent; realizations: readonly number[]; tableName: string }[] =
+        [];
     for (const el of ensembleIdentsWithRealizations) {
         for (const tableName of tableNames) {
             uniqueSources.push({ ensembleIdent: el.ensembleIdent, realizations: el.realizations, tableName });
@@ -60,49 +59,38 @@ export function useGetAggregatedStatisticalTableDataQueries(
 
     const queries = uniqueSources.map((source) => {
         const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
+        const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
         return () => ({
-            queryKey: [
-                "postGetAggregatedStatisticalTableData",
-                source.ensembleIdent.toString(),
-                source.tableName,
-                source.realizations,
-                fluidZones,
-                groupByIdentifiers,
-                accumulateFluidZones,
-                resultNames,
-                identifiersWithValues,
-            ],
-            queryFn: () =>
-                apiService.inplaceVolumetrics.postGetAggregatedStatisticalTableData(
-                    source.ensembleIdent.getCaseUuid(),
-                    source.ensembleIdent.getEnsembleName(),
-                    source.tableName,
-                    resultNames,
-                    fluidZones,
-                    accumulateFluidZones,
-                    {
-                        identifiers_with_values: identifiersWithValues,
-                    },
-                    validGroupByIdentifiers,
-                    validRealizations
-                ),
-            staleTime: STALE_TIME,
-            cacheTime: CACHE_TIME,
+            ...postGetAggregatedStatisticalTableDataOptions({
+                query: {
+                    ensemble_name: source.ensembleIdent.getEnsembleName(),
+                    case_uuid: source.ensembleIdent.getCaseUuid(),
+                    table_name: source.tableName,
+                    result_names: resultNames,
+                    fluid_zones: fluidZones,
+                    accumulate_fluid_zones: accumulateFluidZones,
+                    group_by_identifiers: validGroupByIdentifiers,
+                    realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
+                },
+                body: {
+                    identifiers_with_values: identifiersWithValues,
+                },
+            }),
             enabled: Boolean(
                 allowEnable &&
                     source.ensembleIdent &&
                     source.tableName &&
-                    validRealizations &&
-                    validRealizations.length &&
+                    validRealizationsEncodedAsUintListStr &&
+                    validRealizations?.length &&
                     fluidZones.length &&
                     resultNames.length &&
-                    eachIdentifierHasValues
+                    eachIdentifierHasValues,
             ),
         });
     });
 
     function combine(
-        results: UseQueryResult<InplaceStatisticalVolumetricTableDataPerFluidSelection_api, Error>[]
+        results: UseQueryResult<InplaceStatisticalVolumetricTableDataPerFluidSelection_api, Error>[],
     ): AggregatedStatisticalTableDataResults {
         const tablesData: InplaceVolumetricsStatisticalTableData[] = [];
         const errors: Error[] = [];
@@ -142,9 +130,10 @@ export function useGetAggregatedPerRealizationTableDataQueries(
     groupByIdentifiers: InplaceVolumetricsIdentifier_api[],
     accumulateFluidZones: boolean,
     identifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[],
-    allowEnable: boolean
+    allowEnable: boolean,
 ) {
-    const uniqueSources: { ensembleIdent: EnsembleIdent; realizations: readonly number[]; tableName: string }[] = [];
+    const uniqueSources: { ensembleIdent: RegularEnsembleIdent; realizations: readonly number[]; tableName: string }[] =
+        [];
     for (const el of ensembleIdentsWithRealizations) {
         for (const tableName of tableNames) {
             uniqueSources.push({ ensembleIdent: el.ensembleIdent, realizations: el.realizations, tableName });
@@ -156,50 +145,38 @@ export function useGetAggregatedPerRealizationTableDataQueries(
 
     const queries = uniqueSources.map((source) => {
         const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
+        const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
         return () => ({
-            queryKey: [
-                "postGetAggregatedPerRealizationTableData",
-                source.ensembleIdent.toString(),
-                source.tableName,
-                source.realizations,
-                fluidZones,
-                groupByIdentifiers,
-                accumulateFluidZones,
-                resultNames,
-                identifiersWithValues,
-            ],
-            queryFn: () =>
-                apiService.inplaceVolumetrics.postGetAggregatedPerRealizationTableData(
-                    source.ensembleIdent.getCaseUuid(),
-                    source.ensembleIdent.getEnsembleName(),
-                    source.tableName,
-                    resultNames,
-                    fluidZones,
-                    accumulateFluidZones,
-
-                    {
-                        identifiers_with_values: identifiersWithValues,
-                    },
-                    validGroupByIdentifiers,
-                    validRealizations
-                ),
-            staleTime: STALE_TIME,
-            cacheTime: CACHE_TIME,
+            ...postGetAggregatedPerRealizationTableDataOptions({
+                query: {
+                    ensemble_name: source.ensembleIdent.getEnsembleName(),
+                    case_uuid: source.ensembleIdent.getCaseUuid(),
+                    table_name: source.tableName,
+                    result_names: resultNames,
+                    fluid_zones: fluidZones,
+                    accumulate_fluid_zones: accumulateFluidZones,
+                    group_by_identifiers: validGroupByIdentifiers,
+                    realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
+                },
+                body: {
+                    identifiers_with_values: identifiersWithValues,
+                },
+            }),
             enabled: Boolean(
                 allowEnable &&
                     source.ensembleIdent &&
                     source.tableName &&
-                    validRealizations &&
-                    validRealizations.length &&
+                    validRealizationsEncodedAsUintListStr &&
+                    validRealizations?.length &&
                     fluidZones.length &&
                     resultNames.length &&
-                    eachIdentifierHasValues
+                    eachIdentifierHasValues,
             ),
         });
     });
 
     function combine(
-        results: UseQueryResult<InplaceVolumetricTableDataPerFluidSelection_api, Error>[]
+        results: UseQueryResult<InplaceVolumetricTableDataPerFluidSelection_api, Error>[],
     ): AggregatedTableDataResults {
         const tablesData: InplaceVolumetricsTableData[] = [];
         const errors: Error[] = [];

@@ -1,10 +1,11 @@
-import { EnsembleIdent } from "../EnsembleIdent";
-import { EnsembleSet } from "../EnsembleSet";
+import type { DeltaEnsembleIdent } from "../DeltaEnsembleIdent";
+import type { EnsembleSet } from "../EnsembleSet";
+import type { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
 export function maybeAssignFirstSyncedEnsemble(
-    currIdent: EnsembleIdent | null,
-    syncedEnsembleValues: EnsembleIdent[] | null
-): EnsembleIdent | null {
+    currIdent: RegularEnsembleIdent | null,
+    syncedEnsembleValues: RegularEnsembleIdent[] | null,
+): RegularEnsembleIdent | null {
     if (!syncedEnsembleValues || syncedEnsembleValues.length < 1) {
         return currIdent;
     }
@@ -18,52 +19,101 @@ export function maybeAssignFirstSyncedEnsemble(
 }
 
 /**
- * Validates the the EnsembleIdent specified in currIdent against the contents of the
- * EnsembleSet and fixes the value if it isn't valid.
+ * Validates the the RegularEnsembleIdent or DeltaEnsembleIdent specified in currIdent against the
+ * contents of the EnsembleSet and fixes the value if it isn't valid.
  *
  * Returns null if an empty EnsembleSet is specified.
  *
- * Note that if the specified EnsembleIdent is valid, this function will always return
- * a reference to the exact same object that was passed in currIdent. This means that
- * you can compare the references (fixedIdent !== currIdent) to detect any changes.
+ * Note that if the specified RegularEnsembleIdent or DeltaEnsembleIdent is valid, this function
+ * will always return a reference to the exact same object that was passed in currIdent. This
+ * means that you can compare the references (fixedIdent !== currIdent) to detect any changes.
  */
 export function fixupEnsembleIdent(
-    currIdent: EnsembleIdent | null,
-    ensembleSet: EnsembleSet | null
-): EnsembleIdent | null {
+    currIdent: RegularEnsembleIdent | DeltaEnsembleIdent | null,
+    ensembleSet: EnsembleSet | null,
+): RegularEnsembleIdent | DeltaEnsembleIdent | null {
     if (!ensembleSet?.hasAnyEnsembles()) {
         return null;
     }
 
-    if (currIdent) {
-        if (ensembleSet.hasEnsemble(currIdent)) {
-            return currIdent;
-        }
+    if (currIdent && ensembleSet.hasEnsemble(currIdent)) {
+        return currIdent;
     }
 
-    return ensembleSet.getEnsembleArr()[0].getIdent();
+    return ensembleSet.getEnsembleArray()[0].getIdent();
 }
 
 /**
- * Validates the the EnsembleIdents specified in currIdents against the contents of the
+ * Validates the the RegularEnsembleIdent specified in currIdent against the contents of the
  * EnsembleSet and fixes the value if it isn't valid.
+ *
+ * Returns null if specified EnsembleSet does not contain any regular ensembles.
+ *
+ * Note that if the specified RegularEnsembleIdent is valid, this function will always return
+ * a reference to the exact same object that was passed in currIdent. This means that you can
+ * compare the references (fixedIdent !== currIdent) to detect any changes.
+ */
+export function fixupRegularEnsembleIdent(
+    currIdent: RegularEnsembleIdent | null,
+    ensembleSet: EnsembleSet | null,
+): RegularEnsembleIdent | null {
+    if (!ensembleSet?.hasAnyRegularEnsembles()) {
+        return null;
+    }
+
+    if (currIdent && ensembleSet.hasEnsemble(currIdent)) {
+        return currIdent;
+    }
+
+    return ensembleSet.getRegularEnsembleArray()[0].getIdent();
+}
+
+/**
+ * Validates the the RegularEnsembleIdents or DeltaEnsembleIdents specified in currIdents
+ * against the contents of the EnsembleSet and fixes the value if it isn't valid.
  *
  * Returns null if an empty EnsembleSet is specified.
  *
- * Note that if the specified EnsembleIdents are valid, this function will always return
- * a reference to the exact same object that was passed in currIdent. This means that
- * you can compare the references (fixedIdent !== currIdent) to detect any changes.
+ * Note that if the specified RegularEnsembleIdents or DeltaEnsembleIdents are valid, this
+ * function will always return a reference to the exact same object that was passed in
+ * currIdent. This means that you can compare the references (fixedIdent !== currIdent) to
+ * detect any changes.
  */
 export function fixupEnsembleIdents(
-    currIdents: EnsembleIdent[] | null,
-    ensembleSet: EnsembleSet | null
-): EnsembleIdent[] | null {
+    currIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[] | null,
+    ensembleSet: EnsembleSet | null,
+): (RegularEnsembleIdent | DeltaEnsembleIdent)[] | null {
     if (!ensembleSet?.hasAnyEnsembles()) {
         return null;
     }
 
     if (currIdents === null || currIdents.length === 0) {
-        return [ensembleSet.getEnsembleArr()[0].getIdent()];
+        return [ensembleSet.getEnsembleArray()[0].getIdent()];
+    }
+
+    return currIdents.filter((currIdent) => ensembleSet.hasEnsemble(currIdent));
+}
+
+/**
+ * Validates the the RegularEnsembleIdents specified in currIdents against the contents of the
+ * EnsembleSet and fixes the value if it isn't valid.
+ *
+ * Returns null if an empty EnsembleSet is specified.
+ *
+ * Note that if the specified RegularEnsembleIdents are valid, this function will always return
+ * a reference to the exact same object that was passed in currIdent. This means that you can
+ * compare the references (fixedIdent !== currIdent) to detect any changes.
+ */
+export function fixupRegularEnsembleIdents(
+    currIdents: RegularEnsembleIdent[] | null,
+    ensembleSet: EnsembleSet | null,
+): RegularEnsembleIdent[] | null {
+    if (!ensembleSet?.hasAnyRegularEnsembles()) {
+        return null;
+    }
+
+    if (currIdents === null || currIdents.length === 0) {
+        return [ensembleSet.getRegularEnsembleArray()[0].getIdent()];
     }
 
     return currIdents.filter((currIdent) => ensembleSet.hasEnsemble(currIdent));

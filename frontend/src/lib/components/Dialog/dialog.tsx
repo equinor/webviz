@@ -1,6 +1,5 @@
 import React from "react";
 
-import { useElementSize } from "@lib/hooks/useElementSize";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Close } from "@mui/icons-material";
@@ -23,8 +22,6 @@ export const Dialog: React.FC<DialogProps> = (props) => {
     const wrapperRef = React.useRef<HTMLDivElement>(null);
     const dialogRef = React.useRef<HTMLDivElement>(null);
 
-    const dialogSize = useElementSize(dialogRef);
-
     const handleClose = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         props.onClose?.(e);
     };
@@ -41,8 +38,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
             ref={wrapperRef}
             className={resolveClassNames("fixed", "inset-0", "w-full", "h-full", "z-50", {
                 "pointer-events-none": !props.modal,
-                "bg-slate-600": props.modal,
-                "bg-opacity-50": props.modal,
+                "bg-slate-600/50": props.modal,
                 hidden: !props.open,
             })}
             onClick={handleBackgroundClick}
@@ -54,16 +50,15 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     "left-1/2",
                     "top-1/2",
                     "border",
-                    "rounded",
+                    "rounded-sm",
                     "bg-white",
-                    "shadow",
-                    "w-50",
-                    "h-50",
-                    "pointer-events-auto"
+                    "shadow-sm",
+                    "min-w-lg",
+                    "max-w-[75vw]",
+                    "pointer-events-auto",
                 )}
                 style={{
-                    marginLeft: -dialogSize.width / 2,
-                    marginTop: -dialogSize.height / 2,
+                    transform: `translate(-50%, -50%)`,
                     height: props.height,
                     width: props.width,
                     minWidth: props.minWidth,
@@ -85,6 +80,6 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                 <div className="p-4">{props.children}</div>
                 {props.actions && <div className="flex justify-end mt-4 bg-slate-100 p-4">{props.actions}</div>}
             </div>
-        </div>
+        </div>,
     );
 };

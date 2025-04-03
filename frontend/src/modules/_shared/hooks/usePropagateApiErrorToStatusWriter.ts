@@ -1,10 +1,10 @@
-import { SettingsStatusWriter, ViewStatusWriter } from "@framework/StatusWriter";
+import type { SettingsStatusWriter, ViewStatusWriter } from "@framework/StatusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
-import { UseQueryResult } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
 
-export function usePropagateApiErrorToStatusWriter(
+function propagateError(
     queryResult: UseQueryResult<any, any>,
-    statusWriter: ViewStatusWriter | SettingsStatusWriter
+    statusWriter: ViewStatusWriter | SettingsStatusWriter,
 ): string | null {
     const helper = ApiErrorHelper.fromQueryResult(queryResult);
 
@@ -16,4 +16,18 @@ export function usePropagateApiErrorToStatusWriter(
     }
 
     return errorMessage;
+}
+
+export function usePropagateApiErrorToStatusWriter(
+    queryResult: UseQueryResult<any, any>,
+    statusWriter: ViewStatusWriter | SettingsStatusWriter,
+): string | null {
+    return propagateError(queryResult, statusWriter);
+}
+
+export function usePropagateAllApiErrorsToStatusWriter(
+    queryResults: UseQueryResult<any, any>[],
+    statusWriter: ViewStatusWriter | SettingsStatusWriter,
+): (string | null)[] {
+    return queryResults.map((res) => propagateError(res, statusWriter)).filter((error) => error);
 }

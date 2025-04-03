@@ -1,3 +1,4 @@
+import type { ColorPaletteSerialization } from "@lib/utils/ColorPalette";
 import { ColorPalette } from "@lib/utils/ColorPalette";
 
 export enum ColorScaleType {
@@ -42,6 +43,16 @@ export type PlotlyMapColorScaleObject = {
 export type ColorScaleOptions = {
     type: ColorScaleType;
     colorPalette: ColorPalette;
+    gradientType: ColorScaleGradientType;
+    steps: number;
+    min?: number;
+    max?: number;
+    divMidPoint?: number;
+};
+
+export type ColorScaleSerialization = {
+    type: ColorScaleType;
+    colorPalette: ColorPaletteSerialization;
     gradientType: ColorScaleGradientType;
     steps: number;
     min?: number;
@@ -99,6 +110,14 @@ export class ColorScale {
 
     getColorForValue(value: number): string {
         let color = "";
+
+        // Clamp colors
+        if (value < this._min) {
+            value = this._min;
+        }
+        if (value > this._max) {
+            value = this._max;
+        }
 
         if (this._type === ColorScaleType.Discrete) {
             const colors = this.sampleColors(this._steps);
@@ -268,6 +287,32 @@ export class ColorScale {
             min: this._min,
             max: this._max,
             divMidPoint: this._divMidPoint,
+        });
+    }
+
+    serialize(): ColorScaleSerialization {
+        return {
+            type: this._type,
+            colorPalette: this._colorPalette.serialize(),
+            gradientType: this._gradientType,
+            steps: this._steps,
+            min: this._min,
+            max: this._max,
+            divMidPoint: this._divMidPoint,
+        };
+    }
+
+    static fromSerialized(serialization: ColorScaleSerialization): ColorScale {
+        const colorPalette = ColorPalette.fromSerialized(serialization.colorPalette);
+
+        return new ColorScale({
+            type: serialization.type,
+            colorPalette,
+            gradientType: serialization.gradientType,
+            steps: serialization.steps,
+            min: serialization.min,
+            max: serialization.max,
+            divMidPoint: serialization.divMidPoint,
         });
     }
 }

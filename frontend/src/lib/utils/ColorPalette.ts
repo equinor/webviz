@@ -1,4 +1,5 @@
-import { Oklab, formatHex, interpolate, oklab } from "culori";
+import type { Oklab } from "culori";
+import { formatHex, interpolate, oklab } from "culori";
 
 type ColorStop = {
     hexColor: string;
@@ -7,6 +8,12 @@ type ColorStop = {
 };
 
 export type ColorPaletteOptions = {
+    name: string;
+    colors: string[];
+    id: string;
+};
+
+export type ColorPaletteSerialization = {
     name: string;
     colors: string[];
     id: string;
@@ -122,5 +129,21 @@ export class ColorPalette {
             .join(", ")})`;
 
         return gradient;
+    }
+
+    serialize(): ColorPaletteSerialization {
+        return {
+            name: this._name,
+            colors: this.getColors(),
+            id: this._id,
+        };
+    }
+
+    static fromSerialized(serialized: ColorPaletteSerialization): ColorPalette {
+        return new ColorPalette({
+            name: serialized.name,
+            colors: serialized.colors,
+            id: serialized.id,
+        });
     }
 }

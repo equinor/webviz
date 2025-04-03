@@ -2,11 +2,14 @@ import logging
 from typing import Optional
 
 import pandas as pd
-from fmu.sumo.explorer.objects import Case
+import pyarrow as pa
+from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
+from primary.services.service_exceptions import InvalidDataError, Service
 
-from ._helpers import create_sumo_client, create_sumo_case_async
+from ._arrow_table_loader import ArrowTableLoader
+from .sumo_client_factory import create_sumo_client
 
 
 LOGGER = logging.getLogger(__name__)
@@ -19,57 +22,37 @@ class GroupTreeAccess:
 
     TAGNAME = "gruptree"
 
-    def __init__(self, case: Case, iteration_name: str):
-        self._case = case
-        self._iteration_name = iteration_name
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
+        self._sumo_client = sumo_client
+        self._case_uuid: str = case_uuid
+        self._iteration_name: str = iteration_name
+        self._ensemble_context = SearchContext(sumo=self._sumo_client).filter(
+            uuid=self._case_uuid, iteration=self._iteration_name
+        )
 
     @classmethod
-    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "GroupTreeAccess":
+    def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "GroupTreeAccess":
         sumo_client = create_sumo_client(access_token)
-        case: Case = await create_sumo_case_async(sumo_client, case_uuid, want_keepalive_pit=False)
-        return GroupTreeAccess(case, iteration_name)
+        return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    async def get_group_tree_table(self, realization: Optional[int]) -> Optional[pd.DataFrame]:
+    async def get_group_tree_table_for_realization_async(self, realization: int) -> Optional[pd.DataFrame]:
         """Get well group tree data for case and iteration"""
         timer = PerfTimer()
 
-        # With single realization, filter on realization
-        if realization is not None:
-            table_collection = self._case.tables.filter(
-                tagname=GroupTreeAccess.TAGNAME, realization=realization, iteration=self._iteration_name
-            )
-            if await table_collection.length_async() == 0:
-                return None
-            if await table_collection.length_async() > 1:
-                raise ValueError("Multiple tables found.")
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader.require_tagname(GroupTreeAccess.TAGNAME)
 
-            group_tree_df = table_collection[0].to_pandas()
+        pa_table: pa.Table = await table_loader.get_single_realization_async(realization)
 
-            _validate_group_tree_df(group_tree_df)
-
-            LOGGER.debug(f"Loaded gruptree table from Sumo in: {timer.elapsed_ms()}ms")
-            return group_tree_df
-
-        # If no realization is specified, get all tables and merge them
-        table_collection = self._case.tables.filter(
-            tagname=GroupTreeAccess.TAGNAME, aggregation="collection", iteration=self._iteration_name
-        )
-
-        df0 = table_collection[0].to_pandas()
-        df1 = table_collection[1].to_pandas()
-        df2 = table_collection[2].to_pandas()
-
-        group_tree_df = pd.merge(df0, df1, left_index=True, right_index=True)
-        group_tree_df = pd.merge(group_tree_df, df2, left_index=True, right_index=True)
-
-        _validate_group_tree_df(group_tree_df)
+        group_tree_df_pandas = pa_table.to_pandas()
+        _validate_group_tree_df(group_tree_df_pandas)
 
         LOGGER.debug(f"Loaded gruptree table from Sumo in: {timer.elapsed_ms()}ms")
-        return group_tree_df
+        return group_tree_df_pandas
 
 
 def _validate_group_tree_df(df: pd.DataFrame) -> None:
     expected_columns = {"DATE", "CHILD", "KEYWORD", "PARENT"}
 
     if not expected_columns.issubset(df.columns):
-        raise ValueError(f"Expected columns: {expected_columns} - got: {df.columns}")
+        raise InvalidDataError(f"Expected columns: {expected_columns} - got: {df.columns}", Service.SUMO)

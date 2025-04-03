@@ -1,24 +1,24 @@
 import React from "react";
-import Plot from "react-plotly.js";
 
-import { Ensemble } from "@framework/Ensemble";
-import { ModuleViewProps } from "@framework/Module";
+import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import type { ModuleViewProps } from "@framework/Module";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import { useAtomValue, useSetAtom } from "jotai";
-import { PlotDatum, PlotMouseEvent } from "plotly.js";
+import type { PlotDatum, PlotMouseEvent } from "plotly.js";
 
 import { userSelectedActiveTimestampUtcMsAtom } from "./atoms/baseAtoms";
 import { realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
+import { usePlotBuilder } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
-import { useSubplotBuilder } from "./hooks/useSubplotBuilder";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 
 export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -28,7 +28,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
     const parameterIdent = viewContext.useSettingsToViewInterfaceValue("parameterIdent");
-    const selectedEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedEnsembles");
+    const selectedEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedRegularEnsembles");
+    const selectedDeltaEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedDeltaEnsembles");
     const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
     const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
 
@@ -46,21 +47,20 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
             ? new EnsemblesContinuousParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
             : null;
 
-    const ensemblesWithoutParameter: Ensemble[] = [];
+    const ensemblesWithoutParameter: (RegularEnsemble | DeltaEnsemble)[] = [];
     let parameterDisplayName: string | null = null;
     if (ensemblesParameterColoring) {
         ensemblesWithoutParameter.push(
             ...selectedEnsembles.filter(
-                (ensemble) => !ensemblesParameterColoring.hasParameterForEnsemble(ensemble.getIdent())
-            )
+                (ensemble) => !ensemblesParameterColoring.hasParameterForEnsemble(ensemble.getIdent()),
+            ),
         );
         parameterDisplayName = ensemblesParameterColoring.getParameterDisplayName();
+        ensemblesWithoutParameter.push(...selectedDeltaEnsembles);
     }
 
     useMakeViewStatusWriterMessages(viewContext, statusWriter, parameterDisplayName, ensemblesWithoutParameter);
     usePublishToDataChannels(viewContext);
-
-    const [plotData, plotLayout] = useSubplotBuilder(viewContext, wrapperDivSize, colorSet, ensemblesParameterColoring);
 
     function handleClickInChart(e: PlotMouseEvent) {
         const clickedPoint: PlotDatum = e.points[0];
@@ -76,21 +76,12 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         }
     }
 
-    const doRenderContentError = hasRealizationsQueryError || hasStatisticsQueryError;
+    const plot = usePlotBuilder(viewContext, wrapperDivSize, colorSet, ensemblesParameterColoring, handleClickInChart);
+    const hasNoQueryErrors = !hasRealizationsQueryError && !hasStatisticsQueryError;
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            {doRenderContentError ? (
-                <ContentError>One or more queries have an error state.</ContentError>
-            ) : (
-                <Plot
-                    key={plotData.length} // Note: Temporary to trigger re-render and remove legends when plotData is empty
-                    data={plotData}
-                    layout={plotLayout}
-                    config={{ scrollZoom: true }}
-                    onClick={handleClickInChart}
-                />
-            )}
+            {hasNoQueryErrors ? plot : <ContentError>One or more queries have an error state.</ContentError>}
         </div>
     );
 };

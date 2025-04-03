@@ -1,5 +1,7 @@
-import { Frequency_api, StatisticFunction_api, SummaryVectorObservations_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import type { SummaryVectorObservations_api } from "@api";
+import { Frequency_api, StatisticFunction_api } from "@api";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 /**
  * Definition of ensemble vector observation data
@@ -15,7 +17,7 @@ export type EnsembleVectorObservationData = {
 /**
  * Definition of map of ensemble ident and ensemble vector observation data
  */
-export type EnsembleVectorObservationDataMap = Map<EnsembleIdent, EnsembleVectorObservationData>;
+export type EnsembleVectorObservationDataMap = Map<RegularEnsembleIdent, EnsembleVectorObservationData>;
 
 /**
  * Definition of vector observations queries result for combined queries
@@ -27,7 +29,7 @@ export type VectorObservationsQueriesResult = {
 };
 
 export interface VectorSpec {
-    ensembleIdent: EnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent;
     color: string | null;
     vectorName: string;
     hasHistoricalVector: boolean;
@@ -93,4 +95,16 @@ export const FrequencyEnumToStringMapping = {
     [Frequency_api.MONTHLY]: "Monthly",
     [Frequency_api.QUARTERLY]: "Quarterly",
     [Frequency_api.YEARLY]: "Yearly",
+};
+
+export enum SubplotLimitDirection {
+    NONE = "none",
+    COLUMNS = "columns",
+    ROWS = "rows",
+}
+
+export const SubplotLimitDirectionEnumToStringMapping = {
+    [SubplotLimitDirection.NONE]: "None",
+    [SubplotLimitDirection.COLUMNS]: "Columns",
+    [SubplotLimitDirection.ROWS]: "Rows",
 };

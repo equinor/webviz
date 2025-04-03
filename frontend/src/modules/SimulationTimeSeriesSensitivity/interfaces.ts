@@ -1,24 +1,21 @@
-import { Frequency_api } from "@api";
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { Frequency_api } from "@api";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
-    realizationsToIncludeAtom,
     resamplingFrequencyAtom,
-    selectedSensitivitiesAtom,
     showHistoricalAtom,
     showRealizationsAtom,
     showStatisticsAtom,
-    vectorSpecAtom,
 } from "./settings/atoms/baseAtoms";
-import { VectorSpec } from "./typesAndEnums";
+import { selectedSensitivityNamesAtom, vectorSpecificationAtom } from "./settings/atoms/derivedAtoms";
+import type { VectorSpec } from "./typesAndEnums";
 
-type SettingsToViewInterface = {
-    vectorSpec: VectorSpec | null;
+export type SettingsToViewInterface = {
+    vectorSpecification: VectorSpec | null;
     resamplingFrequency: Frequency_api | null;
-    selectedSensitivities: string[] | null;
+    selectedSensitivityNames: string[];
     showStatistics: boolean;
     showRealizations: boolean;
-    realizationsToInclude: number[] | null;
     showHistorical: boolean;
 };
 
@@ -27,23 +24,20 @@ export type Interfaces = {
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    vectorSpec: (get) => {
-        return get(vectorSpecAtom);
+    vectorSpecification: (get) => {
+        return get(vectorSpecificationAtom);
     },
     resamplingFrequency: (get) => {
         return get(resamplingFrequencyAtom);
     },
-    selectedSensitivities: (get) => {
-        return get(selectedSensitivitiesAtom);
+    selectedSensitivityNames: (get) => {
+        return get(selectedSensitivityNamesAtom);
     },
     showStatistics: (get) => {
         return get(showStatisticsAtom);
     },
     showRealizations: (get) => {
         return get(showRealizationsAtom);
-    },
-    realizationsToInclude: (get) => {
-        return get(realizationsToIncludeAtom);
     },
     showHistorical: (get) => {
         return get(showHistoricalAtom);

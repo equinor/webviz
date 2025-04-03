@@ -1,26 +1,6 @@
-from typing import List, Optional
+from enum import Enum
+from typing import List, Optional, TypeAlias
 from pydantic import BaseModel
-
-
-class StratigraphicUnit(BaseModel):
-    """
-    Stratigraphic unit from SMDA
-
-    Camel case attributes needed for esvIntersection component in front-end
-    """
-
-    identifier: str
-    top: str
-    base: str
-    stratUnitLevel: int
-    stratUnitType: str
-    topAge: int | float
-    baseAge: int | float
-    stratUnitParent: Optional[str] = None
-    colorR: int
-    colorG: int
-    colorB: int
-    lithologyType: int | float | str = "unknown"
 
 
 class WellboreHeader(BaseModel):
@@ -32,6 +12,8 @@ class WellboreHeader(BaseModel):
     wellNorthing: float
     depthReferencePoint: str
     depthReferenceElevation: float
+    wellborePurpose: str
+    wellboreStatus: str
 
 
 class WellboreTrajectory(BaseModel):
@@ -57,15 +39,12 @@ class WellborePick(BaseModel):
     md: float
     mdMsl: float
     uniqueWellboreIdentifier: str
+    wellboreUuid: str
     pickIdentifier: str
     confidence: Optional[str] = None
     depthReferencePoint: str
     mdUnit: str
-
-
-class WellborePicksAndStratigraphicUnits(BaseModel):
-    wellbore_picks: List[WellborePick] = []
-    stratigraphic_units: List[StratigraphicUnit] = []
+    interpreter: str | None
 
 
 class WellboreCompletion(BaseModel):
@@ -100,19 +79,53 @@ class WellborePerforation(BaseModel):
     completionMode: str
 
 
+class WellLogCurveSourceEnum(Enum):
+    SSDL_WELL_LOG = "ssdl.well_log"
+    SMDA_GEOLOGY = "smda.geology"
+    SMDA_STRATIGRAPHY = "smda.stratigraphy"
+
+
+class WellLogCurveTypeEnum(str, Enum):
+    CONTINUOUS = "continuous"
+    DISCRETE = "discrete"
+    FLAG = "flag"
+
+
 class WellboreLogCurveHeader(BaseModel):
+    source: WellLogCurveSourceEnum
+    curveType: WellLogCurveTypeEnum
+
     logName: str
     curveName: str
-    curveUnit: str
+    curveUnit: str | None
+
+
+RgbArray: TypeAlias = tuple[int, int, int]
+
+
+class DiscreteValueMetadata(BaseModel):
+    """
+    Holds information that describes how a discrete curve value should be presented to the user.
+    """
+
+    code: int
+    identifier: str
+    rgbColor: RgbArray
 
 
 class WellboreLogCurveData(BaseModel):
+    source: WellLogCurveSourceEnum
+    name: str
+    logName: str
     indexMin: float
     indexMax: float
-    minCurveValue: float
-    maxCurveValue: float
-    dataPoints: list[list[float | None]]
-    curveAlias: str
-    curveDescription: str
+    minCurveValue: float | None
+    maxCurveValue: float | None
+    curveAlias: str | None
+    curveDescription: str | None
     indexUnit: str
-    noDataValue: float
+    noDataValue: float | None
+    unit: str | None
+    curveUnitDesc: str | None
+    dataPoints: list[tuple[float, float | str | None]]
+    discreteValueMetadata: list[DiscreteValueMetadata] | None

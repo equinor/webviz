@@ -1,10 +1,11 @@
-import { DropdownOption } from "@lib/components/Dropdown";
-import { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
-import { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import type { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
+import type { SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
+import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 
 export function makeSubplotByOptions(
     tableDefinitionsAccessor: TableDefinitionsAccessor,
-    selectedTableNames: string[]
+    selectedTableNames: string[],
 ): DropdownOption<SourceAndTableIdentifierUnion>[] {
     const numEnsembleIdents = tableDefinitionsAccessor.getUniqueEnsembleIdents().length;
     const numTableNames = selectedTableNames.length;
@@ -37,7 +38,7 @@ export function makeSubplotByOptions(
         },
     ];
 
-    for (const identifier of tableDefinitionsAccessor.getIdentifiersWithIntersectionValues()) {
+    for (const identifier of tableDefinitionsAccessor.getCommonIdentifiersWithValues()) {
         options.push({
             value: identifier.identifier,
             label: identifier.identifier,
@@ -50,7 +51,7 @@ export function makeSubplotByOptions(
 export function makeColorByOptions(
     tableDefinitionsAccessor: TableDefinitionsAccessor,
     selectedSubplotBy: SourceAndTableIdentifierUnion,
-    selectedTableNames: string[]
+    selectedTableNames: string[],
 ): DropdownOption<SourceAndTableIdentifierUnion>[] {
     const numEnsembleIdents = tableDefinitionsAccessor.getUniqueEnsembleIdents().length;
     const numTableNames = selectedTableNames.length;
@@ -98,7 +99,7 @@ export function makeColorByOptions(
         });
     }
 
-    for (const identifier of tableDefinitionsAccessor.getIdentifiersWithIntersectionValues()) {
+    for (const identifier of tableDefinitionsAccessor.getCommonIdentifiersWithValues()) {
         if (selectedSubplotBy !== identifier.identifier) {
             options.push({
                 value: identifier.identifier,

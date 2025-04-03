@@ -1,26 +1,24 @@
 import React from "react";
 
-import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { WorkbenchSession, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { getSeismicCubeMetaListOptions } from "@api";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { ColorScaleSelector } from "@framework/components/ColorScaleSelector";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { isIsoStringInterval } from "@framework/utils/timestampUtils";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { SelectOption } from "@lib/components/Select";
-import { ColorScale } from "@lib/utils/ColorScale";
+import type { SelectOption } from "@lib/components/Select";
 import { useLayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
-import {
-    SeismicDataType,
-    SeismicLayer,
-    SeismicLayerSettings,
-    SeismicSurveyType,
-} from "@modules/Intersection/utils/layers/SeismicLayer";
-import { ColorScaleSelector } from "@modules/_shared/components/ColorScaleSelector/colorScaleSelector";
+import type { SeismicLayer, SeismicLayerSettings } from "@modules/Intersection/utils/layers/SeismicLayer";
+import { SeismicDataType, SeismicSurveyType } from "@modules/Intersection/utils/layers/SeismicLayer";
 import { isoIntervalStringToDateLabel, isoStringToDateLabel } from "@modules/_shared/utils/isoDatetimeStringFormatting";
 import { useQuery } from "@tanstack/react-query";
 
@@ -61,7 +59,7 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
 
     const fixupEnsembleIdent = fixupSetting(
         "ensembleIdent",
-        props.ensembleSet.getEnsembleArr().map((el) => el.getIdent()),
+        props.ensembleSet.getRegularEnsembleArray().map((el) => el.getIdent()),
         newSettings
     );
     if (!isEqual(fixupEnsembleIdent, newSettings.ensembleIdent)) {
@@ -90,15 +88,15 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
                     seismicCubeMetaListQuery.data
                         .filter((el) => {
                             return (
-                                el.is_depth &&
-                                el.is_observation === (newSettings.dataType === SeismicDataType.OBSERVED) &&
+                                el.isDepth &&
+                                el.isObservation === (newSettings.dataType === SeismicDataType.OBSERVED) &&
                                 ((newSettings.surveyType === SeismicSurveyType.THREE_D &&
-                                    !isIsoStringInterval(el.iso_date_or_interval)) ||
+                                    !isIsoStringInterval(el.isoDateOrInterval)) ||
                                     (newSettings.surveyType === SeismicSurveyType.FOUR_D &&
-                                        isIsoStringInterval(el.iso_date_or_interval)))
+                                        isIsoStringInterval(el.isoDateOrInterval)))
                             );
                         })
-                        .map((el) => el.seismic_attribute)
+                        .map((el) => el.seismicAttribute)
                 )
             )
         );
@@ -109,16 +107,16 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
                     seismicCubeMetaListQuery.data
                         .filter((el) => {
                             return (
-                                el.is_depth &&
-                                el.seismic_attribute === newSettings.attribute &&
-                                el.is_observation === (newSettings.dataType === SeismicDataType.OBSERVED) &&
+                                el.isDepth &&
+                                el.seismicAttribute === newSettings.attribute &&
+                                el.isObservation === (newSettings.dataType === SeismicDataType.OBSERVED) &&
                                 ((newSettings.surveyType === SeismicSurveyType.THREE_D &&
-                                    !isIsoStringInterval(el.iso_date_or_interval)) ||
+                                    !isIsoStringInterval(el.isoDateOrInterval)) ||
                                     (newSettings.surveyType === SeismicSurveyType.FOUR_D &&
-                                        isIsoStringInterval(el.iso_date_or_interval)))
+                                        isIsoStringInterval(el.isoDateOrInterval)))
                             );
                         })
-                        .map((el) => el.iso_date_or_interval)
+                        .map((el) => el.isoDateOrInterval)
                 )
             ).sort()
         );
@@ -158,7 +156,7 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
         [seismicCubeMetaListQuery.isFetching, props.layer, newSettings]
     );
 
-    function handleEnsembleChange(ensembleIdent: EnsembleIdent | null) {
+    function handleEnsembleChange(ensembleIdent: RegularEnsembleIdent | null) {
         setNewSettings((prev) => ({ ...prev, ensembleIdent }));
     }
 
@@ -186,9 +184,9 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
         setNewSettings((prev) => ({ ...prev, resolution: parseFloat(e.target.value) }));
     }
 
-    function handleColorScaleChange(newColorScale: ColorScale, areBoundariesUserDefined: boolean) {
-        props.layer.setUseCustomColorScaleBoundaries(areBoundariesUserDefined);
-        props.layer.setColorScale(newColorScale);
+    function handleColorScaleChange(newColorScale: ColorScaleSpecification) {
+        props.layer.setUseCustomColorScaleBoundaries(newColorScale.areBoundariesUserDefined);
+        props.layer.setColorScale(newColorScale.colorScale);
     }
 
     return (
@@ -198,7 +196,7 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
                 <div className="table-cell">
                     <EnsembleDropdown
                         value={props.layer.getSettings().ensembleIdent}
-                        ensembleSet={props.ensembleSet}
+                        ensembles={props.ensembleSet.getRegularEnsembleArray()}
                         onChange={handleEnsembleChange}
                         debounceTimeMs={600}
                     />
@@ -307,8 +305,10 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
                 <div className="table-cell align-top">Color scale</div>
                 <div className="table-cell">
                     <ColorScaleSelector
-                        colorScale={props.layer.getColorScale()}
-                        areBoundariesUserDefined={props.layer.getUseCustomColorScaleBoundaries()}
+                        colorScaleSpecification={{
+                            colorScale: props.layer.getColorScale(),
+                            areBoundariesUserDefined: props.layer.getUseCustomColorScaleBoundaries(),
+                        }}
                         workbenchSettings={props.workbenchSettings}
                         onChange={handleColorScaleChange}
                     />
@@ -338,19 +338,14 @@ function makeDateOrIntervalStringOptions(availableSeismicDateOrIntervalStrings: 
     }));
 }
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
-function useSeismicCubeMetaListQuery(ensembleIdent: EnsembleIdent | null) {
+function useSeismicCubeMetaListQuery(ensembleIdent: RegularEnsembleIdent | null) {
     return useQuery({
-        queryKey: ["getSeismicCubeMetaList", ensembleIdent?.getCaseUuid(), ensembleIdent?.getEnsembleName()],
-        queryFn: () =>
-            apiService.seismic.getSeismicCubeMetaList(
-                ensembleIdent?.getCaseUuid() ?? "",
-                ensembleIdent?.getEnsembleName() ?? ""
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
+        ...getSeismicCubeMetaListOptions({
+            query: {
+                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+            },
+        }),
         enabled: Boolean(ensembleIdent),
     });
 }

@@ -7,7 +7,8 @@ import { Close, ExpandLess, ExpandMore } from "@mui/icons-material";
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import { BaseComponent, BaseComponentProps } from "../BaseComponent";
+import type { BaseComponentProps } from "../BaseComponent";
+import { BaseComponent } from "../BaseComponent";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
 
@@ -56,7 +57,7 @@ enum SortDirection {
 function filterData(
     data: IdentifiedTableRow<TableHeading>[],
     filterValues: { [key: string]: string },
-    headings: TableHeading
+    headings: TableHeading,
 ): IdentifiedTableRow<TableHeading>[] {
     return data.filter((series) => {
         for (const col in filterValues) {
@@ -81,7 +82,7 @@ type SortColumnAndDirectionElement = {
 
 function sortDataByColumns(
     data: IdentifiedTableRow<TableHeading>[],
-    sortColumnAndDirectionArray: SortColumnAndDirectionElement[]
+    sortColumnAndDirectionArray: SortColumnAndDirectionElement[],
 ): IdentifiedTableRow<TableHeading>[] {
     return [...data.sort((a, b) => compareDataByColumns(a, b, sortColumnAndDirectionArray))];
 }
@@ -89,7 +90,7 @@ function sortDataByColumns(
 function compareDataByColumns(
     a: IdentifiedTableRow<TableHeading>,
     b: IdentifiedTableRow<TableHeading>,
-    sortColumnAndDirectionArray: SortColumnAndDirectionElement[]
+    sortColumnAndDirectionArray: SortColumnAndDirectionElement[],
 ): number {
     for (const { col, dir } of sortColumnAndDirectionArray) {
         const aValue = a.values[col];
@@ -150,7 +151,7 @@ function recursivelyCalcDepth(headings: TableHeading, depth: number = 1): number
 function extractInformationFromTableHeading(
     headings: TableHeading,
     depth: number = 0,
-    headerRows: TableHeadingCellInformation[][] = []
+    headerRows: TableHeadingCellInformation[][] = [],
 ): TableHeadingInformation {
     const maxDepth = recursivelyCalcDepth(headings);
 
@@ -200,7 +201,7 @@ type FlattenedHeading = Record<
 function flattenHeadings(
     headings: TableHeading,
     headingGroupId?: string,
-    parentSizeInPercent: number = 100.0
+    parentSizeInPercent: number = 100.0,
 ): FlattenedHeading {
     const newHeadings: FlattenedHeading = {};
     for (const col in headings) {
@@ -209,7 +210,7 @@ function flattenHeadings(
             const flattenedSubHeadings = flattenHeadings(
                 subHeadings,
                 headingGroupId ?? col,
-                headings[col].sizeInPercent
+                headings[col].sizeInPercent,
             );
             for (const subCol in flattenedSubHeadings) {
                 newHeadings[`${subCol}`] = {
@@ -232,7 +233,7 @@ function flattenHeadings(
 
 function calcMaxColumnWidths<THeading extends TableHeading>(
     headings: THeading,
-    data: TableRow<THeading>[]
+    data: TableRow<THeading>[],
 ): { [key: string]: number } {
     const columnWidths: { [key: string]: number } = {};
     for (const col in headings) {
@@ -282,7 +283,10 @@ class AlternatingColumnStyleHelper {
     }
 }
 
-export function Table(props: TableProps<TableHeading>): React.ReactNode {
+export function TableComponent(
+    props: TableProps<TableHeading>,
+    ref: React.ForwardedRef<HTMLDivElement>,
+): React.ReactNode {
     const [layoutError, setLayoutError] = React.useState<LayoutError>({ error: false, message: "" });
     const [preprocessedData, setPreprocessedData] = React.useState<IdentifiedTableRow<TableHeading>[]>([]);
     const [filteredData, setFilteredData] = React.useState<IdentifiedTableRow<TableHeading>[]>([]);
@@ -300,6 +304,7 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
     const [prevHeadings, setPrevHeadings] = React.useState<TableHeading>({});
 
     const containerRef = React.useRef<HTMLDivElement>(null);
+    React.useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(ref, () => containerRef.current);
 
     if (!isEqual(prevData, props.data)) {
         setPrevData(props.data);
@@ -308,8 +313,8 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
         setFilteredData(
             sortDataByColumns(
                 filterData(newPreprocessedData, filterValues, flattenedHeadings),
-                sortColumnAndDirectionArray
-            )
+                sortColumnAndDirectionArray,
+            ),
         );
     }
 
@@ -364,8 +369,8 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
         setFilteredData(
             sortDataByColumns(
                 filterData(preprocessedData, newFilterValues, flattenedHeadings),
-                sortColumnAndDirectionArray
-            )
+                sortColumnAndDirectionArray,
+            ),
         );
     }
 
@@ -417,7 +422,7 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
                         "text-sm hover:text-blue-500 cursor-pointer h-1/2 flex flex-col justify-center",
                         sortDirection === SortDirection.ASC
                             ? "text-white bg-blue-800 hover:text-blue-100"
-                            : "text-blue-300 hover:text-white hover:bg-blue-300"
+                            : "text-blue-300 hover:text-white hover:bg-blue-300",
                     )}
                     onClick={(e) => handleSortDirectionChange(e, col, SortDirection.ASC)}
                     title="Sort ascending"
@@ -431,7 +436,7 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
                         "text-sm hover:text-blue-500 cursor-pointer h-1/2 flex flex-col justify-center",
                         sortDirection === SortDirection.DESC
                             ? "text-white bg-blue-800 hover:text-blue-100"
-                            : "text-blue-300 hover:text-white hover:bg-blue-300"
+                            : "text-blue-300 hover:text-white hover:bg-blue-300",
                     )}
                     onClick={(e) => handleSortDirectionChange(e, col, SortDirection.DESC)}
                     title="Sort descending"
@@ -462,7 +467,7 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
 
         const alternatingColumnStyleHelper = new AlternatingColumnStyleHelper(
             flattenedHeadings,
-            ALTERNATING_COLUMN_HEADING_COLORS
+            ALTERNATING_COLUMN_HEADING_COLORS,
         );
 
         for (const key of dataColumnIds) {
@@ -476,7 +481,7 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
             headingCells.push(
                 <th
                     key={`${key}-filter`}
-                    className={resolveClassNames("bg-slate-100 p-0 pb-1 text-left drop-shadow", additionalClassNames)}
+                    className={resolveClassNames("bg-slate-100 p-0 pb-1 text-left drop-shadow-sm", additionalClassNames)}
                     style={{
                         width: `${flattenedHeadings[key].sizeInPercent}%`,
                         minWidth: columnWidths[key],
@@ -502,7 +507,7 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
                             fontSize: "0.5rem",
                         }}
                     />
-                </th>
+                </th>,
             );
         }
 
@@ -514,7 +519,7 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
 
         const alternatingColumnStyleHelper = new AlternatingColumnStyleHelper(
             flattenedHeadings,
-            ALTERNATING_COLUMN_HEADING_COLORS
+            ALTERNATING_COLUMN_HEADING_COLORS,
         );
 
         for (const cell of row) {
@@ -533,7 +538,7 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
                         {
                             "text-center": cell.hasSubHeaders,
                         },
-                        additionalClassNames
+                        additionalClassNames,
                     )}
                     style={{
                         width: `${flattenedHeadings[cell.id].sizeInPercent}%`,
@@ -545,14 +550,14 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
                     colSpan={cell.colSpan}
                 >
                     <div className="h-full flex flex-col">
-                        <div className="px-1 flex items-center gap-1 flex-grow">
-                            <span className="flex-grow pt-1" title={flattenedHeadings[cell.id].hoverText}>
+                        <div className="px-1 flex items-center gap-1 grow">
+                            <span className="grow pt-1" title={flattenedHeadings[cell.id].hoverText}>
                                 {flattenedHeadings[cell.id].label}
                             </span>
                             {!cell.hasSubHeaders ? makeSortButtons(cell.id) : null}
                         </div>
                     </div>
-                </th>
+                </th>,
             );
         }
 
@@ -573,7 +578,7 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
 
         const alternatingColumnStyleHelper = new AlternatingColumnStyleHelper(
             flattenedHeadings,
-            ALTERNATING_COLUMN_CELL_COLORS
+            ALTERNATING_COLUMN_CELL_COLORS,
         );
 
         for (const colId of dataColumnIds) {
@@ -589,12 +594,12 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
                     key={`${row.id}-${colId}`}
                     className={resolveClassNames(
                         "group/td group-hover/tr:bg-blue-100 border p-1 whitespace-nowrap",
-                        additionalClassNames
+                        additionalClassNames,
                     )}
                     style={formatStyle ? formatStyle(row.values[colId]) : undefined}
                 >
                     {format ? format(row.values[colId]) : row.values[colId]}
-                </td>
+                </td>,
             );
         }
 
@@ -615,28 +620,29 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
     }
 
     return (
-        <BaseComponent disabled={props.disabled}>
-            <div
-                ref={containerRef}
-                className="relative overflow-auto"
-                style={{ width: props.width, height: props.height }}
-            >
-                <table className="w-full max-h-full border-0 border-separate border-spacing-0 text-sm">
-                    <thead className="border-0 m-0 p-0 sticky top-0">{makeHeadings()}</thead>
-                    <tbody style={{ width: props.width, maxHeight: props.height }}>
-                        <Virtualization
-                            containerRef={containerRef}
-                            direction="vertical"
-                            placeholderComponent="tr"
-                            items={filteredData}
-                            itemSize={ROW_HEIGHT_PX}
-                            renderItem={makeDataRow}
-                        />
-                    </tbody>
-                </table>
-            </div>
+        <BaseComponent
+            disabled={props.disabled}
+            ref={containerRef}
+            className="relative overflow-auto"
+            style={{ width: props.width, height: props.height }}
+        >
+            <table className="w-full max-h-full border-0 border-separate border-spacing-0 text-sm">
+                <thead className="border-0 m-0 p-0 sticky top-0">{makeHeadings()}</thead>
+                <tbody style={{ width: props.width, maxHeight: props.height }}>
+                    <Virtualization
+                        containerRef={containerRef}
+                        direction="vertical"
+                        placeholderComponent="tr"
+                        items={filteredData}
+                        itemSize={ROW_HEIGHT_PX}
+                        renderItem={makeDataRow}
+                    />
+                </tbody>
+            </table>
         </BaseComponent>
     );
 }
+
+export const Table = React.forwardRef(TableComponent);
 
 Table.displayName = "Table";

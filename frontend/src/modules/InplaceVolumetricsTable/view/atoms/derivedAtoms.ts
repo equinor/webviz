@@ -1,6 +1,6 @@
-import { InplaceVolumetricsIdentifier_api } from "@api";
+import type { InplaceVolumetricsIdentifier_api } from "@api";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
-import { EnsembleIdentWithRealizations } from "@modules/_shared/InplaceVolumetrics/queryHooks";
+import type { EnsembleIdentWithRealizations } from "@modules/_shared/InplaceVolumetrics/queryHooks";
 import { SourceIdentifier, TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { atom } from "jotai";
@@ -21,6 +21,11 @@ export const fluidZonesAtom = atom((get) => {
 export const identifiersValuesAtom = atom((get) => {
     const filter = get(filterAtom);
     return filter?.identifiersValues ?? [];
+});
+
+export const areSelectedTablesComparableAtom = atom((get) => {
+    const filter = get(filterAtom);
+    return filter?.areSelectedTablesComparable ?? false;
 });
 
 export const ensembleIdentsWithRealizationsAtom = atom((get) => {
@@ -68,7 +73,7 @@ export const isQueryFetchingAtom = atom((get) => {
     return activeQueriesResult.isFetching;
 });
 
-export const hasAllQueriesFailedAtom = atom((get) => {
+export const haveAllQueriesFailedAtom = atom((get) => {
     const tableType = get(tableTypeAtom);
     const perRealizationTableDataResults = get(perRealizationTableDataResultsAtom);
     const statisticalTableDataResults = get(statisticalTableDataResultsAtom);

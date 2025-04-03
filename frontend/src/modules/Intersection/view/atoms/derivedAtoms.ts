@@ -49,11 +49,11 @@ export const intersectionReferenceSystemAtom = atom((get) => {
             return referenceSystem;
         }
     } else if (intersectionType === IntersectionType.CUSTOM_POLYLINE && customIntersectionPolyline) {
-        if (customIntersectionPolyline.points.length < 2) {
+        if (customIntersectionPolyline.path.length < 2) {
             return null;
         }
         const referenceSystem = new IntersectionReferenceSystem(
-            customIntersectionPolyline.points.map((point) => [point[0], point[1], 0])
+            customIntersectionPolyline.path.map((point) => [point[0], point[1], 0]),
         );
         referenceSystem.offset = 0;
 
@@ -78,15 +78,15 @@ export const polylineAtom = atom((get) => {
             const simplifiedCurveResult = calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
                 path,
                 intersectionExtensionLength,
-                CURVE_FITTING_EPSILON
+                CURVE_FITTING_EPSILON,
             );
             polylineUtmXy.push(...simplifiedCurveResult.simplifiedWellboreTrajectoryXy.flat());
             actualSectionLengths.push(...simplifiedCurveResult.actualSectionLengths);
         } else if (intersectionType === IntersectionType.CUSTOM_POLYLINE && selectedCustomIntersectionPolyline) {
-            for (const [index, point] of selectedCustomIntersectionPolyline.points.entries()) {
+            for (const [index, point] of selectedCustomIntersectionPolyline.path.entries()) {
                 polylineUtmXy.push(point[0], point[1]);
                 if (index > 0) {
-                    const previousPoint = selectedCustomIntersectionPolyline.points[index - 1];
+                    const previousPoint = selectedCustomIntersectionPolyline.path[index - 1];
                     actualSectionLengths.push(point2Distance(vec2FromArray(point), vec2FromArray(previousPoint)));
                 }
             }

@@ -1,26 +1,73 @@
 import React from "react";
 
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vec2 } from "@lib/utils/vec2";
-import { Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
+import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
+import type { SliderProps as SliderUnstyledProps, SliderValueLabelSlotProps } from "@mui/base";
+import { Popper as PopperUnstyled, Slider as SliderUnstyled } from "@mui/base";
 
 import { BaseComponent } from "../BaseComponent";
 
+function SliderValueLabel(props: SliderValueLabelSlotProps) {
+    const anchorRef = React.useRef<HTMLDivElement | null>(null);
+
+    return (
+        <>
+            <PopperUnstyled
+                id="slider-popper"
+                className="z-50"
+                open={props.disabled ? false : true}
+                anchorEl={() => anchorRef.current!}
+                placement="top"
+                popperOptions={{ modifiers: [{ name: "offset", options: { offset: [0, 8] } }] }}
+            >
+                <span
+                    className={resolveClassNames(
+                        "pointer-events-none",
+                        "inline-block",
+                        "rounded-sm",
+                        "bg-blue-600",
+                        "text-white",
+                        "p-2",
+                        "h-6",
+                        "text-xs",
+                        "font-bold",
+                        "leading-none",
+                        "whitespace-nowrap",
+                        "before:absolute",
+                        "before:-bottom-2",
+                        "before:left-1/2",
+                        "before:transform",
+                        "before:-translate-x-1/2",
+                        "before:-translate-y-1/2",
+                        "before:w-2",
+                        "before:h-2",
+                        "before:bg-blue-600",
+                        "before:rotate-45",
+                    )}
+                >
+                    {props.children}
+                </span>
+            </PopperUnstyled>
+            <div ref={anchorRef} />
+        </>
+    );
+}
+
 export type SliderProps = {
     valueLabelDisplay?: "auto" | "off";
-    valueLabelFormat?: string | ((value: number) => React.ReactNode);
+    valueLabelFormat?: string | ((value: number) => string);
     debounceTimeMs?: number;
 } & Omit<SliderUnstyledProps, "valueLabelFormat">;
 
-export const Slider = React.forwardRef((props: SliderProps, ref: React.ForwardedRef<HTMLDivElement>) => {
+function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElement>) {
     const {
         valueLabelDisplay,
         value: propsValue,
+        valueLabelFormat,
+        scale,
         max,
         min,
-        valueLabelFormat,
         orientation,
         track,
         debounceTimeMs,
@@ -29,13 +76,11 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
     const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [value, setValue] = React.useState<number | number[]>(propsValue ?? 0);
-    const [currentlyActiveThumb, setCurrentlyActiveThumb] = React.useState<number>(0);
     const [prevValue, setPrevValue] = React.useState<number | number[]>(propsValue ?? 0);
     const [valueLabelVisible, setValueLabelVisible] = React.useState<boolean>(false);
-    const [valueLabelPosition, setValueLabelPosition] = React.useState<Vec2>({ x: 0, y: 0 });
 
     const divRef = React.useRef<HTMLDivElement>(null);
-    const valueLabelRef = React.useRef<HTMLDivElement>(null);
+    React.useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(ref, () => divRef.current);
 
     const sliderRect = useElementBoundingRect(divRef);
 
@@ -49,34 +94,9 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
         let pointerPressed = false;
         let hovered = false;
 
-        const handlePointerOver = (e: PointerEvent) => {
+        const handlePointerOver = () => {
             setValueLabelVisible(true);
             hovered = true;
-            if (divRef.current) {
-                const elements = divRef.current.getElementsByClassName("MuiSlider-thumb");
-                if (elements.length >= 1) {
-                    const activeThumb = Array.from(elements).findIndex(
-                        (element) =>
-                            element ===
-                                document
-                                    .elementsFromPoint(e.clientX, e.clientY)
-                                    .filter((el) => el.classList.contains("MuiSlider-thumb"))
-                                    .at(0) ??
-                            elements[0] ??
-                            elements.item(0)
-                    );
-                    if (activeThumb >= 0) {
-                        setCurrentlyActiveThumb(activeThumb);
-                    }
-                    const thumb = elements[activeThumb];
-                    if (thumb) {
-                        setValueLabelPosition({
-                            x: thumb.getBoundingClientRect().left + thumb.getBoundingClientRect().width / 2 + 1,
-                            y: thumb.getBoundingClientRect().top + thumb.getBoundingClientRect().height / 2 + 1,
-                        });
-                    }
-                }
-            }
         };
 
         const handlePointerOut = () => {
@@ -87,33 +107,9 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
             setValueLabelVisible(false);
         };
 
-        const handlePointerDown = (e: PointerEvent) => {
+        const handlePointerDown = () => {
             pointerPressed = true;
-
             if (divRef.current) {
-                const elements = divRef.current.getElementsByClassName("MuiSlider-thumb");
-                if (elements.length >= 1) {
-                    const activeThumb = Array.from(elements).findIndex(
-                        (element) =>
-                            element ===
-                                document
-                                    .elementsFromPoint(e.clientX, e.clientY)
-                                    .filter((el) => el.classList.contains("MuiSlider-thumb"))
-                                    .at(0) ??
-                            elements[0] ??
-                            elements.item(0)
-                    );
-                    if (activeThumb >= 0) {
-                        setCurrentlyActiveThumb(activeThumb);
-                    }
-                    const thumb = elements[activeThumb];
-                    if (thumb) {
-                        setValueLabelPosition({
-                            x: thumb.getBoundingClientRect().left + thumb.getBoundingClientRect().width / 2 + 1,
-                            y: thumb.getBoundingClientRect().top + thumb.getBoundingClientRect().height / 2 + 1,
-                        });
-                    }
-                }
                 document.addEventListener("pointerup", handlePointerUp);
             }
         };
@@ -147,24 +143,6 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
 
     function handleValueChanged(event: Event, value: number | number[], activeThumb: number) {
         setValue(value);
-        setCurrentlyActiveThumb(activeThumb);
-
-        const activeThumbValue = Array.isArray(value) ? value[activeThumb] : value;
-        const range = (max ?? 100) - (min ?? 0);
-        setValueLabelPosition({
-            x:
-                (orientation === "vertical"
-                    ? sliderRect.width / 2
-                    : ((activeThumbValue - (min ?? 0)) / range) * sliderRect.width) +
-                sliderRect.left +
-                3,
-            y:
-                (orientation === "vertical"
-                    ? sliderRect.height * (1 - (activeThumbValue - (min ?? 0)) / range) - 4
-                    : sliderRect.height / 2) +
-                sliderRect.top +
-                1,
-        });
 
         if (debounceTimerRef.current) {
             clearTimeout(debounceTimerRef.current);
@@ -181,20 +159,6 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
         }, debounceTimeMs);
     }
 
-    function makeLabel(): React.ReactNode {
-        const currentValue = Array.isArray(value) ? value[currentlyActiveThumb] : value;
-        const adjustedValue = props.scale ? props.scale(currentValue) : currentValue;
-
-        if (valueLabelFormat) {
-            if (typeof valueLabelFormat === "function") {
-                return valueLabelFormat(adjustedValue);
-            }
-            return valueLabelFormat;
-        }
-
-        return adjustedValue;
-    }
-
     React.useEffect(function handleMount() {
         return function handleUnmount() {
             if (debounceTimerRef.current) {
@@ -203,166 +167,151 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
         };
     }, []);
 
+    // This function converts the slider value to a content string for the label
+    const formatLabelValue = React.useCallback(
+        function formatLabelValue(labelValue: number): React.ReactNode {
+            const adjustedValue = scale ? scale(labelValue) : labelValue;
+            if (valueLabelFormat) {
+                if (typeof valueLabelFormat === "function") {
+                    return valueLabelFormat(adjustedValue);
+                }
+                return valueLabelFormat;
+            }
+
+            return adjustedValue.toString();
+        },
+        [scale, valueLabelFormat],
+    );
+
     return (
-        <BaseComponent disabled={props.disabled}>
-            <div ref={divRef} className="mt-2 mb-2 flex justify-center">
-                <SliderUnstyled
-                    {...rest}
-                    scale={props.scale}
-                    orientation={orientation ?? "horizontal"}
-                    max={max}
-                    min={min}
-                    onChange={handleValueChanged}
-                    value={value}
-                    ref={ref}
-                    slotProps={{
-                        root: {
-                            className: resolveClassNames(
-                                orientation === "vertical" ? "w-3" : "w-full mx-3",
-                                orientation === "vertical" ? "h-full my-3" : "h-3",
-                                "cursor-pointer",
-                                "touch-action-none",
-                                "inline-block",
-                                "relative",
-                                orientation === "vertical" ? "px-4" : ""
-                            ),
-                        },
-                        rail: {
-                            className: resolveClassNames(
-                                "block",
-                                orientation === "vertical" ? "w-1" : "w-full",
-                                orientation === "vertical" ? "h-full" : "h-1",
-                                track === "inverted" ? "bg-blue-600" : "bg-blue-200",
-                                "rounded",
-                                orientation === "vertical" ? "top-0" : "left-0",
-                                "transform",
-                                orientation === "vertical" ? "-translate-y-1" : "translate-y-1"
-                            ),
-                        },
-                        track: {
-                            className: resolveClassNames(
-                                "block",
-                                orientation === "vertical" ? "w-1" : "h-1",
-                                track !== "inverted" ? "bg-blue-600" : "bg-blue-200",
-                                "rounded",
-                                "absolute",
-                                "transform",
-                                orientation === "vertical" ? "translate-x-1/2" : "",
-                                orientation === "vertical" ? "-translate-y-1" : "",
-                                orientation === "vertical" ? "-ml-0.5" : "",
-                                track === false ? "hidden" : ""
-                            ),
-                        },
-                        thumb: {
-                            className: resolveClassNames(
-                                "absolute",
-                                "box-content",
-                                "w-5",
-                                "h-5",
-                                "block",
-                                "bg-blue-600",
-                                "z-30",
-                                "shadow-sm",
-                                "rounded-full",
-                                "transform",
-                                orientation === "vertical" ? "translate-x-1/2" : "-translate-x-1/2",
-                                orientation === "vertical" ? "translate-y-1.5" : "-translate-y-1",
-                                orientation === "vertical" ? "left-0" : "top-0",
-                                orientation === "vertical" ? "-ml-0.5" : "ml-0.5",
-                                "cursor-pointer",
-                                "outline-none",
-                                "focus:outline-none",
-                                "hover:shadow-md",
-                                "active:shadow-lg",
-                                "after:absolute",
-                                "after:rounded-full",
-                                "after:w-7",
-                                "after:h-7",
-                                "after:inset-0",
-                                "after:-left-1",
-                                "after:-top-1",
-                                "after:bg-blue-600",
-                                "after:transition-all",
-                                "after:duration-100",
-                                "after:ease-in-out",
-                                "after:transform",
-                                "after:scale-0",
-                                "after:opacity-0",
-                                "after:hover:opacity-10",
-                                "after:hover:scale-100",
-                                "after:z-50",
-                                "after:active:scale-110",
-                                "after:active:opacity-15",
-                                "after:active:-left-[0.4em]",
-                                "after:active:-top-[0.4em]",
-                                "after:active:w-8",
-                                "after:active:h-8"
-                            ),
-                        },
-                        mark: {
-                            className: resolveClassNames(
-                                "absolute",
-                                "w-2",
-                                "h-2",
-                                "-ml-0.5",
-                                "-mt-0.5",
-                                "bg-blue-600",
-                                "border-2",
-                                "opacity-80",
-                                "border-white",
-                                "transform",
-                                orientation === "vertical" ? "-translate-y-0" : "",
-                                "z-20"
-                            ),
-                        },
-                    }}
-                />
-            </div>
-            {valueLabelDisplay !== undefined &&
-                valueLabelDisplay !== "off" &&
-                createPortal(
-                    <div
-                        className="absolute flex justify-center w-40 -ml-20 h-4 -mt-5 pointer-events-none z-50"
-                        ref={valueLabelRef}
-                        style={{ left: valueLabelPosition.x, top: valueLabelPosition.y }}
-                    >
-                        <div
-                            className={resolveClassNames(
-                                "rounded",
-                                "bg-blue-600",
-                                "text-white",
-                                "p-2",
-                                "text-xs",
-                                "font-bold",
-                                "leading-none",
-                                "transform",
-                                "-ml-0.5",
-                                "-translate-y-full",
-                                "transition-opacity",
-                                "pointer-events-none",
-                                "h-6",
-                                "before:absolute",
-                                "before:-bottom-5",
-                                "before:left-1/2",
-                                "before:transform",
-                                "before:-translate-x-1/2",
-                                "before:-translate-y-full",
-                                "before:w-4",
-                                "before:h-4",
-                                "before:bg-blue-600",
-                                "before:rotate-45",
-                                "before:-z-10",
-                                {
-                                    hidden: !valueLabelVisible && valueLabelDisplay === "auto",
-                                }
-                            )}
-                        >
-                            {makeLabel()}
-                        </div>
-                    </div>
-                )}
+        <BaseComponent disabled={props.disabled} ref={divRef} className="mt-2 mb-2 flex justify-center">
+            <SliderUnstyled
+                {...rest}
+                scale={props.scale}
+                orientation={orientation ?? "horizontal"}
+                max={max}
+                min={min}
+                onChange={handleValueChanged}
+                value={value}
+                ref={ref}
+                valueLabelFormat={(value) => {
+                    return formatLabelValue(value);
+                }}
+                slots={{
+                    valueLabel: SliderValueLabel,
+                }}
+                slotProps={{
+                    valueLabel: {
+                        disabled: !(valueLabelDisplay === "auto" && valueLabelVisible),
+                    },
+                    root: {
+                        className: resolveClassNames(
+                            orientation === "vertical" ? "w-3" : "w-full mx-3",
+                            orientation === "vertical" ? "h-full my-3" : "h-3",
+                            "cursor-pointer",
+                            "touch-action-none",
+                            "inline-block",
+                            "relative",
+                            orientation === "vertical" ? "px-4" : "",
+                        ),
+                    },
+                    rail: {
+                        className: resolveClassNames(
+                            "block",
+                            orientation === "vertical" ? "w-1" : "w-full",
+                            orientation === "vertical" ? "h-full" : "h-1",
+                            track === "inverted" ? "bg-blue-600" : "bg-blue-200",
+                            "rounded-sm",
+                            orientation === "vertical" ? "top-0" : "left-0",
+                            "transform",
+                            orientation === "vertical" ? "-translate-y-1" : "translate-y-1",
+                        ),
+                    },
+                    track: {
+                        className: resolveClassNames(
+                            "block",
+                            orientation === "vertical" ? "w-1" : "h-1",
+                            track !== "inverted" ? "bg-blue-600" : "bg-blue-200",
+                            "rounded-sm",
+                            "absolute",
+                            "transform",
+                            orientation === "vertical" ? "translate-x-1/2" : "",
+                            orientation === "vertical" ? "-translate-y-1" : "",
+                            orientation === "vertical" ? "-ml-0.5" : "",
+                            track === false ? "hidden" : "",
+                        ),
+                    },
+                    thumb: {
+                        className: resolveClassNames(
+                            "absolute",
+                            "box-content",
+                            "w-5",
+                            "h-5",
+                            "block",
+                            "bg-blue-600",
+                            "z-5",
+                            "shadow-xs",
+                            "rounded-full",
+                            "transform",
+                            orientation === "vertical" ? "translate-x-1/2" : "-translate-x-1/2",
+                            orientation === "vertical" ? "translate-y-1.5" : "-translate-y-1",
+                            orientation === "vertical" ? "left-0" : "top-0",
+                            orientation === "vertical" ? "-ml-0.5" : "ml-0.5",
+                            "cursor-pointer",
+                            "outline-hidden",
+                            "focus:outline-hidden",
+                            "hover:shadow-md",
+                            "active:shadow-lg",
+                            "after:absolute",
+                            "after:rounded-full",
+                            "after:w-7",
+                            "after:h-7",
+                            "after:inset-0",
+                            "after:-left-1",
+                            "after:-top-1",
+                            "after:bg-blue-600",
+                            "after:transition-all",
+                            "after:duration-100",
+                            "after:ease-in-out",
+                            "after:transform",
+                            "after:scale-0",
+                            "after:opacity-0",
+                            "hover:after:opacity-10",
+                            "hover:after:scale-100",
+                            "after:z-50",
+                            "active:after:scale-110",
+                            "active:after:opacity-15",
+                            "active:after:-left-[0.4em]",
+                            "active:after:-top-[0.4em]",
+                            "active:after:w-8",
+                            "active:after:h-8",
+                        ),
+                    },
+                    mark: {
+                        className: resolveClassNames(
+                            "absolute",
+                            "w-2",
+                            "h-2",
+                            "-ml-0.5",
+                            "-mt-0.5",
+                            "opacity-80",
+                            "transform",
+                            orientation === "vertical" ? "-translate-y-0" : "",
+                            "z-4",
+                            {
+                                "border-2 bg-blue-600 border-white":
+                                    Array.isArray(props.marks) &&
+                                    props.marks.length <
+                                        ((orientation === "vertical" ? sliderRect.height : sliderRect.width) -
+                                            convertRemToPixels(6 / 4)) /
+                                            8,
+                            },
+                        ),
+                    },
+                }}
+            />
         </BaseComponent>
     );
-});
+}
 
-Slider.displayName = "Slider";
+export const Slider = React.forwardRef(SliderComponent);

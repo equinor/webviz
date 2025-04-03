@@ -29,7 +29,8 @@ export const CustomQueryClientProvider: React.FC<{ children: React.ReactElement 
                     refetchOnWindowFocus: false,
                     refetchOnMount: false,
                     refetchOnReconnect: true,
-                    gcTime: 0,
+                    gcTime: 1000 * 60, // 1 minute
+                    staleTime: 1000 * 60, // 1 minute
                 },
             },
             queryCache: new QueryCache({
@@ -39,7 +40,7 @@ export const CustomQueryClientProvider: React.FC<{ children: React.ReactElement 
                     }
                 },
             }),
-        })
+        }),
     );
 
     return (

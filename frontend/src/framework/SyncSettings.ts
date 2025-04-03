@@ -10,11 +10,10 @@
  */
 
 /* eslint-disable react-hooks/rules-of-hooks */
-import { GlobalTopicDefinitions, TopicDefinitionsType } from "@framework/WorkbenchServices";
+import type { GlobalTopicDefinitions, TopicDefinitionsType, WorkbenchServices } from "@framework/WorkbenchServices";
 import { useSubscribedValueConditionally } from "@framework/WorkbenchServices";
-import { WorkbenchServices } from "@framework/WorkbenchServices";
 
-import { SettingsContext, ViewContext } from "./ModuleContext";
+import type { SettingsContext, ViewContext } from "./ModuleContext";
 
 export enum SyncSettingKey {
     ENSEMBLE = "ENSEMBLE",
@@ -55,7 +54,7 @@ export class SyncSettingsHelper {
     constructor(
         activeSyncedKeys: SyncSettingKey[],
         workbenchServices: WorkbenchServices,
-        moduleContext?: SettingsContext<any> | ViewContext<any>
+        moduleContext?: SettingsContext<any> | ViewContext<any>,
     ) {
         this._activeSyncedKeys = activeSyncedKeys;
         this._workbenchServices = workbenchServices;
@@ -72,14 +71,14 @@ export class SyncSettingsHelper {
             topic,
             isSyncActiveForKey,
             this._workbenchServices,
-            this._moduleContext?.getInstanceIdString()
+            this._moduleContext?.getInstanceIdString(),
         );
     }
 
     publishValue<T extends keyof GlobalTopicDefinitions>(
         key: SyncSettingKey,
         topic: T,
-        value: TopicDefinitionsType<T>
+        value: TopicDefinitionsType<T>,
     ) {
         const isSyncActiveForKey = this._activeSyncedKeys.includes(key);
         if (isSyncActiveForKey) {

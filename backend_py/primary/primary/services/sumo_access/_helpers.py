@@ -1,40 +1,25 @@
 import logging
 
-from fmu.sumo.explorer.explorer import SumoClient, Pit
-from fmu.sumo.explorer.objects import CaseCollection, Case
-from webviz_pkg.core_utils.perf_timer import PerfTimer
+from fmu.sumo.explorer.explorer import SumoClient, SearchContext
+from fmu.sumo.explorer.objects import Case
+from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
-from primary import config
-from primary.services.service_exceptions import Service, NoDataError, MultipleDataMatchesError
+from primary.services.service_exceptions import Service, NoDataError
+
 
 LOGGER = logging.getLogger(__name__)
 
 
-def create_sumo_client(access_token: str) -> SumoClient:
-    sumo_client = SumoClient(env=config.SUMO_ENV, token=access_token, interactive=False)
-    return sumo_client
+async def create_sumo_case_async(client: SumoClient, case_uuid: str) -> Case:
+    timer = PerfMetrics()
+    search_context = SearchContext(client)
+    try:
+        case = await search_context.get_case_by_uuid_async(case_uuid)
+    except Exception as exc:
+        raise NoDataError(f"Sumo case not found for {case_uuid=}", Service.SUMO) from exc
 
+    timer.record_lap("create_sumo_case")
 
-async def create_sumo_case_async(client: SumoClient, case_uuid: str, want_keepalive_pit: bool) -> Case:
-    timer = PerfTimer()
-
-    pit: Pit | None = None
-    et_create_pit_ms = -1
-    if want_keepalive_pit:
-        pit = Pit(client, keep_alive="1m")
-        et_create_pit_ms = timer.lap_ms()
-
-    case_collection = CaseCollection(client, pit=pit).filter(uuid=case_uuid)
-
-    matching_case_count = await case_collection.length_async()
-    if matching_case_count == 0:
-        raise NoDataError(f"Sumo case not found for {case_uuid=}", Service.SUMO)
-    if matching_case_count > 1:
-        raise MultipleDataMatchesError(f"Multiple sumo cases found for {case_uuid=}", Service.SUMO)
-    et_locate_case_ms = timer.lap_ms()
-
-    case = case_collection[0]
-
-    LOGGER.debug(f"create_sumo_case_async() took {timer.elapsed_ms()}ms ({et_create_pit_ms=}, {et_locate_case_ms=})")
+    LOGGER.debug(timer.to_string())
 
     return case

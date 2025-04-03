@@ -15,8 +15,8 @@ export const selectedEnsembleIdentsAtom = atom((get) => {
     const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
 
     let computedEnsembleIdents = userSelectedEnsembleIdents.filter((el) => ensembleSet.hasEnsemble(el));
-    if (computedEnsembleIdents.length === 0 && ensembleSet.getEnsembleArr().length > 0) {
-        computedEnsembleIdents = [ensembleSet.getEnsembleArr()[0].getIdent()];
+    if (computedEnsembleIdents.length === 0 && ensembleSet.getRegularEnsembleArray().length > 0) {
+        computedEnsembleIdents = [ensembleSet.getRegularEnsembleArray()[0].getIdent()];
     }
 
     return computedEnsembleIdents;
@@ -41,7 +41,7 @@ export const intersectedParameterIdentsAtom = atom((get) => {
             .getParameterArr()
             .filter(
                 (parameter) =>
-                    (showConstantParameters || !parameter.isConstant) && parameter.type === ParameterType.CONTINUOUS
+                    (showConstantParameters || !parameter.isConstant) && parameter.type === ParameterType.CONTINUOUS,
             );
         const identArr: ParameterIdent[] = [];
         for (const parameter of parameters) {
@@ -69,6 +69,6 @@ export const selectedParameterIdentsAtom = atom((get) => {
     const userSelectedParameterIdents = get(userSelectedParameterIdentsAtom);
     if (userSelectedParameterIdents.length === 0) return intersectedParameterIdents.slice(0, MAX_PARAMETERS);
     return userSelectedParameterIdents.filter((ident) =>
-        intersectedParameterIdents.some((intersectIdent) => intersectIdent.equals(ident))
+        intersectedParameterIdents.some((intersectIdent) => intersectIdent.equals(ident)),
     );
 });

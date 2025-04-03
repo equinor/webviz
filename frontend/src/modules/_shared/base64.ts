@@ -1,17 +1,17 @@
-import { B64FloatArray_api, B64UintArray_api } from "@api";
+import type { B64FloatArray_api, B64UintArray_api } from "@api";
 
 export function b64DecodeUintArray(
-    base64Arr: B64UintArray_api
+    base64Arr: B64UintArray_api,
 ): Uint8Array | Uint16Array | Uint32Array | BigUint64Array {
     const arrayBuffer = base64StringToArrayBuffer(base64Arr.data_b64str);
     switch (base64Arr.element_type) {
-        case B64UintArray_api.element_type.UINT8:
+        case "uint8":
             return new Uint8Array(arrayBuffer);
-        case B64UintArray_api.element_type.UINT16:
+        case "uint16":
             return new Uint16Array(arrayBuffer);
-        case B64UintArray_api.element_type.UINT32:
+        case "uint32":
             return new Uint32Array(arrayBuffer);
-        case B64UintArray_api.element_type.UINT64:
+        case "uint64":
             return new BigUint64Array(arrayBuffer);
         default:
             throw new Error(`Unknown element_type: ${base64Arr.element_type}`);
@@ -49,9 +49,9 @@ export function b64DecodeUintArrayToUint32OrLess(base64Arr: B64UintArray_api): U
 export function b64DecodeFloatArray(base64Arr: B64FloatArray_api): Float32Array | Float64Array {
     const arrayBuffer = base64StringToArrayBuffer(base64Arr.data_b64str);
     switch (base64Arr.element_type) {
-        case B64FloatArray_api.element_type.FLOAT32:
+        case "float32":
             return new Float32Array(arrayBuffer);
-        case B64FloatArray_api.element_type.FLOAT64:
+        case "float64":
             return new Float64Array(arrayBuffer);
         default:
             throw new Error(`Unknown element_type: ${base64Arr.element_type}`);

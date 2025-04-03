@@ -1,8 +1,8 @@
 import React from "react";
 
-import { QueryClient } from "@tanstack/query-core";
+import type { QueryClient } from "@tanstack/query-core";
 
-import { BaseLayer } from "./BaseLayer";
+import type { BaseLayer } from "./BaseLayer";
 
 export enum LayerManagerTopic {
     LAYERS_CHANGED = "layers-changed",
@@ -102,11 +102,11 @@ export class LayerManager {
 
 export function useLayerManagerTopicValue<T extends LayerManagerTopic>(
     layerManager: LayerManager,
-    topic: T
+    topic: T,
 ): LayerManagerTopicValueTypes[T] {
     const value = React.useSyncExternalStore<LayerManagerTopicValueTypes[T]>(
         layerManager.makeSubscriberFunction(topic),
-        layerManager.makeSnapshotGetter(topic)
+        layerManager.makeSnapshotGetter(topic),
     );
 
     return value;

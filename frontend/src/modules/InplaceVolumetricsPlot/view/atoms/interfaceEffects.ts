@@ -1,8 +1,7 @@
-import { InterfaceEffects } from "@framework/Module";
-import { SettingsToViewInterface } from "@modules/InplaceVolumetricsPlot/interfaces";
+import type { InterfaceEffects } from "@framework/Module";
+import type { SettingsToViewInterface } from "@modules/InplaceVolumetricsPlot/interfaces";
 
 import {
-    areSelectedTablesComparableAtom,
     areTableDefinitionSelectionsValidAtom,
     colorByAtom,
     filterAtom,
@@ -41,10 +40,6 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     (getInterfaceValue, setAtomValue) => {
         const colorBy = getInterfaceValue("colorBy");
         setAtomValue(colorByAtom, colorBy);
-    },
-    (getInterfaceValue, setAtomValue) => {
-        const areSelectedTablesComparable = getInterfaceValue("areSelectedTablesComparable");
-        setAtomValue(areSelectedTablesComparableAtom, areSelectedTablesComparable);
     },
     (getInterfaceValue, setAtomValue) => {
         const areTableDefinitionSelectionsValid = getInterfaceValue("areTableDefinitionSelectionsValid");

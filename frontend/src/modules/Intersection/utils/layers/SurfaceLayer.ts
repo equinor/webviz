@@ -1,20 +1,19 @@
-import { SurfaceIntersectionData_api } from "@api";
-import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import type { SurfaceIntersectionData_api } from "@api";
+import { postGetSurfaceIntersectionOptions } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorSet } from "@lib/utils/ColorSet";
-import { Vec2, normalizeVec2, point2Distance } from "@lib/utils/vec2";
-import { QueryClient } from "@tanstack/query-core";
+import type { Vec2 } from "@lib/utils/vec2";
+import { normalizeVec2, point2Distance } from "@lib/utils/vec2";
+import type { QueryClient } from "@tanstack/query-core";
 
 import { isEqual } from "lodash";
 
-import { BaseLayer, BoundingBox, LayerTopic } from "./BaseLayer";
-
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
+import type { BoundingBox } from "./BaseLayer";
+import { BaseLayer, LayerTopic } from "./BaseLayer";
 
 export type SurfaceLayerSettings = {
-    ensembleIdent: EnsembleIdent | null;
+    ensembleIdent: RegularEnsembleIdent | null;
     realizationNum: number | null;
     polyline: {
         polylineUtmXy: number[];
@@ -107,7 +106,7 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
 
     protected doSettingsChangesRequireDataRefetch(
         prevSettings: SurfaceLayerSettings,
-        newSettings: SurfaceLayerSettings
+        newSettings: SurfaceLayerSettings,
     ): boolean {
         return (
             !isEqual(prevSettings.surfaceNames, newSettings.surfaceNames) ||
@@ -135,7 +134,7 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
             if (i > 0) {
                 const distance = point2Distance(
                     { x: polyline[i], y: polyline[i + 1] },
-                    { x: polyline[i - 2], y: polyline[i - 1] }
+                    { x: polyline[i - 2], y: polyline[i - 1] },
                 );
                 const actualDistance = this._settings.polyline.actualSectionLengths[i / 2 - 1];
                 const numPoints = Math.floor(distance / this._settings.resolution) - 1;
@@ -160,7 +159,7 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
             if (i > 0) {
                 const distance = point2Distance(
                     { x: polyline[i], y: polyline[i + 1] },
-                    { x: xPoints[xPoints.length - 1], y: yPoints[yPoints.length - 1] }
+                    { x: xPoints[xPoints.length - 1], y: yPoints[yPoints.length - 1] },
                 );
 
                 cumulatedHorizontalPolylineLength += distance;
@@ -178,32 +177,21 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
         };
 
         for (const surfaceName of this._settings.surfaceNames) {
-            const queryKey = [
-                "getSurfaceIntersection",
-                this._settings.ensembleIdent?.getCaseUuid() ?? "",
-                this._settings.ensembleIdent?.getEnsembleName() ?? "",
-                this._settings.realizationNum ?? 0,
-                surfaceName,
-                this._settings.attribute ?? "",
-                this._settings.polyline.polylineUtmXy,
-                this._settings.extensionLength,
-                this._settings.resolution,
-            ];
-            this.registerQueryKey(queryKey);
+            const queryOptions = postGetSurfaceIntersectionOptions({
+                query: {
+                    case_uuid: this._settings.ensembleIdent?.getCaseUuid() ?? "",
+                    ensemble_name: this._settings.ensembleIdent?.getEnsembleName() ?? "",
+                    realization_num: this._settings.realizationNum ?? 0,
+                    name: surfaceName,
+                    attribute: this._settings.attribute ?? "",
+                },
+                body: queryBody,
+            });
+
+            this.registerQueryKey(queryOptions.queryKey);
 
             const promise = queryClient.fetchQuery({
-                queryKey,
-                queryFn: () =>
-                    apiService.surface.postGetSurfaceIntersection(
-                        this._settings.ensembleIdent?.getCaseUuid() ?? "",
-                        this._settings.ensembleIdent?.getEnsembleName() ?? "",
-                        this._settings.realizationNum ?? 0,
-                        surfaceName,
-                        this._settings.attribute ?? "",
-                        queryBody
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+                ...queryOptions,
             });
             promises.push(promise);
         }

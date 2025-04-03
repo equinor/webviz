@@ -2,8 +2,8 @@ import React from "react";
 
 import { isEqual } from "lodash";
 
-import { Channel } from "../Channel";
-import { ChannelContentDefinition } from "../ChannelContent";
+import type { Channel } from "../Channel";
+import type { ChannelContentDefinition } from "../ChannelContent";
 
 export interface UsePublishChannelContentsOptions {
     readonly channel: Channel;

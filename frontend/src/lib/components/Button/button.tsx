@@ -1,7 +1,8 @@
 import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Button as ButtonUnstyled, ButtonProps as ButtonUnstyledProps } from "@mui/base";
+import type { ButtonProps as ButtonUnstyledProps } from "@mui/base";
+import { Button as ButtonUnstyled } from "@mui/base";
 
 import { BaseComponent } from "../BaseComponent";
 
@@ -11,18 +12,23 @@ export type ButtonProps = {
     endIcon?: React.ReactNode;
     color?: "primary" | "danger" | "success" | "secondary";
     size?: "small" | "medium" | "large";
+    buttonRef?: React.Ref<HTMLButtonElement>;
 } & ButtonUnstyledProps;
 
-export const Button = React.forwardRef((props: ButtonProps, ref: React.ForwardedRef<HTMLButtonElement>) => {
-    const { disabled, variant, children, startIcon, endIcon, color, ...rest } = props;
+function ButtonComponent(props: ButtonProps, ref: React.ForwardedRef<HTMLDivElement>) {
+    const { disabled, variant, children, startIcon, endIcon, color, buttonRef, ...rest } = props;
+
+    const internalRef = React.useRef<HTMLButtonElement>(null);
+    React.useImperativeHandle<HTMLButtonElement | null, HTMLButtonElement | null>(buttonRef, () => internalRef.current);
+
     const classNames = [
         "inline-flex",
         "items-center",
         ...(props.size === "medium"
             ? ["px-2", "py-1"]
             : props.size === "small"
-            ? ["px-1", "py-0.5"]
-            : ["px-4", "py-2"]),
+              ? ["px-1", "py-0.5"]
+              : ["px-4", "py-2"]),
         "font-medium",
         "rounded-md",
     ];
@@ -73,10 +79,10 @@ export const Button = React.forwardRef((props: ButtonProps, ref: React.Forwarded
     );
 
     return (
-        <BaseComponent disabled={disabled}>
+        <BaseComponent disabled={disabled} ref={ref}>
             <ButtonUnstyled
                 {...rest}
-                ref={ref}
+                ref={buttonRef}
                 slotProps={{
                     root: {
                         className: resolveClassNames(...classNames),
@@ -87,6 +93,6 @@ export const Button = React.forwardRef((props: ButtonProps, ref: React.Forwarded
             </ButtonUnstyled>
         </BaseComponent>
     );
-});
+}
 
-Button.displayName = "Button";
+export const Button = React.forwardRef(ButtonComponent);

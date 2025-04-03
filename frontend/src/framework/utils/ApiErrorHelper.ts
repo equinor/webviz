@@ -1,71 +1,81 @@
-import { ApiError } from "@api";
-import { Origin, StatusMessage } from "@framework/ModuleInstanceStatusController";
-import { UseQueryResult } from "@tanstack/react-query";
+import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import { Origin } from "@framework/ModuleInstanceStatusController";
+import type { UseQueryResult } from "@tanstack/react-query";
 
-import { ApiRequestOptions } from "src/api/core/ApiRequestOptions";
+import type { InternalAxiosRequestConfig } from "axios";
+import { AxiosError } from "axios";
+import { isObject } from "lodash";
 
 export class ApiErrorHelper {
-    private _error: ApiError;
-    private _statusCode: number;
+    private _error: AxiosError;
+    private _statusCode: number | undefined;
     private _endpoint: string;
-    private _request: ApiRequestOptions;
+    private _requestConfig: InternalAxiosRequestConfig | undefined;
     private _service: string | null = null;
     private _type: string | null = null;
     private _message: string | null = null;
 
-    private constructor(readonly error: ApiError) {
+    private constructor(readonly error: AxiosError) {
         this._error = error;
         this._statusCode = error.status;
-        this._endpoint = error.url;
-        this._request = error.request;
+        this._endpoint = error.config?.url ?? "Unknown endpoint";
+        this._requestConfig = error.config;
         this.extractInfoFromErrorBody(error);
     }
 
     static fromQueryResult(queryResult: UseQueryResult<any>): ApiErrorHelper | null {
-        if (!queryResult.error || !(queryResult.error instanceof ApiError)) {
+        if (!queryResult.error || !(queryResult.error instanceof AxiosError)) {
             return null;
         }
         return new ApiErrorHelper(queryResult.error);
     }
 
     static fromError(error: Error): ApiErrorHelper | null {
-        if (!(error instanceof ApiError)) {
+        if (!(error instanceof AxiosError)) {
             return null;
         }
         return new ApiErrorHelper(error);
     }
 
-    private extractInfoFromErrorBody(apiError: ApiError): void {
-        if (!apiError.body || typeof apiError.body !== "object") {
+    private extractInfoFromErrorBody(apiError: AxiosError): void {
+        if (!apiError.response?.data || typeof apiError.response.data !== "object") {
             return;
         }
 
-        if (!("error" in apiError.body)) {
+        const data = apiError.response.data;
+
+        if (!("error" in data)) {
+            return;
+        }
+
+        const error = data.error;
+
+        if (!isObject(error)) {
             return;
         }
 
         if ("url" in apiError) {
-            this._endpoint = apiError.url;
+            this._endpoint = apiError.config?.url ?? "Unknown endpoint";
         }
 
-        if ("type" in apiError.body.error) {
-            this._type = apiError.body.error.type;
+        if ("type" in error && typeof error.type === "string") {
+            this._type = error.type;
         }
 
-        if ("message" in apiError.body.error) {
-            this._message = apiError.body.error.message;
+        if ("message" in error && typeof error.message === "string") {
+            this._message = error.message;
         }
 
-        if ("service" in apiError.body.error) {
-            this._service = apiError.body.error.service;
+        if ("service" in error && typeof error.service === "string") {
+            this._service = error.service;
         }
 
-        if (!("type" in apiError.body.error) || !("message" in apiError.body.error)) {
+        if (!("type" in error) || !("message" in error)) {
             return;
         }
 
-        this._type = apiError.body.error.type;
-        this._message = apiError.body.error.message;
+        this._type = JSON.stringify(error.type);
+        this._message = JSON.stringify(error.message);
     }
 
     hasError(): boolean {
@@ -85,15 +95,15 @@ export class ApiErrorHelper {
     }
 
     getStatusCode(): number | null {
-        return this._statusCode;
+        return this._statusCode ?? null;
     }
 
     getEndPoint(): string {
         return this._endpoint;
     }
 
-    getRequest(): ApiRequestOptions {
-        return this._request;
+    getRequestConfig(): InternalAxiosRequestConfig | undefined {
+        return this._requestConfig;
     }
 
     makeFullErrorMessage(): string {
@@ -120,7 +130,7 @@ export class ApiErrorHelper {
             message: this.makeFullErrorMessage(),
             origin: Origin.API,
             endpoint: this.getEndPoint(),
-            request: this.getRequest(),
+            request: this.getRequestConfig(),
         };
     }
 }

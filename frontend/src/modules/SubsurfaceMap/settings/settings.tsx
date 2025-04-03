@@ -1,12 +1,13 @@
 import React from "react";
 
-import { SurfaceAttributeType_api, SurfaceStatisticFunction_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleSettingsProps } from "@framework/Module";
+import type { SurfaceStatisticFunction_api } from "@api";
+import { SurfaceAttributeType_api } from "@api";
+import type { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
-import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
+import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { Button } from "@lib/components/Button";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -15,11 +16,18 @@ import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Select, SelectOption } from "@lib/components/Select";
-import { PolygonsAddress, PolygonsDirectory, usePolygonsDirectoryQuery } from "@modules/_shared/Polygons";
-import { RealizationSurfaceAddress, StatisticalSurfaceAddress } from "@modules/_shared/Surface";
-import { SurfaceAddressBuilder, SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
-import { useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
+import type { PolygonsAddress } from "@modules/_shared/Polygons";
+import { PolygonsDirectory, usePolygonsDirectoryQuery } from "@modules/_shared/Polygons";
+import {
+    type RealizationSurfaceAddress,
+    type StatisticalSurfaceAddress,
+    SurfaceAddressBuilder,
+    SurfaceDirectory,
+    SurfaceTimeType,
+    useRealizationSurfacesMetadataQuery,
+} from "@modules/_shared/Surface";
 import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
 
 import { useAtom, useSetAtom } from "jotai";
@@ -34,7 +42,7 @@ import {
 } from "./atoms/baseAtoms";
 import { AggregationSelector } from "./components/aggregationSelector";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 
 //-----------------------------------------------------------------------------------------------------------
 type LabelledCheckboxProps = {
@@ -65,7 +73,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     console.debug(`${myInstanceIdStr} -- render TopographicMap settings`);
 
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
+    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<RegularEnsembleIdent | null>(null);
     const [selectedMeshSurfaceName, setSelectedMeshSurfaceName] = React.useState<string | null>(null);
     const [selectedMeshSurfaceAttribute, setSelectedMeshSurfaceAttribute] = React.useState<string | null>(null);
     const [usePropertySurface, setUsePropertySurface] = React.useState<boolean>(false);
@@ -99,14 +107,14 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const syncedValueSurface = syncHelper.useValue(SyncSettingKey.SURFACE, "global.syncValue.surface");
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
-    const computedEnsembleIdent = fixupEnsembleIdent(candidateEnsembleIdent, ensembleSet);
+    const computedEnsembleIdent = fixupRegularEnsembleIdent(candidateEnsembleIdent, ensembleSet);
     if (computedEnsembleIdent && !computedEnsembleIdent.equals(selectedEnsembleIdent)) {
         setSelectedEnsembleIdent(computedEnsembleIdent);
     }
     // Mesh surface
     const meshSurfMetaQuery = useRealizationSurfacesMetadataQuery(
         computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName()
+        computedEnsembleIdent?.getEnsembleName(),
     );
     const meshSurfaceDirectory = new SurfaceDirectory({
         realizationMetaSet: meshSurfMetaQuery.data,
@@ -125,7 +133,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             surfaceName: syncedValueSurface?.name || null,
             surfaceAttribute: syncedValueSurface?.attribute || null,
             timeOrInterval: null,
-        }
+        },
     );
     const computedMeshSurfaceName = fixedMeshSurfSpec.surfaceName;
     const computedMeshSurfaceAttribute = fixedMeshSurfSpec.surfaceAttribute;
@@ -147,7 +155,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     // Property surface
     const propertySurfMetaQuery = useRealizationSurfacesMetadataQuery(
         computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName()
+        computedEnsembleIdent?.getEnsembleName(),
     );
     const propertySurfaceDirectory = new SurfaceDirectory({
         realizationMetaSet: propertySurfMetaQuery.data,
@@ -166,7 +174,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             surfaceName: null,
             surfaceAttribute: null,
             timeOrInterval: null,
-        }
+        },
     );
     const computedPropertySurfaceName = fixedPropertySurfSpec.surfaceName;
     const computedPropertySurfaceAttribute = fixedPropertySurfSpec.surfaceAttribute;
@@ -204,7 +212,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     // Polygon
     const polygonsDirectoryQuery = usePolygonsDirectoryQuery(
         computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName()
+        computedEnsembleIdent?.getEnsembleName(),
     );
 
     const polygonsDirectory = new PolygonsDirectory(
@@ -213,7 +221,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                   polygonsMetas: polygonsDirectoryQuery.data,
                   //   includeAttributeTypes: [PolygonsAttributeType_api.DEPTH],
               }
-            : null
+            : null,
     );
 
     const fixedPolygonsSpec = fixupPolygons(
@@ -222,7 +230,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             polygonsName: linkPolygonNameToSurfaceName ? selectedMeshSurfaceName : selectedPolygonName,
             polygonsAttribute: selectedPolygonAttribute,
         },
-        { polygonsName: null, polygonsAttribute: null }
+        { polygonsName: null, polygonsAttribute: null },
     );
 
     const computedPolygonsName = fixedPolygonsSpec.polygonsName;
@@ -273,7 +281,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             computedMeshSurfaceAttribute,
             settingsContext,
             setMeshSurfaceAddress,
-        ]
+        ],
     );
     React.useEffect(
         function propagatePropertySurfaceSelectionToView() {
@@ -314,7 +322,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             computedPropertyTimeOrInterval,
             settingsContext,
             setPropertySurfaceAddress,
-        ]
+        ],
     );
     React.useEffect(
         function propogatePolygonsSelectionToView() {
@@ -346,7 +354,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             computedPolygonsAttribute,
             settingsContext,
             setPolygonsAddress,
-        ]
+        ],
     );
     React.useEffect(
         function propogateSurfaceSettingsToView() {
@@ -366,7 +374,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             showMaterial,
             settingsContext,
             setSurfaceSettings,
-        ]
+        ],
     );
     React.useEffect(
         function propogateSubsurfaceMapViewSettingsToView() {
@@ -374,14 +382,14 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                 show3d: show3D,
             });
         },
-        [show3D, settingsContext, setViewSettings]
+        [show3D, settingsContext, setViewSettings],
     );
 
     let fieldIdentifier: null | string = null;
     if (computedEnsembleIdent) {
-        const ensembleIdent = new EnsembleIdent(
+        const ensembleIdent = new RegularEnsembleIdent(
             computedEnsembleIdent.getCaseUuid(),
-            computedEnsembleIdent.getEnsembleName()
+            computedEnsembleIdent.getEnsembleName(),
         );
         fieldIdentifier = ensembleSet.findEnsemble(ensembleIdent)?.getFieldIdentifier() ?? null;
     }
@@ -397,7 +405,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
 
     function handleWellsChange(selectedWellUuids: string[], allWellUuidsOptions: SelectOption[]) {
         const newSelectedWellUuids = selectedWellUuids.filter((wellUuid) =>
-            allWellUuidsOptions.some((wellHeader) => wellHeader.value === wellUuid)
+            allWellUuidsOptions.some((wellHeader) => wellHeader.value === wellUuid),
         );
         setSelectedWellUuids(newSelectedWellUuids);
     }
@@ -409,7 +417,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     function hideAllWells() {
         setSelectedWellUuids([]);
     }
-    function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
+    function handleEnsembleSelectionChange(newEnsembleIdent: RegularEnsembleIdent | null) {
         setSelectedEnsembleIdent(newEnsembleIdent);
         if (newEnsembleIdent) {
             syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);
@@ -492,7 +500,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             <CollapsibleGroup expanded={true} title="Ensemble and realization">
                 <Label text="Ensemble" synced={syncHelper.isSynced(SyncSettingKey.ENSEMBLE)}>
                     <EnsembleDropdown
-                        ensembleSet={ensembleSet}
+                        ensembles={ensembleSet.getRegularEnsembleArray()}
                         value={computedEnsembleIdent ? computedEnsembleIdent : null}
                         onChange={handleEnsembleSelectionChange}
                     />
@@ -771,13 +779,13 @@ type PartialSurfSpec = {
 function fixupSurface(
     surfaceDirectory: SurfaceDirectory,
     selectedSurface: PartialSurfSpec,
-    syncedSurface: PartialSurfSpec
+    syncedSurface: PartialSurfSpec,
 ): PartialSurfSpec {
     const surfaceNames = surfaceDirectory.getSurfaceNames(null);
     const finalSurfaceName = fixupSyncedOrSelectedOrFirstValue(
         syncedSurface.surfaceName,
         selectedSurface.surfaceName,
-        surfaceNames
+        surfaceNames,
     );
     let finalSurfaceAttribute: string | null = null;
     let finalTimeOrInterval: string | null = null;
@@ -786,7 +794,7 @@ function fixupSurface(
         finalSurfaceAttribute = fixupSyncedOrSelectedOrFirstValue(
             syncedSurface.surfaceAttribute,
             selectedSurface.surfaceAttribute,
-            surfaceAttributes
+            surfaceAttributes,
         );
     }
     if (finalSurfaceName && finalSurfaceAttribute) {
@@ -794,7 +802,7 @@ function fixupSurface(
         finalTimeOrInterval = fixupSyncedOrSelectedOrFirstValue(
             syncedSurface.timeOrInterval,
             selectedSurface.timeOrInterval,
-            selectedTimeOrIntervals
+            selectedTimeOrIntervals,
         );
     }
     return {
@@ -811,13 +819,13 @@ type PartialPolygonsSpec = {
 function fixupPolygons(
     polygonsDirectory: PolygonsDirectory,
     selectedPolygons: PartialPolygonsSpec,
-    syncedPolygons: PartialPolygonsSpec
+    syncedPolygons: PartialPolygonsSpec,
 ): PartialPolygonsSpec {
     const polygonsNames = polygonsDirectory.getPolygonsNames(null);
     const finalPolygonsName = fixupSyncedOrSelectedOrFirstValue(
         syncedPolygons.polygonsName,
         selectedPolygons.polygonsName,
-        polygonsNames
+        polygonsNames,
     );
     let finalPolygonsAttribute: string | null = null;
     if (finalPolygonsName) {
@@ -825,7 +833,7 @@ function fixupPolygons(
         finalPolygonsAttribute = fixupSyncedOrSelectedOrFirstValue(
             syncedPolygons.polygonsAttribute,
             selectedPolygons.polygonsAttribute,
-            polygonsAttributes
+            polygonsAttributes,
         );
     }
 
@@ -837,7 +845,7 @@ function fixupPolygons(
 function fixupSyncedOrSelectedOrFirstValue(
     syncedValue: string | null,
     selectedValue: string | null,
-    values: string[]
+    values: string[],
 ): string | null {
     if (syncedValue && values.includes(syncedValue)) {
         return syncedValue;

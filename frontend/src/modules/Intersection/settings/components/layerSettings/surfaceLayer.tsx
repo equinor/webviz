@@ -1,23 +1,26 @@
 import React from "react";
 
-import { SurfaceAttributeType_api, SurfaceMetaSet_api } from "@api";
-import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { WorkbenchSession, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { SurfaceMetaSet_api } from "@api";
+import { SurfaceAttributeType_api, getRealizationSurfacesMetadataOptions } from "@api";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/components/ColorPaletteSelector";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
-import { ColorPalette } from "@lib/utils/ColorPalette";
+import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { useLayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
-import { SurfaceLayer, SurfaceLayerSettings } from "@modules/Intersection/utils/layers/SurfaceLayer";
-import { UseQueryResult, useQuery } from "@tanstack/react-query";
+import type { SurfaceLayer, SurfaceLayerSettings } from "@modules/Intersection/utils/layers/SurfaceLayer";
+import type { UseQueryResult } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { cloneDeep, isEqual } from "lodash";
 
@@ -44,13 +47,13 @@ export function SurfaceLayerSettingsComponent(props: SurfaceLayerSettingsCompone
 
     const surfaceDirectoryQuery = useRealizationSurfacesMetadataQuery(
         newSettings.ensembleIdent?.getCaseUuid(),
-        newSettings.ensembleIdent?.getEnsembleName()
+        newSettings.ensembleIdent?.getEnsembleName(),
     );
 
     const fixupEnsembleIdent = fixupSetting(
         "ensembleIdent",
-        props.ensembleSet.getEnsembleArr().map((el) => el.getIdent()),
-        newSettings
+        props.ensembleSet.getRegularEnsembleArray().map((el) => el.getIdent()),
+        newSettings,
     );
     if (!isEqual(fixupEnsembleIdent, newSettings.ensembleIdent)) {
         setNewSettings((prev) => ({ ...prev, ensembleIdent: fixupEnsembleIdent }));
@@ -72,9 +75,9 @@ export function SurfaceLayerSettingsComponent(props: SurfaceLayerSettingsCompone
                 new Set(
                     surfaceDirectoryQuery.data.surfaces
                         .filter((el) => el.attribute_type === SurfaceAttributeType_api.DEPTH)
-                        .map((el) => el.attribute_name)
-                )
-            )
+                        .map((el) => el.attribute_name),
+                ),
+            ),
         );
 
         const fixupAttribute = fixupSetting("attribute", availableAttributes, newSettings);
@@ -89,9 +92,9 @@ export function SurfaceLayerSettingsComponent(props: SurfaceLayerSettingsCompone
                 new Set(
                     surfaceDirectoryQuery.data.surfaces
                         .filter((el) => el.attribute_name === newSettings.attribute)
-                        .map((el) => el.name)
-                )
-            )
+                        .map((el) => el.name),
+                ),
+            ),
         );
 
         const fixupSurfaceNames = fixupSurfaceNamesSetting(newSettings.surfaceNames, availableSurfaceNames);
@@ -106,7 +109,7 @@ export function SurfaceLayerSettingsComponent(props: SurfaceLayerSettingsCompone
         function propagateSettingsChange() {
             props.layer.maybeUpdateSettings(cloneDeep(newSettings));
         },
-        [newSettings, props.layer]
+        [newSettings, props.layer],
     );
 
     React.useEffect(
@@ -116,10 +119,10 @@ export function SurfaceLayerSettingsComponent(props: SurfaceLayerSettingsCompone
                 props.layer.maybeRefetchData();
             }
         },
-        [surfaceDirectoryQuery.isFetching, props.layer, newSettings]
+        [surfaceDirectoryQuery.isFetching, props.layer, newSettings],
     );
 
-    function handleEnsembleChange(ensembleIdent: EnsembleIdent | null) {
+    function handleEnsembleChange(ensembleIdent: RegularEnsembleIdent | null) {
         setNewSettings((prev) => ({ ...prev, ensembleIdent }));
     }
 
@@ -155,7 +158,7 @@ export function SurfaceLayerSettingsComponent(props: SurfaceLayerSettingsCompone
                 <div className="table-cell">
                     <EnsembleDropdown
                         value={props.layer.getSettings().ensembleIdent}
-                        ensembleSet={props.ensembleSet}
+                        ensembles={props.ensembleSet.getRegularEnsembleArray()}
                         onChange={handleEnsembleChange}
                         debounceTimeMs={600}
                     />
@@ -248,18 +251,17 @@ function makeSurfaceNameOptions(surfaceNames: string[]): DropdownOption[] {
     return surfaceNames.map((surfaceName) => ({ label: surfaceName, value: surfaceName }));
 }
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
 export function useRealizationSurfacesMetadataQuery(
     caseUuid: string | undefined,
-    ensembleName: string | undefined
+    ensembleName: string | undefined,
 ): UseQueryResult<SurfaceMetaSet_api> {
     return useQuery({
-        queryKey: ["getRealizationSurfacesMetadata", caseUuid, ensembleName],
-        queryFn: () => apiService.surface.getRealizationSurfacesMetadata(caseUuid ?? "", ensembleName ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
+        ...getRealizationSurfacesMetadataOptions({
+            query: {
+                case_uuid: caseUuid ?? "",
+                ensemble_name: ensembleName ?? "",
+            },
+        }),
         enabled: Boolean(caseUuid && ensembleName),
     });
 }

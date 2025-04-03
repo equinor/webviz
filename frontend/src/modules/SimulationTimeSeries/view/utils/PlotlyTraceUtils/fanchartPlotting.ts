@@ -1,7 +1,7 @@
 import { formatRgb, modeRgb, useMode } from "culori";
-import { ScatterLine } from "plotly.js";
+import type { ScatterLine } from "plotly.js";
 
-import { TimeSeriesPlotData } from "../timeSeriesPlotData";
+import type { TimeSeriesPlotData } from "../timeSeriesPlotData";
 
 /**
     Definition of statistics data for free line trace in fanchart
@@ -84,25 +84,25 @@ function validateFanchartData(data: FanchartData): void {
 
     if (data.minimumMaximum !== undefined && samplesLength !== data.minimumMaximum.minimum.length) {
         throw new Error(
-            "Invalid fanchart minimum value data length. data.samples.length !== data.minimumMaximum.minimum.length"
+            "Invalid fanchart minimum value data length. data.samples.length !== data.minimumMaximum.minimum.length",
         );
     }
 
     if (data.minimumMaximum !== undefined && samplesLength !== data.minimumMaximum.maximum.length) {
         throw new Error(
-            "Invalid fanchart maximum value data length. data.samples.length !== data.minimumMaximum.maximum.length"
+            "Invalid fanchart maximum value data length. data.samples.length !== data.minimumMaximum.maximum.length",
         );
     }
 
     if (data.lowHigh !== undefined && samplesLength !== data.lowHigh.lowData.length) {
         throw new Error(
-            "Invalid fanchart low percentile value data length. data.samples.length !== data.lowHigh.lowData.length"
+            "Invalid fanchart low percentile value data length. data.samples.length !== data.lowHigh.lowData.length",
         );
     }
 
     if (data.lowHigh !== undefined && samplesLength !== data.lowHigh.highData.length) {
         throw new Error(
-            "Invalid fanchart high percentile value data length. data.samples.length !== data.lowHigh.highData.length"
+            "Invalid fanchart high percentile value data length. data.samples.length !== data.lowHigh.highData.length",
         );
     }
 }
@@ -148,7 +148,7 @@ export type CreateFanchartTracesOptions = {
 
     The order of traces are minimum, low, high, maximum and free line. Thus it is required that
     values in minimum <= low, and low <= high, and high <= maximum. Fill is setting "tonexty" in
-    this function is set s.t. trace fillings are not stacked making colors in fills unchanged
+    this function is set such that trace fillings are not stacked making colors in fills unchanged
     when disabling trace statistics inputs (minimum and maximum or low and high).
 
     Free line is last trace and is plotted on top as a line - without filling to other traces.

@@ -1,21 +1,22 @@
 import React from "react";
 
-import { ChannelReceiverChannelContent, KeyKind } from "@framework/DataChannelTypes";
-import { ModuleViewProps } from "@framework/Module";
+import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
+import { KeyKind } from "@framework/DataChannelTypes";
+import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { Size2D } from "@lib/utils/geometry";
+import type { Size2D } from "@lib/utils/geometry";
 import { makeSubplots } from "@modules/_shared/Figure";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { makeHistogramTrace } from "@modules/_shared/histogram";
 import { Warning } from "@mui/icons-material";
 
-import { Layout, PlotData } from "plotly.js";
+import type { Layout, PlotData } from "plotly.js";
 
-import { Interfaces } from "./interfaces";
+import type { Interfaces } from "./interfaces";
 import { PlotType } from "./typesAndEnums";
 import { makeHoverText, makeHoverTextWithColor, makeTitleFromChannelContent } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";
@@ -96,7 +97,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                 setContent(
                     <ContentInfo>
                         Connect a channel to <Tag label={receiverX.displayName} />
-                    </ContentInfo>
+                    </ContentInfo>,
                 );
                 return;
             }
@@ -105,7 +106,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                 setContent(
                     <ContentInfo>
                         No data on <Tag label={receiverX.displayName} />
-                    </ContentInfo>
+                    </ContentInfo>,
                 );
                 return;
             }
@@ -115,7 +116,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     setContent(
                         <ContentInfo>
                             Connect a channel to <Tag label={receiverY.displayName} />
-                        </ContentInfo>
+                        </ContentInfo>,
                     );
                     return;
                 }
@@ -124,7 +125,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     setContent(
                         <ContentInfo>
                             No data on <Tag label={receiverY.displayName} />
-                        </ContentInfo>
+                        </ContentInfo>,
                     );
                     return;
                 }
@@ -135,7 +136,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     setContent(
                         <ContentInfo>
                             Connect a channel to <Tag label={receiverColorMapping.displayName} />
-                        </ContentInfo>
+                        </ContentInfo>,
                     );
                     return;
                 }
@@ -144,7 +145,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     setContent(
                         <ContentInfo>
                             No data on <Tag label={receiverColorMapping.displayName} />
-                        </ContentInfo>
+                        </ContentInfo>,
                     );
                     return;
                 }
@@ -246,7 +247,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                         const valueData = data.dataArray.map((el: any) => el.value);
 
                         const dataTitle = makeTitleFromChannelContent(data);
-                        const kindOfKeyTitle = `${receiverX.channel.kindOfKey}` ?? "";
+                        const kindOfKeyTitle = `${receiverX.channel.kindOfKey}`;
 
                         const trace: Partial<PlotData> = {
                             x: orientation === "h" ? valueData : keyData,
@@ -324,10 +325,13 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                 };
 
                 let cellIndex = 0;
-                receiverX.channel.contents.forEach((contentRow, rowIndex) => {
+
+                receiverX.channel.contents.forEach((contentRow, rowIndex, rowArr) => {
                     if (!receiverY.channel) {
                         return;
                     }
+
+                    const numRows = rowArr.length;
                     receiverY.channel.contents.forEach((contentCol, colIndex) => {
                         cellIndex++;
 
@@ -356,7 +360,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                             keysX.length === keysY.length &&
                             (dataColor === null || keysColor.length === keysX.length) &&
                             !keysX.some(
-                                (el, index) => el !== keysY[index] || (dataColor !== null && el !== keysColor[index])
+                                (el, index) => el !== keysY[index] || (dataColor !== null && el !== keysColor[index]),
                             )
                         ) {
                             keysX.forEach((key) => {
@@ -395,13 +399,13 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                             hovertemplate: realizations.map((real) =>
                                 dataColor
                                     ? makeHoverTextWithColor(contentRow, contentCol, dataColor, real)
-                                    : makeHoverText(contentRow, contentCol, real)
+                                    : makeHoverText(contentRow, contentCol, real),
                             ),
                         };
 
                         figure.addTrace(trace, rowIndex + 1, colIndex + 1);
 
-                        if (rowIndex === 0) {
+                        if (rowIndex === numRows - 1) {
                             const patch: Partial<Layout> = {
                                 [`xaxis${cellIndex}`]: {
                                     title: makeTitleFromChannelContent(contentCol),

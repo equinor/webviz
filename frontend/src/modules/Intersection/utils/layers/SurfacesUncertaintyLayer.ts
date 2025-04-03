@@ -1,20 +1,19 @@
-import { SurfaceRealizationSampleValues_api } from "@api";
-import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import type { SurfaceRealizationSampleValues_api } from "@api";
+import { postGetSampleSurfaceInPointsOptions } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorSet } from "@lib/utils/ColorSet";
-import { Vec2, normalizeVec2, point2Distance } from "@lib/utils/vec2";
-import { QueryClient } from "@tanstack/query-core";
+import type { Vec2 } from "@lib/utils/vec2";
+import { normalizeVec2, point2Distance } from "@lib/utils/vec2";
+import type { QueryClient } from "@tanstack/query-core";
 
 import { isEqual } from "lodash";
 
-import { BaseLayer, BoundingBox, LayerTopic } from "./BaseLayer";
-
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
+import type { BoundingBox } from "./BaseLayer";
+import { BaseLayer, LayerTopic } from "./BaseLayer";
 
 export type SurfacesUncertaintyLayerSettings = {
-    ensembleIdent: EnsembleIdent | null;
+    ensembleIdent: RegularEnsembleIdent | null;
     realizationNums: number[];
     polyline: {
         polylineUtmXy: number[];
@@ -35,7 +34,7 @@ export type SurfaceUncertaintyData = {
 function transformData(
     cumulatedLengths: number[],
     surfaceName: string,
-    data: SurfaceRealizationSampleValues_api[]
+    data: SurfaceRealizationSampleValues_api[],
 ): SurfaceUncertaintyData {
     const sampledValues: number[][] = data.map((realization) => realization.sampled_values);
     return {
@@ -96,7 +95,7 @@ export class SurfacesUncertaintyLayer extends BaseLayer<SurfacesUncertaintyLayer
                     {
                         x: this._settings.polyline.polylineUtmXy[i - 2],
                         y: this._settings.polyline.polylineUtmXy[i - 1],
-                    }
+                    },
                 );
             }
             minX = -this._settings.extensionLength;
@@ -141,7 +140,7 @@ export class SurfacesUncertaintyLayer extends BaseLayer<SurfacesUncertaintyLayer
 
     protected doSettingsChangesRequireDataRefetch(
         prevSettings: SurfacesUncertaintyLayerSettings,
-        newSettings: SurfacesUncertaintyLayerSettings
+        newSettings: SurfacesUncertaintyLayerSettings,
     ): boolean {
         return (
             !isEqual(prevSettings.surfaceNames, newSettings.surfaceNames) ||
@@ -169,7 +168,7 @@ export class SurfacesUncertaintyLayer extends BaseLayer<SurfacesUncertaintyLayer
             if (i > 0) {
                 const distance = point2Distance(
                     { x: polyline[i], y: polyline[i + 1] },
-                    { x: polyline[i - 2], y: polyline[i - 1] }
+                    { x: polyline[i - 2], y: polyline[i - 1] },
                 );
                 const actualDistance = this._settings.polyline.actualSectionLengths[i / 2 - 1];
                 const numPoints = Math.floor(distance / this._settings.resolution) - 1;
@@ -194,7 +193,7 @@ export class SurfacesUncertaintyLayer extends BaseLayer<SurfacesUncertaintyLayer
             if (i > 0) {
                 const distance = point2Distance(
                     { x: polyline[i], y: polyline[i + 1] },
-                    { x: xPoints[xPoints.length - 1], y: yPoints[yPoints.length - 1] }
+                    { x: xPoints[xPoints.length - 1], y: yPoints[yPoints.length - 1] },
                 );
 
                 cumulatedHorizontalPolylineLength += distance;
@@ -211,33 +210,22 @@ export class SurfacesUncertaintyLayer extends BaseLayer<SurfacesUncertaintyLayer
         };
 
         for (const surfaceName of this._settings.surfaceNames) {
-            const queryKey = [
-                "getSurfaceIntersection",
-                this._settings.ensembleIdent?.getCaseUuid() ?? "",
-                this._settings.ensembleIdent?.getEnsembleName() ?? "",
-                this._settings.realizationNums,
-                surfaceName,
-                this._settings.attribute ?? "",
-                this._settings.polyline.polylineUtmXy,
-                this._settings.extensionLength,
-                this._settings.resolution,
-            ];
-            this.registerQueryKey(queryKey);
+            const queryOptions = postGetSampleSurfaceInPointsOptions({
+                query: {
+                    case_uuid: this._settings.ensembleIdent?.getCaseUuid() ?? "",
+                    ensemble_name: this._settings.ensembleIdent?.getEnsembleName() ?? "",
+                    surface_name: surfaceName,
+                    surface_attribute: this._settings.attribute ?? "",
+                    realization_nums: this._settings.realizationNums,
+                },
+                body: queryBody,
+            });
+
+            this.registerQueryKey(queryOptions.queryKey);
 
             const promise = queryClient
                 .fetchQuery({
-                    queryKey,
-                    queryFn: () =>
-                        apiService.surface.postSampleSurfaceInPoints(
-                            this._settings.ensembleIdent?.getCaseUuid() ?? "",
-                            this._settings.ensembleIdent?.getEnsembleName() ?? "",
-                            surfaceName,
-                            this._settings.attribute ?? "",
-                            this._settings.realizationNums,
-                            queryBody
-                        ),
-                    staleTime: STALE_TIME,
-                    gcTime: CACHE_TIME,
+                    ...queryOptions,
                 })
                 .then((data) => transformData(cumulatedHorizontalPolylineLengthArr, surfaceName, data));
             promises.push(promise);

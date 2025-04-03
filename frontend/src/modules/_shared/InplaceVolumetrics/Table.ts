@@ -1,4 +1,4 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import { TableCollection } from "./TableCollection";
 
@@ -148,7 +148,10 @@ export class Table {
         return row;
     }
 
-    filterRowsByColumn(columnName: string, predicate: (value: string | number | EnsembleIdent) => boolean): Row[] {
+    filterRowsByColumn(
+        columnName: string,
+        predicate: (value: string | number | RegularEnsembleIdent) => boolean,
+    ): Row[] {
         const columnIndex = this._columns.findIndex((column) => column.getName() === columnName);
 
         if (columnIndex === -1) {

@@ -1,14 +1,10 @@
-import { InplaceVolumetricResultName_api } from "@api";
+import type { InplaceVolumetricResultName_api } from "@api";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { useGetAggregatedPerRealizationTableDataQueries } from "@modules/_shared/InplaceVolumetrics/queryHooks";
 
+import { areTableDefinitionSelectionsValidAtom, resultName2Atom, resultNameAtom } from "./baseAtoms";
 import {
     areSelectedTablesComparableAtom,
-    areTableDefinitionSelectionsValidAtom,
-    resultName2Atom,
-    resultNameAtom,
-} from "./baseAtoms";
-import {
     doAccumulateFluidZonesAtom,
     ensembleIdentsWithRealizationsAtom,
     fluidZonesAtom,
@@ -47,6 +43,6 @@ export const aggregatedTableDataQueriesAtom = atomWithQueries((get) => {
         groupByIdentifiers,
         doAccumulateFluidZones,
         identifiersValues,
-        enableQueries
+        enableQueries,
     );
 });

@@ -164,3 +164,35 @@ class SurfaceRealizationSampleValues(BaseModel):
 class PointSetXY(BaseModel):
     x_points: list[float]
     y_points: list[float]
+
+
+class StratigraphicColumn(BaseModel):
+    """
+    Stratigraphic column from SMDA
+    """
+
+    identifier: str
+    areaType: str
+    status: str
+    type: str | None
+
+
+class StratigraphicUnit(BaseModel):
+    """
+    Stratigraphic unit from SMDA
+
+    Camel case attributes needed for esvIntersection component in front-end
+    """
+
+    identifier: str
+    top: str
+    base: str
+    stratUnitLevel: int
+    stratUnitType: str
+    topAge: int | float
+    baseAge: int | float
+    stratUnitParent: str | None
+    colorR: int
+    colorG: int
+    colorB: int
+    lithologyType: int | float | str = "unknown"

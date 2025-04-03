@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from primary.auth.auth_helper import AuthHelper
 from primary.services.graph_access.graph_access import GraphApiAccess
+from primary.middleware.add_browser_cache import no_cache
 
 LOGGER = logging.getLogger(__name__)
 
@@ -25,29 +26,31 @@ router = APIRouter()
 
 
 @router.get("/alive")
-def alive() -> str:
-    print("entering alive route")
+@no_cache
+def get_alive() -> str:
+
     return f"ALIVE: Backend is alive at this time: {datetime.datetime.now()}"
 
 
 @router.get("/alive_protected")
-def alive_protected() -> str:
-    print("entering alive_protected route")
+@no_cache
+def get_alive_protected() -> str:
+
     return f"ALIVE_PROTECTED: Backend is alive at this time: {datetime.datetime.now()}"
 
 
 @router.get("/logged_in_user", response_model=UserInfo)
-async def logged_in_user(
+@no_cache
+async def get_logged_in_user(
     request: Request,
     includeGraphApiInfo: bool = Query(  # pylint: disable=invalid-name
         False, description="Set to true to include user avatar and display name from Microsoft Graph API"
     ),
 ) -> UserInfo:
-    print("entering logged_in_user route")
 
     await starsessions.load_session(request)
     authenticated_user = AuthHelper.get_authenticated_user(request)
-    print(f"{authenticated_user=}")
+
     if not authenticated_user:
         # What is the most appropriate return code?
         # Probably 401, but seemingly we got into trouble with that. Should try again

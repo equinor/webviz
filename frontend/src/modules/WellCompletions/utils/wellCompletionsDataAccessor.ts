@@ -1,17 +1,14 @@
-import {
+import type {
     WellCompletionsData_api,
     WellCompletionsUnits_api,
     WellCompletionsWell_api,
     WellCompletionsZone_api,
 } from "@api";
-import { ColorSet } from "@lib/utils/ColorSet";
+import type { ColorSet } from "@lib/utils/ColorSet";
+import type { CompletionPlotData, PlotData, WellPlotData, Zone } from "@webviz/well-completions-plot";
 import {
-    CompletionPlotData,
-    PlotData,
     SortDirection,
     SortWellsBy,
-    WellPlotData,
-    Zone,
     areCompletionsPlotDataValuesEqual,
     createSortedWells,
     createSortedWellsFromSequence,
@@ -65,7 +62,7 @@ export class WellCompletionsDataAccessor {
         // Extract all subzones
         this._subzones = [];
         this._data.zones.forEach((zone) =>
-            WellCompletionsDataAccessor.propagateSubzoneArray(zone, stratigraphyColorSet, this._subzones)
+            WellCompletionsDataAccessor.propagateSubzoneArray(zone, stratigraphyColorSet, this._subzones),
         );
     }
 
@@ -99,7 +96,7 @@ export class WellCompletionsDataAccessor {
 
     createPlotData(
         completionDateIndexSelection: number | [number, number],
-        timeAggregation: TimeAggregationSelection
+        timeAggregation: TimeAggregationSelection,
     ): PlotData | null {
         if (!this._data) return null;
 
@@ -137,7 +134,7 @@ export class WellCompletionsDataAccessor {
         }
 
         const filteredWells = this._wells.filter(
-            (well) => !excludeWellNames.includes(well.name) && includeWellNames.includes(well.name)
+            (well) => !excludeWellNames.includes(well.name) && includeWellNames.includes(well.name),
         );
 
         // TODO: Add filtering of well.attributes values when attribute information is available
@@ -150,7 +147,7 @@ export class WellCompletionsDataAccessor {
             this._sortWellsBy,
             this._sortDirection,
             this._hideZeroCompletions,
-            this._data?.units
+            this._data?.units,
         );
     }
 
@@ -161,7 +158,7 @@ export class WellCompletionsDataAccessor {
                 const completion = well.completions[zone.name];
                 //Find the earliest date for the given completion
                 const earliestDate = completion.sortedCompletionDateIndices.find(
-                    (_, index) => completion.open[index] > 0
+                    (_, index) => completion.open[index] > 0,
                 );
                 if (earliestDate !== undefined) {
                     earliestCompDateIndex = Math.min(earliestCompDateIndex, earliestDate);
@@ -180,7 +177,7 @@ export class WellCompletionsDataAccessor {
         sortWellsBy: SortWellsBy | null,
         sortDirection: SortDirection,
         hideZeroCompletions: boolean,
-        units: WellCompletionsUnits_api
+        units: WellCompletionsUnits_api,
     ): PlotData {
         const wellPlotData: WellPlotData[] = [];
 
@@ -241,7 +238,7 @@ export class WellCompletionsDataAccessor {
                     completionsPlotData.length === 0 ||
                     !areCompletionsPlotDataValuesEqual(
                         completionsPlotData[completionsPlotData.length - 1],
-                        zoneCompletion
+                        zoneCompletion,
                     )
                 ) {
                     completionsPlotData.push(zoneCompletion);
@@ -294,7 +291,7 @@ export class WellCompletionsDataAccessor {
     private static propagateSubzoneArray(
         apiZone: WellCompletionsZone_api,
         stratigraphyColorSet: ColorSet,
-        subzoneArray: Zone[]
+        subzoneArray: Zone[],
     ): void {
         const color =
             subzoneArray.length === 0 ? stratigraphyColorSet.getFirstColor() : stratigraphyColorSet.getNextColor();
@@ -304,7 +301,7 @@ export class WellCompletionsDataAccessor {
             subzoneArray.push({ name: apiZone.name, color: color });
         } else {
             apiZone.subzones.forEach((apiSubZone) =>
-                WellCompletionsDataAccessor.propagateSubzoneArray(apiSubZone, stratigraphyColorSet, subzoneArray)
+                WellCompletionsDataAccessor.propagateSubzoneArray(apiSubZone, stratigraphyColorSet, subzoneArray),
             );
         }
     }

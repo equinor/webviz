@@ -1,36 +1,36 @@
-import { SurfaceDef_api, SurfaceMetaSet_api } from "@api";
-import { SurfaceDataPng_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import type { SurfaceDataPng_api, SurfaceDef_api, SurfaceMetaSet_api } from "@api";
+import { getObservedSurfacesMetadataOptions, getRealizationSurfacesMetadataOptions, getSurfaceDataOptions } from "@api";
 import { encodePropertiesAsKeyValStr } from "@lib/utils/queryStringUtils";
-import { UseQueryResult, useQuery } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
-import { SurfaceDataFloat_trans, transformSurfaceData } from "./queryDataTransforms";
-import { FullSurfaceAddress } from "./surfaceAddress";
-import { encodeSurfAddrStr, peekSurfaceAddressType } from "./surfaceAddress";
-
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
+import type { SurfaceDataFloat_trans } from "./queryDataTransforms";
+import { transformSurfaceData } from "./queryDataTransforms";
+import { type FullSurfaceAddress, encodeSurfAddrStr, peekSurfaceAddressType } from "./surfaceAddress";
 
 export function useRealizationSurfacesMetadataQuery(
     caseUuid: string | undefined,
-    ensembleName: string | undefined
+    ensembleName: string | undefined,
 ): UseQueryResult<SurfaceMetaSet_api> {
     return useQuery({
-        queryKey: ["getRealizationSurfacesMetadata", caseUuid, ensembleName],
-        queryFn: () => apiService.surface.getRealizationSurfacesMetadata(caseUuid ?? "", ensembleName ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: caseUuid && ensembleName ? true : false,
+        ...getRealizationSurfacesMetadataOptions({
+            query: {
+                case_uuid: caseUuid ?? "",
+                ensemble_name: ensembleName ?? "",
+            },
+        }),
+        enabled: Boolean(caseUuid && ensembleName),
     });
 }
 
 export function useObservedSurfacesMetadataQuery(caseUuid: string | undefined): UseQueryResult<SurfaceMetaSet_api> {
     return useQuery({
-        queryKey: ["getObservedSurfacesMetadata", caseUuid],
-        queryFn: () => apiService.surface.getObservedSurfacesMetadata(caseUuid ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: caseUuid ? true : false,
+        ...getObservedSurfacesMetadataOptions({
+            query: {
+                case_uuid: caseUuid ?? "",
+            },
+        }),
+        enabled: Boolean(caseUuid),
     });
 }
 
@@ -41,7 +41,7 @@ export function useSurfaceDataQuery(
     surfAddrStr: string | null,
     format: "float" | "png",
     resampleTo: SurfaceDef_api | null,
-    allowEnable: boolean
+    allowEnable: boolean,
 ): UseQueryResult<SurfaceDataFloat_trans | SurfaceDataPng_api> {
     if (surfAddrStr) {
         const surfAddrType = peekSurfaceAddressType(surfAddrStr);
@@ -56,12 +56,15 @@ export function useSurfaceDataQuery(
     }
 
     return useQuery({
-        queryKey: ["getSurfaceData", surfAddrStr, resampleToKeyValStr, format],
-        queryFn: () => apiService.surface.getSurfaceData(surfAddrStr ?? "", format, resampleToKeyValStr),
+        ...getSurfaceDataOptions({
+            query: {
+                surf_addr_str: surfAddrStr ?? "",
+                data_format: format,
+                resample_to_def_str: resampleToKeyValStr,
+            },
+        }),
         select: transformSurfaceData,
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: allowEnable && Boolean(surfAddrStr),
+        enabled: Boolean(allowEnable && surfAddrStr),
     });
 }
 
@@ -71,7 +74,7 @@ export function useSurfaceDataQueryByAddress(
     surfAddr: FullSurfaceAddress | null,
     format: "float" | "png",
     resampleTo: SurfaceDef_api | null,
-    allowEnable: boolean
+    allowEnable: boolean,
 ): UseQueryResult<SurfaceDataFloat_trans | SurfaceDataPng_api> {
     const surfAddrStr = surfAddr ? encodeSurfAddrStr(surfAddr) : null;
     return useSurfaceDataQuery(surfAddrStr, format, resampleTo, allowEnable);

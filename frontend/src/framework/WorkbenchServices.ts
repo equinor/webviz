@@ -1,13 +1,15 @@
 import React from "react";
 
+import type { Point2D, Point3D } from "@webviz/subsurface-viewer";
+
 import { isEqual } from "lodash";
 
-import { EnsembleIdent } from "./EnsembleIdent";
-import { Workbench } from "./Workbench";
-import { InplaceVolumetricsFilter } from "./types/inplaceVolumetricsFilter";
-import { Intersection } from "./types/intersection";
-import { Viewport } from "./types/viewport";
-import { Wellbore } from "./types/wellbore";
+import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
+import type { Workbench } from "./Workbench";
+import type { InplaceVolumetricsFilterSettings } from "./types/inplaceVolumetricsFilterSettings";
+import type { Intersection } from "./types/intersection";
+import type { Viewport } from "./types/viewport";
+import type { Wellbore } from "./types/wellbore";
 
 export type NavigatorTopicDefinitions = {
     "navigator.dummyPlaceholder": string;
@@ -22,12 +24,12 @@ export type GlobalTopicDefinitions = {
     "global.hoverRegion": { regionName: string } | null;
     "global.hoverFacies": { faciesName: string } | null;
 
-    "global.syncValue.ensembles": EnsembleIdent[];
+    "global.syncValue.ensembles": RegularEnsembleIdent[];
     "global.syncValue.date": { timeOrInterval: string };
     "global.syncValue.timeSeries": { vectorName: string };
     "global.syncValue.surface": { name: string; attribute: string };
     "global.syncValue.cameraPositionMap": {
-        target: number[];
+        target: Point2D | Point3D | undefined;
         zoom: number;
         rotationX: number;
         rotationOrbit: number;
@@ -36,7 +38,7 @@ export type GlobalTopicDefinitions = {
     "global.syncValue.intersection": Intersection;
     "global.syncValue.cameraPositionIntersection": Viewport;
     "global.syncValue.verticalScale": number;
-    "global.syncValue.inplaceVolumetricsFilter": InplaceVolumetricsFilter;
+    "global.syncValue.inplaceVolumetricsFilterSettings": InplaceVolumetricsFilterSettings;
     "global.syncValue.inplaceVolumetricsResultName": string;
 };
 
@@ -45,8 +47,8 @@ export type AllTopicDefinitions = NavigatorTopicDefinitions & GlobalTopicDefinit
 export type TopicDefinitionsType<T extends keyof AllTopicDefinitions> = T extends keyof GlobalTopicDefinitions
     ? GlobalTopicDefinitions[T]
     : T extends keyof NavigatorTopicDefinitions
-    ? NavigatorTopicDefinitions[T]
-    : never;
+      ? NavigatorTopicDefinitions[T]
+      : never;
 
 export type SubscriberCallbackElement<T extends keyof AllTopicDefinitions> = {
     subscriberId?: string;
@@ -89,7 +91,7 @@ export class WorkbenchServices {
     publishGlobalData<T extends keyof GlobalTopicDefinitions>(
         topic: T,
         value: TopicDefinitionsType<T>,
-        publisherId?: string
+        publisherId?: string,
     ) {
         this.internalPublishAnyTopic(topic, value, publisherId);
     }
@@ -97,7 +99,7 @@ export class WorkbenchServices {
     protected internalPublishAnyTopic<T extends keyof AllTopicDefinitions>(
         topic: T,
         value: TopicDefinitionsType<T>,
-        publisherId?: string
+        publisherId?: string,
     ) {
         // Always do compression so that if the value is the same as the last value, don't publish
         // Serves as a sensible default behavior until we see a need for more complex behavior
@@ -125,7 +127,7 @@ export class WorkbenchServices {
 export function useSubscribedValue<T extends keyof AllTopicDefinitions>(
     topic: T,
     workbenchServices: WorkbenchServices,
-    subscriberId?: string
+    subscriberId?: string,
 ): AllTopicDefinitions[T] | null {
     const [latestValue, setLatestValue] = React.useState<AllTopicDefinitions[T] | null>(null);
 
@@ -137,7 +139,7 @@ export function useSubscribedValue<T extends keyof AllTopicDefinitions>(
             const unsubscribeFunc = workbenchServices.subscribe(topic, handleNewValue, subscriberId);
             return unsubscribeFunc;
         },
-        [topic, workbenchServices, subscriberId]
+        [topic, workbenchServices, subscriberId],
     );
 
     return latestValue;
@@ -147,7 +149,7 @@ export function useSubscribedValueConditionally<T extends keyof AllTopicDefiniti
     topic: T,
     enable: boolean,
     workbenchServices: WorkbenchServices,
-    subscriberId?: string
+    subscriberId?: string,
 ): AllTopicDefinitions[T] | null {
     const [latestValue, setLatestValue] = React.useState<AllTopicDefinitions[T] | null>(null);
 
@@ -167,7 +169,7 @@ export function useSubscribedValueConditionally<T extends keyof AllTopicDefiniti
                 unsubscribeFunc();
             };
         },
-        [topic, enable, workbenchServices, subscriberId]
+        [topic, enable, workbenchServices, subscriberId],
     );
 
     return latestValue;

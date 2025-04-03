@@ -1,10 +1,12 @@
-import React, { Key } from "react";
+import type { Key } from "react";
+import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { isEqual } from "lodash";
 
-import { BaseComponent, BaseComponentProps } from "../BaseComponent";
+import type { BaseComponentProps } from "../BaseComponent";
+import { BaseComponent } from "../BaseComponent";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
 import { withDefaults } from "../_component-utils/components";
@@ -47,7 +49,7 @@ function checkForEqualityWithoutAdornment(a: TableSelectOption[], b: TableSelect
         b.map((option) => ({
             ...option,
             values: option.values.map((value) => value.label),
-        }))
+        })),
     );
 }
 
@@ -93,7 +95,7 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
                 });
             });
         },
-        [props.options, filters, props.filter]
+        [props.options, filters, props.filter],
     );
 
     if (!isEqual(prevValue, props.value)) {
@@ -146,7 +148,7 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
                 onChange(values);
             }, props.debounceTimeMs);
         },
-        [onChange, props.debounceTimeMs]
+        [onChange, props.debounceTimeMs],
     );
 
     const toggleValue = React.useCallback(
@@ -180,7 +182,7 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
             setSelected(newSelected);
             handleOnChange(newSelected);
         },
-        [props.multiple, props.options, selected, keysPressed, lastShiftIndex, handleOnChange]
+        [props.multiple, props.options, selected, keysPressed, lastShiftIndex, handleOnChange],
     );
 
     React.useEffect(function handleMount() {
@@ -247,7 +249,7 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
                 window.removeEventListener("keyup", handleKeyUp);
             };
         },
-        [currentIndex, selected, filteredOptions, props.size, hasFocus, startIndex, toggleValue]
+        [currentIndex, selected, filteredOptions, props.size, hasFocus, startIndex, toggleValue],
     );
 
     function handleFilterChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number) {
@@ -286,14 +288,16 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
                             >
                                 {headerLabel}
                                 <br />
-                                <Input
-                                    id={props.id}
-                                    type="text"
-                                    value={filters[index]}
-                                    onChange={(e) => handleFilterChange(e, index)}
-                                    placeholder={`Filter ${headerLabel}...`}
-                                    title={`Filter ${headerLabel}...`}
-                                />
+                                <div className="h-8">
+                                    <Input
+                                        id={props.id}
+                                        type="text"
+                                        value={filters[index]}
+                                        onChange={(e) => handleFilterChange(e, index)}
+                                        placeholder={`Filter ${headerLabel}...`}
+                                        title={`Filter ${headerLabel}...`}
+                                    />
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -329,12 +333,12 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
                                         {
                                             "hover:bg-blue-100": !selected.includes(option.id),
                                             "bg-blue-600 text-white box-border hover:bg-blue-700": selected.includes(
-                                                option.id
+                                                option.id,
                                             ),
                                             "pointer-events-none": option.disabled,
                                             "text-gray-400": option.disabled,
                                             "bg-blue-300": option.disabled && index === currentIndex,
-                                        }
+                                        },
                                     )}
                                     onClick={() => {
                                         if (option.disabled) {

@@ -1,5 +1,5 @@
-import { InplaceStatisticalVolumetricTableData_api, InplaceVolumetricTableData_api } from "@api";
-import { ViewStatusWriter } from "@framework/StatusWriter";
+import type { InplaceStatisticalVolumetricTableData_api, InplaceVolumetricTableData_api } from "@api";
+import type { ViewStatusWriter } from "@framework/StatusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 
 import { useAtomValue } from "jotai";
@@ -9,14 +9,14 @@ import { activeQueriesResultAtom, identifiersValuesAtom } from "../atoms/derived
 
 // Type guard for InplaceVolumetricTableData
 function isInplaceVolumetricTableData(
-    obj: InplaceVolumetricTableData_api | InplaceStatisticalVolumetricTableData_api
+    obj: InplaceVolumetricTableData_api | InplaceStatisticalVolumetricTableData_api,
 ): obj is InplaceVolumetricTableData_api {
     return obj && typeof obj === "object" && "resultColumns" in obj;
 }
 
 // Type guard for InplaceStatisticalVolumetricTableData
 function isInplaceStatisticalVolumetricTableData(
-    obj: InplaceVolumetricTableData_api | InplaceStatisticalVolumetricTableData_api
+    obj: InplaceVolumetricTableData_api | InplaceStatisticalVolumetricTableData_api,
 ): obj is InplaceStatisticalVolumetricTableData_api {
     return obj && typeof obj === "object" && "resultColumnStatistics" in obj;
 }
@@ -44,7 +44,7 @@ export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter) 
     // Due to no throw in back-end for missing/non-existing result for specific tables, we should compare
     // the retrieved result columns with the requested columns
     for (const tableData of activeQueriesResult.tablesData) {
-        // Per unique volumetric table (EnsembleIdent, tableName) we have a query result
+        // Per unique volumetric table (RegularEnsembleIdent, tableName) we have a query result
         const queryData = tableData.data;
 
         // Result columns across all fluid selections
@@ -55,7 +55,7 @@ export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter) 
             }
             if (isInplaceStatisticalVolumetricTableData(fluidSelectionTable)) {
                 fluidSelectionTable.resultColumnStatistics.forEach((col) =>
-                    tableResultColumnsUnion.add(col.columnName)
+                    tableResultColumnsUnion.add(col.columnName),
                 );
             }
         }
@@ -67,7 +67,7 @@ export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter) 
         // the result columns will be visible in the table component if they are present in any of the fluid selections
         if (missingResultNames.length > 0) {
             statusWriter.addWarning(
-                `Missing result names for Table "${tableData.tableName}": ${missingResultNames.join(", ")}`
+                `Missing result names for Table "${tableData.tableName}": ${missingResultNames.join(", ")}`,
             );
         }
     }

@@ -1,39 +1,28 @@
-import { apiService } from "@framework/ApiService";
+import { getVfpTableNamesOptions, getVfpTableOptions } from "@api";
 
 import { atomWithQuery } from "jotai-tanstack-query";
 
 import { selectedEnsembleIdentAtom, selectedRealizationNumberAtom, selectedVfpTableNameAtom } from "./derivedAtoms";
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
 export const vfpTableQueryAtom = atomWithQuery((get) => {
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
     const selectedRealizationNumber = get(selectedRealizationNumberAtom);
-    const selectedVfpTableName = get(selectedVfpTableNameAtom)
+    const selectedVfpTableName = get(selectedVfpTableNameAtom);
 
     const query = {
-        queryKey: [
-            "getVfpTable",
-            selectedEnsembleIdent?.getCaseUuid(),
-            selectedEnsembleIdent?.getEnsembleName(),
-            selectedRealizationNumber,
-            selectedVfpTableName,
-        ],
-        queryFn: () =>
-            apiService.vfp.getVfpTable(
-                selectedEnsembleIdent?.getCaseUuid() ?? "",
-                selectedEnsembleIdent?.getEnsembleName() ?? "",
-                selectedRealizationNumber ?? 0,
-                selectedVfpTableName ?? "",
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: !!(
+        ...getVfpTableOptions({
+            query: {
+                case_uuid: selectedEnsembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: selectedEnsembleIdent?.getEnsembleName() ?? "",
+                realization: selectedRealizationNumber ?? 0,
+                vfp_table_name: selectedVfpTableName ?? "",
+            },
+        }),
+        enabled: Boolean(
             selectedEnsembleIdent?.getCaseUuid() &&
-            selectedEnsembleIdent?.getEnsembleName() &&
-            selectedRealizationNumber !== null &&
-            selectedVfpTableName
+                selectedEnsembleIdent?.getEnsembleName() &&
+                selectedRealizationNumber !== null &&
+                selectedVfpTableName,
         ),
     };
     return query;
@@ -44,24 +33,17 @@ export const vfpTableNamesQueryAtom = atomWithQuery((get) => {
     const selectedRealizationNumber = get(selectedRealizationNumberAtom);
 
     const query = {
-        queryKey: [
-            "getVfpTableNames",
-            selectedEnsembleIdent?.getCaseUuid(),
-            selectedEnsembleIdent?.getEnsembleName(),
-            selectedRealizationNumber,
-        ],
-        queryFn: () =>
-            apiService.vfp.getVfpTableNames(
-                selectedEnsembleIdent?.getCaseUuid() ?? "",
-                selectedEnsembleIdent?.getEnsembleName() ?? "",
-                selectedRealizationNumber ?? 0,
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: !!(
+        ...getVfpTableNamesOptions({
+            query: {
+                case_uuid: selectedEnsembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: selectedEnsembleIdent?.getEnsembleName() ?? "",
+                realization: selectedRealizationNumber ?? 0,
+            },
+        }),
+        enabled: Boolean(
             selectedEnsembleIdent?.getCaseUuid() &&
-            selectedEnsembleIdent?.getEnsembleName() &&
-            selectedRealizationNumber !== null
+                selectedEnsembleIdent?.getEnsembleName() &&
+                selectedRealizationNumber !== null,
         ),
     };
     return query;

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ModuleViewProps } from "@framework/Module";
+import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -9,13 +9,14 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 import { useAtomValue } from "jotai";
 
-import { areSelectedTablesComparableAtom, resultNameAtom } from "./atoms/baseAtoms";
+import { resultNameAtom } from "./atoms/baseAtoms";
+import { areSelectedTablesComparableAtom } from "./atoms/derivedAtoms";
 import { aggregatedTableDataQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useBuildPlotAndTable } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -44,7 +45,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         divBoundingRect.height,
         hoveredRegion?.regionName ?? null,
         hoveredZone?.zoneName ?? null,
-        hoveredFacies?.faciesName ?? null
+        hoveredFacies?.faciesName ?? null,
     );
 
     const table = plotAndTableData?.table;
@@ -57,7 +58,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             return "Failed to load volumetric table data";
         }
         if (!areSelectedTablesComparable) {
-            return "Selected volumetric tables are not comparable";
+            return "Selected volumetric tables are not comparable due to mismatching fluid zones, result names or identifier columns";
         }
 
         return null;

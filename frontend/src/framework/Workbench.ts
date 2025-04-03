@@ -1,15 +1,15 @@
-import { QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
-import { EnsembleIdent } from "./EnsembleIdent";
 import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
 import { InitialSettings } from "./InitialSettings";
 import { ImportState } from "./Module";
-import { ModuleInstance } from "./ModuleInstance";
+import type { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
-import { Template } from "./TemplateRegistry";
-import { WorkbenchServices } from "./WorkbenchServices";
-import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";
+import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
+import type { Template } from "./TemplateRegistry";
+import type { WorkbenchServices } from "./WorkbenchServices";
+import { loadMetadataFromBackendAndCreateEnsembleSet } from "./internal/EnsembleSetLoader";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
 import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
@@ -28,14 +28,28 @@ export type LayoutElement = {
 };
 
 export type UserEnsembleSetting = {
-    ensembleIdent: EnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent;
+    customName: string | null;
+    color: string;
+};
+
+export type UserDeltaEnsembleSetting = {
+    comparisonEnsembleIdent: RegularEnsembleIdent;
+    referenceEnsembleIdent: RegularEnsembleIdent;
     customName: string | null;
     color: string;
 };
 
 export type StoredUserEnsembleSetting = {
     ensembleIdent: string;
-    customName: string;
+    customName: string | null;
+    color: string;
+};
+
+export type StoredUserDeltaEnsembleSetting = {
+    comparisonEnsembleIdent: string;
+    referenceEnsembleIdent: string;
+    customName: string | null;
     color: string;
 };
 
@@ -226,40 +240,94 @@ export class Workbench {
         }
     }
 
-    async loadAndSetupEnsembleSetInSession(
+    async initWorkbenchFromLocalStorage(queryClient: QueryClient): Promise<void> {
+        const storedUserEnsembleSettings = this.maybeLoadEnsembleSettingsFromLocalStorage();
+        const storedUserDeltaEnsembleSettings = this.maybeLoadDeltaEnsembleSettingsFromLocalStorage();
+
+        if (!storedUserEnsembleSettings && !storedUserDeltaEnsembleSettings) {
+            return;
+        }
+
+        await this.loadAndSetupEnsembleSetInSession(
+            queryClient,
+            storedUserEnsembleSettings ?? [],
+            storedUserDeltaEnsembleSettings ?? [],
+        );
+    }
+
+    async storeSettingsInLocalStorageAndLoadAndSetupEnsembleSetInSession(
         queryClient: QueryClient,
-        userEnsembleSettings: UserEnsembleSetting[]
+        userEnsembleSettings: UserEnsembleSetting[],
+        userDeltaEnsembleSettings: UserDeltaEnsembleSetting[],
     ): Promise<void> {
         this.storeEnsembleSetInLocalStorage(userEnsembleSettings);
+        this.storeDeltaEnsembleSetInLocalStorage(userDeltaEnsembleSettings);
 
+        await this.loadAndSetupEnsembleSetInSession(queryClient, userEnsembleSettings, userDeltaEnsembleSettings);
+    }
+
+    private async loadAndSetupEnsembleSetInSession(
+        queryClient: QueryClient,
+        userEnsembleSettings: UserEnsembleSetting[],
+        userDeltaEnsembleSettings: UserDeltaEnsembleSetting[],
+    ): Promise<void> {
         console.debug("loadAndSetupEnsembleSetInSession - starting load");
         this._workbenchSession.setEnsembleSetLoadingState(true);
-        const newEnsembleSet = await loadEnsembleSetMetadataFromBackend(queryClient, userEnsembleSettings);
+        const newEnsembleSet = await loadMetadataFromBackendAndCreateEnsembleSet(
+            queryClient,
+            userEnsembleSettings,
+            userDeltaEnsembleSettings,
+        );
         console.debug("loadAndSetupEnsembleSetInSession - loading done");
         console.debug("loadAndSetupEnsembleSetInSession - publishing");
         this._workbenchSession.setEnsembleSetLoadingState(false);
-        return this._workbenchSession.setEnsembleSet(newEnsembleSet);
+        this._workbenchSession.setEnsembleSet(newEnsembleSet);
     }
 
-    private storeEnsembleSetInLocalStorage(ensemblesToStore: UserEnsembleSetting[]): void {
-        const ensembleIdentsToStore = ensemblesToStore.map((el) => ({
+    private storeEnsembleSetInLocalStorage(ensembleSettingsToStore: UserEnsembleSetting[]): void {
+        const ensembleSettingsArrayToStore: StoredUserEnsembleSetting[] = ensembleSettingsToStore.map((el) => ({
             ...el,
             ensembleIdent: el.ensembleIdent.toString(),
         }));
-        localStorage.setItem("userEnsembleSettings", JSON.stringify(ensembleIdentsToStore));
+        localStorage.setItem("userEnsembleSettings", JSON.stringify(ensembleSettingsArrayToStore));
+    }
+
+    private storeDeltaEnsembleSetInLocalStorage(deltaEnsembleSettingsToStore: UserDeltaEnsembleSetting[]): void {
+        const deltaEnsembleSettingsArrayToStore: StoredUserDeltaEnsembleSetting[] = deltaEnsembleSettingsToStore.map(
+            (el) => ({
+                ...el,
+                comparisonEnsembleIdent: el.comparisonEnsembleIdent.toString(),
+                referenceEnsembleIdent: el.referenceEnsembleIdent.toString(),
+            }),
+        );
+        localStorage.setItem("userDeltaEnsembleSettings", JSON.stringify(deltaEnsembleSettingsArrayToStore));
     }
 
     maybeLoadEnsembleSettingsFromLocalStorage(): UserEnsembleSetting[] | null {
         const ensembleSettingsString = localStorage.getItem("userEnsembleSettings");
         if (!ensembleSettingsString) return null;
 
-        const ensembleIdents = JSON.parse(ensembleSettingsString) as StoredUserEnsembleSetting[];
-        const ensembleIdentsParsed = ensembleIdents.map((el) => ({
+        const ensembleSettingsArray = JSON.parse(ensembleSettingsString) as StoredUserEnsembleSetting[];
+        const parsedEnsembleSettingsArray: UserEnsembleSetting[] = ensembleSettingsArray.map((el) => ({
             ...el,
-            ensembleIdent: EnsembleIdent.fromString(el.ensembleIdent),
+            ensembleIdent: RegularEnsembleIdent.fromString(el.ensembleIdent),
         }));
 
-        return ensembleIdentsParsed;
+        return parsedEnsembleSettingsArray;
+    }
+
+    maybeLoadDeltaEnsembleSettingsFromLocalStorage(): UserDeltaEnsembleSetting[] | null {
+        const deltaEnsembleSettingsString = localStorage.getItem("userDeltaEnsembleSettings");
+        if (!deltaEnsembleSettingsString) return null;
+
+        const deltaEnsembleSettingsArray = JSON.parse(deltaEnsembleSettingsString) as StoredUserDeltaEnsembleSetting[];
+        const parsedDeltaEnsembleSettingsArray: UserDeltaEnsembleSetting[] = deltaEnsembleSettingsArray.map((el) => ({
+            ...el,
+            comparisonEnsembleIdent: RegularEnsembleIdent.fromString(el.comparisonEnsembleIdent),
+            referenceEnsembleIdent: RegularEnsembleIdent.fromString(el.referenceEnsembleIdent),
+        }));
+
+        return parsedDeltaEnsembleSettingsArray;
     }
 
     applyTemplate(template: Template): void {
@@ -287,7 +355,7 @@ export class Workbench {
                     const dataChannel = templateModule.dataChannelsToInitialSettingsMapping[propName];
 
                     const moduleInstanceIndex = template.moduleInstances.findIndex(
-                        (el) => el.instanceRef === dataChannel.listensToInstanceRef
+                        (el) => el.instanceRef === dataChannel.listensToInstanceRef,
                     );
                     if (moduleInstanceIndex === -1) {
                         throw new Error("Could not find module instance for data channel");

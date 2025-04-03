@@ -1,5 +1,4 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleRealizationFilterFunctionAtom, EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 
 import { atom } from "jotai";
 
@@ -14,26 +13,19 @@ export const selectedEnsembleIdentsAtom = atom((get) => {
     const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
 
     let computedEnsembleIdents = userSelectedEnsembleIdents.filter((el) => ensembleSet.hasEnsemble(el));
-    if (computedEnsembleIdents.length === 0 && ensembleSet.getEnsembleArr().length > 0) {
-        computedEnsembleIdents = [ensembleSet.getEnsembleArr()[0].getIdent()];
+    if (computedEnsembleIdents.length === 0 && ensembleSet.getRegularEnsembleArray().length > 0) {
+        computedEnsembleIdents = [ensembleSet.getRegularEnsembleArray()[0].getIdent()];
     }
 
     return computedEnsembleIdents;
 });
 
 export const selectedRealizationsAtom = atom((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
     const userSelectedRealizations = get(userSelectedRealizationsAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
-    let ensembleRealizationFilterFunction = get(EnsembleRealizationFilterFunctionAtom);
 
-    if (ensembleRealizationFilterFunction === null) {
-        ensembleRealizationFilterFunction = (ensembleIdent: EnsembleIdent) => {
-            return ensembleSet.findEnsemble(ensembleIdent)?.getRealizations() ?? [];
-        };
-    }
-
-    const realizations = computeRealizationsIntersection(selectedEnsembleIdents, ensembleRealizationFilterFunction);
+    const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
+    const realizations = computeRealizationsIntersection(selectedEnsembleIdents, validEnsembleRealizationsFunction);
 
     let computedRealizations = userSelectedRealizations.filter((el) => realizations.includes(el));
     if (computedRealizations.length === 0 && realizations.length > 0) {

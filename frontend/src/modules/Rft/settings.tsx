@@ -1,19 +1,18 @@
-import React from "react";
-
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleSettingsProps } from "@framework/Module";
+import type { ModuleSettingsProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
-import { Select, SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { useAtomValue, useSetAtom } from "jotai";
 
-import { Interfaces } from "./interfaces";
+import type { Interfaces } from "./interfaces";
 import {
     userSelectedEnsembleIdentAtom,
     userSelectedResponseNameAtom,
@@ -71,7 +70,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
 
     const rftTableDefErrorMessage = usePropagateApiErrorToStatusWriter(rftTableDefinition, statusWriter) ?? "";
 
-    function handleEnsembleSelectionChange(ensembleIdent: EnsembleIdent | null) {
+    function handleEnsembleSelectionChange(ensembleIdent: RegularEnsembleIdent | null) {
         setUserSelectedEnsembleIdent(ensembleIdent);
     }
     function handleResponseNameChange(responseNames: string[]) {
@@ -88,7 +87,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         <div>
             <CollapsibleGroup expanded={true} title="Ensembles">
                 <EnsembleDropdown
-                    ensembleSet={ensembleSet}
+                    ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={selectedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
                 />

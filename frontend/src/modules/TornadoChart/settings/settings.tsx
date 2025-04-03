@@ -1,8 +1,8 @@
 import React from "react";
 
 import { KeyKind } from "@framework/DataChannelTypes";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleSettingsProps } from "@framework/Module";
+import type { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -18,7 +18,7 @@ import {
     showRealizationPointsAtom,
 } from "./atoms/baseAtoms";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import { DisplayComponentType } from "../typesAndEnums";
 
 export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>): React.ReactNode {
@@ -36,7 +36,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         function propogateReferenceSensitivityName() {
             setModuleReferenceSensitivityName(referenceSensitivityName);
         },
-        [referenceSensitivityName, setModuleReferenceSensitivityName]
+        [referenceSensitivityName, setModuleReferenceSensitivityName],
     );
 
     const responseReceiver = settingsContext.useChannelReceiver({
@@ -53,14 +53,14 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
             const ensembleIdentString = responseReceiver.channel.contents[0].metaData.ensembleIdentString;
             if (typeof ensembleIdentString === "string") {
                 try {
-                    const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
+                    const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentString);
                     const ensemble = ensembleSet.findEnsemble(ensembleIdent);
                     if (ensemble) {
                         sensitivityNames.push(
                             ...(ensemble
                                 .getSensitivities()
                                 ?.getSensitivityArr()
-                                .map((el) => el.name) ?? [])
+                                .map((el) => el.name) ?? []),
                         );
                     }
                 } catch (e) {

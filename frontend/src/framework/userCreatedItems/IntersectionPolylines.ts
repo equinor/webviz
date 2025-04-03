@@ -1,5 +1,5 @@
-import { AtomStoreMaster } from "@framework/AtomStoreMaster";
-import { UserCreatedItemSet } from "@framework/UserCreatedItems";
+import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
+import type { UserCreatedItemSet } from "@framework/UserCreatedItems";
 
 import { atom } from "jotai";
 import { cloneDeep } from "lodash";
@@ -8,7 +8,7 @@ import { v4 } from "uuid";
 export type IntersectionPolyline = {
     id: string;
     name: string;
-    points: number[][];
+    path: number[][];
 };
 
 export type IntersectionPolylineWithoutId = Omit<IntersectionPolyline, "id">;

@@ -1,12 +1,9 @@
-import { apiService } from "@framework/ApiService";
+import { getDrilledWellboreHeadersOptions, getGridModelsInfoOptions } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 
 import { atomWithQuery } from "jotai-tanstack-query";
 
 import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "./derivedAtoms";
-
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
 
 export const gridModelInfosQueryAtom = atomWithQuery((get) => {
     const ensembleIdent = get(selectedEnsembleIdentAtom);
@@ -16,10 +13,13 @@ export const gridModelInfosQueryAtom = atomWithQuery((get) => {
     const ensembleName = ensembleIdent?.getEnsembleName() ?? "";
 
     return {
-        queryKey: ["getGridModelInfos", caseUuid, ensembleName, realizationNumber],
-        queryFn: () => apiService.grid3D.getGridModelsInfo(caseUuid, ensembleName, realizationNumber ?? 0),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
+        ...getGridModelsInfoOptions({
+            query: {
+                case_uuid: caseUuid,
+                ensemble_name: ensembleName,
+                realization_num: realizationNumber ?? 0,
+            },
+        }),
         enabled: Boolean(caseUuid && ensembleName && realizationNumber !== null),
     };
 });
@@ -37,10 +37,11 @@ export const drilledWellboreHeadersQueryAtom = atomWithQuery((get) => {
     }
 
     return {
-        queryKey: ["getDrilledWellboreHeaders", fieldIdentifier],
-        queryFn: () => apiService.well.getDrilledWellboreHeaders(fieldIdentifier ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
+        ...getDrilledWellboreHeadersOptions({
+            query: {
+                field_identifier: fieldIdentifier ?? "",
+            },
+        }),
         enabled: Boolean(fieldIdentifier),
     };
 });

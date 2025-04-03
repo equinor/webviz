@@ -3,7 +3,11 @@ from typing import Any, Dict, Tuple, Optional
 from sumo.wrapper import SumoClient
 from fmu.sumo.explorer import TimeFilter, TimeType
 
-from primary.services.service_exceptions import InvalidDataError, Service
+from primary.services.service_exceptions import (
+    InvalidDataError,
+    MultipleDataMatchesError,
+    Service,
+)
 
 
 def get_time_filter(time_or_interval_str: Optional[str]) -> TimeFilter:
@@ -58,7 +62,7 @@ async def get_grid_geometry_blob_id_async(
     result = response.json()
     hits = result["hits"]["hits"]
     if len(hits) != 1:
-        raise ValueError(f"Expected 1 hit, got {len(hits)}")
+        raise MultipleDataMatchesError(f"Expected 1 hit, got {len(hits)}", Service.SUMO)
     return [hit["_id"] for hit in hits][0]
 
 
@@ -94,7 +98,17 @@ async def get_grid_geometry_and_property_blob_ids_async(
                             {"term": {"fmu.iteration.name.keyword": iteration}},
                             {"term": {"fmu.realization.id": realization}},
                             {"term": {"data.name.keyword": parameter_name}},
-                            {"term": {"data.tagname.keyword": grid_name}},
+                            {
+                                "bool": {
+                                    "should": [
+                                        {"term": {"data.geometry.name.keyword": grid_name}},
+                                        {
+                                            "term": {"data.tagname.keyword": grid_name}
+                                        },  # Old metadata has reference to geometry in tagname. Allow for now.
+                                    ],
+                                    "minimum_should_match": 1,
+                                }
+                            },
                         ]
                     }
                 },

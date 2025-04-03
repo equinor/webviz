@@ -1,8 +1,9 @@
 import React from "react";
 
 import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
-import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
-import { Workbench } from "@framework/Workbench";
+import type { SyncSettingKey } from "@framework/SyncSettings";
+import { SyncSettingsMeta } from "@framework/SyncSettings";
+import type { Workbench } from "@framework/Workbench";
 import { Drawer } from "@framework/internal/components/Drawer";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Link, PinDrop, Public } from "@mui/icons-material";
@@ -82,7 +83,7 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
         return (
             <table className="w-full m-2">
                 <thead>
-                    <tr className="border-b">
+                    <tr className="border-b ">
                         <th className="border-r p-2 w-6" title="Sync for all module instances">
                             <Public fontSize="small" />
                         </th>

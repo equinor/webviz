@@ -1,5 +1,6 @@
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { Dropdown, DropdownOption, DropdownProps } from "@lib/components/Dropdown";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { DropdownOption, DropdownProps } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 
 type FieldDropdownProps = {
     ensembleSet: EnsembleSet;
@@ -14,17 +15,17 @@ export function FieldDropdown(props: FieldDropdownProps): JSX.Element {
         onChange(fieldIdentifier);
     }
 
-    const optionsArr: DropdownOption[] = [];
-    for (const ens of ensembleSet.getEnsembleArr()) {
+    const optionsArray: DropdownOption[] = [];
+    for (const ens of ensembleSet.getRegularEnsembleArray()) {
         const fieldIdentifier = ens.getFieldIdentifier();
-        if (optionsArr.some((option) => option.value === fieldIdentifier.toString())) {
+        if (optionsArray.some((option) => option.value === fieldIdentifier.toString())) {
             continue;
         }
-        optionsArr.push({
+        optionsArray.push({
             value: fieldIdentifier.toString(),
             label: fieldIdentifier.toString(),
         });
     }
 
-    return <Dropdown options={optionsArr} value={value?.toString()} onChange={handleSelectionChanged} {...rest} />;
+    return <Dropdown options={optionsArray} value={value?.toString()} onChange={handleSelectionChanged} {...rest} />;
 }

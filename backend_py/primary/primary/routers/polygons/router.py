@@ -5,12 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary.auth.auth_helper import AuthHelper
-from primary.services.smda_access.mocked_drogon_smda_access import _mocked_stratigraphy_access
-from primary.services.smda_access.stratigraphy_access import StratigraphyAccess
+from primary.services.smda_access.drogon import DrogonSmdaAccess
+from primary.services.smda_access import SmdaAccess
 from primary.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
 from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.sumo_access.polygons_access import PolygonsAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
+from primary.utils.drogon import is_drogon_identifier
 
 from . import converters, schemas
 
@@ -28,20 +29,18 @@ async def get_polygons_directory(
     """
     Get a directory of polygons in a Sumo ensemble
     """
-    access = await PolygonsAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = PolygonsAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     polygons_dir = await access.get_polygons_directory_async()
 
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
-    strat_access: Union[StratigraphyAccess, _mocked_stratigraphy_access.StratigraphyAccess]
+    smda_access: Union[SmdaAccess, DrogonSmdaAccess]
 
-    if strat_column_identifier == "DROGON_HAS_NO_STRATCOLUMN":
-        strat_access = _mocked_stratigraphy_access.StratigraphyAccess(authenticated_user.get_smda_access_token())
+    if is_drogon_identifier(strat_column_identifier=strat_column_identifier):
+        smda_access = DrogonSmdaAccess()
     else:
-        strat_access = StratigraphyAccess(authenticated_user.get_smda_access_token())
-    strat_units = await strat_access.get_stratigraphic_units(strat_column_identifier)
+        smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
+    strat_units = await smda_access.get_stratigraphic_units_async(strat_column_identifier)
     sorted_stratigraphic_surfaces = sort_stratigraphic_names_by_hierarchy(strat_units)
 
     return converters.to_api_polygons_directory(polygons_dir, sorted_stratigraphic_surfaces)
@@ -58,9 +57,7 @@ async def get_polygons_data(
 ) -> List[schemas.PolygonData]:
     timer = PerfTimer()
 
-    access = await PolygonsAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = PolygonsAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_poly = await access.get_polygons_async(real_num=realization_num, name=name, attribute=attribute)
 
     if not xtgeo_poly:

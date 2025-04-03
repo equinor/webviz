@@ -1,14 +1,18 @@
 import React from "react";
 
-import { Layer } from "@deck.gl/core/typed";
+import type { Layer } from "@deck.gl/core";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { ModuleViewProps } from "@framework/Module";
+import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { Intersection, IntersectionType } from "@framework/types/intersection";
-import { IntersectionPolyline, IntersectionPolylineWithoutId } from "@framework/userCreatedItems/IntersectionPolylines";
+import type { Intersection } from "@framework/types/intersection";
+import { IntersectionType } from "@framework/types/intersection";
+import type {
+    IntersectionPolyline,
+    IntersectionPolylineWithoutId,
+} from "@framework/userCreatedItems/IntersectionPolylines";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { useFieldWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
@@ -25,7 +29,7 @@ import { useGridPolylineIntersection as useGridPolylineIntersectionQuery } from 
 import { useWellboreCasingsQuery } from "./queries/wellboreSchematicsQueries";
 import { makeAxesLayer, makeGrid3DLayer, makeIntersectionLayer, makeWellsLayer } from "./utils/layers";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import { userSelectedCustomIntersectionPolylineIdAtom } from "../settings/atoms/baseAtoms";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
@@ -53,11 +57,11 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const gridModelBoundingBox3d = props.viewContext.useSettingsToViewInterfaceValue("gridModelBoundingBox3d");
     const gridModelParameterName = props.viewContext.useSettingsToViewInterfaceValue("gridModelParameterName");
     const gridModelParameterDateOrInterval = props.viewContext.useSettingsToViewInterfaceValue(
-        "gridModelParameterDateOrInterval"
+        "gridModelParameterDateOrInterval",
     );
 
     const editPolylineModeActive = props.viewContext.useSettingsToViewInterfaceValue(
-        "editCustomIntersectionPolylineEditModeActive"
+        "editCustomIntersectionPolylineEditModeActive",
     );
     const setEditPolylineModeActive = useSetAtom(editCustomIntersectionPolylineEditModeActiveAtom);
 
@@ -75,10 +79,10 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             }
 
             props.viewContext.setInstanceTitle(
-                `${ensembleName}, R=${realization} -- ${gridModelName} / ${gridModelParameterName}`
+                `${ensembleName}, R=${realization} -- ${gridModelName} / ${gridModelParameterName}`,
             );
         },
-        [ensembleSet, ensembleIdent, gridModelName, gridModelParameterName, realization, props.viewContext]
+        [ensembleSet, ensembleIdent, gridModelName, gridModelParameterName, realization, props.viewContext],
     );
 
     const gridCellIndexRanges = props.viewContext.useSettingsToViewInterfaceValue("gridCellIndexRanges");
@@ -89,11 +93,11 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         props.viewContext.useSettingsToViewInterfaceValue("intersectionExtensionLength");
 
     const [selectedCustomIntersectionPolylineId, setSelectedCustomIntersectionPolylineId] = useAtom(
-        userSelectedCustomIntersectionPolylineIdAtom
+        userSelectedCustomIntersectionPolylineIdAtom,
     );
 
     const fieldIdentifier = ensembleIdent
-        ? ensembleSet.findEnsemble(ensembleIdent)?.getFieldIdentifier() ?? null
+        ? (ensembleSet.findEnsemble(ensembleIdent)?.getFieldIdentifier() ?? null)
         : null;
     const fieldWellboreTrajectoriesQuery = useFieldWellboreTrajectoriesQuery(fieldIdentifier ?? undefined);
 
@@ -104,7 +108,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         displayedWellboreUuid.push(highlightedWellboreUuid);
     }
     const filteredFieldWellBoreTrajectories = fieldWellboreTrajectoriesQuery.data?.filter((wellbore) =>
-        displayedWellboreUuid.includes(wellbore.wellboreUuid)
+        displayedWellboreUuid.includes(wellbore.wellboreUuid),
     );
 
     const polylineUtmXy: number[] = [];
@@ -116,7 +120,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     if (intersectionType === IntersectionType.WELLBORE) {
         if (filteredFieldWellBoreTrajectories && highlightedWellboreUuid) {
             const wellboreTrajectory = filteredFieldWellBoreTrajectories.find(
-                (wellbore) => wellbore.wellboreUuid === highlightedWellboreUuid
+                (wellbore) => wellbore.wellboreUuid === highlightedWellboreUuid,
             );
             if (wellboreTrajectory) {
                 const path: number[][] = [];
@@ -135,29 +139,29 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     ...calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
                         path,
                         intersectionExtensionLength,
-                        5
-                    ).simplifiedWellboreTrajectoryXy.flat()
+                        5,
+                    ).simplifiedWellboreTrajectoryXy.flat(),
                 );
 
                 const extendedTrajectory = intersectionReferenceSystem.getExtendedTrajectory(
                     100,
                     intersectionExtensionLength,
-                    intersectionExtensionLength
+                    intersectionExtensionLength,
                 );
 
                 oldPolylineUtmXy.push(...extendedTrajectory.points.flat());
             }
         }
     } else if (intersectionType === IntersectionType.CUSTOM_POLYLINE) {
-        if (customIntersectionPolyline && customIntersectionPolyline.points.length >= 2) {
+        if (customIntersectionPolyline && customIntersectionPolyline.path.length >= 2) {
             intersectionReferenceSystem = new IntersectionReferenceSystem(
-                customIntersectionPolyline.points.map((point) => [point[0], point[1], 0])
+                customIntersectionPolyline.path.map((point) => [point[0], point[1], 0]),
             );
             intersectionReferenceSystem.offset = 0;
             if (!customIntersectionPolyline) {
                 statusWriter.addError("Custom intersection polyline not found");
             } else {
-                for (const point of customIntersectionPolyline.points) {
+                for (const point of customIntersectionPolyline.path) {
                     polylineUtmXy.push(point[0], point[1]);
                 }
             }
@@ -172,41 +176,40 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         gridModelParameterDateOrInterval,
         realization,
         polylineUtmXy,
-        showIntersection
+        showIntersection,
     );
 
     // Wellbore casing query
     const wellboreCasingQuery = useWellboreCasingsQuery(highlightedWellboreUuid ?? undefined);
 
     // Grid surface query
-    const gridSurfaceQuery = useGridSurfaceQuery(
-        ensembleIdent?.getCaseUuid() ?? null,
-        ensembleIdent?.getEnsembleName() ?? null,
-        gridModelName,
-        realization,
-        gridCellIndexRanges.i[0],
-        gridCellIndexRanges.i[1],
-        gridCellIndexRanges.j[0],
-        gridCellIndexRanges.j[1],
-        gridCellIndexRanges.k[0],
-        gridCellIndexRanges.k[1]
-    );
+    const gridSurfaceQuery = useGridSurfaceQuery({
+        caseUuid: ensembleIdent?.getCaseUuid() ?? null,
+        ensembleName: ensembleIdent?.getEnsembleName() ?? null,
+        gridName: gridModelName,
+        realizationNum: realization,
+        iMin: gridCellIndexRanges.i[0],
+        iMax: gridCellIndexRanges.i[1],
+        jMin: gridCellIndexRanges.j[0],
+        jMax: gridCellIndexRanges.j[1],
+        kMin: gridCellIndexRanges.k[0],
+        kMax: gridCellIndexRanges.k[1],
+    });
 
     // Grid parameter query
-    const gridParameterQuery = useGridParameterQuery(
-        ensembleIdent?.getCaseUuid() ?? null,
-        ensembleIdent?.getEnsembleName() ?? null,
-        gridModelName,
-        gridModelParameterName,
-        gridModelParameterDateOrInterval,
-        realization,
-        gridCellIndexRanges.i[0],
-        gridCellIndexRanges.i[1],
-        gridCellIndexRanges.j[0],
-        gridCellIndexRanges.j[1],
-        gridCellIndexRanges.k[0],
-        gridCellIndexRanges.k[1]
-    );
+    const gridParameterQuery = useGridParameterQuery({
+        caseUuid: ensembleIdent?.getCaseUuid() ?? null,
+        ensembleName: ensembleIdent?.getEnsembleName() ?? null,
+        gridName: gridModelName,
+        parameterName: gridModelParameterName,
+        realizationNum: realization,
+        iMin: gridCellIndexRanges.i[0],
+        iMax: gridCellIndexRanges.i[1],
+        jMin: gridCellIndexRanges.j[0],
+        jMax: gridCellIndexRanges.j[1],
+        kMin: gridCellIndexRanges.k[0],
+        kMax: gridCellIndexRanges.k[1],
+    });
 
     usePropagateApiErrorToStatusWriter(polylineIntersectionQuery, statusWriter);
     usePropagateApiErrorToStatusWriter(wellboreCasingQuery, statusWriter);
@@ -219,7 +222,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             fieldWellboreTrajectoriesQuery.isFetching ||
             wellboreCasingQuery.isFetching ||
             gridSurfaceQuery.isFetching ||
-            gridParameterQuery.isFetching
+            gridParameterQuery.isFetching,
     );
 
     function handleAddPolyline(polyline: IntersectionPolylineWithoutId) {
@@ -264,7 +267,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             colorScaleClone.setRangeAndMidPoint(
                 minPropValue,
                 maxPropValue,
-                minPropValue + (maxPropValue - minPropValue) / 2
+                minPropValue + (maxPropValue - minPropValue) / 2,
             );
         }
         layers.push(makeGrid3DLayer(gridSurfaceQuery.data, gridParameterQuery.data, showGridLines, colorScaleClone));
@@ -281,7 +284,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const colorScaleWithName = ColorScaleWithName.fromColorScale(
         colorScaleClone,
-        gridModelParameterName ?? "Grid model"
+        gridModelParameterName ?? "Grid model",
     );
 
     return (

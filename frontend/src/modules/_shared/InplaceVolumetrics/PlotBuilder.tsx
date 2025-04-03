@@ -1,11 +1,11 @@
-import React from "react";
+import type React from "react";
 
-import { PlotData } from "plotly.js";
-import { Axis } from "plotly.js";
+import type { Axis, PlotData } from "plotly.js";
 
-import { Table } from "./Table";
+import type { Table } from "./Table";
 
-import { Figure, MakeSubplotOptions, makeSubplots } from "../Figure";
+import type { Figure, MakeSubplotOptions } from "../Figure";
+import { CoordinateDomain, makeSubplots } from "../Figure";
 
 export class PlotBuilder {
     private _table: Table;
@@ -72,7 +72,7 @@ export class PlotBuilder {
                 const yAxisKey = `yaxis${axisIndex}`;
                 const xAxisKey = `xaxis${axisIndex}`;
 
-                const oldLayout = figure.getLayout();
+                const oldLayout = figure.makeLayout();
 
                 figure.updateLayout({
                     // @ts-expect-error - Ignore string type of xAxisKey for oldLayout[xAxisKey]
@@ -90,7 +90,7 @@ export class PlotBuilder {
         options?: Pick<
             MakeSubplotOptions,
             "horizontalSpacing" | "verticalSpacing" | "showGrid" | "margin" | "sharedXAxes" | "sharedYAxes"
-        >
+        >,
     ): React.ReactNode {
         if (!this._groupByColumn) {
             const figure = this.buildSubplots(this._table, height, width, options ?? {});
@@ -118,7 +118,7 @@ export class PlotBuilder {
         table: Table,
         height: number,
         width: number,
-        options: Pick<MakeSubplotOptions, "horizontalSpacing" | "verticalSpacing" | "showGrid" | "margin">
+        options: Pick<MakeSubplotOptions, "horizontalSpacing" | "verticalSpacing" | "showGrid" | "margin">,
     ): Figure {
         if (!this._subplotByColumn) {
             const figure = makeSubplots({
@@ -152,12 +152,12 @@ export class PlotBuilder {
         let legendAdded = false;
         for (let row = 1; row <= numRows; row++) {
             for (let col = 1; col <= numCols; col++) {
-                const index = (numRows - 1 - (row - 1)) * numCols + (col - 1);
+                const index = (row - 1) * numCols + col - 1;
                 if (!keys[index]) {
                     continue;
                 }
                 const label = this._formatLabelFunction(tableCollection.getCollectedBy(), keys[index]);
-                subplotTitles[(row - 1) * numCols + col - 1] = label;
+                subplotTitles[index] = label;
 
                 if (this._highlightedSubPlotNames.includes(keys[index].toString())) {
                     highlightedSubplots.push({ row, col });
@@ -182,6 +182,7 @@ export class PlotBuilder {
             height,
             width,
             subplotTitles,
+            xAxisTickAngle: 35,
             ...options,
         });
 
@@ -203,7 +204,9 @@ export class PlotBuilder {
                     y1: 1,
                 },
                 row,
-                col
+                col,
+                CoordinateDomain.SCENE,
+                CoordinateDomain.SCENE,
             );
         }
 

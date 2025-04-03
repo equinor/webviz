@@ -23,7 +23,7 @@ export const intersectionReferenceSystemAtom = atom((get) => {
         }
 
         const wellboreTrajectory = fieldWellboreTrajectories.data.find(
-            (wellbore) => wellbore.wellboreUuid === wellboreUuid
+            (wellbore) => wellbore.wellboreUuid === wellboreUuid,
         );
 
         if (wellboreTrajectory) {
@@ -42,11 +42,11 @@ export const intersectionReferenceSystemAtom = atom((get) => {
             return referenceSystem;
         }
     } else if (intersectionType === IntersectionType.CUSTOM_POLYLINE && customIntersectionPolyline) {
-        if (customIntersectionPolyline.points.length < 2) {
+        if (customIntersectionPolyline.path.length < 2) {
             return null;
         }
         const referenceSystem = new IntersectionReferenceSystem(
-            customIntersectionPolyline.points.map((point) => [point[0], point[1], 0])
+            customIntersectionPolyline.path.map((point) => [point[0], point[1], 0]),
         );
         referenceSystem.offset = 0;
 

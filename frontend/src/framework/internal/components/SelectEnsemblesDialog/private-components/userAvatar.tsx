@@ -1,24 +1,23 @@
-import React from "react";
+import type React from "react";
 
-import { GraphUserPhoto_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import type { GraphUserPhoto_api } from "@api";
+import { getUserPhotoOptions } from "@api";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { AccountCircle } from "@mui/icons-material";
-import { UseQueryResult, useQuery } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 export type UserAvatarProps = {
     userId: string;
 };
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
 function useUserInfoQuery(userId: string): UseQueryResult<GraphUserPhoto_api> {
     return useQuery({
-        queryKey: ["getUserInfo", userId],
-        queryFn: () => apiService.graph.userInfo(`${userId.toUpperCase()}@equinor.com`),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
+        ...getUserPhotoOptions({
+            query: {
+                user_id: userId,
+            },
+        }),
         enabled: userId !== "",
     });
 }

@@ -1,14 +1,15 @@
 import React from "react";
 
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleSettingsProps } from "@framework/Module";
+import type { ModuleSettingsProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Select, SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
@@ -29,7 +30,7 @@ import {
 import { pvtDataQueriesAtom } from "./atoms/queryAtoms";
 import { DependentVariableSelector } from "./components/DependentVariableSelector/dependentVariableSelector";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import {
     ColorBy,
     PHASE_TO_DISPLAY_NAME,
@@ -57,11 +58,11 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
     const [selectedDependentVariables, setSelectedPlots] = useAtom(selectedDependentVariablesAtom);
 
     const [selectedMultiEnsembleIdents, setSelectedMultiEnsembleIdents] =
-        React.useState<EnsembleIdent[]>(selectedEnsembleIdents);
+        React.useState<RegularEnsembleIdent[]>(selectedEnsembleIdents);
     const [selectedMultiRealizations, setSelectedMultiRealizations] = React.useState<number[]>(selectedRealizations);
     const [selectedMultiPvtNums, setSelectedMultiPvtNums] = React.useState<number[]>(selectedPvtNums);
 
-    function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
+    function handleEnsembleSelectionChange(ensembleIdents: RegularEnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
         setSelectedMultiEnsembleIdents(ensembleIdents);
     }
@@ -126,7 +127,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
             </CollapsibleGroup>
             <CollapsibleGroup title="Ensembles" expanded>
                 <EnsembleSelect
-                    ensembleSet={ensembleSet}
+                    ensembles={ensembleSet.getRegularEnsembleArray()}
                     onChange={handleEnsembleSelectionChange}
                     value={selectedEnsembleIdents}
                     size={5}

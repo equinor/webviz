@@ -1,6 +1,5 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { IntersectionType } from "@framework/types/intersection";
-import { ColorScale } from "@lib/utils/ColorScale";
+import type { ColorScale } from "@lib/utils/ColorScale";
 
 import { atom } from "jotai";
 
@@ -18,6 +17,5 @@ export const seismicColorScaleAtom = atom<ColorScale | null>(null);
 export const showSeismicAtom = atom<boolean>(false);
 
 export const userSelectedFieldIdentifierAtom = atom<string | null>(null);
-export const userSelectedEnsembleIdentAtom = atom<EnsembleIdent | null>(null);
 export const userSelectedWellboreUuidAtom = atom<string | null>(null);
 export const userSelectedCustomIntersectionPolylineIdAtom = atom<string | null>(null);

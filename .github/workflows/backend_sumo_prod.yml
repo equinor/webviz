@@ -1,0 +1,62 @@
+name: integration
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - review
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  sumo_prod:
+    if: github.repository == "equinor/webviz" # Prevent execution on forks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🤖 Get shared key from Sumo
+        working-directory: ./backend_py/primary
+        env:
+          SHARED_KEY_SUMO_PROD: ${{ secrets.SHARED_KEY_DROGON_READ_PROD }}
+        run: |
+          if [ ${#SHARED_KEY_SUMO_PROD} -eq 0 ]; then
+            echo "Error: SHARED_KEY_SUMO_PROD is empty. Stopping the action."
+            exit 1
+          fi
+          mkdir ~/.sumo
+          echo $SHARED_KEY_SUMO_PROD > ~/.sumo/9e5443dd-3431-4690-9617-31eed61cb55a.sharedkey
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: 📦 Install poetry and dependencies
+        working-directory: ./backend_py/primary
+        run: |
+          pip install --upgrade pip
+          pip install poetry==1.8.5  # Pin Poetry to version 1.8.5
+          poetry config virtualenvs.create false
+          poetry check --lock  # Check lock file is consistent with pyproject.toml
+          poetry install --with dev
+
+      - name: 🤖 Run tests
+        working-directory: ./backend_py/primary
+        env:
+          WEBVIZ_CLIENT_SECRET: 0
+          WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
+          WEBVIZ_SMDA_RESOURCE_SCOPE: 0
+          WEBVIZ_VDS_HOST_ADDRESS: 0
+          WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY: 0
+          WEBVIZ_SSDL_RESOURCE_SCOPE: 0
+          WEBVIZ_SUMU_ENV: prod
+        run: |
+          pytest -s --timeout=300 ./tests/integration

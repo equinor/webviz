@@ -1,13 +1,18 @@
 import React from "react";
 
 import WebvizLogo from "@assets/webviz.svg";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { UserEnsembleSetting, Workbench, WorkbenchEvents } from "@framework/Workbench";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { UserDeltaEnsembleSetting, UserEnsembleSetting, Workbench } from "@framework/Workbench";
+import { WorkbenchEvents } from "@framework/Workbench";
 import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
 import { LoginButton } from "@framework/internal/components/LoginButton";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
-import { EnsembleItem } from "@framework/internal/components/SelectEnsemblesDialog/selectEnsemblesDialog";
+import type {
+    BaseEnsembleItem,
+    DeltaEnsembleItem,
+    RegularEnsembleItem,
+} from "@framework/internal/components/SelectEnsemblesDialog/selectEnsemblesDialog";
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -23,29 +28,30 @@ type LeftNavBarProps = {
 };
 
 const NavBarDivider: React.FC = () => {
-    return <div className="bg-slate-200 h-[1px] w-full mt-4 mb-4" />;
+    return <div className="bg-slate-200 h-px w-full mt-4 mb-4" />;
 };
 
 export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
-    const [newSelectedEnsembles, setNewSelectedEnsembles] = React.useState<EnsembleItem[]>([]);
+    const [newSelectedEnsembles, setNewSelectedEnsembles] = React.useState<RegularEnsembleItem[]>([]);
+    const [newCreatedDeltaEnsembles, setNewCreatedDeltaEnsembles] = React.useState<DeltaEnsembleItem[]>([]);
     const [layoutEmpty, setLayoutEmpty] = React.useState<boolean>(props.workbench.getLayout().length === 0);
     const [collapsed, setCollapsed] = React.useState<boolean>(localStorage.getItem("navBarCollapsed") === "true");
     const [prevIsAppInitialized, setPrevIsAppInitialized] = React.useState<boolean>(false);
     const loadingEnsembleSet = useIsEnsembleSetLoading(props.workbench.getWorkbenchSession());
     const [drawerContent, setDrawerContent] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.LeftDrawerContent
+        GuiState.LeftDrawerContent,
     );
     const [leftSettingsPanelWidth, setLeftSettingsPanelWidth] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.LeftSettingsPanelWidthInPercent
+        GuiState.LeftSettingsPanelWidthInPercent,
     );
     const isAppInitialized = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.AppInitialized);
 
     if (isAppInitialized !== prevIsAppInitialized && !loadingEnsembleSet) {
-        setEnsembleDialogOpen(ensembleSet.getEnsembleArr().length === 0);
+        setEnsembleDialogOpen(ensembleSet.getEnsembleArray().length === 0);
         setPrevIsAppInitialized(isAppInitialized);
     }
 
@@ -70,7 +76,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 unsubscribeFunc();
             };
         },
-        [drawerContent, props.workbench, setDrawerContent]
+        [drawerContent, props.workbench, setDrawerContent],
     );
 
     function ensureSettingsPanelIsVisible() {
@@ -117,7 +123,37 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         localStorage.setItem("navBarCollapsed", (!collapsed).toString());
     }
 
-    const selectedEnsembles: EnsembleItem[] = ensembleSet.getEnsembleArr().map((ens) => ({
+    function loadAndSetupEnsembles(
+        ensembleItems: RegularEnsembleItem[],
+        createdDeltaEnsembles: DeltaEnsembleItem[],
+    ): Promise<void> {
+        setNewSelectedEnsembles(ensembleItems);
+        setNewCreatedDeltaEnsembles(createdDeltaEnsembles);
+        const ensembleSettings: UserEnsembleSetting[] = ensembleItems.map((ens) => ({
+            ensembleIdent: new RegularEnsembleIdent(ens.caseUuid, ens.ensembleName),
+            customName: ens.customName,
+            color: ens.color,
+        }));
+        const deltaEnsembleSettings: UserDeltaEnsembleSetting[] = createdDeltaEnsembles.map((deltaEns) => ({
+            comparisonEnsembleIdent: new RegularEnsembleIdent(
+                deltaEns.comparisonEnsemble.caseUuid,
+                deltaEns.comparisonEnsemble.ensembleName,
+            ),
+            referenceEnsembleIdent: new RegularEnsembleIdent(
+                deltaEns.referenceEnsemble.caseUuid,
+                deltaEns.referenceEnsemble.ensembleName,
+            ),
+            customName: deltaEns.customName,
+            color: deltaEns.color,
+        }));
+        return props.workbench.storeSettingsInLocalStorageAndLoadAndSetupEnsembleSetInSession(
+            queryClient,
+            ensembleSettings,
+            deltaEnsembleSettings,
+        );
+    }
+
+    const selectedEnsembles: RegularEnsembleItem[] = ensembleSet.getRegularEnsembleArray().map((ens) => ({
         caseUuid: ens.getCaseUuid(),
         caseName: ens.getCaseName(),
         ensembleName: ens.getEnsembleName(),
@@ -125,34 +161,47 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         customName: ens.getCustomName(),
     }));
 
-    function loadAndSetupEnsembles(ensembleItems: EnsembleItem[]): Promise<void> {
-        setNewSelectedEnsembles(ensembleItems);
-        const ensembleSettings: UserEnsembleSetting[] = ensembleItems.map((ens) => ({
-            ensembleIdent: new EnsembleIdent(ens.caseUuid, ens.ensembleName),
-            customName: ens.customName,
-            color: ens.color,
-        }));
-        return props.workbench.loadAndSetupEnsembleSetInSession(queryClient, ensembleSettings);
-    }
-
     let fixedSelectedEnsembles = selectedEnsembles;
     if (loadingEnsembleSet) {
         fixedSelectedEnsembles = newSelectedEnsembles;
+    }
+
+    const createdDeltaEnsembles: DeltaEnsembleItem[] = ensembleSet.getDeltaEnsembleArray().map((deltaEns) => {
+        const comparisonEnsemble: BaseEnsembleItem = {
+            caseUuid: deltaEns.getComparisonEnsembleIdent().getCaseUuid(),
+            ensembleName: deltaEns.getComparisonEnsembleIdent().getEnsembleName(),
+        };
+        const referenceEnsemble: BaseEnsembleItem = {
+            caseUuid: deltaEns.getReferenceEnsembleIdent().getCaseUuid(),
+            ensembleName: deltaEns.getReferenceEnsembleIdent().getEnsembleName(),
+        };
+
+        const deltaEnsembleItem: DeltaEnsembleItem = {
+            comparisonEnsemble: comparisonEnsemble,
+            referenceEnsemble: referenceEnsemble,
+            color: deltaEns.getColor(),
+            customName: deltaEns.getCustomName(),
+        };
+        return deltaEnsembleItem;
+    });
+    let fixedCreatedDeltaEnsembles = createdDeltaEnsembles;
+    if (loadingEnsembleSet) {
+        fixedCreatedDeltaEnsembles = newCreatedDeltaEnsembles;
     }
 
     return (
         <div
             className={resolveClassNames(
                 "bg-white p-2 border-r-2 border-slate-200 z-50 shadow-lg flex flex-col",
-                collapsed ? "w-[4.5rem]" : "w-64"
+                collapsed ? "w-[4.5rem]" : "w-64",
             )}
         >
-            <div className="flex flex-col gap-2 flex-grow">
+            <div className="flex flex-col gap-2 grow">
                 <div className="w-full flex justify-center mb-2 mt-1 p-2">
                     <img src={WebvizLogo} alt="Webviz logo" className="w-20 h-20" />
                 </div>
                 <div
-                    className="bg-orange-600 text-white p-1 rounded text-xs text-center cursor-help shadow"
+                    className="bg-orange-600 text-white p-1 rounded-sm text-xs text-center cursor-help shadow-sm"
                     title="NOTE: This application is still under heavy development and bugs are to be expected. Please help us improve Webviz by reporting any undesired behaviour either on Slack or Yammer."
                 >
                     BETA
@@ -160,7 +209,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 <div className="flex justify-end">
                     <Button
                         onClick={handleCollapseOrExpand}
-                        className="!text-slate-800"
+                        className="text-slate-800!"
                         title={collapsed ? "Expand menu" : "Collapse menu"}
                     >
                         {collapsed ? <ChevronRight fontSize="small" /> : <ChevronLeft fontSize="small" />}
@@ -170,9 +219,9 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 <Button
                     title="Open ensemble selection dialog"
                     onClick={handleEnsembleClick}
-                    className="w-full !text-slate-800 h-10"
+                    className="w-full text-slate-800! h-10"
                     startIcon={
-                        selectedEnsembles.length === 0 && !loadingEnsembleSet ? (
+                        selectedEnsembles.length === 0 && createdDeltaEnsembles.length === 0 && !loadingEnsembleSet ? (
                             <List fontSize="small" className="w-5 h-5 mr-2" />
                         ) : (
                             <Badge
@@ -182,7 +231,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                                     loadingEnsembleSet ? (
                                         <CircularProgress size="extra-small" color="inherit" />
                                     ) : (
-                                        selectedEnsembles.length
+                                        selectedEnsembles.length + createdDeltaEnsembles.length
                                     )
                                 }
                             >
@@ -201,7 +250,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === LeftDrawerContent.ModuleSettings ? "text-cyan-600" : "!text-slate-800"
+                        drawerContent === LeftDrawerContent.ModuleSettings ? "text-cyan-600" : "text-slate-800!",
                     )}
                     disabled={layoutEmpty}
                 >
@@ -214,7 +263,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === LeftDrawerContent.SyncSettings ? "text-cyan-600" : "!text-slate-800"
+                        drawerContent === LeftDrawerContent.SyncSettings ? "text-cyan-600" : "text-slate-800!",
                     )}
                     disabled={layoutEmpty}
                 >
@@ -228,7 +277,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === LeftDrawerContent.ModulesList ? "text-cyan-600" : "!text-slate-800"
+                        drawerContent === LeftDrawerContent.ModulesList ? "text-cyan-600" : "text-slate-800!",
                     )}
                 >
                     {!collapsed ? "Add modules" : ""}
@@ -240,7 +289,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === LeftDrawerContent.TemplatesList ? "text-cyan-600" : "!text-slate-800"
+                        drawerContent === LeftDrawerContent.TemplatesList ? "text-cyan-600" : "text-slate-800!",
                     )}
                 >
                     {!collapsed ? "Use templates" : ""}
@@ -253,14 +302,14 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === LeftDrawerContent.ColorPaletteSettings ? "text-cyan-600" : "!text-slate-800"
+                        drawerContent === LeftDrawerContent.ColorPaletteSettings ? "text-cyan-600" : "text-slate-800!",
                     )}
                 >
                     {!collapsed ? "Color settings" : ""}
                 </Button>
                 <NavBarDivider />
-                <LoginButton className="w-full !text-slate-800 h-10" showText={!collapsed} />
-                <div className="flex-grow h-5" />
+                <LoginButton className="w-full text-slate-800! h-10" showText={!collapsed} />
+                <div className="grow h-5" />
                 <div className={isDevMode() ? "mb-16" : ""}>
                     <NavBarDivider />
                     <UserSessionState expanded={!collapsed} />
@@ -269,7 +318,8 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
             {ensembleDialogOpen && (
                 <SelectEnsemblesDialog
                     loadAndSetupEnsembles={loadAndSetupEnsembles}
-                    selectedEnsembles={fixedSelectedEnsembles}
+                    selectedRegularEnsembles={fixedSelectedEnsembles}
+                    createdDeltaEnsembles={fixedCreatedDeltaEnsembles}
                     onClose={handleEnsembleDialogClose}
                     colorSet={colorSet}
                 />

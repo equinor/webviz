@@ -1,8 +1,9 @@
-import { Ensemble } from "@framework/Ensemble";
+import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { ViewContext } from "@framework/ModuleContext";
-import { ViewStatusWriter } from "@framework/StatusWriter";
-import { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
+import type { ViewContext } from "@framework/ModuleContext";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { ViewStatusWriter } from "@framework/StatusWriter";
+import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
 import { useAtomValue } from "jotai";
 
@@ -18,7 +19,7 @@ export function useMakeViewStatusWriterMessages(
     viewContext: ViewContext<Interfaces>,
     statusWriter: ViewStatusWriter,
     parameterDisplayName: string | null,
-    ensemblesWithoutParameter: Ensemble[]
+    ensemblesWithoutParameter: (RegularEnsemble | DeltaEnsemble)[],
 ) {
     const ensembleSet = useAtomValue(EnsembleSetAtom);
     const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
@@ -54,7 +55,7 @@ export function useMakeViewStatusWriterMessages(
     if (parameterDisplayName) {
         for (const ensemble of ensemblesWithoutParameter) {
             statusWriter.addWarning(
-                `Ensemble ${ensemble.getDisplayName()} does not have parameter ${parameterDisplayName}.`
+                `Ensemble ${ensemble.getDisplayName()} does not have parameter ${parameterDisplayName}.`,
             );
         }
     }

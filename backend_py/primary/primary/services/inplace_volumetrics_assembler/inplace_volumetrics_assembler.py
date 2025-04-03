@@ -20,6 +20,7 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     InplaceVolumetricTableDataPerFluidSelection,
     InplaceStatisticalVolumetricTableDataPerFluidSelection,
 )
+from primary.services.service_exceptions import Service, InvalidDataError, InvalidParameterError, NoDataError
 
 from ._conversion._conversion import (
     create_raw_volumetric_columns_from_volume_names_and_fluid_zones,
@@ -47,7 +48,6 @@ from ._utils import (
     get_valid_result_names_from_list,
 )
 
-from ..service_exceptions import Service, InvalidParameterError
 
 import logging
 from webviz_pkg.core_utils.perf_timer import PerfTimer
@@ -81,9 +81,7 @@ class InplaceVolumetricsAssembler:
 
         async def get_named_inplace_volumetrics_table_async(table_name: str) -> dict[str, pa.Table]:
             return {
-                table_name: await self._inplace_volumetrics_access.get_inplace_volumetrics_table_async(
-                    table_name, column_names=None
-                )
+                table_name: await self._inplace_volumetrics_access.get_inplace_volumetrics_columns_async(table_name)
             }
 
         tasks = [
@@ -91,16 +89,16 @@ class InplaceVolumetricsAssembler:
             for vol_table_name in vol_table_names
         ]
         tables = await asyncio.gather(*tasks)
-        print(tables, len(tables))
 
         tables_info: list[InplaceVolumetricsTableDefinition] = []
         for table_result in tables:
-            table_name, table = list(table_result.items())[0]
+            table_name, column_names_and_values = list(table_result.items())[0]
+            column_names = list(column_names_and_values.keys())
 
             non_volume_columns = self._inplace_volumetrics_access.get_possible_selector_columns()
 
             # Get raw volume names
-            raw_volumetric_column_names = [name for name in table.column_names if name not in non_volume_columns]
+            raw_volumetric_column_names = [name for name in column_names if name not in non_volume_columns]
 
             fluid_zones = get_fluid_zones(raw_volumetric_column_names)
             volume_names = get_volume_names_from_raw_volumetric_column_names(raw_volumetric_column_names)
@@ -111,8 +109,8 @@ class InplaceVolumetricsAssembler:
             identifiers_with_values = []
             for identifier_name in self._inplace_volumetrics_access.get_possible_identifier_columns():
                 identifier = get_identifier_from_string(identifier_name)
-                if identifier is not None and identifier_name in table.column_names:
-                    identifier_values = table[identifier_name].unique().to_pylist()
+                if identifier is not None and identifier_name in column_names:
+                    identifier_values = column_names_and_values[identifier_name]
                     filtered_identifier_values = [
                         value for value in identifier_values if value not in IGNORED_IDENTIFIER_COLUMN_VALUES
                     ]
@@ -159,6 +157,9 @@ class InplaceVolumetricsAssembler:
         # - Aggregate by each requested group_by_identifier
         table_data_per_fluid_selection: list[InplaceVolumetricTableData] = []
         for fluid_selection, volume_df in volume_df_per_fluid_selection.items():
+            if "REAL" not in volume_df.columns:
+                raise NoDataError("No realization data found in dataframe", Service.GENERAL)
+
             # Create per group summed realization values
             per_group_summed_realization_df = create_per_group_summed_realization_volume_df(
                 volume_df, group_by_identifiers
@@ -208,6 +209,9 @@ class InplaceVolumetricsAssembler:
         # - Aggregate by each requested group_by_identifier
         statistical_table_data_per_fluid_selection: list[InplaceStatisticalVolumetricTableData] = []
         for fluid_selection, volume_df in volume_df_per_fluid_selection.items():
+            if "REAL" not in volume_df.columns:
+                raise NoDataError("No realization data found in dataframe", Service.GENERAL)
+
             # Create per group summed realization values
             per_group_summed_realization_df = create_per_group_summed_realization_volume_df(
                 volume_df, group_by_identifiers
@@ -217,6 +221,9 @@ class InplaceVolumetricsAssembler:
             per_realization_accumulated_result_df = InplaceVolumetricsAssembler._create_result_dataframe_polars(
                 per_group_summed_realization_df, categorized_requested_result_names, fluid_selection
             )
+
+            if group_by_identifiers == []:
+                raise InvalidParameterError("Group by identifiers must be non-empty list or None", Service.GENERAL)
 
             # Create statistical table data from df
             selector_column_data_list, result_column_data_list = create_grouped_statistical_result_table_data_polars(
@@ -451,7 +458,10 @@ class InplaceVolumetricsAssembler:
         for elm in identifiers_with_values:
             identifier_column_name = elm.identifier.value
             if identifier_column_name not in column_names:
-                raise ValueError(f"Identifier column name {identifier_column_name} not found in table {table_name}")
+                raise InvalidDataError(
+                    f"Identifier column name {identifier_column_name} not found in table {table_name}",
+                    Service.GENERAL,
+                )
 
         timer = PerfTimer()
         column_names = inplace_volumetrics_df.columns
@@ -475,8 +485,9 @@ class InplaceVolumetricsAssembler:
             missing_realizations_set = set(realizations) - real_values_set
 
             if missing_realizations_set:
-                raise ValueError(
-                    f"Missing data error: The following realization values do not exist in 'REAL' column: {list(missing_realizations_set)}"
+                raise NoDataError(
+                    f"Missing data error. The following realization values do not exist in 'REAL' column: {list(missing_realizations_set)}",
+                    Service.GENERAL,
                 )
 
             realization_mask = inplace_volumetrics_df["REAL"].is_in(realizations)
@@ -510,9 +521,9 @@ class InplaceVolumetricsAssembler:
         # NOTE:
         # Soft vs hard fail depends on detail level when building the volumetric columns from retrieved result names + fluid zones
         # - Soft fail: get_inplace_volumetrics_table_no_throw_async() does not require matching volumetric column names
-        # - Hard fail: get_inplace_volumetrics_table_async() throws an exception if requested column names are not found
+        # - Hard fail: get_inplace_volumetrics_aggregated_table_async() throws an exception if requested column names are not found
         inplace_volumetrics_table: pa.Table = (
-            await self._inplace_volumetrics_access.get_inplace_volumetrics_table_no_throw_async(
+            await self._inplace_volumetrics_access.get_inplace_volumetrics_aggregated_table_async(
                 table_name=table_name, column_names=volumetric_columns
             )
         )

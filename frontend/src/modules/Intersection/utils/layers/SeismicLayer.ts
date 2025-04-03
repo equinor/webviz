@@ -1,18 +1,22 @@
-import { SeismicFenceData_api } from "@api";
-import { SeismicInfo, findIndexOfSample, getSeismicInfo } from "@equinor/esv-intersection";
-import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import type { SeismicFenceData_api } from "@api";
+import { postGetSeismicFenceOptions } from "@api";
+import type { SeismicInfo } from "@equinor/esv-intersection";
+import { findIndexOfSample, getSeismicInfo } from "@equinor/esv-intersection";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
-import { Vec2, normalizeVec2, point2Distance } from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
+import { normalizeVec2, point2Distance } from "@lib/utils/vec2";
 import { b64DecodeFloatArrayToFloat32 } from "@modules/_shared/base64";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
-import { QueryClient } from "@tanstack/query-core";
+import type { QueryClient } from "@tanstack/query-core";
 
-import { Rgb, parse } from "culori";
+import type { Rgb } from "culori";
+import { parse } from "culori";
 import { isEqual } from "lodash";
 
-import { BaseLayer, BoundingBox, LayerStatus, LayerTopic } from "./BaseLayer";
+import type { BoundingBox } from "./BaseLayer";
+import { BaseLayer, LayerStatus, LayerTopic } from "./BaseLayer";
 
 export type SeismicSliceImageOptions = {
     datapoints: number[][];
@@ -47,11 +51,8 @@ export function transformSeismicFenceData(apiData: SeismicFenceData_api): Seismi
     };
 }
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
 export type SeismicLayerSettings = {
-    ensembleIdent: EnsembleIdent | null;
+    ensembleIdent: RegularEnsembleIdent | null;
     realizationNum: number | null;
     polyline: {
         polylineUtmXy: number[];
@@ -188,7 +189,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
     setUseCustomColorScaleBoundaries(useCustomColorScaleBoundaries: boolean): void {
         this._useCustomColorScaleBoundariesParameterMap.set(
             this._settings.attribute ?? "",
-            useCustomColorScaleBoundaries
+            useCustomColorScaleBoundaries,
         );
         this.notifySubscribers(LayerTopic.DATA);
     }
@@ -209,7 +210,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
 
     protected doSettingsChangesRequireDataRefetch(
         prevSettings: SeismicLayerSettings,
-        newSettings: SeismicLayerSettings
+        newSettings: SeismicLayerSettings,
     ): boolean {
         return (
             !isEqual(prevSettings.ensembleIdent, newSettings.ensembleIdent) ||
@@ -240,7 +241,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
         for (let i = 2; i < polyline.length; i += 2) {
             const distance = point2Distance(
                 { x: polyline[i], y: polyline[i + 1] },
-                { x: polyline[i - 2], y: polyline[i - 1] }
+                { x: polyline[i - 2], y: polyline[i - 1] },
             );
             const actualDistance = this._settings.polyline.actualSectionLengths[i / 2 - 1];
             const numPoints = Math.floor(distance / this._settings.resolution) - 1;
@@ -268,7 +269,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
             useCustomColorScaleBoundaries,
             {
                 isLeftToRight: true,
-            }
+            },
         )
             .then((result) => {
                 return result;
@@ -295,7 +296,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
             if (i > 0) {
                 const distance = point2Distance(
                     { x: polyline[i], y: polyline[i + 1] },
-                    { x: polyline[i - 2], y: polyline[i - 1] }
+                    { x: polyline[i - 2], y: polyline[i - 1] },
                 );
                 const numPoints = Math.floor(distance / this._settings.resolution) - 1;
                 const vector: Vec2 = {
@@ -330,36 +331,25 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
             yPoints.push(point[1]);
         }
 
-        const queryKey = [
-            "postGetSeismicFence",
-            this._settings.ensembleIdent?.getCaseUuid() ?? "",
-            this._settings.ensembleIdent?.getEnsembleName() ?? "",
-            this._settings.realizationNum ?? 0,
-            this._settings.attribute ?? "",
-            this._settings.dateOrInterval ?? "",
-            this._settings.polyline.polylineUtmXy,
-            this._settings.extensionLength,
-            this._settings.surveyType,
-            this._settings.dataType,
-            this._settings.resolution,
-        ];
-        this.registerQueryKey(queryKey);
+        const queryOptions = postGetSeismicFenceOptions({
+            query: {
+                case_uuid: this._settings.ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: this._settings.ensembleIdent?.getEnsembleName() ?? "",
+                realization_num: this._settings.realizationNum ?? 0,
+                seismic_attribute: this._settings.attribute ?? "",
+                time_or_interval_str: this._settings.dateOrInterval ?? "",
+                observed: this._settings.dataType === SeismicDataType.OBSERVED,
+            },
+            body: {
+                polyline: { x_points: xPoints, y_points: yPoints },
+            },
+        });
+
+        this.registerQueryKey(queryOptions.queryKey);
 
         return queryClient
             .fetchQuery({
-                queryKey,
-                queryFn: () =>
-                    apiService.seismic.postGetSeismicFence(
-                        this._settings.ensembleIdent?.getCaseUuid() ?? "",
-                        this._settings.ensembleIdent?.getEnsembleName() ?? "",
-                        this._settings.realizationNum ?? 0,
-                        this._settings.attribute ?? "",
-                        this._settings.dateOrInterval ?? "",
-                        this._settings.dataType === SeismicDataType.OBSERVED,
-                        { polyline: { x_points: xPoints, y_points: yPoints } }
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+                ...queryOptions,
             })
             .then((data) => transformSeismicFenceData(data))
             .then(async (data) => {
@@ -376,7 +366,7 @@ export function isSeismicLayer(layer: BaseLayer<any, any>): layer is SeismicLaye
  * Utility function to convert the 1D array of values from the fence data to a 2D array of values
  * for the seismic slice image.
  *
- * For the bit map image, the values are provided s.t. a seismic trace is a column in the image,
+ * For the bit map image, the values are provided such that a seismic trace is a column in the image,
  * thus the data will be transposed.
  *
  * trace a,b,c and d
@@ -393,7 +383,7 @@ export function isSeismicLayer(layer: BaseLayer<any, any>): layer is SeismicLaye
  */
 export function createSeismicSliceImageDatapointsArrayFromFenceData(
     fenceData: SeismicFenceData_trans,
-    fillValue = 0
+    fillValue = 0,
 ): number[][] {
     const datapoints: number[][] = [];
 
@@ -441,7 +431,7 @@ export async function generateSeismicSliceImage(
         seismicRange?: number;
         seismicMin?: number;
         seismicMax?: number;
-    } = { isLeftToRight: true }
+    } = { isLeftToRight: true },
 ): Promise<ImageBitmap | null> {
     if (!(data.datapoints.length > 0 && trajectory.length > 1)) {
         return null;

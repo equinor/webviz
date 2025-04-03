@@ -1,12 +1,12 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 
+import { client } from "@api";
 import { AuthProvider } from "@framework/internal/providers/AuthProvider";
 import { CustomQueryClientProvider } from "@framework/internal/providers/QueryClientProvider";
 
 import App from "./App";
 import { GlobalErrorBoundary } from "./GlobalErrorBoundary";
-import { TempMovedToAmsterdamNotifier } from "./tempMoved/TempMovedToAmsterdamNotifier";
 
 /*
     If the `cleanStart` query parameter is given, 
@@ -21,6 +21,21 @@ if (urlParams.has("cleanStart")) {
 
 // --------------------------------------------------------------------
 
+/*
+    Initialize the HTTP client.
+*/
+
+client.setConfig({
+    withCredentials: true,
+    baseURL: "/api",
+});
+
+// --------------------------------------------------------------------
+
+/*
+    Render the application.
+*/
+
 const container = document.getElementById("root");
 
 if (!container) {
@@ -29,22 +44,14 @@ if (!container) {
 
 const root = createRoot(container);
 
-if (window.location.hostname === "webviz.app.radix.equinor.com") {
-    root.render(
-        <React.StrictMode>
-            <TempMovedToAmsterdamNotifier />
-        </React.StrictMode>
-    );
-} else {
-    root.render(
-        <React.StrictMode>
-            <GlobalErrorBoundary>
-                <AuthProvider>
-                    <CustomQueryClientProvider>
-                        <App />
-                    </CustomQueryClientProvider>
-                </AuthProvider>
-            </GlobalErrorBoundary>
-        </React.StrictMode>
-    );
-}
+root.render(
+    <React.StrictMode>
+        <GlobalErrorBoundary>
+            <AuthProvider>
+                <CustomQueryClientProvider>
+                    <App />
+                </CustomQueryClientProvider>
+            </AuthProvider>
+        </GlobalErrorBoundary>
+    </React.StrictMode>
+);

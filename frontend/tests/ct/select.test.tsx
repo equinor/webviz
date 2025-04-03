@@ -1,4 +1,5 @@
-import { Select, SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 import { expect, test } from "@playwright/experimental-ct-react";
 
 test.use({ viewport: { width: 1920, height: 1080 } });
@@ -28,10 +29,9 @@ test.describe("Select", () => {
         await expect(select).toBeVisible();
         const firstDiv = select.locator("div").first();
         const secondDiv = firstDiv.locator("div").first();
-        const thirdDiv = secondDiv.locator("div").first();
 
         // Virtualization does always hold more elements than visible in the view, so we expect to have at least "size" visible elements
-        expect((await thirdDiv.locator("div").count()) > SIZE).toBeTruthy();
+        expect((await secondDiv.locator("div").count()) > SIZE).toBeTruthy();
     });
 
     test("Single select is working", async ({ mount }) => {
@@ -43,7 +43,7 @@ test.describe("Select", () => {
         const select = await mount(<Select options={selectOptions1} size={SIZE} onChange={handleChange} />);
 
         // Click on first element and expect selection
-        let options = await select.locator("div").first().locator("div").nth(1).locator("div");
+        let options = await select.locator("div").nth(1).locator("div");
         await options.first().click();
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
 
@@ -82,7 +82,7 @@ test.describe("Select", () => {
         expect(select).toContainText(selectOptions1[0].value);
 
         // Click on fourth element and expect selection
-        options = await select.locator("div").first().locator("div").nth(1).locator("div");
+        options = await select.locator("div").nth(1).locator("div");
         await options.nth(3).click();
         expect(selection.includes(selectOptions1[3].value)).toBeTruthy();
     });
@@ -96,7 +96,7 @@ test.describe("Select", () => {
         const select = await mount(<Select options={selectOptions1} size={SIZE} onChange={handleChange} multiple />);
 
         // Click on first element and expect selection
-        const options = select.locator("div").first().locator("div").nth(1).locator("div");
+        const options = select.locator("div").nth(1).locator("div");
         await options.first().click();
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
 
@@ -122,7 +122,7 @@ test.describe("Select", () => {
                 selectOptions1[0].value,
                 selectOptions1[1].value,
                 selectOptions1[2].value,
-            ])
+            ]),
         ).toBeTruthy();
 
         // Make sure Home is working
@@ -180,8 +180,8 @@ test.describe("Select", () => {
         expect(
             arrayContainsOtherArray(
                 selection,
-                selectOptions1.map((el) => el.value)
-            )
+                selectOptions1.map((el) => el.value),
+            ),
         ).toBeTruthy();
         for (let i = selectOptions1.length - SIZE; i < selectOptions1.length; i++) {
             expect(select).toContainText(selectOptions1[i].value);
@@ -195,8 +195,8 @@ test.describe("Select", () => {
         expect(
             arrayContainsOtherArray(
                 selection,
-                selectOptions1.map((el) => el.value)
-            )
+                selectOptions1.map((el) => el.value),
+            ),
         ).toBeTruthy();
     });
 
@@ -217,7 +217,7 @@ test.describe("Select", () => {
         }
 
         // Click on first element and expect selection
-        const options = select.locator("div").first().locator("div").nth(1).locator("div");
+        const options = select.locator("div").nth(1).locator("div");
         await options.first().click();
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
 
@@ -238,7 +238,7 @@ test.describe("Select", () => {
                 showQuickSelectButtons={true}
                 onChange={handleChange}
                 multiple={true}
-            />
+            />,
         );
 
         // Find the "Select all" button and click it
@@ -250,8 +250,8 @@ test.describe("Select", () => {
         expect(
             arrayContainsOtherArray(
                 selection,
-                selectOptions1.map((option) => option.value)
-            )
+                selectOptions1.map((option) => option.value),
+            ),
         ).toBeTruthy();
 
         // Find the "Unselect all" button and click it

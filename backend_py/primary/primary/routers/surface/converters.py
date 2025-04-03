@@ -5,12 +5,13 @@ import xtgeo
 from numpy.typing import NDArray
 from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32
 
-from primary.services.smda_access.types import StratigraphicSurface
+from primary.services.smda_access.types import StratigraphicSurface, StratigraphicColumn
 from primary.services.sumo_access.surface_types import SurfaceMetaSet
 from primary.services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionPolyline
 from primary.services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionResult
 from primary.services.utils.surface_to_float32 import surface_to_float32_numpy_array
 from primary.services.utils.surface_to_png import surface_to_png_bytes_optimized
+from primary.services.smda_access import StratigraphicUnit
 
 from . import schemas
 
@@ -173,4 +174,32 @@ def to_api_surface_intersection(
         name=xtgeo_surface_intersection.name,
         z_points=xtgeo_surface_intersection.zval,
         cum_lengths=xtgeo_surface_intersection.distance,
+    )
+
+
+def to_api_stratigraphic_column(column: StratigraphicColumn) -> schemas.StratigraphicColumn:
+    return schemas.StratigraphicColumn(
+        identifier=column.strat_column_identifier,
+        areaType=column.strat_column_area_type,
+        status=column.strat_column_status,
+        type=column.strat_column_type,
+    )
+
+
+def to_api_stratigraphic_unit(
+    stratigraphic_unit: StratigraphicUnit,
+) -> schemas.StratigraphicUnit:
+    return schemas.StratigraphicUnit(
+        identifier=stratigraphic_unit.identifier,
+        top=stratigraphic_unit.top,
+        base=stratigraphic_unit.base,
+        stratUnitLevel=stratigraphic_unit.strat_unit_level,
+        stratUnitType=stratigraphic_unit.strat_unit_type,
+        topAge=stratigraphic_unit.top_age,
+        baseAge=stratigraphic_unit.base_age,
+        stratUnitParent=stratigraphic_unit.strat_unit_parent,
+        colorR=stratigraphic_unit.color_r,
+        colorG=stratigraphic_unit.color_g,
+        colorB=stratigraphic_unit.color_b,
+        lithologyType=stratigraphic_unit.lithology_type,
     )

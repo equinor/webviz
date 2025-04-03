@@ -1,17 +1,14 @@
-import { InplaceVolumetricsTableDefinition_api } from "@api";
-import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import type { InplaceVolumetricsTableDefinition_api } from "@api";
+import { getTableDefinitionsOptions } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
-import { QueryObserverResult } from "@tanstack/query-core";
+import type { QueryObserverResult } from "@tanstack/query-core";
 
 import { selectedEnsembleIdentsAtom } from "./derivedAtoms";
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
 export type TableDefinitionsQueryResult = {
     data: {
-        ensembleIdent: EnsembleIdent;
+        ensembleIdent: RegularEnsembleIdent;
         tableDefinitions: InplaceVolumetricsTableDefinition_api[];
     }[];
     isLoading: boolean;
@@ -22,27 +19,25 @@ export const tableDefinitionsQueryAtom = atomWithQueries((get) => {
 
     const queries = selectedEnsembleIdents.map((ensembleIdent) => {
         return () => ({
-            queryKey: ["tableDefinitions", ensembleIdent.toString()],
-            queryFn: () =>
-                apiService.inplaceVolumetrics.getTableDefinitions(
-                    ensembleIdent.getCaseUuid(),
-                    ensembleIdent.getEnsembleName()
-                ),
-            staleTime: STALE_TIME,
-            gcTime: CACHE_TIME,
+            ...getTableDefinitionsOptions({
+                query: {
+                    case_uuid: ensembleIdent.getCaseUuid(),
+                    ensemble_name: ensembleIdent.getEnsembleName(),
+                },
+            }),
         });
     });
 
     return {
         queries,
         combine: (
-            results: QueryObserverResult<InplaceVolumetricsTableDefinition_api[], Error>[]
+            results: QueryObserverResult<InplaceVolumetricsTableDefinition_api[], Error>[],
         ): TableDefinitionsQueryResult => {
             const tableDefinitionsPerEnsembleIdent: TableDefinitionsQueryResult["data"] = results.map(
                 (result, index) => ({
                     ensembleIdent: selectedEnsembleIdents[index],
                     tableDefinitions: result.data ?? [],
-                })
+                }),
             );
             const someLoading = results.some((result) => result.isLoading);
             return {

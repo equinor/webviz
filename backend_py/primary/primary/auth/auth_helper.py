@@ -13,6 +13,7 @@ from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary import config
 from primary.services.utils.authenticated_user import AuthenticatedUser
+from primary.middleware.add_browser_cache import no_cache
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from pydantic import BaseModel
@@ -45,8 +46,8 @@ class AuthHelper:
             methods=["GET"],
         )
 
+    @no_cache
     async def _login_route(self, request: Request, redirect_url_after_login: Optional[str] = None) -> RedirectResponse:
-        # print("######################### _login_route()")
 
         await starsessions.load_session(request)
         request.session.clear()
@@ -76,8 +77,8 @@ class AuthHelper:
 
         return RedirectResponse(flow_dict["auth_uri"])
 
+    @no_cache
     async def _authorized_callback_route(self, request: Request) -> Response:
-        # print("######################### _authorized_callback_route()")
 
         await starsessions.load_session(request)
 
@@ -102,8 +103,7 @@ class AuthHelper:
             )
 
             if "error" in token_dict:
-                # print("!!!!! Error validating redirected auth response")
-                # print(f"!!!!! {token_dict=}")
+
                 return Response(
                     f"Error validating redirected auth response, error: {token_dict['error']}",
                     400,
@@ -113,8 +113,7 @@ class AuthHelper:
 
         except ValueError:
             # Usually caused by CSRF
-            # print("!!!!! Hit an exception, probably CSRF error")
-            # print(f"!!!!! exception: {err}")
+
             return Response("Error processing auth response, probably CSRF error", 400)
 
         target_url_str_after_auth = request.session.get("target_url_str_after_auth")
@@ -230,7 +229,6 @@ class AuthHelper:
 
         _save_token_cache_in_session(request_with_session, token_cache)
         perf_metrics.record_lap("save-token-cache")
-
 
 
         # Could use either 'oid' or 'sub' here, but 'sub' is probably good enough, and it doesn't require

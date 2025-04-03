@@ -1,27 +1,30 @@
 import React from "react";
 
-import { SurfaceAttributeType_api, SurfaceMetaSet_api } from "@api";
-import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { WorkbenchSession, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { SurfaceMetaSet_api } from "@api";
+import { SurfaceAttributeType_api, getRealizationSurfacesMetadataOptions } from "@api";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/components/ColorPaletteSelector";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
-import { ColorPalette } from "@lib/utils/ColorPalette";
+import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { useLayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
-import {
+import type {
     SurfacesUncertaintyLayer,
     SurfacesUncertaintyLayerSettings,
 } from "@modules/Intersection/utils/layers/SurfacesUncertaintyLayer";
 import { SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
-import { UseQueryResult, useQuery } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { cloneDeep, isEqual } from "lodash";
 
@@ -35,7 +38,7 @@ export type SurfacesUncertaintyLayerSettingsComponentProps = {
 };
 
 export function SurfacesUncertaintyLayerSettingsComponent(
-    props: SurfacesUncertaintyLayerSettingsComponentProps
+    props: SurfacesUncertaintyLayerSettingsComponentProps,
 ): React.ReactNode {
     const settings = useLayerSettings(props.layer);
     const [newSettings, setNewSettings] = React.useState<SurfacesUncertaintyLayerSettings>(cloneDeep(settings));
@@ -50,13 +53,13 @@ export function SurfacesUncertaintyLayerSettingsComponent(
 
     const surfaceDirectoryQuery = useSurfaceDirectoryQuery(
         newSettings.ensembleIdent?.getCaseUuid(),
-        newSettings.ensembleIdent?.getEnsembleName()
+        newSettings.ensembleIdent?.getEnsembleName(),
     );
 
     const fixupEnsembleIdent = fixupSetting(
         "ensembleIdent",
-        props.ensembleSet.getEnsembleArr().map((el) => el.getIdent()),
-        newSettings
+        props.ensembleSet.getRegularEnsembleArray().map((el) => el.getIdent()),
+        newSettings,
     );
     if (!isEqual(fixupEnsembleIdent, newSettings.ensembleIdent)) {
         setNewSettings((prev) => ({ ...prev, ensembleIdent: fixupEnsembleIdent }));
@@ -65,7 +68,7 @@ export function SurfacesUncertaintyLayerSettingsComponent(
     if (fixupEnsembleIdent) {
         const fixupRealizationNums = fixupRealizationNumsSetting(
             newSettings.realizationNums,
-            ensembleFilterFunc(fixupEnsembleIdent)
+            ensembleFilterFunc(fixupEnsembleIdent),
         );
         if (!isEqual(fixupRealizationNums, newSettings.realizationNums)) {
             setNewSettings((prev) => ({ ...prev, realizationNums: fixupRealizationNums }));
@@ -107,7 +110,7 @@ export function SurfacesUncertaintyLayerSettingsComponent(
         function propagateSettingsChange() {
             props.layer.maybeUpdateSettings(cloneDeep(newSettings));
         },
-        [newSettings, props.layer]
+        [newSettings, props.layer],
     );
 
     React.useEffect(
@@ -117,10 +120,10 @@ export function SurfacesUncertaintyLayerSettingsComponent(
                 props.layer.maybeRefetchData();
             }
         },
-        [surfaceDirectoryQuery.isFetching, props.layer, newSettings]
+        [surfaceDirectoryQuery.isFetching, props.layer, newSettings],
     );
 
-    function handleEnsembleChange(ensembleIdent: EnsembleIdent | null) {
+    function handleEnsembleChange(ensembleIdent: RegularEnsembleIdent | null) {
         setNewSettings((prev) => ({ ...prev, ensembleIdent }));
     }
 
@@ -156,7 +159,7 @@ export function SurfacesUncertaintyLayerSettingsComponent(
                 <div className="table-cell">
                     <EnsembleDropdown
                         value={props.layer.getSettings().ensembleIdent}
-                        ensembleSet={props.ensembleSet}
+                        ensembles={props.ensembleSet.getRegularEnsembleArray()}
                         onChange={handleEnsembleChange}
                         debounceTimeMs={600}
                     />
@@ -250,25 +253,24 @@ function makeSurfaceNameOptions(surfaceNames: string[]): DropdownOption[] {
     return surfaceNames.map((surfaceName) => ({ label: surfaceName, value: surfaceName }));
 }
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
 export function useSurfaceDirectoryQuery(
     caseUuid: string | undefined,
-    ensembleName: string | undefined
+    ensembleName: string | undefined,
 ): UseQueryResult<SurfaceMetaSet_api> {
     return useQuery({
-        queryKey: ["getSurfaceDirectory", caseUuid, ensembleName],
-        queryFn: () => apiService.surface.getRealizationSurfacesMetadata(caseUuid ?? "", ensembleName ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
+        ...getRealizationSurfacesMetadataOptions({
+            query: {
+                case_uuid: caseUuid ?? "",
+                ensemble_name: ensembleName ?? "",
+            },
+        }),
         enabled: Boolean(caseUuid && ensembleName),
     });
 }
 
 function fixupRealizationNumsSetting(
     currentRealizationNums: readonly number[],
-    validRealizationNums: readonly number[]
+    validRealizationNums: readonly number[],
 ): number[] {
     if (validRealizationNums.length === 0) {
         return [...currentRealizationNums];

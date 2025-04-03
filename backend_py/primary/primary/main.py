@@ -12,12 +12,14 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
+
+from primary.middleware.add_browser_cache import AddBrowserCacheMiddleware
 from primary.routers.dev.router import router as dev_router
-from primary.routers.explore import router as explore_router
+from primary.routers.explore.router import router as explore_router
 from primary.routers.general import router as general_router
 from primary.routers.graph.router import router as graph_router
 from primary.routers.grid3d.router import router as grid3d_router
-from primary.routers.group_tree.router import router as group_tree_router
+from primary.routers.flow_network.router import router as flow_network_router
 from primary.routers.inplace_volumetrics.router import router as inplace_volumetrics_router
 from primary.routers.observations.router import router as observations_router
 from primary.routers.parameters.router import router as parameters_router
@@ -30,6 +32,7 @@ from primary.routers.timeseries.router import router as timeseries_router
 from primary.routers.vfp.router import router as vfp_router
 from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
+from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
@@ -37,18 +40,21 @@ from primary.utils.logging_setup import ensure_console_log_handler_is_configured
 
 from . import config
 
-
 ensure_console_log_handler_is_configured()
 setup_normal_log_levels()
 
 # temporarily set some loggers to DEBUG
 # logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger("primary.services.sumo_access").setLevel(logging.DEBUG)
-logging.getLogger("primary.services.user_session_manager").setLevel(logging.DEBUG)
+logging.getLogger("primary.services.smda_access").setLevel(logging.DEBUG)
+logging.getLogger("primary.services.ssdl_access").setLevel(logging.DEBUG)
 logging.getLogger("primary.services.user_grid3d_service").setLevel(logging.DEBUG)
+logging.getLogger("primary.services.surface_query_service").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 logging.getLogger("primary.auth").setLevel(logging.DEBUG)
+# logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
+# logging.getLogger("uvicorn.access").setLevel(logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -70,6 +76,17 @@ else:
     LOGGER.warning("Skipping telemetry configuration, APPLICATIONINSIGHTS_CONNECTION_STRING env variable not set.")
 
 
+# Start the httpx client on startup and stop it on shutdown of the app
+@app.on_event("startup")
+async def startup_event_async() -> None:
+    HTTPX_ASYNC_CLIENT_WRAPPER.start()
+
+
+@app.on_event("shutdown")
+async def shutdown_event_async() -> None:
+    await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()
+
+
 # The tags we add here will determine the name of the frontend api service for our endpoints as well as
 # providing some grouping when viewing the openapi documentation.
 app.include_router(explore_router, tags=["explore"])
@@ -78,7 +95,7 @@ app.include_router(inplace_volumetrics_router, prefix="/inplace_volumetrics", ta
 app.include_router(surface_router, prefix="/surface", tags=["surface"])
 app.include_router(parameters_router, prefix="/parameters", tags=["parameters"])
 app.include_router(grid3d_router, prefix="/grid3d", tags=["grid3d"])
-app.include_router(group_tree_router, prefix="/group_tree", tags=["group_tree"])
+app.include_router(flow_network_router, prefix="/flow_network", tags=["flow_network"])
 app.include_router(pvt_router, prefix="/pvt", tags=["pvt"])
 app.include_router(well_completions_router, prefix="/well_completions", tags=["well_completions"])
 app.include_router(well_router, prefix="/well", tags=["well"])
@@ -105,6 +122,7 @@ app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total-ex
 # Also redirects to /login endpoint for some select paths
 unprotected_paths = ["/logged_in_user", "/alive", "/openapi.json"]
 paths_redirected_to_login = ["/", "/alive_protected"]
+
 app.add_middleware(
     EnforceLoggedInMiddleware,
     unprotected_paths=unprotected_paths,
@@ -118,6 +136,7 @@ app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 # This middleware instance measures execution time of the endpoints, including the cost of other middleware
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")
+app.add_middleware(AddBrowserCacheMiddleware)
 
 
 @app.get("/")

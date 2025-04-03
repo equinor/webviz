@@ -1,14 +1,19 @@
-import { InterfaceEffects } from "@framework/Module";
-import { SettingsToViewInterface } from "@modules/Intersection/interfaces";
+import type { InterfaceEffects } from "@framework/Module";
+import type { SettingsToViewInterface } from "@modules/Intersection/interfaces";
 
 import {
     intersectionExtensionLengthAtom,
     intersectionTypeAtom,
     selectedCustomIntersectionPolylineIdAtom,
+    selectedFieldIdentifierAtom,
     wellboreHeaderAtom,
 } from "./baseAtoms";
 
 export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInterface> = [
+    (getInterfaceValue, setAtomValue) => {
+        const fieldIdentifier = getInterfaceValue("fieldIdentifier");
+        setAtomValue(selectedFieldIdentifierAtom, fieldIdentifier);
+    },
     (getInterfaceValue, setAtomValue) => {
         const selectedCustomIntersectionPolylineId = getInterfaceValue("selectedCustomIntersectionPolylineId");
         setAtomValue(selectedCustomIntersectionPolylineIdAtom, selectedCustomIntersectionPolylineId);

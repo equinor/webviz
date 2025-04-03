@@ -1,13 +1,15 @@
 import React from "react";
 
-import { AtomStoreMaster } from "./AtomStoreMaster";
-import { Ensemble } from "./Ensemble";
-import { EnsembleIdent } from "./EnsembleIdent";
+import type { AtomStoreMaster } from "./AtomStoreMaster";
+import type { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import { EnsembleSet } from "./EnsembleSet";
 import { RealizationFilterSet } from "./RealizationFilterSet";
+import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import { UserCreatedItems } from "./UserCreatedItems";
 
-export type EnsembleRealizationFilterFunction = (ensembleIdent: EnsembleIdent) => readonly number[];
+export type EnsembleRealizationFilterFunction = (
+    ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent,
+) => readonly number[];
 
 export enum WorkbenchSessionEvent {
     EnsembleSetChanged = "EnsembleSetChanged",
@@ -45,11 +47,11 @@ export class WorkbenchSession {
 
     subscribe<T extends Exclude<WorkbenchSessionEvent, keyof WorkbenchSessionPayloads>>(
         event: T,
-        cb: () => void
+        cb: () => void,
     ): () => void;
     subscribe<T extends keyof WorkbenchSessionPayloads>(
         event: T,
-        cb: (payload: WorkbenchSessionPayloads[T]) => void
+        cb: (payload: WorkbenchSessionPayloads[T]) => void,
     ): () => void;
     subscribe<T extends keyof WorkbenchSessionEvent>(event: T, cb: (payload: any) => void) {
         const subscribersSet = this._subscribersMap.get(event) || new Set();
@@ -61,11 +63,11 @@ export class WorkbenchSession {
     }
 
     protected notifySubscribers<T extends Exclude<WorkbenchSessionEvent, keyof WorkbenchSessionPayloads>>(
-        event: T
+        event: T,
     ): void;
     protected notifySubscribers<T extends keyof WorkbenchSessionPayloads>(
         event: T,
-        payload: WorkbenchSessionPayloads[T]
+        payload: WorkbenchSessionPayloads[T],
     ): void;
     protected notifySubscribers<T extends keyof WorkbenchSessionEvent>(event: T, payload?: any): void {
         const subscribersSet = this._subscribersMap.get(event);
@@ -77,8 +79,10 @@ export class WorkbenchSession {
     }
 }
 
-function createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession: WorkbenchSession) {
-    return function ensembleRealizationFilterFunc(ensembleIdent: EnsembleIdent): readonly number[] {
+export function createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession: WorkbenchSession) {
+    return function ensembleRealizationFilterFunc(
+        ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent,
+    ): readonly number[] {
         const realizationFilterSet = workbenchSession.getRealizationFilterSet();
         const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
 
@@ -87,30 +91,30 @@ function createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession
 }
 
 export function useEnsembleRealizationFilterFunc(
-    workbenchSession: WorkbenchSession
+    workbenchSession: WorkbenchSession,
 ): EnsembleRealizationFilterFunction {
     // With React.useState and filter function `S`, we have `S` = () => readonly number[].
     // For React.useState, initialState (() => S) implies notation () => S, i.e. () => () => readonly number[].
     const [storedEnsembleRealizationFilterFunc, setStoredEnsembleRealizationFilterFunc] =
         React.useState<EnsembleRealizationFilterFunction>(() =>
-            createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession)
+            createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession),
         );
 
     React.useEffect(
         function subscribeToEnsembleRealizationFilterSetChanges() {
             function handleEnsembleRealizationFilterSetChanged() {
                 setStoredEnsembleRealizationFilterFunc(() =>
-                    createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession)
+                    createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession),
                 );
             }
 
             const unsubscribeFunc = workbenchSession.subscribe(
                 WorkbenchSessionEvent.RealizationFilterSetChanged,
-                handleEnsembleRealizationFilterSetChanged
+                handleEnsembleRealizationFilterSetChanged,
             );
             return unsubscribeFunc;
         },
-        [workbenchSession]
+        [workbenchSession],
     );
 
     return storedEnsembleRealizationFilterFunc;
@@ -127,23 +131,14 @@ export function useEnsembleSet(workbenchSession: WorkbenchSession): EnsembleSet 
 
             const unsubFunc = workbenchSession.subscribe(
                 WorkbenchSessionEvent.EnsembleSetChanged,
-                handleEnsembleSetChanged
+                handleEnsembleSetChanged,
             );
             return unsubFunc;
         },
-        [workbenchSession]
+        [workbenchSession],
     );
 
     return storedEnsembleSet;
-}
-
-export function useFirstEnsembleInEnsembleSet(workbenchSession: WorkbenchSession): Ensemble | null {
-    const ensembleSet = useEnsembleSet(workbenchSession);
-    if (!ensembleSet.hasAnyEnsembles()) {
-        return null;
-    }
-
-    return ensembleSet.getEnsembleArr()[0];
 }
 
 export function useIsEnsembleSetLoading(workbenchSession: WorkbenchSession): boolean {
@@ -152,18 +147,18 @@ export function useIsEnsembleSetLoading(workbenchSession: WorkbenchSession): boo
     React.useEffect(
         function subscribeToEnsembleSetLoadingStateChanges() {
             function handleEnsembleSetLoadingStateChanged(
-                payload: WorkbenchSessionPayloads[WorkbenchSessionEvent.EnsembleSetLoadingStateChanged]
+                payload: WorkbenchSessionPayloads[WorkbenchSessionEvent.EnsembleSetLoadingStateChanged],
             ) {
                 setIsLoading(payload.isLoading);
             }
 
             const unsubFunc = workbenchSession.subscribe(
                 WorkbenchSessionEvent.EnsembleSetLoadingStateChanged,
-                handleEnsembleSetLoadingStateChanged
+                handleEnsembleSetLoadingStateChanged,
             );
             return unsubFunc;
         },
-        [workbenchSession]
+        [workbenchSession],
     );
 
     return isLoading;

@@ -1,8 +1,7 @@
-import { isEqual } from "lodash";
-
-import { EnsembleIdent } from "./EnsembleIdent";
-import { EnsembleSet } from "./EnsembleSet";
+import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
+import type { EnsembleSet } from "./EnsembleSet";
 import { RealizationFilter } from "./RealizationFilter";
+import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 
 export class RealizationFilterSet {
     // Map of ensembleIdent string to RealizationFilter
@@ -17,14 +16,23 @@ export class RealizationFilterSet {
     synchronizeWithEnsembleSet(ensembleSet: EnsembleSet): void {
         // Remove filters for ensembles that are no longer in the ensemble set
         for (const ensembleIdentString of this._ensembleIdentStringRealizationFilterMap.keys()) {
-            const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
+            let ensembleIdent = null;
+            if (RegularEnsembleIdent.isValidEnsembleIdentString(ensembleIdentString)) {
+                ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentString);
+            } else if (DeltaEnsembleIdent.isValidEnsembleIdentString(ensembleIdentString)) {
+                ensembleIdent = DeltaEnsembleIdent.fromString(ensembleIdentString);
+            }
+            if (!ensembleIdent) {
+                throw new Error(`Invalid ensemble ident string: ${ensembleIdentString}`);
+            }
+
             if (!ensembleSet.hasEnsemble(ensembleIdent)) {
                 this._ensembleIdentStringRealizationFilterMap.delete(ensembleIdentString);
             }
         }
 
         // Add filters for ensembles that are new to the ensemble set
-        for (const ensemble of ensembleSet.getEnsembleArr()) {
+        for (const ensemble of ensembleSet.getEnsembleArray()) {
             const ensembleIdentString = ensemble.getIdent().toString();
             const isEnsembleInMap = this._ensembleIdentStringRealizationFilterMap.has(ensembleIdentString);
             if (!isEnsembleInMap) {
@@ -36,31 +44,14 @@ export class RealizationFilterSet {
     /**
      * Get filter for ensembleIdent
      */
-    getRealizationFilterForEnsembleIdent(ensembleIdent: EnsembleIdent): RealizationFilter {
+    getRealizationFilterForEnsembleIdent(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent): RealizationFilter {
         const filter = this._ensembleIdentStringRealizationFilterMap.get(ensembleIdent.toString());
         if (filter === undefined) {
             throw new Error(
-                `We expect all ensembles to have a filter instance. No filter found for ${ensembleIdent.toString()}`
+                `We expect all ensembles to have a filter instance. No filter found for ${ensembleIdent.toString()}`,
             );
         }
 
         return filter;
-    }
-
-    isEqual(other: RealizationFilterSet): boolean {
-        if (
-            this._ensembleIdentStringRealizationFilterMap.size !== other._ensembleIdentStringRealizationFilterMap.size
-        ) {
-            return false;
-        }
-
-        for (const [ensembleIdentString, realizationFilter] of this._ensembleIdentStringRealizationFilterMap) {
-            const otherRealizationFilter = other._ensembleIdentStringRealizationFilterMap.get(ensembleIdentString);
-            if (!otherRealizationFilter || isEqual(realizationFilter, otherRealizationFilter)) {
-                return false;
-            }
-        }
-
-        return true;
     }
 }

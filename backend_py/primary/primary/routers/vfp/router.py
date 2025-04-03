@@ -28,11 +28,9 @@ async def get_vfp_table_names(
 ) -> list[str]:
     perf_metrics = ResponsePerfMetrics(response)
 
-    vfp_access = await VfpAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    vfp_access = VfpAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     perf_metrics.record_lap("get-access")
-    vfp_table_names = await vfp_access.get_all_vfp_table_names_for_realization(realization=realization)
+    vfp_table_names = await vfp_access.get_all_vfp_table_names_for_realization_async(realization=realization)
     perf_metrics.record_lap("get-available-vfp-table-names")
     LOGGER.info(f"All Vfp table names loaded in: {perf_metrics.to_string()}")
 
@@ -52,12 +50,10 @@ async def get_vfp_table(
 ) -> schemas.VfpProdTable | schemas.VfpInjTable:
     perf_metrics = ResponsePerfMetrics(response)
 
-    vfp_access = await VfpAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    vfp_access = VfpAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     perf_metrics.record_lap("get-access")
     try:
-        vfp_table: VfpProdTable | VfpInjTable = await vfp_access.get_vfp_table_from_tagname(
+        vfp_table: VfpProdTable | VfpInjTable = await vfp_access.get_vfp_table_from_tagname_async(
             tagname=vfp_table_name, realization=realization
         )
     except NotImplementedError as ex:

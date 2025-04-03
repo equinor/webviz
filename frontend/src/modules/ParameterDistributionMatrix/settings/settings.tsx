@@ -1,12 +1,13 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ParameterIdent } from "@framework/EnsembleParameters";
-import { ModuleSettingsProps } from "@framework/Module";
+import type { ModuleSettingsProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Select, SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
@@ -24,7 +25,7 @@ import {
     selectedParameterIdentsAtom,
 } from "./atoms/derivedAtoms";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import {
     MAX_PARAMETERS,
     ParameterDistributionPlotType,
@@ -43,17 +44,17 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
 
     const [selectedVisualizationType, setSelectedVisualizationType] = useAtom(selectedVisualizationTypeAtom);
     const [showIndividualRealizationValues, setShowIndividualRealizationValues] = useAtom(
-        showIndividualRealizationValuesAtom
+        showIndividualRealizationValuesAtom,
     );
     const [showPercentilesAndMeanLines, setShowPercentilesAndMeanLines] = useAtom(showPercentilesAndMeanLinesAtom);
 
-    function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
+    function handleEnsembleSelectionChange(ensembleIdents: RegularEnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
     }
 
     function handleParameterIdentsChange(parameterIdentStrings: string[]) {
         const parameterIdents = parameterIdentStrings.map((parameterIdentString) =>
-            ParameterIdent.fromString(parameterIdentString)
+            ParameterIdent.fromString(parameterIdentString),
         );
         setSelectedParameterIdents(parameterIdents.slice(0, MAX_PARAMETERS));
     }
@@ -98,7 +99,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
             </CollapsibleGroup>
             <CollapsibleGroup title="Ensembles" expanded>
                 <EnsembleSelect
-                    ensembleSet={ensembleSet}
+                    ensembles={ensembleSet.getRegularEnsembleArray()}
                     onChange={handleEnsembleSelectionChange}
                     value={selectedEnsembleIdents}
                     size={5}

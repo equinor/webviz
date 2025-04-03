@@ -1,18 +1,23 @@
-import { VectorRealizationData_api } from "@api";
-import { ChannelContentMetaData, DataGenerator } from "@framework/DataChannelTypes";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import type { VectorRealizationData_api } from "@api";
+import type { ChannelContentMetaData, DataGenerator } from "@framework/DataChannelTypes";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
-import { VectorSpec } from "./typesAndEnums";
+import type { VectorSpec } from "./typesAndEnums";
+
+// As of now, the publish to data channels only supports regular ensembles
+export interface RegularEnsembleVectorSpec extends VectorSpec {
+    ensembleIdent: RegularEnsembleIdent;
+}
 
 export function makeVectorGroupDataGenerator(
-    vectorSpecification: VectorSpec,
-    vectorSpecificationsAndRealizationData: {
-        vectorSpecification: VectorSpec;
+    regularEnsembleVectorSpecification: RegularEnsembleVectorSpec,
+    regularEnsembleVectorSpecificationsAndRealizationData: {
+        vectorSpecification: RegularEnsembleVectorSpec;
         data: VectorRealizationData_api[];
     }[],
     activeTimestampUtcMs: number,
-    makeEnsembleDisplayName: (ensembleIdent: EnsembleIdent) => string
+    makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent) => string,
 ): DataGenerator {
     return () => {
         const data: { key: number; value: number }[] = [];
@@ -22,16 +27,17 @@ export function makeVectorGroupDataGenerator(
             displayString: "",
         };
 
-        const vector = vectorSpecificationsAndRealizationData.find(
+        const vector = regularEnsembleVectorSpecificationsAndRealizationData.find(
             (vec) =>
-                vec.vectorSpecification.vectorName === vectorSpecification.vectorName &&
-                vec.vectorSpecification.ensembleIdent.equals(vectorSpecification.ensembleIdent)
+                vec.vectorSpecification.vectorName === regularEnsembleVectorSpecification.vectorName &&
+                vec.vectorSpecification.ensembleIdent.equals(regularEnsembleVectorSpecification.ensembleIdent),
         );
+
         if (vector) {
             let unit = "";
             vector.data.forEach((el) => {
                 unit = simulationUnitReformat(el.unit);
-                const indexOfTimestamp = el.timestamps_utc_ms.indexOf(activeTimestampUtcMs);
+                const indexOfTimestamp = el.timestampsUtcMs.indexOf(activeTimestampUtcMs);
                 data.push({
                     key: el.realization,
                     value: indexOfTimestamp === -1 ? el.values[0] : el.values[indexOfTimestamp],
@@ -41,7 +47,7 @@ export function makeVectorGroupDataGenerator(
                 unit,
                 ensembleIdentString: vector.vectorSpecification.ensembleIdent.toString(),
                 displayString: `${simulationVectorDescription(
-                    vector.vectorSpecification.vectorName
+                    vector.vectorSpecification.vectorName,
                 )} (${makeEnsembleDisplayName(vector.vectorSpecification.ensembleIdent)})`,
             };
         }

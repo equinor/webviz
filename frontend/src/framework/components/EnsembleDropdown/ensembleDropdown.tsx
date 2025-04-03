@@ -1,25 +1,57 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { ColorTile } from "@lib/components/ColorTile";
-import { Dropdown, DropdownOption, DropdownProps } from "@lib/components/Dropdown";
+import React from "react";
 
-type EnsembleDropdownProps = {
-    ensembleSet: EnsembleSet;
-    value: EnsembleIdent | null;
-    onChange: (ensembleIdent: EnsembleIdent | null) => void;
-} & Omit<DropdownProps<string>, "options" | "value" | "onChange">;
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { ColorTile } from "@lib/components/ColorTile";
+import type { DropdownOption, DropdownProps } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
+
+export type EnsembleDropdownProps = (
+    | {
+          ensembles: readonly (RegularEnsemble | DeltaEnsemble)[];
+          allowDeltaEnsembles: true;
+          value: RegularEnsembleIdent | DeltaEnsembleIdent | null;
+          onChange: (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) => void;
+      }
+    | {
+          ensembles: readonly RegularEnsemble[];
+          allowDeltaEnsembles?: false | undefined;
+          value: RegularEnsembleIdent | null;
+          onChange: (ensembleIdent: RegularEnsembleIdent) => void;
+      }
+) &
+    Omit<DropdownProps<string>, "options" | "value" | "onChange">;
 
 export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
-    const { ensembleSet, value, onChange, ...rest } = props;
+    const { onChange, ensembles, allowDeltaEnsembles, value, ...rest } = props;
 
-    function handleSelectionChanged(selectedEnsembleIdentStr: string) {
-        const foundEnsemble = ensembleSet.findEnsembleByIdentString(selectedEnsembleIdentStr);
-        onChange(foundEnsemble ? foundEnsemble.getIdent() : null);
-    }
+    const handleSelectionChange = React.useCallback(
+        function handleSelectionChange(selectedEnsembleIdentStr: string) {
+            const foundEnsemble = ensembles.find(
+                (ensemble) => ensemble.getIdent().toString() === selectedEnsembleIdentStr,
+            );
+            if (!foundEnsemble) {
+                throw new Error(`Ensemble not found: ${selectedEnsembleIdentStr}`);
+            }
+            if (allowDeltaEnsembles) {
+                onChange(foundEnsemble.getIdent());
+                return;
+            }
+            if (foundEnsemble instanceof DeltaEnsemble) {
+                throw new Error(
+                    `Invalid ensemble selection: ${selectedEnsembleIdentStr}. Got delta ensemble when not allowed.`,
+                );
+            }
+            onChange(foundEnsemble.getIdent());
+        },
+        [allowDeltaEnsembles, ensembles, onChange],
+    );
 
-    const optionsArr: DropdownOption[] = [];
-    for (const ens of ensembleSet.getEnsembleArr()) {
-        optionsArr.push({
+    const optionsArray: DropdownOption[] = [];
+    for (const ens of ensembles) {
+        optionsArray.push({
             value: ens.getIdent().toString(),
             label: ens.getDisplayName(),
             adornment: (
@@ -30,5 +62,5 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
         });
     }
 
-    return <Dropdown options={optionsArr} value={value?.toString()} onChange={handleSelectionChanged} {...rest} />;
+    return <Dropdown options={optionsArray} value={value?.toString()} onChange={handleSelectionChange} {...rest} />;
 }

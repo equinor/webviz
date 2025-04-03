@@ -1,16 +1,18 @@
 import React from "react";
 
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { ModuleViewProps } from "@framework/Module";
-import { EnsembleRealizationFilterFunction, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
+import type { ParameterIdent } from "@framework/EnsembleParameters";
+import { ParameterType } from "@framework/EnsembleParameters";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { ModuleViewProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { ParameterDistributionPlot } from "./components/ParameterDistributionPlot";
 
-import { Interfaces } from "../interfaces";
-import { ParameterDataArr } from "../typesAndEnums";
+import type { Interfaces } from "../interfaces";
+import type { ParameterDataArr } from "../typesAndEnums";
 
 export function View(props: ModuleViewProps<Interfaces>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -20,7 +22,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
     const selectedParameterIdents = props.viewContext.useSettingsToViewInterfaceValue("selectedParameterIdents");
     const selectedVisualizationType = props.viewContext.useSettingsToViewInterfaceValue("selectedVisualizationType");
     const showIndividualRealizationValues = props.viewContext.useSettingsToViewInterfaceValue(
-        "showIndividualRealizationValues"
+        "showIndividualRealizationValues",
     );
     const showPercentilesAndMeanLines =
         props.viewContext.useSettingsToViewInterfaceValue("showPercentilesAndMeanLines");
@@ -32,7 +34,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
         ensembleSet,
         selectedEnsembleIdents,
         selectedParameterIdents,
-        filterEnsembleRealizationsFunc
+        filterEnsembleRealizationsFunc,
     );
 
     return (
@@ -51,9 +53,9 @@ export function View(props: ModuleViewProps<Interfaces>) {
 
 function makeParameterDataArr(
     ensembleSet: EnsembleSet,
-    ensembleIdents: EnsembleIdent[],
+    ensembleIdents: RegularEnsembleIdent[],
     parameterIdents: ParameterIdent[],
-    filterEnsembleRealizations: EnsembleRealizationFilterFunction
+    filterEnsembleRealizations: EnsembleRealizationFilterFunction,
 ): ParameterDataArr[] {
     const parameterDataArr: ParameterDataArr[] = [];
 

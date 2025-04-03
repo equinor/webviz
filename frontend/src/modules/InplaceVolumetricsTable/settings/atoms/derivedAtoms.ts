@@ -1,9 +1,10 @@
-import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
+import type { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
-import { fixupUserSelection } from "@lib/utils/fixupUserSelection";
+import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
+import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
 import { fixupUserSelectedIdentifierValues } from "@modules/_shared/InplaceVolumetrics/fixupUserSelectedIdentifierValues";
-import { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
+import type { SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
+import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 import {
     TableDefinitionsAccessor,
     makeUniqueTableNamesIntersection,
@@ -12,6 +13,7 @@ import {
 import { atom } from "jotai";
 
 import {
+    selectedIdentifierValueCriteriaAtom,
     userSelectedAccumulationOptionsAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedFluidZonesAtom,
@@ -26,17 +28,17 @@ export const selectedEnsembleIdentsAtom = atom((get) => {
     const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
 
     if (!userSelectedEnsembleIdents) {
-        if (ensembleSet.getEnsembleArr().length === 0) {
+        if (ensembleSet.getRegularEnsembleArray().length === 0) {
             return [];
         }
-        return [ensembleSet.getEnsembleArr()[0].getIdent()];
+        return [ensembleSet.getRegularEnsembleArray()[0].getIdent()];
     }
 
     const newSelectedEnsembleIdents = userSelectedEnsembleIdents.filter((ensemble) =>
-        ensembleSet.hasEnsemble(ensemble)
+        ensembleSet.hasEnsemble(ensemble),
     );
 
-    const validatedEnsembleIdents = fixupEnsembleIdents(newSelectedEnsembleIdents, ensembleSet);
+    const validatedEnsembleIdents = fixupRegularEnsembleIdents(newSelectedEnsembleIdents, ensembleSet);
 
     return validatedEnsembleIdents ?? [];
 });
@@ -44,8 +46,13 @@ export const selectedEnsembleIdentsAtom = atom((get) => {
 export const tableDefinitionsAccessorAtom = atom<TableDefinitionsAccessor>((get) => {
     const selectedTableNames = get(selectedTableNamesAtom);
     const tableDefinitions = get(tableDefinitionsQueryAtom);
+    const selectedIdentifierValueCriteria = get(selectedIdentifierValueCriteriaAtom);
 
-    return new TableDefinitionsAccessor(tableDefinitions.isLoading ? [] : tableDefinitions.data, selectedTableNames);
+    return new TableDefinitionsAccessor(
+        tableDefinitions.isLoading ? [] : tableDefinitions.data,
+        selectedTableNames,
+        selectedIdentifierValueCriteria,
+    );
 });
 
 export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
@@ -111,7 +118,11 @@ export const selectedFluidZonesAtom = atom<FluidZone_api[]>((get) => {
         return tableDefinitionsAccessor.getFluidZonesIntersection();
     }
 
-    return fixupUserSelection(userSelectedFluidZones, tableDefinitionsAccessor.getFluidZonesIntersection(), true);
+    return fixupUserSelection(
+        userSelectedFluidZones,
+        tableDefinitionsAccessor.getFluidZonesIntersection(),
+        FixupSelection.SELECT_ALL,
+    );
 });
 
 export const selectedResultNamesAtom = atom<InplaceVolumetricResultName_api[]>((get) => {
@@ -120,7 +131,7 @@ export const selectedResultNamesAtom = atom<InplaceVolumetricResultName_api[]>((
 
     const fixedSelection = fixupUserSelection(
         userSelectedResultNames,
-        tableDefinitionsAccessor.getResultNamesIntersection()
+        tableDefinitionsAccessor.getResultNamesIntersection(),
     );
 
     return fixedSelection;
@@ -136,7 +147,7 @@ export const selectedAccumulationOptionsAtom = atom<
         SourceAndTableIdentifierUnion,
         SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME
     >[] = [SourceIdentifier.FLUID_ZONE];
-    for (const identifier of tableDefinitionsAccessor.getIdentifiersWithIntersectionValues()) {
+    for (const identifier of tableDefinitionsAccessor.getCommonIdentifiersWithValues()) {
         availableUniqueAccumulationOptions.push(identifier.identifier);
     }
 
@@ -144,20 +155,19 @@ export const selectedAccumulationOptionsAtom = atom<
         return [];
     }
 
-    return fixupUserSelection(userSelectedAccumulation, availableUniqueAccumulationOptions);
+    return fixupUserSelection(userSelectedAccumulation, availableUniqueAccumulationOptions, FixupSelection.SELECT_NONE);
 });
 
 export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWithValues_api[]>((get) => {
     const userSelectedIdentifierValues = get(userSelectedIdentifiersValuesAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
-    const uniqueIdentifierValues = tableDefinitionsAccessor.getIdentifiersWithIntersectionValues();
-    const selectAllOnFixup = true;
+    const uniqueIdentifierValues = tableDefinitionsAccessor.getCommonIdentifiersWithValues();
 
     const fixedUpIdentifierValues: InplaceVolumetricsIdentifierWithValues_api[] = fixupUserSelectedIdentifierValues(
         userSelectedIdentifierValues,
         uniqueIdentifierValues,
-        selectAllOnFixup
+        FixupSelection.SELECT_ALL,
     );
 
     return fixedUpIdentifierValues;

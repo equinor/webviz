@@ -1,6 +1,7 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { SettingsStatusWriter } from "@framework/StatusWriter";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { SettingsStatusWriter } from "@framework/StatusWriter";
 import { joinStringArrayToHumanReadableString } from "@modules/SimulationTimeSeries/utils/stringUtils";
 
 import { useAtomValue } from "jotai";
@@ -29,9 +30,12 @@ export function useMakeSettingsStatusWriterMessages(statusWriter: SettingsStatus
     }
 
     // Set warning for vector names not existing in a selected ensemble
-    function validateVectorNamesInEnsemble(vectorNames: string[], ensembleIdent: EnsembleIdent) {
+    function validateVectorNamesInEnsemble(
+        vectorNames: string[],
+        ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent,
+    ) {
         const existingVectors = vectorNames.filter((vector) =>
-            ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vector)
+            ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vector),
         );
         if (existingVectors.length === vectorNames.length) {
             return;

@@ -4,7 +4,7 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { channelDefs } from "./channelDefs";
-import { Interfaces } from "./interfaces";
+import type { Interfaces } from "./interfaces";
 import { preview } from "./preview";
 
 export const MODULE_NAME = "InplaceVolumetricsPlot";

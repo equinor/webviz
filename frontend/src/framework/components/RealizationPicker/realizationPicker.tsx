@@ -1,6 +1,7 @@
 import React from "react";
 
-import { BaseComponent, BaseComponentProps } from "@lib/components/BaseComponent";
+import type { BaseComponentProps } from "@lib/components/BaseComponent";
+import { BaseComponent } from "@lib/components/BaseComponent";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 import { Close } from "@mui/icons-material";
@@ -47,10 +48,10 @@ const REALIZATION_RANGE_REGEX = /^\d+(-\d+)?$/;
 
 const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
     const [prevValidRealizations, setPrevValidRealizations] = React.useState<typeof props.validRealizations | null>(
-        null
+        null,
     );
     const [validityInfo, setValidityInfo] = React.useState<SelectionValidityInfo>(
-        props.checkValidity(props.initialValue)
+        props.checkValidity(props.initialValue),
     );
     const [value, setValue] = React.useState<string>(props.initialValue);
     const [hasFocus, setHasFocus] = React.useState<boolean>(false);
@@ -125,7 +126,7 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
 
     return (
         <li
-            className={resolveClassNames("flex items-center rounded px-2 py-0.5 mr-1", {
+            className={resolveClassNames("flex items-center rounded-sm px-2 py-0.5 mr-1", {
                 "bg-blue-200": !hasFocus,
                 "bg-red-300": validityInfo.validity === SelectionValidity.InputError && !hasFocus,
                 "bg-orange-300": validityInfo.validity === SelectionValidity.Invalid && !hasFocus,
@@ -136,7 +137,7 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
             {makeMatchCounter()}
             <input
                 ref={ref}
-                className="bg-transparent outline-none"
+                className="bg-transparent outline-hidden"
                 style={{ width: getTextWidthWithFont(value, "Equinor", 1.25) }}
                 type="text"
                 defaultValue={value}
@@ -150,7 +151,7 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
                     "text-slate-800 hover:text-slate-600 text-sm cursor-pointer flex items-center",
                     {
                         invisible: hasFocus,
-                    }
+                    },
                 )}
                 onClick={props.onRemove}
             >
@@ -197,18 +198,18 @@ export type RealizationPickerProps = {
     onChange?: (realizationPickerSelection: RealizationPickerSelection) => void;
 } & BaseComponentProps;
 
-export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
+function RealizationPickerComponent(props: RealizationPickerProps, ref: React.ForwardedRef<HTMLDivElement>) {
     const [selections, setSelections] = React.useState<Selection[]>(
         props.initialRangeTags
             ? [...props.initialRangeTags].map((rangeTag) => {
                   return { value: rangeTag, uuid: v4() };
               })
-            : []
+            : [],
     );
     const [activeSelectionUuid, setActiveSelectionUuid] = React.useState<string | null>(null);
     const [caretPosition, setCaretPosition] = React.useState<CaretPosition>(CaretPosition.End);
     const [prevSelectedRangeTags, setPrevSelectedRangeTags] = React.useState<string[]>(
-        props.selectedRangeTags ? [...props.selectedRangeTags] : []
+        props.selectedRangeTags ? [...props.selectedRangeTags] : [],
     );
 
     const debounceTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -293,7 +294,7 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
                 numMatchedValidRealizations: 1,
             };
         },
-        [props.validRealizations]
+        [props.validRealizations],
     );
 
     function handleSelectionsChange(newSelections: Selection[]) {
@@ -373,7 +374,7 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
                 eventTarget.selectionEnd === eventTarget.value.length
             ) {
                 const currentSelectionIndex = selections.findIndex(
-                    (selection) => selection.uuid === activeSelectionUuid
+                    (selection) => selection.uuid === activeSelectionUuid,
                 );
                 if (currentSelectionIndex !== -1 && currentSelectionIndex < selections.length - 1) {
                     setActiveSelectionUuid(selections[currentSelectionIndex + 1].uuid);
@@ -410,8 +411,8 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
     const numSelectedRealizations = calcUniqueSelections(selections, props.validRealizations).length;
 
     return (
-        <BaseComponent disabled={props.disabled}>
-            <div className="relative border border-gray-300 rounded p-2 pr-6 min-h-[3rem]">
+        <BaseComponent ref={ref} disabled={props.disabled}>
+            <div className="relative border border-gray-300 rounded-sm p-2 pr-6 min-h-[3rem]">
                 <ul className="flex flex-wrap items-center cursor-text gap-1 h-full" onPointerDown={handlePointerDown}>
                     {selections.map((selection) => (
                         <RealizationRangeTag
@@ -428,11 +429,11 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
                             onChange={(value) => handleTagValueChange(selection.uuid, value)}
                         />
                     ))}
-                    <li className="flex-grow flex">
+                    <li className="grow flex">
                         <input
                             ref={inputRef}
                             type="text"
-                            className="outline-none flex-grow"
+                            className="outline-hidden grow"
                             onKeyDown={handleKeyDown}
                         />
                     </li>
@@ -450,6 +451,6 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
             </div>
         </BaseComponent>
     );
-};
+}
 
-RealizationPicker.displayName = "RealizationPicker";
+export const RealizationPicker = React.forwardRef(RealizationPickerComponent);

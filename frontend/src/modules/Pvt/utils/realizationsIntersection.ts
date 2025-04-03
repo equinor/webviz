@@ -1,9 +1,9 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 
 export function computeRealizationsIntersection(
-    ensembleIdents: EnsembleIdent[],
-    filterEnsembleRealizations: EnsembleRealizationFilterFunction
+    ensembleIdents: RegularEnsembleIdent[],
+    filterEnsembleRealizations: EnsembleRealizationFilterFunction,
 ) {
     let realizationsIntersection: number[] = [];
     for (const ensembleIdent of ensembleIdents) {

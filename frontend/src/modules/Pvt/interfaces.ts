@@ -1,16 +1,16 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import { selectedColorByAtom, selectedDependentVariablesAtom, selectedPhaseAtom } from "./settings/atoms/baseAtoms";
 import { selectedEnsembleIdentsAtom, selectedPvtNumsAtom } from "./settings/atoms/derivedAtoms";
 import { pvtDataQueriesAtom } from "./settings/atoms/queryAtoms";
-import { ColorBy, CombinedPvtDataResult, PhaseType, PressureDependentVariable } from "./typesAndEnums";
+import type { ColorBy, CombinedPvtDataResult, PhaseType, PressureDependentVariable } from "./typesAndEnums";
 
 type SettingsToViewInterface = {
     selectedPhase: PhaseType;
     selectedColorBy: ColorBy;
     selectedDependentVariables: PressureDependentVariable[];
-    selectedEnsembleIdents: EnsembleIdent[];
+    selectedEnsembleIdents: RegularEnsembleIdent[];
     selectedPvtNums: number[];
     pvtDataQueries: CombinedPvtDataResult;
 };

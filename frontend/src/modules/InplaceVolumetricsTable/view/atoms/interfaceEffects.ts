@@ -1,9 +1,8 @@
-import { InterfaceEffects } from "@framework/Module";
-import { SettingsToViewInterface } from "@modules/InplaceVolumetricsTable/interfaces";
+import type { InterfaceEffects } from "@framework/Module";
+import type { SettingsToViewInterface } from "@modules/InplaceVolumetricsTable/interfaces";
 
 import {
     accumulationOptionsAtom,
-    areSelectedTablesComparableAtom,
     areTableDefinitionSelectionsValidAtom,
     filterAtom,
     resultNamesAtom,
@@ -15,10 +14,6 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     (getInterfaceValue, setAtomValue) => {
         const filter = getInterfaceValue("filter");
         setAtomValue(filterAtom, filter);
-    },
-    (getInterfaceValue, setAtomValue) => {
-        const areSelectedTablesComparable = getInterfaceValue("areSelectedTablesComparable");
-        setAtomValue(areSelectedTablesComparableAtom, areSelectedTablesComparable);
     },
     (getInterfaceValue, setAtomValue) => {
         const resultNames = getInterfaceValue("resultNames");

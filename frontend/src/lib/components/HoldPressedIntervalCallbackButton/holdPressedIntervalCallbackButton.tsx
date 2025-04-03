@@ -1,12 +1,16 @@
 import React from "react";
 
-import { Button, ButtonProps } from "../Button/button";
+import type { ButtonProps } from "../Button/button";
+import { Button } from "../Button/button";
 
-export type HoldPressedIntervalCallbackButtonProps = ButtonProps & {
+export type HoldPressedIntervalCallbackButtonProps = Omit<ButtonProps, "ref"> & {
     onHoldPressedIntervalCallback: () => void;
 };
 
-export function HoldPressedIntervalCallbackButton(props: HoldPressedIntervalCallbackButtonProps): React.ReactNode {
+function HoldPressedIntervalCallbackButtonComponent(
+    props: HoldPressedIntervalCallbackButtonProps,
+    ref: React.ForwardedRef<HTMLDivElement>,
+): React.ReactNode {
     const { onHoldPressedIntervalCallback, ...other } = props;
 
     const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -39,6 +43,7 @@ export function HoldPressedIntervalCallbackButton(props: HoldPressedIntervalCall
     return (
         <Button
             {...other}
+            ref={ref}
             onClick={handleClick}
             onPointerDown={handlePointerDown}
             onPointerUp={handlePointerUp}
@@ -46,3 +51,5 @@ export function HoldPressedIntervalCallbackButton(props: HoldPressedIntervalCall
         />
     );
 }
+
+export const HoldPressedIntervalCallbackButton = React.forwardRef(HoldPressedIntervalCallbackButtonComponent);

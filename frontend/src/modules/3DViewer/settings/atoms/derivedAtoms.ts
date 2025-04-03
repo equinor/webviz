@@ -1,8 +1,8 @@
-import { Grid3dDimensions_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleRealizationFilterFunctionAtom, EnsembleSetAtom } from "@framework/GlobalAtoms";
+import type { Grid3dDimensions_api } from "@api";
+import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
-import { GridCellIndexRanges } from "@modules/3DViewer/typesAndEnums";
+import type { GridCellIndexRanges } from "@modules/3DViewer/typesAndEnums";
 
 import { atom } from "jotai";
 
@@ -19,12 +19,12 @@ import {
 } from "./baseAtoms";
 import { drilledWellboreHeadersQueryAtom, gridModelInfosQueryAtom } from "./queryAtoms";
 
-export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
+export const selectedEnsembleIdentAtom = atom<RegularEnsembleIdent | null>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const userSelectedEnsembleIdent = get(userSelectedEnsembleIdentAtom);
 
     if (userSelectedEnsembleIdent === null || !ensembleSet.hasEnsemble(userSelectedEnsembleIdent)) {
-        return ensembleSet.getEnsembleArr()[0]?.getIdent() || null;
+        return ensembleSet.getRegularEnsembleArray()[0]?.getIdent() || null;
     }
 
     return userSelectedEnsembleIdent;
@@ -67,22 +67,14 @@ export const selectedCustomIntersectionPolylineIdAtom = atom((get) => {
 });
 
 export const availableRealizationsAtom = atom((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
 
     if (selectedEnsembleIdent === null) {
         return [];
     }
 
-    let ensembleRealizationFilterFunction = get(EnsembleRealizationFilterFunctionAtom);
-
-    if (ensembleRealizationFilterFunction === null) {
-        ensembleRealizationFilterFunction = (ensembleIdent: EnsembleIdent) => {
-            return ensembleSet.findEnsemble(ensembleIdent)?.getRealizations() ?? [];
-        };
-    }
-
-    return ensembleRealizationFilterFunction(selectedEnsembleIdent);
+    const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
+    return validEnsembleRealizationsFunction(selectedEnsembleIdent);
 });
 
 export const selectedRealizationAtom = atom((get) => {
@@ -175,7 +167,7 @@ export const selectedGridModelParameterNameAtom = atom((get) => {
         !gridModelInfos.data
             .find((gridModelInfo) => gridModelInfo.grid_name === selectedGridModelName)
             ?.property_info_arr.some(
-                (propertyInfo) => propertyInfo.property_name === userSelectedGridModelParameterName
+                (propertyInfo) => propertyInfo.property_name === userSelectedGridModelParameterName,
             )
     ) {
         return (
@@ -208,14 +200,14 @@ export const selectedGridModelParameterDateOrIntervalAtom = atom((get) => {
             ?.property_info_arr.some(
                 (propertyInfo) =>
                     propertyInfo.property_name === selectedGridModelParameterName &&
-                    propertyInfo.iso_date_or_interval === userSelectedGridModelParameterDateOrInterval
+                    propertyInfo.iso_date_or_interval === userSelectedGridModelParameterDateOrInterval,
             )
     ) {
         return (
             gridModelInfos.data
                 .find((gridModelInfo) => gridModelInfo.grid_name === selectedGridModelName)
                 ?.property_info_arr.find(
-                    (propertyInfo) => propertyInfo.property_name === selectedGridModelParameterName
+                    (propertyInfo) => propertyInfo.property_name === selectedGridModelParameterName,
                 )?.iso_date_or_interval || null
         );
     }
@@ -254,13 +246,13 @@ export const selectedGridCellIndexRangesAtom = atom<GridCellIndexRanges>((get) =
 
     return assertGridDimensionRangesContainedInGridDimensions(
         userSelectedGridCellIndexRanges as GridCellIndexRanges,
-        gridModelDimensions as Grid3dDimensions_api
+        gridModelDimensions as Grid3dDimensions_api,
     );
 });
 
 function assertGridDimensionRangesContainedInGridDimensions(
     cellIndexRanges: GridCellIndexRanges,
-    other: Grid3dDimensions_api
+    other: Grid3dDimensions_api,
 ): GridCellIndexRanges {
     const assertedGridDimensionRanges: GridCellIndexRanges = {
         ...cellIndexRanges,

@@ -1,30 +1,29 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { ColorSet } from "@lib/utils/ColorSet";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ColorSet } from "@lib/utils/ColorSet";
 import { PlotType } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
-import { Table } from "@modules/_shared/InplaceVolumetrics/Table";
-import { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
+import type { Table } from "@modules/_shared/InplaceVolumetrics/Table";
+import type { SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
+import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
-import {
-    HistogramBinRange,
-    makeHistogramBinRangesFromMinAndMaxValues,
-    makeHistogramTrace,
-} from "@modules/_shared/histogram";
+import type { HistogramBinRange } from "@modules/_shared/histogram";
+import { makeHistogramBinRangesFromMinAndMaxValues, makeHistogramTrace } from "@modules/_shared/histogram";
 
 import { formatRgb, parse } from "culori";
-import { PlotData } from "plotly.js";
+import type { PlotData } from "plotly.js";
 
-import { RealizationAndResult, calcConvergenceArray } from "./convergenceCalculation";
+import type { RealizationAndResult } from "./convergenceCalculation";
+import { calcConvergenceArray } from "./convergenceCalculation";
 
 export function makeFormatLabelFunction(
-    ensembleSet: EnsembleSet
+    ensembleSet: EnsembleSet,
 ): (columnName: string, value: string | number) => string {
     return function formatLabel(columnName: string, value: string | number): string {
         if (columnName === SourceIdentifier.ENSEMBLE) {
-            const ensembleIdent = EnsembleIdent.fromString(value.toString());
+            const ensembleIdent = RegularEnsembleIdent.fromString(value.toString());
             const ensemble = ensembleSet.findEnsemble(ensembleIdent);
             if (ensemble) {
-                return makeDistinguishableEnsembleDisplayName(ensembleIdent, ensembleSet.getEnsembleArr());
+                return makeDistinguishableEnsembleDisplayName(ensembleIdent, ensembleSet.getRegularEnsembleArray());
             }
         }
         return value.toString();
@@ -37,7 +36,7 @@ export function makePlotData(
     resultNameOrSelectorName: string,
     colorBy: SourceAndTableIdentifierUnion,
     ensembleSet: EnsembleSet,
-    colorSet: ColorSet
+    colorSet: ColorSet,
 ): (table: Table) => Partial<PlotData>[] {
     return (table: Table): Partial<PlotData>[] => {
         let binRanges: HistogramBinRange[] = [];
@@ -56,7 +55,7 @@ export function makePlotData(
                         max: Math.max(acc.max, value),
                     };
                 },
-                { min: Number.POSITIVE_INFINITY, max: Number.NEGATIVE_INFINITY }
+                { min: Number.POSITIVE_INFINITY, max: Number.NEGATIVE_INFINITY },
             );
             binRanges = makeHistogramBinRangesFromMinAndMaxValues({
                 xMin: resultMinAndMax.min,
@@ -81,11 +80,14 @@ export function makePlotData(
         for (const [key, table] of collection.getCollectionMap()) {
             let title = key.toString();
             if (colorBy === SourceIdentifier.ENSEMBLE) {
-                const ensembleIdent = EnsembleIdent.fromString(key.toString());
+                const ensembleIdent = RegularEnsembleIdent.fromString(key.toString());
                 const ensemble = ensembleSet.findEnsemble(ensembleIdent);
                 if (ensemble) {
                     color = ensemble.getColor();
-                    title = makeDistinguishableEnsembleDisplayName(ensembleIdent, ensembleSet.getEnsembleArr());
+                    title = makeDistinguishableEnsembleDisplayName(
+                        ensembleIdent,
+                        ensembleSet.getRegularEnsembleArray(),
+                    );
                 }
             }
 
@@ -116,7 +118,7 @@ function makeBarPlot(
     table: Table,
     resultName: string,
     selectorName: string,
-    color: string
+    color: string,
 ): Partial<PlotData>[] {
     const data: Partial<PlotData>[] = [];
 
@@ -221,7 +223,7 @@ function makeConvergencePlot(title: string, table: Table, resultName: string, co
             mode: "lines",
             fill: "tonexty",
             fillcolor: lightColor,
-        }
+        },
     );
 
     return data;
@@ -232,7 +234,7 @@ function makeHistogram(
     table: Table,
     resultName: string,
     color: string,
-    binRanges: HistogramBinRange[]
+    binRanges: HistogramBinRange[],
 ): Partial<PlotData>[] {
     const data: Partial<PlotData>[] = [];
 
@@ -290,7 +292,7 @@ function makeBoxPlot(
     table: Table,
     resultName: string,
     color: string,
-    yAxisPosition?: number
+    yAxisPosition?: number,
 ): Partial<PlotData>[] {
     const data: Partial<PlotData>[] = [];
 
@@ -318,7 +320,7 @@ function makeScatterPlot(
     table: Table,
     resultName: string,
     resultName2: string,
-    color: string
+    color: string,
 ): Partial<PlotData>[] {
     const data: Partial<PlotData>[] = [];
 

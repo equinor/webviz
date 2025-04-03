@@ -1,21 +1,25 @@
 import React from "react";
 
-import { GuiEvent, GuiMessageBroker, GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
-import { Module, ModuleCategory, ModuleDevState } from "@framework/Module";
+import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
+import type { Module } from "@framework/Module";
+import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
-import { DrawPreviewFunc } from "@framework/Preview";
-import { Workbench } from "@framework/Workbench";
+import type { DrawPreviewFunc } from "@framework/Preview";
+import type { Workbench } from "@framework/Workbench";
 import { Drawer } from "@framework/internal/components/Drawer";
 import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import { Checkbox } from "@lib/components/Checkbox";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
-import { MANHATTAN_LENGTH, Size2D, pointRelativeToDomRect } from "@lib/utils/geometry";
+import type { Size2D } from "@lib/utils/geometry";
+import { MANHATTAN_LENGTH, pointRelativeToDomRect } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { Vec2, point2Distance, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
+import { point2Distance, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
 import {
     Attribution,
     Close,
@@ -135,14 +139,14 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             document.addEventListener("pointerup", handlePointerUp);
             document.addEventListener("pointermove", handlePointerMove);
             document.addEventListener("pointercancel", handlePointerUp);
-            document.addEventListener("blur", handlePointerUp);
+            document.addEventListener("blur-sm", handlePointerUp);
         }
 
         function removeDraggingEventListeners() {
             document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
             document.removeEventListener("pointercancel", handlePointerUp);
-            document.removeEventListener("blur", handlePointerUp);
+            document.removeEventListener("blur-sm", handlePointerUp);
         }
 
         if (ref.current) {
@@ -189,20 +193,18 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             <div
                 ref={isDragged ? undefined : ref}
                 className={resolveClassNames(
-                    "touch-none flex flex-col border-solid text-sm text-gray-700 w-full h-12 select-none hover:bg-blue-100 bg-white",
+                    "touch-none flex flex-col text-sm text-gray-700 w-full h-12 select-none hover:bg-blue-100 bg-white",
                     {
                         "cursor-move": !isDragged,
                         "cursor-grabbing": isDragged,
-                    }
+                    },
                 )}
                 style={makeStyle(isDragged, dragSize, dragPosition)}
                 onMouseOver={handleHover}
             >
                 <div ref={ref} className="px-2 flex items-center h-full text-sm gap-2" title={props.displayName}>
-                    <div className="h-12 w-12 min-w-12 overflow-hidden p-1 flex-shrink-0">{makePreviewImage()}</div>
-                    <span className="flex-grow text-ellipsis whitespace-nowrap overflow-hidden">
-                        {props.displayName}
-                    </span>
+                    <div className="h-12 w-12 min-w-12 overflow-hidden p-1 shrink-0">{makePreviewImage()}</div>
+                    <span className="grow text-ellipsis whitespace-nowrap overflow-hidden">{props.displayName}</span>
                     <span
                         className={resolveClassNames({
                             "text-green-600": props.devState === ModuleDevState.PROD,
@@ -248,7 +250,7 @@ function DevStatesFilter(props: DevStatesFilterProps): React.ReactNode {
     return (
         <div className="flex flex-col gap-1 text-sm">
             <div className="flex gap-2 cursor-pointer items-center" onClick={toggleExpanded}>
-                <span className="flex-grow font-bold">Filter by development state</span>
+                <span className="grow font-bold">Filter by development state</span>
                 {expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
             </div>
             {expanded && (
@@ -312,10 +314,10 @@ function ModulesListCategory(props: ModulesListCategoryProps): React.ReactNode {
     return (
         <div className="flex flex-col gap-1">
             <div
-                className="flex gap-2 cursor-pointer items-center bg-slate-100 p-2 text-sm shadow sticky top-0 z-20"
+                className="flex gap-2 cursor-pointer items-center bg-slate-100 p-2 text-sm shadow-sm sticky top-0 z-20"
                 onClick={toggleExpanded}
             >
-                <span className="flex-grow font-bold">{props.title}</span>
+                <span className="grow font-bold">{props.title}</span>
                 {expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
             </div>
             {expanded && <div className="flex flex-col bg-slate-100 gap-0.5">{props.children}</div>}
@@ -392,7 +394,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
                 tags.push(
                     <div key={tag} className="font-bold text-indigo-600">
                         #{tagObj.name}
-                    </div>
+                    </div>,
                 );
             }
         }
@@ -415,16 +417,16 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
             style={style}
         >
             <div>{previewFunc && previewFunc(64, 64)}</div>
-            <div className="flex-grow">
+            <div className="grow">
                 <div className="flex items-center">
-                    <span className="font-bold flex-grow">{props.module.getDefaultTitle()}</span>
+                    <span className="font-bold grow">{props.module.getDefaultTitle()}</span>
                     <div className="cursor-pointer hover:text-blue-600" onClick={props.onClose} title="Close popup">
                         <Close fontSize="inherit" />
                     </div>
                 </div>
                 {makeDevState(props.module.getDevState())}
                 <div className="text-xs mt-2">{props.module.getDescription()}</div>
-                <div className="text-xs mt-2 flex gap-2 text-bold">{makeDataTags()}</div>
+                <div className="text-xs mt-2 flex gap-2 text-bold flex-wrap">{makeDataTags()}</div>
             </div>
         </div>
     );
@@ -560,7 +562,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                         onClose={handleHideDetails}
                         left={left}
                         top={detailsPosY}
-                    />
+                    />,
                 )}
         </div>
     );

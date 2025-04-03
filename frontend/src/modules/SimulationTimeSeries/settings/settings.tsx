@@ -1,9 +1,11 @@
 import React from "react";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { Parameter, ParameterIdent } from "@framework/EnsembleParameters";
-import { ModuleSettingsProps } from "@framework/Module";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { Parameter } from "@framework/EnsembleParameters";
+import { ParameterIdent } from "@framework/EnsembleParameters";
+import type { ModuleSettingsProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
@@ -13,11 +15,12 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
+import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { QueriesErrorCriteria, QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select } from "@lib/components/Select";
-import { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
+import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { Switch } from "@lib/components/Switch";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
@@ -34,12 +37,15 @@ import {
     showHistoricalAtom,
     showObservationsAtom,
     statisticsSelectionAtom,
+    subplotLimitDirectionAtom,
+    subplotMaxDirectionElementsAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedParameterIdentStringAtom,
     visualizationModeAtom,
 } from "./atoms/baseAtoms";
 import {
     continuousAndNonConstantParametersUnionAtom,
+    customVectorDefinitionsAtom,
     ensembleVectorListsHelperAtom,
     isVectorListQueriesFetchingAtom,
     selectedEnsembleIdentsAtom,
@@ -50,7 +56,7 @@ import {
 import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import {
     FanchartStatisticOption,
     FanchartStatisticOptionEnumToStringMapping,
@@ -59,6 +65,8 @@ import {
     GroupByEnumToStringMapping,
     StatisticFunctionEnumToStringMapping,
     StatisticsType,
+    SubplotLimitDirection,
+    SubplotLimitDirectionEnumToStringMapping,
     VisualizationMode,
     VisualizationModeEnumToStringMapping,
 } from "../typesAndEnums";
@@ -72,6 +80,8 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
 
     const [resampleFrequency, setResamplingFrequency] = useAtom(resampleFrequencyAtom);
     const [groupBy, setGroupBy] = useAtom(groupByAtom);
+    const [subplotLimitDirection, setSubplotLimitDirection] = useAtom(subplotLimitDirectionAtom);
+    const [subplotMaxDirectionElements, setSubplotMaxDirectionElements] = useAtom(subplotMaxDirectionElementsAtom);
     const [colorRealizationsByParameter, setColorRealizationsByParameter] = useAtom(colorRealizationsByParameterAtom);
     const [visualizationMode, setVisualizationMode] = useAtom(visualizationModeAtom);
     const [showHistorical, setShowHistorical] = useAtom(showHistoricalAtom);
@@ -79,6 +89,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const [statisticsSelection, setStatisticsSelection] = useAtom(statisticsSelectionAtom);
     const [selectedVectorNames, setSelectedVectorNames] = useAtom(selectedVectorNamesAtom);
     const vectorSelectorData = useAtomValue(vectorSelectorDataAtom);
+    const customVectorDefinitions = useAtomValue(customVectorDefinitionsAtom);
     const statisticsType = useAtomValue(statisticsTypeAtom);
     const [filteredParameterIdentList, setFilteredParameterIdentList] = useAtom(filteredParameterIdentListAtom);
     const setUserSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
@@ -92,8 +103,16 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
 
     useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
 
-    function handleGroupByChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setGroupBy(event.target.value as GroupBy);
+    function handleSubplotLimitDirectionChange(newLimitDirection: SubplotLimitDirection) {
+        setSubplotLimitDirection(newLimitDirection);
+    }
+
+    function handleSubplotMaxDirectionElementsChange(event: React.ChangeEvent<HTMLInputElement>) {
+        setSubplotMaxDirectionElements(parseInt(event.target.value));
+    }
+
+    function handleGroupByChange(newValue: GroupBy) {
+        setGroupBy(newValue);
     }
 
     function handleColorByParameterChange(parameterIdentStrings: string[]) {
@@ -104,8 +123,8 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         setUserSelectedParameterIdentStr(null);
     }
 
-    function handleEnsembleSelectChange(ensembleIdentArr: EnsembleIdent[]) {
-        setUserSelectedEnsembleIdents(ensembleIdentArr);
+    function handleEnsembleSelectChange(ensembleIdentArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[]) {
+        setUserSelectedEnsembleIdents(ensembleIdentArray);
     }
 
     function handleVectorSelectionChange(selection: SmartNodeSelectorSelection) {
@@ -118,22 +137,22 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         setResamplingFrequency(newFreq);
     }
 
-    function handleShowHistorical(event: React.ChangeEvent<HTMLInputElement>) {
-        setShowHistorical(event.target.checked);
+    function handleShowHistorical(isChecked: boolean) {
+        setShowHistorical(isChecked);
     }
 
     function handleShowObservations(event: React.ChangeEvent<HTMLInputElement>) {
         setShowObservations(event.target.checked);
     }
 
-    function handleVisualizationModeChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setVisualizationMode(event.target.value as VisualizationMode);
+    function handleVisualizationModeChange(value: VisualizationMode) {
+        setVisualizationMode(value);
         setShowParameterListFilter(false);
     }
 
     function handleFanchartStatisticsSelectionChange(
         event: React.ChangeEvent<HTMLInputElement>,
-        statistic: FanchartStatisticOption
+        statistic: FanchartStatisticOption,
     ) {
         setStatisticsSelection((prev) => {
             if (event.target.checked) {
@@ -157,17 +176,17 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const handleParameterListFilterChange = React.useCallback(
         function handleParameterListFilterChange(filteredParameters: Parameter[]) {
             const filteredParamIdents = filteredParameters.map((elm) =>
-                ParameterIdent.fromNameAndGroup(elm.name, elm.groupName)
+                ParameterIdent.fromNameAndGroup(elm.name, elm.groupName),
             );
 
             setFilteredParameterIdentList(filteredParamIdents);
         },
-        [setFilteredParameterIdentList]
+        [setFilteredParameterIdentList],
     );
 
     function handleIndividualStatisticsSelectionChange(
         event: React.ChangeEvent<HTMLInputElement>,
-        statistic: StatisticFunction_api
+        statistic: StatisticFunction_api,
     ) {
         setStatisticsSelection((prev) => {
             if (event.target.checked) {
@@ -226,13 +245,35 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
 
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
+            <CollapsibleGroup expanded={true} title="Plot settings">
+                <Label text="Limit subplots by">
+                    <div className="flex flex-row gap-2">
+                        <Dropdown
+                            options={Object.values(SubplotLimitDirection).map((val: SubplotLimitDirection) => {
+                                return { value: val, label: SubplotLimitDirectionEnumToStringMapping[val] };
+                            })}
+                            value={subplotLimitDirection}
+                            onChange={handleSubplotLimitDirectionChange}
+                        />
+                        <Input
+                            type="number"
+                            value={subplotMaxDirectionElements}
+                            disabled={subplotLimitDirection === SubplotLimitDirection.NONE}
+                            min={1}
+                            max={12}
+                            debounceTimeMs={150}
+                            onChange={handleSubplotMaxDirectionElementsChange}
+                        />
+                    </div>
+                </Label>
+            </CollapsibleGroup>
             <CollapsibleGroup expanded={false} title="Group by">
                 <RadioGroup
                     value={groupBy}
                     options={Object.values(GroupBy).map((val: GroupBy) => {
                         return { value: val, label: GroupByEnumToStringMapping[val] };
                     })}
-                    onChange={handleGroupByChange}
+                    onChange={(_, value) => handleGroupByChange(value)}
                 />
             </CollapsibleGroup>
             <CollapsibleGroup expanded={false} title="Resampling frequency">
@@ -249,8 +290,9 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Ensembles">
                 <EnsembleSelect
-                    ensembleSet={ensembleSet}
+                    ensembles={ensembleSet.getEnsembleArray()}
                     value={selectedEnsembleIdents}
+                    allowDeltaEnsembles={true}
                     size={5}
                     onChange={handleEnsembleSelectChange}
                 />
@@ -260,7 +302,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                     label="Show historical"
                     checked={showHistorical}
                     disabled={!selectedVectorNamesHasHistorical}
-                    onChange={handleShowHistorical}
+                    onChange={(_, checked) => handleShowHistorical(checked)}
                 />
                 <Checkbox label="Show observations" checked={showObservations} onChange={handleShowObservations} />
                 <div
@@ -281,6 +323,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             numSecondsUntilSuggestionsAreShown={0.5}
                             lineBreakAfterTag={true}
                             onChange={handleVectorSelectionChange}
+                            customVectorDefinitions={customVectorDefinitions ?? undefined}
                         />
                     </QueryStateWrapper>
                 </div>
@@ -291,7 +334,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                     options={Object.values(VisualizationMode).map((val: VisualizationMode) => {
                         return { value: val, label: VisualizationModeEnumToStringMapping[val] };
                     })}
-                    onChange={handleVisualizationModeChange}
+                    onChange={(_, value) => handleVisualizationModeChange(value)}
                 />
                 <div className="mt-6 p-2 rounded-md outline outline-1 outline-slate-300">
                     <div
@@ -323,8 +366,8 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             })}
                         >
                             <div className="flex flex-col">
-                                <div className="flex flex-row justify-center items-center p-2 bg-slate-100 shadow-sm border-b">
-                                    <h3 className="text-sm font-semibold flex-grow leading-none">Select Parameter</h3>
+                                <div className="flex flex-row justify-center items-center p-2 bg-slate-100 shadow-xs border-b">
+                                    <h3 className="text-sm font-semibold grow leading-none">Select Parameter</h3>
                                     <IconButton
                                         color="secondary"
                                         title="Filter list of parameters"

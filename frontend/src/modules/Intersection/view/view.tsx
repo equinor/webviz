@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ModuleViewProps } from "@framework/Module";
+import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { IntersectionType } from "@framework/types/intersection";
@@ -14,7 +14,7 @@ import { wellboreTrajectoryQueryAtom } from "./atoms/queryAtoms";
 import { LayersWrapper } from "./components/layersWrapper";
 import { useWellboreCasingsQuery } from "./queries/wellboreSchematicsQueries";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import { LayerStatus, useLayersStatuses } from "../utils/layers/BaseLayer";
 import { isGridLayer } from "../utils/layers/GridLayer";
 import { LayerManagerTopic, useLayerManagerTopicValue } from "../utils/layers/LayerManager";
@@ -27,7 +27,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
     const ensembleSet = useEnsembleSet(props.workbenchSession);
 
-    const ensembleIdent = props.viewContext.useSettingsToViewInterfaceValue("ensembleIdent");
+    const fieldIdentifier = props.viewContext.useSettingsToViewInterfaceValue("fieldIdentifier");
     const intersectionReferenceSystem = useAtomValue(intersectionReferenceSystemAtom);
     const wellboreHeader = props.viewContext.useSettingsToViewInterfaceValue("wellboreHeader");
     const wellboreTrajectoryQuery = useAtomValue(wellboreTrajectoryQueryAtom);
@@ -64,7 +64,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 }
             }
         },
-        [polyline, extensionLength, layers]
+        [polyline, extensionLength, layers],
     );
 
     React.useEffect(
@@ -72,37 +72,33 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             for (const layer of layers) {
                 if (isWellpicksLayer(layer)) {
                     layer.maybeUpdateSettings({
-                        ensembleIdent,
+                        fieldIdentifier,
                         wellboreUuid: intersectionType === IntersectionType.WELLBORE ? wellbore?.uuid : null,
                     });
                     layer.maybeRefetchData();
                 }
             }
         },
-        [layers, wellbore, ensembleIdent, intersectionType]
+        [layers, wellbore, fieldIdentifier, intersectionType],
     );
 
     React.useEffect(
         function handleTitleChange() {
-            let ensembleName = "";
-            if (ensembleIdent) {
-                const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-                ensembleName = ensemble?.getDisplayName() ?? "";
-            }
+            const fieldName = fieldIdentifier ?? "";
 
             props.viewContext.setInstanceTitle(
                 `${wellboreHeader?.identifier ?? "Intersection"}
-            (${ensembleName})`
+            (${fieldName})`,
             );
         },
-        [ensembleSet, ensembleIdent, wellboreHeader?.identifier, props.viewContext]
+        [ensembleSet, fieldIdentifier, wellboreHeader?.identifier, props.viewContext],
     );
 
     // Status messages
     for (const layer of layers) {
         if (layer.getStatus() === LayerStatus.ERROR) {
             statusWriter.addError(
-                layer.getError() ?? `Layer "${layer.getName()}": ${layer.getError() ?? "Unknown error"}`
+                layer.getError() ?? `Layer "${layer.getName()}": ${layer.getError() ?? "Unknown error"}`,
             );
         }
     }
@@ -123,7 +119,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             <div
                 className={resolveClassNames(
                     "absolute w-full h-full z-10 bg-white opacity-50 flex items-center justify-center",
-                    { hidden: !mainElementsLoading }
+                    { hidden: !mainElementsLoading },
                 )}
             >
                 <CircularProgress />
@@ -136,7 +132,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 intersectionType={intersectionType}
                 workbenchServices={props.workbenchServices}
                 viewContext={props.viewContext}
-                wellboreHeaderUuid={wellboreTrajectoryQuery.isFetching ? null : wellboreHeader?.uuid ?? null}
+                wellboreHeaderUuid={wellboreTrajectoryQuery.isFetching ? null : (wellboreHeader?.uuid ?? null)}
                 wellboreHeaderDepthReferencePoint={wellboreHeader?.depthReferencePoint ?? null}
                 wellboreHeaderDepthReferenceElevation={wellboreHeader?.depthReferenceElevation ?? null}
             />

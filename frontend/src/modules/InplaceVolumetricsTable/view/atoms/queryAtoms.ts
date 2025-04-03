@@ -5,14 +5,10 @@ import {
 } from "@modules/_shared/InplaceVolumetrics/queryHooks";
 import { TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
-import {
-    areSelectedTablesComparableAtom,
-    areTableDefinitionSelectionsValidAtom,
-    resultNamesAtom,
-    tableTypeAtom,
-} from "./baseAtoms";
+import { areTableDefinitionSelectionsValidAtom, resultNamesAtom, tableTypeAtom } from "./baseAtoms";
 import {
     accumulateFluidZonesAtom,
+    areSelectedTablesComparableAtom,
     ensembleIdentsWithRealizationsAtom,
     fluidZonesAtom,
     groupByIdentifiersAtom,
@@ -44,7 +40,7 @@ export const perRealizationTableDataResultsAtom = atomWithQueries((get) => {
         groupByIdentifiers,
         accumulateFluidZones,
         identifiersValues,
-        enableQueries
+        enableQueries,
     );
 });
 
@@ -72,6 +68,6 @@ export const statisticalTableDataResultsAtom = atomWithQueries((get) => {
         groupByIdentifiers,
         accumulateFluidZones,
         identifiersValues,
-        enableQueries
+        enableQueries,
     );
 });

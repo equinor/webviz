@@ -1,6 +1,6 @@
-import { KeyKind } from "./DataChannelTypes";
-import { SyncSettingKey } from "./SyncSettings";
-import { LayoutElement } from "./Workbench";
+import type { KeyKind } from "./DataChannelTypes";
+import type { SyncSettingKey } from "./SyncSettings";
+import type { LayoutElement } from "./Workbench";
 
 export type DataChannelTemplate = {
     listensToInstanceRef: string;
@@ -25,7 +25,6 @@ export type Template = {
 export class TemplateRegistry {
     private static _registeredTemplates: Record<string, Template> = {};
 
-    /* eslint-disable-next-line @typescript-eslint/no-empty-function */
     private constructor() {}
 
     static registerTemplate(name: string, template: Template): void {

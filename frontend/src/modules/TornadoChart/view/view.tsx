@@ -1,9 +1,9 @@
 import React from "react";
 
 import { KeyKind } from "@framework/DataChannelTypes";
-import { Ensemble } from "@framework/Ensemble";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleViewProps } from "@framework/Module";
+import type { ModuleViewProps } from "@framework/Module";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -14,10 +14,11 @@ import { useSetAtom } from "jotai";
 import { selectedSensitivityAtom } from "./atoms/baseAtoms";
 import { SensitivityChart } from "./components/sensitivityChart";
 import SensitivityTable from "./components/sensitivityTable";
-import { SensitivityResponseCalculator, SensitivityResponseDataset } from "./utils/sensitivityResponseCalculator";
+import type { SensitivityResponseDataset } from "./utils/sensitivityResponseCalculator";
+import { SensitivityResponseCalculator } from "./utils/sensitivityResponseCalculator";
 
 import { createSensitivityColorMap } from "../../_shared/sensitivityColors";
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import { DisplayComponentType } from "../typesAndEnums";
 
 export const View = ({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<Interfaces>) => {
@@ -39,7 +40,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
 
     const realizations: number[] = [];
     const values: number[] = [];
-    let channelEnsemble: Ensemble | null = null;
+    let channelEnsemble: RegularEnsemble | null = null;
     if (responseReceiver.channel && responseReceiver.channel.contents.length > 0) {
         const data = responseReceiver.channel.contents[0].dataArray;
         if (data) {
@@ -51,7 +52,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
         if (responseReceiver.channel.contents[0].metaData.ensembleIdentString) {
             const ensembleIdentString = responseReceiver.channel.contents[0].metaData.ensembleIdentString;
             if (typeof ensembleIdentString === "string") {
-                const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
+                const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentString);
                 channelEnsemble = ensembleSet.findEnsemble(ensembleIdent);
             }
         }
@@ -61,7 +62,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     const colorSet = workbenchSettings.useColorSet();
     const sensitivitiesColorMap = createSensitivityColorMap(
         sensitivities?.getSensitivityNames().sort() ?? [],
-        colorSet
+        colorSet,
     );
 
     let computedSensitivityResponseDataset: SensitivityResponseDataset | null = null;
@@ -74,7 +75,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
                 name: responseReceiver.channel?.contents[0].displayName ?? "",
                 unit: "",
             },
-            referenceSensitivityName
+            referenceSensitivityName,
         );
         computedSensitivityResponseDataset = sensitivityResponseCalculator.computeSensitivitiesForResponse();
     }

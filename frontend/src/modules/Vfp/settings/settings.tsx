@@ -1,5 +1,5 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ModuleSettingsProps } from "@framework/Module";
+import type { ModuleSettingsProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
@@ -7,7 +7,8 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Select, SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { useAtomValue, useSetAtom } from "jotai";
@@ -38,7 +39,7 @@ import {
 } from "./atoms/derivedAtoms";
 import { vfpTableQueryAtom } from "./atoms/queryAtoms";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import { PressureOption, VfpParam, VfpType } from "../types";
 import { VfpDataAccessor } from "../utils/vfpDataAccessor";
 
@@ -80,11 +81,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const setUserSelectedPressureOption = useSetAtom(userSelectedPressureOptionAtom);
 
     const selectedColorBy = useAtomValue(selectedColorByAtom);
-    const setUserSelectedColorBy = useSetAtom(userSelectedColorByAtom)
+    const setUserSelectedColorBy = useSetAtom(userSelectedColorByAtom);
 
     usePropagateApiErrorToStatusWriter(vfpTableQuery, statusWriter);
 
-    function handleEnsembleSelectionChange(ensembleIdent: EnsembleIdent | null) {
+    function handleEnsembleSelectionChange(ensembleIdent: RegularEnsembleIdent | null) {
         setUserSelectedEnsembleIdent(ensembleIdent);
     }
 
@@ -131,17 +132,17 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     let gfrLabel = "GFR";
     let alqLabel = "ALQ";
     const vfpTableData = vfpTableQuery?.data;
-    let vfpDataAccessor: VfpDataAccessor | null = null
-    let vfpType: VfpType | null = null
+    let vfpDataAccessor: VfpDataAccessor | null = null;
+    let vfpType: VfpType | null = null;
     if (vfpTableData) {
-        vfpDataAccessor = new VfpDataAccessor(vfpTableData)
-        thpLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.THP, true)
-        vfpType = vfpDataAccessor.getVfpType()
-        
+        vfpDataAccessor = new VfpDataAccessor(vfpTableData);
+        thpLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.THP, true);
+        vfpType = vfpDataAccessor.getVfpType();
+
         if (vfpDataAccessor.isProdTable()) {
-            wfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.WFR, true)
-            gfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.GFR, true)
-            alqLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.ALQ, true)
+            wfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.WFR, true);
+            gfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.GFR, true);
+            alqLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.ALQ, true);
         }
     }
 
@@ -149,7 +150,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         <div className="flex flex-col gap-2">
             <CollapsibleGroup expanded={true} title="Ensemble">
                 <EnsembleDropdown
-                    ensembleSet={ensembleSet}
+                    ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={selectedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
                 />
@@ -177,44 +178,48 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                 />
             </CollapsibleGroup>
             <CollapsibleGroup title="Filter" expanded={true}>
-                    <div className="flex flex-col gap-2">
-                        <Label text={thpLabel}>
-                            <Select
-                                options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.THP))}
-                                value={selectedThpIndicies?.map((value) => value.toString()) ?? []}
-                                onChange={handleThpIndicesSelectionChange}
-                                size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.THP) ?? 5)}
-                                multiple={true}
-                            />
-                        </Label>
-                        {vfpDataAccessor?.isProdTable() && <div><Label text={wfrLabel}>
-                            <Select
-                                options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.WFR))}
-                                value={selectedWfrIndicies?.map((value) => value.toString()) ?? []}
-                                onChange={handleWfrIndicesSelectionChange}
-                                size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.WFR) ?? 5)}
-                                multiple={true}
-                            />
-                        </Label>
-                        <Label text={gfrLabel}>
-                            <Select
-                                options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.GFR))}
-                                value={selectedGfrIndicies?.map((value) => value.toString()) ?? []}
-                                onChange={handleGfrIndicesSelectionChange}
-                                size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.GFR) ?? 5)}
-                                multiple={true}
-                            />
-                        </Label>
-                        <Label text={alqLabel}>
-                            <Select
-                                options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.ALQ))}
-                                value={selectedAlqIndicies?.map((value) => value.toString()) ?? []}
-                                onChange={handleAlqIndicesSelectionChange}
-                                size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.ALQ) ?? 5)}
-                                multiple={true}
-                            />
-                        </Label></div>}
-                    </div>
+                <div className="flex flex-col gap-2">
+                    <Label text={thpLabel}>
+                        <Select
+                            options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.THP))}
+                            value={selectedThpIndicies?.map((value) => value.toString()) ?? []}
+                            onChange={handleThpIndicesSelectionChange}
+                            size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.THP) ?? 5)}
+                            multiple={true}
+                        />
+                    </Label>
+                    {vfpDataAccessor?.isProdTable() && (
+                        <div>
+                            <Label text={wfrLabel}>
+                                <Select
+                                    options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.WFR))}
+                                    value={selectedWfrIndicies?.map((value) => value.toString()) ?? []}
+                                    onChange={handleWfrIndicesSelectionChange}
+                                    size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.WFR) ?? 5)}
+                                    multiple={true}
+                                />
+                            </Label>
+                            <Label text={gfrLabel}>
+                                <Select
+                                    options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.GFR))}
+                                    value={selectedGfrIndicies?.map((value) => value.toString()) ?? []}
+                                    onChange={handleGfrIndicesSelectionChange}
+                                    size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.GFR) ?? 5)}
+                                    multiple={true}
+                                />
+                            </Label>
+                            <Label text={alqLabel}>
+                                <Select
+                                    options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.ALQ))}
+                                    value={selectedAlqIndicies?.map((value) => value.toString()) ?? []}
+                                    onChange={handleAlqIndicesSelectionChange}
+                                    size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.ALQ) ?? 5)}
+                                    multiple={true}
+                                />
+                            </Label>
+                        </div>
+                    )}
+                </div>
             </CollapsibleGroup>
             <CollapsibleGroup title="Pressure Option" expanded={true}>
                 <RadioGroup
@@ -231,7 +236,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     options={makeColorByOptions(vfpType, vfpDataAccessor)}
                     value={selectedColorBy ?? undefined}
                     onChange={handleColorByChange}
-                    
                 />
             </CollapsibleGroup>
         </div>
@@ -243,13 +247,15 @@ function makeFilterOptions(values: number[] | undefined): SelectOption[] {
 }
 
 function makeColorByOptions(vfpType: VfpType | null, vfpDataAccessor: VfpDataAccessor | null): SelectOption[] {
-    const options = [{ label: vfpDataAccessor?.getVfpParamLabel(VfpParam.THP, false) ?? "THP", value: VfpParam.THP }]
+    const options = [{ label: vfpDataAccessor?.getVfpParamLabel(VfpParam.THP, false) ?? "THP", value: VfpParam.THP }];
     if (vfpType === VfpType.VFPPROD) {
-        options.push(...[
-            { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.WFR, false) ?? "WFR", value: VfpParam.WFR },
-            { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.GFR, false) ?? "GFR", value: VfpParam.GFR },
-            { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.ALQ, false) ?? "ALQ", value: VfpParam.ALQ },
-        ])
+        options.push(
+            ...[
+                { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.WFR, false) ?? "WFR", value: VfpParam.WFR },
+                { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.GFR, false) ?? "GFR", value: VfpParam.GFR },
+                { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.ALQ, false) ?? "ALQ", value: VfpParam.ALQ },
+            ],
+        );
     }
-    return options
+    return options;
 }

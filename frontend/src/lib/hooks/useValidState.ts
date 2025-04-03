@@ -48,7 +48,7 @@ export function useValidState<T>(options: {
 
             setState(newState);
         },
-        [state, validatingFunc]
+        [state, validatingFunc],
     );
 
     const setValidState = React.useCallback(
@@ -61,7 +61,7 @@ export function useValidState<T>(options: {
 
             setState(newState);
         },
-        [state, options.validStates]
+        [state, options.validStates],
     );
 
     if (options.validateStateFunc !== undefined) {

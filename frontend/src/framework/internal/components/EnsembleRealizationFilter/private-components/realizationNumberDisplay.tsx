@@ -18,7 +18,7 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
 
     const [prevSelectedRealizations, setPrevSelectedRealizations] = React.useState<readonly number[]>();
     const [allRealizationsInRange, setAllRealizationsInRange] = React.useState<number[]>(
-        Array.from({ length: Math.max(...props.availableRealizations) + 1 }, (_, i) => i)
+        Array.from({ length: Math.max(...props.availableRealizations) + 1 }, (_, i) => i),
     );
 
     if (!isEqual(props.selectedRealizations, prevSelectedRealizations)) {
@@ -37,7 +37,7 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
         }
         // Remove the realization from the selected realizations
         const newRealizationNumberSelections = props.selectedRealizations.filter(
-            (selectedRealization) => selectedRealization !== realization
+            (selectedRealization) => selectedRealization !== realization,
         );
         props.onRealizationNumberClick(newRealizationNumberSelections);
     }
@@ -64,14 +64,14 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
                     title={isCurrentRealizationAvailable ? `real-${realization}` : `real-${realization} (unavailable)`}
                     key={realization}
                     className={resolveClassNames(
-                        `${realizationDivSizeClass} rounded-full aspect-square flex justify-center items-center hover:outline outline-blue-300 outline-2`,
+                        `${realizationDivSizeClass} rounded-full aspect-square flex justify-center items-center hover:outline-2 hover:outline-blue-300`,
                         {
                             "bg-green-600": isRealizationSelected,
                             "bg-gray-400": !isRealizationSelected && isCurrentRealizationAvailable,
                             "bg-gray-300": !isRealizationSelected && !isCurrentRealizationAvailable,
                             "cursor-pointer": !props.disableOnClick && isCurrentRealizationAvailable,
                             "cursor-not-allowed": !props.disableOnClick && !isCurrentRealizationAvailable,
-                        }
+                        },
                     )}
                     onClick={isClickDisabled ? undefined : () => handleRealizationElementClick(realization)}
                 />
@@ -101,7 +101,7 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
     // Find the number of realizations that can fit in a row based on non-compact size, as factor of 5
     const candidateNumberOfRealizationsPerRow = Math.max(
         5,
-        Math.floor(divSize.width / (nonCompactWidthAndHeightPx + nonCompactGapPx))
+        Math.floor(divSize.width / (nonCompactWidthAndHeightPx + nonCompactGapPx)),
     );
     const remainder = candidateNumberOfRealizationsPerRow % 5;
     const newNumberOfRealizationsPerRow =

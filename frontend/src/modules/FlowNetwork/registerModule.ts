@@ -2,12 +2,12 @@ import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { Interfaces } from "./interfaces";
+import type { Interfaces } from "./interfaces";
 import { preview } from "./preview";
 
 export const MODULE_NAME = "FlowNetwork";
 
-const description = "Visualizes dated group trees over time.";
+const description = "Visualizes dated flow networks over time.";
 
 ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,

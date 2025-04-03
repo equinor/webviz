@@ -1,12 +1,13 @@
-import { PvtData_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ColorSet } from "@lib/utils/ColorSet";
-import { Size2D } from "@lib/utils/geometry";
-import { Figure, makeSubplots } from "@modules/_shared/Figure";
+import type { PvtData_api } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ColorSet } from "@lib/utils/ColorSet";
+import type { Size2D } from "@lib/utils/geometry";
+import type { Figure } from "@modules/_shared/Figure";
+import { makeSubplots } from "@modules/_shared/Figure";
 
-import { Layout, PlotData } from "plotly.js";
+import type { Layout, PlotData } from "plotly.js";
 
-import { PvtDataAccessor } from "./PvtDataAccessor";
+import type { PvtDataAccessor } from "./PvtDataAccessor";
 
 import {
     ColorBy,
@@ -25,9 +26,12 @@ export class PvtPlotBuilder {
     private readonly _pvtDataAccessor: PvtDataAccessor;
     private _figure: Figure | null = null;
     private _numPlots = 0;
-    private readonly _makeEnsembleDisplayNameFunc: (ensemble: EnsembleIdent) => string;
+    private readonly _makeEnsembleDisplayNameFunc: (ensemble: RegularEnsembleIdent) => string;
 
-    constructor(pvtDataAccessor: PvtDataAccessor, makeEnsembleDisplayNameFunc: (ensemble: EnsembleIdent) => string) {
+    constructor(
+        pvtDataAccessor: PvtDataAccessor,
+        makeEnsembleDisplayNameFunc: (ensemble: RegularEnsembleIdent) => string,
+    ) {
         this._pvtDataAccessor = pvtDataAccessor;
         this._makeEnsembleDisplayNameFunc = makeEnsembleDisplayNameFunc;
     }
@@ -48,8 +52,8 @@ export class PvtPlotBuilder {
 
         for (let row = 1; row <= numRows; row++) {
             for (let col = 1; col <= numCols; col++) {
-                const titleIndex = (numRows - row) * numCols + (col - 1);
                 const axisIndex = (row - 1) * numCols + col;
+                const titleIndex = axisIndex - 1;
 
                 const dependentVariable = adjustedDependentVariables.at(titleIndex) ?? null;
                 if (!dependentVariable) {
@@ -65,15 +69,16 @@ export class PvtPlotBuilder {
                     [`yaxis${axisIndex}`]: { title: `[${yUnit}]` },
                 };
 
-                // Last plot in vertical direction? - note the reversed order of rows
-                const evenNumberOfPlotsAndFirstRow = this._numPlots % 2 === 0 && row === 1;
-                const unevenNumberOfPlotsAndLastRowAndLastColumn =
-                    this._numPlots % 2 !== 0 && row === 2 && col === numCols;
-                const unevenNumberOfPlotsAndFirstRowAndFirstColumn = this._numPlots % 2 !== 0 && row === 1 && col === 1;
+                // Last plot in vertical direction?
+                const evenNumberOfPlotsAndLastRow = this._numPlots % 2 === 0 && row === numRows;
+                const unevenNumberOfPlotsAndFirstRowAndLastColumn =
+                    this._numPlots % 2 !== 0 && row === 1 && col === numCols;
+                const unevenNumberOfPlotsAndLastRowAndFirstColumn =
+                    this._numPlots % 2 !== 0 && row === numRows && col === 1;
                 const lastPlotInVerticalDirection =
-                    evenNumberOfPlotsAndFirstRow ||
-                    unevenNumberOfPlotsAndLastRowAndLastColumn ||
-                    unevenNumberOfPlotsAndFirstRowAndFirstColumn;
+                    evenNumberOfPlotsAndLastRow ||
+                    unevenNumberOfPlotsAndFirstRowAndLastColumn ||
+                    unevenNumberOfPlotsAndLastRowAndFirstColumn;
                 if (lastPlotInVerticalDirection) {
                     patch = { ...patch, [`xaxis${axisIndex}`]: { title: "Pressure [" + xUnit + "]" } };
                 }
@@ -102,7 +107,7 @@ export class PvtPlotBuilder {
     private getDependentVariableValue(
         dependentVariable: PressureDependentVariable,
         index: number,
-        table: PvtData_api
+        table: PvtData_api,
     ): number | null {
         if (index < 0 || index >= table.pressure.length) {
             return null;
@@ -131,7 +136,7 @@ export class PvtPlotBuilder {
         pvtNums: readonly number[],
         phase: PhaseType,
         colorBy: ColorBy,
-        colorSet: ColorSet
+        colorSet: ColorSet,
     ): void {
         const figure = this.getFigureAndAssertValidity();
 
@@ -200,7 +205,7 @@ export class PvtPlotBuilder {
                     }
 
                     for (const [dependentVariable, dependentVariableMap] of groupedTracesMaps) {
-                        const row = Math.ceil(this._numPlots / 2) - Math.floor(i / 2);
+                        const row = Math.floor(i / 2) + 1;
                         const col = (i % 2) + 1;
                         const borderTracePoints: TracePointData[] = [];
                         for (const [, tracePointDataArray] of dependentVariableMap) {
@@ -223,7 +228,7 @@ export class PvtPlotBuilder {
                                     table.pvtnum,
                                     phase,
                                     tableCollection.ensembleIdent,
-                                    tableCollection.realization
+                                    tableCollection.realization,
                                 ),
                             };
 
@@ -255,7 +260,7 @@ export class PvtPlotBuilder {
                                 traceLegendName = table.pvtnum.toString();
                             } else {
                                 traceLegendName = `${this._makeEnsembleDisplayNameFunc(
-                                    tableCollection.ensembleIdent
+                                    tableCollection.ensembleIdent,
                                 )} - ${tableCollection.realization}`;
                             }
 
@@ -290,8 +295,8 @@ export class PvtPlotBuilder {
         ratios: readonly number[],
         pvtNum: number,
         phase: PhaseType,
-        ensembleIdent: EnsembleIdent,
-        realization: number
+        ensembleIdent: RegularEnsembleIdent,
+        realization: number,
     ): string[] {
         const nameY = PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME[dependentVariable];
         const ensembleDisplayName = this._makeEnsembleDisplayNameFunc(ensembleIdent);
@@ -329,7 +334,7 @@ export class PvtPlotBuilder {
         colorBy: ColorBy,
         colorSet: ColorSet,
         pvtNumsLength: number,
-        tableCollectionsLength: number
+        tableCollectionsLength: number,
     ): readonly string[] {
         const colors: string[] = [];
         colors.push(colorSet.getFirstColor());

@@ -22,7 +22,6 @@ export type SortableListItemProps = {
  * @param {SortableListItemProps} props Object of properties for the SortableListItem component (see below for details).
  * @param {string} props.id ID that is unique among all components inside the sortable list.
  * @param {React.ReactNode} props.title Title component of the list item.
- * @param {string} props.headerClassNames Class names to apply to the header of the list item.
  * @param {React.ReactNode} props.startAdornment Start adornment to display to the left of the title.
  * @param {React.ReactNode} props.endAdornment End adornment to display to the right of the title.
  * @param {React.ReactNode} props.children Child components to display as the content of the list item.
@@ -58,7 +57,7 @@ export function SortableListItem(props: SortableListItemProps): React.ReactNode 
                     createPortal(
                         <div
                             className={resolveClassNames(
-                                "flex h-8 bg-blue-50 text-sm items-center gap-1 border-b border-b-gray-300 absolute z-50 opacity-75"
+                                "flex h-8 bg-blue-50 text-sm items-center gap-1 border-b border-b-gray-300 absolute z-50 opacity-75",
                             )}
                             style={{
                                 left: dragPosition.x,
@@ -67,11 +66,9 @@ export function SortableListItem(props: SortableListItemProps): React.ReactNode 
                             }}
                         >
                             <Header {...props} />
-                        </div>
+                        </div>,
                     )}
-                {props.children !== undefined && (
-                    <div className={resolveClassNames("bg-white border-b shadow")}>{props.children}</div>
-                )}
+                <div className={resolveClassNames("bg-white border-b shadow-sm")}>{props.children}</div>
             </div>
             {isHovered && sortableListContext.hoveredArea === HoveredArea.BOTTOM && <SortableListDropIndicator />}
         </>
@@ -90,15 +87,15 @@ function Header(props: HeaderProps): React.ReactNode {
         <div
             className={resolveClassNames(
                 "w-full flex gap-1 h-8 bg-slate-100 text-sm items-center border-b border-b-gray-300 px-2",
-                props.headerClassNames ?? ""
+                props.headerClassNames ?? "",
             )}
         >
             <div className={resolveClassNames("sortable-list-element-indicator hover:cursor-grab")}>
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />
             </div>
-            <div className="flex items-center gap-2 flex-grow">
+            <div className="flex items-center gap-2 grow min-w-0">
                 {props.startAdornment}
-                <div className="flex-grow">{props.title}</div>
+                <div className="grow min-w-0">{props.title}</div>
                 {props.endAdornment}
             </div>
         </div>

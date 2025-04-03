@@ -1,14 +1,17 @@
-import { FluidZone_api, InplaceVolumetricStatistic_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { TableHeading, TableRow } from "@lib/components/Table/table";
-import { Column, ColumnType, Row, Table } from "@modules/_shared/InplaceVolumetrics/Table";
+import type { InplaceVolumetricStatistic_api } from "@api";
+import { FluidZone_api } from "@api";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { TableHeading, TableRow } from "@lib/components/Table/table";
+import type { Column, Row } from "@modules/_shared/InplaceVolumetrics/Table";
+import { ColumnType, Table } from "@modules/_shared/InplaceVolumetrics/Table";
 import { sortResultNameStrings } from "@modules/_shared/InplaceVolumetrics/sortResultNames";
 import {
     makeStatisticalTableColumnDataFromApiData,
     makeTableFromApiData,
 } from "@modules/_shared/InplaceVolumetrics/tableUtils";
-import {
+import type {
     InplaceVolumetricsStatisticalTableData,
     InplaceVolumetricsTableData,
 } from "@modules/_shared/InplaceVolumetrics/types";
@@ -18,7 +21,7 @@ import { createScaledNumberWithSuffix } from "@modules/_shared/utils/numberSuffi
 
 export function createTableHeadingsAndRowsFromTablesData(
     tablesData: InplaceVolumetricsTableData[],
-    ensembleSet: EnsembleSet
+    ensembleSet: EnsembleSet,
 ): {
     headings: TableHeading;
     rows: TableRow<any>[];
@@ -47,7 +50,7 @@ export function createTableHeadingsAndRowsFromTablesData(
 export function createStatisticalTableHeadingsAndRowsFromTablesData(
     tablesData: InplaceVolumetricsStatisticalTableData[],
     statisticOptions: InplaceVolumetricStatistic_api[],
-    ensembleSet: EnsembleSet
+    ensembleSet: EnsembleSet,
 ): {
     headings: TableHeading;
     rows: TableRow<any>[];
@@ -122,7 +125,7 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
 
         if (numberOfRows !== resultStatisticalTable.getNumRows()) {
             throw new Error(
-                "Number of rows in statistical table does not match the number of rows in the non-statistical table."
+                "Number of rows in statistical table does not match the number of rows in the non-statistical table.",
             );
         }
 
@@ -173,7 +176,7 @@ function makeStyleFormattingFunc(column: Column): ((value: number | string | nul
 
 function makeValueFormattingFunc(
     column: Column,
-    ensembleSet: EnsembleSet
+    ensembleSet: EnsembleSet,
 ): ((value: number | string | null) => string) | undefined {
     if (column.getType() === ColumnType.ENSEMBLE) {
         return (value: number | string | null) => formatEnsembleIdent(value, ensembleSet);
@@ -190,10 +193,10 @@ function formatEnsembleIdent(value: string | number | null, ensembleSet: Ensembl
         return "-";
     }
     const ensemble = ensembleSet.findEnsembleByIdentString(value.toString());
-    if (ensemble) {
+    if (ensemble && ensemble instanceof RegularEnsemble) {
         return makeDistinguishableEnsembleDisplayName(
-            EnsembleIdent.fromString(value.toString()),
-            ensembleSet.getEnsembleArr()
+            RegularEnsembleIdent.fromString(value.toString()),
+            ensembleSet.getRegularEnsembleArray(),
         );
     }
     return value.toString();
