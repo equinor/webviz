@@ -3,7 +3,7 @@ import { degreesToRadians } from "@lib/utils/geometry";
 import type { Vec2 } from "@lib/utils/vec2";
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import type { FactoryFunctionArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import { ColormapLayer, Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
@@ -35,7 +35,7 @@ export function makeRealizationSurfaceLayer({
     name,
     getData,
     getSetting,
-}: FactoryFunctionArgs<RealizationSurfaceSettings, RealizationSurfaceData>): ColormapLayer | Grid3DLayer | null {
+}: TransformerArgs<RealizationSurfaceSettings, RealizationSurfaceData>): ColormapLayer | Grid3DLayer | null {
     const data = getData();
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
 

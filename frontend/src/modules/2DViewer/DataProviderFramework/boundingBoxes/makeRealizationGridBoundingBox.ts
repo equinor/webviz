@@ -1,11 +1,9 @@
 import type { BBox } from "@lib/utils/bbox";
-import type { FactoryFunctionArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import type { RealizationGridData } from "../customDataProviderImplementations/RealizationGrid";
 
-export function makeRealizationGridBoundingBox({
-    getData,
-}: FactoryFunctionArgs<any, RealizationGridData>): BBox | null {
+export function makeRealizationGridBoundingBox({ getData }: TransformerArgs<any, RealizationGridData>): BBox | null {
     const data = getData();
     if (!data) {
         return null;

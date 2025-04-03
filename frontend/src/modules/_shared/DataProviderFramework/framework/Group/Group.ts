@@ -108,7 +108,7 @@ export class Group<
         return this._sharedSettingsDelegate.getWrappedSettings();
     }
 
-    getGroupType(): string {
+    getGroupType(): GroupType {
         return this._type;
     }
 

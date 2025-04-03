@@ -1,11 +1,9 @@
 import type { BBox } from "@lib/utils/bbox";
-import type { FactoryFunctionArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import type { RealizationSurfaceData } from "../customDataProviderImplementations/RealizationSurface";
 
-export function makeSurfaceLayerBoundingBox({
-    getData,
-}: FactoryFunctionArgs<any, RealizationSurfaceData>): BBox | null {
+export function makeSurfaceLayerBoundingBox({ getData }: TransformerArgs<any, RealizationSurfaceData>): BBox | null {
     const data = getData();
     if (!data) {
         return null;

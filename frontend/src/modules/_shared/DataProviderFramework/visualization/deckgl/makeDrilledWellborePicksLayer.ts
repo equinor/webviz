@@ -2,12 +2,12 @@ import type { WellborePick_api } from "@api";
 import type { WellborePicksLayerData } from "@modules/_shared/customDeckGlLayers/WellborePicksLayer";
 import { WellborePicksLayer } from "@modules/_shared/customDeckGlLayers/WellborePicksLayer";
 
-import type { FactoryFunctionArgs } from "../VisualizationAssembler";
+import type { TransformerArgs } from "../VisualizationAssembler";
 
 export function makeDrilledWellborePicksLayer({
     id,
     getData,
-}: FactoryFunctionArgs<any, WellborePick_api[], any>): WellborePicksLayer | null {
+}: TransformerArgs<any, WellborePick_api[], any>): WellborePicksLayer | null {
     const data = getData();
 
     if (!data) {

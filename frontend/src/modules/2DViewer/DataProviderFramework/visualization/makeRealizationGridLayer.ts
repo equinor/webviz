@@ -1,5 +1,5 @@
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import type { FactoryFunctionArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
@@ -12,7 +12,7 @@ export function makeRealizationGridLayer({
     id,
     getData,
     getSetting,
-}: FactoryFunctionArgs<RealizationGridSettings, RealizationGridData>): Grid3DLayer | null {
+}: TransformerArgs<RealizationGridSettings, RealizationGridData>): Grid3DLayer | null {
     const data = getData();
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
 

@@ -1,5 +1,5 @@
 import type { BBox } from "@lib/utils/bbox";
-import type { FactoryFunctionArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import type {
     DrilledWellborePicksData,
@@ -8,7 +8,7 @@ import type {
 
 export function makeDrilledWellborePicksBoundingBox({
     getData,
-}: FactoryFunctionArgs<DrilledWellborePicksSettings, DrilledWellborePicksData>): BBox | null {
+}: TransformerArgs<DrilledWellborePicksSettings, DrilledWellborePicksData>): BBox | null {
     const data = getData();
     if (!data) {
         return null;

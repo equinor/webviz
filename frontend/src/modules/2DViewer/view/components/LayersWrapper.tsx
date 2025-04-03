@@ -57,39 +57,43 @@ export type LayersWrapperProps = {
 
 const VISUALIZATION_FACTORY = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
-VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.OBSERVED_SURFACE, ObservedSurface, {
-    makeVisualizationFunction: makeObservedSurfaceLayer,
-    calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
-    makeAnnotationsFunction: makeColorScaleAnnotation,
+VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomLayerType.OBSERVED_SURFACE, ObservedSurface, {
+    transformToVisualization: makeObservedSurfaceLayer,
+    transformToBoundingBox: makeSurfaceLayerBoundingBox,
+    transformToAnnotations: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_SURFACE, RealizationSurface, {
-    makeVisualizationFunction: makeRealizationSurfaceLayer,
-    calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
-    makeAnnotationsFunction: makeColorScaleAnnotation,
+VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomLayerType.REALIZATION_SURFACE, RealizationSurface, {
+    transformToVisualization: makeRealizationSurfaceLayer,
+    transformToBoundingBox: makeSurfaceLayerBoundingBox,
+    transformToAnnotations: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.STATISTICAL_SURFACE, StatisticalSurface, {
-    makeVisualizationFunction: makeStatisticalSurfaceLayer,
-    calculateBoundingBoxFunction: makeSurfaceLayerBoundingBox,
-    makeAnnotationsFunction: makeColorScaleAnnotation,
+VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomLayerType.STATISTICAL_SURFACE, StatisticalSurface, {
+    transformToVisualization: makeStatisticalSurfaceLayer,
+    transformToBoundingBox: makeSurfaceLayerBoundingBox,
+    transformToAnnotations: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_POLYGONS, RealizationPolygons, {
-    makeVisualizationFunction: makeRealizationPolygonsLayer,
-    calculateBoundingBoxFunction: makePolygonDataBoundingBox,
-    makeAnnotationsFunction: makeColorScaleAnnotation,
+VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomLayerType.REALIZATION_POLYGONS, RealizationPolygons, {
+    transformToVisualization: makeRealizationPolygonsLayer,
+    transformToBoundingBox: makePolygonDataBoundingBox,
+    transformToAnnotations: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_GRID, RealizationGrid, {
-    makeVisualizationFunction: makeRealizationGridLayer,
-    calculateBoundingBoxFunction: makeRealizationGridBoundingBox,
-    makeAnnotationsFunction: makeColorScaleAnnotation,
+VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomLayerType.REALIZATION_GRID, RealizationGrid, {
+    transformToVisualization: makeRealizationGridLayer,
+    transformToBoundingBox: makeRealizationGridBoundingBox,
+    transformToAnnotations: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(DataProviderType.DRILLED_WELLBORE_PICKS, DrilledWellborePicks, {
-    makeVisualizationFunction: makeDrilledWellborePicksLayer,
-    calculateBoundingBoxFunction: makeDrilledWellborePicksBoundingBox,
+VISUALIZATION_FACTORY.registerDataProviderTransformers(DataProviderType.DRILLED_WELLBORE_PICKS, DrilledWellborePicks, {
+    transformToVisualization: makeDrilledWellborePicksLayer,
+    transformToBoundingBox: makeDrilledWellborePicksBoundingBox,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(DataProviderType.DRILLED_WELL_TRAJECTORIES, DrilledWellTrajectories, {
-    makeVisualizationFunction: makeDrilledWellTrajectoriesLayer,
-    calculateBoundingBoxFunction: makeDrilledWellTrajectoriesBoundingBox,
-});
+VISUALIZATION_FACTORY.registerDataProviderTransformers(
+    DataProviderType.DRILLED_WELL_TRAJECTORIES,
+    DrilledWellTrajectories,
+    {
+        transformToVisualization: makeDrilledWellTrajectoriesLayer,
+        transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
+    },
+);
 
 VISUALIZATION_FACTORY.registerGroupDataCollector(GroupType.VIEW, View, () => ({}));
 
@@ -174,8 +178,8 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         }
     }
 
-    numLoadingLayers = factoryProduct.numLoadingDataLayers;
-    statusWriter.setLoading(factoryProduct.numLoadingDataLayers > 0);
+    numLoadingLayers = factoryProduct.numLoadingDataProviders;
+    statusWriter.setLoading(factoryProduct.numLoadingDataProviders > 0);
 
     for (const message of factoryProduct.aggregatedErrorMessages) {
         statusWriter.addError(message);

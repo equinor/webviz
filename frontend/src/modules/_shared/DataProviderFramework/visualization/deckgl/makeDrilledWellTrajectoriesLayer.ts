@@ -4,7 +4,7 @@ import type { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import type { Feature, GeoJsonProperties, GeometryCollection, LineString, Point } from "geojson";
 
-import type { FactoryFunctionArgs } from "../VisualizationAssembler";
+import type { TransformerArgs } from "../VisualizationAssembler";
 
 function wellTrajectoryToGeojson(
     wellTrajectory: WellboreTrajectory_api,
@@ -55,7 +55,7 @@ function zipCoords(xArr: number[], yArr: number[], zArr: number[]): number[][] {
 export function makeDrilledWellTrajectoriesLayer({
     id,
     getData,
-}: FactoryFunctionArgs<any, WellboreTrajectory_api[], any>): WellsLayer | null {
+}: TransformerArgs<any, WellboreTrajectory_api[], any>): WellsLayer | null {
     const fieldWellboreTrajectoriesData = getData();
 
     if (!fieldWellboreTrajectoriesData) {
