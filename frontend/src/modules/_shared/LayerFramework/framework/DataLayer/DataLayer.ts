@@ -50,6 +50,10 @@ export type LayerDelegatePayloads<TData> = {
 };
 
 export function isDataLayer(object: any): object is DataLayer<any, any> {
+    if (!isDevMode()) {
+        return object instanceof DataLayer;
+    }
+
     if (typeof object !== "object" || object === null) {
         return false;
     }
