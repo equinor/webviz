@@ -26,11 +26,12 @@ import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { DrilledWellTrajectories } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectories";
 import { DrilledWellborePicks } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicks";
+import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import { View } from "@modules/_shared/DataProviderFramework/groups/implementations/View";
 import type {
     Annotation,
-    LayerWithPosition,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { VisualizationAssembler } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
@@ -38,8 +39,6 @@ import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataPro
 import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
 import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
-import type { DataProviderManager } from "@modules/_shared/LayerFramework/framework/DataProviderManager/DataProviderManager";
-import { LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/DataProviderManager/DataProviderManager";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import type { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
@@ -101,7 +100,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const mainDivSize = useElementSize(mainDivRef);
     const statusWriter = useViewStatusWriter(props.viewContext);
 
-    usePublishSubscribeTopicValue(props.layerManager, LayerManagerTopic.LAYER_DATA_REVISION);
+    usePublishSubscribeTopicValue(props.layerManager, DataProviderManagerTopic.DATA_REVISION);
 
     const viewports: ViewportType[] = [];
     const viewerLayers: LayerWithPosition<VisualizationTarget.DECK_GL>[] = [];

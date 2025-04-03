@@ -1,5 +1,5 @@
 import { PreferredViewLayout } from "@modules/2DViewer/types";
-import type { DataProviderManager } from "@modules/_shared/LayerFramework/framework/DataProviderManager/DataProviderManager";
+import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
 import { atom } from "jotai";
 

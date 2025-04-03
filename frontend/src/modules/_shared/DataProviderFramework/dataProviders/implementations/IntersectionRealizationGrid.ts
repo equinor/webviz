@@ -41,7 +41,7 @@ type StoredData = {
     polyline: number[];
 };
 
-export class IntersectionRealizationGridLayer
+export class IntersectionRealizationGrid
     implements
         CustomDataProviderImplementation<
             IntersectionRealizationGridSettings,
