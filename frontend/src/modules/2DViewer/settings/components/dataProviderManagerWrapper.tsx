@@ -61,7 +61,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
     function handleLayerAction(identifier: string, groupDelegate: GroupDelegate) {
         switch (identifier) {
             case "view":
-                groupDelegate.prependChild(
+                groupDelegate.appendChild(
                     GroupRegistry.makeGroup(GroupType.VIEW, props.dataProviderManager, colorSet.getNextColor()),
                 );
                 return;
@@ -187,17 +187,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             children: [],
         };
 
-        if (group instanceof Group) {
-            if (group.getGroupType() === GroupType.VIEW) {
-                if (!hasViewAncestor) {
-                    groupActions.children.push({
-                        identifier: "view",
-                        icon: <Panorama fontSize="small" />,
-                        label: "View",
-                    });
-                }
-            }
-        } else if (group instanceof SettingsGroup) {
+        if (!hasViewAncestor) {
             groupActions.children.push({
                 identifier: "view",
                 icon: <Panorama fontSize="small" />,

@@ -31,9 +31,7 @@ export function isGroup(obj: any): obj is Group {
         return false;
     }
 
-    const group: Group = obj as Group;
-
-    return Object.hasOwn(group, "getGroupType") && Object.hasOwn(group, "getGroupDelegate");
+    return Boolean(obj.getGroupType) && Boolean(obj.getGroupDelegate);
 }
 
 export type GroupParams<

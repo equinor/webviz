@@ -31,7 +31,6 @@ import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type {
     Annotation,
-    VisualizationGroup,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import {
@@ -110,12 +109,11 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     usePublishSubscribeTopicValue(props.layerManager, DataProviderManagerTopic.DATA_REVISION);
 
-    const views: VisualizationGroup<VisualizationTarget.DECK_GL>[] = [];
     const viewports: ViewportType[] = [];
     const deckGlLayers: Layer<any>[] = [];
     const viewportAnnotations: React.ReactNode[] = [];
     const globalAnnotations: Annotation[] = [];
-    const globalLayerIds: string[] = [];
+    const globalLayerIds: string[] = ["placeholder"];
 
     let numCols = 0;
     let numRows = 0;
@@ -144,7 +142,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
             viewportAnnotations.push(
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 /* @ts-expect-error */
-                <DeckGlView key={view.id} id={view.id}>
+                <DeckGlView key={item.id} id={item.id}>
                     <ColorLegendsContainer
                         colorScales={[...item.annotations.filter((el) => "colorScale" in el), ...globalAnnotations]}
                         height={((mainDivSize.height / 3) * 2) / numCols - 20}
@@ -167,8 +165,8 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         }
     }
 
-    numCols = Math.ceil(Math.sqrt(views.length));
-    numRows = Math.ceil(views.length / numCols);
+    numCols = Math.ceil(Math.sqrt(viewports.length));
+    numRows = Math.ceil(viewports.length / numCols);
 
     if (props.preferredViewLayout === PreferredViewLayout.HORIZONTAL) {
         [numCols, numRows] = [numRows, numCols];
@@ -198,6 +196,8 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     deckGlLayers.push(new PlaceholderLayer({ id: "placeholder" }));
 
+    deckGlLayers.reverse();
+
     return (
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
             <PendingWrapper isPending={numLoadingLayers > 0}>
@@ -205,7 +205,10 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                     <ReadoutWrapper
                         views={{
                             layout: [numCols, numRows],
-                            viewports: viewports,
+                            viewports: viewports.map((viewport) => ({
+                                ...viewport,
+                                layerIds: [...(viewport.layerIds ?? []), ...globalLayerIds],
+                            })),
                             showLabel: false,
                         }}
                         viewportAnnotations={viewportAnnotations}

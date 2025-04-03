@@ -10,7 +10,7 @@ import { DataProvider, DataProviderStatus } from "../framework/DataProvider/Data
 import type { DataProviderManager } from "../framework/DataProviderManager/DataProviderManager";
 import { DeltaSurface } from "../framework/DeltaSurface/DeltaSurface";
 import { Group } from "../framework/Group/Group";
-import { GroupType } from "../groups/groupTypes";
+import type { GroupType } from "../groups/groupTypes";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
@@ -61,31 +61,34 @@ export type TransformerArgs<
     getValueRange: () => [number, number] | null;
 };
 
-export type VisualizationGroupMetadata = {
-    itemType: VisualizationItemType.GROUP;
-    id: string;
-    groupType: GroupType | null;
-    color: string | null;
-    name: string;
-};
-
 export interface HoverVisualizationsFunction<TTarget extends VisualizationTarget> {
     (
         hoverInfo: GlobalTopicDefinitions[FilterHoverKeys<GlobalTopicDefinitions>],
     ): DataProviderVisualizationTargetTypes[TTarget][];
 }
 
+export type VisualizationGroupMetadata<TGroupType extends GroupType> = {
+    itemType: VisualizationItemType.GROUP;
+    id: string;
+    groupType: TGroupType | null;
+    color: string | null;
+    name: string;
+};
+
 export type VisualizationGroup<
     TTarget extends VisualizationTarget,
+    TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
     TAccumulatedData extends Record<string, any> = never,
-> = VisualizationGroupMetadata & {
-    children: (VisualizationGroup<TTarget, TAccumulatedData> | DataProviderVisualization<TTarget>)[];
+    TGroupType extends GroupType = GroupType,
+> = VisualizationGroupMetadata<TGroupType> & {
+    children: (VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> | DataProviderVisualization<TTarget>)[];
     annotations: Annotation[];
     aggregatedErrorMessages: (StatusMessage | string)[];
     combinedBoundingBox: bbox.BBox | null;
     numLoadingDataProviders: number;
     accumulatedData: TAccumulatedData;
     makeHoverVisualizationsFunction: HoverVisualizationsFunction<TTarget>;
+    customProps: TCustomGroupProps[TGroupType];
 };
 
 export type EsvView = {
@@ -188,12 +191,15 @@ type FilterHoverKeys<T> = {
 
 export type AssemblerProduct<
     TTarget extends VisualizationTarget,
+    TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
     TAccumulatedData extends Record<string, any> = never,
-> = Omit<VisualizationGroup<TTarget, TAccumulatedData>, keyof VisualizationGroupMetadata>;
+> = Omit<VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>, keyof VisualizationGroupMetadata<any>>;
+
+export type CustomGroupPropsMap = Record<GroupType, Record<string, any>>;
 
 export class VisualizationAssembler<
     TTarget extends VisualizationTarget,
-    TCustomGroupProps extends Record<GroupType, Record<string, any>> = Record<string, never>,
+    TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
     TInjectedData extends Record<string, any> = never,
     TAccumulatedData extends Record<string, any> = never,
 > {
@@ -241,7 +247,7 @@ export class VisualizationAssembler<
             injectedData?: TInjectedData;
             initialAccumulatedData?: TAccumulatedData;
         },
-    ): AssemblerProduct<TTarget, TAccumulatedData> {
+    ): AssemblerProduct<TTarget, TCustomGroupProps, TAccumulatedData> {
         return this.makeRecursively(
             dataProviderManager.getGroupDelegate(),
             options?.initialAccumulatedData ?? ({} as TAccumulatedData),
@@ -253,8 +259,11 @@ export class VisualizationAssembler<
         groupDelegate: GroupDelegate,
         accumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
-    ): VisualizationGroup<TTarget, TAccumulatedData> {
-        const children: (VisualizationGroup<TTarget, TAccumulatedData> | DataProviderVisualization<TTarget>)[] = [];
+    ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
+        const children: (
+            | VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>
+            | DataProviderVisualization<TTarget>
+        )[] = [];
         const annotations: Annotation[] = [];
         const aggregatedErrorMessages: (StatusMessage | string)[] = [];
         const hoverVisualizationFunctions: ((
@@ -352,6 +361,7 @@ export class VisualizationAssembler<
                 }
                 return collectedHoverVisualizations;
             },
+            customProps: {} as TCustomGroupProps,
         };
     }
 
@@ -360,18 +370,16 @@ export class VisualizationAssembler<
         TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     >(
         group: Group<TSettings>,
-        children: (VisualizationGroup<TTarget, TAccumulatedData> | DataProviderVisualization<TTarget>)[],
+        children: (
+            | VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>
+            | DataProviderVisualization<TTarget>
+        )[],
         annotations: Annotation[],
-    ): VisualizationGroup<TTarget, TAccumulatedData> & TCustomGroupProps[keyof TCustomGroupProps] {
+    ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
         const func = this._groupDataCollectors.get(group.getGroupType());
-        if (!func) {
-            throw new Error(
-                `No view function provided for group ${group.getGroupType()}. Did you forget to register it?`,
-            );
-        }
 
         return {
-            item: VisualizationItemType.GROUP,
+            itemType: VisualizationItemType.GROUP,
             id: group.getItemDelegate().getId(),
             color: group.getGroupDelegate().getColor(),
             name: group.getItemDelegate().getName(),
@@ -383,12 +391,13 @@ export class VisualizationAssembler<
             numLoadingDataProviders: 0,
             accumulatedData: {} as TAccumulatedData,
             makeHoverVisualizationsFunction: () => [],
-            ...func({
-                id: group.getItemDelegate().getId(),
-                name: group.getItemDelegate().getName(),
-                getSetting: <TKey extends TSettingKey>(setting: TKey) =>
-                    group.getSharedSettingsDelegate()?.getWrappedSettings()[setting].getValue(),
-            }),
+            customProps:
+                func?.({
+                    id: group.getItemDelegate().getId(),
+                    name: group.getItemDelegate().getName(),
+                    getSetting: <TKey extends TSettingKey>(setting: TKey) =>
+                        group.getSharedSettingsDelegate()?.getWrappedSettings()[setting].getValue(),
+                }) ?? ({} as TCustomGroupProps),
         };
     }
 

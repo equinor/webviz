@@ -47,19 +47,21 @@ export type LayerDelegatePayloads<TData> = {
     [DataProviderTopic.SUBORDINATED]: boolean;
 };
 
-export function isDataProvider(object: any): object is DataProvider<any, any> {
-    if (typeof object !== "object" || object === null) {
+export function isDataProvider(obj: any): obj is DataProvider<any, any> {
+    if (!isDevMode()) {
+        return obj instanceof DataProvider;
+    }
+
+    if (typeof obj !== "object" || obj === null) {
         return false;
     }
 
-    const dataLayer: DataProvider<any, any> = object as DataProvider<any, any>;
-
     return (
-        Object.hasOwn(dataLayer, "getType") &&
-        Object.hasOwn(dataLayer, "getSettingsContextDelegate") &&
-        Object.hasOwn(dataLayer, "getStatus") &&
-        Object.hasOwn(dataLayer, "getData") &&
-        Object.hasOwn(dataLayer, "getError")
+        Boolean(obj.getType) &&
+        Boolean(obj.getSettingsContextDelegate) &&
+        Boolean(obj.getStatus) &&
+        Boolean(obj.getData) &&
+        Boolean(obj.getError)
     );
 }
 

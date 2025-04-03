@@ -22,9 +22,7 @@ export function isSharedSetting(obj: any): obj is SharedSetting<any> {
     if (obj.constructor.name !== "SharedSetting") {
         return false;
     }
-
-    const sharedSetting: SharedSetting<any> = obj as SharedSetting<any>;
-    return Object.hasOwn(sharedSetting, "getSharedSettingsDelegate");
+    return Boolean(obj.getSharedSettingsDelegate) && Boolean(!obj.getGroupDelegate);
 }
 
 export class SharedSetting<TSetting extends Setting> implements Item, SharedSettingsProvider {
