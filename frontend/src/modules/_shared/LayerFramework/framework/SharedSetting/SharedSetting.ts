@@ -1,3 +1,5 @@
+import { isDevMode } from "@lib/utils/devMode";
+
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
 import type { Item, SharedSettingsProvider } from "../../interfacesAndTypes/entities";
@@ -10,6 +12,10 @@ import { LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 import type { SettingManager } from "../SettingManager/SettingManager";
 
 export function isSharedSetting(obj: any): obj is SharedSetting<any> {
+    if (!isDevMode()) {
+        return obj instanceof SharedSetting;
+    }
+
     if (typeof obj !== "object" || obj === null) {
         return false;
     }
