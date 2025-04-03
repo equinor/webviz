@@ -13,12 +13,14 @@ import { RealizationSurface } from "@modules/2DViewer/DataProviderFramework/cust
 import { StatisticalSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/StatisticalSurface";
 import { CustomLayerType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/layerTypes";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
+import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { DataProvider } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { DataLayerManagerComponent } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManagerComponent";
 import { DeltaSurface } from "@modules/_shared/DataProviderFramework/framework/DeltaSurface/DeltaSurface";
 import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
 import { SettingsGroup } from "@modules/_shared/DataProviderFramework/framework/SettingsGroup/SettingsGroup";
@@ -44,86 +46,98 @@ import { useAtom } from "jotai";
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 
 export type LayerManagerComponentWrapperProps = {
-    layerManager: DataProviderManager;
+    dataProviderManager: DataProviderManager;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
 };
 
-export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapperProps): React.ReactNode {
+export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperProps): React.ReactNode {
     const colorSet = props.workbenchSettings.useColorSet();
     const [preferredViewLayout, setPreferredViewLayout] = useAtom(preferredViewLayoutAtom);
 
-    const groupDelegate = props.layerManager.getGroupDelegate();
+    const groupDelegate = props.dataProviderManager.getGroupDelegate();
     usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
     function handleLayerAction(identifier: string, groupDelegate: GroupDelegate) {
         switch (identifier) {
             case "view":
                 groupDelegate.prependChild(
-                    GroupRegistry.makeGroup(GroupType.VIEW, props.layerManager, colorSet.getNextColor()),
+                    GroupRegistry.makeGroup(GroupType.VIEW, props.dataProviderManager, colorSet.getNextColor()),
                 );
                 return;
             case "delta-surface":
-                groupDelegate.prependChild(new DeltaSurface("Delta surface", props.layerManager));
+                groupDelegate.prependChild(new DeltaSurface("Delta surface", props.dataProviderManager));
                 return;
             case "settings-group":
-                groupDelegate.prependChild(new SettingsGroup("Settings group", props.layerManager));
+                groupDelegate.prependChild(new SettingsGroup("Settings group", props.dataProviderManager));
                 return;
             case "color-scale":
-                groupDelegate.prependChild(new SharedSetting(Setting.COLOR_SCALE, null, props.layerManager));
+                groupDelegate.prependChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
                 return;
             case "observed-surface":
                 groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(CustomLayerType.OBSERVED_SURFACE, props.layerManager),
+                    DataProviderRegistry.makeDataProvider(CustomLayerType.OBSERVED_SURFACE, props.dataProviderManager),
                 );
                 return;
             case "statistical-surface":
                 groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(CustomLayerType.STATISTICAL_SURFACE, props.layerManager),
+                    DataProviderRegistry.makeDataProvider(
+                        CustomLayerType.STATISTICAL_SURFACE,
+                        props.dataProviderManager,
+                    ),
                 );
                 return;
             case "realization-surface":
                 groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(CustomLayerType.REALIZATION_SURFACE, props.layerManager),
+                    DataProviderRegistry.makeDataProvider(
+                        CustomLayerType.REALIZATION_SURFACE,
+                        props.dataProviderManager,
+                    ),
                 );
                 return;
             case "realization-polygons":
                 groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(CustomLayerType.REALIZATION_POLYGONS, props.layerManager),
+                    DataProviderRegistry.makeDataProvider(
+                        CustomLayerType.REALIZATION_POLYGONS,
+                        props.dataProviderManager,
+                    ),
                 );
                 return;
             case "drilled-wellbore-trajectories":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
                         DataProviderType.DRILLED_WELL_TRAJECTORIES,
-                        props.layerManager,
+                        props.dataProviderManager,
                     ),
                 );
                 return;
             case "drilled-wellbore-picks":
                 groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(DataProviderType.DRILLED_WELLBORE_PICKS, props.layerManager),
+                    DataProviderRegistry.makeDataProvider(
+                        DataProviderType.DRILLED_WELLBORE_PICKS,
+                        props.dataProviderManager,
+                    ),
                 );
                 return;
             case "realization-grid":
                 groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(CustomLayerType.REALIZATION_GRID, props.layerManager),
+                    DataProviderRegistry.makeDataProvider(CustomLayerType.REALIZATION_GRID, props.dataProviderManager),
                 );
                 return;
             case "ensemble":
-                groupDelegate.appendChild(new SharedSetting(Setting.ENSEMBLE, null, props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(Setting.ENSEMBLE, null, props.dataProviderManager));
                 return;
             case "realization":
-                groupDelegate.appendChild(new SharedSetting(Setting.REALIZATION, null, props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(Setting.REALIZATION, null, props.dataProviderManager));
                 return;
             case "surface-name":
-                groupDelegate.appendChild(new SharedSetting(Setting.SURFACE_NAME, null, props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(Setting.SURFACE_NAME, null, props.dataProviderManager));
                 return;
             case "attribute":
-                groupDelegate.appendChild(new SharedSetting(Setting.ATTRIBUTE, null, props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(Setting.ATTRIBUTE, null, props.dataProviderManager));
                 return;
             case "Date":
-                groupDelegate.appendChild(new SharedSetting(Setting.TIME_OR_INTERVAL, null, props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_OR_INTERVAL, null, props.dataProviderManager));
                 return;
         }
     }
@@ -206,7 +220,7 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
     return (
         <DataLayerManagerComponent
             title={"Layers"}
-            dataLayerManager={props.layerManager}
+            dataLayerManager={props.dataProviderManager}
             additionalHeaderComponents={
                 <Dropdown>
                     <MenuButton label="Settings">

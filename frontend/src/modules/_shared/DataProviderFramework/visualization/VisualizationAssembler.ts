@@ -10,7 +10,7 @@ import { DataProvider, DataProviderStatus } from "../framework/DataProvider/Data
 import type { DataProviderManager } from "../framework/DataProviderManager/DataProviderManager";
 import { DeltaSurface } from "../framework/DeltaSurface/DeltaSurface";
 import { Group } from "../framework/Group/Group";
-import type { GroupType } from "../groups/groupTypes";
+import { GroupType } from "../groups/groupTypes";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
@@ -25,11 +25,28 @@ import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { IntersectionSettingValue } from "../settings/implementations/IntersectionSetting";
 import type { SettingTypes, Settings } from "../settings/settingsDefinitions";
 
+export enum VisualizationItemType {
+    DATA_PROVIDER_VISUALIZATION = "data-provider-visualization",
+    GROUP = "group",
+}
+
 export enum VisualizationTarget {
     DECK_GL = "deck_gl",
     ESV = "esv",
     // VIDEX = "videx",
 }
+
+export type DataProviderVisualizationTargetTypes = {
+    [VisualizationTarget.DECK_GL]: DeckGlLayer<any>;
+    [VisualizationTarget.ESV]: EsvLayer<any>;
+};
+
+export type DataProviderVisualization<TTarget extends VisualizationTarget> = {
+    itemType: VisualizationItemType.DATA_PROVIDER_VISUALIZATION;
+    id: string;
+    name: string;
+    visualization: DataProviderVisualizationTargetTypes[TTarget];
+};
 
 export type TransformerArgs<
     TSettings extends Settings,
@@ -45,7 +62,9 @@ export type TransformerArgs<
 };
 
 export type VisualizationGroupMetadata = {
+    itemType: VisualizationItemType.GROUP;
     id: string;
+    groupType: GroupType | null;
     color: string | null;
     name: string;
 };
@@ -60,7 +79,7 @@ export type VisualizationGroup<
     TTarget extends VisualizationTarget,
     TAccumulatedData extends Record<string, any> = never,
 > = VisualizationGroupMetadata & {
-    children: (VisualizationGroup<TTarget, TAccumulatedData> | DataProviderVisualizationTargetTypes[TTarget])[];
+    children: (VisualizationGroup<TTarget, TAccumulatedData> | DataProviderVisualization<TTarget>)[];
     annotations: Annotation[];
     aggregatedErrorMessages: (StatusMessage | string)[];
     combinedBoundingBox: bbox.BBox | null;
@@ -86,11 +105,6 @@ export interface GroupDataCollector<
         getSetting: <TKey extends TSettingKey>(setting: TKey) => SettingTypes[TKey];
     }): TCustomGroupProps[TGroupKey];
 }
-
-export type DataProviderVisualizationTargetTypes = {
-    [VisualizationTarget.DECK_GL]: DeckGlLayer<any>;
-    [VisualizationTarget.ESV]: EsvLayer<any>;
-};
 
 export type Annotation = ColorScaleWithId; // Add more possible annotation types here, e.g. ColorSets etc.
 
@@ -240,10 +254,7 @@ export class VisualizationAssembler<
         accumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
     ): VisualizationGroup<TTarget, TAccumulatedData> {
-        const children: (
-            | VisualizationGroup<TTarget, TAccumulatedData>
-            | DataProviderVisualizationTargetTypes[TTarget]
-        )[] = [];
+        const children: (VisualizationGroup<TTarget, TAccumulatedData> | DataProviderVisualization<TTarget>)[] = [];
         const annotations: Annotation[] = [];
         const aggregatedErrorMessages: (StatusMessage | string)[] = [];
         const hoverVisualizationFunctions: ((
@@ -321,9 +332,11 @@ export class VisualizationAssembler<
         }
 
         return {
+            itemType: VisualizationItemType.GROUP,
             id: "",
             color: null,
             name: "",
+            groupType: null,
             children,
             aggregatedErrorMessages: aggregatedErrorMessages,
             combinedBoundingBox: combinedBoundingBox,
@@ -347,7 +360,7 @@ export class VisualizationAssembler<
         TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     >(
         group: Group<TSettings>,
-        children: (VisualizationGroup<TTarget, TAccumulatedData> | DataProviderVisualizationTargetTypes[TTarget])[],
+        children: (VisualizationGroup<TTarget, TAccumulatedData> | DataProviderVisualization<TTarget>)[],
         annotations: Annotation[],
     ): VisualizationGroup<TTarget, TAccumulatedData> & TCustomGroupProps[keyof TCustomGroupProps] {
         const func = this._groupDataCollectors.get(group.getGroupType());
@@ -358,9 +371,11 @@ export class VisualizationAssembler<
         }
 
         return {
+            item: VisualizationItemType.GROUP,
             id: group.getItemDelegate().getId(),
             color: group.getGroupDelegate().getColor(),
             name: group.getItemDelegate().getName(),
+            groupType: group.getGroupType(),
             children,
             annotations,
             aggregatedErrorMessages: [],
@@ -405,13 +420,23 @@ export class VisualizationAssembler<
     private makeDataProviderVisualization(
         dataProvider: DataProvider<any, any, any>,
         injectedData?: TInjectedData,
-    ): DataProviderVisualizationTargetTypes[TTarget] | null {
+    ): DataProviderVisualization<TTarget> | null {
         const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToVisualization;
         if (!func) {
             throw new Error(`No visualization transformer found for data provider ${dataProvider.getType()}`);
         }
 
-        return func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
+        const visualization = func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
+        if (!visualization) {
+            return null;
+        }
+
+        return {
+            itemType: VisualizationItemType.DATA_PROVIDER_VISUALIZATION,
+            id: dataProvider.getItemDelegate().getId(),
+            name: dataProvider.getItemDelegate().getName(),
+            visualization,
+        };
     }
 
     private makeDataProviderHoverVisualizationsFunction(

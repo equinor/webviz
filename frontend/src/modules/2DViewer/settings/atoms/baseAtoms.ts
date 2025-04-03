@@ -4,5 +4,5 @@ import type { DataProviderManager } from "@modules/_shared/DataProviderFramework
 import { atom } from "jotai";
 
 export const userSelectedFieldIdentifierAtom = atom<string | null>(null);
-export const layerManagerAtom = atom<DataProviderManager | null>(null);
+export const dataProviderManagerAtom = atom<DataProviderManager | null>(null);
 export const preferredViewLayoutAtom = atom<PreferredViewLayout>(PreferredViewLayout.VERTICAL);

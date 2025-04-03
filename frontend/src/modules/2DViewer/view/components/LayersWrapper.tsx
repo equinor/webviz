@@ -1,6 +1,6 @@
 import React from "react";
 
-import { View as DeckGlView } from "@deck.gl/core";
+import { View as DeckGlView, type Layer } from "@deck.gl/core";
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
@@ -29,12 +29,15 @@ import { DrilledWellborePicks } from "@modules/_shared/DataProviderFramework/dat
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
-import { View } from "@modules/_shared/DataProviderFramework/groups/implementations/View";
 import type {
     Annotation,
+    VisualizationGroup,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { VisualizationAssembler } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import {
+    VisualizationAssembler,
+    VisualizationItemType,
+} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
 import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
@@ -42,7 +45,6 @@ import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFram
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import type { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
-import type { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
@@ -55,38 +57,42 @@ export type LayersWrapperProps = {
     viewContext: ViewContext<Interfaces>;
 };
 
-const VISUALIZATION_FACTORY = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
+const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
-VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomLayerType.OBSERVED_SURFACE, ObservedSurface, {
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomLayerType.OBSERVED_SURFACE, ObservedSurface, {
     transformToVisualization: makeObservedSurfaceLayer,
     transformToBoundingBox: makeSurfaceLayerBoundingBox,
     transformToAnnotations: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomLayerType.REALIZATION_SURFACE, RealizationSurface, {
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomLayerType.REALIZATION_SURFACE, RealizationSurface, {
     transformToVisualization: makeRealizationSurfaceLayer,
     transformToBoundingBox: makeSurfaceLayerBoundingBox,
     transformToAnnotations: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomLayerType.STATISTICAL_SURFACE, StatisticalSurface, {
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomLayerType.STATISTICAL_SURFACE, StatisticalSurface, {
     transformToVisualization: makeStatisticalSurfaceLayer,
     transformToBoundingBox: makeSurfaceLayerBoundingBox,
     transformToAnnotations: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomLayerType.REALIZATION_POLYGONS, RealizationPolygons, {
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomLayerType.REALIZATION_POLYGONS, RealizationPolygons, {
     transformToVisualization: makeRealizationPolygonsLayer,
     transformToBoundingBox: makePolygonDataBoundingBox,
     transformToAnnotations: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomLayerType.REALIZATION_GRID, RealizationGrid, {
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomLayerType.REALIZATION_GRID, RealizationGrid, {
     transformToVisualization: makeRealizationGridLayer,
     transformToBoundingBox: makeRealizationGridBoundingBox,
     transformToAnnotations: makeColorScaleAnnotation,
 });
-VISUALIZATION_FACTORY.registerDataProviderTransformers(DataProviderType.DRILLED_WELLBORE_PICKS, DrilledWellborePicks, {
-    transformToVisualization: makeDrilledWellborePicksLayer,
-    transformToBoundingBox: makeDrilledWellborePicksBoundingBox,
-});
-VISUALIZATION_FACTORY.registerDataProviderTransformers(
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    DataProviderType.DRILLED_WELLBORE_PICKS,
+    DrilledWellborePicks,
+    {
+        transformToVisualization: makeDrilledWellborePicksLayer,
+        transformToBoundingBox: makeDrilledWellborePicksBoundingBox,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.DRILLED_WELL_TRAJECTORIES,
     DrilledWellTrajectories,
     {
@@ -94,8 +100,6 @@ VISUALIZATION_FACTORY.registerDataProviderTransformers(
         transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
     },
 );
-
-VISUALIZATION_FACTORY.registerGroupDataCollector(GroupType.VIEW, View, () => ({}));
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<bbox.BBox | null>(null);
@@ -106,82 +110,84 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     usePublishSubscribeTopicValue(props.layerManager, DataProviderManagerTopic.DATA_REVISION);
 
+    const views: VisualizationGroup<VisualizationTarget.DECK_GL>[] = [];
     const viewports: ViewportType[] = [];
-    const viewerLayers: LayerWithPosition<VisualizationTarget.DECK_GL>[] = [];
+    const deckGlLayers: Layer<any>[] = [];
     const viewportAnnotations: React.ReactNode[] = [];
     const globalAnnotations: Annotation[] = [];
-
-    const views: ViewsType = {
-        layout: [1, 1],
-        viewports: viewports,
-        showLabel: false,
-    };
+    const globalLayerIds: string[] = [];
 
     let numCols = 0;
     let numRows = 0;
 
     let numLoadingLayers = 0;
 
-    const factoryProduct = VISUALIZATION_FACTORY.make(props.layerManager);
+    const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.layerManager);
 
-    numCols = Math.ceil(Math.sqrt(factoryProduct.groups.length));
-    numRows = Math.ceil(factoryProduct.groups.length / numCols);
+    for (const item of assemblerProduct.children) {
+        if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
+            const layerIds: string[] = [];
+            for (const child of item.children) {
+                if (child.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
+                    const layer = child.visualization;
+                    layerIds.push(layer.id);
+                    deckGlLayers.push(layer);
+                }
+            }
+            viewports.push({
+                id: item.id,
+                name: item.name,
+                isSync: true,
+                layerIds,
+            });
+
+            viewportAnnotations.push(
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                /* @ts-expect-error */
+                <DeckGlView key={view.id} id={view.id}>
+                    <ColorLegendsContainer
+                        colorScales={[...item.annotations.filter((el) => "colorScale" in el), ...globalAnnotations]}
+                        height={((mainDivSize.height / 3) * 2) / numCols - 20}
+                        position="left"
+                    />
+                    <div className="font-bold text-lg flex gap-2 justify-center items-center">
+                        <div className="flex gap-2 items-center bg-white/50 p-2 backdrop-blur-sm rounded-sm">
+                            <div
+                                className="rounded-full h-3 w-3 border border-white"
+                                style={{ backgroundColor: item.color ?? undefined }}
+                            />
+                            <div className="">{item.name}</div>
+                        </div>
+                    </div>
+                </DeckGlView>,
+            );
+        } else if (item.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
+            deckGlLayers.push(item.visualization);
+            globalLayerIds.push(item.visualization.id);
+        }
+    }
+
+    numCols = Math.ceil(Math.sqrt(views.length));
+    numRows = Math.ceil(views.length / numCols);
 
     if (props.preferredViewLayout === PreferredViewLayout.HORIZONTAL) {
         [numCols, numRows] = [numRows, numCols];
     }
 
-    views.layout = [numCols, numRows];
-
-    viewerLayers.push(...factoryProduct.dataLayers);
-    globalAnnotations.push(...factoryProduct.annotations);
-    const globalLayerIds = factoryProduct.dataLayers.map((layer) => layer.layer.id);
-
-    for (const view of factoryProduct.groups) {
-        viewports.push({
-            id: view.id,
-            name: view.name,
-            isSync: true,
-            layerIds: [...globalLayerIds, ...view.children.map((layer) => layer.layer.id), "placeholder"],
-        });
-        viewerLayers.push(...view.children);
-
-        viewportAnnotations.push(
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            /* @ts-expect-error */
-            <DeckGlView key={view.id} id={view.id}>
-                <ColorLegendsContainer
-                    colorScales={[...view.annotations.filter((el) => "colorScale" in el), ...globalAnnotations]}
-                    height={((mainDivSize.height / 3) * 2) / numCols - 20}
-                    position="left"
-                />
-                <div className="font-bold text-lg flex gap-2 justify-center items-center">
-                    <div className="flex gap-2 items-center bg-white/50 p-2 backdrop-blur-sm rounded-sm">
-                        <div
-                            className="rounded-full h-3 w-3 border border-white"
-                            style={{ backgroundColor: view.color ?? undefined }}
-                        />
-                        <div className="">{view.name}</div>
-                    </div>
-                </div>
-            </DeckGlView>,
-        );
-    }
-
-    if (factoryProduct.combinedBoundingBox !== null) {
+    if (assemblerProduct.combinedBoundingBox !== null) {
         if (prevBoundingBox !== null) {
-            if (!bbox.outerBoxcontainsInnerBox(prevBoundingBox, factoryProduct.combinedBoundingBox)) {
-                setPrevBoundingBox(factoryProduct.combinedBoundingBox);
+            if (!bbox.outerBoxcontainsInnerBox(prevBoundingBox, assemblerProduct.combinedBoundingBox)) {
+                setPrevBoundingBox(assemblerProduct.combinedBoundingBox);
             }
         } else {
-            setPrevBoundingBox(factoryProduct.combinedBoundingBox);
+            setPrevBoundingBox(assemblerProduct.combinedBoundingBox);
         }
     }
 
-    numLoadingLayers = factoryProduct.numLoadingDataProviders;
-    statusWriter.setLoading(factoryProduct.numLoadingDataProviders > 0);
+    numLoadingLayers = assemblerProduct.numLoadingDataProviders;
+    statusWriter.setLoading(assemblerProduct.numLoadingDataProviders > 0);
 
-    for (const message of factoryProduct.aggregatedErrorMessages) {
+    for (const message of assemblerProduct.aggregatedErrorMessages) {
         statusWriter.addError(message);
     }
 
@@ -190,17 +196,20 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         bounds = [prevBoundingBox.min.x, prevBoundingBox.min.y, prevBoundingBox.max.x, prevBoundingBox.max.y];
     }
 
-    const layers = viewerLayers.toSorted((a, b) => b.position - a.position).map((layer) => layer.layer);
-    layers.push(new PlaceholderLayer({ id: "placeholder" }));
+    deckGlLayers.push(new PlaceholderLayer({ id: "placeholder" }));
 
     return (
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
             <PendingWrapper isPending={numLoadingLayers > 0}>
                 <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
                     <ReadoutWrapper
-                        views={views}
+                        views={{
+                            layout: [numCols, numRows],
+                            viewports: viewports,
+                            showLabel: false,
+                        }}
                         viewportAnnotations={viewportAnnotations}
-                        layers={layers}
+                        layers={deckGlLayers}
                         bounds={bounds}
                     />
                 </div>

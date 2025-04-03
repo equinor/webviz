@@ -10,8 +10,7 @@ import { OverriddenValueProviderType, SettingTopic } from "./SettingManager";
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import type { SettingComponentProps as SettingComponentPropsInterface } from "../../interfacesAndTypes/customSettingImplementation";
 import type { Setting, SettingCategories, SettingTypes } from "../../settings/settingsDefinitions";
-import type { DataProviderManager } from "../DataProviderManager/DataProviderManager";
-import { LayerManagerTopic } from "../DataProviderManager/DataProviderManager";
+import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
 
 export type SettingComponentProps<
     TSetting extends Setting,
@@ -42,7 +41,7 @@ export function SettingComponent<
     );
     const isLoading = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_LOADING);
     const isInitialized = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_INITIALIZED);
-    const globalSettings = usePublishSubscribeTopicValue(props.manager, LayerManagerTopic.GLOBAL_SETTINGS);
+    const globalSettings = usePublishSubscribeTopicValue(props.manager, DataProviderManagerTopic.GLOBAL_SETTINGS);
 
     let actuallyLoading = isLoading || !isInitialized;
     if (!isLoading && isPersisted && !isValid) {
