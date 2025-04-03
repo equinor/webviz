@@ -96,7 +96,7 @@ export type EsvView = {
     extensionLength: number;
 };
 
-export interface GroupDataCollector<
+export interface GroupCustomPropsCollector<
     TSettings extends Settings,
     TGroupKey extends keyof TCustomGroupProps,
     TCustomGroupProps extends Record<GroupType, Record<string, any>> = Record<string, never>,
@@ -208,8 +208,10 @@ export class VisualizationAssembler<
         DataProviderTransformers<any, any, TTarget, any, TInjectedData, TAccumulatedData>
     > = new Map();
 
-    private _groupDataCollectors: Map<keyof TCustomGroupProps, GroupDataCollector<any, any, TCustomGroupProps>> =
-        new Map();
+    private _groupCustomPropsCollectors: Map<
+        keyof TCustomGroupProps,
+        GroupCustomPropsCollector<any, any, TCustomGroupProps>
+    > = new Map();
 
     registerDataProviderTransformers<
         TSettings extends Settings,
@@ -228,17 +230,17 @@ export class VisualizationAssembler<
         this._dataProviderTransformers.set(dataProviderName, transformers);
     }
 
-    registerGroupDataCollector<TSettings extends Settings, TGroupType extends keyof TCustomGroupProps>(
+    registerGroupCustomPropsCollector<TSettings extends Settings, TGroupType extends keyof TCustomGroupProps>(
         groupName: TGroupType,
         groupCtor: {
             new (...params: any[]): CustomGroupImplementation | CustomGroupImplementationWithSettings<TSettings>;
         },
-        collector: GroupDataCollector<TSettings, TGroupType, TCustomGroupProps>,
+        collector: GroupCustomPropsCollector<TSettings, TGroupType, TCustomGroupProps>,
     ): void {
         if (this._dataProviderTransformers.has(groupCtor.name)) {
             throw new Error(`Data collector function for group ${groupCtor.name} already registered`);
         }
-        this._groupDataCollectors.set(groupName, collector);
+        this._groupCustomPropsCollectors.set(groupName, collector);
     }
 
     make(
@@ -376,7 +378,7 @@ export class VisualizationAssembler<
         )[],
         annotations: Annotation[],
     ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
-        const func = this._groupDataCollectors.get(group.getGroupType());
+        const func = this._groupCustomPropsCollectors.get(group.getGroupType());
 
         return {
             itemType: VisualizationItemType.GROUP,
