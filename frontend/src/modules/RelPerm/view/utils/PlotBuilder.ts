@@ -60,7 +60,8 @@ export class PlotBuilder {
         this._uniqueEnsembleIdents = Array.from(new Set(this._relPermSpecs.map((spec) => spec.ensembleIdent)));
         this._uniqueSatNums = Array.from(new Set(this._relPermSpecs.map((spec) => spec.satNum)));
         this._subplotOwner = groupBy;
-
+        this._limitDirection = limitDirection;
+        this._limitDirectionMaxElements = limitDirectionMaxElements;
         if (this._subplotOwner === GroupBy.ENSEMBLE) {
             this._numberOfSubplots = this._uniqueEnsembleIdents.length;
         } else if (this._subplotOwner === GroupBy.SATNUM) {
