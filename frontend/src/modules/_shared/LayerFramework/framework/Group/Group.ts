@@ -1,3 +1,5 @@
+import { isDevMode } from "@lib/utils/devMode";
+
 import { GroupDelegate } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
@@ -17,6 +19,10 @@ import type { SettingManager } from "../SettingManager/SettingManager";
 import { makeSettings } from "../utils/makeSettings";
 
 export function isGroup(obj: any): obj is Group {
+    if (!isDevMode()) {
+        return obj instanceof Group;
+    }
+
     if (typeof obj !== "object" || obj === null) {
         return false;
     }
