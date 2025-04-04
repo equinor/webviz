@@ -5,7 +5,10 @@ import type {
     DataProviderInformationAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import {
+    CancelUpdate,
+    type DefineDependenciesArgs,
+} from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { FullSurfaceAddress } from "@modules/_shared/Surface";
@@ -66,6 +69,7 @@ export class ObservedSurface implements CustomDataProviderImplementation<Observe
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
+        settingAttributesUpdater,
         workbenchSession,
         queryClient,
     }: DefineDependenciesArgs<ObservedSurfaceSettings>) {
@@ -110,6 +114,24 @@ export class ObservedSurface implements CustomDataProviderImplementation<Observe
             ];
 
             return availableAttributes;
+        });
+
+        settingAttributesUpdater(Setting.SURFACE_NAME, ({ getLocalSetting }) => {
+            const attribute = getLocalSetting(Setting.ATTRIBUTE);
+
+            if (!attribute) {
+                return CancelUpdate;
+            }
+
+            if (attribute === "amplitude_mean") {
+                return {
+                    visible: false,
+                };
+            }
+
+            return {
+                visible: true,
+            };
         });
 
         availableSettingsUpdater(Setting.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
