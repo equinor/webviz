@@ -133,7 +133,7 @@ export class SettingsContextDelegate<
         this.createDependencies();
     }
 
-    getLayerManager(): DataProviderManager {
+    getDataProviderManager(): DataProviderManager {
         return this._dataProviderManager;
     }
 
@@ -236,7 +236,7 @@ export class SettingsContextDelegate<
         const settingDelegate = this._settings[key];
         settingDelegate.setAvailableValues(availableValues);
 
-        this.getLayerManager().publishTopic(DataProviderManagerTopic.AVAILABLE_SETTINGS_CHANGED);
+        this.getDataProviderManager().publishTopic(DataProviderManagerTopic.AVAILABLE_SETTINGS_CHANGED);
     }
 
     setStoredData<K extends keyof TStoredData>(key: K, data: TStoredData[K] | null): void {
@@ -325,11 +325,11 @@ export class SettingsContextDelegate<
             handler: (value: GlobalSettings[K]) => void,
         ) => {
             const handleChange = (): void => {
-                handler(this.getLayerManager.bind(this)().getGlobalSetting(key));
+                handler(this.getDataProviderManager.bind(this)().getGlobalSetting(key));
             };
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "dependencies",
-                this.getLayerManager()
+                this.getDataProviderManager()
                     .getPublishSubscribeDelegate()
                     .makeSubscriberFunction(DataProviderManagerTopic.GLOBAL_SETTINGS)(handleChange),
             );
@@ -421,9 +421,9 @@ export class SettingsContextDelegate<
                 availableSettingsUpdater,
                 storedDataUpdater,
                 helperDependency,
-                workbenchSession: this.getLayerManager().getWorkbenchSession(),
-                workbenchSettings: this.getLayerManager().getWorkbenchSettings(),
-                queryClient: this.getLayerManager().getQueryClient(),
+                workbenchSession: this.getDataProviderManager().getWorkbenchSession(),
+                workbenchSettings: this.getDataProviderManager().getWorkbenchSettings(),
+                queryClient: this.getDataProviderManager().getQueryClient(),
             });
         }
     }

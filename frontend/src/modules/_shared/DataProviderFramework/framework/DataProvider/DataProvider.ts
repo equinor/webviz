@@ -41,7 +41,7 @@ export enum DataProviderStatus {
     SUCCESS = "SUCCESS",
 }
 
-export type LayerDelegatePayloads<TData> = {
+export type DataProviderPayloads<TData> = {
     [DataProviderTopic.STATUS]: DataProviderStatus;
     [DataProviderTopic.DATA]: TData;
     [DataProviderTopic.SUBORDINATED]: boolean;
@@ -96,7 +96,7 @@ export class DataProvider<
         TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
         TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     >
-    implements Item, PublishSubscribe<LayerDelegatePayloads<TData>>
+    implements Item, PublishSubscribe<DataProviderPayloads<TData>>
 {
     private _type: string;
     private _customDataProviderImpl: CustomDataProviderImplementation<
@@ -111,7 +111,7 @@ export class DataProvider<
     private _dataProviderManager: DataProviderManager;
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _cancellationPending: boolean = false;
-    private _publishSubscribeDelegate = new PublishSubscribeDelegate<LayerDelegatePayloads<TData>>();
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<DataProviderPayloads<TData>>();
     private _queryKeys: unknown[][] = [];
     private _status: DataProviderStatus = DataProviderStatus.IDLE;
     private _data: TData | null = null;
@@ -271,11 +271,11 @@ export class DataProvider<
         return this._valueRange;
     }
 
-    getLayerManager(): DataProviderManager {
+    getDataProviderManager(): DataProviderManager {
         return this._dataProviderManager;
     }
 
-    makeSnapshotGetter<T extends DataProviderTopic>(topic: T): () => LayerDelegatePayloads<TData>[T] {
+    makeSnapshotGetter<T extends DataProviderTopic>(topic: T): () => DataProviderPayloads<TData>[T] {
         const snapshotGetter = (): any => {
             if (topic === DataProviderTopic.STATUS) {
                 return this._status;
@@ -291,7 +291,7 @@ export class DataProvider<
         return snapshotGetter;
     }
 
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<LayerDelegatePayloads<TData>> {
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<DataProviderPayloads<TData>> {
         return this._publishSubscribeDelegate;
     }
 
@@ -388,9 +388,9 @@ export class DataProvider<
         };
     }
 
-    deserializeState(serializedLayer: SerializedDataProvider<TSettings, TSettingKey>): void {
-        this.getItemDelegate().deserializeState(serializedLayer);
-        this._settingsContextDelegate.deserializeSettings(serializedLayer.settings);
+    deserializeState(serializedDataProvider: SerializedDataProvider<TSettings, TSettingKey>): void {
+        this.getItemDelegate().deserializeState(serializedDataProvider);
+        this._settingsContextDelegate.deserializeSettings(serializedDataProvider.settings);
     }
 
     beforeDestroy(): void {

@@ -26,7 +26,7 @@ export function DataProviderComponent(props: DataProviderComponentProps): React.
     const isExpanded = usePublishSubscribeTopicValue(props.dataProvider.getItemDelegate(), ItemDelegateTopic.EXPANDED);
 
     function makeSetting(setting: SettingManager<any>) {
-        const manager = props.dataProvider.getItemDelegate().getLayerManager();
+        const manager = props.dataProvider.getItemDelegate().getDataProviderManager();
         if (!manager) {
             return null;
         }

@@ -27,7 +27,7 @@ export enum DataProviderManagerTopic {
     ITEMS = "ITEMS",
     SETTINGS_CHANGED = "SETTINGS_CHANGED",
     AVAILABLE_SETTINGS_CHANGED = "AVAILABLE_SETTINGS_CHANGED",
-    DATA_REVISION = "LAYER_DATA_REVISION",
+    DATA_REVISION = "DATA_REVISION",
     GLOBAL_SETTINGS = "GLOBAL_SETTINGS",
     SHARED_SETTINGS_CHANGED = "SHARED_SETTINGS_CHANGED",
 }
@@ -74,7 +74,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         this._workbenchSession = workbenchSession;
         this._workbenchSettings = workbenchSettings;
         this._queryClient = queryClient;
-        this._itemDelegate = new ItemDelegate("LayerManager", 0, this);
+        this._itemDelegate = new ItemDelegate("DataProviderManager", 0, this);
         this._groupDelegate = new GroupDelegate(this);
 
         this._globalSettings = this.initializeGlobalSettings();

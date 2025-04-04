@@ -19,7 +19,7 @@ export type SharedSettingComponentProps = {
 export function SharedSettingComponent(props: SharedSettingComponentProps): React.ReactNode {
     const isExpanded = usePublishSubscribeTopicValue(props.sharedSetting.getItemDelegate(), ItemDelegateTopic.EXPANDED);
 
-    const manager = props.sharedSetting.getItemDelegate().getLayerManager();
+    const manager = props.sharedSetting.getItemDelegate().getDataProviderManager();
     if (!manager) {
         return null;
     }
@@ -79,7 +79,7 @@ function Actions(props: ActionProps): React.ReactNode {
         <>
             <DenseIconButton
                 onClick={handleRemove}
-                title="Remove layer group"
+                title="Remove group"
                 colorScheme={DenseIconButtonColorScheme.DANGER}
             >
                 <Delete fontSize="inherit" />

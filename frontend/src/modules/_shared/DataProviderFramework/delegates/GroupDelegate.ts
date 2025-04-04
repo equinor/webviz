@@ -213,7 +213,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         }
 
         this._deserializing = true;
-        const factory = new DeserializationAssistant(this._owner.getItemDelegate().getLayerManager());
+        const factory = new DeserializationAssistant(this._owner.getItemDelegate().getDataProviderManager());
         for (const child of children) {
             const item = factory.makeItem(child);
             this.appendChild(item);
@@ -280,7 +280,10 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         child.getItemDelegate().setParentGroup(null);
 
         if (child instanceof SharedSetting) {
-            this._owner?.getItemDelegate().getLayerManager().publishTopic(DataProviderManagerTopic.SETTINGS_CHANGED);
+            this._owner
+                ?.getItemDelegate()
+                .getDataProviderManager()
+                .publishTopic(DataProviderManagerTopic.SETTINGS_CHANGED);
         }
 
         this.publishTopic(GroupDelegateTopic.CHILDREN);

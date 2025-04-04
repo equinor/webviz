@@ -23,7 +23,7 @@ export class DataProviderRegistry {
         customDataProviderImplementationConstructorParams?: ConstructorParameters<TDataProvider>,
     ): void {
         if (this._registeredDataProviders.has(type)) {
-            throw new Error(`Layer ${type} already registered`);
+            throw new Error(`Data provider ${type} already registered`);
         }
         this._registeredDataProviders.set(type, {
             customDataProviderImplementation,
@@ -38,7 +38,7 @@ export class DataProviderRegistry {
     ): DataProvider<any, any, any, any> {
         const stored = this._registeredDataProviders.get(type);
         if (!stored) {
-            throw new Error(`Layer ${type} not found`);
+            throw new Error(`Data provider ${type} not found`);
         }
         const customDataProviderImplementation = new stored.customDataProviderImplementation(
             ...(stored.customDataProviderImplementationConstructorParams ?? []),

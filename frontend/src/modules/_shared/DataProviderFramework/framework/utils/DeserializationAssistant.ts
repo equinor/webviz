@@ -28,15 +28,15 @@ export class DeserializationAssistant {
         }
 
         if (serialized.type === SerializedType.DATA_PROVIDER) {
-            const serializedLayer = serialized as SerializedDataProvider<any>;
+            const serializedDataProvider = serialized as SerializedDataProvider<any>;
             const provider = DataProviderRegistry.makeDataProvider(
-                serializedLayer.dataProviderType,
+                serializedDataProvider.dataProviderType,
                 this._dataProviderManager,
-                serializedLayer.name,
+                serializedDataProvider.name,
             );
-            provider.deserializeState(serializedLayer);
-            provider.getItemDelegate().setId(serializedLayer.id);
-            provider.getItemDelegate().setName(serializedLayer.name);
+            provider.deserializeState(serializedDataProvider);
+            provider.getItemDelegate().setId(serializedDataProvider.id);
+            provider.getItemDelegate().setName(serializedDataProvider.name);
             return provider;
         }
 

@@ -12,7 +12,7 @@ export class DeltaSurface implements ItemGroup {
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
-    private _childrenLayerDelegateSet: Set<DataProvider<any, any>> = new Set();
+    private _childrenDataProviderSet: Set<DataProvider<any, any>> = new Set();
 
     constructor(name: string, dataProviderManager: DataProviderManager) {
         this._groupDelegate = new GroupDelegate(this);
@@ -33,16 +33,16 @@ export class DeltaSurface implements ItemGroup {
     private handleChildrenChange(): void {
         this._unsubscribeHandler.unsubscribe("providers");
 
-        for (const provider of this._childrenLayerDelegateSet) {
+        for (const provider of this._childrenDataProviderSet) {
             provider.setIsSubordinated(false);
         }
 
-        this._childrenLayerDelegateSet.clear();
+        this._childrenDataProviderSet.clear();
 
         for (const child of this._groupDelegate.getChildren()) {
             if (child instanceof DataProvider) {
                 child.setIsSubordinated(true);
-                this._childrenLayerDelegateSet.add(child);
+                this._childrenDataProviderSet.add(child);
 
                 this._unsubscribeHandler.registerUnsubscribeFunction(
                     "providers",

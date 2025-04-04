@@ -11,7 +11,7 @@ import type { MakeSettingTypesMap, Settings } from "../../settings/settingsDefin
 import type { SettingsContextDelegate } from "../SettingsContextDelegate";
 
 /*
- * Dependency class is used to represent a node in the dependency graph of a layer settings context.
+ * Dependency class is used to represent a node in the dependency graph of a data provider settings context.
  * It can be compared to an atom in Jotai.
  *
  * It can subscribe to both changes in settings (local and global) and other dependencies.
@@ -158,7 +158,7 @@ export class Dependency<
 
         this._cachedGlobalSettingsMap.set(
             settingName as string,
-            this._contextDelegate.getLayerManager().getGlobalSetting(settingName),
+            this._contextDelegate.getDataProviderManager().getGlobalSetting(settingName),
         );
         return this._cachedGlobalSettingsMap.get(settingName as string);
     }

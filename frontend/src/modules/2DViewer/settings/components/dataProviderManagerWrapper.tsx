@@ -20,7 +20,7 @@ import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/deleg
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { DataProvider } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
-import { DataLayerManagerComponent } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManagerComponent";
+import { DataProviderManagerComponent } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManagerComponent";
 import { DeltaSurface } from "@modules/_shared/DataProviderFramework/framework/DeltaSurface/DeltaSurface";
 import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
 import { SettingsGroup } from "@modules/_shared/DataProviderFramework/framework/SettingsGroup/SettingsGroup";
@@ -214,9 +214,9 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
     }
 
     return (
-        <DataLayerManagerComponent
+        <DataProviderManagerComponent
             title={"Layers"}
-            dataLayerManager={props.dataProviderManager}
+            dataProviderManager={props.dataProviderManager}
             additionalHeaderComponents={
                 <Dropdown>
                     <MenuButton label="Settings">

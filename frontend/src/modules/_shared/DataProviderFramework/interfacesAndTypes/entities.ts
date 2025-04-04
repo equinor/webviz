@@ -5,7 +5,7 @@ import type { ItemDelegate } from "../delegates/ItemDelegate";
 import type { SharedSettingsDelegate } from "../delegates/SharedSettingsDelegate";
 
 /**
- * Each entity in the data layer framework is based upon the Item interface.
+ * Each entity in the data provider framework is based upon the Item interface.
  * It provides methods for serializing and deserializing the state of the entity.
  * It also provides a delegate that can be used to interact with the item - e.g. changing its name, visibility, etc.
  */

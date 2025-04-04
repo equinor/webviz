@@ -12,12 +12,12 @@ export type VisibilityToggleProps = {
 export function VisibilityToggle(props: VisibilityToggleProps): React.ReactNode {
     const isVisible = usePublishSubscribeTopicValue(props.item.getItemDelegate(), ItemDelegateTopic.VISIBILITY);
 
-    function handleToggleLayerVisibility() {
+    function handleToggleVisibility() {
         props.item.getItemDelegate().setVisible(!isVisible);
     }
 
     return (
-        <DenseIconButton onClick={handleToggleLayerVisibility} title="Toggle visibility">
+        <DenseIconButton onClick={handleToggleVisibility} title="Toggle visibility">
             {isVisible ? <Visibility fontSize="inherit" /> : <VisibilityOff fontSize="inherit" />}
         </DenseIconButton>
     );

@@ -44,7 +44,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
     }
 
     function makeSetting(setting: SettingManager<any>) {
-        const manager = props.group.getItemDelegate().getLayerManager();
+        const manager = props.group.getItemDelegate().getDataProviderManager();
         if (!manager) {
             return null;
         }
@@ -61,7 +61,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
 
     function makeEndAdornment() {
         const adornments: React.ReactNode[] = [];
-        adornments.push(<Actions key="layers-actions" actionGroups={actions} onActionClick={handleActionClick} />);
+        adornments.push(<Actions key="actions" actionGroups={actions} onActionClick={handleActionClick} />);
         adornments.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);
         adornments.push(<RemoveItemButton key="remove" item={props.group} />);
         return adornments;

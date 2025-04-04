@@ -20,26 +20,26 @@ import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
-export type LayerManagerComponentProps = {
+export type DataProviderManagerComponentProps = {
     title: string;
-    dataLayerManager: DataProviderManager;
+    dataProviderManager: DataProviderManager;
     additionalHeaderComponents: React.ReactNode;
     groupActions: ActionGroup[] | ((group: ItemGroup) => ActionGroup[]);
     onAction: (identifier: string, groupDelegate: GroupDelegate) => void;
     isMoveAllowed?: (movedItem: Item, destinationGroup: ItemGroup) => boolean;
 };
 
-export function DataLayerManagerComponent(props: LayerManagerComponentProps): React.ReactNode {
+export function DataProviderManagerComponent(props: DataProviderManagerComponentProps): React.ReactNode {
     const { groupActions } = props;
 
     const listRef = React.useRef<HTMLDivElement>(null);
     const listSize = useElementSize(listRef);
 
-    const groupDelegate = props.dataLayerManager.getGroupDelegate();
+    const groupDelegate = props.dataProviderManager.getGroupDelegate();
     const items = usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
     function handleActionClick(identifier: string, group?: ItemGroup) {
-        let groupDelegate = props.dataLayerManager.getGroupDelegate();
+        let groupDelegate = props.dataProviderManager.getGroupDelegate();
         if (group) {
             groupDelegate = group.getGroupDelegate();
         }
@@ -55,7 +55,7 @@ export function DataLayerManagerComponent(props: LayerManagerComponentProps): Re
 
         const destinationItem = args.destinationId
             ? groupDelegate.findDescendantById(args.destinationId)
-            : props.dataLayerManager;
+            : props.dataProviderManager;
 
         if (!destinationItem || !instanceofItemGroup(destinationItem)) {
             return false;
@@ -106,7 +106,7 @@ export function DataLayerManagerComponent(props: LayerManagerComponentProps): Re
             return;
         }
 
-        let origin = props.dataLayerManager.getGroupDelegate();
+        let origin = props.dataProviderManager.getGroupDelegate();
         if (originId) {
             const candidate = groupDelegate.findDescendantById(originId);
             if (candidate && instanceofItemGroup(candidate)) {
@@ -114,7 +114,7 @@ export function DataLayerManagerComponent(props: LayerManagerComponentProps): Re
             }
         }
 
-        let destination = props.dataLayerManager.getGroupDelegate();
+        let destination = props.dataProviderManager.getGroupDelegate();
         if (destinationId) {
             const candidate = groupDelegate.findDescendantById(destinationId);
             if (candidate && instanceofItemGroup(candidate)) {
@@ -133,10 +133,10 @@ export function DataLayerManagerComponent(props: LayerManagerComponentProps): Re
 
     const actions = React.useMemo(() => {
         if (typeof groupActions === "function") {
-            return groupActions(props.dataLayerManager);
+            return groupActions(props.dataProviderManager);
         }
         return groupActions;
-    }, [props.dataLayerManager, groupActions]);
+    }, [props.dataProviderManager, groupActions]);
 
     const makeActionsForGroup = (group: ItemGroup) => {
         if (typeof groupActions === "function") {
@@ -151,7 +151,7 @@ export function DataLayerManagerComponent(props: LayerManagerComponentProps): Re
                 <div className="flex bg-slate-100 h-12 p-2 items-center border-b border-gray-300 gap-2">
                     <div className="grow font-bold text-sm">{props.title}</div>
                     <Actions actionGroups={actions} onActionClick={handleActionClick} />
-                    <ExpandCollapseAllButton group={props.dataLayerManager} />
+                    <ExpandCollapseAllButton group={props.dataProviderManager} />
                     {props.additionalHeaderComponents}
                 </div>
                 <div

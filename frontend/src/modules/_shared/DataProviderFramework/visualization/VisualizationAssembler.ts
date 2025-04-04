@@ -22,7 +22,6 @@ import type {
 import { instanceofItemGroup } from "../interfacesAndTypes/entities";
 import type { StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
-import type { IntersectionSettingValue } from "../settings/implementations/IntersectionSetting";
 import type { SettingTypes, Settings } from "../settings/settingsDefinitions";
 
 export enum VisualizationItemType {
@@ -89,11 +88,6 @@ export type VisualizationGroup<
     accumulatedData: TAccumulatedData;
     makeHoverVisualizationsFunction: HoverVisualizationsFunction<TTarget>;
     customProps: TCustomGroupProps[TGroupType];
-};
-
-export type EsvView = {
-    intersection: IntersectionSettingValue;
-    extensionLength: number;
 };
 
 export interface GroupCustomPropsCollector<
@@ -333,8 +327,8 @@ export class VisualizationAssembler<
                     continue;
                 }
 
-                const layerBoundingBox = this.makeDataProviderBoundingBox(child);
-                maybeApplyBoundingBox(layerBoundingBox);
+                const providerBoundingBox = this.makeDataProviderBoundingBox(child);
+                maybeApplyBoundingBox(providerBoundingBox);
                 children.push(dataProviderVisualization);
                 annotations.push(...this.makeDataProviderAnnotations(child));
                 hoverVisualizationFunctions.push(this.makeDataProviderHoverVisualizationsFunction(child, injectedData));
@@ -408,7 +402,7 @@ export class VisualizationAssembler<
         TData,
         TStoredData extends StoredData = Record<string, never>,
     >(
-        layer: DataProvider<TSettings, TData, any>,
+        dataProvider: DataProvider<TSettings, TData, any>,
         injectedData?: TInjectedData,
     ): TransformerArgs<TSettings, TData, TStoredData, TInjectedData> {
         function getInjectedData() {
@@ -419,12 +413,12 @@ export class VisualizationAssembler<
         }
 
         return {
-            id: layer.getItemDelegate().getId(),
-            name: layer.getItemDelegate().getName(),
-            isLoading: layer.getStatus() === DataProviderStatus.LOADING,
+            id: dataProvider.getItemDelegate().getId(),
+            name: dataProvider.getItemDelegate().getName(),
+            isLoading: dataProvider.getStatus() === DataProviderStatus.LOADING,
             getInjectedData: getInjectedData.bind(this),
-            getValueRange: layer.getValueRange.bind(layer),
-            ...layer.makeAccessors(),
+            getValueRange: dataProvider.getValueRange.bind(dataProvider),
+            ...dataProvider.makeAccessors(),
         };
     }
 
@@ -451,53 +445,53 @@ export class VisualizationAssembler<
     }
 
     private makeDataProviderHoverVisualizationsFunction(
-        layer: DataProvider<any, any, any>,
+        dataProvider: DataProvider<any, any, any>,
         injectedData?: TInjectedData,
     ): HoverVisualizationsFunction<TTarget> {
-        const func = this._dataProviderTransformers.get(layer.getType())?.transformToHoverVisualization;
+        const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToHoverVisualization;
         if (!func) {
             return () => [];
         }
 
         return (hoverInfo: GlobalTopicDefinitions[FilterHoverKeys<GlobalTopicDefinitions>]) => {
-            return func({ ...this.makeFactoryFunctionArgs.bind(this)(layer, injectedData) }, hoverInfo);
+            return func({ ...this.makeFactoryFunctionArgs.bind(this)(dataProvider, injectedData) }, hoverInfo);
         };
     }
 
     private makeDataProviderBoundingBox(
-        layer: DataProvider<any, any, any>,
+        dataProvider: DataProvider<any, any, any>,
         injectedData?: TInjectedData,
     ): bbox.BBox | null {
-        const func = this._dataProviderTransformers.get(layer.getType())?.transformToBoundingBox;
+        const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToBoundingBox;
         if (!func) {
             return null;
         }
 
-        return func(this.makeFactoryFunctionArgs(layer, injectedData));
+        return func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
     }
 
     private makeDataProviderAnnotations(
-        layer: DataProvider<any, any, any>,
+        dataProvider: DataProvider<any, any, any>,
         injectedData?: TInjectedData,
     ): Annotation[] {
-        const func = this._dataProviderTransformers.get(layer.getType())?.transformToAnnotations;
+        const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToAnnotations;
         if (!func) {
             return [];
         }
 
-        return func(this.makeFactoryFunctionArgs(layer, injectedData));
+        return func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
     }
 
     private accumulateDataProviderData(
-        layer: DataProvider<any, any, any>,
+        dataProvider: DataProvider<any, any, any>,
         accumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
     ): TAccumulatedData | null {
-        const func = this._dataProviderTransformers.get(layer.getType())?.reduceAccumulatedData;
+        const func = this._dataProviderTransformers.get(dataProvider.getType())?.reduceAccumulatedData;
         if (!func) {
             return null;
         }
 
-        return func(accumulatedData, this.makeFactoryFunctionArgs(layer, injectedData));
+        return func(accumulatedData, this.makeFactoryFunctionArgs(dataProvider, injectedData));
     }
 }

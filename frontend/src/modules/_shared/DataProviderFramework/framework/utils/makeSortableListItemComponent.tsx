@@ -13,7 +13,7 @@ import { SharedSettingComponent } from "../SharedSetting/SharedSettingComponent"
 
 export function makeSortableListItemComponent(
     item: Item,
-    makeLayerActionsForGroup: (group: ItemGroup) => ActionGroup[],
+    makeActionsForGroup: (group: ItemGroup) => ActionGroup[],
     onActionClick?: (identifier: string, group: ItemGroup) => void,
 ): React.ReactElement {
     if (isDataProvider(item)) {
@@ -24,7 +24,7 @@ export function makeSortableListItemComponent(
             <SettingsGroupComponent
                 key={item.getItemDelegate().getId()}
                 group={item}
-                makeActionsForGroup={makeLayerActionsForGroup}
+                makeActionsForGroup={makeActionsForGroup}
                 onActionClick={onActionClick}
             />
         );
@@ -34,7 +34,7 @@ export function makeSortableListItemComponent(
             <GroupComponent
                 key={item.getItemDelegate().getId()}
                 group={item}
-                makeActionsForGroup={makeLayerActionsForGroup}
+                makeActionsForGroup={makeActionsForGroup}
                 onActionClick={onActionClick}
             />
         );
@@ -44,7 +44,7 @@ export function makeSortableListItemComponent(
             <DeltaSurfaceComponent
                 key={item.getItemDelegate().getId()}
                 deltaSurface={item}
-                makeActionsForGroup={makeLayerActionsForGroup}
+                makeActionsForGroup={makeActionsForGroup}
                 onActionClick={onActionClick}
             />
         );

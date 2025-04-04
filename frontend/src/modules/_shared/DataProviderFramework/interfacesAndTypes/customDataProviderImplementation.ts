@@ -11,7 +11,7 @@ import type { MakeSettingTypesMap, Settings } from "../settings/settingsDefiniti
 
 /**
  * This type is used to pass parameters to the fetchData method of a CustomDataProviderImplementation.
- * It contains accessors to the data and settings of the layer and other useful information.
+ * It contains accessors to the data and settings of the provider and other useful information.
  */
 export type DataProviderInformationAccessors<
     TSettings extends Settings,
@@ -21,13 +21,13 @@ export type DataProviderInformationAccessors<
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
 > = {
     /**
-     * Access the data that the layer is currently storing.
-     * @returns The data that the layer is currently storing, or null if the layer has no data.
+     * Access the data that the provider is currently storing.
+     * @returns The data that the provider is currently storing, or null if the provider has no data.
      */
     getData: () => TData | null;
 
     /**
-     * Access the settings of the layer.
+     * Access the settings of the provider.
      * @param settingName The name of the setting to access.
      * @returns The value of the setting.
      *
@@ -51,7 +51,7 @@ export type DataProviderInformationAccessors<
     getAvailableSettingValues: <K extends TSettingKey>(settingName: K) => AvailableValuesType<K> | null;
 
     /**
-     * Access the global settings of the data layer manager.
+     * Access the global settings of the data provider manager.
      *
      * @param settingName The name of the global setting to access.
      * @returns The value of the global setting.
@@ -64,7 +64,7 @@ export type DataProviderInformationAccessors<
     getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
 
     /**
-     * Access the stored data of the layer.
+     * Access the stored data of the provider.
      *
      * @param key The key of the stored data to access.
      * @returns The stored data, or null if the stored data does not exist.
@@ -91,7 +91,7 @@ export type DataProviderInformationAccessors<
 
 /**
  * This type is used to pass parameters to the fetchData method of a CustomDataProviderImplementation.
- * It contains accessors to the data and settings of the layer and other useful information.
+ * It contains accessors to the data and settings of the provider and other useful information.
  */
 export type FetchDataParams<
     TSettings extends Settings,
@@ -111,17 +111,17 @@ export interface CustomDataProviderImplementation<
     TStoredDataKey extends keyof TStoredData = keyof TStoredData,
 > extends CustomSettingsHandler<TSettings, TStoredData, TSettingTypes, TSettingKey, TStoredDataKey> {
     /**
-     * The default name of a layer of this type.
+     * The default name of a provider of this type.
      */
     getDefaultName(): string;
 
     /**
-     * This method is called when the settings of the layer are changed. It should return true if the new settings
+     * This method is called when the settings of the provider are changed. It should return true if the new settings
      * require a refetch of the data, or false if the data can be reused.
      *
-     * @param prevSettings The previous settings of the layer.
-     * @param newSettings The new settings of the layer.
-     * @param accessors Accessors to the data and settings of the layer.
+     * @param prevSettings The previous settings of the provider.
+     * @param newSettings The new settings of the provider.
+     * @param accessors Accessors to the data and settings of the provider.
      */
     doSettingsChangesRequireDataRefetch(
         prevSettings: TSettingTypes | null,
@@ -130,17 +130,17 @@ export interface CustomDataProviderImplementation<
     ): boolean;
 
     /**
-     * This method must return a promise that resolves to the data that this data layer is providing.
+     * This method must return a promise that resolves to the data that this data provider is providing.
      * This could for example be a fetch request to a server.
      *
-     * @param params An object containing accessors to the data and settings of the layer and other useful information.
+     * @param params An object containing accessors to the data and settings of the provider and other useful information.
      */
     fetchData(params: FetchDataParams<TSettings, TData, TStoredData>): Promise<TData>;
 
     /**
-     * Used to determine the value range of the data in the layer. This is used for coloring the layer.
+     * Used to determine the value range of the data in the provider. This is used for coloring the provider.
      *
-     * @param accessors Accessors to the data and settings of the layer.
+     * @param accessors Accessors to the data and settings of the provider.
      */
     makeValueRange?(
         accessors: DataProviderInformationAccessors<TSettings, TData, TStoredData>,
@@ -149,9 +149,9 @@ export interface CustomDataProviderImplementation<
     /**
      * This method is called to check if the current settings are valid. It should return true if the settings are valid
      * and false if they are not.
-     * As long as the settings are not valid, the layer will not fetch data.
+     * As long as the settings are not valid, the provider will not fetch data.
      *
-     * @param accessors Accessors to the data and settings of the layer.
+     * @param accessors Accessors to the data and settings of the provider.
      * @returns
      */
     areCurrentSettingsValid?: (accessors: DataProviderInformationAccessors<TSettings, TData, TStoredData>) => boolean;

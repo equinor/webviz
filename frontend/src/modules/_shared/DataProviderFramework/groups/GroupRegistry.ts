@@ -27,7 +27,7 @@ export class GroupRegistry {
         });
     }
 
-    static makeGroup(type: GroupType, layerManager: DataProviderManager, color?: string): Group<any, any> {
+    static makeGroup(type: GroupType, dataProviderManager: DataProviderManager, color?: string): Group<any, any> {
         const stored = this._registeredGroups.get(type);
         if (!stored) {
             throw new Error(`Group ${type} not found`);
@@ -35,7 +35,7 @@ export class GroupRegistry {
         const customGroupImplementation = new stored.group(...(stored.customParams ?? []));
         return new Group({
             type,
-            dataProviderManager: layerManager,
+            dataProviderManager: dataProviderManager,
             customGroupImplementation,
             color,
         });

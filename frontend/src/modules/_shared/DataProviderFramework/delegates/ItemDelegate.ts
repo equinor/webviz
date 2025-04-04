@@ -77,7 +77,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
         this._parentGroup = parentGroup;
     }
 
-    getLayerManager(): DataProviderManager {
+    getDataProviderManager(): DataProviderManager {
         return this._dataProviderManager;
     }
 

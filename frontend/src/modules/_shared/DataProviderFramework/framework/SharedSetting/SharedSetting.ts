@@ -52,7 +52,7 @@ export class SharedSetting<TSetting extends Setting> implements Item, SharedSett
     }
 
     publishValueChange(): void {
-        const dataProviderManager = this._itemDelegate.getLayerManager();
+        const dataProviderManager = this._itemDelegate.getDataProviderManager();
         if (dataProviderManager) {
             dataProviderManager.publishTopic(DataProviderManagerTopic.SHARED_SETTINGS_CHANGED);
         }

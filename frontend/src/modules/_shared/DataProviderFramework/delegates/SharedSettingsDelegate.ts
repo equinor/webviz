@@ -24,7 +24,7 @@ export class SharedSettingsDelegate<
         this._wrappedSettings = wrappedSettings;
         this._parentItem = parentItem;
 
-        const dataProviderManager = parentItem.getItemDelegate().getLayerManager();
+        const dataProviderManager = parentItem.getItemDelegate().getDataProviderManager();
         if (!dataProviderManager) {
             throw new Error("SharedSettingDelegate must have a parent item with a data provider manager.");
         }
@@ -69,7 +69,7 @@ export class SharedSettingsDelegate<
     }
 
     publishValueChange(): void {
-        const dataProviderManager = this._parentItem.getItemDelegate().getLayerManager();
+        const dataProviderManager = this._parentItem.getItemDelegate().getDataProviderManager();
         if (dataProviderManager) {
             dataProviderManager.publishTopic(DataProviderManagerTopic.SHARED_SETTINGS_CHANGED);
         }

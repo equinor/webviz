@@ -65,7 +65,7 @@ export interface DefineDependenciesArgs<
 
 /**
  * This interface is describing what methods and members a custom settings handler must implement.
- * This can either be used by a data layer or by a group.
+ * This can either be used by a data provider or by a group.
  */
 export interface CustomSettingsHandler<
     TSettings extends Settings,
@@ -86,7 +86,7 @@ export interface CustomSettingsHandler<
     getDefaultSettingsValues?(): Partial<TSettingTypes>;
 
     /**
-     * A method that defines the dependencies of the settings of the layer.
+     * A method that defines the dependencies of the settings of the data provider.
      * A dependency can either be an updater for the available values of a setting or a stored data object, or a helper dependency (e.g. a fetching operation).
      *
      * @param args An object containing the functions for defining the different dependencies.
