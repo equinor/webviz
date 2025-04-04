@@ -21,7 +21,7 @@ export function isSettingsGroup(obj: any): obj is SettingsGroup {
 
     const settingsGroup: SettingsGroup = obj as SettingsGroup;
 
-    return Object.hasOwn(settingsGroup, "getGroupDelegate");
+    return Boolean(settingsGroup.getGroupDelegate);
 }
 export class SettingsGroup implements ItemGroup {
     private _itemDelegate: ItemDelegate;

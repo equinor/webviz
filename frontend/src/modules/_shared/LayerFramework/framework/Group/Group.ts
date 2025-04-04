@@ -33,7 +33,7 @@ export function isGroup(obj: any): obj is Group {
 
     const group: Group = obj as Group;
 
-    return Object.hasOwn(group, "getGroupType") && Object.hasOwn(group, "getGroupDelegate");
+    return Boolean(group.getItemDelegate) && Boolean(group.getGroupDelegate);
 }
 
 export type GroupParams<
