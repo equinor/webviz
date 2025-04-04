@@ -417,9 +417,6 @@ export class SettingManager<
     }
 
     private checkIfValueIsValid(value: TValue): boolean {
-        if (value === null) {
-            return false;
-        }
         if (this._isStatic) {
             return true;
         }
