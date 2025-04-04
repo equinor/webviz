@@ -50,6 +50,10 @@ export type LayerDelegatePayloads<TData> = {
 };
 
 export function isDataLayer(object: any): object is DataLayer<any, any> {
+    if (!isDevMode()) {
+        return object instanceof DataLayer;
+    }
+
     if (typeof object !== "object" || object === null) {
         return false;
     }
@@ -61,11 +65,11 @@ export function isDataLayer(object: any): object is DataLayer<any, any> {
     const dataLayer: DataLayer<any, any> = object as DataLayer<any, any>;
 
     return (
-        Object.hasOwn(dataLayer, "getType") &&
-        Object.hasOwn(dataLayer, "getSettingsContextDelegate") &&
-        Object.hasOwn(dataLayer, "getStatus") &&
-        Object.hasOwn(dataLayer, "getData") &&
-        Object.hasOwn(dataLayer, "getError")
+        Boolean(dataLayer.getType) &&
+        Boolean(dataLayer.getSettingsContextDelegate) &&
+        Boolean(dataLayer.getStatus) &&
+        Boolean(dataLayer.getData) &&
+        Boolean(dataLayer.getError)
     );
 }
 

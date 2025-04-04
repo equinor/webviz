@@ -1,3 +1,5 @@
+import { isDevMode } from "@lib/utils/devMode";
+
 import { GroupDelegate } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import type { ItemGroup } from "../../interfacesAndTypes/entities";
@@ -6,6 +8,10 @@ import { SerializedType } from "../../interfacesAndTypes/serialization";
 import type { DataLayerManager } from "../DataLayerManager/DataLayerManager";
 
 export function isSettingsGroup(obj: any): obj is SettingsGroup {
+    if (!isDevMode()) {
+        return obj instanceof SettingsGroup;
+    }
+
     if (typeof obj !== "object" || obj === null) {
         return false;
     }
@@ -15,7 +21,7 @@ export function isSettingsGroup(obj: any): obj is SettingsGroup {
 
     const settingsGroup: SettingsGroup = obj as SettingsGroup;
 
-    return Object.hasOwn(settingsGroup, "getGroupDelegate");
+    return Boolean(settingsGroup.getGroupDelegate);
 }
 export class SettingsGroup implements ItemGroup {
     private _itemDelegate: ItemDelegate;
