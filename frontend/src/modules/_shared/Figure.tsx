@@ -193,9 +193,8 @@ export class Figure {
 
     makePlot(plotArgs?: Omit<PlotParams, "data" | "layout">): React.ReactNode {
         const config = plotArgs?.config ?? {
-            displaylogo: false,
+            displayModeBar: false,
             responsive: true,
-            modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "resetScale2d"],
         };
 
         return (
