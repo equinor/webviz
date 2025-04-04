@@ -12,7 +12,7 @@ on:
 
 jobs:
   sumo_prod:
-    if: github.repository == "equinor/webviz" # Prevent execution on forks
+    if: github.repository == 'equinor/webviz' # Prevent execution on forks
     runs-on: ubuntu-latest
     permissions:
       contents: read
