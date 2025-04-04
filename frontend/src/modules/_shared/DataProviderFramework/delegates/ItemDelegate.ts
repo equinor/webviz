@@ -5,7 +5,10 @@ import type { GroupDelegate } from "./GroupDelegate";
 
 import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import { DataProviderManager, DataProviderManagerTopic } from "../framework/DataProviderManager/DataProviderManager";
+import {
+    type DataProviderManager,
+    DataProviderManagerTopic,
+} from "../framework/DataProviderManager/DataProviderManager";
 import type { SerializedItem } from "../interfacesAndTypes/serialization";
 
 export enum ItemDelegateTopic {
