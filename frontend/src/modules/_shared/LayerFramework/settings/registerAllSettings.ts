@@ -1,3 +1,5 @@
+import type { WellborePick_api } from "@api";
+
 import { SettingRegistry } from "./SettingRegistry";
 import { BooleanSetting } from "./implementations/BooleanSetting";
 import { ColorScaleSetting } from "./implementations/ColorScaleSetting";
@@ -8,10 +10,38 @@ import { EnsembleSetting } from "./implementations/EnsembleSetting";
 import { Direction as GridLayerRangeDirection, GridLayerRangeSetting } from "./implementations/GridLayerRangeSetting";
 import { Direction as GridLayerDirection, GridLayerSetting } from "./implementations/GridLayerSetting";
 import { IntersectionSetting } from "./implementations/IntersectionSetting";
+import { LogCurveSetting } from "./implementations/LogCurveSetting";
+import { NumberSetting } from "./implementations/NumberSetting";
+import { ObjectSelectionSetting } from "./implementations/ObjectSelectionSetting";
 import { SeismicSliceDirection, SeismicSliceSetting } from "./implementations/SeismicSliceSetting";
 import { SensitivitySetting } from "./implementations/SensitivitySetting";
+import { StaticDropdownStringSetting } from "./implementations/StaticDropdownStringSetting";
 import { StatisticFunctionSetting } from "./implementations/StatisticFunctionSetting";
 import { Setting } from "./settingsDefinitions";
+
+SettingRegistry.registerSetting(Setting.STRAT_COLUMN, "Stratigraphic Column", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.SMDA_INTERPRETER, "Interpreter", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.WELL_PICKS, "Interpreter", ObjectSelectionSetting<WellborePick_api>, {
+    customConstructorParameters: ["pickIdentifier"],
+});
+
+SettingRegistry.registerSetting(Setting.TRACK_WIDTH, "Track width", NumberSetting, {
+    customConstructorParameters: [{ minMax: [1, 6] }],
+});
+SettingRegistry.registerSetting(Setting.SCALE, "Scale", StaticDropdownStringSetting, {
+    customConstructorParameters: [
+        {
+            options: [
+                { value: "log", label: "Logarithmic" },
+                { value: "linear", label: "Linear" },
+            ],
+        },
+    ],
+});
+
+// @ts-expect-error -- Setting type is a string literal, but Dropdown setting doesn't accept that as a valid type
+SettingRegistry.registerSetting(Setting.PLOT_VARIANT, "Plot variant", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.LOG_CURVE, "Log curve", LogCurveSetting);
 
 SettingRegistry.registerSetting(Setting.ATTRIBUTE, "Attribute", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.ENSEMBLE, "Ensemble", EnsembleSetting);

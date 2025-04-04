@@ -2,35 +2,25 @@
  * Utilities and constants used for generating well-log-viewer template configs
  */
 import { WellLogCurveTypeEnum_api } from "@api";
-import type {
-    Template,
-    TemplatePlot,
-    TemplateTrack,
-} from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import type { Template } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import _ from "lodash";
 import { v4 } from "uuid";
 
 import { CURVE_COLOR_PALETTE, DIFF_CURVE_COLORS } from "./logViewerColors";
 import { MAIN_AXIS_CURVE } from "./queryDataTransform";
-import { getUniqueCurveNameForPlotConfig } from "./strings";
 
 import type { TemplatePlotConfig, TemplateTrackConfig } from "../types";
 
 export const DEFAULT_MAX_VISIBLE_TRACKS = 5;
 
 export function createLogTemplate(templateTracks: TemplateTrackConfig[], nonUniqueNames?: Set<string>): Template {
+    // TODO: Implement non-unique names
     return {
         // AFAIK, this name is not show anywhere
         name: "Well log viewer",
         scale: { primary: MAIN_AXIS_CURVE.name, allowSecondary: true },
-        tracks: templateTracks.map<TemplateTrack>((track) => ({
-            ...track,
-            plots: track.plots.map((plot) => ({
-                ...plot,
-                name: getUniqueCurveNameForPlotConfig(plot, nonUniqueNames),
-            })) as TemplatePlot[],
-        })),
+        tracks: templateTracks,
     };
 }
 

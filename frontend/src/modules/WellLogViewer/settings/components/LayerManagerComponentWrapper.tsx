@@ -1,33 +1,55 @@
 import React from "react";
 
-import { WorkbenchSession } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { WellPicksLayer } from "@modules/WellLogViewer/LayerFramework/layers/WellPicksLayer/WellPicksLayer";
-import { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions";
-import { GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
-import { LayerManager, LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { LayerManagerComponent } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManagerComponent";
+import { WellLogCurveTypeEnum_api } from "@api";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { AreaPlotProvider } from "@modules/WellLogViewer/LayerFramework/dataProviders/plots/AreaPlotProvider";
+import { LinearPlotProvider } from "@modules/WellLogViewer/LayerFramework/dataProviders/plots/LinearPlotProvider";
+import { WellborePicksProvider } from "@modules/WellLogViewer/LayerFramework/dataProviders/wellpicks/WellPicksProvider";
+import { TrackIcon } from "@modules/WellLogViewer/_shared/components/icons";
+import type { ActionGroup } from "@modules/_shared/LayerFramework/Actions";
+import type { GroupDelegate } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
+import { GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
+import {
+    DataLayerManager,
+    LayerManagerTopic,
+} from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
+import { DataLayerManagerComponent } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManagerComponent";
+import { GroupRegistry } from "@modules/_shared/LayerFramework/groups/GroupRegistry";
+import { GroupType } from "@modules/_shared/LayerFramework/groups/groupTypes";
+import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
+import { ShowChart, ViewDay } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAtom } from "jotai";
 
+import "../../LayerFramework/registerFrameworkExtensions";
 import { layerManagerAtom } from "../atoms/baseAtoms";
 import { serializedManagerStateAtom } from "../atoms/persistedAtoms";
 
 enum LayerActionIdents {
-    TRACK = "track",
+    CONTINUOUS_TRACK = "cont_track",
+    DISCRETE_TRACK = "disc_track",
     SETTINGS = "settings",
     PLOT = "plot",
     WELL_PICKS = "well_picks",
 }
 
-const LAYER_ACTIONS: LayersActionGroup[] = [
+enum PlotActionIdents {
+    LINE = "line",
+    AREA = "area",
+    STACKED = "stacked",
+    DIFF = "diff",
+}
+
+const LAYER_ACTIONS: ActionGroup[] = [
     {
         label: "Log viewer",
         children: [
             {
-                label: "Track",
-                identifier: LayerActionIdents.TRACK,
+                label: "Continuous Track",
+                identifier: LayerActionIdents.CONTINUOUS_TRACK,
+                icon: <TrackIcon type={WellLogCurveTypeEnum_api.CONTINUOUS} />,
             },
             {
                 label: "Viewer Settings",
@@ -39,21 +61,26 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
             },
         ],
     },
+    {
+        label: "Plots",
+        children: [
+            { icon: <ShowChart fontSize="inherit" />, label: "Line plot", identifier: PlotActionIdents.LINE },
+            { icon: <ShowChart fontSize="inherit" />, label: "Area plot", identifier: PlotActionIdents.AREA },
+            { icon: <ViewDay fontSize="inherit" />, label: "Stacked plot", identifier: PlotActionIdents.STACKED },
+            { icon: <ShowChart fontSize="inherit" />, label: "Differential plot", identifier: PlotActionIdents.DIFF },
+        ],
+    },
 ];
 
 function usePersistedLayerManager(
     workbenchSession: WorkbenchSession,
-    workbenchSettings: WorkbenchSettings
-): LayerManager | null {
+    workbenchSettings: WorkbenchSettings,
+): DataLayerManager | null {
     const queryClient = useQueryClient();
 
     const hasAppliedPersistedState = React.useRef<boolean>(false);
     const [layerManager, setLayerManager] = useAtom(layerManagerAtom);
     const [serializedManagerState, setSerializedManagerState] = useAtom(serializedManagerStateAtom);
-
-    // const applyPersistedManagerState = React.useCallback(function applyPersistedManagerState(layerManager) {}, [
-    //     serializedManagerState,
-    // ]);
 
     const persistManagerState = React.useCallback(
         function persistManagerState() {
@@ -61,18 +88,18 @@ function usePersistedLayerManager(
 
             setSerializedManagerState(layerManager.serializeState());
         },
-        [layerManager, setSerializedManagerState]
+        [layerManager, setSerializedManagerState],
     );
 
     React.useEffect(
         function initalizeLayerManagerEffect() {
-            const newLayerManager = new LayerManager(workbenchSession, workbenchSettings, queryClient);
+            const newLayerManager = new DataLayerManager(workbenchSession, workbenchSettings, queryClient);
             setLayerManager(newLayerManager);
             hasAppliedPersistedState.current = false;
 
             return () => newLayerManager.beforeDestroy();
         },
-        [queryClient, setLayerManager, workbenchSession, workbenchSettings]
+        [queryClient, setLayerManager, workbenchSession, workbenchSettings],
     );
 
     // applyPersistedManagerState(layerManager);
@@ -85,7 +112,7 @@ function usePersistedLayerManager(
 
             hasAppliedPersistedState.current = true;
         },
-        [serializedManagerState, layerManager]
+        [serializedManagerState, layerManager],
     );
 
     React.useEffect(
@@ -108,27 +135,10 @@ function usePersistedLayerManager(
                 unsubscribeExpands();
             };
         },
-        [layerManager, persistManagerState]
+        [layerManager, persistManagerState],
     );
 
     return layerManager;
-
-    // const applyPersistedManagerState = React.useCallback(function applyPersistedManagerState(layerManager: LayerManager) {
-    //     const serializedState = window.localStorage.getItem(`${props.moduleInstanceId}-settings`);
-    //     if (!serializedState) return;
-
-    //     const parsedState = JSON.parse(serializedState);
-    //     if (parsedState.fieldIdentifier) {
-    //         layerManager.setFieldIdentifier(parsedState.fieldIdentifier);
-    //     }
-    //     if (parsedState.preferredViewLayout) {
-    //         layerManager.setPreferredViewLayout(parsedState.preferredViewLayout);
-    //     }
-    // }, [])
-
-    // React.useEffect(() => applyPersistedState(layerManager),
-    //     [layerManager, applyPersistedState]
-    // );
 }
 
 export type LayerManagerComponentWrapperProps = {
@@ -141,24 +151,36 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
 
     const layerActionCallback = React.useCallback(
         function layerActionCallback(identifier: string, groupDelegate: GroupDelegate) {
+            if (!layerManager) return;
+
             switch (identifier) {
                 case LayerActionIdents.WELL_PICKS:
-                    return groupDelegate.appendChild(new WellPicksLayer(layerManager!));
+                    return groupDelegate.appendChild(LayerRegistry.makeLayer(WellborePicksProvider.name, layerManager));
+
+                case LayerActionIdents.CONTINUOUS_TRACK:
+                    return groupDelegate.appendChild(GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK, layerManager));
+
+                case PlotActionIdents.LINE:
+                    return groupDelegate.appendChild(LayerRegistry.makeLayer(LinearPlotProvider.name, layerManager));
+                case PlotActionIdents.AREA:
+                    return groupDelegate.appendChild(LayerRegistry.makeLayer(AreaPlotProvider.name, layerManager));
+
+                default:
+                    break;
             }
         },
-        [layerManager]
+        [layerManager],
     );
 
     if (!layerManager) return <div />;
 
     return (
-        <>
-            <LayerManagerComponent
-                layerManager={layerManager}
-                additionalHeaderComponents={<></>}
-                layerActions={LAYER_ACTIONS}
-                onLayerAction={layerActionCallback}
-            />
-        </>
+        <DataLayerManagerComponent
+            title="Log config"
+            dataLayerManager={layerManager}
+            additionalHeaderComponents={<></>}
+            groupActions={LAYER_ACTIONS}
+            onAction={layerActionCallback}
+        />
     );
 }
