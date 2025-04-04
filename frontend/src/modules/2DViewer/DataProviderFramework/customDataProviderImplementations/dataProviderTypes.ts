@@ -1,4 +1,4 @@
-export enum CustomLayerType {
+export enum CustomDataProviderType {
     OBSERVED_SURFACE = "OBSERVED_SURFACE",
     REALIZATION_SURFACE = "REALIZATION_SURFACE",
     STATISTICAL_SURFACE = "STATISTICAL_SURFACE",

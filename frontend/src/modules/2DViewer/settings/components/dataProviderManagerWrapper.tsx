@@ -11,7 +11,7 @@ import { MenuItem } from "@lib/components/MenuItem";
 import { ObservedSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurface";
 import { RealizationSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationSurface";
 import { StatisticalSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/StatisticalSurface";
-import { CustomLayerType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/layerTypes";
+import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
@@ -76,13 +76,16 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                 return;
             case "observed-surface":
                 groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(CustomLayerType.OBSERVED_SURFACE, props.dataProviderManager),
+                    DataProviderRegistry.makeDataProvider(
+                        CustomDataProviderType.OBSERVED_SURFACE,
+                        props.dataProviderManager,
+                    ),
                 );
                 return;
             case "statistical-surface":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
-                        CustomLayerType.STATISTICAL_SURFACE,
+                        CustomDataProviderType.STATISTICAL_SURFACE,
                         props.dataProviderManager,
                     ),
                 );
@@ -90,7 +93,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "realization-surface":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
-                        CustomLayerType.REALIZATION_SURFACE,
+                        CustomDataProviderType.REALIZATION_SURFACE,
                         props.dataProviderManager,
                     ),
                 );
@@ -98,7 +101,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "realization-polygons":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
-                        CustomLayerType.REALIZATION_POLYGONS,
+                        CustomDataProviderType.REALIZATION_POLYGONS,
                         props.dataProviderManager,
                     ),
                 );
@@ -121,7 +124,10 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                 return;
             case "realization-grid":
                 groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(CustomLayerType.REALIZATION_GRID, props.dataProviderManager),
+                    DataProviderRegistry.makeDataProvider(
+                        CustomDataProviderType.REALIZATION_GRID,
+                        props.dataProviderManager,
+                    ),
                 );
                 return;
             case "ensemble":

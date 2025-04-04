@@ -15,7 +15,7 @@ import { RealizationGrid } from "@modules/2DViewer/DataProviderFramework/customD
 import { RealizationPolygons } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationPolygons";
 import { RealizationSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationSurface";
 import { StatisticalSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/StatisticalSurface";
-import { CustomLayerType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/layerTypes";
+import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { makeObservedSurfaceLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeObservedSurfaceLayer";
 import { makeRealizationGridLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeRealizationGridLayer";
 import { makeRealizationPolygonsLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeRealizationPolygonsLayer";
@@ -66,27 +66,39 @@ const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
     }
 >();
 
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomLayerType.OBSERVED_SURFACE, ObservedSurface, {
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomDataProviderType.OBSERVED_SURFACE, ObservedSurface, {
     transformToVisualization: makeObservedSurfaceLayer,
     transformToBoundingBox: makeSurfaceLayerBoundingBox,
     transformToAnnotations: makeColorScaleAnnotation,
 });
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomLayerType.REALIZATION_SURFACE, RealizationSurface, {
-    transformToVisualization: makeRealizationSurfaceLayer,
-    transformToBoundingBox: makeSurfaceLayerBoundingBox,
-    transformToAnnotations: makeColorScaleAnnotation,
-});
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomLayerType.STATISTICAL_SURFACE, StatisticalSurface, {
-    transformToVisualization: makeStatisticalSurfaceLayer,
-    transformToBoundingBox: makeSurfaceLayerBoundingBox,
-    transformToAnnotations: makeColorScaleAnnotation,
-});
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomLayerType.REALIZATION_POLYGONS, RealizationPolygons, {
-    transformToVisualization: makeRealizationPolygonsLayer,
-    transformToBoundingBox: makePolygonDataBoundingBox,
-    transformToAnnotations: makeColorScaleAnnotation,
-});
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomLayerType.REALIZATION_GRID, RealizationGrid, {
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    CustomDataProviderType.REALIZATION_SURFACE,
+    RealizationSurface,
+    {
+        transformToVisualization: makeRealizationSurfaceLayer,
+        transformToBoundingBox: makeSurfaceLayerBoundingBox,
+        transformToAnnotations: makeColorScaleAnnotation,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    CustomDataProviderType.STATISTICAL_SURFACE,
+    StatisticalSurface,
+    {
+        transformToVisualization: makeStatisticalSurfaceLayer,
+        transformToBoundingBox: makeSurfaceLayerBoundingBox,
+        transformToAnnotations: makeColorScaleAnnotation,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    CustomDataProviderType.REALIZATION_POLYGONS,
+    RealizationPolygons,
+    {
+        transformToVisualization: makeRealizationPolygonsLayer,
+        transformToBoundingBox: makePolygonDataBoundingBox,
+        transformToAnnotations: makeColorScaleAnnotation,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomDataProviderType.REALIZATION_GRID, RealizationGrid, {
     transformToVisualization: makeRealizationGridLayer,
     transformToBoundingBox: makeRealizationGridBoundingBox,
     transformToAnnotations: makeColorScaleAnnotation,
