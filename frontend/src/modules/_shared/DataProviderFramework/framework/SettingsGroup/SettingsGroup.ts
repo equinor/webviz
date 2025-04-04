@@ -20,7 +20,9 @@ export function isSettingsGroup(obj: any): obj is SettingsGroup {
         return false;
     }
 
-    return Boolean(obj.getGroupDelegate);
+    const settingsGroup: SettingsGroup = obj as SettingsGroup;
+
+    return Boolean(settingsGroup.getGroupDelegate);
 }
 
 export class SettingsGroup implements ItemGroup {
