@@ -152,7 +152,9 @@ class AuthHelper:
                 # Store/cache the AuthenticatedUser object in the request's state
                 request_with_session.state.authenticated_user_obj = authenticated_user
 
-                LOGGER.debug(f"get_authenticated_user() got user auth info from session in: {perf_metrics.to_string()}")
+                LOGGER.debug(
+                    f"get_authenticated_user() got user auth info (valid for {first_item_expires_in:.0f}s) from session in: {perf_metrics.to_string()}"
+                )
                 return authenticated_user
 
         # We can't find a valid user auth info object in the session store, so we need to create/refresh it

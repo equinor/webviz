@@ -1,12 +1,16 @@
 import base64
+import logging
 from typing import List, Optional
 
 import starsessions
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from .auth_helper import AuthHelper
+
+LOGGER = logging.getLogger(__name__)
 
 
 class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
@@ -36,6 +40,7 @@ class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
         self._paths_redirected_to_login = paths_redirected_to_login or []
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        perf_metrics = PerfMetrics()
 
         path_to_check = request.url.path
 
@@ -53,13 +58,16 @@ class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
         if path_is_protected:
 
             await starsessions.load_session(request)
+            perf_metrics.record_lap("load-session")
 
             authenticated_user = AuthHelper.get_authenticated_user(request)
             is_logged_in = authenticated_user is not None
 
+            perf_metrics.record_lap("get-auth-user")
+            LOGGER.debug(f"EnforceLoggedInMiddleware() dispatch took took: {perf_metrics.to_string()}")
+
             if not is_logged_in:
                 if path_to_check in self._paths_redirected_to_login:
-
                     target_url_b64 = base64.urlsafe_b64encode(str(request.url).encode()).decode()
                     return RedirectResponse(f"{root_path}/login?redirect_url_after_login={target_url_b64}")
                 return PlainTextResponse("Not authorized yet, must log in", 401)
