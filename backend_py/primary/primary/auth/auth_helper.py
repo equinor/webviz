@@ -1,24 +1,24 @@
 import base64
+import logging
 import os
 import time
-from typing import List, Optional, Literal
-import logging
+from typing import Literal, Optional, TypeAlias, get_args
 
 import jwt
 import msal
 import starsessions
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel, ValidationError
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from primary import config
-from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.middleware.add_browser_cache import no_cache
-
-from pydantic import BaseModel, ValidationError
-
+from primary.services.utils.authenticated_user import AuthenticatedUser
 
 LOGGER = logging.getLogger(__name__)
+
+_ResourceName: TypeAlias = Literal["graph", "sumo", "smda", "ssdl"]
 
 
 class _TokenEntry(BaseModel):
@@ -30,7 +30,7 @@ class _UserAuthInfo(BaseModel):
     user_id: str
     user_name: str
     user_identity_expires_at: int  # Unix timestamp when the user identity above (extracted from ID token) expires
-    access_tokens: dict[Literal["graph", "sumo", "smda", "ssdl"], _TokenEntry]
+    access_tokens: dict[_ResourceName, _TokenEntry]
     earliest_expiry_time: int  # Earliest expiry time for the user info and of all tokens
 
     def to_authenticated_user(self) -> AuthenticatedUser:
@@ -142,7 +142,7 @@ class AuthHelper:
         if not starsessions.is_loaded(request_with_session):
             raise ValueError("Session data has not been loaded for this request")
 
-        user_auth_info_from_session: _UserAuthInfo = _load_user_auth_info_from_session(request_with_session)
+        user_auth_info_from_session: _UserAuthInfo | None = _load_user_auth_info_from_session(request_with_session)
         perf_metrics.record_lap("load-user-auth-info")
         if user_auth_info_from_session:
             first_item_expires_in = user_auth_info_from_session.earliest_expiry_time - time.time()
@@ -186,7 +186,7 @@ class AuthHelper:
 
 
 def _acquire_access_token_for_resource_scopes(
-    cca: msal.ConfidentialClientApplication, resource_name: Literal["graph", "sumo", "smda" "ssdl"], account: str
+    cca: msal.ConfidentialClientApplication, resource_name: _ResourceName, account: str
 ) -> _TokenEntry | None:
     scopes_list: list[str] | None = None
     if resource_name == "graph":
@@ -230,7 +230,7 @@ def _acquire_refreshed_identity_and_tokens(
 
     account_list = cca.get_accounts()
     if not account_list:
-        LOGGER.error("Error getting accunts")
+        LOGGER.error("Error getting accounts")
         return None
     account = account_list[0]
     perf_metrics.record_lap("get-accounts")
@@ -244,7 +244,12 @@ def _acquire_refreshed_identity_and_tokens(
     # Similar to msal we will consider it expired if it expires is less than 5 minutes.
     time_now = time.time()
     identity_expires_in = curr_auth_info.user_identity_expires_at - time_now if curr_auth_info else 0
-    if identity_expires_in < 5 * 60:
+    if curr_auth_info and identity_expires_in >= 5 * 60:
+        # Just re-use the values from the current auth info
+        user_id = curr_auth_info.user_id
+        user_name = curr_auth_info.user_name
+        id_token_expiry_time = curr_auth_info.user_identity_expires_at
+    else:
         token_dict = cca.acquire_token_silent(scopes=config.GRAPH_SCOPES, account=account, force_refresh=True)
         id_token = token_dict.get("id_token") if token_dict else None
         if not id_token:
@@ -252,9 +257,8 @@ def _acquire_refreshed_identity_and_tokens(
             return None
 
         id_token_claims_dict = _decode_jwt(id_token)
-        
         try:
-            # Could use either 'oid' or 'sub' here, but 'sub' is probably good enough, and it doesn't require the 
+            # Could use either 'oid' or 'sub' here, but 'sub' is probably good enough, and it doesn't require the
             # profile scope (in case it matters). See this page for more info:
             # https://learn.microsoft.com/en-us/azure/active-directory/develop/id-tokens
             #
@@ -267,11 +271,6 @@ def _acquire_refreshed_identity_and_tokens(
             return None
 
         perf_metrics.record_lap("get-id-token")
-    else:
-        # Just reuse the values from the current auth info
-        user_id = curr_auth_info.user_id
-        user_name = curr_auth_info.user_name
-        id_token_expiry_time = curr_auth_info.user_identity_expires_at
 
     # So we have the identity of an authenticated user
     # This is the minimum requirement for returning info on the user so we can create the new object
@@ -284,8 +283,8 @@ def _acquire_refreshed_identity_and_tokens(
         earliest_expiry_time=0,
     )
 
-    resource_names = ["graph", "sumo", "smda", "ssdl"]
-    for resource_name in resource_names:
+    resource_name: _ResourceName
+    for resource_name in get_args(_ResourceName):
         token_entry = _acquire_access_token_for_resource_scopes(cca, resource_name, account)
         if token_entry:
             new_auth_info.access_tokens[resource_name] = token_entry
