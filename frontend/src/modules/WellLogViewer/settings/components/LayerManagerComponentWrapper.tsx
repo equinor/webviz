@@ -15,8 +15,10 @@ import {
     LayerManagerTopic,
 } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import { DataLayerManagerComponent } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManagerComponent";
+import { Group } from "@modules/_shared/LayerFramework/framework/Group/Group";
 import { GroupRegistry } from "@modules/_shared/LayerFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/LayerFramework/groups/groupTypes";
+import type { ItemGroup } from "@modules/_shared/LayerFramework/interfacesAndTypes/entities";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { ShowChart, ViewDay } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
@@ -41,36 +43,6 @@ enum PlotActionIdents {
     STACKED = "stacked",
     DIFF = "diff",
 }
-
-const LAYER_ACTIONS: ActionGroup[] = [
-    {
-        label: "Log viewer",
-        children: [
-            {
-                label: "Continuous Track",
-                identifier: LayerActionIdents.CONTINUOUS_TRACK,
-                icon: <TrackIcon type={WellLogCurveTypeEnum_api.CONTINUOUS} />,
-            },
-            {
-                label: "Viewer Settings",
-                identifier: LayerActionIdents.SETTINGS,
-            },
-            {
-                label: "Well picks",
-                identifier: LayerActionIdents.WELL_PICKS,
-            },
-        ],
-    },
-    {
-        label: "Plots",
-        children: [
-            { icon: <ShowChart fontSize="inherit" />, label: "Line plot", identifier: PlotActionIdents.LINE },
-            { icon: <ShowChart fontSize="inherit" />, label: "Area plot", identifier: PlotActionIdents.AREA },
-            { icon: <ViewDay fontSize="inherit" />, label: "Stacked plot", identifier: PlotActionIdents.STACKED },
-            { icon: <ShowChart fontSize="inherit" />, label: "Differential plot", identifier: PlotActionIdents.DIFF },
-        ],
-    },
-];
 
 function usePersistedLayerManager(
     workbenchSession: WorkbenchSession,
@@ -141,6 +113,47 @@ function usePersistedLayerManager(
     return layerManager;
 }
 
+function makeOptionsForGroup(group: ItemGroup): ActionGroup[] {
+    if (group instanceof Group && group.getGroupType() === GroupType.WELL_LOG_TRACK) {
+        return [
+            {
+                label: "Plots",
+                children: [
+                    { icon: <ShowChart fontSize="inherit" />, label: "Line plot", identifier: PlotActionIdents.LINE },
+                    { icon: <ShowChart fontSize="inherit" />, label: "Area plot", identifier: PlotActionIdents.AREA },
+                    {
+                        icon: <ViewDay fontSize="inherit" />,
+                        label: "Stacked plot",
+                        identifier: PlotActionIdents.STACKED,
+                    },
+                    {
+                        icon: <ShowChart fontSize="inherit" />,
+                        label: "Differential plot",
+                        identifier: PlotActionIdents.DIFF,
+                    },
+                ],
+            },
+        ];
+    }
+
+    return [
+        {
+            label: "Log viewer",
+            children: [
+                {
+                    label: "Continuous Track",
+                    identifier: LayerActionIdents.CONTINUOUS_TRACK,
+                    icon: <TrackIcon type={WellLogCurveTypeEnum_api.CONTINUOUS} />,
+                },
+                {
+                    label: "Well picks",
+                    identifier: LayerActionIdents.WELL_PICKS,
+                },
+            ],
+        },
+    ];
+}
+
 export type LayerManagerComponentWrapperProps = {
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
@@ -178,8 +191,8 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
         <DataLayerManagerComponent
             title="Log config"
             dataLayerManager={layerManager}
-            additionalHeaderComponents={<></>}
-            groupActions={LAYER_ACTIONS}
+            additionalHeaderComponents={null}
+            groupActions={makeOptionsForGroup}
             onAction={layerActionCallback}
         />
     );
