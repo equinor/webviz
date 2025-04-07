@@ -71,6 +71,23 @@ spec:
                 averageUtilization: 60
               cpu:
                 averageUtilization: 80
+
+        - environment: preprod
+          resources:
+            requests:
+              memory: 4Gi
+              cpu: 500m
+            limits:
+              memory: 4Gi
+          horizontalScaling:
+            minReplicas: 1
+            maxReplicas: 3
+            resources:
+              memory:
+                averageUtilization: 60
+              cpu:
+                averageUtilization: 80
+
         - environment: review
           secretRefs:
             azureKeyVaults:
