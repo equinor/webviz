@@ -7,24 +7,25 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { createContinuousColorScaleForMap } from "@modules/3DViewer/view/utils/colorTables";
-import { DATA_ACC_KEY as PLOT_DATA_ACC_KEY } from "@modules/WellLogViewer/LayerFramework/visualizations/plots";
+import {
+    DUPLICATE_NAMES_ACC_KEY,
+    DATA_ACC_KEY as PLOT_DATA_ACC_KEY,
+} from "@modules/WellLogViewer/LayerFramework/visualizations/plots";
 import { isTrackGroup } from "@modules/WellLogViewer/LayerFramework/visualizations/tracks";
+import type { TemplatePlot, TemplateTrack } from "@modules/WellLogViewer/types";
 import { useLogViewerVisualizationFactoryProduct } from "@modules/WellLogViewer/utils/useLogViewerVisualizationFactory";
 import type { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import { WellLogViewer } from "@webviz/well-log-viewer";
 import type { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
-import type { TemplatePlot, TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 import type { WellLogController, WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
-import { useAtomValue } from "jotai";
-import { isEqual } from "lodash";
+import _ from "lodash";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
 import type { InterfaceTypes } from "../../interfaces";
 import { createLogTemplate } from "../../utils/logViewerTemplate";
 import { createWellLogSets } from "../../utils/queryDataTransform";
-import { nonUniqueCurveNamesAtom } from "../atoms/derivedAtoms";
 
 const AXIS_MNEMOS = {
     md: ["RKB", "DEPTH", "DEPT", "MD", "TDEP", "MD_RKB"],
@@ -67,7 +68,7 @@ function useSubscribeToGlobalHoverMdChange(
     React.useEffect(
         function registerMdHoverSubscriber() {
             function handleGlobalValueChange(newValue: GlobalHoverMd) {
-                if (!isEqual(lastReceivedChange, newValue)) {
+                if (!_.isEqual(lastReceivedChange, newValue)) {
                     lastReceivedChange.current = newValue;
 
                     if (newValue?.wellboreUuid === wellboreUuid) {
@@ -149,8 +150,6 @@ function useCreateGlobalVerticalScaleBroadcastFunc(
 }
 
 function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
-    const nonUniqueCurveNames = useAtomValue(nonUniqueCurveNamesAtom);
-
     const trajectoryData = props.trajectoryData;
     const intersectionReferenceSystem = props.intersectionReferenceSystem;
     const padDataWithEmptyRows = props.padDataWithEmptyRows;
@@ -165,6 +164,8 @@ function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
     // TODO: This would arguably be something for the "root view"
     const template = React.useMemo(() => {
         const views = factoryProduct?.views ?? [];
+        const accData = factoryProduct?.accumulatedData ?? {};
+        const duplicatedCurveNames = _.get(accData, DUPLICATE_NAMES_ACC_KEY);
 
         const trackTemplates = views.reduce((acc, v) => {
             if (!isTrackGroup(v)) return acc;
@@ -177,20 +178,22 @@ function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
             return [...acc, fullTrackTemplate];
         }, [] as TemplateTrack[]);
 
-        return createLogTemplate(trackTemplates, nonUniqueCurveNames);
-    }, [factoryProduct, nonUniqueCurveNames]);
+        return createLogTemplate(trackTemplates, duplicatedCurveNames);
+    }, [factoryProduct?.accumulatedData, factoryProduct?.views]);
 
     const welllog = React.useMemo(() => {
-        const curveData = factoryProduct?.accumulatedData[PLOT_DATA_ACC_KEY] ?? [];
+        const accData = factoryProduct?.accumulatedData ?? {};
+        const curveData = _.get(accData, PLOT_DATA_ACC_KEY, []);
+        const duplicatedCurveNames = _.get(accData, DUPLICATE_NAMES_ACC_KEY);
 
         return createWellLogSets(
             curveData,
             trajectoryData,
             intersectionReferenceSystem,
-            nonUniqueCurveNames,
+            duplicatedCurveNames,
             padDataWithEmptyRows,
         );
-    }, [factoryProduct, trajectoryData, intersectionReferenceSystem, padDataWithEmptyRows, nonUniqueCurveNames]);
+    }, [factoryProduct?.accumulatedData, trajectoryData, intersectionReferenceSystem, padDataWithEmptyRows]);
 
     return { template, welllog, wellpicks };
 }

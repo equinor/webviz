@@ -1,8 +1,29 @@
 import type { WellLogCurveTypeEnum_api, WellboreLogCurveHeader_api } from "@api";
-import type { TemplatePlot, TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import type {
+    TemplatePlot as TemplatePlotSSC,
+    Template as TemplateSSC,
+    TemplateTrack as TemplateTrackSSC,
+} from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+
+/**
+ * The well-log viewer does not allow any distinction to which log a curve should be taken from. We add this as an
+ * extension to the type, so it can be used in a later workaround (see `logViewerTemplate.ts`)
+ */
+export type TemplatePlot = TemplatePlotSSC & {
+    logName: string;
+};
+
+export type TemplateTrack = Omit<TemplateTrackSSC, "plots"> & {
+    plots: TemplatePlot[];
+};
+
+export type Template = Omit<TemplateSSC, "tracks"> & {
+    tracks: TemplateTrack[];
+};
 
 /**
  * Extension of the SS-comp library type to add some state types to help with editing settings
+ * @deprecated
  */
 export type TemplatePlotConfig = Partial<TemplatePlot> & {
     // Used for state updates
@@ -17,9 +38,13 @@ export type TemplatePlotConfig = Partial<TemplatePlot> & {
 
 /**
  * Extension of the SS-comp library type to add some state types to help with editing settings
+ * @deprecated
  */
 export type TemplateTrackConfig = ContinuousTemplateTrackConfig | DiscreteTemplateTrackConfig;
 
+/**
+ * @deprecated
+ */
 export type ContinuousTemplateTrackConfig = Omit<TemplateTrack, "plots"> & {
     // ID used to allow the settings-menu to drag-sort them
     _key: string;
@@ -27,6 +52,9 @@ export type ContinuousTemplateTrackConfig = Omit<TemplateTrack, "plots"> & {
     plots: TemplatePlotConfig[];
 };
 
+/**
+ * @deprecated
+ */
 export type DiscreteTemplateTrackConfig = Omit<TemplateTrack, "plots"> & {
     // ID used to allow the settings-menu to drag-sort them
     _key: string;

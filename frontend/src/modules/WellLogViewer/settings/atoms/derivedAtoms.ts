@@ -43,24 +43,36 @@ export const selectedWellboreHeaderAtom = atom<WellboreHeader_api | null>((get) 
     return availableWellboreHeaders.find((wh) => wh.wellboreUuid === selectedWellboreId) ?? availableWellboreHeaders[0];
 });
 
+/**
+ * @deprecated Handled by DataFramework instead
+ */
 export const availableContinuousCurvesAtom = atom((get) => {
     const logCurveHeaders = get(wellLogCurveHeadersQueryAtom).data ?? [];
 
     return _.filter(logCurveHeaders, ["curveType", WellLogCurveTypeEnum_api.CONTINUOUS]);
 });
 
+/**
+ * @deprecated Handled by DataFramework instead
+ */
 export const availableDiscreteCurvesAtom = atom((get) => {
     const logCurveHeaders = get(wellLogCurveHeadersQueryAtom).data ?? [];
 
     return _.filter(logCurveHeaders, ["curveType", WellLogCurveTypeEnum_api.DISCRETE]);
 });
 
+/**
+ * @deprecated Handled by DataFramework instead
+ */
 export const availableFlagCurvesAtom = atom((get) => {
     const logCurveHeaders = get(wellLogCurveHeadersQueryAtom).data ?? [];
 
     return _.filter(logCurveHeaders, ["curveType", WellLogCurveTypeEnum_api.FLAG]);
 });
 
+/**
+ * @deprecated Handled by DataFramework instead
+ */
 export const wellLogTemplateTracksAtom = atom<TemplateTrackConfig[]>((get) => {
     const templateTrackConfigs = get(logViewerTrackConfigsAtom);
 
@@ -72,22 +84,9 @@ export const wellLogTemplateTracksAtom = atom<TemplateTrackConfig[]>((get) => {
     });
 });
 
-export const requiredCurvesAtom = atom<WellboreLogCurveHeader_api[]>((get) => {
-    const templateTracks = get(logViewerTrackConfigsAtom);
-
-    const logCurveHeaders = get(wellLogCurveHeadersQueryAtom).data ?? [];
-    const availableCurves = _.map(logCurveHeaders, "curveName");
-
-    return _.chain(templateTracks)
-        .flatMap<TemplatePlotConfig>("plots")
-        .filter("_isValid") // Do not bother with invalid configs
-        .flatMap(({ _curveHeader, _curveHeader2 }) => [_curveHeader, _curveHeader2])
-        .filter((header): header is WellboreLogCurveHeader_api => !!header)
-        .filter((header) => availableCurves.includes(header.curveName))
-        .uniqBy(makeSelectValueForCurveHeader)
-        .value();
-});
-
+/**
+ * @deprecated Handled by DataFramework instead
+ */
 export const selectedWellPickColumnAtom = atom<string | null>((get) => {
     const userSelectedWellPickColumn = get(userSelectedWellPickColumnAtom) ?? "";
     const wellboreStratColumns = get(wellboreStratColumnsQueryAtom).data ?? [];
@@ -98,17 +97,26 @@ export const selectedWellPickColumnAtom = atom<string | null>((get) => {
     return wellboreStratColumns[0];
 });
 
+/**
+ * @deprecated Handled by DataFramework instead
+ */
 export const wellPicksByInterpreterAtom = atom<Record<string, WellborePick_api[]>>((get) => {
     const picks = get(wellborePicksQueryAtom).data ?? [];
 
     return _.groupBy(picks, "interpreter");
 });
 
+/**
+ * @deprecated Handled by DataFramework instead
+ */
 export const availableWellPickInterpretersAtom = atom<string[]>((get) => {
     const wellPicksByInterpreter = get(wellPicksByInterpreterAtom);
     return Object.keys(wellPicksByInterpreter);
 });
 
+/**
+ * @deprecated Handled by DataFramework instead
+ */
 export const selectedWellPickInterpreter = atom<string | null>((get) => {
     const selectedInterpreter = get(userSelectedWellPickInterpreterAtom);
     const availableInterpreters = get(availableWellPickInterpretersAtom);
@@ -119,6 +127,9 @@ export const selectedWellPickInterpreter = atom<string | null>((get) => {
     return availableInterpreters[0];
 });
 
+/**
+ * @deprecated Handled by DataFramework instead
+ */
 export const selectedWellborePicksAtom = atom<WellborePick_api[]>((get) => {
     const wellPicksByInterpreter = get(wellPicksByInterpreterAtom);
     const selectedInterpreter = get(selectedWellPickInterpreter);
@@ -131,6 +142,9 @@ export const selectedWellborePicksAtom = atom<WellborePick_api[]>((get) => {
     return interpreterPicks.filter(({ pickIdentifier }) => selectedWellPicks.includes(pickIdentifier));
 });
 
+/**
+ * @deprecated Handled by DataFramework instead
+ */
 export const missingCurvesAtom = atom<WellboreLogCurveHeader_api[]>((get) => {
     const templateTracks = get(logViewerTrackConfigsAtom) ?? [];
     const availableCurvesQuery = get(wellLogCurveHeadersQueryAtom);

@@ -13,6 +13,12 @@ import type { AreaPlotSettingTypes } from "../dataProviders/plots/AreaPlotProvid
 import type { LinearPlotSettingTypes } from "../dataProviders/plots/LinearPlotProvider";
 
 export const DATA_ACC_KEY = "LOG_CURVE_DATA";
+export const DUPLICATE_NAMES_ACC_KEY = " DUPLICATE_CURVE_NAMES";
+
+export type FactoryAccResult = {
+    [DATA_ACC_KEY]: WellboreLogCurveData_api[];
+    [DUPLICATE_NAMES_ACC_KEY]: Set<string>;
+};
 
 type PlotVisualizationFunc<PlotSettings extends Settings> = MakeVisualizationFunction<
     PlotSettings,
@@ -24,8 +30,12 @@ export const makeAreaPlotConfig: PlotVisualizationFunc<AreaPlotSettingTypes> = (
     const data = args.getData();
     const plotVariant = args.getSetting(Setting.PLOT_VARIANT);
 
+    const curveName = data?.name ?? "";
+    const logName = data?.logName ?? "";
+
     return {
-        name: data?.name ?? "",
+        logName: logName,
+        name: curveName,
         type: plotVariant ?? undefined,
 
         // TODO: Color
@@ -38,27 +48,36 @@ export const makeLinePlotConfig: PlotVisualizationFunc<LinearPlotSettingTypes> =
 
     const plotVariant = args.getSetting(Setting.PLOT_VARIANT) ?? undefined;
     const curveName = data?.name ?? "";
+    const logName = data?.logName ?? "";
 
     return {
+        logName: logName,
         name: curveName,
         type: plotVariant,
         // TODO: Color
     };
 };
 
-export const plotDataAccumulator: ReduceAccumulatedDataFunction<[], WellboreLogCurveData_api, Record<string, any>> = (
+export const plotDataAccumulator: ReduceAccumulatedDataFunction<[], WellboreLogCurveData_api, FactoryAccResult> = (
     acc,
     args,
 ) => {
-    const existingData = _.get(acc, DATA_ACC_KEY, []) as WellboreLogCurveData_api[];
     const newData = args.getData();
+    if (!newData) return acc;
 
-    // TODO: Use this to set up name-uniqueness checks?
+    const duplicatedNames = _.get(acc, DUPLICATE_NAMES_ACC_KEY, new Set()) as Set<string>;
+    const curveData = _.get(acc, DATA_ACC_KEY, []) as WellboreLogCurveData_api[];
 
-    if (!newData || _.find(existingData, ["name", newData.name])) return acc;
+    const existingCurve = _.find(curveData, ["name", newData.name]);
+    const sameName = existingCurve?.name === newData.name;
+    const sameLog = existingCurve?.logName === newData.logName;
+
+    if (sameName && sameLog) return acc;
+    if (sameName) duplicatedNames.add(newData.name);
 
     return {
         ...acc,
-        [DATA_ACC_KEY]: [...existingData, newData],
+        [DATA_ACC_KEY]: [...curveData, newData],
+        [DUPLICATE_NAMES_ACC_KEY]: duplicatedNames,
     };
 };

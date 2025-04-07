@@ -1,3 +1,4 @@
+import type { TemplateTrack } from "@modules/WellLogViewer/types";
 import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import type {
     TargetViewReturnTypes,
@@ -5,7 +6,7 @@ import type {
     VisualizationTarget,
     VisualizationViewBasic,
 } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
-import type { TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import type { TemplatePlotScale } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import type { ContinuousTrackSettings } from "../groups/ContinuousLogTrack";
 
@@ -20,8 +21,8 @@ export const makeContinuousTrackConfig: ViewDataCollectorFunction<
         title: args.name,
         required: true,
         width: trackWidth,
-        scale: trackScale,
-        // Need to fill this later, as they
+        scale: trackScale as TemplatePlotScale,
+        // Need to fill this later, as they're not defined yet.
         plots: [],
     };
 };

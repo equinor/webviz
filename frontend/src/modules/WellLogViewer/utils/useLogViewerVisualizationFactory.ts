@@ -1,6 +1,5 @@
 import React from "react";
 
-import type { WellboreLogCurveData_api } from "@api";
 import type { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import { LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import { GroupType } from "@modules/_shared/LayerFramework/groups/groupTypes";
@@ -11,15 +10,13 @@ import { AreaPlotProvider } from "../LayerFramework/dataProviders/plots/AreaPlot
 import { LinearPlotProvider } from "../LayerFramework/dataProviders/plots/LinearPlotProvider";
 import { WellborePicksProvider } from "../LayerFramework/dataProviders/wellpicks/WellPicksProvider";
 import { ContinuousLogTrack } from "../LayerFramework/groups/ContinuousLogTrack";
+import type { FactoryAccResult as PlotFactoryAccResult } from "../LayerFramework/visualizations/plots";
 import { makeAreaPlotConfig, makeLinePlotConfig, plotDataAccumulator } from "../LayerFramework/visualizations/plots";
 import { makeContinuousTrackConfig } from "../LayerFramework/visualizations/tracks";
 import { makeLogViewerWellPicks } from "../LayerFramework/visualizations/wellpicks";
 
-const VISUALIZATION_FACTORY = new VisualizationFactory<
-    VisualizationTarget.WSC_WELL_LOG,
-    never,
-    Record<string, WellboreLogCurveData_api[]>
->();
+type FactoryAccResult = PlotFactoryAccResult;
+const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.WSC_WELL_LOG, never, FactoryAccResult>();
 
 VISUALIZATION_FACTORY.registerLayerFunctions(LinearPlotProvider.name, LinearPlotProvider, {
     makeVisualizationFunction: makeLinePlotConfig,
