@@ -1,8 +1,16 @@
+import { BBox } from "./bbox";
 import type { Vec2 } from "./vec2";
+import { Vec3 } from "./vec3";
 
 export type Size2D = {
     width: number;
     height: number;
+};
+
+export type Size3D = {
+    width: number;
+    height: number;
+    depth: number;
 };
 
 export type Rect2D = {
@@ -10,6 +18,36 @@ export type Rect2D = {
     y: number;
     width: number;
     height: number;
+};
+
+export type Rect3D = {
+    x: number;
+    y: number;
+    z: number;
+    width: number;
+    height: number;
+    depth: number;
+};
+
+export enum ShapeType {
+    BOX = "box",
+}
+
+export type Shape = {
+    type: ShapeType.BOX;
+    centerPoint: Vec3;
+    dimensions: Size3D;
+    normalizedEdgeVectors: {
+        // along width
+        u: Vec3;
+        // along height
+        v: Vec3;
+    };
+};
+
+export type Geometry = {
+    shapes: Shape[];
+    boundingBox: BBox;
 };
 
 export const ORIGIN = Object.freeze({ x: 0, y: 0 });
@@ -78,7 +116,20 @@ export function addMarginToRect(rect: Rect2D, margin: number): Rect2D {
     };
 }
 
-export function outerRectContainsInnerRect(outerRect: Rect2D, innerRect: Rect2D): boolean {
+export function outerRectContainsInnerRect(outerRect: Rect3D, innerRect: Rect3D): boolean;
+export function outerRectContainsInnerRect(outerRect: Rect2D, innerRect: Rect2D): boolean;
+export function outerRectContainsInnerRect(outerRect: Rect2D | Rect3D, innerRect: Rect2D | Rect3D): boolean {
+    if ("depth" in outerRect && "depth" in innerRect) {
+        return (
+            outerRect.x <= innerRect.x &&
+            outerRect.y <= innerRect.y &&
+            outerRect.z <= innerRect.z &&
+            outerRect.x + outerRect.width >= innerRect.x + innerRect.width &&
+            outerRect.y + outerRect.height >= innerRect.y + innerRect.height &&
+            outerRect.z + outerRect.depth >= innerRect.z + innerRect.depth
+        );
+    }
+
     return (
         outerRect.x <= innerRect.x &&
         outerRect.y <= innerRect.y &&

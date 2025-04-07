@@ -11,7 +11,7 @@ import {
     type RealizationSurfaceData,
     type RealizationSurfaceSettings,
     SurfaceDataFormat,
-} from "../customDataProviderImplementations/RealizationSurfaceProvider";
+} from "../../dataProviders/implementations/RealizationSurfaceProvider";
 
 function calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [number, number, number, number] {
     const width = (surfDef.npoints_x - 1) * surfDef.inc_x;

@@ -48,7 +48,8 @@
         "react-plotly.js": "^2.6.0",
         "simplify-js": "^1.2.4",
         "uuid": "^9.0.0",
-        "wonka": "^6.3.4"
+        "wonka": "^6.3.4",
+        "workerpool": "^9.2.0"
     },
     "devDependencies": {
         "@hey-api/openapi-ts": "^0.61.1",
@@ -63,6 +64,7 @@
         "@types/react-dom": "^18.2.7",
         "@types/react-plotly.js": "^2.6.0",
         "@types/uuid": "^9.0.0",
+        "@types/workerpool": "^6.4.7",
         "@vitejs/plugin-react": "^4.3.4",
         "@vitest/coverage-istanbul": "^3.0.7",
         "dependency-cruiser": "^14.0.0",

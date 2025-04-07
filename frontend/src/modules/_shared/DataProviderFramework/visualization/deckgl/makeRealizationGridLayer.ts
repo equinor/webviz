@@ -6,7 +6,7 @@ import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 import type {
     RealizationGridData,
     RealizationGridSettings,
-} from "../customDataProviderImplementations/RealizationGridProvider";
+} from "../../dataProviders/implementations/RealizationGridProvider";
 
 export function makeRealizationGridLayer({
     id,
