@@ -8,6 +8,7 @@ well_log_headers_1 = [
 
 well_log_headers_2 = [
     types.WellboreLogCurveHeader(curve_name="BS", curve_unit="IN", log_name="DROGON_CONTINUOUS"),
+    types.WellboreLogCurveHeader(curve_name="BS", curve_unit="IN", log_name="DROGON_CONTINUOUS_2"),
 ]
 
 
@@ -149,6 +150,42 @@ well_log_data_map_2 = {
             (900, 800),
             (950, None),
             (1000, None),
+        ],
+    ),
+    # Curve name is *not* unique across all logs in a well, since some log runs might present the same data.
+    # This is an example of such a curve.
+    "BS_2": types.WellboreLogCurveData(
+        name="BS",
+        log_name="DROGON_CONTINUOUS_2",
+        index_min=100,
+        index_max=1000,
+        index_unit="m",
+        unit="IN",
+        curve_alias=None,
+        curve_description=None,
+        curve_unit_desc=None,
+        min_curve_value=200,
+        max_curve_value=1000,
+        no_data_value=None,
+        DataPoints=[
+            (100, 100),
+            (150, 200),
+            (250, 200),
+            (300, 300),
+            (350, 300),
+            (400, 400),
+            (450, 400),
+            (500, 500),
+            (550, 600),
+            (600, 600),
+            (650, 700),
+            (700, 700),
+            (750, 800),
+            (800, 800),
+            (850, 900),
+            (900, 900),
+            (950, 600),
+            (1000, 600),
         ],
     ),
 }
