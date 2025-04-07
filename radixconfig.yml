@@ -5,6 +5,7 @@ metadata:
 spec:
   environments:
     - name: prod
+    - name: preprod
       build:
         from: main
     - name: review
