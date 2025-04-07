@@ -1,7 +1,7 @@
 import type { BBox } from "@lib/utils/bbox";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-import type { RealizationGridData } from "../customDataProviderImplementations/RealizationGrid";
+import type { RealizationGridData } from "../customDataProviderImplementations/RealizationGridProvider";
 
 export function makeRealizationGridBoundingBox({ getData }: TransformerArgs<any, RealizationGridData>): BBox | null {
     const data = getData();

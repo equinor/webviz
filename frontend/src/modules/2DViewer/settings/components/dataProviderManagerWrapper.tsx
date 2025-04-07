@@ -8,9 +8,9 @@ import { Menu } from "@lib/components/Menu";
 import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
-import { ObservedSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurface";
-import { RealizationSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationSurface";
-import { StatisticalSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/StatisticalSurface";
+import { ObservedSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurfaceProvider";
+import { RealizationSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationSurfaceProvider";
+import { StatisticalSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/StatisticalSurfaceProvider";
 import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
@@ -153,9 +153,9 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             if (
                 movedItem instanceof DataProvider &&
                 !(
-                    movedItem instanceof RealizationSurface ||
-                    movedItem instanceof StatisticalSurface ||
-                    movedItem instanceof ObservedSurface
+                    movedItem instanceof RealizationSurfaceProvider ||
+                    movedItem instanceof StatisticalSurfaceProvider ||
+                    movedItem instanceof ObservedSurfaceProvider
                 )
             ) {
                 return false;

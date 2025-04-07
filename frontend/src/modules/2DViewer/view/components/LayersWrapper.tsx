@@ -10,11 +10,11 @@ import { makeColorScaleAnnotation } from "@modules/2DViewer/DataProviderFramewor
 import { makePolygonDataBoundingBox } from "@modules/2DViewer/DataProviderFramework/boundingBoxes/makePolygonDataBoundingBox";
 import { makeRealizationGridBoundingBox } from "@modules/2DViewer/DataProviderFramework/boundingBoxes/makeRealizationGridBoundingBox";
 import { makeSurfaceLayerBoundingBox } from "@modules/2DViewer/DataProviderFramework/boundingBoxes/makeSurfaceLayerBoundingBox";
-import { ObservedSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurface";
-import { RealizationGrid } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationGrid";
-import { RealizationPolygons } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationPolygons";
-import { RealizationSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationSurface";
-import { StatisticalSurface } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/StatisticalSurface";
+import { ObservedSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurfaceProvider";
+import { RealizationGridProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
+import { RealizationPolygonsProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationPolygonsProvider";
+import { RealizationSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationSurfaceProvider";
+import { StatisticalSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/StatisticalSurfaceProvider";
 import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { makeObservedSurfaceLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeObservedSurfaceLayer";
 import { makeRealizationGridLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeRealizationGridLayer";
@@ -24,12 +24,11 @@ import { makeStatisticalSurfaceLayer } from "@modules/2DViewer/DataProviderFrame
 import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
-import { DrilledWellTrajectories } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectories";
-import { DrilledWellborePicks } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicks";
+import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
+import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
-import { View } from "@modules/_shared/DataProviderFramework/groups/implementations/View";
 import type {
     Annotation,
     VisualizationTarget,
@@ -57,23 +56,20 @@ export type LayersWrapperProps = {
     viewContext: ViewContext<Interfaces>;
 };
 
-const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
-    VisualizationTarget.DECK_GL,
-    {
-        [GroupType.VIEW]: {
-            test: string;
-        };
-    }
->();
+const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomDataProviderType.OBSERVED_SURFACE, ObservedSurface, {
-    transformToVisualization: makeObservedSurfaceLayer,
-    transformToBoundingBox: makeSurfaceLayerBoundingBox,
-    transformToAnnotations: makeColorScaleAnnotation,
-});
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    CustomDataProviderType.OBSERVED_SURFACE,
+    ObservedSurfaceProvider,
+    {
+        transformToVisualization: makeObservedSurfaceLayer,
+        transformToBoundingBox: makeSurfaceLayerBoundingBox,
+        transformToAnnotations: makeColorScaleAnnotation,
+    },
+);
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     CustomDataProviderType.REALIZATION_SURFACE,
-    RealizationSurface,
+    RealizationSurfaceProvider,
     {
         transformToVisualization: makeRealizationSurfaceLayer,
         transformToBoundingBox: makeSurfaceLayerBoundingBox,
@@ -82,7 +78,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     CustomDataProviderType.STATISTICAL_SURFACE,
-    StatisticalSurface,
+    StatisticalSurfaceProvider,
     {
         transformToVisualization: makeStatisticalSurfaceLayer,
         transformToBoundingBox: makeSurfaceLayerBoundingBox,
@@ -91,21 +87,25 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     CustomDataProviderType.REALIZATION_POLYGONS,
-    RealizationPolygons,
+    RealizationPolygonsProvider,
     {
         transformToVisualization: makeRealizationPolygonsLayer,
         transformToBoundingBox: makePolygonDataBoundingBox,
         transformToAnnotations: makeColorScaleAnnotation,
     },
 );
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomDataProviderType.REALIZATION_GRID, RealizationGrid, {
-    transformToVisualization: makeRealizationGridLayer,
-    transformToBoundingBox: makeRealizationGridBoundingBox,
-    transformToAnnotations: makeColorScaleAnnotation,
-});
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    CustomDataProviderType.REALIZATION_GRID,
+    RealizationGridProvider,
+    {
+        transformToVisualization: makeRealizationGridLayer,
+        transformToBoundingBox: makeRealizationGridBoundingBox,
+        transformToAnnotations: makeColorScaleAnnotation,
+    },
+);
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.DRILLED_WELLBORE_PICKS,
-    DrilledWellborePicks,
+    DrilledWellborePicksProvider,
     {
         transformToVisualization: makeDrilledWellborePicksLayer,
         transformToBoundingBox: makeDrilledWellborePicksBoundingBox,
@@ -113,14 +113,12 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.DRILLED_WELL_TRAJECTORIES,
-    DrilledWellTrajectories,
+    DrilledWellTrajectoriesProvider,
     {
         transformToVisualization: makeDrilledWellTrajectoriesLayer,
         transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
     },
 );
-
-VISUALIZATION_ASSEMBLER.registerGroupCustomPropsCollector(GroupType.VIEW, View, ({ name }) => ({ test: name }));
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<bbox.BBox | null>(null);

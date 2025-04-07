@@ -23,7 +23,7 @@ export type DrilledWellborePicksData = WellborePick_api[];
 
 type SettingsWithTypes = MakeSettingTypesMap<DrilledWellborePicksSettings>;
 
-export class DrilledWellborePicks
+export class DrilledWellborePicksProvider
     implements CustomDataProviderImplementation<DrilledWellborePicksSettings, DrilledWellborePicksData>
 {
     settings = drilledWellborePicksSettings;

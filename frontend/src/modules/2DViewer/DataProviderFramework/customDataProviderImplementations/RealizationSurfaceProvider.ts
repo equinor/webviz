@@ -1,5 +1,5 @@
 import type { SurfaceDataPng_api } from "@api";
-import { SurfaceTimeType_api, getObservedSurfacesMetadataOptions, getSurfaceDataOptions } from "@api";
+import { SurfaceTimeType_api, getRealizationSurfacesMetadataOptions, getSurfaceDataOptions } from "@api";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
@@ -16,27 +16,30 @@ import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
 import { isEqual } from "lodash";
 
-const observedSurfaceSettings = [
+const realizationSurfaceSettings = [
     Setting.ENSEMBLE,
+    Setting.REALIZATION,
     Setting.ATTRIBUTE,
     Setting.SURFACE_NAME,
     Setting.TIME_OR_INTERVAL,
     Setting.COLOR_SCALE,
 ] as const;
-export type ObservedSurfaceSettings = typeof observedSurfaceSettings;
-type SettingsWithTypes = MakeSettingTypesMap<ObservedSurfaceSettings>;
+export type RealizationSurfaceSettings = typeof realizationSurfaceSettings;
+type SettingsWithTypes = MakeSettingTypesMap<RealizationSurfaceSettings>;
 
 export enum SurfaceDataFormat {
     FLOAT = "float",
     PNG = "png",
 }
 
-export type ObservedSurfaceData =
+export type RealizationSurfaceData =
     | { format: SurfaceDataFormat.FLOAT; surfaceData: SurfaceDataFloat_trans }
     | { format: SurfaceDataFormat.PNG; surfaceData: SurfaceDataPng_api };
 
-export class ObservedSurface implements CustomDataProviderImplementation<ObservedSurfaceSettings, ObservedSurfaceData> {
-    settings = observedSurfaceSettings;
+export class RealizationSurfaceProvider
+    implements CustomDataProviderImplementation<RealizationSurfaceSettings, RealizationSurfaceData>
+{
+    settings = realizationSurfaceSettings;
 
     private _dataFormat: SurfaceDataFormat;
 
@@ -44,17 +47,41 @@ export class ObservedSurface implements CustomDataProviderImplementation<Observe
         this._dataFormat = dataFormat ?? SurfaceDataFormat.PNG;
     }
 
-    getDefaultName() {
-        return "Observed Surface";
+    getDefaultName(): string {
+        return "Realization Surface";
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
-        return !isEqual(prevSettings, newSettings);
+        return !isEqual(
+            {
+                ...prevSettings,
+                colorScale: null,
+            },
+            { ...newSettings, colorScale: null },
+        );
+    }
+
+    areCurrentSettingsValid({
+        getSetting,
+    }: DataProviderInformationAccessors<RealizationSurfaceSettings, RealizationSurfaceData>): boolean {
+        const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        const realizationNum = getSetting(Setting.REALIZATION);
+        const surfaceName = getSetting(Setting.SURFACE_NAME);
+        const attribute = getSetting(Setting.ATTRIBUTE);
+        const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
+
+        return (
+            ensembleIdent !== null &&
+            realizationNum !== null &&
+            surfaceName !== null &&
+            attribute !== null &&
+            timeOrInterval !== null
+        );
     }
 
     makeValueRange({
         getData,
-    }: DataProviderInformationAccessors<ObservedSurfaceSettings, ObservedSurfaceData>): [number, number] | null {
+    }: DataProviderInformationAccessors<RealizationSurfaceSettings, RealizationSurfaceData>): [number, number] | null {
         const data = getData()?.surfaceData;
         if (!data) {
             return null;
@@ -66,22 +93,33 @@ export class ObservedSurface implements CustomDataProviderImplementation<Observe
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
-        workbenchSession,
         queryClient,
-    }: DefineDependenciesArgs<ObservedSurfaceSettings>) {
+    }: DefineDependenciesArgs<RealizationSurfaceSettings>) {
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembleSet = workbenchSession.getEnsembleSet();
+            const ensembles = getGlobalSetting("ensembles");
 
-            const ensembleIdents = ensembleSet
-                .getRegularEnsembleArray()
+            const ensembleIdents = ensembles
                 .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
                 .map((ensemble) => ensemble.getIdent());
 
             return ensembleIdents;
         });
 
-        const observedSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
+        availableSettingsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
+            const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
+
+            if (!ensembleIdent) {
+                return [];
+            }
+
+            const realizations = realizationFilterFunc(ensembleIdent);
+
+            return [...realizations];
+        });
+
+        const realizationSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
 
             if (!ensembleIdent) {
@@ -89,9 +127,10 @@ export class ObservedSurface implements CustomDataProviderImplementation<Observe
             }
 
             return await queryClient.fetchQuery({
-                ...getObservedSurfacesMetadataOptions({
+                ...getRealizationSurfacesMetadataOptions({
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid(),
+                        ensemble_name: ensembleIdent.getEnsembleName(),
                     },
                     signal: abortSignal,
                 }),
@@ -99,7 +138,7 @@ export class ObservedSurface implements CustomDataProviderImplementation<Observe
         });
 
         availableSettingsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
-            const data = getHelperDependency(observedSurfaceMetadataDep);
+            const data = getHelperDependency(realizationSurfaceMetadataDep);
 
             if (!data) {
                 return [];
@@ -114,7 +153,7 @@ export class ObservedSurface implements CustomDataProviderImplementation<Observe
 
         availableSettingsUpdater(Setting.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
             const attribute = getLocalSetting(Setting.ATTRIBUTE);
-            const data = getHelperDependency(observedSurfaceMetadataDep);
+            const data = getHelperDependency(realizationSurfaceMetadataDep);
 
             if (!attribute || !data) {
                 return [];
@@ -134,7 +173,7 @@ export class ObservedSurface implements CustomDataProviderImplementation<Observe
         availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const attribute = getLocalSetting(Setting.ATTRIBUTE);
             const surfaceName = getLocalSetting(Setting.SURFACE_NAME);
-            const data = getHelperDependency(observedSurfaceMetadataDep);
+            const data = getHelperDependency(realizationSurfaceMetadataDep);
 
             if (!attribute || !surfaceName || !data) {
                 return [];
@@ -169,22 +208,29 @@ export class ObservedSurface implements CustomDataProviderImplementation<Observe
         getSetting,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<ObservedSurfaceSettings, ObservedSurfaceData>): Promise<ObservedSurfaceData> {
+    }: FetchDataParams<RealizationSurfaceSettings, RealizationSurfaceData>): Promise<RealizationSurfaceData> {
         let surfaceAddress: FullSurfaceAddress | null = null;
         const addrBuilder = new SurfaceAddressBuilder();
 
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        const realizationNum = getSetting(Setting.REALIZATION);
         const surfaceName = getSetting(Setting.SURFACE_NAME);
         const attribute = getSetting(Setting.ATTRIBUTE);
         const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
 
-        if (ensembleIdent && surfaceName && attribute && timeOrInterval) {
+        if (ensembleIdent && surfaceName && attribute && realizationNum !== null) {
             addrBuilder.withEnsembleIdent(ensembleIdent);
             addrBuilder.withName(surfaceName);
             addrBuilder.withAttribute(attribute);
-            addrBuilder.withTimeOrInterval(timeOrInterval);
+            addrBuilder.withRealization(realizationNum);
 
-            surfaceAddress = addrBuilder.buildObservedAddress();
+            if (timeOrInterval !== SurfaceTimeType_api.NO_TIME) {
+                addrBuilder.withTimeOrInterval(timeOrInterval);
+            }
+
+            surfaceAddress = addrBuilder.buildRealizationAddress();
+        } else {
+            console.debug("RealizationSurfaceLayer: Missing required settings for fetching data");
         }
 
         const surfAddrStr = surfaceAddress ? encodeSurfAddrStr(surfaceAddress) : null;
@@ -205,6 +251,6 @@ export class ObservedSurface implements CustomDataProviderImplementation<Observe
             })
             .then((data) => ({ format: this._dataFormat, surfaceData: transformSurfaceData(data) }));
 
-        return promise as Promise<ObservedSurfaceData>;
+        return promise as Promise<RealizationSurfaceData>;
     }
 }
