@@ -4,7 +4,7 @@ import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/vis
 import type {
     DrilledWellborePicksData,
     DrilledWellborePicksSettings,
-} from "../../../dataProviders/implementations/DrilledWellborePicks";
+} from "../../../dataProviders/implementations/DrilledWellborePicksProvider";
 
 export function makeDrilledWellborePicksBoundingBox({
     getData,

@@ -1,14 +1,14 @@
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 
-import { ObservedSurface } from "./ObservedSurface";
-import { RealizationGrid } from "./RealizationGrid";
-import { RealizationPolygons } from "./RealizationPolygons";
-import { RealizationSurface } from "./RealizationSurface";
-import { StatisticalSurface } from "./StatisticalSurface";
+import { ObservedSurfaceProvider } from "./ObservedSurfaceProvider";
+import { RealizationGridProvider } from "./RealizationGridProvider";
+import { RealizationPolygonsProvider } from "./RealizationPolygonsProvider";
+import { RealizationSurfaceProvider } from "./RealizationSurfaceProvider";
+import { StatisticalSurfaceProvider } from "./StatisticalSurfaceProvider";
 import { CustomDataProviderType } from "./dataProviderTypes";
 
-DataProviderRegistry.registerDataProvider(CustomDataProviderType.OBSERVED_SURFACE, ObservedSurface);
-DataProviderRegistry.registerDataProvider(CustomDataProviderType.REALIZATION_GRID, RealizationGrid);
-DataProviderRegistry.registerDataProvider(CustomDataProviderType.REALIZATION_POLYGONS, RealizationPolygons);
-DataProviderRegistry.registerDataProvider(CustomDataProviderType.REALIZATION_SURFACE, RealizationSurface);
-DataProviderRegistry.registerDataProvider(CustomDataProviderType.STATISTICAL_SURFACE, StatisticalSurface);
+DataProviderRegistry.registerDataProvider(CustomDataProviderType.OBSERVED_SURFACE, ObservedSurfaceProvider);
+DataProviderRegistry.registerDataProvider(CustomDataProviderType.REALIZATION_GRID, RealizationGridProvider);
+DataProviderRegistry.registerDataProvider(CustomDataProviderType.REALIZATION_POLYGONS, RealizationPolygonsProvider);
+DataProviderRegistry.registerDataProvider(CustomDataProviderType.REALIZATION_SURFACE, RealizationSurfaceProvider);
+DataProviderRegistry.registerDataProvider(CustomDataProviderType.STATISTICAL_SURFACE, StatisticalSurfaceProvider);
