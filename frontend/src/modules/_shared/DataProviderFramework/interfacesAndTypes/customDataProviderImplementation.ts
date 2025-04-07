@@ -3,7 +3,7 @@ import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import type { QueryClient } from "@tanstack/query-core";
 
 import type { CustomSettingsHandler } from "./customSettingsHandler";
-import type { StoredData } from "./sharedTypes";
+import type { NullableStoredData, StoredData } from "./sharedTypes";
 import type { AvailableValuesType, SettingsKeysFromTuple } from "./utils";
 
 import type { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
@@ -116,16 +116,32 @@ export interface CustomDataProviderImplementation<
     getDefaultName(): string;
 
     /**
-     * This method is called when the settings of the provider are changed. It should return true if the new settings
+     * This optional method is called when the settings of the provider are changed. It should return true if the new settings
      * require a refetch of the data, or false if the data can be reused.
      *
      * @param prevSettings The previous settings of the provider.
      * @param newSettings The new settings of the provider.
      * @param accessors Accessors to the data and settings of the provider.
+     * @returns true if the new settings require a refetch of the data, false otherwise.
      */
-    doSettingsChangesRequireDataRefetch(
+    doSettingsChangesRequireDataRefetch?(
         prevSettings: TSettingTypes | null,
         newSettings: TSettingTypes,
+        accessors: DataProviderInformationAccessors<TSettings, TData, TStoredData>,
+    ): boolean;
+
+    /**
+     * This optional method is called when the stored data of the provider is changed. It should return true if the new
+     * stored data require a refetch of the data, or false if the data can be reused.
+     *
+     * @param prevStoredData The previous stored data of the provider.
+     * @param newStoredData The new stored data of the provider.
+     * @param accessors Accessors to the data and settings of the provider.
+     * @returns true if the new stored data require a refetch of the data, false otherwise.
+     */
+    doStoredDataChangesRequireDataRefetch?(
+        prevStoredData: NullableStoredData<TStoredData> | null,
+        newStoredData: NullableStoredData<TStoredData>,
         accessors: DataProviderInformationAccessors<TSettings, TData, TStoredData>,
     ): boolean;
 

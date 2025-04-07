@@ -17,6 +17,11 @@ export interface GetHelperDependency<
     <TDep>(dep: Dependency<TDep, TSettings, TSettingTypes, TKey>): Awaited<TDep> | null;
 }
 
+export type SettingAttributes = {
+    visible: boolean;
+    enabled: boolean;
+};
+
 export const CancelUpdate = Symbol("CancelUpdate");
 
 export interface UpdateFunc<
@@ -48,6 +53,10 @@ export interface DefineDependenciesArgs<
         key: K,
         update: UpdateFunc<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>,
     ) => Dependency<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>;
+    settingAttributesUpdater: <TSettingKey extends TKey>(
+        settingKey: TSettingKey,
+        update: UpdateFunc<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>,
+    ) => Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>;
     helperDependency: <T>(
         update: (args: {
             getLocalSetting: <T extends TKey>(settingName: T) => TSettingTypes[T];
