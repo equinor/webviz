@@ -28,8 +28,13 @@ import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFr
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
-import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import { View } from "@modules/_shared/DataProviderFramework/groups/implementations/View";
+import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
+import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
+import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
+import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type {
     Annotation,
     VisualizationTarget,
@@ -57,14 +62,7 @@ export type LayersWrapperProps = {
     viewContext: ViewContext<Interfaces>;
 };
 
-const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
-    VisualizationTarget.DECK_GL,
-    {
-        [GroupType.VIEW]: {
-            test: string;
-        };
-    }
->();
+const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     CustomDataProviderType.OBSERVED_SURFACE,
@@ -127,8 +125,6 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
         transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
     },
 );
-
-VISUALIZATION_ASSEMBLER.registerGroupCustomPropsCollector(GroupType.VIEW, View, ({ name }) => ({ test: name }));
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<bbox.BBox | null>(null);
