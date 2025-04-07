@@ -1,17 +1,15 @@
 import { type SeismicCubeMeta_api, getDepthSliceOptions, getSeismicCubeMetaListOptions } from "@api";
-import {
-    type SeismicSliceData_trans,
-    transformSeismicSlice,
-} from "@modules/3DViewerNew/settings/queries/queryDataTransforms";
 import type {
-    CustomDataLayerImplementation,
-    DataLayerInformationAccessors,
+    CustomDataProviderImplementation,
+    DataProviderInformationAccessors,
     FetchDataParams,
-} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import { type MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+} from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
+import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { isEqual } from "lodash";
+
+import { type SeismicSliceData_trans, transformSeismicSlice } from "../utils/transformSeismicSlice";
 
 const realizationSeismicDepthSliceSettings = [
     Setting.ENSEMBLE,
@@ -30,9 +28,9 @@ export type RealizationSeismicDepthSliceStoredData = {
     seismicCubeMeta: SeismicCubeMeta_api[];
 };
 
-export class RealizationSeismicDepthSliceLayer
+export class RealizationSeismicDepthSliceProvider
     implements
-        CustomDataLayerImplementation<
+        CustomDataProviderImplementation<
             RealizationSeismicDepthSliceSettings,
             RealizationSeismicDepthSliceData,
             RealizationSeismicDepthSliceStoredData
@@ -49,7 +47,7 @@ export class RealizationSeismicDepthSliceLayer
     }
 
     makeValueRange(
-        accessors: DataLayerInformationAccessors<
+        accessors: DataProviderInformationAccessors<
             RealizationSeismicDepthSliceSettings,
             RealizationSeismicDepthSliceData,
             RealizationSeismicDepthSliceStoredData

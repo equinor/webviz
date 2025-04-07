@@ -1,17 +1,15 @@
 import { type SeismicCubeMeta_api, getCrosslineSliceOptions, getSeismicCubeMetaListOptions } from "@api";
-import {
-    type SeismicSliceData_trans,
-    transformSeismicSlice,
-} from "@modules/3DViewerNew/settings/queries/queryDataTransforms";
 import type {
-    CustomDataLayerImplementation,
-    DataLayerInformationAccessors,
+    CustomDataProviderImplementation,
+    DataProviderInformationAccessors,
     FetchDataParams,
-} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import { type MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+} from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
+import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { isEqual } from "lodash";
+
+import { type SeismicSliceData_trans, transformSeismicSlice } from "../utils/transformSeismicSlice";
 
 const realizationSeismicCrosslineSettings = [
     Setting.ENSEMBLE,
@@ -32,7 +30,7 @@ export type RealizationSeismicCrosslineStoredData = {
 
 export class RealizationSeismicCrosslineProvider
     implements
-        CustomDataLayerImplementation<
+        CustomDataProviderImplementation<
             RealizationSeismicCrosslineSettings,
             RealizationSeismicCrosslineData,
             RealizationSeismicCrosslineStoredData
@@ -49,7 +47,7 @@ export class RealizationSeismicCrosslineProvider
     }
 
     makeValueRange(
-        accessors: DataLayerInformationAccessors<
+        accessors: DataProviderInformationAccessors<
             RealizationSeismicCrosslineSettings,
             RealizationSeismicCrosslineData,
             RealizationSeismicCrosslineStoredData

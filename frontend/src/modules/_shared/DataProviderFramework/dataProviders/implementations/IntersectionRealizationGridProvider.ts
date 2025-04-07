@@ -5,9 +5,6 @@ import {
     postGetPolylineIntersectionOptions,
 } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
-import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { PolylineIntersection_trans } from "@modules/_shared/utils/wellbore";
 import {
     calcExtendedSimplifiedWellboreTrajectoryInXYPlane,
@@ -22,6 +19,8 @@ import type {
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
+import type { IntersectionSettingValue } from "../../settings/implementations/IntersectionSetting";
+import { type MakeSettingTypesMap, Setting } from "../../settings/settingsDefinitions";
 
 const intersectionRealizationGridSettings = [
     Setting.INTERSECTION,
@@ -31,8 +30,10 @@ const intersectionRealizationGridSettings = [
     Setting.GRID_NAME,
     Setting.TIME_OR_INTERVAL,
     Setting.SHOW_GRID_LINES,
+    Setting.COLOR_SCALE,
+    Setting.SHOW_GRID_LINES,
 ] as const;
-type IntersectionRealizationGridSettings = typeof intersectionRealizationGridSettings;
+export type IntersectionRealizationGridSettings = typeof intersectionRealizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<IntersectionRealizationGridSettings>;
 
 export type IntersectionRealizationGridData = PolylineIntersection_trans;
