@@ -161,7 +161,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
         syncHelper.publishValue(
             SyncSettingKey.ENSEMBLE,
             "global.syncValue.ensembles",
-            ensembleIdent ? [ensembleIdent] : []
+            ensembleIdent ? [ensembleIdent] : [],
         );
     }
 
@@ -251,7 +251,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const datesOrIntervalsForSelectedParameter =
         gridModelInfo?.property_info_arr
             .filter((el) => el.property_name === selectedGridModelParameterName)
-            .map((el) => el.iso_date_or_interval) ?? [];
+            .map((el) => el.iso_date_or_interval ?? null) ?? [];
 
     return (
         <div className="flex flex-col gap-1">
@@ -433,7 +433,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                                     >
                                         <Delete fontSize="small" />
                                     </div>
-                                </div>
+                                </div>,
                             )}
                             value={selectedCustomIntersectionPolylineId ? [selectedCustomIntersectionPolylineId] : []}
                             headerLabels={["Polyline name", "Actions"]}
@@ -516,7 +516,7 @@ function makeCustomIntersectionPolylineOptions(
     polylines: IntersectionPolyline[],
     selectedId: string | null,
     filter: string,
-    actions: React.ReactNode
+    actions: React.ReactNode,
 ): TableSelectOption[] {
     return polylines
         .filter((polyline) => polyline.name.includes(filter))
