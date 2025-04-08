@@ -65,7 +65,7 @@ export class Pipe {
         const pl = plane.fromNormalAndPoint(normal, this._path[toIndex]);
 
         const fromContour = this._contours[fromIndex];
-        let toContour: vec3.Vec3[] = [];
+        const toContour: vec3.Vec3[] = [];
 
         for (let i = 0; i < fromContour.length; ++i) {
             toContour.push(plane.intersectLine(pl, { point: fromContour[i], direction: dir1 })!);

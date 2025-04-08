@@ -1,21 +1,21 @@
 import {
     CompositeLayer,
-    CompositeLayerProps,
-    GetPickingInfoParams,
-    Layer,
-    PickingInfo,
-    UpdateParameters,
+    type CompositeLayerProps,
+    type GetPickingInfoParams,
+    type Layer,
+    type PickingInfo,
+    type UpdateParameters,
 } from "@deck.gl/core";
-import { Geometry as LoadingGeometry } from "@lib/utils/geometry";
-import { Geometry } from "@luma.gl/engine";
-import { ExtendedLayerProps } from "@webviz/subsurface-viewer";
-import { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
+import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
+import type { Geometry } from "@luma.gl/engine";
+import type { ExtendedLayerProps } from "@webviz/subsurface-viewer";
+import type { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
 
 import { isEqual } from "lodash";
 import workerpool from "workerpool";
 
 import { ExtendedSimpleMeshLayer } from "./_private/ExtendedSimpleMeshLayer";
-import { WebworkerParameters, makeMesh } from "./_private/worker";
+import { type WebworkerParameters, makeMesh } from "./_private/worker";
 
 import { PreviewLayer } from "../PreviewLayer/PreviewLayer";
 

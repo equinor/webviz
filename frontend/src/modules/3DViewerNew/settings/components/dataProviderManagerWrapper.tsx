@@ -9,8 +9,8 @@ import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
 import { ObservedSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurfaceProvider";
-import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
+import { CustomDataProviderType } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderTypes";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
@@ -74,14 +74,6 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "color-scale":
                 groupDelegate.prependChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
                 return;
-            case "observed-surface":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(
-                        CustomDataProviderType.OBSERVED_SURFACE,
-                        props.dataProviderManager,
-                    ),
-                );
-                return;
             case "statistical-surface":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
@@ -125,6 +117,38 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "realization-grid":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(DataProviderType.REALIZATION_GRID, props.dataProviderManager),
+                );
+                return;
+            case "realization-seismic-inline":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        CustomDataProviderType.REALIZATION_SEISMIC_INLINE,
+                        props.dataProviderManager,
+                    ),
+                );
+                return;
+            case "realization-seismic-crossline":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        CustomDataProviderType.REALIZATION_SEISMIC_CROSSLINE,
+                        props.dataProviderManager,
+                    ),
+                );
+                return;
+            case "realization-seismic-depth-slice":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        CustomDataProviderType.REALIZATION_SEISMIC_DEPTH,
+                        props.dataProviderManager,
+                    ),
+                );
+                return;
+            case "intersection-realization-grid":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        DataProviderType.INTERSECTION_REALIZATION_GRID,
+                        props.dataProviderManager,
+                    ),
                 );
                 return;
             case "ensemble":
@@ -283,6 +307,26 @@ const ACTIONS: ActionGroup[] = [
         label: "Layers",
         children: [
             {
+                label: "Intersection",
+                children: [
+                    {
+                        identifier: "intersection-realization-grid",
+                        icon: <Icon data={grid_layer} fontSize="small" />,
+                        label: "Intersection Realization Grid",
+                    },
+                ],
+            },
+            {
+                label: "Reservoir grid",
+                children: [
+                    {
+                        identifier: "realization-grid",
+                        icon: <Icon data={grid_layer} fontSize="small" />,
+                        label: "Realization Grid",
+                    },
+                ],
+            },
+            {
                 label: "Surfaces",
                 children: [
                     {
@@ -328,12 +372,27 @@ const ACTIONS: ActionGroup[] = [
                 ],
             },
             {
-                label: "Others",
+                label: "Seismic",
                 children: [
                     {
-                        identifier: "realization-grid",
-                        icon: <Icon data={grid_layer} fontSize="small" />,
-                        label: "Realization Grid",
+                        label: "Synthetic",
+                        children: [
+                            {
+                                identifier: "realization-seismic-inline",
+                                icon: <Icon data={surface_layer} fontSize="small" />,
+                                label: "Realization Inline",
+                            },
+                            {
+                                identifier: "realization-seismic-crossline",
+                                icon: <Icon data={surface_layer} fontSize="small" />,
+                                label: "Realization Crossline",
+                            },
+                            {
+                                identifier: "realization-seismic-depth-slice",
+                                icon: <Icon data={surface_layer} fontSize="small" />,
+                                label: "Realization Depth Slice",
+                            },
+                        ],
                     },
                 ],
             },
@@ -367,11 +426,6 @@ const ACTIONS: ActionGroup[] = [
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Date",
             },
-        ],
-    },
-    {
-        label: "Utilities",
-        children: [
             {
                 identifier: "color-scale",
                 icon: <Icon data={color_palette} fontSize="small" />,

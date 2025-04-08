@@ -1,4 +1,4 @@
-import { CompositeLayer, CompositeLayerProps, Layer, UpdateParameters } from "@deck.gl/core";
+import { CompositeLayer, type CompositeLayerProps, type Layer, type UpdateParameters } from "@deck.gl/core";
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 import * as vec3 from "@lib/utils/vec3";
 import { Geometry } from "@luma.gl/engine";
@@ -188,7 +188,7 @@ export class BoxLayer extends CompositeLayer<RectangleLayerProps> {
                 id: "mesh",
                 data: [0],
                 mesh: this.state.geometry,
-                getPosition: (d) => [0, 0, 0],
+                getPosition: () => [0, 0, 0],
                 getColor: [100, 100, 100, 100],
                 material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
                 pickable: false,

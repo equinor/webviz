@@ -6,17 +6,26 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Interfaces } from "./interfaces";
 import { preview } from "./preview";
 
-export const MODULE_NAME = "3DViewer";
+export const MODULE_NAME = "3DViewerNew";
 
 const description = "Generic 3D viewer for grid, surfaces, and wells.";
 
 ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,
-    defaultTitle: "3D Viewer",
+    defaultTitle: "3D Viewer (new)",
     category: ModuleCategory.MAIN,
     devState: ModuleDevState.DEV,
-    dataTagIds: [ModuleDataTagId.GRID3D, ModuleDataTagId.DRILLED_WELLS],
     description,
     preview,
+    dataTagIds: [
+        ModuleDataTagId.SURFACE,
+        ModuleDataTagId.DRILLED_WELLS,
+        ModuleDataTagId.SEISMIC,
+        ModuleDataTagId.GRID3D,
+        ModuleDataTagId.POLYGONS,
+    ],
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.INTERSECTION, SyncSettingKey.VERTICAL_SCALE],
+    onInstanceUnload: (instanceId) => {
+        window.localStorage.removeItem(`${instanceId}-settings`);
+    },
 });

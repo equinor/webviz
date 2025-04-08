@@ -1,6 +1,6 @@
-import { Layer } from "@deck.gl/core";
+import type { Layer } from "@deck.gl/core";
 import * as bbox from "@lib/utils/bbox";
-import { Geometry, ShapeType, degreesToRadians } from "@lib/utils/geometry";
+import { type Geometry, ShapeType, degreesToRadians } from "@lib/utils/geometry";
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import * as vec3 from "@lib/utils/vec3";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";

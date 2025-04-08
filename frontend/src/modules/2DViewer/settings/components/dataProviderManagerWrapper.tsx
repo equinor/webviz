@@ -367,11 +367,6 @@ const ACTIONS: ActionGroup[] = [
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Date",
             },
-        ],
-    },
-    {
-        label: "Utilities",
-        children: [
             {
                 identifier: "color-scale",
                 icon: <Icon data={color_palette} fontSize="small" />,

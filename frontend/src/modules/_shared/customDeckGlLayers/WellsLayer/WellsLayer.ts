@@ -1,14 +1,14 @@
 import {
     CompositeLayer,
-    GetPickingInfoParams,
-    LayersList,
+    type GetPickingInfoParams,
+    type LayersList,
     type Material,
-    PickingInfo,
+    type PickingInfo,
     type UpdateParameters,
 } from "@deck.gl/core";
 import * as vec3 from "@lib/utils/vec3";
-import { ExtendedLayerProps, LayerPickInfo } from "@webviz/subsurface-viewer";
-import { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
+import type { ExtendedLayerProps, LayerPickInfo } from "@webviz/subsurface-viewer";
+import type { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
 
 import { type PipeLayerProps, PipesLayer } from "./_private/PipeLayer";
 import { getMd } from "./_private/wellTrajectoryUtils";

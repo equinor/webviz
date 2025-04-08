@@ -1,6 +1,6 @@
 import * as vec3 from "@lib/utils/vec3";
 
-import { Line } from "./Line";
+import type { Line } from "./Line";
 
 export type Plane = {
     normal: vec3.Vec3;
