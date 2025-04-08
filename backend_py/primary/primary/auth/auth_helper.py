@@ -18,6 +18,7 @@ from primary.services.utils.authenticated_user import AuthenticatedUser
 
 LOGGER = logging.getLogger(__name__)
 
+# Alias for the literal that lists the resource names we use
 _ResourceName: TypeAlias = Literal["graph", "sumo", "smda", "ssdl"]
 
 
@@ -238,16 +239,15 @@ def _acquire_refreshed_identity_and_tokens(
     perf_metrics.record_lap("get-accounts")
 
     # It seems we cannot get a new ID token in the same way can an access token.
-    # There is no direct way of asking for an ID token, but we will get a new ID token each time we get a new
-    # access token for the graph scopes (or any other scopes that include the "openid" scope)
-    # Therefore we will force a refresh on the graph scopes to get a new ID token.
-    # This means we don't get the benefit of the msal token cache, so we try and avoid forcing a refresh
-    # of the ID token unless it is getting close to expiring.
+    # There is no direct way of asking for an ID token, but we will get a new ID token each time we get a new access
+    # token for the graph scopes (or any other scopes that include the "openid" scope.) Therefore we will force a
+    # refresh on the graph scopes to get a new ID token. This means we don't get the benefit of the msal token cache,
+    # so we try and avoid forcing a refresh of the ID token unless it is getting close to expiring.
     # Similar to msal we will consider it expired if it expires is less than 5 minutes.
     time_now = time.time()
     identity_expires_in = curr_auth_info.user_identity_expires_at - time_now if curr_auth_info else 0
     if curr_auth_info and identity_expires_in >= 5 * 60:
-        # Just re-use the values from the current auth info
+        # Still more than 5 minutes left on the ID token, so we can just re-use the values from the current auth info
         user_id = curr_auth_info.user_id
         user_name = curr_auth_info.user_name
         id_token_expiry_time = curr_auth_info.user_identity_expires_at
@@ -275,8 +275,8 @@ def _acquire_refreshed_identity_and_tokens(
         perf_metrics.record_lap("get-id-token")
 
     # So we have the identity of an authenticated user
-    # This is the minimum requirement for returning info on the user so we can create the new object
-    # We'll then continue to populate it with access tokens
+    # This is the minimum requirement for returning info on the user so we can create the new object now.
+    # We'll then continue to populate it with access tokens further down.
     new_auth_info = _UserAuthInfo(
         user_id=user_id,
         user_name=user_name,
@@ -285,13 +285,15 @@ def _acquire_refreshed_identity_and_tokens(
         earliest_expiry_time=0,
     )
 
+    # Iterate over the resource names and get the access tokens for each of them
     resource_name: _ResourceName
     for resource_name in get_args(_ResourceName):
         token_entry = _acquire_access_token_for_resource_scopes(cca, resource_name, account)
         if token_entry:
             new_auth_info.access_tokens[resource_name] = token_entry
 
-    # Determine the earliest expiry time of all the tokens and the identity
+    # Determine the earliest expiry time of all the tokens and the identity and store it so we can use it to
+    # easily check if any of the items in the _UserAuthInfo object needs to be refreshed/updated
     earliest_expiry_time = new_auth_info.user_identity_expires_at
     for token_entry in new_auth_info.access_tokens.values():
         if token_entry.expires_at < earliest_expiry_time:

@@ -34,10 +34,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
     const { authState, userInfo } = useAuthProvider();
 
     function handleLogout() {
-        window.alert("Sign out not implemented in backend yet.");
-        /*
         window.location.href = "/api/logout";
-        */
     }
 
     function makeIcon() {
