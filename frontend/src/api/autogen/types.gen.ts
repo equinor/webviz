@@ -1140,7 +1140,7 @@ export type WellboreLogCurveHeader_api = {
     curveType: WellLogCurveTypeEnum_api;
     logName: string;
     curveName: string;
-    curveUnit?: string | null;
+    curveUnit: string | null;
 };
 
 export type WellborePerforation_api = {
