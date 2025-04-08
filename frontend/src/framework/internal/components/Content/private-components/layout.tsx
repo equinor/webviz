@@ -10,7 +10,13 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Rect2D, Size2D } from "@lib/utils/geometry";
 import { MANHATTAN_LENGTH, addMarginToRect, pointRelativeToDomRect, rectContainsPoint } from "@lib/utils/geometry";
 import type { Vec2 } from "@lib/utils/vec2";
-import { multiplyVec2, point2Distance, scaleVec2NonUniform, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
+import {
+    multiplyElementwiseVec2,
+    point2Distance,
+    scaleVec2NonUniform,
+    subtractVec2,
+    vec2FromPointerEvent,
+} from "@lib/utils/vec2";
 
 import { v4 } from "uuid";
 
@@ -85,7 +91,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 setPosition(
                     subtractVec2(
                         relativePointerPosition,
-                        multiplyVec2(relativePointerToElementDiff, {
+                        multiplyElementwiseVec2(relativePointerToElementDiff, {
                             x: draggedElementSize.width,
                             y: 1,
                         }),
@@ -187,7 +193,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 setPosition(
                     subtractVec2(
                         relativePointerPosition,
-                        multiplyVec2(relativePointerToElementDiff, {
+                        multiplyElementwiseVec2(relativePointerToElementDiff, {
                             x: draggedElementSize.width,
                             y: 1,
                         }),

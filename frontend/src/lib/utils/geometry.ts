@@ -1,6 +1,6 @@
-import { BBox } from "./bbox";
+import type { BBox } from "./bbox";
 import type { Vec2 } from "./vec2";
-import { Vec3 } from "./vec3";
+import type { Vec3 } from "./vec3";
 
 export type Size2D = {
     width: number;
