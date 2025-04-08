@@ -230,7 +230,7 @@ export class DataProvider<
         }
 
         this._cancellationPending = true;
-        this._prevSettings = this._settingsContextDelegate.getValues() as TSettingTypes;
+        this._prevSettings = clone(this._settingsContextDelegate.getValues()) as TSettingTypes;
         this._prevStoredData = clone(this._settingsContextDelegate.getStoredDataRecord()) as TStoredData;
         this.maybeCancelQuery().then(() => {
             this.maybeRefetchData();
