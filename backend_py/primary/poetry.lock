@@ -14,24 +14,25 @@ files = [
 
 [[package]]
 name = "anyio"
-version = "3.7.1"
+version = "4.9.0"
 description = "High level compatibility layer for multiple asynchronous event loop implementations"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "anyio-3.7.1-py3-none-any.whl", hash = "sha256:91dee416e570e92c64041bd18b900d1d6fa78dff7048769ce5ac5ddad004fbb5"},
-    {file = "anyio-3.7.1.tar.gz", hash = "sha256:44a3c9aba0f5defa43261a8b3efb97891f2bd7d804e0e1f56419befa1adfc780"},
+    {file = "anyio-4.9.0-py3-none-any.whl", hash = "sha256:9f76d541cad6e36af7beb62e978876f3b41e3e04f2c1fbf0884604c0a9c4d93c"},
+    {file = "anyio-4.9.0.tar.gz", hash = "sha256:673c0c244e15788651a4ff38710fea9675823028a6f08a5eda409e0c9840a028"},
 ]
 
 [package.dependencies]
 idna = ">=2.8"
 sniffio = ">=1.1"
+typing_extensions = {version = ">=4.5", markers = "python_version < \"3.13\""}
 
 [package.extras]
-doc = ["Sphinx", "packaging", "sphinx-autodoc-typehints (>=1.2.0)", "sphinx-rtd-theme (>=1.2.2)", "sphinxcontrib-jquery"]
-test = ["anyio[trio]", "coverage[toml] (>=4.5)", "hypothesis (>=4.0)", "mock (>=4) ; python_version < \"3.8\"", "psutil (>=5.9)", "pytest (>=7.0)", "pytest-mock (>=3.6.1)", "trustme", "uvloop (>=0.17) ; python_version < \"3.12\" and platform_python_implementation == \"CPython\" and platform_system != \"Windows\""]
-trio = ["trio (<0.22)"]
+doc = ["Sphinx (>=8.2,<9.0)", "packaging", "sphinx-autodoc-typehints (>=1.2.0)", "sphinx_rtd_theme"]
+test = ["anyio[trio]", "blockbuster (>=1.5.23)", "coverage[toml] (>=7)", "exceptiongroup (>=1.2.0)", "hypothesis (>=4.0)", "psutil (>=5.9)", "pytest (>=7.0)", "trustme", "truststore (>=0.9.1) ; python_version >= \"3.10\"", "uvloop (>=0.21) ; platform_python_implementation == \"CPython\" and platform_system != \"Windows\" and python_version < \"3.14\""]
+trio = ["trio (>=0.26.1)"]
 
 [[package]]
 name = "asgiref"
@@ -238,28 +239,28 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
 name = "blosc2"
-version = "3.2.1"
+version = "3.3.0"
 description = "A fast & compressed ndarray library with a flexible compute engine."
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
 files = [
-    {file = "blosc2-3.2.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:46c96a6ac22504ee2c04f92d805e88d540bba910e2ae19bd8a17f21af01e2adc"},
-    {file = "blosc2-3.2.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:1ce77d26443c843450643bfa6a8135471bd2f7d6cc049c4cf691bf5931c98ed8"},
-    {file = "blosc2-3.2.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e0c998480bb60f515a5902df652e73ecf6fd0bd629cdba00131cbc4879ec2a27"},
-    {file = "blosc2-3.2.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ea15f7cc61f3563fcbc58a029e21088f4f44ef21b176133fdac31255cb6f085d"},
-    {file = "blosc2-3.2.1-cp311-cp311-win_amd64.whl", hash = "sha256:78d865b5a54475dcc9d9665abb729bd88eccb744c85229ebbbf5c7a309ea4f26"},
-    {file = "blosc2-3.2.1-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:335890dd8fcb605b29b83b5db467345ce36dba382824a032494c2b5f988c339d"},
-    {file = "blosc2-3.2.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:a993d5322d84ac919fbb03c926e2d41c8f300886c42f01510eb1a8b2d76f5d07"},
-    {file = "blosc2-3.2.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1de7990baba960deb49f863ac12ae934189f2e28090b44bdef3d05ef2390bc16"},
-    {file = "blosc2-3.2.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b43790f3e04b076b95c7ec65399e32ab9e94fde2fa3006593591fb42f2d6711e"},
-    {file = "blosc2-3.2.1-cp312-cp312-win_amd64.whl", hash = "sha256:bbea91f835f3f9b6214eb27f6c4ba6ee39ffc3eb1f0cfbd7be43a814ce3f27ae"},
-    {file = "blosc2-3.2.1-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:53f754ad1bee46759a1c0c565e9586e622568dc24e5683dc2503895ac5bec781"},
-    {file = "blosc2-3.2.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:1960d065b5b02ab5f923e8e3fe53dd8c8a2a242f4c9dd2874e2227cce3dfeb74"},
-    {file = "blosc2-3.2.1-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f4f67d8ec8c4bb170edd628a39b11180255a813feca587d567d21d5659024cc6"},
-    {file = "blosc2-3.2.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:24947d9825c3dfa33bb0879a092aa38f4b7f05d74c320e0c6095eef1e7fc25f0"},
-    {file = "blosc2-3.2.1-cp313-cp313-win_amd64.whl", hash = "sha256:169875f0327053d0a7ec7dc13f83ba445425bc8800986cc9b675db0b1d67c7fc"},
-    {file = "blosc2-3.2.1.tar.gz", hash = "sha256:bc10cc55e6ffa1984b2502e7c4a577064cf84a935602a5879e2685124bbb6141"},
+    {file = "blosc2-3.3.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:a13bd0f84cd4740fcaf366d4e91ae2df1cb0c4bcf4b968491d20a94bb720b49c"},
+    {file = "blosc2-3.3.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:b15a921906bba2fc822347d312ad68e6369544fb033cbfb2d3dd8313f41c61aa"},
+    {file = "blosc2-3.3.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e106b8d42d5df5334b602ae42787630cae3c92165985aa7167d97f6432bf7740"},
+    {file = "blosc2-3.3.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:595be1ae98919c20965276fc4ccad8384466ef45dfcf1ef08c0a17d39e5dc9c3"},
+    {file = "blosc2-3.3.0-cp311-cp311-win_amd64.whl", hash = "sha256:0667da628e552cf4f19483ecd05aa735b26f6be5ab89160a5233004a78f6c850"},
+    {file = "blosc2-3.3.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:e85a3eadc240b566eba1df142c3ab0600330bf24300646c8a48bc6b5a96f3fd4"},
+    {file = "blosc2-3.3.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:2a99d5f1e514f47a95c6092eb53e4bb5992356443419d20dd7c6855a471edc61"},
+    {file = "blosc2-3.3.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:11b7c208c129ba5712671192d6ac13a269f2f3c08aeed389a700d561ebf29f4c"},
+    {file = "blosc2-3.3.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6911461cec7af0514d41fb055c9f7381857e9b4f48024554df8b15d9dddbb465"},
+    {file = "blosc2-3.3.0-cp312-cp312-win_amd64.whl", hash = "sha256:e4239fdcf770733f452bc820d925b026235291305992b26e7e95ec7a78acb117"},
+    {file = "blosc2-3.3.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:8f5d0c5055e1bda2ff1d4d6bdbf24c199a3d6551f24cb730553617f085f89876"},
+    {file = "blosc2-3.3.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:28b07dca02a54167c185f11a8dfd294051935dbdb75b498f926209bb4d451966"},
+    {file = "blosc2-3.3.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:087b7359cdac7192a42a78067ab6f6c8da6f45d0ce484362252ec7cb1beeda20"},
+    {file = "blosc2-3.3.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e412cb177f8ed207db535a0a1f6b6a4144cc4071ff141618378a7ec265bef1dc"},
+    {file = "blosc2-3.3.0-cp313-cp313-win_amd64.whl", hash = "sha256:485f18b1b149cb54e0e674bafcd60795c426529f39c168dff83fc7d19d43d9dc"},
+    {file = "blosc2-3.3.0.tar.gz", hash = "sha256:33a10327ece8197a9852e171f92199b3346e3e8450391cd0f01abaf402ae8979"},
 ]
 
 [package.dependencies]
@@ -785,14 +786,14 @@ files = [
 
 [[package]]
 name = "fmu-sumo"
-version = "2.3.6"
+version = "2.3.8"
 description = "Python package for interacting with Sumo in an FMU setting"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "fmu_sumo-2.3.6-py3-none-any.whl", hash = "sha256:3a260841187c2a96df6af7907873b9358eefa2c81cf55d41b0c72469f76579d6"},
-    {file = "fmu_sumo-2.3.6.tar.gz", hash = "sha256:8c5e96746a1b56e9ec2b44f4efea85532e04fb9533f83b2ad1156de844c7d4c0"},
+    {file = "fmu_sumo-2.3.8-py3-none-any.whl", hash = "sha256:0d16cbc0c812b7338df3565dad24dc812dd8ab8063206aefd555270af19d139c"},
+    {file = "fmu_sumo-2.3.8.tar.gz", hash = "sha256:0a80b941fd66834da7c40c57219b11d80cc3176d4db299e7dc0cb3d5664c370e"},
 ]
 
 [package.dependencies]
@@ -955,49 +956,50 @@ test = ["blosc2 (>=2.5.1) ; python_version >= \"3.9\"", "blosc2-grok (>=0.2.2) ;
 
 [[package]]
 name = "httpcore"
-version = "0.17.3"
+version = "1.0.7"
 description = "A minimal low-level HTTP client."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "httpcore-0.17.3-py3-none-any.whl", hash = "sha256:c2789b767ddddfa2a5782e3199b2b7f6894540b17b16ec26b2c4d8e103510b87"},
-    {file = "httpcore-0.17.3.tar.gz", hash = "sha256:a6f30213335e34c1ade7be6ec7c47f19f50c56db36abef1a9dfa3815b1cb3888"},
+    {file = "httpcore-1.0.7-py3-none-any.whl", hash = "sha256:a3fff8f43dc260d5bd363d9f9cf1830fa3a458b332856f34282de498ed420edd"},
+    {file = "httpcore-1.0.7.tar.gz", hash = "sha256:8551cb62a169ec7162ac7be8d4817d561f60e08eaa485234898414bb5a8a0b4c"},
 ]
 
 [package.dependencies]
-anyio = ">=3.0,<5.0"
 certifi = "*"
 h11 = ">=0.13,<0.15"
-sniffio = "==1.*"
 
 [package.extras]
+asyncio = ["anyio (>=4.0,<5.0)"]
 http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (==1.*)"]
+trio = ["trio (>=0.22.0,<1.0)"]
 
 [[package]]
 name = "httpx"
-version = "0.24.1"
+version = "0.28.1"
 description = "The next generation HTTP client."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "httpx-0.24.1-py3-none-any.whl", hash = "sha256:06781eb9ac53cde990577af654bd990a4949de37a28bdb4a230d434f3a30b9bd"},
-    {file = "httpx-0.24.1.tar.gz", hash = "sha256:5853a43053df830c20f8110c5e69fe44d035d850b2dfe795e196f00fdb774bdd"},
+    {file = "httpx-0.28.1-py3-none-any.whl", hash = "sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad"},
+    {file = "httpx-0.28.1.tar.gz", hash = "sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc"},
 ]
 
 [package.dependencies]
+anyio = "*"
 certifi = "*"
-httpcore = ">=0.15.0,<0.18.0"
+httpcore = "==1.*"
 idna = "*"
-sniffio = "*"
 
 [package.extras]
 brotli = ["brotli ; platform_python_implementation == \"CPython\"", "brotlicffi ; platform_python_implementation != \"CPython\""]
 cli = ["click (==8.*)", "pygments (==2.*)", "rich (>=10,<14)"]
 http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (==1.*)"]
+zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "idna"
@@ -3498,14 +3500,14 @@ pbr = ">=2.0.0"
 
 [[package]]
 name = "sumo-wrapper-python"
-version = "1.0.24"
+version = "1.0.28"
 description = "Python wrapper for the Sumo API"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "sumo_wrapper_python-1.0.24-py3-none-any.whl", hash = "sha256:fb98b758e66e92d756eae91f6f0b410bd36acab75f994e50d2786053a0669f87"},
-    {file = "sumo_wrapper_python-1.0.24.tar.gz", hash = "sha256:4acab21f2e3891cdbb483b7f98c0e32efe91eb319c8565c1111fd2d8995053bf"},
+    {file = "sumo_wrapper_python-1.0.28-py3-none-any.whl", hash = "sha256:44cad34d66f17012da49bff64280cc37ec372bbe78d73e555506e792b8aadd3a"},
+    {file = "sumo_wrapper_python-1.0.28.tar.gz", hash = "sha256:037f00adaeb6e350714aa5707a61adcc569ed2b39d828f067ef0b1135c6e5edf"},
 ]
 
 [package.dependencies]
@@ -3920,4 +3922,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "45354e66e18c1b85b8fa25ba65ea9b960f7dffda2d0b11cb0a81181da9f3d99f"
+content-hash = "5660818ee32cc436f2157fc5339a004a0645917253171c198da81bd48c0af9a1"
