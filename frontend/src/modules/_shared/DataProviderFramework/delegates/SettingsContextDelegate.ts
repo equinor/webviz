@@ -13,7 +13,7 @@ import { Group } from "../framework/Group/Group";
 import type { SettingManager } from "../framework/SettingManager/SettingManager";
 import { SettingTopic } from "../framework/SettingManager/SettingManager";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
-import type { CustomSettingsHandler, UpdateFunc } from "../interfacesAndTypes/customSettingsHandler";
+import type { CustomSettingsHandler, SettingAttributes, UpdateFunc } from "../interfacesAndTypes/customSettingsHandler";
 import { type SharedSettingsProvider, instanceofSharedSettingsProvider } from "../interfacesAndTypes/entities";
 import type { SerializedSettingsState } from "../interfacesAndTypes/serialization";
 import type { NullableStoredData, StoredData } from "../interfacesAndTypes/sharedTypes";
@@ -79,6 +79,7 @@ export class SettingsContextDelegate<
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _status: SettingsContextStatus = SettingsContextStatus.LOADING;
     private _storedData: NullableStoredData<TStoredData> = {} as NullableStoredData<TStoredData>;
+    private _dependencies: Dependency<any, TSettings, any, any>[] = [];
 
     constructor(
         owner: DataProvider<TSettings, any, TStoredData, TSettingTypes, TSettingKey>,
@@ -186,6 +187,16 @@ export class SettingsContextDelegate<
         return true;
     }
 
+    areAllDependenciesLoaded(): boolean {
+        for (const dependency of this._dependencies) {
+            if (dependency.getIsLoading()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     areAllSettingsLoaded(): boolean {
         for (const key in this._settings) {
             if (this._settings[key].isLoading()) {
@@ -241,11 +252,21 @@ export class SettingsContextDelegate<
 
     setStoredData<K extends keyof TStoredData>(key: K, data: TStoredData[K] | null): void {
         this._storedData[key] = data;
+
+        if (!this.areAllDependenciesLoaded()) {
+            this.setStatus(SettingsContextStatus.LOADING);
+            return;
+        }
+
         this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.STORED_DATA_CHANGED);
     }
 
     getSettings() {
         return this._settings;
+    }
+
+    getStoredDataRecord(): NullableStoredData<TStoredData> {
+        return this._storedData;
     }
 
     getStoredData(key: TStoredDataKey): TStoredData[TStoredDataKey] | null {
@@ -297,7 +318,7 @@ export class SettingsContextDelegate<
     createDependencies(): void {
         this._unsubscribeHandler.unsubscribe("dependencies");
 
-        const dependencies: Dependency<any, TSettings, any, any>[] = [];
+        this._dependencies = [];
 
         const makeLocalSettingGetter = <K extends TSettingKey>(key: K, handler: (value: TSettingTypes[K]) => void) => {
             const handleChange = (): void => {
@@ -347,7 +368,7 @@ export class SettingsContextDelegate<
                 makeLocalSettingGetter,
                 makeGlobalSettingGetter,
             );
-            dependencies.push(dependency);
+            this._dependencies.push(dependency);
 
             dependency.subscribe((availableValues) => {
                 if (availableValues === null) {
@@ -360,11 +381,33 @@ export class SettingsContextDelegate<
             dependency.subscribeLoading((loading: boolean, hasDependencies: boolean) => {
                 this._settings[settingKey].setLoading(loading);
 
-                const anyLoading = dependencies.some((dep) => dep.getIsLoading());
-
-                if (!hasDependencies && !loading && !anyLoading) {
+                if (!hasDependencies && !loading) {
                     this.handleSettingChanged();
                 }
+            });
+
+            dependency.initialize();
+
+            return dependency;
+        };
+
+        const settingAttributesUpdater = <K extends TSettingKey>(
+            settingKey: K,
+            updateFunc: UpdateFunc<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>,
+        ): Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey> => {
+            const dependency = new Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>(
+                this,
+                updateFunc,
+                makeLocalSettingGetter,
+                makeGlobalSettingGetter,
+            );
+            this._dependencies.push(dependency);
+
+            dependency.subscribe((attributes: Partial<SettingAttributes> | null) => {
+                if (attributes === null) {
+                    return;
+                }
+                this._settings[settingKey].updateAttributes(attributes);
             });
 
             dependency.initialize();
@@ -382,7 +425,7 @@ export class SettingsContextDelegate<
                 TSettingTypes,
                 TSettingKey
             >(this, updateFunc, makeLocalSettingGetter, makeGlobalSettingGetter);
-            dependencies.push(dependency);
+            this._dependencies.push(dependency);
 
             dependency.subscribe((storedData: TStoredData[K] | null) => {
                 this.setStoredData(key, storedData);
@@ -409,7 +452,7 @@ export class SettingsContextDelegate<
                 makeLocalSettingGetter,
                 makeGlobalSettingGetter,
             );
-            dependencies.push(dependency);
+            this._dependencies.push(dependency);
 
             dependency.initialize();
 
@@ -418,9 +461,10 @@ export class SettingsContextDelegate<
 
         if (this._customSettingsHandler.defineDependencies) {
             this._customSettingsHandler.defineDependencies({
-                availableSettingsUpdater,
-                storedDataUpdater,
-                helperDependency,
+                availableSettingsUpdater: availableSettingsUpdater.bind(this),
+                settingAttributesUpdater: settingAttributesUpdater.bind(this),
+                storedDataUpdater: storedDataUpdater.bind(this),
+                helperDependency: helperDependency.bind(this),
                 workbenchSession: this.getDataProviderManager().getWorkbenchSession(),
                 workbenchSettings: this.getDataProviderManager().getWorkbenchSettings(),
                 queryClient: this.getDataProviderManager().getQueryClient(),
@@ -442,7 +486,7 @@ export class SettingsContextDelegate<
     }
 
     private handleSettingChanged() {
-        if (!this.areAllSettingsLoaded() || !this.areAllSettingsInitialized()) {
+        if (!this.areAllSettingsLoaded() || !this.areAllDependenciesLoaded() || !this.areAllSettingsInitialized()) {
             this.setStatus(SettingsContextStatus.LOADING);
             return;
         }
@@ -457,11 +501,9 @@ export class SettingsContextDelegate<
     }
 
     private handleSettingsLoadingStateChanged() {
-        for (const key in this._settings) {
-            if (this._settings[key].isLoading()) {
-                this.setStatus(SettingsContextStatus.LOADING);
-                return;
-            }
+        if (!this.areAllSettingsLoaded() || !this.areAllDependenciesLoaded() || !this.areAllSettingsInitialized()) {
+            this.setStatus(SettingsContextStatus.LOADING);
+            return;
         }
 
         this.handleSettingChanged();

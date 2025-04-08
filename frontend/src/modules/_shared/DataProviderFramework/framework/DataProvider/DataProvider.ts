@@ -21,7 +21,7 @@ import type {
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { Item } from "../../interfacesAndTypes/entities";
 import { type SerializedDataProvider, SerializedType } from "../../interfacesAndTypes/serialization";
-import type { StoredData } from "../../interfacesAndTypes/sharedTypes";
+import type { NullableStoredData, StoredData } from "../../interfacesAndTypes/sharedTypes";
 import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
 import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
@@ -119,6 +119,7 @@ export class DataProvider<
     private _valueRange: [number, number] | null = null;
     private _isSubordinated: boolean = false;
     private _prevSettings: TSettingTypes | null = null;
+    private _prevStoredData: NullableStoredData<TStoredData> | null = null;
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
         const {
@@ -150,7 +151,7 @@ export class DataProvider<
             this._settingsContextDelegate
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_CHANGED)(() => {
-                this.handleSettingsChange();
+                this.handleSettingsAndStoredDataChange();
             }),
         );
 
@@ -159,7 +160,7 @@ export class DataProvider<
             this._settingsContextDelegate
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(SettingsContextDelegateTopic.STORED_DATA_CHANGED)(() => {
-                this.handleSettingsChange();
+                this.handleSettingsAndStoredDataChange();
             }),
         );
 
@@ -177,7 +178,7 @@ export class DataProvider<
             dataProviderManager
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(DataProviderManagerTopic.GLOBAL_SETTINGS)(() => {
-                this.handleSettingsChange();
+                this.handleSettingsAndStoredDataChange();
             }),
         );
     }
@@ -190,19 +191,36 @@ export class DataProvider<
         return this._customDataProviderImpl.areCurrentSettingsValid(this.makeAccessors());
     }
 
-    handleSettingsChange(): void {
+    handleSettingsAndStoredDataChange(): void {
         if (!this.areCurrentSettingsValid()) {
             this._error = "Invalid settings";
             this.setStatus(DataProviderStatus.INVALID_SETTINGS);
             return;
         }
 
-        const refetchRequired =
-            this._customDataProviderImpl.doSettingsChangesRequireDataRefetch?.(
+        let refetchRequired = false;
+
+        if (this._customDataProviderImpl.doSettingsChangesRequireDataRefetch) {
+            refetchRequired = this._customDataProviderImpl.doSettingsChangesRequireDataRefetch(
                 this._prevSettings,
                 this._settingsContextDelegate.getValues() as TSettingTypes,
                 this.makeAccessors(),
-            ) ?? !isEqual(this._prevSettings, this._settingsContextDelegate.getValues() as TSettingTypes);
+            );
+        } else {
+            refetchRequired = !isEqual(this._settingsContextDelegate.getValues(), this._prevSettings);
+        }
+
+        if (!refetchRequired) {
+            if (this._customDataProviderImpl.doStoredDataChangesRequireDataRefetch) {
+                refetchRequired = this._customDataProviderImpl.doStoredDataChangesRequireDataRefetch(
+                    this._prevStoredData,
+                    this._settingsContextDelegate.getStoredDataRecord(),
+                    this.makeAccessors(),
+                );
+            } else {
+                refetchRequired = !isEqual(this._settingsContextDelegate.getStoredDataRecord(), this._prevStoredData);
+            }
+        }
 
         if (!refetchRequired) {
             this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
@@ -213,6 +231,7 @@ export class DataProvider<
 
         this._cancellationPending = true;
         this._prevSettings = this._settingsContextDelegate.getValues() as TSettingTypes;
+        this._prevStoredData = this._settingsContextDelegate.getStoredDataRecord() as TStoredData;
         this.maybeCancelQuery().then(() => {
             this.maybeRefetchData();
         });

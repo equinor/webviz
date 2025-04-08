@@ -7,6 +7,7 @@ import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
 import type { CustomSettingImplementation } from "../../interfacesAndTypes/customSettingImplementation";
+import type { SettingAttributes } from "../../interfacesAndTypes/customSettingsHandler";
 import type { SharedSettingsProvider } from "../../interfacesAndTypes/entities";
 import type { AvailableValuesType, MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
 import type { Setting, SettingCategories, SettingCategory, SettingTypes } from "../../settings/settingsDefinitions";
@@ -22,6 +23,7 @@ export enum SettingTopic {
     IS_LOADING = "IS_LOADING",
     IS_INITIALIZED = "IS_INITIALIZED",
     IS_PERSISTED = "IS_PERSISTED",
+    ATTRIBUTES = "ATTRIBUTES",
 }
 
 export type SettingTopicPayloads<TValue, TCategory extends SettingCategory> = {
@@ -33,6 +35,7 @@ export type SettingTopicPayloads<TValue, TCategory extends SettingCategory> = {
     [SettingTopic.IS_LOADING]: boolean;
     [SettingTopic.IS_INITIALIZED]: boolean;
     [SettingTopic.IS_PERSISTED]: boolean;
+    [SettingTopic.ATTRIBUTES]: SettingAttributes;
 };
 
 export type SettingManagerParams<
@@ -79,6 +82,10 @@ export class SettingManager<
     private _initialized: boolean = false;
     private _currentValueFromPersistence: TValue | null = null;
     private _isStatic: boolean;
+    private _attributes: SettingAttributes = {
+        enabled: true,
+        visible: true,
+    };
 
     constructor({
         type,
@@ -113,6 +120,20 @@ export class SettingManager<
 
     getLabel(): string {
         return this._label;
+    }
+
+    getAttributes(): SettingAttributes {
+        return this._attributes;
+    }
+
+    updateAttributes(attributes: Partial<SettingAttributes>): void {
+        if (isEqual(this._attributes, attributes)) {
+            return;
+        }
+
+        Object.assign(this._attributes, attributes);
+
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.ATTRIBUTES);
     }
 
     getValue(): TValue {
@@ -307,6 +328,8 @@ export class SettingManager<
                     return this.isPersistedValue();
                 case SettingTopic.IS_INITIALIZED:
                     return this.isInitialized();
+                case SettingTopic.ATTRIBUTES:
+                    return this._attributes;
                 default:
                     throw new Error(`Unknown topic: ${topic}`);
             }

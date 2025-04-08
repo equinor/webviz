@@ -31,6 +31,7 @@ export function SettingComponent<
         props.setting.makeComponent(),
     );
     const value = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE);
+    const attributes = usePublishSubscribeTopicValue(props.setting, SettingTopic.ATTRIBUTES);
     const isValid = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_VALID);
     const isPersisted = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED);
     const availableValues = usePublishSubscribeTopicValue(props.setting, SettingTopic.AVAILABLE_VALUES);
@@ -50,6 +51,10 @@ export function SettingComponent<
 
     function handleValueChanged(newValue: TValue) {
         props.setting.setValue(newValue);
+    }
+
+    if (!attributes.visible) {
+        return null;
     }
 
     if (props.sharedSetting && isInitialized && availableValues === null) {
@@ -95,6 +100,7 @@ export function SettingComponent<
                         <div
                             className={resolveClassNames({
                                 "outline outline-red-500": !isValid && !actuallyLoading,
+                                "pointer-events-none opacity-50": !attributes.enabled,
                             })}
                         >
                             <componentRef.current
