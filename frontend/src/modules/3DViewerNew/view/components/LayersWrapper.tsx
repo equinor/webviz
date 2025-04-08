@@ -5,7 +5,6 @@ import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { makeColorScaleAnnotation } from "@modules/2DViewer/DataProviderFramework/annotations/makeColorScaleAnnotation";
 import { makePolygonDataBoundingBox } from "@modules/2DViewer/DataProviderFramework/boundingBoxes/makePolygonDataBoundingBox";
@@ -135,8 +134,6 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     let numCols = 0;
     let numRows = 0;
 
-    let numLoadingLayers = 0;
-
     const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.layerManager);
 
     for (const item of assemblerProduct.children) {
@@ -153,6 +150,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                 id: item.id,
                 name: item.name,
                 isSync: true,
+                show3D: true,
                 layerIds,
             });
 
@@ -189,7 +187,6 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         [numCols, numRows] = [numRows, numCols];
     }
 
-    numLoadingLayers = assemblerProduct.numLoadingDataProviders;
     statusWriter.setLoading(assemblerProduct.numLoadingDataProviders > 0);
 
     for (const message of assemblerProduct.aggregatedErrorMessages) {
@@ -202,21 +199,19 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     return (
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
-            <PendingWrapper isPending={numLoadingLayers > 0}>
-                <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
-                    <InteractionWrapper
-                        views={{
-                            layout: [1, 1],
-                            viewports: viewports,
-                            showLabel: false,
-                        }}
-                        viewportAnnotations={viewportAnnotations}
-                        layers={deckGlLayers}
-                        workbenchSession={props.workbenchSession}
-                        workbenchSettings={props.workbenchSettings}
-                    />
-                </div>
-            </PendingWrapper>
+            <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
+                <InteractionWrapper
+                    views={{
+                        layout: [numCols, numRows],
+                        viewports: viewports,
+                        showLabel: false,
+                    }}
+                    viewportAnnotations={viewportAnnotations}
+                    layers={deckGlLayers}
+                    workbenchSession={props.workbenchSession}
+                    workbenchSettings={props.workbenchSettings}
+                />
+            </div>
         </div>
     );
 }

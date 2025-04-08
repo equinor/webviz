@@ -6,10 +6,6 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import * as bbox from "@lib/utils/bbox";
-import { makeColorScaleAnnotation } from "@modules/2DViewer/DataProviderFramework/annotations/makeColorScaleAnnotation";
-import { makePolygonDataBoundingBox } from "@modules/2DViewer/DataProviderFramework/boundingBoxes/makePolygonDataBoundingBox";
-import { makeRealizationGridBoundingBox } from "@modules/2DViewer/DataProviderFramework/boundingBoxes/makeRealizationGridBoundingBox";
-import { makeSurfaceLayerBoundingBox } from "@modules/2DViewer/DataProviderFramework/boundingBoxes/makeSurfaceLayerBoundingBox";
 import { ObservedSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurfaceProvider";
 import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { makeObservedSurfaceLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeObservedSurfaceLayer";
@@ -33,6 +29,10 @@ import {
     VisualizationAssembler,
     VisualizationItemType,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { makeColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeColorScaleAnnotation";
+import { makePolygonDataBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makePolygonDataBoundingBox";
+import { makeRealizationGridBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeRealizationGridBoundingBox";
+import { makeSurfaceLayerBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeSurfaceLayerBoundingBox";
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
 import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";

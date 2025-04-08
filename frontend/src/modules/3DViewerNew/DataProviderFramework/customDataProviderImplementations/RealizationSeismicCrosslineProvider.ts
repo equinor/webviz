@@ -66,7 +66,8 @@ export class RealizationSeismicCrosslineProvider
         queryClient,
     }: FetchDataParams<
         RealizationSeismicCrosslineSettings,
-        RealizationSeismicCrosslineData
+        RealizationSeismicCrosslineData,
+        RealizationSeismicCrosslineStoredData
     >): Promise<RealizationSeismicCrosslineData> {
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         const realizationNum = getSetting(Setting.REALIZATION);
