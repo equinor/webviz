@@ -2,6 +2,7 @@ import { isDevMode } from "@lib/utils/devMode";
 
 import "./2DViewer/registerModule";
 import "./3DViewer/registerModule";
+import "./3DViewerNew/registerModule";
 import "./DistributionPlot/registerModule";
 import "./FlowNetwork/registerModule";
 import "./InplaceVolumetricsPlot/registerModule";
