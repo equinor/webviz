@@ -14,14 +14,15 @@ import { isEqual } from "lodash";
 
 import type { PublishSubscribe } from "../../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../../utils/PublishSubscribeDelegate";
-import "../../dataProviders/registerAllDataProviders";
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import "../../groups/registerAllGroups";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { type SerializedDataProviderManager, SerializedType } from "../../interfacesAndTypes/serialization";
-import "../../settings/registerAllSettings";
+
+import("../../dataProviders/registerAllDataProviders");
+import("../../groups/registerAllGroups");
+import("../../settings/registerAllSettings");
 
 export enum DataProviderManagerTopic {
     ITEMS = "ITEMS",
