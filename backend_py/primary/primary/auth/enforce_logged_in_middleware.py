@@ -64,7 +64,7 @@ class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
             is_logged_in = authenticated_user is not None
 
             perf_metrics.record_lap("get-auth-user")
-            LOGGER.debug(f"EnforceLoggedInMiddleware() dispatch took took: {perf_metrics.to_string()}")
+            #LOGGER.debug(f"EnforceLoggedInMiddleware() dispatch took took: {perf_metrics.to_string()}")
 
             if not is_logged_in:
                 if path_to_check in self._paths_redirected_to_login:
