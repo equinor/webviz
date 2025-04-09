@@ -90,7 +90,7 @@ export type VisualizationGroup<
     customProps: TCustomGroupProps[TGroupType];
 };
 
-export type GroupPropCollectorArgs<
+export type GroupPropsCollectorArgs<
     TSettings extends Settings,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > = {
@@ -105,7 +105,7 @@ export interface GroupCustomPropsCollector<
     TCustomGroupProps extends Record<GroupType, Record<string, any>> = Record<string, never>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > {
-    (args: GroupPropCollectorArgs<TSettings, TSettingKey>): TCustomGroupProps[TGroupKey];
+    (args: GroupPropsCollectorArgs<TSettings, TSettingKey>): TCustomGroupProps[TGroupKey];
 }
 
 export type Annotation = ColorScaleWithId; // Add more possible annotation types here, e.g. ColorSets etc.
