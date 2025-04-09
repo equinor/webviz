@@ -1,11 +1,12 @@
+import { atom } from "jotai";
+
 import type { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { PlotType } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
 import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
 import type { SelectorColumn, SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
 import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
+import { PlotType } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
 
-import { atom } from "jotai";
 
 export const userSelectedEnsembleIdentsAtom = atom<RegularEnsembleIdent[] | null>(null);
 export const userSelectedTableNamesAtom = atom<string[] | null>(null);

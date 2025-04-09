@@ -52,3 +52,5 @@ export class DataProviderRegistry {
         });
     }
 }
+
+import "./registerAllSharedDataProviders";

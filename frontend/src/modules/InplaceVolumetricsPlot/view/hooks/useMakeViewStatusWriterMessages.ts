@@ -1,7 +1,8 @@
+import { useAtomValue } from "jotai";
+
 import type { ViewStatusWriter } from "@framework/StatusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 
-import { useAtomValue } from "jotai";
 
 import { identifiersValuesAtom } from "../atoms/derivedAtoms";
 import { aggregatedTableDataQueriesAtom } from "../atoms/queryAtoms";

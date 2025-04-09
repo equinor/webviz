@@ -1,7 +1,8 @@
+import { describe, expect, test } from "vitest";
+
 import { createBestSuggestedRealizationNumberSelections } from "@framework/internal/components/EnsembleRealizationFilter/private-utils/conversionUtils";
 import type { RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 
-import { describe, expect, test } from "vitest";
 
 describe("createBestSuggestedRealizationNumberSelections", () => {
     test("should return an empty array when no selected realization numbers are provided", () => {

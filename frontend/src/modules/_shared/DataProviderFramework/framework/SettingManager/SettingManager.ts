@@ -1,10 +1,11 @@
+import { isEqual } from "lodash";
+import { v4 } from "uuid";
+
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import type { PublishSubscribe } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
-import { isEqual } from "lodash";
-import { v4 } from "uuid";
 
 import type { CustomSettingImplementation } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SettingAttributes } from "../../interfacesAndTypes/customSettingsHandler";

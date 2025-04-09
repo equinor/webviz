@@ -8,11 +8,12 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 import { subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
 
+import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
+
 import { ChannelReceiverNodesWrapper } from "./private-components/channelReceiverNodesWrapper";
 import { Header } from "./private-components/header";
 import { ViewContent } from "./private-components/viewContent";
 
-import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
 
 type ViewWrapperProps = {
     isActive: boolean;

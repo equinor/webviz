@@ -2,10 +2,11 @@ import type React from "react";
 
 import type { Axis, PlotData } from "plotly.js";
 
-import type { Table } from "./Table";
 
 import type { Figure, MakeSubplotOptions } from "../Figure";
 import { CoordinateDomain, makeSubplots } from "../Figure";
+
+import type { Table } from "./Table";
 
 export class PlotBuilder {
     private _table: Table;

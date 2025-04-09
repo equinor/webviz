@@ -1,12 +1,14 @@
 import React from "react";
 
+import { Close, Error, History, Input, Output, Warning } from "@mui/icons-material";
+
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, LeftDrawerContent, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
+import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
-import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -14,7 +16,6 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Close, Error, History, Input, Output, Warning } from "@mui/icons-material";
 
 export type HeaderProps = {
     moduleInstance: ModuleInstance<any>;

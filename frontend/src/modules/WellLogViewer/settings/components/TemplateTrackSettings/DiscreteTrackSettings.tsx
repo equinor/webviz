@@ -1,5 +1,10 @@
 import React from "react";
 
+import { ArrowDownward } from "@mui/icons-material";
+import type { UseQueryResult } from "@tanstack/react-query";
+import { useAtomValue } from "jotai";
+import _ from "lodash";
+
 import type { WellboreLogCurveHeader_api } from "@api";
 import { WellLogCurveSourceEnum_api, WellLogCurveTypeEnum_api } from "@api";
 import { Checkbox } from "@lib/components/Checkbox";
@@ -9,16 +14,9 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import type { TemplatePlotConfig } from "@modules/WellLogViewer/types";
 import { makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
-import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
-import { ArrowDownward } from "@mui/icons-material";
-import type { UseQueryResult } from "@tanstack/react-query";
-
-import { useAtomValue } from "jotai";
-import _ from "lodash";
-
-import type { TrackSettingFragmentProps } from "./private-components/TrackSettings";
 
 import {
     curveSourceToText,
@@ -28,6 +26,9 @@ import {
 } from "../../../utils/strings";
 import { availableDiscreteCurvesAtom, availableFlagCurvesAtom } from "../../atoms/derivedAtoms";
 import { wellLogCurveHeadersQueryAtom } from "../../atoms/queryAtoms";
+
+import type { TrackSettingFragmentProps } from "./private-components/TrackSettings";
+
 
 const DEFAULT_SOURCE = WellLogCurveSourceEnum_api.SMDA_GEOLOGY;
 

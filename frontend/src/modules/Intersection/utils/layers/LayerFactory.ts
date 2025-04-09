@@ -2,8 +2,8 @@ import { GridLayer } from "./GridLayer";
 import { SeismicLayer } from "./SeismicLayer";
 import { SurfaceLayer } from "./SurfaceLayer";
 import { SurfacesUncertaintyLayer } from "./SurfacesUncertaintyLayer";
-import { WellpicksLayer } from "./WellpicksLayer";
 import { LayerType } from "./types";
+import { WellpicksLayer } from "./WellpicksLayer";
 
 export class LayerFactory {
     static makeLayer(layerType: LayerType) {

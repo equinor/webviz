@@ -1,10 +1,11 @@
+import type { Rgb } from "culori";
+import { parse } from "culori";
+import { describe, expect, test } from "vitest";
+
 import { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 
-import type { Rgb } from "culori";
-import { parse } from "culori";
-import { describe, expect, test } from "vitest";
 
 const COLOR_SCALE = new ColorScale({
     colorPalette: new ColorPalette({
