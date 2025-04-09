@@ -1,52 +1,62 @@
 import React from "react";
 
-import type { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
-import { LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
-import { GroupType } from "@modules/_shared/LayerFramework/groups/groupTypes";
-import type { VisualizationTarget } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
-import { VisualizationFactory } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { VisualizationAssembler } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-import { AreaPlotProvider } from "../LayerFramework/dataProviders/plots/AreaPlotProvider";
-import { LinearPlotProvider } from "../LayerFramework/dataProviders/plots/LinearPlotProvider";
-import { WellborePicksProvider } from "../LayerFramework/dataProviders/wellpicks/WellPicksProvider";
-import { ContinuousLogTrack } from "../LayerFramework/groups/ContinuousLogTrack";
-import type { FactoryAccResult as PlotFactoryAccResult } from "../LayerFramework/visualizations/plots";
-import { makeAreaPlotConfig, makeLinePlotConfig, plotDataAccumulator } from "../LayerFramework/visualizations/plots";
-import { makeContinuousTrackConfig } from "../LayerFramework/visualizations/tracks";
-import { makeLogViewerWellPicks } from "../LayerFramework/visualizations/wellpicks";
+import { AreaPlotProvider } from "../DataProviderFramework/dataProviders/plots/AreaPlotProvider";
+import { LinearPlotProvider } from "../DataProviderFramework/dataProviders/plots/LinearPlotProvider";
+import { WellborePicksProvider } from "../DataProviderFramework/dataProviders/wellpicks/WellPicksProvider";
+import { ContinuousLogTrack } from "../DataProviderFramework/groups/ContinuousLogTrack";
+import type { FactoryAccResult as PlotFactoryAccResult } from "../DataProviderFramework/visualizations/plots";
+import {
+    makeAreaPlotConfig,
+    makeLinePlotConfig,
+    plotDataAccumulator,
+} from "../DataProviderFramework/visualizations/plots";
+import { makeContinuousTrackConfig } from "../DataProviderFramework/visualizations/tracks";
+import { makeLogViewerWellPicks } from "../DataProviderFramework/visualizations/wellpicks";
 
 type FactoryAccResult = PlotFactoryAccResult;
-const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.WSC_WELL_LOG, never, FactoryAccResult>();
+const VISUALIZATION_FACTORY = new VisualizationAssembler<VisualizationTarget.WSC_WELL_LOG, never, FactoryAccResult>();
 
-VISUALIZATION_FACTORY.registerLayerFunctions(LinearPlotProvider.name, LinearPlotProvider, {
-    makeVisualizationFunction: makeLinePlotConfig,
+VISUALIZATION_FACTORY.registerDataProviderTransformers(LinearPlotProvider.name, LinearPlotProvider, {
+    transformToVisualization: makeLinePlotConfig,
     reduceAccumulatedDataFunction: plotDataAccumulator,
 });
-VISUALIZATION_FACTORY.registerLayerFunctions(AreaPlotProvider.name, AreaPlotProvider, {
+VISUALIZATION_FACTORY.registerDataProviderTransformers(AreaPlotProvider.name, AreaPlotProvider, {
     makeVisualizationFunction: makeAreaPlotConfig,
     reduceAccumulatedDataFunction: plotDataAccumulator,
 });
 
-VISUALIZATION_FACTORY.registerViewFunction(GroupType.WELL_LOG_TRACK, ContinuousLogTrack, makeContinuousTrackConfig);
+VISUALIZATION_FACTORY.registerGroupCustomPropsCollector(
+    GroupType.WELL_LOG_TRACK,
+    ContinuousLogTrack,
+    makeContinuousTrackConfig,
+);
 
-VISUALIZATION_FACTORY.registerLayerFunctions(WellborePicksProvider.name, WellborePicksProvider, {
+VISUALIZATION_FACTORY.registerDataProviderTransformers(WellborePicksProvider.name, WellborePicksProvider, {
     makeVisualizationFunction: makeLogViewerWellPicks,
 });
 
 type MakeFuncReturn = ReturnType<(typeof VISUALIZATION_FACTORY)["make"]>;
 
-export function useLogViewerVisualizationFactoryProduct(dataLayerManager: DataLayerManager) {
+export function useLogViewerVisualizationFactoryProduct(dataProviderManager: DataProviderManager) {
     const [previousRevision, setPreviousRevision] = React.useState<number | undefined>();
     const [previousProduct, setPreviousProduct] = React.useState<MakeFuncReturn | null>();
 
     const latestRevision = React.useSyncExternalStore(
-        dataLayerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.LAYER_DATA_REVISION),
-        dataLayerManager.makeSnapshotGetter(LayerManagerTopic.LAYER_DATA_REVISION),
+        dataProviderManager
+            .getPublishSubscribeDelegate()
+            .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION),
+        dataProviderManager.makeSnapshotGetter(DataProviderManagerTopic.DATA_REVISION),
     );
 
     if (previousRevision !== latestRevision) {
         setPreviousRevision(latestRevision);
-        setPreviousProduct(VISUALIZATION_FACTORY.make(dataLayerManager));
+        setPreviousProduct(VISUALIZATION_FACTORY.make(dataProviderManager));
     }
 
     return previousProduct;

@@ -41,6 +41,7 @@ export enum Setting {
     ENSEMBLE = "ensemble",
     COLOR_SCALE = "colorScale",
     COLOR_SET = "colorSet",
+    COLOR = "color",
     GRID_LAYER_I_RANGE = "gridLayerIRange",
     GRID_LAYER_J_RANGE = "gridLayerJRange",
     GRID_LAYER_K = "gridLayerK",
@@ -78,6 +79,7 @@ export const settingCategories = {
     [Setting.ENSEMBLE]: SettingCategory.SINGLE_SELECT,
     [Setting.COLOR_SCALE]: SettingCategory.STATIC,
     [Setting.COLOR_SET]: SettingCategory.STATIC,
+    [Setting.COLOR]: SettingCategory.STATIC,
     [Setting.GRID_LAYER_I_RANGE]: SettingCategory.RANGE,
     [Setting.GRID_LAYER_J_RANGE]: SettingCategory.RANGE,
     [Setting.GRID_LAYER_K]: SettingCategory.NUMBER,
@@ -118,6 +120,7 @@ export type SettingTypes = {
     [Setting.ENSEMBLE]: RegularEnsembleIdent | null;
     [Setting.COLOR_SCALE]: ColorScaleSpecification | null;
     [Setting.COLOR_SET]: ColorSet | null;
+    [Setting.COLOR]: string | null;
     [Setting.GRID_LAYER_I_RANGE]: [number, number] | null;
     [Setting.GRID_LAYER_J_RANGE]: [number, number] | null;
     [Setting.GRID_LAYER_K]: number | null;

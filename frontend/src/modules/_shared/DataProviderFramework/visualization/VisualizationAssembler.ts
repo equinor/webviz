@@ -3,7 +3,7 @@ import type { Layer as EsvLayer } from "@equinor/esv-intersection";
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
 import * as bbox from "@lib/utils/bbox";
-import type { TemplateTrack } from "@modules/WellLogViewer/types";
+import type { TemplatePlot } from "@modules/WellLogViewer/types";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
@@ -41,7 +41,7 @@ export enum VisualizationTarget {
 export type DataProviderVisualizationTargetTypes = {
     [VisualizationTarget.DECK_GL]: DeckGlLayer<any>;
     [VisualizationTarget.ESV]: EsvLayer<any>;
-    [VisualizationTarget.WSC_WELL_LOG]: TemplateTrack | WellPickProps;
+    [VisualizationTarget.WSC_WELL_LOG]: TemplatePlot | WellPickProps;
 };
 
 export type DataProviderVisualization<TTarget extends VisualizationTarget> = {

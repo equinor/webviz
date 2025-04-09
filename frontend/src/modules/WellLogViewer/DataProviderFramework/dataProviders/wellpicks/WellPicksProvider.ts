@@ -1,13 +1,12 @@
 import type { WellborePick_api } from "@api";
 import { getWellborePicksInStratColumnOptions, getWellboreStratigraphicColumnsOptions } from "@api";
 import type {
-    CustomDataLayerImplementation,
-    DataLayerInformationAccessors,
+    CustomDataProviderImplementation,
+    DataProviderInformationAccessors,
     FetchDataParams,
-} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+} from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
+import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import _ from "lodash";
 
@@ -15,7 +14,9 @@ export const wellPickSettings = [Setting.STRAT_COLUMN, Setting.SMDA_INTERPRETER,
 export type WellPickSettingTypes = typeof wellPickSettings;
 type SettingsTypeMap = MakeSettingTypesMap<WellPickSettingTypes>;
 
-export class WellborePicksProvider implements CustomDataLayerImplementation<WellPickSettingTypes, WellborePick_api[]> {
+export class WellborePicksProvider
+    implements CustomDataProviderImplementation<WellPickSettingTypes, WellborePick_api[]>
+{
     // Uses the same external things as the other types
     defineDependencies(args: DefineDependenciesArgs<WellPickSettingTypes>) {
         const { helperDependency, availableSettingsUpdater, queryClient } = args;
@@ -93,7 +94,7 @@ export class WellborePicksProvider implements CustomDataLayerImplementation<Well
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    areCurrentSettingsValid(accessor: DataLayerInformationAccessors<WellPickSettingTypes, WellborePick_api[]>) {
+    areCurrentSettingsValid(accessor: DataProviderInformationAccessors<WellPickSettingTypes, WellborePick_api[]>) {
         // TODO
 
         return true;

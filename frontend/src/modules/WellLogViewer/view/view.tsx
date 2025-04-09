@@ -15,7 +15,7 @@ import type { InterfaceTypes } from "../interfaces";
 export function View(props: ModuleViewProps<InterfaceTypes>) {
     // const statusWriter = useViewStatusWriter(props.viewContext);
 
-    const layerManager = props.viewContext.useSettingsToViewInterfaceValue("layerManager");
+    const providerManager = props.viewContext.useSettingsToViewInterfaceValue("providerManager");
 
     // Passed setting atoms
     const selectedWellboreHeader = props.viewContext.useSettingsToViewInterfaceValue("wellboreHeader");
@@ -40,7 +40,7 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
         [props.viewContext, selectedWellboreHeader?.uniqueWellboreIdentifier],
     );
 
-    if (!layerManager || !wellboreTrajectoryDataQuery.data || !intersectionReferenceSystem) {
+    if (!providerManager || !wellboreTrajectoryDataQuery.data || !intersectionReferenceSystem) {
         return (
             <div className="absolute w-full h-full z-10 bg-white opacity-50 flex items-center justify-center">
                 <CircularProgress />
@@ -51,7 +51,7 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
     return (
         <SubsurfaceLogViewerWrapper
             moduleProps={props}
-            dataLayerManager={layerManager}
+            providerManager={providerManager}
             wellboreHeader={selectedWellboreHeader}
             trajectoryData={wellboreTrajectoryDataQuery.data}
             intersectionReferenceSystem={intersectionReferenceSystem}

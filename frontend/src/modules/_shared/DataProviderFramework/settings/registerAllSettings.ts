@@ -15,6 +15,7 @@ import { NumberSetting } from "./implementations/NumberSetting";
 import { ObjectSelectionSetting } from "./implementations/ObjectSelectionSetting";
 import { SeismicSliceDirection, SeismicSliceSetting } from "./implementations/SeismicSliceSetting";
 import { SensitivitySetting } from "./implementations/SensitivitySetting";
+import { SingleColorSetting } from "./implementations/SingleColorSetting";
 import { StaticDropdownStringSetting } from "./implementations/StaticDropdownStringSetting";
 import { StatisticFunctionSetting } from "./implementations/StatisticFunctionSetting";
 import { Setting } from "./settingsDefinitions";
@@ -46,6 +47,7 @@ SettingRegistry.registerSetting(Setting.LOG_CURVE, "Log curve", LogCurveSetting)
 SettingRegistry.registerSetting(Setting.ATTRIBUTE, "Attribute", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.ENSEMBLE, "Ensemble", EnsembleSetting);
 SettingRegistry.registerSetting(Setting.COLOR_SCALE, "Color Scale", ColorScaleSetting);
+SettingRegistry.registerSetting(Setting.COLOR, "Color", SingleColorSetting);
 
 SettingRegistry.registerSetting(Setting.GRID_LAYER_K, "Grid Layer K", GridLayerSetting, {
     customConstructorParameters: [GridLayerDirection.K],

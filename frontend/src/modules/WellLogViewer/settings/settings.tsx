@@ -18,10 +18,10 @@ import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePr
 import { useAtomValue, useSetAtom } from "jotai";
 import _ from "lodash";
 
-import { layerManagerAtom, userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./atoms/baseAtoms";
+import { providerManagerAtom, userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom, selectedWellboreHeaderAtom } from "./atoms/derivedAtoms";
 import { availableFieldsQueryAtom, drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
-import { LayerManagerComponentWrapper } from "./components/LayerManagerComponentWrapper";
+import { ProviderManagerComponentWrapper } from "./components/ProviderManagerComponentWrapper";
 // import { TemplateTrackSettings } from "./components/TemplateTrackSettings";
 import { ViewerSettings } from "./components/ViewerSettings";
 
@@ -61,7 +61,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     // Utilities
     const syncedSettingKeys = props.settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
-    const layerManager = useAtomValue(layerManagerAtom);
+    const providerManager = useAtomValue(providerManagerAtom);
 
     // Field selection
     const availableFields = useAtomValue(availableFieldsQueryAtom)?.data ?? [];
@@ -89,12 +89,12 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     const wellboreHeadersErrorStatus = usePropagateApiErrorToStatusWriter(wellboreHeaders, statusWriter) ?? "";
 
     React.useEffect(() => {
-        layerManager?.updateGlobalSetting("fieldId", selectedField);
-    }, [layerManager, selectedField]);
+        providerManager?.updateGlobalSetting("fieldId", selectedField);
+    }, [providerManager, selectedField]);
 
     React.useEffect(() => {
-        layerManager?.updateGlobalSetting("wellboreUuid", selectedWellboreHeader?.wellboreUuid ?? null);
-    }, [layerManager, selectedWellboreHeader]);
+        providerManager?.updateGlobalSetting("wellboreUuid", selectedWellboreHeader?.wellboreUuid ?? null);
+    }, [providerManager, selectedWellboreHeader]);
 
     return (
         <div className="flex flex-col h-full gap-1">
@@ -128,7 +128,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
 
             {/* <TemplateTrackSettings statusWriter={statusWriter} /> */}
 
-            <LayerManagerComponentWrapper
+            <ProviderManagerComponentWrapper
                 workbenchSession={props.workbenchSession}
                 workbenchSettings={props.workbenchSettings}
             />

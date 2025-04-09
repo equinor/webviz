@@ -1,6 +1,6 @@
-import type { CustomGroupImplementationWithSettings } from "@modules/_shared/LayerFramework/interfacesAndTypes/customGroupImplementation";
-import type { MakeSettingTypesMap } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import type { CustomGroupImplementationWithSettings } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customGroupImplementation";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 const continuousTrackSettings = [Setting.TRACK_WIDTH, Setting.SCALE] as const;
 export type ContinuousTrackSettings = typeof continuousTrackSettings;

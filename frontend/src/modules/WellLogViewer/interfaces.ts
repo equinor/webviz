@@ -1,8 +1,8 @@
 import type { WellboreHeader_api, WellborePick_api } from "@api";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import type { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
+import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
-import { layerManagerAtom } from "./settings/atoms/baseAtoms";
+import { providerManagerAtom } from "./settings/atoms/baseAtoms";
 import {
     selectedFieldIdentifierAtom,
     selectedWellboreHeaderAtom,
@@ -15,7 +15,7 @@ export type InterfaceTypes = {
 };
 
 export type SettingsToViewInterface = {
-    layerManager: DataLayerManager | null;
+    providerManager: DataProviderManager | null;
 
     selectedField: string | null;
     wellboreHeader: WellboreHeader_api | null;
@@ -25,7 +25,7 @@ export type SettingsToViewInterface = {
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    layerManager: (get) => get(layerManagerAtom),
+    providerManager: (get) => get(providerManagerAtom),
     selectedField: (get) => get(selectedFieldIdentifierAtom),
     wellboreHeader: (get) => get(selectedWellboreHeaderAtom),
     viewerHorizontal: (get) => get(viewerHorizontalAtom),

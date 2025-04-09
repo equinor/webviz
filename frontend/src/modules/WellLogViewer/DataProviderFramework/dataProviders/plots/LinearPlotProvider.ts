@@ -1,20 +1,20 @@
 import type { WellboreLogCurveData_api } from "@api";
 import type {
-    CustomDataLayerImplementation,
-    DataLayerInformationAccessors,
-} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+    CustomDataProviderImplementation,
+    DataProviderInformationAccessors,
+} from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
+import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { baseLinearSettings, defineDependencies, fetchData } from "./_shared";
 
-export const linearPlotSettings = [...baseLinearSettings, Setting.PLOT_VARIANT, Setting.COLOR] as const;
+export const linearPlotSettings = [...baseLinearSettings, Setting.PLOT_VARIANT /*Setting.COLOR */] as const;
 export type LinearPlotSettingTypes = typeof linearPlotSettings;
 type SettingsTypeMap = MakeSettingTypesMap<LinearPlotSettingTypes>;
 
 export class LinearPlotProvider
-    implements CustomDataLayerImplementation<LinearPlotSettingTypes, WellboreLogCurveData_api>
+    implements CustomDataProviderImplementation<LinearPlotSettingTypes, WellboreLogCurveData_api>
 {
     // Uses the same external things as the other types
     defineDependencies(args: DefineDependenciesArgs<LinearPlotSettingTypes>) {
@@ -31,8 +31,10 @@ export class LinearPlotProvider
         return "Linear plot";
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    areCurrentSettingsValid(accessor: DataLayerInformationAccessors<LinearPlotSettingTypes, WellboreLogCurveData_api>) {
+    areCurrentSettingsValid(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        accessor: DataProviderInformationAccessors<LinearPlotSettingTypes, WellboreLogCurveData_api>,
+    ) {
         // TODO
 
         return true;

@@ -1,8 +1,8 @@
-import type { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
+import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
 import { atom } from "jotai";
 
-export const layerManagerAtom = atom<DataLayerManager | null>(null);
+export const providerManagerAtom = atom<DataProviderManager | null>(null);
 
 export const userSelectedFieldIdentifierAtom = atom<string | null>(null);
 export const userSelectedWellboreUuidAtom = atom<string | null>(null);

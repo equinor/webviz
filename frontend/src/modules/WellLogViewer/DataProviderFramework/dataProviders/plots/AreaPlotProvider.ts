@@ -1,8 +1,8 @@
 import type { WellboreLogCurveData_api } from "@api";
-import type { CustomDataLayerImplementation } from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import type { MakeSettingTypesMap } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import type { CustomDataProviderImplementation } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
+import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { baseLinearSettings, defineDependencies, fetchData } from "./_shared";
 
@@ -10,7 +10,9 @@ export const AreaPlotSettings = [...baseLinearSettings, Setting.PLOT_VARIANT, Se
 export type AreaPlotSettingTypes = typeof AreaPlotSettings;
 type SettingsTypeMap = MakeSettingTypesMap<AreaPlotSettingTypes>;
 
-export class AreaPlotProvider implements CustomDataLayerImplementation<AreaPlotSettingTypes, WellboreLogCurveData_api> {
+export class AreaPlotProvider
+    implements CustomDataProviderImplementation<AreaPlotSettingTypes, WellboreLogCurveData_api>
+{
     settings = AreaPlotSettings;
 
     // Uses the same external things as the other types

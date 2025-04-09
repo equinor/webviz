@@ -10,11 +10,12 @@ import { createContinuousColorScaleForMap } from "@modules/3DViewer/view/utils/c
 import {
     DUPLICATE_NAMES_ACC_KEY,
     DATA_ACC_KEY as PLOT_DATA_ACC_KEY,
-} from "@modules/WellLogViewer/LayerFramework/visualizations/plots";
-import { isTrackGroup } from "@modules/WellLogViewer/LayerFramework/visualizations/tracks";
+} from "@modules/WellLogViewer/DataProviderFramework/visualizations/plots";
+import { isTrackGroup } from "@modules/WellLogViewer/DataProviderFramework/visualizations/tracks";
 import type { TemplatePlot, TemplateTrack } from "@modules/WellLogViewer/types";
 import { useLogViewerVisualizationFactoryProduct } from "@modules/WellLogViewer/utils/useLogViewerVisualizationFactory";
-import type { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
+import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { WellLogViewer } from "@webviz/well-log-viewer";
 import type { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
 import type { WellLogController, WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
@@ -44,7 +45,7 @@ type GlobalHoverMd = GlobalTopicDefinitions["global.hoverMd"];
 export type SubsurfaceLogViewerWrapperProps = {
     // Data
     wellboreHeader: WellboreHeader_api | null;
-    dataLayerManager: DataLayerManager;
+    providerManager: DataProviderManager;
 
     trajectoryData: WellboreTrajectory_api;
     intersectionReferenceSystem: IntersectionReferenceSystem;
@@ -154,10 +155,14 @@ function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
     const intersectionReferenceSystem = props.intersectionReferenceSystem;
     const padDataWithEmptyRows = props.padDataWithEmptyRows;
 
-    const factoryProduct = useLogViewerVisualizationFactoryProduct(props.dataLayerManager);
+    const factoryProduct = useLogViewerVisualizationFactoryProduct(props.providerManager);
 
     const wellpicks = React.useMemo(() => {
-        return factoryProduct?.layers.find((layer) => layer.layer && "wellpick" in layer.layer)?.layer as WellPickProps;
+        return factoryProduct?.children.find(
+            (child) =>
+                child.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION &&
+                "wellpick" in child.visualization,
+        )?.layer as WellPickProps;
     }, [factoryProduct]);
 
     // Curve data transform is a bit heavy, so we use Memo-hooks to reduce re-render overhead
