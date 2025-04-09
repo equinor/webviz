@@ -3805,6 +3805,22 @@ export type GetAliveProtectedResponses_api = {
 
 export type GetAliveProtectedResponse_api = GetAliveProtectedResponses_api[keyof GetAliveProtectedResponses_api];
 
+export type GetLogoutData_api = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: "/logout";
+};
+
+export type GetLogoutResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type GetLogoutResponse_api = GetLogoutResponses_api[keyof GetLogoutResponses_api];
+
 export type GetLoggedInUserData_api = {
     body?: never;
     path?: never;

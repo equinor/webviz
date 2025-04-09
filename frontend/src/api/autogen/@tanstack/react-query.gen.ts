@@ -28,6 +28,7 @@ import {
     getIsSensitivityRun,
     getLogCurveData,
     getLoggedInUser,
+    getLogout,
     getMisfitSurfaceData,
     getObservations,
     getObservedSurfacesMetadata,
@@ -98,6 +99,7 @@ import type {
     GetIsSensitivityRunData_api,
     GetLogCurveDataData_api,
     GetLoggedInUserData_api,
+    GetLogoutData_api,
     GetMisfitSurfaceDataData_api,
     GetObservationsData_api,
     GetObservedSurfacesMetadataData_api,
@@ -1547,6 +1549,23 @@ export const getAliveProtectedOptions = (options?: Options<GetAliveProtectedData
             return data;
         },
         queryKey: getAliveProtectedQueryKey(options),
+    });
+};
+
+export const getLogoutQueryKey = (options?: Options<GetLogoutData_api>) => [createQueryKey("getLogout", options)];
+
+export const getLogoutOptions = (options?: Options<GetLogoutData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getLogout({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getLogoutQueryKey(options),
     });
 };
 

@@ -63,6 +63,8 @@ import type {
     GetLoggedInUserData_api,
     GetLoggedInUserError_api,
     GetLoggedInUserResponse_api,
+    GetLogoutData_api,
+    GetLogoutResponse_api,
     GetMisfitSurfaceDataData_api,
     GetMisfitSurfaceDataError_api,
     GetMisfitSurfaceDataResponse_api,
@@ -1202,6 +1204,16 @@ export const getAliveProtected = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetAliveProtectedResponse_api, unknown, ThrowOnError>({
         ...options,
         url: "/alive_protected",
+    });
+};
+
+/**
+ * Get Logout
+ */
+export const getLogout = <ThrowOnError extends boolean = false>(options?: Options<GetLogoutData_api, ThrowOnError>) => {
+    return (options?.client ?? client).get<GetLogoutResponse_api, unknown, ThrowOnError>({
+        ...options,
+        url: "/logout",
     });
 };
 
