@@ -1,16 +1,14 @@
+import logging
 from typing import List, Optional
 
 import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
+from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from primary.services.service_exceptions import InvalidDataError, Service
+
 from ._arrow_table_loader import ArrowTableLoader
-
-
 from .sumo_client_factory import create_sumo_client
-
-from webviz_pkg.core_utils.perf_metrics import PerfMetrics
-import logging
 
 LOGGER = logging.getLogger(__name__)
 
