@@ -6,7 +6,6 @@ import { CircularProgress } from "@mui/material";
 
 import { useAtomValue } from "jotai";
 
-import { intersectionReferenceSystemAtom } from "./atoms/derivedAtoms";
 import { wellboreTrajectoryQueryAtom } from "./atoms/queryAtoms";
 import { SubsurfaceLogViewerWrapper } from "./components/SubsurfaceLogViewerWrapper";
 
@@ -23,7 +22,6 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
     const padDataWithEmptyRows = props.viewContext.useSettingsToViewInterfaceValue("padDataWithEmptyRows");
 
     const wellboreTrajectoryDataQuery = useAtomValue(wellboreTrajectoryQueryAtom);
-    const intersectionReferenceSystem = useAtomValue(intersectionReferenceSystemAtom);
 
     React.useEffect(
         function setModuleName() {
@@ -40,7 +38,7 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
         [props.viewContext, selectedWellboreHeader?.uniqueWellboreIdentifier],
     );
 
-    if (!providerManager || !wellboreTrajectoryDataQuery.data || !intersectionReferenceSystem) {
+    if (!providerManager || !wellboreTrajectoryDataQuery.data) {
         return (
             <div className="absolute w-full h-full z-10 bg-white opacity-50 flex items-center justify-center">
                 <CircularProgress />
@@ -54,7 +52,6 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
             providerManager={providerManager}
             wellboreHeader={selectedWellboreHeader}
             trajectoryData={wellboreTrajectoryDataQuery.data}
-            intersectionReferenceSystem={intersectionReferenceSystem}
             horizontal={viewerHorizontal}
             padDataWithEmptyRows={padDataWithEmptyRows}
         />

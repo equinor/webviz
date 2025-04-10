@@ -2,10 +2,13 @@ import type { WellboreLogCurveData_api } from "@api";
 import type { TemplatePlot } from "@modules/WellLogViewer/types";
 import type { Settings } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import type {
-    ReduceAccumulatedDataFunction,
-    VisualizationTarget,
-    VisualizationTransformer,
+import {
+    type DataProviderVisualization,
+    type ReduceAccumulatedDataFunction,
+    type TransformerArgs,
+    type VisualizationGroup,
+    VisualizationItemType,
+    type VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import _ from "lodash";
@@ -21,45 +24,42 @@ export type FactoryAccResult = {
     [DUPLICATE_NAMES_ACC_KEY]: Set<string>;
 };
 
-type PlotVisualizationFunc<PlotSettings extends Settings> = VisualizationTransformer<
-    PlotSettings,
-    WellboreLogCurveData_api,
-    VisualizationTarget.WSC_WELL_LOG
->;
+type PlotVisualizationArgs<PlotSettings extends Settings> = TransformerArgs<PlotSettings, WellboreLogCurveData_api>;
 
-export const makeAreaPlotConfig: PlotVisualizationFunc<AreaPlotSettingTypes> = function makeAreaPlotConfig(
-    args,
-): TemplatePlot {
-    const data = args.getData();
+function getCommonConfig(data: WellboreLogCurveData_api): TemplatePlot {
+    return {
+        name: data.name,
+        logName: data.logName,
+        // TODO: main curve color
+    };
+}
+
+export function makeAreaPlotConfig(args: PlotVisualizationArgs<AreaPlotSettingTypes>): TemplatePlot | null {
+    if (!args.getData()) return null;
+
+    const data = args.getData()!;
     const plotVariant = args.getSetting(Setting.PLOT_VARIANT);
-
-    const curveName = data?.name ?? "";
-    const logName = data?.logName ?? "";
+    const commonConfig = getCommonConfig(data);
 
     return {
-        logName: logName,
-        name: curveName,
+        ...commonConfig,
         type: plotVariant ?? undefined,
-
-        // TODO: Color
         // TODO: Fill/Func
     };
-};
+}
 
-export const makeLinePlotConfig: PlotVisualizationFunc<LinearPlotSettingTypes> = (args) => {
-    const data = args.getData();
+export function makeLinePlotConfig(args: PlotVisualizationArgs<LinearPlotSettingTypes>): TemplatePlot | null {
+    if (!args.getData()) return null;
 
+    const data = args.getData()!;
     const plotVariant = args.getSetting(Setting.PLOT_VARIANT) ?? undefined;
-    const curveName = data?.name ?? "";
-    const logName = data?.logName ?? "";
+    const commonConfig = getCommonConfig(data);
 
     return {
-        logName: logName,
-        name: curveName,
+        ...commonConfig,
         type: plotVariant,
-        // TODO: Color
     };
-};
+}
 
 export const plotDataAccumulator: ReduceAccumulatedDataFunction<[], WellboreLogCurveData_api, FactoryAccResult> =
     function plotDataAccumulator(acc, args) {
@@ -82,3 +82,14 @@ export const plotDataAccumulator: ReduceAccumulatedDataFunction<[], WellboreLogC
             [DUPLICATE_NAMES_ACC_KEY]: duplicatedNames,
         };
     };
+
+export type PlotVisualization = DataProviderVisualization<VisualizationTarget.WSC_WELL_LOG, TemplatePlot>;
+
+export function isPlotVisualization(
+    item: VisualizationGroup<any, any, any, any> | DataProviderVisualization<any, any>,
+): item is PlotVisualization {
+    if (item.itemType !== VisualizationItemType.DATA_PROVIDER_VISUALIZATION) return false;
+
+    // TODO: Check item.providerType once that's implemented
+    return "logName" in item.visualization;
+}

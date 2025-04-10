@@ -1,32 +1,27 @@
 import React from "react";
 
 import type { WellboreHeader_api, WellboreTrajectory_api } from "@api";
-import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import type { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { createContinuousColorScaleForMap } from "@modules/3DViewer/view/utils/colorTables";
 import {
-    DUPLICATE_NAMES_ACC_KEY,
-    DATA_ACC_KEY as PLOT_DATA_ACC_KEY,
-} from "@modules/WellLogViewer/DataProviderFramework/visualizations/plots";
-import { isTrackGroup } from "@modules/WellLogViewer/DataProviderFramework/visualizations/tracks";
-import type { TemplatePlot, TemplateTrack } from "@modules/WellLogViewer/types";
+    createWellLogJsonFromProduct,
+    createWellLogTemplateFromProduct,
+    createWellPickPropFromProduct,
+} from "@modules/WellLogViewer/utils/factoryProduct";
 import { useLogViewerVisualizationFactoryProduct } from "@modules/WellLogViewer/utils/useLogViewerVisualizationFactory";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
-import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { WellLogViewer } from "@webviz/well-log-viewer";
 import type { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
-import type { WellLogController, WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
+import type { WellLogController } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
 import _ from "lodash";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
 import type { InterfaceTypes } from "../../interfaces";
-import { createLogTemplate } from "../../utils/logViewerTemplate";
-import { createWellLogSets } from "../../utils/queryDataTransform";
 
 const AXIS_MNEMOS = {
     md: ["RKB", "DEPTH", "DEPT", "MD", "TDEP", "MD_RKB"],
@@ -46,9 +41,7 @@ export type SubsurfaceLogViewerWrapperProps = {
     // Data
     wellboreHeader: WellboreHeader_api | null;
     providerManager: DataProviderManager;
-
     trajectoryData: WellboreTrajectory_api;
-    intersectionReferenceSystem: IntersectionReferenceSystem;
 
     // Viewer config
     horizontal: boolean;
@@ -152,55 +145,25 @@ function useCreateGlobalVerticalScaleBroadcastFunc(
 
 function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
     const trajectoryData = props.trajectoryData;
-    const intersectionReferenceSystem = props.intersectionReferenceSystem;
     const padDataWithEmptyRows = props.padDataWithEmptyRows;
 
     const factoryProduct = useLogViewerVisualizationFactoryProduct(props.providerManager);
 
     const wellpicks = React.useMemo(() => {
-        return factoryProduct?.children.find(
-            (child) =>
-                child.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION &&
-                "wellpick" in child.visualization,
-        )?.layer as WellPickProps;
+        if (!factoryProduct) return undefined;
+        return createWellPickPropFromProduct(factoryProduct);
     }, [factoryProduct]);
 
-    // Curve data transform is a bit heavy, so we use Memo-hooks to reduce re-render overhead
-    // TODO: This would arguably be something for the "root view"
     const template = React.useMemo(() => {
-        const views = factoryProduct?.views ?? [];
-        const accData = factoryProduct?.accumulatedData ?? {};
-        const duplicatedCurveNames = _.get(accData, DUPLICATE_NAMES_ACC_KEY);
+        return createWellLogTemplateFromProduct(factoryProduct);
+    }, [factoryProduct]);
 
-        const trackTemplates = views.reduce((acc, v) => {
-            if (!isTrackGroup(v)) return acc;
+    const wellLogSets = React.useMemo(() => {
+        if (!factoryProduct) return [];
+        return createWellLogJsonFromProduct(factoryProduct, trajectoryData, padDataWithEmptyRows);
+    }, [factoryProduct, trajectoryData, padDataWithEmptyRows]);
 
-            const fullTrackTemplate = {
-                ...v,
-                plots: v.layers.map(({ layer }) => layer as TemplatePlot),
-            } as TemplateTrack;
-
-            return [...acc, fullTrackTemplate];
-        }, [] as TemplateTrack[]);
-
-        return createLogTemplate(trackTemplates, duplicatedCurveNames);
-    }, [factoryProduct?.accumulatedData, factoryProduct?.views]);
-
-    const welllog = React.useMemo(() => {
-        const accData = factoryProduct?.accumulatedData ?? {};
-        const curveData = _.get(accData, PLOT_DATA_ACC_KEY, []);
-        const duplicatedCurveNames = _.get(accData, DUPLICATE_NAMES_ACC_KEY);
-
-        return createWellLogSets(
-            curveData,
-            trajectoryData,
-            intersectionReferenceSystem,
-            duplicatedCurveNames,
-            padDataWithEmptyRows,
-        );
-    }, [factoryProduct?.accumulatedData, trajectoryData, intersectionReferenceSystem, padDataWithEmptyRows]);
-
-    return { template, welllog, wellpicks };
+    return { template, wellLogSets, wellpicks };
 }
 
 export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProps) {
@@ -209,7 +172,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     const [wellLogReadout, setWellLogReadout] = React.useState<Info[]>([]);
     const [showReadoutBox, setShowReadoutBox] = React.useState<boolean>(false);
 
-    const { template, welllog, wellpicks } = useViewerDataTransform(props);
+    const { template, wellLogSets, wellpicks } = useViewerDataTransform(props);
 
     const colorScale = props.moduleProps.workbenchSettings.useContinuousColorScale({
         gradientType: ColorScaleGradientType.Sequential,
@@ -300,7 +263,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
         >
             <WellLogViewer
                 id="well-log-viewer"
-                wellLogSets={welllog}
+                wellLogSets={wellLogSets}
                 template={template}
                 wellpick={wellpicks}
                 horizontal={props.horizontal}

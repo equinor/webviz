@@ -7,31 +7,10 @@ import _ from "lodash";
 import { v4 } from "uuid";
 
 import { CURVE_COLOR_PALETTE, DIFF_CURVE_COLORS } from "./logViewerColors";
-import { MAIN_AXIS_CURVE } from "./queryDataTransform";
-import { getUniqueCurveNameForPlotConfig } from "./strings";
 
-import type { Template, TemplatePlot, TemplatePlotConfig, TemplateTrack } from "../types";
-
-// import type { TemplatePlotConfig, TemplateTrackConfig } from "../types";
+import type { TemplatePlotConfig } from "../types";
 
 export const DEFAULT_MAX_VISIBLE_TRACKS = 5;
-
-export function createLogTemplate(templateTracks: TemplateTrack[], nonUniqueNames?: Set<string>): Template {
-    return {
-        // AFAIK, this name is not show anywhere
-        name: "Well log viewer",
-        scale: { primary: MAIN_AXIS_CURVE.name, allowSecondary: true },
-
-        // ! Map each plot to ensure a name that points to the correct curve
-        tracks: templateTracks.map<TemplateTrack>((track) => ({
-            ...track,
-            plots: track.plots.map((plot) => ({
-                ...plot,
-                name: getUniqueCurveNameForPlotConfig(plot, nonUniqueNames),
-            })) as TemplatePlot[],
-        })),
-    };
-}
 
 export function makeTrackPlot(plot: Partial<TemplatePlotConfig>): TemplatePlotConfig {
     if (!plot.type) throw new Error(`Plot type is required`);

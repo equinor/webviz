@@ -3,7 +3,10 @@ import React from "react";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
-import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type {
+    CustomGroupPropsMap,
+    VisualizationTarget,
+} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { VisualizationAssembler } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import { AreaPlotProvider } from "../DataProviderFramework/dataProviders/plots/AreaPlotProvider";
@@ -20,15 +23,22 @@ import { makeContinuousTrackConfig } from "../DataProviderFramework/visualizatio
 import { makeLogViewerWellPicks } from "../DataProviderFramework/visualizations/wellpicks";
 
 type FactoryAccResult = PlotFactoryAccResult;
-const VISUALIZATION_FACTORY = new VisualizationAssembler<VisualizationTarget.WSC_WELL_LOG, never, FactoryAccResult>();
+// type FactoryMakeResult
+
+const VISUALIZATION_FACTORY = new VisualizationAssembler<
+    VisualizationTarget.WSC_WELL_LOG,
+    CustomGroupPropsMap,
+    never,
+    FactoryAccResult
+>();
 
 VISUALIZATION_FACTORY.registerDataProviderTransformers(LinearPlotProvider.name, LinearPlotProvider, {
     transformToVisualization: makeLinePlotConfig,
-    reduceAccumulatedDataFunction: plotDataAccumulator,
+    reduceAccumulatedData: plotDataAccumulator,
 });
 VISUALIZATION_FACTORY.registerDataProviderTransformers(AreaPlotProvider.name, AreaPlotProvider, {
-    makeVisualizationFunction: makeAreaPlotConfig,
-    reduceAccumulatedDataFunction: plotDataAccumulator,
+    transformToVisualization: makeAreaPlotConfig,
+    reduceAccumulatedData: plotDataAccumulator,
 });
 
 VISUALIZATION_FACTORY.registerGroupCustomPropsCollector(
@@ -38,14 +48,17 @@ VISUALIZATION_FACTORY.registerGroupCustomPropsCollector(
 );
 
 VISUALIZATION_FACTORY.registerDataProviderTransformers(WellborePicksProvider.name, WellborePicksProvider, {
-    makeVisualizationFunction: makeLogViewerWellPicks,
+    transformToVisualization: makeLogViewerWellPicks,
+    // transformToBoundingBox: computeWellPickBBox,
 });
 
-type MakeFuncReturn = ReturnType<(typeof VISUALIZATION_FACTORY)["make"]>;
+export type WellLogFactoryProduct = ReturnType<(typeof VISUALIZATION_FACTORY)["make"]>;
 
-export function useLogViewerVisualizationFactoryProduct(dataProviderManager: DataProviderManager) {
-    const [previousRevision, setPreviousRevision] = React.useState<number | undefined>();
-    const [previousProduct, setPreviousProduct] = React.useState<MakeFuncReturn | null>();
+export function useLogViewerVisualizationFactoryProduct(
+    dataProviderManager: DataProviderManager,
+): WellLogFactoryProduct | null {
+    const [previousRevision, setPreviousRevision] = React.useState<number | null>(null);
+    const [previousProduct, setPreviousProduct] = React.useState<WellLogFactoryProduct | null>(null);
 
     const latestRevision = React.useSyncExternalStore(
         dataProviderManager

@@ -17,6 +17,7 @@ import {
 } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerComponent } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManagerComponent";
 import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
+import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
 // import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type { ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
@@ -25,9 +26,9 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { useAtom } from "jotai";
 
+import "../../DataProviderFramework/registerFrameworkExtensions";
 import { providerManagerAtom } from "../atoms/baseAtoms";
 import { serializedManagerStateAtom } from "../atoms/persistedAtoms";
-import "../../DataProviderFramework/registerFrameworkExtensions";
 
 enum RootActionIdents {
     CONTINUOUS_TRACK = "cont_track",
@@ -170,19 +171,19 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
                         DataProviderRegistry.makeDataProvider(WellborePicksProvider.name, providerManager),
                     );
 
-                // case RootActionIdents.CONTINUOUS_TRACK:
-                //     return groupDelegate.appendChild(
-                //         GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK, providerManager),
-                //     );
+                case RootActionIdents.CONTINUOUS_TRACK:
+                    return groupDelegate.appendChild(
+                        GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK, providerManager),
+                    );
 
-                // case PlotActionIdents.LINE:
-                //     return groupDelegate.appendChild(
-                //         DataProviderRegistry.makeDataProvider(LinearPlotProvider.name, providerManager),
-                //     );
-                // case PlotActionIdents.AREA:
-                //     return groupDelegate.appendChild(
-                //         DataProviderRegistry.makeDataProvider(AreaPlotProvider.name, providerManager),
-                //     );
+                case PlotActionIdents.LINE:
+                    return groupDelegate.appendChild(
+                        DataProviderRegistry.makeDataProvider(LinearPlotProvider.name, providerManager),
+                    );
+                case PlotActionIdents.AREA:
+                    return groupDelegate.appendChild(
+                        DataProviderRegistry.makeDataProvider(AreaPlotProvider.name, providerManager),
+                    );
 
                 default:
                     break;
