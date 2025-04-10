@@ -191,20 +191,18 @@ export class ObservedSurfaceProvider
 
         const surfAddrStr = surfaceAddress ? encodeSurfAddrStr(surfaceAddress) : null;
 
-        const queryKey = ["getSurfaceData", surfAddrStr, null, "png"];
-
-        registerQueryKey(queryKey);
+        const surfaceDataOptions = getSurfaceDataOptions({
+            query: {
+                surf_addr_str: surfAddrStr ?? "",
+                data_format: this._dataFormat,
+                resample_to_def_str: null,
+            },
+        });
+    
+        registerQueryKey(surfaceDataOptions.queryKey);
 
         const promise = queryClient
-            .fetchQuery({
-                ...getSurfaceDataOptions({
-                    query: {
-                        surf_addr_str: surfAddrStr ?? "",
-                        data_format: this._dataFormat,
-                        resample_to_def_str: null,
-                    },
-                }),
-            })
+            .fetchQuery(surfaceDataOptions)
             .then((data) => ({ format: this._dataFormat, surfaceData: transformSurfaceData(data) }));
 
         return promise as Promise<ObservedSurfaceData>;

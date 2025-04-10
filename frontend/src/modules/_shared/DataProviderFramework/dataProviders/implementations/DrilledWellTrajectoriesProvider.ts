@@ -46,14 +46,15 @@ export class DrilledWellTrajectoriesProvider
             selectedWellboreUuids = selectedWellboreHeaders.map((header) => header.wellboreUuid);
         }
 
-        const queryKey = ["getWellTrajectories", fieldIdentifier];
-        registerQueryKey(queryKey);
+        const queryOptions = getWellTrajectoriesOptions({
+            query: { field_identifier: fieldIdentifier ?? "" },
+        });
+
+        registerQueryKey(queryOptions.queryKey);
 
         const promise = queryClient
             .fetchQuery({
-                ...getWellTrajectoriesOptions({
-                    query: { field_identifier: fieldIdentifier ?? "" },
-                }),
+                ...queryOptions,
                 staleTime: 1800000, // TODO: Both stale and gcTime are set to 30 minutes for now since SMDA is quite slow for fields with many wells - this should be adjusted later
                 gcTime: 1800000,
             })
