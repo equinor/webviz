@@ -63,8 +63,6 @@ import type {
     GetLoggedInUserData_api,
     GetLoggedInUserError_api,
     GetLoggedInUserResponse_api,
-    GetLogoutData_api,
-    GetLogoutResponse_api,
     GetMisfitSurfaceDataData_api,
     GetMisfitSurfaceDataError_api,
     GetMisfitSurfaceDataResponse_api,
@@ -199,6 +197,8 @@ import type {
     PostGetSurfaceIntersectionData_api,
     PostGetSurfaceIntersectionError_api,
     PostGetSurfaceIntersectionResponse_api,
+    PostLogoutData_api,
+    PostLogoutResponse_api,
     RootData_api,
     RootResponse_api,
 } from "./types.gen";
@@ -1208,10 +1208,10 @@ export const getAliveProtected = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get Logout
+ * Post Logout
  */
-export const getLogout = <ThrowOnError extends boolean = false>(options?: Options<GetLogoutData_api, ThrowOnError>) => {
-    return (options?.client ?? client).get<GetLogoutResponse_api, unknown, ThrowOnError>({
+export const postLogout = <ThrowOnError extends boolean = false>(options?: Options<PostLogoutData_api, ThrowOnError>) => {
+    return (options?.client ?? client).post<PostLogoutResponse_api, unknown, ThrowOnError>({
         ...options,
         url: "/logout",
     });

@@ -37,9 +37,8 @@ async def get_alive_protected() -> str:
     return f"ALIVE_PROTECTED: Backend is alive at this time: {datetime.datetime.now()}"
 
 
-@router.get("/logout")
-@no_cache
-async def get_logout(request: Request) -> str:
+@router.post("/logout")
+async def post_logout(request: Request) -> str:
     await starsessions.load_session(request)
     request.session.clear()
 
