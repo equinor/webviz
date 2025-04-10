@@ -44,11 +44,16 @@ export type DataProviderVisualizationTargetTypes = {
     [VisualizationTarget.WSC_WELL_LOG]: TemplatePlot | WellPickProps;
 };
 
-export type DataProviderVisualization<TTarget extends VisualizationTarget> = {
+export type DataProviderVisualization<
+    TTarget extends VisualizationTarget,
+    TVisualization extends
+        DataProviderVisualizationTargetTypes[TTarget] = DataProviderVisualizationTargetTypes[TTarget],
+> = {
     itemType: VisualizationItemType.DATA_PROVIDER_VISUALIZATION;
     id: string;
     name: string;
-    visualization: DataProviderVisualizationTargetTypes[TTarget];
+    type: string;
+    visualization: TVisualization;
 };
 
 export type TransformerArgs<
@@ -94,17 +99,22 @@ export type VisualizationGroup<
     customProps: TCustomGroupProps[TGroupType];
 };
 
+export type GroupPropsCollectorArgs<
+    TSettings extends Settings,
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
+> = {
+    id: string;
+    name: string;
+    getSetting: <TKey extends TSettingKey>(setting: TKey) => SettingTypes[TKey];
+};
+
 export interface GroupCustomPropsCollector<
     TSettings extends Settings,
     TGroupKey extends keyof TCustomGroupProps,
-    TCustomGroupProps extends Record<GroupType, Record<string, any>> = Record<string, never>,
+    TCustomGroupProps extends CustomGroupPropsMap = Record<string, never>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > {
-    (args: {
-        id: string;
-        name: string;
-        getSetting: <TKey extends TSettingKey>(setting: TKey) => SettingTypes[TKey];
-    }): TCustomGroupProps[TGroupKey];
+    (args: GroupPropsCollectorArgs<TSettings, TSettingKey>): TCustomGroupProps[TGroupKey];
 }
 
 export type Annotation = ColorScaleWithId; // Add more possible annotation types here, e.g. ColorSets etc.
@@ -193,7 +203,7 @@ export type AssemblerProduct<
     TAccumulatedData extends Record<string, any> = never,
 > = Omit<VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>, keyof VisualizationGroupMetadata<any>>;
 
-export type CustomGroupPropsMap = Record<GroupType, Record<string, any>>;
+export type CustomGroupPropsMap = Partial<Record<GroupType, Record<string, any>>>;
 
 export class VisualizationAssembler<
     TTarget extends VisualizationTarget,
@@ -444,6 +454,7 @@ export class VisualizationAssembler<
             itemType: VisualizationItemType.DATA_PROVIDER_VISUALIZATION,
             id: dataProvider.getItemDelegate().getId(),
             name: dataProvider.getItemDelegate().getName(),
+            type: dataProvider.getType(),
             visualization,
         };
     }

@@ -133,16 +133,16 @@ export type EnsembleParameter_api = {
     is_logarithmic: boolean;
     is_discrete: boolean;
     is_constant: boolean;
-    group_name: string | null;
-    descriptive_name: string | null;
+    group_name?: string | null;
+    descriptive_name?: string | null;
     realizations: Array<number>;
     values: Array<number> | Array<number> | Array<string>;
 };
 
 export type EnsembleParameterDescription_api = {
     name: string;
-    group_name: string | null;
-    descriptive_name: string | null;
+    group_name?: string | null;
+    descriptive_name?: string | null;
     is_discrete: boolean;
 };
 
@@ -152,8 +152,8 @@ export type EnsembleParameterDescription_api = {
 export type EnsembleScalarResponse_api = {
     realizations: Array<number>;
     values: Array<number>;
-    name: string | null;
-    unit: string | null;
+    name?: string | null;
+    unit?: string | null;
 };
 
 /**
@@ -198,7 +198,7 @@ export type FlowNetworkData_api = {
 export type FlowNetworkMetadata_api = {
     key: string;
     label: string;
-    unit: string | null;
+    unit?: string | null;
 };
 
 export enum FlowRateType_api {
@@ -232,7 +232,7 @@ export enum Gfr_api {
 }
 
 export type GraphUserPhoto_api = {
-    avatar_b64str: string | null;
+    avatar_b64str?: string | null;
 };
 
 /**
@@ -280,7 +280,7 @@ export type Grid3dMappedProperty_api = {
  */
 export type Grid3dPropertyInfo_api = {
     property_name: string;
-    iso_date_or_interval: string | null;
+    iso_date_or_interval?: string | null;
 };
 
 /**
@@ -425,8 +425,8 @@ export enum NodeType_api {
  * A collection of observations associated with a field/case/ensemble
  */
 export type Observations_api = {
-    summary: Array<SummaryVectorObservations_api>;
-    rft: Array<RftObservations_api>;
+    summary?: Array<SummaryVectorObservations_api>;
+    rft?: Array<RftObservations_api>;
 };
 
 export type PointSetXy_api = {
@@ -462,9 +462,9 @@ export enum PolygonsAttributeType_api {
 export type PolygonsMeta_api = {
     name: string;
     name_is_stratigraphic_offical: boolean;
-    stratigraphic_identifier: string | null;
-    relative_stratigraphic_level: number | null;
-    parent_stratigraphic_identifier: string | null;
+    stratigraphic_identifier?: string | null;
+    relative_stratigraphic_level?: number | null;
+    parent_stratigraphic_identifier?: string | null;
     attribute_name: string;
     attribute_type: PolygonsAttributeType_api;
 };
@@ -521,7 +521,7 @@ export type RepeatedTableColumnData_api = {
  */
 export type RftObservation_api = {
     value: number;
-    comment: string | null;
+    comment?: string | null;
     error: number;
     zone: string;
     md_msl: number;
@@ -542,7 +542,7 @@ export type RftObservation_api = {
 export type RftObservations_api = {
     well: string;
     date: string;
-    comment: string | null;
+    comment?: string | null;
     observations: Array<RftObservation_api>;
 };
 
@@ -741,7 +741,7 @@ export type StratigraphicUnit_api = {
     colorR: number;
     colorG: number;
     colorB: number;
-    lithologyType: number | number | string;
+    lithologyType?: number | number | string;
 };
 
 /**
@@ -749,7 +749,7 @@ export type StratigraphicUnit_api = {
  */
 export type SummaryVectorDateObservation_api = {
     date: string;
-    comment: string | null;
+    comment?: string | null;
     value: number;
     error: number;
     label: string;
@@ -760,7 +760,7 @@ export type SummaryVectorDateObservation_api = {
  */
 export type SummaryVectorObservations_api = {
     vector_name: string;
-    comment: string | null;
+    comment?: string | null;
     observations: Array<SummaryVectorDateObservation_api>;
 };
 
@@ -790,7 +790,7 @@ export enum SurfaceAttributeType_api {
 }
 
 export type SurfaceDataFloat_api = {
-    format: "float";
+    format?: "float";
     surface_def: SurfaceDef_api;
     transformed_bbox_utm: BoundingBox2D_api;
     value_min: number;
@@ -799,7 +799,7 @@ export type SurfaceDataFloat_api = {
 };
 
 export type SurfaceDataPng_api = {
-    format: "png";
+    format?: "png";
     surface_def: SurfaceDef_api;
     transformed_bbox_utm: BoundingBox2D_api;
     value_min: number;
@@ -891,7 +891,9 @@ export enum SurfaceTimeType_api {
     INTERVAL = "INTERVAL",
 }
 
-export type Thp_api = "THP";
+export enum Thp_api {
+    THP = "THP",
+}
 
 export enum TabType_api {
     BHP = "BHP",
@@ -930,8 +932,8 @@ export enum UnitType_api {
 
 export type UserInfo_api = {
     username: string;
-    display_name: string | null;
-    avatar_b64str: string | null;
+    display_name?: string | null;
+    avatar_b64str?: string | null;
     has_sumo_access: boolean;
     has_smda_access: boolean;
 };
@@ -946,7 +948,7 @@ export type VectorDescription_api = {
     name: string;
     descriptiveName: string;
     hasHistorical: boolean;
-    derivedVectorInfo: DerivedVectorInfo_api | null;
+    derivedVectorInfo?: DerivedVectorInfo_api | null;
 };
 
 export type VectorHistoricalData_api = {
@@ -962,7 +964,7 @@ export type VectorRealizationData_api = {
     values: Array<number>;
     unit: string;
     isRate: boolean;
-    derivedVectorInfo: DerivedVectorInfo_api | null;
+    derivedVectorInfo?: DerivedVectorInfo_api | null;
 };
 
 export type VectorStatisticData_api = {
@@ -971,7 +973,7 @@ export type VectorStatisticData_api = {
     valueObjects: Array<StatisticValueObject_api>;
     unit: string;
     isRate: boolean;
-    derivedVectorInfo: DerivedVectorInfo_api | null;
+    derivedVectorInfo?: DerivedVectorInfo_api | null;
 };
 
 export type VectorStatisticSensitivityData_api = {
@@ -985,7 +987,7 @@ export type VectorStatisticSensitivityData_api = {
 };
 
 export type VfpInjTable_api = {
-    vfpType: "INJ";
+    vfpType?: "INJ";
     tableNumber: number;
     datum: number;
     flowRateType: FlowRateType_api;
@@ -1000,7 +1002,7 @@ export type VfpInjTable_api = {
 };
 
 export type VfpProdTable_api = {
-    vfpType: "PROD";
+    vfpType?: "PROD";
     tableNumber: number;
     datum: number;
     flowRateType: FlowRateType_api;
@@ -1064,7 +1066,7 @@ export type WellCompletionsWell_api = {
 
 export type WellCompletionsZone_api = {
     name: string;
-    subzones: Array<WellCompletionsZone_api> | null;
+    subzones?: Array<WellCompletionsZone_api> | null;
 };
 
 export enum WellLogCurveSourceEnum_api {
@@ -1083,8 +1085,8 @@ export type WellboreCasing_api = {
     itemType: string;
     diameterNumeric: number;
     diameterInner: number;
-    description: string | null;
-    remark: string | null;
+    description?: string | null;
+    remark?: string | null;
     depthTopMd: number;
     depthBottomMd: number;
     totalDepthMd: number;
@@ -1165,7 +1167,7 @@ export type WellborePick_api = {
     uniqueWellboreIdentifier: string;
     wellboreUuid: string;
     pickIdentifier: string;
-    confidence: string | null;
+    confidence?: string | null;
     depthReferencePoint: string;
     mdUnit: string;
     interpreter: string | null;

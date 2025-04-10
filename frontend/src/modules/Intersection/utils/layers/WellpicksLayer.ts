@@ -94,7 +94,8 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
         });
 
         return Promise.all([wellborePicksPromise, stratigraphicUnitsPromise]).then(
-            ([wellborePicks, stratigraphicUnits]) => transformFormationData(wellborePicks, stratigraphicUnits as any),
+            ([wellborePicks, stratigraphicUnits]) =>
+                transformFormationData(wellborePicks as any, stratigraphicUnits as any),
         );
     }
 }
