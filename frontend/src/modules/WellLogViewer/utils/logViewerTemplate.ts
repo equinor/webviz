@@ -1,21 +1,22 @@
 /**
  * Utilities and constants used for generating well-log-viewer template configs
  */
-import { WellLogCurveTypeEnum_api } from "@api";
 import type {
     Template,
     TemplatePlot,
     TemplateTrack,
 } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
-
 import _ from "lodash";
 import { v4 } from "uuid";
+
+import { WellLogCurveTypeEnum_api } from "@api";
+
+import type { TemplatePlotConfig, TemplateTrackConfig } from "../types";
 
 import { CURVE_COLOR_PALETTE, DIFF_CURVE_COLORS } from "./logViewerColors";
 import { MAIN_AXIS_CURVE } from "./queryDataTransform";
 import { getUniqueCurveNameForPlotConfig } from "./strings";
 
-import type { TemplatePlotConfig, TemplateTrackConfig } from "../types";
 
 export const DEFAULT_MAX_VISIBLE_TRACKS = 5;
 

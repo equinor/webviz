@@ -1,9 +1,10 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
+import type { DataProviderManager } from "../_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+
 import { dataProviderManagerAtom, preferredViewLayoutAtom } from "./settings/atoms/baseAtoms";
 import type { PreferredViewLayout } from "./types";
 
-import type { DataProviderManager } from "../_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
 export type SettingsToViewInterface = {
     layerManager: DataProviderManager | null;

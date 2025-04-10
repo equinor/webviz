@@ -1,5 +1,8 @@
 import React from "react";
 
+import { Warning } from "@mui/icons-material";
+import type { Layout, PlotData } from "plotly.js";
+
 import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
 import { KeyKind } from "@framework/DataChannelTypes";
 import type { ModuleViewProps } from "@framework/Module";
@@ -8,13 +11,11 @@ import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
-import { makeSubplots } from "@modules/_shared/Figure";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { makeSubplots } from "@modules/_shared/Figure";
 import { makeHistogramTrace } from "@modules/_shared/histogram";
-import { Warning } from "@mui/icons-material";
 
-import type { Layout, PlotData } from "plotly.js";
 
 import type { Interfaces } from "./interfaces";
 import { PlotType } from "./typesAndEnums";

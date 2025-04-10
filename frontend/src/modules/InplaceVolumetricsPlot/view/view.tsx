@@ -1,5 +1,7 @@
 import React from "react";
 
+import { useAtomValue } from "jotai";
+
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
@@ -7,7 +9,8 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
-import { useAtomValue } from "jotai";
+
+import type { Interfaces } from "../interfaces";
 
 import { resultNameAtom } from "./atoms/baseAtoms";
 import { areSelectedTablesComparableAtom } from "./atoms/derivedAtoms";
@@ -16,7 +19,6 @@ import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriter
 import { useBuildPlotAndTable } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 
-import type { Interfaces } from "../interfaces";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);

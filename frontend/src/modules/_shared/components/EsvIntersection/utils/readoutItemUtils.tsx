@@ -8,7 +8,13 @@ import type {
     Perforation,
     SchematicData,
 } from "@equinor/esv-intersection";
+
 import { ijkFromCellIndex } from "@framework/utils/cellIndexUtils";
+
+
+import type { ReadoutItem as GenericReadoutItem, InfoItem } from "../../ReadoutBox";
+import type { AdditionalInformationItem, ReadoutItem } from "../types/types";
+import { AdditionalInformationType } from "../types/types";
 
 import { getColorFromLayerData } from "./intersectionConversion";
 import {
@@ -21,10 +27,6 @@ import {
     isSurfaceLayer,
     isWellborepathLayer,
 } from "./layers";
-
-import type { ReadoutItem as GenericReadoutItem, InfoItem } from "../../ReadoutBox";
-import type { AdditionalInformationItem, ReadoutItem } from "../types/types";
-import { AdditionalInformationType } from "../types/types";
 
 export function getLabelFromLayerData(readoutItem: ReadoutItem): string {
     const layer = readoutItem.layer;

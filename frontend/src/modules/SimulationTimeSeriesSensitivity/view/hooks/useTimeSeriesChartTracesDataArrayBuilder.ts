@@ -1,16 +1,17 @@
+import { useAtomValue } from "jotai";
+
 import type { VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
 import { StatisticFunction_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { ColorSet } from "@lib/utils/ColorSet";
+import { createSensitivityColorMap } from "@modules/_shared/sensitivityColors";
 import type { TimeSeriesPlotlyTrace } from "@modules/SimulationTimeSeriesSensitivity/view/utils/createTracesUtils";
 import {
     createLineTrace,
     createRealizationLineTraces,
     createStatisticalLineTraces,
 } from "@modules/SimulationTimeSeriesSensitivity/view/utils/createTracesUtils";
-import { createSensitivityColorMap } from "@modules/_shared/sensitivityColors";
 
-import { useAtomValue } from "jotai";
 
 import {
     selectedSensitivityNamesAtom,

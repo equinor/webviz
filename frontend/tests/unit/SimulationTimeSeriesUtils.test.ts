@@ -1,7 +1,8 @@
+import { describe, expect, test } from "vitest";
+
 import { joinStringArrayToHumanReadableString } from "@modules/SimulationTimeSeries/utils/stringUtils";
 import { scaleHexColorLightness } from "@modules/SimulationTimeSeries/view/utils/colorUtils";
 
-import { describe, expect, test } from "vitest";
 
 describe("Test of utility functions for SimulationTimeSeriesMatrix module", () => {
     test("Test join string array to human readable string", () => {

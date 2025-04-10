@@ -1,4 +1,9 @@
+import type { QueryClient } from "@tanstack/react-query";
+import { isEqual } from "lodash";
+
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
+import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
 import type { EnsembleRealizationFilterFunction, WorkbenchSession } from "@framework/WorkbenchSession";
 import {
     WorkbenchSessionEvent,
@@ -6,22 +11,15 @@ import {
 } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorPaletteType } from "@framework/WorkbenchSettings";
-import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
-import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
-import type { QueryClient } from "@tanstack/react-query";
 
-import { isEqual } from "lodash";
 
 import type { PublishSubscribe } from "../../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../../utils/PublishSubscribeDelegate";
-import "../../dataProviders/registerAllDataProviders";
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import "../../groups/registerAllGroups";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { type SerializedDataProviderManager, SerializedType } from "../../interfacesAndTypes/serialization";
-import "../../settings/registerAllSettings";
 
 export enum DataProviderManagerTopic {
     ITEMS = "ITEMS",

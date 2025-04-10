@@ -1,11 +1,12 @@
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { atom } from "jotai";
+
 import { IntersectionType } from "@framework/types/intersection";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
 import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
-import { CURVE_FITTING_EPSILON } from "@modules/Intersection/typesAndEnums";
 import { calcExtendedSimplifiedWellboreTrajectoryInXYPlane } from "@modules/_shared/utils/wellbore";
+import { CURVE_FITTING_EPSILON } from "@modules/Intersection/typesAndEnums";
 
-import { atom } from "jotai";
 
 import {
     intersectionExtensionLengthAtom,

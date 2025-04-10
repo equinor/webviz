@@ -1,7 +1,8 @@
+import { atomWithQuery } from "jotai-tanstack-query";
+
 import type { WellboreTrajectory_api } from "@api";
 import { getWellTrajectoriesOptions } from "@api";
 
-import { atomWithQuery } from "jotai-tanstack-query";
 
 import { selectedFieldIdentifierAtom, wellboreHeaderAtom } from "./baseAtoms";
 

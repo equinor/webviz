@@ -1,14 +1,13 @@
 import type React from "react";
 
+import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
+
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { SortableListItem } from "@lib/components/SortableList";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
 
-import type { DataProvider } from "./DataProvider";
-import { DataProviderStatus, DataProviderTopic } from "./DataProvider";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
@@ -17,6 +16,9 @@ import { SettingComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
+
+import { DataProviderStatus, DataProviderTopic } from "./DataProvider";
+import type { DataProvider } from "./DataProvider";
 
 export type DataProviderComponentProps = {
     dataProvider: DataProvider<any, any>;

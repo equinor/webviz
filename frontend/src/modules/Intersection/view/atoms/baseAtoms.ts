@@ -1,7 +1,8 @@
+import { atom } from "jotai";
+
 import { IntersectionType } from "@framework/types/intersection";
 import type { WellboreHeader } from "@modules/Intersection/typesAndEnums";
 
-import { atom } from "jotai";
 
 export const selectedFieldIdentifierAtom = atom<string | null>(null);
 export const selectedCustomIntersectionPolylineIdAtom = atom<string | null>(null);

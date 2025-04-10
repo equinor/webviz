@@ -1,10 +1,11 @@
+import { atom } from "jotai";
+import { atomWithQuery } from "jotai-tanstack-query";
+
 import { getVectorListOptions } from "@api";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
-import { atom } from "jotai";
-import { atomWithQuery } from "jotai-tanstack-query";
 
 export const textAtom = atom<string>("I am an atom with text!");
 export const selectedEnsembleAtom = atom<RegularEnsembleIdent | null>(null);

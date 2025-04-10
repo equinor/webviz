@@ -1,3 +1,5 @@
+import type { UseQueryResult } from "@tanstack/react-query";
+
 import type {
     FluidZone_api,
     InplaceStatisticalVolumetricTableDataPerFluidSelection_api,
@@ -13,7 +15,6 @@ import type {
     InplaceVolumetricsStatisticalTableData,
     InplaceVolumetricsTableData,
 } from "@modules/_shared/InplaceVolumetrics/types";
-import type { UseQueryResult } from "@tanstack/react-query";
 
 export type EnsembleIdentWithRealizations = {
     ensembleIdent: RegularEnsembleIdent;

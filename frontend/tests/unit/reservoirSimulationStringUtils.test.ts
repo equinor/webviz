@@ -1,10 +1,11 @@
+import { describe, expect, test } from "vitest";
+
 import {
     simulationUnitReformat,
     simulationVectorDefinition,
     simulationVectorDescription,
 } from "@modules/_shared/reservoirSimulationStringUtils";
 
-import { describe, expect, test } from "vitest";
 
 describe("Reservoir Simulation string utils tests", () => {
     test("Test simulationVectorDescription", () => {

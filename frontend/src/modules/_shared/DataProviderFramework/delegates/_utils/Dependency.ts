@@ -1,5 +1,4 @@
 import { isCancelledError } from "@tanstack/react-query";
-
 import { isEqual } from "lodash";
 
 import type { GlobalSettings } from "../../framework/DataProviderManager/DataProviderManager";

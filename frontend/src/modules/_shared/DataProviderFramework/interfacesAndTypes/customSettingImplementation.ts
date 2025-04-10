@@ -1,10 +1,11 @@
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
-import type { MakeAvailableValuesTypeBasedOnCategory } from "./utils";
 
 import type { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
 import type { SettingCategory } from "../settings/settingsDefinitions";
+
+import type { MakeAvailableValuesTypeBasedOnCategory } from "./utils";
 
 export type OverriddenValueRepresentationArgs<TValue> = {
     value: TValue;

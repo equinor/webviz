@@ -1,4 +1,5 @@
 import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
+import { ModuleNotFoundPlaceholder } from "./internal/ModuleNotFoundPlaceholder";
 import type {
     InterfaceEffects,
     ModuleCategory,
@@ -11,7 +12,6 @@ import type { ModuleDataTagId } from "./ModuleDataTags";
 import type { DrawPreviewFunc } from "./Preview";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
-import { ModuleNotFoundPlaceholder } from "./internal/ModuleNotFoundPlaceholder";
 
 export type RegisterModuleOptions = {
     moduleName: string;

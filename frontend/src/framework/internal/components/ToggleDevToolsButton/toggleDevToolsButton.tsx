@@ -1,10 +1,11 @@
 import React from "react";
 
+import { BugReport } from "@mui/icons-material";
+
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { BugReport } from "@mui/icons-material";
 
 export type ToggleDevToolsButtonProps = {
     guiMessageBroker: GuiMessageBroker;

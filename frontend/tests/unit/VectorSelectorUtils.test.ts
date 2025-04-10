@@ -1,10 +1,11 @@
+import { describe, expect, test } from "vitest";
+
 import type { TreeDataNode } from "@lib/components/SmartNodeSelector";
 import {
     addVectorToVectorSelectorData,
     createVectorSelectorDataFromVectors,
 } from "@modules/_shared/components/VectorSelector";
 
-import { describe, expect, test } from "vitest";
 
 const VECTOR_NAMES = [
     "WOPR:A1",

@@ -1,5 +1,4 @@
 import type { Controller, OverlayMouseMoveEvent } from "@equinor/esv-intersection";
-
 import { isEqual } from "lodash";
 
 import type { IntersectedItem, IntersectionCalculator, IntersectionItem } from "../types/types";

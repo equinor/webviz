@@ -1,7 +1,6 @@
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import type { GroupDelegate } from "./GroupDelegate";
 
 import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
@@ -10,6 +9,8 @@ import {
     DataProviderManagerTopic,
 } from "../framework/DataProviderManager/DataProviderManager";
 import type { SerializedItem } from "../interfacesAndTypes/serialization";
+
+import type { GroupDelegate } from "./GroupDelegate";
 
 export enum ItemDelegateTopic {
     NAME = "NAME",

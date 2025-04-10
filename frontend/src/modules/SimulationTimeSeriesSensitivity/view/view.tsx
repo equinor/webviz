@@ -1,11 +1,14 @@
 import React from "react";
 
+import { useAtomValue, useSetAtom } from "jotai";
+
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { useAtomValue, useSetAtom } from "jotai";
+
+import type { Interfaces } from "../interfaces";
 
 import { userSelectedActiveTimestampUtcMsAtom, vectorSpecificationAtom } from "./atoms/baseAtoms";
 import { activeTimestampUtcMsAtom } from "./atoms/derivedAtoms";
@@ -15,7 +18,6 @@ import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriter
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { useTimeSeriesChartTracesDataArrayBuilder } from "./hooks/useTimeSeriesChartTracesDataArrayBuilder";
 
-import type { Interfaces } from "../interfaces";
 
 export const View = ({ viewContext, workbenchSettings, workbenchServices }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);

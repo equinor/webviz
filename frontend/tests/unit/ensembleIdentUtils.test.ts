@@ -1,3 +1,5 @@
+import { describe, expect, test } from "vitest";
+
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import {
@@ -8,7 +10,6 @@ import {
     isEnsembleIdentOfType,
 } from "@framework/utils/ensembleIdentUtils";
 
-import { describe, expect, test } from "vitest";
 
 describe("Ensemble ident utility functions", () => {
     const REGULAR_ENSEMBLE_IDENT_1 = new RegularEnsembleIdent(

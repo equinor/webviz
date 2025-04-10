@@ -1,9 +1,10 @@
+import type { UseQueryResult } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+
 import { postGetPolylineIntersectionOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { PolylineIntersection_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import { transformPolylineIntersection } from "@modules/3DViewer/view/queries/queryDataTransforms";
-import type { UseQueryResult } from "@tanstack/react-query";
-import { useQuery } from "@tanstack/react-query";
 
 export function useGridPolylineIntersection(
     ensembleIdent: RegularEnsembleIdent | null,

@@ -9,10 +9,11 @@ import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSess
 import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { ParameterDistributionPlot } from "./components/ParameterDistributionPlot";
 
 import type { Interfaces } from "../interfaces";
 import type { ParameterDataArr } from "../typesAndEnums";
+
+import { ParameterDistributionPlot } from "./components/ParameterDistributionPlot";
 
 export function View(props: ModuleViewProps<Interfaces>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);

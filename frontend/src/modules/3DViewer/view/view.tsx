@@ -2,25 +2,29 @@ import React from "react";
 
 import type { Layer } from "@deck.gl/core";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { NorthArrow3DLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { useAtom, useSetAtom } from "jotai";
+
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { useIntersectionPolylines } from "@framework/UserCreatedItems";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
 import type { Intersection } from "@framework/types/intersection";
 import { IntersectionType } from "@framework/types/intersection";
+import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import type {
     IntersectionPolyline,
     IntersectionPolylineWithoutId,
 } from "@framework/userCreatedItems/IntersectionPolylines";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { useFieldWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { calcExtendedSimplifiedWellboreTrajectoryInXYPlane } from "@modules/_shared/utils/wellbore";
-import { NorthArrow3DLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { useFieldWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 
-import { useAtom, useSetAtom } from "jotai";
+
+import type { Interfaces } from "../interfaces";
+import { userSelectedCustomIntersectionPolylineIdAtom } from "../settings/atoms/baseAtoms";
 
 import { editCustomIntersectionPolylineEditModeActiveAtom, intersectionTypeAtom } from "./atoms/baseAtoms";
 import { SyncedSettingsUpdateWrapper } from "./components/SyncedSettingsUpdateWrapper";
@@ -29,8 +33,6 @@ import { useGridPolylineIntersection as useGridPolylineIntersectionQuery } from 
 import { useWellboreCasingsQuery } from "./queries/wellboreSchematicsQueries";
 import { makeAxesLayer, makeGrid3DLayer, makeIntersectionLayer, makeWellsLayer } from "./utils/layers";
 
-import type { Interfaces } from "../interfaces";
-import { userSelectedCustomIntersectionPolylineIdAtom } from "../settings/atoms/baseAtoms";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);

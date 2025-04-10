@@ -2,9 +2,9 @@ import React from "react";
 
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import type { ModuleInstanceStatusControllerInternal } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
+import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { isDevMode } from "@lib/utils/devMode";
 
 type DebugProfilerRenderInfoProps = {

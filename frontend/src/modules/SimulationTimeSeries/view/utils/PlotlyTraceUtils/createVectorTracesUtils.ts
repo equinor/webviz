@@ -6,12 +6,13 @@ import type {
 } from "@api";
 import { DerivedVectorType_api, StatisticFunction_api } from "@api";
 
+import type { TimeSeriesPlotData } from "../timeSeriesPlotData";
+
 import type { FanchartData, FreeLineData, LowHighData, MinMaxData } from "./fanchartPlotting";
 import { createFanchartTraces } from "./fanchartPlotting";
 import type { LineData, StatisticsData } from "./statisticsPlotting";
 import { createStatisticsTraces } from "./statisticsPlotting";
 
-import type { TimeSeriesPlotData } from "../timeSeriesPlotData";
 
 function isDerivedVectorOfType(
     vectorData: VectorRealizationData_api | VectorStatisticData_api | VectorHistoricalData_api,

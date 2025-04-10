@@ -1,10 +1,12 @@
+import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { isEqual } from "lodash";
+
 import {
     getDrilledWellboreHeadersOptions,
     getGridModelsInfoOptions,
     getWellTrajectoriesOptions,
     postGetPolylineIntersectionOptions,
 } from "@api";
-import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
@@ -14,7 +16,6 @@ import {
     transformPolylineIntersection,
 } from "@modules/_shared/utils/wellbore";
 
-import { isEqual } from "lodash";
 
 import type {
     CustomDataProviderImplementation,

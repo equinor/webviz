@@ -1,9 +1,10 @@
+import { atom } from "jotai";
+
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { IntersectionType } from "@framework/types/intersection";
 import type { ColorScale } from "@lib/utils/ColorScale";
 import type { GridCellIndexRanges } from "@modules/3DViewer/typesAndEnums";
 
-import { atom } from "jotai";
 
 export const showGridlinesAtom = atom<boolean>(false);
 export const showIntersectionAtom = atom<boolean>(false);

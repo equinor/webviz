@@ -1,9 +1,10 @@
 import type { Gfr_api, VfpInjTable_api, VfpProdTable_api, Wfr_api } from "@api";
 import { Alq_api, FlowRateType_api } from "@api";
 
+import { VfpParam, VfpType } from "../types";
+
 import { isInjTable, isProdTable } from "./vfpTableClassifier";
 
-import { VfpParam, VfpType } from "../types";
 
 export class VfpDataAccessor {
     private _vfpTable: VfpProdTable_api | VfpInjTable_api;

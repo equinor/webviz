@@ -1,8 +1,8 @@
-import type { WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-
 import { atom } from "jotai";
 import _ from "lodash";
+
+import type { WellboreTrajectory_api } from "@api";
 
 import { requiredCurvesAtom } from "./baseAtoms";
 import { wellboreTrajectoryQueryAtom } from "./queryAtoms";

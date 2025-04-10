@@ -1,8 +1,9 @@
 import React from "react";
 
+import { BugReport, Info, MoodBad, Refresh } from "@mui/icons-material";
+
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
-import { BugReport, Info, MoodBad, Refresh } from "@mui/icons-material";
 
 export type FormattedErrorProps = {
     moduleName: string;

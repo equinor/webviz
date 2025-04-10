@@ -1,9 +1,9 @@
 import React from "react";
 
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Deselect, SelectAll } from "@mui/icons-material";
-
 import { isEqual } from "lodash";
+
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { BaseComponentProps } from "../BaseComponent";
 import { BaseComponent } from "../BaseComponent";

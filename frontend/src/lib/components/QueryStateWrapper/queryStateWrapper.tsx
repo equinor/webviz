@@ -1,7 +1,8 @@
 import type React from "react";
 
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { QueryObserverResult } from "@tanstack/react-query";
+
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 // Definition of error criteria for multiple queries
 // - SOME_QUERIES_HAVE_ERROR: If at least one query has an error, the error component is displayed

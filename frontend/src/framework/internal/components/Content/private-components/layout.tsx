@@ -1,18 +1,19 @@
 import React from "react";
 
-import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
-import { GuiEvent } from "@framework/GuiMessageBroker";
-import type { LayoutElement, Workbench } from "@framework/Workbench";
+import { v4 } from "uuid";
+
 import type { LayoutBox } from "@framework/components/LayoutBox";
 import { LayoutBoxComponents, makeLayoutBoxes } from "@framework/components/LayoutBox";
+import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
+import { GuiEvent } from "@framework/GuiMessageBroker";
 import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
+import type { LayoutElement, Workbench } from "@framework/Workbench";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Rect2D, Size2D } from "@lib/utils/geometry";
 import { MANHATTAN_LENGTH, addMarginToRect, pointRelativeToDomRect, rectContainsPoint } from "@lib/utils/geometry";
 import type { Vec2 } from "@lib/utils/vec2";
 import { multiplyVec2, point2Distance, scaleVec2NonUniform, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
 
-import { v4 } from "uuid";
 
 import { ViewWrapper } from "./ViewWrapper";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";

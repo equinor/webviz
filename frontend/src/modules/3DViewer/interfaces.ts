@@ -1,7 +1,7 @@
 import type { BoundingBox3D_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import type { IntersectionType } from "@framework/types/intersection";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import type { ColorScale } from "@lib/utils/ColorScale";
 
 import {

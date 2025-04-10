@@ -2,6 +2,7 @@ import type React from "react";
 
 import type { VectorDefinitionsType } from "@assets/vectorDefinitions";
 import { vectorDefinitions } from "@assets/vectorDefinitions";
+
 import type { SmartNodeSelectorProps, TreeDataNode } from "@lib/components/SmartNodeSelector";
 import { Direction, KeyEventType, SmartNodeSelectorComponent, TreeData } from "@lib/components/SmartNodeSelector";
 

@@ -1,4 +1,6 @@
 import React from "react";
+
+import type { PlotData } from "plotly.js";
 import Plot from "react-plotly.js";
 
 import type { RftRealizationData_api } from "@api";
@@ -10,7 +12,6 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
-import type { PlotData } from "plotly.js";
 
 import type { Interfaces } from "./interfaces";
 

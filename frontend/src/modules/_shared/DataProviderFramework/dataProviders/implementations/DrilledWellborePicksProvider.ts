@@ -1,3 +1,5 @@
+import { isEqual } from "lodash";
+
 import type { WellborePick_api } from "@api";
 import {
     getDrilledWellboreHeadersOptions,
@@ -7,7 +9,6 @@ import {
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-import { isEqual } from "lodash";
 
 import type {
     CustomDataProviderImplementation,

@@ -1,9 +1,10 @@
+import { describe, expect, test } from "vitest";
+
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { RealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 
-import { describe, expect, test } from "vitest";
 
 describe("RealizationFilterSet tests", () => {
     const regularEnsembleArray = [

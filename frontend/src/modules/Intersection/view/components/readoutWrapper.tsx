@@ -1,11 +1,12 @@
 import React from "react";
 
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { isEqual } from "lodash";
+
 import type { ViewContext } from "@framework/ModuleContext";
-import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
 import type { Viewport } from "@framework/types/viewport";
-import type { Interfaces } from "@modules/Intersection/interfaces";
+import { useSubscribedValue } from "@framework/WorkbenchServices";
+import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import type { EsvIntersectionReadoutEvent, LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { EsvIntersection } from "@modules/_shared/components/EsvIntersection";
 import type { ReadoutItem as EsvReadoutItem, HighlightItem } from "@modules/_shared/components/EsvIntersection/types";
@@ -14,8 +15,8 @@ import { isWellborepathLayer } from "@modules/_shared/components/EsvIntersection
 import { esvReadoutToGenericReadout } from "@modules/_shared/components/EsvIntersection/utils/readoutItemUtils";
 import type { ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
+import type { Interfaces } from "@modules/Intersection/interfaces";
 
-import { isEqual } from "lodash";
 
 // Needs extra distance for the left side; this avoids overlapping with legend elements
 const READOUT_EDGE_DISTANCE_REM = { left: 6 };

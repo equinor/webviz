@@ -1,5 +1,7 @@
 import type React from "react";
 
+import type { Annotations, PlotMarker, Shape } from "plotly.js";
+
 import type {
     DerivedVectorInfo_api,
     Frequency_api,
@@ -13,15 +15,16 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import type { ColorSet } from "@lib/utils/ColorSet";
-import type { VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
-import { FrequencyEnumToStringMapping, SubplotLimitDirection } from "@modules/SimulationTimeSeries/typesAndEnums";
-import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
 import type { Figure } from "@modules/_shared/Figure";
 import { CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
+import type { VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
+import { FrequencyEnumToStringMapping, SubplotLimitDirection } from "@modules/SimulationTimeSeries/typesAndEnums";
+import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
 
-import type { Annotations, PlotMarker, Shape } from "plotly.js";
 
+import { scaleHexColorLightness } from "./colorUtils";
+import type { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
 import {
     createHistoricalVectorTrace,
     createVectorFanchartTraces,
@@ -31,8 +34,6 @@ import {
     createVectorStatisticsTraces,
     getTraceLineShape,
 } from "./PlotlyTraceUtils/createVectorTracesUtils";
-import { scaleHexColorLightness } from "./colorUtils";
-import type { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
 import type { TimeSeriesPlotData } from "./timeSeriesPlotData";
 
 type VectorNameSubplotTitleMap = { [vectorName: string]: string };

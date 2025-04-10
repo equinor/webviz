@@ -1,11 +1,12 @@
 import React from "react";
 
-import type { ViewContext } from "@framework/ModuleContext";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { SubsurfaceViewerProps } from "@webviz/subsurface-viewer";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 import type { ViewStateType } from "@webviz/subsurface-viewer/dist/components/Map";
+
+import type { ViewContext } from "@framework/ModuleContext";
+import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import type { WorkbenchServices } from "@framework/WorkbenchServices";
 
 export type SyncedSubsurfaceViewerProps = {
     viewContext: ViewContext<any>;

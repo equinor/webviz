@@ -1,5 +1,3 @@
-import { ItemDelegateTopic } from "./ItemDelegate";
-import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
@@ -10,6 +8,9 @@ import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
 import { DeserializationAssistant } from "../framework/utils/DeserializationAssistant";
 import type { Item } from "../interfacesAndTypes/entities";
 import type { SerializedItem } from "../interfacesAndTypes/serialization";
+
+import { ItemDelegateTopic } from "./ItemDelegate";
+import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 export enum GroupDelegateTopic {
     CHILDREN = "CHILDREN",

@@ -1,8 +1,9 @@
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { atom } from "jotai";
+
 import { IntersectionType } from "@framework/types/intersection";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
 
-import { atom } from "jotai";
 
 import { customIntersectionPolylineIdAtom, highlightedWellboreUuidAtom, intersectionTypeAtom } from "./baseAtoms";
 import { fieldWellboreTrajectoriesQueryAtom } from "./queryAtoms";

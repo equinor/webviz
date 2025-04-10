@@ -2,16 +2,27 @@ import type React from "react";
 
 import { Icon } from "@equinor/eds-core-react";
 import { color_palette, fault, grid_layer, settings, surface_layer, wellbore } from "@equinor/eds-icons";
+import { Dropdown } from "@mui/base";
+import {
+    Check,
+    Panorama,
+    SettingsApplications,
+    Settings as SettingsIcon,
+    TableRowsOutlined,
+    ViewColumnOutlined,
+} from "@mui/icons-material";
+import { useAtom } from "jotai";
+
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { Menu } from "@lib/components/Menu";
 import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
+import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { ObservedSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurfaceProvider";
 import { RealizationSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationSurfaceProvider";
 import { StatisticalSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/StatisticalSurfaceProvider";
-import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
@@ -31,17 +42,6 @@ import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/int
 import { instanceofItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import { Dropdown } from "@mui/base";
-import {
-    Check,
-    Panorama,
-    SettingsApplications,
-    Settings as SettingsIcon,
-    TableRowsOutlined,
-    ViewColumnOutlined,
-} from "@mui/icons-material";
-
-import { useAtom } from "jotai";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 

@@ -1,12 +1,14 @@
+import { atom } from "jotai";
+
 import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 
-import { atom } from "jotai";
+
+import { PvtDataAccessor } from "../../utils/PvtDataAccessor";
+import { computeRealizationsIntersection } from "../../utils/realizationsIntersection";
 
 import { userSelectedEnsembleIdentsAtom, userSelectedPvtNumsAtom, userSelectedRealizationsAtom } from "./baseAtoms";
 import { pvtDataQueriesAtom } from "./queryAtoms";
 
-import { PvtDataAccessor } from "../../utils/PvtDataAccessor";
-import { computeRealizationsIntersection } from "../../utils/realizationsIntersection";
 
 export const selectedEnsembleIdentsAtom = atom((get) => {
     const ensembleSet = get(EnsembleSetAtom);

@@ -1,7 +1,8 @@
+import { atom } from "jotai";
+
 import type { SelectedSensitivity } from "@modules/TornadoChart/typesAndEnums";
 import { DisplayComponentType } from "@modules/TornadoChart/typesAndEnums";
 
-import { atom } from "jotai";
 
 export const displayComponentTypeAtom = atom<DisplayComponentType>(DisplayComponentType.TornadoChart);
 export const referenceSensitivityNameAtom = atom<string | null>(null);

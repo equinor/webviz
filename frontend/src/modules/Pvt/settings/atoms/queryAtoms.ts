@@ -1,11 +1,13 @@
+import type { UseQueryResult } from "@tanstack/react-query";
+
 import { type PvtData_api, getTableDataOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
-import type { UseQueryResult } from "@tanstack/react-query";
+
+import type { CombinedPvtDataResult } from "../../typesAndEnums";
 
 import { selectedEnsembleIdentsAtom, selectedRealizationsAtom } from "./derivedAtoms";
 
-import type { CombinedPvtDataResult } from "../../typesAndEnums";
 
 export const pvtDataQueriesAtom = atomWithQueries((get) => {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);

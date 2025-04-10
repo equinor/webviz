@@ -1,8 +1,9 @@
 import { v4 } from "uuid";
 
+import type { TemplateTrackConfig } from "../types";
+
 import { makeTrackPlot } from "./logViewerTemplate";
 
-import type { TemplateTrackConfig } from "../types";
 
 /**
  * Calculates a data-blob download uri from a list of viewer track configuration objects

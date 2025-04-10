@@ -1,10 +1,11 @@
+import { atom } from "jotai";
+
 import type { ParameterIdent } from "@framework/EnsembleParameters";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 import { ParameterDistributionPlotType } from "@modules/ParameterDistributionMatrix/typesAndEnums";
 
-import { atom } from "jotai";
 
 export const selectedVisualizationTypeAtom = atom<ParameterDistributionPlotType>(
     ParameterDistributionPlotType.DISTRIBUTION_PLOT,

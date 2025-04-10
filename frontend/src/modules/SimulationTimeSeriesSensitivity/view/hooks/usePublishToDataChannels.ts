@@ -1,9 +1,10 @@
+import { useAtomValue } from "jotai";
+
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { ViewContext } from "@framework/ModuleContext";
 import { makeVectorDataGenerator } from "@modules/SimulationTimeSeriesSensitivity/dataGenerators";
 import type { Interfaces } from "@modules/SimulationTimeSeriesSensitivity/interfaces";
 
-import { useAtomValue } from "jotai";
 
 import { ChannelIds } from "../../channelDefs";
 import { vectorSpecificationAtom } from "../atoms/baseAtoms";

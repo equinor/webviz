@@ -1,6 +1,7 @@
+import { isEqual } from "lodash";
+
 import type { RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 
-import { isEqual } from "lodash";
 
 /**
  * Create the best suggested realization number selections from an array of realization numbers and an array of valid realization numbers.

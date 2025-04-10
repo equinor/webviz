@@ -1,7 +1,8 @@
 import type React from "react";
 
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { UnfoldLessDouble, UnfoldMoreDouble } from "@mui/icons-material";
+
+import { DenseIconButton } from "@lib/components/DenseIconButton";
 
 import type { ItemGroup } from "../../interfacesAndTypes/entities";
 

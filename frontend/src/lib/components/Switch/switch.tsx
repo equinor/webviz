@@ -1,8 +1,9 @@
 import React from "react";
 
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { UseSwitchParameters } from "@mui/base";
 import { Switch as SwitchUnstyled, useSwitch } from "@mui/base";
+
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { BaseComponent } from "../BaseComponent";
 

@@ -1,7 +1,7 @@
 import type React from "react";
 
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import type {
     CustomSettingImplementation,

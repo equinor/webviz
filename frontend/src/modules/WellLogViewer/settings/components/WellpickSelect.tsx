@@ -1,5 +1,8 @@
 import React from "react";
 
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import _ from "lodash";
+
 import type { SettingsStatusWriter } from "@framework/StatusWriter";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -8,8 +11,6 @@ import type { SelectOption, SelectProps } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import _ from "lodash";
 
 import {
     userSelectedWellPickColumnAtom,

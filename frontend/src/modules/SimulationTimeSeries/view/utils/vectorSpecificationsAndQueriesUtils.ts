@@ -1,6 +1,7 @@
+import type { UseQueryResult } from "@tanstack/react-query";
+
 import type { VectorStatisticData_api } from "@api";
 import { StatisticFunction_api } from "@api";
-import type { UseQueryResult } from "@tanstack/react-query";
 
 import type { VectorSpec } from "../../typesAndEnums";
 import { FanchartStatisticOption } from "../../typesAndEnums";

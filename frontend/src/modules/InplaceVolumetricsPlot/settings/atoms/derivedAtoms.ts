@@ -1,3 +1,5 @@
+import { atom } from "jotai";
+
 import type { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
@@ -10,7 +12,8 @@ import {
     makeUniqueTableNamesIntersection,
 } from "@modules_shared/InplaceVolumetrics/TableDefinitionsAccessor";
 
-import { atom } from "jotai";
+
+import { makeColorByOptions, makeSubplotByOptions } from "../utils/plotDimensionUtils";
 
 import {
     selectedIdentifierValueCriteriaAtom,
@@ -26,7 +29,6 @@ import {
 } from "./baseAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
 
-import { makeColorByOptions, makeSubplotByOptions } from "../utils/plotDimensionUtils";
 
 export const selectedEnsembleIdentsAtom = atom((get) => {
     const ensembleSet = get(EnsembleSetAtom);

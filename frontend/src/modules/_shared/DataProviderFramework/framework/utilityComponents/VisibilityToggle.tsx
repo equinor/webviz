@@ -1,5 +1,6 @@
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+
+import { DenseIconButton } from "@lib/components/DenseIconButton";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";

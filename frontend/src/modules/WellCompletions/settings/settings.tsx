@@ -1,11 +1,16 @@
 import React from "react";
 
+import { ArrowDownwardSharp, ArrowUpwardSharp } from "@mui/icons-material";
+import { SortDirection, SortWellsBy, SortWellsByEnumToStringMapping } from "@webviz/well-completions-plot";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { isEqual } from "lodash";
+
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { Button } from "@lib/components/Button";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { DiscreteSlider } from "@lib/components/DiscreteSlider";
@@ -16,11 +21,15 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Switch } from "@lib/components/Switch";
 import type { ColorSet } from "@lib/utils/ColorSet";
-import { ArrowDownwardSharp, ArrowUpwardSharp } from "@mui/icons-material";
-import { SortDirection, SortWellsBy, SortWellsByEnumToStringMapping } from "@webviz/well-completions-plot";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { isEqual } from "lodash";
+
+import type { Interfaces } from "../interfaces";
+import {
+    RealizationSelection,
+    RealizationSelectionEnumToStringMapping,
+    TimeAggregationSelection,
+    TimeAggregationSelectionEnumToStringMapping,
+} from "../typesAndEnums";
 
 import {
     selectedStratigraphyColorSetAtom,
@@ -49,13 +58,6 @@ import {
 } from "./atoms/derivedAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
-import type { Interfaces } from "../interfaces";
-import {
-    RealizationSelection,
-    RealizationSelectionEnumToStringMapping,
-    TimeAggregationSelection,
-    TimeAggregationSelectionEnumToStringMapping,
-} from "../typesAndEnums";
 
 export const Settings = ({
     settingsContext,

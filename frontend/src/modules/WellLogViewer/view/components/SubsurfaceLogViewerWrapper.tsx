@@ -1,26 +1,28 @@
 import React from "react";
 
-import type { WellboreHeader_api, WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { WellLogViewer } from "@webviz/well-log-viewer";
+import type { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
+import type { WellLogController } from "@webviz/well-log-viewer/dist/components/WellLogView";
+import { useAtomValue } from "jotai";
+import { isEqual } from "lodash";
+
+import type { WellboreHeader_api, WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { createContinuousColorScaleForMap } from "@modules/3DViewer/view/utils/colorTables";
 import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
-import { WellLogViewer } from "@webviz/well-log-viewer";
-import type { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
-import type { WellLogController } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
-import { useAtomValue } from "jotai";
-import { isEqual } from "lodash";
 
-import { ReadoutWrapper } from "./ReadoutWrapper";
 
 import type { InterfaceTypes } from "../../interfaces";
 import { createLogTemplate } from "../../utils/logViewerTemplate";
 import { createLogViewerWellPicks, createWellLogSets } from "../../utils/queryDataTransform";
 import { nonUniqueCurveNamesAtom } from "../atoms/derivedAtoms";
+
+import { ReadoutWrapper } from "./ReadoutWrapper";
 
 const AXIS_MNEMOS = {
     md: ["RKB", "DEPTH", "DEPT", "MD", "TDEP", "MD_RKB"],

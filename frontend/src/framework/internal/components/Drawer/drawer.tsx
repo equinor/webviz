@@ -1,7 +1,8 @@
 import React from "react";
 
-import { Input } from "@lib/components/Input";
 import { Close, Search } from "@mui/icons-material";
+
+import { Input } from "@lib/components/Input";
 
 export type DrawerProps = {
     title: string;

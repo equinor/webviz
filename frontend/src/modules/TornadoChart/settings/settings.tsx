@@ -1,5 +1,7 @@
 import React from "react";
 
+import { useAtom, useSetAtom } from "jotai";
+
 import { KeyKind } from "@framework/DataChannelTypes";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -8,7 +10,9 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { RadioGroup } from "@lib/components/RadioGroup";
 
-import { useAtom, useSetAtom } from "jotai";
+
+import type { Interfaces } from "../interfaces";
+import { DisplayComponentType } from "../typesAndEnums";
 
 import {
     displayComponentTypeAtom,
@@ -18,8 +22,6 @@ import {
     showRealizationPointsAtom,
 } from "./atoms/baseAtoms";
 
-import type { Interfaces } from "../interfaces";
-import { DisplayComponentType } from "../typesAndEnums";
 
 export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const [displayComponentType, setDisplayComponentType] = useAtom(displayComponentTypeAtom);

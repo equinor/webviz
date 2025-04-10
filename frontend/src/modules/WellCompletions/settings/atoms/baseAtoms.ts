@@ -1,9 +1,10 @@
+import { SortDirection, SortWellsBy } from "@webviz/well-completions-plot";
+import { atom } from "jotai";
+
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import { RealizationSelection, TimeAggregationSelection } from "@modules/WellCompletions/typesAndEnums";
-import { SortDirection, SortWellsBy } from "@webviz/well-completions-plot";
 
-import { atom } from "jotai";
 
 export const syncedEnsembleIdentsAtom = atom<RegularEnsembleIdent[] | null>(null);
 export const selectedStratigraphyColorSetAtom = atom<ColorSet | null>(null);

@@ -1,22 +1,24 @@
 import React from "react";
 
-import type { ModuleSettingsProps } from "@framework/Module";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { FieldDropdown } from "@framework/components/FieldDropdown";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { useQueryClient } from "@tanstack/react-query";
-
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
-import { dataProviderManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
-import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
-import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
+import { FieldDropdown } from "@framework/components/FieldDropdown";
+import type { ModuleSettingsProps } from "@framework/Module";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
+
 
 import {
     DataProviderManager,
     DataProviderManagerTopic,
 } from "../../_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+
+import { dataProviderManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
+import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
+import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
+
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);

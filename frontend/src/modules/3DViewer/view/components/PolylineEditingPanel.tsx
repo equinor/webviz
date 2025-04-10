@@ -1,5 +1,7 @@
 import React from "react";
 
+import { ArrowBack, ArrowForward, Delete, Save } from "@mui/icons-material";
+
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { Button } from "@lib/components/Button";
 import { IconButton } from "@lib/components/IconButton";
@@ -7,7 +9,6 @@ import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { ArrowBack, ArrowForward, Delete, Save } from "@mui/icons-material";
 
 export type PolylineEditingPanelProps = {
     currentlyEditedPolyline: number[][];

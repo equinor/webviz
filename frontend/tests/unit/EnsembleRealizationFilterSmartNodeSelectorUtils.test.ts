@@ -1,7 +1,8 @@
+import { describe, expect, test } from "vitest";
+
 import type { Parameter } from "@framework/EnsembleParameters";
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import type { TreeDataNode } from "@lib/components/SmartNodeSelector";
-
 import folderIcon from "src/framework/internal/components/EnsembleRealizationFilter/private-assets/folder.svg";
 import miscIcon from "src/framework/internal/components/EnsembleRealizationFilter/private-assets/misc.svg";
 import {
@@ -11,7 +12,6 @@ import {
     createSmartNodeSelectorTagTextListFromParameterIdentStrings,
     createTreeDataNodeListFromParameters,
 } from "src/framework/internal/components/EnsembleRealizationFilter/private-utils/smartNodeSelectorUtils";
-import { describe, expect, test } from "vitest";
 
 describe("createSmartNodeSelectorTagListFromParameterList", () => {
     const param1: Parameter = {

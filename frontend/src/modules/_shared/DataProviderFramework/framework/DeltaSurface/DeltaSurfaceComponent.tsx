@@ -2,7 +2,6 @@ import React from "react";
 
 import { SortableListGroup } from "@lib/components/SortableList";
 
-import type { DeltaSurface } from "./DeltaSurface";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import type { ActionGroup } from "../../Actions";
@@ -17,6 +16,8 @@ import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllB
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
+
+import type { DeltaSurface } from "./DeltaSurface";
 
 export type DeltaSurfaceComponentProps = {
     deltaSurface: DeltaSurface;

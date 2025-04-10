@@ -1,10 +1,11 @@
+import { useAtomValue } from "jotai";
+
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { SettingsStatusWriter } from "@framework/StatusWriter";
 import { joinStringArrayToHumanReadableString } from "@modules/SimulationTimeSeries/utils/stringUtils";
 
-import { useAtomValue } from "jotai";
 
 import { selectedVectorNamesAtom } from "../atoms/baseAtoms";
 import { ensembleVectorListsHelperAtom, selectedEnsembleIdentsAtom } from "../atoms/derivedAtoms";

@@ -3,7 +3,6 @@ import React from "react";
 import { ColorSelect } from "@lib/components/ColorSelect";
 import { SortableListGroup } from "@lib/components/SortableList";
 
-import type { Group } from "./Group";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import type { ActionGroup } from "../../Actions";
@@ -19,6 +18,8 @@ import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllB
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
+
+import type { Group } from "./Group";
 
 export type GroupComponentProps = {
     group: Group<any, any>;

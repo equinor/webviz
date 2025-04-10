@@ -4,9 +4,10 @@ import type { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { TableHeading, TableRow } from "@lib/components/Table/table";
+import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
+import { sortResultNameStrings } from "@modules/_shared/InplaceVolumetrics/sortResultNames";
 import type { Column, Row } from "@modules/_shared/InplaceVolumetrics/Table";
 import { ColumnType, Table } from "@modules/_shared/InplaceVolumetrics/Table";
-import { sortResultNameStrings } from "@modules/_shared/InplaceVolumetrics/sortResultNames";
 import {
     makeStatisticalTableColumnDataFromApiData,
     makeTableFromApiData,
@@ -16,7 +17,6 @@ import type {
     InplaceVolumetricsTableData,
 } from "@modules/_shared/InplaceVolumetrics/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumetrics/volumetricStringUtils";
-import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import { createScaledNumberWithSuffix } from "@modules/_shared/utils/numberSuffixFormatting";
 
 export function createTableHeadingsAndRowsFromTablesData(

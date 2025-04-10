@@ -1,15 +1,14 @@
 import React from "react";
 
 import type { Point2D, Point3D } from "@webviz/subsurface-viewer";
-
 import { isEqual } from "lodash";
 
 import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
-import type { Workbench } from "./Workbench";
 import type { InplaceVolumetricsFilterSettings } from "./types/inplaceVolumetricsFilterSettings";
 import type { Intersection } from "./types/intersection";
 import type { Viewport } from "./types/viewport";
 import type { Wellbore } from "./types/wellbore";
+import type { Workbench } from "./Workbench";
 
 export type NavigatorTopicDefinitions = {
     "navigator.dummyPlaceholder": string;

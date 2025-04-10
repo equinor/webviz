@@ -1,6 +1,7 @@
+import { atomWithQuery } from "jotai-tanstack-query";
+
 import { getRealizationFlowNetworkOptions } from "@api";
 
-import { atomWithQuery } from "jotai-tanstack-query";
 
 import { selectedNodeTypesAtom, selectedResamplingFrequencyAtom } from "./baseAtoms";
 import { selectedEnsembleIdentAtom, selectedRealizationNumberAtom } from "./derivedAtoms";

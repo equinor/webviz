@@ -1,18 +1,4 @@
 {
-    "plugins": ["@trivago/prettier-plugin-sort-imports"],
-    "importOrder": [
-        "^react?.+$",
-        "^@",
-        "^@core",
-        "^@components",
-        "^@shared-types",
-        "^@assets",
-        "^(?![@\\.]).+$",
-        "^\\./",
-        "^\\.\\./"
-    ],
-    "importOrderSeparation": true,
-    "importOrderSortSpecifiers": true,
     "singleQuote": false,
     "printWidth": 120,
     "tabWidth": 4
