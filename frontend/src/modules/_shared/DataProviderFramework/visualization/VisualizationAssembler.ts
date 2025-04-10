@@ -40,12 +40,16 @@ export type DataProviderVisualizationTargetTypes = {
     [VisualizationTarget.ESV]: EsvLayer<any>;
 };
 
-export type DataProviderVisualization<TTarget extends VisualizationTarget> = {
+export type DataProviderVisualization<
+    TTarget extends VisualizationTarget,
+    TVisualization extends
+        DataProviderVisualizationTargetTypes[TTarget] = DataProviderVisualizationTargetTypes[TTarget],
+> = {
     itemType: VisualizationItemType.DATA_PROVIDER_VISUALIZATION;
     id: string;
     name: string;
     type: string;
-    visualization: DataProviderVisualizationTargetTypes[TTarget];
+    visualization: TVisualization;
 };
 
 export type TransformerArgs<
