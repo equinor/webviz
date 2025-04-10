@@ -14,8 +14,8 @@ import {
     AllowHoveringOf,
     EditablePolylineLayer,
     isEditablePolylineLayerPickingInfo,
-} from "../customDeckGlLayers/EditablePolylineLayer";
-import { PolylinesLayer, isPolylinesLayerPickingInfo } from "../customDeckGlLayers/PolylinesLayer";
+} from "../../customDeckGlLayers/EditablePolylineLayer";
+import { PolylinesLayer, isPolylinesLayerPickingInfo } from "../../customDeckGlLayers/PolylinesLayer";
 
 export type Polyline = {
     id: string;
