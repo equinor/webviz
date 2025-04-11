@@ -41,6 +41,9 @@ import {
     getRealizationSurfacesMetadata,
     getRealizationVectorAtTimestamp,
     getRealizationsVectorData,
+    getRelpermRealizationsCurveData,
+    getRelpermTableInfo,
+    getRelpermTableNames,
     getSeismicCubeMetaList,
     getSensitivities,
     getStatisticalVectorData,
@@ -112,6 +115,9 @@ import type {
     GetRealizationSurfacesMetadataData_api,
     GetRealizationVectorAtTimestampData_api,
     GetRealizationsVectorDataData_api,
+    GetRelpermRealizationsCurveDataData_api,
+    GetRelpermTableInfoData_api,
+    GetRelpermTableNamesData_api,
     GetSeismicCubeMetaListData_api,
     GetSensitivitiesData_api,
     GetStatisticalVectorDataData_api,
@@ -989,6 +995,63 @@ export const getTableDataOptions = (options: Options<GetTableDataData_api>) => {
             return data;
         },
         queryKey: getTableDataQueryKey(options),
+    });
+};
+
+export const getRelpermTableNamesQueryKey = (options: Options<GetRelpermTableNamesData_api>) => [
+    createQueryKey("getRelpermTableNames", options),
+];
+
+export const getRelpermTableNamesOptions = (options: Options<GetRelpermTableNamesData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getRelpermTableNames({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getRelpermTableNamesQueryKey(options),
+    });
+};
+
+export const getRelpermTableInfoQueryKey = (options: Options<GetRelpermTableInfoData_api>) => [
+    createQueryKey("getRelpermTableInfo", options),
+];
+
+export const getRelpermTableInfoOptions = (options: Options<GetRelpermTableInfoData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getRelpermTableInfo({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getRelpermTableInfoQueryKey(options),
+    });
+};
+
+export const getRelpermRealizationsCurveDataQueryKey = (options: Options<GetRelpermRealizationsCurveDataData_api>) => [
+    createQueryKey("getRelpermRealizationsCurveData", options),
+];
+
+export const getRelpermRealizationsCurveDataOptions = (options: Options<GetRelpermRealizationsCurveDataData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getRelpermRealizationsCurveData({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getRelpermRealizationsCurveDataQueryKey(options),
     });
 };
 
