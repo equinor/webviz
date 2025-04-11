@@ -125,10 +125,10 @@ spec:
             OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=dev, service.version=tbd0.1.2
           resources:
             requests:
-              memory: 4Gi
-              cpu: 500m
+              memory: 96Gi
+              cpu: 12000m
             limits:
-              memory: 4Gi
+              memory: 96Gi
           horizontalScaling:
             minReplicas: 1
             maxReplicas: 3
