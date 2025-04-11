@@ -296,32 +296,17 @@ async def get_misfit_surface_data(
     raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
 
 
-@router.get("/wellbore_stratigraphic_columns/")
-async def get_wellbore_stratigraphic_columns(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    wellbore_uuid: str = Query(description="Wellbore uuid"),
-) -> list[schemas.StratigraphicColumn]:
-
-    smda_access: SmdaAccess | DrogonSmdaAccess
-    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
-        # Handle DROGON
-        smda_access = DrogonSmdaAccess()
-    else:
-        smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
-
-    strat_columns = await smda_access.get_stratigraphic_columns_for_wellbore_async(wellbore_uuid)
-
-    return [converters.to_api_stratigraphic_column(col) for col in strat_columns]
-
-
-@router.get("/stratigraphic_units")
-async def get_stratigraphic_units(
+@router.get("/deprecated_stratigraphic_units")
+async def deprecated_get_stratigraphic_units(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     # fmt:on
 ) -> list[schemas.StratigraphicUnit]:
+    """
+    NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
+    """
     perf_metrics = ResponsePerfMetrics(response)
 
     strat_units = await _get_stratigraphic_units_for_case_async(authenticated_user, case_uuid)

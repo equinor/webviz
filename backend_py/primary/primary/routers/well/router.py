@@ -103,7 +103,11 @@ async def get_wellbore_picks_for_pick_identifier(
     pick_identifier: str = Query(description="Pick identifier")
     # fmt:on
 ) -> List[schemas.WellborePick]:
-    """Get wellbore picks for field and pick identifier"""
+    """Get picks for wellbores for field and pick identifier
+
+    This implies picks for multiple wellbores for given field and pick identifier.
+    E.g. picks for all wellbores in a given surface in a field.
+    """
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
     if is_drogon_identifier(field_identifier=field_identifier):
         # Handle DROGON
@@ -119,14 +123,17 @@ async def get_wellbore_picks_for_pick_identifier(
     return [converters.convert_wellbore_pick_to_schema(wellbore_pick) for wellbore_pick in wellbore_picks]
 
 
-@router.get("/wellbore_picks_for_wellbore/")
-async def get_wellbore_picks_for_wellbore(
+@router.get("/deprecated_wellbore_picks_for_wellbore/")
+async def deprecated_get_wellbore_picks_for_wellbore(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid")
     # fmt:on
 ) -> List[schemas.WellborePick]:
-    """Get wellbore picks for field and pick identifier"""
+    """Get wellbore picks for field and pick identifier
+
+    NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
+    """
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
 
     if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
@@ -144,21 +151,42 @@ async def get_wellbore_picks_for_wellbore(
 async def get_wellbore_picks_in_strat_column(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid"),
-    strat_column: str = Query(description="Optional - Filter by stratigraphic column"),
+    strat_column_identifier: str = Query(description="Filter by stratigraphic column"),
 ) -> list[schemas.WellborePick]:
+    """
+    Get wellbore picks for a single wellbore with stratigraphic column identifier
+    """
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
 
-    if is_drogon_identifier(strat_column_identifier=strat_column):
+    if is_drogon_identifier(strat_column_identifier=strat_column_identifier):
         # Handle DROGON
         well_access = DrogonSmdaAccess()
     else:
         well_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
     wellbore_picks = await well_access.get_wellbore_picks_in_stratigraphic_column_async(
-        wellbore_uuid=wellbore_uuid, strat_column_identifier=strat_column
+        wellbore_uuid=wellbore_uuid, strat_column_identifier=strat_column_identifier
     )
 
     return [converters.convert_wellbore_pick_to_schema(wellbore_pick) for wellbore_pick in wellbore_picks]
+
+
+@router.get("/wellbore_stratigraphic_columns/")
+async def get_wellbore_stratigraphic_columns(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    wellbore_uuid: str = Query(description="Wellbore uuid"),
+) -> list[schemas.StratigraphicColumn]:
+
+    smda_access: SmdaAccess | DrogonSmdaAccess
+    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
+        # Handle DROGON
+        smda_access = DrogonSmdaAccess()
+    else:
+        smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
+
+    strat_columns = await smda_access.get_stratigraphic_columns_for_wellbore_async(wellbore_uuid)
+
+    return [converters.to_api_stratigraphic_column(col) for col in strat_columns]
 
 
 @router.get("/wellbore_completions/")
