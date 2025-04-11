@@ -197,6 +197,8 @@ import type {
     PostGetSurfaceIntersectionData_api,
     PostGetSurfaceIntersectionError_api,
     PostGetSurfaceIntersectionResponse_api,
+    PostLogoutData_api,
+    PostLogoutResponse_api,
     RootData_api,
     RootResponse_api,
 } from "./types.gen";
@@ -1202,6 +1204,16 @@ export const getAliveProtected = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetAliveProtectedResponse_api, unknown, ThrowOnError>({
         ...options,
         url: "/alive_protected",
+    });
+};
+
+/**
+ * Post Logout
+ */
+export const postLogout = <ThrowOnError extends boolean = false>(options?: Options<PostLogoutData_api, ThrowOnError>) => {
+    return (options?.client ?? client).post<PostLogoutResponse_api, unknown, ThrowOnError>({
+        ...options,
+        url: "/logout",
     });
 };
 
