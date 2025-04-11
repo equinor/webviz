@@ -119,6 +119,8 @@ spec:
                 items:
                   - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-DEV
                     envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
+          secrets:
+            - AZURE_STORAGE_CONNECTION_STRING
           variables:
             OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=dev, service.version=tbd0.1.2
           resources:
