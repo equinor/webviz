@@ -4,9 +4,8 @@ import type { WellboreHeader_api, WellboreTrajectory_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
-import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { createContinuousColorScaleForMap } from "@modules/3DViewer/view/utils/colorTables";
 import {
+    createColorMapDefsFromProduct,
     createWellLogJsonFromProduct,
     createWellLogTemplateFromProduct,
     createWellPickPropFromProduct,
@@ -149,21 +148,16 @@ function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
 
     const factoryProduct = useLogViewerVisualizationFactoryProduct(props.providerManager);
 
-    const wellpicks = React.useMemo(() => {
-        if (!factoryProduct) return undefined;
-        return createWellPickPropFromProduct(factoryProduct);
-    }, [factoryProduct]);
+    const colorMapFuncDefs = React.useMemo(() => createColorMapDefsFromProduct(factoryProduct), [factoryProduct]);
 
-    const template = React.useMemo(() => {
-        return createWellLogTemplateFromProduct(factoryProduct);
-    }, [factoryProduct]);
+    const wellpicks = React.useMemo(() => createWellPickPropFromProduct(factoryProduct), [factoryProduct]);
+    const template = React.useMemo(() => createWellLogTemplateFromProduct(factoryProduct), [factoryProduct]);
+    const wellLogSets = React.useMemo(
+        () => createWellLogJsonFromProduct(factoryProduct, trajectoryData, padDataWithEmptyRows),
+        [factoryProduct, trajectoryData, padDataWithEmptyRows],
+    );
 
-    const wellLogSets = React.useMemo(() => {
-        if (!factoryProduct) return [];
-        return createWellLogJsonFromProduct(factoryProduct, trajectoryData, padDataWithEmptyRows);
-    }, [factoryProduct, trajectoryData, padDataWithEmptyRows]);
-
-    return { template, wellLogSets, wellpicks };
+    return { template, wellLogSets, wellpicks, colorMapFuncDefs };
 }
 
 export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProps) {
@@ -172,12 +166,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     const [wellLogReadout, setWellLogReadout] = React.useState<Info[]>([]);
     const [showReadoutBox, setShowReadoutBox] = React.useState<boolean>(false);
 
-    const { template, wellLogSets, wellpicks } = useViewerDataTransform(props);
-
-    const colorScale = props.moduleProps.workbenchSettings.useContinuousColorScale({
-        gradientType: ColorScaleGradientType.Sequential,
-    });
-    const colorTables = React.useMemo(() => createContinuousColorScaleForMap(colorScale), [colorScale]);
+    const { template, wellLogSets, wellpicks, colorMapFuncDefs } = useViewerDataTransform(props);
 
     const instanceId = props.moduleProps.viewContext.getInstanceIdString();
     const syncableSettingKeys = props.moduleProps.viewContext.useSyncedSettingKeys();
@@ -271,7 +260,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
                 layout={{ right: undefined }}
                 axisMnemos={AXIS_MNEMOS}
                 axisTitles={AXIS_TITLES}
-                colorMapFunctions={colorTables}
+                colorMapFunctions={colorMapFuncDefs}
                 // Disable the pin and selection logic, since we dont use that for anything yet
                 options={{ hideSelectionInterval: true, maxVisibleTrackNum: 12 }}
                 onTrackMouseEvent={handleTrackMouseEvent}

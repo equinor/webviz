@@ -1,4 +1,5 @@
 import type { WellboreTrajectory_api } from "@api";
+import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/components/ColorMapFunction";
 import type { WellLogSet } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
@@ -10,6 +11,7 @@ import { trajectoryToIntersectionReference } from "./trajectory";
 import type { WellLogFactoryProduct } from "./useLogViewerVisualizationFactory";
 
 import {
+    COLOR_MAP_ACC_KEY,
     DATA_ACC_KEY,
     DUPLICATE_NAMES_ACC_KEY,
     isPlotVisualization,
@@ -69,10 +71,12 @@ export function createWellLogTemplateFromProduct(factoryProduct: WellLogFactoryP
 }
 
 export function createWellLogJsonFromProduct(
-    factoryProduct: WellLogFactoryProduct,
+    factoryProduct: WellLogFactoryProduct | null,
     wellboreTrajectory: WellboreTrajectory_api,
     padDataWithEmptyRows?: boolean,
 ): WellLogSet[] {
+    if (!factoryProduct) return [];
+
     const accData = factoryProduct.accumulatedData;
     const curveData = _.get(accData, DATA_ACC_KEY, []);
     const duplicatedCurveNames = _.get(accData, DUPLICATE_NAMES_ACC_KEY);
@@ -88,7 +92,7 @@ export function createWellLogJsonFromProduct(
     );
 }
 
-export function createWellPickPropFromProduct(factoryProduct: WellLogFactoryProduct): WellPickProps | undefined {
+export function createWellPickPropFromProduct(factoryProduct: WellLogFactoryProduct | null): WellPickProps | undefined {
     if (!factoryProduct) return undefined;
 
     // ! We only take the
@@ -96,4 +100,13 @@ export function createWellPickPropFromProduct(factoryProduct: WellLogFactoryProd
 
     // Can be used as is, no need for further transformations
     return wellpickVisualization?.visualization;
+}
+
+export function createColorMapDefsFromProduct(factoryProduct: WellLogFactoryProduct | null): ColorMapFunction[] {
+    if (!factoryProduct) return [];
+
+    const accData = factoryProduct.accumulatedData;
+    const colorMapFuncDefs = _.get(accData, COLOR_MAP_ACC_KEY) ?? [];
+
+    return colorMapFuncDefs;
 }

@@ -298,3 +298,12 @@ function mergePicks(pick1: WellLogDataRow, pick2: WellLogDataRow): WellLogDataRo
     // ! I have no clue how the well-log viewer computes the colors, but if I DONT use a plus here they all end up having the same color???
     return [pick1[0], `${pick1[1]} + ${pick2[1]}`];
 }
+
+export function isNumericalDataPoints(
+    dataPoints: WellboreLogCurveData_api["dataPoints"],
+): dataPoints is [number, number][] {
+    const firstDefinedRow = dataPoints.find(([, value]) => value != null);
+
+    if (!firstDefinedRow) return false;
+    return typeof firstDefinedRow[1] === "number";
+}

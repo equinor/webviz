@@ -7,7 +7,7 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 
 export const baseSettings = [Setting.LOG_CURVE] as const;
 
-export const baseLinearSettings = [...baseSettings, Setting.SCALE /*, Setting.COLOR */] as const;
+export const baseLinearSettings = [...baseSettings, Setting.SCALE, Setting.COLOR] as const;
 export const baseDiscreteSettings = [...baseSettings, Setting.SHOW_LINES, Setting.SHOW_LABELS, Setting.LABEL_DIR];
 
 export function defineDependencies<T extends Settings>(args: DefineDependenciesArgs<T>) {

@@ -1,6 +1,8 @@
 import type React from "react";
 
+import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorSelect } from "@lib/components/ColorSelect";
+import type { ColorPalette } from "@lib/utils/ColorPalette";
 
 import type {
     CustomSettingImplementation,
@@ -11,8 +13,25 @@ import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = string | null;
 
+function* makeColorGenerator(palette: ColorPalette) {
+    const colors = palette.getColors();
+    let i = 0;
+
+    while (true) {
+        yield colors[i % colors.length];
+        i++;
+    }
+}
+
 export class SingleColorSetting implements CustomSettingImplementation<ValueType, SettingCategory.STATIC> {
-    defaultValue: ValueType = null;
+    // ? How do I get this one tied to work-bench settings?
+    static _colorGenerator = makeColorGenerator(defaultColorPalettes[0]);
+
+    defaultValue: ValueType;
+
+    constructor() {
+        this.defaultValue = SingleColorSetting._colorGenerator.next().value ?? null;
+    }
 
     getIsStatic(): boolean {
         return true;
@@ -34,7 +53,7 @@ export class SingleColorSetting implements CustomSettingImplementation<ValueType
     }
 
     fixupValue(value: ValueType): NonNullable<ValueType> {
-        if (!value) return "#ffffff";
+        if (!value) return this.defaultValue ?? "";
         return value;
     }
 
@@ -46,7 +65,7 @@ export class SingleColorSetting implements CustomSettingImplementation<ValueType
 
             return (
                 <div className="single-color-setting">
-                    <ColorSelect onChange={handleColorChange} value={props.value ?? "#ffffff"} dense />
+                    <ColorSelect onChange={handleColorChange} value={props.value!} dense />
                 </div>
             );
         };

@@ -9,7 +9,7 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 
 import { baseLinearSettings, defineDependencies, fetchData } from "./_shared";
 
-export const linearPlotSettings = [...baseLinearSettings, Setting.PLOT_VARIANT /*Setting.COLOR */] as const;
+export const linearPlotSettings = [Setting.PLOT_VARIANT, ...baseLinearSettings] as const;
 export type LinearPlotSettingTypes = typeof linearPlotSettings;
 type SettingsTypeMap = MakeSettingTypesMap<LinearPlotSettingTypes>;
 
@@ -35,8 +35,6 @@ export class LinearPlotProvider
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         accessor: DataProviderInformationAccessors<LinearPlotSettingTypes, WellboreLogCurveData_api>,
     ) {
-        // TODO
-
         return true;
     }
 

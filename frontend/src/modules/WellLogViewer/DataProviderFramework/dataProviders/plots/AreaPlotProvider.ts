@@ -6,7 +6,7 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 
 import { baseLinearSettings, defineDependencies, fetchData } from "./_shared";
 
-export const AreaPlotSettings = [...baseLinearSettings, Setting.PLOT_VARIANT, Setting.COLOR_SCALE] as const;
+export const AreaPlotSettings = [Setting.PLOT_VARIANT, ...baseLinearSettings, Setting.COLOR_SCALE] as const;
 export type AreaPlotSettingTypes = typeof AreaPlotSettings;
 type SettingsTypeMap = MakeSettingTypesMap<AreaPlotSettingTypes>;
 
