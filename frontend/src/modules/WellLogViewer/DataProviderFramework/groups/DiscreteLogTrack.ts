@@ -1,16 +1,25 @@
-// import type { CustomGroupImplementationWithSettings } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customGroupImplementation";
-// import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { CustomGroupImplementationWithSettings } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customGroupImplementation";
+import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-// const discreteLogSettings = [Setting.STRAT_COLUMN, Setting.SMDA_INTERPRETER];
+import { baseSettings } from "./_shared";
 
-// class DiscreteLogTrack implements CustomGroupImplementationWithSettings {
-//     constructor(parameters) {}
-//     settings;
+const discreteTrackSettings = [...baseSettings] as const;
+export type DiscreteTrackSettings = typeof discreteTrackSettings;
+type TrackSettingTypes = MakeSettingTypesMap<DiscreteTrackSettings>;
 
-//     getDefaultSettingsValues(): {} {
-//         throw new Error("Method not implemented.");
-//     }
-//     getDefaultName(): string {
-//         return "Track";
-//     }
-// }
+export class DiscreteLogTrack
+    implements CustomGroupImplementationWithSettings<DiscreteTrackSettings, TrackSettingTypes>
+{
+    settings = discreteTrackSettings;
+
+    getDefaultSettingsValues(): TrackSettingTypes {
+        return {
+            [Setting.TRACK_WIDTH]: 3,
+        };
+    }
+
+    getDefaultName(): string {
+        return "Track";
+    }
+}

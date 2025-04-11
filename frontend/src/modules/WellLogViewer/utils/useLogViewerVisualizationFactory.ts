@@ -42,7 +42,7 @@ VISUALIZATION_FACTORY.registerDataProviderTransformers(AreaPlotProvider.name, Ar
 });
 
 VISUALIZATION_FACTORY.registerGroupCustomPropsCollector(
-    GroupType.WELL_LOG_TRACK,
+    GroupType.WELL_LOG_TRACK_CONT,
     ContinuousLogTrack,
     makeContinuousTrackConfig,
 );

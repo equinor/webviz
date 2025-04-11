@@ -2,7 +2,9 @@ import type { CustomGroupImplementationWithSettings } from "@modules/_shared/Dat
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-const continuousTrackSettings = [Setting.TRACK_WIDTH, Setting.SCALE] as const;
+import { baseSettings } from "./_shared";
+
+const continuousTrackSettings = [...baseSettings, Setting.SCALE] as const;
 export type ContinuousTrackSettings = typeof continuousTrackSettings;
 type TrackSettingTypes = MakeSettingTypesMap<ContinuousTrackSettings>;
 

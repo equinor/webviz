@@ -5,11 +5,7 @@ import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramew
 import type { Settings } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-export const baseSettings = [
-    Setting.LOG_CURVE,
-    // TODO: Only needed to infer track settings. Remove once we can define view visualizations
-    Setting.TRACK_WIDTH,
-] as const;
+export const baseSettings = [Setting.LOG_CURVE] as const;
 
 export const baseLinearSettings = [...baseSettings, Setting.SCALE /*, Setting.COLOR */] as const;
 export const baseDiscreteSettings = [...baseSettings, Setting.SHOW_LINES, Setting.SHOW_LABELS, Setting.LABEL_DIR];

@@ -113,7 +113,7 @@ function usePersistedProviderManager(
 }
 
 function makeOptionsForGroup(group: ItemGroup): ActionGroup[] {
-    if (group instanceof Group && group.getGroupType() === GroupType.WELL_LOG_TRACK) {
+    if (group instanceof Group && group.getGroupType() === GroupType.WELL_LOG_TRACK_CONT) {
         return [
             {
                 label: "Plots",
@@ -121,14 +121,24 @@ function makeOptionsForGroup(group: ItemGroup): ActionGroup[] {
                     { icon: <ShowChart fontSize="inherit" />, label: "Line plot", identifier: PlotActionIdents.LINE },
                     { icon: <ShowChart fontSize="inherit" />, label: "Area plot", identifier: PlotActionIdents.AREA },
                     {
-                        icon: <ViewDay fontSize="inherit" />,
-                        label: "Stacked plot",
-                        identifier: PlotActionIdents.STACKED,
-                    },
-                    {
                         icon: <ShowChart fontSize="inherit" />,
                         label: "Differential plot",
                         identifier: PlotActionIdents.DIFF,
+                    },
+                ],
+            },
+        ];
+    }
+
+    if (group instanceof Group && group.getGroupType() === GroupType.WELL_LOG_TRACK_DISC) {
+        return [
+            {
+                label: "Plots",
+                children: [
+                    {
+                        icon: <ViewDay fontSize="inherit" />,
+                        label: "Stacked plot",
+                        identifier: PlotActionIdents.STACKED,
                     },
                 ],
             },
@@ -145,8 +155,14 @@ function makeOptionsForGroup(group: ItemGroup): ActionGroup[] {
                     icon: <TrackIcon type={WellLogCurveTypeEnum_api.CONTINUOUS} />,
                 },
                 {
+                    label: "Discrete Track",
+                    identifier: RootActionIdents.DISCRETE_TRACK,
+                    icon: <ViewDay fontSize="inherit" />,
+                },
+                {
                     label: "Well picks",
                     identifier: RootActionIdents.WELL_PICKS,
+                    icon: <HorizontalRule fontSize="inherit" />,
                 },
             ],
         },
@@ -173,7 +189,12 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
 
                 case RootActionIdents.CONTINUOUS_TRACK:
                     return groupDelegate.appendChild(
-                        GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK, providerManager),
+                        GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK_CONT, providerManager),
+                    );
+
+                case RootActionIdents.DISCRETE_TRACK:
+                    return groupDelegate.appendChild(
+                        GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK_DISC, providerManager),
                     );
 
                 case PlotActionIdents.LINE:

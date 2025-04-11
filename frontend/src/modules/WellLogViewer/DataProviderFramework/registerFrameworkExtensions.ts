@@ -7,8 +7,11 @@ import { DifferentialPlotProvider } from "./dataProviders/plots/DiffPlotProvider
 import { LinearPlotProvider } from "./dataProviders/plots/LinearPlotProvider";
 import { WellborePicksProvider } from "./dataProviders/wellpicks/WellPicksProvider";
 import { ContinuousLogTrack } from "./groups/ContinuousLogTrack";
+import { DiscreteLogTrack } from "./groups/DiscreteLogTrack";
 
-GroupRegistry.registerGroup(GroupType.WELL_LOG_TRACK, ContinuousLogTrack);
+// ? It confuses me why there's a difference in registration of groups and providers? Why does one check an external enum, while the other does not?
+GroupRegistry.registerGroup(GroupType.WELL_LOG_TRACK_CONT, ContinuousLogTrack);
+GroupRegistry.registerGroup(GroupType.WELL_LOG_TRACK_DISC, DiscreteLogTrack);
 
 DataProviderRegistry.registerDataProvider(LinearPlotProvider.name, LinearPlotProvider);
 DataProviderRegistry.registerDataProvider(AreaPlotProvider.name, AreaPlotProvider);
