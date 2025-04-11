@@ -55,6 +55,9 @@ logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 logging.getLogger("primary.auth").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.access").setLevel(logging.DEBUG)
+logging.getLogger("primary.services.utils.user_cache").setLevel(level=logging.DEBUG)
+logging.getLogger("primary.services.utils.user_cache_two_level").setLevel(level=logging.DEBUG)
+logging.getLogger("primary.routers.surface").setLevel(level=logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
 

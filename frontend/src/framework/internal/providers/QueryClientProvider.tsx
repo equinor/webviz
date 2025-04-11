@@ -29,8 +29,11 @@ export const CustomQueryClientProvider: React.FC<{ children: React.ReactElement 
                     refetchOnWindowFocus: false,
                     refetchOnMount: false,
                     refetchOnReconnect: true,
-                    gcTime: 1000 * 60, // 1 minute
-                    staleTime: 1000 * 60, // 1 minute
+                    // !!!!!!!!!!!!!!!!!!!!!!!
+                    // !!!!!!!!!!!!!!!!!!!!!!!
+                    // !!!!!!!!!!!!!!!!!!!!!!!
+                    gcTime: 0,
+                    staleTime: 0,
                 },
             },
             queryCache: new QueryCache({

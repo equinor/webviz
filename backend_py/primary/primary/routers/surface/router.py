@@ -26,6 +26,10 @@ from . import dependencies
 from .surface_address import RealizationSurfaceAddress, ObservedSurfaceAddress, StatisticalSurfaceAddress
 from .surface_address import decode_surf_addr_str
 
+#from primary.services.utils.user_cache import get_user_cache
+from primary.services.utils.user_cache_two_level import get_user_cache
+from fastapi import BackgroundTasks
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -125,6 +129,7 @@ async def get_observed_surfaces_metadata(
 @router.get("/surface_data", description="Get surface data for the specified surface." + GENERAL_SURF_ADDR_DOC_STR)
 async def get_surface_data(
     # fmt:off
+    background_tasks: BackgroundTasks,
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     surf_addr_str: Annotated[str, Query(description="Surface address string, supported address types are *REAL*, *OBS* and *STAT*")],
@@ -140,7 +145,21 @@ async def get_surface_data(
     if not isinstance(addr, RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress):
         raise HTTPException(status_code=404, detail="Endpoint only supports address types REAL, OBS and STAT")
 
-    if addr.address_type == "REAL":
+    user_cache = get_user_cache(authenticated_user)
+    cache_key = surf_addr_str
+
+    cached_xtgeo_surf = None
+    cached_xtgeo_surf = await user_cache.get_Any(cache_key)
+    #cached_xtgeo_surf = await user_cache.get_RegularSurface(cache_key)
+    #cached_xtgeo_surf = await user_cache.get_RegularSurface_quick(cache_key)
+    perf_metrics.record_lap(f"read-cache{'-hit' if cached_xtgeo_surf else '-miss'}")
+
+    LOGGER.debug(f"{type(cached_xtgeo_surf)=}")
+
+    if cached_xtgeo_surf is not None:
+        xtgeo_surf = cached_xtgeo_surf
+
+    elif addr.address_type == "REAL":
         access = SurfaceAccess.from_iteration_name(access_token, addr.case_uuid, addr.ensemble_name)
         xtgeo_surf = await access.get_realization_surface_data_async(
             real_num=addr.realization,
@@ -177,6 +196,15 @@ async def get_surface_data(
         perf_metrics.record_lap("get-surf")
         if not xtgeo_surf:
             raise HTTPException(status_code=404, detail="Could not get observed surface")
+
+    if not cached_xtgeo_surf:
+        perf_metrics.reset_lap_timer()
+        #await user_cache.set_Any(cache_key, xtgeo_surf)
+        background_tasks.add_task(user_cache.set_Any, cache_key, xtgeo_surf)
+        #await user_cache.set_RegularSurface(cache_key, xtgeo_surf)
+        #await user_cache.set_RegularSurface_quick(cache_key, xtgeo_surf)
+        #background_tasks.add_task(user_cache.set_RegularSurface, cache_key, xtgeo_surf)
+        perf_metrics.record_lap("write-cache")
 
     if resample_to is not None:
         xtgeo_surf = converters.resample_to_surface_def(xtgeo_surf, resample_to)

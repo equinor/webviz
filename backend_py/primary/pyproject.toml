@@ -11,7 +11,7 @@ fastapi = "^0.115.12"
 uvicorn = "^0.20.0"
 msal = "^1.32.0"
 starsessions = "^2.1.2"
-redis = "^4.6.0"
+redis = "^5.2.1"
 pyarrow = "^19.0.0"
 python-dotenv = "^0.21.0"
 pyjwt = "^2.6.0"
@@ -29,6 +29,9 @@ xtgeo = "^3.8.0"
 core_utils = {path = "../libs/core_utils", develop = true}
 server_schemas = {path = "../libs/server_schemas", develop = true}
 polars = "^1.6.0"
+aiocache = {version = "^0.12.3", extras = ["redis", "msgpack"]}
+aiohttp = "3.11.16"
+azure-storage-blob = "^12.25.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.12.0"
@@ -37,7 +40,6 @@ pytest = "^8.3.2"
 mypy = "^1.9.0"
 bandit = "^1.7.5"
 types-requests = "^2.31.0.1"
-types-redis = "^4.6.0"
 pytest-timeout = "^2.3.1"
 pytest-asyncio = "^0.26.0"
 astroid = "^2.0.0"
