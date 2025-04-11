@@ -54,10 +54,6 @@ function assert(condition: any, msg?: string): asserts condition {
 export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSectionMeshLayerProps> {
     static layerName: string = "SeismicFenceSectionMeshLayer";
 
-    private _workerInstance: Worker = new MeshWorker();
-    private _meshWorker: ComlinkRemote = wrap<{
-        makeMesh(params: WebworkerParameters): Promise<WebworkerResult>;
-    }>(this._workerInstance);
     private _verticesArray: Float32Array | null = null;
     private _indicesArray: Uint32Array | null = null;
     private _colorsArray: Float32Array | null = null;
@@ -169,8 +165,14 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
             zIncreasingDownwards: zIncreaseDownwards ?? false,
         };
 
+        const workerInstance = new MeshWorker();
+
         try {
-            const result = await transfer(this._meshWorker.makeMesh(params), [
+            const meshWorker = wrap<{
+                makeMesh(params: WebworkerParameters): Promise<WebworkerResult>;
+            }>(workerInstance);
+
+            const result = await transfer(meshWorker.makeMesh(params), [
                 this._verticesArray.buffer,
                 this._indicesArray.buffer,
             ]);
@@ -182,6 +184,8 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
         } catch (error) {
             console.error("Error in worker:", error);
         }
+
+        workerInstance.terminate();
     }
 
     private recolorMesh() {
@@ -305,15 +309,5 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
         }
 
         return layers;
-    }
-
-    finalize() {
-        if (this._workerInstance) {
-            this._workerInstance.terminate();
-        }
-
-        this._verticesArray = null;
-        this._indicesArray = null;
-        this._colorsArray = null;
     }
 }
