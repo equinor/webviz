@@ -6,13 +6,6 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { makeColorScaleAnnotation } from "@modules/2DViewer/DataProviderFramework/annotations/makeColorScaleAnnotation";
-import { makePolygonDataBoundingBox } from "@modules/2DViewer/DataProviderFramework/boundingBoxes/makePolygonDataBoundingBox";
-import { makeRealizationGridBoundingBox } from "@modules/2DViewer/DataProviderFramework/boundingBoxes/makeRealizationGridBoundingBox";
-import { makeSurfaceLayerBoundingBox } from "@modules/2DViewer/DataProviderFramework/boundingBoxes/makeSurfaceLayerBoundingBox";
-import { ObservedSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurfaceProvider";
-import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
-import { makeObservedSurfaceLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeObservedSurfaceLayer";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
@@ -49,6 +42,15 @@ import { InteractionWrapper } from "./InteractionWrapper";
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 import "../../DataProviderFramework/registerAllDataProviders";
+import { makeSurfaceLayerBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeSurfaceLayerBoundingBox";
+import { makeColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeColorScaleAnnotation";
+import { makePolygonDataBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makePolygonDataBoundingBox";
+import { makeRealizationGridBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeRealizationGridBoundingBox";
+import { CustomDataProviderType } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderTypes";
+import { RealizationSeismicInlineProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicInlineProvider";
+import { makeSeismicFenceMeshLayerFunction, Plane } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeSeismicFenceMeshLayer";
+import { RealizationSeismicCrosslineProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicCrosslineProvider";
+import { RealizationSeismicDepthSliceProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicDepthProvider";
 
 export type LayersWrapperProps = {
     layerManager: DataProviderManager;
@@ -60,15 +62,6 @@ export type LayersWrapperProps = {
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
-    CustomDataProviderType.OBSERVED_SURFACE,
-    ObservedSurfaceProvider,
-    {
-        transformToVisualization: makeObservedSurfaceLayer,
-        transformToBoundingBox: makeSurfaceLayerBoundingBox,
-        transformToAnnotations: makeColorScaleAnnotation,
-    },
-);
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.REALIZATION_SURFACE,
     RealizationSurfaceProvider,
@@ -116,6 +109,27 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
         transformToVisualization: makeDrilledWellTrajectoriesLayer,
         transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
     },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    CustomDataProviderType.REALIZATION_SEISMIC_INLINE,
+    RealizationSeismicInlineProvider,
+    {
+        transformToVisualization: makeSeismicFenceMeshLayerFunction(Plane.INLINE),
+    }
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    CustomDataProviderType.REALIZATION_SEISMIC_CROSSLINE,
+    RealizationSeismicCrosslineProvider,
+    {
+        transformToVisualization: makeSeismicFenceMeshLayerFunction(Plane.CROSSLINE),
+    }
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    CustomDataProviderType.REALIZATION_SEISMIC_DEPTH,
+    RealizationSeismicDepthSliceProvider,
+    {
+        transformToVisualization: makeSeismicFenceMeshLayerFunction(Plane.DEPTH),
+    }
 );
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {

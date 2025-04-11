@@ -16,15 +16,15 @@ const paths = {
 };
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
     const define = {
         "process.env": {},
     };
 
     // In order to polyfill "global" for older packages
     // Only in dev since "@loaders.gl" is already exporting "window" and would cause a duplicate export
-    if (mode === "development") {
-        define["global"] = "window";
+    if (mode === "development" && command === "serve") {
+        define["global"] = "globalThis";
     }
 
     return {

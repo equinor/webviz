@@ -9,7 +9,7 @@ import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProvide
 
 import type { RealizationSeismicDepthSliceStoredData } from "../customDataProviderImplementations/RealizationSeismicDepthProvider";
 import type { SeismicSliceData_trans } from "../utils/transformSeismicSlice";
-import { SeismicFenceMeshLayer } from "@modules/3DViewerNew/customDeckGlLayers/SeismicFenceMeshLayer/SeismicFenceMeshLayer";
+import { SeismicFenceMeshLayer } from "@modules/3DViewerNew/customDeckGlLayers/SeismicFenceMeshLayer copy/SeismicFenceMeshLayer";
 
 export enum Plane {
     CROSSLINE = "CROSSLINE",
