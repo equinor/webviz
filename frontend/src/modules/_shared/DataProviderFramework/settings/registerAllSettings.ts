@@ -17,6 +17,7 @@ import { SeismicSliceDirection, SeismicSliceSetting } from "./implementations/Se
 import { SensitivitySetting } from "./implementations/SensitivitySetting";
 import { SingleColorSetting } from "./implementations/SingleColorSetting";
 import { StaticDropdownStringSetting } from "./implementations/StaticDropdownStringSetting";
+import { StaticRotationSetting } from "./implementations/StaticRotationSetting";
 import { StatisticFunctionSetting } from "./implementations/StatisticFunctionSetting";
 import { Setting } from "./settingsDefinitions";
 
@@ -43,6 +44,9 @@ SettingRegistry.registerSetting(Setting.SCALE, "Scale", StaticDropdownStringSett
 // @ts-expect-error -- Setting type is a string literal, but Dropdown setting doesn't accept that as a valid type
 SettingRegistry.registerSetting(Setting.PLOT_VARIANT, "Plot variant", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.LOG_CURVE, "Log curve", LogCurveSetting);
+SettingRegistry.registerSetting(Setting.SHOW_LABELS, "Show labels", BooleanSetting);
+SettingRegistry.registerSetting(Setting.LABEL_ROTATION, "Label rotation", StaticRotationSetting);
+SettingRegistry.registerSetting(Setting.SHOW_LINES, "Show lines", BooleanSetting);
 
 SettingRegistry.registerSetting(Setting.ATTRIBUTE, "Attribute", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.ENSEMBLE, "Ensemble", EnsembleSetting);

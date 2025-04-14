@@ -29,7 +29,7 @@ export enum SettingCategory {
 export enum Setting {
     // Assorted styling visual settings
     SHOW_LABELS = "showLabels",
-    LABEL_DIR = "labelDir",
+    LABEL_ROTATION = "labelRotation",
     SHOW_LINES = "showLines",
     TRACK_WIDTH = "trackWidth",
     SCALE = "scale",
@@ -69,7 +69,7 @@ export enum Setting {
 
 export const settingCategories = {
     [Setting.SHOW_LABELS]: SettingCategory.BOOLEAN,
-    [Setting.LABEL_DIR]: SettingCategory.SINGLE_SELECT,
+    [Setting.LABEL_ROTATION]: SettingCategory.NUMBER_WITH_STEP,
     [Setting.SHOW_LINES]: SettingCategory.BOOLEAN,
     [Setting.TRACK_WIDTH]: SettingCategory.NUMBER_WITH_STEP,
     [Setting.SCALE]: SettingCategory.SINGLE_SELECT,
@@ -111,7 +111,7 @@ export type SettingCategories = typeof settingCategories;
 export type SettingTypes = {
     [Setting.SHOW_LABELS]: boolean;
     [Setting.SCALE]: "linear" | "log" | null;
-    [Setting.LABEL_DIR]: "horizontal" | "vertical" | null;
+    [Setting.LABEL_ROTATION]: number | null;
     [Setting.SHOW_LINES]: boolean;
     [Setting.TRACK_WIDTH]: number | null;
     [Setting.LOG_CURVE]: WellboreLogCurveHeader_api | null;

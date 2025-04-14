@@ -11,19 +11,24 @@ import { VisualizationAssembler } from "@modules/_shared/DataProviderFramework/v
 
 import { AreaPlotProvider } from "../DataProviderFramework/dataProviders/plots/AreaPlotProvider";
 import { LinearPlotProvider } from "../DataProviderFramework/dataProviders/plots/LinearPlotProvider";
+import { StackedPlotProvider } from "../DataProviderFramework/dataProviders/plots/StackedPlotProvider";
 import { WellborePicksProvider } from "../DataProviderFramework/dataProviders/wellpicks/WellPicksProvider";
 import { ContinuousLogTrack } from "../DataProviderFramework/groups/ContinuousLogTrack";
+import { DiscreteLogTrack } from "../DataProviderFramework/groups/DiscreteLogTrack";
 import type { FactoryAccResult as PlotFactoryAccResult } from "../DataProviderFramework/visualizations/plots";
 import {
     makeAreaPlotConfig,
     makeLinePlotConfig,
+    makeStackedPlotConfig,
     plotDataAccumulator,
 } from "../DataProviderFramework/visualizations/plots";
-import { makeContinuousTrackConfig } from "../DataProviderFramework/visualizations/tracks";
+import {
+    collectContinuousTrackConfig,
+    collectDiscreteTrackConfig,
+} from "../DataProviderFramework/visualizations/tracks";
 import { makeLogViewerWellPicks } from "../DataProviderFramework/visualizations/wellpicks";
 
 type FactoryAccResult = PlotFactoryAccResult;
-// type FactoryMakeResult
 
 const VISUALIZATION_FACTORY = new VisualizationAssembler<
     VisualizationTarget.WSC_WELL_LOG,
@@ -41,10 +46,21 @@ VISUALIZATION_FACTORY.registerDataProviderTransformers(AreaPlotProvider.name, Ar
     reduceAccumulatedData: plotDataAccumulator,
 });
 
+VISUALIZATION_FACTORY.registerDataProviderTransformers(StackedPlotProvider.name, StackedPlotProvider, {
+    transformToVisualization: makeStackedPlotConfig,
+    reduceAccumulatedData: plotDataAccumulator,
+});
+
 VISUALIZATION_FACTORY.registerGroupCustomPropsCollector(
     GroupType.WELL_LOG_TRACK_CONT,
     ContinuousLogTrack,
-    makeContinuousTrackConfig,
+    collectContinuousTrackConfig,
+);
+
+VISUALIZATION_FACTORY.registerGroupCustomPropsCollector(
+    GroupType.WELL_LOG_TRACK_DISC,
+    DiscreteLogTrack,
+    collectDiscreteTrackConfig,
 );
 
 VISUALIZATION_FACTORY.registerDataProviderTransformers(WellborePicksProvider.name, WellborePicksProvider, {

@@ -8,13 +8,21 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 export const baseSettings = [Setting.LOG_CURVE] as const;
 
 export const baseLinearSettings = [...baseSettings, Setting.SCALE, Setting.COLOR] as const;
-export const baseDiscreteSettings = [...baseSettings, Setting.SHOW_LINES, Setting.SHOW_LABELS, Setting.LABEL_DIR];
+export const baseDiscreteSettings = [
+    ...baseSettings,
+    // These might be a bit too specific to the stacked plot.
+    // Consider moving this if/when we introduce other discrete curves.
+    Setting.SHOW_LINES,
+    Setting.SHOW_LABELS,
+    Setting.LABEL_ROTATION,
+] as const;
 
-export function defineDependencies<T extends Settings>(args: DefineDependenciesArgs<T>) {
+export function defineBaseContinuousDependencies<T extends readonly Setting[]>(args: DefineDependenciesArgs<T>) {
     const { availableSettingsUpdater, helperDependency } = args;
 
     const curveHeaderQueryDep = helperDependency(async ({ getGlobalSetting, abortSignal }) => {
         const wellboreId = getGlobalSetting("wellboreUuid") ?? "";
+
         return await args.queryClient.fetchQuery({
             ...getWellboreLogCurveHeadersOptions({
                 query: { wellbore_uuid: wellboreId },

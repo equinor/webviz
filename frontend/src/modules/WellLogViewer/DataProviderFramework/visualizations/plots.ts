@@ -19,6 +19,7 @@ import _ from "lodash";
 import { AreaPlotProvider, type AreaPlotSettingTypes } from "../dataProviders/plots/AreaPlotProvider";
 import { DifferentialPlotProvider } from "../dataProviders/plots/DiffPlotProvider";
 import { LinearPlotProvider, type LinearPlotSettingTypes } from "../dataProviders/plots/LinearPlotProvider";
+import type { StackedPlotSettingTypes } from "../dataProviders/plots/StackedPlotProvider";
 import { StackedPlotProvider } from "../dataProviders/plots/StackedPlotProvider";
 
 export const DATA_ACC_KEY = "LOG_CURVE_DATA";
@@ -78,6 +79,26 @@ export function makeLinePlotConfig(args: PlotVisualizationArgs<LinearPlotSetting
     return {
         ...commonConfig,
         type: plotVariant,
+    };
+}
+
+export function makeStackedPlotConfig(args: PlotVisualizationArgs<StackedPlotSettingTypes>): TemplatePlot | null {
+    if (!args.getData()) return null;
+
+    const data = args.getData()!;
+
+    const showLabels = args.getSetting(Setting.SHOW_LABELS);
+    const showLines = args.getSetting(Setting.SHOW_LINES);
+    const rotation = args.getSetting(Setting.LABEL_ROTATION) ?? 90;
+
+    return {
+        name: data.name,
+        logName: data.logName,
+        type: "stacked",
+        showLabels,
+        showLines,
+        // ! The number used in WSC is a little unintuitive (no rotation == -90 degrees), so we offset the  the rotation to make it work as expected in the setting form
+        labelRotation: rotation - 90,
     };
 }
 

@@ -11,20 +11,34 @@ import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/vi
 import type { TemplatePlotScale } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import type { ContinuousTrackSettings } from "../groups/ContinuousLogTrack";
+import type { DiscreteTrackSettings } from "../groups/DiscreteLogTrack";
+import type { baseSettings } from "../groups/_shared";
 
-type TrackCustomPropsCollector = GroupPropsCollectorArgs<ContinuousTrackSettings>;
+type DiscreteTrackCollectorArgs = GroupPropsCollectorArgs<DiscreteTrackSettings>;
+type ContinuousTrackCollectorArgs = GroupPropsCollectorArgs<ContinuousTrackSettings>;
 
-export function makeContinuousTrackConfig(args: TrackCustomPropsCollector): TemplateTrack {
-    const trackWidth = args.getSetting(Setting.TRACK_WIDTH) ?? undefined;
+function getSharedConfig(args: GroupPropsCollectorArgs<typeof baseSettings>): TemplateTrack {
+    return {
+        title: args.name,
+        width: args.getSetting(Setting.TRACK_WIDTH) ?? undefined,
+        required: true,
+        // Need to fill this later, as they're not defined yet.
+        plots: [],
+    };
+}
+
+export function collectDiscreteTrackConfig(args: DiscreteTrackCollectorArgs): TemplateTrack {
+    return {
+        ...getSharedConfig(args),
+    };
+}
+
+export function collectContinuousTrackConfig(args: ContinuousTrackCollectorArgs): TemplateTrack {
     const trackScale = args.getSetting(Setting.SCALE) ?? undefined;
 
     return {
-        title: args.name,
-        required: true,
-        width: trackWidth,
+        ...getSharedConfig(args),
         scale: trackScale as TemplatePlotScale,
-        // Need to fill this later, as they're not defined yet.
-        plots: [],
     };
 }
 
@@ -32,7 +46,7 @@ export type TrackVisualizationGroup = VisualizationGroup<
     VisualizationTarget.WSC_WELL_LOG,
     { [GroupType.WELL_LOG_TRACK_CONT]: TemplateTrack },
     never,
-    GroupType.WELL_LOG_TRACK_CONT
+    GroupType.WELL_LOG_TRACK_CONT | GroupType.WELL_LOG_TRACK_DISC
 >;
 
 export function isTrackGroup(

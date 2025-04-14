@@ -5,6 +5,7 @@ import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTy
 import { AreaPlotProvider } from "./dataProviders/plots/AreaPlotProvider";
 import { DifferentialPlotProvider } from "./dataProviders/plots/DiffPlotProvider";
 import { LinearPlotProvider } from "./dataProviders/plots/LinearPlotProvider";
+import { StackedPlotProvider } from "./dataProviders/plots/StackedPlotProvider";
 import { WellborePicksProvider } from "./dataProviders/wellpicks/WellPicksProvider";
 import { ContinuousLogTrack } from "./groups/ContinuousLogTrack";
 import { DiscreteLogTrack } from "./groups/DiscreteLogTrack";
@@ -17,3 +18,4 @@ DataProviderRegistry.registerDataProvider(LinearPlotProvider.name, LinearPlotPro
 DataProviderRegistry.registerDataProvider(AreaPlotProvider.name, AreaPlotProvider);
 DataProviderRegistry.registerDataProvider(DifferentialPlotProvider.name, DifferentialPlotProvider);
 DataProviderRegistry.registerDataProvider(WellborePicksProvider.name, WellborePicksProvider);
+DataProviderRegistry.registerDataProvider(StackedPlotProvider.name, StackedPlotProvider);
