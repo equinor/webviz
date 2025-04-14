@@ -13,6 +13,7 @@ type SettingsTypeMap = MakeSettingTypesMap<StackedPlotSettingTypes>;
 export class StackedPlotProvider
     implements CustomDataProviderImplementation<StackedPlotSettingTypes, WellboreLogCurveData_api>
 {
+    areCurrentSettingsValid = verifyBasePlotSettings<StackedPlotSettingTypes>;
     fetchData = fetchData<StackedPlotSettingTypes>;
     settings = stackedPlotSettings;
 

@@ -5,7 +5,7 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 
 import _ from "lodash";
 
-import { defineDependencies, fetchData } from "./_shared";
+import { defineBaseContinuousDependencies, fetchData } from "./_shared";
 
 // TODO: Need a clean way to
 export const differentialPlotSettings = [Setting.LOG_CURVE, Setting.LOG_CURVE, Setting.SCALE] as const;
@@ -15,10 +15,8 @@ type SettingsTypeMap = MakeSettingTypesMap<DifferentialPlotSettingTypes>;
 export class DifferentialPlotProvider
     implements CustomDataProviderImplementation<DifferentialPlotSettingTypes, WellboreLogCurveData_api>
 {
-    // Uses the same external things as the other types
-    defineDependencies = defineDependencies<DifferentialPlotSettingTypes>;
-    fetchData = fetchData<DifferentialPlotSettingTypes>;
-
+    defineDependencies = defineBaseContinuousDependencies;
+    fetchData = fetchData;
     settings = differentialPlotSettings;
 
     getDefaultName() {

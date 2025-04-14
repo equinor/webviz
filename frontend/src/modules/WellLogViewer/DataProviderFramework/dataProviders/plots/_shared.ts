@@ -1,9 +1,19 @@
 import type { WellboreLogCurveData_api } from "@api";
-import { getLogCurveDataOptions, getWellboreLogCurveHeadersOptions } from "@api";
-import type { FetchDataParams } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
+import {
+    WellLogCurveSourceEnum_api,
+    WellLogCurveTypeEnum_api,
+    getLogCurveDataOptions,
+    getWellboreLogCurveHeadersOptions,
+} from "@api";
+import type {
+    DataProviderInformationAccessors,
+    FetchDataParams,
+} from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { Settings } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+
+import _ from "lodash";
 
 export const baseSettings = [Setting.LOG_CURVE] as const;
 
@@ -25,7 +35,7 @@ export function defineBaseContinuousDependencies<T extends readonly Setting[]>(a
 
         return await args.queryClient.fetchQuery({
             ...getWellboreLogCurveHeadersOptions({
-                query: { wellbore_uuid: wellboreId },
+                query: { wellbore_uuid: wellboreId, sources: [WellLogCurveSourceEnum_api.SSDL_WELL_LOG] },
                 signal: abortSignal,
             }),
         });
@@ -37,8 +47,27 @@ export function defineBaseContinuousDependencies<T extends readonly Setting[]>(a
 
         if (!wellboreId || !headerData) return [];
 
-        return headerData;
+        return headerData.filter((curve) => curve.curveType !== WellLogCurveTypeEnum_api.DISCRETE);
     });
+}
+
+export function verifyBasePlotSettings<T extends readonly Setting[]>(
+    accessor: DataProviderInformationAccessors<T, WellboreLogCurveData_api>,
+): boolean {
+    const availableCurves = accessor.getAvailableSettingValues(Setting.LOG_CURVE) ?? [];
+    const selectedCurve = accessor.getSetting(Setting.LOG_CURVE);
+
+    return selectedCurve && !!_.find(availableCurves, (curve) => curve.curveName === selectedCurve.curveName);
+}
+
+export function verifyContinuousPlotSetting<T extends readonly Setting[]>(
+    accessor: DataProviderInformationAccessors<T, WellboreLogCurveData_api>,
+) {
+    if (!verifyBasePlotSettings(accessor)) return false;
+
+    const selectedCurve = accessor.getSetting(Setting.LOG_CURVE)!;
+
+    return [WellLogCurveTypeEnum_api.CONTINUOUS, WellLogCurveTypeEnum_api.FLAG].includes(selectedCurve.curveType);
 }
 
 export function fetchData<T extends Settings>(
@@ -57,6 +86,7 @@ export function fetchData<T extends Settings>(
                 wellbore_uuid: wellboreId,
                 curve_name: curveHeader.curveName,
                 log_name: curveHeader.logName,
+                source: curveHeader.source,
             },
         }),
     });

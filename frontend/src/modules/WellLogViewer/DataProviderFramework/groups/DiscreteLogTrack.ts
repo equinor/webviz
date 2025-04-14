@@ -20,6 +20,6 @@ export class DiscreteLogTrack
     }
 
     getDefaultName(): string {
-        return "Track";
+        return "Discrete track";
     }
 }

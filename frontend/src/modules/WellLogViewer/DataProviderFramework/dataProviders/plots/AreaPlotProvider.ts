@@ -4,7 +4,7 @@ import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramew
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-import { baseLinearSettings, defineDependencies, fetchData } from "./_shared";
+import { baseLinearSettings, defineBaseContinuousDependencies, fetchData, verifyBasePlotSettings } from "./_shared";
 
 export const AreaPlotSettings = [Setting.PLOT_VARIANT, ...baseLinearSettings, Setting.COLOR_SCALE] as const;
 export type AreaPlotSettingTypes = typeof AreaPlotSettings;
@@ -13,12 +13,12 @@ type SettingsTypeMap = MakeSettingTypesMap<AreaPlotSettingTypes>;
 export class AreaPlotProvider
     implements CustomDataProviderImplementation<AreaPlotSettingTypes, WellboreLogCurveData_api>
 {
+    areCurrentSettingsValid = verifyBasePlotSettings<AreaPlotSettingTypes>;
+    fetchData = fetchData<AreaPlotSettingTypes>;
     settings = AreaPlotSettings;
 
-    // Uses the same external things as the other types
-    fetchData = fetchData<AreaPlotSettingTypes>;
     defineDependencies(args: DefineDependenciesArgs<AreaPlotSettingTypes>) {
-        defineDependencies<AreaPlotSettingTypes>(args);
+        defineBaseContinuousDependencies(args);
 
         args.availableSettingsUpdater(Setting.PLOT_VARIANT, () => {
             return ["area", "gradientfill"];
@@ -27,11 +27,6 @@ export class AreaPlotProvider
 
     getDefaultName() {
         return "Area plot";
-    }
-
-    areCurrentSettingsValid() {
-        // TODO
-        return true;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

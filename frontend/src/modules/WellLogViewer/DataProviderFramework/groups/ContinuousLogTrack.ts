@@ -21,6 +21,6 @@ export class ContinuousLogTrack
     }
 
     getDefaultName(): string {
-        return "Track";
+        return "Continuous track";
     }
 }
