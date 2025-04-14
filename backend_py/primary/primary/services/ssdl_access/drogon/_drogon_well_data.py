@@ -9,6 +9,7 @@ well_log_headers_1 = [
 well_log_headers_2 = [
     types.WellboreLogCurveHeader(curve_name="BS", curve_unit="IN", log_name="DROGON_CONTINUOUS"),
     types.WellboreLogCurveHeader(curve_name="BS", curve_unit="IN", log_name="DROGON_CONTINUOUS_2"),
+    types.WellboreLogCurveHeader(curve_name="DROGON_COMMENTS", curve_unit="UNITLESS", log_name="DROGON_DISCRETE"),
 ]
 
 
@@ -186,6 +187,27 @@ well_log_data_map_2 = {
             (900, 900),
             (950, 600),
             (1000, 600),
+        ],
+    ),
+    "DROGON_COMMENTS": types.WellboreLogCurveData(
+        name="DROGON_COMMENTS",
+        log_name="DROGON_DISCRETE",
+        index_min=100,
+        index_max=1000,
+        index_unit="m",
+        unit="UNITLESS",
+        curve_alias="TEXT",
+        curve_description=None,
+        curve_unit_desc=None,
+        min_curve_value=None,
+        max_curve_value=None,
+        no_data_value=None,
+        DataPoints=[
+            (150, "High quality"),
+            (200, "Good quality"),
+            (600, "No seal"),
+            (800, "High quality"),
+            (1000, "High quality"),
         ],
     ),
 }
