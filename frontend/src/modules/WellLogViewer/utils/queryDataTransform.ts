@@ -17,19 +17,7 @@ import _ from "lodash";
 import { COLOR_TABLES } from "./logViewerColors";
 import { getUniqueCurveNameForCurveData } from "./strings";
 
-export const MAIN_AXIS_CURVE: WellLogCurve = {
-    name: "RKB",
-    unit: "M",
-    dimensions: 1,
-    valueType: "float",
-};
-
-export const SECONDARY_AXIS_CURVE: WellLogCurve = {
-    name: "MSL",
-    unit: "M",
-    dimensions: 1,
-    valueType: "float",
-};
+import { MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE } from "../constants";
 
 type DataRowAccumulatorMap = Record<number, SafeWellLogDataRow>;
 

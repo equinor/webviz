@@ -1,4 +1,3 @@
-import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { atomWithModuleInstanceStorage, clearModuleInstanceStorage } from "@modules/WellLogViewer/utils/atoms";
 import type { SerializedDataProviderManager } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization";
 
@@ -19,11 +18,6 @@ function setPersistentModuleField(get: Getter, set: Setter, valueKey: string, ne
 
     set(moduleSettingsAtom, storageCopy);
 }
-
-export const logViewerTrackConfigsAtom = atom<TemplateTrackConfig[], [TemplateTrackConfig[]], void>(
-    (get) => getPersistentModuleField(get, "logViewerTrackConfigs", []),
-    (get, set, newVal) => setPersistentModuleField(get, set, "logViewerTrackConfigs", newVal),
-);
 
 export const viewerHorizontalAtom = atom<boolean, [boolean], void>(
     (get) => getPersistentModuleField(get, "viewerHorizontal", false),

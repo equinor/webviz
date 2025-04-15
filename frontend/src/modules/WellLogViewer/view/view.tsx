@@ -1,7 +1,6 @@
 import React from "react";
 
 import type { ModuleViewProps } from "@framework/Module";
-// import { useViewStatusWriter } from "@framework/StatusWriter";
 import { CircularProgress } from "@mui/material";
 
 import { useAtomValue } from "jotai";
@@ -12,11 +11,7 @@ import { ProviderManagerWrapper } from "./components/ProviderManagerWrapper";
 import type { InterfaceTypes } from "../interfaces";
 
 export function View(props: ModuleViewProps<InterfaceTypes>) {
-    // const statusWriter = useViewStatusWriter(props.viewContext);
-
     const providerManager = props.viewContext.useSettingsToViewInterfaceValue("providerManager");
-
-    // Passed setting atoms
     const selectedWellboreHeader = props.viewContext.useSettingsToViewInterfaceValue("wellboreHeader");
     const viewerHorizontal = props.viewContext.useSettingsToViewInterfaceValue("viewerHorizontal");
     const padDataWithEmptyRows = props.viewContext.useSettingsToViewInterfaceValue("padDataWithEmptyRows");

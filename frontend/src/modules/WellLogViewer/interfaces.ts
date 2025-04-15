@@ -1,13 +1,9 @@
-import type { WellboreHeader_api, WellborePick_api } from "@api";
+import type { WellboreHeader_api } from "@api";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
 import { providerManagerAtom } from "./settings/atoms/baseAtoms";
-import {
-    selectedFieldIdentifierAtom,
-    selectedWellboreHeaderAtom,
-    selectedWellborePicksAtom,
-} from "./settings/atoms/derivedAtoms";
+import { selectedFieldIdentifierAtom, selectedWellboreHeaderAtom } from "./settings/atoms/derivedAtoms";
 import { padDataWithEmptyRowsAtom, viewerHorizontalAtom } from "./settings/atoms/persistedAtoms";
 
 export type InterfaceTypes = {
@@ -21,7 +17,6 @@ export type SettingsToViewInterface = {
     wellboreHeader: WellboreHeader_api | null;
     viewerHorizontal: boolean;
     padDataWithEmptyRows: boolean;
-    selectedWellborePicks: WellborePick_api[];
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
@@ -30,5 +25,4 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     wellboreHeader: (get) => get(selectedWellboreHeaderAtom),
     viewerHorizontal: (get) => get(viewerHorizontalAtom),
     padDataWithEmptyRows: (get) => get(padDataWithEmptyRowsAtom),
-    selectedWellborePicks: (get) => get(selectedWellborePicksAtom),
 };

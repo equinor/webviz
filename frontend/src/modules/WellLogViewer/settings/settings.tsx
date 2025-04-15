@@ -22,7 +22,6 @@ import { providerManagerAtom, userSelectedFieldIdentifierAtom, userSelectedWellb
 import { selectedFieldIdentifierAtom, selectedWellboreHeaderAtom } from "./atoms/derivedAtoms";
 import { availableFieldsQueryAtom, drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
 import { ProviderManagerComponentWrapper } from "./components/ProviderManagerComponentWrapper";
-// import { TemplateTrackSettings } from "./components/TemplateTrackSettings";
 import { ViewerSettings } from "./components/ViewerSettings";
 
 import type { InterfaceTypes } from "../interfaces";
@@ -122,11 +121,9 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
                 </Label>
             </CollapsibleGroup>
 
-            <CollapsibleGroup title="Log viewer settings">
-                <ViewerSettings statusWriter={statusWriter} />
+            <CollapsibleGroup title="Log viewer settings" expanded>
+                <ViewerSettings />
             </CollapsibleGroup>
-
-            {/* <TemplateTrackSettings statusWriter={statusWriter} /> */}
 
             <ProviderManagerComponentWrapper
                 workbenchSession={props.workbenchSession}
