@@ -1,10 +1,12 @@
 import React from "react";
 
 import type { WellboreTrajectory_api } from "@api";
+import type { DiffVisualizationGroup } from "@modules/WellLogViewer/DataProviderFramework/visualizations/plots";
 import {
     COLOR_MAP_ACC_KEY,
     DATA_ACC_KEY,
     DUPLICATE_NAMES_ACC_KEY,
+    isDiffPlotGroup,
     isPlotVisualization,
 } from "@modules/WellLogViewer/DataProviderFramework/visualizations/plots";
 import {
@@ -34,19 +36,40 @@ export type LogViewerProps = {
     horizontal: boolean;
 };
 
-function getProvidedPlots(trackGroup: TrackVisualizationGroup, duplicatedCurveNames: Set<string>) {
+function getProvidedPlots(
+    trackGroup: TrackVisualizationGroup | DiffVisualizationGroup,
+    duplicatedCurveNames: Set<string>,
+) {
     const plots: TemplatePlot[] = [];
 
     for (const child of trackGroup.children) {
-        if (!isPlotVisualization(child)) continue;
+        if (isPlotVisualization(child)) {
+            const template = child.visualization;
 
-        const template = child.visualization;
+            plots.push({
+                ...template,
+                // ! Map each plot to ensure a name that points to the correct curve
+                name: getUniqueCurveNameForPlotConfig(template, duplicatedCurveNames),
+            });
+        } else if (isDiffPlotGroup(child)) {
+            // ! Recursively get this group's children
+            const [primaryPlot, secondaryPlot] = getProvidedPlots(child, duplicatedCurveNames);
 
-        plots.push({
-            ...template,
-            // ! Map each plot to ensure a name that points to the correct curve
-            name: getUniqueCurveNameForPlotConfig(template, duplicatedCurveNames),
-        });
+            if (primaryPlot && secondaryPlot) {
+                plots.push({
+                    ...primaryPlot,
+                    name: getUniqueCurveNameForPlotConfig(primaryPlot, duplicatedCurveNames),
+                    name2: getUniqueCurveNameForPlotConfig(secondaryPlot, duplicatedCurveNames),
+                    logName2: secondaryPlot.logName,
+                    color2: secondaryPlot.color,
+
+                    // Over/under colors
+                    // TODO: Make this based on a setting
+                    fill: "#c50f0f",
+                    fill2: "#0d8d1e",
+                });
+            }
+        }
     }
 
     return plots;

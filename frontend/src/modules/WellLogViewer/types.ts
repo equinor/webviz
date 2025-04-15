@@ -11,6 +11,7 @@ import type {
  */
 export type TemplatePlot = TemplatePlotSSC & {
     logName: string;
+    logName2?: string;
 };
 
 export type TemplateTrack = Omit<TemplateTrackSSC, "plots"> & {

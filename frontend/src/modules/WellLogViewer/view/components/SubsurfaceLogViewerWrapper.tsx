@@ -37,10 +37,6 @@ export type SubsurfaceLogViewerWrapperProps = {
     wellLogSets: WellLogSet[];
     wellPicks?: WellPickProps;
 
-    // Data
-    // providerManager: DataProviderManager;
-    // trajectoryData: WellboreTrajectory_api;
-
     // Viewer config
     viewerTemplate: Template;
     colorMapFunctions?: ColorMapFunction[];
@@ -141,24 +137,6 @@ function useCreateGlobalVerticalScaleBroadcastFunc(
 
     return broadcastVerticalScaleChange;
 }
-
-// function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
-//     const trajectoryData = props.trajectoryData;
-//     const padDataWithEmptyRows = props.padDataWithEmptyRows;
-
-//     const factoryProduct = useLogViewerVisualizationProduct(props.providerManager);
-
-//     const colorMapFuncDefs = React.useMemo(() => createColorMapDefsFromProduct(factoryProduct), [factoryProduct]);
-
-//     const wellpicks = React.useMemo(() => createWellPickPropFromProduct(factoryProduct), [factoryProduct]);
-//     const template = React.useMemo(() => createWellLogTemplateFromProduct(factoryProduct), [factoryProduct]);
-//     const wellLogSets = React.useMemo(
-//         () => createWellLogJsonFromProduct(factoryProduct, trajectoryData, padDataWithEmptyRows),
-//         [factoryProduct, trajectoryData, padDataWithEmptyRows],
-//     );
-
-//     return { template, wellLogSets, wellpicks, colorMapFuncDefs };
-// }
 
 export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProps) {
     // <WellLogViewer /> uses an internal controller to change things like zoom, selection and so on. Use this when possible to avoid uneccessary re-renders

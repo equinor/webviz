@@ -4,6 +4,7 @@ import { WellLogCurveTypeEnum_api } from "@api";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { AreaPlotProvider } from "@modules/WellLogViewer/DataProviderFramework/dataProviders/plots/AreaPlotProvider";
+import { DiffPlotProvider } from "@modules/WellLogViewer/DataProviderFramework/dataProviders/plots/DiffPlotProvider";
 import { LinearPlotProvider } from "@modules/WellLogViewer/DataProviderFramework/dataProviders/plots/LinearPlotProvider";
 import { StackedPlotProvider } from "@modules/WellLogViewer/DataProviderFramework/dataProviders/plots/StackedPlotProvider";
 import { WellborePicksProvider } from "@modules/WellLogViewer/DataProviderFramework/dataProviders/wellpicks/WellPicksProvider";
@@ -20,7 +21,7 @@ import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Gr
 import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type { ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
-import { HorizontalRule, ShowChart, ViewDay } from "@mui/icons-material";
+import { HorizontalRule, MultilineChart, ShowChart, ViewDay } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAtom } from "jotai";
@@ -52,6 +53,7 @@ enum PlotActionIdents {
     AREA = "area",
     STACKED = "stacked",
     DIFF = "diff",
+    DIFF_CURVE = "diffCurve",
 }
 
 function usePersistedProviderManager(
@@ -123,60 +125,84 @@ function usePersistedProviderManager(
 }
 
 function makeOptionsForGroup(group: ItemGroup): ActionGroup[] {
-    if (group instanceof Group && group.getGroupType() === GroupType.WELL_LOG_TRACK_CONT) {
-        return [
-            {
-                label: "Plots",
-                children: [
-                    { icon: <ShowChart fontSize="inherit" />, label: "Line plot", identifier: PlotActionIdents.LINE },
-                    { icon: <ShowChart fontSize="inherit" />, label: "Area plot", identifier: PlotActionIdents.AREA },
-                    {
-                        icon: <ShowChart fontSize="inherit" />,
-                        label: "Differential plot",
-                        identifier: PlotActionIdents.DIFF,
-                    },
-                ],
-            },
-        ];
-    }
+    switch (group instanceof Group && group.getGroupType()) {
+        case GroupType.WELL_LOG_TRACK_CONT:
+            return [
+                {
+                    label: "Plots",
+                    children: [
+                        {
+                            icon: <ShowChart fontSize="inherit" />,
+                            label: "Line plot",
+                            identifier: PlotActionIdents.LINE,
+                        },
+                        {
+                            // TODO: Newer versions of MUI has a  "area chart" icon
+                            icon: <ShowChart fontSize="inherit" />,
+                            label: "Area plot",
+                            identifier: PlotActionIdents.AREA,
+                        },
+                        {
+                            icon: <MultilineChart fontSize="inherit" />,
+                            label: "Differential plot",
+                            identifier: PlotActionIdents.DIFF,
+                        },
+                    ],
+                },
+            ];
 
-    if (group instanceof Group && group.getGroupType() === GroupType.WELL_LOG_TRACK_DISC) {
-        return [
-            {
-                label: "Plots",
-                children: [
-                    {
-                        icon: <ViewDay fontSize="inherit" />,
-                        label: "Stacked plot",
-                        identifier: PlotActionIdents.STACKED,
-                    },
-                ],
-            },
-        ];
-    }
+        case GroupType.WELL_LOG_TRACK_DISC:
+            return [
+                {
+                    label: "Plots",
+                    children: [
+                        {
+                            icon: <ViewDay fontSize="inherit" />,
+                            label: "Stacked plot",
+                            identifier: PlotActionIdents.STACKED,
+                        },
+                    ],
+                },
+            ];
 
-    return [
-        {
-            label: "Log viewer",
-            children: [
+        case GroupType.WELL_LOG_DIFF_GROUP:
+            return [
                 {
-                    label: "Continuous Track",
-                    identifier: RootActionIdents.CONTINUOUS_TRACK,
-                    icon: <TrackIcon type={WellLogCurveTypeEnum_api.CONTINUOUS} />,
+                    label: "Plots",
+                    children: [
+                        {
+                            icon: <MultilineChart fontSize="inherit" />,
+                            label: "Differential plot curve",
+                            identifier: PlotActionIdents.DIFF_CURVE,
+                        },
+                    ],
                 },
+            ];
+
+        default:
+            return [
                 {
-                    label: "Discrete Track",
-                    identifier: RootActionIdents.DISCRETE_TRACK,
-                    icon: <ViewDay fontSize="inherit" />,
+                    label: "Log viewer",
+                    children: [
+                        {
+                            label: "Continuous Track",
+                            identifier: RootActionIdents.CONTINUOUS_TRACK,
+                            icon: <TrackIcon type={WellLogCurveTypeEnum_api.CONTINUOUS} />,
+                        },
+                        {
+                            label: "Discrete Track",
+                            identifier: RootActionIdents.DISCRETE_TRACK,
+                            icon: <ViewDay fontSize="inherit" />,
+                        },
+                        {
+                            label: "Well picks",
+                            identifier: RootActionIdents.WELL_PICKS,
+                            icon: <HorizontalRule fontSize="inherit" />,
+                        },
+                    ],
                 },
-                {
-                    label: "Well picks",
-                    identifier: RootActionIdents.WELL_PICKS,
-                    icon: <HorizontalRule fontSize="inherit" />,
-                },
-            ],
-        },
-    ];
+            ];
+    }
 }
 
 export type ProviderManagerComponentWrapperProps = {
@@ -206,6 +232,27 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
                 case RootActionIdents.DISCRETE_TRACK:
                     return groupDelegate.appendChild(
                         GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK_DISC, providerManager),
+                    );
+
+                case PlotActionIdents.DIFF: {
+                    const diffGroup = GroupRegistry.makeGroup(GroupType.WELL_LOG_DIFF_GROUP, providerManager);
+
+                    diffGroup.getGroupDelegate().appendChild(
+                        // @ts-expect-error -- dumb workaround, waiting for circular dependency pr to be available
+                        DataProviderRegistry.makeDataProvider(DiffPlotProvider.name, providerManager),
+                    );
+                    diffGroup.getGroupDelegate().appendChild(
+                        // @ts-expect-error -- dumb workaround, waiting for circular dependency pr to be available
+                        DataProviderRegistry.makeDataProvider(DiffPlotProvider.name, providerManager),
+                    );
+
+                    return groupDelegate.appendChild(diffGroup);
+                }
+
+                case PlotActionIdents.DIFF_CURVE:
+                    return groupDelegate.appendChild(
+                        // @ts-expect-error -- dumb workaround, waiting for circular dependency pr to be available
+                        DataProviderRegistry.makeDataProvider(DiffPlotProvider.name, providerManager),
                     );
 
                 case PlotActionIdents.LINE:

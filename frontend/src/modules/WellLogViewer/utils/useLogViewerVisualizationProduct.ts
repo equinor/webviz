@@ -10,6 +10,7 @@ import type {
 import { VisualizationAssembler } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import { AreaPlotProvider } from "../DataProviderFramework/dataProviders/plots/AreaPlotProvider";
+import { DiffPlotProvider } from "../DataProviderFramework/dataProviders/plots/DiffPlotProvider";
 import { LinearPlotProvider } from "../DataProviderFramework/dataProviders/plots/LinearPlotProvider";
 import { StackedPlotProvider } from "../DataProviderFramework/dataProviders/plots/StackedPlotProvider";
 import { WellborePicksProvider } from "../DataProviderFramework/dataProviders/wellpicks/WellPicksProvider";
@@ -18,6 +19,7 @@ import { DiscreteLogTrack } from "../DataProviderFramework/groups/DiscreteLogTra
 import type { FactoryAccResult as PlotFactoryAccResult } from "../DataProviderFramework/visualizations/plots";
 import {
     makeAreaPlotConfig,
+    makeDiffPlotConfig,
     makeLinePlotConfig,
     makeStackedPlotConfig,
     plotDataAccumulator,
@@ -43,6 +45,10 @@ VISUALIZATION_FACTORY.registerDataProviderTransformers(LinearPlotProvider.name, 
 });
 VISUALIZATION_FACTORY.registerDataProviderTransformers(AreaPlotProvider.name, AreaPlotProvider, {
     transformToVisualization: makeAreaPlotConfig,
+    reduceAccumulatedData: plotDataAccumulator,
+});
+VISUALIZATION_FACTORY.registerDataProviderTransformers(DiffPlotProvider.name, DiffPlotProvider, {
+    transformToVisualization: makeDiffPlotConfig,
     reduceAccumulatedData: plotDataAccumulator,
 });
 

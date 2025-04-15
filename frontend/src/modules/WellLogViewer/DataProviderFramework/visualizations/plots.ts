@@ -1,6 +1,7 @@
 import type { WellboreLogCurveData_api } from "@api";
 import type { TemplatePlot } from "@modules/WellLogViewer/types";
 import { isNumericalDataPoints } from "@modules/WellLogViewer/utils/queryDataTransform";
+import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type { Settings } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import {
@@ -17,7 +18,8 @@ import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/components/C
 import _ from "lodash";
 
 import { AreaPlotProvider, type AreaPlotSettingTypes } from "../dataProviders/plots/AreaPlotProvider";
-import { DifferentialPlotProvider } from "../dataProviders/plots/DiffPlotProvider";
+import type { DiffPlotSettingTypes } from "../dataProviders/plots/DiffPlotProvider";
+import { DiffPlotProvider } from "../dataProviders/plots/DiffPlotProvider";
 import { LinearPlotProvider, type LinearPlotSettingTypes } from "../dataProviders/plots/LinearPlotProvider";
 import type { StackedPlotSettingTypes } from "../dataProviders/plots/StackedPlotProvider";
 import { StackedPlotProvider } from "../dataProviders/plots/StackedPlotProvider";
@@ -66,7 +68,6 @@ export function makeAreaPlotConfig(args: PlotVisualizationArgs<AreaPlotSettingTy
         ...commonConfig,
         ...colorFillOptions,
         type: plotVariant ?? undefined,
-        // TODO: Fill/Func
     };
 }
 
@@ -79,6 +80,18 @@ export function makeLinePlotConfig(args: PlotVisualizationArgs<LinearPlotSetting
     return {
         ...commonConfig,
         type: plotVariant,
+    };
+}
+
+export function makeDiffPlotConfig(args: PlotVisualizationArgs<DiffPlotSettingTypes>): TemplatePlot | null {
+    if (!args.getData()) return null;
+
+    const commonConfig = getCommonConfig(args);
+
+    return {
+        ...commonConfig,
+        type: "differential",
+        // TODO: Some way to do over/under colors (aka; fill and fill2)
     };
 }
 
@@ -146,16 +159,27 @@ export const plotDataAccumulator: ReduceAccumulatedDataFunction<Setting[], Wellb
     };
 
 export type PlotVisualization = DataProviderVisualization<VisualizationTarget.WSC_WELL_LOG, TemplatePlot>;
+export type DiffVisualizationGroup = VisualizationGroup<
+    VisualizationTarget.WSC_WELL_LOG,
+    never,
+    never,
+    GroupType.WELL_LOG_DIFF_GROUP
+>;
+
+export function isDiffPlotGroup(
+    item: VisualizationGroup<any, any, any, any> | DataProviderVisualization<any, any>,
+): item is DiffVisualizationGroup {
+    if (item.itemType !== VisualizationItemType.GROUP) return false;
+
+    return item.groupType === GroupType.WELL_LOG_DIFF_GROUP;
+}
 
 export function isPlotVisualization(
     item: VisualizationGroup<any, any, any, any> | DataProviderVisualization<any, any>,
 ): item is PlotVisualization {
     if (item.itemType !== VisualizationItemType.DATA_PROVIDER_VISUALIZATION) return false;
 
-    return [
-        AreaPlotProvider.name,
-        LinearPlotProvider.name,
-        DifferentialPlotProvider.name,
-        StackedPlotProvider.name,
-    ].includes(item.type);
+    return [AreaPlotProvider.name, LinearPlotProvider.name, DiffPlotProvider.name, StackedPlotProvider.name].includes(
+        item.type,
+    );
 }
