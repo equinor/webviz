@@ -1,20 +1,15 @@
 import React from "react";
 
-import type { WellboreHeader_api, WellboreTrajectory_api } from "@api";
+import type { WellboreHeader_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
-import {
-    createColorMapDefsFromProduct,
-    createWellLogJsonFromProduct,
-    createWellLogTemplateFromProduct,
-    createWellPickPropFromProduct,
-} from "@modules/WellLogViewer/utils/factoryProduct";
-import { useLogViewerVisualizationFactoryProduct } from "@modules/WellLogViewer/utils/useLogViewerVisualizationFactory";
-import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import type { Template } from "@modules/WellLogViewer/types";
 import { WellLogViewer } from "@webviz/well-log-viewer";
+import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/components/ColorMapFunction";
 import type { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
-import type { WellLogController } from "@webviz/well-log-viewer/dist/components/WellLogView";
+import type { WellLogSet } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
+import type { WellLogController, WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
 import _ from "lodash";
 
@@ -39,12 +34,17 @@ type GlobalHoverMd = GlobalTopicDefinitions["global.hoverMd"];
 export type SubsurfaceLogViewerWrapperProps = {
     // Data
     wellboreHeader: WellboreHeader_api | null;
-    providerManager: DataProviderManager;
-    trajectoryData: WellboreTrajectory_api;
+    wellLogSets: WellLogSet[];
+    wellPicks?: WellPickProps;
+
+    // Data
+    // providerManager: DataProviderManager;
+    // trajectoryData: WellboreTrajectory_api;
 
     // Viewer config
+    viewerTemplate: Template;
+    colorMapFunctions?: ColorMapFunction[];
     horizontal: boolean;
-    padDataWithEmptyRows: boolean;
 
     // Passing the module props to make context and service access less cumbersome
     moduleProps: ModuleViewProps<InterfaceTypes>;
@@ -142,31 +142,29 @@ function useCreateGlobalVerticalScaleBroadcastFunc(
     return broadcastVerticalScaleChange;
 }
 
-function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
-    const trajectoryData = props.trajectoryData;
-    const padDataWithEmptyRows = props.padDataWithEmptyRows;
+// function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
+//     const trajectoryData = props.trajectoryData;
+//     const padDataWithEmptyRows = props.padDataWithEmptyRows;
 
-    const factoryProduct = useLogViewerVisualizationFactoryProduct(props.providerManager);
+//     const factoryProduct = useLogViewerVisualizationProduct(props.providerManager);
 
-    const colorMapFuncDefs = React.useMemo(() => createColorMapDefsFromProduct(factoryProduct), [factoryProduct]);
+//     const colorMapFuncDefs = React.useMemo(() => createColorMapDefsFromProduct(factoryProduct), [factoryProduct]);
 
-    const wellpicks = React.useMemo(() => createWellPickPropFromProduct(factoryProduct), [factoryProduct]);
-    const template = React.useMemo(() => createWellLogTemplateFromProduct(factoryProduct), [factoryProduct]);
-    const wellLogSets = React.useMemo(
-        () => createWellLogJsonFromProduct(factoryProduct, trajectoryData, padDataWithEmptyRows),
-        [factoryProduct, trajectoryData, padDataWithEmptyRows],
-    );
+//     const wellpicks = React.useMemo(() => createWellPickPropFromProduct(factoryProduct), [factoryProduct]);
+//     const template = React.useMemo(() => createWellLogTemplateFromProduct(factoryProduct), [factoryProduct]);
+//     const wellLogSets = React.useMemo(
+//         () => createWellLogJsonFromProduct(factoryProduct, trajectoryData, padDataWithEmptyRows),
+//         [factoryProduct, trajectoryData, padDataWithEmptyRows],
+//     );
 
-    return { template, wellLogSets, wellpicks, colorMapFuncDefs };
-}
+//     return { template, wellLogSets, wellpicks, colorMapFuncDefs };
+// }
 
 export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProps) {
     // <WellLogViewer /> uses an internal controller to change things like zoom, selection and so on. Use this when possible to avoid uneccessary re-renders
     const [wellLogController, setWellLogController] = React.useState<WellLogController | null>(null);
     const [wellLogReadout, setWellLogReadout] = React.useState<Info[]>([]);
     const [showReadoutBox, setShowReadoutBox] = React.useState<boolean>(false);
-
-    const { template, wellLogSets, wellpicks, colorMapFuncDefs } = useViewerDataTransform(props);
 
     const instanceId = props.moduleProps.viewContext.getInstanceIdString();
     const syncableSettingKeys = props.moduleProps.viewContext.useSyncedSettingKeys();
@@ -252,15 +250,15 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
         >
             <WellLogViewer
                 id="well-log-viewer"
-                wellLogSets={wellLogSets}
-                template={template}
-                wellpick={wellpicks}
+                template={props.viewerTemplate}
+                wellLogSets={props.wellLogSets}
+                wellpick={props.wellPicks}
                 horizontal={props.horizontal}
                 // Removes the default right-side readout panel
                 layout={{ right: undefined }}
                 axisMnemos={AXIS_MNEMOS}
                 axisTitles={AXIS_TITLES}
-                colorMapFunctions={colorMapFuncDefs}
+                colorMapFunctions={props.colorMapFunctions ?? []}
                 // Disable the pin and selection logic, since we dont use that for anything yet
                 options={{ hideSelectionInterval: true, maxVisibleTrackNum: 12 }}
                 onTrackMouseEvent={handleTrackMouseEvent}
@@ -271,7 +269,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
             />
 
             <ReadoutWrapper
-                templateTracks={template?.tracks ?? []}
+                templateTracks={props.viewerTemplate?.tracks ?? []}
                 wellLogReadout={wellLogReadout}
                 hide={!showReadoutBox}
             />

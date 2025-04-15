@@ -70,7 +70,7 @@ VISUALIZATION_FACTORY.registerDataProviderTransformers(WellborePicksProvider.nam
 
 export type WellLogFactoryProduct = ReturnType<(typeof VISUALIZATION_FACTORY)["make"]>;
 
-export function useLogViewerVisualizationFactoryProduct(
+export function useLogViewerVisualizationProduct(
     dataProviderManager: DataProviderManager,
 ): WellLogFactoryProduct | null {
     const [previousRevision, setPreviousRevision] = React.useState<number | null>(null);

@@ -8,7 +8,7 @@ import _ from "lodash";
 import { MAIN_AXIS_CURVE, createWellLogSets } from "./queryDataTransform";
 import { getUniqueCurveNameForPlotConfig } from "./strings";
 import { trajectoryToIntersectionReference } from "./trajectory";
-import type { WellLogFactoryProduct } from "./useLogViewerVisualizationFactory";
+import type { WellLogFactoryProduct } from "./useLogViewerVisualizationProduct";
 
 import {
     COLOR_MAP_ACC_KEY,

@@ -5,10 +5,10 @@ import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { AreaPlotProvider } from "@modules/WellLogViewer/DataProviderFramework/dataProviders/plots/AreaPlotProvider";
 import { LinearPlotProvider } from "@modules/WellLogViewer/DataProviderFramework/dataProviders/plots/LinearPlotProvider";
+import { StackedPlotProvider } from "@modules/WellLogViewer/DataProviderFramework/dataProviders/plots/StackedPlotProvider";
 import { WellborePicksProvider } from "@modules/WellLogViewer/DataProviderFramework/dataProviders/wellpicks/WellPicksProvider";
 import { TrackIcon } from "@modules/WellLogViewer/_shared/components/icons";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
-import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import {
@@ -18,17 +18,27 @@ import {
 import { DataProviderManagerComponent } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManagerComponent";
 import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
 import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
-// import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type { ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
-import { ShowChart, ViewDay } from "@mui/icons-material";
+import { HorizontalRule, ShowChart, ViewDay } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAtom } from "jotai";
 
-import "../../DataProviderFramework/registerFrameworkExtensions";
 import { providerManagerAtom } from "../atoms/baseAtoms";
 import { serializedManagerStateAtom } from "../atoms/persistedAtoms";
+
+// import type { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
+
+import("../../DataProviderFramework/registerFrameworkExtensions");
+
+// @ts-expect-error -- dumb workaround, waiting for circular dependency pr to be available
+let DataProviderRegistry;
+import("@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry").then(
+    ({ DataProviderRegistry: provider }) => {
+        DataProviderRegistry = provider;
+    },
+);
 
 enum RootActionIdents {
     CONTINUOUS_TRACK = "cont_track",
@@ -184,6 +194,7 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
             switch (identifier) {
                 case RootActionIdents.WELL_PICKS:
                     return groupDelegate.appendChild(
+                        // @ts-expect-error -- dumb workaround, waiting for circular dependency pr to be available
                         DataProviderRegistry.makeDataProvider(WellborePicksProvider.name, providerManager),
                     );
 
@@ -199,11 +210,19 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
 
                 case PlotActionIdents.LINE:
                     return groupDelegate.appendChild(
+                        // @ts-expect-error -- dumb workaround, waiting for circular dependency pr to be available
                         DataProviderRegistry.makeDataProvider(LinearPlotProvider.name, providerManager),
                     );
                 case PlotActionIdents.AREA:
                     return groupDelegate.appendChild(
+                        // @ts-expect-error -- dumb workaround, waiting for circular dependency pr to be available
                         DataProviderRegistry.makeDataProvider(AreaPlotProvider.name, providerManager),
+                    );
+
+                case PlotActionIdents.STACKED:
+                    return groupDelegate.appendChild(
+                        // @ts-expect-error -- dumb workaround, waiting for circular dependency pr to be available
+                        DataProviderRegistry.makeDataProvider(StackedPlotProvider.name, providerManager),
                     );
 
                 default:

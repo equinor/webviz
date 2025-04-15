@@ -7,7 +7,7 @@ import { CircularProgress } from "@mui/material";
 import { useAtomValue } from "jotai";
 
 import { wellboreTrajectoryQueryAtom } from "./atoms/queryAtoms";
-import { SubsurfaceLogViewerWrapper } from "./components/SubsurfaceLogViewerWrapper";
+import { ProviderManagerWrapper } from "./components/ProviderManagerWrapper";
 
 import type { InterfaceTypes } from "../interfaces";
 
@@ -47,13 +47,13 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
     }
 
     return (
-        <SubsurfaceLogViewerWrapper
-            moduleProps={props}
+        <ProviderManagerWrapper
             providerManager={providerManager}
             wellboreHeader={selectedWellboreHeader}
             trajectoryData={wellboreTrajectoryDataQuery.data}
             horizontal={viewerHorizontal}
             padDataWithEmptyRows={padDataWithEmptyRows}
+            moduleProps={props}
         />
     );
 }
