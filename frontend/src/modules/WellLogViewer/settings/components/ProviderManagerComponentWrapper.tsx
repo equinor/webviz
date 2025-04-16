@@ -12,19 +12,21 @@ import { TrackIcon } from "@modules/WellLogViewer/_shared/components/icons";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
+import { DataProvider } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
 import {
     DataProviderManager,
     DataProviderManagerTopic,
 } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerComponent } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManagerComponent";
-import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
+import { Group, isGroup } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
 import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
-import type { ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
+import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { HorizontalRule, MultilineChart, ShowChart, ViewDay } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAtom } from "jotai";
+import _ from "lodash";
 
 import { providerManagerAtom } from "../atoms/baseAtoms";
 import { serializedManagerStateAtom } from "../atoms/persistedAtoms";
@@ -205,6 +207,46 @@ function makeOptionsForGroup(group: ItemGroup): ActionGroup[] {
     }
 }
 
+const ALLOWED_CHILDREN = {
+    [GroupType.VIEW]: {
+        groups: [GroupType.WELL_LOG_TRACK_CONT, GroupType.WELL_LOG_TRACK_DISC],
+        providers: [WellborePicksProvider.name],
+    },
+    [GroupType.WELL_LOG_TRACK_CONT]: {
+        groups: [GroupType.WELL_LOG_DIFF_GROUP],
+        providers: [LinearPlotProvider.name, AreaPlotProvider.name],
+    },
+    [GroupType.WELL_LOG_TRACK_DISC]: {
+        providers: [StackedPlotProvider.name],
+    },
+    [GroupType.WELL_LOG_DIFF_GROUP]: {
+        providers: [DiffPlotProvider.name],
+    },
+} as const;
+
+function getDestinationType(itemGroup: ItemGroup): GroupType {
+    if (itemGroup instanceof DataProviderManager) return GroupType.VIEW;
+    if (isGroup(itemGroup)) return itemGroup.getGroupType();
+
+    throw new Error("Excepted an item group type");
+}
+
+function getMovedItemIdent(item: Item): string {
+    if (isGroup(item)) return item.getGroupType();
+    if (item instanceof DataProvider) return item.getType();
+
+    throw new Error("Expected moved item to have a valid key");
+}
+
+function checkManagerMove(movedItem: Item, destinationGroup: ItemGroup): boolean {
+    const targetType = getDestinationType(destinationGroup);
+    const movedCategory = isGroup(movedItem) ? "groups" : "providers";
+    const movedIdent = getMovedItemIdent(movedItem);
+
+    const targetAllowedItems: string[] = _.get(ALLOWED_CHILDREN, [targetType, movedCategory], []);
+    return targetAllowedItems.includes(movedIdent);
+}
+
 export type ProviderManagerComponentWrapperProps = {
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
@@ -288,6 +330,7 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
             additionalHeaderComponents={null}
             groupActions={makeOptionsForGroup}
             onAction={groupActionCallback}
+            isMoveAllowed={checkManagerMove}
         />
     );
 }

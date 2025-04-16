@@ -6,7 +6,7 @@ import { CircularProgress } from "@mui/material";
 import { useAtomValue } from "jotai";
 
 import { wellboreTrajectoryQueryAtom } from "./atoms/queryAtoms";
-import { ProviderManagerWrapper } from "./components/ProviderManagerWrapper";
+import { ProviderVisualizationWrapper } from "./components/ProviderVisualizationWrapper";
 
 import type { InterfaceTypes } from "../interfaces";
 
@@ -42,7 +42,7 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
     }
 
     return (
-        <ProviderManagerWrapper
+        <ProviderVisualizationWrapper
             providerManager={providerManager}
             wellboreHeader={selectedWellboreHeader}
             trajectoryData={wellboreTrajectoryDataQuery.data}

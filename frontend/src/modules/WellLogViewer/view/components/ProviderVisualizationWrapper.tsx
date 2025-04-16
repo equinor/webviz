@@ -143,13 +143,13 @@ function createColorMapDefsFromProduct(factoryProduct: WellLogFactoryProduct | n
     return colorMapFuncDefs;
 }
 
-export type ProviderManagerWrapperProps = {
+export type ProviderVisualizationWrapperProps = {
     providerManager: DataProviderManager;
     trajectoryData: WellboreTrajectory_api;
     padDataWithEmptyRows: boolean;
 } & Omit<SubsurfaceLogViewerWrapperProps, "wellLogSets" | "wellPicks" | "viewerTemplate">;
 
-export function ProviderManagerWrapper(props: ProviderManagerWrapperProps): React.ReactNode {
+export function ProviderVisualizationWrapper(props: ProviderVisualizationWrapperProps): React.ReactNode {
     const { trajectoryData, padDataWithEmptyRows, providerManager, ...rest } = props;
 
     const factoryProduct = useLogViewerVisualizationProduct(providerManager);
