@@ -23,9 +23,9 @@ import { getUniqueCurveNameForPlotConfig } from "@modules/WellLogViewer/utils/st
 import { trajectoryToIntersectionReference } from "@modules/WellLogViewer/utils/trajectory";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { CircularProgress } from "@mui/material";
-import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/components/ColorMapFunction";
 import type { WellLogSet } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
+import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
 
 import _ from "lodash";
 

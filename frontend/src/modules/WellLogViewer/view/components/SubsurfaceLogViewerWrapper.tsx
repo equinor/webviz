@@ -6,10 +6,10 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import type { Template } from "@modules/WellLogViewer/types";
 import { WellLogViewer } from "@webviz/well-log-viewer";
-import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/components/ColorMapFunction";
 import type { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
 import type { WellLogSet } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 import type { WellLogController, WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
+import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
 
 import _ from "lodash";
 

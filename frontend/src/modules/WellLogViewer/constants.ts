@@ -3,6 +3,9 @@ import type { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/W
 import type { WellLogCurve } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 
 type PlotDropdownOption = DropdownOption<TemplatePlotType>;
+
+export const DEFAULT_MAX_VISIBLE_TRACKS = 5;
+
 export const PLOT_TYPE_OPTIONS: PlotDropdownOption[] = [
     { value: "line", label: "Line" },
     { value: "linestep", label: "Linestep" },

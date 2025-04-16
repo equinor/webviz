@@ -13,7 +13,7 @@ import {
     type VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
-import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/components/ColorMapFunction";
+import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
 
 import _ from "lodash";
 
