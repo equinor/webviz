@@ -4,14 +4,13 @@ import { isNumericalDataPoints } from "@modules/WellLogViewer/utils/queryDataTra
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type { Settings } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import {
-    type DataProviderVisualization,
-    type ReduceAccumulatedDataFunction,
-    type TransformerArgs,
-    type VisualizationGroup,
-    VisualizationItemType,
-    type VisualizationTarget,
+import type {
+    DataProviderVisualization,
+    TransformerArgs,
+    VisualizationGroup,
+    VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
 
@@ -35,6 +34,16 @@ export type FactoryAccResult = {
 };
 
 type PlotVisualizationArgs<PlotSettings extends Settings> = TransformerArgs<PlotSettings, WellboreLogCurveData_api>;
+
+function hasColorFunctionSetting(args: TransformerArgs<Setting[], WellboreLogCurveData_api>) {
+    // ! Temporary workaround; we are not able to check if a setting exists in the accumulator,
+    // ! and the provider crashes when you attempt to access a non-existent setting.
+    try {
+        return args.getSetting(Setting.COLOR_SCALE)?.colorScale;
+    } catch {
+        return false;
+    }
+}
 
 function colorFuncName(args: PlotVisualizationArgs<any>): string {
     return `colorMapping::${args.id}`;
@@ -115,48 +124,50 @@ export function makeStackedPlotConfig(args: PlotVisualizationArgs<StackedPlotSet
     };
 }
 
-export const plotDataAccumulator: ReduceAccumulatedDataFunction<Setting[], WellboreLogCurveData_api, FactoryAccResult> =
-    function plotDataAccumulator(acc, args) {
-        const newData = args.getData();
-        if (!newData) return acc;
+export function plotDataAccumulator(
+    acc: FactoryAccResult,
+    args: TransformerArgs<Setting[], WellboreLogCurveData_api>,
+): FactoryAccResult {
+    const newData = args.getData();
+    if (!newData) return acc;
 
-        const duplicatedNames = _.get(acc, DUPLICATE_NAMES_ACC_KEY) ?? new Set();
-        const curveData = _.get(acc, DATA_ACC_KEY) ?? [];
-        const colorMapFuncDefs = _.get(acc, COLOR_MAP_ACC_KEY) ?? [];
+    const duplicatedNames = _.get(acc, DUPLICATE_NAMES_ACC_KEY) ?? new Set();
+    const curveData = _.get(acc, DATA_ACC_KEY) ?? [];
+    const colorMapFuncDefs = _.get(acc, COLOR_MAP_ACC_KEY) ?? [];
 
-        const existingCurve = _.find(curveData, ["name", newData.name]);
-        const sameName = existingCurve?.name === newData.name;
-        const sameLog = existingCurve?.logName === newData.logName;
+    const existingCurve = _.find(curveData, ["name", newData.name]);
+    const sameName = existingCurve?.name === newData.name;
+    const sameLog = existingCurve?.logName === newData.logName;
 
-        if (args.getSetting(Setting.PLOT_VARIANT) === "gradientfill") {
-            const colorScale = args.getSetting(Setting.COLOR_SCALE)?.colorScale;
-            const dataPoints = newData.dataPoints;
+    if (hasColorFunctionSetting(args)) {
+        const colorScale = args.getSetting(Setting.COLOR_SCALE)?.colorScale;
+        const dataPoints = newData.dataPoints;
 
-            if (!isNumericalDataPoints(dataPoints)) {
-                console.warn("Cannot create color mapping for non-numeric data");
-            }
-
-            if (colorScale && isNumericalDataPoints(dataPoints)) {
-                const minValue = newData.minCurveValue ?? _.minBy(dataPoints, "1")![1];
-                const maxValue = newData.maxCurveValue ?? _.maxBy(dataPoints, "1")![1];
-
-                colorMapFuncDefs.push({
-                    name: colorFuncName(args),
-                    func: makeColorMapFunctionFromColorScale(colorScale, minValue, maxValue)!,
-                });
-            }
+        if (!isNumericalDataPoints(dataPoints)) {
+            console.warn("Cannot create color mapping for non-numeric data");
         }
 
-        if (sameName && sameLog) return acc;
-        if (sameName) duplicatedNames.add(newData.name);
+        if (colorScale && isNumericalDataPoints(dataPoints)) {
+            const minValue = newData.minCurveValue ?? _.minBy(dataPoints, "1")![1];
+            const maxValue = newData.maxCurveValue ?? _.maxBy(dataPoints, "1")![1];
 
-        return {
-            ...acc,
-            [DATA_ACC_KEY]: [...curveData, newData],
-            [COLOR_MAP_ACC_KEY]: colorMapFuncDefs,
-            [DUPLICATE_NAMES_ACC_KEY]: duplicatedNames,
-        };
+            colorMapFuncDefs.push({
+                name: colorFuncName(args),
+                func: makeColorMapFunctionFromColorScale(colorScale, minValue, maxValue)!,
+            });
+        }
+    }
+
+    if (sameName && sameLog) return acc;
+    if (sameName) duplicatedNames.add(newData.name);
+
+    return {
+        ...acc,
+        [DATA_ACC_KEY]: [...curveData, newData],
+        [COLOR_MAP_ACC_KEY]: colorMapFuncDefs,
+        [DUPLICATE_NAMES_ACC_KEY]: duplicatedNames,
     };
+}
 
 export type PlotVisualization = DataProviderVisualization<VisualizationTarget.WSC_WELL_LOG, TemplatePlot>;
 export type DiffVisualizationGroup = VisualizationGroup<
