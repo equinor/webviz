@@ -10,6 +10,7 @@ export type InputProps = InputUnstyledProps & {
     wrapperStyle?: React.CSSProperties;
     min?: number;
     max?: number;
+    step?: number;
     rounded?: "all" | "left" | "right" | "none";
     debounceTimeMs?: number;
     onValueChange?: (value: string) => void;
@@ -176,6 +177,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
                         className: "grow",
                     },
                     input: {
+                        step: props.step,
                         className: resolveClassNames("h-full block w-full sm:text-sm outline-none truncate"),
                         ref: internalRef,
                     },
