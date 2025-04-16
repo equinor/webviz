@@ -281,11 +281,15 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
 
                     diffGroup.getGroupDelegate().appendChild(
                         // @ts-expect-error -- dumb workaround, waiting for circular dependency pr to be available
-                        DataProviderRegistry.makeDataProvider(DiffPlotProvider.name, providerManager),
+                        DataProviderRegistry.makeDataProvider(DiffPlotProvider.name, providerManager, "Primary curve"),
                     );
                     diffGroup.getGroupDelegate().appendChild(
                         // @ts-expect-error -- dumb workaround, waiting for circular dependency pr to be available
-                        DataProviderRegistry.makeDataProvider(DiffPlotProvider.name, providerManager),
+                        DataProviderRegistry.makeDataProvider(
+                            DiffPlotProvider.name,
+                            providerManager,
+                            "Secondary curve",
+                        ),
                     );
 
                     return groupDelegate.appendChild(diffGroup);

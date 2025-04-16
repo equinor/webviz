@@ -16,7 +16,7 @@ export class DiffPlotProvider
     settings = differentialPlotSettings;
 
     getDefaultName() {
-        return "Linear plot";
+        return "Differential plot";
     }
 
     areCurrentSettingsValid() {

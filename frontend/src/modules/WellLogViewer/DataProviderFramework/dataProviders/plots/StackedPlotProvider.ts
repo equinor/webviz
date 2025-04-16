@@ -61,7 +61,7 @@ export class StackedPlotProvider
     }
 
     getDefaultName() {
-        return "Linear plot";
+        return "Stacked plot";
     }
 
     // TODO: Figure out why prev-settings is undefined

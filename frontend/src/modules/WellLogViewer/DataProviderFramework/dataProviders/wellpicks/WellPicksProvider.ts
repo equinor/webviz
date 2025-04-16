@@ -93,17 +93,14 @@ export class WellborePicksProvider
         return "Wellbore picks";
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     areCurrentSettingsValid(accessor: DataProviderInformationAccessors<WellPickSettingTypes, WellborePick_api[]>) {
-        // TODO
-
-        return true;
+        return accessor.getSetting(Setting.STRAT_COLUMN) != null;
     }
 
-    // TODO: Figure out why prev-settings is undefined
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsTypeMap, newSettings: SettingsTypeMap): boolean {
-        // return !_.isEqual(prevSettings?.logCurve, newSettings?.logCurve);
+        // TODO: Refetch if wellbore changed, which is a global value
         return true;
+        // return prevSettings?.stratColumn !== newSettings?.stratColumn;
     }
 }
