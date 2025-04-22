@@ -1,17 +1,18 @@
-import { BooleanSetting } from "./implementations/BooleanSetting";
-import { ColorScaleSetting } from "./implementations/ColorScaleSetting";
-import { DrilledWellboresSetting } from "./implementations/DrilledWellboresSetting";
-import { DropdownNumberSetting } from "./implementations/DropdownNumberSetting";
-import { DropdownStringSetting } from "./implementations/DropdownStringSetting";
-import { EnsembleSetting } from "./implementations/EnsembleSetting";
-import { Direction as GridLayerRangeDirection, GridLayerRangeSetting } from "./implementations/GridLayerRangeSetting";
-import { Direction as GridLayerDirection, GridLayerSetting } from "./implementations/GridLayerSetting";
-import { IntersectionSetting } from "./implementations/IntersectionSetting";
-import { SeismicSliceDirection, SeismicSliceSetting } from "./implementations/SeismicSliceSetting";
-import { SensitivitySetting } from "./implementations/SensitivitySetting";
-import { StatisticFunctionSetting } from "./implementations/StatisticFunctionSetting";
-import { SettingRegistry } from "./SettingRegistry";
-import { Setting } from "./settingsDefinitions";
+import { BooleanSetting } from "../implementations/BooleanSetting";
+import { ColorScaleSetting } from "../implementations/ColorScaleSetting";
+import { DrilledWellboresSetting } from "../implementations/DrilledWellboresSetting";
+import { DropdownNumberSetting } from "../implementations/DropdownNumberSetting";
+import { DropdownStringSetting } from "../implementations/DropdownStringSetting";
+import { EnsembleSetting } from "../implementations/EnsembleSetting";
+import { Direction as GridLayerRangeDirection, GridLayerRangeSetting } from "../implementations/GridLayerRangeSetting";
+import { Direction as GridLayerDirection, GridLayerSetting } from "../implementations/GridLayerSetting";
+import { IntersectionSetting } from "../implementations/IntersectionSetting";
+import { SeismicSliceDirection, SeismicSliceSetting } from "../implementations/SeismicSliceSetting";
+import { SensitivitySetting } from "../implementations/SensitivitySetting";
+import { StatisticFunctionSetting } from "../implementations/StatisticFunctionSetting";
+import { Setting } from "../settingsDefinitions";
+
+import { SettingRegistry } from "./_SettingRegistry";
 
 SettingRegistry.registerSetting(Setting.ATTRIBUTE, "Attribute", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.ENSEMBLE, "Ensemble", EnsembleSetting);
