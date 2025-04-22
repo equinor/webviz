@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./lib/components/@next/Input/input.css";
 
 /* Additional tailwind component classes */
 @utility input-comp {

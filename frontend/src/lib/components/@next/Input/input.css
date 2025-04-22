@@ -1,0 +1,22 @@
+@layer components {
+    .--wv-input {
+        @apply cursor-text sm:text-sm;
+        @apply px-2 py-1.5;
+        @apply bg-white border-gray-300 shadow-xs;
+        @apply rounded border flex gap-2 items-center;
+        @apply focus-within:outline-indigo-500 focus-within:outline;
+
+        &[data-disabled] {
+            @apply opacity-50 cursor-not-allowed;
+        }
+
+        &[data-invalid] {
+            @apply border-red-300 outline-red-300;
+        }
+
+        .--control {
+            /* Extend input area to edges of wrapper */
+            @apply -my-1.5 -mx-2 py-1.5 px-2 grow truncate focus:outline-none focus-visible:outline-none;
+        }
+    }
+}
