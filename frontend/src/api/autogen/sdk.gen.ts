@@ -195,6 +195,8 @@ import type {
     GetAliveResponse_api,
     GetAliveProtectedData_api,
     GetAliveProtectedResponse_api,
+    PostLogoutData_api,
+    PostLogoutResponse_api,
     GetLoggedInUserData_api,
     GetLoggedInUserResponse_api,
     GetLoggedInUserError_api,
@@ -1203,6 +1205,16 @@ export const getAliveProtected = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetAliveProtectedResponse_api, unknown, ThrowOnError>({
         ...options,
         url: "/alive_protected",
+    });
+};
+
+/**
+ * Post Logout
+ */
+export const postLogout = <ThrowOnError extends boolean = false>(options?: Options<PostLogoutData_api, ThrowOnError>) => {
+    return (options?.client ?? client).post<PostLogoutResponse_api, unknown, ThrowOnError>({
+        ...options,
+        url: "/logout",
     });
 };
 

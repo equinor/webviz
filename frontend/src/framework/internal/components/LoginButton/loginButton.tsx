@@ -3,6 +3,7 @@ import React from "react";
 import { Dropdown, MenuButton } from "@mui/base";
 import { AccountCircle, Login, Logout } from "@mui/icons-material";
 
+import { postLogout } from "@api";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Menu } from "@lib/components/Menu";
@@ -34,11 +35,11 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
 
     const { authState, userInfo } = useAuthProvider();
 
-    function handleLogout() {
-        window.alert("Sign out not implemented in backend yet.");
-        /*
-        window.location.href = "/api/logout";
-        */
+    async function handleLogout() {
+        console.debug("Logging out...");
+        await postLogout();
+        console.debug("Redirecting to login screen...");
+        window.location.href = "/";
     }
 
     function makeIcon() {
