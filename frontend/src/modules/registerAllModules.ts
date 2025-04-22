@@ -22,5 +22,6 @@ import "./WellLogViewer/registerModule";
 if (isDevMode()) {
     await import("./MyModule/registerModule");
     await import("./MyModule2/registerModule");
+    await import("./FormComponents/registerModule");
     await import("./DbgWorkbenchSpy/registerModule");
 }
