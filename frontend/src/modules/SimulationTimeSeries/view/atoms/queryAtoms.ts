@@ -1,5 +1,3 @@
-import type { QueryObserverResult } from "@tanstack/react-query";
-
 import type { Observations_api } from "@api";
 import {
     Frequency_api,
@@ -18,6 +16,7 @@ import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import type { EnsembleVectorObservationDataMap } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
+import type { QueryObserverResult } from "@tanstack/react-query";
 
 import {
     resampleFrequencyAtom,

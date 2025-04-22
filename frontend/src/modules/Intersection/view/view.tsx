@@ -1,14 +1,18 @@
 import React from "react";
 
-import { useAtomValue } from "jotai";
-
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { IntersectionType } from "@framework/types/intersection";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { IntersectionType } from "@framework/types/intersection";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { useAtomValue } from "jotai";
+
+import { intersectionReferenceSystemAtom, polylineAtom } from "./atoms/derivedAtoms";
+import { wellboreTrajectoryQueryAtom } from "./atoms/queryAtoms";
+import { LayersWrapper } from "./components/layersWrapper";
+import { useWellboreCasingsQuery } from "./queries/wellboreSchematicsQueries";
 
 import type { Interfaces } from "../interfaces";
 import { LayerStatus, useLayersStatuses } from "../utils/layers/BaseLayer";
@@ -18,11 +22,6 @@ import { isSeismicLayer } from "../utils/layers/SeismicLayer";
 import { isSurfaceLayer } from "../utils/layers/SurfaceLayer";
 import { isSurfacesUncertaintyLayer } from "../utils/layers/SurfacesUncertaintyLayer";
 import { isWellpicksLayer } from "../utils/layers/WellpicksLayer";
-
-import { intersectionReferenceSystemAtom, polylineAtom } from "./atoms/derivedAtoms";
-import { wellboreTrajectoryQueryAtom } from "./atoms/queryAtoms";
-import { LayersWrapper } from "./components/layersWrapper";
-import { useWellboreCasingsQuery } from "./queries/wellboreSchematicsQueries";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);

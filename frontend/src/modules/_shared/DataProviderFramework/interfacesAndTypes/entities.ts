@@ -1,9 +1,8 @@
+import type { SerializedItem } from "./serialization";
 
 import type { GroupDelegate } from "../delegates/GroupDelegate";
 import type { ItemDelegate } from "../delegates/ItemDelegate";
 import type { SharedSettingsDelegate } from "../delegates/SharedSettingsDelegate";
-
-import type { SerializedItem } from "./serialization";
 
 /**
  * Each entity in the data provider framework is based upon the Item interface.

@@ -1,6 +1,3 @@
-import type { QueryClient } from "@tanstack/query-core";
-import { isEqual } from "lodash";
-
 import { postGetPolylineIntersectionOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
@@ -8,7 +5,9 @@ import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/C
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import type { AdjustedPolylineIntersection } from "@modules/_shared/utils/wellbore";
 import { transformPolylineIntersection, transformPolylineIntersectionResult } from "@modules/_shared/utils/wellbore";
+import type { QueryClient } from "@tanstack/query-core";
 
+import { isEqual } from "lodash";
 
 import type { BoundingBox } from "./BaseLayer";
 import { BaseLayer, LayerTopic } from "./BaseLayer";

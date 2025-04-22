@@ -1,7 +1,5 @@
 import React from "react";
 
-import { isEqual } from "lodash";
-
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorPaletteType } from "@framework/WorkbenchSettings";
 import { Button } from "@lib/components/Button";
@@ -22,6 +20,7 @@ import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { Vec2 } from "@lib/utils/vec2";
 import { point2Distance } from "@lib/utils/vec2";
 
+import { isEqual } from "lodash";
 
 export type ColorScaleSpecification = {
     colorScale: ColorScale;

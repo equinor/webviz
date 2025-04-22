@@ -1,7 +1,6 @@
-import { atomWithQuery } from "jotai-tanstack-query";
-
 import { getDrilledWellboreHeadersOptions } from "@api";
 
+import { atomWithQuery } from "jotai-tanstack-query";
 
 import { selectedFieldIdentifierAtom } from "./derivedAtoms";
 

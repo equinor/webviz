@@ -1,21 +1,20 @@
 import React from "react";
 
-import { cloneDeep, isEqual } from "lodash";
-
 import type { FluidZone_api, InplaceVolumetricsIdentifierWithValues_api, InplaceVolumetricsIdentifier_api } from "@api";
-import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { SettingsContext } from "@framework/ModuleContext";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import type { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
+import { EnsembleSelect } from "@framework/components/EnsembleSelect";
+import type { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { ErrorWrapper } from "@lib/components/ErrorWrapper";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
 
+import { cloneDeep, isEqual } from "lodash";
 
 export type InplaceVolumetricsFilterComponentProps = {
     ensembleSet: EnsembleSet;

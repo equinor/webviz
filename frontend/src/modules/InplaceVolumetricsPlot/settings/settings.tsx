@@ -1,23 +1,19 @@
 import type React from "react";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-
 import type { InplaceVolumetricResultName_api } from "@api";
 import type { ModuleSettingsProps } from "@framework/Module";
-import type { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import type { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/InplaceVolumetricsFilterComponent";
 import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
 import { RealSelector, type SelectorColumn } from "@modules/_shared/InplaceVolumetrics/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumetrics/volumetricStringUtils";
+import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/InplaceVolumetricsFilterComponent";
 
-
-import type { Interfaces } from "../interfaces";
-import { PlotType, plotTypeToStringMapping } from "../typesAndEnums";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
     selectedIdentifierValueCriteriaAtom,
@@ -47,6 +43,8 @@ import {
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 import { makeColorByOptions, makeSubplotByOptions } from "./utils/plotDimensionUtils";
 
+import type { Interfaces } from "../interfaces";
+import { PlotType, plotTypeToStringMapping } from "../typesAndEnums";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);

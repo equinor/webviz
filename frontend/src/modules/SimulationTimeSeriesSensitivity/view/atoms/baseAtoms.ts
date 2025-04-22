@@ -1,8 +1,7 @@
-import { atom } from "jotai";
-
 import { Frequency_api } from "@api";
 import type { VectorSpec } from "@modules/SimulationTimeSeriesSensitivity/typesAndEnums";
 
+import { atom } from "jotai";
 
 export const vectorSpecificationAtom = atom<VectorSpec | null>(null);
 export const resamplingFrequencyAtom = atom<Frequency_api | null>(Frequency_api.MONTHLY);

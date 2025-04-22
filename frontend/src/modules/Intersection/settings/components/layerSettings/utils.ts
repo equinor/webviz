@@ -1,7 +1,6 @@
-import { isEqual } from "lodash";
-
 import type { LayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
 
+import { isEqual } from "lodash";
 
 export function fixupSetting<TSettings extends LayerSettings, TKey extends keyof TSettings>(
     setting: TKey,

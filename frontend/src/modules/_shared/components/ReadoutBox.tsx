@@ -1,10 +1,9 @@
 import React from "react";
 
-import _ from "lodash";
-
 import { useStableProp } from "@lib/hooks/useStableProp";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 
+import _ from "lodash";
 
 export type ReadoutItem = {
     label: string;

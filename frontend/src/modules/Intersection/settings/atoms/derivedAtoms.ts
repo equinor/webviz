@@ -1,11 +1,10 @@
-import { atom } from "jotai";
-import { queryClientAtom } from "jotai-tanstack-query";
-
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
 import { LayerManager } from "@modules/Intersection/utils/layers/LayerManager";
 
+import { atom } from "jotai";
+import { queryClientAtom } from "jotai-tanstack-query";
 
 import {
     userSelectedCustomIntersectionPolylineIdAtom,

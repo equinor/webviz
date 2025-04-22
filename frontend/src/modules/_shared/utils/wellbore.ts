@@ -1,8 +1,7 @@
-import simplify from "simplify-js";
-
 import type { FenceMeshSection_api, PolylineIntersection_api } from "@api";
 import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
 
+import simplify from "simplify-js";
 
 import { b64DecodeFloatArrayToFloat32, b64DecodeUintArrayToUint32, b64DecodeUintArrayToUint32OrLess } from "../base64";
 

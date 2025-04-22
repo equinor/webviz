@@ -1,14 +1,13 @@
 import React from "react";
 
-import { Close } from "@mui/icons-material";
-import { isEqual } from "lodash";
-import { v4 } from "uuid";
-
 import type { BaseComponentProps } from "@lib/components/BaseComponent";
 import { BaseComponent } from "@lib/components/BaseComponent";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
+import { Close } from "@mui/icons-material";
 
+import { isEqual } from "lodash";
+import { v4 } from "uuid";
 
 enum SelectionValidity {
     Valid = "valid",

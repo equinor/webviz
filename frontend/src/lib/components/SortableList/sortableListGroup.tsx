@@ -1,19 +1,17 @@
 import React from "react";
 
-import { DragIndicator, ExpandLess, ExpandMore } from "@mui/icons-material";
-import { isEqual } from "lodash";
-
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { DragIndicator, ExpandLess, ExpandMore } from "@mui/icons-material";
 
-
-import { DenseIconButton } from "../DenseIconButton";
+import { isEqual } from "lodash";
 
 import { HoveredArea, SortableListContext } from "./sortableList";
 import { SortableListDropIndicator } from "./sortableListDropIndicator";
 import type { SortableListItemProps } from "./sortableListItem";
 
+import { DenseIconButton } from "../DenseIconButton";
 
 export type SortableListGroupProps = {
     id: string;

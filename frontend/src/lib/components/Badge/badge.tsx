@@ -1,9 +1,8 @@
 import type React from "react";
 
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { BadgeProps as MuiBadgeProps } from "@mui/base";
 import { Badge as MuiBadge } from "@mui/base";
-
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type BadgeProps = MuiBadgeProps;
 

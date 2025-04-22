@@ -1,12 +1,9 @@
-import { atom } from "jotai";
-
 import type { DatedFlowNetwork_api, FlowNetworkMetadata_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 
-
-import { QueryStatus } from "../../types";
+import { atom } from "jotai";
 
 import {
     userSelectedDateTimeAtom,
@@ -18,6 +15,7 @@ import {
 } from "./baseAtoms";
 import { realizationFlowNetworkQueryAtom } from "./queryAtoms";
 
+import { QueryStatus } from "../../types";
 
 export const flowNetworkQueryResultAtom = atom((get) => {
     return get(realizationFlowNetworkQueryAtom);

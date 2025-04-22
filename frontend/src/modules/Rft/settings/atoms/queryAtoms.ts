@@ -1,7 +1,6 @@
-import { atomWithQuery } from "jotai-tanstack-query";
-
 import { getRealizationDataOptions, getTableDefinitionOptions } from "@api";
 
+import { atomWithQuery } from "jotai-tanstack-query";
 
 import {
     selectedEnsembleIdentAtom,

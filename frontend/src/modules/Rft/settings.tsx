@@ -1,17 +1,16 @@
-import { useAtomValue, useSetAtom } from "jotai";
-
-import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
+import { useAtomValue, useSetAtom } from "jotai";
 
 import type { Interfaces } from "./interfaces";
 import {

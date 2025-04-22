@@ -1,10 +1,9 @@
 import React from "react";
 
-import { DragIndicator } from "@mui/icons-material";
-
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { DragIndicator } from "@mui/icons-material";
 
 import { HoveredArea, SortableListContext } from "./sortableList";
 import { SortableListDropIndicator } from "./sortableListDropIndicator";

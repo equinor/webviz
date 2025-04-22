@@ -1,9 +1,8 @@
-import { describe, expect, test } from "vitest";
-
 import type { Parameter } from "@framework/EnsembleParameters";
 import { EnsembleParameters, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { MinMax } from "@lib/utils/MinMax";
 
+import { describe, expect, test } from "vitest";
 
 // prettier-ignore
 const PARAM_ARR: Parameter[] = [

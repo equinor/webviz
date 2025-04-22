@@ -1,9 +1,6 @@
 import type { Layer } from "@equinor/esv-intersection";
+
 import { isEqual } from "lodash";
-
-
-import type { IntersectionItem, LayerDataItem } from "../types/types";
-import { IntersectionItemShape } from "../types/types";
 
 import {
     isCalloutCanvasLayer,
@@ -13,6 +10,9 @@ import {
     isSurfaceLayer,
     isWellborepathLayer,
 } from "./layers";
+
+import type { IntersectionItem, LayerDataItem } from "../types/types";
+import { IntersectionItemShape } from "../types/types";
 
 export function makeLayerDataItems(layer: Layer<any>): LayerDataItem[] {
     if (isSurfaceLayer(layer) && layer.data) {

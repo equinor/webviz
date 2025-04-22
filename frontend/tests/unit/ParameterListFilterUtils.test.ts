@@ -1,15 +1,14 @@
-import { describe, expect, test } from "vitest";
-
+import type { ContinuousParameter, DiscreteParameter } from "@framework/EnsembleParameters";
+import { ParameterType } from "@framework/EnsembleParameters";
 import {
     createAndAddNode,
     createTreeDataNodeListFromParameters,
     getChildNodeNamesFromParentNodeName,
     getParametersMatchingSelectedNodes,
 } from "@framework/components/ParameterListFilter/private-utils/smartNodeSelectorUtils";
-import type { ContinuousParameter, DiscreteParameter } from "@framework/EnsembleParameters";
-import { ParameterType } from "@framework/EnsembleParameters";
 import type { TreeDataNode } from "@lib/components/SmartNodeSelector";
 
+import { describe, expect, test } from "vitest";
 
 const CONTINUOUS_PARAMETER: ContinuousParameter = {
     type: ParameterType.CONTINUOUS,

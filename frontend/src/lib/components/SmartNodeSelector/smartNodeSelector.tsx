@@ -1,9 +1,9 @@
 import React from "react";
 
-import { Close } from "@mui/icons-material";
-import _ from "lodash";
-
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Close } from "@mui/icons-material";
+
+import _ from "lodash";
 
 import { Suggestions } from "./private-components/suggestions";
 import { Tag } from "./private-components/tag";

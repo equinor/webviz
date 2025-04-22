@@ -1,7 +1,5 @@
 import React from "react";
 
-import { Deselect, SelectAll } from "@mui/icons-material";
-
 import type { WellboreHeader_api } from "@api";
 import { Button } from "@lib/components/Button";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -9,6 +7,7 @@ import { Label } from "@lib/components/Label";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
+import { Deselect, SelectAll } from "@mui/icons-material";
 
 export type WellboreSelectorProps = {
     wellboreHeaders: WellboreHeader_api[];

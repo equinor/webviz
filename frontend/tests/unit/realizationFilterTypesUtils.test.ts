@@ -1,5 +1,3 @@
-import { describe, expect, test } from "vitest";
-
 import type { ParameterValueSelection, RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 import {
     areParameterIdentStringToValueSelectionMapCandidatesEqual,
@@ -9,6 +7,7 @@ import {
     makeRealizationNumberArrayFromSelections,
 } from "@framework/utils/realizationFilterTypesUtils";
 
+import { describe, expect, test } from "vitest";
 
 describe("isValueSelectionAnArrayOfString", () => {
     test("should return true for an array of strings", () => {

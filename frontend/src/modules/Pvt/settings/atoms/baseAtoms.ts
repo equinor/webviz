@@ -1,11 +1,10 @@
-import { atom } from "jotai";
-import { isEqual } from "lodash";
-
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 import { ColorBy, PhaseType, PressureDependentVariable } from "@modules/Pvt/typesAndEnums";
 
+import { atom } from "jotai";
+import { isEqual } from "lodash";
 
 export const selectedPhaseAtom = atom<PhaseType>(PhaseType.OIL);
 export const selectedColorByAtom = atom<ColorBy>(ColorBy.ENSEMBLE);

@@ -1,9 +1,8 @@
-import { atom } from "jotai";
-
+import type { SurfaceMeshLayerSettings, ViewSettings } from "@modules/SubsurfaceMap/_utils";
 import type { PolygonsAddress } from "@modules/_shared/Polygons";
 import type { RealizationSurfaceAddress, StatisticalSurfaceAddress } from "@modules/_shared/Surface";
-import type { SurfaceMeshLayerSettings, ViewSettings } from "@modules/SubsurfaceMap/_utils";
 
+import { atom } from "jotai";
 
 export const meshSurfaceAddressAtom = atom<RealizationSurfaceAddress | StatisticalSurfaceAddress | null>(null);
 export const propertySurfaceAddressAtom = atom<RealizationSurfaceAddress | StatisticalSurfaceAddress | null>(null);

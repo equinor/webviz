@@ -1,7 +1,5 @@
 import React from "react";
 
-import { useSetAtom } from "jotai";
-
 import { KeyKind } from "@framework/DataChannelTypes";
 import type { ModuleViewProps } from "@framework/Module";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
@@ -11,10 +9,7 @@ import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage/contentMessage";
 
-
-import { createSensitivityColorMap } from "../../_shared/sensitivityColors";
-import type { Interfaces } from "../interfaces";
-import { DisplayComponentType } from "../typesAndEnums";
+import { useSetAtom } from "jotai";
 
 import { selectedSensitivityAtom } from "./atoms/baseAtoms";
 import { SensitivityChart } from "./components/sensitivityChart";
@@ -22,6 +17,9 @@ import SensitivityTable from "./components/sensitivityTable";
 import type { SensitivityResponseDataset } from "./utils/sensitivityResponseCalculator";
 import { SensitivityResponseCalculator } from "./utils/sensitivityResponseCalculator";
 
+import { createSensitivityColorMap } from "../../_shared/sensitivityColors";
+import type { Interfaces } from "../interfaces";
+import { DisplayComponentType } from "../typesAndEnums";
 
 export const View = ({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");

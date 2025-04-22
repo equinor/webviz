@@ -1,8 +1,8 @@
+import type { GroupType } from "./groupTypes";
+
 import type { DataProviderManager } from "../framework/DataProviderManager/DataProviderManager";
 import { Group } from "../framework/Group/Group";
 import type { CustomGroupImplementation } from "../interfacesAndTypes/customGroupImplementation";
-
-import type { GroupType } from "./groupTypes";
 
 export class GroupRegistry {
     private static _registeredGroups: Map<
@@ -41,5 +41,3 @@ export class GroupRegistry {
         });
     }
 }
-
-import "./registerAllSharedGroups";

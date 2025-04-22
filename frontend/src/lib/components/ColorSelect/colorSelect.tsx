@@ -1,10 +1,9 @@
 import React from "react";
 
-import { ExpandMore } from "@mui/icons-material";
-
 import { Button } from "@lib/components/Button";
 import { ColorTile } from "@lib/components/ColorTile";
 import { Dropdown } from "@lib/components/Dropdown";
+import { ExpandMore } from "@mui/icons-material";
 
 import { DenseIconButton } from "../DenseIconButton";
 

@@ -1,7 +1,5 @@
 import React from "react";
 
-import { useAtomValue } from "jotai";
-
 import { InplaceVolumetricsIdentifier_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -11,13 +9,13 @@ import { Table as TableComponent } from "@lib/components/Table";
 import type { TableHeading, TableRow } from "@lib/components/Table/table";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
-
-import type { Interfaces } from "../interfaces";
+import { useAtomValue } from "jotai";
 
 import { areSelectedTablesComparableAtom, haveAllQueriesFailedAtom, isQueryFetchingAtom } from "./atoms/derivedAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useTableBuilder } from "./hooks/useTableBuilder";
 
+import type { Interfaces } from "../interfaces";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);

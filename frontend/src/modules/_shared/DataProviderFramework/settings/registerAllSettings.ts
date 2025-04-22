@@ -1,3 +1,4 @@
+import { SettingRegistry } from "./SettingRegistry";
 import { BooleanSetting } from "./implementations/BooleanSetting";
 import { ColorScaleSetting } from "./implementations/ColorScaleSetting";
 import { DrilledWellboresSetting } from "./implementations/DrilledWellboresSetting";
@@ -10,7 +11,6 @@ import { IntersectionSetting } from "./implementations/IntersectionSetting";
 import { SeismicSliceDirection, SeismicSliceSetting } from "./implementations/SeismicSliceSetting";
 import { SensitivitySetting } from "./implementations/SensitivitySetting";
 import { StatisticFunctionSetting } from "./implementations/StatisticFunctionSetting";
-import { SettingRegistry } from "./SettingRegistry";
 import { Setting } from "./settingsDefinitions";
 
 SettingRegistry.registerSetting(Setting.ATTRIBUTE, "Attribute", DropdownStringSetting);

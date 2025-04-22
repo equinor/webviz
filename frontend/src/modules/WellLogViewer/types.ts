@@ -1,6 +1,5 @@
-import type { TemplatePlot, TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
-
 import type { WellLogCurveTypeEnum_api, WellboreLogCurveHeader_api } from "@api";
+import type { TemplatePlot, TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 /**
  * Extension of the SS-comp library type to add some state types to help with editing settings

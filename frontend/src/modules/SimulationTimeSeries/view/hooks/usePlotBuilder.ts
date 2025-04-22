@@ -1,14 +1,14 @@
 import type React from "react";
 
-import { useAtomValue } from "jotai";
-
 import type { SummaryVectorObservations_api } from "@api";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import type { Size2D } from "@lib/utils/geometry";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
+import { useAtomValue } from "jotai";
 
+import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
 import type { VectorSpec } from "../../typesAndEnums";
 import { GroupBy, VisualizationMode } from "../../typesAndEnums";
@@ -20,14 +20,12 @@ import {
     loadedVectorSpecificationsAndStatisticsDataAtom,
 } from "../atoms/derivedAtoms";
 import { vectorObservationsQueriesAtom } from "../atoms/queryAtoms";
-import type { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
 import { PlotBuilder, SubplotOwner } from "../utils/PlotBuilder";
+import type { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
 import {
     filterVectorSpecificationAndFanchartStatisticsDataArray,
     filterVectorSpecificationAndIndividualStatisticsDataArray,
 } from "../utils/vectorSpecificationsAndQueriesUtils";
-
-import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
 export function usePlotBuilder(
     viewContext: ViewContext<Interfaces>,

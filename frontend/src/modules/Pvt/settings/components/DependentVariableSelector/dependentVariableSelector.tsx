@@ -1,9 +1,8 @@
 import React from "react";
 
-import { isEqual } from "lodash";
-
 import { Checkbox } from "@lib/components/Checkbox";
 
+import { isEqual } from "lodash";
 
 import type { PressureDependentVariable } from "../../../typesAndEnums";
 import { PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME } from "../../../typesAndEnums";

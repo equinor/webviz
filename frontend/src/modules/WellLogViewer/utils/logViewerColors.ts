@@ -1,6 +1,5 @@
-import type { ColorTable } from "@webviz/well-log-viewer/dist/components/ColorMapFunction";
-
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
+import type { ColorTable } from "@webviz/well-log-viewer/dist/components/ColorMapFunction";
 
 // Using the "Time series" palette to pick line colors
 export const CURVE_COLOR_PALETTE = defaultColorPalettes[2];

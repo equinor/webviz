@@ -1,11 +1,10 @@
 import React from "react";
 
-import { Button, Dropdown, MenuButton } from "@mui/base";
-import { Add } from "@mui/icons-material";
-
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import type { SelectOption } from "@lib/components/Select";
+import { Button, Dropdown, MenuButton } from "@mui/base";
+import { Add } from "@mui/icons-material";
 
 export type AddItemButtonProps<TValue> = {
     buttonText: string;

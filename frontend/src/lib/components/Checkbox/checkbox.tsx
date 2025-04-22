@@ -1,9 +1,8 @@
 import React from "react";
 
-import { v4 } from "uuid";
-
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { v4 } from "uuid";
 
 import type { BaseComponentProps } from "../BaseComponent";
 import { BaseComponent } from "../BaseComponent";

@@ -1,7 +1,3 @@
-import type { QueryObserverResult } from "@tanstack/react-query";
-import { atomWithQuery } from "jotai-tanstack-query";
-import _ from "lodash";
-
 import type { StratigraphicColumn_api, WellboreLogCurveHeader_api } from "@api";
 import {
     WellLogCurveSourceEnum_api,
@@ -13,7 +9,10 @@ import {
 } from "@api";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { mergeResults } from "@modules/WellLogViewer/utils/queries";
+import type { QueryObserverResult } from "@tanstack/react-query";
 
+import { atomWithQuery } from "jotai-tanstack-query";
+import _ from "lodash";
 
 import { selectedFieldIdentifierAtom, selectedWellPickColumnAtom, selectedWellboreHeaderAtom } from "./derivedAtoms";
 

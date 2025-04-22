@@ -1,5 +1,8 @@
 import type { Controller, Layer, SchematicData, SchematicLayer } from "@equinor/esv-intersection";
 
+import { HighlightOverlay } from "./HighlightOverlay";
+import type { Intersection, IntersectionHandlerOptions } from "./IntersectionHandler";
+import { IntersectionHandler, IntersectionHandlerTopic } from "./IntersectionHandler";
 
 import type { HighlightItem, LayerDataItem, ReadoutItem } from "../types/types";
 import {
@@ -8,10 +11,6 @@ import {
 } from "../utils/intersectionConversion";
 import { makeLayerDataItems } from "../utils/layerDataItems";
 import { isSchematicLayer } from "../utils/layers";
-
-import { HighlightOverlay } from "./HighlightOverlay";
-import { IntersectionHandler, IntersectionHandlerTopic } from "./IntersectionHandler";
-import type { Intersection, IntersectionHandlerOptions } from "./IntersectionHandler";
 
 export enum InteractionHandlerTopic {
     READOUT_ITEMS_CHANGE = "readout-items-change",

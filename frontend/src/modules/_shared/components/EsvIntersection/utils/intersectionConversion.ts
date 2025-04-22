@@ -1,24 +1,5 @@
 import type { Controller, Layer } from "@equinor/esv-intersection";
 
-
-import { FanchartIntersectionCalculator } from "../interaction/FanchartIntersectionCalculator";
-import type { IntersectionHandlerOptions } from "../interaction/IntersectionHandler";
-import { LineIntersectionCalculator } from "../interaction/LineIntersectionCalculator";
-import { LineSetIntersectionCalculator } from "../interaction/LineSetIntersectionCalculator";
-import { PointIntersectionCalculator } from "../interaction/PointIntersectionCalculator";
-import { PolygonIntersectionCalculator } from "../interaction/PolygonIntersectionCalculator";
-import { PolygonsIntersectionCalculator } from "../interaction/PolygonsIntersectionCalculator";
-import { RectangleIntersectionCalculator } from "../interaction/RectangleIntersectionCalculator";
-import { WellborePathIntersectionCalculator } from "../interaction/WellborePathIntersectionCalculator";
-import type {
-    HighlightItem,
-    IntersectedItem,
-    IntersectionCalculator,
-    IntersectionItem,
-    ReadoutItem,
-} from "../types/types";
-import { HighlightItemShape, IntersectionItemShape } from "../types/types";
-
 import {
     isFanchartIntersectionResult,
     isLineIntersectionResult,
@@ -39,6 +20,24 @@ import {
     isSurfaceLayer,
     isWellborepathLayer,
 } from "./layers";
+
+import { FanchartIntersectionCalculator } from "../interaction/FanchartIntersectionCalculator";
+import type { IntersectionHandlerOptions } from "../interaction/IntersectionHandler";
+import { LineIntersectionCalculator } from "../interaction/LineIntersectionCalculator";
+import { LineSetIntersectionCalculator } from "../interaction/LineSetIntersectionCalculator";
+import { PointIntersectionCalculator } from "../interaction/PointIntersectionCalculator";
+import { PolygonIntersectionCalculator } from "../interaction/PolygonIntersectionCalculator";
+import { PolygonsIntersectionCalculator } from "../interaction/PolygonsIntersectionCalculator";
+import { RectangleIntersectionCalculator } from "../interaction/RectangleIntersectionCalculator";
+import { WellborePathIntersectionCalculator } from "../interaction/WellborePathIntersectionCalculator";
+import type {
+    HighlightItem,
+    IntersectedItem,
+    IntersectionCalculator,
+    IntersectionItem,
+    ReadoutItem,
+} from "../types/types";
+import { HighlightItemShape, IntersectionItemShape } from "../types/types";
 
 export function makeIntersectionCalculatorFromIntersectionItem(
     intersectionItem: IntersectionItem,

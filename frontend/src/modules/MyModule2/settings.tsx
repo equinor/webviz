@@ -1,9 +1,8 @@
 import React from "react";
 
-import { ArrowBackIosNew, ImageAspectRatioTwoTone } from "@mui/icons-material";
-
 import { Dropdown, type DropdownOptionOrGroup } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { ArrowBackIosNew, ImageAspectRatioTwoTone } from "@mui/icons-material";
 
 export function Settings(): React.ReactNode {
     const [selectedItem, setSelectedItem] = React.useState<string>();

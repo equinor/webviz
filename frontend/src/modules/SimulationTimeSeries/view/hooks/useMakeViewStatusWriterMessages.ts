@@ -1,5 +1,3 @@
-import { useAtomValue } from "jotai";
-
 import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { ViewContext } from "@framework/ModuleContext";
@@ -7,6 +5,7 @@ import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { ViewStatusWriter } from "@framework/StatusWriter";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
+import { useAtomValue } from "jotai";
 
 import {
     historicalDataQueryHasErrorAtom,

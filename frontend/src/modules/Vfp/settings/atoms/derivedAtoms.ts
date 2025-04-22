@@ -1,12 +1,9 @@
-import { atom } from "jotai";
-
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 import { isProdTable } from "@modules/Vfp/utils/vfpTableClassifier";
 
-
-import { PressureOption, VfpParam } from "../../types";
+import { atom } from "jotai";
 
 import {
     userSelectedAlqIndicesAtom,
@@ -22,6 +19,7 @@ import {
 } from "./baseAtoms";
 import { vfpTableNamesQueryAtom, vfpTableQueryAtom } from "./queryAtoms";
 
+import { PressureOption, VfpParam } from "../../types";
 
 export const vfpTableNamesQueryResultAtom = atom((get) => {
     return get(vfpTableNamesQueryAtom);

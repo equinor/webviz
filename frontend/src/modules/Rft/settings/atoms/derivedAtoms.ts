@@ -1,9 +1,8 @@
-import { atom } from "jotai";
-
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 
+import { atom } from "jotai";
 
 import {
     userSelectedEnsembleIdentAtom,

@@ -1,15 +1,15 @@
 import React from "react";
 
-import { Add } from "@mui/icons-material";
-
-import { SortableList } from "@lib/components/SortableList";
 import type { IsMoveAllowedArgs } from "@lib/components/SortableList";
+import { SortableList } from "@lib/components/SortableList";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
+import { Add } from "@mui/icons-material";
 
+import type { DataProviderManager } from "./DataProviderManager";
 
 import type { ActionGroup } from "../../Actions";
 import { Actions } from "../../Actions";
@@ -19,8 +19,6 @@ import { instanceofItemGroup } from "../../interfacesAndTypes/entities";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
-
-import type { DataProviderManager } from "./DataProviderManager";
 
 export type DataProviderManagerComponentProps = {
     title: string;

@@ -1,16 +1,14 @@
-import { isEqual } from "lodash";
-
 import type { SurfaceStatisticFunction_api, WellboreHeader_api } from "@api";
-import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import type { ColorSet } from "@lib/utils/ColorSet";
 
-
-import type { AvailableValuesType } from "../interfacesAndTypes/utils";
+import { isEqual } from "lodash";
 
 import type { IntersectionSettingValue } from "./implementations/IntersectionSetting";
 import type { SensitivityNameCasePair } from "./implementations/SensitivitySetting";
 
+import type { AvailableValuesType } from "../interfacesAndTypes/utils";
 
 export enum SettingCategory {
     SINGLE_SELECT = "singleSelect",

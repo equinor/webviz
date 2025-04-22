@@ -1,5 +1,3 @@
-import { describe, expect, test } from "vitest";
-
 import {
     hasTime,
     hasTimezone,
@@ -8,6 +6,7 @@ import {
     timestampUtcMsToIsoString,
 } from "@framework/utils/timestampUtils";
 
+import { describe, expect, test } from "vitest";
 
 describe("TimestampUtils tests", () => {
     test("Check if ISO 8601 string contains time", () => {

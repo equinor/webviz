@@ -1,3 +1,5 @@
+import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
+import { Dependency } from "./_utils/Dependency";
 
 import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
@@ -17,9 +19,6 @@ import type { SerializedSettingsState } from "../interfacesAndTypes/serializatio
 import type { NullableStoredData, StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { AvailableValuesType, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { MakeSettingTypesMap, SettingTypes, Settings } from "../settings/settingsDefinitions";
-
-import { Dependency } from "./_utils/Dependency";
-import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 export enum SettingsContextStatus {
     VALID_SETTINGS = "VALID_SETTINGS",

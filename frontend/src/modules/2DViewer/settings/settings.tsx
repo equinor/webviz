@@ -1,24 +1,22 @@
 import React from "react";
 
-import { useQueryClient } from "@tanstack/react-query";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-
-import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { FieldDropdown } from "@framework/components/FieldDropdown";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
+import { useQueryClient } from "@tanstack/react-query";
 
-
-import {
-    DataProviderManager,
-    DataProviderManagerTopic,
-} from "../../_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { dataProviderManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
 
+import {
+    DataProviderManager,
+    DataProviderManagerTopic,
+} from "../../_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);

@@ -1,14 +1,13 @@
+import { EnsembleSet } from "@framework/EnsembleSet";
 
 import { atom } from "jotai";
 import { isEqual } from "lodash";
 
-import { EnsembleSet } from "@framework/EnsembleSet";
-
 import type { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import type { RealizationFilterSet } from "./RealizationFilterSet";
 import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
-import { atomWithCompare } from "./utils/atomUtils";
 import type { EnsembleRealizationFilterFunction } from "./WorkbenchSession";
+import { atomWithCompare } from "./utils/atomUtils";
 
 /** A module's instance-id. Available in the jotai-store of each module, otherwise null */
 // ? Should this one be moved to `AtomStoreMaster.ts`?

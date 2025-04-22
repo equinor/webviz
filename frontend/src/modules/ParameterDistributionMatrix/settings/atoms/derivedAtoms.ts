@@ -1,9 +1,8 @@
-import { atom } from "jotai";
-
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { MAX_PARAMETERS } from "@modules/ParameterDistributionMatrix/typesAndEnums";
 
+import { atom } from "jotai";
 
 import {
     showConstantParametersAtom,

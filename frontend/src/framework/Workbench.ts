@@ -3,16 +3,16 @@ import type { QueryClient } from "@tanstack/react-query";
 import { AtomStoreMaster } from "./AtomStoreMaster";
 import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
 import { InitialSettings } from "./InitialSettings";
-import { loadMetadataFromBackendAndCreateEnsembleSet } from "./internal/EnsembleSetLoader";
-import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
-import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
-import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
 import { ImportState } from "./Module";
 import type { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import type { Template } from "./TemplateRegistry";
 import type { WorkbenchServices } from "./WorkbenchServices";
+import { loadMetadataFromBackendAndCreateEnsembleSet } from "./internal/EnsembleSetLoader";
+import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
+import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
+import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
 
 export enum WorkbenchEvents {
     ModuleInstancesChanged = "ModuleInstancesChanged",

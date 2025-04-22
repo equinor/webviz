@@ -1,8 +1,8 @@
 import type { colorTablesObj } from "@emerson-eps/color-tables";
+import type { ColorScale } from "@lib/utils/ColorScale";
+
 import type { Color, Rgb } from "culori";
 import { parse } from "culori";
-
-import type { ColorScale } from "@lib/utils/ColorScale";
 
 export function createContinuousColorScaleForMap(colorScale: ColorScale): colorTablesObj[] {
     const hexColors = colorScale.getPlotlyColorScale();

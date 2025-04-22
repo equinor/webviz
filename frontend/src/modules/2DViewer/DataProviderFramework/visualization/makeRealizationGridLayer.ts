@@ -1,8 +1,7 @@
-import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
-
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
+import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import type {
     RealizationGridData,

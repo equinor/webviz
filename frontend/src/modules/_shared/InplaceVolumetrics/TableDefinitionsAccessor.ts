@@ -1,5 +1,3 @@
-import { isEqual } from "lodash";
-
 import type {
     FluidZone_api,
     InplaceVolumetricResultName_api,
@@ -9,6 +7,7 @@ import type {
 } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
+import { isEqual } from "lodash";
 
 import { sortResultNames } from "./sortResultNames";
 

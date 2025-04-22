@@ -1,17 +1,15 @@
 import React from "react";
 
-import { useAtom } from "jotai";
-
 import type { SettingsStatusWriter } from "@framework/StatusWriter";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Label } from "@lib/components/Label";
 
-
-import { userSelectedWellPicksAtom } from "../atoms/baseAtoms";
-import { padDataWithEmptyRowsAtom, viewerHorizontalAtom } from "../atoms/persistedAtoms";
+import { useAtom } from "jotai";
 
 import { WellpickSelect } from "./WellpickSelect";
 
+import { userSelectedWellPicksAtom } from "../atoms/baseAtoms";
+import { padDataWithEmptyRowsAtom, viewerHorizontalAtom } from "../atoms/persistedAtoms";
 
 export type ViewerSettingsProps = {
     statusWriter: SettingsStatusWriter;

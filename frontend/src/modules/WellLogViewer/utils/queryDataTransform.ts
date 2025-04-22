@@ -1,6 +1,8 @@
 /**
  * Utilities to convert fetched well log data to the JSON well-log format (see https://jsonwelllogformat.org/)
  */
+import type { WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
+import { WellLogCurveSourceEnum_api } from "@api";
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import type {
     WellLogCurve,
@@ -9,10 +11,8 @@ import type {
     WellLogSet,
 } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
-import _ from "lodash";
 
-import { WellLogCurveSourceEnum_api } from "@api";
-import type { WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
+import _ from "lodash";
 
 import { COLOR_TABLES } from "./logViewerColors";
 import { getUniqueCurveNameForCurveData } from "./strings";

@@ -1,10 +1,10 @@
-import type { Locator, TestType } from "@playwright/experimental-ct-core";
-import { expect, test } from "@playwright/experimental-ct-react";
-
 import { ResizablePanels } from "@lib/components/ResizablePanels";
 import type { ResizablePanelsProps } from "@lib/components/ResizablePanels/resizablePanels";
 import type { Size2D } from "@lib/utils/geometry";
 import type { Vec2 } from "@lib/utils/vec2";
+import type { Locator, TestType } from "@playwright/experimental-ct-core";
+import { expect, test } from "@playwright/experimental-ct-react";
+
 import { compareWithTolerance } from "tests/utils/compare";
 
 const viewPortSize = { width: 1920, height: 1080 };

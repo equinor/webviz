@@ -1,11 +1,10 @@
 import React from "react";
 
-import { isEqual } from "lodash";
-
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 
+import { isEqual } from "lodash";
 
 export type ResizablePanelsProps = {
     id: string;

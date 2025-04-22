@@ -1,15 +1,13 @@
 import React from "react";
 
-import { useSetAtom } from "jotai";
-
 import type { SurfaceStatisticFunction_api } from "@api";
-import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Input } from "@lib/components/Input";
@@ -18,7 +16,6 @@ import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import type { FullSurfaceAddress } from "@modules/_shared/Surface";
 import {
     SurfaceAddressBuilder,
@@ -27,13 +24,14 @@ import {
     useObservedSurfacesMetadataQuery,
     useRealizationSurfacesMetadataQuery,
 } from "@modules/_shared/Surface";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
-
-import type { Interfaces } from "../interfaces";
-import { AggregationDropdown } from "../UiComponents";
+import { useSetAtom } from "jotai";
 
 import { surfaceAddressAtom } from "./atoms/baseAtoms";
 
+import { AggregationDropdown } from "../UiComponents";
+import type { Interfaces } from "../interfaces";
 
 const SurfaceTimeTypeEnumToStringMapping = {
     [SurfaceTimeType.None]: "Static",

@@ -1,9 +1,8 @@
-import { useAtomValue } from "jotai";
-
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { TableHeading, TableRow } from "@lib/components/Table/table";
 import { TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
+import { useAtomValue } from "jotai";
 
 import { statisticOptionsAtom, tableTypeAtom } from "../atoms/baseAtoms";
 import { perRealizationTableDataResultsAtom, statisticalTableDataResultsAtom } from "../atoms/queryAtoms";

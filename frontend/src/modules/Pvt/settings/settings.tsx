@@ -1,11 +1,9 @@
 import React from "react";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-
-import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
@@ -13,16 +11,7 @@ import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 
-
-import type { Interfaces } from "../interfaces";
-import {
-    ColorBy,
-    PHASE_TO_DISPLAY_NAME,
-    PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME,
-    PhaseType,
-    PressureDependentVariable,
-} from "../typesAndEnums";
-import { computeRealizationsIntersection } from "../utils/realizationsIntersection";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
     selectedColorByAtom,
@@ -41,6 +30,15 @@ import {
 import { pvtDataQueriesAtom } from "./atoms/queryAtoms";
 import { DependentVariableSelector } from "./components/DependentVariableSelector/dependentVariableSelector";
 
+import type { Interfaces } from "../interfaces";
+import {
+    ColorBy,
+    PHASE_TO_DISPLAY_NAME,
+    PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME,
+    PhaseType,
+    PressureDependentVariable,
+} from "../typesAndEnums";
+import { computeRealizationsIntersection } from "../utils/realizationsIntersection";
 
 export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);

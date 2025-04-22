@@ -1,12 +1,10 @@
 import type React from "react";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-
 import type { InplaceVolumetricResultName_api } from "@api";
 import { InplaceVolumetricStatistic_api } from "@api";
 import type { ModuleSettingsProps } from "@framework/Module";
-import type { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import type { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
@@ -14,7 +12,6 @@ import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import type { TagOption } from "@lib/components/TagPicker";
 import { TagPicker } from "@lib/components/TagPicker";
-import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/InplaceVolumetricsFilterComponent";
 import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
 import type { SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
 import {
@@ -24,9 +21,9 @@ import {
     TableTypeToStringMapping,
 } from "@modules/_shared/InplaceVolumetrics/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumetrics/volumetricStringUtils";
+import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/InplaceVolumetricsFilterComponent";
 
-
-import type { Interfaces } from "../interfaces";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
     selectedIdentifierValueCriteriaAtom,
@@ -50,6 +47,7 @@ import {
 } from "./atoms/derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 
+import type { Interfaces } from "../interfaces";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);

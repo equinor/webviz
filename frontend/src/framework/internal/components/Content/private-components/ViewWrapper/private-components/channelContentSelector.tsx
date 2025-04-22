@@ -1,6 +1,4 @@
 import React from "react";
-
-import { Close } from "@mui/icons-material";
 import { createPortal } from "react-dom";
 
 import type { ChannelContentDefinition } from "@framework/DataChannelTypes";
@@ -10,6 +8,7 @@ import { Checkbox } from "@lib/components/Checkbox";
 import { Overlay } from "@lib/components/Overlay";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { Vec2 } from "@lib/utils/vec2";
+import { Close } from "@mui/icons-material";
 
 export type SelectableChannel = {
     idString: string;

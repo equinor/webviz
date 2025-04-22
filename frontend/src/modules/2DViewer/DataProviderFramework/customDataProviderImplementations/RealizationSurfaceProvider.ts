@@ -1,5 +1,3 @@
-import { isEqual } from "lodash";
-
 import type { SurfaceDataPng_api } from "@api";
 import { SurfaceTimeType_api, getRealizationSurfacesMetadataOptions, getSurfaceDataOptions } from "@api";
 import type {
@@ -16,6 +14,7 @@ import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataT
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
+import { isEqual } from "lodash";
 
 const realizationSurfaceSettings = [
     Setting.ENSEMBLE,

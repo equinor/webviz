@@ -1,13 +1,12 @@
 import React from "react";
 
-import { GridView } from "@mui/icons-material";
-
 import { GuiState, LeftDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
-import { Drawer } from "@framework/internal/components/Drawer";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
 import type { Workbench } from "@framework/Workbench";
+import { Drawer } from "@framework/internal/components/Drawer";
+import { GridView } from "@mui/icons-material";
 
 function drawTemplatePreview(template: Template, width: number, height: number): React.ReactNode {
     return (

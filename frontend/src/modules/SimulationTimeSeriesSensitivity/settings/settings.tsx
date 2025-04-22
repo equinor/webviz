@@ -1,14 +1,11 @@
 import React from "react";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { isEqual } from "lodash";
-
 import { Frequency_api } from "@api";
-import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -19,9 +16,8 @@ import { Select } from "@lib/components/Select";
 import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 
-
-import type { Interfaces } from "../interfaces";
-import { FrequencyEnumToStringMapping } from "../typesAndEnums";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { isEqual } from "lodash";
 
 import {
     resamplingFrequencyAtom,
@@ -43,6 +39,8 @@ import {
 } from "./atoms/derivedAtoms";
 import { vectorListQueryAtom } from "./atoms/queryAtoms";
 
+import type { Interfaces } from "../interfaces";
+import { FrequencyEnumToStringMapping } from "../typesAndEnums";
 
 //-----------------------------------------------------------------------------------------------------------
 

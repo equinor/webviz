@@ -1,7 +1,5 @@
 import React from "react";
 
-import { isEqual } from "lodash";
-
 import type { RealizationPickerSelection } from "@framework/components/RealizationPicker";
 import { RealizationPicker } from "@framework/components/RealizationPicker";
 import type { RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
@@ -9,6 +7,7 @@ import { IncludeExcludeFilter } from "@framework/types/realizationFilterTypes";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 
+import { isEqual } from "lodash";
 
 import {
     makeRealizationNumberSelectionsFromRealizationPickerTags,

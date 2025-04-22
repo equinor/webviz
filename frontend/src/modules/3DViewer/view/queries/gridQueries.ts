@@ -1,7 +1,6 @@
+import { getGridParameterOptions, getGridSurfaceOptions } from "@api";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
-
-import { getGridParameterOptions, getGridSurfaceOptions } from "@api";
 
 import type { GridMappedProperty_trans, GridSurface_trans } from "./queryDataTransforms";
 import { transformGridMappedProperty, transformGridSurface } from "./queryDataTransforms";

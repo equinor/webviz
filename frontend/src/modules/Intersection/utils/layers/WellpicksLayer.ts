@@ -1,9 +1,9 @@
-import { transformFormationData } from "@equinor/esv-intersection";
-import type { QueryClient } from "@tanstack/query-core";
-import { isEqual } from "lodash";
-
 import { getStratigraphicUnitsOptions, getWellborePicksForWellboreOptions } from "@api";
+import { transformFormationData } from "@equinor/esv-intersection";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { QueryClient } from "@tanstack/query-core";
+
+import { isEqual } from "lodash";
 
 import { BaseLayer } from "./BaseLayer";
 

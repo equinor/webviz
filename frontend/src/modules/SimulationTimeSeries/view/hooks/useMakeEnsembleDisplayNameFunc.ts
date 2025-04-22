@@ -1,8 +1,8 @@
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
+import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 export function useMakeEnsembleDisplayNameFunc(
     viewContext: ViewContext<Interfaces>,

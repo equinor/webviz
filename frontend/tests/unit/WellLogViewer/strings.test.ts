@@ -1,5 +1,3 @@
-import { describe, expect, it } from "vitest";
-
 import { WellLogCurveSourceEnum_api } from "@api";
 import type { TemplatePlotConfig } from "@modules/WellLogViewer/types";
 import {
@@ -8,6 +6,7 @@ import {
     simplifyLogName,
 } from "@modules/WellLogViewer/utils/strings";
 
+import { describe, expect, it } from "vitest";
 
 describe("curveSourceToText", () => {
     it("should return 'Geology' for SMDA_GEOLOGY", () => {

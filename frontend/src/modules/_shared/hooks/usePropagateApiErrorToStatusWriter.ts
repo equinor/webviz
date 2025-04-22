@@ -1,7 +1,6 @@
-import type { UseQueryResult } from "@tanstack/react-query";
-
 import type { SettingsStatusWriter, ViewStatusWriter } from "@framework/StatusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
+import type { UseQueryResult } from "@tanstack/react-query";
 
 function propagateError(
     queryResult: UseQueryResult<any, any>,

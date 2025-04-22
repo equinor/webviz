@@ -1,11 +1,11 @@
 import type React from "react";
 
-import type { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
-import _ from "lodash";
-
+import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import type { InfoItem, ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
-import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
+import type { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
+
+import _ from "lodash";
 
 import { DEFAULT_MAX_VISIBLE_TRACKS } from "../../utils/logViewerTemplate";
 

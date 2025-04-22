@@ -1,7 +1,5 @@
 import React from "react";
 
-import { Check, Clear } from "@mui/icons-material";
-
 import type { EnsembleParameters } from "@framework/EnsembleParameters";
 import { RealizationFilter } from "@framework/RealizationFilter";
 import type { ParameterValueSelection, RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
@@ -14,6 +12,7 @@ import { Button } from "@lib/components/Button";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Check, Clear } from "@mui/icons-material";
 
 import { ByParameterValueFilter } from "./private-components/byParameterValueFilter";
 import type { ByRealizationNumberFilterSelection } from "./private-components/byRealizationNumberFilter";

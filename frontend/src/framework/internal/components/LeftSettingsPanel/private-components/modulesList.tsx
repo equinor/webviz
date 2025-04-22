@@ -1,26 +1,15 @@
 import React from "react";
 
-import {
-    Attribution,
-    Close,
-    ExpandLess,
-    ExpandMore,
-    Help,
-    HistoryToggleOff,
-    Science,
-    WebAsset,
-} from "@mui/icons-material";
-
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
-import { Drawer } from "@framework/internal/components/Drawer";
-import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import type { Module } from "@framework/Module";
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import type { DrawPreviewFunc } from "@framework/Preview";
 import type { Workbench } from "@framework/Workbench";
+import { Drawer } from "@framework/internal/components/Drawer";
+import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import { Checkbox } from "@lib/components/Checkbox";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
@@ -31,6 +20,16 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { Vec2 } from "@lib/utils/vec2";
 import { point2Distance, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
+import {
+    Attribution,
+    Close,
+    ExpandLess,
+    ExpandMore,
+    Help,
+    HistoryToggleOff,
+    Science,
+    WebAsset,
+} from "@mui/icons-material";
 
 const makeStyle = (isDragged: boolean, dragSize: Size2D, dragPosition: Vec2): React.CSSProperties => {
     if (isDragged) {

@@ -1,9 +1,8 @@
 import React from "react";
 
-import { isEqual } from "lodash";
-
 import type { DataElement, KeyKind, KeyKindToKeyTypeMapping } from "@framework/DataChannelTypes";
 
+import { isEqual } from "lodash";
 
 import type { ChannelContentMetaData } from "../ChannelContent";
 import type { ChannelReceiver } from "../ChannelReceiver";

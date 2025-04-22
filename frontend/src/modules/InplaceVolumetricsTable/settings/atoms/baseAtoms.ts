@@ -1,5 +1,3 @@
-import { atom } from "jotai";
-
 import type { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { InplaceVolumetricStatistic_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -7,6 +5,7 @@ import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/Tab
 import type { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 import { TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
+import { atom } from "jotai";
 
 export const userSelectedEnsembleIdentsAtom = atom<RegularEnsembleIdent[] | null>(null);
 export const userSelectedTableNamesAtom = atom<string[] | null>(null);

@@ -1,11 +1,10 @@
 import React from "react";
 
-import { Settings as SettingsIcon } from "@mui/icons-material";
-
 import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
-import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import type { Workbench } from "@framework/Workbench";
+import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Settings as SettingsIcon } from "@mui/icons-material";
 
 import { ColorPaletteSettings } from "./private-components/colorPaletteSettings";
 import { ModuleSettings } from "./private-components/moduleSettings";

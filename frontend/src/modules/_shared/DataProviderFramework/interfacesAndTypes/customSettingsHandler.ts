@@ -1,15 +1,13 @@
-import type { QueryClient } from "@tanstack/query-core";
-
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
-
-import type { Dependency } from "../delegates/_utils/Dependency";
-import type { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
-import type { MakeSettingTypesMap, Settings } from "../settings/settingsDefinitions";
+import type { QueryClient } from "@tanstack/query-core";
 
 import type { NullableStoredData, StoredData } from "./sharedTypes";
 import type { AvailableValuesType, SettingsKeysFromTuple } from "./utils";
 
+import type { Dependency } from "../delegates/_utils/Dependency";
+import type { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
+import type { MakeSettingTypesMap, Settings } from "../settings/settingsDefinitions";
 
 export interface GetHelperDependency<
     TSettings extends Settings,

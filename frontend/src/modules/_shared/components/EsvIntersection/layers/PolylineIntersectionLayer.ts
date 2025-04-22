@@ -1,9 +1,8 @@
 import type { LayerOptions, OnRescaleEvent, OnUpdateEvent, PixiRenderApplication } from "@equinor/esv-intersection";
 import { PixiLayer } from "@equinor/esv-intersection";
-import { Graphics } from "pixi.js";
-
 import type { ColorScale } from "@lib/utils/ColorScale";
 
+import { Graphics } from "pixi.js";
 
 import { polygonFromVerticesAndIndices } from "../utils/geometry";
 

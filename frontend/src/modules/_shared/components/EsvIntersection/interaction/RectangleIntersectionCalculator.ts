@@ -1,8 +1,7 @@
+import { BoundingBox2D } from "./BoundingBox2D";
 
 import type { IntersectedItem, IntersectionCalculator } from "../types/types";
 import { IntersectionItemShape } from "../types/types";
-
-import { BoundingBox2D } from "./BoundingBox2D";
 
 export interface RectangleIntersectedItem extends IntersectedItem {
     shape: IntersectionItemShape.RECTANGLE;

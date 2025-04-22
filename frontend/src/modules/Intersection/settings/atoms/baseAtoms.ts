@@ -1,8 +1,7 @@
-import { atom } from "jotai";
-
 import { IntersectionType } from "@framework/types/intersection";
 import type { ColorScale } from "@lib/utils/ColorScale";
 
+import { atom } from "jotai";
 
 export const addCustomIntersectionPolylineEditModeActiveAtom = atom<boolean>(false);
 export const editCustomIntersectionPolylineEditModeActiveAtom = atom<boolean>(false);

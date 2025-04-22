@@ -1,4 +1,5 @@
 import type { UseQueryResult } from "@tanstack/react-query";
+
 import { describe, expect, it } from "vitest";
 
 import { mergeResults } from "../../../src/modules/WellLogViewer/utils/queries";

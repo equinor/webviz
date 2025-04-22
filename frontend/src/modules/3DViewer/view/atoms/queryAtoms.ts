@@ -1,8 +1,7 @@
-import { atomWithQuery } from "jotai-tanstack-query";
-
 import { getWellTrajectoriesOptions } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 
+import { atomWithQuery } from "jotai-tanstack-query";
 
 import { ensembleIdentAtom } from "./baseAtoms";
 

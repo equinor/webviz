@@ -1,23 +1,22 @@
 import React from "react";
 
-import { FilterAlt } from "@mui/icons-material";
-import { isEqual } from "lodash";
-
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, RightDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { Workbench } from "@framework/Workbench";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Drawer } from "@framework/internal/components/Drawer";
 import type { EnsembleRealizationFilterSelections } from "@framework/internal/components/EnsembleRealizationFilter";
 import { EnsembleRealizationFilter } from "@framework/internal/components/EnsembleRealizationFilter";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
 import { areUnsortedArraysEqual } from "@framework/utils/arrayUtils";
 import { getEnsembleIdentFromString } from "@framework/utils/ensembleIdentUtils";
 import { countTrueValues } from "@framework/utils/objectUtils";
 import { areParameterIdentStringToValueSelectionMapCandidatesEqual } from "@framework/utils/realizationFilterTypesUtils";
-import type { Workbench } from "@framework/Workbench";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { FilterAlt } from "@mui/icons-material";
 
+import { isEqual } from "lodash";
 
 export type RealizationFilterSettingsProps = { workbench: Workbench; onClose: () => void };
 

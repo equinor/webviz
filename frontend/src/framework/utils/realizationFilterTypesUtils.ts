@@ -1,11 +1,10 @@
-import { isEqual, range } from "lodash";
-
 import type {
     NumberRange,
     ParameterValueSelection,
     RealizationNumberSelection,
 } from "@framework/types/realizationFilterTypes";
 
+import { isEqual, range } from "lodash";
 
 import { isArrayOfNumbers, isArrayOfStrings } from "./arrayUtils";
 

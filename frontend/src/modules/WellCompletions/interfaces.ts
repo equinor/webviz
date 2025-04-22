@@ -1,6 +1,5 @@
-import type { PlotData } from "@webviz/well-completions-plot";
-
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { PlotData } from "@webviz/well-completions-plot";
 
 import { dataLoadingStatusAtom, plotDataAtom, sortedCompletionDatesAtom } from "./settings/atoms/derivedAtoms";
 import type { DataLoadingStatus } from "./typesAndEnums";

@@ -1,7 +1,5 @@
 import type React from "react";
 
-import SubsurfaceViewer from "@webviz/subsurface-viewer";
-
 import type { SurfaceDef_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -10,6 +8,7 @@ import { rotatePoint2Around } from "@lib/utils/vec2";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
+import SubsurfaceViewer from "@webviz/subsurface-viewer";
 
 import type { Interfaces } from "./interfaces";
 

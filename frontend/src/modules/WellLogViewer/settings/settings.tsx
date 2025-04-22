@@ -1,8 +1,5 @@
 import React from "react";
 
-import { useAtomValue, useSetAtom } from "jotai";
-import _ from "lodash";
-
 import type { WellboreHeader_api } from "@api";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -18,8 +15,8 @@ import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
-
-import type { InterfaceTypes } from "../interfaces";
+import { useAtomValue, useSetAtom } from "jotai";
+import _ from "lodash";
 
 import { userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom, selectedWellboreHeaderAtom } from "./atoms/derivedAtoms";
@@ -27,6 +24,7 @@ import { availableFieldsQueryAtom, drilledWellboreHeadersQueryAtom } from "./ato
 import { TemplateTrackSettings } from "./components/TemplateTrackSettings";
 import { ViewerSettings } from "./components/ViewerSettings";
 
+import type { InterfaceTypes } from "../interfaces";
 
 function useSyncedWellboreSetting(
     syncHelper: SyncSettingsHelper,

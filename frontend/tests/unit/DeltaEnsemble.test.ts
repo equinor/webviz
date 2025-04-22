@@ -1,11 +1,10 @@
-import { describe, expect, test } from "vitest";
-
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleParameters, ParameterType } from "@framework/EnsembleParameters";
 import { SensitivityType } from "@framework/EnsembleSensitivities";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 
+import { describe, expect, test } from "vitest";
 
 describe("DeltaEnsemble", () => {
     const COMPARISON_ENSEMBLE = new RegularEnsemble(

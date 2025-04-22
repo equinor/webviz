@@ -1,9 +1,9 @@
 import React from "react";
 
-import { Link } from "@mui/icons-material";
-import { v4 } from "uuid";
-
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Link } from "@mui/icons-material";
+
+import { v4 } from "uuid";
 
 export type LabelProps = {
     text: string;

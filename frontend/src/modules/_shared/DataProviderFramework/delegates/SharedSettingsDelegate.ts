@@ -1,3 +1,4 @@
+import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 import { DataProvider } from "../framework/DataProvider/DataProvider";
 import { DataProviderManagerTopic } from "../framework/DataProviderManager/DataProviderManager";
@@ -8,8 +9,6 @@ import type { Item } from "../interfacesAndTypes/entities";
 import type { AvailableValuesType, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { SettingTypes, Settings } from "../settings/settingsDefinitions";
 import { settingCategoryAvailableValuesIntersectionReducerMap } from "../settings/settingsDefinitions";
-
-import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 export class SharedSettingsDelegate<
     TSettings extends Settings,

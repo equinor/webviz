@@ -2,12 +2,11 @@ import React from "react";
 
 import { GeoJsonLayer } from "@deck.gl/layers";
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { isEqual } from "lodash";
-
 import type { ViewContext } from "@framework/ModuleContext";
 import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 
+import { isEqual } from "lodash";
 
 import type { SubsurfaceViewerWrapperProps } from "./SubsurfaceViewerWrapper";
 import { SubsurfaceViewerWrapper } from "./SubsurfaceViewerWrapper";

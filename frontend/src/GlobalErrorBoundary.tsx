@@ -1,10 +1,9 @@
 import React from "react";
 
-import { BugReport, ContentCopy } from "@mui/icons-material";
-
 import { Button } from "@lib/components/Button";
 import { IconButton } from "@lib/components/IconButton";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { BugReport, ContentCopy } from "@mui/icons-material";
 
 type Props = {
     children?: React.ReactNode;

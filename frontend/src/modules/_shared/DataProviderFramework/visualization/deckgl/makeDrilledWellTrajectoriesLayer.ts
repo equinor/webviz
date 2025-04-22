@@ -1,9 +1,8 @@
-import type { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
-import type { Feature, GeoJsonProperties, GeometryCollection, LineString, Point } from "geojson";
-
 import type { WellboreTrajectory_api } from "@api";
 import { AdvancedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdvancedWellsLayer";
+import type { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
+import type { Feature, GeoJsonProperties, GeometryCollection, LineString, Point } from "geojson";
 
 import type { TransformerArgs } from "../VisualizationAssembler";
 

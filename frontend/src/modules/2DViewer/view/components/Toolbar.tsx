@@ -1,7 +1,6 @@
-import { FilterCenterFocus } from "@mui/icons-material";
-
 import { Button } from "@lib/components/Button";
 import { Toolbar as GenericToolbar } from "@modules/_shared/components/Toolbar";
+import { FilterCenterFocus } from "@mui/icons-material";
 
 export type ToolbarProps = {
     onFitInView: () => void;

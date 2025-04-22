@@ -1,8 +1,7 @@
 import type React from "react";
 
-import { expect, test } from "@playwright/experimental-ct-react";
-
 import { Checkbox } from "@lib/components/Checkbox";
+import { expect, test } from "@playwright/experimental-ct-react";
 
 test.use({ viewport: { width: 1920, height: 1080 } });
 

@@ -2,6 +2,7 @@ import React from "react";
 
 import type { SubsurfaceViewerProps, ViewStateType } from "@webviz/subsurface-viewer";
 import SubsurfaceViewer from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
+
 import { isEqual } from "lodash";
 
 export type SubsurfaceViewerWithCameraStateProps = SubsurfaceViewerProps & {

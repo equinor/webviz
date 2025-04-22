@@ -1,7 +1,6 @@
-import { describe, expect, test } from "vitest";
-
 import { encodeAsUintListStr, encodePropertiesAsKeyValStr } from "@lib/utils/queryStringUtils";
 
+import { describe, expect, test } from "vitest";
 
 describe("KeyValStr tests", () => {
     test("Test encoding of object properties into KeyValStr", () => {

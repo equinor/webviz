@@ -1,13 +1,10 @@
-import { atom } from "jotai";
-
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
-import { createVectorSelectorDataFromVectors } from "@modules/_shared/components/VectorSelector";
 import type { VectorSpec } from "@modules/SimulationTimeSeriesSensitivity/typesAndEnums";
+import { createVectorSelectorDataFromVectors } from "@modules/_shared/components/VectorSelector";
 
-
-import { fixupVectorName } from "../utils/fixupVectorName";
+import { atom } from "jotai";
 
 import {
     syncedRegularEnsembleIdentsAtom,
@@ -18,6 +15,7 @@ import {
 } from "./baseAtoms";
 import { vectorListQueryAtom } from "./queryAtoms";
 
+import { fixupVectorName } from "../utils/fixupVectorName";
 
 export const selectedRegularEnsembleIdentAtom = atom<RegularEnsembleIdent | null>((get) => {
     const syncedRegularEnsembleIdents = get(syncedRegularEnsembleIdentsAtom);

@@ -12,14 +12,13 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import React from "react";
 
-import { isEqual } from "lodash";
-
 import { WorkbenchSettingsEvents } from "@framework/internal/PrivateWorkbenchSettings";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import type { ColorScaleOptions } from "@lib/utils/ColorScale";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { ColorSet } from "@lib/utils/ColorSet";
 
+import { isEqual } from "lodash";
 
 import {
     defaultColorPalettes,

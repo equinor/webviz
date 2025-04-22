@@ -1,9 +1,8 @@
+import { BoundingBox2D } from "./BoundingBox2D";
 
 import type { IntersectedItem, IntersectionCalculator, PolygonData } from "../types/types";
 import { IntersectionItemShape } from "../types/types";
 import { polygonFromVerticesAndIndices } from "../utils/geometry";
-
-import { BoundingBox2D } from "./BoundingBox2D";
 
 function isPointInPolygon(
     point: number[],

@@ -1,10 +1,5 @@
 import React from "react";
 
-import { Dropdown, MenuButton } from "@mui/base";
-import { FileDownload, FileUpload, MoreVert } from "@mui/icons-material";
-import { useAtom } from "jotai";
-import { v4 } from "uuid";
-
 import { WellLogCurveTypeEnum_api } from "@api";
 import type { SettingsStatusWriter } from "@framework/StatusWriter";
 import { Menu } from "@lib/components/Menu";
@@ -16,12 +11,16 @@ import { TrackIcon } from "@modules/WellLogViewer/_shared/components/icons";
 import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { configToJsonDataBlob, jsonFileToTrackConfigs } from "@modules/WellLogViewer/utils/settingsImport";
+import { Dropdown, MenuButton } from "@mui/base";
+import { FileDownload, FileUpload, MoreVert } from "@mui/icons-material";
 
-import { logViewerTrackConfigsAtom } from "../../atoms/persistedAtoms";
-import { AddItemButton } from "../AddItemButton";
+import { useAtom } from "jotai";
+import { v4 } from "uuid";
 
 import { SortableTrackItem } from "./private-components/SortableTrackItem";
 
+import { logViewerTrackConfigsAtom } from "../../atoms/persistedAtoms";
+import { AddItemButton } from "../AddItemButton";
 
 interface TemplateTrackSettingsProps {
     statusWriter: SettingsStatusWriter;

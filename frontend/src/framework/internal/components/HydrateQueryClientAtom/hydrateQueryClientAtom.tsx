@@ -1,8 +1,9 @@
 import type React from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useHydrateAtoms } from "jotai/utils";
+
 import { queryClientAtom } from "jotai-tanstack-query";
+import { useHydrateAtoms } from "jotai/utils";
 
 export type HydrateQueryClientAtomProps = {
     children?: React.ReactNode;

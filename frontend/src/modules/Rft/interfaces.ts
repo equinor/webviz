@@ -1,7 +1,6 @@
-import type { UseQueryResult } from "@tanstack/react-query";
-
 import type { RftRealizationData_api } from "@api";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { UseQueryResult } from "@tanstack/react-query";
 
 import { validRealizationNumbersAtom } from "./settings/atoms/baseAtoms";
 import {

@@ -1,10 +1,9 @@
+import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
+import { atomWithModuleInstanceStorage, clearModuleInstanceStorage } from "@modules/WellLogViewer/utils/atoms";
 
 import type { Getter, Setter } from "jotai";
 import { atom } from "jotai";
 import type { Dictionary } from "lodash";
-
-import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
-import { atomWithModuleInstanceStorage, clearModuleInstanceStorage } from "@modules/WellLogViewer/utils/atoms";
 
 const STORAGE_KEY = "moduleSettings";
 const moduleSettingsAtom = atomWithModuleInstanceStorage<Dictionary<any>>(STORAGE_KEY, {});

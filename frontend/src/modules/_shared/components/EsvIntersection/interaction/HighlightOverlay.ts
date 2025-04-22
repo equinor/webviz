@@ -1,4 +1,5 @@
 import type { Controller, OnRescaleEvent } from "@equinor/esv-intersection";
+
 import { isEqual } from "lodash";
 
 import type { HighlightItem } from "../types/types";

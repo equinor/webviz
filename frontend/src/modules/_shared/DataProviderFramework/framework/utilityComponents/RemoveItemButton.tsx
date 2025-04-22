@@ -1,7 +1,6 @@
-import { Delete } from "@mui/icons-material";
-
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
+import { Delete } from "@mui/icons-material";
 
 import type { Item } from "../../interfacesAndTypes/entities";
 import { DataProvider } from "../DataProvider/DataProvider";

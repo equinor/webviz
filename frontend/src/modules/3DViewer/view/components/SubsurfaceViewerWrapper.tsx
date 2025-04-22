@@ -2,13 +2,6 @@ import React from "react";
 
 import type { Layer, PickingInfo } from "@deck.gl/core";
 import { ColumnLayer, SolidPolygonLayer } from "@deck.gl/layers";
-import { Add, FilterCenterFocus, Polyline, Remove } from "@mui/icons-material";
-import type { LayerPickInfo, ViewStateType } from "@webviz/subsurface-viewer";
-import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
-import type { MapMouseEvent } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
-import type { Feature } from "geojson";
-import { isEqual } from "lodash";
-
 import type {
     IntersectionPolyline,
     IntersectionPolylineWithoutId,
@@ -19,12 +12,18 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import type { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
+import { Add, FilterCenterFocus, Polyline, Remove } from "@mui/icons-material";
+import type { LayerPickInfo, ViewStateType } from "@webviz/subsurface-viewer";
+import type { MapMouseEvent } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
+import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
 
-import { createContinuousColorScaleForMap } from "../utils/colorTables";
+import type { Feature } from "geojson";
+import { isEqual } from "lodash";
 
 import { PolylineEditingPanel } from "./PolylineEditingPanel";
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 
+import { createContinuousColorScaleForMap } from "../utils/colorTables";
 
 export type BoundingBox3D = {
     xmin: number;

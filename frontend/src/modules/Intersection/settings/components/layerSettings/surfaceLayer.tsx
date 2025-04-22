@@ -1,18 +1,14 @@
 import React from "react";
 
-import type { UseQueryResult } from "@tanstack/react-query";
-import { useQuery } from "@tanstack/react-query";
-import { cloneDeep, isEqual } from "lodash";
-
 import type { SurfaceMetaSet_api } from "@api";
 import { SurfaceAttributeType_api, getRealizationSurfacesMetadataOptions } from "@api";
-import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/components/ColorPaletteSelector";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -23,6 +19,10 @@ import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { useLayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
 import type { SurfaceLayer, SurfaceLayerSettings } from "@modules/Intersection/utils/layers/SurfaceLayer";
+import type { UseQueryResult } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+
+import { cloneDeep, isEqual } from "lodash";
 
 import { fixupSetting } from "./utils";
 

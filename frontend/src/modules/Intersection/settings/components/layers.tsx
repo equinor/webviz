@@ -1,21 +1,5 @@
 import React from "react";
 
-import { Dropdown, MenuButton } from "@mui/base";
-import {
-    Add,
-    ArrowDropDown,
-    Check,
-    Delete,
-    DragIndicator,
-    Error,
-    ExpandLess,
-    ExpandMore,
-    Settings,
-    Visibility,
-    VisibilityOff,
-} from "@mui/icons-material";
-import { isEqual } from "lodash";
-
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
@@ -43,9 +27,25 @@ import { LayerManagerTopic, useLayerManagerTopicValue } from "@modules/Intersect
 import { isSeismicLayer } from "@modules/Intersection/utils/layers/SeismicLayer";
 import { isSurfaceLayer } from "@modules/Intersection/utils/layers/SurfaceLayer";
 import { isSurfacesUncertaintyLayer } from "@modules/Intersection/utils/layers/SurfacesUncertaintyLayer";
+import { isWellpicksLayer } from "@modules/Intersection/utils/layers/WellpicksLayer";
 import type { LayerType } from "@modules/Intersection/utils/layers/types";
 import { LAYER_TYPE_TO_STRING_MAPPING } from "@modules/Intersection/utils/layers/types";
-import { isWellpicksLayer } from "@modules/Intersection/utils/layers/WellpicksLayer";
+import { Dropdown, MenuButton } from "@mui/base";
+import {
+    Add,
+    ArrowDropDown,
+    Check,
+    Delete,
+    DragIndicator,
+    Error,
+    ExpandLess,
+    ExpandMore,
+    Settings,
+    Visibility,
+    VisibilityOff,
+} from "@mui/icons-material";
+
+import { isEqual } from "lodash";
 
 import { GridLayerSettingsComponent } from "./layerSettings/gridLayer";
 import { SeismicLayerSettingsComponent } from "./layerSettings/seismicLayer";

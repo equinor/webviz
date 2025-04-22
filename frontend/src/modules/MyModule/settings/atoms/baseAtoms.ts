@@ -1,7 +1,6 @@
-import { atom } from "jotai";
-
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
+import { atom } from "jotai";
 
 export const typeAtom = atom<ColorScaleType>(ColorScaleType.Discrete);
 export const gradientTypeAtom = atom<ColorScaleGradientType>(ColorScaleGradientType.Sequential);

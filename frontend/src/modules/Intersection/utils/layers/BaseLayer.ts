@@ -1,13 +1,12 @@
 import React from "react";
 
-import type { QueryClient } from "@tanstack/query-core";
-import { cloneDeep, isEqual } from "lodash";
-import { v4 } from "uuid";
-
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
+import type { QueryClient } from "@tanstack/query-core";
 
+import { cloneDeep, isEqual } from "lodash";
+import { v4 } from "uuid";
 
 export enum LayerStatus {
     IDLE = "IDLE",

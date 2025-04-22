@@ -1,10 +1,9 @@
 import React from "react";
 
-import { isEqual } from "lodash";
-
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { isEqual } from "lodash";
 
 export type RealizationNumberDisplayProps = {
     selectedRealizations: readonly number[];

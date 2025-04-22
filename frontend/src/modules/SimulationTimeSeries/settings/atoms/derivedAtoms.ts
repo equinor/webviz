@@ -1,7 +1,4 @@
-import { atom } from "jotai";
-
 import type { VectorDefinitionsType } from "@assets/vectorDefinitions";
-
 import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { Parameter } from "@framework/EnsembleParameters";
@@ -11,14 +8,11 @@ import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
+import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
 import { createVectorSelectorDataFromVectors } from "@modules/_shared/components/VectorSelector";
 import { simulationVectorDefinition } from "@modules/_shared/reservoirSimulationStringUtils";
-import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
 
-
-import type { VectorSpec } from "../../typesAndEnums";
-import { StatisticsType, VisualizationMode } from "../../typesAndEnums";
-import { EnsembleVectorListsHelper } from "../../utils/ensemblesVectorListHelper";
+import { atom } from "jotai";
 
 import {
     filteredParameterIdentListAtom,
@@ -28,6 +22,10 @@ import {
     visualizationModeAtom,
 } from "./baseAtoms";
 import { vectorListQueriesAtom } from "./queryAtoms";
+
+import type { VectorSpec } from "../../typesAndEnums";
+import { StatisticsType, VisualizationMode } from "../../typesAndEnums";
+import { EnsembleVectorListsHelper } from "../../utils/ensemblesVectorListHelper";
 
 export const statisticsTypeAtom = atom<StatisticsType>((get) => {
     const visualizationMode = get(visualizationModeAtom);

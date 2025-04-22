@@ -1,17 +1,14 @@
 import React from "react";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { isEqual } from "lodash";
-
 import type { WellboreHeader_api } from "@api";
-import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { Intersection } from "@framework/types/intersection";
 import { IntersectionType } from "@framework/types/intersection";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
@@ -22,8 +19,8 @@ import { Select } from "@lib/components/Select";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
-
-import type { Interfaces } from "../interfaces";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { isEqual } from "lodash";
 
 import {
     intersectionExtensionLengthAtom,
@@ -43,6 +40,7 @@ import {
 import { drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
 import { Layers } from "./components/layers";
 
+import type { Interfaces } from "../interfaces";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const ensembleSet = useEnsembleSet(props.workbenchSession);

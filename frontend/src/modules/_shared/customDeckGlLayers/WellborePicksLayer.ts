@@ -1,6 +1,7 @@
 import type { CompositeLayerProps, FilterContext, Layer, UpdateParameters } from "@deck.gl/core";
 import { CompositeLayer } from "@deck.gl/core";
 import { GeoJsonLayer, TextLayer } from "@deck.gl/layers";
+
 import type { Feature, FeatureCollection } from "geojson";
 
 export type WellborePicksLayerData = {

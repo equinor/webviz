@@ -1,10 +1,9 @@
-import { atom } from "jotai";
-
 import { InplaceVolumetricsIdentifier_api } from "@api";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import type { EnsembleIdentWithRealizations } from "@modules/_shared/InplaceVolumetrics/queryHooks";
 import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 
+import { atom } from "jotai";
 
 import { colorByAtom, filterAtom, selectorColumnAtom, subplotByAtom } from "./baseAtoms";
 

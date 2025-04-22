@@ -1,7 +1,5 @@
 import type React from "react";
 
-import { useAtom } from "jotai";
-
 import type { ModuleSettingsProps } from "@framework/Module";
 import { ColorGradient } from "@lib/components/ColorGradient/colorGradient";
 import { Input } from "@lib/components/Input";
@@ -9,11 +7,11 @@ import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
-
-import type { Interfaces } from "../interfaces";
+import { useAtom } from "jotai";
 
 import { divMidPointAtom, gradientTypeAtom, maxAtom, minAtom, typeAtom } from "./atoms/baseAtoms";
 
+import type { Interfaces } from "../interfaces";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const [type, setType] = useAtom(typeAtom);

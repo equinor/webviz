@@ -1,17 +1,16 @@
-import { formatRgb, parse } from "culori";
-import type { PlotData } from "plotly.js";
-
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ColorSet } from "@lib/utils/ColorSet";
-import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
-import type { HistogramBinRange } from "@modules/_shared/histogram";
-import { makeHistogramBinRangesFromMinAndMaxValues, makeHistogramTrace } from "@modules/_shared/histogram";
+import { PlotType } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
 import type { Table } from "@modules/_shared/InplaceVolumetrics/Table";
 import type { SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
 import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
-import { PlotType } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
+import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
+import type { HistogramBinRange } from "@modules/_shared/histogram";
+import { makeHistogramBinRangesFromMinAndMaxValues, makeHistogramTrace } from "@modules/_shared/histogram";
 
+import { formatRgb, parse } from "culori";
+import type { PlotData } from "plotly.js";
 
 import type { RealizationAndResult } from "./convergenceCalculation";
 import { calcConvergenceArray } from "./convergenceCalculation";

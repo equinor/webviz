@@ -1,10 +1,9 @@
-import { atom } from "jotai";
-
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 import { areEnsembleIdentsEqual } from "@framework/utils/ensembleIdentUtils";
 import type { PressureOption, VfpParam } from "@modules/Vfp/types";
 
+import { atom } from "jotai";
 
 export const userSelectedRealizationNumberAtom = atom<number | null>(null);
 

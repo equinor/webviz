@@ -1,23 +1,15 @@
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-
-import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 
-
-import type { Interfaces } from "../interfaces";
-import {
-    MAX_PARAMETERS,
-    ParameterDistributionPlotType,
-    ParameterDistributionPlotTypeEnumToStringMapping,
-} from "../typesAndEnums";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
     selectedVisualizationTypeAtom,
@@ -33,6 +25,12 @@ import {
     selectedParameterIdentsAtom,
 } from "./atoms/derivedAtoms";
 
+import type { Interfaces } from "../interfaces";
+import {
+    MAX_PARAMETERS,
+    ParameterDistributionPlotType,
+    ParameterDistributionPlotTypeEnumToStringMapping,
+} from "../typesAndEnums";
 
 export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);

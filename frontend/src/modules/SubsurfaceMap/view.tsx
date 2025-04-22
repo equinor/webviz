@@ -1,21 +1,19 @@
 import React from "react";
 
-import { ContinuousLegend } from "@emerson-eps/color-tables";
-import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
-
 import type { BoundingBox2D_api, PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
+import { ContinuousLegend } from "@emerson-eps/color-tables";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import type { Wellbore } from "@framework/types/wellbore";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import type { Wellbore } from "@framework/types/wellbore";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { usePolygonsDataQueryByAddress } from "@modules/_shared/Polygons";
 import { useFieldWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
-
+import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
 import {
     createAxesLayer,

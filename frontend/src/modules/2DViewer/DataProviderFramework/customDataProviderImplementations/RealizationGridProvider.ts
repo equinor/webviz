@@ -1,5 +1,3 @@
-import { isEqual } from "lodash";
-
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
 import type { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import { transformGridMappedProperty, transformGridSurface } from "@modules/3DViewer/view/queries/queryDataTransforms";
@@ -12,6 +10,7 @@ import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramew
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
+import { isEqual } from "lodash";
 
 const realizationGridSettings = [
     Setting.ENSEMBLE,

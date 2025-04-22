@@ -1,18 +1,16 @@
 import React from "react";
 
-import { Link, Warning } from "@mui/icons-material";
-
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Link, Warning } from "@mui/icons-material";
 
+import type { SettingManager } from "./SettingManager";
+import { OverriddenValueProviderType, SettingTopic } from "./SettingManager";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import type { SettingComponentProps as SettingComponentPropsInterface } from "../../interfacesAndTypes/customSettingImplementation";
 import type { Setting, SettingCategories, SettingTypes } from "../../settings/settingsDefinitions";
 import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
-
-import { OverriddenValueProviderType, SettingTopic } from "./SettingManager";
-import type { SettingManager } from "./SettingManager";
 
 export type SettingComponentProps<
     TSetting extends Setting,

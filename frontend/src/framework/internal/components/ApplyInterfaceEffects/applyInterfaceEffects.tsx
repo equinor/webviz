@@ -1,10 +1,9 @@
 import type React from "react";
 
-import { useAtom } from "jotai";
-
 import type { ModuleInterfaceTypes } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 
+import { useAtom } from "jotai";
 
 export type ApplyInterfaceEffectsProps<TInterfaces extends ModuleInterfaceTypes> = {
     moduleInstance: ModuleInstance<TInterfaces>;

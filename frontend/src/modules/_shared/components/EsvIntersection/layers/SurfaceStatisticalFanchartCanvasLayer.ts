@@ -1,5 +1,6 @@
 import type { LayerOptions, OnRescaleEvent, OnUpdateEvent } from "@equinor/esv-intersection";
 import { CanvasLayer } from "@equinor/esv-intersection";
+
 import { formatCss, parse } from "culori";
 
 export type SurfaceStatisticalFanchart = {
