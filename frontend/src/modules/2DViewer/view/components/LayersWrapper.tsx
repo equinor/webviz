@@ -137,12 +137,16 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const globalAnnotations: Annotation[] = [];
     const globalLayerIds: string[] = ["placeholder"];
 
-    let numCols = 0;
-    let numRows = 0;
-
     let numLoadingLayers = 0;
 
     const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.layerManager);
+
+    const numViews = assemblerProduct.children.filter(
+        (item) => item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW,
+    ).length;
+
+    let numCols = Math.ceil(Math.sqrt(numViews));
+    let numRows = Math.ceil(numViews / numCols);
 
     for (const item of assemblerProduct.children) {
         if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
@@ -186,9 +190,6 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
             globalLayerIds.push(item.visualization.id);
         }
     }
-
-    numCols = Math.ceil(Math.sqrt(viewports.length));
-    numRows = Math.ceil(viewports.length / numCols);
 
     if (props.preferredViewLayout === PreferredViewLayout.HORIZONTAL) {
         [numCols, numRows] = [numRows, numCols];

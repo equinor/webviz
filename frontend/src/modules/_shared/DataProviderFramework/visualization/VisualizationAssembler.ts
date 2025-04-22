@@ -302,6 +302,7 @@ export class VisualizationAssembler<
                 accumulatedData = product.accumulatedData;
                 aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
                 hoverVisualizationFunctions.push(product.makeHoverVisualizationsFunction);
+                annotations.push(...product.annotations);
                 numLoadingDataProviders += product.numLoadingDataProviders;
                 maybeApplyBoundingBox(product.combinedBoundingBox);
 
