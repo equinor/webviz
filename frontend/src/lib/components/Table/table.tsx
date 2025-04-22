@@ -1,11 +1,11 @@
 import React from "react";
 
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { getTextWidthWithFont } from "@lib/utils/textSize";
 import { Close, ExpandLess, ExpandMore } from "@mui/icons-material";
-
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
+
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { getTextWidthWithFont } from "@lib/utils/textSize";
 
 import type { BaseComponentProps } from "../BaseComponent";
 import { BaseComponent } from "../BaseComponent";

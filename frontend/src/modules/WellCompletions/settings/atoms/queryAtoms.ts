@@ -1,7 +1,8 @@
+import { atomWithQuery } from "jotai-tanstack-query";
+
 import { getWellCompletionsDataOptions } from "@api";
 import { RealizationSelection } from "@modules/WellCompletions/typesAndEnums";
 
-import { atomWithQuery } from "jotai-tanstack-query";
 
 import { userSelectedRealizationSelectionAtom } from "./baseAtoms";
 import { selectedEnsembleIdentAtom, selectedRealizationNumberAtom, validRealizationNumbersAtom } from "./derivedAtoms";

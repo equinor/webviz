@@ -1,5 +1,7 @@
 import React from "react";
 
+import { AddCircle, Delete, Report } from "@mui/icons-material";
+
 import type { EnsembleParameters } from "@framework/EnsembleParameters";
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import type {
@@ -22,7 +24,6 @@ import { SmartNodeSelector } from "@lib/components/SmartNodeSelector";
 import type { SmartNodeSelectorTag } from "@lib/components/SmartNodeSelector/smartNodeSelector";
 import { TagPicker } from "@lib/components/TagPicker";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { AddCircle, Delete, Report } from "@mui/icons-material";
 
 import { createContinuousValueSliderStep } from "../private-utils/sliderUtils";
 import {

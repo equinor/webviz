@@ -1,3 +1,5 @@
+import { useAtomValue } from "jotai";
+
 import type { VectorRealizationData_api } from "@api";
 import type { ChannelContentDefinition } from "@framework/DataChannelTypes";
 import type { ViewContext } from "@framework/ModuleContext";
@@ -5,9 +7,6 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
-import { useAtomValue } from "jotai";
-
-import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
 import { ChannelIds } from "../../channelDefs";
 import type { RegularEnsembleVectorSpec } from "../../dataGenerators";
@@ -17,6 +16,8 @@ import {
     loadedVectorSpecificationsAndRealizationDataAtom,
     queryIsFetchingAtom,
 } from "../atoms/derivedAtoms";
+
+import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
 export function usePublishToDataChannels(viewContext: ViewContext<Interfaces>) {
     const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);

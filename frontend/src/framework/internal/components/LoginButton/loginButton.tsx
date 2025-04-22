@@ -1,5 +1,8 @@
 import React from "react";
 
+import { Dropdown, MenuButton } from "@mui/base";
+import { AccountCircle, Login, Logout } from "@mui/icons-material";
+
 import { postLogout } from "@api";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -7,8 +10,6 @@ import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
-import { Dropdown, MenuButton } from "@mui/base";
-import { AccountCircle, Login, Logout } from "@mui/icons-material";
 
 function makeInitials(name: string): string | null {
     const regExp = new RegExp(/([^()]+)(\([\w ]+\))/);

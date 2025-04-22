@@ -1,9 +1,10 @@
+import { atom } from "jotai";
+
 import type { InplaceVolumetricsIdentifier_api } from "@api";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import type { EnsembleIdentWithRealizations } from "@modules/_shared/InplaceVolumetrics/queryHooks";
 import { SourceIdentifier, TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
-import { atom } from "jotai";
 
 import { accumulationOptionsAtom, filterAtom, tableTypeAtom } from "./baseAtoms";
 import { perRealizationTableDataResultsAtom, statisticalTableDataResultsAtom } from "./queryAtoms";

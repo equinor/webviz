@@ -1,11 +1,11 @@
 import React from "react";
 
+import { ChevronLeft, ChevronRight, GridView, Link, List, Palette, Settings, WebAsset } from "@mui/icons-material";
+import { useQueryClient } from "@tanstack/react-query";
+
 import WebvizLogo from "@assets/webviz.svg";
+
 import { GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { UserDeltaEnsembleSetting, UserEnsembleSetting, Workbench } from "@framework/Workbench";
-import { WorkbenchEvents } from "@framework/Workbench";
-import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
 import { LoginButton } from "@framework/internal/components/LoginButton";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
 import type {
@@ -13,13 +13,15 @@ import type {
     DeltaEnsembleItem,
     RegularEnsembleItem,
 } from "@framework/internal/components/SelectEnsemblesDialog/selectEnsemblesDialog";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { UserDeltaEnsembleSetting, UserEnsembleSetting, Workbench } from "@framework/Workbench";
+import { WorkbenchEvents } from "@framework/Workbench";
+import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { ChevronLeft, ChevronRight, GridView, Link, List, Palette, Settings, WebAsset } from "@mui/icons-material";
-import { useQueryClient } from "@tanstack/react-query";
 
 import { UserSessionState } from "./private-components/UserSessionState";
 
