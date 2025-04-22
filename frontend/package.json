@@ -19,6 +19,7 @@
         "test:ct:ui": "playwright test -c playwright.ct.config.ts --ui"
     },
     "dependencies": {
+        "@base-ui-components/react": "^1.0.0-alpha.7",
         "@equinor/eds-core-react": "^0.42.5",
         "@equinor/esv-intersection": "^3.0.10",
         "@headlessui/react": "^1.7.8",
