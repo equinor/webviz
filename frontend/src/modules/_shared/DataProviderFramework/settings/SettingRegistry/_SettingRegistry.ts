@@ -1,8 +1,8 @@
-import { SettingManager } from "../framework/SettingManager/SettingManager";
-import type { CustomSettingImplementation } from "../interfacesAndTypes/customSettingImplementation";
+import { SettingManager } from "../../framework/SettingManager/SettingManager";
+import type { CustomSettingImplementation } from "../../interfacesAndTypes/customSettingImplementation";
 
-import type { Setting, SettingCategories, SettingTypes } from "./settingsDefinitions";
-import { settingCategories } from "./settingsDefinitions";
+import type { Setting, SettingCategories, SettingTypes } from "./../settingsDefinitions";
+import { settingCategories } from "./../settingsDefinitions";
 
 export class SettingRegistry {
     private static _registeredSettings: Map<
@@ -60,5 +60,3 @@ export class SettingRegistry {
         });
     }
 }
-
-import "./registerAllSettings";
