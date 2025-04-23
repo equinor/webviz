@@ -298,9 +298,7 @@ export class IntersectionRealizationGridProvider
                     registerQueryKey(wellboreQueryOptions.queryKey);
 
                     return queryClient
-                        .fetchQuery({
-                            ...wellboreQueryOptions,
-                        })
+                        .fetchQuery(wellboreQueryOptions)
                         .then((data) => {
                             const path: number[][] = [];
                             for (const [index, northing] of data[0].northingArr.entries()) {
@@ -361,9 +359,7 @@ export class IntersectionRealizationGridProvider
 
                 registerQueryKey(intersectionQueryOptions.queryKey);
 
-                return queryClient.fetchQuery({
-                    ...intersectionQueryOptions,
-                });
+                return queryClient.fetchQuery(intersectionQueryOptions);
             })
             .then(transformPolylineIntersection);
 
