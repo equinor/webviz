@@ -1,7 +1,8 @@
 import React from "react";
 
-import { SortableListGroup } from "@lib/components/SortableList";
 import { SettingsApplications } from "@mui/icons-material";
+
+import { SortableListGroup } from "@lib/components/SortableList";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import type { ActionGroup } from "../../Actions";

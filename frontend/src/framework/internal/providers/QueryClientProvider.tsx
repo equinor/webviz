@@ -2,12 +2,12 @@ import React from "react";
 
 import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
 import { Provider } from "jotai";
+
+import { HydrateQueryClientAtom } from "../components/HydrateQueryClientAtom";
 
 import { AuthState, useAuthProvider } from "./AuthProvider";
 
-import { HydrateQueryClientAtom } from "../components/HydrateQueryClientAtom";
 
 type QueryError = {
     url: string;

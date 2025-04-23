@@ -1,11 +1,12 @@
 import React from "react";
 
+import { isEqual } from "lodash";
+
 import type { Parameter } from "@framework/EnsembleParameters";
 import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
 import { SmartNodeSelector } from "@lib/components/SmartNodeSelector";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { isEqual } from "lodash";
 
 // Icons placed here due to limitation of jest for testing utils (cannot import svg)
 import checkIcon from "./private-assets/check.svg";

@@ -1,8 +1,9 @@
+import type { QueryClient } from "@tanstack/react-query";
+
 import type { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api } from "@api";
 import { SensitivityType_api, getEnsembleDetailsOptions, getParametersOptions, getSensitivitiesOptions } from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/Workbench";
-import type { QueryClient } from "@tanstack/react-query";
 
 import type { ContinuousParameter, DiscreteParameter, Parameter } from "../EnsembleParameters";
 import { ParameterType } from "../EnsembleParameters";

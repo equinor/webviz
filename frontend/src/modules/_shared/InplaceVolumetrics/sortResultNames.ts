@@ -1,5 +1,6 @@
-import type { InplaceVolumetricResultName_api } from "@api";
 import { ORDERED_VOLUME_DEFINITIONS } from "@assets/volumeDefinitions";
+
+import type { InplaceVolumetricResultName_api } from "@api";
 
 function sortResultNamesGeneric<T extends string>(resultNames: T[]): T[] {
     const sortedResultNames: T[] = [];

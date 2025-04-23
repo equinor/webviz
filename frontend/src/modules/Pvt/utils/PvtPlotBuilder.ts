@@ -1,3 +1,5 @@
+import type { Layout, PlotData } from "plotly.js";
+
 import type { PvtData_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ColorSet } from "@lib/utils/ColorSet";
@@ -5,9 +7,6 @@ import type { Size2D } from "@lib/utils/geometry";
 import type { Figure } from "@modules/_shared/Figure";
 import { makeSubplots } from "@modules/_shared/Figure";
 
-import type { Layout, PlotData } from "plotly.js";
-
-import type { PvtDataAccessor } from "./PvtDataAccessor";
 
 import {
     ColorBy,
@@ -15,6 +14,9 @@ import {
     PhaseType,
     PressureDependentVariable,
 } from "../typesAndEnums";
+
+import type { PvtDataAccessor } from "./PvtDataAccessor";
+
 
 type TracePointData = {
     ratio: number;

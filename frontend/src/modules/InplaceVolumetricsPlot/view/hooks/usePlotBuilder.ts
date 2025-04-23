@@ -1,15 +1,16 @@
 import type React from "react";
 
+import { useAtomValue } from "jotai";
+
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { ColorSet } from "@lib/utils/ColorSet";
-import type { Interfaces } from "@modules/InplaceVolumetricsPlot/interfaces";
-import { PlotType, plotTypeToStringMapping } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
 import { PlotBuilder } from "@modules/_shared/InplaceVolumetrics/PlotBuilder";
 import type { Table } from "@modules/_shared/InplaceVolumetrics/Table";
 import { makeTableFromApiData } from "@modules/_shared/InplaceVolumetrics/tableUtils";
+import type { Interfaces } from "@modules/InplaceVolumetricsPlot/interfaces";
+import { PlotType, plotTypeToStringMapping } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
 
-import { useAtomValue } from "jotai";
 
 import {
     colorByAtom,
