@@ -1,8 +1,9 @@
 import React from "react";
 
+import { isEqual } from "lodash";
+
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
-import { isEqual } from "lodash";
 
 import {
     type ContextMenu as ContextMenuType,

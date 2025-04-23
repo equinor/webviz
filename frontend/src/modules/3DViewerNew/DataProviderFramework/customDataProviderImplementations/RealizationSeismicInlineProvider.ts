@@ -1,3 +1,5 @@
+import { isEqual } from "lodash";
+
 import { type SeismicCubeMeta_api, getInlineSliceOptions, getSeismicCubeMetaListOptions } from "@api";
 import type {
     CustomDataProviderImplementation,
@@ -6,8 +8,6 @@ import type {
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-
-import { isEqual } from "lodash";
 
 import { type SeismicSliceData_trans, transformSeismicSlice } from "../utils/transformSeismicSlice";
 

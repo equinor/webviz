@@ -6,9 +6,10 @@ import {
     type PickingInfo,
     type UpdateParameters,
 } from "@deck.gl/core";
-import * as vec3 from "@lib/utils/vec3";
 import type { ExtendedLayerProps, LayerPickInfo } from "@webviz/subsurface-viewer";
 import type { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
+
+import * as vec3 from "@lib/utils/vec3";
 
 import { type PipeLayerProps, PipesLayer } from "./_private/PipeLayer";
 import { getMd } from "./_private/wellTrajectoryUtils";

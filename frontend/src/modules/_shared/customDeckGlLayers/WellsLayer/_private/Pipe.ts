@@ -1,6 +1,7 @@
+import { cloneDeep } from "lodash";
+
 import * as vec3 from "@lib/utils/vec3";
 
-import { cloneDeep } from "lodash";
 
 import * as mat4 from "./Mat4";
 import * as plane from "./Plane";

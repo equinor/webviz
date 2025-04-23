@@ -1,6 +1,6 @@
 import { CompositeLayer, type GetPickingInfoParams, type Layer, type PickingInfo } from "@deck.gl/core";
 import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
-import { Geometry } from "@luma.gl/engine";
+import type { Geometry } from "@luma.gl/engine";
 import type { ExtendedLayerProps } from "@webviz/subsurface-viewer";
 import type { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
 

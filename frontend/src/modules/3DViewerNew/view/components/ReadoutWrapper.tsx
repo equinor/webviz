@@ -2,14 +2,15 @@ import React from "react";
 
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
+import type { LayerPickInfo, MapMouseEvent, ViewsType } from "@webviz/subsurface-viewer";
+
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
-import type { LayerPickInfo, MapMouseEvent, ViewsType } from "@webviz/subsurface-viewer";
-
-import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 
 import type { DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
+
+import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 
 export type ReadoutWrapperProps = {
     views: ViewsType;
@@ -41,7 +42,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             <ReadoutBoxWrapper layerPickInfo={layerPickingInfo} visible />
             <SubsurfaceViewerWithCameraState
                 {...props.deckGlManager.makeDeckGlComponentProps({
-                    deckGlRef: deckGlRef,
+                    deckGlRef,
                     id: `subsurface-viewer-${id}`,
                     views: props.views,
                     verticalScale: props.verticalScale,

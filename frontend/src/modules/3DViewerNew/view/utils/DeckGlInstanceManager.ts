@@ -3,9 +3,10 @@ This manager is responsible for managing plugins for DeckGL, forwarding events t
 */
 import type { Layer, PickingInfo } from "@deck.gl/core";
 import type { DeckGLProps, DeckGLRef } from "@deck.gl/react";
+import type { MapMouseEvent } from "@webviz/subsurface-viewer";
+
 import type { SubsurfaceViewerWithCameraStateProps } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { type PublishSubscribe, PublishSubscribeDelegate } from "@modules_shared/utils/PublishSubscribeDelegate";
-import type { MapMouseEvent } from "@webviz/subsurface-viewer";
 
 export type ContextMenuItem = {
     icon?: React.ReactElement;

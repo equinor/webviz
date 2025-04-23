@@ -1,12 +1,13 @@
+import { MapLayer } from "@webviz/subsurface-viewer/dist/layers";
+
 import {
     type RealizationSurfaceData,
     type RealizationSurfaceSettings,
     SurfaceDataFormat,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationSurfaceProvider";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
-import { MapLayer } from "@webviz/subsurface-viewer/dist/layers";
+import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 export function makeRealizationSurfaceLayer({
     id,
@@ -21,7 +22,7 @@ export function makeRealizationSurfaceLayer({
         return null;
     }
 
-    if (data.surfaceData.format === SurfaceDataFormat.FLOAT) {
+    if (data.format === SurfaceDataFormat.FLOAT) {
         return new MapLayer({
             id,
             name,

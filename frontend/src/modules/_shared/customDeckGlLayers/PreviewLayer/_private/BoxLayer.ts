@@ -1,7 +1,8 @@
 import { CompositeLayer, type CompositeLayerProps, type Layer, type UpdateParameters } from "@deck.gl/core";
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
-import * as vec3 from "@lib/utils/vec3";
 import { Geometry } from "@luma.gl/engine";
+
+import * as vec3 from "@lib/utils/vec3";
 
 export type RectangleLayerData = {
     centerPoint: [number, number, number];

@@ -6,6 +6,7 @@ import {
     type PickingInfo,
 } from "@deck.gl/core";
 import { PathLayer, TextLayer } from "@deck.gl/layers";
+
 import type { Polyline } from "@modules/3DViewerNew/view/utils/PolylinesPlugin";
 
 export type PolylinesLayerProps = {

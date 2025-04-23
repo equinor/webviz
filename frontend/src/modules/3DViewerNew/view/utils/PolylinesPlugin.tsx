@@ -1,14 +1,14 @@
-import addPathIcon from "@assets/add_path.svg";
-import continuePathIcon from "@assets/continue_path.svg";
-import removePathIcon from "@assets/remove_path.svg";
 import type { Layer, PickingInfo } from "@deck.gl/core";
-import { type PublishSubscribe, PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { Edit, Remove } from "@mui/icons-material";
-
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import { type ContextMenuItem, type DeckGlInstanceManager, DeckGlPlugin } from "./DeckGlInstanceManager";
+import addPathIcon from "@assets/add_path.svg";
+import continuePathIcon from "@assets/continue_path.svg";
+import removePathIcon from "@assets/remove_path.svg";
+
+import { type PublishSubscribe, PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
+
 
 import {
     AllowHoveringOf,
@@ -16,6 +16,8 @@ import {
     isEditablePolylineLayerPickingInfo,
 } from "../../customDeckGlLayers/EditablePolylineLayer";
 import { PolylinesLayer, isPolylinesLayerPickingInfo } from "../../customDeckGlLayers/PolylinesLayer";
+
+import { type ContextMenuItem, type DeckGlInstanceManager, DeckGlPlugin } from "./DeckGlInstanceManager";
 
 export type Polyline = {
     id: string;

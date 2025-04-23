@@ -9,12 +9,12 @@ import {
     picking,
     project32,
 } from "@deck.gl/core";
-import type { Vec3 } from "@lib/utils/vec3";
-import * as vec3 from "@lib/utils/vec3";
 import { Geometry, Model } from "@luma.gl/engine";
 import { phongLighting } from "@luma.gl/shadertools";
-
 import { isEqual } from "lodash";
+
+import * as vec3 from "@lib/utils/vec3";
+import type { Vec3 } from "@lib/utils/vec3";
 
 import { Pipe } from "./Pipe";
 import fragmentShader from "./shaders/fragmentShader.glsl?raw";

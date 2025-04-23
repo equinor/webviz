@@ -1,15 +1,16 @@
 import type { Layer } from "@deck.gl/core";
+
 import * as bbox from "@lib/utils/bbox";
 import { type Geometry, ShapeType, degreesToRadians } from "@lib/utils/geometry";
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import * as vec3 from "@lib/utils/vec3";
+import { SeismicFenceMeshLayer } from "@modules/3DViewerNew/customDeckGlLayers/SeismicFenceMeshLayer copy/SeismicFenceMeshLayer";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
+import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import type { RealizationSeismicDepthSliceStoredData } from "../customDataProviderImplementations/RealizationSeismicDepthProvider";
 import type { SeismicSliceData_trans } from "../utils/transformSeismicSlice";
-import { SeismicFenceMeshLayer } from "@modules/3DViewerNew/customDeckGlLayers/SeismicFenceMeshLayer copy/SeismicFenceMeshLayer";
 
 export enum Plane {
     CROSSLINE = "CROSSLINE",

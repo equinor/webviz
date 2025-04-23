@@ -1,8 +1,8 @@
 import type { WellboreTrajectory_api } from "@api";
 import * as bbox from "@lib/utils/bbox";
-import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import { WellsLayer, type WellsLayerData } from "@modules/_shared/customDeckGlLayers/WellsLayer/WellsLayer";
+import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
+import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 export function makeDrilledWellTrajectoriesLayer(
     args: TransformerArgs<any, WellboreTrajectory_api[], any>,

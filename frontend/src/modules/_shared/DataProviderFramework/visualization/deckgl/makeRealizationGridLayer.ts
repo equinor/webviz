@@ -1,15 +1,15 @@
+import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
+
 import { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { makeRealizationGridBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeRealizationGridBoundingBox";
-import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
-import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import type {
     RealizationGridData,
     RealizationGridSettings,
 } from "../../dataProviders/implementations/RealizationGridProvider";
+import { makeColorMapFunctionFromColorScale } from "../utils/colors";
 
 export function makeRealizationGridLayer(
     args: TransformerArgs<RealizationGridSettings, RealizationGridData>,
@@ -17,9 +17,8 @@ export function makeRealizationGridLayer(
     const { id, getData, getSetting, isLoading } = args;
     const data = getData();
     let colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
-    const boundingBox = makeRealizationGridBoundingBox(args);
 
-    if (!data || !boundingBox || !colorScale) {
+    if (!data || !colorScale) {
         return null;
     }
 

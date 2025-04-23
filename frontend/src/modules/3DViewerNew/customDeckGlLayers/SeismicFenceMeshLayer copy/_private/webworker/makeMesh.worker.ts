@@ -1,4 +1,5 @@
 import { expose } from "comlink";
+
 import type { WebworkerParameters } from "./types";
 
 /*

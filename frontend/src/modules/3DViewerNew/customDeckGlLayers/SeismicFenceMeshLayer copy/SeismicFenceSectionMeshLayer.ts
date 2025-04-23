@@ -6,18 +6,19 @@ import {
     type PickingInfo,
     type UpdateParameters,
 } from "@deck.gl/core";
-import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
 import { Geometry } from "@luma.gl/engine";
 import type { ExtendedLayerProps } from "@webviz/subsurface-viewer";
-
+import { transfer, wrap } from "comlink";
 import { isEqual } from "lodash";
 
-import { ExtendedSimpleMeshLayer } from "./_private/ExtendedSimpleMeshLayer";
-import { type WebworkerParameters, type WebworkerResult } from "./_private/webworker/types";
-import MeshWorker from "./_private/webworker/makeMesh.worker?worker";
+import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
 
 import { PreviewLayer } from "../PreviewLayer/PreviewLayer";
-import { transfer, wrap } from "comlink";
+
+import { ExtendedSimpleMeshLayer } from "./_private/ExtendedSimpleMeshLayer";
+import MeshWorker from "./_private/webworker/makeMesh.worker?worker";
+import { type WebworkerParameters, type WebworkerResult } from "./_private/webworker/types";
+
 
 type ComlinkRemote = ReturnType<
     typeof wrap<{
@@ -110,8 +111,8 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
     private initArrayBuffers() {
         const { data } = this.props;
 
-        let totalNumVertices = data.numSamplesU * data.numSamplesV * 3;
-        let totalNumIndices = (data.numSamplesU - 1) * (data.numSamplesV - 1) * 6;
+        const totalNumVertices = data.numSamplesU * data.numSamplesV * 3;
+        const totalNumIndices = (data.numSamplesU - 1) * (data.numSamplesV - 1) * 6;
 
         this._verticesArray = new Float32Array(totalNumVertices * Float32Array.BYTES_PER_ELEMENT);
         this._indicesArray = new Uint32Array(totalNumIndices * Uint32Array.BYTES_PER_ELEMENT);

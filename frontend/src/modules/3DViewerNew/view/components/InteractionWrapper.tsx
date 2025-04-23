@@ -2,19 +2,21 @@ import React from "react";
 
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
+import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { converter } from "culori";
+
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import { converter } from "culori";
+
+import { DeckGlInstanceManager, DeckGlInstanceManagerTopic } from "../utils/DeckGlInstanceManager";
+import { type Polyline, PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";
 
 import { ContextMenu } from "./ContextMenu";
 import { ReadoutWrapper, type ReadoutWrapperProps } from "./ReadoutWrapper";
 import { Toolbar } from "./Toolbar";
 
-import { DeckGlInstanceManager, DeckGlInstanceManagerTopic } from "../utils/DeckGlInstanceManager";
-import { type Polyline, PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";
 
 export type InteractionWrapperProps = Omit<
     ReadoutWrapperProps,

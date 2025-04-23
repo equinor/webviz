@@ -1,6 +1,8 @@
 import React from "react";
 
 import { View as DeckGlView, type Layer } from "@deck.gl/core";
+import type { ViewportType } from "@webviz/subsurface-viewer";
+
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
@@ -8,9 +10,18 @@ import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
+import { RealizationSeismicCrosslineProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicCrosslineProvider";
+import { RealizationSeismicDepthSliceProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicDepthProvider";
+import { RealizationSeismicInlineProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicInlineProvider";
+import { CustomDataProviderType } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderTypes";
+import {
+    makeSeismicFenceMeshLayerFunction,
+    Plane,
+} from "@modules/3DViewerNew/DataProviderFramework/visualization/makeSeismicFenceMeshLayer";
+import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
-import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
+import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
 import { RealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationGridProvider";
 import { RealizationPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationPolygonsProvider";
 import { RealizationSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationSurfaceProvider";
@@ -18,6 +29,18 @@ import { StatisticalSurfaceProvider } from "@modules/_shared/DataProviderFramewo
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import { makeColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeColorScaleAnnotation";
+import { makePolygonDataBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makePolygonDataBoundingBox";
+import { makeRealizationGridBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeRealizationGridBoundingBox";
+import { makeSurfaceLayerBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeSurfaceLayerBoundingBox";
+import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
+import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
+import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
+import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
+import { makeRealizationGridLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationGridLayer";
+import { makeRealizationPolygonsLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationPolygonsLayer";
+import { makeRealizationSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationSurfaceLayer";
+import { makeStatisticalSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeStatisticalSurfaceLayer";
 import type {
     Annotation,
     VisualizationTarget,
@@ -26,31 +49,13 @@ import {
     VisualizationAssembler,
     VisualizationItemType,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
-import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
-import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
-import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
-import { makeRealizationGridLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationGridLayer";
-import { makeRealizationPolygonsLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationPolygonsLayer";
-import { makeRealizationSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationSurfaceLayer";
-import { makeStatisticalSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeStatisticalSurfaceLayer";
-import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import type { ViewportType } from "@webviz/subsurface-viewer";
+
+import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
 import { InteractionWrapper } from "./InteractionWrapper";
 
-import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 import "../../DataProviderFramework/registerAllDataProviders";
-import { makeSurfaceLayerBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeSurfaceLayerBoundingBox";
-import { makeColorScaleAnnotation } from "@modules/_shared/DataProviderFramework/visualization/annotations/makeColorScaleAnnotation";
-import { makePolygonDataBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makePolygonDataBoundingBox";
-import { makeRealizationGridBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeRealizationGridBoundingBox";
-import { CustomDataProviderType } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderTypes";
-import { RealizationSeismicInlineProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicInlineProvider";
-import { makeSeismicFenceMeshLayerFunction, Plane } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeSeismicFenceMeshLayer";
-import { RealizationSeismicCrosslineProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicCrosslineProvider";
-import { RealizationSeismicDepthSliceProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicDepthProvider";
 
 export type LayersWrapperProps = {
     layerManager: DataProviderManager;
@@ -115,21 +120,21 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     RealizationSeismicInlineProvider,
     {
         transformToVisualization: makeSeismicFenceMeshLayerFunction(Plane.INLINE),
-    }
+    },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     CustomDataProviderType.REALIZATION_SEISMIC_CROSSLINE,
     RealizationSeismicCrosslineProvider,
     {
         transformToVisualization: makeSeismicFenceMeshLayerFunction(Plane.CROSSLINE),
-    }
+    },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     CustomDataProviderType.REALIZATION_SEISMIC_DEPTH,
     RealizationSeismicDepthSliceProvider,
     {
         transformToVisualization: makeSeismicFenceMeshLayerFunction(Plane.DEPTH),
-    }
+    },
 );
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {

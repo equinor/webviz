@@ -1,9 +1,9 @@
 import React from "react";
 
-import { ReadoutBox, type ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import type { ExtendedLayerProps, LayerPickInfo } from "@webviz/subsurface-viewer";
-
 import { isEqual } from "lodash";
+
+import { ReadoutBox, type ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 
 // Needs extra distance for the left side; this avoids overlapping with legend elements
 const READOUT_EDGE_DISTANCE_REM = { left: 6 };

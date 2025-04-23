@@ -21,7 +21,6 @@ import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
 import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { ObservedSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurfaceProvider";
-import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";

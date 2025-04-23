@@ -8,14 +8,12 @@ import {
     postGetPolylineIntersectionOptions,
 } from "@api";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
-import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { PolylineIntersection_trans } from "@modules/_shared/utils/wellbore";
 import {
     calcExtendedSimplifiedWellboreTrajectoryInXYPlane,
     transformPolylineIntersection,
 } from "@modules/_shared/utils/wellbore";
-
 
 import type {
     CustomDataProviderImplementation,
@@ -23,8 +21,6 @@ import type {
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
-import type { IntersectionSettingValue } from "../../settings/implementations/IntersectionSetting";
-import { type MakeSettingTypesMap, Setting } from "../../settings/settingsDefinitions";
 
 const intersectionRealizationGridSettings = [
     Setting.INTERSECTION,

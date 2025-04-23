@@ -1,6 +1,7 @@
 import { CompositeLayer, type GetPickingInfoParams, type Layer, type PickingInfo } from "@deck.gl/core";
 import { PathStyleExtension } from "@deck.gl/extensions";
 import { LineLayer, PathLayer, ScatterplotLayer } from "@deck.gl/layers";
+
 import type { Polyline } from "@modules/3DViewerNew/view/utils/PolylinesPlugin";
 
 import { AnimatedPathLayer } from "./AnimatedPathLayer";
