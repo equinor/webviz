@@ -1,10 +1,11 @@
+import { isEqual } from "lodash";
+import { v4 } from "uuid";
+
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import type { PublishSubscribe } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
-import { isEqual } from "lodash";
-import { v4 } from "uuid";
 
 import type { CustomSettingImplementation } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SettingAttributes } from "../../interfacesAndTypes/customSettingsHandler";
@@ -16,6 +17,7 @@ import { Group } from "../Group/Group";
 
 export enum SettingTopic {
     VALUE = "VALUE",
+    VALUE_ABOUT_TO_BE_CHANGED = "VALUE_ABOUT_TO_BE_CHANGED",
     IS_VALID = "IS_VALID",
     AVAILABLE_VALUES = "AVAILABLE_VALUES",
     OVERRIDDEN_VALUE = "OVERRIDDEN_VALUE",
@@ -28,6 +30,7 @@ export enum SettingTopic {
 
 export type SettingTopicPayloads<TValue, TCategory extends SettingCategory> = {
     [SettingTopic.VALUE]: TValue;
+    [SettingTopic.VALUE_ABOUT_TO_BE_CHANGED]: void;
     [SettingTopic.IS_VALID]: boolean;
     [SettingTopic.AVAILABLE_VALUES]: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> | null;
     [SettingTopic.OVERRIDDEN_VALUE]: TValue | undefined;
@@ -186,10 +189,12 @@ export class SettingManager<
             return;
         }
         this._currentValueFromPersistence = null;
+
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_ABOUT_TO_BE_CHANGED);
+
         this._value = value;
 
         this.setValueValid(this.checkIfValueIsValid(this._value));
-
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
     }
 
@@ -314,6 +319,8 @@ export class SettingManager<
             switch (topic) {
                 case SettingTopic.VALUE:
                     return this.getValue();
+                case SettingTopic.VALUE_ABOUT_TO_BE_CHANGED:
+                    return;
                 case SettingTopic.IS_VALID:
                     return this._isValueValid;
                 case SettingTopic.AVAILABLE_VALUES:

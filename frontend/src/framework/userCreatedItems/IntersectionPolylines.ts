@@ -1,9 +1,10 @@
-import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
-import type { UserCreatedItemSet } from "@framework/UserCreatedItems";
 
 import { atom } from "jotai";
 import { cloneDeep, isEqual } from "lodash";
 import { v4 } from "uuid";
+
+import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
+import type { UserCreatedItemSet } from "@framework/UserCreatedItems";
 
 export type IntersectionPolyline = {
     id: string;

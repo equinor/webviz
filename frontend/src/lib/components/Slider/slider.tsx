@@ -1,10 +1,11 @@
 import React from "react";
 
+import type { SliderProps as SliderUnstyledProps, SliderValueLabelSlotProps } from "@mui/base";
+import { Popper as PopperUnstyled, Slider as SliderUnstyled } from "@mui/base";
+
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import type { SliderProps as SliderUnstyledProps, SliderValueLabelSlotProps } from "@mui/base";
-import { Popper as PopperUnstyled, Slider as SliderUnstyled } from "@mui/base";
 
 import { BaseComponent } from "../BaseComponent";
 

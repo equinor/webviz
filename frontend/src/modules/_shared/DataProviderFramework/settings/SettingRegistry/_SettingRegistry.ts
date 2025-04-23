@@ -1,8 +1,8 @@
-import type { Setting, SettingCategories, SettingTypes} from "./settingsDefinitions";
-import { settingCategories } from "./settingsDefinitions";
+import { SettingManager } from "../../framework/SettingManager/SettingManager";
+import type { CustomSettingImplementation } from "../../interfacesAndTypes/customSettingImplementation";
 
-import { SettingManager } from "../framework/SettingManager/SettingManager";
-import type { CustomSettingImplementation } from "../interfacesAndTypes/customSettingImplementation";
+import type { Setting, SettingCategories, SettingTypes } from "./../settingsDefinitions";
+import { settingCategories } from "./../settingsDefinitions";
 
 export class SettingRegistry {
     private static _registeredSettings: Map<
@@ -22,14 +22,14 @@ export class SettingRegistry {
         TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
         TSettingImpl extends new (...args: any) => CustomSettingImplementation<TValue, TCategory> = {
             new (params?: any): CustomSettingImplementation<TValue, TCategory>;
-        }
+        },
     >(
         type: TSetting,
         label: string,
         customSettingImplementation: TSettingImpl,
         options?: {
             customConstructorParameters?: ConstructorParameters<TSettingImpl>;
-        }
+        },
     ): void {
         if (this._registeredSettings.has(type)) {
             throw new Error(`Setting ${type} already registered`);
@@ -43,7 +43,7 @@ export class SettingRegistry {
 
     static makeSetting<TSetting extends Setting>(
         type: TSetting,
-        defaultValue?: SettingTypes[TSetting]
+        defaultValue?: SettingTypes[TSetting],
     ): SettingManager<TSetting> {
         const stored = this._registeredSettings.get(type);
         if (!stored) {

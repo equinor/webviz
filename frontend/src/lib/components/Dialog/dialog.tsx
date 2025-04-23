@@ -1,8 +1,9 @@
 import React from "react";
 
+import { Close } from "@mui/icons-material";
+
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Close } from "@mui/icons-material";
 
 export type DialogProps = {
     title?: string;

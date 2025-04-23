@@ -1,7 +1,8 @@
-import { CurrentModuleInstanceIdAtom } from "@framework/GlobalAtoms";
 
 import type { Getter } from "jotai";
 import { atom } from "jotai";
+
+import { CurrentModuleInstanceIdAtom } from "@framework/GlobalAtoms";
 
 /**
  * Creates an writeable atom that persists it's value in localstorage, but keeps it unique per module instance. **Note: must only be used within a module instances own store**

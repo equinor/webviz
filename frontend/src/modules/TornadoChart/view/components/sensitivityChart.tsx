@@ -1,10 +1,11 @@
 import React from "react";
-import Plot from "react-plotly.js";
-
-import type { SelectedSensitivity } from "@modules/TornadoChart/typesAndEnums";
-import type { SensitivityColorMap } from "@modules/_shared/sensitivityColors";
 
 import type { Layout, PlotData, PlotMouseEvent } from "plotly.js";
+import Plot from "react-plotly.js";
+
+import type { SensitivityColorMap } from "@modules/_shared/sensitivityColors";
+import type { SelectedSensitivity } from "@modules/TornadoChart/typesAndEnums";
+
 
 import type { SensitivityResponse, SensitivityResponseDataset } from "../utils/sensitivityResponseCalculator";
 

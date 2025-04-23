@@ -1,10 +1,11 @@
+import { atom } from "jotai";
+
 import type { Grid3dDimensions_api } from "@api";
 import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
 import type { GridCellIndexRanges } from "@modules/3DViewer/typesAndEnums";
 
-import { atom } from "jotai";
 
 import {
     userSelectedCustomIntersectionPolylineIdAtom,

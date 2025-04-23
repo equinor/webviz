@@ -1,3 +1,6 @@
+import type { QueryClient } from "@tanstack/query-core";
+import { isEqual } from "lodash";
+
 import type { SurfaceRealizationSampleValues_api } from "@api";
 import { postGetSampleSurfaceInPointsOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -5,9 +8,7 @@ import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorSet } from "@lib/utils/ColorSet";
 import type { Vec2 } from "@lib/utils/vec2";
 import { normalizeVec2, point2Distance } from "@lib/utils/vec2";
-import type { QueryClient } from "@tanstack/query-core";
 
-import { isEqual } from "lodash";
 
 import type { BoundingBox } from "./BaseLayer";
 import { BaseLayer, LayerTopic } from "./BaseLayer";

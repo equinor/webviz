@@ -1,13 +1,15 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import type { QueryClient } from "@tanstack/query-core";
+
+import type { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
+import type { MakeSettingTypesMap, Settings } from "../settings/settingsDefinitions";
 
 import type { CustomSettingsHandler } from "./customSettingsHandler";
 import type { NullableStoredData, StoredData } from "./sharedTypes";
 import type { AvailableValuesType, SettingsKeysFromTuple } from "./utils";
 
-import type { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
-import type { MakeSettingTypesMap, Settings } from "../settings/settingsDefinitions";
 
 /**
  * This type is used to pass parameters to the fetchData method of a CustomDataProviderImplementation.

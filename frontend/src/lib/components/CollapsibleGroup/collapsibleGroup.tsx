@@ -1,7 +1,8 @@
 import React from "react";
 
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
+
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { BaseComponentProps } from "../BaseComponent";
 import { BaseComponent } from "../BaseComponent";

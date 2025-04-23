@@ -1,6 +1,6 @@
-import { DataProvider } from "../framework/DataProvider/DataProvider";
-import type { DataProviderManager } from "../framework/DataProviderManager/DataProviderManager";
-import type { CustomDataProviderImplementation } from "../interfacesAndTypes/customDataProviderImplementation";
+import { DataProvider } from "../../framework/DataProvider/DataProvider";
+import type { DataProviderManager } from "../../framework/DataProviderManager/DataProviderManager";
+import type { CustomDataProviderImplementation } from "../../interfacesAndTypes/customDataProviderImplementation";
 
 export class DataProviderRegistry {
     private static _registeredDataProviders: Map<

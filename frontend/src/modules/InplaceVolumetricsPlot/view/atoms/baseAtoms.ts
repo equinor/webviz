@@ -1,10 +1,11 @@
+import { atom } from "jotai";
+
 import type { InplaceVolumetricResultName_api } from "@api";
-import type { InplaceVolumetricsFilterSelections } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
-import { PlotType } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
 import type { SelectorColumn, SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
 import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
+import type { InplaceVolumetricsFilterSelections } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
+import { PlotType } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
 
-import { atom } from "jotai";
 
 export const filterAtom = atom<InplaceVolumetricsFilterSelections>({
     ensembleIdents: [],

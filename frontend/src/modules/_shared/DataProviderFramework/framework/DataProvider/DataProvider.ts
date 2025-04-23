@@ -1,12 +1,12 @@
+import type { QueryClient } from "@tanstack/react-query";
+import { isCancelledError } from "@tanstack/react-query";
+import { clone, isEqual } from "lodash";
+
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
 import type { PublishSubscribe } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import type { QueryClient } from "@tanstack/react-query";
-import { isCancelledError } from "@tanstack/react-query";
-
-import { isEqual } from "lodash";
 
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import {
@@ -230,8 +230,8 @@ export class DataProvider<
         }
 
         this._cancellationPending = true;
-        this._prevSettings = this._settingsContextDelegate.getValues() as TSettingTypes;
-        this._prevStoredData = this._settingsContextDelegate.getStoredDataRecord() as TStoredData;
+        this._prevSettings = clone(this._settingsContextDelegate.getValues()) as TSettingTypes;
+        this._prevStoredData = clone(this._settingsContextDelegate.getStoredDataRecord()) as TStoredData;
         this.maybeCancelQuery().then(() => {
             this.maybeRefetchData();
         });

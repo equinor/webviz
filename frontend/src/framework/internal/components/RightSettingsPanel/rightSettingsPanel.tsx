@@ -1,8 +1,8 @@
 import React from "react";
 
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import type { Workbench } from "@framework/Workbench";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
+import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 

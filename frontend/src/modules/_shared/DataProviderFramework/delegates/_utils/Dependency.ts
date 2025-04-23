@@ -1,5 +1,4 @@
 import { isCancelledError } from "@tanstack/react-query";
-
 import { isEqual } from "lodash";
 
 import type { GlobalSettings } from "../../framework/DataProviderManager/DataProviderManager";
@@ -132,6 +131,16 @@ export class Dependency<
             // #Waterfall
         });
 
+        setting.getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE_ABOUT_TO_BE_CHANGED)(() => {
+            const loading = true;
+            if (loading) {
+                this.setLoadingState(true);
+            }
+            // Not subscribing to loading state false as it will
+            // be set when this dependency is updated
+            // #Waterfall
+        });
+
         return this._cachedSettingsMap.get(settingName as string);
     }
 
@@ -245,12 +254,12 @@ export class Dependency<
     }
 
     private applyNewValue(newValue: Awaited<TReturnValue> | null) {
+        this.setLoadingState(false);
         if (!isEqual(newValue, this._cachedValue) || newValue === null) {
             this._cachedValue = newValue;
             for (const callback of this._dependencies) {
                 callback(newValue);
             }
         }
-        this.setLoadingState(false);
     }
 }

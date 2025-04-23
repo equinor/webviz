@@ -1,6 +1,8 @@
 import React from "react";
 
 import { View as DeckGlView, type Layer } from "@deck.gl/core";
+import type { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
+
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
@@ -11,7 +13,9 @@ import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/
 import { makeObservedSurfaceLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeObservedSurfaceLayer";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
+import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
+import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import { RealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationGridProvider";
@@ -21,6 +25,10 @@ import { StatisticalSurfaceProvider } from "@modules/_shared/DataProviderFramewo
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
+import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
+import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
+import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import type {
     Annotation,
     VisualizationTarget,
@@ -43,11 +51,11 @@ import { makeRealizationSurfaceLayer } from "@modules/_shared/DataProviderFramew
 import { makeStatisticalSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeStatisticalSurfaceLayer";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import type { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
+
+import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
-import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 
 export type LayersWrapperProps = {

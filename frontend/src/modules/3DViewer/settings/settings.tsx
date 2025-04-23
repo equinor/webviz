@@ -1,18 +1,22 @@
 import React from "react";
 
+import { Delete, Edit } from "@mui/icons-material";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { isEqual } from "lodash";
+
 import type { Grid3dInfo_api, WellboreHeader_api } from "@api";
+import { ColorScaleSelector } from "@framework/components/ColorScaleSelector";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { useIntersectionPolylines } from "@framework/UserCreatedItems";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { ColorScaleSelector } from "@framework/components/ColorScaleSelector";
-import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
-import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { Intersection } from "@framework/types/intersection";
 import { IntersectionType } from "@framework/types/intersection";
+import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
@@ -27,10 +31,10 @@ import { TableSelect } from "@lib/components/TableSelect";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { isoIntervalStringToDateLabel, isoStringToDateLabel } from "@modules/_shared/utils/isoDatetimeStringFormatting";
-import { Delete, Edit } from "@mui/icons-material";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { isEqual } from "lodash";
+
+import type { Interfaces } from "../interfaces";
+import type { GridCellIndexRanges } from "../typesAndEnums";
 
 import {
     addCustomIntersectionPolylineEditModeActiveAtom,
@@ -67,8 +71,6 @@ import { drilledWellboreHeadersQueryAtom, gridModelInfosQueryAtom } from "./atom
 import { GridCellIndexFilter } from "./components/gridCellIndexFilter";
 import { WellboreSelector } from "./components/wellboreSelector";
 
-import type { Interfaces } from "../interfaces";
-import type { GridCellIndexRanges } from "../typesAndEnums";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -161,7 +163,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
         syncHelper.publishValue(
             SyncSettingKey.ENSEMBLE,
             "global.syncValue.ensembles",
-            ensembleIdent ? [ensembleIdent] : []
+            ensembleIdent ? [ensembleIdent] : [],
         );
     }
 
@@ -251,7 +253,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const datesOrIntervalsForSelectedParameter =
         gridModelInfo?.property_info_arr
             .filter((el) => el.property_name === selectedGridModelParameterName)
-            .map((el) => el.iso_date_or_interval) ?? [];
+            .map((el) => el.iso_date_or_interval ?? null) ?? [];
 
     return (
         <div className="flex flex-col gap-1">
@@ -433,7 +435,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                                     >
                                         <Delete fontSize="small" />
                                     </div>
-                                </div>
+                                </div>,
                             )}
                             value={selectedCustomIntersectionPolylineId ? [selectedCustomIntersectionPolylineId] : []}
                             headerLabels={["Polyline name", "Actions"]}
@@ -516,7 +518,7 @@ function makeCustomIntersectionPolylineOptions(
     polylines: IntersectionPolyline[],
     selectedId: string | null,
     filter: string,
-    actions: React.ReactNode
+    actions: React.ReactNode,
 ): TableSelectOption[] {
     return polylines
         .filter((polyline) => polyline.name.includes(filter))
