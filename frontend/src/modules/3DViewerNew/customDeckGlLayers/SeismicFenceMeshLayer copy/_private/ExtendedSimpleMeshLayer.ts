@@ -1,19 +1,18 @@
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 
 export class ExtendedSimpleMeshLayer extends SimpleMeshLayer {
-    static name = "ExtendedSimpleMeshLayer";
-    static componentName = "ExtendedSimpleMeshLayer";
+    static layerName = "ExtendedSimpleMeshLayer";
 
     getShaders() {
         return {
             ...super.getShaders(),
             inject: {
                 "vs:#decl": `
-    flat out int vertexIndex;`,
+    out float vVertexIndex;`,
                 "vs:#main-end": `
-    vertexIndex = gl_VertexID;`,
+    vVertexIndex = float(gl_VertexID);`,
                 "fs:#decl": `
-    flat in int vertexIndex;
+    in float vVertexIndex;
     
     vec4 encodeVertexIndexToRGB (int vertexIndex) {
         float r = 0.0;
@@ -37,7 +36,7 @@ export class ExtendedSimpleMeshLayer extends SimpleMeshLayer {
     `,
                 "fs:#main-start": `
     if (picking.isActive > 0.5 && !(picking.isAttribute > 0.5)) {
-        fragColor = encodeVertexIndexToRGB(vertexIndex);
+        fragColor = encodeVertexIndexToRGB(int(vVertexIndex));
         return;
     }`,
             },

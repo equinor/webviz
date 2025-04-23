@@ -93,7 +93,7 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                         />
                     </div>
                     <div className="w-1/5">
-                        <Input type="number" value={props.value} onChange={handleInputChange} />
+                        <Input type="number" value={props.value ?? 0} onChange={handleInputChange} />
                     </div>
                 </div>
             );

@@ -1,8 +1,14 @@
-import { CompositeLayer, type GetPickingInfoParams, type Layer, type PickingInfo } from "@deck.gl/core";
-import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
-import type { Geometry } from "@luma.gl/engine";
+import {
+    CompositeLayer,
+    type CompositeLayerProps,
+    type Layer,
+    type PickingInfo,
+    type UpdateParameters,
+} from "@deck.gl/core";
 import type { ExtendedLayerProps } from "@webviz/subsurface-viewer";
 import type { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
+
+import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
 
 import { SeismicFenceSectionMeshLayer, type SeismicFenceSection } from "./SeismicFenceSectionMeshLayer";
 
@@ -29,22 +35,42 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
 
     // @ts-expect-error - This is how deck.gl expects the state to be defined
     state!: {
-        geometry: Geometry;
         isHovered: boolean;
     };
 
-    getPickingInfo({ info }: GetPickingInfoParams): SeismicFenceMeshLayerPickingInfo {
-        const { zIncreaseDownwards } = this.props;
-        if (!info.color) {
-            return info;
-        }
-
-        return info;
+    onHover(pickingInfo: PickingInfo): boolean {
+        this.setState({ isHovered: pickingInfo.index !== -1 });
+        return false;
     }
 
-    onHover(pickingInfo: PickingInfo): boolean {
-        this.setState({ ...this.state, isHovered: pickingInfo.index !== -1 });
+    shouldUpdateState(
+        params: UpdateParameters<Layer<SeismicFenceMeshLayerProps & Required<CompositeLayerProps>>>,
+    ): boolean {
+        const { changeFlags } = params;
+
+        if (changeFlags.dataChanged) {
+            return true;
+        }
+
+        if (this.props.isLoading && this.state.isHovered) {
+            return true;
+        }
+
         return false;
+    }
+
+    updateState(params: UpdateParameters<Layer<SeismicFenceMeshLayerProps & Required<CompositeLayerProps>>>): void {
+        const { props } = params;
+
+        if (params.changeFlags.dataChanged) {
+            this.setState({ isHovered: false });
+        }
+
+        if (props.reportBoundingBox && params.changeFlags.dataChanged) {
+            props.reportBoundingBox({
+                layerBoundingBox: this.calcBoundingBox(),
+            });
+        }
     }
 
     private calcBoundingBox(): BoundingBox3D {
@@ -79,7 +105,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         for (const [index, section] of data.sections.entries()) {
             layers.push(
                 new SeismicFenceSectionMeshLayer({
-                    id: `${this.props.id}-${index}`,
+                    id: `${this.props.id}-section-${index}`,
                     data: section,
                     colorMapFunction: this.props.colorMapFunction,
                     zIncreaseDownwards: zIncreaseDownwards,

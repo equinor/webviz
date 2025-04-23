@@ -16,15 +16,9 @@ import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
 import { PreviewLayer } from "../PreviewLayer/PreviewLayer";
 
 import { ExtendedSimpleMeshLayer } from "./_private/ExtendedSimpleMeshLayer";
+// eslint-disable-next-line import/default
 import MeshWorker from "./_private/webworker/makeMesh.worker?worker";
 import { type WebworkerParameters, type WebworkerResult } from "./_private/webworker/types";
-
-
-type ComlinkRemote = ReturnType<
-    typeof wrap<{
-        makeMesh(params: WebworkerParameters): Promise<WebworkerResult>;
-    }>
->;
 
 export type SeismicFenceMeshLayerPickingInfo = {
     properties?: { name: string; value: number }[];
@@ -38,6 +32,7 @@ export type SeismicFenceSection = {
 };
 
 export interface SeismicFenceSectionMeshLayerProps extends ExtendedLayerProps {
+    id: string;
     data: SeismicFenceSection;
     colorMapFunction: (value: number) => [number, number, number];
     hoverable?: boolean;
@@ -116,6 +111,11 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
 
         this._verticesArray = new Float32Array(totalNumVertices * Float32Array.BYTES_PER_ELEMENT);
         this._indicesArray = new Uint32Array(totalNumIndices * Uint32Array.BYTES_PER_ELEMENT);
+    }
+
+    private initColorsArray() {
+        const { data } = this.props;
+
         this._colorsArray = new Float32Array(data.properties.length * 4);
     }
 
@@ -193,6 +193,7 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
         const { geometry } = this.state;
 
         this.setState({ ...this.state, colorsArrayCreated: false });
+        this.initColorsArray();
         assert(this._colorsArray !== null, "Colors array is null");
 
         this.makeColorsArray().then(() => {
@@ -278,7 +279,7 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
     }
 
     renderLayers() {
-        const { isLoading, zIncreaseDownwards, loadingGeometry } = this.props;
+        const { id, isLoading, zIncreaseDownwards, loadingGeometry } = this.props;
         const { geometry, meshCreated, colorsArrayCreated } = this.state;
 
         const origin = this.calcOrigin();
@@ -288,7 +289,7 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
         if ((isLoading || !meshCreated || !colorsArrayCreated) && loadingGeometry) {
             layers.push(
                 new PreviewLayer({
-                    id: "seismic-fence-mesh-layer-loading",
+                    id: `${id}-loading`,
                     data: {
                         geometry: loadingGeometry,
                     },
@@ -298,7 +299,7 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
         } else {
             layers.push(
                 new ExtendedSimpleMeshLayer({
-                    id: "seismic-fence-mesh-layer",
+                    id: `${id}-mesh`,
                     data: [0],
                     mesh: geometry,
                     getPosition: origin,
