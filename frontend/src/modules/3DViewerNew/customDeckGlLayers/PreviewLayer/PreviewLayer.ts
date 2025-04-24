@@ -17,7 +17,7 @@ export class PreviewLayer extends CompositeLayer<PreviewLayerProps> {
     static layerName = "PreviewLayer";
 
     renderLayers(): LayersList {
-        const { data } = this.props;
+        const { id, data } = this.props;
 
         const layers: Layer<any>[] = [];
 
@@ -27,7 +27,7 @@ export class PreviewLayer extends CompositeLayer<PreviewLayerProps> {
             if (shape.type === ShapeType.BOX) {
                 layers.push(
                     new BoxLayer({
-                        id: `${idx}`,
+                        id: `${id}-${idx}`,
                         data: {
                             centerPoint: vec3.toArray(
                                 vec3.multiplyElementWise(shape.centerPoint, vec3.create(1, 1, zFactor)),

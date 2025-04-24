@@ -186,7 +186,7 @@ export class BoxLayer extends CompositeLayer<RectangleLayerProps> {
     renderLayers() {
         return [
             new SimpleMeshLayer({
-                id: "mesh",
+                id: `${this.props.id}-mesh`,
                 data: [0],
                 mesh: this.state.geometry,
                 getPosition: () => [0, 0, 0],
