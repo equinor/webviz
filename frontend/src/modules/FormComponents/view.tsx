@@ -4,6 +4,7 @@ import type { ModuleViewProps } from "@framework/Module";
 
 import { DebounceExample } from "./examples/DebounceExample";
 import { InputExample } from "./examples/InputExample";
+import { SliderExample } from "./examples/SliderExample";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function View(props: ModuleViewProps<object>): React.ReactNode {
@@ -17,6 +18,8 @@ export function View(props: ModuleViewProps<object>): React.ReactNode {
                 <InputExample />
 
                 <DebounceExample />
+
+                <SliderExample />
             </div>
         </>
     );
