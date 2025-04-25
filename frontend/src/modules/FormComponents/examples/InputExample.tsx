@@ -4,6 +4,8 @@ import { Input } from "@lib/components/@next/Input";
 import { ToggleButton } from "@lib/components/ToggleButton";
 import { GroupAdd, Search } from "@mui/icons-material";
 
+import { ValueResult } from "../ValueResult";
+
 export function InputExample(): React.ReactNode {
     const [inputValue, setInputValue] = React.useState<string | undefined>("");
 
@@ -45,11 +47,7 @@ export function InputExample(): React.ReactNode {
                 </div>
             </div>
 
-            <p>
-                <span className="inline-block text-sm border-2 border-gray-400 p-1.5 rounded bg-gray-100">
-                    {inputValue}
-                </span>
-            </p>
+            <ValueResult>{inputValue}</ValueResult>
         </>
     );
 }
