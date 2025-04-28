@@ -93,7 +93,6 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     {
         transformToVisualization: makeRealizationPolygonsLayer,
         transformToBoundingBox: makePolygonDataBoundingBox,
-        transformToAnnotations: makeColorScaleAnnotation,
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
