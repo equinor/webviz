@@ -1,14 +1,28 @@
-import simplify from "simplify-js";
-
-import type { FenceMeshSection_api, PolylineIntersection_api } from "@api";
 import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
 
-
-import { b64DecodeFloatArrayToFloat32, b64DecodeUintArrayToUint32, b64DecodeUintArrayToUint32OrLess } from "../base64";
 
 function normalizeVector(vector: number[]): number[] {
     const vectorLength = Math.sqrt(vector[0] ** 2 + vector[1] ** 2);
     return [vector[0] / vectorLength, vector[1] / vectorLength];
+}
+
+/**
+ * Creates a simplified curve of (x,y) points using simplify-js.
+ *
+ * If the number of points is less than or equal to 2, it returns the original points without duplicates (if any).
+ */
+function createSimplifiedCurveFromXyPoints(xyPointsArray: { x: number; y: number }[], epsilon: number): number[][] {
+    // Find simplified curve (simplify() has early return for number of points <= 2)
+    if (xyPointsArray.length <= 2) {
+        // Original points, without duplicate points if existing
+        return xyPointsArray
+            .map((point) => [point.x, point.y])
+            .filter(
+                (point, index, array) =>
+                    index === 0 || point[0] !== array[index - 1][0] || point[1] !== array[index - 1][1],
+            );
+    }
+    return simplify(xyPointsArray, epsilon).map((point) => [point.x, point.y]);
 }
 
 export type SimplifiedWellboreTrajectoryInXyPlaneResult = {
@@ -29,12 +43,13 @@ export function calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
     const simplifiedTrajectoryXy: number[][] = [];
     const actualSectionLengths: number[] = [];
 
-    const adjustedWellboreTrajectory = wellboreTrajectory.map((point) => ({ x: point[0], y: point[1] }));
+    const wellboreTrajectoryXyPoints = wellboreTrajectory.map((point) => ({ x: point[0], y: point[1] }));
 
-    const simplifiedCurve = simplify(adjustedWellboreTrajectory, epsilon).map((point) => [point.x, point.y]);
+    // Get simplified curve from xy trajectory
+    const simplifiedCurveXy = createSimplifiedCurveFromXyPoints(wellboreTrajectoryXyPoints, epsilon);
 
     let lastWellboreTrajectoryIndex = 0;
-    for (const [index, point] of simplifiedCurve.entries()) {
+    for (const [index, point] of simplifiedCurveXy.entries()) {
         simplifiedTrajectoryXy.push([point[0], point[1]]);
 
         if (index === 0) {
@@ -57,11 +72,11 @@ export function calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
     }
 
     if (extensionLength > 0) {
-        const vectorEndPoint = simplifiedCurve[simplifiedCurve.length - 1];
+        const vectorEndPoint = simplifiedCurveXy[simplifiedCurveXy.length - 1];
         let vectorStartPoint = vectorEndPoint;
-        for (let i = simplifiedCurve.length - 2; i >= 0; i--) {
-            if (simplifiedCurve[i][0] !== vectorEndPoint[0] || simplifiedCurve[i][1] !== vectorEndPoint[1]) {
-                vectorStartPoint = simplifiedCurve[i];
+        for (let i = simplifiedCurveXy.length - 2; i >= 0; i--) {
+            if (simplifiedCurveXy[i][0] !== vectorEndPoint[0] || simplifiedCurveXy[i][1] !== vectorEndPoint[1]) {
+                vectorStartPoint = simplifiedCurveXy[i];
                 break;
             }
         }
@@ -75,24 +90,24 @@ export function calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
         const normalizedVector = normalizeVector(vector);
 
         const extendedFirstPoint = [
-            simplifiedCurve[0][0] - normalizedVector[0] * extensionLength,
-            simplifiedCurve[0][1] - normalizedVector[1] * extensionLength,
+            simplifiedCurveXy[0][0] - normalizedVector[0] * extensionLength,
+            simplifiedCurveXy[0][1] - normalizedVector[1] * extensionLength,
         ];
         const extendedLastPoint = [
-            simplifiedCurve[simplifiedCurve.length - 1][0] + normalizedVector[0] * extensionLength,
-            simplifiedCurve[simplifiedCurve.length - 1][1] + normalizedVector[1] * extensionLength,
+            simplifiedCurveXy[simplifiedCurveXy.length - 1][0] + normalizedVector[0] * extensionLength,
+            simplifiedCurveXy[simplifiedCurveXy.length - 1][1] + normalizedVector[1] * extensionLength,
         ];
 
         simplifiedTrajectoryXy.unshift(extendedFirstPoint);
         simplifiedTrajectoryXy.push(extendedLastPoint);
 
         actualSectionLengths.unshift(
-            point2Distance(vec2FromArray(extendedFirstPoint), vec2FromArray(simplifiedCurve[0])),
+            point2Distance(vec2FromArray(extendedFirstPoint), vec2FromArray(simplifiedCurveXy[0])),
         );
         actualSectionLengths.push(
             point2Distance(
                 vec2FromArray(extendedLastPoint),
-                vec2FromArray(simplifiedCurve[simplifiedCurve.length - 1]),
+                vec2FromArray(simplifiedCurveXy[simplifiedCurveXy.length - 1]),
             ),
         );
     }
@@ -100,123 +115,5 @@ export function calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
     return {
         simplifiedWellboreTrajectoryXy: simplifiedTrajectoryXy,
         actualSectionLengths,
-    };
-}
-
-export type FenceMeshSection_trans = Omit<
-    FenceMeshSection_api,
-    | "vertices_uz_b64arr"
-    | "poly_indices_b64arr"
-    | "vertices_per_poly_b64arr"
-    | "poly_source_cell_indices_b64arr"
-    | "poly_props_b64arr"
-> & {
-    verticesUzFloat32Arr: Float32Array;
-    polyIndicesUintArr: Uint32Array | Uint16Array | Uint8Array;
-    verticesPerPolyUintArr: Uint32Array | Uint16Array | Uint8Array;
-    polySourceCellIndicesUint32Arr: Uint32Array;
-    polyPropsFloat32Arr: Float32Array;
-};
-
-export type PolylineIntersection_trans = Omit<PolylineIntersection_api, "fence_mesh_sections"> & {
-    fenceMeshSections: Array<FenceMeshSection_trans>;
-};
-
-function transformFenceMeshSection(apiData: FenceMeshSection_api): FenceMeshSection_trans {
-    const {
-        vertices_uz_b64arr,
-        poly_indices_b64arr,
-        vertices_per_poly_b64arr,
-        poly_source_cell_indices_b64arr,
-        poly_props_b64arr,
-        ...untransformedData
-    } = apiData;
-
-    const verticesUzFloat32Arr = b64DecodeFloatArrayToFloat32(vertices_uz_b64arr);
-    const polyIndicesUintArr = b64DecodeUintArrayToUint32OrLess(poly_indices_b64arr);
-    const verticesPerPolyUintArr = b64DecodeUintArrayToUint32OrLess(vertices_per_poly_b64arr);
-    const polySourceCellIndicesUint32Arr = b64DecodeUintArrayToUint32(poly_source_cell_indices_b64arr);
-    const polyPropsFloat32Arr = b64DecodeFloatArrayToFloat32(poly_props_b64arr);
-
-    return {
-        ...untransformedData,
-        verticesUzFloat32Arr: verticesUzFloat32Arr,
-        polyIndicesUintArr: polyIndicesUintArr,
-        verticesPerPolyUintArr: verticesPerPolyUintArr,
-        polySourceCellIndicesUint32Arr: polySourceCellIndicesUint32Arr,
-        polyPropsFloat32Arr: polyPropsFloat32Arr,
-    };
-}
-
-export function transformPolylineIntersection(apiData: PolylineIntersection_api): PolylineIntersection_trans {
-    const { fence_mesh_sections, ...untransformedData } = apiData;
-
-    const transMeshSections: FenceMeshSection_trans[] = [];
-
-    for (const apiSection of fence_mesh_sections) {
-        const transformedSection = transformFenceMeshSection(apiSection);
-        transMeshSections.push(transformedSection);
-    }
-
-    return {
-        ...untransformedData,
-        fenceMeshSections: transMeshSections,
-    };
-}
-
-export type AdjustedFenceMeshSection = FenceMeshSection_trans & {
-    sectionLength: number;
-    minZ: number;
-    maxZ: number;
-};
-
-export type AdjustedPolylineIntersection = Omit<PolylineIntersection_trans, "fenceMeshSections"> & {
-    fenceMeshSections: AdjustedFenceMeshSection[];
-};
-
-export function transformPolylineIntersectionResult(
-    polylineIntersection: PolylineIntersection_trans,
-    actualSectionLengths: number[],
-): AdjustedPolylineIntersection {
-    const fenceMeshSections: AdjustedFenceMeshSection[] = [];
-
-    // Section with a length of 0 are not included in the results - remove
-    const adjustedActualSectionLengths = actualSectionLengths.filter((length) => length > 0);
-
-    for (const [index, section] of polylineIntersection.fenceMeshSections.entries()) {
-        const actualSectionLength = adjustedActualSectionLengths[index];
-        const simplifiedSectionLength = point2Distance(
-            {
-                x: section.start_utm_x,
-                y: section.start_utm_y,
-            },
-            {
-                x: section.end_utm_x,
-                y: section.end_utm_y,
-            },
-        );
-
-        const scale = actualSectionLength / simplifiedSectionLength;
-
-        let minZ = Number.MAX_VALUE;
-        let maxZ = Number.MIN_VALUE;
-        for (let i = 0; i < section.verticesUzFloat32Arr.length; i += 2) {
-            section.verticesUzFloat32Arr[i] *= scale;
-            section.verticesUzFloat32Arr[i + 1] *= -1;
-            minZ = Math.min(minZ, section.verticesUzFloat32Arr[i + 1]);
-            maxZ = Math.max(maxZ, section.verticesUzFloat32Arr[i + 1]);
-        }
-
-        fenceMeshSections.push({
-            ...section,
-            sectionLength: actualSectionLength,
-            minZ,
-            maxZ,
-        });
-    }
-
-    return {
-        ...polylineIntersection,
-        fenceMeshSections,
     };
 }

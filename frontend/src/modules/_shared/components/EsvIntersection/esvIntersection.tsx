@@ -102,6 +102,7 @@ export type LayerItem = {
     };
 }[keyof LayerOptionsMap] & {
     id: string;
+    name: string;
     hoverable?: boolean;
 };
 
@@ -137,7 +138,7 @@ function makeLayer<T extends keyof LayerDataTypeMap>(
     type: T,
     id: string,
     options: LayerOptionsMap[T],
-    pixiRenderApplication: PixiRenderApplication,
+    pixiRenderApplication: PixiRenderApplication
 ): Layer<LayerDataTypeMap[T]> {
     switch (type) {
         case LayerType.CALLOUT_CANVAS:
@@ -156,13 +157,13 @@ function makeLayer<T extends keyof LayerDataTypeMap>(
             return new GeomodelLayerV2(
                 pixiRenderApplication,
                 id,
-                options as LayerOptions<SurfaceData>,
+                options as LayerOptions<SurfaceData>
             ) as unknown as Layer<LayerDataTypeMap[T]>;
         case LayerType.POLYLINE_INTERSECTION:
             return new PolylineIntersectionLayer(
                 pixiRenderApplication,
                 id,
-                options as PolylineIntersectionLayerOptions,
+                options as PolylineIntersectionLayerOptions
             ) as unknown as Layer<LayerDataTypeMap[T]>;
         case LayerType.IMAGE_CANVAS:
             return new ImageLayer(id, options as LayerOptions<unknown>) as unknown as Layer<LayerDataTypeMap[T]>;
@@ -174,7 +175,7 @@ function makeLayer<T extends keyof LayerDataTypeMap>(
             return new SchematicLayer(
                 pixiRenderApplication,
                 id,
-                options as SchematicLayerOptions<SchematicData>,
+                options as SchematicLayerOptions<SchematicData>
             ) as unknown as Layer<LayerDataTypeMap[T]>;
         case LayerType.SEISMIC:
             return new SeismicLayer(id, options as LayerOptions<SeismicLayerData>) as unknown as Layer<
@@ -187,12 +188,12 @@ function makeLayer<T extends keyof LayerDataTypeMap>(
         case LayerType.SURFACE_STATISTICAL_FANCHARTS_CANVAS:
             return new SurfaceStatisticalFanchartsCanvasLayer(
                 id,
-                options as LayerOptions<SurfaceStatisticalFanchartsData>,
+                options as LayerOptions<SurfaceStatisticalFanchartsData>
             ) as unknown as Layer<LayerDataTypeMap[T]>;
         case LayerType.WELLBORE_PATH:
             return new WellborepathLayer(
                 id,
-                options as WellborepathLayerOptions<[number, number][]>,
+                options as WellborepathLayerOptions<[number, number][]>
             ) as unknown as Layer<LayerDataTypeMap[T]>;
     }
 
@@ -373,7 +374,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                                     layer.type,
                                     layer.id,
                                     newLayerOptions,
-                                    pixiRenderApplication,
+                                    pixiRenderApplication
                                 );
                                 esvController.addLayer(newLayer);
                             } else {
@@ -418,6 +419,12 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             newEsvController.zoomPanHandler.onRescale = function handleRescale(event: OnRescaleEvent) {
                 if (!automaticChanges.current) {
                     const k = event.transform.k;
+
+                    // Prevent division by zero
+                    if (k === 0 || Number.isNaN(k)) {
+                        return;
+                    }
+
                     const xSpan = newEsvController.zoomPanHandler.xSpan;
                     const displ = xSpan / k;
                     const unitsPerPixel = displ / event.width;
@@ -480,7 +487,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                 newEsvController.destroy();
             };
         },
-        [props.intersectionThreshold],
+        [props.intersectionThreshold]
     );
 
     React.useEffect(
@@ -490,7 +497,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             }
 
             function handleReadoutItemsChange(
-                payload: InteractionHandlerTopicPayload[InteractionHandlerTopic.READOUT_ITEMS_CHANGE],
+                payload: InteractionHandlerTopicPayload[InteractionHandlerTopic.READOUT_ITEMS_CHANGE]
             ) {
                 if (onReadout) {
                     onReadout({ readoutItems: payload.items });
@@ -499,14 +506,14 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
 
             const unsubscribe = interactionHandler.subscribe(
                 InteractionHandlerTopic.READOUT_ITEMS_CHANGE,
-                handleReadoutItemsChange,
+                handleReadoutItemsChange
             );
 
             return function handleRemoveReadoutFunction() {
                 unsubscribe();
             };
         },
-        [onReadout, interactionHandler],
+        [onReadout, interactionHandler]
     );
 
     React.useEffect(
@@ -516,7 +523,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                 setPrevViewport(currentViewport);
             }
         },
-        [currentViewport, onViewportChange],
+        [currentViewport, onViewportChange]
     );
 
     React.useEffect(
@@ -536,7 +543,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                 gridLayer?.element?.setAttribute("height", size.height.toString());
             }
         },
-        [containerSize.width, containerSize.height, esvController, pixiRenderApplication],
+        [containerSize.width, containerSize.height, esvController, pixiRenderApplication]
     );
 
     return (
