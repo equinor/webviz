@@ -1,20 +1,16 @@
-import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { isEqual } from "lodash";
-
-import {
-    getDrilledWellboreHeadersOptions,
-    getGridModelsInfoOptions,
-    getWellTrajectoriesOptions,
-    postGetPolylineIntersectionOptions,
-} from "@api";
+import { getDrilledWellboreHeadersOptions, getGridModelsInfoOptions, postGetPolylineIntersectionOptions } from "@api";
+import { IntersectionType } from "@framework/types/intersection";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import type { PolylineIntersection_trans } from "@modules/_shared/utils/wellbore";
-import {
-    calcExtendedSimplifiedWellboreTrajectoryInXYPlane,
-    transformPolylineIntersection,
-} from "@modules/_shared/utils/wellbore";
+import type { PolylineIntersection_trans } from "@modules/_shared/Intersection/gridIntersectionTransform";
+import { transformPolylineIntersection } from "@modules/_shared/Intersection/gridIntersectionTransform";
+import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
+import type {
+    PolylineIntersectionSpecification,
+    WellboreIntersectionSpecification,
+} from "@modules/_shared/Intersection/intersectionPolylineUtils";
+import { makeIntersectionPolylineWithSectionLengthsPromise } from "@modules/_shared/Intersection/intersectionPolylineUtils";
 
 
 import type {
@@ -26,31 +22,39 @@ import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSett
 
 const intersectionRealizationGridSettings = [
     Setting.INTERSECTION,
+    Setting.INTERSECTION_EXTENSION_LENGTH,
     Setting.ENSEMBLE,
     Setting.REALIZATION,
-    Setting.ATTRIBUTE,
     Setting.GRID_NAME,
+    Setting.ATTRIBUTE,
     Setting.TIME_OR_INTERVAL,
     Setting.SHOW_GRID_LINES,
+    Setting.COLOR_SCALE,
 ] as const;
-type IntersectionRealizationGridSettings = typeof intersectionRealizationGridSettings;
+export type IntersectionRealizationGridSettings = typeof intersectionRealizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<IntersectionRealizationGridSettings>;
 
-export type IntersectionRealizationGridData = PolylineIntersection_trans;
-
-type StoredData = {
-    polyline: number[];
+export type IntersectionRealizationGridStoredData = {
+    polylineWithSectionLengths: PolylineWithSectionLengths;
 };
+
+export type IntersectionRealizationGridData = PolylineIntersection_trans;
 
 export class IntersectionRealizationGridProvider
     implements
         CustomDataProviderImplementation<
             IntersectionRealizationGridSettings,
             IntersectionRealizationGridData,
-            StoredData
+            IntersectionRealizationGridStoredData
         >
 {
     settings = intersectionRealizationGridSettings;
+
+    private _isExtensionLengthEnabled = false;
+
+    constructor(isExtensionLengthEnabled: boolean) {
+        this._isExtensionLengthEnabled = isExtensionLengthEnabled;
+    }
 
     getDefaultSettingsValues() {
         return {
@@ -71,7 +75,7 @@ export class IntersectionRealizationGridProvider
     }: DataProviderInformationAccessors<
         IntersectionRealizationGridSettings,
         IntersectionRealizationGridData,
-        StoredData
+        IntersectionRealizationGridStoredData
     >): [number, number] | null {
         const data = getData();
         if (!data) {
@@ -90,24 +94,46 @@ export class IntersectionRealizationGridProvider
     }: DataProviderInformationAccessors<
         IntersectionRealizationGridSettings,
         IntersectionRealizationGridData,
-        StoredData
+        IntersectionRealizationGridStoredData
     >): boolean {
+        let isValidExtensionLength = true;
+        if (this._isExtensionLengthEnabled) {
+            // Must have extension length for wellbore
+            isValidExtensionLength =
+                getSetting(Setting.INTERSECTION)?.type !== IntersectionType.WELLBORE ||
+                getSetting(Setting.INTERSECTION_EXTENSION_LENGTH) !== null;
+        }
+
         return (
             getSetting(Setting.INTERSECTION) !== null &&
+            isValidExtensionLength &&
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&
             getSetting(Setting.GRID_NAME) !== null &&
             getSetting(Setting.ATTRIBUTE) !== null &&
-            getSetting(Setting.TIME_OR_INTERVAL) !== null
+            getSetting(Setting.TIME_OR_INTERVAL) !== null &&
+            getSetting(Setting.SHOW_GRID_LINES) !== null &&
+            getSetting(Setting.COLOR_SCALE) !== null
         );
     }
 
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
+        settingAttributesUpdater,
+        storedDataUpdater,
         queryClient,
         workbenchSession,
-    }: DefineDependenciesArgs<IntersectionRealizationGridSettings, StoredData>): void {
+    }: DefineDependenciesArgs<IntersectionRealizationGridSettings, IntersectionRealizationGridStoredData>): void {
+        const isExtensionLengthIncluded = this._isExtensionLengthEnabled;
+
+        settingAttributesUpdater(Setting.INTERSECTION_EXTENSION_LENGTH, () => {
+            if (isExtensionLengthIncluded) {
+                return { enabled: true, visible: true };
+            }
+            return { enabled: false, visible: false };
+        });
+
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -210,22 +236,20 @@ export class IntersectionRealizationGridProvider
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
 
-            if (!wellboreHeaders) {
-                return [];
-            }
-
             const intersectionOptions: IntersectionSettingValue[] = [];
-            for (const wellboreHeader of wellboreHeaders) {
-                intersectionOptions.push({
-                    type: "wellbore",
-                    name: wellboreHeader.uniqueWellboreIdentifier,
-                    uuid: wellboreHeader.wellboreUuid,
-                });
+            if (wellboreHeaders) {
+                for (const wellboreHeader of wellboreHeaders) {
+                    intersectionOptions.push({
+                        type: IntersectionType.WELLBORE,
+                        name: wellboreHeader.uniqueWellboreIdentifier,
+                        uuid: wellboreHeader.wellboreUuid,
+                    });
+                }
             }
 
             for (const polyline of intersectionPolylines) {
                 intersectionOptions.push({
-                    type: "polyline",
+                    type: IntersectionType.CUSTOM_POLYLINE,
                     name: polyline.name,
                     uuid: polyline.id,
                 });
@@ -258,20 +282,91 @@ export class IntersectionRealizationGridProvider
 
             return availableTimeOrIntervals;
         });
+
+        // Create intersection polyline and actual section lengths data asynchronously
+        const intersectionPolylineWithSectionLengthsDep = helperDependency(
+            async ({ getLocalSetting, getGlobalSetting }) => {
+                const fieldIdentifier = getGlobalSetting("fieldId");
+                const intersection = getLocalSetting(Setting.INTERSECTION);
+                const intersectionExtensionLength = getLocalSetting(Setting.INTERSECTION_EXTENSION_LENGTH) ?? 0;
+
+                // If no intersection is selected, return an empty polyline
+                if (!intersection) {
+                    const emptyPolylineWithSectionLengthsPromise = new Promise<PolylineWithSectionLengths>((resolve) =>
+                        resolve({
+                            polylineUtmXy: [],
+                            actualSectionLengths: [],
+                        }),
+                    );
+
+                    return emptyPolylineWithSectionLengthsPromise;
+                }
+
+                if (intersection.type === IntersectionType.CUSTOM_POLYLINE) {
+                    const polyline = workbenchSession
+                        .getUserCreatedItems()
+                        .getIntersectionPolylines()
+                        .getPolyline(intersection.uuid);
+                    if (!polyline) {
+                        throw new Error(`Could not find polyline with id ${intersection.uuid}`);
+                    }
+                    const intersectionSpecification: PolylineIntersectionSpecification = {
+                        type: IntersectionType.CUSTOM_POLYLINE,
+                        polyline: polyline,
+                    };
+                    return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification);
+                }
+                if (intersection.type === IntersectionType.WELLBORE) {
+                    if (!fieldIdentifier) {
+                        throw new Error("Field identifier is not set");
+                    }
+
+                    const intersectionSpecification: WellboreIntersectionSpecification = {
+                        type: IntersectionType.WELLBORE,
+                        wellboreUuid: intersection.uuid,
+                        intersectionExtensionLength: intersectionExtensionLength,
+                        fieldIdentifier: fieldIdentifier,
+                        queryClient,
+                    };
+                    return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification);
+                }
+
+                throw new Error(`Unhandled intersection type ${intersection.type}`);
+            },
+        );
+
+        storedDataUpdater("polylineWithSectionLengths", ({ getHelperDependency }) => {
+            const intersectionPolylineWithSectionLengths = getHelperDependency(
+                intersectionPolylineWithSectionLengthsDep,
+            );
+
+            // If no intersection is selected, or polyline is empty, return an empty polyline
+            if (
+                !intersectionPolylineWithSectionLengths ||
+                intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
+            ) {
+                return {
+                    polylineUtmXy: [],
+                    actualSectionLengths: [],
+                };
+            }
+
+            return intersectionPolylineWithSectionLengths;
+        });
     }
 
     fetchData({
         getSetting,
-        getGlobalSetting,
+        getStoredData,
         registerQueryKey,
         queryClient,
     }: FetchDataParams<
         IntersectionRealizationGridSettings,
-        IntersectionRealizationGridData
+        IntersectionRealizationGridData,
+        IntersectionRealizationGridStoredData
     >): Promise<IntersectionRealizationGridData> {
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         const realizationNum = getSetting(Setting.REALIZATION);
-        const intersection = getSetting(Setting.INTERSECTION);
         const gridName = getSetting(Setting.GRID_NAME);
         const parameterName = getSetting(Setting.ATTRIBUTE);
         let timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
@@ -279,89 +374,29 @@ export class IntersectionRealizationGridProvider
             timeOrInterval = null;
         }
 
-        const fieldIdentifier = getGlobalSetting("fieldId");
-
-        let makePolylinePromise: Promise<number[]> = new Promise((resolve) => {
-            resolve([]);
-        });
-
-        if (intersection) {
-            makePolylinePromise = new Promise((resolve) => {
-                if (intersection.type === "wellbore") {
-                    const wellboreQueryOptions = getWellTrajectoriesOptions({
-                        query: {
-                            field_identifier: fieldIdentifier ?? "",
-                            wellbore_uuids: [intersection.uuid],
-                        },
-                    });
-
-                    registerQueryKey(wellboreQueryOptions.queryKey);
-
-                    return queryClient
-                        .fetchQuery(wellboreQueryOptions)
-                        .then((data) => {
-                            const path: number[][] = [];
-                            for (const [index, northing] of data[0].northingArr.entries()) {
-                                const easting = data[0].eastingArr[index];
-                                const tvd_msl = data[0].tvdMslArr[index];
-
-                                path.push([easting, northing, tvd_msl]);
-                            }
-                            const offset = data[0].tvdMslArr[0];
-
-                            const intersectionReferenceSystem = new IntersectionReferenceSystem(path);
-                            intersectionReferenceSystem.offset = offset;
-
-                            const polylineUtmXy: number[] = [];
-                            polylineUtmXy.push(
-                                ...calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
-                                    path,
-                                    0,
-                                    5,
-                                ).simplifiedWellboreTrajectoryXy.flat(),
-                            );
-
-                            resolve(polylineUtmXy);
-                        });
-                } else {
-                    const intersectionPolyline = getGlobalSetting("intersectionPolylines").find(
-                        (polyline) => polyline.id === intersection.uuid,
-                    );
-                    if (!intersectionPolyline) {
-                        resolve([]);
-                        return;
-                    }
-
-                    const polylineUtmXy: number[] = [];
-                    for (const point of intersectionPolyline.path) {
-                        polylineUtmXy.push(point[0], point[1]);
-                    }
-
-                    resolve(polylineUtmXy);
-                }
-            });
+        const polylineWithSectionLengths = getStoredData("polylineWithSectionLengths");
+        if (!polylineWithSectionLengths) {
+            throw new Error("No polyline and actual section lengths found in stored data");
+        }
+        if (polylineWithSectionLengths.polylineUtmXy.length < 4) {
+            throw new Error("Invalid polyline in stored data. Must contain at least two (x,y)-points");
         }
 
-        const gridIntersectionPromise = makePolylinePromise
-            .then((polyline_utm_xy) => {
+        const queryOptions = postGetPolylineIntersectionOptions({
+            query: {
+                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+                grid_name: gridName ?? "",
+                parameter_name: parameterName ?? "",
+                parameter_time_or_interval_str: timeOrInterval,
+                realization_num: realizationNum ?? 0,
+            },
+            body: { polyline_utm_xy: polylineWithSectionLengths.polylineUtmXy },
+        });
 
-                const intersectionQueryOptions = postGetPolylineIntersectionOptions({
-                    query: {
-                        case_uuid: ensembleIdent?.getCaseUuid() ?? "",
-                        ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
-                        grid_name: gridName ?? "",
-                        parameter_name: parameterName ?? "",
-                        parameter_time_or_interval_str: timeOrInterval,
-                        realization_num: realizationNum ?? 0,
-                    },
-                    body: { polyline_utm_xy },
-                });
+        registerQueryKey(queryOptions.queryKey);
 
-                registerQueryKey(intersectionQueryOptions.queryKey);
-
-                return queryClient.fetchQuery(intersectionQueryOptions);
-            })
-            .then(transformPolylineIntersection);
+        const gridIntersectionPromise = queryClient.fetchQuery(queryOptions).then(transformPolylineIntersection);
 
         return gridIntersectionPromise;
     }

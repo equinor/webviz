@@ -1,5 +1,6 @@
 import React from "react";
 
+import { IntersectionType } from "@framework/types/intersection";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 import { RadioGroup } from "@lib/components/RadioGroup";
@@ -12,7 +13,7 @@ import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAnd
 import type { SettingCategory } from "../settingsDefinitions";
 
 export type IntersectionSettingValue = {
-    type: "wellbore" | "polyline";
+    type: IntersectionType;
     name: string;
     uuid: string;
 };
@@ -22,7 +23,7 @@ type ValueType = IntersectionSettingValue | null;
 export class IntersectionSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
     isValueValid(
         value: IntersectionSettingValue | null,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_SELECT>
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_SELECT>,
     ): boolean {
         if (value === null) {
             return false;
@@ -33,10 +34,10 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
 
     fixupValue(
         currentValue: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_SELECT>
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_SELECT>,
     ): ValueType {
         if (currentValue === null) {
-            return availableValues.find((v) => v.type === "wellbore") ?? null;
+            return availableValues.find((v) => v.type === IntersectionType.WELLBORE) ?? null;
         }
 
         if (availableValues.some((v) => v.uuid === currentValue.uuid && v.type === currentValue.type)) {
@@ -50,7 +51,9 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
         return function Realization(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
             const availableValues = props.availableValues ?? [];
 
-            const [type, setType] = React.useState<IntersectionSettingValue["type"]>(props.value?.type ?? "wellbore");
+            const [type, setType] = React.useState<IntersectionSettingValue["type"]>(
+                props.value?.type ?? IntersectionType.WELLBORE,
+            );
             function handleSelectionChange(selectedValue: string) {
                 const newValue = availableValues.find((v) => v.uuid === selectedValue) ?? null;
                 props.onValueChange(newValue);
@@ -84,11 +87,11 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                         options={[
                             {
                                 label: "Wellbore",
-                                value: "wellbore",
+                                value: IntersectionType.WELLBORE,
                             },
                             {
                                 label: "Polyline",
-                                value: "polyline",
+                                value: IntersectionType.CUSTOM_POLYLINE,
                             },
                         ]}
                         value={type}

@@ -84,7 +84,7 @@ type ArrayElement<T extends unknown[]> = T extends readonly (infer U)[] ? U : T;
 
 export function makeSchematicInfo<T extends keyof Omit<SchematicData, "symbols">>(
     type: T,
-    item: ArrayElement<SchematicData[T]>,
+    item: ArrayElement<SchematicData[T]>
 ): { label: string; value: string | number }[] {
     const arr: { label: string; value: string | number }[] = [];
 
@@ -153,7 +153,7 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
                 value: ijkFromCellIndex(
                     cellIndex,
                     layer.data.gridDimensions.cellCountI,
-                    layer.data.gridDimensions.cellCountJ,
+                    layer.data.gridDimensions.cellCountJ
                 ),
             });
 
@@ -433,20 +433,21 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
 
     if (isSeismicLayer(layer)) {
         const seismicData = layer.getData();
-        if (seismicData) {
+        const seismicInfo = layer.getSeismicInfo();
+        if (seismicData && seismicInfo) {
             const x = readoutItem.point[0];
             const y = readoutItem.point[1];
 
             const height = Math.abs(seismicData.maxFenceDepth - seismicData.minFenceDepth);
-            const width = Math.abs(seismicData.maxFenceX - seismicData.minFenceX);
+            const width = Math.abs(seismicInfo.maxX - seismicInfo.minX);
             const rowHeight = height / seismicData.numSamplesPerTrace;
             const columnWidth = width / seismicData.numTraces;
 
             const sampleNum = Math.floor((y - seismicData.minFenceDepth) / rowHeight);
-            const traceNum = Math.floor((x - seismicData.minFenceX) / columnWidth);
+            const traceNum = Math.floor((x - seismicInfo.minX) / columnWidth);
 
             const index = traceNum * seismicData.numSamplesPerTrace + sampleNum;
-            const value = seismicData.fenceTracesFloat32Array[index];
+            const value = seismicData.fenceTracesArray[index];
 
             items.push({
                 label: seismicData.propertyName,
@@ -463,7 +464,7 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
 export function esvReadoutToGenericReadout(
     readout: ReadoutItem,
     index: number,
-    layerIdToNameMap: Record<string, string>,
+    layerIdToNameMap: Record<string, string>
 ): GenericReadoutItem {
     return {
         label: makeLabelFromLayer(readout.layer, layerIdToNameMap) ?? getLabelFromLayerData(readout),
