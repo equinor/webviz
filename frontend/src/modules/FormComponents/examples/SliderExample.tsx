@@ -16,15 +16,34 @@ function toSingle(value: number | readonly number[]): number {
 }
 
 export function SliderExample(): React.ReactNode {
-    const [inputValue, setInputValue] = React.useState<number | readonly number[]>(0);
+    const [inputValue, setInputValue] = React.useState<number | readonly number[]>(50);
     const [useMultiValue, setUseMultiValue] = React.useState(false);
 
     return (
         <>
             <div>
-                <Slider value={inputValue} valueLabelDisplay="auto" onValueChange={setInputValue} />
+                <div className="grid grid-cols-[auto_auto_1fr] items-center gap-2 h-48">
+                    <Slider
+                        value={inputValue}
+                        className="h-full col-span-1 row-span-2"
+                        orientation="vertical"
+                        valueLabelDisplay="auto"
+                        onValueChange={setInputValue}
+                    />
 
-                <DiscreteSlider value={inputValue} values={[0, 25, 50, 75, 100]} onValueChange={setInputValue} />
+                    <DiscreteSlider
+                        value={inputValue}
+                        values={[0, 25, 50, 75, 100]}
+                        className="h-full col-span-1 row-span-2"
+                        orientation="vertical"
+                        valueLabelDisplay="auto"
+                        onValueChange={setInputValue}
+                    />
+
+                    <Slider value={inputValue} valueLabelDisplay="auto" onValueChange={setInputValue} />
+
+                    <DiscreteSlider value={inputValue} values={[0, 25, 50, 75, 100]} onValueChange={setInputValue} />
+                </div>
 
                 <div className="mt-1">
                     <ToggleButton

@@ -7,6 +7,12 @@
     @apply hover:outline-1 hover:outline-blue-300 focus:outline-1 focus:outline-blue-600;
 }
 
+@layer components {
+    .--wv-form-comp[data-disabled] {
+        @apply opacity-50 cursor-not-allowed pointer-events-none;
+    }
+}
+
 /* Reverts some default color changes introduced Tailwind v4. Remove if we're okay with the new ones */
 @layer base {
     *,

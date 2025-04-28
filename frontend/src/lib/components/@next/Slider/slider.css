@@ -1,50 +1,61 @@
 @layer components {
     /* TODO: Vertical orientation */
     .--wv-slider {
+        --color-main-hard: var(--color-blue-600);
+        --color-main-soft: var(--color-blue-200);
+
+        &[data-orientation="horizontal"] {
+            .--control {
+                @apply px-3 py-4;
+            }
+            .--track {
+                @apply h-1;
+            }
+            .--mark {
+                @apply -ml-0.5 -mt-1;
+            }
+        }
+
+        &[data-orientation="vertical"] {
+            .--control {
+                @apply flex-col h-full py-3 px-4;
+            }
+            .--track {
+                @apply w-1;
+            }
+            .--mark {
+                @apply -mb-0.5;
+            }
+        }
+
         .--control {
-            @apply flex content-center py-3;
+            @apply flex items-center cursor-pointer;
         }
 
         .--track {
-            @apply h-1 grow bg-blue-200 rounded-sm;
+            @apply grow bg-[var(--color-main-soft)] rounded-sm;
         }
         .--indicator {
-            @apply bg-blue-600 rounded-sm;
+            @apply bg-[var(--color-main-hard)] rounded-sm;
         }
         .--thumb {
+            &::after {
+                @apply absolute rounded-full w-7 h-7 inset-0 -left-1 -top-1 bg-[var(--color-main-hard)] transition-all duration-100 ease-in-out transform scale-0 opacity-0 z-50;
+            }
+
+            @apply hover:after:opacity-10 hover:after:scale-100 active:after:scale-110 active:after:opacity-15 active:after:-left-[0.4em] active:after:-top-[0.4em] active:after:w-8 active:after:h-8;
+
             @apply block box-content;
             @apply size-5 rounded-full;
-            @apply bg-blue-600;
+            @apply bg-[var(--color-main-hard)] focus:shadow-lg hover:shadow-md has-active:shadow-lg;
         }
 
         .--mark {
             @apply w-1 h-1 opacity-80 transform;
-            @apply -ml-0.5 -mt-1;
-            @apply outline-2 outline-white bg-blue-600;
-        }
-    }
 
-    &[data-disabled] {
-        /* Move this to a shared thing? */
-        @apply opacity-50 cursor-not-allowed;
-    }
-
-    &[data-orientation="horizontal"] {
-        .--control {
-            @apply px-3 py-4;
+            @apply outline-2 outline-white bg-[var(--color-main-hard)];
         }
 
-        @apply w-full;
+        @apply inline-block relative;
     }
-
-    &[data-orientation="vertical"] {
-        .--control {
-            @apply py-3 px-4;
-        }
-        .--mark {
-            @apply -translate-y-0;
-        }
-    }
-
-    @apply inline-block relative;
 }

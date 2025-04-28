@@ -6,10 +6,6 @@
         @apply rounded border flex gap-2 items-center;
         @apply focus-within:outline-indigo-500 focus-within:outline;
 
-        &[data-disabled] {
-            @apply opacity-50 cursor-not-allowed;
-        }
-
         &[data-invalid] {
             @apply border-red-300 outline-red-300;
         }

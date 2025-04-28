@@ -34,7 +34,7 @@ function InputComp(props: InputProps, ref: React.ForwardedRef<HTMLInputElement>)
     return (
         <Base.Field.Root
             disabled={props.disabled}
-            className={(state) => buildBaseUiClassName(state, "--wv-input", className)}
+            className={(state) => buildBaseUiClassName(state, "--wv-form-comp --wv-input", className)}
             {...{ invalid, validate, validationMode, validationDebounceTime }}
             {...wrapperProps}
         >

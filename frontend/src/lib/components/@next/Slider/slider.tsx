@@ -2,6 +2,8 @@ import React from "react";
 
 import { Tooltip } from "@base-ui-components/react";
 import * as Base from "@base-ui-components/react/slider";
+import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 
 import _ from "lodash";
 
@@ -53,13 +55,25 @@ function valueToPercentString(value: number, min: number, max: number) {
     return `${((value - min) * 100) / (max - min)}%`;
 }
 
-function SliderMarks(props: SliderProps): React.ReactNode {
+function SliderMarks(props: SliderProps & { trackRef: React.RefObject<HTMLDivElement> }): React.ReactNode {
+    const trackRect = useElementBoundingRect(props.trackRef);
+
     if (!props.markSteps) return null;
+
+    // const maxMarkAmt = rectWidthOrHeight -
 
     // ! Default matches the default ones from
     const min = props.min ?? 0;
     const max = props.max ?? 100;
     const step = props.step ?? 1;
+
+    const steps = Math.floor(max / step);
+    const rectWidthOrHeight = props.orientation === "vertical" ? trackRect.height : trackRect.width;
+
+    // ? Not fully sure where the numbers 6, 4, and 8 are coming from
+    const renderMarks = steps < (rectWidthOrHeight - convertRemToPixels(6 / 4)) / 8;
+
+    const offsetDir = props.orientation === "vertical" ? "bottom" : "left";
 
     return (
         <>
@@ -68,8 +82,9 @@ function SliderMarks(props: SliderProps): React.ReactNode {
                     key={v}
                     className="--mark"
                     style={{
+                        display: renderMarks ? undefined : "none",
                         position: "absolute",
-                        insetInlineStart: valueToPercentString(v, min, max),
+                        [offsetDir]: valueToPercentString(v, min, max),
                     }}
                 />
             ))}
@@ -84,58 +99,72 @@ function SliderThumbs(props: SliderProps & { isHoveringSlider: boolean }) {
 
     return (
         <>
-            <Base.Slider.Thumb
-                className="--thumb"
-                render={(divProps, inputProps, state) => {
-                    if (state.values[0] == null) return <></>;
-                    return (
-                        <ValueLabelTooltip open={labelsShouldShow} value={state.values[0]}>
-                            <div {...divProps}>
-                                <input {...inputProps} />
-                            </div>
-                        </ValueLabelTooltip>
-                    );
-                }}
-            />
+            <Tooltip.Provider>
+                <Base.Slider.Thumb
+                    className="--thumb"
+                    render={(divProps, inputProps, state) => {
+                        if (state.values[0] == null) return <></>;
+                        return (
+                            <ValueLabelTooltip open={labelsShouldShow} value={state.values[0]}>
+                                <div {...divProps}>
+                                    <input {...inputProps} />
+                                </div>
+                            </ValueLabelTooltip>
+                        );
+                    }}
+                />
 
-            <Base.Slider.Thumb
-                className="--thumb"
-                render={(divProps, inputProps, state) => {
-                    if (state.values[1] == null) return <></>;
-                    return (
-                        <ValueLabelTooltip open={labelsShouldShow} value={state.values[1]}>
-                            <div {...divProps}>
-                                <input {...inputProps} />
-                            </div>
-                        </ValueLabelTooltip>
-                    );
-                }}
-            />
+                <Base.Slider.Thumb
+                    className="--thumb -m-[-0]"
+                    render={(divProps, inputProps, state) => {
+                        if (state.values[1] == null) return <></>;
+                        return (
+                            <ValueLabelTooltip open={labelsShouldShow} value={state.values[1]}>
+                                <div {...divProps}>
+                                    <input {...inputProps} />
+                                </div>
+                            </ValueLabelTooltip>
+                        );
+                    }}
+                />
+            </Tooltip.Provider>
         </>
     );
 }
 
 function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
-    const { className, ...otherProps } = props;
+    const { className, markSteps, valueLabelDisplay, valueLabelFormat, ...otherProps } = props;
+
+    const trackRef = React.useRef<HTMLDivElement | null>(null);
 
     const [isHoveringSlider, setIsHoveringSlider] = React.useState(false);
 
     return (
-        <Base.Slider.Root className="--wv-slider" {...otherProps}>
-            <Tooltip.Provider>
-                <Base.Slider.Control
-                    ref={ref}
-                    className={(state) => buildBaseUiClassName(state, "--control", className)}
-                    onPointerEnter={() => setIsHoveringSlider(true)}
-                    onPointerLeave={() => setIsHoveringSlider(false)}
+        <Base.Slider.Root
+            className={(state) => buildBaseUiClassName(state, "--wv-form-comp --wv-slider -mx-[-0]", className)}
+            {...otherProps}
+        >
+            <Base.Slider.Control
+                ref={ref}
+                className="--control"
+                onPointerEnter={() => setIsHoveringSlider(true)}
+                onPointerLeave={() => setIsHoveringSlider(false)}
+            >
+                <Base.Slider.Track
+                    ref={trackRef}
+                    key={isMultiValue(props.value) ? "mult" : "single"}
+                    className="--track"
                 >
-                    <Base.Slider.Track key={isMultiValue(props.value) ? "mult" : "single"} className="--track">
-                        <Base.Slider.Indicator className="--indicator" />
-                        <SliderMarks {...otherProps} />
-                        <SliderThumbs isHoveringSlider={isHoveringSlider} {...otherProps} />
-                    </Base.Slider.Track>
-                </Base.Slider.Control>
-            </Tooltip.Provider>
+                    <Base.Slider.Indicator className="--indicator" />
+                    <SliderMarks trackRef={trackRef} markSteps={markSteps} {...otherProps} />
+                    <SliderThumbs
+                        valueLabelDisplay={valueLabelDisplay}
+                        valueLabelFormat={valueLabelFormat}
+                        isHoveringSlider={isHoveringSlider}
+                        {...otherProps}
+                    />
+                </Base.Slider.Track>
+            </Base.Slider.Control>
         </Base.Slider.Root>
     );
 }
