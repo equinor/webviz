@@ -1,6 +1,6 @@
 import React from "react";
 
-import { DebouncedField } from "@lib/components/@next/DebouncedField/DebouncedField";
+import { DebouncedField } from "@lib/components/@next/DebouncedField/debouncedField";
 import { Input } from "@lib/components/@next/Input";
 
 import { ValueResult } from "../ValueResult";

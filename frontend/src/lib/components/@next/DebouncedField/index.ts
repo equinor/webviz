@@ -1,1 +1,1 @@
-export { DebouncedField } from "./DebouncedField";
+export { DebouncedField } from "./debouncedField";

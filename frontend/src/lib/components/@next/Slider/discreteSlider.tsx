@@ -1,7 +1,7 @@
 import React from "react";
 
-import type { SliderProps } from "./Slider";
-import { Slider } from "./Slider";
+import type { SliderProps } from "./slider";
+import { Slider } from "./slider";
 
 export type DiscreteSliderProps = {
     values: number[];

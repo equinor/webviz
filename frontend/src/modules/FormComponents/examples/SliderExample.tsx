@@ -1,7 +1,6 @@
 import React from "react";
 
-import { Slider } from "@lib/components/@next/Slider";
-import { DiscreteSlider } from "@lib/components/@next/Slider/DiscreteSlider";
+import { DiscreteSlider, Slider } from "@lib/components/@next/Slider";
 import { ToggleButton } from "@lib/components/ToggleButton";
 
 import { ValueResult } from "../ValueResult";

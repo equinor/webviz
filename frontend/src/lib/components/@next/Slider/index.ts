@@ -1,1 +1,2 @@
-export { Slider } from "./Slider";
+export { Slider } from "./slider";
+export { DiscreteSlider } from "./discreteSlider";
