@@ -255,6 +255,10 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         // Add ordered layers to assembler layers
         assemblerLayerItems.push(...perProviderLayerItems.flat());
 
+        if (viewIntersection.type === IntersectionType.CUSTOM_POLYLINE) {
+            visualizationLayerItems.push(createReferenceLinesLayerItem());
+        }
+
         if (viewIntersection.type === IntersectionType.WELLBORE) {
             if (wellboreHeadersQuery.data && wellboreHeadersQuery.data.length > 0) {
                 visualizationLayerItems.push(

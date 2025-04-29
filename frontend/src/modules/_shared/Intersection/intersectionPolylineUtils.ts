@@ -1,13 +1,14 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import { getWellTrajectoriesOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import type { Vec2 } from "@lib/utils/vec2";
 import { normalizeVec2, point2Distance, vec2FromArray } from "@lib/utils/vec2";
-import type { QueryClient } from "@tanstack/query-core";
-
-import type { PolylineWithSectionLengths } from "./intersectionPolylineTypes";
 
 import { calcExtendedSimplifiedWellboreTrajectoryInXYPlane } from "../utils/wellbore";
+
+import type { PolylineWithSectionLengths } from "./intersectionPolylineTypes";
 
 export const CURVE_FITTING_EPSILON = 5; // meter
 
@@ -125,16 +126,18 @@ export function createResampledPolylineXyUtm(polylineXyUtm: number[], sampleStep
 }
 
 /**
- * Resample polyline with section lengths.
+ * Resample polyline XY UTM coordinates with section lengths.
  *
- * Takes a polyline with section lengths and a sample step and returns a resampled polyline with corresponding resampled section lengths,
- * where the sample step is the distance between each point in the resampled polyline.
+ * Takes a polyline xy utm coordinates with section lengths and a sample step and returns a resampled polyline xy utm coordinates
+ * with corresponding resampled section lengths.
  *
- * The resampled section lengths are calculated by dividing the actual section length by the number of resample points.
+ * The resampling is performed per section of the input polyline, meaning that the resampling is done for each segment of the polyline.
+ * With sample step as the distance between each point in the resampled polyline segment. This is to ensure that the original polyline
+ * points are not lost during the resampling process.
  *
- * If a section length is less than the sample step, it will not be resampled.
+ * Note: If a section length is less than the sample step, it will not be resampled.
  */
-export function createResampledPolylineWithSectionLengths(
+export function createSectionWiseResampledPolylineWithSectionLengths(
     polylineWithSectionLengths: PolylineWithSectionLengths,
     sampleStep: number,
 ): PolylineWithSectionLengths {

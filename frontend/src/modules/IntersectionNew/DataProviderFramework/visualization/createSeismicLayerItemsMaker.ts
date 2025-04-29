@@ -1,4 +1,6 @@
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+
+import { LayerType } from "@modules/_shared/components/EsvIntersection";
 import type {
     IntersectionRealizationSeismicData,
     IntersectionRealizationSeismicSettings,
@@ -9,7 +11,6 @@ import type {
     EsvLayerItemsMaker,
     TransformerArgs,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { LayerType } from "@modules/_shared/components/EsvIntersection";
 
 /**
  * Make a trajectory in the uz-plane of a fence made from a polyline in the xy-plane of a
@@ -75,6 +76,11 @@ export function createSeismicLayerItemsMaker({
 
     // NOTE: Temporary to catch loading (null -> empty polyline -> empty section lengths)
     if (seismicFenceSectionLengths.length === 0) {
+        return null;
+    }
+    // Temporary until we can ensure that fetched data and settings/stored data is synced as long
+    // as isLoading is false
+    if (fenceData.num_traces !== seismicFenceSectionLengths.length + 1) {
         return null;
     }
 

@@ -1,9 +1,9 @@
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 
+import { CustomDataProviderType } from "./dataProviderTypes";
 import { EnsembleWellborePicksProvider } from "./EnsembleWellborePicksProvider";
 import { RealizationSurfacesProvider } from "./RealizationSurfacesProvider";
 import { SurfacesPerRealizationValuesProvider } from "./SurfacesPerRealizationValuesProvider";
-import { CustomDataProviderType } from "./dataProviderTypes";
 
 DataProviderRegistry.registerDataProvider(
     CustomDataProviderType.ENSEMBLE_WELLBORE_PICKS,

@@ -725,26 +725,6 @@ export type StratigraphicColumn_api = {
 };
 
 /**
- * Stratigraphic unit from SMDA
- *
- * Camel case attributes needed for esvIntersection component in front-end
- */
-export type StratigraphicUnit_api = {
-    identifier: string;
-    top: string;
-    base: string;
-    stratUnitLevel: number;
-    stratUnitType: string;
-    topAge: number | number;
-    baseAge: number | number;
-    stratUnitParent: string | null;
-    colorR: number;
-    colorG: number;
-    colorB: number;
-    lithologyType?: number | number | string;
-};
-
-/**
  * A single observation of a summary vector at a specific date.
  */
 export type SummaryVectorDateObservation_api = {

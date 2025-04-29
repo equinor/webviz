@@ -1,12 +1,13 @@
 import type { IntersectionReferenceSystem, SurfaceLine } from "@equinor/esv-intersection";
+
+import { LayerType } from "@modules/_shared/components/EsvIntersection";
+import type { SurfaceStatisticalFanchart } from "@modules/_shared/components/EsvIntersection/layers/SurfaceStatisticalFanchartCanvasLayer";
+import { makeSurfaceStatisticalFanchartFromRealizationSurface } from "@modules/_shared/components/EsvIntersection/utils/surfaceStatisticalFancharts";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type {
     EsvLayerItemsMaker,
     TransformerArgs,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { LayerType } from "@modules/_shared/components/EsvIntersection";
-import type { SurfaceStatisticalFanchart } from "@modules/_shared/components/EsvIntersection/layers/SurfaceStatisticalFanchartCanvasLayer";
-import { makeSurfaceStatisticalFanchartFromRealizationSurface } from "@modules/_shared/components/EsvIntersection/utils/surfaceStatisticalFancharts";
 
 import type {
     SurfacesPerRealizationValuesData,
@@ -32,7 +33,7 @@ export function createUncertaintySurfacesLayerItemsMaker({
 
     const requestedPolylineWithCumulatedLengths = getStoredData("requestedPolylineWithCumulatedLengths");
 
-    if (!data || !colorSet || !requestedPolylineWithCumulatedLengths) {
+    if (!data || !colorSet || !requestedPolylineWithCumulatedLengths || isLoading) {
         return null;
     }
 
@@ -40,17 +41,19 @@ export function createUncertaintySurfacesLayerItemsMaker({
     const cumulatedHorizontalPolylineLengths =
         requestedPolylineWithCumulatedLengths.cumulatedHorizontalPolylineLengthArr;
 
-    let currentColor = isLoading ? "#aaaaaa" : colorSet.getFirstColor();
     const labelData: SurfaceLine[] = [];
     const fancharts: SurfaceStatisticalFanchart[] = [];
-
+    let currentColor = colorSet.getFirstColor();
     for (const [surfaceName, perRealizationValues] of Object.entries(data)) {
         const sampledValues = perRealizationValues.map((realization) => realization.sampled_values);
 
-        for (const realizationValues of sampledValues) {
-            if (realizationValues.length !== requestedPolylineLength) {
-                // throw new Error("Length of sampled values does not match length of requested polyline");
-            }
+        if (sampledValues.length === 0) {
+            continue;
+        }
+
+        // Verify sample values length using first fetched realization
+        if (sampledValues[0].length !== requestedPolylineLength) {
+            throw new Error("Length of sampled values does not match length of requested polyline");
         }
 
         const fanchart = makeSurfaceStatisticalFanchartFromRealizationSurface(
@@ -67,9 +70,7 @@ export function createUncertaintySurfacesLayerItemsMaker({
         fancharts.push(fanchart);
 
         // Update color for the next surface
-        if (!isLoading) {
-            currentColor = colorSet.getNextColor();
-        }
+        currentColor = colorSet.getNextColor();
     }
 
     const uncertaintySurfaceIntersectionLayerItemsMaker: EsvLayerItemsMaker = {

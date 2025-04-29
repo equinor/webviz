@@ -27,6 +27,7 @@ export function createGridLayerItemsMaker({
 >): EsvLayerItemsMaker | null {
     const intersectionData = getData();
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
+    const useCustomColorScaleBoundaries = getSetting(Setting.COLOR_SCALE)?.areBoundariesUserDefined ?? false;
     const intersectionExtensionLength = getSetting(Setting.INTERSECTION_EXTENSION_LENGTH) ?? 0;
     const showGridLines = getSetting(Setting.SHOW_GRID_LINES);
     const sourcePolylineWithSectionLengths = getStoredData("polylineWithSectionLengths");
@@ -48,10 +49,13 @@ export function createGridLayerItemsMaker({
     // Temporary until we can ensure that fetched data and settings/stored data is synced as long
     // as isLoading is false
     if (intersectionData.fenceMeshSections.length !== sourcePolylineWithSectionLengths.actualSectionLengths.length) {
+        return null;
+    }
+
+    if (intersectionData.fenceMeshSections.length !== sourcePolylineWithSectionLengths.actualSectionLengths.length) {
         throw new Error(
-            "The number of fence mesh sections does not match the number of requested actual section lengths",
+            "The number of fence mesh sections does not match the number if actual section lengths for requested polyline",
         );
-        // return null;
     }
 
     const transformedPolylineIntersection = createTransformedPolylineIntersectionResult(
@@ -59,12 +63,13 @@ export function createGridLayerItemsMaker({
         sourcePolylineWithSectionLengths.actualSectionLengths,
     );
 
-    // TODO: Always use custom boundaries for the color scale?
     const adjustedColorScale = colorScale.clone();
-    const min = transformedPolylineIntersection.min_grid_prop_value;
-    const max = transformedPolylineIntersection.max_grid_prop_value;
-    const mid = min + (max - min) / 2;
-    adjustedColorScale.setRangeAndMidPoint(min, max, mid);
+    if (!useCustomColorScaleBoundaries) {
+        const min = transformedPolylineIntersection.min_grid_prop_value;
+        const max = transformedPolylineIntersection.max_grid_prop_value;
+        const mid = min + (max - min) / 2;
+        adjustedColorScale.setRangeAndMidPoint(min, max, mid);
+    }
 
     const gridIntersectionLayerItemsMaker: EsvLayerItemsMaker = {
         makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null) => {

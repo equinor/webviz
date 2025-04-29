@@ -1,9 +1,10 @@
 import { getPicksData, transformFormationData } from "@equinor/esv-intersection";
+
+import { LayerType } from "@modules/_shared/components/EsvIntersection";
 import type {
     EsvLayerItemsMaker,
     TransformerArgs,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { LayerType } from "@modules/_shared/components/EsvIntersection";
 
 import type { EnsembleWellborePicksSettings } from "../customDataProviderImplementations/EnsembleWellborePicksProvider";
 

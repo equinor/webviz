@@ -6,14 +6,14 @@ import type {
     SeismicInfo,
 } from "@equinor/esv-intersection";
 import { CanvasLayer, findIndexOfSample, getSeismicInfo, getSeismicOptions } from "@equinor/esv-intersection";
+import type { Rgb } from "culori";
+import { parse } from "culori";
+
 import type { ColorScale } from "@lib/utils/ColorScale";
 import {
     createSeismicSliceImageDatapointsArrayFromFenceTracesArray,
     createSeismicSliceImageYAxisValuesArrayForFence,
 } from "@modules/_shared/Intersection/seismicIntersectionUtils";
-
-import type { Rgb } from "culori";
-import { parse } from "culori";
 
 // Options for generating seismic slice image using generateSeismicSliceImage
 export type SeismicSliceImageOptions = {
