@@ -1,13 +1,22 @@
 import { Icon } from "@equinor/eds-core-react";
 import { color_palette, grid_layer, settings, surface_layer, timeline, wellbore } from "@equinor/eds-icons";
+import { Dropdown } from "@mui/base";
+import {
+    Check,
+    Panorama,
+    SettingsApplications,
+    Settings as SettingsIcon,
+    TableRowsOutlined,
+    ViewColumnOutlined,
+} from "@mui/icons-material";
+import { useAtom } from "jotai";
+
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { Menu } from "@lib/components/Menu";
 import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
-import { CustomDataProviderType } from "@modules/IntersectionNew/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
-import { PreferredViewLayout } from "@modules/IntersectionNew/typesAndEnums";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
@@ -23,17 +32,8 @@ import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTy
 import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import { Dropdown } from "@mui/base";
-import {
-    Check,
-    Panorama,
-    SettingsApplications,
-    Settings as SettingsIcon,
-    TableRowsOutlined,
-    ViewColumnOutlined,
-} from "@mui/icons-material";
-
-import { useAtom } from "jotai";
+import { CustomDataProviderType } from "@modules/IntersectionNew/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
+import { PreferredViewLayout } from "@modules/IntersectionNew/typesAndEnums";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 

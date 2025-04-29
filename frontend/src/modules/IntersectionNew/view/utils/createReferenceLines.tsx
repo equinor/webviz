@@ -1,4 +1,5 @@
 import type { ReferenceLine } from "@equinor/esv-intersection";
+
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { LayerType } from "@modules/_shared/components/EsvIntersection";
 
@@ -7,9 +8,10 @@ import { LayerType } from "@modules/_shared/components/EsvIntersection";
  *
  * Optional wellboreHeaderSpecification to create a reference line for the wellbore header
  */
-function createReferenceLines(
-    wellboreHeaderSpecification: { depthReferenceElevation: number; depthReferencePoint: string } | null,
-): ReferenceLine[] {
+function createReferenceLines(wellboreHeaderSpecification?: {
+    depthReferenceElevation: number;
+    depthReferencePoint: string;
+}): ReferenceLine[] {
     const referenceLines: ReferenceLine[] = [
         {
             depth: 0,
@@ -38,9 +40,10 @@ function createReferenceLines(
  *
  * Optional wellboreHeaderSpecification to create a reference line for the wellbore header
  */
-export function createReferenceLinesLayerItem(
-    wellboreHeaderSpecification: { depthReferenceElevation: number; depthReferencePoint: string } | null,
-): LayerItem {
+export function createReferenceLinesLayerItem(wellboreHeaderSpecification?: {
+    depthReferenceElevation: number;
+    depthReferencePoint: string;
+}): LayerItem {
     return {
         id: "reference-line",
         name: "Reference line",

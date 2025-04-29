@@ -1,5 +1,6 @@
-import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
+import simplify from "simplify-js";
 
+import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
 
 function normalizeVector(vector: number[]): number[] {
     const vectorLength = Math.sqrt(vector[0] ** 2 + vector[1] ** 2);

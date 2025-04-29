@@ -1,28 +1,33 @@
+import { isEqual } from "lodash";
+
 import type { SurfaceIntersectionData_api } from "@api";
 import {
     SurfaceAttributeType_api,
-    getDrilledWellboreHeadersOptions,
     getRealizationSurfacesMetadataOptions,
     postGetSurfaceIntersectionOptions,
 } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
+import {
+    createIntersectionPolylineWithSectionLengthsForField,
+    fetchWellboreHeaders,
+} from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedHelperDependencyFunctions";
+import {
+    getAvailableEnsembleIdentsForField,
+    getAvailableIntersectionOptions,
+    getAvailableRealizationsForEnsembleIdent,
+} from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
+import {
+    CancelUpdate,
+    type DefineDependenciesArgs,
+} from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
-import type {
-    PolylineIntersectionSpecification,
-    WellboreIntersectionSpecification,
-} from "@modules/_shared/Intersection/intersectionPolylineUtils";
-import { makeIntersectionPolylineWithSectionLengthsPromise } from "@modules/_shared/Intersection/intersectionPolylineUtils";
-
-import { isEqual } from "lodash";
 
 import { createResampledPolylinePointsAndCumulatedLengthArray } from "./utils";
 
@@ -57,6 +62,13 @@ export class RealizationSurfacesProvider
 
     getDefaultName() {
         return "Realization Surfaces";
+    }
+
+    getDefaultSettingsValues() {
+        return {
+            [Setting.INTERSECTION_EXTENSION_LENGTH]: 500.0,
+            [Setting.SAMPLE_RESOLUTION_IN_METERS]: 1.0,
+        };
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
@@ -96,75 +108,24 @@ export class RealizationSurfacesProvider
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
-
-            const ensembleIdentsForField = ensembles
-                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
-                .map((ensemble) => ensemble.getIdent());
-
-            return ensembleIdentsForField;
+            return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
         });
 
         availableSettingsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
-
-            if (!ensembleIdent) {
-                return [];
-            }
-
-            const realizations = realizationFilterFunc(ensembleIdent);
-            return [...realizations];
+            return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunc);
         });
 
-        const wellboreHeadersDep = helperDependency(async function fetchData({ getLocalSetting, abortSignal }) {
+        const wellboreHeadersDep = helperDependency(({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-
-            if (!ensembleIdent) {
-                return null;
-            }
-
-            const ensembleSet = workbenchSession.getEnsembleSet();
-            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-
-            if (!ensemble) {
-                return null;
-            }
-
-            const fieldIdentifier = ensemble.getFieldIdentifier();
-
-            return await queryClient.fetchQuery({
-                ...getDrilledWellboreHeadersOptions({
-                    query: { field_identifier: fieldIdentifier },
-                    signal: abortSignal,
-                }),
-            });
+            return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
         });
 
         availableSettingsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
-            const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
+            const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
-
-            const intersectionOptions: IntersectionSettingValue[] = [];
-
-            if (wellboreHeaders) {
-                for (const wellboreHeader of wellboreHeaders) {
-                    intersectionOptions.push({
-                        type: IntersectionType.WELLBORE,
-                        name: wellboreHeader.uniqueWellboreIdentifier,
-                        uuid: wellboreHeader.wellboreUuid,
-                    });
-                }
-            }
-
-            for (const polyline of intersectionPolylines) {
-                intersectionOptions.push({
-                    type: IntersectionType.CUSTOM_POLYLINE,
-                    name: polyline.name,
-                    uuid: polyline.id,
-                });
-            }
-
-            return intersectionOptions;
+            return getAvailableIntersectionOptions(wellboreHeaders, intersectionPolylines);
         });
 
         const depthSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
@@ -211,56 +172,19 @@ export class RealizationSurfacesProvider
         });
 
         // Create intersection polyline and actual section lengths data asynchronously
-        const intersectionPolylineWithSectionLengthsDep = helperDependency(
-            async ({ getLocalSetting, getGlobalSetting }) => {
-                const fieldIdentifier = getGlobalSetting("fieldId");
-                const intersection = getLocalSetting(Setting.INTERSECTION);
-                const intersectionExtensionLength = getLocalSetting(Setting.INTERSECTION_EXTENSION_LENGTH) ?? 0;
+        const intersectionPolylineWithSectionLengthsDep = helperDependency(({ getLocalSetting, getGlobalSetting }) => {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            const intersection = getLocalSetting(Setting.INTERSECTION);
+            const intersectionExtensionLength = getLocalSetting(Setting.INTERSECTION_EXTENSION_LENGTH) ?? 0;
 
-                // If no intersection is selected, return an empty polyline
-                if (!intersection) {
-                    const emptyPolylineWithSectionLengthsPromise = new Promise<PolylineWithSectionLengths>((resolve) =>
-                        resolve({
-                            polylineUtmXy: [],
-                            actualSectionLengths: [],
-                        }),
-                    );
-
-                    return emptyPolylineWithSectionLengthsPromise;
-                }
-
-                if (intersection.type === IntersectionType.CUSTOM_POLYLINE) {
-                    const polyline = workbenchSession
-                        .getUserCreatedItems()
-                        .getIntersectionPolylines()
-                        .getPolyline(intersection.uuid);
-                    if (!polyline) {
-                        throw new Error(`Could not find polyline with id ${intersection.uuid}`);
-                    }
-                    const intersectionSpecification: PolylineIntersectionSpecification = {
-                        type: IntersectionType.CUSTOM_POLYLINE,
-                        polyline: polyline,
-                    };
-                    return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification);
-                }
-                if (intersection.type === IntersectionType.WELLBORE) {
-                    if (!fieldIdentifier) {
-                        throw new Error("Field identifier is not set");
-                    }
-
-                    const intersectionSpecification: WellboreIntersectionSpecification = {
-                        type: IntersectionType.WELLBORE,
-                        wellboreUuid: intersection.uuid,
-                        intersectionExtensionLength: intersectionExtensionLength,
-                        fieldIdentifier: fieldIdentifier,
-                        queryClient,
-                    };
-                    return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification);
-                }
-
-                throw new Error(`Unhandled intersection type ${intersection.type}`);
-            },
-        );
+            return createIntersectionPolylineWithSectionLengthsForField(
+                fieldIdentifier,
+                intersection,
+                intersectionExtensionLength,
+                workbenchSession,
+                queryClient,
+            );
+        });
 
         storedDataUpdater("polylineWithSectionLengths", ({ getHelperDependency }) => {
             const intersectionPolylineWithSectionLengths = getHelperDependency(
@@ -272,10 +196,7 @@ export class RealizationSurfacesProvider
                 !intersectionPolylineWithSectionLengths ||
                 intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
             ) {
-                return {
-                    polylineUtmXy: [],
-                    actualSectionLengths: [],
-                };
+                return CancelUpdate;
             }
 
             return intersectionPolylineWithSectionLengths;

@@ -1,10 +1,11 @@
 import type { IntersectionReferenceSystem, SurfaceData } from "@equinor/esv-intersection";
+
+import { LayerType } from "@modules/_shared/components/EsvIntersection";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type {
     EsvLayerItemsMaker,
     TransformerArgs,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { LayerType } from "@modules/_shared/components/EsvIntersection";
 
 import type {
     RealizationSurfacesData,
@@ -21,16 +22,16 @@ export function createSurfacesLayerItemsMaker({
     const data = getData();
     const colorSet = getSetting(Setting.COLOR_SET);
 
-    if (!data || !colorSet) {
+    if (!data || !colorSet || isLoading) {
         return null;
     }
 
-    let currentColor = isLoading ? "#aaaaaa" : colorSet.getFirstColor();
+    let currentColor = colorSet.getFirstColor();
     const surfaceData: SurfaceData = {
         areas: [],
         lines: data.map((surface) => {
             const color = currentColor;
-            currentColor = isLoading ? "#aaaaaa" : colorSet.getNextColor();
+            currentColor = colorSet.getNextColor();
             return {
                 data: surface.cum_lengths.map((el, index) => [el, surface.z_points[index]]),
                 color: color,

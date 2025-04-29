@@ -1,14 +1,18 @@
-import { type WellborePick_api, getDrilledWellboreHeadersOptions, getWellborePicksInStratColumnOptions } from "@api";
+import { filter, groupBy, isEqual, keys } from "lodash";
+
+import { type WellborePick_api, getWellborePicksInStratColumnOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
+import { fetchWellboreHeaders } from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedHelperDependencyFunctions";
+import {
+    getAvailableEnsembleIdentsForField,
+    getAvailableIntersectionOptions,
+} from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import type {
     CustomDataProviderImplementation,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-
-import { filter, groupBy, isEqual, keys } from "lodash";
 
 const ensembleWellborePicksSettings = [
     Setting.INTERSECTION,
@@ -43,62 +47,19 @@ export class EnsembleWellborePicksProvider
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
-
-            const ensembleIdents = ensembles
-                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
-                .map((ensemble) => ensemble.getIdent());
-
-            return ensembleIdents;
+            return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
         });
 
-        const wellboreHeadersDep = helperDependency(async function fetchData({ getLocalSetting, abortSignal }) {
+        const wellboreHeadersDep = helperDependency(({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-
-            if (!ensembleIdent) {
-                return null;
-            }
-
-            const ensembleSet = workbenchSession.getEnsembleSet();
-            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-
-            if (!ensemble) {
-                return null;
-            }
-
-            const fieldIdentifier = ensemble.getFieldIdentifier();
-
-            return await queryClient.fetchQuery({
-                ...getDrilledWellboreHeadersOptions({
-                    query: { field_identifier: fieldIdentifier },
-                    signal: abortSignal,
-                }),
-            });
+            return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
         });
 
         availableSettingsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
-            const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
+            const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
 
-            const intersectionOptions: IntersectionSettingValue[] = [];
-            if (wellboreHeaders) {
-                for (const wellboreHeader of wellboreHeaders) {
-                    intersectionOptions.push({
-                        type: IntersectionType.WELLBORE,
-                        name: wellboreHeader.uniqueWellboreIdentifier,
-                        uuid: wellboreHeader.wellboreUuid,
-                    });
-                }
-            }
-
-            for (const polyline of intersectionPolylines) {
-                intersectionOptions.push({
-                    type: IntersectionType.CUSTOM_POLYLINE,
-                    name: polyline.name,
-                    uuid: polyline.id,
-                });
-            }
-
-            return intersectionOptions;
+            return getAvailableIntersectionOptions(wellboreHeaders, intersectionPolylines);
         });
 
         const wellborePicksDep = helperDependency(({ getGlobalSetting, getLocalSetting, abortSignal }) => {
