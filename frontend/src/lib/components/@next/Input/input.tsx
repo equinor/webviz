@@ -10,12 +10,20 @@ export type InputProps = Base.Field.Control.Props & {
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
 
+    noAdornmentWrapper?: boolean;
+
     // Exposing these as a QoL for developers
     validate?: Base.Field.Root.Props["validate"];
     invalid?: Base.Field.Root.Props["invalid"];
     validationMode?: Base.Field.Root.Props["validationMode"];
     validationDebounceTime?: Base.Field.Root.Props["validationDebounceTime"];
 };
+
+function makeAdornment(adornment?: React.ReactNode, noAdornmentWrapper?: boolean): React.ReactNode {
+    if (!adornment) return null;
+    if (noAdornmentWrapper) return adornment;
+    return <Base.Field.Label aria-hidden>{adornment}</Base.Field.Label>;
+}
 
 function InputComp(props: InputProps, ref: React.ForwardedRef<HTMLInputElement>): React.ReactNode {
     const {
@@ -24,6 +32,7 @@ function InputComp(props: InputProps, ref: React.ForwardedRef<HTMLInputElement>)
         wrapperProps,
         startAdornment,
         endAdornment,
+        noAdornmentWrapper,
         validate,
         invalid,
         validationMode,
@@ -38,13 +47,13 @@ function InputComp(props: InputProps, ref: React.ForwardedRef<HTMLInputElement>)
             {...{ invalid, validate, validationMode, validationDebounceTime }}
             {...wrapperProps}
         >
-            {startAdornment && <Base.Field.Label aria-hidden>{startAdornment}</Base.Field.Label>}
+            {makeAdornment(startAdornment, noAdornmentWrapper)}
             <Base.Field.Control
                 ref={ref}
                 className={(state) => buildBaseUiClassName(state, "--control", inputClassName)}
                 {...baseProps}
             />
-            {endAdornment && <Base.Field.Label aria-hidden>{endAdornment}</Base.Field.Label>}
+            {makeAdornment(endAdornment, noAdornmentWrapper)}
         </Base.Field.Root>
     );
 }

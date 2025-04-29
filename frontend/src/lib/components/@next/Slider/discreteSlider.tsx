@@ -38,6 +38,7 @@ function DiscreteSliderComponent(props: DiscreteSliderProps, ref: React.Forwarde
                 ref={ref}
                 value={value}
                 step={step}
+                largeStep={step * 2}
                 min={props.values[0]}
                 max={props.values.at(-1)}
                 markSteps

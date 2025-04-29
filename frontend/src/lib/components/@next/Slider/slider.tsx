@@ -10,7 +10,7 @@ import _ from "lodash";
 import { buildBaseUiClassName } from "../utils/buildBaseUiClassName";
 
 export type SliderProps = Omit<Base.Slider.Root.Props, "value"> & {
-    value: number | readonly number[];
+    value?: number | readonly number[];
     markSteps?: boolean;
     valueLabelDisplay?: "auto" | "off" | "on";
     valueLabelFormat?: string | ((value: number) => string);
@@ -141,7 +141,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
 
     return (
         <Base.Slider.Root
-            className={(state) => buildBaseUiClassName(state, "--wv-form-comp --wv-slider -mx-[-0]", className)}
+            className={(state) => buildBaseUiClassName(state, "--wv-form-comp --wv-slider", className)}
             {...otherProps}
         >
             <Base.Slider.Control

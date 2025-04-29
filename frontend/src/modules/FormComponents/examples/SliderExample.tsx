@@ -3,16 +3,18 @@ import React from "react";
 import { DiscreteSlider, Slider } from "@lib/components/@next/Slider";
 import { ToggleButton } from "@lib/components/ToggleButton";
 
+import { ExampleTitle } from "../ExampleTitle";
 import { ValueResult } from "../ValueResult";
 
 function toMulti(value: number | readonly number[]): readonly number[] {
     if (typeof value !== "number") return value;
-    return [value, 100];
+    return [0, value];
 }
 
 function toSingle(value: number | readonly number[]): number {
     if (typeof value === "number") return value;
-    return value[0];
+    // ! Picking the second value to avoid indicator visual issue
+    return value[1];
 }
 
 export function SliderExample(): React.ReactNode {
@@ -21,8 +23,10 @@ export function SliderExample(): React.ReactNode {
 
     return (
         <>
+            <ExampleTitle>Slider</ExampleTitle>
+
             <div>
-                <div className="grid grid-cols-[auto_auto_1fr] items-center gap-2 h-48">
+                <div className="grid grid-cols-[auto_auto_1fr] items-center gap-2 h-28">
                     <Slider
                         value={inputValue}
                         className="h-full col-span-1 row-span-2"

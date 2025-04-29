@@ -1,14 +1,14 @@
 import React from "react";
 
-import { Input } from "@lib/components/@next/Input";
+import { NumberInput } from "@lib/components/@next/Input/numberInput";
 import { ToggleButton } from "@lib/components/ToggleButton";
 import { GroupAdd, Search } from "@mui/icons-material";
 
 import { ExampleTitle } from "../ExampleTitle";
 import { ValueResult } from "../ValueResult";
 
-export function InputExample(): React.ReactNode {
-    const [inputValue, setInputValue] = React.useState<string | undefined>("");
+export function NumberInputExample(): React.ReactNode {
+    const [inputValue, setInputValue] = React.useState<number | null>(10);
 
     const [showStartAdornment, setShowStartAdornment] = React.useState<boolean>(false);
     const [showEndAdornment, setShowEndAdornment] = React.useState<boolean>(false);
@@ -17,17 +17,17 @@ export function InputExample(): React.ReactNode {
 
     return (
         <>
-            <ExampleTitle>Input field</ExampleTitle>
+            <ExampleTitle>Number input field</ExampleTitle>
 
             <div>
-                <Input
+                <NumberInput
                     value={inputValue}
                     placeholder="My placeholder"
                     disabled={isDisabled}
+                    onValueChange={setInputValue}
                     invalid={isError}
                     startAdornment={showStartAdornment && <GroupAdd fontSize="inherit" />}
                     endAdornment={showEndAdornment && <Search fontSize="inherit" />}
-                    onValueChange={(v) => setInputValue(v as string)}
                 />
 
                 <div className="mt-2 flex gap-2 ">
