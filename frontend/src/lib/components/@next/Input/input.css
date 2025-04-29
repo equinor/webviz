@@ -12,7 +12,7 @@
 
         .--control {
             /* Extend input area to edges of wrapper */
-            @apply -my-1.5 -mx-2 py-1.5 px-2 grow truncate focus:outline-none focus-visible:outline-none;
+            @apply min-w-0 -my-1.5 -mx-2 py-1.5 px-2 grow truncate focus:outline-none focus-visible:outline-none;
         }
     }
 }
