@@ -1,24 +1,27 @@
 import React from "react";
 
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { IntersectionType } from "@framework/types/intersection";
+import type { Viewport } from "@framework/types/viewport";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { IntersectionType } from "@framework/types/intersection";
-import type { Viewport } from "@framework/types/viewport";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { BBox } from "@lib/utils/bbox";
 import { combine } from "@lib/utils/bbox";
+import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
+import { IntersectionRealizationSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
 import { makeColorScaleAnnotation } from "@modules/IntersectionNew/DataProviderFramework/annotations/makeColorScaleAnnotation";
 import { makeGridBoundingBox } from "@modules/IntersectionNew/DataProviderFramework/boundingBoxes/makeGridBoundingBox";
 import { makeSeismicBoundingBox } from "@modules/IntersectionNew/DataProviderFramework/boundingBoxes/makeSeismicBoundingBox";
 import { makeSurfacesBoundingBox } from "@modules/IntersectionNew/DataProviderFramework/boundingBoxes/makeSurfacesBoundingBox";
+import { CustomDataProviderType } from "@modules/IntersectionNew/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { EnsembleWellborePicksProvider } from "@modules/IntersectionNew/DataProviderFramework/customDataProviderImplementations/EnsembleWellborePicksProvider";
 import { RealizationSurfacesProvider } from "@modules/IntersectionNew/DataProviderFramework/customDataProviderImplementations/RealizationSurfacesProvider";
 import { SurfacesPerRealizationValuesProvider } from "@modules/IntersectionNew/DataProviderFramework/customDataProviderImplementations/SurfacesPerRealizationValuesProvider";
-import { CustomDataProviderType } from "@modules/IntersectionNew/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import type { IntersectionInjectedData } from "@modules/IntersectionNew/DataProviderFramework/injectedDataType";
 import { createGridLayerItemsMaker } from "@modules/IntersectionNew/DataProviderFramework/visualization/createGridLayerItemsMaker";
 import { createSeismicLayerItemsMaker } from "@modules/IntersectionNew/DataProviderFramework/visualization/createSeismicLayerItemsMaker";
@@ -28,9 +31,7 @@ import { createWellborePicksLayerItemsMaker } from "@modules/IntersectionNew/Dat
 import { makeEsvViewDataCollection } from "@modules/IntersectionNew/DataProviderFramework/visualization/makeEsvViewDataCollection";
 import type { Interfaces } from "@modules/IntersectionNew/interfaces";
 import type { PreferredViewLayout } from "@modules/IntersectionNew/typesAndEnums";
-import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
-import { IntersectionRealizationSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
 import {
     type DataProviderManager,
     DataProviderManagerTopic,

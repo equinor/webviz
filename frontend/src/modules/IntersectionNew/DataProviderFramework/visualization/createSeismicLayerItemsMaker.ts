@@ -63,30 +63,14 @@ export function createSeismicLayerItemsMaker({
 
     const seismicFenceSectionLengths = getStoredData("seismicFencePolylineWithSectionLengths")?.actualSectionLengths;
 
-    // if (isLoading || !fenceData || !seismicFencePolylineWithSectionLengths || !colorScale) {
-    if (!fenceData || !seismicFenceSectionLengths || !colorScale) {
+    if (!fenceData || !seismicFenceSectionLengths || !colorScale || isLoading) {
         return null;
     }
 
-    // Temporary
-    if (isLoading) {
-        // TODO: Handle loading state for color scale, or provide another layer for loading state
-        return null;
-    }
-
-    // NOTE: Temporary to catch loading (null -> empty polyline -> empty section lengths)
-    if (seismicFenceSectionLengths.length === 0) {
-        return null;
-    }
-    // Temporary until we can ensure that fetched data and settings/stored data is synced as long
-    // as isLoading is false
-    if (fenceData.num_traces !== seismicFenceSectionLengths.length + 1) {
-        return null;
-    }
-
+    // Ensure consistency between fetched data and requested polyline
     if (fenceData.num_traces !== seismicFenceSectionLengths.length + 1) {
         throw new Error(
-            "The number of fence mesh sections does not match the number if actual section lengths for requested polyline",
+            `Number of traces (${fenceData.num_traces}) does not match number of sections (${seismicFenceSectionLengths.length + 1}) for requested polyline`,
         );
     }
 
