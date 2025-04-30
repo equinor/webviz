@@ -158,34 +158,29 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     const mainDivSize = useElementSize(mainDivRef);
     const statusWriter = useViewStatusWriter(props.viewContext);
 
-    // const [prevReferenceSystem, setPrevReferenceSystem] = React.useState<IntersectionReferenceSystem | null>(null);
+    const [prevReferenceSystem, setPrevReferenceSystem] = React.useState<IntersectionReferenceSystem | null>(null);
     const [viewport, setViewport] = React.useState<Viewport>([0, 0, 2000]);
     const [prevProvidersViewport, setPrevProvidersViewport] = React.useState<Viewport | null>(null);
     const [prevBounds, setPrevBounds] = React.useState<{ x: [number, number]; y: [number, number] } | null>(null);
     const [isInitialProviderViewportSet, setIsInitialProviderViewportSet] = React.useState<boolean>(false);
 
-    // How to detect new "order" of providers in settings/tree?
     usePublishSubscribeTopicValue(props.dataProviderManager, DataProviderManagerTopic.DATA_REVISION);
 
     const fieldIdentifier: string | null = props.dataProviderManager.getGlobalSetting("fieldId");
 
     // Assemble visualization of providers
     const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.dataProviderManager);
-
-    // Create reference system for each view:
     if (assemblerProduct.children.length === 0) {
-        // return null;
         statusWriter.addWarning("Create intersection view to visualize");
     }
-
     if (assemblerProduct.children.length > 1) {
-        // throw new Error("Multiple views are not supported");
-        statusWriter.addWarning("Multiple views are not supported");
+        throw new Error("Multiple views are not supported");
     }
 
-    assemblerProduct.aggregatedErrorMessages.forEach((error) => {
+    // Retrieve error messages from assembler
+    for (const error of assemblerProduct.aggregatedErrorMessages) {
         statusWriter.addError(error);
-    });
+    }
 
     // View of interest when supporting only one view
     const viewCandidate = assemblerProduct.children.find((child) => child.itemType === VisualizationItemType.GROUP);
@@ -207,13 +202,11 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     );
 
     // Detect if intersection reference system has changed
-    // let hasNewIntersectionReferenceSystem = false;
-    // if (intersectionReferenceSystem && !isEqual(intersectionReferenceSystem, prevReferenceSystem)) {
-    //     hasNewIntersectionReferenceSystem = true;
-    //     setPrevReferenceSystem(intersectionReferenceSystem);
-    //     setIsInitialLayerViewportSet(false);
-    //     setPrevLayersViewport(null);
-    // }
+    if (intersectionReferenceSystem && !isEqual(intersectionReferenceSystem, prevReferenceSystem)) {
+        setPrevReferenceSystem(intersectionReferenceSystem);
+        setIsInitialProviderViewportSet(false);
+        setPrevProvidersViewport(null);
+    }
 
     // Extract esv layers from view of interest
     const providerVisualizationMakers: EsvLayerItemsMaker[] = [];
@@ -226,23 +219,12 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
 
     let boundingBox: BBox | null = null;
     if (view && viewIntersection && intersectionReferenceSystem) {
+        // Make LayerItems per provider, using maker function
+        const perProviderLayerItems: LayerItem[][] = [];
         for (const item of view.children) {
             if (item.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
-                providerVisualizationMakers.push(item.visualization);
+                perProviderLayerItems.push(item.visualization.makeLayerItems(intersectionReferenceSystem));
             }
-        }
-
-        providerVisualizationMakers.push(
-            ...[...view.children]
-                .filter((elm) => elm.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION)
-                .map((child) => child.visualization)
-                .flat(),
-        );
-
-        // Make LayerItems for each visualization
-        const perProviderLayerItems: LayerItem[][] = [];
-        for (const visualizationMaker of providerVisualizationMakers) {
-            perProviderLayerItems.push(visualizationMaker.makeLayerItems(intersectionReferenceSystem));
         }
 
         // Assign esv LayerItem order, reverse
@@ -259,10 +241,10 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         // Add ordered layers to assembler layers
         assemblerLayerItems.push(...perProviderLayerItems.flat());
 
+        // Add layers to be visualized based on selected polyline
         if (viewIntersection.type === IntersectionType.CUSTOM_POLYLINE) {
             visualizationLayerItems.push(createReferenceLinesLayerItem());
         }
-
         if (viewIntersection.type === IntersectionType.WELLBORE) {
             if (wellboreHeadersQuery.data && wellboreHeadersQuery.data.length > 0) {
                 visualizationLayerItems.push(
@@ -273,7 +255,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
                 );
             }
 
-            const layerOrder = providerVisualizationMakers.length * 2 + 1; // Place layers on top of factory layers
+            const layerOrder = numProviders * 2 + 1; // Place layers on top of factory layers
             const wellboreCasingsData =
                 wellboreCasings.data && wellboreCasings.data.length > 0 ? wellboreCasings.data : null;
             visualizationLayerItems.push(
@@ -348,19 +330,19 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         bounds.y = [zMin, zMax];
     } else if (!isBoundsSetByProvider) {
         bounds.x = prevBounds?.x ?? [0, 2000];
-        bounds.y = prevBounds?.y ?? [0, 2000];
+        bounds.y = prevBounds?.y ?? [0, 1000];
     }
 
     if (!isEqual(bounds, prevBounds)) {
         setPrevBounds(bounds);
     }
 
-    const viewportRatio = mainDivSize.width / mainDivSize.height;
-    const safeViewportRatio = Number.isNaN(viewportRatio) ? 1 : viewportRatio;
+    const viewportRatioCandidate = mainDivSize.width / mainDivSize.height;
+    const viewportRatio = Number.isNaN(viewportRatioCandidate) ? 1 : viewportRatioCandidate;
     const newViewport: [number, number, number] = [
         bounds.x[0] + (bounds.x[1] - bounds.x[0]) / 2,
         bounds.y[0] + (bounds.y[1] - bounds.y[0]) / 2,
-        Math.max(Math.abs(bounds.y[1] - bounds.y[0]) * safeViewportRatio, Math.abs(bounds.x[1] - bounds.x[0])) * 1.2,
+        Math.max(Math.abs(bounds.y[1] - bounds.y[0]) * viewportRatio, Math.abs(bounds.x[1] - bounds.x[0])) * 1.2,
     ];
 
     if (!isEqual(newViewport, prevProvidersViewport) && !isInitialProviderViewportSet) {
