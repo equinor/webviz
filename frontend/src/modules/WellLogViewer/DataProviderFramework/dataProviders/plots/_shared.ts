@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 import type { WellboreLogCurveData_api } from "@api";
 import {
     WellLogCurveSourceEnum_api,
@@ -12,8 +14,6 @@ import type {
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { Settings } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-
-import _ from "lodash";
 
 export const baseSettings = [Setting.LOG_CURVE] as const;
 

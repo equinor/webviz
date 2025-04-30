@@ -1,4 +1,5 @@
-import type { TemplateTrack } from "@modules/WellLogViewer/types";
+import type { TemplatePlotScale } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type {
@@ -8,11 +9,11 @@ import type {
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import type { TemplatePlotScale } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import type { TemplateTrack } from "@modules/WellLogViewer/types";
 
+import type { baseSettings } from "../groups/_shared";
 import type { ContinuousTrackSettings } from "../groups/ContinuousLogTrack";
 import type { DiscreteTrackSettings } from "../groups/DiscreteLogTrack";
-import type { baseSettings } from "../groups/_shared";
 
 type DiscreteTrackCollectorArgs = GroupPropsCollectorArgs<DiscreteTrackSettings>;
 type ContinuousTrackCollectorArgs = GroupPropsCollectorArgs<ContinuousTrackSettings>;

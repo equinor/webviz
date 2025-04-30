@@ -1,6 +1,14 @@
 import React from "react";
 
+import { CircularProgress } from "@mui/material";
+import type { WellLogSet } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
+import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
+import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
+import _ from "lodash";
+
 import type { WellboreTrajectory_api } from "@api";
+import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { MAIN_AXIS_CURVE } from "@modules/WellLogViewer/constants";
 import type { DiffVisualizationGroup } from "@modules/WellLogViewer/DataProviderFramework/visualizations/plots";
 import {
     COLOR_MAP_ACC_KEY,
@@ -14,20 +22,12 @@ import {
     isTrackGroup,
 } from "@modules/WellLogViewer/DataProviderFramework/visualizations/tracks";
 import { isWellPickVisualization } from "@modules/WellLogViewer/DataProviderFramework/visualizations/wellpicks";
-import { MAIN_AXIS_CURVE } from "@modules/WellLogViewer/constants";
 import type { WellLogFactoryProduct } from "@modules/WellLogViewer/hooks/useLogViewerVisualizationProduct";
 import { useLogViewerVisualizationProduct } from "@modules/WellLogViewer/hooks/useLogViewerVisualizationProduct";
 import type { Template, TemplatePlot, TemplateTrack } from "@modules/WellLogViewer/types";
 import { createWellLogSets } from "@modules/WellLogViewer/utils/queryDataTransform";
 import { getUniqueCurveNameForPlotConfig } from "@modules/WellLogViewer/utils/strings";
 import { trajectoryToIntersectionReference } from "@modules/WellLogViewer/utils/trajectory";
-import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
-import { CircularProgress } from "@mui/material";
-import type { WellLogSet } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
-import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
-import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
-
-import _ from "lodash";
 
 import type { SubsurfaceLogViewerWrapperProps } from "./SubsurfaceLogViewerWrapper";
 import { SubsurfaceLogViewerWrapper } from "./SubsurfaceLogViewerWrapper";

@@ -1,6 +1,7 @@
+import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
+
 import type { WellborePick_api } from "@api";
 // import { BBox } from "@lib/utils/bbox";
-import { createLogViewerWellPicks } from "@modules/WellLogViewer/utils/queryDataTransform";
 import {
     type DataProviderVisualization,
     type TransformerArgs,
@@ -8,7 +9,7 @@ import {
     VisualizationItemType,
     type VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
+import { createLogViewerWellPicks } from "@modules/WellLogViewer/utils/queryDataTransform";
 
 import type { WellPickSettingTypes } from "../dataProviders/wellpicks/WellPicksProvider";
 

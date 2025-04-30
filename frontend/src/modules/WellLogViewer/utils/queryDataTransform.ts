@@ -14,10 +14,10 @@ import _ from "lodash";
 import { WellLogCurveSourceEnum_api } from "@api";
 import type { WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 
+import { MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE } from "../constants";
+
 import { COLOR_TABLES } from "./logViewerColors";
 import { getUniqueCurveNameForCurveData } from "./strings";
-
-import { MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE } from "../constants";
 
 type DataRowAccumulatorMap = Record<number, SafeWellLogDataRow>;
 

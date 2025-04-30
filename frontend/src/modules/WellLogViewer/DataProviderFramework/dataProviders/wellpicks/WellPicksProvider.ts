@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 import type { WellborePick_api } from "@api";
 import { getWellborePicksInStratColumnOptions, getWellboreStratigraphicColumnsOptions } from "@api";
 import type {
@@ -7,8 +9,6 @@ import type {
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-
-import _ from "lodash";
 
 export const wellPickSettings = [Setting.STRAT_COLUMN, Setting.SMDA_INTERPRETER, Setting.WELL_PICKS] as const;
 export type WellPickSettingTypes = typeof wellPickSettings;

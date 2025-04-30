@@ -1,9 +1,11 @@
+import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
+import _ from "lodash";
+
 import type { WellboreLogCurveData_api } from "@api";
-import type { TemplatePlot } from "@modules/WellLogViewer/types";
-import { isNumericalDataPoints } from "@modules/WellLogViewer/utils/queryDataTransform";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type { Settings } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type {
     DataProviderVisualization,
     TransformerArgs,
@@ -11,10 +13,8 @@ import type {
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
-import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
-
-import _ from "lodash";
+import type { TemplatePlot } from "@modules/WellLogViewer/types";
+import { isNumericalDataPoints } from "@modules/WellLogViewer/utils/queryDataTransform";
 
 import { AreaPlotProvider, type AreaPlotSettingTypes } from "../dataProviders/plots/AreaPlotProvider";
 import type { DiffPlotSettingTypes } from "../dataProviders/plots/DiffPlotProvider";
