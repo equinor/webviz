@@ -1,3 +1,5 @@
+import { isEqual } from "lodash";
+
 import type { SurfaceDataPng_api } from "@api";
 import { SurfaceTimeType_api, getRealizationSurfacesMetadataOptions, getSurfaceDataOptions } from "@api";
 import type {
@@ -14,7 +16,6 @@ import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataT
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
-import { isEqual } from "lodash";
 
 const realizationSurfaceSettings = [
     Setting.ENSEMBLE,
@@ -235,20 +236,20 @@ export class RealizationSurfaceProvider
 
         const surfAddrStr = surfaceAddress ? encodeSurfAddrStr(surfaceAddress) : null;
 
-        const queryKey = ["getSurfaceData", surfAddrStr, null, "png"];
+        const surfaceDataOptions = getSurfaceDataOptions({
+            query: {
+                surf_addr_str: surfAddrStr ?? "",
+                data_format: this._dataFormat,
+                resample_to_def_str: null,
+            },
+        });
 
-        registerQueryKey(queryKey);
+        registerQueryKey(surfaceDataOptions.queryKey);
 
         const promise = queryClient
-            .fetchQuery({
-                ...getSurfaceDataOptions({
-                    query: {
-                        surf_addr_str: surfAddrStr ?? "",
-                        data_format: this._dataFormat,
-                        resample_to_def_str: null,
-                    },
-                }),
-            })
+            .fetchQuery(
+                surfaceDataOptions,
+            )
             .then((data) => ({ format: this._dataFormat, surfaceData: transformSurfaceData(data) }));
 
         return promise as Promise<RealizationSurfaceData>;

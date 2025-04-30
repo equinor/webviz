@@ -1,5 +1,6 @@
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
 import type { Layer as EsvLayer } from "@equinor/esv-intersection";
+
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
 import * as bbox from "@lib/utils/bbox";
@@ -305,6 +306,7 @@ export class VisualizationAssembler<
                 accumulatedData = product.accumulatedData;
                 aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
                 hoverVisualizationFunctions.push(product.makeHoverVisualizationsFunction);
+                annotations.push(...product.annotations);
                 numLoadingDataProviders += product.numLoadingDataProviders;
                 maybeApplyBoundingBox(product.combinedBoundingBox);
 

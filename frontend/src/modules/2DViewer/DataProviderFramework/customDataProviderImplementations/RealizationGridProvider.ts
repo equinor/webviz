@@ -1,3 +1,5 @@
+import { isEqual } from "lodash";
+
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
 import type { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import { transformGridMappedProperty, transformGridSurface } from "@modules/3DViewer/view/queries/queryDataTransforms";
@@ -10,7 +12,6 @@ import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramew
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-import { isEqual } from "lodash";
 
 const realizationGridSettings = [
     Setting.ENSEMBLE,
@@ -95,60 +96,49 @@ export class RealizationGridProvider
         const jMax = availableDimensions?.j ?? 0;
         const kMin = layerIndex || 0;
         const kMax = layerIndex || 0;
-        const queryKey = [
-            "gridParameter",
-            ensembleIdent,
-            gridName,
-            attribute,
-            timeOrInterval,
-            realizationNum,
-            iMin,
-            iMax,
-            jMin,
-            jMax,
-            kMin,
-            kMax,
-        ];
-        registerQueryKey(queryKey);
+
+        const gridParameterOptions = getGridParameterOptions({
+            query: {
+                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+                grid_name: gridName ?? "",
+                parameter_name: attribute ?? "",
+                parameter_time_or_interval_str: timeOrInterval,
+                realization_num: realizationNum ?? 0,
+                i_min: iMin,
+                i_max: iMax - 1,
+                j_min: jMin,
+                j_max: jMax - 1,
+                k_min: kMin,
+                k_max: kMax,
+            },
+        });
+
+        registerQueryKey(gridParameterOptions.queryKey);
+
+        const gridSurfaceOptions = getGridSurfaceOptions({
+            query: {
+                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+                grid_name: gridName ?? "",
+                realization_num: realizationNum ?? 0,
+                i_min: iMin,
+                i_max: iMax - 1,
+                j_min: jMin,
+                j_max: jMax - 1,
+                k_min: kMin,
+                k_max: kMax,
+            },
+        });
+
+        registerQueryKey(gridSurfaceOptions.queryKey);
 
         const gridParameterPromise = queryClient
-            .fetchQuery({
-                ...getGridParameterOptions({
-                    query: {
-                        case_uuid: ensembleIdent?.getCaseUuid() ?? "",
-                        ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
-                        grid_name: gridName ?? "",
-                        parameter_name: attribute ?? "",
-                        parameter_time_or_interval_str: timeOrInterval,
-                        realization_num: realizationNum ?? 0,
-                        i_min: iMin,
-                        i_max: iMax - 1,
-                        j_min: jMin,
-                        j_max: jMax - 1,
-                        k_min: kMin,
-                        k_max: kMax,
-                    },
-                }),
-            })
+            .fetchQuery(gridParameterOptions)
             .then(transformGridMappedProperty);
 
         const gridSurfacePromise = queryClient
-            .fetchQuery({
-                ...getGridSurfaceOptions({
-                    query: {
-                        case_uuid: ensembleIdent?.getCaseUuid() ?? "",
-                        ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
-                        grid_name: gridName ?? "",
-                        realization_num: realizationNum ?? 0,
-                        i_min: iMin,
-                        i_max: iMax - 1,
-                        j_min: jMin,
-                        j_max: jMax - 1,
-                        k_min: kMin,
-                        k_max: kMax,
-                    },
-                }),
-            })
+            .fetchQuery(gridSurfaceOptions)
             .then(transformGridSurface);
 
         return Promise.all([gridSurfacePromise, gridParameterPromise]).then(([gridSurfaceData, gridParameterData]) => ({

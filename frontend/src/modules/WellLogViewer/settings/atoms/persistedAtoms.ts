@@ -1,9 +1,9 @@
-import { atomWithModuleInstanceStorage, clearModuleInstanceStorage } from "@modules/WellLogViewer/utils/atoms";
-import type { SerializedDataProviderManager } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization";
-
 import type { Getter, Setter } from "jotai";
 import { atom } from "jotai";
 import type { Dictionary } from "lodash";
+
+import type { SerializedDataProviderManager } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization";
+import { atomWithModuleInstanceStorage, clearModuleInstanceStorage } from "@modules/WellLogViewer/utils/atoms";
 
 const STORAGE_KEY = "moduleSettings";
 const moduleSettingsAtom = atomWithModuleInstanceStorage<Dictionary<any>>(STORAGE_KEY, {});

@@ -1,9 +1,10 @@
+import { isEqual } from "lodash";
+
 import type { WellboreTrajectory_api } from "@api";
 import { getDrilledWellboreHeadersOptions, getWellTrajectoriesOptions } from "@api";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-import { isEqual } from "lodash";
 
 import type {
     CustomDataProviderImplementation,
@@ -46,14 +47,15 @@ export class DrilledWellTrajectoriesProvider
             selectedWellboreUuids = selectedWellboreHeaders.map((header) => header.wellboreUuid);
         }
 
-        const queryKey = ["getWellTrajectories", fieldIdentifier];
-        registerQueryKey(queryKey);
+        const queryOptions = getWellTrajectoriesOptions({
+            query: { field_identifier: fieldIdentifier ?? "" },
+        });
+
+        registerQueryKey(queryOptions.queryKey);
 
         const promise = queryClient
             .fetchQuery({
-                ...getWellTrajectoriesOptions({
-                    query: { field_identifier: fieldIdentifier ?? "" },
-                }),
+                ...queryOptions,
                 staleTime: 1800000, // TODO: Both stale and gcTime are set to 30 minutes for now since SMDA is quite slow for fields with many wells - this should be adjusted later
                 gcTime: 1800000,
             })

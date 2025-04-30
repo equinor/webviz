@@ -1,6 +1,7 @@
+import { atomWithQuery } from "jotai-tanstack-query";
+
 import { getVfpTableNamesOptions, getVfpTableOptions } from "@api";
 
-import { atomWithQuery } from "jotai-tanstack-query";
 
 import { selectedEnsembleIdentAtom, selectedRealizationNumberAtom, selectedVfpTableNameAtom } from "./derivedAtoms";
 

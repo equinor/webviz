@@ -1,5 +1,8 @@
 import React from "react";
 
+import { useAtomValue, useSetAtom } from "jotai";
+import type { PlotDatum, PlotMouseEvent } from "plotly.js";
+
 import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ModuleViewProps } from "@framework/Module";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
@@ -8,8 +11,8 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
-import { useAtomValue, useSetAtom } from "jotai";
-import type { PlotDatum, PlotMouseEvent } from "plotly.js";
+
+import type { Interfaces } from "../interfaces";
 
 import { userSelectedActiveTimestampUtcMsAtom } from "./atoms/baseAtoms";
 import { realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
@@ -18,7 +21,6 @@ import { usePlotBuilder } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
 
-import type { Interfaces } from "../interfaces";
 
 export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);

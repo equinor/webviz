@@ -1,21 +1,21 @@
 import React from "react";
 
-import type { WellboreHeader_api } from "@api";
-import type { ModuleViewProps } from "@framework/Module";
-import { SyncSettingKey } from "@framework/SyncSettings";
-import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
-import type { Template } from "@modules/WellLogViewer/types";
 import { WellLogViewer } from "@webviz/well-log-viewer";
 import type { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
 import type { WellLogSet } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 import type { WellLogController, WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
 import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
-
 import _ from "lodash";
 
-import { ReadoutWrapper } from "./ReadoutWrapper";
+import type { WellboreHeader_api } from "@api";
+import type { ModuleViewProps } from "@framework/Module";
+import { SyncSettingKey } from "@framework/SyncSettings";
+import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
+import type { Template } from "@modules/WellLogViewer/types";
 
 import type { InterfaceTypes } from "../../interfaces";
+
+import { ReadoutWrapper } from "./ReadoutWrapper";
 
 const AXIS_MNEMOS = {
     md: ["RKB", "DEPTH", "DEPT", "MD", "TDEP", "MD_RKB"],

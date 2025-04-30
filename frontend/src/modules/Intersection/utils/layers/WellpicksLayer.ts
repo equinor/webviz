@@ -1,9 +1,9 @@
-import { getStratigraphicUnitsForCaseOptions, getWellborePicksForWellboreOptions } from "@api";
 import { transformFormationData } from "@equinor/esv-intersection";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { QueryClient } from "@tanstack/query-core";
-
 import { isEqual } from "lodash";
+
+import { getStratigraphicUnitsForCaseOptions, getWellborePicksForWellboreOptions } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import { BaseLayer } from "./BaseLayer";
 

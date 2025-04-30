@@ -1,10 +1,10 @@
+import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { describe, expect, it } from "vitest";
+
 import type { WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 import { WellLogCurveSourceEnum_api } from "@api";
-import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE } from "@modules/WellLogViewer/constants";
 import { createLogViewerWellPicks, createWellLogSets } from "@modules/WellLogViewer/utils/queryDataTransform";
-
-import { describe, expect, it } from "vitest";
 
 describe("QueryDataTransform", () => {
     describe("Well log viewer template test", () => {

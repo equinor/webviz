@@ -1,6 +1,7 @@
-import type { DropdownOption } from "@lib/components/Dropdown";
 import type { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 import type { WellLogCurve } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
+
+import type { DropdownOption } from "@lib/components/Dropdown";
 
 type PlotDropdownOption = DropdownOption<TemplatePlotType>;
 

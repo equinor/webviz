@@ -1,9 +1,9 @@
 import type React from "react";
 
+import { useAtom } from "jotai";
+
 import { Checkbox } from "@lib/components/Checkbox";
 import { Label } from "@lib/components/Label";
-
-import { useAtom } from "jotai";
 
 import { padDataWithEmptyRowsAtom, viewerHorizontalAtom } from "../atoms/persistedAtoms";
 

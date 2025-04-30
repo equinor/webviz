@@ -1,11 +1,12 @@
 import type React from "react";
 
-import type { GraphUserPhoto_api } from "@api";
-import { getUserPhotoOptions } from "@api";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { AccountCircle } from "@mui/icons-material";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
+
+import type { GraphUserPhoto_api } from "@api";
+import { getUserPhotoOptions } from "@api";
+import { CircularProgress } from "@lib/components/CircularProgress";
 
 export type UserAvatarProps = {
     userId: string;

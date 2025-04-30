@@ -1,12 +1,13 @@
 import React from "react";
 
+import { Close, ExpandMore } from "@mui/icons-material";
+import { isEqual } from "lodash";
+
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
-import { Close, ExpandMore } from "@mui/icons-material";
 
-import { isEqual } from "lodash";
 
 import type { BaseComponentProps } from "../BaseComponent";
 import { BaseComponent } from "../BaseComponent";

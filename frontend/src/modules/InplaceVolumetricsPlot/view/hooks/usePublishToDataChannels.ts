@@ -3,11 +3,11 @@ import type { ChannelContentDefinition, ChannelContentMetaData, DataGenerator } 
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewContext } from "@framework/ModuleContext";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { ChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
-import type { Interfaces } from "@modules/InplaceVolumetricsPlot/interfaces";
+import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import type { Table } from "@modules/_shared/InplaceVolumetrics/Table";
 import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
-import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
+import { ChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
+import type { Interfaces } from "@modules/InplaceVolumetricsPlot/interfaces";
 
 function makeDataGeneratorFunc(
     ensembleName: string,

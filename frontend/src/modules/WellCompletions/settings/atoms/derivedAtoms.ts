@@ -1,10 +1,11 @@
+import type { PlotData } from "@webviz/well-completions-plot";
+import { atom } from "jotai";
+
 import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { DataLoadingStatus, TimeAggregationSelection } from "@modules/WellCompletions/typesAndEnums";
 import { WellCompletionsDataAccessor } from "@modules/WellCompletions/utils/wellCompletionsDataAccessor";
-import type { PlotData } from "@webviz/well-completions-plot";
 
-import { atom } from "jotai";
 
 import {
     selectedStratigraphyColorSetAtom,

@@ -1,14 +1,14 @@
 import React from "react";
 
-import type { ModuleViewProps } from "@framework/Module";
 import { CircularProgress } from "@mui/material";
-
 import { useAtomValue } from "jotai";
+
+import type { ModuleViewProps } from "@framework/Module";
+
+import type { InterfaceTypes } from "../interfaces";
 
 import { wellboreTrajectoryQueryAtom } from "./atoms/queryAtoms";
 import { ProviderVisualizationWrapper } from "./components/ProviderVisualizationWrapper";
-
-import type { InterfaceTypes } from "../interfaces";
 
 export function View(props: ModuleViewProps<InterfaceTypes>) {
     const providerManager = props.viewContext.useSettingsToViewInterfaceValue("providerManager");

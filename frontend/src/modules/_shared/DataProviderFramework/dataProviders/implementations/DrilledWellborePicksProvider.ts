@@ -1,3 +1,5 @@
+import { isEqual } from "lodash";
+
 import type { WellborePick_api } from "@api";
 import {
     getDrilledWellboreHeadersOptions,
@@ -7,7 +9,6 @@ import {
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-import { isEqual } from "lodash";
 
 import type {
     CustomDataProviderImplementation,
@@ -50,18 +51,17 @@ export class DrilledWellborePicksProvider
         const selectedPickIdentifier = getSetting(Setting.SURFACE_NAME);
         const fieldIdentifier = getGlobalSetting("fieldId");
 
-        const queryKey = ["getWellborePicksForPickIdentifier", fieldIdentifier, selectedPickIdentifier];
-        registerQueryKey(queryKey);
+        const queryOptions = getWellborePicksForPickIdentifierOptions({
+            query: {
+                field_identifier: fieldIdentifier ?? "",
+                pick_identifier: selectedPickIdentifier ?? "",
+            },
+        });
+
+        registerQueryKey(queryOptions.queryKey);
 
         const promise = queryClient
-            .fetchQuery({
-                ...getWellborePicksForPickIdentifierOptions({
-                    query: {
-                        field_identifier: fieldIdentifier ?? "",
-                        pick_identifier: selectedPickIdentifier ?? "",
-                    },
-                }),
-            })
+            .fetchQuery(queryOptions)
             .then((response: WellborePick_api[]) => {
                 return response.filter((trajectory) => selectedWellboreUuids.includes(trajectory.wellboreUuid));
             });

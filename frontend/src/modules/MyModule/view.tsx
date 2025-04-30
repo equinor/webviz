@@ -1,11 +1,12 @@
 import React from "react";
+
+import type { PlotData } from "plotly.js";
 import Plot from "react-plotly.js";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleType } from "@lib/utils/ColorScale";
 
-import type { PlotData } from "plotly.js";
 
 import type { Interfaces } from "./interfaces";
 

@@ -1,6 +1,6 @@
-import type { WellboreHeader_api } from "@api";
-
 import { atom } from "jotai";
+
+import type { WellboreHeader_api } from "@api";
 
 import { userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./baseAtoms";
 import { availableFieldsQueryAtom, drilledWellboreHeadersQueryAtom } from "./queryAtoms";

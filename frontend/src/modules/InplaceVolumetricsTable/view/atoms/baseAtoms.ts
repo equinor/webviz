@@ -1,9 +1,10 @@
+import { atom } from "jotai";
+
 import type { InplaceVolumetricResultName_api, InplaceVolumetricStatistic_api } from "@api";
-import type { InplaceVolumetricsFilterSelections } from "@modules/InplaceVolumetricsTable/types";
 import type { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 import { TableType } from "@modules/_shared/InplaceVolumetrics/types";
+import type { InplaceVolumetricsFilterSelections } from "@modules/InplaceVolumetricsTable/types";
 
-import { atom } from "jotai";
 
 export const filterAtom = atom<InplaceVolumetricsFilterSelections>({
     ensembleIdents: [],

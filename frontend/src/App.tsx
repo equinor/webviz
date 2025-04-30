@@ -1,17 +1,19 @@
 import React from "react";
 
+import { useQueryClient } from "@tanstack/react-query";
+
 import WebvizLogo from "@assets/webviz.svg";
+
 import { GuiState, LeftDrawerContent } from "@framework/GuiMessageBroker";
-import type { LayoutElement } from "@framework/Workbench";
-import { Workbench } from "@framework/Workbench";
 import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
+import { Workbench } from "@framework/Workbench";
+import type { LayoutElement } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { WebvizSpinner } from "@lib/components/WebvizSpinner";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { useQueryClient } from "@tanstack/react-query";
 
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
