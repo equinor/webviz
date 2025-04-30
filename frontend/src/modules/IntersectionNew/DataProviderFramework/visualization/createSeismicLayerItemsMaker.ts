@@ -11,6 +11,7 @@ import type {
     EsvLayerItemsMaker,
     TransformerArgs,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { seismicColorScaleValues } from "../utils.ts/colorScaleUtils";
 
 /**
  * Make a trajectory in the uz-plane of a fence made from a polyline in the xy-plane of a
@@ -47,6 +48,7 @@ export function createSeismicLayerItemsMaker({
     getData,
     getSetting,
     getStoredData,
+    getValueRange,
     isLoading,
     name,
 }: TransformerArgs<
@@ -60,10 +62,11 @@ export function createSeismicLayerItemsMaker({
     const useCustomColorScaleBoundaries = getSetting(Setting.COLOR_SCALE)?.areBoundariesUserDefined ?? false;
     const intersectionExtensionLength = getSetting(Setting.INTERSECTION_EXTENSION_LENGTH) ?? 0;
     const attribute = getSetting(Setting.ATTRIBUTE);
+    const valueRange = getValueRange();
 
     const seismicFenceSectionLengths = getStoredData("seismicFencePolylineWithSectionLengths")?.actualSectionLengths;
 
-    if (!fenceData || !seismicFenceSectionLengths || !colorScale || isLoading) {
+    if (!fenceData || !seismicFenceSectionLengths || !colorScale || isLoading || !valueRange) {
         return null;
     }
 
@@ -79,6 +82,12 @@ export function createSeismicLayerItemsMaker({
         seismicFenceSectionLengths,
         intersectionExtensionLength,
     );
+
+    const adjustedColorScale = colorScale.clone();
+    if (!useCustomColorScaleBoundaries) {
+        const { min, max, mid } = seismicColorScaleValues(valueRange);
+        adjustedColorScale.setRangeAndMidPoint(min, max, mid);
+    }
 
     // The layer has to be created inside EsvIntersection, so we need to return a LayerItem
     const intersectionSeismicLayerItemsMaker: EsvLayerItemsMaker = {
@@ -105,8 +114,7 @@ export function createSeismicLayerItemsMaker({
                             numTraces: fenceData.num_traces,
                             fenceTracesArray: fenceData.fenceTracesFloat32Arr,
                             trajectoryFenceProjection: trajectoryFenceProjection,
-                            colorScale: colorScale.clone(),
-                            useCustomColorScaleBoundaries: useCustomColorScaleBoundaries,
+                            colorScale: adjustedColorScale,
                         },
                     },
                     hoverable: true,
