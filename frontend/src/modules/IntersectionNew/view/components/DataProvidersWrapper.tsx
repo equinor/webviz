@@ -14,7 +14,10 @@ import type { BBox } from "@lib/utils/bbox";
 import { combine } from "@lib/utils/bbox";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { IntersectionRealizationSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
-import { makeColorScaleAnnotation } from "@modules/IntersectionNew/DataProviderFramework/annotations/makeColorScaleAnnotation";
+import {
+    makeGridColorScaleAnnotation,
+    makeSeismicColorScaleAnnotation,
+} from "@modules/IntersectionNew/DataProviderFramework/annotations/makeColorScaleAnnotation";
 import { makeGridBoundingBox } from "@modules/IntersectionNew/DataProviderFramework/boundingBoxes/makeGridBoundingBox";
 import { makeSeismicBoundingBox } from "@modules/IntersectionNew/DataProviderFramework/boundingBoxes/makeSeismicBoundingBox";
 import { makeSurfacesBoundingBox } from "@modules/IntersectionNew/DataProviderFramework/boundingBoxes/makeSurfacesBoundingBox";
@@ -100,7 +103,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     {
         transformToVisualization: createGridLayerItemsMaker,
         transformToBoundingBox: makeGridBoundingBox,
-        transformToAnnotations: makeColorScaleAnnotation,
+        transformToAnnotations: makeGridColorScaleAnnotation,
     },
 );
 
@@ -110,7 +113,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     {
         transformToVisualization: createSeismicLayerItemsMaker,
         transformToBoundingBox: makeSeismicBoundingBox,
-        transformToAnnotations: makeColorScaleAnnotation,
+        transformToAnnotations: makeSeismicColorScaleAnnotation,
     },
 );
 
@@ -120,7 +123,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     {
         transformToVisualization: createSeismicLayerItemsMaker,
         transformToBoundingBox: makeSeismicBoundingBox,
-        transformToAnnotations: makeColorScaleAnnotation,
+        transformToAnnotations: makeSeismicColorScaleAnnotation,
     },
 );
 

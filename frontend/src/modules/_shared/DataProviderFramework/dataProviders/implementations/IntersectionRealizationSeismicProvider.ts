@@ -88,6 +88,27 @@ export class IntersectionRealizationSeismicProvider
         return !isEqual(prevSettings, newSettings);
     }
 
+    makeValueRange({
+        getData,
+    }: DataProviderInformationAccessors<
+        IntersectionRealizationSeismicSettings,
+        IntersectionRealizationSeismicData,
+        IntersectionRealizationSeismicStoredData
+    >): [number, number] | null {
+        const data = getData();
+        if (!data) {
+            return null;
+        }
+
+        if (data) {
+            const minValue = data.fenceTracesFloat32Arr.reduce((acc, value) => Math.min(acc, value), Infinity);
+            const maxValue = data.fenceTracesFloat32Arr.reduce((acc, value) => Math.max(acc, value), -Infinity);
+            return [minValue, maxValue];
+        }
+
+        return null;
+    }
+
     areCurrentSettingsValid({
         getSetting,
     }: DataProviderInformationAccessors<

@@ -35,7 +35,6 @@ export type SeismicLayerData = {
     propertyName: string;
     propertyUnit: string;
     colorScale: ColorScale;
-    useCustomColorScaleBoundaries: boolean;
 };
 
 export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
@@ -73,7 +72,6 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
         this._canvasDataOptions = getSeismicOptions(this._seismicInfo);
 
         const colorScale = event.data.colorScale.clone();
-        const useCustomColorScaleBoundaries = event.data.useCustomColorScaleBoundaries;
 
         // Create image
         const seismicSliceImageOptions: SeismicSliceImageOptions = {
@@ -84,7 +82,7 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
         };
 
         // Generate image and render when done
-        this.generateImage(seismicSliceImageOptions, useCustomColorScaleBoundaries).then((image) => {
+        this.generateImage(seismicSliceImageOptions).then((image) => {
             this._image = image;
             this.render();
         });
@@ -111,15 +109,13 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
             this._canvasDataOptions.height,
         );
     }
-    private async generateImage(
-        seismicSliceImageOptions: SeismicSliceImageOptions,
-        useCustomColorScaleBoundaries: boolean,
-    ): Promise<ImageBitmap | null> {
+    private async generateImage(seismicSliceImageOptions: SeismicSliceImageOptions): Promise<ImageBitmap | null> {
+        const useCustomColorScaleBoundaries = false;
+
         const image = await this.generateSeismicSliceImage(
             { ...seismicSliceImageOptions },
             seismicSliceImageOptions.trajectory,
             seismicSliceImageOptions.colorScale.clone(),
-            useCustomColorScaleBoundaries,
             {
                 isLeftToRight: true,
             },
@@ -138,36 +134,14 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
         data: { datapoints: number[][]; yAxisValues: number[] },
         trajectory: number[][],
         colorScale: ColorScale,
-        useCustomColorScaleBoundaries: boolean,
         options: {
             isLeftToRight: boolean;
-            seismicRange?: number;
-            seismicMin?: number;
-            seismicMax?: number;
         } = { isLeftToRight: true },
     ): Promise<ImageBitmap | null> {
         if (!(data.datapoints.length > 0 && trajectory.length > 1)) {
             return null;
         }
         const { datapoints: dp } = data;
-
-        const min =
-            options?.seismicMin ||
-            options?.seismicRange ||
-            dp.reduce((val: number, array: number[]) => Math.min(...array, val), 0);
-        const max =
-            options?.seismicMax ||
-            options?.seismicRange ||
-            dp.reduce((val: number, array: number[]) => Math.max(...array, val), 0);
-
-        const absMax = Math.max(Math.abs(min), Math.abs(max));
-
-        const dmin = -absMax;
-        const dmax = absMax;
-
-        if (!useCustomColorScaleBoundaries) {
-            colorScale.setRange(dmin, dmax);
-        }
 
         const length = trajectory[0][0] - trajectory[trajectory.length - 1][0];
         const width = Math.abs(Math.floor(length / 5));

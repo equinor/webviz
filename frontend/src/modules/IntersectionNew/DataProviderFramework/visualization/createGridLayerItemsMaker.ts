@@ -1,4 +1,6 @@
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+
+import { LayerType } from "@modules/_shared/components/EsvIntersection";
 import type {
     IntersectionRealizationGridData,
     IntersectionRealizationGridSettings,
@@ -10,7 +12,7 @@ import type {
     TransformerArgs,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { createTransformedPolylineIntersectionResult } from "@modules/_shared/Intersection/gridIntersectionTransform";
-import { LayerType } from "@modules/_shared/components/EsvIntersection";
+import { gridColorScaleValues } from "../utils.ts/colorScaleUtils";
 
 export function createGridLayerItemsMaker({
     id,
@@ -19,6 +21,7 @@ export function createGridLayerItemsMaker({
     getData,
     getSetting,
     getStoredData,
+    getValueRange,
 }: TransformerArgs<
     IntersectionRealizationGridSettings,
     IntersectionRealizationGridData,
@@ -30,9 +33,11 @@ export function createGridLayerItemsMaker({
     const useCustomColorScaleBoundaries = getSetting(Setting.COLOR_SCALE)?.areBoundariesUserDefined ?? false;
     const intersectionExtensionLength = getSetting(Setting.INTERSECTION_EXTENSION_LENGTH) ?? 0;
     const showGridLines = getSetting(Setting.SHOW_GRID_LINES);
+    const selectedAttribute = getSetting(Setting.ATTRIBUTE);
     const sourcePolylineWithSectionLengths = getStoredData("polylineWithSectionLengths");
+    const valueRange = getValueRange();
 
-    if (!intersectionData || !sourcePolylineWithSectionLengths || !colorScale || isLoading) {
+    if (!intersectionData || !sourcePolylineWithSectionLengths || !colorScale || isLoading || !valueRange) {
         return null;
     }
 
@@ -54,9 +59,7 @@ export function createGridLayerItemsMaker({
 
     const adjustedColorScale = colorScale.clone();
     if (!useCustomColorScaleBoundaries) {
-        const min = transformedPolylineIntersection.min_grid_prop_value;
-        const max = transformedPolylineIntersection.max_grid_prop_value;
-        const mid = min + (max - min) / 2;
+        const { min, max, mid } = gridColorScaleValues(valueRange);
         adjustedColorScale.setRangeAndMidPoint(min, max, mid);
     }
 
@@ -90,7 +93,7 @@ export function createGridLayerItemsMaker({
                                 cellCountJ: transformedPolylineIntersection.grid_dimensions.j_count,
                                 cellCountK: transformedPolylineIntersection.grid_dimensions.k_count,
                             },
-                            propertyName: "", // settings.parameterName ?? "",
+                            propertyName: selectedAttribute ?? "",
                             propertyUnit: "",
                         },
                     },
