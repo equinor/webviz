@@ -32,7 +32,7 @@ export function createGridLayerItemsMaker({
     const showGridLines = getSetting(Setting.SHOW_GRID_LINES);
     const sourcePolylineWithSectionLengths = getStoredData("polylineWithSectionLengths");
 
-    if (!intersectionData || !sourcePolylineWithSectionLengths || !colorScale) {
+    if (!intersectionData || !sourcePolylineWithSectionLengths || !colorScale || isLoading) {
         return null;
     }
 
@@ -40,21 +40,10 @@ export function createGridLayerItemsMaker({
         return null;
     }
 
-    if (isLoading) {
-        // Temporary
-        // TODO: Handle loading state for color scale, or provide another layer for loading state
-        return null;
-    }
-
-    // Temporary until we can ensure that fetched data and settings/stored data is synced as long
-    // as isLoading is false
-    if (intersectionData.fenceMeshSections.length !== sourcePolylineWithSectionLengths.actualSectionLengths.length) {
-        return null;
-    }
-
     if (intersectionData.fenceMeshSections.length !== sourcePolylineWithSectionLengths.actualSectionLengths.length) {
         throw new Error(
-            "The number of fence mesh sections does not match the number if actual section lengths for requested polyline",
+            `Number of fence mesh sections (${intersectionData.fenceMeshSections.length}) does not match  number of actual section
+            lengths (${sourcePolylineWithSectionLengths.actualSectionLengths.length}) for requested polyline`,
         );
     }
 
