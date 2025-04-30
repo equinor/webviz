@@ -12,6 +12,7 @@ import type {
     TransformerArgs,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { createTransformedPolylineIntersectionResult } from "@modules/_shared/Intersection/gridIntersectionTransform";
+
 import { gridColorScaleValues } from "../utils.ts/colorScaleUtils";
 
 export function createGridLayerItemsMaker({
