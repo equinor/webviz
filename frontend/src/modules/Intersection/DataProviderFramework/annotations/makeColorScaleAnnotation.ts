@@ -1,4 +1,3 @@
-import type { ColorScale } from "@lib/utils/ColorScale";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type {
     Annotation,
@@ -6,18 +5,15 @@ import type {
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 
-import { gridColorScaleValues, seismicColorScaleValues } from "../utils.ts/colorScaleUtils";
+import { createGridColorScaleValues, createSeismicColorScaleValues } from "../utils.ts/colorScaleUtils";
 
 function makeColorScaleAnnotation({
     getSetting,
     getValueRange,
     id,
-    colorScaleValues,
+    createColorScaleValues,
 }: TransformerArgs<[Setting.COLOR_SCALE, Setting.ATTRIBUTE], any, any, any> & {
-    colorScaleValues: (
-        valueRange: [number, number],
-        colorScale: ColorScale,
-    ) => { min: number; max: number; mid: number };
+    createColorScaleValues: (valueRange: [number, number]) => { min: number; max: number; mid: number };
 }): Annotation[] {
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
     const useCustomColorScaleBoundaries = getSetting(Setting.COLOR_SCALE)?.areBoundariesUserDefined ?? false;
@@ -31,7 +27,7 @@ function makeColorScaleAnnotation({
     // Adjust color scale boundaries
     const adjustedColorScale = colorScale.clone();
     if (!useCustomColorScaleBoundaries) {
-        const { min, max, mid } = colorScaleValues(valueRange, colorScale);
+        const { min, max, mid } = createColorScaleValues(valueRange);
         adjustedColorScale.setRangeAndMidPoint(min, max, mid);
     }
 
@@ -43,7 +39,7 @@ export function makeGridColorScaleAnnotation(
 ): Annotation[] {
     return makeColorScaleAnnotation({
         ...args,
-        colorScaleValues: (valueRange) => gridColorScaleValues(valueRange),
+        createColorScaleValues: createGridColorScaleValues,
     });
 }
 
@@ -52,6 +48,6 @@ export function makeSeismicColorScaleAnnotation(
 ): Annotation[] {
     return makeColorScaleAnnotation({
         ...args,
-        colorScaleValues: (valueRange) => seismicColorScaleValues(valueRange),
+        createColorScaleValues: createSeismicColorScaleValues,
     });
 }

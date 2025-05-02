@@ -12,7 +12,7 @@ import type {
     TransformerArgs,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-import { seismicColorScaleValues } from "../utils.ts/colorScaleUtils";
+import { createSeismicColorScaleValues } from "../utils.ts/colorScaleUtils";
 
 /**
  * Make a trajectory in the uz-plane of a fence made from a polyline in the xy-plane of a
@@ -86,7 +86,7 @@ export function createSeismicLayerItemsMaker({
 
     const adjustedColorScale = colorScale.clone();
     if (!useCustomColorScaleBoundaries) {
-        const { min, max, mid } = seismicColorScaleValues(valueRange);
+        const { min, max, mid } = createSeismicColorScaleValues(valueRange);
         adjustedColorScale.setRangeAndMidPoint(min, max, mid);
     }
 
