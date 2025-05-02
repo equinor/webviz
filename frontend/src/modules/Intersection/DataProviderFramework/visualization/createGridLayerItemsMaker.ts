@@ -13,7 +13,7 @@ import type {
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { createTransformedPolylineIntersectionResult } from "@modules/_shared/Intersection/gridIntersectionTransform";
 
-import { gridColorScaleValues } from "../utils.ts/colorScaleUtils";
+import { createGridColorScaleValues } from "../utils.ts/colorScaleUtils";
 
 export function createGridLayerItemsMaker({
     id,
@@ -60,7 +60,7 @@ export function createGridLayerItemsMaker({
 
     const adjustedColorScale = colorScale.clone();
     if (!useCustomColorScaleBoundaries) {
-        const { min, max, mid } = gridColorScaleValues(valueRange);
+        const { min, max, mid } = createGridColorScaleValues(valueRange);
         adjustedColorScale.setRangeAndMidPoint(min, max, mid);
     }
 
