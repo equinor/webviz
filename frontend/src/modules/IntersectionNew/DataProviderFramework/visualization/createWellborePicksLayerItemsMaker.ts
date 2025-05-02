@@ -11,10 +11,11 @@ import type { EnsembleWellborePicksSettings } from "../customDataProviderImpleme
 export function createWellborePicksLayerItemsMaker({
     id,
     name,
+    isLoading,
     getData,
 }: TransformerArgs<EnsembleWellborePicksSettings, any, any, any>): EsvLayerItemsMaker | null {
     const selectedWellborePicks = getData();
-    if (!selectedWellborePicks) {
+    if (!selectedWellborePicks || isLoading) {
         return null;
     }
 
