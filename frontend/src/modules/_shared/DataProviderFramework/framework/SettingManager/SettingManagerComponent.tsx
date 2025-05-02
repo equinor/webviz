@@ -37,10 +37,10 @@ export function SettingComponent<
     const isValid = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_VALID);
     const isPersisted = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED);
     const availableValues = usePublishSubscribeTopicValue(props.setting, SettingTopic.AVAILABLE_VALUES);
-    const overriddenValue = usePublishSubscribeTopicValue(props.setting, SettingTopic.OVERRIDDEN_VALUE);
-    const overriddenValueProvider = usePublishSubscribeTopicValue(
+    const isExternallyControlled = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_EXTERNALLY_CONTROLLED);
+    const externalControllerProvider = usePublishSubscribeTopicValue(
         props.setting,
-        SettingTopic.OVERRIDDEN_VALUE_PROVIDER,
+        SettingTopic.EXTERNAL_CONTROLLER_PROVIDER,
     );
     const isLoading = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_LOADING);
     const isInitialized = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_INITIALIZED);
@@ -68,12 +68,12 @@ export function SettingComponent<
         );
     }
 
-    if (overriddenValue !== undefined) {
-        if (overriddenValueProvider !== OverriddenValueProviderType.SHARED_SETTING) {
+    if (isExternallyControlled) {
+        if (externalControllerProvider !== OverriddenValueProviderType.SHARED_SETTING) {
             return null;
         }
         const valueAsString = props.setting.valueToRepresentation(
-            overriddenValue,
+            value,
             props.manager.getWorkbenchSession(),
             props.manager.getWorkbenchSettings(),
         );
@@ -109,8 +109,8 @@ export function SettingComponent<
                                 onValueChange={handleValueChanged}
                                 value={value}
                                 isValueValid={isValid}
-                                isOverridden={overriddenValue !== undefined}
-                                overriddenValue={overriddenValue ?? null}
+                                isOverridden={isExternallyControlled}
+                                overriddenValue={value}
                                 availableValues={availableValues}
                                 globalSettings={globalSettings}
                                 workbenchSession={props.manager.getWorkbenchSession()}

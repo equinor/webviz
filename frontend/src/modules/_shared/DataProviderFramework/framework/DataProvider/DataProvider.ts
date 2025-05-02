@@ -120,6 +120,7 @@ export class DataProvider<
     private _isSubordinated: boolean = false;
     private _prevSettings: TSettingTypes | null = null;
     private _prevStoredData: NullableStoredData<TStoredData> | null = null;
+    private _currentTransactionId: number = 0;
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
         const {
@@ -150,16 +151,7 @@ export class DataProvider<
             "settings-context",
             this._settingsContextDelegate
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_CHANGED)(() => {
-                this.handleSettingsAndStoredDataChange();
-            }),
-        );
-
-        this._unsubscribeHandler.registerUnsubscribeFunction(
-            "settings-context",
-            this._settingsContextDelegate
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(SettingsContextDelegateTopic.STORED_DATA_CHANGED)(() => {
+                .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_AND_STORED_DATA_CHANGED)(() => {
                 this.handleSettingsAndStoredDataChange();
             }),
         );
@@ -170,15 +162,6 @@ export class DataProvider<
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(SettingsContextDelegateTopic.STATUS)(() => {
                 this.handleSettingsStatusChange();
-            }),
-        );
-
-        this._unsubscribeHandler.registerUnsubscribeFunction(
-            "data-provider-manager",
-            dataProviderManager
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(DataProviderManagerTopic.GLOBAL_SETTINGS)(() => {
-                this.handleSettingsAndStoredDataChange();
             }),
         );
     }
@@ -192,6 +175,11 @@ export class DataProvider<
     }
 
     handleSettingsAndStoredDataChange(): void {
+        if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
+            this.setStatus(DataProviderStatus.LOADING);
+            return;
+        }
+
         if (!this.areCurrentSettingsValid()) {
             this._error = "Invalid settings";
             this.setStatus(DataProviderStatus.INVALID_SETTINGS);
@@ -223,17 +211,21 @@ export class DataProvider<
         }
 
         if (!refetchRequired) {
-            this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
-            this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
             this.setStatus(DataProviderStatus.SUCCESS);
             return;
         }
 
         this._cancellationPending = true;
-        this._prevSettings = clone(this._settingsContextDelegate.getValues()) as TSettingTypes;
-        this._prevStoredData = clone(this._settingsContextDelegate.getStoredDataRecord()) as TStoredData;
+
+        // It might be that we started a new transaction while the previous one was still running.
+        // In this case, we need to make sure that we only use the latest transaction and cancel the previous one.
+        this._currentTransactionId += 1;
+
         this.maybeCancelQuery().then(() => {
-            this.maybeRefetchData();
+            this.maybeRefetchData().then(() => {
+                this._prevSettings = clone(this._settingsContextDelegate.getValues()) as TSettingTypes;
+                this._prevStoredData = clone(this._settingsContextDelegate.getStoredDataRecord()) as TStoredData;
+            });
         });
     }
 
@@ -345,6 +337,8 @@ export class DataProvider<
     }
 
     async maybeRefetchData(): Promise<void> {
+        const thisTransactionId = this._currentTransactionId;
+
         const queryClient = this.getQueryClient();
 
         if (!queryClient) {
@@ -371,6 +365,15 @@ export class DataProvider<
                 queryClient,
                 registerQueryKey: (key) => this.registerQueryKey(key),
             });
+
+            // This is a security check to make sure that we are not using a stale transaction id.
+            // This can happen if the transaction id is incremented while the async fetch data function is still running.
+            // Queries are cancelled in the maybeCancelQuery function and should, hence, throw a cancelled error.
+            // However, there might me some operations following after the query execution that are not cancelled.
+            if (this._currentTransactionId !== thisTransactionId) {
+                return;
+            }
+
             if (this._customDataProviderImpl.makeValueRange) {
                 this._valueRange = this._customDataProviderImpl.makeValueRange(accessors);
             }
@@ -381,7 +384,6 @@ export class DataProvider<
             }
             this._queryKeys = [];
             this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
-            this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
             this.setStatus(DataProviderStatus.SUCCESS);
         } catch (error: any) {
             if (isCancelledError(error)) {

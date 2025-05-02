@@ -1,13 +1,14 @@
 import { isCancelledError } from "@tanstack/react-query";
-import { isEqual } from "lodash";
 
 import type { GlobalSettings } from "../../framework/DataProviderManager/DataProviderManager";
 import { SettingTopic } from "../../framework/SettingManager/SettingManager";
-import { CancelUpdate } from "../../interfacesAndTypes/customSettingsHandler";
 import type { UpdateFunc } from "../../interfacesAndTypes/customSettingsHandler";
 import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
 import type { SettingsContextDelegate } from "../SettingsContextDelegate";
+
+class DependencyLoadingError extends Error {
+}
 
 /*
  * Dependency class is used to represent a node in the dependency graph of a data provider settings context.
@@ -34,6 +35,7 @@ export class Dependency<
     private _contextDelegate: SettingsContextDelegate<TSettings, any, TSettingTypes, TKey, any>;
 
     private _makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[K]) => void) => void;
+    private _localSettingLoadingStateGetter: <K extends TKey>(key: K) => boolean;
     private _makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
         key: K,
         handler: (value: GlobalSettings[K]) => void,
@@ -51,6 +53,7 @@ export class Dependency<
         contextDelegate: SettingsContextDelegate<TSettings, TSettingTypes, any, TKey, any>,
         updateFunc: UpdateFunc<TReturnValue, TSettings, TSettingTypes, TKey>,
         makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[K]) => void) => void,
+        localSettingLoadingStateGetter: <K extends TKey>(key: K) => boolean,
         makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
             key: K,
             handler: (value: GlobalSettings[K]) => void,
@@ -59,6 +62,7 @@ export class Dependency<
         this._contextDelegate = contextDelegate;
         this._updateFunc = updateFunc;
         this._makeLocalSettingGetter = makeLocalSettingGetter;
+        this._localSettingLoadingStateGetter = localSettingLoadingStateGetter;
         this._makeGlobalSettingGetter = makeGlobalSettingGetter;
 
         this.getGlobalSetting = this.getGlobalSetting.bind(this);
@@ -106,6 +110,10 @@ export class Dependency<
             this._numParentDependencies++;
         }
 
+        if (this._localSettingLoadingStateGetter(settingName)) {
+            throw new DependencyLoadingError("Setting is loading");
+        }
+
         // If the dependency has already subscribed to this setting, return the cached value
         // that is updated when the setting changes
         if (this._cachedSettingsMap.has(settingName as string)) {
@@ -118,7 +126,7 @@ export class Dependency<
 
         this._makeLocalSettingGetter(settingName, (value) => {
             this._cachedSettingsMap.set(settingName as string, value);
-            this.callUpdateFunc();
+            this.invalidate();
         });
 
         setting.getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_LOADING)(() => {
@@ -157,12 +165,8 @@ export class Dependency<
         }
 
         this._makeGlobalSettingGetter(settingName, (value) => {
-            const cachedValue = this._cachedGlobalSettingsMap.get(settingName as string);
-            if (isEqual(value, cachedValue)) {
-                return;
-            }
             this._cachedGlobalSettingsMap.set(settingName as string, value);
-            this.callUpdateFunc();
+            this.invalidate();
         });
 
         this._cachedGlobalSettingsMap.set(
@@ -177,6 +181,10 @@ export class Dependency<
             this._numParentDependencies++;
         }
 
+        if (dep.getIsLoading()) {
+            throw new DependencyLoadingError("Dependency is loading");
+        }
+
         if (this._cachedDependenciesMap.has(dep)) {
             return this._cachedDependenciesMap.get(dep);
         }
@@ -186,7 +194,7 @@ export class Dependency<
 
         dep.subscribe((newValue) => {
             this._cachedDependenciesMap.set(dep, newValue);
-            this.callUpdateFunc();
+            this.invalidate();
         }, true);
 
         dep.subscribeLoading((loading) => {
@@ -220,6 +228,14 @@ export class Dependency<
         this._isInitialized = true;
     }
 
+    private invalidate(): void {
+        if (!this._isLoading) {
+            this.setLoadingState(true);
+        }
+        this.callUpdateFunc();
+    }
+    
+
     private async callUpdateFunc() {
         if (this._abortController) {
             this._abortController.abort();
@@ -228,9 +244,7 @@ export class Dependency<
 
         this._abortController = new AbortController();
 
-        this.setLoadingState(true);
-
-        let newValue: Awaited<TReturnValue> | null | typeof CancelUpdate = null;
+        let newValue: Awaited<TReturnValue> | null = null;
         try {
             newValue = await this._updateFunc({
                 getLocalSetting: this.getLocalSetting,
@@ -239,14 +253,14 @@ export class Dependency<
                 abortSignal: this._abortController.signal,
             });
         } catch (e: any) {
+            if (e instanceof DependencyLoadingError) {
+                return;
+            }
+            
             if (!isCancelledError(e)) {
                 this.applyNewValue(null);
                 return;
             }
-            return;
-        }
-
-        if (newValue === CancelUpdate) {
             return;
         }
 
@@ -255,11 +269,9 @@ export class Dependency<
 
     private applyNewValue(newValue: Awaited<TReturnValue> | null) {
         this.setLoadingState(false);
-        if (!isEqual(newValue, this._cachedValue) || newValue === null) {
-            this._cachedValue = newValue;
-            for (const callback of this._dependencies) {
-                callback(newValue);
-            }
+        this._cachedValue = newValue;
+        for (const callback of this._dependencies) {
+            callback(newValue);
         }
     }
 }

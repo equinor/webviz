@@ -7,7 +7,7 @@ import type { SerializedSharedSetting } from "../../interfacesAndTypes/serializa
 import { SerializedType } from "../../interfacesAndTypes/serialization";
 import { SettingRegistry } from "../../settings/SettingRegistry";
 import type { Setting, SettingTypes } from "../../settings/settingsDefinitions";
-import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
+import { type DataProviderManager } from "../DataProviderManager/DataProviderManager";
 import type { SettingManager } from "../SettingManager/SettingManager";
 
 export function isSharedSetting(obj: any): obj is SharedSetting<any> {
@@ -49,13 +49,6 @@ export class SharedSetting<TSetting extends Setting> implements Item, SharedSett
 
     getSharedSettingsDelegate(): SharedSettingsDelegate<any> {
         return this._sharedSettingsDelegate;
-    }
-
-    publishValueChange(): void {
-        const dataProviderManager = this._itemDelegate.getDataProviderManager();
-        if (dataProviderManager) {
-            dataProviderManager.publishTopic(DataProviderManagerTopic.SHARED_SETTINGS_CHANGED);
-        }
     }
 
     getWrappedSetting(): SettingManager<TSetting> {

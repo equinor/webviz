@@ -321,6 +321,10 @@ export class VisualizationAssembler<
                     numLoadingDataProviders++;
                 }
 
+                if (child.getStatus() === DataProviderStatus.INVALID_SETTINGS) {
+                    continue;
+                }
+
                 if (child.getStatus() === DataProviderStatus.ERROR) {
                     const error = child.getError();
                     if (error) {

@@ -7,12 +7,13 @@ import type { PublishSubscribe } from "@modules/_shared/utils/PublishSubscribeDe
 import { PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
 
+import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import type { CustomSettingImplementation } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SettingAttributes } from "../../interfacesAndTypes/customSettingsHandler";
-import type { SharedSettingsProvider } from "../../interfacesAndTypes/entities";
 import type { AvailableValuesType, MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
 import type { Setting, SettingCategories, SettingCategory, SettingTypes } from "../../settings/settingsDefinitions";
 import { settingCategoryFixupMap, settingCategoryIsValueValidMap } from "../../settings/settingsDefinitions";
+import type { ExternalSettingController } from "../ExternalSettingController/ExternalSettingController";
 import { Group } from "../Group/Group";
 
 export enum SettingTopic {
@@ -20,8 +21,8 @@ export enum SettingTopic {
     VALUE_ABOUT_TO_BE_CHANGED = "VALUE_ABOUT_TO_BE_CHANGED",
     IS_VALID = "IS_VALID",
     AVAILABLE_VALUES = "AVAILABLE_VALUES",
-    OVERRIDDEN_VALUE = "OVERRIDDEN_VALUE",
-    OVERRIDDEN_VALUE_PROVIDER = "OVERRIDDEN_VALUE_PROVIDER",
+    IS_EXTERNALLY_CONTROLLED = "IS_EXTERNALLY_CONTROLLED",
+    EXTERNAL_CONTROLLER_PROVIDER = "EXTERNAL_CONTROLLER_PROVIDER",
     IS_LOADING = "IS_LOADING",
     IS_INITIALIZED = "IS_INITIALIZED",
     IS_PERSISTED = "IS_PERSISTED",
@@ -33,8 +34,8 @@ export type SettingTopicPayloads<TValue, TCategory extends SettingCategory> = {
     [SettingTopic.VALUE_ABOUT_TO_BE_CHANGED]: void;
     [SettingTopic.IS_VALID]: boolean;
     [SettingTopic.AVAILABLE_VALUES]: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> | null;
-    [SettingTopic.OVERRIDDEN_VALUE]: TValue | undefined;
-    [SettingTopic.OVERRIDDEN_VALUE_PROVIDER]: OverriddenValueProviderType | undefined;
+    [SettingTopic.IS_EXTERNALLY_CONTROLLED]: boolean;
+    [SettingTopic.EXTERNAL_CONTROLLER_PROVIDER]: OverriddenValueProviderType | undefined;
     [SettingTopic.IS_LOADING]: boolean;
     [SettingTopic.IS_INITIALIZED]: boolean;
     [SettingTopic.IS_PERSISTED]: boolean;
@@ -79,8 +80,6 @@ export class SettingManager<
     private _isValueValid: boolean = false;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingTopicPayloads<TValue, TCategory>>();
     private _availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> | null = null;
-    private _overriddenValue: TValue | undefined = undefined;
-    private _overriddenValueProviderType: OverriddenValueProviderType | undefined = undefined;
     private _loading: boolean = false;
     private _initialized: boolean = false;
     private _currentValueFromPersistence: TValue | null = null;
@@ -89,6 +88,8 @@ export class SettingManager<
         enabled: true,
         visible: true,
     };
+    private _externalController: ExternalSettingController<TSetting, TValue, TCategory> | null = null;
+    private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
 
     constructor({
         type,
@@ -107,6 +108,82 @@ export class SettingManager<
         if (this._isStatic) {
             this.setValueValid(this.checkIfValueIsValid(this._value));
         }
+    }
+
+    registerExternalSettingController(
+        externalController: ExternalSettingController<TSetting, TValue, TCategory>,
+    ): void {
+        this._externalController = externalController;
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "external-setting-controller",
+            externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(
+                () => {
+                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
+                    this._value = externalController.getSetting().getValue();
+                },
+            ),
+        );
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "external-setting-controller",
+            externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_VALID)(
+                () => {
+                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_VALID);
+                },
+            ),
+        );
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "external-setting-controller",
+            externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_LOADING)(
+                () => {
+                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
+                }
+            ),
+        );
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "external-setting-controller",
+            externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.ATTRIBUTES)(
+                () => {
+                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.ATTRIBUTES);
+                }
+            ),
+        );
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "external-setting-controller",
+            externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE_ABOUT_TO_BE_CHANGED)(
+                () => {
+                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_ABOUT_TO_BE_CHANGED);
+                }
+            ),
+        );
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "external-setting-controller",
+            externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_INITIALIZED)(
+                () => {
+                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_INITIALIZED);
+                }
+            ),
+        );
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "external-setting-controller",
+            externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_PERSISTED)(
+                () => {
+                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED);
+                }   
+            ),
+        );
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "external-setting-controller",
+            externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.AVAILABLE_VALUES)(
+                () => {
+                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.AVAILABLE_VALUES);
+                }
+            ),
+        );
+    }
+
+    unregisterExternalSettingController(): void {
+        this._externalController = null;
+        this._unsubscribeHandler.unsubscribe("external-setting-controller");
     }
 
     getId(): string {
@@ -140,8 +217,8 @@ export class SettingManager<
     }
 
     getValue(): TValue {
-        if (this._overriddenValue !== undefined) {
-            return this._overriddenValue;
+        if (this._externalController) {
+            return this._externalController.getSetting().getValue();
         }
 
         if (this._currentValueFromPersistence !== null) {
@@ -173,10 +250,16 @@ export class SettingManager<
     }
 
     isValueValid(): boolean {
+        if (this._externalController) {
+            return this._externalController.getSetting().isValueValid();
+        }
         return this._isValueValid;
     }
 
     isPersistedValue(): boolean {
+        if (this._externalController) {
+            return this._externalController.getSetting().isPersistedValue();
+        }
         return this._currentValueFromPersistence !== null;
     }
 
@@ -210,6 +293,13 @@ export class SettingManager<
         if (this._loading === loading) {
             return;
         }
+
+        if (this._externalController) {
+            this._externalController.getSetting().setLoading(loading);
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
+            return;
+        }
+
         this._loading = loading;
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
     }
@@ -223,10 +313,16 @@ export class SettingManager<
     }
 
     isInitialized(): boolean {
+        if (this._externalController) {
+            return this._externalController.getSetting().isInitialized();
+        }
         return this._initialized || this._isStatic;
     }
 
     isLoading(): boolean {
+        if (this._externalController) {
+            return this._externalController.getSetting().isLoading();
+        }
         return this._loading;
     }
 
@@ -235,6 +331,10 @@ export class SettingManager<
         workbenchSession: WorkbenchSession,
         workbenchSettings: WorkbenchSettings,
     ): React.ReactNode {
+        if (this._externalController) {
+            return this._externalController.getSetting().valueToRepresentation(value, workbenchSession, workbenchSettings);
+        }
+
         if (this._customSettingImplementation.overriddenValueRepresentation) {
             return this._customSettingImplementation.overriddenValueRepresentation({
                 value,
@@ -258,63 +358,22 @@ export class SettingManager<
         return "Value has no string representation";
     }
 
-    checkForOverrides(sharedSettingsProviders: SharedSettingsProvider[]) {
-        let overriddenValue: TValue | undefined;
-        let overriddenValueProviderType: OverriddenValueProviderType | undefined;
-
-        for (const provider of sharedSettingsProviders) {
-            if (!provider.getSharedSettingsDelegate()) {
-                continue;
-            }
-            for (const sharedSettingKey in provider.getSharedSettingsDelegate().getWrappedSettings()) {
-                const sharedSetting = provider.getSharedSettingsDelegate().getWrappedSettings()[sharedSettingKey];
-                if (sharedSetting.getType() === this._type) {
-                    overriddenValue = sharedSetting.getValue();
-                    overriddenValueProviderType = OverriddenValueProviderType.SHARED_SETTING;
-                    if (provider instanceof Group) {
-                        overriddenValueProviderType = OverriddenValueProviderType.GROUP;
-                    }
-                    break;
-                }
-            }
-        }
-
-        this.setOverriddenValue(overriddenValue);
-        this._overriddenValueProviderType = overriddenValueProviderType;
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.OVERRIDDEN_VALUE_PROVIDER);
-    }
-
-    setOverriddenValue(overriddenValue: TValue | undefined): void {
-        if (isEqual(this._overriddenValue, overriddenValue)) {
-            return;
-        }
-
-        const prevValue = this._overriddenValue;
-        this._overriddenValue = overriddenValue;
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.OVERRIDDEN_VALUE);
-
-        if (overriddenValue === undefined) {
-            // Keep overridden value, if invalid fix it
-            if (prevValue !== undefined) {
-                this._value = prevValue;
-            }
-            this.maybeFixupValue();
-        }
-
-        this.setValueValid(this.checkIfValueIsValid(this.getValue()));
-
-        if (prevValue === undefined && overriddenValue !== undefined && isEqual(this._value, overriddenValue)) {
-            return;
-        }
-
-        if (prevValue !== undefined && overriddenValue === undefined && isEqual(this._value, prevValue)) {
-            return;
-        }
-
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
-    }
-
     makeSnapshotGetter<T extends SettingTopic>(topic: T): () => SettingTopicPayloads<TValue, TCategory>[T] {
+        const externalController = this._externalController;
+        if (externalController) {
+            return (): any => {
+                if (topic === SettingTopic.IS_EXTERNALLY_CONTROLLED) {
+                    return true;
+                }
+                if (topic === SettingTopic.EXTERNAL_CONTROLLER_PROVIDER) {
+                    return externalController.getParentItem() instanceof Group
+                        ? OverriddenValueProviderType.GROUP
+                        : OverriddenValueProviderType.SHARED_SETTING;
+                }
+                return externalController.getSetting().makeSnapshotGetter(topic)();
+            }
+        }
+
         const snapshotGetter = (): any => {
             switch (topic) {
                 case SettingTopic.VALUE:
@@ -325,10 +384,12 @@ export class SettingManager<
                     return this._isValueValid;
                 case SettingTopic.AVAILABLE_VALUES:
                     return this._availableValues;
-                case SettingTopic.OVERRIDDEN_VALUE:
-                    return this._overriddenValue;
-                case SettingTopic.OVERRIDDEN_VALUE_PROVIDER:
-                    return this._overriddenValueProviderType;
+                case SettingTopic.IS_EXTERNALLY_CONTROLLED:
+                    return this._externalController !== null;
+                case SettingTopic.EXTERNAL_CONTROLLER_PROVIDER:
+                    return this._externalController?.getParentItem() instanceof Group
+                        ? OverriddenValueProviderType.GROUP
+                        : OverriddenValueProviderType.SHARED_SETTING;
                 case SettingTopic.IS_LOADING:
                     return this.isLoading();
                 case SettingTopic.IS_PERSISTED:
@@ -394,18 +455,28 @@ export class SettingManager<
     }
 
     setAvailableValues(availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>): void {
+        if (this._externalController) {
+            this.initialize();
+            this._externalController.setAvailableValues(availableValues);
+        }
+        
         if (isEqual(this._availableValues, availableValues) && this._initialized) {
+            this.setLoading(false);
             return;
         }
 
         this._availableValues = availableValues;
+
         let valueChanged = false;
-        if ((!this.checkIfValueIsValid(this.getValue()) && this.maybeFixupValue()) || this.maybeResetPersistedValue()) {
+        const valueFixedUp = !this.checkIfValueIsValid(this.getValue()) && this.maybeFixupValue();
+        const persistedValueReset = this.maybeResetPersistedValue();
+        if (valueFixedUp || persistedValueReset) {
             valueChanged = true;
         }
         const prevIsValid = this._isValueValid;
         this.setValueValid(this.checkIfValueIsValid(this.getValue()));
         this.initialize();
+        this.setLoading(false);
         if (valueChanged || this._isValueValid !== prevIsValid) {
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
         }
