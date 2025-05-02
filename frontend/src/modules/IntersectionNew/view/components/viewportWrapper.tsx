@@ -11,7 +11,6 @@ import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
 import type { Interfaces } from "@modules/IntersectionNew/interfaces";
 
-
 import { ReadoutWrapper } from "./readoutWrapper";
 
 export type ViewportWrapperProps = {
@@ -98,22 +97,21 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
 
     const handleFitInViewClick = React.useCallback(
         function handleFitInViewClick(): void {
-            if (props.referenceSystem) {
-                const newViewport: [number, number, number] = [0, 0, 2000];
-                const firstPoint = props.referenceSystem.projectedPath[0];
-                const lastPoint = props.referenceSystem.projectedPath[props.referenceSystem.projectedPath.length - 1];
-                const xMax = Math.max(firstPoint[0], lastPoint[0]);
-                const xMin = Math.min(firstPoint[0], lastPoint[0]);
-                const yMax = Math.max(firstPoint[1], lastPoint[1]);
-                const yMin = Math.min(firstPoint[1], lastPoint[1]);
+            if (props.bounds) {
+                const [xMin, xMax] = props.bounds.x;
+                const [yMin, yMax] = props.bounds.y;
 
-                newViewport[0] = xMin + (xMax - xMin) / 2;
-                newViewport[1] = yMin + (yMax - yMin) / 2;
-                newViewport[2] = Math.max(xMax - xMin, yMax - yMin) * 1.2;
+                const centerX = xMin + (xMax - xMin) / 2;
+                const centerY = yMin + (yMax - yMin) / 2;
+                const newViewport: [number, number, number] = [
+                    centerX,
+                    centerY,
+                    Math.max(xMax - xMin, yMax - yMin) * 1.2,
+                ];
                 setViewport(newViewport);
             }
         },
-        [props.referenceSystem],
+        [props.bounds],
     );
 
     const handleShowGridToggle = React.useCallback(function handleGridLinesToggle(active: boolean): void {
