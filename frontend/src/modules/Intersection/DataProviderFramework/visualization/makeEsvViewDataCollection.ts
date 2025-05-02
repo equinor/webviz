@@ -2,7 +2,7 @@ import type { GroupType } from "@modules/_shared/DataProviderFramework/groups/gr
 import type { IntersectionViewSettings } from "@modules/_shared/DataProviderFramework/groups/implementations/IntersectionView";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { GroupCustomPropsCollector } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import type { TargetViewReturnTypes } from "@modules/IntersectionNew/view/components/DataProvidersWrapper";
+import type { TargetViewReturnTypes } from "@modules/Intersection/view/components/DataProvidersWrapper";
 
 export const makeEsvViewDataCollection: GroupCustomPropsCollector<
     IntersectionViewSettings,

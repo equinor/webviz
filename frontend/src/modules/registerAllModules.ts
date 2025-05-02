@@ -6,7 +6,7 @@ import "./DistributionPlot/registerModule";
 import "./FlowNetwork/registerModule";
 import "./InplaceVolumetricsPlot/registerModule";
 import "./InplaceVolumetricsTable/registerModule";
-import "./IntersectionNew/registerModule";
+import "./Intersection/registerModule";
 import "./Map/registerModule";
 import "./ParameterDistributionMatrix/registerModule";
 import "./ParameterResponseParallelCoordsPlot/registerModule";

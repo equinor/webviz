@@ -15,8 +15,7 @@ import { isWellborepathLayer } from "@modules/_shared/components/EsvIntersection
 import { esvReadoutToGenericReadout } from "@modules/_shared/components/EsvIntersection/utils/readoutItemUtils";
 import type { ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
-import type { Interfaces } from "@modules/IntersectionNew/interfaces";
-
+import type { Interfaces } from "@modules/Intersection/interfaces";
 
 // Needs extra distance for the left side; this avoids overlapping with legend elements
 const READOUT_EDGE_DISTANCE_REM = { left: 6 };
