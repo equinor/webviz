@@ -246,15 +246,23 @@ export class SurfacesPerRealizationValuesProvider
         if (!requestedPolylineWithCumulatedLengths) {
             throw new Error("No polyline and cumulated lengths found in stored data");
         }
-        if (
-            requestedPolylineWithCumulatedLengths.xUtmPoints.length < 2 &&
-            requestedPolylineWithCumulatedLengths.xUtmPoints.length !==
-                requestedPolylineWithCumulatedLengths.yUtmPoints.length &&
-            requestedPolylineWithCumulatedLengths.xUtmPoints.length !==
-                requestedPolylineWithCumulatedLengths.cumulatedHorizontalPolylineLengthArr.length + 1
-        ) {
+        if (requestedPolylineWithCumulatedLengths.xUtmPoints.length < 2) {
             throw new Error(
                 "Invalid polyline in stored data. Must contain at least two (x,y)-points, and cumulated length per polyline section",
+            );
+        }
+        if (
+            requestedPolylineWithCumulatedLengths.xUtmPoints.length !==
+            requestedPolylineWithCumulatedLengths.yUtmPoints.length
+        ) {
+            throw new Error("Invalid polyline points in stored data. Must have same number of X and Y points");
+        }
+        if (
+            requestedPolylineWithCumulatedLengths.xUtmPoints.length !==
+            requestedPolylineWithCumulatedLengths.cumulatedHorizontalPolylineLengthArr.length
+        ) {
+            throw new Error(
+                "Invalid polyline in stored data. Number of cumulated lengths must be equal to number of polyline points",
             );
         }
 
