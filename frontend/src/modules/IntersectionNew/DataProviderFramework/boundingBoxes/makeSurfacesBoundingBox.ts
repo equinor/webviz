@@ -18,6 +18,7 @@ export function makeSurfacesBoundingBox({
     getData,
     getSetting,
     getStoredData,
+    isLoading,
 }: TransformerArgs<
     RealizationSurfacesSettings,
     RealizationSurfacesData,
@@ -28,20 +29,15 @@ export function makeSurfacesBoundingBox({
     const extensionLength = getSetting(Setting.INTERSECTION_EXTENSION_LENGTH);
     const polylineActualSectionLengths = getStoredData("polylineWithSectionLengths")?.actualSectionLengths;
 
-    if (!data || !extensionLength || !polylineActualSectionLengths) {
+    if (!data || !extensionLength || !polylineActualSectionLengths || isLoading) {
         return null;
     }
 
     const minX = -extensionLength;
     const maxX = polylineActualSectionLengths.reduce((sum, length) => sum + length, -extensionLength);
-
-    // let minX = Number.MAX_VALUE;
-    // let maxX = Number.MIN_VALUE;
     let minY = Number.MAX_VALUE;
     let maxY = Number.MIN_VALUE;
     for (const surface of data) {
-        // minX = Math.min(minX, surface.cum_lengths[0]);
-        // maxX = Math.max(maxX, surface.cum_lengths[surface.cum_lengths.length - 1]);
         minY = Math.min(minY, ...surface.z_points);
         maxY = Math.max(maxY, ...surface.z_points);
     }

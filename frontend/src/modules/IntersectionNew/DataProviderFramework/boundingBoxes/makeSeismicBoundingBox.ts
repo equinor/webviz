@@ -17,6 +17,7 @@ export function makeSeismicBoundingBox({
     getData,
     getSetting,
     getStoredData,
+    isLoading,
 }: TransformerArgs<
     IntersectionRealizationSeismicSettings,
     IntersectionRealizationSeismicData,
@@ -27,7 +28,7 @@ export function makeSeismicBoundingBox({
     const extensionLength = getSetting(Setting.INTERSECTION_EXTENSION_LENGTH);
     const polylineActualSectionLengths = getStoredData("sourcePolylineWithSectionLengths")?.actualSectionLengths;
 
-    if (!data || !extensionLength || !polylineActualSectionLengths) {
+    if (!data || !extensionLength || !polylineActualSectionLengths || isLoading) {
         return null;
     }
 
