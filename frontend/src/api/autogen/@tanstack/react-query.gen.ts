@@ -2,8 +2,90 @@
 
 import type { Options } from "@hey-api/client-axios";
 import { queryOptions, type UseMutationOptions, type DefaultError } from "@tanstack/react-query";
-import type { AxiosError } from "axios";
-
+import type {
+    GetFieldsData,
+    GetCasesData,
+    GetEnsemblesData,
+    GetEnsembleDetailsData,
+    GetVectorListData,
+    GetDeltaEnsembleVectorListData,
+    GetRealizationsVectorDataData,
+    GetDeltaEnsembleRealizationsVectorDataData,
+    GetTimestampsListData,
+    GetHistoricalVectorDataData,
+    GetStatisticalVectorDataData,
+    GetDeltaEnsembleStatisticalVectorDataData,
+    GetStatisticalVectorDataPerSensitivityData,
+    GetRealizationVectorAtTimestampData,
+    GetTableDefinitionsData,
+    PostGetAggregatedPerRealizationTableDataData,
+    PostGetAggregatedPerRealizationTableDataError,
+    PostGetAggregatedPerRealizationTableDataResponse,
+    PostGetAggregatedStatisticalTableDataData,
+    PostGetAggregatedStatisticalTableDataError,
+    PostGetAggregatedStatisticalTableDataResponse,
+    GetRealizationSurfacesMetadataData,
+    GetObservedSurfacesMetadataData,
+    GetSurfaceDataData,
+    PostGetSurfaceIntersectionData,
+    PostGetSurfaceIntersectionError,
+    PostGetSurfaceIntersectionResponse,
+    PostGetSampleSurfaceInPointsData,
+    PostGetSampleSurfaceInPointsError,
+    PostGetSampleSurfaceInPointsResponse,
+    GetDeltaSurfaceDataData,
+    GetMisfitSurfaceDataData,
+    GetWellboreStratigraphicColumnsData,
+    GetStratigraphicUnitsData,
+    GetParameterNamesAndDescriptionData,
+    GetParameterData,
+    GetParametersData,
+    GetIsSensitivityRunData,
+    GetSensitivitiesData,
+    GetGridModelsInfoData,
+    GetGridSurfaceData,
+    GetGridParameterData,
+    PostGetPolylineIntersectionData,
+    PostGetPolylineIntersectionError,
+    PostGetPolylineIntersectionResponse,
+    GetRealizationFlowNetworkData,
+    GetTableDataData,
+    GetWellCompletionsDataData,
+    GetDrilledWellboreHeadersData,
+    GetWellTrajectoriesData,
+    GetWellborePickIdentifiersData,
+    GetWellborePicksForPickIdentifierData,
+    GetWellborePicksForWellboreData,
+    GetWellborePicksInStratColumnData,
+    GetWellboreCompletionsData,
+    GetWellboreCasingsData,
+    GetWellborePerforationsData,
+    GetWellboreLogCurveHeadersData,
+    GetLogCurveDataData,
+    GetSeismicCubeMetaListData,
+    GetInlineSliceData,
+    GetCrosslineSliceData,
+    GetDepthSliceData,
+    PostGetSeismicFenceData,
+    PostGetSeismicFenceError,
+    PostGetSeismicFenceResponse,
+    GetPolygonsDirectoryData,
+    GetPolygonsDataData,
+    GetUserPhotoData,
+    GetObservationsData,
+    GetTableDefinitionData,
+    GetRealizationDataData,
+    GetVfpTableNamesData,
+    GetVfpTableData,
+    LoginRouteData,
+    AuthorizedCallbackRouteData,
+    GetAliveData,
+    GetAliveProtectedData,
+    PostLogoutData,
+    PostLogoutResponse,
+    GetLoggedInUserData,
+    RootData,
+} from "../types.gen";
 import {
     getFields,
     getCases,
@@ -76,90 +158,7 @@ import {
     root,
     client,
 } from "../sdk.gen";
-import type {
-    GetFieldsData_api,
-    GetCasesData_api,
-    GetEnsemblesData_api,
-    GetEnsembleDetailsData_api,
-    GetVectorListData_api,
-    GetDeltaEnsembleVectorListData_api,
-    GetRealizationsVectorDataData_api,
-    GetDeltaEnsembleRealizationsVectorDataData_api,
-    GetTimestampsListData_api,
-    GetHistoricalVectorDataData_api,
-    GetStatisticalVectorDataData_api,
-    GetDeltaEnsembleStatisticalVectorDataData_api,
-    GetStatisticalVectorDataPerSensitivityData_api,
-    GetRealizationVectorAtTimestampData_api,
-    GetTableDefinitionsData_api,
-    PostGetAggregatedPerRealizationTableDataData_api,
-    PostGetAggregatedPerRealizationTableDataError_api,
-    PostGetAggregatedPerRealizationTableDataResponse_api,
-    PostGetAggregatedStatisticalTableDataData_api,
-    PostGetAggregatedStatisticalTableDataError_api,
-    PostGetAggregatedStatisticalTableDataResponse_api,
-    GetRealizationSurfacesMetadataData_api,
-    GetObservedSurfacesMetadataData_api,
-    GetSurfaceDataData_api,
-    PostGetSurfaceIntersectionData_api,
-    PostGetSurfaceIntersectionError_api,
-    PostGetSurfaceIntersectionResponse_api,
-    PostGetSampleSurfaceInPointsData_api,
-    PostGetSampleSurfaceInPointsError_api,
-    PostGetSampleSurfaceInPointsResponse_api,
-    GetDeltaSurfaceDataData_api,
-    GetMisfitSurfaceDataData_api,
-    GetWellboreStratigraphicColumnsData_api,
-    GetStratigraphicUnitsData_api,
-    GetParameterNamesAndDescriptionData_api,
-    GetParameterData_api,
-    GetParametersData_api,
-    GetIsSensitivityRunData_api,
-    GetSensitivitiesData_api,
-    GetGridModelsInfoData_api,
-    GetGridSurfaceData_api,
-    GetGridParameterData_api,
-    PostGetPolylineIntersectionData_api,
-    PostGetPolylineIntersectionError_api,
-    PostGetPolylineIntersectionResponse_api,
-    GetRealizationFlowNetworkData_api,
-    GetTableDataData_api,
-    GetWellCompletionsDataData_api,
-    GetDrilledWellboreHeadersData_api,
-    GetWellTrajectoriesData_api,
-    GetWellborePickIdentifiersData_api,
-    GetWellborePicksForPickIdentifierData_api,
-    GetWellborePicksForWellboreData_api,
-    GetWellborePicksInStratColumnData_api,
-    GetWellboreCompletionsData_api,
-    GetWellboreCasingsData_api,
-    GetWellborePerforationsData_api,
-    GetWellboreLogCurveHeadersData_api,
-    GetLogCurveDataData_api,
-    GetSeismicCubeMetaListData_api,
-    GetInlineSliceData_api,
-    GetCrosslineSliceData_api,
-    GetDepthSliceData_api,
-    PostGetSeismicFenceData_api,
-    PostGetSeismicFenceError_api,
-    PostGetSeismicFenceResponse_api,
-    GetPolygonsDirectoryData_api,
-    GetPolygonsDataData_api,
-    GetUserPhotoData_api,
-    GetObservationsData_api,
-    GetTableDefinitionData_api,
-    GetRealizationDataData_api,
-    GetVfpTableNamesData_api,
-    GetVfpTableData_api,
-    LoginRouteData_api,
-    AuthorizedCallbackRouteData_api,
-    GetAliveData_api,
-    GetAliveProtectedData_api,
-    PostLogoutData_api,
-    PostLogoutResponse_api,
-    GetLoggedInUserData_api,
-    RootData_api,
-} from "../types.gen";
+import type { AxiosError } from "axios";
 
 type QueryKey<TOptions extends Options> = [
     Pick<TOptions, "baseURL" | "body" | "headers" | "path" | "query"> & {
@@ -195,9 +194,9 @@ const createQueryKey = <TOptions extends Options>(
     return params;
 };
 
-export const getFieldsQueryKey = (options?: Options<GetFieldsData_api>) => [createQueryKey("getFields", options)];
+export const getFieldsQueryKey = (options?: Options<GetFieldsData>) => [createQueryKey("getFields", options)];
 
-export const getFieldsOptions = (options?: Options<GetFieldsData_api>) => {
+export const getFieldsOptions = (options?: Options<GetFieldsData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getFields({
@@ -212,9 +211,9 @@ export const getFieldsOptions = (options?: Options<GetFieldsData_api>) => {
     });
 };
 
-export const getCasesQueryKey = (options: Options<GetCasesData_api>) => [createQueryKey("getCases", options)];
+export const getCasesQueryKey = (options: Options<GetCasesData>) => [createQueryKey("getCases", options)];
 
-export const getCasesOptions = (options: Options<GetCasesData_api>) => {
+export const getCasesOptions = (options: Options<GetCasesData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getCases({
@@ -229,9 +228,9 @@ export const getCasesOptions = (options: Options<GetCasesData_api>) => {
     });
 };
 
-export const getEnsemblesQueryKey = (options: Options<GetEnsemblesData_api>) => [createQueryKey("getEnsembles", options)];
+export const getEnsemblesQueryKey = (options: Options<GetEnsemblesData>) => [createQueryKey("getEnsembles", options)];
 
-export const getEnsemblesOptions = (options: Options<GetEnsemblesData_api>) => {
+export const getEnsemblesOptions = (options: Options<GetEnsemblesData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getEnsembles({
@@ -246,11 +245,11 @@ export const getEnsemblesOptions = (options: Options<GetEnsemblesData_api>) => {
     });
 };
 
-export const getEnsembleDetailsQueryKey = (options: Options<GetEnsembleDetailsData_api>) => [
+export const getEnsembleDetailsQueryKey = (options: Options<GetEnsembleDetailsData>) => [
     createQueryKey("getEnsembleDetails", options),
 ];
 
-export const getEnsembleDetailsOptions = (options: Options<GetEnsembleDetailsData_api>) => {
+export const getEnsembleDetailsOptions = (options: Options<GetEnsembleDetailsData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getEnsembleDetails({
@@ -265,11 +264,11 @@ export const getEnsembleDetailsOptions = (options: Options<GetEnsembleDetailsDat
     });
 };
 
-export const getVectorListQueryKey = (options: Options<GetVectorListData_api>) => [
+export const getVectorListQueryKey = (options: Options<GetVectorListData>) => [
     createQueryKey("getVectorList", options),
 ];
 
-export const getVectorListOptions = (options: Options<GetVectorListData_api>) => {
+export const getVectorListOptions = (options: Options<GetVectorListData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getVectorList({
@@ -284,11 +283,11 @@ export const getVectorListOptions = (options: Options<GetVectorListData_api>) =>
     });
 };
 
-export const getDeltaEnsembleVectorListQueryKey = (options: Options<GetDeltaEnsembleVectorListData_api>) => [
+export const getDeltaEnsembleVectorListQueryKey = (options: Options<GetDeltaEnsembleVectorListData>) => [
     createQueryKey("getDeltaEnsembleVectorList", options),
 ];
 
-export const getDeltaEnsembleVectorListOptions = (options: Options<GetDeltaEnsembleVectorListData_api>) => {
+export const getDeltaEnsembleVectorListOptions = (options: Options<GetDeltaEnsembleVectorListData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getDeltaEnsembleVectorList({
@@ -303,11 +302,11 @@ export const getDeltaEnsembleVectorListOptions = (options: Options<GetDeltaEnsem
     });
 };
 
-export const getRealizationsVectorDataQueryKey = (options: Options<GetRealizationsVectorDataData_api>) => [
+export const getRealizationsVectorDataQueryKey = (options: Options<GetRealizationsVectorDataData>) => [
     createQueryKey("getRealizationsVectorData", options),
 ];
 
-export const getRealizationsVectorDataOptions = (options: Options<GetRealizationsVectorDataData_api>) => {
+export const getRealizationsVectorDataOptions = (options: Options<GetRealizationsVectorDataData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getRealizationsVectorData({
@@ -323,11 +322,11 @@ export const getRealizationsVectorDataOptions = (options: Options<GetRealization
 };
 
 export const getDeltaEnsembleRealizationsVectorDataQueryKey = (
-    options: Options<GetDeltaEnsembleRealizationsVectorDataData_api>,
+    options: Options<GetDeltaEnsembleRealizationsVectorDataData>,
 ) => [createQueryKey("getDeltaEnsembleRealizationsVectorData", options)];
 
 export const getDeltaEnsembleRealizationsVectorDataOptions = (
-    options: Options<GetDeltaEnsembleRealizationsVectorDataData_api>,
+    options: Options<GetDeltaEnsembleRealizationsVectorDataData>,
 ) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
@@ -343,11 +342,11 @@ export const getDeltaEnsembleRealizationsVectorDataOptions = (
     });
 };
 
-export const getTimestampsListQueryKey = (options: Options<GetTimestampsListData_api>) => [
+export const getTimestampsListQueryKey = (options: Options<GetTimestampsListData>) => [
     createQueryKey("getTimestampsList", options),
 ];
 
-export const getTimestampsListOptions = (options: Options<GetTimestampsListData_api>) => {
+export const getTimestampsListOptions = (options: Options<GetTimestampsListData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getTimestampsList({
@@ -362,11 +361,11 @@ export const getTimestampsListOptions = (options: Options<GetTimestampsListData_
     });
 };
 
-export const getHistoricalVectorDataQueryKey = (options: Options<GetHistoricalVectorDataData_api>) => [
+export const getHistoricalVectorDataQueryKey = (options: Options<GetHistoricalVectorDataData>) => [
     createQueryKey("getHistoricalVectorData", options),
 ];
 
-export const getHistoricalVectorDataOptions = (options: Options<GetHistoricalVectorDataData_api>) => {
+export const getHistoricalVectorDataOptions = (options: Options<GetHistoricalVectorDataData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getHistoricalVectorData({
@@ -381,11 +380,11 @@ export const getHistoricalVectorDataOptions = (options: Options<GetHistoricalVec
     });
 };
 
-export const getStatisticalVectorDataQueryKey = (options: Options<GetStatisticalVectorDataData_api>) => [
+export const getStatisticalVectorDataQueryKey = (options: Options<GetStatisticalVectorDataData>) => [
     createQueryKey("getStatisticalVectorData", options),
 ];
 
-export const getStatisticalVectorDataOptions = (options: Options<GetStatisticalVectorDataData_api>) => {
+export const getStatisticalVectorDataOptions = (options: Options<GetStatisticalVectorDataData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getStatisticalVectorData({
@@ -401,11 +400,11 @@ export const getStatisticalVectorDataOptions = (options: Options<GetStatisticalV
 };
 
 export const getDeltaEnsembleStatisticalVectorDataQueryKey = (
-    options: Options<GetDeltaEnsembleStatisticalVectorDataData_api>,
+    options: Options<GetDeltaEnsembleStatisticalVectorDataData>,
 ) => [createQueryKey("getDeltaEnsembleStatisticalVectorData", options)];
 
 export const getDeltaEnsembleStatisticalVectorDataOptions = (
-    options: Options<GetDeltaEnsembleStatisticalVectorDataData_api>,
+    options: Options<GetDeltaEnsembleStatisticalVectorDataData>,
 ) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
@@ -422,11 +421,11 @@ export const getDeltaEnsembleStatisticalVectorDataOptions = (
 };
 
 export const getStatisticalVectorDataPerSensitivityQueryKey = (
-    options: Options<GetStatisticalVectorDataPerSensitivityData_api>,
+    options: Options<GetStatisticalVectorDataPerSensitivityData>,
 ) => [createQueryKey("getStatisticalVectorDataPerSensitivity", options)];
 
 export const getStatisticalVectorDataPerSensitivityOptions = (
-    options: Options<GetStatisticalVectorDataPerSensitivityData_api>,
+    options: Options<GetStatisticalVectorDataPerSensitivityData>,
 ) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
@@ -442,11 +441,11 @@ export const getStatisticalVectorDataPerSensitivityOptions = (
     });
 };
 
-export const getRealizationVectorAtTimestampQueryKey = (options: Options<GetRealizationVectorAtTimestampData_api>) => [
+export const getRealizationVectorAtTimestampQueryKey = (options: Options<GetRealizationVectorAtTimestampData>) => [
     createQueryKey("getRealizationVectorAtTimestamp", options),
 ];
 
-export const getRealizationVectorAtTimestampOptions = (options: Options<GetRealizationVectorAtTimestampData_api>) => {
+export const getRealizationVectorAtTimestampOptions = (options: Options<GetRealizationVectorAtTimestampData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getRealizationVectorAtTimestamp({
@@ -461,11 +460,11 @@ export const getRealizationVectorAtTimestampOptions = (options: Options<GetReali
     });
 };
 
-export const getTableDefinitionsQueryKey = (options: Options<GetTableDefinitionsData_api>) => [
+export const getTableDefinitionsQueryKey = (options: Options<GetTableDefinitionsData>) => [
     createQueryKey("getTableDefinitions", options),
 ];
 
-export const getTableDefinitionsOptions = (options: Options<GetTableDefinitionsData_api>) => {
+export const getTableDefinitionsOptions = (options: Options<GetTableDefinitionsData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getTableDefinitions({
@@ -481,11 +480,11 @@ export const getTableDefinitionsOptions = (options: Options<GetTableDefinitionsD
 };
 
 export const postGetAggregatedPerRealizationTableDataQueryKey = (
-    options: Options<PostGetAggregatedPerRealizationTableDataData_api>,
+    options: Options<PostGetAggregatedPerRealizationTableDataData>,
 ) => [createQueryKey("postGetAggregatedPerRealizationTableData", options)];
 
 export const postGetAggregatedPerRealizationTableDataOptions = (
-    options: Options<PostGetAggregatedPerRealizationTableDataData_api>,
+    options: Options<PostGetAggregatedPerRealizationTableDataData>,
 ) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
@@ -502,12 +501,12 @@ export const postGetAggregatedPerRealizationTableDataOptions = (
 };
 
 export const postGetAggregatedPerRealizationTableDataMutation = (
-    options?: Partial<Options<PostGetAggregatedPerRealizationTableDataData_api>>,
+    options?: Partial<Options<PostGetAggregatedPerRealizationTableDataData>>,
 ) => {
     const mutationOptions: UseMutationOptions<
-        PostGetAggregatedPerRealizationTableDataResponse_api,
-        AxiosError<PostGetAggregatedPerRealizationTableDataError_api>,
-        Options<PostGetAggregatedPerRealizationTableDataData_api>
+        PostGetAggregatedPerRealizationTableDataResponse,
+        AxiosError<PostGetAggregatedPerRealizationTableDataError>,
+        Options<PostGetAggregatedPerRealizationTableDataData>
     > = {
         mutationFn: async (localOptions) => {
             const { data } = await postGetAggregatedPerRealizationTableData({
@@ -522,11 +521,11 @@ export const postGetAggregatedPerRealizationTableDataMutation = (
 };
 
 export const postGetAggregatedStatisticalTableDataQueryKey = (
-    options: Options<PostGetAggregatedStatisticalTableDataData_api>,
+    options: Options<PostGetAggregatedStatisticalTableDataData>,
 ) => [createQueryKey("postGetAggregatedStatisticalTableData", options)];
 
 export const postGetAggregatedStatisticalTableDataOptions = (
-    options: Options<PostGetAggregatedStatisticalTableDataData_api>,
+    options: Options<PostGetAggregatedStatisticalTableDataData>,
 ) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
@@ -543,12 +542,12 @@ export const postGetAggregatedStatisticalTableDataOptions = (
 };
 
 export const postGetAggregatedStatisticalTableDataMutation = (
-    options?: Partial<Options<PostGetAggregatedStatisticalTableDataData_api>>,
+    options?: Partial<Options<PostGetAggregatedStatisticalTableDataData>>,
 ) => {
     const mutationOptions: UseMutationOptions<
-        PostGetAggregatedStatisticalTableDataResponse_api,
-        AxiosError<PostGetAggregatedStatisticalTableDataError_api>,
-        Options<PostGetAggregatedStatisticalTableDataData_api>
+        PostGetAggregatedStatisticalTableDataResponse,
+        AxiosError<PostGetAggregatedStatisticalTableDataError>,
+        Options<PostGetAggregatedStatisticalTableDataData>
     > = {
         mutationFn: async (localOptions) => {
             const { data } = await postGetAggregatedStatisticalTableData({
@@ -562,11 +561,11 @@ export const postGetAggregatedStatisticalTableDataMutation = (
     return mutationOptions;
 };
 
-export const getRealizationSurfacesMetadataQueryKey = (options: Options<GetRealizationSurfacesMetadataData_api>) => [
+export const getRealizationSurfacesMetadataQueryKey = (options: Options<GetRealizationSurfacesMetadataData>) => [
     createQueryKey("getRealizationSurfacesMetadata", options),
 ];
 
-export const getRealizationSurfacesMetadataOptions = (options: Options<GetRealizationSurfacesMetadataData_api>) => {
+export const getRealizationSurfacesMetadataOptions = (options: Options<GetRealizationSurfacesMetadataData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getRealizationSurfacesMetadata({
@@ -581,11 +580,11 @@ export const getRealizationSurfacesMetadataOptions = (options: Options<GetRealiz
     });
 };
 
-export const getObservedSurfacesMetadataQueryKey = (options: Options<GetObservedSurfacesMetadataData_api>) => [
+export const getObservedSurfacesMetadataQueryKey = (options: Options<GetObservedSurfacesMetadataData>) => [
     createQueryKey("getObservedSurfacesMetadata", options),
 ];
 
-export const getObservedSurfacesMetadataOptions = (options: Options<GetObservedSurfacesMetadataData_api>) => {
+export const getObservedSurfacesMetadataOptions = (options: Options<GetObservedSurfacesMetadataData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getObservedSurfacesMetadata({
@@ -600,11 +599,11 @@ export const getObservedSurfacesMetadataOptions = (options: Options<GetObservedS
     });
 };
 
-export const getSurfaceDataQueryKey = (options: Options<GetSurfaceDataData_api>) => [
+export const getSurfaceDataQueryKey = (options: Options<GetSurfaceDataData>) => [
     createQueryKey("getSurfaceData", options),
 ];
 
-export const getSurfaceDataOptions = (options: Options<GetSurfaceDataData_api>) => {
+export const getSurfaceDataOptions = (options: Options<GetSurfaceDataData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getSurfaceData({
@@ -619,11 +618,11 @@ export const getSurfaceDataOptions = (options: Options<GetSurfaceDataData_api>) 
     });
 };
 
-export const postGetSurfaceIntersectionQueryKey = (options: Options<PostGetSurfaceIntersectionData_api>) => [
+export const postGetSurfaceIntersectionQueryKey = (options: Options<PostGetSurfaceIntersectionData>) => [
     createQueryKey("postGetSurfaceIntersection", options),
 ];
 
-export const postGetSurfaceIntersectionOptions = (options: Options<PostGetSurfaceIntersectionData_api>) => {
+export const postGetSurfaceIntersectionOptions = (options: Options<PostGetSurfaceIntersectionData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await postGetSurfaceIntersection({
@@ -638,11 +637,11 @@ export const postGetSurfaceIntersectionOptions = (options: Options<PostGetSurfac
     });
 };
 
-export const postGetSurfaceIntersectionMutation = (options?: Partial<Options<PostGetSurfaceIntersectionData_api>>) => {
+export const postGetSurfaceIntersectionMutation = (options?: Partial<Options<PostGetSurfaceIntersectionData>>) => {
     const mutationOptions: UseMutationOptions<
-        PostGetSurfaceIntersectionResponse_api,
-        AxiosError<PostGetSurfaceIntersectionError_api>,
-        Options<PostGetSurfaceIntersectionData_api>
+        PostGetSurfaceIntersectionResponse,
+        AxiosError<PostGetSurfaceIntersectionError>,
+        Options<PostGetSurfaceIntersectionData>
     > = {
         mutationFn: async (localOptions) => {
             const { data } = await postGetSurfaceIntersection({
@@ -656,11 +655,11 @@ export const postGetSurfaceIntersectionMutation = (options?: Partial<Options<Pos
     return mutationOptions;
 };
 
-export const postGetSampleSurfaceInPointsQueryKey = (options: Options<PostGetSampleSurfaceInPointsData_api>) => [
+export const postGetSampleSurfaceInPointsQueryKey = (options: Options<PostGetSampleSurfaceInPointsData>) => [
     createQueryKey("postGetSampleSurfaceInPoints", options),
 ];
 
-export const postGetSampleSurfaceInPointsOptions = (options: Options<PostGetSampleSurfaceInPointsData_api>) => {
+export const postGetSampleSurfaceInPointsOptions = (options: Options<PostGetSampleSurfaceInPointsData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await postGetSampleSurfaceInPoints({
@@ -675,11 +674,11 @@ export const postGetSampleSurfaceInPointsOptions = (options: Options<PostGetSamp
     });
 };
 
-export const postGetSampleSurfaceInPointsMutation = (options?: Partial<Options<PostGetSampleSurfaceInPointsData_api>>) => {
+export const postGetSampleSurfaceInPointsMutation = (options?: Partial<Options<PostGetSampleSurfaceInPointsData>>) => {
     const mutationOptions: UseMutationOptions<
-        PostGetSampleSurfaceInPointsResponse_api,
-        AxiosError<PostGetSampleSurfaceInPointsError_api>,
-        Options<PostGetSampleSurfaceInPointsData_api>
+        PostGetSampleSurfaceInPointsResponse,
+        AxiosError<PostGetSampleSurfaceInPointsError>,
+        Options<PostGetSampleSurfaceInPointsData>
     > = {
         mutationFn: async (localOptions) => {
             const { data } = await postGetSampleSurfaceInPoints({
@@ -693,11 +692,11 @@ export const postGetSampleSurfaceInPointsMutation = (options?: Partial<Options<P
     return mutationOptions;
 };
 
-export const getDeltaSurfaceDataQueryKey = (options: Options<GetDeltaSurfaceDataData_api>) => [
+export const getDeltaSurfaceDataQueryKey = (options: Options<GetDeltaSurfaceDataData>) => [
     createQueryKey("getDeltaSurfaceData", options),
 ];
 
-export const getDeltaSurfaceDataOptions = (options: Options<GetDeltaSurfaceDataData_api>) => {
+export const getDeltaSurfaceDataOptions = (options: Options<GetDeltaSurfaceDataData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getDeltaSurfaceData({
@@ -712,11 +711,11 @@ export const getDeltaSurfaceDataOptions = (options: Options<GetDeltaSurfaceDataD
     });
 };
 
-export const getMisfitSurfaceDataQueryKey = (options: Options<GetMisfitSurfaceDataData_api>) => [
+export const getMisfitSurfaceDataQueryKey = (options: Options<GetMisfitSurfaceDataData>) => [
     createQueryKey("getMisfitSurfaceData", options),
 ];
 
-export const getMisfitSurfaceDataOptions = (options: Options<GetMisfitSurfaceDataData_api>) => {
+export const getMisfitSurfaceDataOptions = (options: Options<GetMisfitSurfaceDataData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getMisfitSurfaceData({
@@ -731,11 +730,11 @@ export const getMisfitSurfaceDataOptions = (options: Options<GetMisfitSurfaceDat
     });
 };
 
-export const getWellboreStratigraphicColumnsQueryKey = (options: Options<GetWellboreStratigraphicColumnsData_api>) => [
+export const getWellboreStratigraphicColumnsQueryKey = (options: Options<GetWellboreStratigraphicColumnsData>) => [
     createQueryKey("getWellboreStratigraphicColumns", options),
 ];
 
-export const getWellboreStratigraphicColumnsOptions = (options: Options<GetWellboreStratigraphicColumnsData_api>) => {
+export const getWellboreStratigraphicColumnsOptions = (options: Options<GetWellboreStratigraphicColumnsData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getWellboreStratigraphicColumns({
@@ -750,11 +749,11 @@ export const getWellboreStratigraphicColumnsOptions = (options: Options<GetWellb
     });
 };
 
-export const getStratigraphicUnitsQueryKey = (options: Options<GetStratigraphicUnitsData_api>) => [
+export const getStratigraphicUnitsQueryKey = (options: Options<GetStratigraphicUnitsData>) => [
     createQueryKey("getStratigraphicUnits", options),
 ];
 
-export const getStratigraphicUnitsOptions = (options: Options<GetStratigraphicUnitsData_api>) => {
+export const getStratigraphicUnitsOptions = (options: Options<GetStratigraphicUnitsData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getStratigraphicUnits({
@@ -769,11 +768,11 @@ export const getStratigraphicUnitsOptions = (options: Options<GetStratigraphicUn
     });
 };
 
-export const getParameterNamesAndDescriptionQueryKey = (options: Options<GetParameterNamesAndDescriptionData_api>) => [
+export const getParameterNamesAndDescriptionQueryKey = (options: Options<GetParameterNamesAndDescriptionData>) => [
     createQueryKey("getParameterNamesAndDescription", options),
 ];
 
-export const getParameterNamesAndDescriptionOptions = (options: Options<GetParameterNamesAndDescriptionData_api>) => {
+export const getParameterNamesAndDescriptionOptions = (options: Options<GetParameterNamesAndDescriptionData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getParameterNamesAndDescription({
@@ -788,9 +787,9 @@ export const getParameterNamesAndDescriptionOptions = (options: Options<GetParam
     });
 };
 
-export const getParameterQueryKey = (options: Options<GetParameterData_api>) => [createQueryKey("getParameter", options)];
+export const getParameterQueryKey = (options: Options<GetParameterData>) => [createQueryKey("getParameter", options)];
 
-export const getParameterOptions = (options: Options<GetParameterData_api>) => {
+export const getParameterOptions = (options: Options<GetParameterData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getParameter({
@@ -805,11 +804,11 @@ export const getParameterOptions = (options: Options<GetParameterData_api>) => {
     });
 };
 
-export const getParametersQueryKey = (options: Options<GetParametersData_api>) => [
+export const getParametersQueryKey = (options: Options<GetParametersData>) => [
     createQueryKey("getParameters", options),
 ];
 
-export const getParametersOptions = (options: Options<GetParametersData_api>) => {
+export const getParametersOptions = (options: Options<GetParametersData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getParameters({
@@ -824,11 +823,11 @@ export const getParametersOptions = (options: Options<GetParametersData_api>) =>
     });
 };
 
-export const getIsSensitivityRunQueryKey = (options: Options<GetIsSensitivityRunData_api>) => [
+export const getIsSensitivityRunQueryKey = (options: Options<GetIsSensitivityRunData>) => [
     createQueryKey("getIsSensitivityRun", options),
 ];
 
-export const getIsSensitivityRunOptions = (options: Options<GetIsSensitivityRunData_api>) => {
+export const getIsSensitivityRunOptions = (options: Options<GetIsSensitivityRunData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getIsSensitivityRun({
@@ -843,11 +842,11 @@ export const getIsSensitivityRunOptions = (options: Options<GetIsSensitivityRunD
     });
 };
 
-export const getSensitivitiesQueryKey = (options: Options<GetSensitivitiesData_api>) => [
+export const getSensitivitiesQueryKey = (options: Options<GetSensitivitiesData>) => [
     createQueryKey("getSensitivities", options),
 ];
 
-export const getSensitivitiesOptions = (options: Options<GetSensitivitiesData_api>) => {
+export const getSensitivitiesOptions = (options: Options<GetSensitivitiesData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getSensitivities({
@@ -862,11 +861,11 @@ export const getSensitivitiesOptions = (options: Options<GetSensitivitiesData_ap
     });
 };
 
-export const getGridModelsInfoQueryKey = (options: Options<GetGridModelsInfoData_api>) => [
+export const getGridModelsInfoQueryKey = (options: Options<GetGridModelsInfoData>) => [
     createQueryKey("getGridModelsInfo", options),
 ];
 
-export const getGridModelsInfoOptions = (options: Options<GetGridModelsInfoData_api>) => {
+export const getGridModelsInfoOptions = (options: Options<GetGridModelsInfoData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getGridModelsInfo({
@@ -881,11 +880,11 @@ export const getGridModelsInfoOptions = (options: Options<GetGridModelsInfoData_
     });
 };
 
-export const getGridSurfaceQueryKey = (options: Options<GetGridSurfaceData_api>) => [
+export const getGridSurfaceQueryKey = (options: Options<GetGridSurfaceData>) => [
     createQueryKey("getGridSurface", options),
 ];
 
-export const getGridSurfaceOptions = (options: Options<GetGridSurfaceData_api>) => {
+export const getGridSurfaceOptions = (options: Options<GetGridSurfaceData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getGridSurface({
@@ -900,11 +899,11 @@ export const getGridSurfaceOptions = (options: Options<GetGridSurfaceData_api>) 
     });
 };
 
-export const getGridParameterQueryKey = (options: Options<GetGridParameterData_api>) => [
+export const getGridParameterQueryKey = (options: Options<GetGridParameterData>) => [
     createQueryKey("getGridParameter", options),
 ];
 
-export const getGridParameterOptions = (options: Options<GetGridParameterData_api>) => {
+export const getGridParameterOptions = (options: Options<GetGridParameterData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getGridParameter({
@@ -919,11 +918,11 @@ export const getGridParameterOptions = (options: Options<GetGridParameterData_ap
     });
 };
 
-export const postGetPolylineIntersectionQueryKey = (options: Options<PostGetPolylineIntersectionData_api>) => [
+export const postGetPolylineIntersectionQueryKey = (options: Options<PostGetPolylineIntersectionData>) => [
     createQueryKey("postGetPolylineIntersection", options),
 ];
 
-export const postGetPolylineIntersectionOptions = (options: Options<PostGetPolylineIntersectionData_api>) => {
+export const postGetPolylineIntersectionOptions = (options: Options<PostGetPolylineIntersectionData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await postGetPolylineIntersection({
@@ -938,11 +937,11 @@ export const postGetPolylineIntersectionOptions = (options: Options<PostGetPolyl
     });
 };
 
-export const postGetPolylineIntersectionMutation = (options?: Partial<Options<PostGetPolylineIntersectionData_api>>) => {
+export const postGetPolylineIntersectionMutation = (options?: Partial<Options<PostGetPolylineIntersectionData>>) => {
     const mutationOptions: UseMutationOptions<
-        PostGetPolylineIntersectionResponse_api,
-        AxiosError<PostGetPolylineIntersectionError_api>,
-        Options<PostGetPolylineIntersectionData_api>
+        PostGetPolylineIntersectionResponse,
+        AxiosError<PostGetPolylineIntersectionError>,
+        Options<PostGetPolylineIntersectionData>
     > = {
         mutationFn: async (localOptions) => {
             const { data } = await postGetPolylineIntersection({
@@ -956,11 +955,11 @@ export const postGetPolylineIntersectionMutation = (options?: Partial<Options<Po
     return mutationOptions;
 };
 
-export const getRealizationFlowNetworkQueryKey = (options: Options<GetRealizationFlowNetworkData_api>) => [
+export const getRealizationFlowNetworkQueryKey = (options: Options<GetRealizationFlowNetworkData>) => [
     createQueryKey("getRealizationFlowNetwork", options),
 ];
 
-export const getRealizationFlowNetworkOptions = (options: Options<GetRealizationFlowNetworkData_api>) => {
+export const getRealizationFlowNetworkOptions = (options: Options<GetRealizationFlowNetworkData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getRealizationFlowNetwork({
@@ -975,9 +974,9 @@ export const getRealizationFlowNetworkOptions = (options: Options<GetRealization
     });
 };
 
-export const getTableDataQueryKey = (options: Options<GetTableDataData_api>) => [createQueryKey("getTableData", options)];
+export const getTableDataQueryKey = (options: Options<GetTableDataData>) => [createQueryKey("getTableData", options)];
 
-export const getTableDataOptions = (options: Options<GetTableDataData_api>) => {
+export const getTableDataOptions = (options: Options<GetTableDataData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getTableData({
@@ -992,11 +991,11 @@ export const getTableDataOptions = (options: Options<GetTableDataData_api>) => {
     });
 };
 
-export const getWellCompletionsDataQueryKey = (options: Options<GetWellCompletionsDataData_api>) => [
+export const getWellCompletionsDataQueryKey = (options: Options<GetWellCompletionsDataData>) => [
     createQueryKey("getWellCompletionsData", options),
 ];
 
-export const getWellCompletionsDataOptions = (options: Options<GetWellCompletionsDataData_api>) => {
+export const getWellCompletionsDataOptions = (options: Options<GetWellCompletionsDataData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getWellCompletionsData({
@@ -1011,11 +1010,11 @@ export const getWellCompletionsDataOptions = (options: Options<GetWellCompletion
     });
 };
 
-export const getDrilledWellboreHeadersQueryKey = (options: Options<GetDrilledWellboreHeadersData_api>) => [
+export const getDrilledWellboreHeadersQueryKey = (options: Options<GetDrilledWellboreHeadersData>) => [
     createQueryKey("getDrilledWellboreHeaders", options),
 ];
 
-export const getDrilledWellboreHeadersOptions = (options: Options<GetDrilledWellboreHeadersData_api>) => {
+export const getDrilledWellboreHeadersOptions = (options: Options<GetDrilledWellboreHeadersData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getDrilledWellboreHeaders({
@@ -1030,11 +1029,11 @@ export const getDrilledWellboreHeadersOptions = (options: Options<GetDrilledWell
     });
 };
 
-export const getWellTrajectoriesQueryKey = (options: Options<GetWellTrajectoriesData_api>) => [
+export const getWellTrajectoriesQueryKey = (options: Options<GetWellTrajectoriesData>) => [
     createQueryKey("getWellTrajectories", options),
 ];
 
-export const getWellTrajectoriesOptions = (options: Options<GetWellTrajectoriesData_api>) => {
+export const getWellTrajectoriesOptions = (options: Options<GetWellTrajectoriesData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getWellTrajectories({
@@ -1049,11 +1048,11 @@ export const getWellTrajectoriesOptions = (options: Options<GetWellTrajectoriesD
     });
 };
 
-export const getWellborePickIdentifiersQueryKey = (options: Options<GetWellborePickIdentifiersData_api>) => [
+export const getWellborePickIdentifiersQueryKey = (options: Options<GetWellborePickIdentifiersData>) => [
     createQueryKey("getWellborePickIdentifiers", options),
 ];
 
-export const getWellborePickIdentifiersOptions = (options: Options<GetWellborePickIdentifiersData_api>) => {
+export const getWellborePickIdentifiersOptions = (options: Options<GetWellborePickIdentifiersData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getWellborePickIdentifiers({
@@ -1068,11 +1067,11 @@ export const getWellborePickIdentifiersOptions = (options: Options<GetWellborePi
     });
 };
 
-export const getWellborePicksForPickIdentifierQueryKey = (options: Options<GetWellborePicksForPickIdentifierData_api>) => [
+export const getWellborePicksForPickIdentifierQueryKey = (options: Options<GetWellborePicksForPickIdentifierData>) => [
     createQueryKey("getWellborePicksForPickIdentifier", options),
 ];
 
-export const getWellborePicksForPickIdentifierOptions = (options: Options<GetWellborePicksForPickIdentifierData_api>) => {
+export const getWellborePicksForPickIdentifierOptions = (options: Options<GetWellborePicksForPickIdentifierData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getWellborePicksForPickIdentifier({
@@ -1087,11 +1086,11 @@ export const getWellborePicksForPickIdentifierOptions = (options: Options<GetWel
     });
 };
 
-export const getWellborePicksForWellboreQueryKey = (options: Options<GetWellborePicksForWellboreData_api>) => [
+export const getWellborePicksForWellboreQueryKey = (options: Options<GetWellborePicksForWellboreData>) => [
     createQueryKey("getWellborePicksForWellbore", options),
 ];
 
-export const getWellborePicksForWellboreOptions = (options: Options<GetWellborePicksForWellboreData_api>) => {
+export const getWellborePicksForWellboreOptions = (options: Options<GetWellborePicksForWellboreData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getWellborePicksForWellbore({
@@ -1106,11 +1105,11 @@ export const getWellborePicksForWellboreOptions = (options: Options<GetWellboreP
     });
 };
 
-export const getWellborePicksInStratColumnQueryKey = (options: Options<GetWellborePicksInStratColumnData_api>) => [
+export const getWellborePicksInStratColumnQueryKey = (options: Options<GetWellborePicksInStratColumnData>) => [
     createQueryKey("getWellborePicksInStratColumn", options),
 ];
 
-export const getWellborePicksInStratColumnOptions = (options: Options<GetWellborePicksInStratColumnData_api>) => {
+export const getWellborePicksInStratColumnOptions = (options: Options<GetWellborePicksInStratColumnData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getWellborePicksInStratColumn({
@@ -1125,11 +1124,11 @@ export const getWellborePicksInStratColumnOptions = (options: Options<GetWellbor
     });
 };
 
-export const getWellboreCompletionsQueryKey = (options: Options<GetWellboreCompletionsData_api>) => [
+export const getWellboreCompletionsQueryKey = (options: Options<GetWellboreCompletionsData>) => [
     createQueryKey("getWellboreCompletions", options),
 ];
 
-export const getWellboreCompletionsOptions = (options: Options<GetWellboreCompletionsData_api>) => {
+export const getWellboreCompletionsOptions = (options: Options<GetWellboreCompletionsData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getWellboreCompletions({
@@ -1144,11 +1143,11 @@ export const getWellboreCompletionsOptions = (options: Options<GetWellboreComple
     });
 };
 
-export const getWellboreCasingsQueryKey = (options: Options<GetWellboreCasingsData_api>) => [
+export const getWellboreCasingsQueryKey = (options: Options<GetWellboreCasingsData>) => [
     createQueryKey("getWellboreCasings", options),
 ];
 
-export const getWellboreCasingsOptions = (options: Options<GetWellboreCasingsData_api>) => {
+export const getWellboreCasingsOptions = (options: Options<GetWellboreCasingsData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getWellboreCasings({
@@ -1163,11 +1162,11 @@ export const getWellboreCasingsOptions = (options: Options<GetWellboreCasingsDat
     });
 };
 
-export const getWellborePerforationsQueryKey = (options: Options<GetWellborePerforationsData_api>) => [
+export const getWellborePerforationsQueryKey = (options: Options<GetWellborePerforationsData>) => [
     createQueryKey("getWellborePerforations", options),
 ];
 
-export const getWellborePerforationsOptions = (options: Options<GetWellborePerforationsData_api>) => {
+export const getWellborePerforationsOptions = (options: Options<GetWellborePerforationsData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getWellborePerforations({
@@ -1182,11 +1181,11 @@ export const getWellborePerforationsOptions = (options: Options<GetWellborePerfo
     });
 };
 
-export const getWellboreLogCurveHeadersQueryKey = (options: Options<GetWellboreLogCurveHeadersData_api>) => [
+export const getWellboreLogCurveHeadersQueryKey = (options: Options<GetWellboreLogCurveHeadersData>) => [
     createQueryKey("getWellboreLogCurveHeaders", options),
 ];
 
-export const getWellboreLogCurveHeadersOptions = (options: Options<GetWellboreLogCurveHeadersData_api>) => {
+export const getWellboreLogCurveHeadersOptions = (options: Options<GetWellboreLogCurveHeadersData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getWellboreLogCurveHeaders({
@@ -1201,11 +1200,11 @@ export const getWellboreLogCurveHeadersOptions = (options: Options<GetWellboreLo
     });
 };
 
-export const getLogCurveDataQueryKey = (options: Options<GetLogCurveDataData_api>) => [
+export const getLogCurveDataQueryKey = (options: Options<GetLogCurveDataData>) => [
     createQueryKey("getLogCurveData", options),
 ];
 
-export const getLogCurveDataOptions = (options: Options<GetLogCurveDataData_api>) => {
+export const getLogCurveDataOptions = (options: Options<GetLogCurveDataData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getLogCurveData({
@@ -1220,11 +1219,11 @@ export const getLogCurveDataOptions = (options: Options<GetLogCurveDataData_api>
     });
 };
 
-export const getSeismicCubeMetaListQueryKey = (options: Options<GetSeismicCubeMetaListData_api>) => [
+export const getSeismicCubeMetaListQueryKey = (options: Options<GetSeismicCubeMetaListData>) => [
     createQueryKey("getSeismicCubeMetaList", options),
 ];
 
-export const getSeismicCubeMetaListOptions = (options: Options<GetSeismicCubeMetaListData_api>) => {
+export const getSeismicCubeMetaListOptions = (options: Options<GetSeismicCubeMetaListData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getSeismicCubeMetaList({
@@ -1239,11 +1238,11 @@ export const getSeismicCubeMetaListOptions = (options: Options<GetSeismicCubeMet
     });
 };
 
-export const getInlineSliceQueryKey = (options: Options<GetInlineSliceData_api>) => [
+export const getInlineSliceQueryKey = (options: Options<GetInlineSliceData>) => [
     createQueryKey("getInlineSlice", options),
 ];
 
-export const getInlineSliceOptions = (options: Options<GetInlineSliceData_api>) => {
+export const getInlineSliceOptions = (options: Options<GetInlineSliceData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getInlineSlice({
@@ -1258,11 +1257,11 @@ export const getInlineSliceOptions = (options: Options<GetInlineSliceData_api>) 
     });
 };
 
-export const getCrosslineSliceQueryKey = (options: Options<GetCrosslineSliceData_api>) => [
+export const getCrosslineSliceQueryKey = (options: Options<GetCrosslineSliceData>) => [
     createQueryKey("getCrosslineSlice", options),
 ];
 
-export const getCrosslineSliceOptions = (options: Options<GetCrosslineSliceData_api>) => {
+export const getCrosslineSliceOptions = (options: Options<GetCrosslineSliceData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getCrosslineSlice({
@@ -1277,11 +1276,11 @@ export const getCrosslineSliceOptions = (options: Options<GetCrosslineSliceData_
     });
 };
 
-export const getDepthSliceQueryKey = (options: Options<GetDepthSliceData_api>) => [
+export const getDepthSliceQueryKey = (options: Options<GetDepthSliceData>) => [
     createQueryKey("getDepthSlice", options),
 ];
 
-export const getDepthSliceOptions = (options: Options<GetDepthSliceData_api>) => {
+export const getDepthSliceOptions = (options: Options<GetDepthSliceData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getDepthSlice({
@@ -1296,11 +1295,11 @@ export const getDepthSliceOptions = (options: Options<GetDepthSliceData_api>) =>
     });
 };
 
-export const postGetSeismicFenceQueryKey = (options: Options<PostGetSeismicFenceData_api>) => [
+export const postGetSeismicFenceQueryKey = (options: Options<PostGetSeismicFenceData>) => [
     createQueryKey("postGetSeismicFence", options),
 ];
 
-export const postGetSeismicFenceOptions = (options: Options<PostGetSeismicFenceData_api>) => {
+export const postGetSeismicFenceOptions = (options: Options<PostGetSeismicFenceData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await postGetSeismicFence({
@@ -1315,11 +1314,11 @@ export const postGetSeismicFenceOptions = (options: Options<PostGetSeismicFenceD
     });
 };
 
-export const postGetSeismicFenceMutation = (options?: Partial<Options<PostGetSeismicFenceData_api>>) => {
+export const postGetSeismicFenceMutation = (options?: Partial<Options<PostGetSeismicFenceData>>) => {
     const mutationOptions: UseMutationOptions<
-        PostGetSeismicFenceResponse_api,
-        AxiosError<PostGetSeismicFenceError_api>,
-        Options<PostGetSeismicFenceData_api>
+        PostGetSeismicFenceResponse,
+        AxiosError<PostGetSeismicFenceError>,
+        Options<PostGetSeismicFenceData>
     > = {
         mutationFn: async (localOptions) => {
             const { data } = await postGetSeismicFence({
@@ -1333,11 +1332,11 @@ export const postGetSeismicFenceMutation = (options?: Partial<Options<PostGetSei
     return mutationOptions;
 };
 
-export const getPolygonsDirectoryQueryKey = (options: Options<GetPolygonsDirectoryData_api>) => [
+export const getPolygonsDirectoryQueryKey = (options: Options<GetPolygonsDirectoryData>) => [
     createQueryKey("getPolygonsDirectory", options),
 ];
 
-export const getPolygonsDirectoryOptions = (options: Options<GetPolygonsDirectoryData_api>) => {
+export const getPolygonsDirectoryOptions = (options: Options<GetPolygonsDirectoryData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getPolygonsDirectory({
@@ -1352,11 +1351,11 @@ export const getPolygonsDirectoryOptions = (options: Options<GetPolygonsDirector
     });
 };
 
-export const getPolygonsDataQueryKey = (options: Options<GetPolygonsDataData_api>) => [
+export const getPolygonsDataQueryKey = (options: Options<GetPolygonsDataData>) => [
     createQueryKey("getPolygonsData", options),
 ];
 
-export const getPolygonsDataOptions = (options: Options<GetPolygonsDataData_api>) => {
+export const getPolygonsDataOptions = (options: Options<GetPolygonsDataData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getPolygonsData({
@@ -1371,9 +1370,9 @@ export const getPolygonsDataOptions = (options: Options<GetPolygonsDataData_api>
     });
 };
 
-export const getUserPhotoQueryKey = (options: Options<GetUserPhotoData_api>) => [createQueryKey("getUserPhoto", options)];
+export const getUserPhotoQueryKey = (options: Options<GetUserPhotoData>) => [createQueryKey("getUserPhoto", options)];
 
-export const getUserPhotoOptions = (options: Options<GetUserPhotoData_api>) => {
+export const getUserPhotoOptions = (options: Options<GetUserPhotoData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getUserPhoto({
@@ -1388,11 +1387,11 @@ export const getUserPhotoOptions = (options: Options<GetUserPhotoData_api>) => {
     });
 };
 
-export const getObservationsQueryKey = (options: Options<GetObservationsData_api>) => [
+export const getObservationsQueryKey = (options: Options<GetObservationsData>) => [
     createQueryKey("getObservations", options),
 ];
 
-export const getObservationsOptions = (options: Options<GetObservationsData_api>) => {
+export const getObservationsOptions = (options: Options<GetObservationsData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getObservations({
@@ -1407,11 +1406,11 @@ export const getObservationsOptions = (options: Options<GetObservationsData_api>
     });
 };
 
-export const getTableDefinitionQueryKey = (options: Options<GetTableDefinitionData_api>) => [
+export const getTableDefinitionQueryKey = (options: Options<GetTableDefinitionData>) => [
     createQueryKey("getTableDefinition", options),
 ];
 
-export const getTableDefinitionOptions = (options: Options<GetTableDefinitionData_api>) => {
+export const getTableDefinitionOptions = (options: Options<GetTableDefinitionData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getTableDefinition({
@@ -1426,11 +1425,11 @@ export const getTableDefinitionOptions = (options: Options<GetTableDefinitionDat
     });
 };
 
-export const getRealizationDataQueryKey = (options: Options<GetRealizationDataData_api>) => [
+export const getRealizationDataQueryKey = (options: Options<GetRealizationDataData>) => [
     createQueryKey("getRealizationData", options),
 ];
 
-export const getRealizationDataOptions = (options: Options<GetRealizationDataData_api>) => {
+export const getRealizationDataOptions = (options: Options<GetRealizationDataData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getRealizationData({
@@ -1445,11 +1444,11 @@ export const getRealizationDataOptions = (options: Options<GetRealizationDataDat
     });
 };
 
-export const getVfpTableNamesQueryKey = (options: Options<GetVfpTableNamesData_api>) => [
+export const getVfpTableNamesQueryKey = (options: Options<GetVfpTableNamesData>) => [
     createQueryKey("getVfpTableNames", options),
 ];
 
-export const getVfpTableNamesOptions = (options: Options<GetVfpTableNamesData_api>) => {
+export const getVfpTableNamesOptions = (options: Options<GetVfpTableNamesData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getVfpTableNames({
@@ -1464,9 +1463,9 @@ export const getVfpTableNamesOptions = (options: Options<GetVfpTableNamesData_ap
     });
 };
 
-export const getVfpTableQueryKey = (options: Options<GetVfpTableData_api>) => [createQueryKey("getVfpTable", options)];
+export const getVfpTableQueryKey = (options: Options<GetVfpTableData>) => [createQueryKey("getVfpTable", options)];
 
-export const getVfpTableOptions = (options: Options<GetVfpTableData_api>) => {
+export const getVfpTableOptions = (options: Options<GetVfpTableData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getVfpTable({
@@ -1481,9 +1480,9 @@ export const getVfpTableOptions = (options: Options<GetVfpTableData_api>) => {
     });
 };
 
-export const loginRouteQueryKey = (options?: Options<LoginRouteData_api>) => [createQueryKey("loginRoute", options)];
+export const loginRouteQueryKey = (options?: Options<LoginRouteData>) => [createQueryKey("loginRoute", options)];
 
-export const loginRouteOptions = (options?: Options<LoginRouteData_api>) => {
+export const loginRouteOptions = (options?: Options<LoginRouteData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await loginRoute({
@@ -1498,11 +1497,11 @@ export const loginRouteOptions = (options?: Options<LoginRouteData_api>) => {
     });
 };
 
-export const authorizedCallbackRouteQueryKey = (options?: Options<AuthorizedCallbackRouteData_api>) => [
+export const authorizedCallbackRouteQueryKey = (options?: Options<AuthorizedCallbackRouteData>) => [
     createQueryKey("authorizedCallbackRoute", options),
 ];
 
-export const authorizedCallbackRouteOptions = (options?: Options<AuthorizedCallbackRouteData_api>) => {
+export const authorizedCallbackRouteOptions = (options?: Options<AuthorizedCallbackRouteData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await authorizedCallbackRoute({
@@ -1517,9 +1516,9 @@ export const authorizedCallbackRouteOptions = (options?: Options<AuthorizedCallb
     });
 };
 
-export const getAliveQueryKey = (options?: Options<GetAliveData_api>) => [createQueryKey("getAlive", options)];
+export const getAliveQueryKey = (options?: Options<GetAliveData>) => [createQueryKey("getAlive", options)];
 
-export const getAliveOptions = (options?: Options<GetAliveData_api>) => {
+export const getAliveOptions = (options?: Options<GetAliveData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getAlive({
@@ -1534,11 +1533,11 @@ export const getAliveOptions = (options?: Options<GetAliveData_api>) => {
     });
 };
 
-export const getAliveProtectedQueryKey = (options?: Options<GetAliveProtectedData_api>) => [
+export const getAliveProtectedQueryKey = (options?: Options<GetAliveProtectedData>) => [
     createQueryKey("getAliveProtected", options),
 ];
 
-export const getAliveProtectedOptions = (options?: Options<GetAliveProtectedData_api>) => {
+export const getAliveProtectedOptions = (options?: Options<GetAliveProtectedData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getAliveProtected({
@@ -1553,9 +1552,9 @@ export const getAliveProtectedOptions = (options?: Options<GetAliveProtectedData
     });
 };
 
-export const postLogoutQueryKey = (options?: Options<PostLogoutData_api>) => [createQueryKey("postLogout", options)];
+export const postLogoutQueryKey = (options?: Options<PostLogoutData>) => [createQueryKey("postLogout", options)];
 
-export const postLogoutOptions = (options?: Options<PostLogoutData_api>) => {
+export const postLogoutOptions = (options?: Options<PostLogoutData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await postLogout({
@@ -1570,8 +1569,8 @@ export const postLogoutOptions = (options?: Options<PostLogoutData_api>) => {
     });
 };
 
-export const postLogoutMutation = (options?: Partial<Options<PostLogoutData_api>>) => {
-    const mutationOptions: UseMutationOptions<PostLogoutResponse_api, AxiosError<DefaultError>, Options<PostLogoutData_api>> = {
+export const postLogoutMutation = (options?: Partial<Options<PostLogoutData>>) => {
+    const mutationOptions: UseMutationOptions<PostLogoutResponse, AxiosError<DefaultError>, Options<PostLogoutData>> = {
         mutationFn: async (localOptions) => {
             const { data } = await postLogout({
                 ...options,
@@ -1584,11 +1583,11 @@ export const postLogoutMutation = (options?: Partial<Options<PostLogoutData_api>
     return mutationOptions;
 };
 
-export const getLoggedInUserQueryKey = (options?: Options<GetLoggedInUserData_api>) => [
+export const getLoggedInUserQueryKey = (options?: Options<GetLoggedInUserData>) => [
     createQueryKey("getLoggedInUser", options),
 ];
 
-export const getLoggedInUserOptions = (options?: Options<GetLoggedInUserData_api>) => {
+export const getLoggedInUserOptions = (options?: Options<GetLoggedInUserData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getLoggedInUser({
@@ -1603,9 +1602,9 @@ export const getLoggedInUserOptions = (options?: Options<GetLoggedInUserData_api
     });
 };
 
-export const rootQueryKey = (options?: Options<RootData_api>) => [createQueryKey("root", options)];
+export const rootQueryKey = (options?: Options<RootData>) => [createQueryKey("root", options)];
 
-export const rootOptions = (options?: Options<RootData_api>) => {
+export const rootOptions = (options?: Options<RootData>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await root({
