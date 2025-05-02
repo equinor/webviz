@@ -6,7 +6,6 @@ import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import type { PublishSubscribe } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
-
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import type { CustomSettingImplementation } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SettingAttributes } from "../../interfacesAndTypes/customSettingsHandler";
@@ -133,51 +132,57 @@ export class SettingManager<
         );
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "external-setting-controller",
-            externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_LOADING)(
-                () => {
-                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
-                }
-            ),
+            externalController
+                .getSetting()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingTopic.IS_LOADING)(() => {
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
+            }),
         );
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "external-setting-controller",
-            externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.ATTRIBUTES)(
-                () => {
-                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.ATTRIBUTES);
-                }
-            ),
+            externalController
+                .getSetting()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingTopic.ATTRIBUTES)(() => {
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.ATTRIBUTES);
+            }),
         );
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "external-setting-controller",
-            externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE_ABOUT_TO_BE_CHANGED)(
-                () => {
-                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_ABOUT_TO_BE_CHANGED);
-                }
-            ),
+            externalController
+                .getSetting()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingTopic.VALUE_ABOUT_TO_BE_CHANGED)(() => {
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_ABOUT_TO_BE_CHANGED);
+            }),
         );
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "external-setting-controller",
-            externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_INITIALIZED)(
-                () => {
-                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_INITIALIZED);
-                }
-            ),
+            externalController
+                .getSetting()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingTopic.IS_INITIALIZED)(() => {
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_INITIALIZED);
+            }),
         );
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "external-setting-controller",
-            externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_PERSISTED)(
-                () => {
-                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED);
-                }   
-            ),
+            externalController
+                .getSetting()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingTopic.IS_PERSISTED)(() => {
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED);
+            }),
         );
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "external-setting-controller",
-            externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.AVAILABLE_VALUES)(
-                () => {
-                    this._publishSubscribeDelegate.notifySubscribers(SettingTopic.AVAILABLE_VALUES);
-                }
-            ),
+            externalController
+                .getSetting()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingTopic.AVAILABLE_VALUES)(() => {
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.AVAILABLE_VALUES);
+            }),
         );
     }
 
@@ -332,7 +337,9 @@ export class SettingManager<
         workbenchSettings: WorkbenchSettings,
     ): React.ReactNode {
         if (this._externalController) {
-            return this._externalController.getSetting().valueToRepresentation(value, workbenchSession, workbenchSettings);
+            return this._externalController
+                .getSetting()
+                .valueToRepresentation(value, workbenchSession, workbenchSettings);
         }
 
         if (this._customSettingImplementation.overriddenValueRepresentation) {
@@ -371,7 +378,7 @@ export class SettingManager<
                         : OverriddenValueProviderType.SHARED_SETTING;
                 }
                 return externalController.getSetting().makeSnapshotGetter(topic)();
-            }
+            };
         }
 
         const snapshotGetter = (): any => {
@@ -454,12 +461,12 @@ export class SettingManager<
         return false;
     }
 
-    setAvailableValues(availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>): void {
+    setAvailableValues(availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> | null): void {
         if (this._externalController) {
             this.initialize();
             this._externalController.setAvailableValues(availableValues);
         }
-        
+
         if (isEqual(this._availableValues, availableValues) && this._initialized) {
             this.setLoading(false);
             return;

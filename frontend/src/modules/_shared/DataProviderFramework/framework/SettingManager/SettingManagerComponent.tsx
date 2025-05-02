@@ -5,7 +5,6 @@ import { Link, Warning } from "@mui/icons-material";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import type { SettingComponentProps as SettingComponentPropsInterface } from "../../interfacesAndTypes/customSettingImplementation";
 import type { Setting, SettingCategories, SettingTypes } from "../../settings/settingsDefinitions";

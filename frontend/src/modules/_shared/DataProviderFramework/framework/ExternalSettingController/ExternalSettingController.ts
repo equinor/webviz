@@ -77,6 +77,11 @@ export class ExternalSettingController<
             }
         }
 
+        if (this._controlledSettings.size === 0) {
+            this._setting.setAvailableValues(null);
+            return;
+        }
+
         this.makeIntersectionOfAvailableValues();
     }
 
