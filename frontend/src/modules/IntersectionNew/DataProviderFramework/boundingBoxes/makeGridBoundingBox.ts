@@ -29,23 +29,16 @@ export function makeGridBoundingBox({
     const intersectionExtensionLength = getSetting(Setting.INTERSECTION_EXTENSION_LENGTH);
     const polylineActualSectionLengths = getStoredData("polylineWithSectionLengths")?.actualSectionLengths;
 
-    if (!polylineIntersectionData || !intersectionExtensionLength || !polylineActualSectionLengths) {
+    if (!polylineIntersectionData || !intersectionExtensionLength || !polylineActualSectionLengths || isLoading) {
         return null;
     }
 
-    // Temporary
-    // TODO: Handle loading state for color scale, or provide another layer for loading state
-    if (isLoading) {
-        return null;
-    }
-
-    // Temporary until we can ensure that fetched data and settings/stored data is synced as long
-    // as isLoading is false
+    // Ensure consistency between fetched data and requested polyline
     if (polylineIntersectionData.fenceMeshSections.length !== polylineActualSectionLengths.length) {
         throw new Error(
-            "The number of fence mesh sections does not match the number of requested actual section lengths",
+            `Number of fence mesh sections (${polylineIntersectionData.fenceMeshSections.length}) does not match  number of actual section
+            lengths (${polylineActualSectionLengths.length}) for requested polyline`,
         );
-        return null;
     }
 
     const transformedPolylineIntersection = createTransformedPolylineIntersectionResult(
