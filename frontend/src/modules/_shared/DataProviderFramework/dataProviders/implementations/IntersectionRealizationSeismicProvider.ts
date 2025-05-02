@@ -298,7 +298,7 @@ export class IntersectionRealizationSeismicProvider
         if (!seismicFencePolylineUtmXy) {
             throw new Error("No seismic fence polyline found in stored data");
         }
-        if (seismicFencePolylineUtmXy.length === 0) {
+        if (seismicFencePolylineUtmXy.length < 4) {
             throw new Error("Invalid seismic fence polyline in stored data. Must contain at least two (x,y)-points");
         }
 

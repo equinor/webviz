@@ -393,7 +393,7 @@ export class DataProvider<
             if (apiError) {
                 this._error = apiError.makeStatusMessage();
             } else {
-                this._error = "An error occurred";
+                this._error = error.message;
             }
             this.setStatus(DataProviderStatus.ERROR);
         }
