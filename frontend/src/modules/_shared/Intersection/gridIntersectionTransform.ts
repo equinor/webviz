@@ -1,7 +1,8 @@
+import { cloneDeep } from "lodash";
+
 import type { FenceMeshSection_api, PolylineIntersection_api } from "@api";
 import { point2Distance } from "@lib/utils/vec2";
 
-import { cloneDeep } from "lodash";
 
 import { b64DecodeFloatArrayToFloat32, b64DecodeUintArrayToUint32, b64DecodeUintArrayToUint32OrLess } from "../base64";
 

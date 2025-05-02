@@ -1,11 +1,12 @@
 import React from "react";
 
+import { Deselect, SelectAll } from "@mui/icons-material";
+import { upperFirst } from "lodash";
+
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { Deselect, SelectAll } from "@mui/icons-material";
 
-import { upperFirst } from "lodash";
 
 import type {
     CustomSettingImplementation,

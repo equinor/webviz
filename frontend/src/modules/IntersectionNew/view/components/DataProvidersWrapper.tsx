@@ -1,6 +1,7 @@
 import React from "react";
 
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { isEqual } from "lodash";
 
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -12,8 +13,26 @@ import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { BBox } from "@lib/utils/bbox";
 import { combine } from "@lib/utils/bbox";
+import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
+import { isColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
+import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
+import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { IntersectionRealizationSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
+import {
+    type DataProviderManager,
+    DataProviderManagerTopic,
+} from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import { IntersectionView } from "@modules/_shared/DataProviderFramework/groups/implementations/IntersectionView";
+import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
+import {
+    VisualizationAssembler,
+    VisualizationItemType,
+} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
+import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore";
 import {
     makeGridColorScaleAnnotation,
     makeSeismicColorScaleAnnotation,
@@ -34,37 +53,14 @@ import { createWellborePicksLayerItemsMaker } from "@modules/IntersectionNew/Dat
 import { makeEsvViewDataCollection } from "@modules/IntersectionNew/DataProviderFramework/visualization/makeEsvViewDataCollection";
 import type { Interfaces } from "@modules/IntersectionNew/interfaces";
 import type { PreferredViewLayout } from "@modules/IntersectionNew/typesAndEnums";
-import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
-import {
-    type DataProviderManager,
-    DataProviderManagerTopic,
-} from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
-import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
-import { IntersectionView } from "@modules/_shared/DataProviderFramework/groups/implementations/IntersectionView";
-import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
-import {
-    VisualizationAssembler,
-    VisualizationItemType,
-} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import type {
-    EsvLayerItemsMaker,
-    VisualizationTarget,
-} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore";
-import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
-import { isColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
-import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
-import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
-
-import { isEqual } from "lodash";
-
-import { ViewportWrapper } from "./viewportWrapper";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 import { useWellboreCasingsQuery } from "../hooks/queryHooks";
 import { useCreateIntersectionReferenceSystem } from "../hooks/useIntersectionReferenceSystem";
 import { createReferenceLinesLayerItem } from "../utils/createReferenceLines";
 import { createWellboreLayerItems } from "../utils/createWellboreLayerItems";
+
+import { ViewportWrapper } from "./viewportWrapper";
 
 export type DataProvidersWrapperProps = {
     dataProviderManager: DataProviderManager;
@@ -207,9 +203,6 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         setIsInitialProviderViewportSet(false);
         setPrevProvidersViewport(null);
     }
-
-    // Extract esv layers from view of interest
-    const providerVisualizationMakers: EsvLayerItemsMaker[] = [];
 
     // Make layers using intersection reference system
     const assemblerLayerItems: LayerItem[] = [];

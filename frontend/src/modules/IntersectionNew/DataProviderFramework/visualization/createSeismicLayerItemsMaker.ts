@@ -11,6 +11,7 @@ import type {
     EsvLayerItemsMaker,
     TransformerArgs,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+
 import { seismicColorScaleValues } from "../utils.ts/colorScaleUtils";
 
 /**

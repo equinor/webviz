@@ -1,5 +1,6 @@
-import type { WellboreCasing_api } from "@api";
 import type { Casing, IntersectionReferenceSystem } from "@equinor/esv-intersection";
+
+import type { WellboreCasing_api } from "@api";
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { LayerType } from "@modules/_shared/components/EsvIntersection";
 
