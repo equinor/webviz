@@ -57,11 +57,11 @@ import type { PreferredViewLayout } from "@modules/IntersectionNew/typesAndEnums
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 import { useWellboreCasingsQuery } from "../hooks/queryHooks";
 import { useCreateIntersectionReferenceSystem } from "../hooks/useIntersectionReferenceSystem";
+import { createBBoxForWellborePath } from "../utils/boundingBoxUtils";
 import { createReferenceLinesLayerItem } from "../utils/createReferenceLines";
 import { createWellboreLayerItems } from "../utils/createWellboreLayerItems";
 
 import { ViewportWrapper } from "./viewportWrapper";
-import { createBBoxForWellborePath } from "../utils/boundBoxUtils";
 
 export type DataProvidersWrapperProps = {
     dataProviderManager: DataProviderManager;
