@@ -335,26 +335,23 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         }
     }
 
-    const isInvalidView = !view || !intersectionReferenceSystem || visualizationLayerItems.length === 0;
     const colorScales = assemblerProduct.annotations.filter((elm) => isColorScaleWithId(elm));
 
     return (
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
-            {isInvalidView ? null : (
-                <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
-                    <ViewportWrapper
-                        referenceSystem={intersectionReferenceSystem ?? undefined}
-                        layerItems={visualizationLayerItems}
-                        layerItemIdToNameMap={layerIdToNameMap}
-                        bounds={bounds}
-                        viewport={actualViewport}
-                        workbenchServices={props.workbenchServices}
-                        viewContext={props.viewContext}
-                        wellboreHeaderUuid={wellboreHeadersQuery.data?.[0].wellboreUuid ?? null}
-                    />
-                    <ColorLegendsContainer colorScales={colorScales} height={mainDivSize.height / 2 - 50} />
-                </div>
-            )}
+            <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
+                <ViewportWrapper
+                    referenceSystem={intersectionReferenceSystem ?? undefined}
+                    layerItems={visualizationLayerItems}
+                    layerItemIdToNameMap={layerIdToNameMap}
+                    bounds={bounds}
+                    viewport={actualViewport}
+                    workbenchServices={props.workbenchServices}
+                    viewContext={props.viewContext}
+                    wellboreHeaderUuid={wellboreHeadersQuery.data?.[0].wellboreUuid ?? null}
+                />
+                <ColorLegendsContainer colorScales={colorScales} height={mainDivSize.height / 2 - 50} />
+            </div>
         </div>
     );
 }
