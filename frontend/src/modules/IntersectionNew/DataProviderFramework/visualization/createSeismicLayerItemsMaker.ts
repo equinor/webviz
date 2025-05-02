@@ -95,11 +95,6 @@ export function createSeismicLayerItemsMaker({
         makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null) => {
             void intersectionReferenceSystem; // Not used for this layer
 
-            if (isLoading) {
-                // TODO: Add gray layer when loading
-                return [];
-            }
-
             return [
                 {
                     id: `${id}-seismic-layer`,
