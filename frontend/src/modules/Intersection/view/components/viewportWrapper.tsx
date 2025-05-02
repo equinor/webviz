@@ -9,7 +9,7 @@ import type { Viewport } from "@framework/types/viewport";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
-import type { Interfaces } from "@modules/IntersectionNew/interfaces";
+import type { Interfaces } from "@modules/Intersection/interfaces";
 
 import { ReadoutWrapper } from "./readoutWrapper";
 

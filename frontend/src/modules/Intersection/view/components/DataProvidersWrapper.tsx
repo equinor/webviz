@@ -36,23 +36,23 @@ import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore";
 import {
     makeGridColorScaleAnnotation,
     makeSeismicColorScaleAnnotation,
-} from "@modules/IntersectionNew/DataProviderFramework/annotations/makeColorScaleAnnotation";
-import { makeGridBoundingBox } from "@modules/IntersectionNew/DataProviderFramework/boundingBoxes/makeGridBoundingBox";
-import { makeSeismicBoundingBox } from "@modules/IntersectionNew/DataProviderFramework/boundingBoxes/makeSeismicBoundingBox";
-import { makeSurfacesBoundingBox } from "@modules/IntersectionNew/DataProviderFramework/boundingBoxes/makeSurfacesBoundingBox";
-import { CustomDataProviderType } from "@modules/IntersectionNew/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
-import { EnsembleWellborePicksProvider } from "@modules/IntersectionNew/DataProviderFramework/customDataProviderImplementations/EnsembleWellborePicksProvider";
-import { RealizationSurfacesProvider } from "@modules/IntersectionNew/DataProviderFramework/customDataProviderImplementations/RealizationSurfacesProvider";
-import { SurfacesPerRealizationValuesProvider } from "@modules/IntersectionNew/DataProviderFramework/customDataProviderImplementations/SurfacesPerRealizationValuesProvider";
-import type { IntersectionInjectedData } from "@modules/IntersectionNew/DataProviderFramework/injectedDataType";
-import { createGridLayerItemsMaker } from "@modules/IntersectionNew/DataProviderFramework/visualization/createGridLayerItemsMaker";
-import { createSeismicLayerItemsMaker } from "@modules/IntersectionNew/DataProviderFramework/visualization/createSeismicLayerItemsMaker";
-import { createSurfacesLayerItemsMaker } from "@modules/IntersectionNew/DataProviderFramework/visualization/createSurfacesLayerItemsMaker";
-import { createUncertaintySurfacesLayerItemsMaker } from "@modules/IntersectionNew/DataProviderFramework/visualization/createUncertaintySurfacesLayerItemsMaker";
-import { createWellborePicksLayerItemsMaker } from "@modules/IntersectionNew/DataProviderFramework/visualization/createWellborePicksLayerItemsMaker";
-import { makeEsvViewDataCollection } from "@modules/IntersectionNew/DataProviderFramework/visualization/makeEsvViewDataCollection";
-import type { Interfaces } from "@modules/IntersectionNew/interfaces";
-import type { PreferredViewLayout } from "@modules/IntersectionNew/typesAndEnums";
+} from "@modules/Intersection/DataProviderFramework/annotations/makeColorScaleAnnotation";
+import { makeGridBoundingBox } from "@modules/Intersection/DataProviderFramework/boundingBoxes/makeGridBoundingBox";
+import { makeSeismicBoundingBox } from "@modules/Intersection/DataProviderFramework/boundingBoxes/makeSeismicBoundingBox";
+import { makeSurfacesBoundingBox } from "@modules/Intersection/DataProviderFramework/boundingBoxes/makeSurfacesBoundingBox";
+import { CustomDataProviderType } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
+import { EnsembleWellborePicksProvider } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/EnsembleWellborePicksProvider";
+import { RealizationSurfacesProvider } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/RealizationSurfacesProvider";
+import { SurfacesPerRealizationValuesProvider } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/SurfacesPerRealizationValuesProvider";
+import type { IntersectionInjectedData } from "@modules/Intersection/DataProviderFramework/injectedDataType";
+import { createGridLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createGridLayerItemsMaker";
+import { createSeismicLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createSeismicLayerItemsMaker";
+import { createSurfacesLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createSurfacesLayerItemsMaker";
+import { createUncertaintySurfacesLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createUncertaintySurfacesLayerItemsMaker";
+import { createWellborePicksLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createWellborePicksLayerItemsMaker";
+import { makeEsvViewDataCollection } from "@modules/Intersection/DataProviderFramework/visualization/makeEsvViewDataCollection";
+import type { Interfaces } from "@modules/Intersection/interfaces";
+import type { PreferredViewLayout } from "@modules/Intersection/typesAndEnums";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 import { useWellboreCasingsQuery } from "../hooks/queryHooks";

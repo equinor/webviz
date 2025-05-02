@@ -6,7 +6,7 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Interfaces } from "./interfaces";
 import { preview } from "./preview";
 
-export const MODULE_NAME = "IntersectionNew";
+export const MODULE_NAME = "Intersection";
 
 ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,
