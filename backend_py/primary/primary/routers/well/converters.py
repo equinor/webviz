@@ -28,6 +28,7 @@ def to_api_stratigraphic_column(column: StratigraphicColumn) -> schemas.Stratigr
         type=column.strat_column_type,
     )
 
+
 def convert_wellbore_pick_to_schema(wellbore_pick: WellborePick) -> schemas.WellborePick:
     return schemas.WellborePick(
         northing=wellbore_pick.northing,

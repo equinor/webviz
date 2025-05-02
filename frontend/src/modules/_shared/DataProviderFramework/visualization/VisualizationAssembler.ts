@@ -1,9 +1,10 @@
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
 import * as bbox from "@lib/utils/bbox";
-import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
+import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 
 import type { GroupDelegate } from "../delegates/GroupDelegate";

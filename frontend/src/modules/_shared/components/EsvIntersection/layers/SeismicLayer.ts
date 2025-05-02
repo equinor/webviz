@@ -110,8 +110,6 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
         );
     }
     private async generateImage(seismicSliceImageOptions: SeismicSliceImageOptions): Promise<ImageBitmap | null> {
-        const useCustomColorScaleBoundaries = false;
-
         const image = await this.generateSeismicSliceImage(
             { ...seismicSliceImageOptions },
             seismicSliceImageOptions.trajectory,
