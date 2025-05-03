@@ -3,11 +3,14 @@ import type { ChannelContentDefinition, ChannelContentMetaData, DataGenerator } 
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewContext } from "@framework/ModuleContext";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { ColorSet } from "@lib/utils/ColorSet";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import type { Table } from "@modules/_shared/InplaceVolumetrics/Table";
 import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 import { ChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
 import type { Interfaces } from "@modules/InplaceVolumetricsPlot/interfaces";
+import { colorByAtom } from "../atoms/baseAtoms";
+import { useAtomValue } from "jotai";
 
 function makeDataGeneratorFunc(
     ensembleName: string,
@@ -16,6 +19,7 @@ function makeDataGeneratorFunc(
     fluidZone: string,
     table: Table,
     resultName: string,
+    color: string,
 ): DataGenerator {
     return () => {
         const realColumn = table.getColumn("REAL");
@@ -36,6 +40,7 @@ function makeDataGeneratorFunc(
             unit: "",
             ensembleIdentString: ensembleIdent.toString(),
             displayString: `${resultName} (${ensembleName}, ${tableName}, ${fluidZone})`,
+            preferredColor: color,
         };
 
         return {
@@ -48,21 +53,27 @@ function makeDataGeneratorFunc(
 export function usePublishToDataChannels(
     viewContext: ViewContext<Interfaces>,
     ensembleSet: EnsembleSet,
+    colorSet: ColorSet,
+
     table?: Table,
     resultName?: InplaceVolumetricResultName_api,
 ) {
     const contents: ChannelContentDefinition[] = [];
+    const colorBy = useAtomValue(colorByAtom);
 
     if (table && resultName) {
         const ensembleCollection = table.splitByColumn(SourceIdentifier.ENSEMBLE);
+
         for (const [ensembleIdentStr, ensembleTable] of ensembleCollection.getCollectionMap()) {
             const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentStr.toString());
             const ensembleName = makeDistinguishableEnsembleDisplayName(
                 ensembleIdent,
                 ensembleSet.getRegularEnsembleArray(),
             );
-
+            let color = colorSet.getFirstColor();
             const tableCollection = ensembleTable.splitByColumn(SourceIdentifier.TABLE_NAME);
+            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+
             for (const [tableName, table] of tableCollection.getCollectionMap()) {
                 const fluidZoneCollection = table.splitByColumn(SourceIdentifier.FLUID_ZONE);
                 for (const [fluidZone, fluidZoneTable] of fluidZoneCollection.getCollectionMap()) {
@@ -73,12 +84,15 @@ export function usePublishToDataChannels(
                         fluidZone.toString(),
                         fluidZoneTable,
                         resultName,
+                        colorBy === SourceIdentifier.ENSEMBLE && ensemble ? ensemble.getColor() : color,
                     );
+
                     contents.push({
                         contentIdString: `${fluidZone}-${tableName}-${ensembleIdentStr}`,
                         displayName: `${resultName} (${ensembleName}, ${tableName}, ${fluidZone})`,
                         dataGenerator,
                     });
+                    color = colorSet.getNextColor();
                 }
             }
         }

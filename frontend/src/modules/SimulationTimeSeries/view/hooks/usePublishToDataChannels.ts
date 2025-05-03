@@ -7,7 +7,6 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
-
 import { ChannelIds } from "../../channelDefs";
 import type { RegularEnsembleVectorSpec } from "../../dataGenerators";
 import { makeVectorGroupDataGenerator } from "../../dataGenerators";
@@ -66,7 +65,7 @@ export function usePublishToDataChannels(viewContext: ViewContext<Interfaces>) {
     viewContext.usePublishChannelContents({
         channelIdString: ChannelIds.TIME_SERIES,
         dependencies: [regularEnsembleVectorSpecificationsAndRealizationData, activeTimestampUtcMs],
-        enabled: !isQueryFetching,
+        // enabled: !isQueryFetching,
         contents,
     });
 }

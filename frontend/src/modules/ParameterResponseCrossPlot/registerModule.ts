@@ -7,19 +7,14 @@ import { preview } from "./preview";
 import { receiverDefs } from "./receiverDefs";
 import { ModuleDataTagId } from "@framework/ModuleDataTags";
 
-export const MODULE_NAME = "TornadoChart";
-
-const description = `Ranks sensitivities from a design matrix run with the responses from a connected module.
-                     Can be presented as a tornado plot or a table.`;
-
 ModuleRegistry.registerModule<Interfaces>({
-    moduleName: MODULE_NAME,
-    defaultTitle: "Tornado plot",
+    moduleName: "ParameterResponseCrossPlot",
+    defaultTitle: "Parameter/response cross plot",
     category: ModuleCategory.SUB,
     devState: ModuleDevState.PROD,
-    syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
+    syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES, SyncSettingKey.PARAMETER],
     dataTagIds: [ModuleDataTagId.PARAMETERS, ModuleDataTagId.SUMMARY, ModuleDataTagId.INPLACE_VOLUMETRICS],
-    preview,
     channelReceiverDefinitions: receiverDefs,
-    description,
+    preview,
+    description: "Cross plot input parameters and the responses from a connected module.",
 });

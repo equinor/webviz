@@ -9,6 +9,8 @@ import "./InplaceVolumetricsTable/registerModule";
 import "./Intersection/registerModule";
 import "./Map/registerModule";
 import "./ParameterDistributionMatrix/registerModule";
+import "./ParameterCorrelationPlot/registerModule";
+import "./ParameterResponseCrossPlot/registerModule";
 import "./Pvt/registerModule";
 import "./Rft/registerModule";
 import "./SimulationTimeSeries/registerModule";

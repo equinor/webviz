@@ -3,7 +3,6 @@ import type { Annotations, AxisType, Layout, PlotData, Shape, XAxisName, YAxisNa
 import type { PlotParams } from "react-plotly.js";
 import Plot from "react-plotly.js";
 
-
 /**
  * Enum for axis coordinate domain.
  *
@@ -138,9 +137,9 @@ export class Figure {
         const axisIndex = this.getAxisIndex(row, column);
 
         const adjustedAnnotation: Partial<Annotations> = {
-            ...annotation,
             xref: this.makeXAxisRef(axisIndex, xCoordinateDomain),
             yref: this.makeYAxisRef(axisIndex, yCoordinateDomain),
+            ...annotation,
         };
 
         if (!this._plotLayout.annotations) {

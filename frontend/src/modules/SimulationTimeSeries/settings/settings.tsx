@@ -28,7 +28,6 @@ import { Switch } from "@lib/components/Switch";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 
-
 import type { Interfaces } from "../interfaces";
 import {
     FanchartStatisticOption,
@@ -71,7 +70,6 @@ import {
 } from "./atoms/derivedAtoms";
 import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
-
 
 export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
