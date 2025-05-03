@@ -33,7 +33,7 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
     const [revNumberResponse, setRevNumberResponse] = React.useState<number>(0);
     useApplyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
     useApplyInitialSettingsToState(initialSettings, "parameterIdentString", "string", setParameterIdentString);
-
+    console.log(parameterIdentString);
     const ensembleSet = workbenchSession.getEnsembleSet();
     const receiverResponse = settingsContext.useChannelReceiver({
         receiverIdString: "channelResponse",
@@ -105,6 +105,12 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
         if (value.length > 0) {
             const parameterIdent = ParameterIdent.fromString(value[0]);
             setParameterIdentString(parameterIdent.toString());
+        } else if (continuousAndNonConstantParametersUnion.length > 0) {
+            const parameterIdent = ParameterIdent.fromNameAndGroup(
+                continuousAndNonConstantParametersUnion[0].name,
+                continuousAndNonConstantParametersUnion[0].groupName,
+            );
+            setParameterIdentString(parameterIdent.toString());
         } else {
             setParameterIdentString(null);
         }
@@ -126,6 +132,7 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
                         }))}
                         multiple={false}
                         size={100}
+                        filter
                     />
                 </Label>
             </CollapsibleGroup>
