@@ -27,6 +27,7 @@ export enum SyncSettingKey {
     VERTICAL_SCALE = "VERTICAL_SCALE",
     INPLACE_VOLUMETRICS_FILTER = "INPLACE_VOLUMETRICS_FILTER",
     INPLACE_VOLUMETRICS_RESULT_NAME = "INPLACE_VOLUMETRICS_RESULT_NAME",
+    PARAMETER = "PARAMETER",
 }
 
 export const SyncSettingsMeta = {
@@ -44,6 +45,7 @@ export const SyncSettingsMeta = {
     [SyncSettingKey.VERTICAL_SCALE]: { name: "Vertical Scale", abbreviation: "VSCAL" },
     [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER]: { name: "Inplace Volumetrics Filter", abbreviation: "IVF" },
     [SyncSettingKey.INPLACE_VOLUMETRICS_RESULT_NAME]: { name: "Inplace Volumetrics Result Name", abbreviation: "IVRN" },
+    [SyncSettingKey.PARAMETER]: { name: "Parameter", abbreviation: "Param" },
 };
 
 export class SyncSettingsHelper {

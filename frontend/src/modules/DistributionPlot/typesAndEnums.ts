@@ -3,4 +3,5 @@ export enum PlotType {
     BarChart = "barchart",
     Scatter = "scatter",
     ScatterWithColorMapping = "scatterWithColor",
+    ParameterCorrelation = "parameterCorrelation",
 }

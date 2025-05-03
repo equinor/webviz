@@ -14,7 +14,7 @@ ModuleRegistry.registerModule<Interfaces>({
     defaultTitle: "Distribution plot",
     category: ModuleCategory.SUB,
     devState: ModuleDevState.PROD,
-    syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
+    syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES, SyncSettingKey.PARAMETER],
     channelReceiverDefinitions: receiverDefs,
     preview,
     description,
