@@ -11,7 +11,6 @@ import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage/contentMessage";
 
-
 import { createSensitivityColorMap } from "../../_shared/sensitivityColors";
 import type { Interfaces } from "../interfaces";
 import { DisplayComponentType } from "../typesAndEnums";
@@ -21,7 +20,7 @@ import { SensitivityChart } from "./components/sensitivityChart";
 import SensitivityTable from "./components/sensitivityTable";
 import type { SensitivityResponseDataset } from "./utils/sensitivityResponseCalculator";
 import { SensitivityResponseCalculator } from "./utils/sensitivityResponseCalculator";
-
+import { Input } from "@mui/icons-material";
 
 export const View = ({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");
@@ -87,7 +86,11 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
         if (!responseReceiver.channel) {
             return (
                 <ContentInfo>
-                    Connect a data channel to <Tag label="Response" />
+                    <span>
+                        Data channel required for use. Add a main module to the workbench and use the data channels icon
+                        <Input />
+                    </span>
+                    <Tag label="Response" />
                 </ContentInfo>
             );
         }
