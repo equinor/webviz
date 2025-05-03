@@ -10,12 +10,10 @@ import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Slider } from "@lib/components/Slider";
 
-
 import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
 
 import { numBinsAtom, orientationAtom, plotTypeAtom } from "./atoms/baseAtoms";
-
 
 const plotTypes = [
     {
@@ -34,6 +32,7 @@ const plotTypes = [
         value: PlotType.ScatterWithColorMapping,
         label: "Scatter 2D with color mapping",
     },
+    { value: PlotType.ParameterCorrelation, label: "Parameter correlation" },
 ];
 
 //-----------------------------------------------------------------------------------------------------------
