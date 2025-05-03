@@ -16,11 +16,11 @@ import { ContentWarning } from "@modules/_shared/components/ContentMessage/conte
 import { makeSubplots } from "@modules/_shared/Figure";
 import { makeHistogramTrace } from "@modules/_shared/histogram";
 
+
 import type { Interfaces } from "./interfaces";
 import { PlotType } from "./typesAndEnums";
 import { makeHoverText, makeHoverTextWithColor, makeTitleFromChannelContent } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 
 const MAX_NUM_PLOTS = 12;
 
@@ -36,12 +36,7 @@ const MaxNumberPlotsExceededMessage: React.FC = () => {
 
 MaxNumberPlotsExceededMessage.displayName = "MaxNumberPlotsExceededMessage";
 
-export const View = ({
-    viewContext,
-    workbenchSettings,
-    workbenchSession,
-    workbenchServices,
-}: ModuleViewProps<Interfaces>) => {
+export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const [isPending, startTransition] = React.useTransition();
     const [content, setContent] = React.useState<React.ReactNode>(null);
     const [revNumberX, setRevNumberX] = React.useState<number>(0);
@@ -55,9 +50,7 @@ export const View = ({
     const plotType = viewContext.useSettingsToViewInterfaceValue("plotType");
     const numBins = viewContext.useSettingsToViewInterfaceValue("numBins");
     const orientation = viewContext.useSettingsToViewInterfaceValue("orientation");
-    const syncedSettingKeys = viewContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
-    const syncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
+
     const statusWriter = useViewStatusWriter(viewContext);
 
     const colorSet = workbenchSettings.useColorSet();
@@ -289,102 +282,6 @@ export const View = ({
                 setContent(figure.makePlot());
                 return;
             }
-            if (plotType === PlotType.ParameterCorrelation) {
-                const numContents = receiverX.channel.contents.length;
-                if (numContents > MAX_NUM_PLOTS) {
-                    setContent(<MaxNumberPlotsExceededMessage />);
-                    return;
-                }
-                const numCols = Math.floor(Math.sqrt(numContents));
-                const numRows = Math.ceil(numContents / numCols);
-
-                const figure = makeSubplots({
-                    numRows,
-                    numCols,
-                    width: wrapperDivSize.width,
-                    height: wrapperDivSize.height,
-                    sharedXAxes: false,
-                    sharedYAxes: false,
-                    verticalSpacing: 100 / (wrapperDivSize.height - 50),
-                    horizontalSpacing: 0.2 / numCols,
-                    margin: {
-                        t: 0,
-                        r: 20,
-                        b: 50,
-                        l: 400,
-                    },
-                });
-                // title: "Parameter Sensitivity (Correlation to Response)",
-                // xaxis: {
-                //     title: "Correlation",
-                //     range: [-1, 1],
-                //     zeroline: true,
-                // },
-                // yaxis: {
-                //     autorange: "reversed" as const, // show highest on top
-                // },
-                // margin: { l: 150 },
-
-                let cellIndex = 0;
-                for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
-                    for (let colIndex = 0; colIndex < numCols; colIndex++) {
-                        if (cellIndex >= numContents) {
-                            break;
-                        }
-                        const data = receiverX.channel.contents[cellIndex];
-                        // First
-
-                        const ensembleSet = workbenchSession.getEnsembleSet();
-                        const ensemble = ensembleSet.findEnsembleByIdentString(data.metaData.ensembleIdentString);
-                        // console.log("ensemble", ensemble);
-                        const parameterArr = ensemble?.getParameters().getParameterArr();
-                        const parameters: Parameter[] = [];
-                        const responses: Response[] = [];
-                        if (parameterArr) {
-                            parameterArr.forEach((parameter) => {
-                                const parameterName = parameter.name;
-                                const parameterValues = parameter.values as number[];
-                                const parameterRealizations = parameter.realizations;
-                                const parameterObj: Parameter = {
-                                    name: parameterName,
-                                    values: parameterValues,
-                                    realizations: parameterRealizations,
-                                };
-                                parameters.push(parameterObj);
-                            });
-
-                            data.dataArray.forEach((dataPoint) => {
-                                const realization = dataPoint.key as number;
-                                const responseValue = dataPoint.value as number;
-                                const responseObj: Response = {
-                                    key: realization,
-                                    value: responseValue,
-                                };
-                                responses.push(responseObj);
-                            });
-
-                            const rankedParameters = rankParameters(parameters, responses);
-                            const trace = plotRankedCorrelations(rankedParameters) as Partial<PlotData>;
-                            figure.addTrace(trace, rowIndex + 1, colIndex + 1);
-                            const patch: Partial<Layout> = {
-                                [`xaxis${cellIndex + 1}`]: {
-                                    title: "Correlation",
-                                    // range: [-1, 1],
-                                    zeroline: true,
-                                },
-                                [`yaxis${cellIndex + 1}`]: {
-                                    title: "Correlation",
-                                    autorange: "reversed",
-                                    // range: [-1, 1],
-                                },
-                            };
-                            figure.updateLayout(patch);
-                        }
-                    }
-                }
-                setContent(figure.makePlot());
-                return;
-            }
 
             if (
                 (plotType === PlotType.Scatter && receiverY.channel) ||
@@ -552,102 +449,3 @@ export const View = ({
 };
 
 View.displayName = "View";
-
-type Parameter = {
-    name: string;
-    values: number[];
-    realizations: number[];
-};
-type Response = {
-    key: number;
-    value: number;
-};
-
-function pearsonCorrelation(x: number[], y: number[]): number | null {
-    const n = x.length;
-    if (n < 2) return null; // Not enough data to compute correlation
-
-    const avgX = x.reduce((a, b) => a + b, 0) / n;
-    const avgY = y.reduce((a, b) => a + b, 0) / n;
-
-    let numerator = 0;
-    let denomX = 0;
-    let denomY = 0;
-
-    for (let i = 0; i < n; i++) {
-        const dx = x[i] - avgX;
-        const dy = y[i] - avgY;
-        numerator += dx * dy;
-        denomX += dx * dx;
-        denomY += dy * dy;
-    }
-
-    const denominator = Math.sqrt(denomX * denomY);
-    return denominator === 0 ? null : numerator / denominator;
-}
-type RankedParameter = {
-    name: string;
-    correlation: number | null;
-    absCorrelation: number | null;
-};
-
-function rankParameters(parameters: Parameter[], responses: Response[]): RankedParameter[] {
-    const responseMap = new Map(responses.map((r) => [r.key, r.value]));
-
-    const correlations = parameters.map((param) => {
-        const x: number[] = [];
-        const y: number[] = [];
-
-        for (let i = 0; i < param.realizations.length; i++) {
-            const realization = param.realizations[i];
-            const responseValue = responseMap.get(realization);
-
-            if (responseValue !== undefined) {
-                x.push(param.values[i]);
-                y.push(responseValue);
-            }
-        }
-
-        const corr = pearsonCorrelation(x, y);
-
-        return {
-            name: param.name,
-            correlation: corr,
-            absCorrelation: corr !== null ? Math.abs(corr) : null,
-        };
-    });
-
-    return correlations.filter((c) => c.correlation !== null).sort((a, b) => b.absCorrelation! - a.absCorrelation!);
-}
-
-function plotRankedCorrelations(ranked: RankedParameter[]) {
-    // Filter out any nulls to ensure safe plotting
-    const filtered = ranked.filter((p) => p.correlation !== null && p.absCorrelation !== null).slice(0, 40);
-
-    const names = filtered.map((p) => p.name);
-    const correlations = filtered.map((p) => p.correlation!); // safe after filter
-
-    const trace = {
-        x: correlations,
-        y: names,
-        type: "bar",
-        orientation: "h" as const,
-        marker: {
-            color: correlations.map((c) => (c >= 0 ? "steelblue" : "red")),
-        },
-    };
-
-    const layout = {
-        title: "Parameter Sensitivity (Correlation to Response)",
-        xaxis: {
-            title: "Correlation",
-            range: [-1, 1],
-            zeroline: true,
-        },
-        yaxis: {
-            autorange: "reversed" as const, // show highest on top
-        },
-        margin: { l: 150 },
-    };
-    return trace;
-}
