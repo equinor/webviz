@@ -33,7 +33,7 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
     const [revNumberResponse, setRevNumberResponse] = React.useState<number>(0);
     useApplyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
     useApplyInitialSettingsToState(initialSettings, "parameterIdentString", "string", setParameterIdentString);
-    console.log(parameterIdentString);
+
     const ensembleSet = workbenchSession.getEnsembleSet();
     const receiverResponse = settingsContext.useChannelReceiver({
         receiverIdString: "channelResponse",

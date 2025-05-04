@@ -5,56 +5,44 @@ import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
 import { PlotType as CorrPlotType } from "@modules/ParameterCorrelationPlot/typesAndEnums";
 import { PlotType as CrossPlotType } from "@modules/ParameterResponseCrossPlot/typesAndEnums";
-import { ChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
-
+import { ChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
+import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 const template: Template = {
-    description: "Inplace volumes overview correlated against input parameters",
+    description:
+        "Water cut, gas oil ratio, water bottom hole pressure and oil production rate correlated against input parameters",
     moduleInstances: [
         {
-            instanceRef: "MainInplaceVolumetricsPlotInstance",
-            moduleName: "InplaceVolumetricsPlot",
+            instanceRef: "MainSimulationTimeSeriesInstance",
+            moduleName: "SimulationTimeSeries",
             layout: {
-                relHeight: 0.4,
-                relWidth: 0.5,
+                relHeight: 0.5,
+                relWidth: 1,
                 relX: 0,
                 relY: 0,
             },
-            syncedSettings: [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER, SyncSettingKey.INPLACE_VOLUMETRICS_RESULT_NAME],
+            // syncedSettings: [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER, SyncSettingKey.INPLACE_VOLUMETRICS_RESULT_NAME],
             initialSettings: {
                 // plotType: PlotType.Histogram,
-                subplotBy: InplaceVolumetricsIdentifier_api.ZONE,
+                selectedVectorTags: ["WWCT:A1", "WGOR:A1", "WBHP:A1", "WOPT:A1"],
+                visualizationMode: VisualizationMode.INDIVIDUAL_REALIZATIONS,
             },
         },
-        {
-            instanceRef: "MainInplaceVolumetricsTableInstance",
-            moduleName: "InplaceVolumetricsTable",
-            layout: {
-                relHeight: 0.2,
-                relWidth: 1,
-                relX: 0,
-                relY: 0.8,
-            },
-            syncedSettings: [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER, SyncSettingKey.INPLACE_VOLUMETRICS_RESULT_NAME],
-            initialSettings: {
-                // plotType: PlotType.Histogram,
-                subplotBy: InplaceVolumetricsIdentifier_api.ZONE,
-            },
-        },
+
         {
             instanceRef: "MyParameterResponseCrossPlotInstance",
             moduleName: "ParameterResponseCrossPlot",
             layout: {
-                relHeight: 0.4,
+                relHeight: 0.5,
                 relWidth: 0.5,
                 relX: 0,
-                relY: 0.4,
+                relY: 0.5,
             },
 
             dataChannelsToInitialSettingsMapping: {
                 channelResponse: {
-                    listensToInstanceRef: "MainInplaceVolumetricsPlotInstance",
+                    listensToInstanceRef: "MainSimulationTimeSeriesInstance",
                     kindOfKey: KeyKind.REALIZATION,
-                    channelIdString: ChannelIds.RESPONSE_PER_REAL,
+                    channelIdString: ChannelIds.TIME_SERIES,
                 },
             },
             initialSettings: {
@@ -67,25 +55,27 @@ const template: Template = {
             instanceRef: "MyParameterCorrelationPlotInstance",
             moduleName: "ParameterCorrelationPlot",
             layout: {
-                relHeight: 0.8,
+                relHeight: 0.5,
                 relWidth: 0.5,
                 relX: 0.5,
-                relY: 0,
+                relY: 0.5,
             },
 
             dataChannelsToInitialSettingsMapping: {
                 channelResponse: {
-                    listensToInstanceRef: "MainInplaceVolumetricsPlotInstance",
+                    listensToInstanceRef: "MainSimulationTimeSeriesInstance",
                     kindOfKey: KeyKind.REALIZATION,
-                    channelIdString: ChannelIds.RESPONSE_PER_REAL,
+                    channelIdString: ChannelIds.TIME_SERIES,
                 },
             },
             initialSettings: {
                 plotType: CorrPlotType.ParameterCorrelation,
                 crossPlottingType: KeyKind.REALIZATION,
+                showLabels: true,
+                numParams: 50,
             },
         },
     ],
 };
 
-TemplateRegistry.registerTemplate("Parameter analysis of inplace volumes", template);
+TemplateRegistry.registerTemplate("Parameter analysis of well vectors", template);
