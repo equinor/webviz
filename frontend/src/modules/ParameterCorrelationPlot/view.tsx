@@ -125,7 +125,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                         t: 20,
                         r: 20,
                         b: 20,
-                        l: showLabels ? 220 : 20,
+                        l: 20,
                     },
                     showGrid: true,
                 });
@@ -176,7 +176,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                         const rankedParameters = rankParameters(parameters, responseData, numParams, corrCutOff);
                         const color = responseChannelData.metaData.preferredColor;
 
-                        const trace = plotRankedCorrelations(rankedParameters, color) as Partial<PlotData>;
+                        const trace = plotRankedCorrelations(rankedParameters, showLabels, color) as Partial<PlotData>;
 
                         figure.addTrace(trace, rowIndex + 1, colIndex + 1);
 
@@ -189,11 +189,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                             },
                             [`yaxis${cellIndex + 1}`]: {
                                 autorange: "reversed",
-                                visible: showLabels,
-                                tickangle: -45,
-                                tickfont: {
-                                    size: 10,
-                                },
+                                visible: false,
                             },
                         };
 
@@ -299,21 +295,23 @@ function rankParameters(
         .slice(0, numParams); // Limit to numParams
 }
 
-function plotRankedCorrelations(rankedParameters: RankedParameter[], color?: string): Partial<PlotData> {
+function plotRankedCorrelations(
+    rankedParameters: RankedParameter[],
+    showLabel: boolean,
+    color?: string,
+): Partial<PlotData> {
     const identStrings = rankedParameters.map((p) => p.ident.toString());
     const names = rankedParameters.map((p) => p.ident.name);
     const correlations = rankedParameters.map((p) => p.correlation!);
 
-    const trace: Partial<PlotData> = {
+    let trace: Partial<PlotData> = {
         x: correlations,
         y: names,
         customdata: identStrings,
         type: "bar",
         orientation: "h",
         marker: {
-            size: 20,
             color: "rgba(0.0, 112.0, 121.0, .5)",
-
             line: {
                 color: "rgba(0.0, 112.0, 121.0, 1)",
                 width: 1,
@@ -325,6 +323,16 @@ function plotRankedCorrelations(rankedParameters: RankedParameter[], color?: str
             font: { size: 12, color: "black" },
         },
     };
-
+    if (showLabel) {
+        trace = {
+            ...trace,
+            text: names,
+            textposition: "inside",
+            insidetextanchor: "middle",
+            textfont: {
+                color: "white",
+            },
+        };
+    }
     return trace;
 }

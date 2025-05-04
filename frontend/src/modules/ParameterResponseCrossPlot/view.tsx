@@ -149,7 +149,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                 }
             });
             if (ensembleParametersMap.size === 0) {
-                setContent(<ContentInfo>Parameter not found. Please select a parameter to plot.</ContentInfo>);
+                setContent(<ContentInfo>Parameter not found. Click here and select a parameter to plot.</ContentInfo>);
                 return;
             }
             // Loop through the contents and plot the correlations
