@@ -1,7 +1,6 @@
 import React from "react";
 
 import { Input, Warning } from "@mui/icons-material";
-import type { Layout, PlotData } from "plotly.js";
 
 import { KeyKind } from "@framework/DataChannelTypes";
 import type { ModuleViewProps } from "@framework/Module";
@@ -125,7 +124,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                         t: 20,
                         r: 20,
                         b: 50,
-                        l: 20,
+                        l: 0,
                     },
                     showGrid: true,
                 });

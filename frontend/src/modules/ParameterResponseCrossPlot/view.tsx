@@ -118,7 +118,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                     t: 20,
                     r: 20,
                     b: 20,
-                    l: 20,
+                    l: 40,
                 },
                 showGrid: true,
             });
@@ -245,7 +245,7 @@ function scatterPlotParameterResponse(responses: ResponseData, parameter: Parame
         type: "scatter",
         marker: {
             symbol: "circle",
-            size: 20,
+            size: 10,
             color: markerPlotColor,
             opacity: 0.5,
             line: {
