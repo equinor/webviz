@@ -169,7 +169,14 @@ export class Figure {
     }
 
     makeLayout(): Partial<Layout> {
-        const layout = { ...this._plotLayout };
+        const layout = {
+            font: {
+                family: "Roboto, sans-serif",
+                size: 12,
+                color: "#333",
+            },
+            ...this._plotLayout,
+        };
         layout.annotations = [
             ...(layout.annotations ?? []),
             ...Array.from(this._axesIndexToSubplotTitleAnnotationMap.values()),
@@ -452,9 +459,6 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
                 y: yDomainEnd + (options.height ? 20 / options.height : 0.02),
                 text: title,
                 showarrow: false,
-                font: {
-                    size: 14,
-                },
             });
 
             gridAxesMapping[row].push(index + 1);
