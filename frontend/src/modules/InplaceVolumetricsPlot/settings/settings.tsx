@@ -15,7 +15,6 @@ import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/Tab
 import { RealSelector, type SelectorColumn } from "@modules/_shared/InplaceVolumetrics/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumetrics/volumetricStringUtils";
 
-
 import type { Interfaces } from "../interfaces";
 import { PlotType, plotTypeToStringMapping } from "../typesAndEnums";
 
@@ -46,7 +45,7 @@ import {
 } from "./atoms/derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 import { makeColorByOptions, makeSubplotByOptions } from "./utils/plotDimensionUtils";
-
+import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -85,6 +84,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         selectedIdentifierValueCriteriaAtom,
     );
 
+    useApplyInitialSettingsToState(
+        props.initialSettings,
+        "selectedIdentifierValueCriteria",
+        "string",
+        setSelectedIdentifierValueCriteria,
+    );
     function handleFilterChange(newFilter: InplaceVolumetricsFilterSettings) {
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);

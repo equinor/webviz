@@ -10,7 +10,6 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { RadioGroup } from "@lib/components/RadioGroup";
 
-
 import type { Interfaces } from "../interfaces";
 import { DisplayComponentType } from "../typesAndEnums";
 
@@ -21,9 +20,13 @@ import {
     showLabelsAtom,
     showRealizationPointsAtom,
 } from "./atoms/baseAtoms";
+import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 
-
-export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>): React.ReactNode {
+export function Settings({
+    initialSettings,
+    settingsContext,
+    workbenchSession,
+}: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const [displayComponentType, setDisplayComponentType] = useAtom(displayComponentTypeAtom);
     const [hideZeroY, setHideZeroY] = useAtom(hideZeroYAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
@@ -31,6 +34,8 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const setModuleReferenceSensitivityName = useSetAtom(referenceSensitivityNameAtom);
     // const selectedSensitivity = settingsContext.useViewToSettingsInterfaceValue("selectedSensitivity");
     const [referenceSensitivityName, setReferenceSensitivityName] = React.useState<string | null>(null);
+
+    useApplyInitialSettingsToState(initialSettings, "displayComponentType", "string", setDisplayComponentType);
 
     const ensembleSet = workbenchSession.getEnsembleSet();
 
