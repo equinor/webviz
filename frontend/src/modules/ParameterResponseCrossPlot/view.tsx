@@ -8,7 +8,7 @@ import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
@@ -74,24 +74,26 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
 
         if (!receiverResponse.channel) {
             console.log("No channel");
-            return (
+            setContent(
                 <ContentInfo>
                     <span>
                         Data channel required for use. Add a main module to the workbench and use the data channels icon
                         <Input />
                     </span>
                     <Tag label="Response" />
-                </ContentInfo>
+                </ContentInfo>,
             );
+            return;
         }
 
         if (receiverResponse.channel.contents.length === 0) {
             console.log("No contents");
-            return (
+            setContent(
                 <ContentInfo>
                     No data on <Tag label={receiverResponse.displayName} />
-                </ContentInfo>
+                </ContentInfo>,
             );
+            return;
         }
 
         if (plotType === PlotType.ParameterResponseCrossPlot) {
@@ -108,7 +110,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                 numCols,
                 width: wrapperDivSize.width,
                 height: wrapperDivSize.height,
-                sharedXAxes: true,
+                sharedXAxes: false,
                 sharedYAxes: false,
 
                 horizontalSpacing: 0.2 / numCols,
@@ -120,14 +122,17 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                 },
                 showGrid: true,
             });
-            figure.updateLayout({ showlegend: false });
+            figure.updateLayout({
+                showlegend: false,
+            });
             // Create a map with parameters for each ensemble
             if (!parameterIdentString) {
                 return;
             }
             const parameterIdent = ParameterIdent.fromString(parameterIdentString ?? "");
-            console.log("parameterIdent", parameterIdent);
+
             if (!parameterIdent) {
+                setContent(<ContentInfo>Parameter not found. Please select a parameter to plot.</ContentInfo>);
                 return;
             }
 
@@ -136,11 +141,17 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                 const ensembleIdentString = content.metaData.ensembleIdentString;
                 const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
                 if (ensemble && ensemble instanceof RegularEnsemble) {
-                    const parameter = ensemble.getParameters().getParameter(parameterIdent);
+                    const parameter = ensemble.getParameters().findParameter(parameterIdent);
+                    if (!parameter) {
+                        return;
+                    }
                     ensembleParametersMap.set(ensembleIdentString, parameter);
                 }
             });
-
+            if (ensembleParametersMap.size === 0) {
+                setContent(<ContentInfo>Parameter not found. Please select a parameter to plot.</ContentInfo>);
+                return;
+            }
             // Loop through the contents and plot the correlations
             let cellIndex = 0;
             for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
@@ -148,35 +159,32 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                     if (cellIndex >= numContents) {
                         break;
                     }
-                    const responses: Response[] = [];
-                    const responseData = receiverResponse.channel.contents[cellIndex];
-                    responseData.dataArray.forEach((dataPoint) => {
-                        const realization = dataPoint.key as number;
-                        const responseValue = dataPoint.value as number;
-                        const responseObj: Response = {
-                            key: realization,
-                            value: responseValue,
-                        };
-                        responses.push(responseObj);
-                    });
-                    const parameter = ensembleParametersMap.get(responseData.metaData.ensembleIdentString);
+
+                    const responseChannelData = receiverResponse.channel.contents[cellIndex];
+
+                    const parameter = ensembleParametersMap.get(responseChannelData.metaData.ensembleIdentString);
                     if (!parameter) {
                         return;
                     }
 
-                    const traces = scatterPlotParameterResponse(responses, parameter);
+                    const responseData: ResponseData = {
+                        realizations: responseChannelData.dataArray.map((dataPoint) => dataPoint.key as number),
+                        values: responseChannelData.dataArray.map((dataPoint) => dataPoint.value as number),
+                        displayName: responseChannelData.displayName,
+                    };
+                    const traces = scatterPlotParameterResponse(responseData, parameter);
                     figure.addTraces(traces, rowIndex + 1, colIndex + 1);
+
                     const layoutPatch: Partial<Layout> = {
                         [`xaxis${cellIndex + 1}`]: {
                             zeroline: false,
-                            // range: [-xRange, xRange],
                         },
                         [`yaxis${cellIndex + 1}`]: {
                             zeroline: false,
                         },
                     };
                     figure.updateLayout(layoutPatch);
-                    const channelTitle = `${parameterIdent.name} / <b>${responseData.metaData.displayString}`;
+                    const channelTitle = `${parameterIdent.name} / <b>${responseChannelData.metaData.displayString}`;
                     figure.updateSubplotTitle(`${channelTitle}`, rowIndex + 1, colIndex + 1);
                     cellIndex++;
                 }
@@ -196,26 +204,39 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
 
 View.displayName = "View";
 
-type Response = {
-    key: number;
-    value: number;
+type ResponseData = {
+    realizations: number[];
+    values: number[];
+    displayName: string;
 };
-
-function scatterPlotParameterResponse(responses: Response[], parameter: Parameter) {
-    const parameterRealizations = parameter.realizations;
-    const parameterValues = parameter.values as number[];
+function scatterPlotParameterResponse(responses: ResponseData, parameter: Parameter, showTrendline = true) {
+    const parameterDisplayName = parameter.name;
+    const responseValueMap = new Map<number, number>();
+    for (let i = 0; i < responses.realizations.length; i++) {
+        const realization = responses.realizations[i] as number;
+        const value = responses.values[i] as number;
+        responseValueMap.set(realization, value);
+    }
 
     const xValues: number[] = [];
     const yValues: number[] = [];
+    const realizationValues: number[] = [];
 
-    for (let i = 0; i < parameterRealizations.length; i++) {
-        const realization = parameterRealizations[i];
-        const response = responses.find((r) => r.key === realization);
-        if (response) {
-            xValues.push(parameterValues[i]);
-            yValues.push(response.value);
+    for (let i = 0; i < parameter.realizations.length; i++) {
+        const realization = parameter.realizations[i];
+        const parameterValue = parameter.values[i] as number;
+
+        const responseValue = responseValueMap.get(realization);
+
+        if (responseValue !== undefined) {
+            xValues.push(responseValue);
+            yValues.push(parameterValue);
+            realizationValues.push(realization);
         }
     }
+
+    const basePlotColor = "rgba(0, 112, 121, 1)";
+    const markerPlotColor = "rgba(0, 112, 121, 0.5)";
 
     const scatterTrace: Partial<PlotData> = {
         x: xValues,
@@ -225,38 +246,50 @@ function scatterPlotParameterResponse(responses: Response[], parameter: Paramete
         marker: {
             symbol: "circle",
             size: 20,
-            color: "rgba(0.0, 112.0, 121.0, 0.5)",
+            color: markerPlotColor,
             opacity: 0.5,
             line: {
-                color: "rgba(0.0, 112.0, 121.0, 1)",
+                color: basePlotColor,
                 width: 1,
             },
         },
-        line: { color: "rgba(0.0, 112.0, 121.0, 1)", width: 1 },
-    };
 
-    // Calculate linear regression for the trendline
-    const { slope, intercept } = linearRegression(xValues, yValues);
-
-    // Generate x values for the trendline (spanning the data range)
-    const minX = Math.min(...xValues);
-    const maxX = Math.max(...xValues);
-    const trendlineX = [minX, maxX];
-    const trendlineY = [intercept + slope * minX, intercept + slope * maxX];
-
-    const trendlineTrace: Partial<PlotData> = {
-        x: trendlineX,
-        y: trendlineY,
-        mode: "lines",
-        type: "scatter",
-        name: "Trendline", // Optional name for the legend
-        line: {
-            color: "black", // Customize the trendline color
-            // dash: "dash", // Optional line style
+        hovertemplate: `${responses.displayName} = <b>%{x}</b> <br> ${parameterDisplayName} = <b>%{y}</b> <br> Realization = <b>%{text}</b> <extra></extra>`,
+        hoverlabel: {
+            bgcolor: "white",
+            font: { size: 12, color: "black" },
         },
+        text: realizationValues.map((realization) => realization.toString()),
     };
 
-    return [scatterTrace, trendlineTrace];
+    const traces: Partial<PlotData>[] = [scatterTrace];
+
+    traces.push(scatterTrace);
+    if (showTrendline) {
+        // Calculate linear regression for the trendline
+        const { slope, intercept } = linearRegression(xValues, yValues);
+
+        // Create the trendline data
+        const minX = Math.min(...xValues);
+        const maxX = Math.max(...xValues);
+        const trendlineX = [minX, maxX];
+        const trendlineY = [intercept + slope * minX, intercept + slope * maxX];
+
+        const trendlineTrace: Partial<PlotData> = {
+            x: trendlineX,
+            y: trendlineY,
+            mode: "lines",
+            type: "scatter",
+            name: "Linear Trendline",
+            line: {
+                color: "black",
+                dash: "dash",
+                width: 2,
+            },
+        };
+        traces.push(trendlineTrace);
+    }
+    return traces;
 }
 function linearRegression(x: number[], y: number[]): { slope: number; intercept: number } {
     const n = x.length;

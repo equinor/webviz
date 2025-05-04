@@ -30,7 +30,9 @@ const plotTypes = [{ value: PlotType.ParameterResponseCrossPlot, label: "Paramet
 export function Settings({ initialSettings, settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const [plotType, setPlotType] = useAtom(plotTypeAtom);
     const [parameterIdentString, setParameterIdentString] = useAtom(parameterIdentStringAtom);
+    const [availableParameters, setAvailableParameters] = React.useState<Parameter[]>([]);
     const [revNumberResponse, setRevNumberResponse] = React.useState<number>(0);
+
     useApplyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
     useApplyInitialSettingsToState(initialSettings, "parameterIdentString", "string", setParameterIdentString);
 
@@ -83,7 +85,7 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
     });
     const selectedEnsembles = ensembles.filter((ensemble) => ensemble !== null);
 
-    const continuousAndNonConstantParametersUnion: Parameter[] = [];
+    const parameterIdentsUnion: ParameterIdent[] = [];
     for (const ensemble of selectedEnsembles) {
         const continuousAndNonConstantParameters = ensemble
             .getParameters()
@@ -93,27 +95,32 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
         // Add non-duplicate parameters to list - verified by ParameterIdent
         for (const parameter of continuousAndNonConstantParameters) {
             const parameterIdent = ParameterIdent.fromNameAndGroup(parameter.name, parameter.groupName);
-            const isParameterInUnion = continuousAndNonConstantParametersUnion.some((elm) =>
+            const isParameterInUnion = parameterIdentsUnion.some((elm) =>
                 parameterIdent.equals(ParameterIdent.fromNameAndGroup(elm.name, elm.groupName)),
             );
 
             if (isParameterInUnion) continue;
-            continuousAndNonConstantParametersUnion.push(parameter);
+            parameterIdentsUnion.push(parameterIdent);
         }
     }
     function handleParameterChanged(value: string[]) {
-        if (value.length > 0) {
-            const parameterIdent = ParameterIdent.fromString(value[0]);
-            setParameterIdentString(parameterIdent.toString());
-        } else if (continuousAndNonConstantParametersUnion.length > 0) {
-            const parameterIdent = ParameterIdent.fromNameAndGroup(
-                continuousAndNonConstantParametersUnion[0].name,
-                continuousAndNonConstantParametersUnion[0].groupName,
-            );
-            setParameterIdentString(parameterIdent.toString());
-        } else {
-            setParameterIdentString(null);
+        if (parameterIdentsUnion.length > 0) {
+            if (value.length === 1) {
+                const parameterIdent = ParameterIdent.fromString(value[0]);
+                if (
+                    parameterIdentsUnion.some((elm) =>
+                        parameterIdent.equals(ParameterIdent.fromNameAndGroup(elm.name, elm.groupName)),
+                    )
+                ) {
+                    setParameterIdentString(parameterIdent.toString());
+                    return;
+                }
+            }
+            setParameterIdentString(parameterIdentsUnion[0].toString());
+            return;
         }
+
+        setParameterIdentString(null);
     }
 
     return (
@@ -126,9 +133,9 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
                     <Select
                         value={parameterIdentString ? [parameterIdentString] : [""]}
                         onChange={handleParameterChanged}
-                        options={continuousAndNonConstantParametersUnion.map((parameter) => ({
-                            value: new ParameterIdent(parameter.name, parameter.groupName).toString(),
-                            label: `${parameter.name} (${parameter.groupName})`,
+                        options={parameterIdentsUnion.map((parameterIdent) => ({
+                            value: parameterIdent.toString(),
+                            label: `${parameterIdent.name} (${parameterIdent.groupName})`,
                         }))}
                         multiple={false}
                         size={100}

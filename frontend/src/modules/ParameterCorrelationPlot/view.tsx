@@ -8,7 +8,7 @@ import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
@@ -17,7 +17,7 @@ import { makeSubplots } from "@modules/_shared/Figure";
 import type { Interfaces } from "./interfaces";
 import { PlotType } from "./typesAndEnums";
 
-import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 
 const MAX_NUM_PLOTS = 12;
@@ -144,15 +144,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                                 if (parameter.isConstant || parameter.type !== ParameterType.CONTINUOUS) {
                                     return;
                                 }
-                                const parameterIdent = new ParameterIdent(parameter.name, parameter.groupName);
-                                const parameterValues = parameter.values as number[];
-                                const parameterRealizations = parameter.realizations;
-                                const parameterObj: Parameter = {
-                                    ident: parameterIdent,
-                                    values: parameterValues,
-                                    realizations: parameterRealizations,
-                                };
-                                parameters.push(parameterObj);
+                                parameters.push(parameter);
                             });
                             ensembleParametersMap.set(ensembleIdentString, parameters);
                         }
@@ -166,51 +158,34 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                         if (cellIndex >= numContents) {
                             break;
                         }
-                        const responseData = receiverResponse.channel.contents[cellIndex];
+                        const responseChannelData = receiverResponse.channel.contents[cellIndex];
 
-                        const ensembleIdentString = responseData.metaData.ensembleIdentString;
+                        const ensembleIdentString = responseChannelData.metaData.ensembleIdentString;
                         const parameters = ensembleParametersMap.get(ensembleIdentString);
                         if (!parameters) {
                             cellIndex++;
                             continue;
                         }
 
-                        const responses: Response[] = [];
+                        const responseData: ResponseData = {
+                            realizations: responseChannelData.dataArray.map((dataPoint) => dataPoint.key as number),
+                            values: responseChannelData.dataArray.map((dataPoint) => dataPoint.value as number),
+                            displayName: responseChannelData.displayName,
+                        };
 
-                        responseData.dataArray.forEach((dataPoint) => {
-                            const realization = dataPoint.key as number;
-                            const responseValue = dataPoint.value as number;
-                            const responseObj: Response = {
-                                key: realization,
-                                value: responseValue,
-                            };
-                            responses.push(responseObj);
-                        });
+                        const rankedParameters = rankParameters(parameters, responseData, numParams, corrCutOff);
+                        const color = responseChannelData.metaData.preferredColor;
 
-                        const rankedParameters = rankParameters(parameters, responses);
-                        const filteredRankedParameters = rankedParameters.filter(
-                            (p) => p.absCorrelation !== null && Math.abs(p.absCorrelation) >= corrCutOff,
-                        );
-
-                        // const xRange = Math.max(...filteredRankedParameters.map((p) => p.correlation ?? 0));
-
-                        const color = responseData.metaData.preferredColor;
-
-                        const trace = plotRankedCorrelations(
-                            filteredRankedParameters,
-                            numParams,
-                            color,
-                        ) as Partial<PlotData>;
+                        const trace = plotRankedCorrelations(rankedParameters, color) as Partial<PlotData>;
 
                         figure.addTrace(trace, rowIndex + 1, colIndex + 1);
 
-                        const channelTitle = responseData.metaData.displayString;
+                        const channelTitle = responseChannelData.metaData.displayString;
                         figure.updateSubplotTitle(`<b>${channelTitle}</b>`, rowIndex + 1, colIndex + 1);
 
                         const layoutPatch: Partial<Layout> = {
                             [`xaxis${cellIndex + 1}`]: {
                                 zeroline: true,
-                                // range: [-xRange, xRange],
                             },
                             [`yaxis${cellIndex + 1}`]: {
                                 autorange: "reversed",
@@ -241,19 +216,10 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
 
 View.displayName = "View";
 
-type Parameter = {
-    ident: ParameterIdent;
-    values: number[];
-    realizations: number[];
-};
-type Response = {
-    key: number;
-    value: number;
-};
-
 function pearsonCorrelation(x: number[], y: number[]): number | null {
+    // to be improved
     const n = x.length;
-    if (n < 2) return null; // Not enough data
+    if (n < 2) return null; //  Cant corrlate with less than 2 points
 
     const avgX = x.reduce((a, b) => a + b, 0) / n;
     const avgY = y.reduce((a, b) => a + b, 0) / n;
@@ -271,7 +237,7 @@ function pearsonCorrelation(x: number[], y: number[]): number | null {
     }
 
     if (denomX === 0 || denomY === 0) {
-        return null; // Handle zero variance
+        return null; // No variation in one of the variables
     }
 
     const denominator = Math.sqrt(denomX * denomY);
@@ -282,9 +248,24 @@ type RankedParameter = {
     correlation: number | null;
     absCorrelation: number | null;
 };
+type ResponseData = {
+    realizations: number[];
+    values: number[];
+    displayName: string;
+};
+function rankParameters(
+    parameters: Parameter[],
+    responses: ResponseData,
+    numParams: number,
+    absCutoff: number,
+): RankedParameter[] {
+    const responseValueMap = new Map<number, number>();
 
-function rankParameters(parameters: Parameter[], responses: Response[]): RankedParameter[] {
-    const responseMap = new Map(responses.map((r) => [r.key, r.value]));
+    for (let i = 0; i < responses.realizations.length; i++) {
+        const realization = responses.realizations[i];
+        const value = responses.values[i] as number;
+        responseValueMap.set(realization, value);
+    }
 
     const correlations = parameters.map((param) => {
         const x: number[] = [];
@@ -292,10 +273,12 @@ function rankParameters(parameters: Parameter[], responses: Response[]): RankedP
 
         for (let i = 0; i < param.realizations.length; i++) {
             const realization = param.realizations[i];
-            const responseValue = responseMap.get(realization);
-            //
+            const parameterValue = param.values[i] as number;
+
+            const responseValue = responseValueMap.get(realization);
+
             if (responseValue !== undefined) {
-                x.push(param.values[i]);
+                x.push(parameterValue);
                 y.push(responseValue);
             }
         }
@@ -303,29 +286,30 @@ function rankParameters(parameters: Parameter[], responses: Response[]): RankedP
         const corr = pearsonCorrelation(x, y);
 
         return {
-            ident: param.ident,
+            ident: ParameterIdent.fromNameAndGroup(param.name, param.groupName),
             correlation: corr,
             absCorrelation: corr !== null ? Math.abs(corr) : null,
         };
     });
 
-    return correlations.filter((c) => c.correlation !== null).sort((a, b) => b.absCorrelation! - a.absCorrelation!);
+    return correlations
+        .filter((c) => c.absCorrelation !== null) // Filter out null correlations
+        .filter((c) => Math.abs(c.absCorrelation!) >= absCutoff) // Filter by absolute cutoff
+        .sort((a, b) => b.absCorrelation! - a.absCorrelation!) // Sort by absolute correlation
+        .slice(0, numParams); // Limit to numParams
 }
 
-function plotRankedCorrelations(ranked: RankedParameter[], numParams: number, color?: string): Partial<PlotData> {
-    // Filter out any nulls to ensure safe plotting
-    const filtered = ranked.filter((p) => p.correlation !== null && p.absCorrelation !== null).slice(0, numParams);
-
-    const identStrings = filtered.map((p) => p.ident.toString());
-    const names = filtered.map((p) => p.ident.name);
-    const correlations = filtered.map((p) => p.correlation!); // safe after filter
+function plotRankedCorrelations(rankedParameters: RankedParameter[], color?: string): Partial<PlotData> {
+    const identStrings = rankedParameters.map((p) => p.ident.toString());
+    const names = rankedParameters.map((p) => p.ident.name);
+    const correlations = rankedParameters.map((p) => p.correlation!);
 
     const trace: Partial<PlotData> = {
         x: correlations,
         y: names,
         customdata: identStrings,
         type: "bar",
-        orientation: "h" as const,
+        orientation: "h",
         marker: {
             size: 20,
             color: "rgba(0.0, 112.0, 121.0, .5)",
@@ -334,6 +318,11 @@ function plotRankedCorrelations(ranked: RankedParameter[], numParams: number, co
                 color: "rgba(0.0, 112.0, 121.0, 1)",
                 width: 1,
             },
+        },
+        hovertemplate: "Parameter = <b>%{y}</b><br>Correlation = <b>%{x}</b><extra></extra>",
+        hoverlabel: {
+            bgcolor: "white",
+            font: { size: 12, color: "black" },
         },
     };
 

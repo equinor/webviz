@@ -1,3 +1,4 @@
 import "./oatTimeSeries";
-import "./inplaceDashboard";
-import "./wellVectors";
+import "./inplaceParameterCorrelation";
+import "./wellVectorCorrelation";
+import "./fieldProduction";
