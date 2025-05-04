@@ -339,9 +339,3 @@ function plotRankedCorrelations(ranked: RankedParameter[], numParams: number, co
 
     return trace;
 }
-// function handleParameterChange(newParameter: string | null) {
-//     setUserSelectedRegularEnsembleIdent(newEnsembleIdent);
-//     if (newEnsembleIdent) {
-//         syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);
-//     }
-// }

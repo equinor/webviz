@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Input, Warning } from "@mui/icons-material";
-import type { Layout, PlotData } from "plotly.js";
+import type { Layout, PlotData, PlotMouseEvent } from "plotly.js";
 
 import { KeyKind } from "@framework/DataChannelTypes";
 import type { ModuleViewProps } from "@framework/Module";

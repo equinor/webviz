@@ -70,8 +70,9 @@ import {
 } from "./atoms/derivedAtoms";
 import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
+import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 
-export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
+export function Settings({ initialSettings, settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
 
@@ -100,6 +101,9 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);
     const setUserSelectedParameterIdentStr = useSetAtom(userSelectedParameterIdentStringAtom);
     const selectedParameterIdentStr = useAtomValue(selectedParameterIdentStringAtom);
+
+    useApplyInitialSettingsToState(initialSettings, "selectedVectorTags", "array", setSelectedVectorTags);
+    useApplyInitialSettingsToState(initialSettings, "visualizationMode", "string", setVisualizationMode);
 
     useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
 
@@ -324,6 +328,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             lineBreakAfterTag={true}
                             onChange={handleVectorSelectionChange}
                             customVectorDefinitions={customVectorDefinitions ?? undefined}
+                            selectedTags={selectedVectorTags}
                         />
                     </QueryStateWrapper>
                 </div>
