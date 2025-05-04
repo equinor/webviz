@@ -82,6 +82,7 @@ const template: Template = {
             initialSettings: {
                 plotType: CorrPlotType.ParameterCorrelation,
                 crossPlottingType: KeyKind.REALIZATION,
+                showLabels: true,
             },
         },
     ],
