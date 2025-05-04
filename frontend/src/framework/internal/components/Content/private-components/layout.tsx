@@ -5,7 +5,7 @@ import { v4 } from "uuid";
 import type { LayoutBox } from "@framework/components/LayoutBox";
 import { LayoutBoxComponents, makeLayoutBoxes } from "@framework/components/LayoutBox";
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
-import { GuiEvent } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, LeftDrawerContent } from "@framework/GuiMessageBroker";
 import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import type { LayoutElement, Workbench } from "@framework/Workbench";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -14,9 +14,11 @@ import { MANHATTAN_LENGTH, addMarginToRect, pointRelativeToDomRect, rectContains
 import type { Vec2 } from "@lib/utils/vec2";
 import { multiplyVec2, point2Distance, scaleVec2NonUniform, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
 
-
 import { ViewWrapper } from "./ViewWrapper";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
+import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
+import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
+import HistoryIcon from "@mui/icons-material/History"; // Icon for the "Pick up" section
 
 type LayoutProps = {
     workbench: Workbench;
@@ -34,6 +36,7 @@ function convertLayoutRectToRealRect(element: LayoutElement, size: Size2D): Rect
 
 export const Layout: React.FC<LayoutProps> = (props) => {
     const [draggedModuleInstanceId, setDraggedModuleInstanceId] = React.useState<string | null>(null);
+    const [firstUse, setFirstUse] = React.useState<boolean>(true);
     const [position, setPosition] = React.useState<Vec2>({ x: 0, y: 0 });
     const [pointer, setPointer] = React.useState<Vec2>({ x: -1, y: -1 });
     const [layout, setLayout] = React.useState<LayoutElement[]>([]);
@@ -122,6 +125,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 layoutBoxRef.current = currentLayoutBox;
                 setLayout(currentLayout);
                 props.workbench.setLayout(currentLayout);
+
                 setPosition({ x: 0, y: 0 });
                 setPointer({ x: -1, y: -1 });
 
@@ -341,7 +345,35 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             />
         );
     }
+    function handleSelectTemplates() {
+        props.workbench.getGuiMessageBroker().setState(GuiState.LeftDrawerContent, LeftDrawerContent.TemplatesList);
+        props.workbench.getGuiMessageBroker().setState(GuiState.LeftSettingsPanelWidthInPercent, 20);
+    }
+    function handleSelectModules() {
+        props.workbench.getGuiMessageBroker().setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModulesList);
+        props.workbench.getGuiMessageBroker().setState(GuiState.LeftSettingsPanelWidthInPercent, 20);
+    }
+    if (firstUse && layout.length === 0) {
+        setFirstUse(false);
+        props.workbench.getGuiMessageBroker().setState(GuiState.LeftSettingsPanelWidthInPercent, 1);
+    }
+    const recentLayouts = [
+        { id: "recent1", description: "Til partnermøte", date: "2025-05-02" },
+        { id: "recent2", description: "22-A", date: "2025-04-28" },
+        { id: "recent3", description: "Blablabla", date: "2025-04-25" },
+    ];
 
+    const formatDate = (dateString: string) => {
+        try {
+            return new Date(dateString).toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+            });
+        } catch (e) {
+            return dateString;
+        }
+    };
     return (
         <div ref={mainRef} className="relative flex h-full w-full">
             <div ref={ref} className="h-full grow">
@@ -353,6 +385,65 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                         zIndex={1}
                         pointer={pointer}
                     />
+                )}
+
+                {layout.length === 0 && (
+                    <div className="flex flex-col   justify-center h-full w-full p-8 overflow-y-auto">
+                        <div className="flex w-full   items-stretch justify-center gap-8 mb-12">
+                            <div
+                                onClick={handleSelectModules}
+                                className="flex flex-1 flex-col items-center justify-center p-10 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 min-h-64 text-center cursor-pointer hover:shadow-xl transition-shadow duration-200" // Use min-h-64 instead of h-64
+                            >
+                                <LightbulbOutlinedIcon className="w-12 h-12 mb-4 text-yellow-500" />
+                                <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Start fresh</h3>
+                                <p className="text-gray-600 dark:text-gray-400 mt-2">
+                                    Start by dragging in a module from the left sidebar.
+                                </p>
+                            </div>
+
+                            <div
+                                onClick={() => handleSelectTemplates()}
+                                className="flex flex-1 flex-col items-center justify-center p-10 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 min-h-64 text-center cursor-pointer hover:shadow-xl transition-shadow duration-200"
+                            >
+                                <ArticleOutlinedIcon className="w-12 h-12 mb-4 text-blue-500" />
+                                <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+                                    Start from template
+                                </h3>
+                                <p className="text-gray-600 dark:text-gray-400 mt-2">
+                                    Choose an existing layout template.
+                                </p>
+                            </div>
+                        </div>
+
+                        {recentLayouts && recentLayouts.length > 0 && (
+                            <div className="w-full max-w-2xl mx-auto   items-center justify-center p-10 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 min-h-64 text-center">
+                                {" "}
+                                <h4 className="text-lg font-semibold text-center text-gray-700 dark:text-gray-300 mb-4 flex items-center justify-center gap-2">
+                                    <HistoryIcon className="w-5 h-5" />
+                                    Pick up where you left off
+                                </h4>
+                                <ul className="space-y-3">
+                                    {" "}
+                                    {recentLayouts.map((item) => (
+                                        <li
+                                            key={item.id}
+                                            className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150 shadow-sm"
+                                        >
+                                            <span className="text-sm text-gray-800 dark:text-gray-200 font-medium">
+                                                {item.description}
+                                            </span>
+                                            <time
+                                                dateTime={item.date}
+                                                className="text-xs text-gray-500 dark:text-gray-400"
+                                            >
+                                                {formatDate(item.date)}
+                                            </time>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
                 )}
                 {moduleInstances.map((instance) => {
                     const layoutElement = layout.find((element) => element.moduleInstanceId === instance.getId());
