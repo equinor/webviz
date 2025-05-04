@@ -33,3 +33,6 @@ DEFAULT_CACHE_MAX_AGE = 3600  # 1 hour
 DEFAULT_STALE_WHILE_REVALIDATE = 3600 * 24  # 24 hour
 REDIS_USER_SESSION_URL = "redis://redis-user-session:6379"
 REDIS_CACHE_URL = "redis://redis-cache:6379"
+
+COSMOS_DB_URI = os.environ["WEBVIZ_COSMOS_DB_URI"]
+COSMOS_DB_KEY = os.environ["WEBVIZ_COSMOS_DB_KEY"]
