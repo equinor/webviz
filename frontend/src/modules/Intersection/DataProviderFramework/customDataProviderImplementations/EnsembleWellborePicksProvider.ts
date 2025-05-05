@@ -91,7 +91,7 @@ export class EnsembleWellborePicksProvider
 
             const picksByInterpreter = groupBy(wellborePicks, "interpreter");
 
-            return keys(picksByInterpreter);
+            return Array.from(keys(picksByInterpreter)).sort();
         });
 
         availableSettingsUpdater(Setting.WELLBORE_PICKS, ({ getLocalSetting, getHelperDependency }) => {
@@ -102,7 +102,7 @@ export class EnsembleWellborePicksProvider
                 return [];
             }
 
-            return filter(wellborePicks, ["interpreter", interpreter]);
+            return filter(wellborePicks, ["interpreter", interpreter]).sort();
         });
     }
 

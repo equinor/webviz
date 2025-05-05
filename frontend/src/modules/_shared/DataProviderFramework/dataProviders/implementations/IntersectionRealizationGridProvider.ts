@@ -183,7 +183,7 @@ export class IntersectionRealizationGridProvider
                 return [];
             }
 
-            const availableGridNames = [...Array.from(new Set(data.map((gridModelInfo) => gridModelInfo.grid_name)))];
+            const availableGridNames = Array.from(new Set(data.map((gridModelInfo) => gridModelInfo.grid_name))).sort();
 
             return availableGridNames;
         });
@@ -199,16 +199,16 @@ export class IntersectionRealizationGridProvider
             const gridAttributeArr =
                 data.find((gridModel) => gridModel.grid_name === gridName)?.property_info_arr ?? [];
 
-            const availableGridAttributes = [
-                ...Array.from(new Set(gridAttributeArr.map((gridAttribute) => gridAttribute.property_name))),
-            ];
+            const availableGridAttributes = Array.from(
+                new Set(gridAttributeArr.map((gridAttribute) => gridAttribute.property_name)),
+            ).sort();
 
             return availableGridAttributes;
         });
 
-        const wellboreHeadersDep = helperDependency(({ getLocalSetting, abortSignal }) =>
-            fetchWellboreHeaders(getLocalSetting(Setting.ENSEMBLE), abortSignal, workbenchSession, queryClient),
-        );
+        const wellboreHeadersDep = helperDependency(({ getLocalSetting, abortSignal }) => {
+            return fetchWellboreHeaders(getLocalSetting(Setting.ENSEMBLE), abortSignal, workbenchSession, queryClient);
+        });
 
         availableSettingsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
@@ -229,15 +229,13 @@ export class IntersectionRealizationGridProvider
             const gridAttributeArr =
                 data.find((gridModel) => gridModel.grid_name === gridName)?.property_info_arr ?? [];
 
-            const availableTimeOrIntervals = [
-                ...Array.from(
-                    new Set(
-                        gridAttributeArr
-                            .filter((attr) => attr.property_name === gridAttribute)
-                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
-                    ),
+            const availableTimeOrIntervals = Array.from(
+                new Set(
+                    gridAttributeArr
+                        .filter((attr) => attr.property_name === gridAttribute)
+                        .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
                 ),
-            ];
+            ).sort();
 
             return availableTimeOrIntervals;
         });

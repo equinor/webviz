@@ -158,7 +158,7 @@ export class RealizationSurfacesProvider
                 return [];
             }
 
-            return Array.from(new Set(depthSurfacesMetadata.map((elm) => elm.attribute_name)));
+            return Array.from(new Set(depthSurfacesMetadata.map((elm) => elm.attribute_name))).sort();
         });
 
         availableSettingsUpdater(Setting.SURFACE_NAMES, ({ getHelperDependency }) => {
@@ -168,7 +168,7 @@ export class RealizationSurfacesProvider
                 return [];
             }
 
-            return Array.from(new Set(depthSurfacesMetadata.map((elm) => elm.name)));
+            return Array.from(new Set(depthSurfacesMetadata.map((elm) => elm.name))).sort();
         });
 
         // Create intersection polyline and actual section lengths data asynchronously
