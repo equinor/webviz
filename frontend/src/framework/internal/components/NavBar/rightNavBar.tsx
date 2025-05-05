@@ -5,7 +5,7 @@ import { FilterAlt, History } from "@mui/icons-material";
 import { GuiState, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
-import { Button } from "@lib/components/Button";
+import { NavBarButton } from "@lib/components/NavBarButton";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type RightNavBarProps = {
@@ -58,40 +58,29 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
             )}
         >
             <div className="flex flex-col gap-2 grow">
-                <Button
+                <NavBarButton
+                    active={drawerContent === RightDrawerContent.RealizationFilterSettings}
                     title={`Open realization filter panel${
                         numberOfUnsavedRealizationFilters === 0 ? "" : " (unsaved changes)"
                     }`}
-                    onClick={handleRealizationFilterClick}
-                    className={resolveClassNames(
-                        "w-full",
-                        "h-10",
-                        drawerContent === RightDrawerContent.RealizationFilterSettings && rightSettingsPanelWidth > 0
-                            ? "text-cyan-600"
-                            : "text-slate-800!",
-                    )}
-                >
-                    {numberOfUnsavedRealizationFilters !== 0 ? (
-                        <Badge badgeContent="!" color="bg-orange-500">
-                            <FilterAlt fontSize="small" className="w-5 h-5 mr-2" />
+                    icon={
+                        <Badge
+                            badgeContent="!"
+                            color="bg-orange-500"
+                            invisible={numberOfUnsavedRealizationFilters === 0}
+                        >
+                            <FilterAlt fontSize="small" className="size-5 mr-2" />
                         </Badge>
-                    ) : (
-                        <FilterAlt fontSize="small" className="w-5 h-5 mr-2" />
-                    )}
-                </Button>
-                <Button
-                    title="Open realization filter panel"
+                    }
+                    onClick={handleRealizationFilterClick}
+                />
+
+                <NavBarButton
+                    icon={<History fontSize="small" className="size-5 mr-2" />}
+                    active={drawerContent === RightDrawerContent.ModuleInstanceLog}
+                    title="Open module history"
                     onClick={handleModuleInstanceLogClick}
-                    className={resolveClassNames(
-                        "w-full",
-                        "h-10",
-                        drawerContent === RightDrawerContent.ModuleInstanceLog && rightSettingsPanelWidth > 0
-                            ? "text-cyan-600"
-                            : "text-slate-800!",
-                    )}
-                >
-                    <History fontSize="small" className="w-5 h-5 mr-2" />
-                </Button>
+                />
             </div>
         </div>
     );
