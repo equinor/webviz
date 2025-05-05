@@ -1,7 +1,5 @@
-
 import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import type { DataProvider } from "../framework/DataProvider/DataProvider";
 import {
     type DataProviderManager,
     DataProviderManagerTopic,
@@ -25,8 +23,8 @@ export enum SettingsContextStatus {
 }
 
 export enum SettingsContextDelegateTopic {
-    SETTINGS_AND_STORED_DATA_CHANGED = "SETTINGS_CHANGED",
-    STATUS = "LOADING_STATE_CHANGED",
+    SETTINGS_AND_STORED_DATA_CHANGED = "SETTINGS_AND_STORED_DATA_CHANGED",
+    STATUS = "STATUS",
 }
 
 export type SettingsContextDelegatePayloads = {
@@ -58,7 +56,6 @@ export class SettingsContextDelegate<
     TStoredDataKey extends keyof TStoredData = keyof TStoredData,
 > implements PublishSubscribe<SettingsContextDelegatePayloads>
 {
-    private _owner: DataProvider<TSettings, any, TStoredData, TSettingTypes, TSettingKey>;
     private _customSettingsHandler: CustomSettingsHandler<
         TSettings,
         TStoredData,
@@ -80,7 +77,6 @@ export class SettingsContextDelegate<
     private _dependencies: Dependency<any, TSettings, any, any>[] = [];
 
     constructor(
-        owner: DataProvider<TSettings, any, TStoredData, TSettingTypes, TSettingKey>,
         customSettingsHandler: CustomSettingsHandler<
             TSettings,
             TStoredData,
@@ -91,7 +87,6 @@ export class SettingsContextDelegate<
         dataProviderManager: DataProviderManager,
         settings: { [K in TSettingKey]: SettingManager<K> },
     ) {
-        this._owner = owner;
         this._customSettingsHandler = customSettingsHandler;
         this._dataProviderManager = dataProviderManager;
 
@@ -100,8 +95,8 @@ export class SettingsContextDelegate<
             this.getDataProviderManager()
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(DataProviderManagerTopic.GLOBAL_SETTINGS)(() => {
-                    this.handleSettingChanged();
-                }),
+                this.handleSettingChanged();
+            }),
         );
 
         for (const key in settings) {
@@ -305,11 +300,12 @@ export class SettingsContextDelegate<
 
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "dependencies",
-                this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_LOADING)(() => {
-                    if (!this._settings[key].isLoading()) {
-                        handleChange();
-                    }
-                }
+                this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_LOADING)(
+                    () => {
+                        if (!this._settings[key].isLoading()) {
+                            handleChange();
+                        }
+                    },
                 ),
             );
 
@@ -342,7 +338,7 @@ export class SettingsContextDelegate<
 
         const loadingStateGetter = <K extends TSettingKey>(settingKey: K): boolean => {
             return this._settings[settingKey].isLoading();
-        }
+        };
 
         const availableSettingsUpdater = <K extends TSettingKey>(
             settingKey: K,
@@ -419,7 +415,7 @@ export class SettingsContextDelegate<
                 TSettings,
                 TSettingTypes,
                 TSettingKey
-            >(this, updateFunc, makeLocalSettingGetter,loadingStateGetter, makeGlobalSettingGetter);
+            >(this, updateFunc, makeLocalSettingGetter, loadingStateGetter, makeGlobalSettingGetter);
             this._dependencies.push(dependency);
 
             dependency.subscribe((storedData: TStoredData[K] | null) => {
@@ -506,7 +502,11 @@ export class SettingsContextDelegate<
             return;
         }
 
-        if (this.isSomePersistedSettingNotValid() || !this.areCurrentSettingsValid() || !this.areAllSettingsInitialized()) {
+        if (
+            this.isSomePersistedSettingNotValid() ||
+            !this.areCurrentSettingsValid() ||
+            !this.areAllSettingsInitialized()
+        ) {
             this.setStatus(SettingsContextStatus.INVALID_SETTINGS);
             return;
         }

@@ -132,7 +132,6 @@ export class DataProvider<
         this._type = type;
         this._dataProviderManager = dataProviderManager;
         this._settingsContextDelegate = new SettingsContextDelegate<TSettings, TSettingTypes, TStoredData, TSettingKey>(
-            this,
             customDataProviderImplementation,
             dataProviderManager,
             makeSettings<TSettings, TSettingTypes, TSettingKey>(
