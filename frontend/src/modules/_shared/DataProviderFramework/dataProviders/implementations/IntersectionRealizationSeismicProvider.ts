@@ -185,7 +185,7 @@ export class IntersectionRealizationSeismicProvider
                         .filter((el) => el.isDepth && el.isObservation === doRequestObservation)
                         .map((el) => el.seismicAttribute),
                 ),
-            );
+            ).sort();
 
             return availableAttributes;
         });
@@ -198,9 +198,7 @@ export class IntersectionRealizationSeismicProvider
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
 
-            const tmp = getAvailableIntersectionOptions(wellboreHeaders, intersectionPolylines);
-
-            return tmp;
+            return getAvailableIntersectionOptions(wellboreHeaders, intersectionPolylines);
         });
 
         availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
@@ -218,7 +216,7 @@ export class IntersectionRealizationSeismicProvider
                             .filter((surface) => surface.seismicAttribute === seismicAttribute)
                             .map((el) => el.isoDateOrInterval),
                     ),
-                ),
+                ).sort(),
             ];
 
             return availableTimeOrIntervals;
