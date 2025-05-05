@@ -9,7 +9,7 @@ class DashboardAccess:
         query = f"SELECT * FROM dashboards WHERE id = '{dashboard_id}'"
         return self.container_access.query_items(query)
 
-    def get_all_dashboards(self):
+    def get_all_dashboards_for_user(self, user_id: str):
         query = "SELECT * FROM dashboards"
         self.db.execute(query)
         return self.db.fetchall()
