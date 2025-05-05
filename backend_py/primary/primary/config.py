@@ -36,3 +36,6 @@ REDIS_CACHE_URL = "redis://redis-cache:6379"
 
 COSMOS_DB_URI = os.environ["WEBVIZ_COSMOS_DB_URI"]
 COSMOS_DB_KEY = os.environ["WEBVIZ_COSMOS_DB_KEY"]
+
+PERISTENCE_DB_NAME = "persistence"
+DASHBOARDS_CONTAINER_NAME = "dashboards"
