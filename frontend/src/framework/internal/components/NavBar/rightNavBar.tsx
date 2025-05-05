@@ -30,14 +30,25 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
         }
     }
 
+    function hideSettingsPanel() {
+        setRightSettingsPanelWidth(0);
+        setDrawerContent(undefined);
+    }
+
+    function togglePanelContent(targetContent: RightDrawerContent) {
+        if (targetContent === drawerContent) hideSettingsPanel();
+        else {
+            setDrawerContent(targetContent);
+            ensureSettingsPanelIsVisible();
+        }
+    }
+
     function handleRealizationFilterClick() {
-        ensureSettingsPanelIsVisible();
-        setDrawerContent(RightDrawerContent.RealizationFilterSettings);
+        togglePanelContent(RightDrawerContent.RealizationFilterSettings);
     }
 
     function handleModuleInstanceLogClick() {
-        ensureSettingsPanelIsVisible();
-        setDrawerContent(RightDrawerContent.ModuleInstanceLog);
+        togglePanelContent(RightDrawerContent.ModuleInstanceLog);
     }
 
     return (

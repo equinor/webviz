@@ -86,7 +86,7 @@ export type GuiEventPayloads = {
 
 type GuiStateValueTypes = {
     [GuiState.LeftDrawerContent]: LeftDrawerContent;
-    [GuiState.RightDrawerContent]: RightDrawerContent;
+    [GuiState.RightDrawerContent]: RightDrawerContent | undefined;
     [GuiState.LeftSettingsPanelWidthInPercent]: number;
     [GuiState.ActiveModuleInstanceId]: string;
     [GuiState.DataChannelConnectionLayerVisible]: boolean;
@@ -99,7 +99,7 @@ type GuiStateValueTypes = {
 
 const defaultStates: Map<GuiState, any> = new Map();
 defaultStates.set(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
-defaultStates.set(GuiState.RightDrawerContent, RightDrawerContent.RealizationFilterSettings);
+defaultStates.set(GuiState.RightDrawerContent, undefined);
 defaultStates.set(GuiState.LeftSettingsPanelWidthInPercent, 30);
 defaultStates.set(GuiState.ActiveModuleInstanceId, "");
 defaultStates.set(GuiState.DataChannelConnectionLayerVisible, false);
@@ -151,7 +151,7 @@ export class GuiMessageBroker {
             // However, in the future, we may want to store at least some of them in a database on the server
             const stateValue = this._storedValues.get(state);
             if (stateValue === undefined || stateValue === null) {
-                return;
+                return localStorage.removeItem(state);
             }
             localStorage.setItem(state, JSON.stringify(stateValue));
         }
