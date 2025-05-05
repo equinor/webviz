@@ -35,6 +35,8 @@ services:
             - OTEL_SERVICE_NAME=primary-backend
             - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=dummy0.1.2
             - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
+            - WEBVIZ_COSMOS_DB_URI
+            - WEBVIZ_COSMOS_DB_KEY
         volumes:
             - ./backend_py/primary/primary:/home/appuser/backend_py/primary/primary
             - ./backend_py/libs:/home/appuser/backend_py/libs

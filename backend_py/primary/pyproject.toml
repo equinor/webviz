@@ -30,6 +30,7 @@ core_utils = {path = "../libs/core_utils", develop = true}
 server_schemas = {path = "../libs/server_schemas", develop = true}
 polars = "^1.6.0"
 azure-cosmos = "^4.9.0"
+aiohttp = "^3.11.18"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.12.0"
