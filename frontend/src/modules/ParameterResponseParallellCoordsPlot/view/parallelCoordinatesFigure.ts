@@ -1,7 +1,8 @@
-import { RankedParameterCorrelation, RankedParameterData, ResponseData } from "../../_shared/utils/rankParameter";
-import { Size2D } from "@lib/utils/geometry";
-import { Figure, makeSubplots } from "@modules/_shared/Figure";
-import type { PlotData } from "plotly.js";
+import type { Size2D } from "@lib/utils/geometry";
+import type { Figure } from "@modules/_shared/Figure";
+import { makeSubplots } from "@modules/_shared/Figure";
+
+import type { RankedParameterData, ResponseData } from "../../_shared/rankParameter";
 
 export class ParallelCoordinatesFigure {
     private _figure: Figure;
@@ -39,7 +40,7 @@ export class ParallelCoordinatesFigure {
             colorscale?: string;
             showColorScale?: boolean;
             lineColor?: string;
-        }
+        },
     ) {
         const { trace, dimensions } = createPlotParallelCoordinates(responseData, rankedParameters, options);
         this._figure.addTrace(trace, 1, 1);
@@ -60,7 +61,7 @@ function createPlotParallelCoordinates(
         colorscale?: string;
         showColorScale?: boolean;
         lineColor?: string;
-    } = {}
+    } = {},
 ): any {
     const { colorscale = "Viridis", showColorScale = true, lineColor } = options;
 
@@ -90,8 +91,6 @@ function createPlotParallelCoordinates(
             showscale: showColorScale,
         };
     }
-    const xStart = parameterDimensions.length / 100;
-    console.log("xStart", xStart);
     const trace: any = {
         type: "parcoords",
         dimensions: allDimensions,

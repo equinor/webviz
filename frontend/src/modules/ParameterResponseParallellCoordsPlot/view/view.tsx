@@ -1,7 +1,10 @@
-import type { Interfaces } from "../interfaces";
-import { ParallelCoordinatesFigure } from "./parallelCoordinatesFigure";
+import React from "react";
+
+import { Input, Warning } from "@mui/icons-material";
+
 import { KeyKind } from "@framework/DataChannelTypes";
-import { ContinuousParameter, ParameterType } from "@framework/EnsembleParameters";
+import type { ContinuousParameter } from "@framework/EnsembleParameters";
+import { ParameterType } from "@framework/EnsembleParameters";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -10,13 +13,12 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
-import {
-    createRankedParameterCorrelations,
-    getRankedParameterData,
-    ResponseData,
-} from "@modules/_shared/utils/rankParameter";
-import { Input, Warning } from "@mui/icons-material";
-import React from "react";
+import type { ResponseData } from "@modules/_shared/rankParameter";
+import { createRankedParameterCorrelations, getRankedParameterData } from "@modules/_shared/rankParameter";
+
+import type { Interfaces } from "../interfaces";
+
+import { ParallelCoordinatesFigure } from "./parallelCoordinatesFigure";
 
 const MAX_NUM_PLOTS = 1;
 
@@ -82,7 +84,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                             <Input />
                         </span>
                         <Tag label="Response" />
-                    </ContentInfo>
+                    </ContentInfo>,
                 );
                 return;
             }
@@ -91,7 +93,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                 setContent(
                     <ContentInfo>
                         No data on <Tag label={receiverResponse.displayName} />
-                    </ContentInfo>
+                    </ContentInfo>,
                 );
                 return;
             }
@@ -100,7 +102,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                     <ContentWarning>
                         <Warning fontSize="large" className="mb-2" />
                         Only one channel is supported. Please select a single channel.
-                    </ContentWarning>
+                    </ContentWarning>,
                 );
                 return;
             }
@@ -113,7 +115,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                     <ContentWarning>
                         <Warning fontSize="large" className="mb-2" />
                         Ensemble not found. Please select a valid ensemble.
-                    </ContentWarning>
+                    </ContentWarning>,
                 );
                 return;
             }
@@ -133,7 +135,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                     <ContentWarning>
                         <Warning fontSize="large" className="mb-2" />
                         No parameters found in ensemble
-                    </ContentWarning>
+                    </ContentWarning>,
                 );
                 return;
             }
@@ -147,7 +149,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                 parameters,
                 responseData,
                 numParams,
-                corrCutOff
+                corrCutOff,
             );
             const rankedParametersData = getRankedParameterData(rankedParameterCorrelations, parameters);
             const figure = new ParallelCoordinatesFigure(wrapperDivSize);

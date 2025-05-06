@@ -65,7 +65,7 @@ export function usePublishToDataChannels(viewContext: ViewContext<Interfaces>) {
     viewContext.usePublishChannelContents({
         channelIdString: ChannelIds.TIME_SERIES,
         dependencies: [regularEnsembleVectorSpecificationsAndRealizationData, activeTimestampUtcMs],
-        // enabled: !isQueryFetching,
+        enabled: !isQueryFetching,
         contents,
     });
 }

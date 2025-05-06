@@ -1,7 +1,10 @@
-import type { Interfaces } from "../interfaces";
-import { ParameterCorrelationFigure } from "./parameterCorrelationFigure";
+import React from "react";
+
+import { Input, Warning } from "@mui/icons-material";
+
 import { KeyKind } from "@framework/DataChannelTypes";
-import { ContinuousParameter, ParameterType } from "@framework/EnsembleParameters";
+import type { ContinuousParameter } from "@framework/EnsembleParameters";
+import { ParameterType } from "@framework/EnsembleParameters";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -10,13 +13,14 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
-import {
-    createRankedParameterCorrelations,
-    getRankedParameterData,
-    ResponseData,
-} from "@modules/_shared/utils/rankParameter";
-import { Input, Warning } from "@mui/icons-material";
-import React from "react";
+import type { ResponseData } from "@modules/_shared/rankParameter";
+import { createRankedParameterCorrelations } from "@modules/_shared/rankParameter";
+
+import type { Interfaces } from "../interfaces";
+
+import { ParameterCorrelationFigure } from "./parameterCorrelationFigure";
+import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { PlotDatum, PlotMouseEvent } from "plotly.js";
 
 const MAX_NUM_PLOTS = 12;
 
@@ -32,7 +36,7 @@ const MaxNumberPlotsExceededMessage: React.FC = () => {
 
 MaxNumberPlotsExceededMessage.displayName = "MaxNumberPlotsExceededMessage";
 
-export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfaces>) => {
+export const View = ({ viewContext, workbenchSession, workbenchServices }: ModuleViewProps<Interfaces>) => {
     const [isPending, startTransition] = React.useTransition();
     const [content, setContent] = React.useState<React.ReactNode>(null);
     const [revNumberResponse, setRevNumberResponse] = React.useState<number>(0);
@@ -40,6 +44,30 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
     const [prevCorrCutOff, setPrevCorrCutOff] = React.useState<number>(0.0);
     const [prevShowLabels, setPrevShowLabels] = React.useState<boolean | null>(null);
     const [prevSize, setPrevSize] = React.useState<Size2D | null>(null);
+    const [localParameterString, setLocalParameterString] = React.useState<string | null>(null);
+    const [prevParameterIdentString, setPrevParameterIdentString] = React.useState<string | null>(null);
+
+    const syncedSettingKeys = viewContext.useSyncedSettingKeys();
+    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
+    const globalSyncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
+
+    // Receive global string and update local state if different
+    React.useEffect(() => {
+        if (globalSyncedParameter !== null && globalSyncedParameter !== localParameterString) {
+            setLocalParameterString(globalSyncedParameter);
+        }
+    }, [globalSyncedParameter, localParameterString]);
+
+    function handleClickInChart(e: PlotMouseEvent) {
+        const clickedPoint: PlotDatum = e.points[0];
+        if (!clickedPoint) {
+            return;
+        }
+        const newParameterString = clickedPoint.customdata as string;
+        syncHelper.publishValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter", newParameterString);
+        setLocalParameterString(newParameterString);
+        console.log("Clicked parameter: ", newParameterString);
+    }
 
     const numParams = viewContext.useSettingsToViewInterfaceValue("numParams");
     const corrCutOff = viewContext.useSettingsToViewInterfaceValue("corrCutOff");
@@ -63,6 +91,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
         numParams !== prevNumParams ||
         corrCutOff !== prevCorrCutOff ||
         showLabels !== prevShowLabels ||
+        localParameterString !== prevParameterIdentString ||
         wrapperDivSize !== prevSize
     ) {
         setRevNumberResponse(receiverResponse.revisionNumber);
@@ -70,6 +99,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
         setPrevNumParams(numParams);
         setPrevCorrCutOff(corrCutOff);
         setPrevShowLabels(showLabels);
+        setPrevParameterIdentString(localParameterString);
 
         setPrevSize(wrapperDivSize);
 
@@ -83,7 +113,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                             <Input />
                         </span>
                         <Tag label="Response" />
-                    </ContentInfo>
+                    </ContentInfo>,
                 );
                 return;
             }
@@ -92,7 +122,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                 setContent(
                     <ContentInfo>
                         No data on <Tag label={receiverResponse.displayName} />
-                    </ContentInfo>
+                    </ContentInfo>,
                 );
                 return;
             }
@@ -142,7 +172,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                         parameters,
                         responseData,
                         numParams,
-                        corrCutOff
+                        corrCutOff,
                     );
 
                     // const color = responseChannelData.metaData.preferredColor;
@@ -151,15 +181,16 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
 
                     figure.addCorrelationTrace(
                         rankedParameters,
+                        localParameterString,
                         rowIndex + 1,
                         colIndex + 1,
                         cellIndex,
-                        channelTitle ?? ""
+                        channelTitle ?? "",
                     );
                     cellIndex++;
                 }
             }
-            setContent(figure.build());
+            setContent(figure.build(handleClickInChart));
             return;
         });
     }

@@ -1,5 +1,6 @@
-import { corrCutOffAtom, numParamsAtom, showLabelsAtom } from "./settings/atoms/baseAtoms";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+
+import { corrCutOffAtom, numParamsAtom, showLabelsAtom } from "./settings/atoms/baseAtoms";
 
 type SettingsToViewInterface = {
     numParams: number;

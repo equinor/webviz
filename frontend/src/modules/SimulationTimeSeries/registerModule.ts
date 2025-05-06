@@ -5,6 +5,7 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { channelDefs } from "./channelDefs";
 import type { Interfaces } from "./interfaces";
 import { preview } from "./preview";
+import { SyncSettingKey } from "@framework/SyncSettings";
 
 export const MODULE_NAME = "SimulationTimeSeries";
 
@@ -16,6 +17,7 @@ ModuleRegistry.registerModule<Interfaces>({
     category: ModuleCategory.MAIN,
     devState: ModuleDevState.PROD,
     dataTagIds: [ModuleDataTagId.SUMMARY, ModuleDataTagId.OBSERVATIONS],
+    syncableSettingKeys: [SyncSettingKey.PARAMETER],
     preview,
     channelDefinitions: channelDefs,
     description,

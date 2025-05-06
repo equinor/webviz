@@ -1,5 +1,6 @@
 import React from "react";
 
+import { Input } from "@mui/icons-material";
 import { useSetAtom } from "jotai";
 
 import { KeyKind } from "@framework/DataChannelTypes";
@@ -20,7 +21,6 @@ import { SensitivityChart } from "./components/sensitivityChart";
 import SensitivityTable from "./components/sensitivityTable";
 import type { SensitivityResponseDataset } from "./utils/sensitivityResponseCalculator";
 import { SensitivityResponseCalculator } from "./utils/sensitivityResponseCalculator";
-import { Input } from "@mui/icons-material";
 
 export const View = ({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");

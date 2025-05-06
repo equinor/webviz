@@ -9,6 +9,7 @@ import { ParameterListFilter } from "@framework/components/ParameterListFilter";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { Parameter } from "@framework/EnsembleParameters";
 import { ParameterIdent } from "@framework/EnsembleParameters";
+import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -70,9 +71,14 @@ import {
 } from "./atoms/derivedAtoms";
 import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
-import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
+import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 
-export function Settings({ initialSettings, settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
+export function Settings({
+    initialSettings,
+    settingsContext,
+    workbenchSession,
+    workbenchServices,
+}: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
 
@@ -104,6 +110,29 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
 
     useApplyInitialSettingsToState(initialSettings, "selectedVectorTags", "array", setSelectedVectorTags);
     useApplyInitialSettingsToState(initialSettings, "visualizationMode", "string", setVisualizationMode);
+    useApplyInitialSettingsToState(
+        initialSettings,
+        "colorRealizationsByParameter",
+        "boolean",
+        setColorRealizationsByParameter,
+    );
+    useApplyInitialSettingsToState(
+        initialSettings,
+        "selectedParameterIdentString",
+        "string",
+        setUserSelectedParameterIdentStr,
+    );
+
+    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
+    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
+    const globalSyncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
+    console.log("globalSyncedParameter", globalSyncedParameter);
+    // Receive global parameter string and update local state if different
+    React.useEffect(() => {
+        if (globalSyncedParameter !== null && globalSyncedParameter !== selectedParameterIdentStr) {
+            setUserSelectedParameterIdentStr(globalSyncedParameter);
+        }
+    }, [globalSyncedParameter]);
 
     useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
 

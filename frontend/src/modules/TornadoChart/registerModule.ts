@@ -1,11 +1,11 @@
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
+import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import type { Interfaces } from "./interfaces";
 import { preview } from "./preview";
 import { receiverDefs } from "./receiverDefs";
-import { ModuleDataTagId } from "@framework/ModuleDataTags";
 
 export const MODULE_NAME = "TornadoChart";
 
@@ -19,7 +19,7 @@ ModuleRegistry.registerModule<Interfaces>({
     devState: ModuleDevState.PROD,
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
     dataTagIds: [ModuleDataTagId.PARAMETERS, ModuleDataTagId.SUMMARY, ModuleDataTagId.INPLACE_VOLUMETRICS],
-    preview,
+    // preview,
     channelReceiverDefinitions: receiverDefs,
     description,
 });
