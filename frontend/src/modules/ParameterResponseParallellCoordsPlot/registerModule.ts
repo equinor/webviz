@@ -4,7 +4,6 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import type { Interfaces } from "./interfaces";
-
 import { receiverDefs } from "./receiverDefs";
 
 ModuleRegistry.registerModule<Interfaces>({

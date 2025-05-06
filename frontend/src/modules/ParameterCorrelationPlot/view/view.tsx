@@ -1,6 +1,7 @@
 import React from "react";
 
 import { Input, Warning } from "@mui/icons-material";
+import type { PlotDatum, PlotMouseEvent } from "plotly.js";
 
 import { KeyKind } from "@framework/DataChannelTypes";
 import type { ContinuousParameter } from "@framework/EnsembleParameters";
@@ -8,6 +9,7 @@ import { ParameterType } from "@framework/EnsembleParameters";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
@@ -19,8 +21,6 @@ import { createRankedParameterCorrelations } from "@modules/_shared/rankParamete
 import type { Interfaces } from "../interfaces";
 
 import { ParameterCorrelationFigure } from "./parameterCorrelationFigure";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { PlotDatum, PlotMouseEvent } from "plotly.js";
 
 const MAX_NUM_PLOTS = 12;
 
@@ -66,7 +66,6 @@ export const View = ({ viewContext, workbenchSession, workbenchServices }: Modul
         const newParameterString = clickedPoint.customdata as string;
         syncHelper.publishValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter", newParameterString);
         setLocalParameterString(newParameterString);
-        console.log("Clicked parameter: ", newParameterString);
     }
 
     const numParams = viewContext.useSettingsToViewInterfaceValue("numParams");

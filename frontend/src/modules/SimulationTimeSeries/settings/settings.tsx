@@ -13,6 +13,7 @@ import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
+import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -71,7 +72,6 @@ import {
 } from "./atoms/derivedAtoms";
 import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 
 export function Settings({
     initialSettings,
@@ -132,7 +132,7 @@ export function Settings({
         if (globalSyncedParameter !== null && globalSyncedParameter !== selectedParameterIdentStr) {
             setUserSelectedParameterIdentStr(globalSyncedParameter);
         }
-    }, [globalSyncedParameter]);
+    }, [globalSyncedParameter, setUserSelectedParameterIdentStr, selectedParameterIdentStr]);
 
     useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
 

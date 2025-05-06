@@ -19,7 +19,7 @@ ModuleRegistry.registerModule<Interfaces>({
     devState: ModuleDevState.PROD,
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
     dataTagIds: [ModuleDataTagId.PARAMETERS, ModuleDataTagId.SUMMARY, ModuleDataTagId.INPLACE_VOLUMETRICS],
-    // preview,
+    preview,
     channelReceiverDefinitions: receiverDefs,
     description,
 });

@@ -8,6 +8,7 @@ import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -19,7 +20,6 @@ import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
 
 import { parameterIdentStringAtom, plotTypeAtom, showTrendlineAtom } from "./atoms/baseAtoms";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 
 const plotTypes = [{ value: PlotType.ParameterResponseCrossPlot, label: "Parameter correlation" }];
 
@@ -81,7 +81,7 @@ export function Settings({
                 setParameterIdentString(globalSyncedParameter);
             }
         }
-    }, [parameterIdents, globalSyncedParameter]);
+    }, [parameterIdents, globalSyncedParameter, parameterIdentString, setParameterIdentString]);
 
     if (ensembleIdentStringsFromChannels.length === 0) {
         return;

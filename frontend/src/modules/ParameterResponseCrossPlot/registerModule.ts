@@ -4,7 +4,6 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import type { Interfaces } from "./interfaces";
-import { preview } from "./preview";
 import { receiverDefs } from "./receiverDefs";
 
 ModuleRegistry.registerModule<Interfaces>({
@@ -15,6 +14,5 @@ ModuleRegistry.registerModule<Interfaces>({
     syncableSettingKeys: [SyncSettingKey.PARAMETER],
     dataTagIds: [ModuleDataTagId.PARAMETERS, ModuleDataTagId.SUMMARY, ModuleDataTagId.INPLACE_VOLUMETRICS],
     channelReceiverDefinitions: receiverDefs,
-    // preview,
     description: "Cross plot input parameters and the responses from a connected module.",
 });
