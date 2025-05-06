@@ -9,7 +9,7 @@ export const preview: DrawPreviewFunc = function (width: number, height: number)
     const totalBarHeight = plotHeight / barValues.length;
     const barPadding = 0.15;
     const barHeight = totalBarHeight * (1 - barPadding);
-    const scaleMax = 1; // Assuming values are normalized between -1 and 1
+    const scaleMax = 1;
 
     const scaleWidth = (value: number) => (Math.abs(value) / scaleMax) * (plotWidth / 2);
 

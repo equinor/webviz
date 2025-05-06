@@ -2,9 +2,9 @@ import { KeyKind } from "@framework/DataChannelTypes";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
+import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
 import { ChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
 import { PlotType as CrossPlotType } from "@modules/ParameterResponseCrossPlot/typesAndEnums";
-import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
 
 const template: Template = {
     description: "Inplace volumes overview correlated against input parameters",
@@ -18,13 +18,13 @@ const template: Template = {
                 relX: 0,
                 relY: 0,
             },
-            syncedSettings: [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER, SyncSettingKey.INPLACE_VOLUMETRICS_RESULT_NAME],
+            syncedSettings: [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER],
             initialSettings: {
                 selectedIdentifierValueCriteria: IdentifierValueCriteria.ALLOW_INTERSECTION,
             },
         },
         {
-            instanceRef: "MainInplaceVolumetricsTableInstance",
+            instanceRef: "MainInplaceVolumetricsTableInstance2",
             moduleName: "InplaceVolumetricsTable",
             layout: {
                 relHeight: 0.2,
@@ -32,7 +32,7 @@ const template: Template = {
                 relX: 0,
                 relY: 0.8,
             },
-            syncedSettings: [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER, SyncSettingKey.INPLACE_VOLUMETRICS_RESULT_NAME],
+            syncedSettings: [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER],
             initialSettings: {
                 selectedIdentifierValueCriteria: IdentifierValueCriteria.ALLOW_INTERSECTION,
             },
@@ -57,8 +57,8 @@ const template: Template = {
             initialSettings: {
                 plotType: CrossPlotType.ParameterResponseCrossPlot,
                 crossPlottingType: KeyKind.REALIZATION,
-                parameterIdentString: "FWL_CENTRAL~@@~GLOBVAR",
             },
+            syncedSettings: [SyncSettingKey.PARAMETER],
         },
         {
             instanceRef: "MyParameterCorrelationPlotInstance",
@@ -80,7 +80,9 @@ const template: Template = {
             initialSettings: {
                 crossPlottingType: KeyKind.REALIZATION,
                 showLabels: true,
+                numParams: 10,
             },
+            syncedSettings: [SyncSettingKey.PARAMETER],
         },
     ],
 };

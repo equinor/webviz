@@ -10,12 +10,10 @@ import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Slider } from "@lib/components/Slider";
 
-
 import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
 
 import { numBinsAtom, orientationAtom, plotTypeAtom } from "./atoms/baseAtoms";
-
 
 const plotTypes = [
     {
@@ -112,7 +110,12 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
     return (
         <div className="flex flex-col gap-2">
             <CollapsibleGroup title="Plot type" expanded>
-                <Dropdown value={plotType as string} options={plotTypes} onChange={handlePlotTypeChanged} />
+                <Dropdown
+                    key="plot-type"
+                    value={plotType as string}
+                    options={plotTypes}
+                    onChange={handlePlotTypeChanged}
+                />
             </CollapsibleGroup>
             {makeContent()}
         </div>

@@ -4,6 +4,7 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import type { InplaceVolumetricResultName_api } from "@api";
 import { InplaceVolumetricStatistic_api } from "@api";
+import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -48,7 +49,6 @@ import {
     tableDefinitionsAccessorAtom,
 } from "./atoms/derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
-import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);

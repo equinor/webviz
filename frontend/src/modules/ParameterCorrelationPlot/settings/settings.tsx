@@ -1,12 +1,16 @@
-import type { Interfaces } from "../interfaces";
-import { corrCutOffAtom, numParamsAtom, showLabelsAtom } from "./atoms/baseAtoms";
+import { useAtom } from "jotai";
+
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
 import { Slider } from "@lib/components/Slider";
-import { useAtom } from "jotai";
+
+import type { Interfaces } from "../interfaces";
+
+import { corrCutOffAtom, numParamsAtom, showLabelsAtom } from "./atoms/baseAtoms";
+
 
 //-----------------------------------------------------------------------------------------------------------
 export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {

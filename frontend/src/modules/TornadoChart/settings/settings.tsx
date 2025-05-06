@@ -3,6 +3,7 @@ import React from "react";
 import { useAtom, useSetAtom } from "jotai";
 
 import { KeyKind } from "@framework/DataChannelTypes";
+import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Checkbox } from "@lib/components/Checkbox";
@@ -20,7 +21,6 @@ import {
     showLabelsAtom,
     showRealizationPointsAtom,
 } from "./atoms/baseAtoms";
-import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 
 export function Settings({
     initialSettings,

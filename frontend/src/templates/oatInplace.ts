@@ -24,7 +24,7 @@ const template: Template = {
             },
         },
         {
-            instanceRef: "MainInplaceVolumetricsTableInstance",
+            instanceRef: "MainInplaceVolumetricsTableInstance2",
             moduleName: "InplaceVolumetricsTable",
             layout: {
                 relHeight: 0.5,
@@ -59,7 +59,7 @@ const template: Template = {
             },
         },
         {
-            instanceRef: "TornadoChartInstance",
+            instanceRef: "TornadoChartInstance2",
             moduleName: "TornadoChart",
             layout: {
                 relHeight: 0.5,
