@@ -1,15 +1,15 @@
+import { colorByAtom } from "../atoms/baseAtoms";
 import type { InplaceVolumetricResultName_api } from "@api";
 import type { ChannelContentDefinition, ChannelContentMetaData, DataGenerator } from "@framework/DataChannelTypes";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewContext } from "@framework/ModuleContext";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { ColorSet } from "@lib/utils/ColorSet";
-import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
-import type { Table } from "@modules/_shared/InplaceVolumetrics/Table";
-import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 import { ChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
 import type { Interfaces } from "@modules/InplaceVolumetricsPlot/interfaces";
-import { colorByAtom } from "../atoms/baseAtoms";
+import type { Table } from "@modules/_shared/InplaceVolumetrics/Table";
+import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
+import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import { useAtomValue } from "jotai";
 
 function makeDataGeneratorFunc(
@@ -19,7 +19,7 @@ function makeDataGeneratorFunc(
     fluidZone: string,
     table: Table,
     resultName: string,
-    color: string,
+    color: string
 ): DataGenerator {
     return () => {
         const realColumn = table.getColumn("REAL");
@@ -56,7 +56,7 @@ export function usePublishToDataChannels(
     colorSet: ColorSet,
 
     table?: Table,
-    resultName?: InplaceVolumetricResultName_api,
+    resultName?: InplaceVolumetricResultName_api
 ) {
     const contents: ChannelContentDefinition[] = [];
     const colorBy = useAtomValue(colorByAtom);
@@ -68,7 +68,7 @@ export function usePublishToDataChannels(
             const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentStr.toString());
             const ensembleName = makeDistinguishableEnsembleDisplayName(
                 ensembleIdent,
-                ensembleSet.getRegularEnsembleArray(),
+                ensembleSet.getRegularEnsembleArray()
             );
             let color = colorSet.getFirstColor();
             const tableCollection = ensembleTable.splitByColumn(SourceIdentifier.TABLE_NAME);
@@ -84,7 +84,7 @@ export function usePublishToDataChannels(
                         fluidZone.toString(),
                         fluidZoneTable,
                         resultName,
-                        colorBy === SourceIdentifier.ENSEMBLE && ensemble ? ensemble.getColor() : color,
+                        colorBy === SourceIdentifier.ENSEMBLE && ensemble ? ensemble.getColor() : color
                     );
 
                     contents.push({
