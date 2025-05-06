@@ -126,7 +126,7 @@ export function Settings({
     const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const globalSyncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
-    console.log("globalSyncedParameter", globalSyncedParameter);
+
     // Receive global parameter string and update local state if different
     React.useEffect(() => {
         if (globalSyncedParameter !== null && globalSyncedParameter !== selectedParameterIdentStr) {

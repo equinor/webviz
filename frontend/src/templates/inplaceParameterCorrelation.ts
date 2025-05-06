@@ -87,4 +87,4 @@ const template: Template = {
     ],
 };
 
-TemplateRegistry.registerTemplate("Parameter analysis of inplace volumes", template);
+TemplateRegistry.registerTemplate("Parameter Analysis of Inplace Volumes", template);
