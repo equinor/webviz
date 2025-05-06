@@ -10,6 +10,7 @@ from fmu.sumo.explorer.explorer import SumoClient, SearchContext
 from fmu.sumo.explorer.objects import Surface
 
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
+from primary.services.utils.otel_span_tracing import otel_span_decorator, start_otel_span, start_otel_span_async
 from primary.services.utils.statistic_function import StatisticFunction
 from primary.services.service_exceptions import Service, MultipleDataMatchesError, InvalidParameterError
 
@@ -18,6 +19,7 @@ from .generic_types import SumoContent
 from .queries.surface_queries import SurfTimeType, SurfInfo, TimePoint, TimeInterval
 from .queries.surface_queries import RealizationSurfQueries, ObservedSurfQueries
 from .sumo_client_factory import create_sumo_client
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -38,6 +40,7 @@ class SurfaceAccess:
         sumo_client = create_sumo_client(access_token)
         return SurfaceAccess(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=None)
 
+    @otel_span_decorator()
     async def get_realization_surfaces_metadata_async(self) -> SurfaceMetaSet:
         if not self._iteration_name:
             raise InvalidParameterError(
@@ -116,6 +119,7 @@ class SurfaceAccess:
 
         return surf_meta_set
 
+    @otel_span_decorator()
     async def get_realization_surface_data_async(
         self, real_num: int, name: str, attribute: str, time_or_interval_str: str | None = None
     ) -> xtgeo.RegularSurface | None:
@@ -154,11 +158,13 @@ class SurfaceAccess:
         sumo_surf: Surface = await search_context.getitem_async(0)
         perf_metrics.record_lap("locate")
 
-        byte_stream: BytesIO = await sumo_surf.blob_async
-        perf_metrics.record_lap("download")
+        async with start_otel_span_async("download-blob"):
+            byte_stream: BytesIO = await sumo_surf.blob_async
+            perf_metrics.record_lap("download")
 
-        xtgeo_surf = xtgeo.surface_from_file(byte_stream)
-        perf_metrics.record_lap("xtgeo-read")
+        with start_otel_span("xtgeo-read", {"operation.type": "heavy_computation", "byte_size": byte_stream.getbuffer().nbytes / (1024 * 1024)}):
+            xtgeo_surf = xtgeo.surface_from_file(byte_stream)
+            perf_metrics.record_lap("xtgeo-read")
 
         size_mb = byte_stream.getbuffer().nbytes / (1024 * 1024)
         LOGGER.debug(
@@ -214,6 +220,7 @@ class SurfaceAccess:
 
         return xtgeo_surf
 
+    @otel_span_decorator()
     async def get_statistical_surface_data_async(
         self,
         statistic_function: StatisticFunction,
