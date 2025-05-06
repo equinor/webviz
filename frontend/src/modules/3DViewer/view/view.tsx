@@ -22,7 +22,6 @@ import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { calcExtendedSimplifiedWellboreTrajectoryInXYPlane } from "@modules/_shared/utils/wellbore";
 import { useFieldWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 
-
 import type { Interfaces } from "../interfaces";
 import { userSelectedCustomIntersectionPolylineIdAtom } from "../settings/atoms/baseAtoms";
 
@@ -32,7 +31,6 @@ import { useGridParameterQuery, useGridSurfaceQuery } from "./queries/gridQuerie
 import { useGridPolylineIntersection as useGridPolylineIntersectionQuery } from "./queries/polylineIntersection";
 import { useWellboreCasingsQuery } from "./queries/wellboreSchematicsQueries";
 import { makeAxesLayer, makeGrid3DLayer, makeIntersectionLayer, makeWellsLayer } from "./utils/layers";
-
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
@@ -71,6 +69,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const setIntersectionType = useSetAtom(intersectionTypeAtom);
 
     const ensembleSet = useEnsembleSet(props.workbenchSession);
+
+    const fieldId = ensembleIdent ? (ensembleSet.getEnsemble(ensembleIdent)?.getFieldIdentifier() ?? null) : null;
 
     React.useEffect(
         function handleTitleChange() {
@@ -295,6 +295,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 boundingBox={gridModelBoundingBox3d ?? undefined}
                 colorScale={colorScaleWithName}
                 layers={layers}
+                fieldId={fieldId ?? ""}
                 show3D
                 enableIntersectionPolylineEditing
                 onAddIntersectionPolyline={handleAddPolyline}
