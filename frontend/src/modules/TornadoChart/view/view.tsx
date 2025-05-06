@@ -67,6 +67,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     );
 
     let computedSensitivityResponseDataset: SensitivityResponseDataset | null = null;
+
     if (referenceSensitivityName && sensitivities && realizations.length > 0 && values.length > 0) {
         const sensitivityResponseCalculator = new SensitivityResponseCalculator(
             sensitivities,
@@ -76,7 +77,9 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
                 name: responseReceiver.channel?.contents[0].displayName ?? "",
                 unit: "",
             },
-            referenceSensitivityName,
+            sensitivities.hasSensitivityName(referenceSensitivityName)
+                ? referenceSensitivityName
+                : sensitivities.getSensitivityNames()[0],
         );
         computedSensitivityResponseDataset = sensitivityResponseCalculator.computeSensitivitiesForResponse();
     }

@@ -32,7 +32,7 @@ export function Settings({
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
     const [showRealizationPoints, setShowRealizationPoints] = useAtom(showRealizationPointsAtom);
     const setModuleReferenceSensitivityName = useSetAtom(referenceSensitivityNameAtom);
-    // const selectedSensitivity = settingsContext.useViewToSettingsInterfaceValue("selectedSensitivity");
+    const selectedSensitivity = settingsContext.useViewToSettingsInterfaceValue("selectedSensitivity");
     const [referenceSensitivityName, setReferenceSensitivityName] = React.useState<string | null>(null);
 
     useApplyInitialSettingsToState(initialSettings, "displayComponentType", "string", setDisplayComponentType);

@@ -19,7 +19,6 @@ import { Select } from "@lib/components/Select";
 import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 
-
 import type { Interfaces } from "../interfaces";
 import { FrequencyEnumToStringMapping } from "../typesAndEnums";
 
@@ -42,7 +41,6 @@ import {
     vectorSelectorDataAtom,
 } from "./atoms/derivedAtoms";
 import { vectorListQueryAtom } from "./atoms/queryAtoms";
-
 
 //-----------------------------------------------------------------------------------------------------------
 
