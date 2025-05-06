@@ -191,6 +191,10 @@ export class SettingManager<
         this._unsubscribeHandler.unsubscribe("external-setting-controller");
     }
 
+    beforeDestroy(): void {
+        this._unsubscribeHandler.unsubscribeAll();
+    }
+
     getId(): string {
         return this._id;
     }

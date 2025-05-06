@@ -367,13 +367,6 @@ export class SettingsContextDelegate<
                     this._settings[settingKey].setLoading(loading);
                 }
                 this.handleSettingChanged();
-                /*
-                this._settings[settingKey].setLoading(loading);
-
-                if (!hasDependencies && !loading) {
-                    this.handleSettingChanged();
-                }
-                */
             });
 
             dependency.initialize();
@@ -428,13 +421,6 @@ export class SettingsContextDelegate<
                     this._storedDataLoadingStatus[key] = loading;
                     this.handleSettingChanged();
                 }
-                /*
-                this._settings[settingKey].setLoading(loading);
-
-                if (!hasDependencies && !loading) {
-                    this.handleSettingChanged();
-                }
-                */
             });
 
             dependency.initialize();
@@ -485,6 +471,14 @@ export class SettingsContextDelegate<
 
     beforeDestroy(): void {
         this._unsubscribeHandler.unsubscribeAll();
+        for (const dependency of this._dependencies) {
+            dependency.beforeDestroy();
+        }
+        this._dependencies = [];
+        for (const key in this._settings) {
+            this._settings[key].beforeDestroy();
+        }
+        this._settings = {} as { [K in TSettingKey]: SettingManager<K, SettingTypes[K]> };
     }
 
     private setStatus(status: SettingsContextStatus) {

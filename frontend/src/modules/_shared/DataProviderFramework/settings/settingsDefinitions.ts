@@ -5,12 +5,10 @@ import type { ColorScaleSpecification } from "@framework/components/ColorScaleSe
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ColorSet } from "@lib/utils/ColorSet";
 
-
 import type { AvailableValuesType } from "../interfacesAndTypes/utils";
 
 import type { IntersectionSettingValue } from "./implementations/IntersectionSetting";
 import type { SensitivityNameCasePair } from "./implementations/SensitivitySetting";
-
 
 export enum SettingCategory {
     SINGLE_SELECT = "singleSelect",
@@ -308,7 +306,7 @@ export const settingCategoryAvailableValuesIntersectionReducerMap: SettingCatego
 
                 return [Math.max(min, currentMin), Math.min(max, currentMax)];
             },
-            startingValue: [Number.MIN_VALUE, Number.MAX_VALUE],
+            startingValue: [-Number.MAX_VALUE, Number.MAX_VALUE],
         },
         [SettingCategory.RANGE]: {
             reducer: (accumulator, currentAvailableValues) => {
@@ -317,7 +315,7 @@ export const settingCategoryAvailableValuesIntersectionReducerMap: SettingCatego
 
                 return [Math.max(min, currentMin), Math.min(max, currentMax)];
             },
-            startingValue: [Number.MIN_VALUE, Number.MAX_VALUE],
+            startingValue: [-Number.MAX_VALUE, Number.MAX_VALUE],
         },
     };
 
