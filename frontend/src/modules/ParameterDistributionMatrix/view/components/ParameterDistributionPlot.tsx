@@ -1,9 +1,13 @@
+import type React from "react";
+
+import type { PlotType } from "plotly.js";
+import Plot from "react-plotly.js";
+
+import { computeQuantile } from "@modules/_shared/utils/math/statistics";
+
+
 import type { ParameterDataArr } from "../../typesAndEnums";
 import { ParameterDistributionPlotType } from "../../typesAndEnums";
-import { computeQuantile } from "@modules/_shared/utils/math/statistics";
-import type { PlotType } from "plotly.js";
-import type React from "react";
-import Plot from "react-plotly.js";
 
 type ParameterDistributionPlotProps = {
     dataArr: ParameterDataArr[];
@@ -62,14 +66,14 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                             yPosition,
                             ensembleData.ensembleDisplayName,
                             ensembleData.ensembleColor,
-                            subplotIndex
-                        )
+                            subplotIndex,
+                        ),
                     );
                 }
 
                 if (props.showIndividualRealizationValues) {
                     const hoverText = ensembleData.values.map(
-                        (_, index) => `Realization: ${ensembleData.realizations[index]}`
+                        (_, index) => `Realization: ${ensembleData.realizations[index]}`,
                     );
 
                     // Distribution plot shows positive values, thus the rug plot is placed below 0.
@@ -121,7 +125,7 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
 
                 const verticalPosition = index * (2 + 1); // 2 is the height of each box + 1 space
                 const hoverText = ensembleData.values.map(
-                    (_, index) => `Realization: ${ensembleData.realizations[index]}`
+                    (_, index) => `Realization: ${ensembleData.realizations[index]}`,
                 );
 
                 const trace = {
@@ -152,8 +156,8 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                             verticalPosition,
                             ensembleData.ensembleDisplayName,
                             ensembleData.ensembleColor,
-                            subplotIndex
-                        )
+                            subplotIndex,
+                        ),
                     );
                 }
             });
@@ -168,7 +172,7 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
         yPosition: number,
         ensembleName: string,
         ensembleColor: string | undefined,
-        subplotIndex: number
+        subplotIndex: number,
     ): any[] {
         const p90 = computeQuantile(parameterValues, 0.9);
         const p10 = computeQuantile(parameterValues, 0.1);
