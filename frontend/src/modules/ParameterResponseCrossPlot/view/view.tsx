@@ -1,26 +1,21 @@
-import React from "react";
-
-import { Input, Warning } from "@mui/icons-material";
-
-import { KeyKind } from "@framework/DataChannelTypes";
-import type { ModuleViewProps } from "@framework/Module";
-import { useViewStatusWriter } from "@framework/StatusWriter";
-import { Tag } from "@lib/components/Tag";
-import { useElementSize } from "@lib/hooks/useElementSize";
-
-import type { Size2D } from "@lib/utils/geometry";
-import { ContentInfo } from "@modules/_shared/components/ContentMessage";
-import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
-
 import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
-
-import { Parameter, ParameterIdent } from "@framework/EnsembleParameters";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
 import {
     ScatterPlotParameterResponseFigure,
     scatterPlotParameterResponseData,
 } from "./scatterPlotParameterResponseFigure";
+import { KeyKind } from "@framework/DataChannelTypes";
+import { Parameter, ParameterIdent } from "@framework/EnsembleParameters";
+import type { ModuleViewProps } from "@framework/Module";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
+import { useViewStatusWriter } from "@framework/StatusWriter";
+import { Tag } from "@lib/components/Tag";
+import { useElementSize } from "@lib/hooks/useElementSize";
+import type { Size2D } from "@lib/utils/geometry";
+import { ContentInfo } from "@modules/_shared/components/ContentMessage";
+import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { Input, Warning } from "@mui/icons-material";
+import React from "react";
 
 const MAX_NUM_PLOTS = 12;
 
@@ -83,7 +78,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                         <Input />
                     </span>
                     <Tag label="Response" />
-                </ContentInfo>,
+                </ContentInfo>
             );
             return;
         }
@@ -92,7 +87,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
             setContent(
                 <ContentInfo>
                     No data on <Tag label={receiverResponse.displayName} />
-                </ContentInfo>,
+                </ContentInfo>
             );
             return;
         }
@@ -151,7 +146,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                         responseChannelData.dataArray.map((dataPoint) => [
                             dataPoint.key as number,
                             dataPoint.value as number,
-                        ]),
+                        ])
                     );
 
                     const responseValues: number[] = [];

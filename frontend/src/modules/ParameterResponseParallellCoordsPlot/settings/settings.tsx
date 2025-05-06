@@ -1,35 +1,22 @@
-import { useAtom } from "jotai";
-
+import type { Interfaces } from "../interfaces";
+import { corrCutOffAtom, numParamsAtom, showLabelsAtom } from "./atoms/baseAtoms";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
+import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { Slider } from "@lib/components/Slider";
-
-import type { Interfaces } from "../interfaces";
-import { PlotType } from "../typesAndEnums";
-
-import { corrCutOffAtom, numParamsAtom, plotTypeAtom, showLabelsAtom } from "./atoms/baseAtoms";
-import { Checkbox } from "@lib/components/Checkbox";
-
-const plotTypes = [{ value: PlotType.ParameterCorrelation, label: "Parameter correlation" }];
+import { useAtom } from "jotai";
 
 //-----------------------------------------------------------------------------------------------------------
 export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
-    const [plotType, setPlotType] = useAtom(plotTypeAtom);
     const [numParams, setNumParams] = useAtom(numParamsAtom);
     const [corrCutOff, setCorrCutOff] = useAtom(corrCutOffAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
 
-    useApplyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
     useApplyInitialSettingsToState(initialSettings, "numParams", "number", setNumParams);
     useApplyInitialSettingsToState(initialSettings, "showLabels", "boolean", setShowLabels);
     useApplyInitialSettingsToState(initialSettings, "corrCutOff", "number", setCorrCutOff);
-
-    function handlePlotTypeChanged(value: string) {
-        setPlotType(value as PlotType);
-    }
 
     function handleNumParamsChange(_: Event, value: number | number[]) {
         if (Array.isArray(value)) {
@@ -45,9 +32,6 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
     }
     return (
         <div className="flex flex-col gap-2">
-            <CollapsibleGroup title="Plot type" expanded>
-                <Dropdown value={plotType as string} options={plotTypes} onChange={handlePlotTypeChanged} />
-            </CollapsibleGroup>
             <CollapsibleGroup title="Plot settings" expanded>
                 <Label text="Max number of parameters" key="number-of-params">
                     <Slider
