@@ -34,8 +34,10 @@ DEFAULT_STALE_WHILE_REVALIDATE = 3600 * 24  # 24 hour
 REDIS_USER_SESSION_URL = "redis://redis-user-session:6379"
 REDIS_CACHE_URL = "redis://redis-cache:6379"
 
-COSMOS_DB_URI = os.environ["WEBVIZ_COSMOS_DB_URI"]
-COSMOS_DB_KEY = os.environ["WEBVIZ_COSMOS_DB_KEY"]
+COSMOS_DB_PROD_CONNECTION_STRING = os.environ.get("WEBVIZ_DB_CONNECTION_STRING", None)
+# pylint: disable=line-too-long
+COSMOS_DB_EMULATOR_URI = "https://host.docker.internal:8081/"
+COSMOS_DB_EMULATOR_KEY = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==;"
 
 PERSISTENCE_DB_NAME = "persistence"
 DASHBOARDS_CONTAINER_NAME = "dashboards"

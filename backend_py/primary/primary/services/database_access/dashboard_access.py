@@ -1,7 +1,7 @@
 from primary.auth.auth_helper import AuthHelper
 from primary.services.service_exceptions import Service, ServiceRequestError
 from primary.routers.persistence import schemas
-from primary.services.database_access.database_access import ContainerAccess
+from primary.services.database_access.container_access import ContainerAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from fastapi import Depends
 
@@ -21,8 +21,8 @@ class DashboardAccess:
         async def dependency(user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
             async with await cls.create(user) as instance:
                 yield instance
-        return Depends(dependency)
 
+        return Depends(dependency)
 
     async def __aenter__(self):
         await self.container_access.__aenter__()
@@ -68,6 +68,8 @@ class DashboardAccess:
             raise ServiceRequestError(f"Dashboard with id '{dashboard_id}' not found.", Service.DATABASE)
 
         if dashboard.get("user_id") != self.user.get_user_id():
-            raise ServiceRequestError(f"You do not have permission to access the dashboard: '{dashboard_id}'.", Service.DATABASE)
+            raise ServiceRequestError(
+                f"You do not have permission to access the dashboard: '{dashboard_id}'.", Service.DATABASE
+            )
 
         return dashboard
