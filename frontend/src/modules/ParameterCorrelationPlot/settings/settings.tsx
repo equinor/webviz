@@ -23,6 +23,7 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
     const [numParams, setNumParams] = useAtom(numParamsAtom);
     const [corrCutOff, setCorrCutOff] = useAtom(corrCutOffAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
+
     useApplyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
     useApplyInitialSettingsToState(initialSettings, "numParams", "number", setNumParams);
     useApplyInitialSettingsToState(initialSettings, "showLabels", "boolean", setShowLabels);
