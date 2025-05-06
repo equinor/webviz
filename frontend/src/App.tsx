@@ -20,7 +20,7 @@ import "./templates/registerAllTemplates";
 
 function DataSharingLabel() {
     return (
-        <div className="border-2 border-orange-600  px-3 py-2 rounded-sm max-w-[600px] text-justify mt-4 z-50 shadow-sm">
+        <div className="border-2 border-orange-600 px-3 py-2 rounded-sm max-w-[600px] text-justify mt-4 z-50 shadow-sm">
             <p>
                 <strong>Disclaimer:</strong> Webviz is a service provided by Equinor and is not a way of sharing
                 official data. Data should continue to be shared through L2S, FTP and/or Dasha.
@@ -149,8 +149,6 @@ function App() {
 
     return (
         <>
-            {/* <UsageNoticeDialog /> */}
-
             {authState === AuthState.NotLoggedIn ? (
                 <div className="w-screen h-screen flex flex-col items-center justify-center gap-8">
                     <img src={WebvizLogo} alt="Webviz logo" className="w-32 h-32" />
