@@ -1,11 +1,9 @@
-import { InplaceVolumetricsIdentifier_api } from "@api";
 import { KeyKind } from "@framework/DataChannelTypes";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
-import { PlotType as CorrPlotType } from "@modules/ParameterCorrelationPlot/typesAndEnums";
-import { PlotType as CrossPlotType } from "@modules/ParameterResponseCrossPlot/typesAndEnums";
 import { ChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
+import { PlotType as CrossPlotType } from "@modules/ParameterResponseCrossPlot/typesAndEnums";
 import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
 
 const template: Template = {
@@ -80,7 +78,6 @@ const template: Template = {
                 },
             },
             initialSettings: {
-                plotType: CorrPlotType.ParameterCorrelation,
                 crossPlottingType: KeyKind.REALIZATION,
                 showLabels: true,
             },

@@ -1,12 +1,9 @@
-import { InplaceVolumetricsIdentifier_api } from "@api";
 import { KeyKind } from "@framework/DataChannelTypes";
-import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
-import { PlotType as CorrPlotType } from "@modules/ParameterCorrelationPlot/typesAndEnums";
-import { PlotType as CrossPlotType } from "@modules/ParameterResponseCrossPlot/typesAndEnums";
 import { ChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
 import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
+
 const template: Template = {
     description: "Field production correlated against input parameters",
     moduleInstances: [
@@ -19,9 +16,8 @@ const template: Template = {
                 relX: 0,
                 relY: 0,
             },
-            // syncedSettings: [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER, SyncSettingKey.INPLACE_VOLUMETRICS_RESULT_NAME],
+
             initialSettings: {
-                // plotType: PlotType.Histogram,
                 selectedVectorTags: ["FOPT"],
                 visualizationMode: VisualizationMode.INDIVIDUAL_REALIZATIONS,
             },
@@ -45,7 +41,6 @@ const template: Template = {
                 },
             },
             initialSettings: {
-                plotType: CrossPlotType.ParameterResponseCrossPlot,
                 crossPlottingType: KeyKind.REALIZATION,
                 parameterIdentString: "FWL_CENTRAL~@@~GLOBVAR",
             },
@@ -68,7 +63,6 @@ const template: Template = {
                 },
             },
             initialSettings: {
-                plotType: CorrPlotType.ParameterCorrelation,
                 crossPlottingType: KeyKind.REALIZATION,
                 showLabels: true,
                 numParams: 50,
