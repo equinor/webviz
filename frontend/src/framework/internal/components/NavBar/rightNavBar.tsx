@@ -1,11 +1,12 @@
 import type React from "react";
 
-import { FilterAlt, History } from "@mui/icons-material";
+import { FilterAlt, Fullscreen, FullscreenExit, History } from "@mui/icons-material";
 
 import { GuiState, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
+import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
 import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
-import { NavBarButton } from "@lib/components/NavBarComponents";
+import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type RightNavBarProps = {
@@ -14,6 +15,8 @@ type RightNavBarProps = {
 
 export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
+
+    const [isFullscreen, toggleFullScreen] = useBrowserFullscreen();
     const [drawerContent, setDrawerContent] = useGuiState(guiMessageBroker, GuiState.RightDrawerContent);
     const [numberOfUnsavedRealizationFilters] = useGuiState(
         guiMessageBroker,
@@ -80,6 +83,16 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                     active={drawerContent === RightDrawerContent.ModuleInstanceLog}
                     title="Open module history"
                     onClick={handleModuleInstanceLogClick}
+                />
+
+                <NavBarDivider />
+
+                <NavBarButton
+                    active={isFullscreen}
+                    icon={<Fullscreen fontSize="small" className="size-5 mr-2" />}
+                    activeIcon={<FullscreenExit fontSize="small" className="size-5 mr-2" />}
+                    title="Open module history"
+                    onClick={toggleFullScreen}
                 />
             </div>
         </div>
