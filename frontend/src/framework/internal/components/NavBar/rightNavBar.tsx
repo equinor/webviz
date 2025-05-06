@@ -5,7 +5,7 @@ import { FilterAlt, History } from "@mui/icons-material";
 import { GuiState, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
-import { NavBarButton } from "@lib/components/NavBarButton";
+import { NavBarButton } from "@lib/components/NavBarComponents";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type RightNavBarProps = {

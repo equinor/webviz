@@ -20,7 +20,7 @@ import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSes
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { NavBarButton } from "@lib/components/NavBarButton";
+import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -28,10 +28,6 @@ import { UserSessionState } from "./private-components/UserSessionState";
 
 type LeftNavBarProps = {
     workbench: Workbench;
-};
-
-const NavBarDivider: React.FC = () => {
-    return <div className="bg-slate-200 h-px w-full mt-4 mb-4" />;
 };
 
 export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
