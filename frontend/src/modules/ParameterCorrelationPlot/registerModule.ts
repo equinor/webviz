@@ -15,6 +15,6 @@ ModuleRegistry.registerModule<Interfaces>({
     syncableSettingKeys: [SyncSettingKey.PARAMETER],
     dataTagIds: [ModuleDataTagId.PARAMETERS, ModuleDataTagId.SUMMARY, ModuleDataTagId.INPLACE_VOLUMETRICS],
     channelReceiverDefinitions: receiverDefs,
-    // preview,
+    preview,
     description: "Pearson correlation between input parameters and the responses from a connected module.",
 });

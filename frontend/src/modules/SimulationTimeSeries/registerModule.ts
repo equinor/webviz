@@ -1,11 +1,11 @@
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
+import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { channelDefs } from "./channelDefs";
 import type { Interfaces } from "./interfaces";
 import { preview } from "./preview";
-import { SyncSettingKey } from "@framework/SyncSettings";
 
 export const MODULE_NAME = "SimulationTimeSeries";
 
