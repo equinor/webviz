@@ -1,8 +1,7 @@
-import type { Layout, PlotData } from "plotly.js";
-
-import { linearRegression } from "@modules/_shared/linearRegression";
-import { Figure, makeSubplots } from "@modules/_shared/Figure";
 import { Size2D } from "@lib/utils/geometry";
+import { Figure, makeSubplots } from "@modules/_shared/Figure";
+import { linearRegression } from "@modules/_shared/utils/math/linearRegression";
+import type { Layout, PlotData } from "plotly.js";
 
 export class ScatterPlotParameterResponseFigure {
     private _figure: Figure;
@@ -35,7 +34,7 @@ export class ScatterPlotParameterResponseFigure {
         rowIndex: number,
         colIndex: number,
         cellIndex: number,
-        traceTitle: string,
+        traceTitle: string
     ) {
         const scatterTrace = createPlotlyParameterResponseScatterTrace(data);
 
