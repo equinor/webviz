@@ -90,7 +90,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
             return (
                 <ContentInfo>
                     <span>
-                        Data channel required for use. Add a main module to the workbench and use the data channels icon
+                        Data channel required for use. Add a main module to the workbench and use the data channels icon{" "}
                         <Input />
                     </span>
                     <Tag label="Response" />
