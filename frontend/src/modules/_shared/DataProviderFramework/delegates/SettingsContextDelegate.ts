@@ -340,12 +340,21 @@ export class SettingsContextDelegate<
             return this._settings[settingKey].isLoading();
         };
 
+        const localSettingManagerGetter = <K extends TSettingKey>(key: K): SettingManager<K> => {
+            return this._settings[key];
+        };
+
+        const globalSettingGetter = <K extends keyof GlobalSettings>(key: K): GlobalSettings[K] => {
+            return this.getDataProviderManager.bind(this)().getGlobalSetting(key);
+        };
+
         const availableSettingsUpdater = <K extends TSettingKey>(
             settingKey: K,
             updateFunc: UpdateFunc<AvailableValuesType<K>, TSettings, TSettingTypes, TSettingKey>,
         ): Dependency<AvailableValuesType<K>, TSettings, TSettingTypes, TSettingKey> => {
             const dependency = new Dependency<AvailableValuesType<K>, TSettings, TSettingTypes, TSettingKey>(
-                this,
+                localSettingManagerGetter,
+                globalSettingGetter,
                 updateFunc,
                 makeLocalSettingGetter,
                 loadingStateGetter,
@@ -379,7 +388,8 @@ export class SettingsContextDelegate<
             updateFunc: UpdateFunc<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>,
         ): Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey> => {
             const dependency = new Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TSettingKey>(
-                this,
+                localSettingManagerGetter,
+                globalSettingGetter,
                 updateFunc,
                 makeLocalSettingGetter,
                 loadingStateGetter,
@@ -408,7 +418,14 @@ export class SettingsContextDelegate<
                 TSettings,
                 TSettingTypes,
                 TSettingKey
-            >(this, updateFunc, makeLocalSettingGetter, loadingStateGetter, makeGlobalSettingGetter);
+            >(
+                localSettingManagerGetter,
+                globalSettingGetter,
+                updateFunc,
+                makeLocalSettingGetter,
+                loadingStateGetter,
+                makeGlobalSettingGetter,
+            );
             this._dependencies.push(dependency);
 
             dependency.subscribe((storedData: TStoredData[K] | null) => {
@@ -439,7 +456,8 @@ export class SettingsContextDelegate<
             }) => T,
         ) => {
             const dependency = new Dependency<T, TSettings, TSettingTypes, TSettingKey>(
-                this,
+                localSettingManagerGetter,
+                globalSettingGetter,
                 update,
                 makeLocalSettingGetter,
                 loadingStateGetter,

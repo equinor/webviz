@@ -9,7 +9,6 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 
-
 import {
     DataProviderManager,
     DataProviderManagerTopic,
@@ -18,7 +17,6 @@ import {
 import { dataProviderManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
-
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -112,7 +110,6 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(persistState);
 
             return function onUnmountEffect() {
-                dataProviderManager.beforeDestroy();
                 unsubscribeDataRev();
                 unsubscribeExpands();
             };

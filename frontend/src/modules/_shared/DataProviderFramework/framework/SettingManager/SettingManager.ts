@@ -220,7 +220,10 @@ export class SettingManager<
             return;
         }
 
-        Object.assign(this._attributes, attributes);
+        this._attributes = {
+            ...this._attributes,
+            ...attributes,
+        };
 
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.ATTRIBUTES);
     }
@@ -305,8 +308,6 @@ export class SettingManager<
 
         if (this._externalController) {
             this._externalController.getSetting().setLoading(loading);
-            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
-            return;
         }
 
         this._loading = loading;

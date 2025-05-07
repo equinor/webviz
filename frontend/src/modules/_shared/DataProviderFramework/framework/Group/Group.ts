@@ -9,6 +9,7 @@ import type {
     CustomGroupImplementationWithSettings,
 } from "../../interfacesAndTypes/customGroupImplementation";
 import { includesSettings } from "../../interfacesAndTypes/customGroupImplementation";
+import type { DefineBasicDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 import type { ItemGroup } from "../../interfacesAndTypes/entities";
 import type { SerializedGroup } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
@@ -57,7 +58,7 @@ export class Group<
     private _type: GroupType;
     private _icon: React.ReactNode | null = null;
     private _emptyContentMessage: string | null = null;
-    private _sharedSettingsDelegate: SharedSettingsDelegate<TSettings, TSettingKey> | null = null;
+    private _sharedSettingsDelegate: SharedSettingsDelegate<TSettings, TSettingTypes, TSettingKey> | null = null;
 
     constructor(params: GroupParams<TSettings, TSettingTypes>) {
         const { dataProviderManager, customGroupImplementation, type } = params;
@@ -65,12 +66,15 @@ export class Group<
         this._groupDelegate.setColor(dataProviderManager.makeGroupColor());
         this._itemDelegate = new ItemDelegate(customGroupImplementation.getDefaultName(), 1, dataProviderManager);
         if (includesSettings(customGroupImplementation)) {
-            this._sharedSettingsDelegate = new SharedSettingsDelegate<TSettings, TSettingKey>(
+            this._sharedSettingsDelegate = new SharedSettingsDelegate<TSettings, TSettingTypes, TSettingKey>(
                 this,
                 makeSettings<TSettings, TSettingTypes, TSettingKey>(
                     customGroupImplementation.settings as unknown as TSettings,
-                    customGroupImplementation.getDefaultSettingsValues() as unknown as TSettingTypes,
+                    customGroupImplementation.getDefaultSettingsValues?.() ?? {},
                 ),
+                customGroupImplementation.defineDependencies as unknown as
+                    | ((args: DefineBasicDependenciesArgs<TSettings, TSettingTypes>) => void)
+                    | undefined,
             );
         }
         this._type = type;
@@ -95,7 +99,7 @@ export class Group<
         return this._emptyContentMessage;
     }
 
-    getSharedSettingsDelegate(): SharedSettingsDelegate<TSettings, TSettingKey> | null {
+    getSharedSettingsDelegate(): SharedSettingsDelegate<TSettings, TSettingTypes, TSettingKey> | null {
         return this._sharedSettingsDelegate;
     }
 

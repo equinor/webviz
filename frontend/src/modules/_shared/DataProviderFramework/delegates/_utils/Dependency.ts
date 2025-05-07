@@ -1,11 +1,10 @@
 import { isCancelledError } from "@tanstack/react-query";
 
 import type { GlobalSettings } from "../../framework/DataProviderManager/DataProviderManager";
-import { SettingTopic } from "../../framework/SettingManager/SettingManager";
+import { SettingTopic, type SettingManager } from "../../framework/SettingManager/SettingManager";
 import type { UpdateFunc } from "../../interfacesAndTypes/customSettingsHandler";
 import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
-import type { SettingsContextDelegate } from "../SettingsContextDelegate";
 
 class DependencyLoadingError extends Error {}
 
@@ -31,7 +30,8 @@ export class Dependency<
     private _loadingDependencies: Set<(loading: boolean, hasDependencies: boolean) => void> = new Set();
     private _isLoading = false;
 
-    private _contextDelegate: SettingsContextDelegate<TSettings, any, TSettingTypes, TKey, any>;
+    private _localSettingManagerGetter: <K extends TKey>(key: K) => SettingManager<K>;
+    private _globalSettingGetter: <K extends keyof GlobalSettings>(key: K) => GlobalSettings[K];
 
     private _makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[K]) => void) => void;
     private _localSettingLoadingStateGetter: <K extends TKey>(key: K) => boolean;
@@ -49,7 +49,8 @@ export class Dependency<
     private _numChildDependencies = 0;
 
     constructor(
-        contextDelegate: SettingsContextDelegate<TSettings, TSettingTypes, any, TKey, any>,
+        localSettingManagerGetter: <K extends TKey>(key: K) => SettingManager<K>,
+        globalSettingGetter: <K extends keyof GlobalSettings>(key: K) => GlobalSettings[K],
         updateFunc: UpdateFunc<TReturnValue, TSettings, TSettingTypes, TKey>,
         makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[K]) => void) => void,
         localSettingLoadingStateGetter: <K extends TKey>(key: K) => boolean,
@@ -58,7 +59,8 @@ export class Dependency<
             handler: (value: GlobalSettings[K]) => void,
         ) => void,
     ) {
-        this._contextDelegate = contextDelegate;
+        this._localSettingManagerGetter = localSettingManagerGetter;
+        this._globalSettingGetter = globalSettingGetter;
         this._updateFunc = updateFunc;
         this._makeLocalSettingGetter = makeLocalSettingGetter;
         this._localSettingLoadingStateGetter = localSettingLoadingStateGetter;
@@ -126,7 +128,7 @@ export class Dependency<
             return this._cachedSettingsMap.get(settingName as string);
         }
 
-        const setting = this._contextDelegate.getSettings()[settingName];
+        const setting = this._localSettingManagerGetter(settingName);
         const value = setting.getValue();
         this._cachedSettingsMap.set(settingName as string, value);
 
@@ -175,10 +177,7 @@ export class Dependency<
             this.invalidate();
         });
 
-        this._cachedGlobalSettingsMap.set(
-            settingName as string,
-            this._contextDelegate.getDataProviderManager().getGlobalSetting(settingName),
-        );
+        this._cachedGlobalSettingsMap.set(settingName as string, this._globalSettingGetter(settingName));
         return this._cachedGlobalSettingsMap.get(settingName as string);
     }
 
