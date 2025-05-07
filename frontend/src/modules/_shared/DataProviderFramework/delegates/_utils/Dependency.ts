@@ -7,8 +7,7 @@ import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
 import type { SettingsContextDelegate } from "../SettingsContextDelegate";
 
-class DependencyLoadingError extends Error {
-}
+class DependencyLoadingError extends Error {}
 
 /*
  * Dependency class is used to represent a node in the dependency graph of a data provider settings context.
@@ -68,6 +67,13 @@ export class Dependency<
         this.getGlobalSetting = this.getGlobalSetting.bind(this);
         this.getLocalSetting = this.getLocalSetting.bind(this);
         this.getHelperDependency = this.getHelperDependency.bind(this);
+    }
+
+    beforeDestroy() {
+        this._abortController?.abort();
+        this._abortController = null;
+        this._dependencies.clear();
+        this._loadingDependencies.clear();
     }
 
     hasChildDependencies(): boolean {
@@ -234,7 +240,6 @@ export class Dependency<
         }
         this.callUpdateFunc();
     }
-    
 
     private async callUpdateFunc() {
         if (this._abortController) {
@@ -256,7 +261,7 @@ export class Dependency<
             if (e instanceof DependencyLoadingError) {
                 return;
             }
-            
+
             if (!isCancelledError(e)) {
                 this.applyNewValue(null);
                 return;

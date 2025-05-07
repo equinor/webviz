@@ -1,4 +1,3 @@
-
 import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import { DataProvider } from "../framework/DataProvider/DataProvider";
@@ -314,5 +313,12 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         }
 
         return [startIndex, endIndex];
+    }
+
+    beforeDestroy() {
+        this._unsubscribeHandlerDelegate.unsubscribeAll();
+        for (const child of this._children) {
+            child.beforeDestroy?.();
+        }
     }
 }

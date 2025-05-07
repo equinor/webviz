@@ -70,6 +70,7 @@ export class SharedSetting<TSetting extends Setting> implements Item, SharedSett
     }
 
     beforeDestroy(): void {
+        this._sharedSettingsDelegate.beforeDestroy();
         this._sharedSettingsDelegate.unsubscribeAll();
     }
 }

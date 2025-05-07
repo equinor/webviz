@@ -12,7 +12,6 @@ import {
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorPaletteType } from "@framework/WorkbenchSettings";
 
-
 import type { PublishSubscribe } from "../../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../../utils/PublishSubscribeDelegate";
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
@@ -176,6 +175,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     }
 
     beforeDestroy() {
+        this._groupDelegate.beforeDestroy();
         this._subscriptionsHandler.unsubscribeAll();
     }
 

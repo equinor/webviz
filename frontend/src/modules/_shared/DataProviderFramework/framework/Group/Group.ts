@@ -125,4 +125,9 @@ export class Group<
         this._groupDelegate.setColor(serialized.color);
         this._groupDelegate.deserializeChildren(serialized.children);
     }
+
+    beforeDestroy(): void {
+        this._groupDelegate.beforeDestroy();
+        this._sharedSettingsDelegate?.beforeDestroy();
+    }
 }

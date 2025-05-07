@@ -1,4 +1,3 @@
-
 import { ExternalSettingController } from "../framework/ExternalSettingController/ExternalSettingController";
 import type { SettingManager } from "../framework/SettingManager/SettingManager";
 import type { Item } from "../interfacesAndTypes/entities";
@@ -11,7 +10,6 @@ export class SharedSettingsDelegate<
     TSettings extends Settings,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 > {
-    private _parentItem: Item;
     private _externalSettingControllers: { [K in TSettingKey]: ExternalSettingController<K> } = {} as {
         [K in TSettingKey]: ExternalSettingController<K>;
     };
@@ -21,7 +19,6 @@ export class SharedSettingsDelegate<
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
 
     constructor(parentItem: Item, wrappedSettings: { [K in TSettingKey]: SettingManager<K> }) {
-        this._parentItem = parentItem;
         this._wrappedSettings = wrappedSettings;
 
         for (const key in wrappedSettings) {
@@ -42,5 +39,17 @@ export class SharedSettingsDelegate<
 
     unsubscribeAll(): void {
         this._unsubscribeHandler.unsubscribeAll();
+    }
+
+    beforeDestroy(): void {
+        this._unsubscribeHandler.unsubscribeAll();
+        for (const key in this._externalSettingControllers) {
+            const externalSettingController = this._externalSettingControllers[key];
+            externalSettingController.beforeDestroy();
+        }
+        for (const key in this._wrappedSettings) {
+            const setting = this._wrappedSettings[key];
+            setting.beforeDestroy();
+        }
     }
 }

@@ -38,6 +38,11 @@ export class ExternalSettingController<
         );
     }
 
+    beforeDestroy(): void {
+        this._unsubscribeHandler.unsubscribeAll();
+        this.unregisterAllControlledSettings();
+    }
+
     getParentItem(): Item {
         return this._parentItem;
     }

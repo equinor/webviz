@@ -1,4 +1,3 @@
-
 import type { GroupDelegate } from "../delegates/GroupDelegate";
 import type { ItemDelegate } from "../delegates/ItemDelegate";
 import type { SharedSettingsDelegate } from "../delegates/SharedSettingsDelegate";
