@@ -26,7 +26,7 @@ import {
 
 const intersectionRealizationGridSettings = [
     Setting.INTERSECTION,
-    Setting.INTERSECTION_EXTENSION_LENGTH,
+    Setting.WELLBORE_EXTENSION_LENGTH,
     Setting.ENSEMBLE,
     Setting.REALIZATION,
     Setting.GRID_NAME,
@@ -45,7 +45,7 @@ export type IntersectionRealizationGridStoredData = {
 export type IntersectionRealizationGridData = PolylineIntersection_trans;
 
 export type IntersectionRealizationGridProviderArgs = {
-    isExtensionLengthEnabled: boolean;
+    enableWellboreExtensionLength: boolean;
 };
 
 export class IntersectionRealizationGridProvider
@@ -58,15 +58,15 @@ export class IntersectionRealizationGridProvider
 {
     settings = intersectionRealizationGridSettings;
 
-    private _isExtensionLengthEnabled = false;
+    private _isWellboreExtensionLengthEnabled = false;
 
     constructor(args: IntersectionRealizationGridProviderArgs) {
-        this._isExtensionLengthEnabled = args.isExtensionLengthEnabled;
+        this._isWellboreExtensionLengthEnabled = args.enableWellboreExtensionLength;
     }
 
     getDefaultSettingsValues() {
         return {
-            [Setting.INTERSECTION_EXTENSION_LENGTH]: 500.0,
+            [Setting.WELLBORE_EXTENSION_LENGTH]: 500.0,
             [Setting.SAMPLE_RESOLUTION_IN_METERS]: 1,
             [Setting.SHOW_GRID_LINES]: false,
         };
@@ -108,11 +108,11 @@ export class IntersectionRealizationGridProvider
         IntersectionRealizationGridStoredData
     >): boolean {
         let isValidExtensionLength = true;
-        if (this._isExtensionLengthEnabled) {
+        if (this._isWellboreExtensionLengthEnabled) {
             // Must have extension length for wellbore
             isValidExtensionLength =
                 getSetting(Setting.INTERSECTION)?.type !== IntersectionType.WELLBORE ||
-                getSetting(Setting.INTERSECTION_EXTENSION_LENGTH) !== null;
+                getSetting(Setting.WELLBORE_EXTENSION_LENGTH) !== null;
         }
 
         return (
@@ -136,13 +136,16 @@ export class IntersectionRealizationGridProvider
         queryClient,
         workbenchSession,
     }: DefineDependenciesArgs<IntersectionRealizationGridSettings, IntersectionRealizationGridStoredData>): void {
-        const isExtensionLengthIncluded = this._isExtensionLengthEnabled;
+        const isWellboreExtensionLengthEnabled = this._isWellboreExtensionLengthEnabled;
 
-        settingAttributesUpdater(Setting.INTERSECTION_EXTENSION_LENGTH, () => {
-            if (isExtensionLengthIncluded) {
-                return { enabled: true, visible: true };
+        settingAttributesUpdater(Setting.WELLBORE_EXTENSION_LENGTH, ({ getLocalSetting }) => {
+            const intersection = getLocalSetting(Setting.INTERSECTION);
+            if (!isWellboreExtensionLengthEnabled) {
+                return { enabled: false, visible: false };
             }
-            return { enabled: false, visible: false };
+
+            const isEnabled = intersection?.type === IntersectionType.WELLBORE;
+            return { enabled: isEnabled, visible: true };
         });
 
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
@@ -250,12 +253,12 @@ export class IntersectionRealizationGridProvider
         const intersectionPolylineWithSectionLengthsDep = helperDependency(({ getLocalSetting, getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const intersection = getLocalSetting(Setting.INTERSECTION);
-            const intersectionExtensionLength = getLocalSetting(Setting.INTERSECTION_EXTENSION_LENGTH) ?? 0;
+            const wellboreExtensionLength = getLocalSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
 
             return createIntersectionPolylineWithSectionLengthsForField(
                 fieldIdentifier,
                 intersection,
-                intersectionExtensionLength,
+                wellboreExtensionLength,
                 workbenchSession,
                 queryClient,
             );

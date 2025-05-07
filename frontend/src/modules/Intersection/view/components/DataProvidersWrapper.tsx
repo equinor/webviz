@@ -96,7 +96,7 @@ VISUALIZATION_ASSEMBLER.registerGroupCustomPropsCollector(
 );
 
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
-    DataProviderType.INTERSECTION_WITH_EXTENSION_REALIZATION_GRID,
+    DataProviderType.INTERSECTION_WITH_WELLBORE_EXTENSION_REALIZATION_GRID,
     IntersectionRealizationGridProvider,
     {
         transformToVisualization: createGridLayerItemsMaker,

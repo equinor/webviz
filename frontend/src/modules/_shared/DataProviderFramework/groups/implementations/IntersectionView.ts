@@ -1,7 +1,7 @@
 import { Setting } from "../..//settings/settingsDefinitions";
 import type { CustomGroupImplementationWithSettings } from "../../interfacesAndTypes/customGroupImplementation";
 
-const intersectionViewSettings = [Setting.INTERSECTION, Setting.INTERSECTION_EXTENSION_LENGTH] as const;
+const intersectionViewSettings = [Setting.INTERSECTION, Setting.WELLBORE_EXTENSION_LENGTH] as const;
 export type IntersectionViewSettings = typeof intersectionViewSettings;
 
 export class IntersectionView implements CustomGroupImplementationWithSettings<IntersectionViewSettings> {
@@ -14,7 +14,7 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<I
     getDefaultSettingsValues() {
         return {
             intersection: null,
-            intersectionExtensionLength: 500.0,
+            wellboreExtensionLength: 500.0,
         };
     }
 }

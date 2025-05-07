@@ -26,10 +26,10 @@ export function makeGridBoundingBox({
     any
 >): BBox | null {
     const polylineIntersectionData = getData();
-    const intersectionExtensionLength = getSetting(Setting.INTERSECTION_EXTENSION_LENGTH);
+    const extensionLength = getSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
     const polylineActualSectionLengths = getStoredData("polylineWithSectionLengths")?.actualSectionLengths;
 
-    if (!polylineIntersectionData || !intersectionExtensionLength || !polylineActualSectionLengths || isLoading) {
+    if (!polylineIntersectionData || !polylineActualSectionLengths || isLoading) {
         return null;
     }
 
@@ -46,8 +46,8 @@ export function makeGridBoundingBox({
         polylineActualSectionLengths,
     );
 
-    const minX = -intersectionExtensionLength;
-    let maxX = -intersectionExtensionLength;
+    const minX = -extensionLength;
+    let maxX = -extensionLength;
 
     // If no sections, return a bounding box with only the x-coordinates
     if (transformedPolylineIntersection.fenceMeshSections.length === 0) {

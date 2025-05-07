@@ -20,7 +20,7 @@ export type PolylineIntersectionSpecification = {
 export type WellboreIntersectionSpecification = {
     type: IntersectionType.WELLBORE;
     wellboreUuid: string;
-    intersectionExtensionLength: number;
+    extensionLength: number;
     fieldIdentifier: string;
     queryClient: QueryClient;
 };
@@ -55,7 +55,7 @@ export function makeIntersectionPolylineWithSectionLengthsPromise(
     }
 
     // Wellbore intersection
-    const { intersectionExtensionLength, wellboreUuid, fieldIdentifier, queryClient } = intersectionSpecification;
+    const { extensionLength, wellboreUuid, fieldIdentifier, queryClient } = intersectionSpecification;
     const makePolylineAndActualSectionLengthsPromise = queryClient
         .fetchQuery({
             ...getWellTrajectoriesOptions({
@@ -76,7 +76,7 @@ export function makeIntersectionPolylineWithSectionLengthsPromise(
 
             const simplifiedWellboreTrajectory = calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
                 wellTrajectoryPath,
-                intersectionExtensionLength,
+                extensionLength,
                 CURVE_FITTING_EPSILON,
             );
 

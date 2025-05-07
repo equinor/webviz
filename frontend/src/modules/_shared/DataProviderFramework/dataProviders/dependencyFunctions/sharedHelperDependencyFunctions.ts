@@ -50,7 +50,7 @@ export async function fetchWellboreHeaders(
 export async function createIntersectionPolylineWithSectionLengthsForField(
     fieldIdentifier: string | null,
     intersection: IntersectionSettingValue | null,
-    intersectionExtensionLength: number,
+    wellboreExtensionLength: number,
     workbenchSession: WorkbenchSession,
     queryClient: QueryClient,
 ): Promise<PolylineWithSectionLengths | null> {
@@ -80,7 +80,7 @@ export async function createIntersectionPolylineWithSectionLengthsForField(
         const intersectionSpecification: WellboreIntersectionSpecification = {
             type: IntersectionType.WELLBORE,
             wellboreUuid: intersection.uuid,
-            intersectionExtensionLength: intersectionExtensionLength,
+            extensionLength: wellboreExtensionLength,
             fieldIdentifier: fieldIdentifier,
             queryClient,
         };

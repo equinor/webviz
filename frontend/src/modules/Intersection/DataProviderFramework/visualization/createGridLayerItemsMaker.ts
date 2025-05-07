@@ -32,7 +32,7 @@ export function createGridLayerItemsMaker({
     const intersectionData = getData();
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
     const useCustomColorScaleBoundaries = getSetting(Setting.COLOR_SCALE)?.areBoundariesUserDefined ?? false;
-    const intersectionExtensionLength = getSetting(Setting.INTERSECTION_EXTENSION_LENGTH) ?? 0;
+    const extensionLength = getSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
     const showGridLines = getSetting(Setting.SHOW_GRID_LINES);
     const selectedAttribute = getSetting(Setting.ATTRIBUTE);
     const sourcePolylineWithSectionLengths = getStoredData("polylineWithSectionLengths");
@@ -88,7 +88,7 @@ export function createGridLayerItemsMaker({
                             maxGridPropValue: transformedPolylineIntersection.max_grid_prop_value,
                             colorScale: adjustedColorScale,
                             hideGridlines: !showGridLines,
-                            extensionLengthStart: intersectionExtensionLength,
+                            extensionLengthStart: extensionLength,
                             gridDimensions: {
                                 cellCountI: transformedPolylineIntersection.grid_dimensions.i_count,
                                 cellCountJ: transformedPolylineIntersection.grid_dimensions.j_count,
