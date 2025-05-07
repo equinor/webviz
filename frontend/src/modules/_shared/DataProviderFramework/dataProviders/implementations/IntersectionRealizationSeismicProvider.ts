@@ -28,7 +28,7 @@ import {
 
 const intersectionRealizationSeismicSettings = [
     Setting.INTERSECTION,
-    Setting.INTERSECTION_EXTENSION_LENGTH,
+    Setting.WELLBORE_EXTENSION_LENGTH,
     Setting.ENSEMBLE,
     Setting.REALIZATION,
     Setting.ATTRIBUTE,
@@ -74,7 +74,7 @@ export class IntersectionRealizationSeismicProvider
 
     getDefaultSettingsValues() {
         return {
-            [Setting.INTERSECTION_EXTENSION_LENGTH]: 500.0,
+            [Setting.WELLBORE_EXTENSION_LENGTH]: 500.0,
             [Setting.SAMPLE_RESOLUTION_IN_METERS]: 1.0,
         };
     }
@@ -123,13 +123,13 @@ export class IntersectionRealizationSeismicProvider
         IntersectionRealizationSeismicStoredData
     >): boolean {
         // Extension has to be set if intersection is wellbore
-        const isValidIntersectionExtensionLength =
+        const isValidExtensionLength =
             getSetting(Setting.INTERSECTION)?.type !== IntersectionType.WELLBORE ||
-            getSetting(Setting.INTERSECTION_EXTENSION_LENGTH) !== null;
+            getSetting(Setting.WELLBORE_EXTENSION_LENGTH) !== null;
 
         return (
             getSetting(Setting.INTERSECTION) !== null &&
-            isValidIntersectionExtensionLength &&
+            isValidExtensionLength &&
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&
             getSetting(Setting.ATTRIBUTE) !== null &&
@@ -141,10 +141,18 @@ export class IntersectionRealizationSeismicProvider
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
+        settingAttributesUpdater,
         queryClient,
         workbenchSession,
         storedDataUpdater,
     }: DefineDependenciesArgs<IntersectionRealizationSeismicSettings, IntersectionRealizationSeismicStoredData>): void {
+        settingAttributesUpdater(Setting.WELLBORE_EXTENSION_LENGTH, ({ getLocalSetting }) => {
+            const intersection = getLocalSetting(Setting.INTERSECTION);
+
+            const isEnabled = intersection?.type === IntersectionType.WELLBORE;
+            return { enabled: isEnabled, visible: true };
+        });
+
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -237,12 +245,12 @@ export class IntersectionRealizationSeismicProvider
         const intersectionPolylineWithSectionLengthsDep = helperDependency(({ getLocalSetting, getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const intersection = getLocalSetting(Setting.INTERSECTION);
-            const intersectionExtensionLength = getLocalSetting(Setting.INTERSECTION_EXTENSION_LENGTH) ?? 0;
+            const wellboreExtensionLength = getLocalSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
 
             return createIntersectionPolylineWithSectionLengthsForField(
                 fieldIdentifier,
                 intersection,
-                intersectionExtensionLength,
+                wellboreExtensionLength,
                 workbenchSession,
                 queryClient,
             );

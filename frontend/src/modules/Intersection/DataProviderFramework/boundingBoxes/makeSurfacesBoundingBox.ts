@@ -26,10 +26,10 @@ export function makeSurfacesBoundingBox({
     any
 >): BBox | null {
     const data = getData();
-    const extensionLength = getSetting(Setting.INTERSECTION_EXTENSION_LENGTH);
+    const extensionLength = getSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
     const polylineActualSectionLengths = getStoredData("polylineWithSectionLengths")?.actualSectionLengths;
 
-    if (!data || !extensionLength || !polylineActualSectionLengths || isLoading) {
+    if (!data || !polylineActualSectionLengths || isLoading) {
         return null;
     }
 

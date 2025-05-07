@@ -61,7 +61,7 @@ export function createSeismicLayerItemsMaker({
     const fenceData = getData();
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
     const useCustomColorScaleBoundaries = getSetting(Setting.COLOR_SCALE)?.areBoundariesUserDefined ?? false;
-    const intersectionExtensionLength = getSetting(Setting.INTERSECTION_EXTENSION_LENGTH) ?? 0;
+    const extensionLength = getSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
     const attribute = getSetting(Setting.ATTRIBUTE);
     const valueRange = getValueRange();
 
@@ -81,7 +81,7 @@ export function createSeismicLayerItemsMaker({
     // Create projection of polyline onto the fence (uz-plane) with actual section lengths
     const trajectoryFenceProjection = makeTrajectoryFenceProjectionFromFenceActualSectionLengths(
         seismicFenceSectionLengths,
-        intersectionExtensionLength,
+        extensionLength,
     );
 
     const adjustedColorScale = colorScale.clone();

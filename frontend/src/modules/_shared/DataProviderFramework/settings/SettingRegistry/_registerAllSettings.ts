@@ -39,14 +39,6 @@ SettingRegistry.registerSetting(Setting.GRID_LAYER_J_RANGE, "Grid Layer J Range"
 });
 SettingRegistry.registerSetting(Setting.GRID_NAME, "Grid Name", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.INTERSECTION, "Intersection", IntersectionSetting);
-SettingRegistry.registerSetting(
-    Setting.INTERSECTION_EXTENSION_LENGTH,
-    "Intersection Extension Length",
-    InputNumberSetting,
-    {
-        customConstructorParameters: [{ min: 0.0, max: 5000.0 }],
-    },
-);
 SettingRegistry.registerSetting(Setting.POLYGONS_ATTRIBUTE, "Polygons Attribute", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.POLYGONS_NAME, "Polygons Name", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.REALIZATION, "Realization", DropdownNumberSetting);
@@ -75,5 +67,8 @@ SettingRegistry.registerSetting(
         customConstructorParameters: [{ min: 1.0, max: 50.0 }],
     },
 );
+SettingRegistry.registerSetting(Setting.WELLBORE_EXTENSION_LENGTH, "Wellbore Extension Length", InputNumberSetting, {
+    customConstructorParameters: [{ min: 0.0, max: 5000.0 }],
+});
 SettingRegistry.registerSetting(Setting.WELLBORE_PICK_IDENTIFIER, "Wellbore Pick Identifier", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.WELLBORE_PICKS, "Wellbore Picks", DrilledWellborePicksSetting);

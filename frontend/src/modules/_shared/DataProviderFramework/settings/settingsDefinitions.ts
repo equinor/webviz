@@ -31,7 +31,6 @@ export enum Setting {
     GRID_LAYER_K_RANGE = "gridLayerKRange",
     GRID_NAME = "gridName",
     INTERSECTION = "intersection",
-    INTERSECTION_EXTENSION_LENGTH = "intersectionExtensionLength",
     POLYGONS_ATTRIBUTE = "polygonsAttribute",
     POLYGONS_NAME = "polygonsName",
     REALIZATION = "realization",
@@ -48,6 +47,7 @@ export enum Setting {
     SURFACE_NAMES = "surfaceNames",
     TIME_OR_INTERVAL = "timeOrInterval",
     SAMPLE_RESOLUTION_IN_METERS = "sampleResolutionInMeters",
+    WELLBORE_EXTENSION_LENGTH = "wellboreExtensionLength",
     WELLBORE_PICKS = "wellborePicks",
     WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
 }
@@ -63,7 +63,6 @@ export const settingCategories = {
     [Setting.GRID_LAYER_K_RANGE]: SettingCategory.RANGE,
     [Setting.GRID_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.INTERSECTION]: SettingCategory.SINGLE_SELECT,
-    [Setting.INTERSECTION_EXTENSION_LENGTH]: SettingCategory.NUMBER,
     [Setting.POLYGONS_ATTRIBUTE]: SettingCategory.SINGLE_SELECT,
     [Setting.POLYGONS_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.REALIZATION]: SettingCategory.SINGLE_SELECT,
@@ -80,6 +79,7 @@ export const settingCategories = {
     [Setting.SURFACE_NAMES]: SettingCategory.MULTI_SELECT,
     [Setting.TIME_OR_INTERVAL]: SettingCategory.SINGLE_SELECT,
     [Setting.SAMPLE_RESOLUTION_IN_METERS]: SettingCategory.NUMBER,
+    [Setting.WELLBORE_EXTENSION_LENGTH]: SettingCategory.NUMBER,
     [Setting.WELLBORE_PICKS]: SettingCategory.MULTI_SELECT,
     [Setting.WELLBORE_PICK_IDENTIFIER]: SettingCategory.SINGLE_SELECT,
 } as const;
@@ -97,7 +97,6 @@ export type SettingTypes = {
     [Setting.GRID_LAYER_K_RANGE]: [number, number] | null;
     [Setting.GRID_NAME]: string | null;
     [Setting.INTERSECTION]: IntersectionSettingValue | null;
-    [Setting.INTERSECTION_EXTENSION_LENGTH]: number | null;
     [Setting.POLYGONS_ATTRIBUTE]: string | null;
     [Setting.POLYGONS_NAME]: string | null;
     [Setting.REALIZATION]: number | null;
@@ -114,6 +113,7 @@ export type SettingTypes = {
     [Setting.SURFACE_NAMES]: string[] | null;
     [Setting.TIME_OR_INTERVAL]: string | null;
     [Setting.SAMPLE_RESOLUTION_IN_METERS]: number | null;
+    [Setting.WELLBORE_EXTENSION_LENGTH]: number | null;
     [Setting.WELLBORE_PICKS]: WellborePick_api[] | null;
     [Setting.WELLBORE_PICK_IDENTIFIER]: string | null;
 };

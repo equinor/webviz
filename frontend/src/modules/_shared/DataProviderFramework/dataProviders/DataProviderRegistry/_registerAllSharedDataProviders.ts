@@ -12,9 +12,9 @@ import { DataProviderRegistry } from "./_DataProviderRegistry";
 DataProviderRegistry.registerDataProvider(DataProviderType.DRILLED_WELLBORE_PICKS, DrilledWellborePicksProvider);
 DataProviderRegistry.registerDataProvider(DataProviderType.DRILLED_WELL_TRAJECTORIES, DrilledWellTrajectoriesProvider);
 DataProviderRegistry.registerDataProvider(
-    DataProviderType.INTERSECTION_WITH_EXTENSION_REALIZATION_GRID,
+    DataProviderType.INTERSECTION_WITH_WELLBORE_EXTENSION_REALIZATION_GRID,
     IntersectionRealizationGridProvider,
-    [{ isExtensionLengthEnabled: true }],
+    [{ enableWellboreExtensionLength: true }],
 );
 DataProviderRegistry.registerDataProvider(
     DataProviderType.INTERSECTION_REALIZATION_OBSERVED_SEISMIC,
