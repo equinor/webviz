@@ -21,10 +21,7 @@ import type {
     DataProviderInformationAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
-import {
-    CancelUpdate,
-    type DefineDependenciesArgs,
-} from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
@@ -129,8 +126,13 @@ export class SurfacesPerRealizationValuesProvider
         availableSettingsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
+            const fieldIdentifier = getGlobalSetting("fieldId");
 
-            return getAvailableIntersectionOptions(wellboreHeaders, intersectionPolylines);
+            const fieldIntersectionPolylines = intersectionPolylines.filter(
+                (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
+            );
+
+            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
         });
 
         const depthSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
@@ -203,7 +205,11 @@ export class SurfacesPerRealizationValuesProvider
                 !intersectionPolylineWithSectionLengths ||
                 intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
             ) {
-                return CancelUpdate;
+                return {
+                    xUtmPoints: [],
+                    yUtmPoints: [],
+                    cumulatedHorizontalPolylineLengthArr: [],
+                };
             }
 
             const initialHorizontalPosition = -intersectionExtensionLength;

@@ -9,6 +9,7 @@ import type { Viewport } from "@framework/types/viewport";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
+import { isValidViewport } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 
 import { ReadoutWrapper } from "./readoutWrapper";
@@ -76,8 +77,8 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
 
     const handleViewportChange = React.useCallback(
         function handleViewportChange(newViewport: Viewport) {
-            if (Number.isNaN(newViewport[0]) || Number.isNaN(newViewport[1]) || Number.isNaN(newViewport[2])) {
-                throw new Error("Invalid viewport: " + newViewport);
+            if (!isValidViewport(newViewport)) {
+                throw new Error("Got invalid viewport: " + newViewport);
             }
 
             setViewport((prev) => {
@@ -98,16 +99,18 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const handleFitInViewClick = React.useCallback(
         function handleFitInViewClick(): void {
             if (props.bounds) {
-                const [xMin, xMax] = props.bounds.x;
-                const [yMin, yMax] = props.bounds.y;
+                let [xMin, xMax] = props.bounds.x;
+                let [yMin, yMax] = props.bounds.y;
+
+                // Ensure that the bounds are finite numbers
+                if (!Number.isFinite(xMin)) xMin = 0;
+                if (!Number.isFinite(xMax)) xMax = 0;
+                if (!Number.isFinite(yMin)) yMin = 0;
+                if (!Number.isFinite(yMax)) yMax = 0;
 
                 const centerX = xMin + (xMax - xMin) / 2;
                 const centerY = yMin + (yMax - yMin) / 2;
-                const newViewport: [number, number, number] = [
-                    centerX,
-                    centerY,
-                    Math.max(xMax - xMin, yMax - yMin) * 1.2,
-                ];
+                const newViewport: [number, number, number] = [centerX, centerY, (xMax - xMin) * 1.2];
                 setViewport(newViewport);
             }
         },

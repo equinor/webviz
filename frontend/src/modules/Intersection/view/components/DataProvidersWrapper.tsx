@@ -16,6 +16,7 @@ import { combine } from "@lib/utils/bbox";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { isColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
+import { areValidBounds, isValidViewport } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { IntersectionRealizationSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
@@ -283,8 +284,8 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
 
     // Create bounds for the view from the bounding box
     const bounds: { x: [number, number]; y: [number, number] } = {
-        x: [Number.MAX_VALUE, Number.MIN_VALUE],
-        y: [Number.MAX_VALUE, Number.MIN_VALUE],
+        x: [0.0, 0.0],
+        y: [0.0, 0.0],
     };
     let isBoundsSetByProvider = false;
     if (combinedBoundingBox) {
@@ -312,6 +313,12 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         bounds.y = prevBounds?.y ?? [0, 1000];
     }
 
+    // Set valid bound for the view
+    if (!areValidBounds(bounds)) {
+        bounds.x = [0, 2000];
+        bounds.y = [0, 1000];
+    }
+
     if (!isEqual(bounds, prevBounds)) {
         setPrevBounds(bounds);
     }
@@ -326,7 +333,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     ];
 
     let actualViewport = viewport;
-    if (!isEqual(candidateViewport, prevViewport) && !isInitialViewportSet) {
+    if (!isEqual(candidateViewport, prevViewport) && isValidViewport(candidateViewport) && !isInitialViewportSet) {
         actualViewport = candidateViewport;
         setViewport(candidateViewport);
         setPrevViewport(candidateViewport);

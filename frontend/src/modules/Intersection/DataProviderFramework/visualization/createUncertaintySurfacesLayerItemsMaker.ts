@@ -52,8 +52,11 @@ export function createUncertaintySurfacesLayerItemsMaker({
         }
 
         // Verify sample values length using first fetched realization
-        if (sampledValues[0].length !== requestedPolylineLength) {
-            throw new Error("Length of sampled values does not match length of requested polyline");
+        const numPoints = sampledValues[0].length;
+        if (numPoints !== requestedPolylineLength) {
+            throw new Error(
+                `Number of surface sampled values (${numPoints}) does not match length of requested polyline (${requestedPolylineLength})`,
+            );
         }
 
         const fanchart = makeSurfaceStatisticalFanchartFromRealizationSurface(

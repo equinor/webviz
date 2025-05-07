@@ -99,6 +99,9 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                     />
                     <Dropdown<string>
                         options={options}
+                        placeholder={
+                            type === IntersectionType.CUSTOM_POLYLINE ? "Select polyline..." : "Select wellbore..."
+                        }
                         value={!props.isOverridden ? props.value?.uuid : props.overriddenValue?.uuid}
                         onChange={handleSelectionChange}
                         disabled={props.isOverridden}

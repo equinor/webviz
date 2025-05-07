@@ -13,7 +13,7 @@ import type {
     DataProviderInformationAccessors,
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
-import { CancelUpdate, type DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
+import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
     fetchWellboreHeaders,
@@ -93,6 +93,7 @@ export class IntersectionRealizationGridProvider
         }
 
         if (data) {
+            // Note: min and max for entire grid, not only for the intersection
             return [data.min_grid_prop_value, data.max_grid_prop_value];
         }
 
@@ -213,8 +214,13 @@ export class IntersectionRealizationGridProvider
         availableSettingsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
+            const fieldIdentifier = getGlobalSetting("fieldId");
 
-            return getAvailableIntersectionOptions(wellboreHeaders, intersectionPolylines);
+            const fieldIntersectionPolylines = intersectionPolylines.filter(
+                (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
+            );
+
+            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
         });
 
         availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
@@ -265,7 +271,7 @@ export class IntersectionRealizationGridProvider
                 !intersectionPolylineWithSectionLengths ||
                 intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
             ) {
-                return CancelUpdate;
+                return { polylineUtmXy: [], actualSectionLengths: [] };
             }
 
             return intersectionPolylineWithSectionLengths;

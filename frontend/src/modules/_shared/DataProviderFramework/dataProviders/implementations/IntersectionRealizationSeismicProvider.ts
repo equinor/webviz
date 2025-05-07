@@ -15,7 +15,7 @@ import type {
     DataProviderInformationAccessors,
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataProviderImplementation";
-import { CancelUpdate, type DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
+import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
     fetchWellboreHeaders,
@@ -101,8 +101,14 @@ export class IntersectionRealizationSeismicProvider
         }
 
         if (data) {
-            const minValue = data.fenceTracesFloat32Arr.reduce((acc, value) => Math.min(acc, value), Infinity);
-            const maxValue = data.fenceTracesFloat32Arr.reduce((acc, value) => Math.max(acc, value), -Infinity);
+            // Fill value is NaN
+            const minValue = data.fenceTracesFloat32Arr
+                .filter((value) => !Number.isNaN(value))
+                .reduce((acc, value) => Math.min(acc, value), Infinity);
+            const maxValue = data.fenceTracesFloat32Arr
+                .filter((value) => !Number.isNaN(value))
+                .reduce((acc, value) => Math.max(acc, value), -Infinity);
+
             return [minValue, maxValue];
         }
 
@@ -197,8 +203,13 @@ export class IntersectionRealizationSeismicProvider
         availableSettingsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
+            const fieldIdentifier = getGlobalSetting("fieldId");
 
-            return getAvailableIntersectionOptions(wellboreHeaders, intersectionPolylines);
+            const fieldIntersectionPolylines = intersectionPolylines.filter(
+                (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
+            );
+
+            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
         });
 
         availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
@@ -247,7 +258,7 @@ export class IntersectionRealizationSeismicProvider
                 !intersectionPolylineWithSectionLengths ||
                 intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
             ) {
-                return CancelUpdate;
+                return { polylineUtmXy: [], actualSectionLengths: [] };
             }
 
             return intersectionPolylineWithSectionLengths;
@@ -264,7 +275,7 @@ export class IntersectionRealizationSeismicProvider
                 !intersectionPolylineWithSectionLengths ||
                 intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
             ) {
-                return CancelUpdate;
+                return { polylineUtmXy: [], actualSectionLengths: [] };
             }
 
             // Resample the polyline, as seismic fence is created by one trace per (x,y) point in the polyline

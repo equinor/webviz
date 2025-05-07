@@ -1,4 +1,4 @@
-import type { BBox } from "@lib/utils/bbox";
+import { fromNumArray, type BBox } from "@lib/utils/bbox";
 import type {
     IntersectionRealizationGridData,
     IntersectionRealizationGridSettings,
@@ -48,9 +48,14 @@ export function makeGridBoundingBox({
 
     const minX = -intersectionExtensionLength;
     let maxX = -intersectionExtensionLength;
-    let minY = Number.MAX_VALUE;
-    let maxY = Number.MIN_VALUE;
 
+    // If no sections, return a bounding box with only the x-coordinates
+    if (transformedPolylineIntersection.fenceMeshSections.length === 0) {
+        return fromNumArray([minX, 0, 0, maxX, 0, 0]);
+    }
+
+    let minY = Number.MAX_VALUE;
+    let maxY = -Number.MAX_VALUE;
     for (const section of transformedPolylineIntersection.fenceMeshSections) {
         maxX += section.sectionLength;
 
@@ -58,16 +63,5 @@ export function makeGridBoundingBox({
         maxY = Math.max(maxY, section.maxZ);
     }
 
-    return {
-        min: {
-            x: minX,
-            y: minY,
-            z: 0,
-        },
-        max: {
-            x: maxX,
-            y: maxY,
-            z: 0,
-        },
-    };
+    return fromNumArray([minX, minY, 0, maxX, maxY, 0]);
 }

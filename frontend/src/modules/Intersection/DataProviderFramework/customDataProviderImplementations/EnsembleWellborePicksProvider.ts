@@ -58,8 +58,13 @@ export class EnsembleWellborePicksProvider
         availableSettingsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
+            const fieldIdentifier = getGlobalSetting("fieldId");
 
-            return getAvailableIntersectionOptions(wellboreHeaders, intersectionPolylines);
+            const fieldIntersectionPolylines = intersectionPolylines.filter(
+                (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
+            );
+
+            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
         });
 
         const wellborePicksDep = helperDependency(({ getGlobalSetting, getLocalSetting, abortSignal }) => {
