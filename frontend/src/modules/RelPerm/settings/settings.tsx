@@ -1,42 +1,50 @@
 import React from "react";
 
+import { CircularProgress } from "@equinor/eds-core-react";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
+import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { QueriesErrorCriteria, QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
+import { Slider } from "@lib/components/Slider";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
     selectedColorByAtom,
-    selectedVisualizationTypeAtom,
-    userSelectedEnsembleIdentAtom,
+    selectedLineWidthAtom,
+    selectedOpacityAtom,
+    userSelectedEnsembleIdentsAtom,
     userSelectedRelPermCurveNamesAtom,
     userSelectedSatNumsAtom,
     userSelectedSaturationAxisAtom,
     userSelectedTableNameAtom,
-    validRealizationNumbersAtom,
 } from "./atoms/baseAtoms";
 import {
     availableRelPermCurveNamesAtom,
     availableRelPermSaturationAxesAtom,
     availableRelPermTableNamesAtom,
     availableSatNumsAtom,
-    selectedEnsembleIdentAtom,
+    selectedEnsembleIdentsAtom,
     selectedRelPermCurveNamesAtom,
     selectedRelPermSaturationAxisAtom,
     selectedRelPermTableNameAtom,
     selectedSatNumsAtom,
 } from "./atoms/derivedAtoms";
-import { relPermTableInfoQueryAtom, relPermTableNamesQueryAtom } from "./atoms/queryAtoms";
+import { relPermTableInfoQueriesAtom, relPermTableNamesQueriesAtom } from "./atoms/queryAtoms";
 
 import { Interfaces } from "../interfaces";
 import { ColorBy, VisualizationType } from "../typesAndEnums";
@@ -50,18 +58,13 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
 
-    const selectedEnsembleIdent = useAtomValue(selectedEnsembleIdentAtom);
-    const setUserSelectedEnsembleIdent = useSetAtom(userSelectedEnsembleIdentAtom);
-    const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
-
-    const setValidRealizationNumbersAtom = useSetAtom(validRealizationNumbersAtom);
-    const validRealizations = selectedEnsembleIdent ? [...filterEnsembleRealizationsFunc(selectedEnsembleIdent)] : null;
-    setValidRealizationNumbersAtom(validRealizations);
+    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
+    const setUserSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
 
     const [selectedColorBy, setSelectedColorBy] = useAtom(selectedColorByAtom);
-    const [selectedVisualizationType, setSelectedVisualizationType] = useAtom(selectedVisualizationTypeAtom);
-    const relPermTableNamesQuery = useAtomValue(relPermTableNamesQueryAtom);
-    const relPermTableInfoQuery = useAtomValue(relPermTableInfoQueryAtom);
+
+    const relPermTableNamesQuery = useAtomValue(relPermTableNamesQueriesAtom);
+    const relPermTableInfoQuery = useAtomValue(relPermTableInfoQueriesAtom);
     const availableRelPermTableNames = useAtomValue(availableRelPermTableNamesAtom);
     const selecedRelPermTableName = useAtomValue(selectedRelPermTableNameAtom);
     const setUserSelectedRelPermTableName = useSetAtom(userSelectedTableNameAtom);
@@ -78,13 +81,15 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const selectedSatNums = useAtomValue(selectedSatNumsAtom);
     const setUserSelectedSatNums = useSetAtom(userSelectedSatNumsAtom);
 
-    const relPermTableNamesQueryErrorMessage =
-        usePropagateApiErrorToStatusWriter(relPermTableNamesQuery, statusWriter) ?? "";
-    const relPermTableInfoQueryErrorMessage =
-        usePropagateApiErrorToStatusWriter(relPermTableInfoQuery, statusWriter) ?? "";
+    const [selectedOpacity, setSelectedOpacity] = useAtom(selectedOpacityAtom);
+    const [selectedLineWidth, setSelectedLineWidth] = useAtom(selectedLineWidthAtom);
+    // const relPermTableNamesQueryErrorMessage =
+    //     usePropagateApiErrorToStatusWriter(relPermTableNamesQuery, statusWriter) ?? "";
+    // const relPermTableInfoQueryErrorMessage =
+    //     usePropagateApiErrorToStatusWriter(relPermTableInfoQuery, statusWriter) ?? "";
 
-    function handleEnsembleSelectionChange(ensembleIdent: RegularEnsembleIdent | null) {
-        setUserSelectedEnsembleIdent(ensembleIdent);
+    function handleEnsembleSelectChange(ensembleIdentArray: RegularEnsembleIdent[]) {
+        setUserSelectedEnsembleIdents(ensembleIdentArray);
     }
 
     const [selectedMultiSatNums, setSelectedMultiSatNums] = React.useState<number[]>(selectedSatNums);
@@ -111,25 +116,28 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         //     setSelectedPvtNums([selectedMultiPvtNums[0]]);
         // }
     }
-    function handleVisualizationTypeChange(
-        _: React.ChangeEvent<HTMLInputElement>,
-        visualizationType: VisualizationType
-    ) {
-        setSelectedVisualizationType(visualizationType);
+    function handleOpacityChange(event: Event, value: number | number[]) {
+        setSelectedOpacity(value as number);
     }
-
+    function handleLineWidthChange(event: Event, value: number | number[]) {
+        setSelectedLineWidth(value as number);
+    }
     return (
         <div>
             <CollapsibleGroup expanded={true} title="Ensembles">
-                <EnsembleDropdown
+                <EnsembleSelect
                     ensembles={ensembleSet.getRegularEnsembleArray()}
-                    value={selectedEnsembleIdent}
-                    onChange={handleEnsembleSelectionChange}
+                    value={selectedEnsembleIdents}
+                    allowDeltaEnsembles={false}
+                    size={5}
+                    onChange={handleEnsembleSelectChange}
                 />
             </CollapsibleGroup>
-            <PendingWrapper
-                isPending={relPermTableNamesQuery.isFetching}
-                errorMessage={relPermTableNamesQueryErrorMessage}
+            <QueryStateWrapper
+                queryResults={relPermTableNamesQuery}
+                loadingComponent={<CircularProgress />}
+                showErrorWhen={QueriesErrorCriteria.ALL_QUERIES_HAVE_ERROR}
+                errorComponent={"Could not load relperm tables"}
             >
                 <CollapsibleGroup expanded={true} title="Table name">
                     <Dropdown
@@ -138,10 +146,12 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                         onChange={setUserSelectedRelPermTableName}
                     />
                 </CollapsibleGroup>
-            </PendingWrapper>
-            <PendingWrapper
-                isPending={relPermTableInfoQuery.isFetching}
-                errorMessage={relPermTableInfoQueryErrorMessage}
+            </QueryStateWrapper>
+            <QueryStateWrapper
+                queryResults={relPermTableInfoQuery}
+                loadingComponent={<CircularProgress />}
+                showErrorWhen={QueriesErrorCriteria.ALL_QUERIES_HAVE_ERROR}
+                errorComponent={"Could not load relperm tables"}
             >
                 <CollapsibleGroup expanded={true} title="Saturation axis">
                     <Dropdown
@@ -176,20 +186,18 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                         value={selectedSatNums ? selectedSatNums.map((num) => num.toString()) : []}
                         onChange={handleSatNumsChange}
                         size={10}
-                        multiple={selectedColorBy === ColorBy.SATNUM}
+                        multiple
                     />
                 </CollapsibleGroup>
-                <CollapsibleGroup expanded={true} title="Visualization type">
-                    <RadioGroup
-                        options={[
-                            { label: "Statistical Fanchart", value: VisualizationType.STATISTICAL_FANCHART },
-                            { label: "Individual Realizations", value: VisualizationType.INDIVIDUAL_REALIZATIONS },
-                        ]}
-                        value={selectedVisualizationType}
-                        onChange={handleVisualizationTypeChange}
-                    />
-                </CollapsibleGroup>
-            </PendingWrapper>
+            </QueryStateWrapper>
+            <CollapsibleGroup expanded={true} title="Visualization">
+                <Label text="Opacity" key="opacity">
+                    <Slider min={0.05} max={1} step={0.001} value={selectedOpacity} onChange={handleOpacityChange} />
+                </Label>
+                <Label text="Line width" key="line-width">
+                    <Slider min={1} max={20} step={0.1} value={selectedLineWidth} onChange={handleLineWidthChange} />
+                </Label>
+            </CollapsibleGroup>
         </div>
     );
 }

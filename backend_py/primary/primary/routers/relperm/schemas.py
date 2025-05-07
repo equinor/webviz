@@ -19,40 +19,11 @@ class RelPermTableInfo(BaseModel):
 class CurveData(BaseModel):
     curve_name: str
     curve_values: List[float]
-    unit: str | None = None
-
-
-class RelPermRealizationCurveData(BaseModel):
-    curve_name: str
-    curve_values: List[float]
-    realization_id: int
 
 
 class RelPermRealizationData(BaseModel):
+    curve_data_arr: List[CurveData]
+    realization_id: int
+    saturation_name: str
+    saturation_values: List[float]
     saturation_number: int
-    saturation_axis_data: CurveData
-    relperm_curve_data: List[RelPermRealizationCurveData]
-
-
-class Statistic(StrEnum):
-    """
-    Definition of possible statistics
-    """
-
-    MEAN = "mean"
-    STD_DEV = "stddev"
-    MAX = "max"
-    MIN = "min"
-    P10 = "p10"
-    P90 = "p90"
-
-
-class RelPermStatisticalCurveData(BaseModel):
-    curve_name: str
-    curve_values: Dict[Statistic, List[float]]
-
-
-class RelPermStatisticalDataForSaturation(BaseModel):
-    saturation_axis_data: CurveData
-    saturation_number: int
-    relperm_curve_data: List[RelPermStatisticalCurveData]

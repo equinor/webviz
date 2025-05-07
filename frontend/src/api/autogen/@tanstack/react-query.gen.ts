@@ -136,7 +136,6 @@ import {
     getRealizationsTablesAreEqual,
     getRealizationsVectorData,
     getRelpermRealizationsCurveData,
-    getRelpermStatisticalCurveData,
     getRelpermTableInfo,
     getRelpermTableNames,
     getSeismicCubeMetaList,
@@ -207,7 +206,6 @@ import type {
     GetRealizationsTablesAreEqualData_api,
     GetRealizationsVectorDataData_api,
     GetRelpermRealizationsCurveDataData_api,
-    GetRelpermStatisticalCurveDataData_api,
     GetRelpermTableInfoData_api,
     GetRelpermTableNamesData_api,
     GetSeismicCubeMetaListData_api,
@@ -1315,6 +1313,7 @@ export const getRelpermRealizationsCurveDataOptions = (options: Options<GetRelpe
     });
 };
 
+<<<<<<< HEAD
 export const getRelpermStatisticalCurveDataQueryKey = (options: Options<GetRelpermStatisticalCurveDataData_api>) => [
     createQueryKey("getRelpermStatisticalCurveData", options),
 ];
@@ -1338,6 +1337,8 @@ export const getRelpermStatisticalCurveDataOptions = (options: Options<GetRelper
 >>>>>>> 437c065e (wip)
 =======
 >>>>>>> 205e1909 (wip)
+=======
+>>>>>>> 1153acfb (wip)
 export const getWellCompletionsDataQueryKey = (options: Options<GetWellCompletionsDataData_api>) => [
     createQueryKey("getWellCompletionsData", options),
 ];

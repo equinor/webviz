@@ -47,34 +47,31 @@ export function usePlotBuilder(
     const loadedRelPermSpecificationsAndRealizationData = useAtomValue(
         loadedRelPermSpecificationsAndRealizationDataAtom,
     );
-    const loadedVectorSpecificationsAndStatisticsData = useAtomValue(loadedVectorSpecificationsAndStatisticsDataAtom);
-    const loadedRegularEnsembleVectorSpecificationsAndHistoricalData = useAtomValue(
-        loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
-    );
-    const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
-    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
+
+    // const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
+    // const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
 
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
 
-    const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
+    // const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
+    const subplotOwner = SubplotOwner.ENSEMBLE
+    const scatterType = "scattergl"
+        // visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
+        // visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
+        //     ? "scattergl"
+        //     : "scatter";
 
-    const scatterType =
-        visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
-        visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
-            ? "scattergl"
-            : "scatter";
+    // const loadedVectorSpecificationsAndObservationData: {
+    //     vectorSpecification: VectorSpec;
+    //     data: SummaryVectorObservations_api;
+    // }[] = [];
+    // vectorObservationsQueries.ensembleVectorObservationDataMap.forEach((ensembleObservationData) => {
+    //     if (showObservations && !ensembleObservationData.hasSummaryObservations) {
+    //         return;
+    //     }
 
-    const loadedVectorSpecificationsAndObservationData: {
-        vectorSpecification: VectorSpec;
-        data: SummaryVectorObservations_api;
-    }[] = [];
-    vectorObservationsQueries.ensembleVectorObservationDataMap.forEach((ensembleObservationData) => {
-        if (showObservations && !ensembleObservationData.hasSummaryObservations) {
-            return;
-        }
-
-        loadedVectorSpecificationsAndObservationData.push(...ensembleObservationData.vectorsObservationData);
-    });
+    //     loadedVectorSpecificationsAndObservationData.push(...ensembleObservationData.vectorsObservationData);
+    // });
 
     const plotBuilder = new PlotBuilder(
         subplotOwner,

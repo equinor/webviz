@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 import polars as pl
 import pyarrow as pa
+import pyarrow.compute as pc
 
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
@@ -101,6 +102,10 @@ class RelPermAccess:
         if "REAL" in columns:
             columns.remove("REAL")
         arrow_table = await arrow_loader.get_aggregated_multiple_columns_async(columns)
+        if realizations is not None:
+            requested_reals_arr = pa.array(realizations)
+            mask = pc.is_in(arrow_table["REAL"], value_set=requested_reals_arr)
+            arrow_table = arrow_table.filter(mask)
         pl_table = pl.DataFrame(arrow_table)
         return pl_table
 

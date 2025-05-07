@@ -1,6 +1,6 @@
 import { InterfaceEffects } from "@framework/Module";
 
-import { relPermSpecificationsAtom, selectedColorByAtom, selectedVisualizationTypeAtom } from "./baseAtoms";
+import { relPermSpecificationsAtom, visualizationSettingsAtom } from "./baseAtoms";
 
 import { SettingsToViewInterface } from "../../interfaces";
 
@@ -10,11 +10,7 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
         setAtomValue(relPermSpecificationsAtom, relPermSpecifications);
     },
     (getInterfaceValue, setAtomValue) => {
-        const colorBy = getInterfaceValue("colorBy");
-        setAtomValue(selectedColorByAtom, colorBy);
-    },
-    (getInterfaceValue, setAtomValue) => {
-        const visualizationType = getInterfaceValue("visualizationType");
-        setAtomValue(selectedVisualizationTypeAtom, visualizationType);
+        const visualizationSettings = getInterfaceValue("visualizationSettings");
+        setAtomValue(visualizationSettingsAtom, visualizationSettings);
     },
 ];

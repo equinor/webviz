@@ -1,18 +1,20 @@
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { fixupEnsembleIdent, fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
+import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { RelPermSpec } from "@modules/RelPerm/typesAndEnums";
 
 import { atom } from "jotai";
 
 import {
-    userSelectedEnsembleIdentAtom,
+    userSelectedEnsembleIdentsAtom,
     userSelectedRelPermCurveNamesAtom,
     userSelectedSatNumsAtom,
     userSelectedSaturationAxisAtom,
     userSelectedTableNameAtom,
 } from "./baseAtoms";
-import { relPermTableInfoQueryAtom, relPermTableNamesQueryAtom } from "./queryAtoms";
+import { relPermTableInfoQueriesAtom, relPermTableNamesQueriesAtom } from "./queryAtoms";
+
+import { relPermTablesInfoHelper } from "../utils/relPermTableInfoHelper";
 
 function fixupSelectedOrFirstValue<T extends string | number>(selectedValue: T | null, values: T[]): T | null {
     const includes = (value: T | null): value is T => {
@@ -28,30 +30,42 @@ function fixupSelectedOrFirstValue<T extends string | number>(selectedValue: T |
     return null;
 }
 
-export const selectedEnsembleIdentAtom = atom<RegularEnsembleIdent | null>((get) => {
+export const selectedEnsembleIdentsAtom = atom<RegularEnsembleIdent[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
-    const userSelectedEnsembleIdent = get(userSelectedEnsembleIdentAtom);
+    const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
 
-    const validEnsembleIdent = fixupRegularEnsembleIdent(userSelectedEnsembleIdent, ensembleSet);
-    return validEnsembleIdent;
+    const newSelectedEnsembleIdents = userSelectedEnsembleIdents.filter((ensemble) =>
+        ensembleSet.hasEnsemble(ensemble),
+    );
+    const validatedEnsembleIdents = fixupRegularEnsembleIdents(newSelectedEnsembleIdents, ensembleSet);
+
+    return validatedEnsembleIdents ?? [];
 });
 
 export const availableRelPermTableNamesAtom = atom<string[]>((get) => {
-    const tableNames = get(relPermTableNamesQueryAtom).data;
-    return tableNames ?? [];
+    const tableNamesQueries = get(relPermTableNamesQueriesAtom);
+    if (tableNamesQueries.some((query) => query.isFetching)) {
+        return [];
+    }
+
+    return tableNamesQueries.reduce<string[]>((acc, query) => {
+        return query.data ? acc.filter((name) => query.data.includes(name)) : acc;
+    }, tableNamesQueries[0].data ?? []);
 });
+
 export const selectedRelPermTableNameAtom = atom<string | null>((get) => {
     const availableRelPermTableNames = get(availableRelPermTableNamesAtom);
     const userSelectedTableName = get(userSelectedTableNameAtom);
     return fixupSelectedOrFirstValue(userSelectedTableName, availableRelPermTableNames);
 });
 
+export const relPermTablesInfoHelperAtom = atom<relPermTablesInfoHelper>((get) => {
+    const tableInfoQueries = get(relPermTableInfoQueriesAtom);
+    return new relPermTablesInfoHelper(tableInfoQueries);
+});
 export const availableRelPermSaturationAxesAtom = atom<string[]>((get) => {
-    const tableInfo = get(relPermTableInfoQueryAtom).data;
-    if (!tableInfo) {
-        return [];
-    }
-    return tableInfo.saturation_axes.map((axis) => axis.saturation_name);
+    const relPermTablesInfoHelper = get(relPermTablesInfoHelperAtom);
+    return relPermTablesInfoHelper.saturationNamesIntersection();
 });
 
 export const selectedRelPermSaturationAxisAtom = atom<string | null>((get) => {
@@ -61,22 +75,16 @@ export const selectedRelPermSaturationAxisAtom = atom<string | null>((get) => {
 });
 
 export const availableRelPermCurveNamesAtom = atom<string[]>((get) => {
-    const tableInfo = get(relPermTableInfoQueryAtom).data;
-    if (!tableInfo) {
-        return [];
-    }
+    const relPermTablesInfoHelper = get(relPermTablesInfoHelperAtom);
     const selectedSaturationAxis = get(selectedRelPermSaturationAxisAtom);
-    const selectedSaturationAxisInfo = tableInfo.saturation_axes.find(
-        (axis) => axis.saturation_name === selectedSaturationAxis
-    );
-    return selectedSaturationAxisInfo?.relperm_curve_names ?? [];
+    return relPermTablesInfoHelper.relPermCurveNamesIntersection(selectedSaturationAxis);
 });
 
 export const selectedRelPermCurveNamesAtom = atom<string[] | null>((get) => {
     const availableRelPermCurveNames = get(availableRelPermCurveNamesAtom);
     const userSelectedRelPermCurveNames = get(userSelectedRelPermCurveNamesAtom);
     let computedRelPermCurveNames = userSelectedRelPermCurveNames?.filter((name) =>
-        availableRelPermCurveNames.includes(name)
+        availableRelPermCurveNames.includes(name),
     );
     if (!computedRelPermCurveNames || computedRelPermCurveNames.length === 0) {
         computedRelPermCurveNames = availableRelPermCurveNames;
@@ -85,12 +93,8 @@ export const selectedRelPermCurveNamesAtom = atom<string[] | null>((get) => {
 });
 
 export const availableSatNumsAtom = atom<number[]>((get) => {
-    const tableInfo = get(relPermTableInfoQueryAtom).data;
-    if (!tableInfo) {
-        return [];
-    }
-
-    return tableInfo.satnums;
+    const relPermTablesInfoHelper = get(relPermTablesInfoHelperAtom);
+    return relPermTablesInfoHelper.satNumsIntersection();
 });
 
 export const selectedSatNumsAtom = atom<number[]>((get) => {
@@ -111,7 +115,7 @@ export const selectedSatNumsAtom = atom<number[]>((get) => {
 });
 
 export const relPermSpecificationsAtom = atom<RelPermSpec[]>((get) => {
-    const ensembleIdent = get(selectedEnsembleIdentAtom);
+    const ensembleIdents = get(selectedEnsembleIdentsAtom);
     const selectedCurveNames = get(selectedRelPermCurveNamesAtom);
     const selectedSatNums = get(selectedSatNumsAtom);
     const selectedSaturationAxisName = get(selectedRelPermSaturationAxisAtom);
@@ -119,19 +123,17 @@ export const relPermSpecificationsAtom = atom<RelPermSpec[]>((get) => {
 
     const specifications: RelPermSpec[] = [];
 
-    // for (const vectorName of selectedVectorNames) {
-    //     if (!ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vectorName)) {
-    //         continue;
-    //     }
-    if (ensembleIdent && selectedTableName && selectedSaturationAxisName && selectedCurveNames) {
-        for (const satNum of selectedSatNums) {
-            specifications.push({
-                ensembleIdent,
-                tableName: selectedTableName,
-                saturationAxisName: selectedSaturationAxisName,
-                curveNames: selectedCurveNames,
-                satNum: satNum,
-            });
+    if (ensembleIdents.length && selectedTableName && selectedSaturationAxisName && selectedCurveNames) {
+        for (const ensembleIdent of ensembleIdents) {
+            for (const satNum of selectedSatNums) {
+                specifications.push({
+                    ensembleIdent,
+                    tableName: selectedTableName,
+                    saturationAxisName: selectedSaturationAxisName,
+                    curveNames: selectedCurveNames,
+                    satNum: satNum,
+                });
+            }
         }
     }
     return specifications;

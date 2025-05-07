@@ -305,9 +305,6 @@ import type {
     GetRelpermRealizationsCurveDataData_api,
     GetRelpermRealizationsCurveDataError_api,
     GetRelpermRealizationsCurveDataResponse_api,
-    GetRelpermStatisticalCurveDataData_api,
-    GetRelpermStatisticalCurveDataError_api,
-    GetRelpermStatisticalCurveDataResponse_api,
     GetRelpermTableInfoData_api,
     GetRelpermTableInfoError_api,
     GetRelpermTableInfoResponse_api,
@@ -1222,6 +1219,7 @@ export const getRelpermRealizationsCurveData = <ThrowOnError extends boolean = f
 };
 
 /**
+<<<<<<< HEAD
  * Get Relperm Statistical Curve Data
  */
 export const getRelpermStatisticalCurveData = <ThrowOnError extends boolean = false>(
@@ -1239,6 +1237,8 @@ export const getRelpermStatisticalCurveData = <ThrowOnError extends boolean = fa
 
 /**
 >>>>>>> 205e1909 (wip)
+=======
+>>>>>>> 1153acfb (wip)
  * Get Well Completions Data
  */
 export const getWellCompletionsData = <ThrowOnError extends boolean = false>(

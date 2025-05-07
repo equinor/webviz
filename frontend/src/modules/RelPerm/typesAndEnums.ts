@@ -12,9 +12,15 @@ export enum VisualizationType {
     INDIVIDUAL_REALIZATIONS = "individualRealizations",
 }
 export interface RelPermSpec {
-    ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent;
     tableName: string;
     curveNames: string[];
     satNum: number;
     saturationAxisName: string;
+}
+
+export interface VisualizationSettings {
+    colorBy: ColorBy;
+    opacity: number;
+    lineWidth: number;
 }

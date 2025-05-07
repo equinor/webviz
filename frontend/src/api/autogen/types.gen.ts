@@ -90,7 +90,6 @@ export type Completions_api = {
 export type CurveData_api = {
     curve_name: string;
     curve_values: Array<number>;
-    unit: string | null;
 };
 
 export type DatedFlowNetwork_api = {
@@ -538,35 +537,18 @@ export type PvtData_api = {
     ratio_unit: string;
 };
 
-export type RelPermRealizationCurveData_api = {
-    curve_name: string;
-    curve_values: Array<number>;
-    realization_id: number;
-};
-
 export type RelPermRealizationData_api = {
+    curve_data_arr: Array<CurveData_api>;
+    realization_id: number;
+    saturation_name: string;
+    saturation_values: Array<number>;
     saturation_number: number;
-    saturation_axis_data: CurveData_api;
-    relperm_curve_data: Array<RelPermRealizationCurveData_api>;
 };
 
 export type RelPermSaturationAxis_api = {
     saturation_name: string;
     relperm_curve_names: Array<string>;
     capillary_pressure_curve_names: Array<string>;
-};
-
-export type RelPermStatisticalCurveData_api = {
-    curve_name: string;
-    curve_values: {
-        [key: string]: Array<number>;
-    };
-};
-
-export type RelPermStatisticalDataForSaturation_api = {
-    saturation_axis_data: CurveData_api;
-    saturation_number: number;
-    relperm_curve_data: Array<RelPermStatisticalCurveData_api>;
 };
 
 export type RelPermTableInfo_api = {
@@ -800,18 +782,6 @@ export type SeismicSliceData_api = {
 export enum SensitivityType_api {
     MONTECARLO = "montecarlo",
     SCENARIO = "scenario",
-}
-
-/**
- * Definition of possible statistics
- */
-export enum Statistic_api {
-    MEAN = "mean",
-    STDDEV = "stddev",
-    MAX = "max",
-    MIN = "min",
-    P10 = "p10",
-    P90 = "p90",
 }
 
 export enum StatisticFunction_api {
@@ -3220,6 +3190,10 @@ export type GetRelpermRealizationsCurveDataData_api = {
          * Satnum
          */
         satnum: number;
+        /**
+         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
+         */
+        realizations_encoded_as_uint_list_str?: string | null;
     };
     url: "/relperm/relperm_realizations_curve_data";
 };
@@ -3238,12 +3212,13 @@ export type GetRelpermRealizationsCurveDataResponses_api = {
     /**
      * Successful Response
      */
-    200: RelPermRealizationData_api;
+    200: Array<RelPermRealizationData_api>;
 };
 
 export type GetRelpermRealizationsCurveDataResponse_api =
     GetRelpermRealizationsCurveDataResponses_api[keyof GetRelpermRealizationsCurveDataResponses_api];
 
+<<<<<<< HEAD
 export type GetRelpermStatisticalCurveDataData_api = {
     body?: never;
     path?: never;
@@ -3300,6 +3275,8 @@ export type GetRelpermStatisticalCurveDataResponse_api =
 >>>>>>> 437c065e (wip)
 =======
 >>>>>>> 205e1909 (wip)
+=======
+>>>>>>> 1153acfb (wip)
 export type GetWellCompletionsDataData_api = {
     body?: never;
     path?: never;

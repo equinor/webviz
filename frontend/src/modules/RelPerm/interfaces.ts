@@ -1,14 +1,12 @@
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
-import { selectedColorByAtom } from "./settings/atoms/baseAtoms";
-import { selectedVisualizationTypeAtom } from "./settings/atoms/baseAtoms";
+import { selectedColorByAtom, selectedLineWidthAtom, selectedOpacityAtom } from "./settings/atoms/baseAtoms";
 import { relPermSpecificationsAtom } from "./settings/atoms/derivedAtoms";
-import { ColorBy, RelPermSpec, VisualizationType } from "./typesAndEnums";
+import { ColorBy, RelPermSpec, VisualizationSettings, VisualizationType } from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
     relPermSpecifications: RelPermSpec[];
-    colorBy: ColorBy;
-    visualizationType: VisualizationType;
+    visualizationSettings: VisualizationSettings;
 };
 export type Interfaces = {
     settingsToView: SettingsToViewInterface;
@@ -18,10 +16,11 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     relPermSpecifications: (get) => {
         return get(relPermSpecificationsAtom);
     },
-    colorBy: (get) => {
-        return get(selectedColorByAtom);
-    },
-    visualizationType: (get) => {
-        return get(selectedVisualizationTypeAtom);
+    visualizationSettings: (get) => {
+        return {
+            colorBy: get(selectedColorByAtom),
+            opacity: get(selectedOpacityAtom),
+            lineWidth: get(selectedLineWidthAtom),
+        };
     },
 };

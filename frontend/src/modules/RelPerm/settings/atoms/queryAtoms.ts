@@ -1,37 +1,53 @@
-import { getRelpermTableInfoOptions, getRelpermTableNamesOptions } from "@api";
+import { getRelpermTableInfo, getRelpermTableNames } from "@api";
+import { atomWithQueries } from "@framework/utils/atomUtils";
 
-import { atomWithQuery } from "jotai-tanstack-query";
+import { selectedEnsembleIdentsAtom, selectedRelPermTableNameAtom } from "./derivedAtoms";
 
-import { selectedEnsembleIdentAtom, selectedRelPermTableNameAtom } from "./derivedAtoms";
+export const relPermTableNamesQueriesAtom = atomWithQueries((get) => {
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const queries = selectedEnsembleIdents.map((ensembleIdent) => {
+        return () => ({
+            queryKey: ["getRelpermTableNames", ensembleIdent.getCaseUuid(), ensembleIdent.getEnsembleName()],
+            queryFn: async () => {
+                const { data } = await getRelpermTableNames({
+                    query: {
+                        case_uuid: ensembleIdent.getCaseUuid(),
+                        ensemble_name: ensembleIdent.getEnsembleName(),
+                    },
+                    throwOnError: true,
+                });
 
-export const relPermTableNamesQueryAtom = atomWithQuery((get) => {
-    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
-    const query = {
-        ...getRelpermTableNamesOptions({
-            query: {
-                case_uuid: selectedEnsembleIdent?.getCaseUuid() ?? "",
-                ensemble_name: selectedEnsembleIdent?.getEnsembleName() ?? "",
+                return data;
             },
-        }),
-        enabled: Boolean(selectedEnsembleIdent?.getCaseUuid() && selectedEnsembleIdent?.getEnsembleName()),
-    };
-    return query;
+        });
+    });
+    return { queries };
 });
 
-export const relPermTableInfoQueryAtom = atomWithQuery((get) => {
-    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
+export const relPermTableInfoQueriesAtom = atomWithQueries((get) => {
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
     const selectedTableName = get(selectedRelPermTableNameAtom);
-    const query = {
-        ...getRelpermTableInfoOptions({
-            query: {
-                case_uuid: selectedEnsembleIdent?.getCaseUuid() ?? "",
-                ensemble_name: selectedEnsembleIdent?.getEnsembleName() ?? "",
-                table_name: selectedTableName ?? "",
+    const queries = selectedEnsembleIdents.map((ensembleIdent) => {
+        return () => ({
+            queryKey: [
+                "getRelpermTableInfo",
+                ensembleIdent.getCaseUuid(),
+                ensembleIdent.getEnsembleName(),
+                selectedTableName,
+            ],
+            queryFn: async () => {
+                const { data } = await getRelpermTableInfo({
+                    query: {
+                        case_uuid: ensembleIdent.getCaseUuid(),
+                        ensemble_name: ensembleIdent.getEnsembleName(),
+                        table_name: selectedTableName || "",
+                    },
+                    throwOnError: true,
+                });
+
+                return data;
             },
-        }),
-        enabled: Boolean(
-            selectedEnsembleIdent?.getCaseUuid() && selectedEnsembleIdent?.getEnsembleName() && selectedTableName
-        ),
-    };
-    return query;
+        });
+    });
+    return { queries };
 });

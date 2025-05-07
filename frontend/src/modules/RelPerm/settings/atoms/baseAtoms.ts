@@ -1,20 +1,16 @@
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
-import { ColorBy, VisualizationType } from "@modules/RelPerm/typesAndEnums";
+import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
+import { ColorBy } from "@modules/RelPerm/typesAndEnums";
 
 import { atom } from "jotai";
 import { isEqual } from "lodash";
 
-function areEnsembleIdentsEqual(a: RegularEnsembleIdent | null, b: RegularEnsembleIdent | null) {
-    if (a === null) {
-        return b === null;
-    }
-    return a.equals(b);
-}
 export const selectedColorByAtom = atom<ColorBy>(ColorBy.ENSEMBLE);
-export const selectedVisualizationTypeAtom = atom<VisualizationType>(VisualizationType.STATISTICAL_FANCHART);
+export const selectedOpacityAtom = atom<number>(0.1);
+export const selectedLineWidthAtom = atom<number>(1);
+export const userSelectedEnsembleIdentsAtom = atomWithCompare<RegularEnsembleIdent[]>([], areEnsembleIdentListsEqual);
 
-export const userSelectedEnsembleIdentAtom = atomWithCompare<RegularEnsembleIdent | null>(null, areEnsembleIdentsEqual);
 export const validRealizationNumbersAtom = atom<number[] | null>(null);
 
 export const userSelectedTableNameAtom = atom<string | null>(null);
