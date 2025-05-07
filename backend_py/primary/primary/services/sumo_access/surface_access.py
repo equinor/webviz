@@ -158,15 +158,16 @@ class SurfaceAccess:
         sumo_surf: Surface = await search_context.getitem_async(0)
         perf_metrics.record_lap("locate")
 
-        async with start_otel_span_async("download-blob"):
+        async with start_otel_span_async("download-blob") as span:
             byte_stream: BytesIO = await sumo_surf.blob_async
+            size_mb = byte_stream.getbuffer().nbytes / (1024 * 1024)
+            span.set_attribute("webviz.data.size_mb", size_mb)
             perf_metrics.record_lap("download")
 
-        with start_otel_span("xtgeo-read", {"operation.type": "heavy_computation", "byte_size": byte_stream.getbuffer().nbytes / (1024 * 1024)}):
+        with start_otel_span("xtgeo-read", {"webviz.data.size_mb": size_mb}):
             xtgeo_surf = xtgeo.surface_from_file(byte_stream)
             perf_metrics.record_lap("xtgeo-read")
 
-        size_mb = byte_stream.getbuffer().nbytes / (1024 * 1024)
         LOGGER.debug(
             f"Got realization surface from Sumo in: {perf_metrics.to_string()} "
             f"[{xtgeo_surf.ncol}x{xtgeo_surf.nrow}, {size_mb:.2f}MB] ({surf_str})"
@@ -174,6 +175,7 @@ class SurfaceAccess:
 
         return xtgeo_surf
 
+    @otel_span_decorator()
     async def get_observed_surface_data_async(
         self, name: str, attribute: str, time_or_interval_str: str
     ) -> xtgeo.RegularSurface | None:
