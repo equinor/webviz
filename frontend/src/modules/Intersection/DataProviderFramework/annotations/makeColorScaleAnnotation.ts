@@ -11,6 +11,7 @@ function makeColorScaleAnnotation({
     getSetting,
     getValueRange,
     id,
+    isLoading,
     createColorScaleValues,
 }: TransformerArgs<[Setting.COLOR_SCALE, Setting.ATTRIBUTE], any, any, any> & {
     createColorScaleValues: (valueRange: [number, number]) => { min: number; max: number; mid: number };
@@ -20,7 +21,7 @@ function makeColorScaleAnnotation({
     const valueRange = getValueRange();
     const attribute = getSetting(Setting.ATTRIBUTE);
 
-    if (!colorScale || !valueRange || !attribute) {
+    if (!colorScale || !valueRange || !attribute || isLoading) {
         return [];
     }
 

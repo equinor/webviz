@@ -1,4 +1,4 @@
-import type { BBox } from "@lib/utils/bbox";
+import { fromNumArray, type BBox } from "@lib/utils/bbox";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
@@ -35,23 +35,18 @@ export function makeSurfacesBoundingBox({
 
     const minX = -extensionLength;
     const maxX = polylineActualSectionLengths.reduce((sum, length) => sum + length, -extensionLength);
+
+    // If no surfaces, return a bounding box with only the x-coordinates
+    if (data.length === 0) {
+        return fromNumArray([minX, 0, 0, maxX, 0, 0]);
+    }
+
     let minY = Number.MAX_VALUE;
-    let maxY = Number.MIN_VALUE;
+    let maxY = -Number.MAX_VALUE;
     for (const surface of data) {
         minY = Math.min(minY, ...surface.z_points);
         maxY = Math.max(maxY, ...surface.z_points);
     }
 
-    return {
-        min: {
-            x: minX,
-            y: minY,
-            z: 0,
-        },
-        max: {
-            x: maxX,
-            y: maxY,
-            z: 0,
-        },
-    };
+    return fromNumArray([minX, minY, 0, maxX, maxY, 0]);
 }
