@@ -1,4 +1,4 @@
-import { apiService } from "@framework/ApiService";
+import { getRelpermRealizationsCurveDataOptions, getRelpermStatisticalCurveDataOptions } from "@api";
 import {
     selectedRelPermSaturationAxisAtom,
     selectedRelPermTableNameAtom,
@@ -14,9 +14,6 @@ import {
     selectedVisualizationTypeAtom,
 } from "./baseAtoms";
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
 export const relPermRealizationDataQueryAtom = atomWithQuery((get) => {
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
     const selectedTableName = get(selectedRelPermTableNameAtom);
@@ -24,38 +21,28 @@ export const relPermRealizationDataQueryAtom = atomWithQuery((get) => {
     const selectedSatNums = get(selectedSatNumsAtom);
     const selectedRelPermCurveNames = get(selectedRelPermCurveNamesAtom);
     const visualizationType = get(selectedVisualizationTypeAtom);
-
     const query = {
-        queryKey: [
-            "getRelPermRealizationData",
-            selectedEnsembleIdent?.getCaseUuid(),
-            selectedEnsembleIdent?.getEnsembleName(),
-            selectedTableName,
-            selectedRelPermSaturationAxis,
-            selectedSatNums,
-            selectedRelPermCurveNames,
-        ],
-        queryFn: () =>
-            apiService.relperm.getRealizationsCurveData(
-                selectedEnsembleIdent?.getCaseUuid() ?? "",
-                selectedEnsembleIdent?.getEnsembleName() ?? "",
-                selectedTableName ?? "",
-                selectedRelPermSaturationAxis ?? "",
-                selectedRelPermCurveNames ?? [],
-                selectedSatNums ?? []
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: !!(
+        ...getRelpermRealizationsCurveDataOptions({
+            query: {
+                case_uuid: selectedEnsembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: selectedEnsembleIdent?.getEnsembleName() ?? "",
+                table_name: selectedTableName ?? "",
+                saturation_axis_name: selectedRelPermSaturationAxis ?? "",
+                curve_names: selectedRelPermCurveNames ?? [],
+                satnums: selectedSatNums ?? [],
+            },
+        }),
+        enabled: Boolean(
             selectedEnsembleIdent?.getCaseUuid() &&
-            selectedEnsembleIdent?.getEnsembleName() &&
-            selectedTableName &&
-            selectedRelPermSaturationAxis &&
-            selectedSatNums &&
-            selectedRelPermCurveNames &&
-            visualizationType === VisualizationType.INDIVIDUAL_REALIZATIONS
+                selectedEnsembleIdent?.getEnsembleName() &&
+                selectedTableName &&
+                selectedRelPermSaturationAxis &&
+                selectedSatNums &&
+                selectedRelPermCurveNames &&
+                visualizationType === VisualizationType.INDIVIDUAL_REALIZATIONS
         ),
     };
+
     return query;
 });
 
@@ -66,37 +53,27 @@ export const relPermStatisticalDataQueryAtom = atomWithQuery((get) => {
     const selectedSatNums = get(selectedSatNumsAtom);
     const selectedRelPermCurveNames = get(selectedRelPermCurveNamesAtom);
     const visualizationType = get(selectedVisualizationTypeAtom);
-
     const query = {
-        queryKey: [
-            "getRelPermStatisticalData",
-            selectedEnsembleIdent?.getCaseUuid(),
-            selectedEnsembleIdent?.getEnsembleName(),
-            selectedTableName,
-            selectedRelPermSaturationAxis,
-            selectedSatNums,
-            selectedRelPermCurveNames,
-        ],
-        queryFn: () =>
-            apiService.relperm.getStatisticalCurveData(
-                selectedEnsembleIdent?.getCaseUuid() ?? "",
-                selectedEnsembleIdent?.getEnsembleName() ?? "",
-                selectedTableName ?? "",
-                selectedRelPermSaturationAxis ?? "",
-                selectedRelPermCurveNames ?? [],
-                selectedSatNums ?? []
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: !!(
+        ...getRelpermStatisticalCurveDataOptions({
+            query: {
+                case_uuid: selectedEnsembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: selectedEnsembleIdent?.getEnsembleName() ?? "",
+                table_name: selectedTableName ?? "",
+                saturation_axis_name: selectedRelPermSaturationAxis ?? "",
+                curve_names: selectedRelPermCurveNames ?? [],
+                satnums: selectedSatNums ?? [],
+            },
+        }),
+        enabled: Boolean(
             selectedEnsembleIdent?.getCaseUuid() &&
-            selectedEnsembleIdent?.getEnsembleName() &&
-            selectedTableName &&
-            selectedRelPermSaturationAxis &&
-            selectedSatNums &&
-            selectedRelPermCurveNames &&
-            visualizationType === VisualizationType.STATISTICAL_FANCHART
+                selectedEnsembleIdent?.getEnsembleName() &&
+                selectedTableName &&
+                selectedRelPermSaturationAxis &&
+                selectedSatNums &&
+                selectedRelPermCurveNames &&
+                visualizationType === VisualizationType.STATISTICAL_FANCHART
         ),
     };
+
     return query;
 });

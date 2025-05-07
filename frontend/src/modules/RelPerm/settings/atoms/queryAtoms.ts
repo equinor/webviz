@@ -1,35 +1,19 @@
-import { apiService } from "@framework/ApiService";
+import { getRelpermTableInfoOptions, getRelpermTableNamesOptions } from "@api";
 
 import { atomWithQuery } from "jotai-tanstack-query";
 
-import {
-    selectedEnsembleIdentAtom,
-    selectedRelPermCurveNamesAtom,
-    selectedRelPermSaturationAxisAtom,
-    selectedRelPermTableNameAtom,
-    selectedSatNumsAtom,
-} from "./derivedAtoms";
-
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
+import { selectedEnsembleIdentAtom, selectedRelPermTableNameAtom } from "./derivedAtoms";
 
 export const relPermTableNamesQueryAtom = atomWithQuery((get) => {
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
-
     const query = {
-        queryKey: [
-            "getRelPermTableNames",
-            selectedEnsembleIdent?.getCaseUuid(),
-            selectedEnsembleIdent?.getEnsembleName(),
-        ],
-        queryFn: () =>
-            apiService.relperm.getTableNames(
-                selectedEnsembleIdent?.getCaseUuid() ?? "",
-                selectedEnsembleIdent?.getEnsembleName() ?? ""
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: !!(selectedEnsembleIdent?.getCaseUuid() && selectedEnsembleIdent?.getEnsembleName()),
+        ...getRelpermTableNamesOptions({
+            query: {
+                case_uuid: selectedEnsembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: selectedEnsembleIdent?.getEnsembleName() ?? "",
+            },
+        }),
+        enabled: Boolean(selectedEnsembleIdent?.getCaseUuid() && selectedEnsembleIdent?.getEnsembleName()),
     };
     return query;
 });
@@ -37,26 +21,16 @@ export const relPermTableNamesQueryAtom = atomWithQuery((get) => {
 export const relPermTableInfoQueryAtom = atomWithQuery((get) => {
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
     const selectedTableName = get(selectedRelPermTableNameAtom);
-
     const query = {
-        queryKey: [
-            "getRelPermTableInfo",
-            selectedEnsembleIdent?.getCaseUuid(),
-            selectedEnsembleIdent?.getEnsembleName(),
-            selectedTableName,
-        ],
-        queryFn: () =>
-            apiService.relperm.getTableInfo(
-                selectedEnsembleIdent?.getCaseUuid() ?? "",
-                selectedEnsembleIdent?.getEnsembleName() ?? "",
-                selectedTableName ?? ""
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: !!(
-            selectedEnsembleIdent?.getCaseUuid() &&
-            selectedEnsembleIdent?.getEnsembleName() &&
-            selectedTableName
+        ...getRelpermTableInfoOptions({
+            query: {
+                case_uuid: selectedEnsembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: selectedEnsembleIdent?.getEnsembleName() ?? "",
+                table_name: selectedTableName ?? "",
+            },
+        }),
+        enabled: Boolean(
+            selectedEnsembleIdent?.getCaseUuid() && selectedEnsembleIdent?.getEnsembleName() && selectedTableName
         ),
     };
     return query;

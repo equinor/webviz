@@ -1,4 +1,4 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import { selectedColorByAtom, validRealizationNumbersAtom } from "./settings/atoms/baseAtoms";
@@ -13,7 +13,7 @@ import {
 import { ColorBy, VisualizationType } from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
-    ensembleIdent: EnsembleIdent | null;
+    ensembleIdent: RegularEnsembleIdent | null;
     realizationNumbers: number[] | null;
     tableName: string | null;
     saturationAxis: string | null;

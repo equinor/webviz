@@ -302,6 +302,18 @@ import type {
     GetRealizationsVectorDataData_api,
     GetRealizationsVectorDataError_api,
     GetRealizationsVectorDataResponse_api,
+    GetRelpermRealizationsCurveDataData_api,
+    GetRelpermRealizationsCurveDataError_api,
+    GetRelpermRealizationsCurveDataResponse_api,
+    GetRelpermStatisticalCurveDataData_api,
+    GetRelpermStatisticalCurveDataError_api,
+    GetRelpermStatisticalCurveDataResponse_api,
+    GetRelpermTableInfoData_api,
+    GetRelpermTableInfoError_api,
+    GetRelpermTableInfoResponse_api,
+    GetRelpermTableNamesData_api,
+    GetRelpermTableNamesError_api,
+    GetRelpermTableNamesResponse_api,
     GetSeismicCubeMetaListData_api,
     GetSeismicCubeMetaListError_api,
     GetSeismicCubeMetaListResponse_api,
@@ -1186,6 +1198,62 @@ export const getRealizationsTablesAreEqual = <ThrowOnError extends boolean = fal
     >({
         ...options,
         url: "/pvt/realizations_tables_are_equal/",
+    });
+};
+
+/**
+ * Get Relperm Table Names
+ */
+export const getRelpermTableNames = <ThrowOnError extends boolean = false>(
+    options: Options<GetRelpermTableNamesData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<GetRelpermTableNamesResponse_api, GetRelpermTableNamesError_api, ThrowOnError>({
+        ...options,
+        url: "/relperm/relperm_table_names",
+    });
+};
+
+/**
+ * Get Relperm Table Info
+ */
+export const getRelpermTableInfo = <ThrowOnError extends boolean = false>(
+    options: Options<GetRelpermTableInfoData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<GetRelpermTableInfoResponse_api, GetRelpermTableInfoError_api, ThrowOnError>({
+        ...options,
+        url: "/relperm/relperm_table_info",
+    });
+};
+
+/**
+ * Get Relperm Realizations Curve Data
+ */
+export const getRelpermRealizationsCurveData = <ThrowOnError extends boolean = false>(
+    options: Options<GetRelpermRealizationsCurveDataData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<
+        GetRelpermRealizationsCurveDataResponse_api,
+        GetRelpermRealizationsCurveDataError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/relperm/relperm_realizations_curve_data",
+    });
+};
+
+/**
+ * Get Relperm Statistical Curve Data
+ */
+export const getRelpermStatisticalCurveData = <ThrowOnError extends boolean = false>(
+    options: Options<GetRelpermStatisticalCurveDataData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<
+        GetRelpermStatisticalCurveDataResponse_api,
+        GetRelpermStatisticalCurveDataError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/relperm/relperm_statistical_curve_data",
     });
 };
 
