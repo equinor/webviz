@@ -1,10 +1,11 @@
 import logging
-from typing import Annotated, List
+from typing import Annotated, List, Any
 
 from fastapi import APIRouter, Depends, Query
 
 from primary.auth.auth_helper import AuthHelper
 from primary.services.sumo_access.relperm_access import RelPermAccess
+from primary.services.relperm_assembler.relperm_assembler import RelPermAssembler
 from primary.services.utils.authenticated_user import AuthenticatedUser
 
 from . import schemas
@@ -15,13 +16,49 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/table_definition")
-async def get_table_definition(
+@router.get("/table_names")
+async def get_table_names(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
-) -> List[schemas.RelPermTableInfo]:
-    access = await RelPermAccess.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    relperm_tables_info = await access.get_relperm_tables_info()
-    return [converters.to_api_relperm_table_info(table_info) for table_info in relperm_tables_info]
-    
+) -> List[str]:
+    access = await RelPermAccess.from_case_uuid_async(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+    return await access.get_relperm_table_names()
+
+
+@router.get("/table_info")
+async def get_table_info(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    table_name: Annotated[str, Query(description="Table name")],
+) -> schemas.RelPermTableInfo:
+    access = await RelPermAccess.from_case_uuid_async(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+    assembler = RelPermAssembler(access)
+    relperm_table_info = await assembler.get_relperm_table_info(table_name)
+
+    return converters.to_api_relperm_table_info(relperm_table_info)
+
+
+@router.get("/saturation_and_curve_data")
+async def get_saturation_and_curve_data(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    table_name: Annotated[str, Query(description="Table name")],
+    saturation_axis_name: Annotated[str, Query(description="Saturation axis name")],
+    curve_names: Annotated[List[str], Query(description="Curve names")],
+    satnums: Annotated[List[int], Query(description="Satnums")],
+) -> List[schemas.RelPermRealizationData]:
+
+    access = await RelPermAccess.from_case_uuid_async(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+    assembler = RelPermAssembler(access)
+    relperm_data = await assembler.get_relperm_ensemble_data(table_name, saturation_axis_name, curve_names, satnums)
+
+    return [converters.to_api_relperm_ensemble_data(data) for data in relperm_data]

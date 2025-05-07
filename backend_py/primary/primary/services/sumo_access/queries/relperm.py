@@ -1,12 +1,18 @@
 from typing import List
 from dataclasses import dataclass
 from sumo.wrapper import SumoClient
-from ..relperm_types import RelPermTableInfo, RealizationBlobid
+from ..relperm_types import RealizationBlobid
+
+
+@dataclass
+class TableInfo:
+    table_name: str
+    column_names: List[str]
 
 
 async def get_relperm_table_names_and_columns(
     sumo_client: SumoClient, case_id: str, iteration_name: str
-) -> List[RelPermTableInfo]:
+) -> List[TableInfo]:
     query = {
         "size": 0,
         "query": {
@@ -31,11 +37,11 @@ async def get_relperm_table_names_and_columns(
     result = response.json()
     aggs = result.get("aggregations", {})
     table_names = aggs.get("table_names", {}).get("buckets", [])
-    table_infos: List[RelPermTableInfo] = []
+    table_infos: List[TableInfo] = []
     for table_name in table_names:
         column_names_aggs = table_name.get("column_names", {}).get("buckets", [])
         column_names = [column_name.get("key") for column_name in column_names_aggs]
-        table_info = RelPermTableInfo(table_name=table_name.get("key"), column_names=column_names)
+        table_info = TableInfo(table_name=table_name.get("key"), column_names=column_names)
         table_infos.append(table_info)
     return table_infos
 

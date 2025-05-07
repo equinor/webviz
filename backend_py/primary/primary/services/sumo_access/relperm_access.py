@@ -2,13 +2,13 @@ from enum import Enum
 import logging
 from io import BytesIO
 import asyncio
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Sequence
 from dataclasses import dataclass
 from fmu.sumo.explorer.objects import Case, TableCollection
 import polars as pl
 import pyarrow as pa
 
-from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from ._helpers import create_sumo_client, create_sumo_case_async
 from ..service_exceptions import (
@@ -17,15 +17,14 @@ from ..service_exceptions import (
     InvalidDataError,
 )
 
-from .queries.relperm import get_relperm_table_names_and_columns, get_relperm_realization_table_blob_uuids
+from .queries.relperm import (
+    get_relperm_table_names_and_columns,
+    get_relperm_realization_table_blob_uuids,
+)
 from .relperm_types import RelPermTableInfo, RealizationBlobid
 
 
-class RelPermFamily(str, Enum):
-    """Enumeration of relative permeability keyword families"""
-
-    FAMILY_1 = "family_1"  # SWOF, SGOF, SLGOF family
-    FAMILY_2 = "family_2"  # SWFN, SGFN, SOF3 family
+SATURATIONS = ["SW", "SO", "SG", "SL"]
 
 
 LOGGER = logging.getLogger(__name__)
@@ -36,6 +35,19 @@ class RelPermSaturationInfo:
     name: str
     relperm_curve_names: List[str]
     capillary_pressure_curve_names: List[str]
+
+
+@dataclass
+class RelpermCurveData:
+    curve_name: str
+    curve_data: List[float]
+
+
+@dataclass
+class RelPermEnsembleSaturationData:
+    saturation_curve_data: List[float]
+    relperm_curves_data: List[RelpermCurveData]
+    realizations: List[int]
 
 
 class RelPermAccess:
@@ -50,26 +62,43 @@ class RelPermAccess:
         case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
         return RelPermAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    async def get_relperm_tables_info(self) -> List[RelPermTableInfo]:
+    async def get_relperm_table_names(self) -> List[str]:
         table_names_and_columns = await get_relperm_table_names_and_columns(
             self._case._sumo, self._case_uuid, self._iteration_name
         )
-
-        valid_table_names_and_columns = []
+        table_names: List[str] = []
         for table_info in table_names_and_columns:
-            if validate_relperm_columns(table_info):
-                valid_table_names_and_columns.append(table_info)
-        test = await self.get_relperm_table("DROGON")
-        return valid_table_names_and_columns
+            if has_required_relperm_table_columns(table_info.table_name, table_info.column_names):
+                table_names.append(table_info.table_name)
+        return table_names
 
-    async def get_relperm_table(self, table_name: str) -> TableCollection:
+    async def get_single_realization_table(self, table_name: str) -> pl.DataFrame:
         realization_blob_ids = await get_relperm_realization_table_blob_uuids(
-            self._case._sumo, self._case_uuid, self._iteration_name, "DROGON"
+            self._case._sumo, self._case_uuid, self._iteration_name, table_name
         )
+        single_realization_blob_id = realization_blob_ids[0]
+        return await self.fetch_realization_table(single_realization_blob_id)
+
+    async def get_relperm_table(
+        self,
+        table_name: str,
+        realizations: Sequence[int] | None = None,
+    ) -> pl.DataFrame:
+        perf_metrics = PerfMetrics()
+        realization_blob_ids = await get_relperm_realization_table_blob_uuids(
+            self._case._sumo, self._case_uuid, self._iteration_name, table_name
+        )
+        perf_metrics.record_lap("get_relperm_realization_table_blob_uuids")
+
         tasks = [asyncio.create_task(self.fetch_realization_table(table)) for table in realization_blob_ids]
         realization_tables = await asyncio.gather(*tasks)
+        perf_metrics.record_lap("fetch_realization_tables")
+
         table = pl.concat(realization_tables)
-        print(table)
+        perf_metrics.record_lap("concat_realization_tables")
+
+        LOGGER.debug(f"RelPermAccess.get_relperm_table: {perf_metrics.to_string()}")
+        return table
 
     async def fetch_realization_table(self, realization_blob_id: RealizationBlobid) -> pl.DataFrame:
         res = await self._case._sumo.get_async(f"/objects('{realization_blob_id.blob_name}')/blob")
@@ -80,14 +109,18 @@ class RelPermAccess:
         return real_df
 
 
-def validate_relperm_columns(table_info: RelPermTableInfo) -> bool:
-    if "KEYWORD" not in table_info.column_names:
-        LOGGER.warning(f"Missing 'KEYWORD' column in table '{table_info.table_name}'")
+def has_required_relperm_table_columns(table_name: str, column_names: List[str]) -> bool:
+    if "KEYWORD" not in column_names:
+        LOGGER.warning(f"Missing 'KEYWORD' column in table '{table_name}'")
         return False
-    if "SATNUM" not in table_info.column_names:
-        LOGGER.warning(f"Missing 'SATNUM' column in table '{table_info.table_name}'")
+    if "SATNUM" not in column_names:
+        LOGGER.warning(f"Missing 'SATNUM' column in table '{table_name}'")
         return False
-    if not any(saturation in table_info.column_names for saturation in ["SW", "SO", "SG", "SL"]):
-        LOGGER.warning(f"Missing saturation columns in table '{table_info.table_name}'")
+    if not any(saturation in column_names for saturation in ["SW", "SO", "SG", "SL"]):
+        LOGGER.warning(f"Missing saturation columns in table '{table_name}'")
         return False
     return True
+
+
+def get_saturation_names(column_names: List[str]) -> List[str]:
+    return [sat for sat in SATURATIONS if sat in column_names]

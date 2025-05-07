@@ -10,6 +10,7 @@ import "./Intersection/registerModule";
 import "./Map/registerModule";
 import "./ParameterDistributionMatrix/registerModule";
 import "./Pvt/registerModule";
+import "./RelPerm/registerModule";
 import "./Rft/registerModule";
 import "./SimulationTimeSeries/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";
