@@ -22,9 +22,7 @@ async def get_relperm_table_names(
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
 ) -> List[str]:
-    access = await RelPermAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = RelPermAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     return await access.get_relperm_table_names()
 
 
@@ -35,9 +33,7 @@ async def get_relperm_table_info(
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     table_name: Annotated[str, Query(description="Table name")],
 ) -> schemas.RelPermTableInfo:
-    access = await RelPermAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = RelPermAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     assembler = RelPermAssembler(access)
     relperm_table_info = await assembler.get_relperm_table_info(table_name)
     print("*****************************", relperm_table_info)
@@ -55,9 +51,7 @@ async def get_relperm_realizations_curve_data(
     satnum: Annotated[int, Query(description="Satnum")],
 ) -> schemas.RelPermRealizationData:
 
-    access = await RelPermAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = RelPermAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     assembler = RelPermAssembler(access)
     relperm_data = await assembler.get_relperm_realization_data(table_name, saturation_axis_name, curve_names, satnum)
 
@@ -75,9 +69,7 @@ async def get_relperm_statistical_curve_data(
     satnums: Annotated[List[int], Query(description="Satnums")],
 ) -> schemas.RelPermStatisticalDataForSaturation:
 
-    access = await RelPermAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = RelPermAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     assembler = RelPermAssembler(access)
     relperm_data = await assembler.get_relperm_statistics_data(table_name, saturation_axis_name, curve_names, satnums)
 

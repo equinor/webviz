@@ -35,10 +35,10 @@ export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
 
     const visualizationType = viewContext.useSettingsToViewInterfaceValue("visualizationType");
     const loadedRelPermSpecificationsAndRealizationData = useAtomValue(
-        loadedRelPermSpecificationsAndRealizationDataAtom
+        loadedRelPermSpecificationsAndRealizationDataAtom,
     );
     const loadedRelPermSpecificationsAndStatisticalData = useAtomValue(
-        loadedRelPermSpecificationsAndStatisticalDataAtom
+        loadedRelPermSpecificationsAndStatisticalDataAtom,
     );
     const statusWriter = useViewStatusWriter(viewContext);
 
@@ -47,8 +47,6 @@ export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
     if (visualizationType === VisualizationType.INDIVIDUAL_REALIZATIONS) {
         plotData = createRealizationsTraces(loadedRelPermSpecificationsAndRealizationData);
     }
-
-    console.log("plotData", plotData);
 
     content = (
         <Plot
@@ -75,7 +73,7 @@ function createRealizationsTraces(
     relPermSpecAndRealizationData: {
         relPermSpecification: RelPermSpec;
         data: RelPermRealizationData_api;
-    }[]
+    }[],
 ): Partial<PlotData>[] {
     const plotData: Partial<PlotData>[] = [];
 
@@ -88,7 +86,7 @@ function createRealizationsTraces(
     const curveNames = new Set(
         relPermSpecAndRealizationData.map((real) => {
             return real.data.relperm_curve_data.map((data) => data.curve_name);
-        })
+        }),
     );
 
     relPermSpecAndRealizationData.forEach((real) => {
@@ -98,8 +96,8 @@ function createRealizationsTraces(
                     realizationData.realization_id,
                     real.data.saturation_axis_data.curve_values,
                     realizationData.curve_values,
-                    useGl
-                )
+                    useGl,
+                ),
             );
         });
     });
@@ -110,7 +108,7 @@ function createRelPermRealizationTrace(
     realization: number,
     saturationValues: number[],
     curveValues: number[],
-    useGl: boolean
+    useGl: boolean,
 ): Partial<PlotData> {
     const trace: Partial<PlotData> = {
         x: saturationValues,
@@ -126,6 +124,7 @@ function createRelPermRealizationTrace(
             color: "blue",
             size: 5,
         },
+        hovertext: `Realization: ${realization}`,
     };
     return trace;
 }

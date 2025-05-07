@@ -1232,6 +1232,7 @@ export const getTableDataOptions = (options: Options<GetTableDataData_api>) => {
 };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 export const getRealizationsTablesAreEqualQueryKey = (options: Options<GetRealizationsTablesAreEqualData_api>) => [
     createQueryKey("getRealizationsTablesAreEqual", options),
@@ -1255,6 +1256,8 @@ export const getRealizationsTablesAreEqualOptions = (options: Options<GetRealiza
 <<<<<<< HEAD
 >>>>>>> f98d8bb5 (wip)
 =======
+=======
+>>>>>>> 205e1909 (wip)
 export const getRelpermTableNamesQueryKey = (options: Options<GetRelpermTableNamesData_api>) => [
     createQueryKey("getRelpermTableNames", options),
 ];
@@ -1331,7 +1334,10 @@ export const getRelpermStatisticalCurveDataOptions = (options: Options<GetRelper
     });
 };
 
+<<<<<<< HEAD
 >>>>>>> 437c065e (wip)
+=======
+>>>>>>> 205e1909 (wip)
 export const getWellCompletionsDataQueryKey = (options: Options<GetWellCompletionsDataData_api>) => [
     createQueryKey("getWellCompletionsData", options),
 ];

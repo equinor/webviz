@@ -4,13 +4,13 @@ from io import BytesIO
 import asyncio
 from typing import List, Optional, Dict, Sequence, Any
 from dataclasses import dataclass
-from fmu.sumo.explorer.objects import Case, TableCollection
+from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 import polars as pl
 import pyarrow as pa
 
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
-from ._helpers import create_sumo_client, create_sumo_case_async
+from .sumo_client_factory import create_sumo_client
 from ..service_exceptions import (
     Service,
     NoDataError,
@@ -51,20 +51,19 @@ class RelPermEnsembleSaturationData:
 
 
 class RelPermAccess:
-    def __init__(self, case: Case, case_uuid: str, iteration_name: str):
-        self._case: Case = case
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
+        self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
 
     @classmethod
-    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "RelPermAccess":
+    def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "RelPermAccess":
         sumo_client = create_sumo_client(access_token)
-        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
-        return RelPermAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
+        return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_relperm_table_names(self) -> List[str]:
         table_names_and_columns = await get_relperm_table_names_and_columns(
-            self._case._sumo, self._case_uuid, self._iteration_name
+            self._sumo_client, self._case_uuid, self._iteration_name
         )
         table_names: List[str] = []
         for table_info in table_names_and_columns:
@@ -74,7 +73,7 @@ class RelPermAccess:
 
     async def get_single_realization_table(self, table_name: str) -> pl.DataFrame:
         realization_blob_ids = await get_relperm_realization_table_blob_uuids(
-            self._case._sumo, self._case_uuid, self._iteration_name, table_name
+            self._sumo_client, self._case_uuid, self._iteration_name, table_name
         )
         single_realization_blob_id = realization_blob_ids[0]
         res = await self.fetch_realization_table(single_realization_blob_id)
@@ -91,7 +90,7 @@ class RelPermAccess:
     ) -> pl.DataFrame:
         perf_metrics = PerfMetrics()
         realization_blob_ids = await get_relperm_realization_table_blob_uuids(
-            self._case._sumo, self._case_uuid, self._iteration_name, table_name
+            self._sumo_client, self._case_uuid, self._iteration_name, table_name
         )
         perf_metrics.record_lap("get_relperm_realization_table_blob_uuids")
 
@@ -114,7 +113,7 @@ class RelPermAccess:
         return table
 
     async def fetch_realization_table(self, realization_blob_id: RealizationBlobid) -> Any:
-        res = await self._case._sumo.get_async(f"/objects('{realization_blob_id.blob_name}')/blob")
+        res = await self._sumo_client.get_async(f"/objects('{realization_blob_id.blob_name}')/blob")
         return res
 
 

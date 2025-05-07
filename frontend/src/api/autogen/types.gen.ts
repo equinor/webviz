@@ -3077,6 +3077,7 @@ export type GetTableDataResponses_api = {
 export type GetTableDataResponse_api = GetTableDataResponses_api[keyof GetTableDataResponses_api];
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 export type GetRealizationsTablesAreEqualData_api = {
     body?: never;
@@ -3117,6 +3118,8 @@ export type GetRealizationsTablesAreEqualResponse_api =
 <<<<<<< HEAD
 >>>>>>> f98d8bb5 (wip)
 =======
+=======
+>>>>>>> 205e1909 (wip)
 export type GetRelpermTableNamesData_api = {
     body?: never;
     path?: never;
@@ -3293,7 +3296,10 @@ export type GetRelpermStatisticalCurveDataResponses_api = {
 export type GetRelpermStatisticalCurveDataResponse_api =
     GetRelpermStatisticalCurveDataResponses_api[keyof GetRelpermStatisticalCurveDataResponses_api];
 
+<<<<<<< HEAD
 >>>>>>> 437c065e (wip)
+=======
+>>>>>>> 205e1909 (wip)
 export type GetWellCompletionsDataData_api = {
     body?: never;
     path?: never;

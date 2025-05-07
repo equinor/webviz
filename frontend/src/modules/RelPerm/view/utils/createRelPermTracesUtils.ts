@@ -66,9 +66,9 @@ export function createVectorRealizationTrace({
     //               use that to determine the line shape or provide a lineShape argument?
 
     return {
-        x: vectorRealizationData.timestamps_utc_ms,
+        x: vectorRealizationData.timestampsUtcMs,
         y: vectorRealizationData.values,
-        line: { width: 1, color: color, shape: getLineShape(vectorRealizationData.is_rate) },
+        line: { width: 1, color: color, shape: getLineShape(vectorRealizationData.isRate) },
         mode: "lines",
         type: type,
         hovertemplate: `${hoverTemplate}Realization: ${vectorRealizationData.realization}`,
