@@ -188,11 +188,6 @@ async def get_surface_data(
     elif data_format == "png":
         surf_data_response = converters.to_api_surface_data_png(xtgeo_surf)
 
-    LOGGER.info("This is information")
-    LOGGER.error("This is an error")
-    LOGGER.debug("This is debug logging")
-    LOGGER.warning("This is a warning")
-
     perf_metrics.record_lap("convert")
 
     LOGGER.info(f"Got {addr.address_type} surface in: {perf_metrics.to_string()}")
