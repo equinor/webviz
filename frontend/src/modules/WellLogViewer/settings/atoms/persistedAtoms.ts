@@ -1,9 +1,8 @@
-
 import type { Getter, Setter } from "jotai";
 import { atom } from "jotai";
 import type { Dictionary } from "lodash";
 
-import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
+import type { SerializedDataProviderManager } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization";
 import { atomWithModuleInstanceStorage, clearModuleInstanceStorage } from "@modules/WellLogViewer/utils/atoms";
 
 const STORAGE_KEY = "moduleSettings";
@@ -20,11 +19,6 @@ function setPersistentModuleField(get: Getter, set: Setter, valueKey: string, ne
     set(moduleSettingsAtom, storageCopy);
 }
 
-export const logViewerTrackConfigsAtom = atom<TemplateTrackConfig[], [TemplateTrackConfig[]], void>(
-    (get) => getPersistentModuleField(get, "logViewerTrackConfigs", []),
-    (get, set, newVal) => setPersistentModuleField(get, set, "logViewerTrackConfigs", newVal),
-);
-
 export const viewerHorizontalAtom = atom<boolean, [boolean], void>(
     (get) => getPersistentModuleField(get, "viewerHorizontal", false),
     (get, set, newVal) => setPersistentModuleField(get, set, "viewerHorizontal", newVal),
@@ -33,6 +27,11 @@ export const viewerHorizontalAtom = atom<boolean, [boolean], void>(
 export const padDataWithEmptyRowsAtom = atom<boolean, [boolean], void>(
     (get) => getPersistentModuleField(get, "padDataWithEmptyRows", true),
     (get, set, newVal) => setPersistentModuleField(get, set, "padDataWithEmptyRows", newVal),
+);
+
+export const serializedManagerStateAtom = atom<SerializedDataProviderManager, [SerializedDataProviderManager], void>(
+    (get) => getPersistentModuleField(get, "providerManagerState", undefined),
+    (get, set, newVal) => setPersistentModuleField(get, set, "providerManagerState", newVal),
 );
 
 export function clearStorageForInstance(instanceId: string) {

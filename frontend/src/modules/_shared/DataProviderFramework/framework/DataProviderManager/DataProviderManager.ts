@@ -41,6 +41,7 @@ export type DataProviderManagerTopicPayload = {
 
 export type GlobalSettings = {
     fieldId: string | null;
+    wellboreUuid: string | null;
     ensembles: readonly RegularEnsemble[];
     realizationFilterFunction: EnsembleRealizationFilterFunction;
     intersectionPolylines: IntersectionPolyline[];
@@ -226,6 +227,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         const ensembles = this._workbenchSession.getEnsembleSet().getRegularEnsembleArray();
         return {
             fieldId: null,
+            wellboreUuid: null,
             ensembles,
             realizationFilterFunction: createEnsembleRealizationFilterFuncForWorkbenchSession(this._workbenchSession),
             intersectionPolylines: this._workbenchSession

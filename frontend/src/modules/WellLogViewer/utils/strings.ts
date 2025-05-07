@@ -1,6 +1,7 @@
 import type { WellboreLogCurveData_api, WellboreLogCurveHeader_api } from "@api";
 import { WellLogCurveSourceEnum_api } from "@api";
-import type { TemplatePlotConfig } from "@modules/WellLogViewer/types";
+
+import type { TemplatePlot } from "../types";
 
 /**
  * Translates a well log curve data source to a more readable string
@@ -34,12 +35,12 @@ export function simplifyLogName(logName: string, truncateLength = 0) {
     return logName;
 }
 
-export function getUniqueCurveNameForPlotConfig(plot: TemplatePlotConfig, nonUniqueNames?: Set<string>) {
+export function getUniqueCurveNameForPlotConfig(plot: TemplatePlot, nonUniqueNames?: Set<string>) {
     if (!plot.name) throw new Error("Unexpected invalid config");
-    if (!plot._curveHeader) throw new Error("Unexpected invalid config");
+    if (!plot.logName) throw new Error("Unexpected invalid config");
 
     if (nonUniqueNames?.has(plot.name)) {
-        return makeCompoundCurveName(plot._curveHeader.curveName, plot._curveHeader.logName);
+        return makeCompoundCurveName(plot.name, plot.logName);
     }
 
     return plot.name;

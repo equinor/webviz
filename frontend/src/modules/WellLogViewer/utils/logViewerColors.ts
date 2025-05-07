@@ -1,4 +1,4 @@
-import type { ColorTable } from "@webviz/well-log-viewer/dist/components/ColorMapFunction";
+import type { ColorTable } from "@webviz/well-log-viewer/dist/utils/color-function";
 
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 
