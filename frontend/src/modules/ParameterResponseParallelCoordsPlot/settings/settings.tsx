@@ -64,5 +64,3 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
         </div>
     );
 }
-
-Settings.displayName = "Settings";

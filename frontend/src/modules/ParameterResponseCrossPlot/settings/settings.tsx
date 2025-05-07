@@ -71,17 +71,21 @@ export function Settings({
 
     // Check if the parameterIdentString/globalSyncedParameter is valid
     // If not, set it to the first valid parameterIdent
-    React.useEffect(() => {
-        const newParameterIdentString = fixupParameterIdent(parameterIdents, parameterIdentString);
-        if (newParameterIdentString !== parameterIdentString) {
-            setParameterIdentString(newParameterIdentString);
-        }
-        if (globalSyncedParameter !== null && globalSyncedParameter !== parameterIdentString) {
-            if (fixupParameterIdent(parameterIdents, globalSyncedParameter) === globalSyncedParameter) {
-                setParameterIdentString(globalSyncedParameter);
+
+    React.useEffect(
+        function updateParameterIdentString() {
+            const newParameterIdentString = fixupParameterIdent(parameterIdents, parameterIdentString);
+            if (newParameterIdentString !== parameterIdentString) {
+                setParameterIdentString(newParameterIdentString);
             }
-        }
-    }, [parameterIdents, globalSyncedParameter, parameterIdentString, setParameterIdentString]);
+            if (globalSyncedParameter !== null && globalSyncedParameter !== parameterIdentString) {
+                if (fixupParameterIdent(parameterIdents, globalSyncedParameter) === globalSyncedParameter) {
+                    setParameterIdentString(globalSyncedParameter);
+                }
+            }
+        },
+        [parameterIdents, globalSyncedParameter, parameterIdentString, setParameterIdentString],
+    );
 
     if (ensembleIdentStringsFromChannels.length === 0) {
         return;

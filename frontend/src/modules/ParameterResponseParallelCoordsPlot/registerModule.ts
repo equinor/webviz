@@ -7,8 +7,8 @@ import type { Interfaces } from "./interfaces";
 import { receiverDefs } from "./receiverDefs";
 
 ModuleRegistry.registerModule<Interfaces>({
-    moduleName: "ParameterResponseParallellCoordsPlot",
-    defaultTitle: "Parameter/Response Parallell Coordinates plot",
+    moduleName: "ParameterResponseParallelCoordsPlot",
+    defaultTitle: "Parameter/Response Parallel Coordinates plot",
     category: ModuleCategory.SUB,
     devState: ModuleDevState.PROD,
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES, SyncSettingKey.PARAMETER],

@@ -20,21 +20,7 @@ import type { Interfaces } from "../interfaces";
 
 import { ParallelCoordinatesFigure } from "./parallelCoordinatesFigure";
 
-const MAX_NUM_PLOTS = 1;
-
-const MaxNumberPlotsExceededMessage: React.FC = () => {
-    return (
-        <ContentWarning>
-            <Warning fontSize="large" className="mb-2" />
-            Too many plots to display. Due to performance limitations, the number of plots is limited to {MAX_NUM_PLOTS}
-            .
-        </ContentWarning>
-    );
-};
-
-MaxNumberPlotsExceededMessage.displayName = "MaxNumberPlotsExceededMessage";
-
-export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfaces>) => {
+export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfaces>) {
     const [isPending, startTransition] = React.useTransition();
     const [content, setContent] = React.useState<React.ReactNode>(null);
     const [revNumberResponse, setRevNumberResponse] = React.useState<number>(0);
@@ -80,8 +66,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                     <ContentInfo>
                         <span>
                             Data channel required for use. Add a main module to the workbench and use the data channels
-                            icon
-                            <Input />
+                            icon <Input />
                         </span>
                         <Tag label="Response" />
                     </ContentInfo>,
@@ -165,6 +150,4 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
             {content}
         </div>
     );
-};
-
-View.displayName = "View";
+}

@@ -137,9 +137,9 @@ export class Figure {
         const axisIndex = this.getAxisIndex(row, column);
 
         const adjustedAnnotation: Partial<Annotations> = {
+            ...annotation,
             xref: this.makeXAxisRef(axisIndex, xCoordinateDomain),
             yref: this.makeYAxisRef(axisIndex, yCoordinateDomain),
-            ...annotation,
         };
 
         if (!this._plotLayout.annotations) {

@@ -3,7 +3,7 @@ import React from "react";
 import { Input, Warning } from "@mui/icons-material";
 
 import { KeyKind } from "@framework/DataChannelTypes";
-import type { Parameter} from "@framework/EnsembleParameters";
+import type { Parameter } from "@framework/EnsembleParameters";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
@@ -17,16 +17,12 @@ import { ContentWarning } from "@modules/_shared/components/ContentMessage/conte
 import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
 
-import type {
-    scatterPlotParameterResponseData} from "./scatterPlotParameterResponseFigure";
-import {
-    ScatterPlotParameterResponseFigure
-} from "./scatterPlotParameterResponseFigure";
-
+import type { scatterPlotParameterResponseData } from "./scatterPlotParameterResponseFigure";
+import { ScatterPlotParameterResponseFigure } from "./scatterPlotParameterResponseFigure";
 
 const MAX_NUM_PLOTS = 12;
 
-const MaxNumberPlotsExceededMessage: React.FC = () => {
+function MaxNumberPlotsExceededMessage() {
     return (
         <ContentWarning>
             <Warning fontSize="large" className="mb-2" />
@@ -34,11 +30,9 @@ const MaxNumberPlotsExceededMessage: React.FC = () => {
             .
         </ContentWarning>
     );
-};
+}
 
-MaxNumberPlotsExceededMessage.displayName = "MaxNumberPlotsExceededMessage";
-
-export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfaces>) => {
+export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfaces>) {
     const [content, setContent] = React.useState<React.ReactNode>(null);
     const [revNumberResponse, setRevNumberResponse] = React.useState<number>(0);
     const [prevPlotType, setPrevPlotType] = React.useState<PlotType | null>(null);
@@ -81,7 +75,7 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
             setContent(
                 <ContentInfo>
                     <span>
-                        Data channel required for use. Add a main module to the workbench and use the data channels icon
+                        Data channel required for use. Add a main module to the workbench and use the data channels icon{" "}
                         <Input />
                     </span>
                     <Tag label="Response" />
@@ -200,6 +194,4 @@ export const View = ({ viewContext, workbenchSession }: ModuleViewProps<Interfac
             {content}
         </div>
     );
-};
-
-View.displayName = "View";
+}

@@ -5,7 +5,7 @@ import { settingsToViewInterfaceInitialization } from "./interfaces";
 import { Settings } from "./settings/settings";
 import { View } from "./view/view";
 
-const module = ModuleRegistry.initModule<Interfaces>("ParameterResponseParallellCoordsPlot", {
+const module = ModuleRegistry.initModule<Interfaces>("ParameterResponseParallelCoordsPlot", {
     settingsToViewInterfaceInitialization,
 });
 

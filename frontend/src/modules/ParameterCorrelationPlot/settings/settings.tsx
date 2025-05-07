@@ -11,7 +11,6 @@ import type { Interfaces } from "../interfaces";
 
 import { corrCutOffAtom, numParamsAtom, showLabelsAtom } from "./atoms/baseAtoms";
 
-
 //-----------------------------------------------------------------------------------------------------------
 export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
     const [numParams, setNumParams] = useAtom(numParamsAtom);
@@ -65,5 +64,3 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
         </div>
     );
 }
-
-Settings.displayName = "Settings";

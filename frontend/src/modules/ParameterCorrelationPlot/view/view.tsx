@@ -24,7 +24,7 @@ import { ParameterCorrelationFigure } from "./parameterCorrelationFigure";
 
 const MAX_NUM_PLOTS = 12;
 
-const MaxNumberPlotsExceededMessage: React.FC = () => {
+function MaxNumberPlotsExceededMessage() {
     return (
         <ContentWarning>
             <Warning fontSize="large" className="mb-2" />
@@ -32,11 +32,9 @@ const MaxNumberPlotsExceededMessage: React.FC = () => {
             .
         </ContentWarning>
     );
-};
+}
 
-MaxNumberPlotsExceededMessage.displayName = "MaxNumberPlotsExceededMessage";
-
-export const View = ({ viewContext, workbenchSession, workbenchServices }: ModuleViewProps<Interfaces>) => {
+export function View({ viewContext, workbenchSession, workbenchServices }: ModuleViewProps<Interfaces>) {
     const [isPending, startTransition] = React.useTransition();
     const [content, setContent] = React.useState<React.ReactNode>(null);
     const [revNumberResponse, setRevNumberResponse] = React.useState<number>(0);
@@ -52,11 +50,14 @@ export const View = ({ viewContext, workbenchSession, workbenchServices }: Modul
     const globalSyncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
 
     // Receive global string and update local state if different
-    React.useEffect(() => {
-        if (globalSyncedParameter !== null && globalSyncedParameter !== localParameterString) {
-            setLocalParameterString(globalSyncedParameter);
-        }
-    }, [globalSyncedParameter, localParameterString]);
+    React.useEffect(
+        function updateLocalParameterStringFromGlobal() {
+            if (globalSyncedParameter !== null && globalSyncedParameter !== localParameterString) {
+                setLocalParameterString(globalSyncedParameter);
+            }
+        },
+        [globalSyncedParameter, localParameterString],
+    );
 
     function handleClickInChart(e: PlotMouseEvent) {
         const clickedPoint: PlotDatum = e.points[0];
@@ -108,8 +109,7 @@ export const View = ({ viewContext, workbenchSession, workbenchServices }: Modul
                     <ContentInfo>
                         <span>
                             Data channel required for use. Add a main module to the workbench and use the data channels
-                            icon
-                            <Input />
+                            icon <Input />
                         </span>
                         <Tag label="Response" />
                     </ContentInfo>,
@@ -199,6 +199,4 @@ export const View = ({ viewContext, workbenchSession, workbenchServices }: Modul
             {content}
         </div>
     );
-};
-
-View.displayName = "View";
+}

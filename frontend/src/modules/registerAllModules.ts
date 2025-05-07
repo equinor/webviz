@@ -9,7 +9,7 @@ import "./InplaceVolumetricsTable/registerModule";
 import "./Intersection/registerModule";
 import "./Map/registerModule";
 import "./ParameterDistributionMatrix/registerModule";
-import "./ParameterResponseParallellCoordsPlot/registerModule";
+import "./ParameterResponseParallelCoordsPlot/registerModule";
 import "./ParameterCorrelationPlot/registerModule";
 import "./ParameterResponseCrossPlot/registerModule";
 import "./Pvt/registerModule";

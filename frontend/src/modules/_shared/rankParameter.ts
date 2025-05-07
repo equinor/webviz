@@ -57,8 +57,7 @@ export function createRankedParameterCorrelations(
     });
 
     return correlations
-        .filter((c) => c.absCorrelation !== null) // Filter out null correlations
-        .filter((c) => Math.abs(c.absCorrelation!) >= absCutoff) // Filter by absolute cutoff
+        .filter((c) => c.absCorrelation !== null && Math.abs(c.absCorrelation) >= absCutoff) // Filter by absolute cutoff
         .sort((a, b) => b.absCorrelation! - a.absCorrelation!) // Sort by absolute correlation
         .slice(0, numParams); // Limit to numParams
 }

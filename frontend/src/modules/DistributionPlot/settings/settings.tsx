@@ -110,16 +110,9 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
     return (
         <div className="flex flex-col gap-2">
             <CollapsibleGroup title="Plot type" expanded>
-                <Dropdown
-                    key="plot-type"
-                    value={plotType as string}
-                    options={plotTypes}
-                    onChange={handlePlotTypeChanged}
-                />
+                <Dropdown value={plotType as string} options={plotTypes} onChange={handlePlotTypeChanged} />
             </CollapsibleGroup>
             {makeContent()}
         </div>
     );
 }
-
-Settings.displayName = "Settings";
