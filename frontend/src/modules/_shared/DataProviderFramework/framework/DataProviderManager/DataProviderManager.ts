@@ -38,7 +38,7 @@ export type GlobalSettings = {
     fieldId: string | null;
     ensembles: readonly RegularEnsemble[];
     realizationFilterFunction: EnsembleRealizationFilterFunction;
-    intersectionPolylines: IntersectionPolyline[];
+    intersectionPolylines: readonly IntersectionPolyline[];
 };
 
 /*

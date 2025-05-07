@@ -4,11 +4,11 @@ import type { Feature, GeoJsonProperties, GeometryCollection, LineString, Point 
 import type { WellboreTrajectory_api } from "@api";
 import { AdvancedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdvancedWellsLayer";
 
-
+import type { DeepReadonly } from "../../framework/utils/immutabilityUtils";
 import type { TransformerArgs } from "../VisualizationAssembler";
 
 function wellTrajectoryToGeojson(
-    wellTrajectory: WellboreTrajectory_api,
+    wellTrajectory: DeepReadonly<WellboreTrajectory_api>,
 ): Feature<GeometryCollection, GeoJsonProperties> {
     const point: Point = {
         type: "Point",
@@ -44,7 +44,7 @@ function wellTrajectoryToGeojson(
     return geometryCollection;
 }
 
-function zipCoords(xArr: number[], yArr: number[], zArr: number[]): number[][] {
+function zipCoords(xArr: readonly number[], yArr: readonly number[], zArr: readonly number[]): number[][] {
     const coords: number[][] = [];
     for (let i = 0; i < xArr.length; i++) {
         coords.push([xArr[i], yArr[i], -zArr[i]]);

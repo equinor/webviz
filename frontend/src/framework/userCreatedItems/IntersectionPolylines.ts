@@ -1,4 +1,3 @@
-
 import { atom } from "jotai";
 import { cloneDeep } from "lodash";
 import { v4 } from "uuid";
@@ -55,7 +54,7 @@ export class IntersectionPolylines implements UserCreatedItemSet {
         this.notifySubscribers(IntersectionPolylinesEvent.CHANGE);
     }
 
-    getPolylines(): IntersectionPolyline[] {
+    getPolylines(): readonly IntersectionPolyline[] {
         return this._polylines;
     }
 

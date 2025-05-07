@@ -25,7 +25,6 @@ import { createContinuousColorScaleForMap } from "../utils/colorTables";
 import { PolylineEditingPanel } from "./PolylineEditingPanel";
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 
-
 export type BoundingBox3D = {
     xmin: number;
     ymin: number;
@@ -55,7 +54,7 @@ export type SubsurfaceViewerWrapperProps = {
     onIntersectionPolylineEditCancel?: () => void;
     onVerticalScaleChange?: (verticalScale: number) => void;
     intersectionPolyline?: IntersectionPolyline;
-    intersectionPolylines?: IntersectionPolyline[];
+    intersectionPolylines?: readonly IntersectionPolyline[];
 };
 
 type IntersectionZValues = {

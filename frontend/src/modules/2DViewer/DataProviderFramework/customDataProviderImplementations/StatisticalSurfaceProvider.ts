@@ -1,5 +1,3 @@
-import { isEqual } from "lodash";
-
 import type { SurfaceDataPng_api } from "@api";
 import {
     SurfaceStatisticFunction_api,
@@ -21,7 +19,7 @@ import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
-
+import { isEqual } from "lodash";
 
 const statisicalSurfaceSettings = [
     Setting.ENSEMBLE,

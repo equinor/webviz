@@ -4,12 +4,12 @@ import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
 import type { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
+import type { DeepReadonly } from "../framework/utils/immutabilityUtils";
 import type { MakeSettingTypesMap, Settings } from "../settings/settingsDefinitions";
 
 import type { CustomSettingsHandler } from "./customSettingsHandler";
 import type { NullableStoredData, StoredData } from "./sharedTypes";
 import type { AvailableValuesType, SettingsKeysFromTuple } from "./utils";
-
 
 /**
  * This type is used to pass parameters to the fetchData method of a CustomDataProviderImplementation.
@@ -26,7 +26,7 @@ export type DataProviderInformationAccessors<
      * Access the data that the provider is currently storing.
      * @returns The data that the provider is currently storing, or null if the provider has no data.
      */
-    getData: () => TData | null;
+    getData: () => DeepReadonly<TData> | null;
 
     /**
      * Access the settings of the provider.
@@ -50,7 +50,7 @@ export type DataProviderInformationAccessors<
      * const availableValues = getAvailableSettingValues("settingName");
      * ```
      */
-    getAvailableSettingValues: <K extends TSettingKey>(settingName: K) => AvailableValuesType<K> | null;
+    getAvailableSettingValues: <K extends TSettingKey>(settingName: K) => DeepReadonly<AvailableValuesType<K>> | null;
 
     /**
      * Access the global settings of the data provider manager.
@@ -63,7 +63,7 @@ export type DataProviderInformationAccessors<
      * const value = getGlobalSetting("settingName");
      * ```
      */
-    getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
+    getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => DeepReadonly<GlobalSettings[T]>;
 
     /**
      * Access the stored data of the provider.
@@ -76,7 +76,7 @@ export type DataProviderInformationAccessors<
      * const storedData = getStoredData("key");
      * ```
      */
-    getStoredData: <K extends keyof TStoredData>(key: K) => TStoredData[K] | null;
+    getStoredData: <K extends keyof TStoredData>(key: K) => DeepReadonly<TStoredData[K]> | null;
 
     /**
      * Access to the workbench session.
@@ -162,7 +162,7 @@ export interface CustomDataProviderImplementation<
      */
     makeValueRange?(
         accessors: DataProviderInformationAccessors<TSettings, TData, TStoredData>,
-    ): [number, number] | null;
+    ): readonly [number, number] | null;
 
     /**
      * This method is called to check if the current settings are valid. It should return true if the settings are valid

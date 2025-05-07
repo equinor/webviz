@@ -25,6 +25,7 @@ import type { NullableStoredData, StoredData } from "../../interfacesAndTypes/sh
 import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
 import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
+import { makeDeepImmutable, makeImmutable } from "../utils/immutabilityUtils";
 import { makeSettings } from "../utils/makeSettings";
 
 export enum DataProviderTopic {
@@ -116,7 +117,7 @@ export class DataProvider<
     private _status: DataProviderStatus = DataProviderStatus.IDLE;
     private _data: TData | null = null;
     private _error: StatusMessage | string | null = null;
-    private _valueRange: [number, number] | null = null;
+    private _valueRange: readonly [number, number] | null = null;
     private _isSubordinated: boolean = false;
     private _prevSettings: TSettingTypes | null = null;
     private _prevStoredData: NullableStoredData<TStoredData> | null = null;
@@ -277,7 +278,7 @@ export class DataProvider<
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.SUBORDINATED);
     }
 
-    getValueRange(): [number, number] | null {
+    getValueRange(): readonly [number, number] | null {
         return this._valueRange;
     }
 
@@ -324,12 +325,15 @@ export class DataProvider<
 
     makeAccessors(): DataProviderInformationAccessors<TSettings, TData, TStoredData, TSettingKey> {
         return {
-            getSetting: (settingName) => this._settingsContextDelegate.getSettings()[settingName].getValue(),
+            getSetting: (settingName) =>
+                makeImmutable(this._settingsContextDelegate.getSettings()[settingName].getValue()),
             getAvailableSettingValues: (settingName) =>
-                this._settingsContextDelegate.getSettings()[settingName].getAvailableValues(),
-            getGlobalSetting: (settingName) => this._dataProviderManager.getGlobalSetting(settingName),
-            getStoredData: (key: keyof TStoredData) => this._settingsContextDelegate.getStoredData(key),
-            getData: () => this._data,
+                makeDeepImmutable(this._settingsContextDelegate.getSettings()[settingName].getAvailableValues()),
+            getGlobalSetting: (settingName) =>
+                makeDeepImmutable(this._dataProviderManager.getGlobalSetting(settingName)),
+            getStoredData: (key: keyof TStoredData) =>
+                makeDeepImmutable(this._settingsContextDelegate.getStoredData(key)),
+            getData: () => makeDeepImmutable(this._data),
             getWorkbenchSession: () => this._dataProviderManager.getWorkbenchSession(),
             getWorkbenchSettings: () => this._dataProviderManager.getWorkbenchSettings(),
         };

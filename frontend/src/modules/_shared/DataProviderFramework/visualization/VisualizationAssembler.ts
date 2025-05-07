@@ -63,7 +63,7 @@ export type TransformerArgs<
     name: string;
     isLoading: boolean;
     getInjectedData: () => TInjectedData;
-    getValueRange: () => [number, number] | null;
+    getValueRange: () => Readonly<[number, number]> | null;
 };
 
 export interface HoverVisualizationsFunction<TTarget extends VisualizationTarget> {
