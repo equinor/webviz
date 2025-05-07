@@ -1,0 +1,61 @@
+@layer components {
+    /* TODO: Vertical orientation */
+    .--wv-slider {
+        --color-main-hard: var(--color-blue-600);
+        --color-main-soft: var(--color-blue-200);
+
+        &[data-orientation="horizontal"] {
+            .--control {
+                @apply px-3 py-4;
+            }
+            .--track {
+                @apply h-1;
+            }
+            .--mark {
+                @apply -ml-0.5 -mt-1;
+            }
+        }
+
+        &[data-orientation="vertical"] {
+            .--control {
+                @apply flex-col h-full py-3 px-4;
+            }
+            .--track {
+                @apply w-1;
+            }
+            .--mark {
+                @apply -mb-0.5;
+            }
+        }
+
+        .--control {
+            @apply flex items-center cursor-pointer;
+        }
+
+        .--track {
+            @apply grow bg-[var(--color-main-soft)] rounded-sm;
+        }
+        .--indicator {
+            @apply bg-[var(--color-main-hard)] rounded-sm;
+        }
+        .--thumb {
+            &::after {
+                @apply absolute rounded-full w-7 h-7 inset-0 -left-1 -top-1 bg-[var(--color-main-hard)] transition-all duration-100 ease-in-out transform scale-0 opacity-0 z-50;
+            }
+
+            @apply hover:after:opacity-10 hover:after:scale-100 active:after:scale-110 active:after:opacity-15 active:after:-left-[0.4em] active:after:-top-[0.4em] active:after:w-8 active:after:h-8;
+
+            @apply block box-content;
+            @apply size-5 rounded-full;
+            @apply bg-[var(--color-main-hard)] focus:shadow-lg hover:shadow-md has-active:shadow-lg;
+        }
+
+        .--mark {
+            @apply w-1 h-1 opacity-80 transform;
+
+            @apply outline-2 outline-white bg-[var(--color-main-hard)];
+        }
+
+        @apply inline-block relative;
+    }
+}
