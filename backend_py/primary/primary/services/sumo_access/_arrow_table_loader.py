@@ -54,13 +54,41 @@ class ArrowTableLoader:
         if existing_agg_table_count > 1:
             raise MultipleDataMatchesError(f"Multiple tables found for: {self._make_req_info_str()}", Service.SUMO)
 
-        sumo_table_obj: Table
+        sumo_table_obj: Table | None = None
         if existing_agg_table_count == 1:
             # We're good, just get hold of the single object and fetch the blob into the object
-            sumo_table_obj = await sc_existing_agg_tables.getitem_async(0)
-            await sumo_table_obj.blob_async
-            perf_metrics.record_lap("fetch")
-        else:
+            sumo_table_obj: Table = await sc_existing_agg_tables.getitem_async(0)
+            perf_metrics.record_lap("get-sumo-obj")
+
+            async def is_agg_valid() -> bool:
+                # This doesn't look quite right!!!!!
+                # What about "brand new" realizations that have appeared after the aggregation
+                ts = sumo_table_obj.metadata["_sumo"]["timestamp"]
+                reals = await sc_tables_basis.filter(realization=True, complex={"range": {"_sumo.timestamp": {"lt": ts}}}).realizationids_async
+                if set(reals) == set(sumo_table_obj.metadata["fmu"]["aggregation"]["realization_ids"]):
+                    return True
+                else:
+                    return False
+
+            # await sumo_table_obj.blob_async
+            # perf_metrics.record_lap("fetch")
+
+            # agg_valid = await is_agg_valid()
+            # perf_metrics.record_lap("validate-agg")
+
+            # if not agg_valid:
+            #     sumo_table_obj = None
+
+            async with asyncio.TaskGroup() as tg:
+                fetch_task = tg.create_task(sumo_table_obj.blob_async)
+                validate_task = tg.create_task(is_agg_valid())
+
+            perf_metrics.record_lap("fetch-and-validate")
+
+            if not validate_task.result():
+                sumo_table_obj = None
+
+        if not sumo_table_obj:
             # No aggregated table exists for the column, we need to aggregate it
             sc_agg_input_tables = sc_tables_basis.filter(aggregation=False, realization=True)
 
