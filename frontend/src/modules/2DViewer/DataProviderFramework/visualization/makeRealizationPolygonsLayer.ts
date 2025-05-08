@@ -1,8 +1,9 @@
-import type { PolygonData_api } from "@api";
 import { GeoJsonLayer } from "@deck.gl/layers";
+import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
+
+import type { PolygonData_api } from "@api";
 import type { DeepReadonly } from "@modules/_shared/DataProviderFramework/framework/utils/immutabilityUtils";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
 
 import type {
     RealizationPolygonsData,
