@@ -43,6 +43,7 @@ export type BoundingBox2D = {
 
 export type SubsurfaceViewerWrapperProps = {
     ref?: React.ForwardedRef<HTMLDivElement>;
+    fieldId: string;
     boundingBox: BoundingBox2D | BoundingBox3D;
     layers: Layer[];
     show3D?: boolean;
@@ -369,6 +370,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
             if (props.onAddIntersectionPolyline && currentlyEditedPolyline.length > 1) {
                 props.onAddIntersectionPolyline({
                     name,
+                    fieldId: props.fieldId,
                     path: currentlyEditedPolyline,
                 });
             }

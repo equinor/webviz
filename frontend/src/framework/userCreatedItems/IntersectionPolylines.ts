@@ -9,6 +9,7 @@ export type IntersectionPolyline = {
     id: string;
     name: string;
     path: number[][];
+    fieldId: string;
 };
 
 export type IntersectionPolylineWithoutId = Omit<IntersectionPolyline, "id">;
