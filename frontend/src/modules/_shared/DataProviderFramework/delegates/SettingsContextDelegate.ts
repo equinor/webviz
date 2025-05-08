@@ -94,27 +94,44 @@ export class SettingsContextDelegate<
             "dependencies",
             this.getDataProviderManager()
                 .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(DataProviderManagerTopic.DESERIALIZATION_DONE)(() => {
+                this.initialize();
+            }),
+        );
+
+        this._settings = settings;
+
+        if (!this.getDataProviderManager().isDeserializing()) {
+            this.initialize();
+        }
+    }
+
+    private initialize() {
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "dependencies",
+            this.getDataProviderManager()
+                .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(DataProviderManagerTopic.GLOBAL_SETTINGS)(() => {
                 this.handleSettingChanged();
             }),
         );
 
-        for (const key in settings) {
+        for (const key in this._settings) {
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "settings",
-                settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(() => {
+                this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(() => {
                     this.handleSettingChanged();
                 }),
             );
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "settings",
-                settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_LOADING)(() => {
-                    this.handleSettingsLoadingStateChanged();
-                }),
+                this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_LOADING)(
+                    () => {
+                        this.handleSettingsLoadingStateChanged();
+                    },
+                ),
             );
         }
-
-        this._settings = settings;
 
         this.createDependencies();
     }

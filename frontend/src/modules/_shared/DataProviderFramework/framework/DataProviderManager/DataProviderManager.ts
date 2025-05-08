@@ -25,6 +25,7 @@ export enum DataProviderManagerTopic {
     SETTINGS_CHANGED = "SETTINGS_CHANGED",
     DATA_REVISION = "DATA_REVISION",
     GLOBAL_SETTINGS = "GLOBAL_SETTINGS",
+    DESERIALIZATION_DONE = "SERIALIZATION_DONE",
 }
 
 export type DataProviderManagerTopicPayload = {
@@ -32,6 +33,7 @@ export type DataProviderManagerTopicPayload = {
     [DataProviderManagerTopic.SETTINGS_CHANGED]: void;
     [DataProviderManagerTopic.DATA_REVISION]: number;
     [DataProviderManagerTopic.GLOBAL_SETTINGS]: GlobalSettings;
+    [DataProviderManagerTopic.DESERIALIZATION_DONE]: void;
 };
 
 export type GlobalSettings = {
@@ -165,6 +167,9 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             if (topic === DataProviderManagerTopic.GLOBAL_SETTINGS) {
                 return this._globalSettings;
             }
+            if (topic === DataProviderManagerTopic.DESERIALIZATION_DONE) {
+                return;
+            }
         };
 
         return snapshotGetter;
@@ -188,6 +193,10 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         };
     }
 
+    isDeserializing(): boolean {
+        return this._deserializing;
+    }
+
     deserializeState(serializedState: SerializedDataProviderManager): void {
         this._deserializing = true;
         this._itemDelegate.deserializeState(serializedState);
@@ -195,6 +204,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         this._deserializing = false;
 
         this.publishTopic(DataProviderManagerTopic.ITEMS);
+        this.publishTopic(DataProviderManagerTopic.DESERIALIZATION_DONE);
     }
 
     makeGroupColor(): string {
