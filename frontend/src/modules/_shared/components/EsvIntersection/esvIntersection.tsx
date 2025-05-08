@@ -563,18 +563,11 @@ class CustomPixiRenderApplication extends PixiRenderApplication {
         });
         this.stage = undefined;
 
-        // Get renderType and clContext before we destroy the renderer
         const renderType = this.renderer?.type;
         const glContext = this.renderer instanceof Renderer ? this.renderer?.gl : undefined;
 
         this.renderer?.destroy(true);
 
-        /**
-         * WebGL v2 does supposedly not have WEBGL_lose_context
-         * so Pixi.js does not use it to "clean up" on v2.
-         *
-         * Cleaning up our self since it still seems to work and fix issue with lingering context
-         */
         if (renderType === RENDERER_TYPE.WEBGL && glContext) {
             const loseContextExt = glContext.getExtension("WEBGL_lose_context");
             if (loseContextExt && !glContext.isContextLost()) {
@@ -589,15 +582,5 @@ class CustomPixiRenderApplication extends PixiRenderApplication {
         }
 
         this.renderer = undefined;
-    }
-
-    get view() {
-        return this.renderer?.view;
-    }
-
-    render() {
-        if (this.stage != null) {
-            this.renderer?.render(this.stage);
-        }
     }
 }
