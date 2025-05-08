@@ -2,6 +2,7 @@ import logging
 from typing import List, Optional
 
 import pyarrow as pa
+import pyarrow.compute as pc
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
@@ -41,6 +42,21 @@ ALLOWED_RAW_VOLUMETRIC_COLUMNS = [
 ]
 
 POSSIBLE_IDENTIFIER_COLUMNS = ["ZONE", "REGION", "FACIES", "LICENSE"]
+
+
+def _tmp_remove_license_totals(pa_table: pa.Table) -> pa.Table:
+    """
+    Remove the LICENSE column if all values in all rows are "Totals"
+    This is a temporary fix. ISSUE: #969
+    """
+    if "LICENSE" in pa_table.column_names:
+        license_col = pa_table.column("LICENSE")
+        is_total_array = pc.equal(license_col, "Totals")
+        all_totals = pc.all(is_total_array).as_py()
+        if all_totals:
+            pa_table = pa_table.drop("LICENSE")
+            LOGGER.debug("Removed LICENSE column from volumetric table as all values were 'Totals'")
+    return pa_table
 
 
 class InplaceVolumetricsAccess:
@@ -115,6 +131,8 @@ class InplaceVolumetricsAccess:
         pa_table = await table_loader.get_aggregated_multiple_columns_async(requested_columns)
         perf_metrics.record_lap("load-table")
 
+        pa_table = _tmp_remove_license_totals(pa_table)
+
         LOGGER.debug(
             f"get_inplace_volumetrics_aggregated_table_async took: {perf_metrics.to_string()}, {table_name=}, {column_names=}"
         )
@@ -142,6 +160,8 @@ class InplaceVolumetricsAccess:
         table_loader.require_table_name(table_name)
 
         pa_table = await table_loader.get_single_realization_async(realizations[0])
+
+        pa_table = _tmp_remove_license_totals(pa_table)
 
         column_names = pa_table.column_names
         column_names_and_values = {}
