@@ -36,10 +36,7 @@ import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProvid
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
 import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
-import type {
-    Annotation,
-    VisualizationTarget,
-} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import {
     VisualizationAssembler,
     VisualizationItemType,
@@ -133,12 +130,13 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const viewports: ViewportType[] = [];
     const deckGlLayers: Layer<any>[] = [];
     const viewportAnnotations: React.ReactNode[] = [];
-    const globalAnnotations: Annotation[] = [];
     const globalLayerIds: string[] = ["placeholder"];
 
     let numLoadingLayers = 0;
 
     const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.layerManager);
+
+    const globalAnnotations = assemblerProduct.annotations;
 
     const numViews = assemblerProduct.children.filter(
         (item) => item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW,

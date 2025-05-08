@@ -113,9 +113,7 @@ export class ExternalSettingController<
         const reducerDefinition = settingCategoryAvailableValuesIntersectionReducerMap[category];
 
         if (!reducerDefinition) {
-            throw new Error(
-                `No reducer definition found for category ${category}. Please check the settings definitions.`,
-            );
+            return;
         }
 
         const { reducer, startingValue, isValid } = reducerDefinition;
