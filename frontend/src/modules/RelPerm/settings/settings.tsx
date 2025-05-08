@@ -43,7 +43,7 @@ import { relPermTableInfoQueriesAtom, relPermTableNamesQueriesAtom } from "./ato
 
 import type { Interfaces } from "../interfaces";
 import { ColorBy, CurveType, GroupBy, VisualizationType } from "../typesAndEnums";
-import { selectedVisualizationTypeAtom } from "../view/atoms/baseAtoms";
+import { visualizationTypeAtom } from "../view/atoms/baseAtoms";
 
 //Helpers to populate dropdowns
 const stringToOptions = (strings: string[]): SelectOption[] => {
@@ -59,7 +59,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
     const [selectedColorBy, setSelectedColorBy] = useAtom(selectedColorByAtom);
     const [selectedGroupBy, setSelectedGroupBy] = useAtom(selectedGroupByAtom);
     const [selectedCurveType, setSelectedCurveType] = useAtom(selectedCurveTypeAtom);
-    const [selectedVisualizationType, setSelectedVisualizationType] = useAtom(selectedVisualizationTypeAtom);
+    const [selectedVisualizationType, setSelectedVisualizationType] = useAtom(visualizationTypeAtom);
     const relPermTableNamesQuery = useAtomValue(relPermTableNamesQueriesAtom);
     const relPermTableInfoQuery = useAtomValue(relPermTableInfoQueriesAtom);
     const availableRelPermTableNames = useAtomValue(availableRelPermTableNamesAtom);

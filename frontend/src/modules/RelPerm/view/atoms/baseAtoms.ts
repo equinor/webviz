@@ -11,4 +11,4 @@ export const visualizationSettingsAtom = atom<VisualizationSettings>({
     opacity: 0.5,
     lineWidth: 1,
 });
-export const selectedVisualizationTypeAtom = atom<VisualizationType>(VisualizationType.STATISTICAL_FANCHART);
+export const visualizationTypeAtom = atom<VisualizationType>(VisualizationType.STATISTICAL_FANCHART);

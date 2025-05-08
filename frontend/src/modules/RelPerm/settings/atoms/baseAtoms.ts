@@ -1,7 +1,7 @@
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
-import { ColorBy, CurveType, GroupBy } from "@modules/RelPerm/typesAndEnums";
+import { ColorBy, CurveType, GroupBy, VisualizationType } from "@modules/RelPerm/typesAndEnums";
 
 import { atom } from "jotai";
 import { isEqual } from "lodash";
@@ -11,6 +11,7 @@ export const selectedGroupByAtom = atom<GroupBy>(GroupBy.NONE);
 export const selectedOpacityAtom = atom<number>(0.5);
 export const selectedLineWidthAtom = atom<number>(1);
 export const selectedCurveTypeAtom = atom<CurveType>(CurveType.RELPERM);
+export const selectedVisualizationTypeAtom = atom<VisualizationType>(VisualizationType.STATISTICAL_FANCHART);
 export const userSelectedEnsembleIdentsAtom = atomWithCompare<RegularEnsembleIdent[]>([], areEnsembleIdentListsEqual);
 
 export const validRealizationNumbersAtom = atom<number[] | null>(null);

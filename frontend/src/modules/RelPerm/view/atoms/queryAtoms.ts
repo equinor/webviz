@@ -3,11 +3,13 @@ import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 
-import { relPermSpecificationsAtom } from "./baseAtoms";
+import { relPermSpecificationsAtom, visualizationTypeAtom } from "./baseAtoms";
+import { VisualizationType } from "@modules/RelPerm/typesAndEnums";
 
 export const relPermRealizationDataQueryAtom = atomWithQueries((get) => {
     const relPermSpecifications = get(relPermSpecificationsAtom);
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
+    const visualizationType = get(visualizationTypeAtom);
     const queries = relPermSpecifications.map((item) => {
         const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
         const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
@@ -37,6 +39,7 @@ export const relPermRealizationDataQueryAtom = atomWithQueries((get) => {
                 });
                 return data;
             },
+            enabled: visualizationType === VisualizationType.INDIVIDUAL_REALIZATIONS,
         });
     });
     return { queries };
@@ -45,6 +48,7 @@ export const relPermRealizationDataQueryAtom = atomWithQueries((get) => {
 export const relPermStatisticalDataQueryAtom = atomWithQueries((get) => {
     const relPermSpecifications = get(relPermSpecificationsAtom);
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
+    const visualizationType = get(visualizationTypeAtom);
     const queries = relPermSpecifications.map((item) => {
         const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
         const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
@@ -74,6 +78,7 @@ export const relPermStatisticalDataQueryAtom = atomWithQueries((get) => {
                 });
                 return data;
             },
+            enabled: visualizationType === VisualizationType.STATISTICAL_FANCHART,
         });
     });
     return { queries };

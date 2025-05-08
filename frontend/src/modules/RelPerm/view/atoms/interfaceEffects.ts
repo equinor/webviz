@@ -17,4 +17,8 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
         const visualizationSettings = getInterfaceValue("visualizationSettings");
         setAtomValue(visualizationSettingsAtom, visualizationSettings);
     },
+    (getInterfaceValue, setAtomValue) => {
+        const visualizationType = getInterfaceValue("visualizationType");
+        setAtomValue(visualizationSettingsAtom, (prev) => ({ ...prev, visualizationType }));
+    },
 ];

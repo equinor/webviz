@@ -185,8 +185,8 @@ class RelPermAssembler:
             # Case 2: No shared axis found - perform interpolation
 
             # Determine common interpolation axis (linearly spaced)
-            min_sat = filtered_table[saturation_axis_name].min()
-            max_sat = filtered_table[saturation_axis_name].max()
+            min_sat = 0.0  # filtered_table[saturation_axis_name].min()
+            max_sat = 1.0  # filtered_table[saturation_axis_name].max()
 
             if not isinstance(min_sat, (int, float)) or not isinstance(max_sat, (int, float)):
                 raise InvalidDataError(
@@ -400,7 +400,7 @@ class RelPermAssembler:
                 )
 
         columns_to_use = [saturation_axis_name] + curve_names + ["REAL", "SATNUM"]
-
+        p
         filtered_table = (
             realizations_table.select(columns_to_use)
             .filter((realizations_table["SATNUM"].cast(pl.Int32) == satnum))

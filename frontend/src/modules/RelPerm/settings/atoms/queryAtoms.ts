@@ -40,13 +40,14 @@ export const relPermTableInfoQueriesAtom = atomWithQueries((get) => {
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
-                        table_name: selectedTableName || "",
+                        table_name: selectedTableName ?? "",
                     },
                     throwOnError: true,
                 });
 
                 return data;
             },
+            enabled: !!selectedTableName,
         });
     });
     return { queries };

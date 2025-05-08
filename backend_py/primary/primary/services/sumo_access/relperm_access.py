@@ -109,6 +109,7 @@ class RelPermAccess:
         arrow_table = await arrow_loader.get_aggregated_multiple_columns_async(
             [col for col in columns if col != "SATNUM"]
         )
+        print(arrow_table)
         if realizations is not None:
             requested_reals_arr = pa.array(realizations)
             mask = pc.is_in(arrow_table["REAL"], value_set=requested_reals_arr)
