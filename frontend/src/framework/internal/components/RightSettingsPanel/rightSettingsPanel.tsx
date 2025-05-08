@@ -14,6 +14,8 @@ type RightSettingsPanelProps = { workbench: Workbench };
 export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
     const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
+
+    const [, setRightDrawerContent] = useGuiState(guiMessageBroker, GuiState.RightDrawerContent);
     const [, setRightSettingsPanelWidth] = useGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
     const [numberOfUnsavedRealizationFilters] = useGuiState(
         guiMessageBroker,
@@ -27,6 +29,7 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
         }
 
         setRightSettingsPanelWidth(0);
+        setRightDrawerContent(undefined);
     }
 
     function handleDialogSaveClick() {

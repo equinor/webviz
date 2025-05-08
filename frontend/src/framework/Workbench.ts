@@ -15,6 +15,7 @@ import type { Template } from "./TemplateRegistry";
 import type { WorkbenchServices } from "./WorkbenchServices";
 
 export enum WorkbenchEvents {
+    LayoutChanged = "LayoutChanged",
     ModuleInstancesChanged = "ModuleInstancesChanged",
 }
 
@@ -25,6 +26,8 @@ export type LayoutElement = {
     relY: number;
     relHeight: number;
     relWidth: number;
+    minimized?: boolean;
+    maximized?: boolean;
 };
 
 export type UserEnsembleSetting = {
@@ -159,6 +162,7 @@ export class Workbench {
             this._moduleInstances.push(moduleInstance);
             this._layout[index] = { ...this._layout[index], moduleInstanceId: moduleInstance.getId() };
             this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
+            this.notifySubscribers(WorkbenchEvents.LayoutChanged);
         });
     }
 
@@ -175,6 +179,7 @@ export class Workbench {
         this._moduleInstances = [];
         this._layout = [];
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
+        this.notifySubscribers(WorkbenchEvents.LayoutChanged);
     }
 
     makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
@@ -191,6 +196,7 @@ export class Workbench {
 
         this._layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
+        this.notifySubscribers(WorkbenchEvents.LayoutChanged);
         this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, moduleInstance.getId());
         return moduleInstance;
     }
@@ -226,6 +232,7 @@ export class Workbench {
             return { ...el, moduleInstanceId: undefined };
         });
         localStorage.setItem("layout", JSON.stringify(modifiedLayout));
+        this.notifySubscribers(WorkbenchEvents.LayoutChanged);
     }
 
     maybeMakeFirstModuleInstanceActive(): void {
