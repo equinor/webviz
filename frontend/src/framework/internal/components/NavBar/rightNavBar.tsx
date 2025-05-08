@@ -91,7 +91,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                     active={isFullscreen}
                     icon={<Fullscreen fontSize="small" className="size-5 mr-2" />}
                     activeIcon={<FullscreenExit fontSize="small" className="size-5 mr-2" />}
-                    title="Open module history"
+                    title="Fullscreen application (F11)"
                     onClick={toggleFullScreen}
                 />
             </div>
