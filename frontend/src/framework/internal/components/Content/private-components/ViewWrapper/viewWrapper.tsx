@@ -149,7 +149,30 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                     <ViewWrapperPlaceholder width={props.width} height={props.height} x={props.x} y={props.y} />
                 </>
             )}
-
+            {props.changingLayout && (
+                <div
+                    className="absolute box-border p-0.5"
+                    style={{
+                        width: props.width,
+                        height: props.height,
+                        left: props.isDragged ? props.dragPosition.x : props.x,
+                        top: props.isDragged ? props.dragPosition.y : props.y,
+                        opacity: props.isDragged ? 0.5 : 1,
+                        zIndex: props.isDragged ? 1 : 0,
+                    }}
+                >
+                    <div className="bg-white h-full w-full flex flex-col border-solid border-2 box-border shadow-sm">
+                        <Header
+                            moduleInstance={props.moduleInstance}
+                            isDragged={props.isDragged}
+                            onPointerDown={handleHeaderPointerDown}
+                            onRemoveClick={handleRemoveClick}
+                            onReceiversClick={handleReceiversClick}
+                            guiMessageBroker={guiMessageBroker}
+                        />
+                    </div>
+                </div>
+            )}
             <div
                 ref={ref}
                 className="absolute box-border p-0.5"
