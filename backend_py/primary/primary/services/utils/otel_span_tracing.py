@@ -1,7 +1,7 @@
 import contextlib
 import inspect
 from functools import wraps
-from typing import AsyncGenerator, Generator, Callable, Any
+from typing import AsyncIterator, Iterator, Callable, Any
 
 from opentelemetry import trace
 from opentelemetry.trace import Span, Status, StatusCode
@@ -11,7 +11,7 @@ _tracer = trace.get_tracer("PrimaryBackendSpanInstrumentation")
 
 
 @contextlib.asynccontextmanager
-async def start_otel_span_async(span_name: str, span_attributes: Attributes = None) -> AsyncGenerator[Span]:
+async def start_otel_span_async(span_name: str, span_attributes: Attributes = None) -> AsyncIterator[Span]:
     """
     Context manager to create an async OpenTelemetry span.
     Usage:
@@ -23,7 +23,7 @@ async def start_otel_span_async(span_name: str, span_attributes: Attributes = No
 
 
 @contextlib.contextmanager
-def start_otel_span(span_name: str, span_attributes: Attributes = None) -> Generator[Span]:
+def start_otel_span(span_name: str, span_attributes: Attributes = None) -> Iterator[Span]:
     """
     Context manager to create an sync OpenTelemetry span.
 
