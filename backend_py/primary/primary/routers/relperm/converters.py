@@ -3,6 +3,8 @@ from primary.services.relperm_assembler.relperm_assembler import (
     RelPermSaturationAxis,
     RelPermRealizationData,
     CurveData,
+    RelPermStatisticalData,
+    StatisticalCurveData,
 )
 
 from . import schemas
@@ -44,4 +46,30 @@ def to_api_relperm_realization_data(
         saturation_name=data.saturation_name,
         saturation_values=data.saturation_values.tolist(),
         saturation_number=data.saturation_number,
+    )
+
+
+def to_api_statistical_curve_data(
+    data: StatisticalCurveData,
+) -> schemas.StatisticalCurveData:
+
+    return schemas.StatisticalCurveData(
+        curve_name=data.curve_name,
+        mean_values=data.mean_values.tolist(),
+        min_values=data.min_values.tolist(),
+        max_values=data.max_values.tolist(),
+        p10_values=data.p10_values.tolist(),
+        p90_values=data.p90_values.tolist(),
+    )
+
+
+def to_api_relperm_statistical_data(
+    data: RelPermStatisticalData,
+) -> schemas.RelPermStatisticalData:
+
+    return schemas.RelPermStatisticalData(
+        saturation_number=data.saturation_number,
+        saturation_name=data.saturation_name,
+        saturation_values=data.saturation_values.tolist(),
+        curve_statistics=[to_api_statistical_curve_data(stat) for stat in data.curve_statistics],
     )

@@ -8,12 +8,14 @@ import {
     selectedOpacityAtom,
 } from "./settings/atoms/baseAtoms";
 import { relPermSpecificationsAtom } from "./settings/atoms/derivedAtoms";
-import type { CurveType, RelPermSpec, VisualizationSettings } from "./typesAndEnums";
+import type { CurveType, RelPermSpec, VisualizationSettings, VisualizationType } from "./typesAndEnums";
+import { selectedVisualizationTypeAtom } from "./view/atoms/baseAtoms";
 
 export type SettingsToViewInterface = {
     relPermSpecifications: RelPermSpec[];
     visualizationSettings: VisualizationSettings;
     curveType: CurveType;
+    visualizationType: VisualizationType;
 };
 export type Interfaces = {
     settingsToView: SettingsToViewInterface;
@@ -22,6 +24,9 @@ export type Interfaces = {
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     relPermSpecifications: (get) => {
         return get(relPermSpecificationsAtom);
+    },
+    visualizationType: (get) => {
+        return get(selectedVisualizationTypeAtom);
     },
     visualizationSettings: (get) => {
         return {

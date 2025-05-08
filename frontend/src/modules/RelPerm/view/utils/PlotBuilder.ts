@@ -1,4 +1,4 @@
-import type { RelPermRealizationData_api } from "@api";
+import type { RelPermRealizationData_api, RelPermStatisticalData_api } from "@api";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ColorSet } from "@lib/utils/ColorSet";
@@ -6,10 +6,14 @@ import type { Figure } from "@modules/_shared/Figure";
 import { makeSubplots } from "@modules/_shared/Figure";
 
 import type { Rgb } from "culori";
-import { parseHex } from "culori";
+import { formatRgb, parseHex } from "culori";
 import type { Axis, PlotData } from "plotly.js";
 
-import { createRelPermRealizationTrace, createRelPermRealizationTraceHovertext } from "./createRelPermTracesUtils";
+import {
+    createRelPermFanchartTraces,
+    createRelPermRealizationTrace,
+    createRelPermRealizationTraceHovertext,
+} from "./createRelPermTracesUtils";
 
 import { ColorBy, GroupBy } from "../../typesAndEnums";
 import type { RelPermSpec } from "../../typesAndEnums";
@@ -160,6 +164,64 @@ export class PlotBuilder {
             this._figure.addTraces(plotData, row, col);
         }
     }
+
+    addFanchartTraces(
+        relPermStatisticData: { relPermSpecification: RelPermSpec; data: RelPermStatisticalData_api }[],
+    ): void {
+        const showLegendMapper = new Map<string, boolean>();
+        for (const relPermSpecAndData of relPermStatisticData) {
+            const ensemble = this._ensembleSet.getEnsemble(relPermSpecAndData.relPermSpecification.ensembleIdent);
+            const satNum = relPermSpecAndData.relPermSpecification.satNum;
+            const subplotIndex = this.getSubplotIndexFromSpec(relPermSpecAndData.relPermSpecification);
+            if (subplotIndex === -1) {
+                continue;
+            }
+            const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
+
+            relPermSpecAndData.data.curve_statistics.forEach((curve) => {
+                // const hoverLabel = createRelPermRealizationTraceHovertext(
+                //     ensemble.getDisplayName(),
+                //     satNum.toString(),
+                //     curve.curve_name,
+                //     realizationData.realization_id,
+                // );
+
+                let showLegend = false;
+                let name = "";
+                let rgbColor: Rgb | undefined = undefined;
+                if (ColorBy.ENSEMBLE === this._colorBy) {
+                    rgbColor = this._ensColors.get(ensemble.getDisplayName());
+                    showLegend = !showLegendMapper.has(ensemble.getDisplayName());
+                    showLegendMapper.set(ensemble.getDisplayName(), true);
+                    name = ensemble.getDisplayName();
+                }
+                if (ColorBy.CURVE === this._colorBy) {
+                    rgbColor = this._curveColors.get(curve.curve_name);
+                    showLegend = !showLegendMapper.has(curve.curve_name);
+                    showLegendMapper.set(curve.curve_name, true);
+                    name = curve.curve_name;
+                }
+                if (ColorBy.SATNUM === this._colorBy) {
+                    rgbColor = this._satNumColors.get(satNum);
+                    showLegend = !showLegendMapper.has(satNum.toString());
+                    showLegendMapper.set(satNum.toString(), true);
+                    name = satNum.toString();
+                }
+
+                const fanChartTraces = createRelPermFanchartTraces(
+                    curve,
+                    relPermSpecAndData.data.saturation_values,
+                    rgbColor ? rgbColor : (parseHex("#000000") as Rgb),
+                    // legendGroupTitle: this._colorBy,
+                    name,
+                    this._colorBy,
+                    showLegend,
+                );
+                this._figure.addTraces(fanChartTraces, row, col);
+            });
+        }
+    }
+
     setXAxisOptions(options: Partial<Axis>): void {
         this._axesOptions.x = options;
     }

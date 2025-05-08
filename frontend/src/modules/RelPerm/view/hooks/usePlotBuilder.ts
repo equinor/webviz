@@ -5,12 +5,15 @@ import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import type { Size2D } from "@lib/utils/geometry";
-import { CurveType } from "@modules/RelPerm/typesAndEnums";
+import { CurveType, VisualizationType } from "@modules/RelPerm/typesAndEnums";
 
 import { useAtomValue } from "jotai";
 
 import type { Interfaces } from "../../interfaces";
-import { loadedRelPermSpecificationsAndRealizationDataAtom } from "../atoms/derivedAtoms";
+import {
+    loadedRelPermSpecificationsAndRealizationDataAtom,
+    loadedRelPermSpecificationsAndStatisticalDataAtom,
+} from "../atoms/derivedAtoms";
 import { PlotBuilder } from "../utils/PlotBuilder";
 
 export function usePlotBuilder(
@@ -21,11 +24,16 @@ export function usePlotBuilder(
 ): React.ReactNode {
     const relPermSpecs = viewContext.useSettingsToViewInterfaceValue("relPermSpecifications");
     const visualizationSettings = viewContext.useSettingsToViewInterfaceValue("visualizationSettings");
+    const visualizationType = viewContext.useSettingsToViewInterfaceValue("visualizationType");
     const curveType = viewContext.useSettingsToViewInterfaceValue("curveType");
     const ensembleSet = useEnsembleSet(workbenchSession);
     const loadedRelPermSpecificationsAndRealizationData = useAtomValue(
         loadedRelPermSpecificationsAndRealizationDataAtom,
     );
+    const loadedRelPermSpecificationsAndStatisticalData = useAtomValue(
+        loadedRelPermSpecificationsAndStatisticalDataAtom,
+    );
+
     const colorSet = workbenchSettings.useColorSet();
 
     const plotBuilder = new PlotBuilder({
@@ -37,12 +45,16 @@ export function usePlotBuilder(
         width: wrapperDivSize.width,
         height: wrapperDivSize.height,
     });
-
-    plotBuilder.addRealizationsTraces(
-        loadedRelPermSpecificationsAndRealizationData,
-        visualizationSettings.opacity,
-        visualizationSettings.lineWidth,
-    );
+    if (visualizationType === VisualizationType.INDIVIDUAL_REALIZATIONS) {
+        plotBuilder.addRealizationsTraces(
+            loadedRelPermSpecificationsAndRealizationData,
+            visualizationSettings.opacity,
+            visualizationSettings.lineWidth,
+        );
+    }
+    if (visualizationType === VisualizationType.STATISTICAL_FANCHART) {
+        plotBuilder.addFanchartTraces(loadedRelPermSpecificationsAndStatisticalData);
+    }
     const xAxisName = relPermSpecs.length > 0 ? relPermSpecs[0].saturationAxisName : "Sw";
 
     plotBuilder.setXAxisOptions({

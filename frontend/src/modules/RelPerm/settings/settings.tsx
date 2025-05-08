@@ -42,7 +42,8 @@ import {
 import { relPermTableInfoQueriesAtom, relPermTableNamesQueriesAtom } from "./atoms/queryAtoms";
 
 import type { Interfaces } from "../interfaces";
-import { ColorBy, CurveType, GroupBy } from "../typesAndEnums";
+import { ColorBy, CurveType, GroupBy, VisualizationType } from "../typesAndEnums";
+import { selectedVisualizationTypeAtom } from "../view/atoms/baseAtoms";
 
 //Helpers to populate dropdowns
 const stringToOptions = (strings: string[]): SelectOption[] => {
@@ -58,6 +59,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
     const [selectedColorBy, setSelectedColorBy] = useAtom(selectedColorByAtom);
     const [selectedGroupBy, setSelectedGroupBy] = useAtom(selectedGroupByAtom);
     const [selectedCurveType, setSelectedCurveType] = useAtom(selectedCurveTypeAtom);
+    const [selectedVisualizationType, setSelectedVisualizationType] = useAtom(selectedVisualizationTypeAtom);
     const relPermTableNamesQuery = useAtomValue(relPermTableNamesQueriesAtom);
     const relPermTableInfoQuery = useAtomValue(relPermTableInfoQueriesAtom);
     const availableRelPermTableNames = useAtomValue(availableRelPermTableNamesAtom);
@@ -104,6 +106,12 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
     }
     function handleSaturationAxisChange(_: React.ChangeEvent<HTMLInputElement>, axisname: string) {
         setUserSelectedRelPermSaturationAxis(axisname);
+    }
+    function handleVisualizationTypeChange(
+        _: React.ChangeEvent<HTMLInputElement>,
+        visualizationType: VisualizationType,
+    ) {
+        setSelectedVisualizationType(visualizationType);
     }
     return (
         <div>
@@ -161,7 +169,16 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                         direction="horizontal"
                     />
                 </CollapsibleGroup>
-
+                <CollapsibleGroup expanded={true} title="Visualizatione">
+                    <RadioGroup
+                        options={[
+                            { label: "Individual Realizations", value: VisualizationType.INDIVIDUAL_REALIZATIONS },
+                            { label: "Statistical Fanchart", value: VisualizationType.STATISTICAL_FANCHART },
+                        ]}
+                        value={selectedVisualizationType}
+                        onChange={handleVisualizationTypeChange}
+                    />
+                </CollapsibleGroup>
                 <CollapsibleGroup expanded={true} title="Color by">
                     <RadioGroup
                         options={[

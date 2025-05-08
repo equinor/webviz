@@ -1,4 +1,4 @@
-import { ColorBy, CurveType, GroupBy } from "@modules/RelPerm/typesAndEnums";
+import { ColorBy, CurveType, GroupBy, VisualizationType } from "@modules/RelPerm/typesAndEnums";
 import type { RelPermSpec, VisualizationSettings } from "@modules/RelPerm/typesAndEnums";
 
 import { atom } from "jotai";
@@ -11,3 +11,4 @@ export const visualizationSettingsAtom = atom<VisualizationSettings>({
     opacity: 0.5,
     lineWidth: 1,
 });
+export const selectedVisualizationTypeAtom = atom<VisualizationType>(VisualizationType.STATISTICAL_FANCHART);

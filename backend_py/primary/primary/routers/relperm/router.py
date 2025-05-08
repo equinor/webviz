@@ -68,3 +68,35 @@ async def get_relperm_realizations_curve_data(
     )
 
     return [converters.to_api_relperm_realization_data(data) for data in relperm_data]
+
+
+# Same syntax as above including realizations , but for statistical data
+@router.get("/relperm_statistical_curve_data")
+async def get_relperm_statistical_curve_data(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    table_name: Annotated[str, Query(description="Table name")],
+    saturation_axis_name: Annotated[str, Query(description="Saturation axis name")],
+    curve_names: Annotated[List[str], Query(description="Curve names")],
+    satnum: Annotated[int, Query(description="Satnum")],
+    realizations_encoded_as_uint_list_str: Annotated[
+        str | None,
+        Query(
+            description="Optional list of realizations encoded as string to include. If not specified, all realizations will be included."
+        ),
+    ] = None,
+) -> schemas.RelPermStatisticalData | None:
+    realizations: list[int] | None = None
+    if realizations_encoded_as_uint_list_str:
+        realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
+
+    access = RelPermAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    assembler = RelPermAssembler(access)
+    stat_data = await assembler.get_relperm_statistical_data_async(
+        table_name, saturation_axis_name, curve_names, satnum, realizations
+    )
+
+    if stat_data is None:
+        return None
+    return converters.to_api_relperm_statistical_data(stat_data)

@@ -122,6 +122,9 @@ import type {
     GetRelpermRealizationsCurveDataData_api,
     GetRelpermRealizationsCurveDataResponse_api,
     GetRelpermRealizationsCurveDataError_api,
+    GetRelpermStatisticalCurveDataData_api,
+    GetRelpermStatisticalCurveDataResponse_api,
+    GetRelpermStatisticalCurveDataError_api,
     GetWellCompletionsDataData_api,
     GetWellCompletionsDataResponse_api,
     GetWellCompletionsDataError_api,
@@ -857,6 +860,22 @@ export const getRelpermRealizationsCurveData = <ThrowOnError extends boolean = f
     >({
         ...options,
         url: "/relperm/relperm_realizations_curve_data",
+    });
+};
+
+/**
+ * Get Relperm Statistical Curve Data
+ */
+export const getRelpermStatisticalCurveData = <ThrowOnError extends boolean = false>(
+    options: Options<GetRelpermStatisticalCurveDataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<
+        GetRelpermStatisticalCurveDataResponse_api,
+        GetRelpermStatisticalCurveDataError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/relperm/relperm_statistical_curve_data",
     });
 };
 

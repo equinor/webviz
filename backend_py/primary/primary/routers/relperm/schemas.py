@@ -27,3 +27,19 @@ class RelPermRealizationData(BaseModel):
     saturation_name: str
     saturation_values: List[float]
     saturation_number: int
+
+
+class StatisticalCurveData(BaseModel):
+    curve_name: str
+    mean_values: list[float]
+    min_values: list[float]
+    max_values: list[float]
+    p10_values: list[float]
+    p90_values: list[float]
+
+
+class RelPermStatisticalData(BaseModel):
+    saturation_number: int
+    saturation_name: str
+    saturation_values: list[float]
+    curve_statistics: List[StatisticalCurveData]

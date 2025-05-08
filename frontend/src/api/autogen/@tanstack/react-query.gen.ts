@@ -45,6 +45,7 @@ import {
     getRelpermTableNames,
     getRelpermTableInfo,
     getRelpermRealizationsCurveData,
+    getRelpermStatisticalCurveData,
     getWellCompletionsData,
     getDrilledWellboreHeaders,
     getWellTrajectories,
@@ -130,6 +131,7 @@ import type {
     GetRelpermTableNamesData_api,
     GetRelpermTableInfoData_api,
     GetRelpermRealizationsCurveDataData_api,
+    GetRelpermStatisticalCurveDataData_api,
     GetWellCompletionsDataData_api,
     GetDrilledWellboreHeadersData_api,
     GetWellTrajectoriesData_api,
@@ -1052,6 +1054,25 @@ export const getRelpermRealizationsCurveDataOptions = (options: Options<GetRelpe
             return data;
         },
         queryKey: getRelpermRealizationsCurveDataQueryKey(options),
+    });
+};
+
+export const getRelpermStatisticalCurveDataQueryKey = (options: Options<GetRelpermStatisticalCurveDataData_api>) => [
+    createQueryKey("getRelpermStatisticalCurveData", options),
+];
+
+export const getRelpermStatisticalCurveDataOptions = (options: Options<GetRelpermStatisticalCurveDataData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getRelpermStatisticalCurveData({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getRelpermStatisticalCurveDataQueryKey(options),
     });
 };
 

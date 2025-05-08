@@ -16,6 +16,7 @@ export enum CurveType {
 }
 export enum VisualizationType {
     INDIVIDUAL_REALIZATIONS = "individualRealizations",
+    STATISTICAL_FANCHART = "StatisticalFanchart",
 }
 export interface RelPermSpec {
     ensembleIdent: RegularEnsembleIdent;
