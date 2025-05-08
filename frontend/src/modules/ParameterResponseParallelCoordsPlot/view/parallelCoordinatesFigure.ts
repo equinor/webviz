@@ -28,6 +28,11 @@ export class ParallelCoordinatesFigure {
         });
         this._figure.updateLayout({
             showlegend: false,
+            font: {
+                family: "Roboto, sans-serif",
+                size: 12,
+                color: "#333",
+            },
         });
 
         this._wrapperDivSize = wrapperDivSize;

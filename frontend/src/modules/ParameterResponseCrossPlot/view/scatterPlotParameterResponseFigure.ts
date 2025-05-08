@@ -1,7 +1,7 @@
 import type { Layout, PlotData } from "plotly.js";
 
 import type { Size2D } from "@lib/utils/geometry";
-import type { Figure} from "@modules/_shared/Figure";
+import type { Figure } from "@modules/_shared/Figure";
 import { makeSubplots } from "@modules/_shared/Figure";
 import { linearRegression } from "@modules/_shared/utils/math/linearRegression";
 
@@ -28,6 +28,11 @@ export class ScatterPlotParameterResponseFigure {
         });
         this._figure.updateLayout({
             showlegend: false,
+            font: {
+                family: "Roboto, sans-serif",
+                size: 12,
+                color: "#333",
+            },
         });
         this._showTrendline = showTrendline;
     }

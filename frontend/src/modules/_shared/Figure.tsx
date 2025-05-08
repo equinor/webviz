@@ -169,14 +169,8 @@ export class Figure {
     }
 
     makeLayout(): Partial<Layout> {
-        const layout = {
-            font: {
-                family: "Roboto, sans-serif",
-                size: 12,
-                color: "#333",
-            },
-            ...this._plotLayout,
-        };
+        const layout = { ...this._plotLayout };
+
         layout.annotations = [
             ...(layout.annotations ?? []),
             ...Array.from(this._axesIndexToSubplotTitleAnnotationMap.values()),
