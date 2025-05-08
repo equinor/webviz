@@ -130,8 +130,6 @@ export function Settings({
     );
 }
 
-Settings.displayName = "Settings";
-
 function fixupParameterIdent(parameterIdents: ParameterIdent[], parameterIdentString: string | null) {
     if (parameterIdents.length > 0) {
         const currentParamIdent = parameterIdentString ? ParameterIdent.fromString(parameterIdentString) : null;
