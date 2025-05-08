@@ -38,7 +38,7 @@ export type DataProviderInformationAccessors<
      * const value = getSetting("settingName");
      * ```
      */
-    getSetting: <K extends TSettingKey>(settingName: K) => TSettingTypes[K];
+    getSetting: <K extends TSettingKey>(settingName: K) => TSettingTypes[K] | null;
 
     /**
      * Access the available values of a setting.

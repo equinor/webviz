@@ -124,13 +124,22 @@ function EndActions(props: EndActionProps): React.ReactNode {
             }
         }
         if (status === DataProviderStatus.INVALID_SETTINGS) {
+            let errorMessage = "Invalid settings";
+            const invalidSettings = props.dataProvider.getSettingsContextDelegate().getInvalidSettings();
+
+            if (invalidSettings.length > 0) {
+                errorMessage += `: ${invalidSettings.join(", ")}`;
+            }
+            errorMessage += ".";
+
+            const customReportedErrors = props.dataProvider.getSettingsErrorMessages();
+            if (customReportedErrors.length > 0) {
+                errorMessage += `\n${customReportedErrors.join("\n")}`;
+            }
+            errorMessage += "\nPlease check the settings.";
+
             return (
-                <div
-                    title={`Invalid settings: ${props.dataProvider
-                        .getSettingsContextDelegate()
-                        .getInvalidSettings()
-                        .join(", ")}`}
-                >
+                <div title={errorMessage}>
                     <Block className="text-red-700 p-0.5" fontSize="small" />
                 </div>
             );

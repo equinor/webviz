@@ -56,7 +56,7 @@ export class SharedSettingsDelegate<
         this.createDependencies();
     }
 
-    getWrappedSettings(): { [K in TSettingKey]: SettingManager<K, SettingTypes[K]> } {
+    getWrappedSettings(): { [K in TSettingKey]: SettingManager<K, SettingTypes[K] | null> } {
         return this._wrappedSettings;
     }
 

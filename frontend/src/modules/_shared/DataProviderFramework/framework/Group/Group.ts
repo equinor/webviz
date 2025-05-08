@@ -103,7 +103,7 @@ export class Group<
         return this._sharedSettingsDelegate;
     }
 
-    getWrappedSettings(): { [K in TSettingKey]: SettingManager<K, SettingTypes[K]> } {
+    getWrappedSettings(): { [K in TSettingKey]: SettingManager<K, SettingTypes[K] | null> } {
         if (!this._sharedSettingsDelegate) {
             throw new Error("Group does not have shared settings.");
         }

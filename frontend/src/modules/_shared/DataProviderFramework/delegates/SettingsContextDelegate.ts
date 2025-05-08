@@ -64,8 +64,8 @@ export class SettingsContextDelegate<
         TStoredDataKey
     >;
     private _dataProviderManager: DataProviderManager;
-    private _settings: { [K in TSettingKey]: SettingManager<K, SettingTypes[K]> } = {} as {
-        [K in TSettingKey]: SettingManager<K, SettingTypes[K]>;
+    private _settings: { [K in TSettingKey]: SettingManager<K, SettingTypes[K] | null> } = {} as {
+        [K in TSettingKey]: SettingManager<K, SettingTypes[K] | null>;
     };
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingsContextDelegatePayloads>();
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
@@ -90,23 +90,8 @@ export class SettingsContextDelegate<
         this._customSettingsHandler = customSettingsHandler;
         this._dataProviderManager = dataProviderManager;
 
-        this._unsubscribeHandler.registerUnsubscribeFunction(
-            "dependencies",
-            this.getDataProviderManager()
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(DataProviderManagerTopic.DESERIALIZATION_DONE)(() => {
-                this.initialize();
-            }),
-        );
-
         this._settings = settings;
 
-        if (!this.getDataProviderManager().isDeserializing()) {
-            this.initialize();
-        }
-    }
-
-    private initialize() {
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "dependencies",
             this.getDataProviderManager()
@@ -513,7 +498,7 @@ export class SettingsContextDelegate<
         for (const key in this._settings) {
             this._settings[key].beforeDestroy();
         }
-        this._settings = {} as { [K in TSettingKey]: SettingManager<K, SettingTypes[K]> };
+        this._settings = {} as { [K in TSettingKey]: SettingManager<K, SettingTypes[K] | null> };
     }
 
     private setStatus(status: SettingsContextStatus) {

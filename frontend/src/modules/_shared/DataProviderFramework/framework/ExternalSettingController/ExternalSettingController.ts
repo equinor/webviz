@@ -1,6 +1,6 @@
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import type { Item } from "../../interfacesAndTypes/entities";
-import type { AvailableValuesType, MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
+import type { AvailableValuesType } from "../../interfacesAndTypes/utils";
 import {
     type Setting,
     type SettingCategories,
@@ -14,7 +14,7 @@ import type { SettingManager } from "../SettingManager/SettingManager";
 
 export class ExternalSettingController<
     TSetting extends Setting,
-    TValue extends SettingTypes[TSetting] = SettingTypes[TSetting],
+    TValue extends SettingTypes[TSetting] | null = SettingTypes[TSetting] | null,
     TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
 > {
     private _parentItem: Item;
@@ -117,23 +117,21 @@ export class ExternalSettingController<
         }
 
         const { reducer, startingValue, isValid } = reducerDefinition;
-        let availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> =
-            startingValue as MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>;
+        let availableValues: AvailableValuesType<TSetting> = startingValue as AvailableValuesType<TSetting>;
         let index = 0;
+        let isInvalid = false;
 
         for (const value of this._availableValuesMap.values()) {
             if (value === null) {
-                continue;
+                isInvalid = true;
+                break;
             }
-            availableValues = reducer(
-                availableValues as any,
-                value as any,
-                index++,
-            ) as MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>;
+            availableValues = reducer(availableValues as any, value as any, index++) as AvailableValuesType<TSetting>;
         }
 
-        if (!isValid(availableValues as any)) {
+        if (!isValid(availableValues as any) || isInvalid) {
             this._setting.setAvailableValues(null);
+            this._setting.setValue(null as any);
             return;
         }
 

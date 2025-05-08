@@ -66,7 +66,7 @@ export enum OverriddenValueProviderType {
  */
 export class SettingManager<
     TSetting extends Setting,
-    TValue extends SettingTypes[TSetting] = SettingTypes[TSetting],
+    TValue extends SettingTypes[TSetting] | null = SettingTypes[TSetting] | null,
     TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
 > implements PublishSubscribe<SettingTopicPayloads<TValue, TCategory>>
 {
@@ -78,7 +78,7 @@ export class SettingManager<
     private _value: TValue;
     private _isValueValid: boolean = false;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingTopicPayloads<TValue, TCategory>>();
-    private _availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> | null = null;
+    private _availableValues: AvailableValuesType<TSetting> | null = null;
     private _loading: boolean = false;
     private _initialized: boolean = false;
     private _currentValueFromPersistence: TValue | null = null;
@@ -427,7 +427,7 @@ export class SettingManager<
         if (this._externalController) {
             return this._externalController.getSetting().getAvailableValues();
         }
-        return this._availableValues;
+        return this._availableValues as AvailableValuesType<TSetting> | null;
     }
 
     maybeResetPersistedValue(): boolean {
@@ -449,7 +449,7 @@ export class SettingManager<
         if (customIsValueValidFunction) {
             isPersistedValueValid = customIsValueValidFunction(
                 this._currentValueFromPersistence,
-                this._availableValues,
+                this._availableValues as any,
             );
         } else {
             isPersistedValueValid = settingCategoryIsValueValidMap[this._category](
@@ -486,7 +486,7 @@ export class SettingManager<
         }
     }
 
-    setAvailableValues(availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> | null): void {
+    setAvailableValues(availableValues: AvailableValuesType<TSetting> | null): void {
         if (this._externalController) {
             this.initialize();
             this._externalController.setAvailableValues(this.getId(), availableValues);
@@ -524,7 +524,7 @@ export class SettingManager<
 
         let candidate: TValue;
         if (this._customSettingImplementation.fixupValue) {
-            candidate = this._customSettingImplementation.fixupValue(this._value, this._availableValues);
+            candidate = this._customSettingImplementation.fixupValue(this._value, this._availableValues as any);
         } else {
             candidate = settingCategoryFixupMap[this._category](
                 this._value as any,
@@ -547,7 +547,7 @@ export class SettingManager<
             return false;
         }
         if (this._customSettingImplementation.isValueValid) {
-            return this._customSettingImplementation.isValueValid(value, this._availableValues);
+            return this._customSettingImplementation.isValueValid(value, this._availableValues as any);
         } else {
             return settingCategoryIsValueValidMap[this._category](value as any, this._availableValues as any);
         }

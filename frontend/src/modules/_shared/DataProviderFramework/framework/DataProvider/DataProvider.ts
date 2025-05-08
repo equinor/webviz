@@ -179,6 +179,10 @@ export class DataProvider<
         return this._customDataProviderImpl.areCurrentSettingsValid({ ...this.makeAccessors(), reportError });
     }
 
+    getSettingsErrorMessages(): string[] {
+        return this._settingsErrorMessages;
+    }
+
     handleSettingsAndStoredDataChange(): void {
         if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
             this.setStatus(DataProviderStatus.LOADING);
