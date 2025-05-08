@@ -189,6 +189,7 @@ export class SettingManager<
     unregisterExternalSettingController(): void {
         this._externalController = null;
         this._unsubscribeHandler.unsubscribe("external-setting-controller");
+        this.applyAvailableValues();
     }
 
     beforeDestroy(): void {
@@ -423,6 +424,9 @@ export class SettingManager<
     }
 
     getAvailableValues(): AvailableValuesType<TSetting> | null {
+        if (this._externalController) {
+            return this._externalController.getSetting().getAvailableValues();
+        }
         return this._availableValues;
     }
 
@@ -466,19 +470,7 @@ export class SettingManager<
         return false;
     }
 
-    setAvailableValues(availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> | null): void {
-        if (this._externalController) {
-            this.initialize();
-            this._externalController.setAvailableValues(availableValues);
-        }
-
-        if (isEqual(this._availableValues, availableValues) && this._initialized) {
-            this.setLoading(false);
-            return;
-        }
-
-        this._availableValues = availableValues;
-
+    private applyAvailableValues() {
         let valueChanged = false;
         const valueFixedUp = !this.checkIfValueIsValid(this.getValue()) && this.maybeFixupValue();
         const persistedValueReset = this.maybeResetPersistedValue();
@@ -489,9 +481,27 @@ export class SettingManager<
         this.setValueValid(this.checkIfValueIsValid(this.getValue()));
         this.initialize();
         this.setLoading(false);
-        if (valueChanged || this._isValueValid !== prevIsValid) {
+        if (valueChanged || this._isValueValid !== prevIsValid || this._value === null) {
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
         }
+    }
+
+    setAvailableValues(availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> | null): void {
+        if (this._externalController) {
+            this.initialize();
+            this._externalController.setAvailableValues(this.getId(), availableValues);
+            this._availableValues = availableValues;
+            return;
+        }
+
+        if (isEqual(this._availableValues, availableValues) && this._initialized) {
+            this.setLoading(false);
+            return;
+        }
+
+        this._availableValues = availableValues;
+
+        this.applyAvailableValues();
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.AVAILABLE_VALUES);
     }
 

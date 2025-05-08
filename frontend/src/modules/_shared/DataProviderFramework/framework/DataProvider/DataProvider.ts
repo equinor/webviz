@@ -122,6 +122,7 @@ export class DataProvider<
     private _prevSettings: TSettingTypes | null = null;
     private _prevStoredData: NullableStoredData<TStoredData> | null = null;
     private _currentTransactionId: number = 0;
+    private _settingsErrorMessages: string[] = [];
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
         const {
@@ -171,7 +172,11 @@ export class DataProvider<
             return true;
         }
 
-        return this._customDataProviderImpl.areCurrentSettingsValid(this.makeAccessors());
+        this._settingsErrorMessages = [];
+        const reportError = (message: string) => {
+            this._settingsErrorMessages.push(message);
+        };
+        return this._customDataProviderImpl.areCurrentSettingsValid({ ...this.makeAccessors(), reportError });
     }
 
     handleSettingsAndStoredDataChange(): void {

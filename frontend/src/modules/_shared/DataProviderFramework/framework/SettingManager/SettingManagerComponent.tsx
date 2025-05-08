@@ -23,7 +23,7 @@ export type SettingComponentProps<
     sharedSetting: boolean;
 };
 
-export function SettingComponent<
+export function SettingManagerComponent<
     TSetting extends Setting,
     TValue extends SettingTypes[TSetting] = SettingTypes[TSetting],
     TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],

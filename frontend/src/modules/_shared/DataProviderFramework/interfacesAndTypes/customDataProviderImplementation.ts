@@ -91,6 +91,16 @@ export type DataProviderInformationAccessors<
     getWorkbenchSettings: () => WorkbenchSettings;
 };
 
+export type AreSettingsValidArgs<
+    TSettings extends Settings,
+    TData,
+    TStoredData extends StoredData = Record<string, never>,
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
+    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+> = DataProviderInformationAccessors<TSettings, TData, TStoredData, TSettingKey, TSettingTypes> & {
+    reportError: (error: string) => void;
+};
+
 /**
  * This type is used to pass parameters to the fetchData method of a CustomDataProviderImplementation.
  * It contains accessors to the data and settings of the provider and other useful information.
@@ -169,8 +179,9 @@ export interface CustomDataProviderImplementation<
      * and false if they are not.
      * As long as the settings are not valid, the provider will not fetch data.
      *
-     * @param accessors Accessors to the data and settings of the provider.
-     * @returns
+     * @param args Accessors to the data and settings of the provider plus a function that can be used to report an error if
+     * some settings are not valid. It can be called multiple times if multiple settings are not valid.
+     * @returns true if the settings are valid, false otherwise.
      */
-    areCurrentSettingsValid?: (accessors: DataProviderInformationAccessors<TSettings, TData, TStoredData>) => boolean;
+    areCurrentSettingsValid?: (args: AreSettingsValidArgs<TSettings, TData, TStoredData>) => boolean;
 }

@@ -98,11 +98,11 @@ export class ExternalSettingController<
         this._availableValuesMap.clear();
     }
 
-    setAvailableValues(availableValues: AvailableValuesType<TSetting> | null): void {
+    setAvailableValues(settingId: string, availableValues: AvailableValuesType<TSetting> | null): void {
         if (availableValues) {
-            this._availableValuesMap.set(this._setting.getId(), availableValues);
+            this._availableValuesMap.set(settingId, availableValues);
         } else {
-            this._availableValuesMap.delete(this._setting.getId());
+            this._availableValuesMap.delete(settingId);
         }
 
         this.makeIntersectionOfAvailableValues();
@@ -118,7 +118,7 @@ export class ExternalSettingController<
             );
         }
 
-        const { reducer, startingValue } = reducerDefinition;
+        const { reducer, startingValue, isValid } = reducerDefinition;
         let availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> =
             startingValue as MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>;
         let index = 0;
@@ -132,6 +132,11 @@ export class ExternalSettingController<
                 value as any,
                 index++,
             ) as MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>;
+        }
+
+        if (!isValid(availableValues as any)) {
+            this._setting.setAvailableValues(null);
+            return;
         }
 
         this._setting.setAvailableValues(availableValues);
