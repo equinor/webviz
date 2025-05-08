@@ -1,8 +1,9 @@
+import { indexOf } from "lodash";
+
 import type { VectorRealizationData_api } from "@api";
 import type { DataGenerator } from "@framework/DataChannelTypes";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 
-import { indexOf } from "lodash";
 
 export function makeVectorDataGenerator(
     ensemble: RegularEnsemble | null,

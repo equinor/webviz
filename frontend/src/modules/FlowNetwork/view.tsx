@@ -1,12 +1,13 @@
 import React from "react";
 
+import type { DatedTree, EdgeMetadata, NodeMetadata } from "@webviz/group-tree-plot";
+import { GroupTreePlot } from "@webviz/group-tree-plot";
+
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { simulationUnitReformat } from "@modules/_shared/reservoirSimulationStringUtils";
-import type { DatedTree, EdgeMetadata, NodeMetadata } from "@webviz/group-tree-plot";
-import { GroupTreePlot } from "@webviz/group-tree-plot";
 
 import type { Interfaces } from "./interfaces";
 import { QueryStatus } from "./types";

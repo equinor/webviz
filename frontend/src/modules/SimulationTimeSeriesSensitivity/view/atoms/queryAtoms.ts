@@ -1,3 +1,5 @@
+import { atomWithQuery } from "jotai-tanstack-query";
+
 import {
     Frequency_api,
     getHistoricalVectorDataOptions,
@@ -13,7 +15,6 @@ import {
     vectorSpecificationAtom,
 } from "@modules/SimulationTimeSeriesSensitivity/view/atoms/baseAtoms";
 
-import { atomWithQuery } from "jotai-tanstack-query";
 
 export const vectorDataQueryAtom = atomWithQuery((get) => {
     const vectorSpecification = get(vectorSpecificationAtom);

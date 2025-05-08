@@ -1,6 +1,7 @@
+import { useAtomValue } from "jotai";
+
 import type { ViewStatusWriter } from "@framework/StatusWriter";
 
-import { useAtomValue } from "jotai";
 
 import { showHistoricalAtom, showStatisticsAtom } from "../atoms/baseAtoms";
 import {

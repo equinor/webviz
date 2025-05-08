@@ -1,13 +1,15 @@
 import React from "react";
 
+import { useAtom, useSetAtom } from "jotai";
+
 import type { SurfaceStatisticFunction_api } from "@api";
 import { SurfaceAttributeType_api } from "@api";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Button } from "@lib/components/Button";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -30,7 +32,8 @@ import {
 } from "@modules/_shared/Surface";
 import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
 
-import { useAtom, useSetAtom } from "jotai";
+
+import type { Interfaces } from "../interfaces";
 
 import {
     meshSurfaceAddressAtom,
@@ -42,7 +45,6 @@ import {
 } from "./atoms/baseAtoms";
 import { AggregationSelector } from "./components/aggregationSelector";
 
-import type { Interfaces } from "../interfaces";
 
 //-----------------------------------------------------------------------------------------------------------
 type LabelledCheckboxProps = {

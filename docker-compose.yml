@@ -1,8 +1,6 @@
 # This configuration aims at being a good setup
 # for doing development of the frontend + backend in combination.
 
-version: "3.6"
-
 services:
   frontend:
     build:

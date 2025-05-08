@@ -1,20 +1,21 @@
 import React from "react";
 
+import { CheckCircle, ClearAll, CloudDone, CloudDownload, Error, History, Warning } from "@mui/icons-material";
+
 import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
-import type { ModuleInstance } from "@framework/ModuleInstance";
-import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
-import type { Workbench } from "@framework/Workbench";
+import { Drawer } from "@framework/internal/components/Drawer";
 import type { LogEntry } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import {
     LogEntryType,
     useStatusControllerStateValue,
 } from "@framework/internal/ModuleInstanceStatusControllerInternal";
-import { Drawer } from "@framework/internal/components/Drawer";
+import type { ModuleInstance } from "@framework/ModuleInstance";
+import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
+import type { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { CheckCircle, ClearAll, CloudDone, CloudDownload, Error, History, Warning } from "@mui/icons-material";
 
 export type ModuleInstanceLogProps = {
     workbench: Workbench;

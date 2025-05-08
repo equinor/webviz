@@ -52,6 +52,7 @@ logging.getLogger("primary.services.user_grid3d_service").setLevel(logging.DEBUG
 logging.getLogger("primary.services.surface_query_service").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
+logging.getLogger("primary.auth").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.access").setLevel(logging.DEBUG)
 
@@ -119,7 +120,7 @@ app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total-ex
 
 # Add out custom middleware to enforce that user is logged in
 # Also redirects to /login endpoint for some select paths
-unprotected_paths = ["/logged_in_user", "/alive", "/openapi.json"]
+unprotected_paths = ["/logout", "/logged_in_user", "/alive", "/openapi.json"]
 paths_redirected_to_login = ["/", "/alive_protected"]
 
 app.add_middleware(
@@ -128,7 +129,7 @@ app.add_middleware(
     paths_redirected_to_login=paths_redirected_to_login,
 )
 
-session_store = RedisStore(config.REDIS_USER_SESSION_URL, prefix="user-auth:")
+session_store = RedisStore(config.REDIS_USER_SESSION_URL, prefix="auth-sessions:")
 app.add_middleware(SessionMiddleware, store=session_store)
 
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")

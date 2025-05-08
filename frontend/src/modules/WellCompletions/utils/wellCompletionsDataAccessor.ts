@@ -1,10 +1,3 @@
-import type {
-    WellCompletionsData_api,
-    WellCompletionsUnits_api,
-    WellCompletionsWell_api,
-    WellCompletionsZone_api,
-} from "@api";
-import type { ColorSet } from "@lib/utils/ColorSet";
 import type { CompletionPlotData, PlotData, WellPlotData, Zone } from "@webviz/well-completions-plot";
 import {
     SortDirection,
@@ -14,6 +7,14 @@ import {
     createSortedWellsFromSequence,
     createWellNameRegexMatcher,
 } from "@webviz/well-completions-plot";
+
+import type {
+    WellCompletionsData_api,
+    WellCompletionsUnits_api,
+    WellCompletionsWell_api,
+    WellCompletionsZone_api,
+} from "@api";
+import type { ColorSet } from "@lib/utils/ColorSet";
 
 import { TimeAggregationSelection } from "../typesAndEnums";
 

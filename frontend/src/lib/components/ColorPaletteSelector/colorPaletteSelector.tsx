@@ -1,5 +1,7 @@
 import React from "react";
 
+import { ExpandMore } from "@mui/icons-material";
+
 import { ColorGradient } from "@lib/components/ColorGradient";
 import { ColorTileGroup } from "@lib/components/ColorTileGroup";
 import { IconButton } from "@lib/components/IconButton";
@@ -9,7 +11,6 @@ import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { ExpandMore } from "@mui/icons-material";
 
 export enum ColorPaletteSelectorType {
     Categorical = "categorical",
