@@ -3,10 +3,6 @@ import React from "react";
 export function useBrowserFullscreen(): [boolean, () => void] {
     const [isFullscreen, setIsFullscreen] = React.useState(false);
 
-    document.addEventListener("fullscreenchange", () => {
-        setIsFullscreen(document.fullscreenElement != null);
-    });
-
     const enterFullscreen = React.useCallback((element?: HTMLElement) => {
         if (!document.fullscreenEnabled) return console.warn("Fullscreen not allowed");
 
@@ -22,6 +18,15 @@ export function useBrowserFullscreen(): [boolean, () => void] {
         if (document.fullscreenElement) exitFullscreen();
         else enterFullscreen();
     }, [enterFullscreen, exitFullscreen]);
+
+    React.useEffect(function setupFullscreenListener() {
+        function handleFullscreenChange() {
+            setIsFullscreen(document.fullscreenElement != null);
+        }
+
+        document.addEventListener("fullscreenchange", handleFullscreenChange);
+        return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    });
 
     return [isFullscreen, toggleFullscreen];
 }

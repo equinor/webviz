@@ -151,7 +151,8 @@ export class GuiMessageBroker {
             // However, in the future, we may want to store at least some of them in a database on the server
             const stateValue = this._storedValues.get(state);
             if (stateValue === undefined || stateValue === null) {
-                return localStorage.removeItem(state);
+                localStorage.removeItem(state);
+                return;
             }
             localStorage.setItem(state, JSON.stringify(stateValue));
         }
