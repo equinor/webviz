@@ -55,7 +55,7 @@ export type SubsurfaceViewerWrapperProps = {
     onIntersectionPolylineEditCancel?: () => void;
     onVerticalScaleChange?: (verticalScale: number) => void;
     intersectionPolyline?: IntersectionPolyline;
-    intersectionPolylines?: IntersectionPolyline[];
+    intersectionPolylines?: readonly IntersectionPolyline[];
 };
 
 type IntersectionZValues = {

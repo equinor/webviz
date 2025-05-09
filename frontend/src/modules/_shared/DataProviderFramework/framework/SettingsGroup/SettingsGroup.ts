@@ -53,4 +53,8 @@ export class SettingsGroup implements ItemGroup {
         this._itemDelegate.deserializeState(serialized);
         this._groupDelegate.deserializeChildren(serialized.children);
     }
+
+    beforeDestroy?(): void {
+        this._groupDelegate.beforeDestroy();
+    }
 }

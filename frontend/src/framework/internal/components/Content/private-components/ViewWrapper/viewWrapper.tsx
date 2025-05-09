@@ -14,7 +14,6 @@ import { ChannelReceiverNodesWrapper } from "./private-components/channelReceive
 import { Header } from "./private-components/header";
 import { ViewContent } from "./private-components/viewContent";
 
-
 type ViewWrapperProps = {
     isActive: boolean;
     moduleInstance: ModuleInstance<any>;

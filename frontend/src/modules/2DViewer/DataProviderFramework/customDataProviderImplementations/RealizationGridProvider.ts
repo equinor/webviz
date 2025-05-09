@@ -4,6 +4,7 @@ import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOption
 import type { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import { transformGridMappedProperty, transformGridSurface } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import type {
+    AreSettingsValidArgs,
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
     FetchDataParams,
@@ -11,7 +12,6 @@ import type {
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-
 
 const realizationGridSettings = [
     Setting.ENSEMBLE,
@@ -133,13 +133,9 @@ export class RealizationGridProvider
 
         registerQueryKey(gridSurfaceOptions.queryKey);
 
-        const gridParameterPromise = queryClient
-            .fetchQuery(gridParameterOptions)
-            .then(transformGridMappedProperty);
+        const gridParameterPromise = queryClient.fetchQuery(gridParameterOptions).then(transformGridMappedProperty);
 
-        const gridSurfacePromise = queryClient
-            .fetchQuery(gridSurfaceOptions)
-            .then(transformGridSurface);
+        const gridSurfacePromise = queryClient.fetchQuery(gridSurfaceOptions).then(transformGridSurface);
 
         return Promise.all([gridSurfacePromise, gridParameterPromise]).then(([gridSurfaceData, gridParameterData]) => ({
             gridSurfaceData,
@@ -149,7 +145,7 @@ export class RealizationGridProvider
 
     areCurrentSettingsValid({
         getSetting,
-    }: DataProviderInformationAccessors<RealizationGridSettings, RealizationGridData, StoredData>): boolean {
+    }: AreSettingsValidArgs<RealizationGridSettings, RealizationGridData, StoredData>): boolean {
         return (
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&

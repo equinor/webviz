@@ -22,7 +22,6 @@ import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataT
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
-
 const statisicalSurfaceSettings = [
     Setting.ENSEMBLE,
     Setting.STATISTIC_FUNCTION,
