@@ -110,7 +110,11 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
 
                 const centerX = xMin + (xMax - xMin) / 2;
                 const centerY = yMin + (yMax - yMin) / 2;
-                const newViewport: [number, number, number] = [centerX, centerY, (xMax - xMin) * 1.2];
+                const newViewport: [number, number, number] = [
+                    centerX,
+                    centerY,
+                    Math.max(xMax - xMin, yMax - yMin) * 1.2,
+                ];
                 setViewport(newViewport);
             }
         },

@@ -6,8 +6,8 @@ import { normalizeVec2, point2Distance } from "@lib/utils/vec2";
  *
  */
 export function createResampledPolylinePointsAndCumulatedLengthArray(
-    polylineUtmXy: number[],
-    actualSectionLengths: number[],
+    polylineUtmXy: readonly number[],
+    actualSectionLengths: readonly number[],
     initialHorizontalPosition: number,
     sampledResolution: number,
 ): { xPoints: number[]; yPoints: number[]; cumulatedHorizontalPolylineLengthArr: number[] } {

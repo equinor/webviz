@@ -94,7 +94,7 @@ export function makeIntersectionPolylineWithSectionLengthsPromise(
  * Takes a polyline xy utm coordinates and a sample step and returns a resampled polyline xy utm coordinates,
  * where the sample step is the distance between each point in the resampled polyline.
  */
-export function createResampledPolylineXyUtm(polylineXyUtm: number[], sampleStep: number): number[] {
+export function createResampledPolylineXyUtm(polylineXyUtm: readonly number[], sampleStep: number): number[] {
     const resampledPolyline: number[] = [];
     const limitedSampleStep = Math.max(1, sampleStep);
 

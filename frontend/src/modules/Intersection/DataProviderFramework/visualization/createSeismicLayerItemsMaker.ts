@@ -22,7 +22,7 @@ import { createSeismicColorScaleValues } from "../utils.ts/colorScaleUtils";
  * along the polyline in the xy-plane.
  */
 function makeTrajectoryFenceProjectionFromFenceActualSectionLengths(
-    actualFenceSectionLengths: number[],
+    actualFenceSectionLengths: readonly number[],
     extensionLength: number,
 ): number[][] {
     if (actualFenceSectionLengths.length === 0) {

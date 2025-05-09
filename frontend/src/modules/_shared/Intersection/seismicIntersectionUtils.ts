@@ -6,7 +6,7 @@ import type { SeismicFencePolyline_api } from "@api";
  * Takes a polyline xy coordinates array, where the x and y coordinates are interleaved,
  * and returns a seismic fence polyline object.
  */
-export function createSeismicFencePolylineFromPolylineXy(polylineXy: number[]): SeismicFencePolyline_api {
+export function createSeismicFencePolylineFromPolylineXy(polylineXy: readonly number[]): SeismicFencePolyline_api {
     const xPoints: number[] = [];
     const yPoints: number[] = [];
 

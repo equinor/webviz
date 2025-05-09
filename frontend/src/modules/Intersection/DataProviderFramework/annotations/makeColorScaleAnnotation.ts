@@ -14,7 +14,7 @@ function makeColorScaleAnnotation({
     isLoading,
     createColorScaleValues,
 }: TransformerArgs<[Setting.COLOR_SCALE, Setting.ATTRIBUTE], any, any, any> & {
-    createColorScaleValues: (valueRange: [number, number]) => { min: number; max: number; mid: number };
+    createColorScaleValues: (valueRange: readonly [number, number]) => { min: number; max: number; mid: number };
 }): Annotation[] {
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
     const useCustomColorScaleBoundaries = getSetting(Setting.COLOR_SCALE)?.areBoundariesUserDefined ?? false;

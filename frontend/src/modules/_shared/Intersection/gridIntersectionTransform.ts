@@ -1,5 +1,3 @@
-import { cloneDeep } from "lodash";
-
 import type { FenceMeshSection_api, PolylineIntersection_api } from "@api";
 import { point2Distance } from "@lib/utils/vec2";
 
@@ -82,7 +80,7 @@ export type AdjustedPolylineIntersection = Omit<PolylineIntersection_trans, "fen
  */
 export function createTransformedPolylineIntersectionResult(
     polylineIntersection: PolylineIntersection_trans,
-    actualSectionLengths: number[],
+    actualSectionLengths: readonly number[],
 ): AdjustedPolylineIntersection {
     // Section with a length of 0 are not included in the results - remove
     const adjustedActualSectionLengths = actualSectionLengths.filter((length) => length > 0);
@@ -93,8 +91,8 @@ export function createTransformedPolylineIntersectionResult(
 
     const adjustedFenceMeshSections: AdjustedFenceMeshSection[] = [];
     for (const [index, section] of polylineIntersection.fenceMeshSections.entries()) {
-        // Deep clone to avoid modifying the original data
-        const clonedVerticesUzFloat32Arr = cloneDeep(section.verticesUzFloat32Arr);
+        // Create new float array to avoid modifying the original data
+        const adjustedVerticesUzFloat32Arr = new Float32Array([...section.verticesUzFloat32Arr.values()]);
 
         const actualSectionLength = adjustedActualSectionLengths[index];
         const simplifiedSectionLength = point2Distance(
@@ -113,20 +111,21 @@ export function createTransformedPolylineIntersectionResult(
         // Find min and max z values (if no vertices, set to 0)
         let minZ = 0;
         let maxZ = 0;
-        if (clonedVerticesUzFloat32Arr.length !== 0) {
+        if (adjustedVerticesUzFloat32Arr.length !== 0) {
             minZ = Number.MAX_VALUE;
             maxZ = -Number.MAX_VALUE;
-            for (let i = 0; i < clonedVerticesUzFloat32Arr.length; i += 2) {
-                clonedVerticesUzFloat32Arr[i] *= scale;
-                clonedVerticesUzFloat32Arr[i + 1] *= -1;
-                minZ = Math.min(minZ, clonedVerticesUzFloat32Arr[i + 1]);
-                maxZ = Math.max(maxZ, clonedVerticesUzFloat32Arr[i + 1]);
+            // Scale vertices and invert z values
+            for (let i = 0; i < adjustedVerticesUzFloat32Arr.length; i += 2) {
+                adjustedVerticesUzFloat32Arr[i] *= scale;
+                adjustedVerticesUzFloat32Arr[i + 1] *= -1;
+                minZ = Math.min(minZ, adjustedVerticesUzFloat32Arr[i + 1]);
+                maxZ = Math.max(maxZ, adjustedVerticesUzFloat32Arr[i + 1]);
             }
         }
 
         adjustedFenceMeshSections.push({
             ...section,
-            verticesUzFloat32Arr: clonedVerticesUzFloat32Arr,
+            verticesUzFloat32Arr: adjustedVerticesUzFloat32Arr,
             sectionLength: actualSectionLength,
             minZ,
             maxZ,
