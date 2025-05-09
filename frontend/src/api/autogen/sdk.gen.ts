@@ -113,6 +113,15 @@ import type {
     GetTableDataData_api,
     GetTableDataResponse_api,
     GetTableDataError_api,
+    GetRelpermTableNamesData_api,
+    GetRelpermTableNamesResponse_api,
+    GetRelpermTableNamesError_api,
+    GetRelpermTableInfoData_api,
+    GetRelpermTableInfoResponse_api,
+    GetRelpermTableInfoError_api,
+    GetRelpermRealizationsCurveDataData_api,
+    GetRelpermRealizationsCurveDataResponse_api,
+    GetRelpermRealizationsCurveDataError_api,
     GetWellCompletionsDataData_api,
     GetWellCompletionsDataResponse_api,
     GetWellCompletionsDataError_api,
@@ -808,6 +817,46 @@ export const getTableData = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetTableDataResponse_api, GetTableDataError_api, ThrowOnError>({
         ...options,
         url: "/pvt/table_data/",
+    });
+};
+
+/**
+ * Get Relperm Table Names
+ */
+export const getRelpermTableNames = <ThrowOnError extends boolean = false>(
+    options: Options<GetRelpermTableNamesData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetRelpermTableNamesResponse_api, GetRelpermTableNamesError_api, ThrowOnError>({
+        ...options,
+        url: "/relperm/relperm_table_names",
+    });
+};
+
+/**
+ * Get Relperm Table Info
+ */
+export const getRelpermTableInfo = <ThrowOnError extends boolean = false>(
+    options: Options<GetRelpermTableInfoData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetRelpermTableInfoResponse_api, GetRelpermTableInfoError_api, ThrowOnError>({
+        ...options,
+        url: "/relperm/relperm_table_info",
+    });
+};
+
+/**
+ * Get Relperm Realizations Curve Data
+ */
+export const getRelpermRealizationsCurveData = <ThrowOnError extends boolean = false>(
+    options: Options<GetRelpermRealizationsCurveDataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<
+        GetRelpermRealizationsCurveDataResponse_api,
+        GetRelpermRealizationsCurveDataError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/relperm/relperm_realizations_curve_data",
     });
 };
 
