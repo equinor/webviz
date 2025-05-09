@@ -3,7 +3,6 @@ import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import type { Interfaces } from "./interfaces";
-
 import { preview } from "./preview";
 
 const description = "Plotting of simulated RFT results.";
