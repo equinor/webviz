@@ -58,7 +58,7 @@ export function SettingManagerComponent<
         return null;
     }
 
-    if (props.sharedSetting && isInitialized && availableValues === null) {
+    if (props.sharedSetting && isInitialized && availableValues === null && !props.setting.isStatic()) {
         return (
             <React.Fragment key={props.setting.getId()}>
                 <div className="p-0.5 px-2 w-32">{props.setting.getLabel()}</div>

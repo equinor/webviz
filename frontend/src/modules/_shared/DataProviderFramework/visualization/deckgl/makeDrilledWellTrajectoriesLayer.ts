@@ -4,11 +4,10 @@ import type { Feature, GeoJsonProperties, GeometryCollection, LineString, Point 
 import type { WellboreTrajectory_api } from "@api";
 import { AdvancedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdvancedWellsLayer";
 
-import type { DeepReadonly } from "../../framework/utils/immutabilityUtils";
 import type { TransformerArgs } from "../VisualizationAssembler";
 
 function wellTrajectoryToGeojson(
-    wellTrajectory: DeepReadonly<WellboreTrajectory_api>,
+    wellTrajectory: WellboreTrajectory_api,
 ): Feature<GeometryCollection, GeoJsonProperties> {
     const point: Point = {
         type: "Point",

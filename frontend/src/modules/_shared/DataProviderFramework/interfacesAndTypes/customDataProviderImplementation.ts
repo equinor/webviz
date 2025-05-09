@@ -4,7 +4,6 @@ import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
 import type { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
-import type { DeepReadonly } from "../framework/utils/immutabilityUtils";
 import type { MakeSettingTypesMap, Settings } from "../settings/settingsDefinitions";
 
 import type { CustomSettingsHandler } from "./customSettingsHandler";
@@ -26,7 +25,7 @@ export type DataProviderInformationAccessors<
      * Access the data that the provider is currently storing.
      * @returns The data that the provider is currently storing, or null if the provider has no data.
      */
-    getData: () => DeepReadonly<TData> | null;
+    getData: () => TData | null;
 
     /**
      * Access the settings of the provider.
@@ -50,7 +49,7 @@ export type DataProviderInformationAccessors<
      * const availableValues = getAvailableSettingValues("settingName");
      * ```
      */
-    getAvailableSettingValues: <K extends TSettingKey>(settingName: K) => DeepReadonly<AvailableValuesType<K>> | null;
+    getAvailableSettingValues: <K extends TSettingKey>(settingName: K) => AvailableValuesType<K> | null;
 
     /**
      * Access the global settings of the data provider manager.
@@ -63,7 +62,7 @@ export type DataProviderInformationAccessors<
      * const value = getGlobalSetting("settingName");
      * ```
      */
-    getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => DeepReadonly<GlobalSettings[T]>;
+    getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
 
     /**
      * Access the stored data of the provider.
@@ -76,7 +75,7 @@ export type DataProviderInformationAccessors<
      * const storedData = getStoredData("key");
      * ```
      */
-    getStoredData: <K extends keyof TStoredData>(key: K) => DeepReadonly<TStoredData[K]> | null;
+    getStoredData: <K extends keyof TStoredData>(key: K) => TStoredData[K] | null;
 
     /**
      * Access to the workbench session.
