@@ -320,11 +320,12 @@ export class SettingManager<
             return;
         }
         this._initialized = true;
+
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_INITIALIZED);
     }
 
-    isInitialized(): boolean {
-        if (this._externalController) {
+    isInitialized(itself: boolean = false): boolean {
+        if (this._externalController && !itself) {
             return this._externalController.getSetting().isInitialized();
         }
         return this._initialized || this._isStatic;
@@ -488,9 +489,9 @@ export class SettingManager<
 
     setAvailableValues(availableValues: AvailableValuesType<TSetting> | null): void {
         if (this._externalController) {
+            this._availableValues = availableValues;
             this.initialize();
             this._externalController.setAvailableValues(this.getId(), availableValues);
-            this._availableValues = availableValues;
             return;
         }
 
