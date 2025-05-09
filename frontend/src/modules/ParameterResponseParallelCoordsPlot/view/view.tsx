@@ -66,7 +66,7 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                     <ContentInfo>
                         <span>
                             Data channel required for use. Add a main module to the workbench and use the data channels
-                            icon <Input />
+                            icon <Input fontSize="small" />
                         </span>
                         <Tag label="Response" />
                     </ContentInfo>,
