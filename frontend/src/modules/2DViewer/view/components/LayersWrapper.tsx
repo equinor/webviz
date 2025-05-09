@@ -1,12 +1,11 @@
 import React from "react";
 
-import { View as DeckGlView, type Layer } from "@deck.gl/core";
-import type { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
+import type { Layer } from "@deck.gl/core";
+import type { BoundingBox2D } from "@webviz/subsurface-viewer";
 
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
-import { useElementSize } from "@lib/hooks/useElementSize";
 import * as bbox from "@lib/utils/bbox";
 import { makeColorScaleAnnotation } from "@modules/2DViewer/DataProviderFramework/annotations/makeColorScaleAnnotation";
 import { makePolygonDataBoundingBox } from "@modules/2DViewer/DataProviderFramework/boundingBoxes/makePolygonDataBoundingBox";
@@ -25,7 +24,6 @@ import { makeRealizationSurfaceLayer } from "@modules/2DViewer/DataProviderFrame
 import { makeStatisticalSurfaceLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeStatisticalSurfaceLayer";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
-import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
@@ -52,7 +50,6 @@ import type { ViewPortTypeExt, ViewsTypeExt } from "./SubsurfaceViewerWrapper";
 import { SubsurfaceViewerWrapper } from "./SubsurfaceViewerWrapper";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
-import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 
 export type LayersWrapperProps = {
     layerManager: DataProviderManager;
@@ -134,44 +131,30 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     const viewports: ViewPortTypeExt[] = [];
     const deckGlLayers: Layer<any>[] = [];
-    const globalColorScales: ColorScaleWithId[] = [...assemblerProduct.annotations];
+    const globalAnnotations: Annotation[] = [];
+    const globalColorScales = globalAnnotations.filter((el) => "colorScale" in el);
 
     const globalLayerIds: string[] = ["placeholder"];
 
     const views: ViewsTypeExt = {
-        layout: [1, 1],
+        layout: [0, 0],
         viewports: viewports,
         showLabel: false,
     };
-
-    let numLoadingLayers = 0;
 
     const numViews = assemblerProduct.children.filter(
         (item) => item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW,
     ).length;
 
-    let numCols = Math.ceil(Math.sqrt(numViews));
-    let numRows = Math.ceil(numViews / numCols);
+    if (numViews) {
+        const numCols = Math.ceil(Math.sqrt(numViews));
+        const numRows = Math.ceil(numViews / numCols);
+        views.layout = [numCols, numRows];
+    }
 
-    // viewerLayers.push(...viewsAndLayers.layers);
-    // colorScales.push(...viewsAndLayers.colorScales);
-
-    // const globalLayerIds = viewsAndLayers.layers.map((layer) => layer.layer.id);
-    // const globalColorScaleIds = viewsAndLayers.colorScales.map((c) => c.id);
-
-    // for (const view of viewsAndLayers.views) {
-    //     viewports.push({
-    //         id: view.id,
-    //         name: view.name,
-    //         color: view.color,
-    //         isSync: true,
-    //         layerIds: [...globalLayerIds, ...view.layers.map((layer) => layer.layer.id), "placeholder"],
-    //         colorScaleIds: [...globalColorScaleIds, ...view.colorScales.map((scale) => scale.id)],
-    //     });
-
-    //     viewerLayers.push(...view.layers);
-    //     colorScales.push(...view.colorScales);
-    // }
+    if (props.preferredViewLayout === PreferredViewLayout.HORIZONTAL) {
+        views.layout = [views.layout[1], views.layout[0]];
+    }
 
     for (const item of assemblerProduct.children) {
         if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
@@ -192,37 +175,12 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                 color: item.color,
                 isSync: true,
                 layerIds: [...globalLayerIds, ...layerIds],
-                colorScales: [...globalColorScales, ...viewColorScales],
+                colorScales: [...viewColorScales, ...globalColorScales],
             });
-
-            // viewportAnnotations.push(
-            //     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            //     /* @ts-expect-error */
-            //     <DeckGlView key={item.id} id={item.id}>
-            //         <ColorLegendsContainer
-            //             colorScales={[...item.annotations.filter((el) => "colorScale" in el), ...globalAnnotations]}
-            //             height={((mainDivSize.height / 3) * 2) / numCols - 20}
-            //             position="left"
-            //         />
-            //         <div className="font-bold text-lg flex gap-2 justify-center items-center">
-            //             <div className="flex gap-2 items-center bg-white/50 p-2 backdrop-blur-sm rounded-sm">
-            //                 <div
-            //                     className="rounded-full h-3 w-3 border border-white"
-            //                     style={{ backgroundColor: item.color ?? undefined }}
-            //                 />
-            //                 <div className="">{item.name}</div>
-            //             </div>
-            //         </div>
-            //     </DeckGlView>,
-            // );
         } else if (item.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
             deckGlLayers.push(item.visualization);
             globalLayerIds.push(item.visualization.id);
         }
-    }
-
-    if (props.preferredViewLayout === PreferredViewLayout.HORIZONTAL) {
-        [numCols, numRows] = [numRows, numCols];
     }
 
     if (assemblerProduct.combinedBoundingBox !== null) {
@@ -235,7 +193,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         }
     }
 
-    numLoadingLayers = assemblerProduct.numLoadingDataProviders;
+    const numLoadingLayers = assemblerProduct.numLoadingDataProviders;
     statusWriter.setLoading(assemblerProduct.numLoadingDataProviders > 0);
 
     for (const message of assemblerProduct.aggregatedErrorMessages) {
@@ -252,31 +210,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     return (
         <PendingWrapper className="w-full h-full flex flex-col" isPending={numLoadingLayers > 0}>
-            <SubsurfaceViewerWrapper
-                views={views}
-                layers={deckGlLayers}
-                bounds={bounds}
-                colorScales={globalColorScales}
-            />
+            <SubsurfaceViewerWrapper views={views} layers={deckGlLayers} bounds={bounds} />
         </PendingWrapper>
-        // <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
-        //     <PendingWrapper isPending={numLoadingLayers > 0}>
-        //         <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
-        //             <ReadoutWrapper
-        //                 views={{
-        //                     layout: [numCols, numRows],
-        //                     viewports: viewports.map((viewport) => ({
-        //                         ...viewport,
-        //                         layerIds: [...(viewport.layerIds ?? []), ...globalLayerIds],
-        //                     })),
-        //                     showLabel: false,
-        //                 }}
-        //                 viewportAnnotations={viewportAnnotations}
-        //                 layers={deckGlLayers}
-        //                 bounds={bounds}
-        //             />
-        //         </div>
-        //     </PendingWrapper>
-        // </div>
     );
 }

@@ -19,8 +19,6 @@ import { ViewPortLabel } from "./ViewPortLabel";
 export type SubsurfaceViewerWrapperProps = {
     views: ViewsTypeExt;
     layers: DeckGlLayer[];
-    colorScales: ColorScaleWithId[];
-
     bounds?: BoundingBox2D;
 };
 
