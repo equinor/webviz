@@ -1,10 +1,11 @@
 import logging
 from io import BytesIO
 from typing import List, Optional
-import asyncio
 import pandas as pd
 import xtgeo
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
+from fmu.sumo.explorer.objects import Polygons
+
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
@@ -37,8 +38,8 @@ class PolygonsAccess:
         )
 
         poly_meta_arr: list[PolygonsMeta] = []
-        async for polygons_object in polygons_context:
-            poly_meta_arr.append(_create_polygons_meta_from_object(polygons_object))
+        async for sumo_polygons_object in polygons_context:
+            poly_meta_arr.append(_create_polygons_meta_from_sumo_polygons_object(sumo_polygons_object))
 
         return poly_meta_arr
 
@@ -102,30 +103,30 @@ class PolygonsAccess:
         return addr_str
 
 
-def _create_polygons_meta_from_object(polygons_object: dict) -> PolygonsMeta:
-    content = polygons_object["data"].get("content", SumoContent.DEPTH)
+def _create_polygons_meta_from_sumo_polygons_object(sumo_polygons_object: Polygons) -> PolygonsMeta:
+    content = sumo_polygons_object["data"].get("content", SumoContent.DEPTH)
 
     # Remove this once Sumo enforces content (content-unset)
     # https://github.com/equinor/webviz/issues/433
 
     if content == "unset":
         LOGGER.warning(
-            f"Polygons {polygons_object['data']['name']} has unset content. Defaulting temporarily to depth until enforced by dataio."
+            f"Polygons {sumo_polygons_object['data']['name']} has unset content. Defaulting temporarily to depth until enforced by dataio."
         )
         content = SumoContent.DEPTH
 
     # Remove this once Sumo enforces tagname (tagname-unset)
     # https://github.com/equinor/webviz/issues/433
-    tagname = polygons_object["data"].get("tagname", "")
+    tagname = sumo_polygons_object["data"].get("tagname", "")
     if tagname == "":
         LOGGER.warning(
-            f"Surface {polygons_object['data']['name']} has empty tagname. Defaulting temporarily to Unknown until enforced by dataio."
+            f"Surface {sumo_polygons_object['data']['name']} has empty tagname. Defaulting temporarily to Unknown until enforced by dataio."
         )
         tagname = "Unknown"
     polygons_meta = PolygonsMeta(
-        name=polygons_object["data"]["name"],
+        name=sumo_polygons_object["data"]["name"],
         tagname=tagname,
         content=content,
-        is_stratigraphic=polygons_object["data"]["stratigraphic"],
+        is_stratigraphic=sumo_polygons_object["data"]["stratigraphic"],
     )
     return polygons_meta

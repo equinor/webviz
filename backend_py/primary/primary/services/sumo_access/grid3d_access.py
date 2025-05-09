@@ -1,9 +1,9 @@
 import logging
 from typing import List, Optional
-import asyncio
 
 from pydantic import BaseModel
 from fmu.sumo.explorer.explorer import SumoClient, SearchContext
+from fmu.sumo.explorer.objects import CPGrid
 
 
 from .sumo_client_factory import create_sumo_client
@@ -75,20 +75,20 @@ class Grid3dAccess:
         grid3d_context = self._ensemble_context.grids.filter(realization=realization)
 
         grid_meta_arr: list[Grid3dInfo] = []
-        async for grid3d_object in grid3d_context:
-            grid_meta_arr.append(await _create_grid_model_meta_from_object_async(grid3d_object))
+        async for sumo_grid_object in grid3d_context:
+            grid_meta_arr.append(await _create_grid_model_meta_from_object_async(sumo_grid_object))
 
         return grid_meta_arr
 
 
-async def _create_grid_model_meta_from_object_async(grid3d_el: dict) -> Grid3dInfo:
+async def _create_grid_model_meta_from_object_async(sumo_grid_object: CPGrid) -> Grid3dInfo:
     """
     Create metadata for a grid model. This is a helper function for Grid3dAccess.get_models_info_arr_async
     Note that in fmu-sumo the grid properties metadata are related to a grid geometry via data.geometry.relative_path.keyword
     Older metadata using e.g. name or tagname for the grid geometry relationship are not supported.
     """
 
-    grid_metadata = grid3d_el.metadata
+    grid_metadata = sumo_grid_object.metadata
 
     bbox = Grid3dBoundingBox(
         xmin=grid_metadata["data"]["bbox"]["xmin"],
@@ -113,7 +113,7 @@ async def _create_grid_model_meta_from_object_async(grid3d_el: dict) -> Grid3dIn
         subgrids=subgrids,
     )
 
-    grid_properties_context = grid3d_el.grid_properties
+    grid_properties_context = sumo_grid_object.grid_properties
     property_names = await grid_properties_context.names_async
 
     property_info_arr = []

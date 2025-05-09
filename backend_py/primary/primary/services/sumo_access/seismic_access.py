@@ -1,6 +1,5 @@
 import logging
 from typing import List
-import asyncio
 from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects.cube import Cube
@@ -35,8 +34,8 @@ class SeismicAccess:
         )
 
         cube_meta_arr: list[SeismicCubeMeta] = []
-        async for seismic_cube_object in seismic_context:
-            cube_meta_arr.append(_create_seismic_cube_meta_from_object(seismic_cube_object))
+        async for sumo_cube_object in seismic_context:
+            cube_meta_arr.append(_create_seismic_cube_meta_from_sumo_cube_object(sumo_cube_object))
 
         return cube_meta_arr
 
@@ -102,12 +101,12 @@ def clean_vds_url(vds_url: str) -> str:
     return vds_url.replace(":443", "")
 
 
-def _create_seismic_cube_meta_from_object(seismic_cube_object: dict) -> SeismicCubeMeta:
-    t_start = seismic_cube_object["data"].get("time", {}).get("t0", {}).get("value", None)
-    t_end = seismic_cube_object["data"].get("time", {}).get("t1", {}).get("value", None)
+def _create_seismic_cube_meta_from_sumo_cube_object(sumo_cube_object: Cube) -> SeismicCubeMeta:
+    t_start = sumo_cube_object["data"].get("time", {}).get("t0", {}).get("value", None)
+    t_end = sumo_cube_object["data"].get("time", {}).get("t1", {}).get("value", None)
 
     if not t_start and not t_end:
-        raise ValueError(f"Cube {seismic_cube_object['data']['tagname']} has no time information")
+        raise ValueError(f"Cube {sumo_cube_object['data']['tagname']} has no time information")
 
     if t_start and not t_end:
         iso_string_or_time_interval = t_start
@@ -116,26 +115,26 @@ def _create_seismic_cube_meta_from_object(seismic_cube_object: dict) -> SeismicC
         iso_string_or_time_interval = f"{t_start}/{t_end}"
 
     seismic_spec = SeismicCubeSpec(
-        num_cols=seismic_cube_object["data"]["spec"]["ncol"],
-        num_rows=seismic_cube_object["data"]["spec"]["nrow"],
-        num_layers=seismic_cube_object["data"]["spec"]["nlay"],
-        x_origin=seismic_cube_object["data"]["spec"]["xori"],
-        y_origin=seismic_cube_object["data"]["spec"]["yori"],
-        z_origin=seismic_cube_object["data"]["spec"]["zori"],
-        x_inc=seismic_cube_object["data"]["spec"]["xinc"],
-        y_inc=seismic_cube_object["data"]["spec"]["yinc"],
-        z_inc=seismic_cube_object["data"]["spec"]["zinc"],
-        y_flip=seismic_cube_object["data"]["spec"]["yflip"],
-        z_flip=seismic_cube_object["data"]["spec"]["zflip"],
-        rotation=seismic_cube_object["data"]["spec"]["rotation"],
+        num_cols=sumo_cube_object["data"]["spec"]["ncol"],
+        num_rows=sumo_cube_object["data"]["spec"]["nrow"],
+        num_layers=sumo_cube_object["data"]["spec"]["nlay"],
+        x_origin=sumo_cube_object["data"]["spec"]["xori"],
+        y_origin=sumo_cube_object["data"]["spec"]["yori"],
+        z_origin=sumo_cube_object["data"]["spec"]["zori"],
+        x_inc=sumo_cube_object["data"]["spec"]["xinc"],
+        y_inc=sumo_cube_object["data"]["spec"]["yinc"],
+        z_inc=sumo_cube_object["data"]["spec"]["zinc"],
+        y_flip=sumo_cube_object["data"]["spec"]["yflip"],
+        z_flip=sumo_cube_object["data"]["spec"]["zflip"],
+        rotation=sumo_cube_object["data"]["spec"]["rotation"],
     )
     seismic_meta = SeismicCubeMeta(
-        seismic_attribute=seismic_cube_object["data"].get("tagname"),
-        unit=seismic_cube_object["data"].get("unit"),
+        seismic_attribute=sumo_cube_object["data"].get("tagname"),
+        unit=sumo_cube_object["data"].get("unit"),
         iso_date_or_interval=iso_string_or_time_interval,
-        is_observation=seismic_cube_object["data"]["is_observation"],
-        is_depth=seismic_cube_object["data"].get("vertical_domain", "depth") == "depth",
-        bbox=seismic_cube_object["data"]["bbox"],
+        is_observation=sumo_cube_object["data"]["is_observation"],
+        is_depth=sumo_cube_object["data"].get("vertical_domain", "depth") == "depth",
+        bbox=sumo_cube_object["data"]["bbox"],
         spec=seismic_spec,
     )
     return seismic_meta
