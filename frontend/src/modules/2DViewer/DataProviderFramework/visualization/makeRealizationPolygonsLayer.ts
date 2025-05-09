@@ -2,17 +2,12 @@ import { GeoJsonLayer } from "@deck.gl/layers";
 import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
 
 import type { PolygonData_api } from "@api";
-import type { DeepReadonly } from "@modules/_shared/DataProviderFramework/framework/utils/immutabilityUtils";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import type {
     RealizationPolygonsData,
     RealizationPolygonsSettings,
-<<<<<<<< HEAD:frontend/src/modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationPolygonsLayer.ts
-} from "../../layers/implementations/RealizationPolygonsLayer";
-========
 } from "../customDataProviderImplementations/RealizationPolygonsProvider";
->>>>>>>> origin/dpf-improve-dep-tree:frontend/src/modules/2DViewer/DataProviderFramework/visualization/makeRealizationPolygonsLayer.ts
 
 function zipCoords(xArr: readonly number[], yArr: readonly number[], zArr: readonly number[]): number[][] {
     const coords: number[][] = [];
@@ -23,7 +18,7 @@ function zipCoords(xArr: readonly number[], yArr: readonly number[], zArr: reado
     return coords;
 }
 
-function polygonsToGeojson(polygons: DeepReadonly<PolygonData_api>): Feature<Geometry, GeoJsonProperties> {
+function polygonsToGeojson(polygons: PolygonData_api): Feature<Geometry, GeoJsonProperties> {
     const data: Feature<Geometry, GeoJsonProperties> = {
         type: "Feature",
         geometry: {

@@ -12,11 +12,7 @@ import {
     type RealizationSurfaceData,
     type RealizationSurfaceSettings,
     SurfaceDataFormat,
-<<<<<<<< HEAD:frontend/src/modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationSurfaceLayer.ts
-} from "../../layers/implementations/RealizationSurfaceLayer";
-========
 } from "../customDataProviderImplementations/RealizationSurfaceProvider";
->>>>>>>> origin/dpf-improve-dep-tree:frontend/src/modules/2DViewer/DataProviderFramework/visualization/makeRealizationSurfaceLayer.ts
 
 function calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [number, number, number, number] {
     const width = (surfDef.npoints_x - 1) * surfDef.inc_x;

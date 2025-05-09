@@ -1,10 +1,6 @@
-<<<<<<<< HEAD:frontend/src/modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationSurfaceLayer.ts
-import type { SurfaceAttributeType_api, SurfaceDataPng_api } from "@api";
-========
 import { isEqual } from "lodash";
 
 import type { SurfaceDataPng_api } from "@api";
->>>>>>>> origin/dpf-improve-dep-tree:frontend/src/modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationSurfaceProvider.ts
 import { SurfaceTimeType_api, getRealizationSurfacesMetadataOptions, getSurfaceDataOptions } from "@api";
 import type {
     CustomDataProviderImplementation,
@@ -19,7 +15,6 @@ import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
-
 
 const realizationSurfaceSettings = [
     Setting.ENSEMBLE,
@@ -47,10 +42,8 @@ export class RealizationSurfaceProvider
     settings = realizationSurfaceSettings;
 
     private _dataFormat: SurfaceDataFormat;
-    private _attributeTypesFilter: SurfaceAttributeType_api[] = [];
 
-    constructor(attributeTypesFilter?: SurfaceAttributeType_api[], dataFormat?: SurfaceDataFormat) {
-        this._attributeTypesFilter = attributeTypesFilter ?? [];
+    constructor(dataFormat?: SurfaceDataFormat) {
         this._dataFormat = dataFormat ?? SurfaceDataFormat.PNG;
     }
 
@@ -152,17 +145,7 @@ export class RealizationSurfaceProvider
             }
 
             const availableAttributes = [
-                ...Array.from(
-                    new Set(
-                        data.surfaces
-                            .filter(
-                                (el) =>
-                                    this._attributeTypesFilter.includes(el.attribute_type) ||
-                                    this._attributeTypesFilter.length === 0,
-                            )
-                            .map((surface) => surface.attribute_name),
-                    ),
-                ),
+                ...Array.from(new Set(data.surfaces.map((surface) => surface.attribute_name))),
             ];
 
             return availableAttributes;
@@ -263,9 +246,7 @@ export class RealizationSurfaceProvider
         registerQueryKey(surfaceDataOptions.queryKey);
 
         const promise = queryClient
-            .fetchQuery(
-                surfaceDataOptions,
-            )
+            .fetchQuery(surfaceDataOptions)
             .then((data) => ({ format: this._dataFormat, surfaceData: transformSurfaceData(data) }));
 
         return promise as Promise<RealizationSurfaceData>;

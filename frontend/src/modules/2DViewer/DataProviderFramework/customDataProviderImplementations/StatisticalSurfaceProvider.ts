@@ -1,10 +1,6 @@
-<<<<<<<< HEAD:frontend/src/modules/_shared/DataProviderFramework/dataProviders/implementations/StatisticalSurfaceLayer.ts
-import type { SurfaceAttributeType_api, SurfaceDataPng_api } from "@api";
-========
 import { isEqual } from "lodash";
 
 import type { SurfaceDataPng_api } from "@api";
->>>>>>>> origin/dpf-improve-dep-tree:frontend/src/modules/2DViewer/DataProviderFramework/customDataProviderImplementations/StatisticalSurfaceProvider.ts
 import {
     SurfaceStatisticFunction_api,
     SurfaceTimeType_api,
@@ -53,10 +49,8 @@ export class StatisticalSurfaceProvider
     settings = statisicalSurfaceSettings;
 
     private _dataFormat: SurfaceDataFormat;
-    private _attributeTypesFilter: SurfaceAttributeType_api[] = [];
 
-    constructor(attributeTypesFilter?: SurfaceAttributeType_api[], dataFormat?: SurfaceDataFormat) {
-        this._attributeTypesFilter = attributeTypesFilter ?? [];
+    constructor(dataFormat?: SurfaceDataFormat) {
         this._dataFormat = dataFormat ?? SurfaceDataFormat.PNG;
     }
 
@@ -153,17 +147,7 @@ export class StatisticalSurfaceProvider
             }
 
             const availableAttributes = [
-                ...Array.from(
-                    new Set(
-                        data.surfaces
-                            .filter(
-                                (el) =>
-                                    this._attributeTypesFilter.includes(el.attribute_type) ||
-                                    this._attributeTypesFilter.length === 0,
-                            )
-                            .map((surface) => surface.attribute_name),
-                    ),
-                ),
+                ...Array.from(new Set(data.surfaces.map((surface) => surface.attribute_name))),
             ];
 
             return availableAttributes;

@@ -1,21 +1,3 @@
-<<<<<<<< HEAD:frontend/src/modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationGridLayer.ts
-import { ColorPalette } from "@lib/utils/ColorPalette";
-import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
-import { makeColorMapFunctionFromColorScale } from "@modules/_shared/LayerFramework/visualization/utils/colors";
-import { PreviewLayer } from "@modules/_shared/customDeckGlLayers/PreviewLayer/PreviewLayer";
-import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
-
-import { makeRealizationGridBoundingBox } from "./boundingBoxes/makeRealizationGridBoundingBox";
-
-import type { RealizationGridData, RealizationGridSettings } from "../../layers/implementations/RealizationGridLayer";
-
-export function makeRealizationGridLayer(
-    args: FactoryFunctionArgs<RealizationGridSettings, RealizationGridData>,
-): Grid3DLayer | PreviewLayer | null {
-    const { id, getData, getSetting, isLoading } = args;
-========
 import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
@@ -32,26 +14,11 @@ export function makeRealizationGridLayer({
     getData,
     getSetting,
 }: TransformerArgs<RealizationGridSettings, RealizationGridData>): Grid3DLayer | null {
->>>>>>>> origin/dpf-improve-dep-tree:frontend/src/modules/2DViewer/DataProviderFramework/visualization/makeRealizationGridLayer.ts
     const data = getData();
-    let colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
-    const boundingBox = makeRealizationGridBoundingBox(args);
+    const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
 
-    if (!data || !boundingBox || !colorScale) {
+    if (!data) {
         return null;
-    }
-
-    if (isLoading) {
-        colorScale = new ColorScale({
-            colorPalette: new ColorPalette({
-                name: "ResInsight",
-                colors: ["#EEEEEE", "#EFEFEF"],
-                id: "black-white",
-            }),
-            gradientType: ColorScaleGradientType.Sequential,
-            type: ColorScaleType.Continuous,
-            steps: 100,
-        });
     }
 
     const { gridSurfaceData, gridParameterData } = data;

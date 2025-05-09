@@ -12,11 +12,7 @@ import {
     type StatisticalSurfaceData,
     type StatisticalSurfaceSettings,
     SurfaceDataFormat,
-<<<<<<<< HEAD:frontend/src/modules/_shared/DataProviderFramework/visualization/deckgl/makeStatisticalSurfaceLayer.ts
-} from "../../layers/implementations/StatisticalSurfaceLayer";
-========
 } from "../customDataProviderImplementations/StatisticalSurfaceProvider";
->>>>>>>> origin/dpf-improve-dep-tree:frontend/src/modules/2DViewer/DataProviderFramework/visualization/makeStatisticalSurfaceLayer.ts
 
 function calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [number, number, number, number] {
     const width = (surfDef.npoints_x - 1) * surfDef.inc_x;

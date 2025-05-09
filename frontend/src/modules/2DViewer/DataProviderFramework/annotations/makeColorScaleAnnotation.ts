@@ -9,12 +9,8 @@ export function makeColorScaleAnnotation({
     getSetting,
     id,
     name,
-<<<<<<<< HEAD:frontend/src/modules/_shared/DataProviderFramework/visualization/deckgl/annotations/makeColorScaleAnnotation.ts
     getValueRange,
-}: FactoryFunctionArgs<[Setting.COLOR_SCALE], any>): Annotation[] {
-========
 }: TransformerArgs<[Setting.COLOR_SCALE], any>): Annotation[] {
->>>>>>>> origin/dpf-improve-dep-tree:frontend/src/modules/2DViewer/DataProviderFramework/annotations/makeColorScaleAnnotation.ts
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
 
     if (!colorScale) {
