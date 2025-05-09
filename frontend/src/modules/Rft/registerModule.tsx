@@ -4,6 +4,8 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import type { Interfaces } from "./interfaces";
 
+import { preview } from "./preview";
+
 const description = "Plotting of simulated RFT results.";
 
 ModuleRegistry.registerModule<Interfaces>({
@@ -13,4 +15,5 @@ ModuleRegistry.registerModule<Interfaces>({
     devState: ModuleDevState.DEV,
     dataTagIds: [ModuleDataTagId.RFT],
     description,
+    preview,
 });
