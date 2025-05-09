@@ -9,7 +9,6 @@ import {
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
@@ -60,11 +59,9 @@ export class DrilledWellborePicksProvider
 
         registerQueryKey(queryOptions.queryKey);
 
-        const promise = queryClient
-            .fetchQuery(queryOptions)
-            .then((response: WellborePick_api[]) => {
-                return response.filter((trajectory) => selectedWellboreUuids.includes(trajectory.wellboreUuid));
-            });
+        const promise = queryClient.fetchQuery(queryOptions).then((response: WellborePick_api[]) => {
+            return response.filter((trajectory) => selectedWellboreUuids.includes(trajectory.wellboreUuid));
+        });
 
         return promise;
     }

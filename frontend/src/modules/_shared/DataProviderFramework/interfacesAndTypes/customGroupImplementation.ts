@@ -1,5 +1,7 @@
 import type { MakeSettingTypesMap, Settings } from "../settings/settingsDefinitions";
 
+import type { DefineBasicDependenciesArgs } from "./customSettingsHandler";
+
 /**
  * This interface is describing what methods and members a custom group must implement.
  * A custom group can contain settings but it does not have to.
@@ -29,9 +31,11 @@ export interface CustomGroupImplementationWithSettings<
      * A method that returns the default values of the settings.
      * @returns The default values of the settings.
      */
-    getDefaultSettingsValues(): TSettingTypes;
+    getDefaultSettingsValues?(): Partial<TSettingTypes>;
+
+    defineDependencies?(args: DefineBasicDependenciesArgs<TSettings, TSettingTypes>): void;
 }
 
 export function includesSettings(obj: any): obj is CustomGroupImplementationWithSettings {
-    return obj.settings !== undefined && obj.getDefaultSettingsValues !== undefined;
+    return obj.settings !== undefined;
 }

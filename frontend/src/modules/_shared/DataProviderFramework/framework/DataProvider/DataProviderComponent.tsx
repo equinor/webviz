@@ -8,11 +8,10 @@ import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { SortableListItem } from "@lib/components/SortableList";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { SettingManager } from "../SettingManager/SettingManager";
-import { SettingComponent } from "../SettingManager/SettingManagerComponent";
+import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
@@ -32,7 +31,9 @@ export function DataProviderComponent(props: DataProviderComponentProps): React.
         if (!manager) {
             return null;
         }
-        return <SettingComponent key={setting.getId()} setting={setting} manager={manager} sharedSetting={false} />;
+        return (
+            <SettingManagerComponent key={setting.getId()} setting={setting} manager={manager} sharedSetting={false} />
+        );
     }
 
     function makeSettings(settings: Record<string, SettingManager<any>>): React.ReactNode[] {
@@ -123,13 +124,22 @@ function EndActions(props: EndActionProps): React.ReactNode {
             }
         }
         if (status === DataProviderStatus.INVALID_SETTINGS) {
+            let errorMessage = "Invalid settings";
+            const invalidSettings = props.dataProvider.getSettingsContextDelegate().getInvalidSettings();
+
+            if (invalidSettings.length > 0) {
+                errorMessage += `: ${invalidSettings.join(", ")}`;
+            }
+            errorMessage += ".";
+
+            const customReportedErrors = props.dataProvider.getSettingsErrorMessages();
+            if (customReportedErrors.length > 0) {
+                errorMessage += `\n${customReportedErrors.join("\n")}`;
+            }
+            errorMessage += "\nPlease check the settings.";
+
             return (
-                <div
-                    title={`Invalid settings: ${props.dataProvider
-                        .getSettingsContextDelegate()
-                        .getInvalidSettings()
-                        .join(", ")}`}
-                >
+                <div title={errorMessage}>
                     <Block className="text-red-700 p-0.5" fontSize="small" />
                 </div>
             );

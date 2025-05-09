@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import type { ColorScale } from "@lib/utils/ColorScale";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
@@ -34,6 +34,7 @@ function makeMarkers(
     sectionBottom: number,
     left: number,
     barHeight: number,
+    maxNumLog10: number = 4,
 ): React.ReactNode[] {
     const sectionHeight = Math.abs(sectionBottom - sectionTop);
 
@@ -72,7 +73,7 @@ function makeMarkers(
                 fontSize="10"
                 style={TEXT_STYLE}
             >
-                {formatLegendValue(value)}
+                {formatLegendValue(value, maxNumLog10)}
             </text>,
         );
 
@@ -81,7 +82,13 @@ function makeMarkers(
     return markers;
 }
 
-function makeDiscreteMarkers(colorScale: ColorScale, left: number, top: number, barHeight: number): React.ReactNode[] {
+function makeDiscreteMarkers(
+    colorScale: ColorScale,
+    left: number,
+    top: number,
+    barHeight: number,
+    maxNumLog10: number = 4,
+): React.ReactNode[] {
     const minMarkerHeight = STYLE_CONSTANTS.fontSize + 2 * STYLE_CONSTANTS.textGap;
 
     const numSteps = colorScale.getNumSteps();
@@ -123,7 +130,7 @@ function makeDiscreteMarkers(colorScale: ColorScale, left: number, top: number, 
                 fontSize="10"
                 style={TEXT_STYLE}
             >
-                {formatLegendValue(value)}
+                {formatLegendValue(value, maxNumLog10)}
             </text>,
         );
 
@@ -140,9 +147,11 @@ type ColorLegendProps = {
     left: number;
     totalHeight: number;
     barWidth: number;
+    maxNumLog10?: number;
 };
 
 function ColorLegend(props: ColorLegendProps): React.ReactNode {
+    const clipPathId = React.useId();
     const barHeight = props.totalHeight - STYLE_CONSTANTS.offset;
 
     const barStartPosition = props.left + STYLE_CONSTANTS.nameLabelWidth + STYLE_CONSTANTS.textGap;
@@ -170,7 +179,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
             fontSize="10"
             style={TEXT_STYLE}
         >
-            {formatLegendValue(props.colorScale.getMax())}
+            {formatLegendValue(props.colorScale.getMax(), props.maxNumLog10)}
         </text>,
     );
 
@@ -274,13 +283,13 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
             fontSize="10"
             style={TEXT_STYLE}
         >
-            {formatLegendValue(props.colorScale.getMin())}
+            {formatLegendValue(props.colorScale.getMin(), props.maxNumLog10)}
         </text>,
     );
 
     return (
         <g key={`color-scale-${makeGradientId(props.id)}`}>
-            <clipPath id={`clip-${props.id}`}>
+            <clipPath id={`clip-${clipPathId}`}>
                 <rect
                     x={props.left - props.totalHeight / 2}
                     y={props.top + STYLE_CONSTANTS.offset + props.totalHeight / 2}
@@ -309,7 +318,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
                 alignmentBaseline="baseline"
                 transform={`rotate(270, ${props.left}, ${props.top + STYLE_CONSTANTS.offset + props.totalHeight / 2})`}
                 style={TEXT_STYLE}
-                clipPath={`url(#clip-${props.id})`}
+                clipPath={`url(#clip-${clipPathId})`}
             >
                 {props.colorScale.getName()}
             </text>
@@ -327,6 +336,7 @@ export type ColorLegendsContainerProps = {
     colorScales: ColorScaleWithId[];
     height: number;
     position?: "left" | "right";
+    maxNumLog10?: number;
 };
 
 export function ColorLegendsContainer(props: ColorLegendsContainerProps): React.ReactNode {
@@ -369,6 +379,7 @@ export function ColorLegendsContainer(props: ColorLegendsContainerProps): React.
                         left={left}
                         totalHeight={height}
                         barWidth={width}
+                        maxNumLog10={props.maxNumLog10}
                     />,
                 );
             }
@@ -443,9 +454,9 @@ function countDecimalPlaces(value: number): number {
     return decimalIndex >= 0 ? value.toString().length - decimalIndex - 1 : 0;
 }
 
-function formatLegendValue(value: number): string {
+function formatLegendValue(value: number, maxNumLog10: number = 4): string {
     const numDecimalPlaces = countDecimalPlaces(value);
-    if (Math.log10(Math.abs(value)) > 2) {
+    if (Math.log10(Math.abs(value)) > maxNumLog10) {
         return value.toExponential(numDecimalPlaces > 2 ? 2 : numDecimalPlaces);
     }
     return value.toFixed(numDecimalPlaces > 2 ? 2 : numDecimalPlaces);

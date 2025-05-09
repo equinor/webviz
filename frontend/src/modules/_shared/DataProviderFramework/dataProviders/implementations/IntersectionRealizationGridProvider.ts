@@ -32,8 +32,10 @@ const intersectionRealizationGridSettings = [
     Setting.GRID_NAME,
     Setting.TIME_OR_INTERVAL,
     Setting.SHOW_GRID_LINES,
+    Setting.COLOR_SCALE,
+    Setting.SHOW_GRID_LINES,
 ] as const;
-type IntersectionRealizationGridSettings = typeof intersectionRealizationGridSettings;
+export type IntersectionRealizationGridSettings = typeof intersectionRealizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<IntersectionRealizationGridSettings>;
 
 export type IntersectionRealizationGridData = PolylineIntersection_trans;
