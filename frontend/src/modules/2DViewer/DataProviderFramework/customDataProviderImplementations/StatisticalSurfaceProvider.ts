@@ -64,7 +64,10 @@ export class StatisticalSurfaceProvider
         return "Statistical Surface";
     }
 
-    doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
+    doSettingsChangesRequireDataRefetch(
+        prevSettings: SettingsWithTypes | null,
+        newSettings: SettingsWithTypes,
+    ): boolean {
         return !isEqual(prevSettings, newSettings);
     }
 

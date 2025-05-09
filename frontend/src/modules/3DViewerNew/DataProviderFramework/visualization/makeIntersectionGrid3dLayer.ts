@@ -1,7 +1,7 @@
-import type { IntersectionRealizationGridSettings } from "@modules/_shared/LayerFramework/layers/implementations/IntersectionRealizationGridLayer";
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
-import { makeColorMapFunctionFromColorScale } from "@modules/_shared/LayerFramework/visualization/utils/colors";
+import type { IntersectionRealizationGridSettings } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
+import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { FenceMeshSection_trans, PolylineIntersection_trans } from "@modules/_shared/utils/wellbore";
 import { TGrid3DColoringMode } from "@webviz/subsurface-viewer";
 import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
@@ -79,7 +79,7 @@ export function makeIntersectionLayer({
     name,
     getData,
     getSetting,
-}: FactoryFunctionArgs<IntersectionRealizationGridSettings, PolylineIntersection_trans>): Grid3DLayer | null {
+}: TransformerArgs<IntersectionRealizationGridSettings, PolylineIntersection_trans>): Grid3DLayer | null {
     const data = getData();
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
     const showGridLines = getSetting(Setting.SHOW_GRID_LINES);
@@ -105,7 +105,7 @@ export function makeIntersectionLayer({
             data.max_grid_prop_value,
         ),
         ZIncreasingDownwards: false,
-        gridLines: showGridLines,
+        gridLines: showGridLines ?? false,
         material: { ambient: 0.4, diffuse: 0.7, shininess: 8, specularColor: [25, 25, 25] },
         pickable: true,
     });

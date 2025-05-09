@@ -249,9 +249,6 @@ export class SettingsContextDelegate<
             if (topic === SettingsContextDelegateTopic.SETTINGS_AND_STORED_DATA_CHANGED) {
                 return;
             }
-            if (topic === SettingsContextDelegateTopic.STORED_DATA_CHANGED) {
-                return;
-            }
             if (topic === SettingsContextDelegateTopic.STATUS) {
                 return this._status;
             }

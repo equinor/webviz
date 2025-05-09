@@ -4,12 +4,12 @@ import {
     transformSeismicSlice,
 } from "@modules/3DViewerNew/settings/queries/queryDataTransforms";
 import type {
-    CustomDataLayerImplementation,
-    DataLayerInformationAccessors,
+    CustomDataProviderImplementation,
+    DataProviderInformationAccessors,
     FetchDataParams,
-} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import { type MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+} from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
+import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import { Setting, type MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { isEqual } from "lodash";
 
@@ -30,9 +30,9 @@ export type RealizationSeismicDepthSliceStoredData = {
     seismicCubeMeta: SeismicCubeMeta_api[];
 };
 
-export class RealizationSeismicDepthSliceLayer
+export class RealizationSeismicDepthSliceProvider
     implements
-        CustomDataLayerImplementation<
+        CustomDataProviderImplementation<
             RealizationSeismicDepthSliceSettings,
             RealizationSeismicDepthSliceData,
             RealizationSeismicDepthSliceStoredData
@@ -49,7 +49,7 @@ export class RealizationSeismicDepthSliceLayer
     }
 
     makeValueRange(
-        accessors: DataLayerInformationAccessors<
+        accessors: DataProviderInformationAccessors<
             RealizationSeismicDepthSliceSettings,
             RealizationSeismicDepthSliceData,
             RealizationSeismicDepthSliceStoredData

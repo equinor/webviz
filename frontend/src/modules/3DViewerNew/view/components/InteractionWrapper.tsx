@@ -10,22 +10,24 @@ import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { converter } from "culori";
 
 import { ContextMenu } from "./ContextMenu";
-import { ReadooutWrapperProps, ReadoutWrapper } from "./ReadoutWrapper";
+import { ReadoutWrapperProps, ReadoutWrapper } from "./ReadoutWrapper";
 import { Toolbar } from "./Toolbar";
 
 import { DeckGlInstanceManager, DeckGlInstanceManagerTopic } from "../utils/DeckGlInstanceManager";
 import { Polyline, PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";
 
 export type InteractionWrapperProps = Omit<
-    ReadooutWrapperProps,
+    ReadoutWrapperProps,
     "deckGlManager" | "triggerHome" | "verticalScale" | "deckGlRef"
->;
+> & {
+    fieldIdentifier: string | null;
+};
 
 export function InteractionWrapper(props: InteractionWrapperProps): React.ReactNode {
     const deckGlRef = React.useRef<DeckGLRef>(null);
     deckGlRef.current?.deck?.needsRedraw;
     const [deckGlManager, setDeckGlManager] = React.useState<DeckGlInstanceManager>(
-        new DeckGlInstanceManager(deckGlRef.current)
+        new DeckGlInstanceManager(deckGlRef.current),
     );
     const [polylinesPlugin, setPolylinesPlugin] = React.useState<PolylinesPlugin>(new PolylinesPlugin(deckGlManager));
 
@@ -49,7 +51,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 i++;
             }
         },
-        [colorSet]
+        [colorSet],
     );
 
     React.useEffect(
@@ -65,8 +67,10 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             const unsubscribeFromPolylinesPlugin = polylinesPlugin
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(PolylinesPluginTopic.EDITING_POLYLINE_ID)(() => {
-                if (polylinesPlugin.getCurrentEditingPolylineId() === null) {
-                    intersectionPolylines.setPolylines(polylinesPlugin.getPolylines());
+                if (polylinesPlugin.getCurrentEditingPolylineId() === null && props.fieldIdentifier !== null) {
+                    intersectionPolylines.setPolylines(
+                        polylinesPlugin.getPolylines().map((p) => ({ ...p, fieldId: props.fieldIdentifier! })),
+                    );
                 }
             });
 
@@ -74,7 +78,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 IntersectionPolylinesEvent.CHANGE,
                 () => {
                     polylinesPlugin.setPolylines(intersectionPolylines.getPolylines());
-                }
+                },
             );
 
             return function cleanupDeckGlManager() {
@@ -83,7 +87,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 unsubscribeFromIntersectionPolylines();
             };
         },
-        [intersectionPolylines, colorGenerator]
+        [intersectionPolylines, colorGenerator],
     );
 
     const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
@@ -121,10 +125,10 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                     }
 
                     return polyline;
-                })
+                }),
             );
         },
-        [activePolylineId]
+        [activePolylineId],
     );
 
     let adjustedLayers: DeckGlLayer[] = [...props.layers];

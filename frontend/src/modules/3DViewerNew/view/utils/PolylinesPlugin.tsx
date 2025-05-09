@@ -97,11 +97,11 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         return this._polylines;
     }
 
-    setPolylines(polylines: Polyline[]): void {
+    setPolylines(polylines: readonly Polyline[]): void {
         if (isEqual(this._polylines, polylines)) {
             return;
         }
-        this._polylines = polylines;
+        this._polylines = [...polylines];
         this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);
         this.requireRedraw();
     }
@@ -470,7 +470,9 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 id: "polylines-layer",
                 polylines: this._polylines.filter((polyline) => polyline.id !== this._currentEditingPolylineId),
                 selectedPolylineId:
-                    this._editingMode === PolylineEditingMode.NONE ? undefined : this._selectedPolylineId ?? undefined,
+                    this._editingMode === PolylineEditingMode.NONE
+                        ? undefined
+                        : (this._selectedPolylineId ?? undefined),
                 hoverable: this._editingMode === PolylineEditingMode.IDLE,
             }),
         ];
@@ -492,12 +494,12 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                     mouseHoverPoint: this._hoverPoint ?? undefined,
                     referencePathPointIndex:
                         this._editingMode === PolylineEditingMode.DRAW
-                            ? this._currentEditingPolylinePathReferencePointIndex ?? undefined
+                            ? (this._currentEditingPolylinePathReferencePointIndex ?? undefined)
                             : undefined,
                     onDragStart: this.handleDragStart.bind(this),
                     onDragEnd: this.handleDragEnd.bind(this),
                     allowHoveringOf,
-                })
+                }),
             );
         }
 

@@ -1,47 +1,47 @@
-import { type SeismicCubeMeta_api, getInlineSliceOptions, getSeismicCubeMetaListOptions } from "@api";
+import { type SeismicCubeMeta_api, getCrosslineSliceOptions, getSeismicCubeMetaListOptions } from "@api";
 import {
     type SeismicSliceData_trans,
     transformSeismicSlice,
 } from "@modules/3DViewerNew/settings/queries/queryDataTransforms";
 import type {
-    CustomDataLayerImplementation,
-    DataLayerInformationAccessors,
+    CustomDataProviderImplementation,
+    DataProviderInformationAccessors,
     FetchDataParams,
-} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import { type MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+} from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
+import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import { Setting, type MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { isEqual } from "lodash";
 
-const realizationSeismicInlineSettings = [
+const realizationSeismicCrosslineSettings = [
     Setting.ENSEMBLE,
     Setting.REALIZATION,
     Setting.ATTRIBUTE,
     Setting.TIME_OR_INTERVAL,
-    Setting.SEISMIC_INLINE,
+    Setting.SEISMIC_CROSSLINE,
     Setting.COLOR_SCALE,
 ] as const;
-export type RealizationSeismicInlineSettings = typeof realizationSeismicInlineSettings;
-type SettingsWithTypes = MakeSettingTypesMap<RealizationSeismicInlineSettings>;
+export type RealizationSeismicCrosslineSettings = typeof realizationSeismicCrosslineSettings;
+type SettingsWithTypes = MakeSettingTypesMap<RealizationSeismicCrosslineSettings>;
 
-export type RealizationSeismicInlineData = SeismicSliceData_trans;
+export type RealizationSeismicCrosslineData = SeismicSliceData_trans;
 
-export type RealizationSeismicInlineStoredData = {
+export type RealizationSeismicCrosslineStoredData = {
     seismicCubeMeta: SeismicCubeMeta_api[];
 };
 
-export class RealizationSeismicInlineLayer
+export class RealizationSeismicCrosslineProvider
     implements
-        CustomDataLayerImplementation<
-            RealizationSeismicInlineSettings,
-            RealizationSeismicInlineData,
-            RealizationSeismicInlineStoredData
+        CustomDataProviderImplementation<
+            RealizationSeismicCrosslineSettings,
+            RealizationSeismicCrosslineData,
+            RealizationSeismicCrosslineStoredData
         >
 {
-    settings = realizationSeismicInlineSettings;
+    settings = realizationSeismicCrosslineSettings;
 
     getDefaultName(): string {
-        return "Seismic Inline (realization)";
+        return "Seismic Crossline (realization)";
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
@@ -49,10 +49,10 @@ export class RealizationSeismicInlineLayer
     }
 
     makeValueRange(
-        accessors: DataLayerInformationAccessors<
-            RealizationSeismicInlineSettings,
-            RealizationSeismicInlineData,
-            RealizationSeismicInlineStoredData
+        accessors: DataProviderInformationAccessors<
+            RealizationSeismicCrosslineSettings,
+            RealizationSeismicCrosslineData,
+            RealizationSeismicCrosslineStoredData
         >,
     ): [number, number] | null {
         const data = accessors.getData();
@@ -67,16 +67,16 @@ export class RealizationSeismicInlineLayer
         registerQueryKey,
         queryClient,
     }: FetchDataParams<
-        RealizationSeismicInlineSettings,
-        RealizationSeismicInlineData
-    >): Promise<RealizationSeismicInlineData> {
+        RealizationSeismicCrosslineSettings,
+        RealizationSeismicCrosslineData
+    >): Promise<RealizationSeismicCrosslineData> {
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         const realizationNum = getSetting(Setting.REALIZATION);
         const attribute = getSetting(Setting.ATTRIBUTE);
         const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
-        const inlineNumber = getSetting(Setting.SEISMIC_INLINE);
+        const crosslineNumber = getSetting(Setting.SEISMIC_CROSSLINE);
 
-        const queryOptions = getInlineSliceOptions({
+        const queryOptions = getCrosslineSliceOptions({
             query: {
                 case_uuid: ensembleIdent?.getCaseUuid() ?? "",
                 ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
@@ -84,7 +84,7 @@ export class RealizationSeismicInlineLayer
                 seismic_attribute: attribute ?? "",
                 time_or_interval_str: timeOrInterval ?? "",
                 observed: false,
-                inline_no: inlineNumber ?? 0,
+                crossline_no: crosslineNumber ?? 0,
             },
         });
 
@@ -102,7 +102,7 @@ export class RealizationSeismicInlineLayer
         availableSettingsUpdater,
         storedDataUpdater,
         queryClient,
-    }: DefineDependenciesArgs<RealizationSeismicInlineSettings, RealizationSeismicInlineStoredData>): void {
+    }: DefineDependenciesArgs<RealizationSeismicCrosslineSettings, RealizationSeismicCrosslineStoredData>): void {
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -192,7 +192,7 @@ export class RealizationSeismicInlineLayer
             return availableTimeOrIntervals;
         });
 
-        availableSettingsUpdater(Setting.SEISMIC_INLINE, ({ getLocalSetting, getHelperDependency }) => {
+        availableSettingsUpdater(Setting.SEISMIC_CROSSLINE, ({ getLocalSetting, getHelperDependency }) => {
             const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
             const timeOrInterval = getLocalSetting(Setting.TIME_OR_INTERVAL);
             const data = getHelperDependency(realizationSeismicCrosslineDataDep);
@@ -205,10 +205,10 @@ export class RealizationSeismicInlineLayer
                     seismicInfos.seismicAttribute === seismicAttribute &&
                     seismicInfos.isoDateOrInterval === timeOrInterval,
             )[0];
-            const iMin = 0;
-            const iMax = seismicInfo.spec.numCols - 1;
+            const jMin = 0;
+            const jMax = seismicInfo.spec.numRows - 1;
 
-            return [iMin, iMax, 1];
+            return [jMin, jMax, 1];
         });
     }
 }

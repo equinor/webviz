@@ -118,8 +118,6 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     },
 );
 
-VISUALIZATION_FACTORY.registerViewFunction(GroupType.VIEW, View, () => ({}));
-
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<bbox.BBox | null>(null);
 

@@ -11,7 +11,7 @@ import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 
 import { DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
 
-export type ReadooutWrapperProps = {
+export type ReadoutWrapperProps = {
     views: ViewsType;
     viewportAnnotations: React.ReactNode[];
     layers: DeckGlLayer[];
@@ -24,7 +24,7 @@ export type ReadooutWrapperProps = {
     deckGlRef: React.RefObject<DeckGLRef | null>;
 };
 
-export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
+export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const id = React.useId();
     const deckGlRef = React.useRef<DeckGLRef>(null);
 

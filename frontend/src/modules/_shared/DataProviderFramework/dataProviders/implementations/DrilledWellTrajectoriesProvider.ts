@@ -5,7 +5,6 @@ import { getDrilledWellboreHeadersOptions, getWellTrajectoriesOptions } from "@a
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-
 import type {
     CustomDataProviderImplementation,
     FetchDataParams,
@@ -106,7 +105,6 @@ export class DrilledWellTrajectoriesProvider
                 }),
             });
         });
-
         availableSettingsUpdater(Setting.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
 
@@ -114,10 +112,7 @@ export class DrilledWellTrajectoriesProvider
                 return [];
             }
 
-            return wellboreHeaders.map((header) => ({
-                wellboreUuid: header.wellboreUuid,
-                uniqueWellboreIdentifier: header.uniqueWellboreIdentifier,
-            }));
+            return wellboreHeaders;
         });
     }
 }

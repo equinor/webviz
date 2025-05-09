@@ -4,25 +4,24 @@ import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
-import { layerManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
+import { providerManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 import { LayerManagerComponentWrapper } from "./components/layerManagerComponentWrapper";
-
 import {
-    DataLayerManager,
-    LayerManagerTopic,
-} from "../../_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
+    DataProviderManager,
+    DataProviderManagerTopic,
+} from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const queryClient = useQueryClient();
 
-    const [layerManager, setLayerManager] = useAtom(layerManagerAtom);
+    const [layerManager, setLayerManager] = useAtom(providerManagerAtom);
 
     const fieldIdentifier = useAtomValue(selectedFieldIdentifierAtom);
     const setFieldIdentifier = useSetAtom(userSelectedFieldIdentifierAtom);
@@ -48,7 +47,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     );
 
     const applyPersistedState = React.useCallback(
-        function applyPersistedState(layerManager: DataLayerManager) {
+        function applyPersistedState(layerManager: DataProviderManager) {
             const serializedState = window.localStorage.getItem(
                 `${props.settingsContext.getInstanceIdString()}-settings`,
             );
@@ -76,7 +75,11 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
 
     React.useEffect(
         function onMountEffect() {
-            const newLayerManager = new DataLayerManager(props.workbenchSession, props.workbenchSettings, queryClient);
+            const newLayerManager = new DataProviderManager(
+                props.workbenchSession,
+                props.workbenchSettings,
+                queryClient,
+            );
             setLayerManager(newLayerManager);
 
             applyPersistedState(newLayerManager);
@@ -98,7 +101,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
 
             const unsubscribeDataRev = layerManager
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(LayerManagerTopic.LAYER_DATA_REVISION)(persistState);
+                .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION)(persistState);
 
             const unsubscribeExpands = layerManager
                 .getGroupDelegate()

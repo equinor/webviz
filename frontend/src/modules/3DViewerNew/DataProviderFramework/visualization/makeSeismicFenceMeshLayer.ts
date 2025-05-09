@@ -4,12 +4,12 @@ import { Geometry, ShapeType, degreesToRadians } from "@lib/utils/geometry";
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import * as vec3 from "@lib/utils/vec3";
 import { SeismicSliceData_trans } from "@modules/3DViewerNew/settings/queries/queryDataTransforms";
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import type { FactoryFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
-import { makeColorMapFunctionFromColorScale } from "@modules/_shared/LayerFramework/visualization/utils/colors";
 import { SeismicFenceMeshLayer } from "@modules/_shared/customDeckGlLayers/SeismicFenceMeshLayer/SeismicFenceMeshLayer";
 
-import type { RealizationSeismicDepthSliceStoredData } from "../customLayerImplementations/RealizationSeismicDepthLayer";
+import type { RealizationSeismicDepthSliceStoredData } from "../customDataProviderImplementations/RealizationSeismicDepthProvider";
+import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 
 export enum Plane {
     CROSSLINE = "CROSSLINE",
@@ -20,7 +20,7 @@ export enum Plane {
 function predictDepthSliceGeometry({
     getSetting,
     getStoredData,
-}: FactoryFunctionArgs<any, SeismicSliceData_trans, RealizationSeismicDepthSliceStoredData>): Geometry | null {
+}: TransformerArgs<any, SeismicSliceData_trans, RealizationSeismicDepthSliceStoredData>): Geometry | null {
     const attribute = getSetting(Setting.ATTRIBUTE);
     const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
     const seismicDepthSliceNumber = getSetting(Setting.SEISMIC_DEPTH_SLICE);
@@ -86,7 +86,7 @@ function predictDepthSliceGeometry({
 function predictCrosslineGeometry({
     getSetting,
     getStoredData,
-}: FactoryFunctionArgs<any, SeismicSliceData_trans, RealizationSeismicDepthSliceStoredData>): Geometry | null {
+}: TransformerArgs<any, SeismicSliceData_trans, RealizationSeismicDepthSliceStoredData>): Geometry | null {
     const attribute = getSetting(Setting.ATTRIBUTE);
     const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
     const seismicCrosslineNumber = getSetting(Setting.SEISMIC_CROSSLINE);
@@ -154,7 +154,7 @@ function predictCrosslineGeometry({
 function predictInlineGeometry({
     getSetting,
     getStoredData,
-}: FactoryFunctionArgs<any, SeismicSliceData_trans, RealizationSeismicDepthSliceStoredData>): Geometry | null {
+}: TransformerArgs<any, SeismicSliceData_trans, RealizationSeismicDepthSliceStoredData>): Geometry | null {
     const attribute = getSetting(Setting.ATTRIBUTE);
     const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
     const seismicInlineNumber = getSetting(Setting.SEISMIC_INLINE);
@@ -221,7 +221,7 @@ function predictInlineGeometry({
 
 export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
     return function makeSeismicFenceMeshLayer(
-        args: FactoryFunctionArgs<any, SeismicSliceData_trans, RealizationSeismicDepthSliceStoredData>,
+        args: TransformerArgs<any, SeismicSliceData_trans, RealizationSeismicDepthSliceStoredData>,
     ): Layer<any> | null {
         const { id, name, getData, getSetting, isLoading } = args;
         const data = getData();

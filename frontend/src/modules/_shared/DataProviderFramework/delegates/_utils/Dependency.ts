@@ -268,10 +268,6 @@ export class Dependency<
             return;
         }
 
-        if (newValue === CancelUpdate) {
-            return;
-        }
-
         this.applyNewValue(newValue);
     }
 
