@@ -60,7 +60,6 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
                     <Checkbox checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} />
                 </Label>
             </CollapsibleGroup>
-            ,
         </div>
     );
 }
