@@ -561,6 +561,7 @@ class CustomPixiRenderApplication extends PixiRenderApplication {
             texture: true,
             baseTexture: true,
         });
+
         this.stage = undefined;
 
         const renderType = this.renderer?.type;
