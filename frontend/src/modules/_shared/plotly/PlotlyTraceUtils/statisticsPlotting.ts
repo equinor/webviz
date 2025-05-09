@@ -1,6 +1,6 @@
 import type { ScatterLine } from "plotly.js";
 
-import type { TimeSeriesPlotData } from "../timeSeriesPlotData";
+import type { PlotData } from "plotly.js";
 
 /**
     Definition of line trace data for statistics plot
@@ -144,14 +144,14 @@ export function createStatisticsTraces({
     hoverTemplate = undefined,
     legendRank = undefined,
     type = "scatter",
-}: CreateStatisticsTracesOptions): Partial<TimeSeriesPlotData>[] {
+}: CreateStatisticsTracesOptions): Partial<PlotData>[] {
     // NOTE:
     // - hovermode? not exposed?
 
     validateStatisticsData(data);
 
-    function getDefaultTrace(statisticsName: string, values: number[]): Partial<TimeSeriesPlotData> {
-        const trace: Partial<TimeSeriesPlotData> = {
+    function getDefaultTrace(statisticsName: string, values: number[]): Partial<PlotData> {
+        const trace: Partial<PlotData> = {
             name: name ?? legendGroup,
             x: data.samples,
             y: values,
@@ -178,7 +178,7 @@ export function createStatisticsTraces({
         return trace;
     }
 
-    const traces: Partial<TimeSeriesPlotData>[] = [];
+    const traces: Partial<PlotData>[] = [];
 
     // Minimum
     if (data.minimum !== undefined) {
