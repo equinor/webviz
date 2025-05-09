@@ -32,6 +32,7 @@ export enum DataProviderTopic {
     STATUS = "STATUS",
     DATA = "DATA",
     SUBORDINATED = "SUBORDINATED",
+    REVISION_NUMBER = "REVISION_NUMBER",
 }
 
 export enum DataProviderStatus {
@@ -46,6 +47,7 @@ export type DataProviderPayloads<TData> = {
     [DataProviderTopic.STATUS]: DataProviderStatus;
     [DataProviderTopic.DATA]: TData;
     [DataProviderTopic.SUBORDINATED]: boolean;
+    [DataProviderTopic.REVISION_NUMBER]: number;
 };
 
 export function isDataProvider(obj: any): obj is DataProvider<any, any> {
@@ -123,6 +125,7 @@ export class DataProvider<
     private _prevStoredData: NullableStoredData<TStoredData> | null = null;
     private _currentTransactionId: number = 0;
     private _settingsErrorMessages: string[] = [];
+    private _revisionNumber: number = 0;
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
         const {
@@ -220,6 +223,12 @@ export class DataProvider<
         }
 
         if (!refetchRequired) {
+            // If the settings have changed but no refetch is required, it might be that the settings changes
+            // still require a rerender of the data provider.
+            if (this._status === DataProviderStatus.SUCCESS) {
+                this.incrementRevisionNumber();
+                return;
+            }
             this.setStatus(DataProviderStatus.SUCCESS);
             return;
         }
@@ -305,6 +314,9 @@ export class DataProvider<
             }
             if (topic === DataProviderTopic.SUBORDINATED) {
                 return this._isSubordinated;
+            }
+            if (topic === DataProviderTopic.REVISION_NUMBER) {
+                return this._revisionNumber;
             }
         };
 
@@ -431,13 +443,19 @@ export class DataProvider<
         this._unsubscribeHandler.unsubscribeAll();
     }
 
+    private incrementRevisionNumber(): void {
+        this._revisionNumber += 1;
+        this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.REVISION_NUMBER);
+        this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
+    }
+
     private setStatus(status: DataProviderStatus): void {
         if (this._status === status) {
             return;
         }
 
         this._status = status;
-        this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
+        this.incrementRevisionNumber();
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.STATUS);
     }
 

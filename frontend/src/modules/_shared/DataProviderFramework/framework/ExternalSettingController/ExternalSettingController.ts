@@ -112,6 +112,11 @@ export class ExternalSettingController<
         const category = this._setting.getCategory();
         const reducerDefinition = settingCategoryAvailableValuesIntersectionReducerMap[category];
 
+        if (this._setting.isStatic()) {
+            this._setting.maybeResetPersistedValue();
+            return;
+        }
+
         if (!reducerDefinition) {
             return;
         }
