@@ -44,9 +44,9 @@ ALLOWED_RAW_VOLUMETRIC_COLUMNS = [
 POSSIBLE_IDENTIFIER_COLUMNS = ["ZONE", "REGION", "FACIES", "LICENSE"]
 
 
-def _tmp_remove_license_totals(pa_table: pa.Table) -> pa.Table:
+def _tmp_remove_license_column_if_all_values_are_total(pa_table: pa.Table) -> pa.Table:
     """
-    Remove the LICENSE column if all values in all rows are "Totals"
+    Remove the LICENSE column if values in all rows are "Totals"
     This is a temporary fix. ISSUE: #969
     """
     if "LICENSE" in pa_table.column_names:
@@ -131,7 +131,7 @@ class InplaceVolumetricsAccess:
         pa_table = await table_loader.get_aggregated_multiple_columns_async(requested_columns)
         perf_metrics.record_lap("load-table")
 
-        pa_table = _tmp_remove_license_totals(pa_table)
+        pa_table = _tmp_remove_license_column_if_all_values_are_total(pa_table)
 
         LOGGER.debug(
             f"get_inplace_volumetrics_aggregated_table_async took: {perf_metrics.to_string()}, {table_name=}, {column_names=}"
@@ -161,7 +161,7 @@ class InplaceVolumetricsAccess:
 
         pa_table = await table_loader.get_single_realization_async(realizations[0])
 
-        pa_table = _tmp_remove_license_totals(pa_table)
+        pa_table = _tmp_remove_license_column_if_all_values_are_total(pa_table)
 
         column_names = pa_table.column_names
         column_names_and_values = {}
