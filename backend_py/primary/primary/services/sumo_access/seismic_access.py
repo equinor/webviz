@@ -34,10 +34,9 @@ class SeismicAccess:
             realization=realizations[0],
         )
 
-        length_cubes = await seismic_context.length_async()
-        async with asyncio.TaskGroup() as tg:
-            tasks = [tg.create_task(_get_seismic_cube_meta_async(seismic_context, i)) for i in range(length_cubes)]
-        cube_meta_arr: list[SeismicCubeMeta] = [task.result() for task in tasks]
+        cube_meta_arr: list[SeismicCubeMeta] = []
+        async for seismic_cube_object in seismic_context:
+            cube_meta_arr.append(_create_seismic_cube_meta_from_object(seismic_cube_object))
 
         return cube_meta_arr
 
@@ -103,13 +102,12 @@ def clean_vds_url(vds_url: str) -> str:
     return vds_url.replace(":443", "")
 
 
-async def _get_seismic_cube_meta_async(search_context: SearchContext, item_no: int) -> SeismicCubeMeta:
-    seismic_cube = await search_context.getitem_async(item_no)
-    t_start = seismic_cube["data"].get("time", {}).get("t0", {}).get("value", None)
-    t_end = seismic_cube["data"].get("time", {}).get("t1", {}).get("value", None)
+def _create_seismic_cube_meta_from_object(seismic_cube_object: dict) -> SeismicCubeMeta:
+    t_start = seismic_cube_object["data"].get("time", {}).get("t0", {}).get("value", None)
+    t_end = seismic_cube_object["data"].get("time", {}).get("t1", {}).get("value", None)
 
     if not t_start and not t_end:
-        raise ValueError(f"Cube {seismic_cube['data']['tagname']} has no time information")
+        raise ValueError(f"Cube {seismic_cube_object['data']['tagname']} has no time information")
 
     if t_start and not t_end:
         iso_string_or_time_interval = t_start
@@ -118,26 +116,26 @@ async def _get_seismic_cube_meta_async(search_context: SearchContext, item_no: i
         iso_string_or_time_interval = f"{t_start}/{t_end}"
 
     seismic_spec = SeismicCubeSpec(
-        num_cols=seismic_cube["data"]["spec"]["ncol"],
-        num_rows=seismic_cube["data"]["spec"]["nrow"],
-        num_layers=seismic_cube["data"]["spec"]["nlay"],
-        x_origin=seismic_cube["data"]["spec"]["xori"],
-        y_origin=seismic_cube["data"]["spec"]["yori"],
-        z_origin=seismic_cube["data"]["spec"]["zori"],
-        x_inc=seismic_cube["data"]["spec"]["xinc"],
-        y_inc=seismic_cube["data"]["spec"]["yinc"],
-        z_inc=seismic_cube["data"]["spec"]["zinc"],
-        y_flip=seismic_cube["data"]["spec"]["yflip"],
-        z_flip=seismic_cube["data"]["spec"]["zflip"],
-        rotation=seismic_cube["data"]["spec"]["rotation"],
+        num_cols=seismic_cube_object["data"]["spec"]["ncol"],
+        num_rows=seismic_cube_object["data"]["spec"]["nrow"],
+        num_layers=seismic_cube_object["data"]["spec"]["nlay"],
+        x_origin=seismic_cube_object["data"]["spec"]["xori"],
+        y_origin=seismic_cube_object["data"]["spec"]["yori"],
+        z_origin=seismic_cube_object["data"]["spec"]["zori"],
+        x_inc=seismic_cube_object["data"]["spec"]["xinc"],
+        y_inc=seismic_cube_object["data"]["spec"]["yinc"],
+        z_inc=seismic_cube_object["data"]["spec"]["zinc"],
+        y_flip=seismic_cube_object["data"]["spec"]["yflip"],
+        z_flip=seismic_cube_object["data"]["spec"]["zflip"],
+        rotation=seismic_cube_object["data"]["spec"]["rotation"],
     )
     seismic_meta = SeismicCubeMeta(
-        seismic_attribute=seismic_cube["data"].get("tagname"),
-        unit=seismic_cube["data"].get("unit"),
+        seismic_attribute=seismic_cube_object["data"].get("tagname"),
+        unit=seismic_cube_object["data"].get("unit"),
         iso_date_or_interval=iso_string_or_time_interval,
-        is_observation=seismic_cube["data"]["is_observation"],
-        is_depth=seismic_cube["data"].get("vertical_domain", "depth") == "depth",
-        bbox=seismic_cube["data"]["bbox"],
+        is_observation=seismic_cube_object["data"]["is_observation"],
+        is_depth=seismic_cube_object["data"].get("vertical_domain", "depth") == "depth",
+        bbox=seismic_cube_object["data"]["bbox"],
         spec=seismic_spec,
     )
     return seismic_meta

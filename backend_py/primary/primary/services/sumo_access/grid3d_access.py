@@ -74,23 +74,20 @@ class Grid3dAccess:
 
         grid3d_context = self._ensemble_context.grids.filter(realization=realization)
 
-        length_grids = await grid3d_context.length_async()
-
-        async with asyncio.TaskGroup() as tg:
-            tasks = [tg.create_task(_get_grid_model_meta_async(grid3d_context, i)) for i in range(length_grids)]
-        grid_meta_arr: list[Grid3dInfo] = [task.result() for task in tasks]
+        grid_meta_arr: list[Grid3dInfo] = []
+        async for grid3d_object in grid3d_context:
+            grid_meta_arr.append(await _create_grid_model_meta_from_object_async(grid3d_object))
 
         return grid_meta_arr
 
 
-async def _get_grid_model_meta_async(search_context: SearchContext, item_no: int) -> Grid3dInfo:
+async def _create_grid_model_meta_from_object_async(grid3d_el: dict) -> Grid3dInfo:
     """
-    Retrieve metadata for a grid model. This is a helper function for Grid3dAccess.get_models_info_arr_async
+    Create metadata for a grid model. This is a helper function for Grid3dAccess.get_models_info_arr_async
     Note that in fmu-sumo the grid properties metadata are related to a grid geometry via data.geometry.relative_path.keyword
     Older metadata using e.g. name or tagname for the grid geometry relationship are not supported.
     """
 
-    grid3d_el = await search_context.getitem_async(item_no)
     grid_metadata = grid3d_el.metadata
 
     bbox = Grid3dBoundingBox(
