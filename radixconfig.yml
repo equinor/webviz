@@ -205,24 +205,24 @@ spec:
       payload:
         path: /compute/args
       environmentConfig:
-        # - environment: prod
-        #   secretRefs:
-        #     azureKeyVaults:
-        #       - name: webviz
-        #         items:
-        #           - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD
-        #             envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
-        #   variables:
-        #     OTEL_RESOURCE_ATTRIBUTES: service.name=user-grid3d-ri, service.namespace=prod
-        # - environment: review
-        #   secretRefs:
-        #     azureKeyVaults:
-        #       - name: webviz
-        #         items:
-        #           - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
-        #             envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
-        #   variables:
-        #     OTEL_RESOURCE_ATTRIBUTES: service.name=user-grid3d-ri, service.namespace=review
+        - environment: prod
+          secretRefs:
+            azureKeyVaults:
+              - name: webviz
+                items:
+                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD
+                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
+          variables:
+            OTEL_RESOURCE_ATTRIBUTES: service.name=user-grid3d-ri, service.namespace=prod
+        - environment: review
+          secretRefs:
+            azureKeyVaults:
+              - name: webviz
+                items:
+                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
+                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
+          variables:
+            OTEL_RESOURCE_ATTRIBUTES: service.name=user-grid3d-ri, service.namespace=review
         - environment: dev
           secretRefs:
             azureKeyVaults:
