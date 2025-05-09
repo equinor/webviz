@@ -75,7 +75,8 @@ class Grid3dAccess:
         grid3d_context = self._ensemble_context.grids.filter(realization=realization)
 
         grid_meta_arr: list[Grid3dInfo] = []
-        async for sumo_grid_object in grid3d_context:
+        async for sumo_object in grid3d_context:
+            sumo_grid_object: CPGrid = sumo_object
             grid_meta_arr.append(await _create_grid_model_meta_from_object_async(sumo_grid_object))
 
         return grid_meta_arr
