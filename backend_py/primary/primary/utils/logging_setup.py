@@ -15,8 +15,8 @@ def ensure_console_log_handler_is_configured() -> None:
         console_handler = logging.StreamHandler()
         root_logger.addHandler(console_handler)
 
-    # Set our default format string
-    formatter = logging.Formatter("%(asctime)s %(levelname)-3s [%(name)s]: %(message)s", datefmt="%H:%M:%S")
+    # Set our default format string (the -7s part below aligns the level name to the left and pads it with spaces)
+    formatter = logging.Formatter("%(asctime)s %(levelname)-7s [%(name)s]: %(message)s", datefmt="%H:%M:%S")
     console_handler.setFormatter(formatter)
 
 
