@@ -1,6 +1,7 @@
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
+import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { channelDefs } from "./channelDefs";
 import type { Interfaces } from "./interfaces";
@@ -16,6 +17,7 @@ ModuleRegistry.registerModule<Interfaces>({
     category: ModuleCategory.MAIN,
     devState: ModuleDevState.PROD,
     dataTagIds: [ModuleDataTagId.SUMMARY, ModuleDataTagId.OBSERVATIONS],
+    syncableSettingKeys: [SyncSettingKey.PARAMETER],
     preview,
     channelDefinitions: channelDefs,
     description,
