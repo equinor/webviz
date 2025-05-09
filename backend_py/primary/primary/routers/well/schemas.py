@@ -25,6 +25,17 @@ class WellboreTrajectory(BaseModel):
     northingArr: List[float]
 
 
+class StratigraphicColumn(BaseModel):
+    """
+    Stratigraphic column from SMDA
+    """
+
+    identifier: str
+    areaType: str
+    status: str
+    type: str | None
+
+
 class WellborePick(BaseModel):
     """
     Wellbore pick from SMDA

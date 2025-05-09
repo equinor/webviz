@@ -230,10 +230,12 @@ export class DataProvider<
         }
 
         this._cancellationPending = true;
-        this._prevSettings = clone(this._settingsContextDelegate.getValues()) as TSettingTypes;
-        this._prevStoredData = clone(this._settingsContextDelegate.getStoredDataRecord()) as TStoredData;
+
         this.maybeCancelQuery().then(() => {
-            this.maybeRefetchData();
+            this.maybeRefetchData().then(() => {
+                this._prevSettings = clone(this._settingsContextDelegate.getValues()) as TSettingTypes;
+                this._prevStoredData = clone(this._settingsContextDelegate.getStoredDataRecord()) as TStoredData;
+            });
         });
     }
 
@@ -391,7 +393,7 @@ export class DataProvider<
             if (apiError) {
                 this._error = apiError.makeStatusMessage();
             } else {
-                this._error = "An error occurred";
+                this._error = error.message;
             }
             this.setStatus(DataProviderStatus.ERROR);
         }

@@ -182,9 +182,11 @@ export function makeLayerDataItems(layer: Layer<any>): LayerDataItem[] {
     }
 
     if (isSeismicLayer(layer)) {
-        if (!layer.data) {
+        const seismicInfo = layer.getSeismicInfo();
+        if (!layer.data || !seismicInfo) {
             return [];
         }
+
         return [
             {
                 id: layer.id,
@@ -194,8 +196,8 @@ export function makeLayerDataItems(layer: Layer<any>): LayerDataItem[] {
                     id: layer.id,
                     shape: IntersectionItemShape.RECTANGLE,
                     data: [
-                        [layer.data.minFenceX, layer.data.minFenceDepth],
-                        [layer.data.maxFenceX, layer.data.maxFenceDepth],
+                        [seismicInfo.minX, layer.data.minFenceDepth],
+                        [seismicInfo.maxX, layer.data.maxFenceDepth],
                     ],
                 },
             },

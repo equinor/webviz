@@ -725,26 +725,6 @@ export type StratigraphicColumn_api = {
 };
 
 /**
- * Stratigraphic unit from SMDA
- *
- * Camel case attributes needed for esvIntersection component in front-end
- */
-export type StratigraphicUnit_api = {
-    identifier: string;
-    top: string;
-    base: string;
-    stratUnitLevel: number;
-    stratUnitType: string;
-    topAge: number | number;
-    baseAge: number | number;
-    stratUnitParent: string | null;
-    colorR: number;
-    colorG: number;
-    colorB: number;
-    lithologyType?: number | number | string;
-};
-
-/**
  * A single observation of a summary vector at a specific date.
  */
 export type SummaryVectorDateObservation_api = {
@@ -2218,68 +2198,6 @@ export type GetMisfitSurfaceDataResponses_api = {
 
 export type GetMisfitSurfaceDataResponse_api = GetMisfitSurfaceDataResponses_api[keyof GetMisfitSurfaceDataResponses_api];
 
-export type GetWellboreStratigraphicColumnsData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Wellbore uuid
-         */
-        wellbore_uuid: string;
-    };
-    url: "/surface/wellbore_stratigraphic_columns/";
-};
-
-export type GetWellboreStratigraphicColumnsErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type GetWellboreStratigraphicColumnsError_api =
-    GetWellboreStratigraphicColumnsErrors_api[keyof GetWellboreStratigraphicColumnsErrors_api];
-
-export type GetWellboreStratigraphicColumnsResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: Array<StratigraphicColumn_api>;
-};
-
-export type GetWellboreStratigraphicColumnsResponse_api =
-    GetWellboreStratigraphicColumnsResponses_api[keyof GetWellboreStratigraphicColumnsResponses_api];
-
-export type GetStratigraphicUnitsData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Sumo case uuid
-         */
-        case_uuid: string;
-    };
-    url: "/surface/stratigraphic_units";
-};
-
-export type GetStratigraphicUnitsErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type GetStratigraphicUnitsError_api = GetStratigraphicUnitsErrors_api[keyof GetStratigraphicUnitsErrors_api];
-
-export type GetStratigraphicUnitsResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: Array<StratigraphicUnit_api>;
-};
-
-export type GetStratigraphicUnitsResponse_api = GetStratigraphicUnitsResponses_api[keyof GetStratigraphicUnitsResponses_api];
-
 export type GetParameterNamesAndDescriptionData_api = {
     body?: never;
     path?: never;
@@ -2949,38 +2867,6 @@ export type GetWellborePicksForPickIdentifierResponses_api = {
 export type GetWellborePicksForPickIdentifierResponse_api =
     GetWellborePicksForPickIdentifierResponses_api[keyof GetWellborePicksForPickIdentifierResponses_api];
 
-export type GetWellborePicksForWellboreData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Wellbore uuid
-         */
-        wellbore_uuid: string;
-    };
-    url: "/well/wellbore_picks_for_wellbore/";
-};
-
-export type GetWellborePicksForWellboreErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type GetWellborePicksForWellboreError_api =
-    GetWellborePicksForWellboreErrors_api[keyof GetWellborePicksForWellboreErrors_api];
-
-export type GetWellborePicksForWellboreResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: Array<WellborePick_api>;
-};
-
-export type GetWellborePicksForWellboreResponse_api =
-    GetWellborePicksForWellboreResponses_api[keyof GetWellborePicksForWellboreResponses_api];
-
 export type GetWellborePicksInStratColumnData_api = {
     body?: never;
     path?: never;
@@ -2990,9 +2876,9 @@ export type GetWellborePicksInStratColumnData_api = {
          */
         wellbore_uuid: string;
         /**
-         * Optional - Filter by stratigraphic column
+         * Filter by stratigraphic column
          */
-        strat_column: string;
+        strat_column_identifier: string;
     };
     url: "/well/wellbore_picks_in_strat_column";
 };
@@ -3016,6 +2902,38 @@ export type GetWellborePicksInStratColumnResponses_api = {
 
 export type GetWellborePicksInStratColumnResponse_api =
     GetWellborePicksInStratColumnResponses_api[keyof GetWellborePicksInStratColumnResponses_api];
+
+export type GetWellboreStratigraphicColumnsData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Wellbore uuid
+         */
+        wellbore_uuid: string;
+    };
+    url: "/well/wellbore_stratigraphic_columns/";
+};
+
+export type GetWellboreStratigraphicColumnsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetWellboreStratigraphicColumnsError_api =
+    GetWellboreStratigraphicColumnsErrors_api[keyof GetWellboreStratigraphicColumnsErrors_api];
+
+export type GetWellboreStratigraphicColumnsResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<StratigraphicColumn_api>;
+};
+
+export type GetWellboreStratigraphicColumnsResponse_api =
+    GetWellboreStratigraphicColumnsResponses_api[keyof GetWellboreStratigraphicColumnsResponses_api];
 
 export type GetWellboreCompletionsData_api = {
     body?: never;

@@ -74,12 +74,6 @@ import type {
     GetMisfitSurfaceDataData_api,
     GetMisfitSurfaceDataResponse_api,
     GetMisfitSurfaceDataError_api,
-    GetWellboreStratigraphicColumnsData_api,
-    GetWellboreStratigraphicColumnsResponse_api,
-    GetWellboreStratigraphicColumnsError_api,
-    GetStratigraphicUnitsData_api,
-    GetStratigraphicUnitsResponse_api,
-    GetStratigraphicUnitsError_api,
     GetParameterNamesAndDescriptionData_api,
     GetParameterNamesAndDescriptionResponse_api,
     GetParameterNamesAndDescriptionError_api,
@@ -128,12 +122,12 @@ import type {
     GetWellborePicksForPickIdentifierData_api,
     GetWellborePicksForPickIdentifierResponse_api,
     GetWellborePicksForPickIdentifierError_api,
-    GetWellborePicksForWellboreData_api,
-    GetWellborePicksForWellboreResponse_api,
-    GetWellborePicksForWellboreError_api,
     GetWellborePicksInStratColumnData_api,
     GetWellborePicksInStratColumnResponse_api,
     GetWellborePicksInStratColumnError_api,
+    GetWellboreStratigraphicColumnsData_api,
+    GetWellboreStratigraphicColumnsResponse_api,
+    GetWellboreStratigraphicColumnsError_api,
     GetWellboreCompletionsData_api,
     GetWellboreCompletionsResponse_api,
     GetWellboreCompletionsError_api,
@@ -628,34 +622,6 @@ export const getMisfitSurfaceData = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get Wellbore Stratigraphic Columns
- */
-export const getWellboreStratigraphicColumns = <ThrowOnError extends boolean = false>(
-    options: Options<GetWellboreStratigraphicColumnsData_api, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<
-        GetWellboreStratigraphicColumnsResponse_api,
-        GetWellboreStratigraphicColumnsError_api,
-        ThrowOnError
-    >({
-        ...options,
-        url: "/surface/wellbore_stratigraphic_columns/",
-    });
-};
-
-/**
- * Get Stratigraphic Units
- */
-export const getStratigraphicUnits = <ThrowOnError extends boolean = false>(
-    options: Options<GetStratigraphicUnitsData_api, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<GetStratigraphicUnitsResponse_api, GetStratigraphicUnitsError_api, ThrowOnError>({
-        ...options,
-        url: "/surface/stratigraphic_units",
-    });
-};
-
-/**
  * Get Parameter Names And Description
  * Retrieve parameter names and description for an ensemble
  */
@@ -872,7 +838,10 @@ export const getWellborePickIdentifiers = <ThrowOnError extends boolean = false>
 
 /**
  * Get Wellbore Picks For Pick Identifier
- * Get wellbore picks for field and pick identifier
+ * Get picks for wellbores for field and pick identifier
+ *
+ * This implies picks for multiple wellbores for given field and pick identifier.
+ * E.g. picks for all wellbores in a given surface in a field.
  */
 export const getWellborePicksForPickIdentifier = <ThrowOnError extends boolean = false>(
     options: Options<GetWellborePicksForPickIdentifierData_api, ThrowOnError>,
@@ -888,24 +857,8 @@ export const getWellborePicksForPickIdentifier = <ThrowOnError extends boolean =
 };
 
 /**
- * Get Wellbore Picks For Wellbore
- * Get wellbore picks for field and pick identifier
- */
-export const getWellborePicksForWellbore = <ThrowOnError extends boolean = false>(
-    options: Options<GetWellborePicksForWellboreData_api, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<
-        GetWellborePicksForWellboreResponse_api,
-        GetWellborePicksForWellboreError_api,
-        ThrowOnError
-    >({
-        ...options,
-        url: "/well/wellbore_picks_for_wellbore/",
-    });
-};
-
-/**
  * Get Wellbore Picks In Strat Column
+ * Get wellbore picks for a single wellbore with stratigraphic column identifier
  */
 export const getWellborePicksInStratColumn = <ThrowOnError extends boolean = false>(
     options: Options<GetWellborePicksInStratColumnData_api, ThrowOnError>,
@@ -917,6 +870,22 @@ export const getWellborePicksInStratColumn = <ThrowOnError extends boolean = fal
     >({
         ...options,
         url: "/well/wellbore_picks_in_strat_column",
+    });
+};
+
+/**
+ * Get Wellbore Stratigraphic Columns
+ */
+export const getWellboreStratigraphicColumns = <ThrowOnError extends boolean = false>(
+    options: Options<GetWellboreStratigraphicColumnsData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<
+        GetWellboreStratigraphicColumnsResponse_api,
+        GetWellboreStratigraphicColumnsError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/well/wellbore_stratigraphic_columns/",
     });
 };
 
