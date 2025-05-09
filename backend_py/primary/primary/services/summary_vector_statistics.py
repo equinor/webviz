@@ -40,6 +40,15 @@ def compute_vector_statistics_table(
             StatisticFunction.P50,
         ]
 
+    def nanmin_func(x: List[float]) -> np.floating:
+        return np.nanmin(x)
+
+    def nanmax_func(x: List[float]) -> np.floating:
+        return np.nanmax(x)
+
+    def nanmean_func(x: List[float]) -> np.floating:
+        return np.nanmean(x)
+
     # Invert p10 and p90 due to oil industry convention.
     def p10_func(x: List[float]) -> np.floating:
         return np.nanpercentile(x, q=90)
@@ -53,11 +62,11 @@ def compute_vector_statistics_table(
     agg_dict = {}
     for stat_func in statistic_functions:
         if stat_func == StatisticFunction.MIN:
-            agg_dict["MIN"] = pd.NamedAgg(column=vector_name, aggfunc=np.nanmin)
+            agg_dict["MIN"] = pd.NamedAgg(column=vector_name, aggfunc=nanmin_func)
         elif stat_func == StatisticFunction.MAX:
-            agg_dict["MAX"] = pd.NamedAgg(column=vector_name, aggfunc=np.nanmax)
+            agg_dict["MAX"] = pd.NamedAgg(column=vector_name, aggfunc=nanmax_func)
         elif stat_func == StatisticFunction.MEAN:
-            agg_dict["MEAN"] = pd.NamedAgg(column=vector_name, aggfunc=np.nanmean)
+            agg_dict["MEAN"] = pd.NamedAgg(column=vector_name, aggfunc=nanmean_func)
         elif stat_func == StatisticFunction.P10:
             agg_dict["P10"] = pd.NamedAgg(column=vector_name, aggfunc=p10_func)
         elif stat_func == StatisticFunction.P90:
