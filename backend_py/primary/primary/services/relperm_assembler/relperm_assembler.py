@@ -379,7 +379,10 @@ class RelPermAssembler:
         satnum: int,
         realizations: Optional[Sequence[int]],
     ) -> List[RelPermRealizationData]:
-
+        """
+        Fetches realization data for specified curves, saturation axis, and SATNUM.
+        Returns a list of RelPermRealizationData, one per realization.
+        """
         realizations_table: pl.DataFrame = await self._relperm_access.get_relperm_table_async(
             relperm_table_name, realizations
         )
@@ -400,26 +403,25 @@ class RelPermAssembler:
                 )
 
         columns_to_use = [saturation_axis_name] + curve_names + ["REAL", "SATNUM"]
-        p
         filtered_table = (
-            realizations_table.select(columns_to_use)
-            .filter((realizations_table["SATNUM"].cast(pl.Int32) == satnum))
-            .drop_nulls()
-            .sort(saturation_axis_name)
+            realizations_table.select(columns_to_use).filter(pl.col("SATNUM").cast(pl.Int32) == satnum).drop_nulls()
         )
 
+        if filtered_table.is_empty():
+            raise NoDataError(
+                f"No data found for SATNUM {satnum} in the selected realizations and table {relperm_table_name} after filtering.",
+                Service.SUMO,
+            )
+
+        # Group by realization
         real_data: List[RelPermRealizationData] = []
-
-        for _real, real_table in filtered_table.group_by("REAL"):
-
-            curve_data_arr: List[CurveData] = []
-            for curve_name in curve_names:
-                curve_values = real_table[curve_name].to_numpy()
-                curve_data_arr.append(CurveData(curve_name=curve_name, curve_values=curve_values))
-
-            realization = real_table["REAL"][0]
+        for real_table in filtered_table.partition_by("REAL"):
+            curve_data_arr = [
+                CurveData(curve_name=curve_name, curve_values=real_table[curve_name].to_numpy())
+                for curve_name in curve_names
+            ]
+            realization = real_table["REAL"].unique()[0]
             saturation_values = real_table[saturation_axis_name].to_numpy()
-
             real_data.append(
                 RelPermRealizationData(
                     curve_data_arr=curve_data_arr,

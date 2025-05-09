@@ -49,11 +49,12 @@ export function createRelPermRealizationTrace({
         legendgroup: legendGroup,
         name,
         marker: {
-            color: `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${opacity})`,
+            color: `rgba(${rgbColor.r * 255}, ${rgbColor.g * 255}, ${rgbColor.b * 255}, ${opacity})`,
         },
 
         hovertext: hoverLabel,
     };
+    console.log(`rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${opacity})`);
     return trace;
 }
 

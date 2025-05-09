@@ -100,16 +100,19 @@ class RelPermAccess:
         table_names = await table_context.names_async
         if table_name not in table_names:
             raise NoDataError(f"Table '{table_name}' not found in iteration '{self._iteration_name}'", Service.SUMO)
-
+        table_context = table_context.filter(name=table_name)
         columns = await table_context.columns_async
+        meta_version = await table_context._get_field_values_async("version.keyword")
+        if meta_version[0] != "0.8.0":
+            # Sumo 0.8.0 and later versions
+            columns = [col for col in columns if col not in ["SATNUM"]]
+        print(columns, meta_version)
         arrow_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
         arrow_loader.require_content_type("relperm")
         if "REAL" in columns:
             columns.remove("REAL")
-        arrow_table = await arrow_loader.get_aggregated_multiple_columns_async(
-            [col for col in columns if col != "SATNUM"]
-        )
-        print(arrow_table)
+        arrow_table = await arrow_loader.get_aggregated_multiple_columns_async(columns)
+
         if realizations is not None:
             requested_reals_arr = pa.array(realizations)
             mask = pc.is_in(arrow_table["REAL"], value_set=requested_reals_arr)
