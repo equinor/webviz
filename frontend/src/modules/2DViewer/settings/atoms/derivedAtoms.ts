@@ -1,6 +1,7 @@
+import { atom } from "jotai";
+
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 
-import { atom } from "jotai";
 
 import { userSelectedFieldIdentifierAtom } from "./baseAtoms";
 

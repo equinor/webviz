@@ -1,42 +1,142 @@
 import React from "react";
 
+import { View as DeckGlView, type Layer } from "@deck.gl/core";
+import type { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
+
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
-import type { Rect2D } from "@lib/utils/geometry";
-import { outerRectContainsInnerRect } from "@lib/utils/geometry";
+import { useElementSize } from "@lib/hooks/useElementSize";
+import * as bbox from "@lib/utils/bbox";
+import { makeColorScaleAnnotation } from "@modules/2DViewer/DataProviderFramework/annotations/makeColorScaleAnnotation";
+import { makePolygonDataBoundingBox } from "@modules/2DViewer/DataProviderFramework/boundingBoxes/makePolygonDataBoundingBox";
+import { makeRealizationGridBoundingBox } from "@modules/2DViewer/DataProviderFramework/boundingBoxes/makeRealizationGridBoundingBox";
+import { makeSurfaceLayerBoundingBox } from "@modules/2DViewer/DataProviderFramework/boundingBoxes/makeSurfaceLayerBoundingBox";
+import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
+import { ObservedSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurfaceProvider";
+import { RealizationGridProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
+import { RealizationPolygonsProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationPolygonsProvider";
+import { RealizationSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationSurfaceProvider";
+import { StatisticalSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/StatisticalSurfaceProvider";
+import { makeObservedSurfaceLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeObservedSurfaceLayer";
+import { makeRealizationGridLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeRealizationGridLayer";
+import { makeRealizationPolygonsLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeRealizationPolygonsLayer";
+import { makeRealizationSurfaceLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeRealizationSurfaceLayer";
+import { makeStatisticalSurfaceLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeStatisticalSurfaceLayer";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
-import type { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import type { BoundingBox } from "@modules/_shared/LayerFramework/interfaces";
-import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
+import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
+import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
+import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
+import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
+import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
+import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
+import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
+import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
+import type {
+    Annotation,
+    VisualizationTarget,
+} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import {
+    VisualizationAssembler,
+    VisualizationItemType,
+} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import type { BoundingBox2D } from "@webviz/subsurface-viewer";
+
+import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
 import type { ViewPortTypeExt, ViewsTypeExt } from "./SubsurfaceViewerWrapper";
 import { SubsurfaceViewerWrapper } from "./SubsurfaceViewerWrapper";
 
-import { PlaceholderLayer } from "../customDeckGlLayers/PlaceholderLayer";
-import type { DeckGlLayerWithPosition } from "../utils/makeViewsAndLayers";
-import { recursivelyMakeViewsAndLayers } from "../utils/makeViewsAndLayers";
+import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
+import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 
 export type LayersWrapperProps = {
-    layerManager: LayerManager;
+    layerManager: DataProviderManager;
     preferredViewLayout: PreferredViewLayout;
     viewContext: ViewContext<Interfaces>;
 };
 
+const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
+
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    CustomDataProviderType.OBSERVED_SURFACE,
+    ObservedSurfaceProvider,
+    {
+        transformToVisualization: makeObservedSurfaceLayer,
+        transformToBoundingBox: makeSurfaceLayerBoundingBox,
+        transformToAnnotations: makeColorScaleAnnotation,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    CustomDataProviderType.REALIZATION_SURFACE,
+    RealizationSurfaceProvider,
+    {
+        transformToVisualization: makeRealizationSurfaceLayer,
+        transformToBoundingBox: makeSurfaceLayerBoundingBox,
+        transformToAnnotations: makeColorScaleAnnotation,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    CustomDataProviderType.STATISTICAL_SURFACE,
+    StatisticalSurfaceProvider,
+    {
+        transformToVisualization: makeStatisticalSurfaceLayer,
+        transformToBoundingBox: makeSurfaceLayerBoundingBox,
+        transformToAnnotations: makeColorScaleAnnotation,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    CustomDataProviderType.REALIZATION_POLYGONS,
+    RealizationPolygonsProvider,
+    {
+        transformToVisualization: makeRealizationPolygonsLayer,
+        transformToBoundingBox: makePolygonDataBoundingBox,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    CustomDataProviderType.REALIZATION_GRID,
+    RealizationGridProvider,
+    {
+        transformToVisualization: makeRealizationGridLayer,
+        transformToBoundingBox: makeRealizationGridBoundingBox,
+        transformToAnnotations: makeColorScaleAnnotation,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    DataProviderType.DRILLED_WELLBORE_PICKS,
+    DrilledWellborePicksProvider,
+    {
+        transformToVisualization: makeDrilledWellborePicksLayer,
+        transformToBoundingBox: makeDrilledWellborePicksBoundingBox,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    DataProviderType.DRILLED_WELL_TRAJECTORIES,
+    DrilledWellTrajectoriesProvider,
+    {
+        transformToVisualization: makeDrilledWellTrajectoriesLayer,
+        transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
+    },
+);
+
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
-    const [prevBoundingBox, setPrevBoundingBox] = React.useState<BoundingBox | null>(null);
+    const [prevBoundingBox, setPrevBoundingBox] = React.useState<bbox.BBox | null>(null);
 
     const statusWriter = useViewStatusWriter(props.viewContext);
 
-    usePublishSubscribeTopicValue(props.layerManager, LayerManagerTopic.LAYER_DATA_REVISION);
+    usePublishSubscribeTopicValue(props.layerManager, DataProviderManagerTopic.DATA_REVISION);
+
+    const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.layerManager);
 
     const viewports: ViewPortTypeExt[] = [];
-    const viewerLayers: DeckGlLayerWithPosition[] = [];
-    const colorScales: ColorScaleWithId[] = [];
+    const deckGlLayers: Layer<any>[] = [];
+    const globalColorScales: ColorScaleWithId[] = [...assemblerProduct.annotations];
+
+    const globalLayerIds: string[] = ["placeholder"];
 
     const views: ViewsTypeExt = {
         layout: [1, 1],
@@ -44,84 +144,139 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         showLabel: false,
     };
 
-    let numCols = 0;
-    let numRows = 0;
-
     let numLoadingLayers = 0;
 
-    const viewsAndLayers = recursivelyMakeViewsAndLayers(props.layerManager.getGroupDelegate());
+    const numViews = assemblerProduct.children.filter(
+        (item) => item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW,
+    ).length;
 
-    numCols = Math.ceil(Math.sqrt(viewsAndLayers.views.length));
-    numRows = Math.ceil(viewsAndLayers.views.length / numCols);
+    let numCols = Math.ceil(Math.sqrt(numViews));
+    let numRows = Math.ceil(numViews / numCols);
+
+    // viewerLayers.push(...viewsAndLayers.layers);
+    // colorScales.push(...viewsAndLayers.colorScales);
+
+    // const globalLayerIds = viewsAndLayers.layers.map((layer) => layer.layer.id);
+    // const globalColorScaleIds = viewsAndLayers.colorScales.map((c) => c.id);
+
+    // for (const view of viewsAndLayers.views) {
+    //     viewports.push({
+    //         id: view.id,
+    //         name: view.name,
+    //         color: view.color,
+    //         isSync: true,
+    //         layerIds: [...globalLayerIds, ...view.layers.map((layer) => layer.layer.id), "placeholder"],
+    //         colorScaleIds: [...globalColorScaleIds, ...view.colorScales.map((scale) => scale.id)],
+    //     });
+
+    //     viewerLayers.push(...view.layers);
+    //     colorScales.push(...view.colorScales);
+    // }
+
+    for (const item of assemblerProduct.children) {
+        if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
+            const viewColorScales = item.annotations.filter((el) => "colorScale" in el);
+
+            const layerIds: string[] = [];
+            for (const child of item.children) {
+                if (child.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
+                    const layer = child.visualization;
+                    layerIds.push(layer.id);
+                    deckGlLayers.push(layer);
+                }
+            }
+
+            viewports.push({
+                id: item.id,
+                name: item.name,
+                color: item.color,
+                isSync: true,
+                layerIds: [...globalLayerIds, ...layerIds],
+                colorScales: [...globalColorScales, ...viewColorScales],
+            });
+
+            // viewportAnnotations.push(
+            //     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            //     /* @ts-expect-error */
+            //     <DeckGlView key={item.id} id={item.id}>
+            //         <ColorLegendsContainer
+            //             colorScales={[...item.annotations.filter((el) => "colorScale" in el), ...globalAnnotations]}
+            //             height={((mainDivSize.height / 3) * 2) / numCols - 20}
+            //             position="left"
+            //         />
+            //         <div className="font-bold text-lg flex gap-2 justify-center items-center">
+            //             <div className="flex gap-2 items-center bg-white/50 p-2 backdrop-blur-sm rounded-sm">
+            //                 <div
+            //                     className="rounded-full h-3 w-3 border border-white"
+            //                     style={{ backgroundColor: item.color ?? undefined }}
+            //                 />
+            //                 <div className="">{item.name}</div>
+            //             </div>
+            //         </div>
+            //     </DeckGlView>,
+            // );
+        } else if (item.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
+            deckGlLayers.push(item.visualization);
+            globalLayerIds.push(item.visualization.id);
+        }
+    }
 
     if (props.preferredViewLayout === PreferredViewLayout.HORIZONTAL) {
         [numCols, numRows] = [numRows, numCols];
     }
 
-    views.layout = [numCols, numRows];
-
-    viewerLayers.push(...viewsAndLayers.layers);
-    colorScales.push(...viewsAndLayers.colorScales);
-
-    const globalLayerIds = viewsAndLayers.layers.map((layer) => layer.layer.id);
-    const globalColorScaleIds = viewsAndLayers.colorScales.map((c) => c.id);
-
-    for (const view of viewsAndLayers.views) {
-        viewports.push({
-            id: view.id,
-            name: view.name,
-            color: view.color,
-            isSync: true,
-            layerIds: [...globalLayerIds, ...view.layers.map((layer) => layer.layer.id), "placeholder"],
-            colorScaleIds: [...globalColorScaleIds, ...view.colorScales.map((scale) => scale.id)],
-        });
-
-        viewerLayers.push(...view.layers);
-        colorScales.push(...view.colorScales);
-    }
-
-    if (viewsAndLayers.boundingBox !== null) {
+    if (assemblerProduct.combinedBoundingBox !== null) {
         if (prevBoundingBox !== null) {
-            const oldBoundingRect: Rect2D | null = {
-                x: prevBoundingBox.x[0],
-                y: prevBoundingBox.y[0],
-                width: prevBoundingBox.x[1] - prevBoundingBox.x[0],
-                height: prevBoundingBox.y[1] - prevBoundingBox.y[0],
-            };
-
-            const newBoundingRect: Rect2D = {
-                x: viewsAndLayers.boundingBox.x[0],
-                y: viewsAndLayers.boundingBox.y[0],
-                width: viewsAndLayers.boundingBox.x[1] - viewsAndLayers.boundingBox.x[0],
-                height: viewsAndLayers.boundingBox.y[1] - viewsAndLayers.boundingBox.y[0],
-            };
-
-            if (!outerRectContainsInnerRect(oldBoundingRect, newBoundingRect)) {
-                setPrevBoundingBox(viewsAndLayers.boundingBox);
+            if (!bbox.outerBoxcontainsInnerBox(prevBoundingBox, assemblerProduct.combinedBoundingBox)) {
+                setPrevBoundingBox(assemblerProduct.combinedBoundingBox);
             }
         } else {
-            setPrevBoundingBox(viewsAndLayers.boundingBox);
+            setPrevBoundingBox(assemblerProduct.combinedBoundingBox);
         }
     }
 
-    numLoadingLayers = viewsAndLayers.numLoadingLayers;
-    statusWriter.setLoading(viewsAndLayers.numLoadingLayers > 0);
+    numLoadingLayers = assemblerProduct.numLoadingDataProviders;
+    statusWriter.setLoading(assemblerProduct.numLoadingDataProviders > 0);
 
-    for (const message of viewsAndLayers.errorMessages) {
+    for (const message of assemblerProduct.aggregatedErrorMessages) {
         statusWriter.addError(message);
     }
 
     let bounds: BoundingBox2D | undefined = undefined;
     if (prevBoundingBox) {
-        bounds = [prevBoundingBox.x[0], prevBoundingBox.y[0], prevBoundingBox.x[1], prevBoundingBox.y[1]];
+        bounds = [prevBoundingBox.min.x, prevBoundingBox.min.y, prevBoundingBox.max.x, prevBoundingBox.max.y];
     }
 
-    const layers = viewerLayers.toSorted((a, b) => b.position - a.position).map((layer) => layer.layer);
-    layers.push(new PlaceholderLayer({ id: "placeholder" }));
+    deckGlLayers.push(new PlaceholderLayer({ id: "placeholder" }));
+    deckGlLayers.reverse();
 
     return (
         <PendingWrapper className="w-full h-full flex flex-col" isPending={numLoadingLayers > 0}>
-            <SubsurfaceViewerWrapper views={views} layers={layers} bounds={bounds} colorScales={colorScales} />
+            <SubsurfaceViewerWrapper
+                views={views}
+                layers={deckGlLayers}
+                bounds={bounds}
+                colorScales={globalColorScales}
+            />
         </PendingWrapper>
+        // <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
+        //     <PendingWrapper isPending={numLoadingLayers > 0}>
+        //         <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
+        //             <ReadoutWrapper
+        //                 views={{
+        //                     layout: [numCols, numRows],
+        //                     viewports: viewports.map((viewport) => ({
+        //                         ...viewport,
+        //                         layerIds: [...(viewport.layerIds ?? []), ...globalLayerIds],
+        //                     })),
+        //                     showLabel: false,
+        //                 }}
+        //                 viewportAnnotations={viewportAnnotations}
+        //                 layers={deckGlLayers}
+        //                 bounds={bounds}
+        //             />
+        //         </div>
+        //     </PendingWrapper>
+        // </div>
     );
 }

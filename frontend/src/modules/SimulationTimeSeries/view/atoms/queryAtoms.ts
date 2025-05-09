@@ -1,3 +1,5 @@
+import type { QueryObserverResult } from "@tanstack/react-query";
+
 import type { Observations_api } from "@api";
 import {
     Frequency_api,
@@ -16,7 +18,6 @@ import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import type { EnsembleVectorObservationDataMap } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
-import type { QueryObserverResult } from "@tanstack/react-query";
 
 import {
     resampleFrequencyAtom,
@@ -338,14 +339,15 @@ export const vectorObservationsQueriesAtom = atomWithQueries((get) => {
                     (item) => item.ensembleIdent === ensembleIdent,
                 );
 
-                const ensembleHasObservations = result.data?.summary.length !== 0;
+                const summary = result.data?.summary ?? [];
+                const ensembleHasObservations = summary.length !== 0;
                 combinedResult.set(ensembleIdent, {
                     hasSummaryObservations: ensembleHasObservations,
                     vectorsObservationData: [],
                 });
                 for (const vectorSpec of ensembleVectorSpecifications) {
                     const vectorObservationsData =
-                        result.data?.summary.find((elm) => elm.vector_name === vectorSpec.vectorName) ?? null;
+                        summary.find((elm) => elm.vector_name === vectorSpec.vectorName) ?? null;
                     if (!vectorObservationsData) continue;
 
                     combinedResult.get(ensembleIdent)?.vectorsObservationData.push({

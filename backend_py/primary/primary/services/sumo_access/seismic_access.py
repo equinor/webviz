@@ -3,6 +3,7 @@ from typing import List
 import asyncio
 from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
+from fmu.sumo.explorer.objects.cube import Cube
 
 from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
 
@@ -27,7 +28,7 @@ class SeismicAccess:
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_seismic_cube_meta_list_async(self) -> List[SeismicCubeMeta]:
-        realizations = await self._ensemble_context.get_field_values_async("fmu.realization.id")
+        realizations = await self._ensemble_context.realizationids_async
 
         seismic_context = self._ensemble_context.cubes.filter(
             realization=realizations[0],
@@ -74,7 +75,7 @@ class SeismicAccess:
         )
 
         # Filter on observed
-        cubes = []
+        cubes: List[Cube] = []
         async for cube in cube_context:
             if cube["data"]["is_observation"] == observed:
                 cubes.append(cube)
@@ -89,7 +90,8 @@ class SeismicAccess:
 
         cube = cubes[0]
 
-        sas_token, url = await asyncio.gather(cube.sas_async, cube.url_async)
+        url, sas_token = await cube.auth_async
+
         return VdsHandle(
             sas_token=sas_token,
             vds_url=clean_vds_url(url),

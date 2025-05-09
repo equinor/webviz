@@ -2,14 +2,15 @@ import React from "react";
 
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
 import { View as DeckGlView } from "@deck.gl/core";
-import { useElementSize } from "@lib/hooks/useElementSize";
-import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
-import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
-import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import type { BoundingBox2D, MapMouseEvent, ViewStateType, ViewportType, ViewsType } from "@webviz/subsurface-viewer";
 import { useMultiViewCursorTracking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewCursorTracking";
 import type { UseMultiViewPickingProps } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking";
 import { useMultiViewPicking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking";
+
+import { useElementSize } from "@lib/hooks/useElementSize";
+import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
+import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
+import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import { Toolbar } from "./Toolbar";
@@ -25,7 +26,7 @@ export type SubsurfaceViewerWrapperProps = {
 
 export type ViewPortTypeExt = ViewportType & {
     color: string | null;
-    colorScaleIds: string[];
+    colorScales: ColorScaleWithId[];
 };
 
 export interface ViewsTypeExt extends ViewsType {
@@ -45,7 +46,6 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
     const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
     const [hideReadout, setHideReadout] = React.useState<boolean>(false);
 
-    const colorScalesLookup = Object.fromEntries(props.colorScales.map((scale) => [scale.id, scale]));
     const [numCols] = props.views.layout;
 
     const viewports = props.views?.viewports ?? [];
@@ -100,9 +100,8 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 deckGlRef={deckGlRef}
                 bounds={props.bounds}
                 cameraPosition={cameraPositionSetByAction ?? undefined}
-                onCameraPositionApplied={() => setCameraPositionSetByAction(null)}
-                onMouseEvent={handleMouseEvent}
                 views={{ ...props.views, viewports: adjustedViewports }}
+                // views={props.views}
                 layers={adjustedLayers}
                 scale={{
                     visible: true,
@@ -118,6 +117,8 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 coords={{ visible: false, multiPicking: true, pickDepth: 2 }}
                 triggerHome={triggerHomeCounter}
                 pickingRadius={5}
+                onCameraPositionApplied={() => setCameraPositionSetByAction(null)}
+                onMouseEvent={handleMouseEvent}
             >
                 {props.views.viewports.map((viewport) => (
                     // @ts-expect-error -- This class is marked as abstract, but seems to just work as is
@@ -126,7 +127,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                         <ViewPortLabel viewPort={viewport} />
 
                         <ColorLegendsContainer
-                            colorScales={viewport.colorScaleIds.map((id) => colorScalesLookup[id])}
+                            colorScales={viewport.colorScales}
                             height={((mainDivSize.height / 3) * 2) / numCols - 20}
                             position="left"
                         />

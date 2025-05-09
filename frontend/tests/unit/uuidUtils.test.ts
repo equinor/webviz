@@ -1,6 +1,7 @@
+import { describe, expect, test } from "vitest";
+
 import { UUID_REGEX_STRING } from "@framework/utils/uuidUtils";
 
-import { describe, expect, test } from "vitest";
 
 describe("UUID utility functions", () => {
     test("should return a valid UUID regex pattern", () => {

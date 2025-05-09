@@ -1,7 +1,8 @@
+import { atomWithQuery } from "jotai-tanstack-query";
+
 import { getDrilledWellboreHeadersOptions, getGridModelsInfoOptions } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 
-import { atomWithQuery } from "jotai-tanstack-query";
 
 import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "./derivedAtoms";
 

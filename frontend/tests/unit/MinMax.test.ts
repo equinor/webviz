@@ -1,6 +1,7 @@
+import { describe, expect, test } from "vitest";
+
 import { MinMax } from "@lib/utils/MinMax";
 
-import { describe, expect, test } from "vitest";
 
 describe("MinMax tests", () => {
     test("Check validity of MinMax instances", () => {

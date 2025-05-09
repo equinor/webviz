@@ -1,7 +1,10 @@
+import { atom } from "jotai";
+
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 
-import { atom } from "jotai";
+
+import { createLoadedVectorSpecificationAndDataArray } from "../utils/vectorSpecificationsAndQueriesUtils";
 
 import { userSelectedActiveTimestampUtcMsAtom, vectorSpecificationsAtom } from "./baseAtoms";
 import {
@@ -11,7 +14,6 @@ import {
     vectorStatisticsQueriesAtom,
 } from "./queryAtoms";
 
-import { createLoadedVectorSpecificationAndDataArray } from "../utils/vectorSpecificationsAndQueriesUtils";
 
 export const queryIsFetchingAtom = atom((get) => {
     const vectorDataQueries = get(vectorDataQueriesAtom);

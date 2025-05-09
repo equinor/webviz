@@ -1,9 +1,10 @@
+import { atom } from "jotai";
+import { isEqual } from "lodash";
+
 import { Frequency_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 
-import { atom } from "jotai";
-import { isEqual } from "lodash";
 
 function areRegularEnsembleIdentsEqual(a: RegularEnsembleIdent | null, b: RegularEnsembleIdent | null) {
     if (a === null) {

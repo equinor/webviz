@@ -1,12 +1,13 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
-import { layerManagerAtom, preferredViewLayoutAtom } from "./settings/atoms/baseAtoms";
+import type { DataProviderManager } from "../_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+
+import { dataProviderManagerAtom, preferredViewLayoutAtom } from "./settings/atoms/baseAtoms";
 import type { PreferredViewLayout } from "./types";
 
-import type { LayerManager } from "../_shared/LayerFramework/framework/LayerManager/LayerManager";
 
 export type SettingsToViewInterface = {
-    layerManager: LayerManager | null;
+    layerManager: DataProviderManager | null;
     preferredViewLayout: PreferredViewLayout;
 };
 
@@ -16,7 +17,7 @@ export type Interfaces = {
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     layerManager: (get) => {
-        return get(layerManagerAtom);
+        return get(dataProviderManagerAtom);
     },
     preferredViewLayout: (get) => {
         return get(preferredViewLayoutAtom);

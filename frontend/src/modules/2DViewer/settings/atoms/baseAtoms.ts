@@ -1,8 +1,9 @@
-import { PreferredViewLayout } from "@modules/2DViewer/types";
-import type { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-
 import { atom } from "jotai";
 
+import { PreferredViewLayout } from "@modules/2DViewer/types";
+import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+
+
 export const userSelectedFieldIdentifierAtom = atom<string | null>(null);
-export const layerManagerAtom = atom<LayerManager | null>(null);
+export const dataProviderManagerAtom = atom<DataProviderManager | null>(null);
 export const preferredViewLayoutAtom = atom<PreferredViewLayout>(PreferredViewLayout.VERTICAL);

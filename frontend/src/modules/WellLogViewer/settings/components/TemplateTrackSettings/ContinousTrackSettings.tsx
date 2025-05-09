@@ -1,18 +1,19 @@
 import React from "react";
 
+import type { UseQueryResult } from "@tanstack/react-query";
+import type { TemplatePlotScale } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import { useAtomValue } from "jotai";
+
 import { Dropdown, type DropdownOption } from "@lib/components/Dropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
-import type { UseQueryResult } from "@tanstack/react-query";
-import type { TemplatePlotScale } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
-import { useAtomValue } from "jotai";
+import { availableContinuousCurvesAtom, availableFlagCurvesAtom } from "../../atoms/derivedAtoms";
+import { wellLogCurveHeadersQueryAtom } from "../../atoms/queryAtoms";
 
 import { SortablePlotList } from "./private-components/SortablePlotList";
 import type { TrackSettingFragmentProps } from "./private-components/TrackSettings";
 
-import { availableContinuousCurvesAtom, availableFlagCurvesAtom } from "../../atoms/derivedAtoms";
-import { wellLogCurveHeadersQueryAtom } from "../../atoms/queryAtoms";
 
 type TemplatePlotScaleOption = DropdownOption<TemplatePlotScale>;
 

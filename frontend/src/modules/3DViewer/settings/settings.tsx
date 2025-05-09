@@ -1,16 +1,22 @@
 import React from "react";
 
+import { Delete, Edit } from "@mui/icons-material";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { isEqual } from "lodash";
+
 import type { Grid3dInfo_api, WellboreHeader_api } from "@api";
+import { ColorScaleSelector } from "@framework/components/ColorScaleSelector";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { useIntersectionPolylines } from "@framework/UserCreatedItems";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { Intersection } from "@framework/types/intersection";
 import { IntersectionType } from "@framework/types/intersection";
+import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
@@ -22,15 +28,13 @@ import { Select } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
 import type { TableSelectOption } from "@lib/components/TableSelect";
 import { TableSelect } from "@lib/components/TableSelect";
-import type { ColorScale } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { ColorScaleSelector } from "@modules/_shared/components/ColorScaleSelector/colorScaleSelector";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { isoIntervalStringToDateLabel, isoStringToDateLabel } from "@modules/_shared/utils/isoDatetimeStringFormatting";
-import { Delete, Edit } from "@mui/icons-material";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { isEqual } from "lodash";
+
+import type { Interfaces } from "../interfaces";
+import type { GridCellIndexRanges } from "../typesAndEnums";
 
 import {
     addCustomIntersectionPolylineEditModeActiveAtom,
@@ -67,8 +71,6 @@ import { drilledWellboreHeadersQueryAtom, gridModelInfosQueryAtom } from "./atom
 import { GridCellIndexFilter } from "./components/gridCellIndexFilter";
 import { WellboreSelector } from "./components/wellboreSelector";
 
-import type { Interfaces } from "../interfaces";
-import type { GridCellIndexRanges } from "../typesAndEnums";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -241,9 +243,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
         setCustomPolylineFilterText(e.target.value);
     }
 
-    function handleColorScaleChange(colorScale: ColorScale, areBoundariesUserDefined: boolean) {
-        setColorScale(colorScale);
-        setUseCustomBounds(areBoundariesUserDefined);
+    function handleColorScaleChange(colorScaleSpecification: ColorScaleSpecification) {
+        setColorScale(colorScaleSpecification.colorScale);
+        setUseCustomBounds(colorScaleSpecification.areBoundariesUserDefined);
     }
 
     const realizationOptions = makeRealizationOptions(availableRealizations);
@@ -251,7 +253,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const datesOrIntervalsForSelectedParameter =
         gridModelInfo?.property_info_arr
             .filter((el) => el.property_name === selectedGridModelParameterName)
-            .map((el) => el.iso_date_or_interval) ?? [];
+            .map((el) => el.iso_date_or_interval ?? null) ?? [];
 
     return (
         <div className="flex flex-col gap-1">
@@ -333,9 +335,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                     <Label text="Color scale">
                         <ColorScaleSelector
                             workbenchSettings={props.workbenchSettings}
-                            colorScale={colorScale ?? undefined}
+                            colorScaleSpecification={
+                                colorScale
+                                    ? { colorScale: colorScale, areBoundariesUserDefined: useCustomBounds }
+                                    : undefined
+                            }
                             onChange={handleColorScaleChange}
-                            areBoundariesUserDefined={useCustomBounds}
                         />
                     </Label>
                 </div>

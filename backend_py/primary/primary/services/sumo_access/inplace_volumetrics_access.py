@@ -1,13 +1,16 @@
+import logging
 from typing import List, Optional
 
 import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
+from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from primary.services.service_exceptions import InvalidDataError, Service
+
 from ._arrow_table_loader import ArrowTableLoader
-
-
 from .sumo_client_factory import create_sumo_client
+
+LOGGER = logging.getLogger(__name__)
 
 # Index column values to ignore, i.e. remove from the volumetric tables
 IGNORED_IDENTIFIER_COLUMN_VALUES = ["Totals"]
@@ -83,13 +86,18 @@ class InplaceVolumetricsAccess:
         pa.Table with columns: ZONE, REGION, FACIES, REAL, and the requested column names.
         """
 
+        perf_metrics = PerfMetrics()
+
         table_context = self._ensemble_context.tables.filter(
             name=table_name,
             content="volumes",
             column=column_names if column_names is None else list(column_names),
         )
 
+        perf_metrics.reset_lap_timer()
         available_column_names = await table_context.columns_async
+        perf_metrics.record_lap("get-column-names")
+
         available_response_names = [
             col for col in available_column_names if col not in self.get_possible_selector_columns()
         ]
@@ -105,6 +113,11 @@ class InplaceVolumetricsAccess:
         table_loader.require_content_type("volumes")
         table_loader.require_table_name(table_name)
         pa_table = await table_loader.get_aggregated_multiple_columns_async(requested_columns)
+        perf_metrics.record_lap("load-table")
+
+        LOGGER.debug(
+            f"get_inplace_volumetrics_aggregated_table_async took: {perf_metrics.to_string()}, {table_name=}, {column_names=}"
+        )
 
         return pa_table
 
@@ -118,7 +131,7 @@ class InplaceVolumetricsAccess:
         pa.Table with columns: ZONE, REGION, FACIES, REAL, and the requested column names.
         """
 
-        realizations = await self._ensemble_context.get_field_values_async("fmu.realization.id")
+        realizations = await self._ensemble_context.realizationids_async
         if len(realizations) == 0:
             raise InvalidDataError(
                 f"No realizations found in the ensemble {self._case_uuid}, {self._iteration_name}",
