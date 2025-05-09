@@ -57,7 +57,9 @@ export class ExternalSettingController<
     }
 
     private updateControlledSettings(): void {
-        this.unregisterAllControlledSettings();
+        const oldControlledSettings = new Map(this._controlledSettings);
+        this._controlledSettings.clear();
+        this._availableValuesMap.clear();
 
         let parentGroup = this._parentItem.getItemDelegate().getParentGroup();
         if (this._parentItem instanceof Group) {
@@ -79,6 +81,15 @@ export class ExternalSettingController<
                 this._controlledSettings.set(setting.getId(), setting);
                 this._availableValuesMap.set(setting.getId(), setting.getAvailableValues());
                 setting.registerExternalSettingController(this);
+            }
+        }
+
+        for (const settingId of oldControlledSettings.keys()) {
+            if (!this._controlledSettings.has(settingId)) {
+                const setting = oldControlledSettings.get(settingId);
+                if (setting) {
+                    setting.unregisterExternalSettingController();
+                }
             }
         }
 
@@ -109,6 +120,12 @@ export class ExternalSettingController<
     }
 
     makeIntersectionOfAvailableValues(): void {
+        for (const setting of this._controlledSettings.values()) {
+            if (!setting.isInitialized(true)) {
+                return;
+            }
+        }
+
         const category = this._setting.getCategory();
         const reducerDefinition = settingCategoryAvailableValuesIntersectionReducerMap[category];
 
