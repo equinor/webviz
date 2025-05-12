@@ -318,12 +318,19 @@ export class SettingsContextDelegate<
                 ),
             );
 
+            this._unsubscribeHandler.registerUnsubscribeFunction(
+                "dependencies",
+                this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_INITIALIZED)(
+                    handleChange,
+                ),
+            );
+
             return handleChange;
         };
 
         const makeGlobalSettingGetter = <K extends keyof GlobalSettings>(
             key: K,
-            handler: (value: GlobalSettings[K]) => void,
+            handler: (value: GlobalSettings[K] | null) => void,
         ) => {
             const handleChange = (): void => {
                 handler(this.getDataProviderManager.bind(this)().getGlobalSetting(key));
@@ -346,7 +353,7 @@ export class SettingsContextDelegate<
             return this._settings[key];
         };
 
-        const globalSettingGetter = <K extends keyof GlobalSettings>(key: K): GlobalSettings[K] => {
+        const globalSettingGetter = <K extends keyof GlobalSettings>(key: K): GlobalSettings[K] | null => {
             return this.getDataProviderManager.bind(this)().getGlobalSetting(key);
         };
 

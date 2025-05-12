@@ -115,12 +115,19 @@ export class SharedSettingsDelegate<
                     .makeSubscriberFunction(SettingTopic.IS_PERSISTED)(handleChange),
             );
 
+            this._unsubscribeHandler.registerUnsubscribeFunction(
+                "dependencies",
+                this._wrappedSettings[key]
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(SettingTopic.IS_INITIALIZED)(handleChange),
+            );
+
             return handleChange;
         };
 
         const makeGlobalSettingGetter = <K extends keyof GlobalSettings>(
             key: K,
-            handler: (value: GlobalSettings[K]) => void,
+            handler: (value: GlobalSettings[K] | null) => void,
         ) => {
             const handleChange = (): void => {
                 handler(this._parentItem.getItemDelegate().getDataProviderManager().getGlobalSetting(key));
@@ -145,7 +152,7 @@ export class SharedSettingsDelegate<
             return this._wrappedSettings[key];
         };
 
-        const globalSettingGetter = <K extends keyof GlobalSettings>(key: K): GlobalSettings[K] => {
+        const globalSettingGetter = <K extends keyof GlobalSettings>(key: K): GlobalSettings[K] | null => {
             return this._parentItem.getItemDelegate().getDataProviderManager().getGlobalSetting(key);
         };
 

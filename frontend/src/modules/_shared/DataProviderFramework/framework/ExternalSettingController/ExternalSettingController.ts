@@ -121,7 +121,7 @@ export class ExternalSettingController<
 
     makeIntersectionOfAvailableValues(): void {
         for (const setting of this._controlledSettings.values()) {
-            if (!setting.isInitialized(true)) {
+            if (!setting.isInitialized(true) || setting.isLoading(true)) {
                 return;
             }
         }

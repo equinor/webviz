@@ -62,7 +62,7 @@ export type DataProviderInformationAccessors<
      * const value = getGlobalSetting("settingName");
      * ```
      */
-    getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
+    getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T] | null;
 
     /**
      * Access the stored data of the provider.

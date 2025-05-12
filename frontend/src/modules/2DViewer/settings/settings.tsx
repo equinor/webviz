@@ -68,6 +68,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 if (!layerManager) {
                     return;
                 }
+                layerManager.updateGlobalSetting("fieldId", parsedState.fieldIdentifier);
                 layerManager.deserializeState(parsedState.layerManager);
             }
         },

@@ -331,8 +331,8 @@ export class SettingManager<
         return this._initialized || this._isStatic;
     }
 
-    isLoading(): boolean {
-        if (this._externalController) {
+    isLoading(itself: boolean = false): boolean {
+        if (this._externalController && !itself) {
             return this._externalController.getSetting().isLoading();
         }
         return this._loading;
@@ -490,6 +490,7 @@ export class SettingManager<
     setAvailableValues(availableValues: AvailableValuesType<TSetting> | null): void {
         if (this._externalController) {
             this._availableValues = availableValues;
+            this.setLoading(false);
             this.initialize();
             this._externalController.setAvailableValues(this.getId(), availableValues);
             return;

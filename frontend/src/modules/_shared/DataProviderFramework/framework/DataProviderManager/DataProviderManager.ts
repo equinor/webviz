@@ -62,6 +62,10 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     private _subscriptionsHandler = new UnsubscribeHandlerDelegate();
     private _deserializing = false;
     private _groupColorGenerator: Generator<string, string>;
+    private _globalSettingsInitialized: Record<keyof GlobalSettings, boolean> = {} as Record<
+        keyof GlobalSettings,
+        boolean
+    >;
 
     constructor(workbenchSession: WorkbenchSession, workbenchSettings: WorkbenchSettings, queryClient: QueryClient) {
         this._workbenchSession = workbenchSession;
@@ -120,10 +124,14 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         }
 
         this._globalSettings[key] = value;
+        this._globalSettingsInitialized[key] = true;
         this.publishTopic(DataProviderManagerTopic.GLOBAL_SETTINGS);
     }
 
-    getGlobalSetting<T extends keyof GlobalSettings>(key: T): GlobalSettings[T] {
+    getGlobalSetting<T extends keyof GlobalSettings>(key: T): GlobalSettings[T] | null {
+        if (!this._globalSettingsInitialized[key]) {
+            return null;
+        }
         return this._globalSettings[key];
     }
 
@@ -217,6 +225,12 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
 
     private initializeGlobalSettings(): GlobalSettings {
         const ensembles = this._workbenchSession.getEnsembleSet().getRegularEnsembleArray();
+        this._globalSettingsInitialized = {
+            fieldId: false,
+            ensembles: true,
+            realizationFilterFunction: true,
+            intersectionPolylines: true,
+        };
         return {
             fieldId: null,
             ensembles,
@@ -229,25 +243,21 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     }
 
     private handleRealizationFilterSetChanged() {
-        this._globalSettings.realizationFilterFunction = createEnsembleRealizationFilterFuncForWorkbenchSession(
-            this._workbenchSession,
+        this.updateGlobalSetting(
+            "realizationFilterFunction",
+            createEnsembleRealizationFilterFuncForWorkbenchSession(this._workbenchSession),
         );
-
-        this.publishTopic(DataProviderManagerTopic.GLOBAL_SETTINGS);
     }
 
     private handleEnsembleSetChanged() {
         const ensembles = this._workbenchSession.getEnsembleSet().getRegularEnsembleArray();
-        this._globalSettings.ensembles = ensembles;
-
-        this.publishTopic(DataProviderManagerTopic.GLOBAL_SETTINGS);
+        this.updateGlobalSetting("ensembles", ensembles);
     }
 
     private handleIntersectionPolylinesChanged() {
-        this._globalSettings.intersectionPolylines = this._workbenchSession
-            .getUserCreatedItems()
-            .getIntersectionPolylines()
-            .getPolylines();
-        this.publishTopic(DataProviderManagerTopic.GLOBAL_SETTINGS);
+        this.updateGlobalSetting(
+            "intersectionPolylines",
+            this._workbenchSession.getUserCreatedItems().getIntersectionPolylines().getPolylines(),
+        );
     }
 }
