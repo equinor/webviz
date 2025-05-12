@@ -3,7 +3,7 @@ import type React from "react";
 import type { PlotType } from "plotly.js";
 import Plot from "react-plotly.js";
 
-import { computeQuantile } from "@modules_shared/statistics";
+import { computeQuantile } from "@modules/_shared/utils/math/statistics";
 
 
 import type { ParameterDataArr } from "../../typesAndEnums";

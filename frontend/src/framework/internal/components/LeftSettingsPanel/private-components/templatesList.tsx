@@ -12,7 +12,7 @@ import type { Workbench } from "@framework/Workbench";
 function drawTemplatePreview(template: Template, width: number, height: number): React.ReactNode {
     return (
         <svg width={width} height={height} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" version="1.1">
-            {template.moduleInstances.map((element) => {
+            {template.moduleInstances.map((element, idx) => {
                 const w = element.layout.relWidth * width;
                 const h = element.layout.relHeight * height;
                 const x = element.layout.relX * width;
@@ -22,7 +22,7 @@ function drawTemplatePreview(template: Template, width: number, height: number):
                 const module = ModuleRegistry.getModule(element.moduleName);
                 const drawFunc = module.getDrawPreviewFunc();
                 return (
-                    <g key={element.moduleName}>
+                    <g key={`${element.moduleName}-${idx}`}>
                         <rect x={x} y={y} width={w} height={h} fill="white" stroke="#aaa" strokeWidth={strokeWidth} />
                         <rect
                             x={x + strokeWidth / 2}
