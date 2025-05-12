@@ -34,8 +34,8 @@ class SeismicAccess:
         )
 
         cube_meta_arr: list[SeismicCubeMeta] = []
-        async for sumo_object in seismic_context:
-            sumo_cube_object: Cube = sumo_object
+        sumo_cube_object: Cube
+        async for sumo_cube_object in seismic_context:
             cube_meta_arr.append(_create_seismic_cube_meta_from_sumo_cube_object(sumo_cube_object))
 
         return cube_meta_arr

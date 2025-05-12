@@ -1,5 +1,6 @@
 import logging
 from typing import List, Optional
+import asyncio
 
 from pydantic import BaseModel
 from fmu.sumo.explorer.explorer import SumoClient, SearchContext
@@ -74,12 +75,29 @@ class Grid3dAccess:
 
         grid3d_context = self._ensemble_context.grids.filter(realization=realization)
 
-        grid_meta_arr: list[Grid3dInfo] = []
-        async for sumo_object in grid3d_context:
-            sumo_grid_object: CPGrid = sumo_object
-            grid_meta_arr.append(await _create_grid_model_meta_from_object_async(sumo_grid_object))
+        # Run loop in parallel as function for creating meta is async
+        sumo_grid_uuids: list[str] = await grid3d_context.uuids_async
+        async with asyncio.TaskGroup() as tg:
+            tasks = [
+                tg.create_task(_get_grid_object_and_create_meta_async(grid3d_context, uuid)) for uuid in sumo_grid_uuids
+            ]
+        grid_meta_arr: list[Grid3dInfo] = [task.result() for task in tasks]
 
         return grid_meta_arr
+
+
+async def _get_grid_object_and_create_meta_async(
+    sumo_grid3d_search_context: SearchContext, grid_uuid: str
+) -> Grid3dInfo:
+    """
+    Get object from grid search context and grid uuid, and create the metadata for the grid model.
+
+    This is a helper function for Grid3dAccess.get_models_info_arr_async
+    """
+
+    sumo_grid_object: CPGrid = await sumo_grid3d_search_context.get_object_async(grid_uuid)
+
+    return await _create_grid_model_meta_from_object_async(sumo_grid_object)
 
 
 async def _create_grid_model_meta_from_object_async(sumo_grid_object: CPGrid) -> Grid3dInfo:

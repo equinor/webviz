@@ -38,8 +38,8 @@ class PolygonsAccess:
         )
 
         poly_meta_arr: list[PolygonsMeta] = []
-        async for sumo_object in polygons_context:
-            sumo_polygons_object: Polygons = sumo_object
+        sumo_polygons_object: Polygons
+        async for sumo_polygons_object in polygons_context:
             poly_meta_arr.append(_create_polygons_meta_from_sumo_polygons_object(sumo_polygons_object))
 
         return poly_meta_arr
