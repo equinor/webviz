@@ -78,7 +78,7 @@ export const wellborePicksQueryAtom = atomWithQuery((get) => {
         ...getWellborePicksInStratColumnOptions({
             query: {
                 wellbore_uuid: selectedWellboreUuid,
-                strat_column: selectedStratColumn,
+                strat_column_identifier: selectedStratColumn,
             },
         }),
         enabled: Boolean(selectedWellboreUuid),
