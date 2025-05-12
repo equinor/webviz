@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { isEqual } from "lodash";
+import { clone, isEqual } from "lodash";
 
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
@@ -119,7 +119,12 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             return;
         }
 
-        this._globalSettings[key] = value;
+        if (typeof value === "function") {
+            this._globalSettings[key] = value;
+        } else {
+            this._globalSettings[key] = clone(value);
+        }
+
         this.publishTopic(DataProviderManagerTopic.GLOBAL_SETTINGS);
     }
 
