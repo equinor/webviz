@@ -54,29 +54,29 @@ class ArrowTableLoader:
         if existing_agg_table_count > 1:
             raise MultipleDataMatchesError(f"Multiple tables found for: {self._make_req_info_str()}", Service.SUMO)
 
-        agg_sumo_table_obj: Table | None = None
+        sumo_table_obj: Table | None = None
 
         if existing_agg_table_count == 1:
             # We're probably good and have an already aggregated table, but we also need to check if the
             # aggregation has become stale with regards to the underlying realizations.
             # Since we assume that most of the time we will have valid aggregations, we optimistically do
             # fetching of the blob payload contents and validation concurrently.
-            existing_table_obj: Table = await sc_existing_agg_tables.getitem_async(0)
+            existing_agg_table_obj: Table = await sc_existing_agg_tables.getitem_async(0)
             perf_metrics.record_lap("get-sumo-obj")
 
             async with asyncio.TaskGroup() as tg:
-                fetch_blob_task = tg.create_task(existing_table_obj.blob_async)
-                validate_agg_task = tg.create_task(_is_agg_valid_for_realizations(existing_table_obj, sc_tables_basis))
+                tg.create_task(existing_agg_table_obj.blob_async)
+                validate_task = tg.create_task(_is_agg_valid_for_reals_async(existing_agg_table_obj, sc_tables_basis))
             perf_metrics.record_lap("fetch-and-validate")
 
-            if validate_agg_task.result():
-                agg_sumo_table_obj = existing_table_obj
+            if validate_task.result():
+                sumo_table_obj = existing_agg_table_obj
             else:
                 LOGGER.debug(
                     f"ArrowTableLoader.get_aggregated_single_column() found stale aggregation for: {column_name=}, {self._make_req_info_str()}"
                 )
 
-        if not agg_sumo_table_obj:
+        if not sumo_table_obj:
             # No valid aggregated table exists for the column, we need to aggregate it
             LOGGER.debug(
                 f"ArrowTableLoader.get_aggregated_single_column() doing aggregation for: {column_name=}, {self._make_req_info_str()}"
@@ -98,12 +98,10 @@ class ArrowTableLoader:
                 )
 
             # Does the aggregation and gets the blob (also writes the resulting aggregation back into Sumo)
-            agg_sumo_table_obj = await sc_agg_input_tables.aggregate_async(
-                columns=[column_name], operation="collection"
-            )
+            sumo_table_obj = await sc_agg_input_tables.aggregate_async(columns=[column_name], operation="collection")
             perf_metrics.record_lap("aggregate")
 
-        arrow_table: pa.Table = await agg_sumo_table_obj.to_arrow_async()
+        arrow_table: pa.Table = await sumo_table_obj.to_arrow_async()
         perf_metrics.record_lap("to-arrow")
 
         LOGGER.debug(
@@ -176,7 +174,10 @@ class ArrowTableLoader:
         return info_str
 
 
-async def _is_agg_valid_for_realizations(agg_sumo_table_obj: Table, sc_tables: SearchContext) -> bool:
+async def _is_agg_valid_for_reals_async(agg_sumo_table_obj: Table, sc_tables: SearchContext) -> bool:
+    """
+    Check if the aggregation is valid with regards to the underlying realizations.
+    """
     agg_ts = agg_sumo_table_obj.metadata["_sumo"]["timestamp"]
 
     sc_real_tables = sc_tables.filter(realization=True, aggregation=False)
