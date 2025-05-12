@@ -330,7 +330,7 @@ export class SettingsContextDelegate<
 
         const makeGlobalSettingGetter = <K extends keyof GlobalSettings>(
             key: K,
-            handler: (value: GlobalSettings[K] | null) => void,
+            handler: (value: GlobalSettings[K] | undefined) => void,
         ) => {
             const handleChange = (): void => {
                 handler(this.getDataProviderManager.bind(this)().getGlobalSetting(key));
@@ -353,7 +353,7 @@ export class SettingsContextDelegate<
             return this._settings[key];
         };
 
-        const globalSettingGetter = <K extends keyof GlobalSettings>(key: K): GlobalSettings[K] | null => {
+        const globalSettingGetter = <K extends keyof GlobalSettings>(key: K): GlobalSettings[K] | undefined => {
             return this.getDataProviderManager.bind(this)().getGlobalSetting(key);
         };
 
