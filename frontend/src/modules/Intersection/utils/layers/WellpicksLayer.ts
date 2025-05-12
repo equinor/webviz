@@ -1,9 +1,8 @@
-import { deprecatedGetStratigraphicUnitsOptions, deprecatedGetWellborePicksForWellboreOptions } from "@api";
 import { transformFormationData } from "@equinor/esv-intersection";
 import type { QueryClient } from "@tanstack/query-core";
 import { isEqual } from "lodash";
 
-import { getStratigraphicUnitsOptions, getWellborePicksForWellboreOptions } from "@api";
+import { deprecatedGetStratigraphicUnitsOptions, deprecatedGetWellborePicksForWellboreOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import { BaseLayer } from "./BaseLayer";
@@ -95,7 +94,8 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
         });
 
         return Promise.all([wellborePicksPromise, stratigraphicUnitsPromise]).then(
-            ([wellborePicks, stratigraphicUnits]) => transformFormationData(wellborePicks, stratigraphicUnits as any),
+            ([wellborePicks, stratigraphicUnits]) =>
+                transformFormationData(wellborePicks as any, stratigraphicUnits as any),
         );
     }
 }
