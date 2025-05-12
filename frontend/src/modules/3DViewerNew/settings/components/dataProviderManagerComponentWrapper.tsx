@@ -183,10 +183,45 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
         return true;
     }
 
-    const hasView =
-        groupDelegate.getDescendantItems((item) => item instanceof Group && item.getGroupType() === GroupType.VIEW)
-            .length > 0;
-    const adjustedLayerActions = hasView ? LAYER_ACTIONS : INITIAL_LAYER_ACTIONS;
+    function makeActionsForGroup(group: ItemGroup): ActionGroup[] {
+        const hasView =
+            groupDelegate.getDescendantItems((item) => item instanceof Group && item.getGroupType() === GroupType.VIEW)
+                .length > 0;
+
+        const hasViewAncestor =
+            group
+                .getGroupDelegate()
+                .getAncestors((item) => item instanceof Group && item.getGroupType() === GroupType.VIEW).length > 0;
+        const actions: ActionGroup[] = [];
+
+        if (!hasView) {
+            return INITIAL_ACTIONS;
+        }
+
+        const groupActions: ActionGroup = {
+            label: "Groups",
+            children: [],
+        };
+
+        if (!hasViewAncestor) {
+            groupActions.children.push({
+                identifier: "view",
+                icon: <Panorama fontSize="small" />,
+                label: "View",
+            });
+        }
+
+        groupActions.children.push({
+            identifier: "settings-group",
+            icon: <SettingsApplications fontSize="small" />,
+            label: "Settings group",
+        });
+
+        actions.push(groupActions);
+        actions.push(...ACTIONS);
+
+        return actions;
+    }
 
     return (
         <DataProviderManagerComponent
@@ -214,7 +249,7 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                     </Menu>
                 </Dropdown>
             }
-            groupActions={adjustedLayerActions}
+            groupActions={makeActionsForGroup}
             onAction={handleLayerAction}
             isMoveAllowed={checkIfItemMoveAllowed}
         />
@@ -238,7 +273,7 @@ function ViewLayoutMenuItem(props: ViewLayoutMenuItemProps): React.ReactNode {
     );
 }
 
-const INITIAL_LAYER_ACTIONS: ActionGroup[] = [
+const INITIAL_ACTIONS: ActionGroup[] = [
     {
         label: "Groups",
         children: [
@@ -256,22 +291,7 @@ const INITIAL_LAYER_ACTIONS: ActionGroup[] = [
     },
 ];
 
-const LAYER_ACTIONS: ActionGroup[] = [
-    {
-        label: "Groups",
-        children: [
-            {
-                identifier: "view",
-                icon: <Panorama fontSize="small" />,
-                label: "View",
-            },
-            {
-                identifier: "settings-group",
-                icon: <SettingsApplications fontSize="small" />,
-                label: "Settings group",
-            },
-        ],
-    },
+const ACTIONS: ActionGroup[] = [
     {
         label: "Layers",
         children: [

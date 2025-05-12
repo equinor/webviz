@@ -174,6 +174,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                 id: item.id,
                 name: item.name,
                 isSync: true,
+                show3D: true,
                 layerIds,
             });
 

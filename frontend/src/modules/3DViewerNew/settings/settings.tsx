@@ -10,7 +10,7 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { providerManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
-import { LayerManagerComponentWrapper } from "./components/layerManagerComponentWrapper";
+import { LayerManagerComponentWrapper } from "./components/dataProviderManagerComponentWrapper";
 import {
     DataProviderManager,
     DataProviderManagerTopic,
