@@ -7,6 +7,7 @@ import pyarrow.compute as pc
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
+from primary.services.utils.otel_span_tracing import otel_span_decorator
 from primary.services.utils.arrow_helpers import (
     find_first_non_increasing_date_pair,
     sort_table_on_real_then_date,
@@ -42,6 +43,7 @@ class SummaryAccess:
         sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
+    @otel_span_decorator()
     async def get_available_vectors_async(self) -> List[VectorInfo]:
         timer = PerfTimer()
 
@@ -89,6 +91,7 @@ class SummaryAccess:
 
         return ret_info_arr
 
+    @otel_span_decorator()
     async def get_vector_table_async(
         self,
         vector_name: str,
@@ -152,6 +155,7 @@ class SummaryAccess:
 
         return table, vector_metadata
 
+    @otel_span_decorator()
     async def get_vector_async(
         self,
         vector_name: str,
@@ -184,6 +188,7 @@ class SummaryAccess:
 
         return ret_arr
 
+    @otel_span_decorator()
     async def get_single_real_vectors_table_async(
         self,
         vector_names: Sequence[str],
@@ -254,6 +259,7 @@ class SummaryAccess:
 
         return table, vector_metadata_list
 
+    @otel_span_decorator()
     async def get_matching_historical_vector_async(
         self,
         non_historical_vector_name: str,
