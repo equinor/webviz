@@ -262,6 +262,13 @@ export class SettingManager<
         this._currentValueFromPersistence = JSON.parse(serializedValue);
     }
 
+    isExternallyControlled(): boolean {
+        if (this._externalController) {
+            return this._externalController.getSetting().isExternallyControlled();
+        }
+        return false;
+    }
+
     isValueValid(): boolean {
         if (this._externalController) {
             return this._externalController.getSetting().isValueValid();

@@ -1,3 +1,4 @@
+import type { GroupDelegate } from "../../delegates/GroupDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import type { Item } from "../../interfacesAndTypes/entities";
 import type { AvailableValuesType } from "../../interfacesAndTypes/utils";
@@ -11,6 +12,7 @@ import { DataProvider } from "../DataProvider/DataProvider";
 import { DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
 import { Group } from "../Group/Group";
 import type { SettingManager } from "../SettingManager/SettingManager";
+import { SharedSetting } from "../SharedSetting/SharedSetting";
 
 export class ExternalSettingController<
     TSetting extends Setting,
@@ -56,6 +58,34 @@ export class ExternalSettingController<
         return this._setting;
     }
 
+    private findControlledSettingsRecursively(
+        groupDelegate: GroupDelegate,
+    ): SettingManager<TSetting, TValue, TCategory>[] {
+        const children = groupDelegate.getChildren();
+        const foundSettings: SettingManager<TSetting, TValue, TCategory>[] = [];
+
+        for (const child of children) {
+            if (child instanceof DataProvider) {
+                const setting = child.getSettingsContextDelegate().getSettings()[this._setting.getType()];
+                if (setting) {
+                    foundSettings.push(setting);
+                }
+            } else if (child instanceof SharedSetting) {
+                if (child === this._parentItem) {
+                    continue;
+                }
+                const setting = child.getSharedSettingsDelegate().getWrappedSettings()[this._setting.getType()];
+                if (setting) {
+                    foundSettings.push(setting);
+                }
+            } else if (child instanceof Group) {
+                foundSettings.push(...this.findControlledSettingsRecursively(child.getGroupDelegate()));
+            }
+        }
+
+        return foundSettings;
+    }
+
     private updateControlledSettings(): void {
         const oldControlledSettings = new Map(this._controlledSettings);
         this._controlledSettings.clear();
@@ -70,19 +100,39 @@ export class ExternalSettingController<
             return;
         }
 
-        const providers = parentGroup.getDescendantItems((item) => item instanceof DataProvider) as DataProvider<
-            any,
-            any
-        >[];
+        const settings = this.findControlledSettingsRecursively(parentGroup);
+        for (const setting of settings) {
+            if (setting.isExternallyControlled()) {
+                continue;
+            }
+            this._controlledSettings.set(setting.getId(), setting);
+            this._availableValuesMap.set(
+                setting.getId(),
+                setting.getAvailableValues() as AvailableValuesType<TSetting>,
+            );
+            setting.registerExternalSettingController(this);
+        }
 
-        for (const provider of providers) {
-            const setting = provider.getSettingsContextDelegate().getSettings()[this._setting.getType()];
-            if (setting) {
-                this._controlledSettings.set(setting.getId(), setting);
-                this._availableValuesMap.set(setting.getId(), setting.getAvailableValues());
-                setting.registerExternalSettingController(this);
+        /*
+
+        const sharedSettingsProviders = parentGroup.getDescendantItems(
+            (item) => item instanceof DataProvider || item instanceof SharedSetting || item instanceof Group,
+        );
+
+        for (const provider of sharedSettingsProviders) {
+            if (provider instanceof DataProvider) {
+                const setting = provider.getSettingsContextDelegate().getSettings()[this._setting.getType()];
+                if (setting) {
+                    if (setting.isExternallyControlled()) {
+                        continue;
+                    }
+                    this._controlledSettings.set(setting.getId(), setting);
+                    this._availableValuesMap.set(setting.getId(), setting.getAvailableValues());
+                    setting.registerExternalSettingController(this);
+                }
             }
         }
+        */
 
         for (const settingId of oldControlledSettings.keys()) {
             if (!this._controlledSettings.has(settingId)) {
