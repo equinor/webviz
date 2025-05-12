@@ -86,9 +86,7 @@ class Grid3dAccess:
         return grid_meta_arr
 
 
-async def _get_grid_model_meta_async(
-    sumo_grid3d_search_context: SearchContext, grid_uuid: str
-) -> Grid3dInfo:
+async def _get_grid_model_meta_async(sumo_grid3d_search_context: SearchContext, grid_uuid: str) -> Grid3dInfo:
     """
     Get grid object from SUMO using grid search context and grid uuid, and create metadata for the grid model.
 
