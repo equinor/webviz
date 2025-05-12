@@ -183,7 +183,11 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     function makePreviewImage() {
         if (props.drawPreviewFunc) {
             const pixels = convertRemToPixels(2.5);
-            return props.drawPreviewFunc(pixels, pixels);
+            return (
+                <svg width={pixels} height={pixels} viewBox={`0 0 ${pixels} ${pixels}`}>
+                    {props.drawPreviewFunc(pixels, pixels)}
+                </svg>
+            );
         }
         return <div className="border bg-slate-200 border-slate-300 flex items-center justify-center w-full h-full" />;
     }

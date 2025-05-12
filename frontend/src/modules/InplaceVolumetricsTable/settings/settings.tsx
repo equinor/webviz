@@ -4,6 +4,7 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import type { InplaceVolumetricResultName_api } from "@api";
 import { InplaceVolumetricStatistic_api } from "@api";
+import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -24,7 +25,6 @@ import {
     TableTypeToStringMapping,
 } from "@modules/_shared/InplaceVolumetrics/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumetrics/volumetricStringUtils";
-
 
 import type { Interfaces } from "../interfaces";
 
@@ -49,7 +49,6 @@ import {
     tableDefinitionsAccessorAtom,
 } from "./atoms/derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
-
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -79,7 +78,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedIdentifierValueCriteria, setSelectedIdentifierValueCriteria] = useAtom(
         selectedIdentifierValueCriteriaAtom,
     );
-
+    useApplyInitialSettingsToState(
+        props.initialSettings,
+        "selectedIdentifierValueCriteria",
+        "string",
+        setSelectedIdentifierValueCriteria,
+    );
     function handleFilterChange(newFilter: InplaceVolumetricsFilterSettings) {
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);
