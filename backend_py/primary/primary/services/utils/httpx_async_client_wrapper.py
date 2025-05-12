@@ -30,7 +30,7 @@ class HTTPXAsyncClientWrapper:
         if self._async_client is None:
             # Try and increase the maximum number of concurrent connections and the max number of
             # keep-alive connections from their defualts of 100 and 20 respectively.
-            limits=httpx.Limits(max_connections=300, max_keepalive_connections=100)
+            limits = httpx.Limits(max_connections=300, max_keepalive_connections=100)
             self._async_client = httpx.AsyncClient(limits=limits)
             LOGGER.info(f"httpx AsyncClient instantiated: id={id(self._async_client)}, {limits=}")
 
