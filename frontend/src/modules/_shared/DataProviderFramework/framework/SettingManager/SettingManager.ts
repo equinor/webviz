@@ -490,6 +490,7 @@ export class SettingManager<
     setAvailableValues(availableValues: AvailableValuesType<TSetting> | null): void {
         if (this._externalController) {
             this._availableValues = availableValues;
+            this.maybeResetPersistedValue();
             this.setLoading(false);
             this.initialize();
             this._externalController.setAvailableValues(this.getId(), availableValues);

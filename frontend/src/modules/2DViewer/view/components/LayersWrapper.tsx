@@ -136,7 +136,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.layerManager);
 
-    const globalAnnotations = assemblerProduct.annotations;
+    const globalAnnotations = assemblerProduct.annotations.filter((el) => "colorScale" in el);
 
     const numViews = assemblerProduct.children.filter(
         (item) => item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW,
