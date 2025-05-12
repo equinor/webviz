@@ -40,6 +40,8 @@ def compute_vector_statistics_table(
             StatisticFunction.P50,
         ]
 
+     # Use wrappers for np.nanmin(), np.nanmax() and np.nanmean() to be explicit about the usage of the
+     # NumPy functions and to be consistent with the other statistics functions in this module.
     def nanmin_func(x: List[float]) -> np.floating:
         return np.nanmin(x)
 
