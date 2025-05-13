@@ -4,6 +4,7 @@ import asyncio
 
 from pydantic import BaseModel
 from fmu.sumo.explorer.explorer import SumoClient, SearchContext
+from fmu.sumo.explorer.objects import CPGrid
 
 
 from .sumo_client_factory import create_sumo_client
@@ -72,26 +73,32 @@ class Grid3dAccess:
     async def get_models_info_arr_async(self, realization: int) -> List[Grid3dInfo]:
         """Get metadata for all 3D grid models, including bbox, dimensions and properties"""
 
-        grid3d_context = self._ensemble_context.grids.filter(realization=realization)
+        grid3d_search_context = self._ensemble_context.grids.filter(realization=realization)
 
-        length_grids = await grid3d_context.length_async()
-
+        # Run loop in parallel as function for creating meta is async
+        sumo_grid_uuids: list[str] = await grid3d_search_context.uuids_async
         async with asyncio.TaskGroup() as tg:
-            tasks = [tg.create_task(_get_grid_model_meta_async(grid3d_context, i)) for i in range(length_grids)]
+            tasks = [
+                tg.create_task(_get_grid_model_meta_async(grid3d_search_context, uuid)) for uuid in sumo_grid_uuids
+            ]
         grid_meta_arr: list[Grid3dInfo] = [task.result() for task in tasks]
 
         return grid_meta_arr
 
 
-async def _get_grid_model_meta_async(search_context: SearchContext, item_no: int) -> Grid3dInfo:
+async def _get_grid_model_meta_async(sumo_grid3d_search_context: SearchContext, grid_uuid: str) -> Grid3dInfo:
     """
-    Retrieve metadata for a grid model. This is a helper function for Grid3dAccess.get_models_info_arr_async
+    Get grid object from SUMO using grid search context and grid uuid, and create metadata for the grid model.
+
+    This is a helper function for Grid3dAccess.get_models_info_arr_async
+
     Note that in fmu-sumo the grid properties metadata are related to a grid geometry via data.geometry.relative_path.keyword
     Older metadata using e.g. name or tagname for the grid geometry relationship are not supported.
     """
+    # Get the grid object from the search context
+    sumo_grid_object: CPGrid = await sumo_grid3d_search_context.get_object_async(grid_uuid)
 
-    grid3d_el = await search_context.getitem_async(item_no)
-    grid_metadata = grid3d_el.metadata
+    grid_metadata = sumo_grid_object.metadata
 
     bbox = Grid3dBoundingBox(
         xmin=grid_metadata["data"]["bbox"]["xmin"],
@@ -116,7 +123,7 @@ async def _get_grid_model_meta_async(search_context: SearchContext, item_no: int
         subgrids=subgrids,
     )
 
-    grid_properties_context = grid3d_el.grid_properties
+    grid_properties_context = sumo_grid_object.grid_properties
     property_names = await grid_properties_context.names_async
 
     property_info_arr = []

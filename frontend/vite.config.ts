@@ -1,11 +1,12 @@
+import path from "path";
+
 import tailwindPlugin from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-
 import jotaiDebugLabel from "jotai/babel/plugin-debug-label";
 import jotaiReactRefresh from "jotai/babel/plugin-react-refresh";
-import path from "path";
 import { defineConfig } from "vite";
 import vitePluginChecker from "vite-plugin-checker";
+import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 import aliases from "./aliases.json";
 
@@ -36,6 +37,14 @@ export default defineConfig(({ mode, command }) => {
                 },
             }),
             vitePluginChecker({ typescript: true }),
+            // Polyfill is only needed to solve an import issue in a nested dep in the subsurface-viewer component
+            // See webviz-subsurface-components issue #2540 for details.
+            nodePolyfills({
+                // ! https://security.snyk.io/vuln/SNYK-JS-ELLIPTIC-8187303 Don't allow use of this for now. Nothing
+                // ! we' have *is* using it, but I'm excluding it to make it more explicit.
+                exclude: ["crypto"],
+                globals: { Buffer: true },
+            }),
         ],
         build: {
             rollupOptions: {

@@ -1,4 +1,3 @@
-
 import { atom } from "jotai";
 import { cloneDeep, isEqual } from "lodash";
 import { v4 } from "uuid";
@@ -11,6 +10,7 @@ export type IntersectionPolyline = {
     name: string;
     color: [number, number, number];
     path: number[][];
+    fieldId: string;
 };
 
 export type IntersectionPolylineWithoutId = Omit<IntersectionPolyline, "id">;

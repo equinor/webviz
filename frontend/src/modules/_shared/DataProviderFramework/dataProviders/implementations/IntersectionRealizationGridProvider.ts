@@ -281,17 +281,6 @@ export class IntersectionRealizationGridProvider
 
         const fieldIdentifier = getGlobalSetting("fieldId");
 
-        const queryKey = [
-            "gridIntersection",
-            ensembleIdent,
-            gridName,
-            parameterName,
-            timeOrInterval,
-            realizationNum,
-            intersection,
-        ];
-        registerQueryKey(queryKey);
-
         let makePolylinePromise: Promise<number[]> = new Promise((resolve) => {
             resolve([]);
         });
@@ -299,15 +288,17 @@ export class IntersectionRealizationGridProvider
         if (intersection) {
             makePolylinePromise = new Promise((resolve) => {
                 if (intersection.type === "wellbore") {
+                    const wellboreQueryOptions = getWellTrajectoriesOptions({
+                        query: {
+                            field_identifier: fieldIdentifier ?? "",
+                            wellbore_uuids: [intersection.uuid],
+                        },
+                    });
+
+                    registerQueryKey(wellboreQueryOptions.queryKey);
+
                     return queryClient
-                        .fetchQuery({
-                            ...getWellTrajectoriesOptions({
-                                query: {
-                                    field_identifier: fieldIdentifier ?? "",
-                                    wellbore_uuids: [intersection.uuid],
-                                },
-                            }),
-                        })
+                        .fetchQuery(wellboreQueryOptions)
                         .then((data) => {
                             const path: number[][] = [];
                             for (const [index, northing] of data[0].northingArr.entries()) {
@@ -352,21 +343,24 @@ export class IntersectionRealizationGridProvider
         }
 
         const gridIntersectionPromise = makePolylinePromise
-            .then((polyline_utm_xy) =>
-                queryClient.fetchQuery({
-                    ...postGetPolylineIntersectionOptions({
-                        query: {
-                            case_uuid: ensembleIdent?.getCaseUuid() ?? "",
-                            ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
-                            grid_name: gridName ?? "",
-                            parameter_name: parameterName ?? "",
-                            parameter_time_or_interval_str: timeOrInterval,
-                            realization_num: realizationNum ?? 0,
-                        },
-                        body: { polyline_utm_xy },
-                    }),
-                }),
-            )
+            .then((polyline_utm_xy) => {
+
+                const intersectionQueryOptions = postGetPolylineIntersectionOptions({
+                    query: {
+                        case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                        ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+                        grid_name: gridName ?? "",
+                        parameter_name: parameterName ?? "",
+                        parameter_time_or_interval_str: timeOrInterval,
+                        realization_num: realizationNum ?? 0,
+                    },
+                    body: { polyline_utm_xy },
+                });
+
+                registerQueryKey(intersectionQueryOptions.queryKey);
+
+                return queryClient.fetchQuery(intersectionQueryOptions);
+            })
             .then(transformPolylineIntersection);
 
         return gridIntersectionPromise;
