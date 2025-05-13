@@ -60,7 +60,7 @@
         "simplify-js": "^1.2.4",
         "uuid": "^9.0.0",
         "vite-plugin-node-polyfills": "^0.23.0",
-        "wonka": "^6.3.4"
+        "wonka": "^6.3.4",
         "workerpool": "^9.2.0"
     },
     "devDependencies": {
