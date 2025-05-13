@@ -25,6 +25,30 @@ export class DrilledWellborePicksSetting
         return "Drilled wellbore picks";
     }
 
+    isValueValid(
+        currentValue: ValueType,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_SELECT>,
+    ): boolean {
+        if (!currentValue && availableValues.length === 0) {
+            return false;
+        }
+
+        if (!currentValue) {
+            return true;
+        }
+
+        // Check if every element in currentValue is in availableValues
+        const isValid = currentValue.every((value) =>
+            availableValues.some(
+                (availableValue) =>
+                    availableValue.pickIdentifier === value.pickIdentifier &&
+                    availableValue.interpreter === value.interpreter,
+            ),
+        );
+
+        return isValid;
+    }
+
     fixupValue(
         currentValue: ValueType,
         availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_SELECT>,
@@ -33,13 +57,15 @@ export class DrilledWellborePicksSetting
             return availableValues;
         }
 
-        const matchingValues = currentValue.filter((value) =>
-            availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid),
+        // Filter new/available values with old/previously selected pickIdentifiers
+        const matchingNewValues = availableValues.filter((newValue) =>
+            currentValue.some((oldValue) => oldValue.pickIdentifier === newValue.pickIdentifier),
         );
-        if (matchingValues.length === 0) {
+
+        if (matchingNewValues.length === 0) {
             return availableValues;
         }
-        return matchingValues;
+        return matchingNewValues;
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) => React.ReactNode {
