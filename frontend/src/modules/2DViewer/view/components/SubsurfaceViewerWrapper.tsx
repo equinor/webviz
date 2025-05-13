@@ -14,7 +14,7 @@ import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/Sub
 
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import { Toolbar } from "./Toolbar";
-import { ViewPortLabel } from "./ViewPortLabel";
+import { ViewportLabel } from "./ViewportLabel";
 
 export type SubsurfaceViewerWrapperProps = {
     views: ViewsTypeExtended;
@@ -22,13 +22,13 @@ export type SubsurfaceViewerWrapperProps = {
     bounds?: BoundingBox2D;
 };
 
-export interface ViewPortTypeExtended extends ViewportType {
+export interface ViewportTypeExtended extends ViewportType {
     color: string | null;
     colorScales: ColorScaleWithId[];
 }
 
 export interface ViewsTypeExtended extends ViewsType {
-    viewports: ViewPortTypeExtended[];
+    viewports: ViewportTypeExtended[];
 }
 
 export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): React.ReactNode {
@@ -96,7 +96,6 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 bounds={props.bounds}
                 cameraPosition={cameraPositionSetByAction ?? undefined}
                 views={{ ...props.views, viewports: adjustedViewports }}
-                // views={props.views}
                 layers={adjustedLayers}
                 scale={{
                     visible: true,
@@ -119,7 +118,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                     // @ts-expect-error -- This class is marked as abstract, but seems to just work as is
                     // ? Should we do a proper implementation of the class??
                     <DeckGlView key={viewport.id} id={viewport.id}>
-                        <ViewPortLabel viewPort={viewport} />
+                        <ViewportLabel viewport={viewport} />
 
                         <ColorLegendsContainer
                             colorScales={viewport.colorScales}

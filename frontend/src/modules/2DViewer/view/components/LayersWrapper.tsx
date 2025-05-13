@@ -46,7 +46,7 @@ import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSub
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
-import type { ViewPortTypeExtended, ViewsTypeExtended } from "./SubsurfaceViewerWrapper";
+import type { ViewportTypeExtended, ViewsTypeExtended } from "./SubsurfaceViewerWrapper";
 import { SubsurfaceViewerWrapper } from "./SubsurfaceViewerWrapper";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
@@ -129,7 +129,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.layerManager);
 
-    const viewports: ViewPortTypeExtended[] = [];
+    const viewports: ViewportTypeExtended[] = [];
     const deckGlLayers: Layer<any>[] = [];
     const globalAnnotations: Annotation[] = [];
     const globalColorScales = globalAnnotations.filter((el) => "colorScale" in el);
