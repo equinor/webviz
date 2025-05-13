@@ -37,6 +37,7 @@ const intersectionRealizationSeismicSettings = [
     Setting.TIME_OR_INTERVAL,
     Setting.SAMPLE_RESOLUTION_IN_METERS,
     Setting.COLOR_SCALE,
+    Setting.OPACITY_PERCENT,
 ] as const;
 export type IntersectionRealizationSeismicSettings = typeof intersectionRealizationSeismicSettings;
 type SettingsWithTypes = MakeSettingTypesMap<IntersectionRealizationSeismicSettings>;
@@ -92,6 +93,7 @@ export class IntersectionRealizationSeismicProvider
                 colorScale: defaultColorScale,
                 areBoundariesUserDefined: false,
             },
+            [Setting.OPACITY_PERCENT]: 100,
         };
     }
 

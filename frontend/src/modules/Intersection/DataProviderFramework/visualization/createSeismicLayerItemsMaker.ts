@@ -60,6 +60,7 @@ export function createSeismicLayerItemsMaker({
 >): EsvLayerItemsMaker | null {
     const fenceData = getData();
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
+    const colorOpacityPercent = getSetting(Setting.OPACITY_PERCENT) ?? 100;
     const useCustomColorScaleBoundaries = getSetting(Setting.COLOR_SCALE)?.areBoundariesUserDefined ?? false;
     const extensionLength = getSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
     const attribute = getSetting(Setting.ATTRIBUTE);
@@ -111,6 +112,7 @@ export function createSeismicLayerItemsMaker({
                             fenceTracesArray: fenceData.fenceTracesFloat32Arr,
                             trajectoryFenceProjection: trajectoryFenceProjection,
                             colorScale: adjustedColorScale,
+                            opacityPercent: colorOpacityPercent,
                         },
                     },
                     hoverable: true,

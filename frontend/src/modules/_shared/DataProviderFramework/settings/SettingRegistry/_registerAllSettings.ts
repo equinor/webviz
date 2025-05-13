@@ -14,6 +14,7 @@ import { SeismicSliceDirection, SeismicSliceSetting } from "../implementations/S
 import { SelectNumberSetting } from "../implementations/SelectNumberSetting";
 import { SelectStringSetting } from "../implementations/SelectStringSetting";
 import { SensitivitySetting } from "../implementations/SensitivitySetting";
+import { SliderNumberSetting } from "../implementations/SliderNumberSettig";
 import { StatisticFunctionSetting } from "../implementations/StatisticFunctionSetting";
 import { TimeOrIntervalSetting } from "../implementations/TimeOrIntervalSetting";
 import { Setting } from "../settingsDefinitions";
@@ -39,10 +40,21 @@ SettingRegistry.registerSetting(Setting.GRID_LAYER_J_RANGE, "Grid Layer J Range"
 });
 SettingRegistry.registerSetting(Setting.GRID_NAME, "Grid Name", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.INTERSECTION, "Intersection", IntersectionSetting);
+SettingRegistry.registerSetting(Setting.OPACITY_PERCENT, "Color Opacity [%]", SliderNumberSetting, {
+    customConstructorParameters: [{ minMax: { min: 0, max: 100 }, step: 1 }],
+});
 SettingRegistry.registerSetting(Setting.POLYGONS_ATTRIBUTE, "Polygons Attribute", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.POLYGONS_NAME, "Polygons Name", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.REALIZATION, "Realization", DropdownNumberSetting);
 SettingRegistry.registerSetting(Setting.REALIZATIONS, "Realizations", SelectNumberSetting);
+SettingRegistry.registerSetting(
+    Setting.SAMPLE_RESOLUTION_IN_METERS,
+    "Sample Resolution in Meters",
+    InputNumberSetting,
+    {
+        customConstructorParameters: [{ min: 1.0, max: 50.0 }],
+    },
+);
 SettingRegistry.registerSetting(Setting.SEISMIC_CROSSLINE, "Seismic Crossline", SeismicSliceSetting, {
     customConstructorParameters: [SeismicSliceDirection.CROSSLINE],
 });
@@ -59,14 +71,6 @@ SettingRegistry.registerSetting(Setting.STATISTIC_FUNCTION, "Statistic Function"
 SettingRegistry.registerSetting(Setting.SURFACE_NAME, "Surface Name", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.SURFACE_NAMES, "Surface Names", SelectStringSetting);
 SettingRegistry.registerSetting(Setting.TIME_OR_INTERVAL, "Time or Interval", TimeOrIntervalSetting);
-SettingRegistry.registerSetting(
-    Setting.SAMPLE_RESOLUTION_IN_METERS,
-    "Sample Resolution in Meters",
-    InputNumberSetting,
-    {
-        customConstructorParameters: [{ min: 1.0, max: 50.0 }],
-    },
-);
 SettingRegistry.registerSetting(Setting.WELLBORE_EXTENSION_LENGTH, "Wellbore Extension Length", InputNumberSetting, {
     customConstructorParameters: [{ min: 0.0, max: 5000.0 }],
 });

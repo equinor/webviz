@@ -34,6 +34,7 @@ const intersectionRealizationGridSettings = [
     Setting.TIME_OR_INTERVAL,
     Setting.SHOW_GRID_LINES,
     Setting.COLOR_SCALE,
+    Setting.OPACITY_PERCENT,
 ] as const;
 export type IntersectionRealizationGridSettings = typeof intersectionRealizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<IntersectionRealizationGridSettings>;
@@ -69,6 +70,7 @@ export class IntersectionRealizationGridProvider
             [Setting.WELLBORE_EXTENSION_LENGTH]: 500.0,
             [Setting.SAMPLE_RESOLUTION_IN_METERS]: 1,
             [Setting.SHOW_GRID_LINES]: false,
+            [Setting.OPACITY_PERCENT]: 100,
         };
     }
 

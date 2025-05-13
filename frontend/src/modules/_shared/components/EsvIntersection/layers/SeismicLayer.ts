@@ -21,6 +21,7 @@ export type SeismicSliceImageOptions = {
     yAxisValues: number[];
     trajectory: number[][];
     colorScale: ColorScale;
+    opacityPercent: number;
 };
 
 // Note: This type does not extend SeismicCanvasData because we want to generate the image and seismic info
@@ -35,6 +36,7 @@ export type SeismicLayerData = {
     propertyName: string;
     propertyUnit: string;
     colorScale: ColorScale;
+    opacityPercent?: number;
 };
 
 export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
@@ -72,6 +74,7 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
         this._canvasDataOptions = getSeismicOptions(this._seismicInfo);
 
         const colorScale = event.data.colorScale.clone();
+        const opacityPercent = event.data.opacityPercent ?? 100;
 
         // Create image
         const seismicSliceImageOptions: SeismicSliceImageOptions = {
@@ -79,6 +82,7 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
             yAxisValues,
             trajectory: event.data.trajectoryFenceProjection,
             colorScale,
+            opacityPercent,
         };
 
         // Generate image and render when done
@@ -114,6 +118,7 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
             { ...seismicSliceImageOptions },
             seismicSliceImageOptions.trajectory,
             seismicSliceImageOptions.colorScale.clone(),
+            seismicSliceImageOptions.opacityPercent,
             {
                 isLeftToRight: true,
             },
@@ -132,6 +137,7 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
         data: { datapoints: number[][]; yAxisValues: number[] },
         trajectory: number[][],
         colorScale: ColorScale,
+        opacityPercent: number,
         options: {
             isLeftToRight: boolean;
         } = { isLeftToRight: true },
@@ -186,7 +192,7 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
                     const rgbColor = parse(hexColor) as Rgb | undefined;
                     if (rgbColor) {
                         color = [rgbColor.r * 255, rgbColor.g * 255, rgbColor.b * 255];
-                        opacity = 255;
+                        opacity = (opacityPercent / 100.0) * 255.0;
                     }
                 }
 

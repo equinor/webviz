@@ -31,6 +31,7 @@ export function createGridLayerItemsMaker({
 >): EsvLayerItemsMaker | null {
     const intersectionData = getData();
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
+    const colorOpacityPercent = getSetting(Setting.OPACITY_PERCENT) ?? 100;
     const useCustomColorScaleBoundaries = getSetting(Setting.COLOR_SCALE)?.areBoundariesUserDefined ?? false;
     const extensionLength = getSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
     const showGridLines = getSetting(Setting.SHOW_GRID_LINES);
@@ -87,6 +88,7 @@ export function createGridLayerItemsMaker({
                             minGridPropValue: transformedPolylineIntersection.min_grid_prop_value,
                             maxGridPropValue: transformedPolylineIntersection.max_grid_prop_value,
                             colorScale: adjustedColorScale,
+                            opacityPercent: colorOpacityPercent,
                             hideGridlines: !showGridLines,
                             extensionLengthStart: extensionLength,
                             gridDimensions: {
