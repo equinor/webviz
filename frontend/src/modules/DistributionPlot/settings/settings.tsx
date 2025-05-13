@@ -10,12 +10,10 @@ import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Slider } from "@lib/components/Slider";
 
-
 import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
 
 import { numBinsAtom, orientationAtom, plotTypeAtom } from "./atoms/baseAtoms";
-
 
 const plotTypes = [
     {
@@ -118,5 +116,3 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
         </div>
     );
 }
-
-Settings.displayName = "Settings";

@@ -1,6 +1,6 @@
 import logging
 
-from fmu.sumo.explorer.explorer import SumoClient
+from sumo.wrapper import SumoClient, RetryStrategy
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary import config
@@ -29,6 +29,7 @@ def create_sumo_client(access_token: str) -> SumoClient:
         sumo_client = SumoClient(
             env=config.SUMO_ENV,
             token=access_token,
+            retry_strategy=RetryStrategy(stop_after=1),
             http_client=_FakeSyncHttpClient(),
             async_http_client=HTTPX_ASYNC_CLIENT_WRAPPER.client,
         )

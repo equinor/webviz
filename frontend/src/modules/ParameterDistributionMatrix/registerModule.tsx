@@ -2,6 +2,7 @@ import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import type { Interfaces } from "./interfaces";
+import { preview } from "./preview";
 
 export const MODULE_NAME = "ParameterDistributionMatrix";
 
@@ -13,4 +14,5 @@ ModuleRegistry.registerModule<Interfaces>({
     category: ModuleCategory.MAIN,
     devState: ModuleDevState.PROD,
     description,
+    preview,
 });

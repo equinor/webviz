@@ -40,17 +40,21 @@ class ParameterAccess:
         """Retrieve parameters for an ensemble"""
         timer = PerfTimer()
 
-        table_context = self._ensemble_context.filter(
-            aggregation="collection",
-            name="parameters",
-            tagname="all",
-        )
+        table_context = self._ensemble_context.filter(aggregation="collection", content="parameters")
         if await table_context.length_async() == 0:
             raise NoDataError(f"No parameter tables found {self._case_uuid, self._iteration_name}", Service.SUMO)
         if await table_context.length_async() > 1:
-            raise MultipleDataMatchesError(
-                f"Multiple parameter tables found {self._case_uuid,self._iteration_name}", Service.SUMO
-            )
+            # There should never be more than one parameter table, but we currently have cases that
+            # have tables both from new and old Sumo aggregation methods.
+            # As we need these cases to work, we need this temporary extra check.
+            # ISSUE #969
+            table_context = self._ensemble_context.filter(aggregation="collection", content="parameters", tagname="all")
+            if await table_context.length_async() == 0:
+                raise NoDataError(f"No parameter tables found {self._case_uuid, self._iteration_name}", Service.SUMO)
+            if await table_context.length_async() > 1:
+                raise MultipleDataMatchesError(
+                    f"Multiple parameter tables found {self._case_uuid,self._iteration_name}", Service.SUMO
+                )
 
         table = await table_context.getitem_async(0)
         byte_stream: BytesIO = await table.blob_async
