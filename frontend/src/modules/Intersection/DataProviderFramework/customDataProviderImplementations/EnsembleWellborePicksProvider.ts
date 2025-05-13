@@ -116,11 +116,6 @@ export class EnsembleWellborePicksProvider
     }: FetchDataParams<EnsembleWellborePicksSettings, EnsembleWellborePicksData>): Promise<EnsembleWellborePicksData> {
         const selectedWellborePicks = getSetting(Setting.WELLBORE_PICKS) ?? [];
 
-        // TODO:
-        // Settings: unique combination of interpreter + pick identifier
-        // Fetch wellbore picks in strat column and filter with selected interpreter and pick identifiers here
-        // The fetched data is cached bu tanstack query, rather than storing the picks in StoredData
-
         // ! Not actually any reason for this to be a promise.
         // No data to fetch, it's already available in the well-picks settings
         return new Promise((resolve) => {

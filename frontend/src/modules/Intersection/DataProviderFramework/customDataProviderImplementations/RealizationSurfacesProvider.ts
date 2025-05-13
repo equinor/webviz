@@ -107,7 +107,7 @@ export class RealizationSurfacesProvider
             const intersection = getLocalSetting(Setting.INTERSECTION);
 
             const isEnabled = intersection?.type === IntersectionType.WELLBORE;
-            return { enabled: isEnabled, visible: true };
+            return { enabled: isEnabled };
         });
 
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
