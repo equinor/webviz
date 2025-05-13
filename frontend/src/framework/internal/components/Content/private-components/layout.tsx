@@ -6,14 +6,15 @@ import type { LayoutBox } from "@framework/components/LayoutBox";
 import { LayoutBoxComponents, makeLayoutBoxes } from "@framework/components/LayoutBox";
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent } from "@framework/GuiMessageBroker";
-import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
+import { useModuleInstances, useModuleLayout } from "@framework/internal/hooks/workbenchHooks";
+import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { LayoutElement, Workbench } from "@framework/Workbench";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Rect2D, Size2D } from "@lib/utils/geometry";
 import { MANHATTAN_LENGTH, addMarginToRect, pointRelativeToDomRect, rectContainsPoint } from "@lib/utils/geometry";
+import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { Vec2 } from "@lib/utils/vec2";
 import { multiplyElementWiseVec2, point2Distance, scaleVec2NonUniform, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
-
 
 import { ViewWrapper } from "./ViewWrapper";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
@@ -36,7 +37,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const [draggedModuleInstanceId, setDraggedModuleInstanceId] = React.useState<string | null>(null);
     const [position, setPosition] = React.useState<Vec2>({ x: 0, y: 0 });
     const [pointer, setPointer] = React.useState<Vec2>({ x: -1, y: -1 });
-    const [layout, setLayout] = React.useState<LayoutElement[]>([]);
     const [tempLayoutBoxId, setTempLayoutBoxId] = React.useState<string | null>(null);
     const ref = React.useRef<HTMLDivElement>(null);
     const mainRef = React.useRef<HTMLDivElement>(null);
@@ -44,6 +44,11 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const layoutBoxRef = React.useRef<LayoutBox | null>(null);
     const moduleInstances = useModuleInstances(props.workbench);
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
+
+    // We use a temporary layout while dragging elements around
+    const [tempLayout, setTempLayout] = React.useState<LayoutElement[] | null>(null);
+    const trueLayout = useModuleLayout(props.workbench);
+    const layout = tempLayout ?? trueLayout;
 
     React.useEffect(() => {
         let pointerDownPoint: Vec2 | null = null;
@@ -55,7 +60,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         let dragging = false;
         let moduleInstanceId: string | null = null;
         let moduleName: string | null = null;
-        setLayout(props.workbench.getLayout());
         let originalLayout: LayoutElement[] = props.workbench.getLayout();
         let currentLayout: LayoutElement[] = props.workbench.getLayout();
         let originalLayoutBox = makeLayoutBoxes(originalLayout);
@@ -78,7 +82,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     currentLayout = preview.toLayout();
                     currentLayoutBox = preview;
                 }
-                setLayout(currentLayout);
+
+                setTempLayout(currentLayout);
                 layoutBoxRef.current = currentLayoutBox;
 
                 const draggedElementSize = calcSizeOfDraggedElement();
@@ -120,7 +125,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 currentLayoutBox = makeLayoutBoxes(currentLayout);
                 originalLayoutBox = currentLayoutBox;
                 layoutBoxRef.current = currentLayoutBox;
-                setLayout(currentLayout);
+                setTempLayout(null);
                 props.workbench.setLayout(currentLayout);
                 setPosition({ x: 0, y: 0 });
                 setPointer({ x: -1, y: -1 });
@@ -202,7 +207,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 if (!rectContainsPoint(addMarginToRect(rect, 25), vec2FromPointerEvent(e))) {
                     currentLayout = originalLayout;
                     currentLayoutBox = originalLayoutBox;
-                    setLayout(currentLayout);
+                    setTempLayout(null);
                     layoutBoxRef.current = currentLayoutBox;
                     if (delayTimer) {
                         clearTimeout(delayTimer);
@@ -226,7 +231,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 if (delayTimer) {
                     clearTimeout(delayTimer);
                 }
-                setLayout(originalLayout);
+                setTempLayout(null);
                 currentLayout = originalLayout;
                 pointerDownPoint = null;
                 pointerDownElementPosition = null;
@@ -238,7 +243,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 originalLayout = currentLayout;
                 currentLayoutBox = makeLayoutBoxes(currentLayout);
                 originalLayoutBox = currentLayoutBox;
-                setLayout(currentLayout);
                 isNewModule = false;
                 setTempLayoutBoxId(null);
                 removeDraggingEventListeners();
@@ -255,7 +259,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             props.workbench.removeModuleInstance(payload.moduleInstanceId);
             currentLayoutBox.removeLayoutElement(payload.moduleInstanceId);
             currentLayout = currentLayoutBox.toLayout();
-            setLayout(currentLayout);
             originalLayout = currentLayout;
             originalLayoutBox = currentLayoutBox;
             props.workbench.setLayout(currentLayout);
@@ -342,9 +345,75 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         );
     }
 
+    const maximizedLayouts = React.useMemo(() => layout.filter((l) => l.maximized), [layout]);
+    const minimizedLayouts = React.useMemo(() => layout.filter((l) => !l.maximized), [layout]);
+
+    // TODO: Support multiple expanded modules? Probably fits together with minimizing...
+    if (maximizedLayouts.length > 1) throw Error("Multiple expanded modules not supported");
+
+    const minimizedLayoutsHeight = convertRemToPixels(2);
+    const minimizedLayoutsMinWidth = convertRemToPixels(16);
+
+    let rows = minimizedLayouts.length;
+    let elementsPerRow = 1;
+    let elementsInLastRow = 1;
+
+    // Only worry about minimized module positions if we have more than 2 minimized
+    if (minimizedLayouts.length && layoutDivSize.width > minimizedLayoutsMinWidth * 2) {
+        elementsPerRow = Math.floor(layoutDivSize.width / minimizedLayoutsMinWidth);
+        elementsInLastRow = minimizedLayouts.length % elementsPerRow || elementsPerRow;
+        rows = Math.ceil(minimizedLayouts.length / elementsPerRow);
+    }
+
+    function computeModuleLayoutProps(moduleInstance: ModuleInstance<any>) {
+        const moduleId = moduleInstance.getId();
+        const layoutElement = layout.find((element) => element.moduleInstanceId === moduleId);
+
+        if (!layoutElement) return null;
+
+        // Standard tiling layout.
+        // ! Always uses the tiled layout if we're adjusting the layout
+        if (!maximizedLayouts.length || draggedModuleInstanceId) {
+            const rect = convertLayoutRectToRealRect(layoutElement, layoutDivSize);
+
+            return { width: rect.width, height: rect.height, x: rect.x, y: rect.y };
+        }
+
+        // Maximized view. One module takes up all the space, other ones are minimized
+        // Positions is computed, so old tile-layout is stored
+        if (layoutElement?.maximized) {
+            return {
+                x: 0,
+                y: minimizedLayoutsHeight * rows,
+                height: layoutDivSize.height - minimizedLayoutsHeight * rows,
+                width: layoutDivSize.width,
+                isMaximized: true,
+            };
+        } else {
+            const idx = minimizedLayouts.findIndex((l) => l.moduleInstanceId === moduleId);
+
+            const col = idx % elementsPerRow;
+            const row = Math.floor(idx / elementsPerRow);
+            const isLastRow = idx >= minimizedLayouts.length - elementsInLastRow;
+
+            const adjustedWidth = layoutDivSize.width / elementsPerRow;
+            const lastRowAdjustedWidth = layoutDivSize.width / elementsInLastRow;
+
+            const width = isLastRow ? lastRowAdjustedWidth : adjustedWidth;
+
+            return {
+                x: col * width,
+                y: row * minimizedLayoutsHeight,
+                height: minimizedLayoutsHeight,
+                width,
+                isMinimized: true,
+            };
+        }
+    }
+
     return (
-        <div ref={mainRef} className="relative flex h-full w-full">
-            <div ref={ref} className="h-full grow">
+        <div ref={mainRef} className="flex flex-col h-full w-full max-w-full">
+            <div ref={ref} className="relative grow">
                 {layoutBoxRef.current && draggedModuleInstanceId !== null && (
                     <LayoutBoxComponents
                         active={draggedModuleInstanceId}
@@ -354,26 +423,23 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                         pointer={pointer}
                     />
                 )}
+
                 {moduleInstances.map((instance) => {
-                    const layoutElement = layout.find((element) => element.moduleInstanceId === instance.getId());
-                    if (!layoutElement) {
-                        return null;
-                    }
-                    const rect = convertLayoutRectToRealRect(layoutElement, layoutDivSize);
+                    const layoutProps = computeModuleLayoutProps(instance);
                     const isDragged = draggedModuleInstanceId === instance.getId();
+
+                    if (!layoutProps) return null;
+
                     return (
                         <ViewWrapper
                             key={instance.getId()}
                             moduleInstance={instance}
                             workbench={props.workbench}
                             isActive={props.activeModuleInstanceId === instance.getId()}
-                            width={rect.width}
-                            height={rect.height}
-                            x={rect.x}
-                            y={rect.y}
                             isDragged={isDragged}
                             dragPosition={position}
                             changingLayout={draggedModuleInstanceId !== null}
+                            {...layoutProps}
                         />
                     );
                 })}

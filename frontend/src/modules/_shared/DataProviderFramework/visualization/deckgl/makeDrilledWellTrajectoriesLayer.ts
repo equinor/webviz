@@ -1,14 +1,25 @@
 import type { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
-import type { Feature, GeoJsonProperties, GeometryCollection, LineString, Point } from "geojson";
+import { LabelOrientation } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
+import type {
+    WellFeature as BaseWellFeature,
+    GeoJsonWellProperties as BaseWellProperties,
+} from "@webviz/subsurface-viewer/dist/layers/wells/types";
+import type { Feature, LineString, Point } from "geojson";
 
 import type { WellboreTrajectory_api } from "@api";
 import { AdvancedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdvancedWellsLayer";
 
 import type { TransformerArgs } from "../VisualizationAssembler";
 
-function wellTrajectoryToGeojson(
-    wellTrajectory: WellboreTrajectory_api,
-): Feature<GeometryCollection, GeoJsonProperties> {
+export type GeoWellProperties = BaseWellProperties & {
+    uuid: string;
+    uwi: string;
+    lineWidth: number;
+    wellHeadSize: number;
+};
+export type GeoWellFeature = BaseWellFeature & { properties: GeoWellProperties };
+
+function wellTrajectoryToGeojson(wellTrajectory: WellboreTrajectory_api): GeoWellFeature {
     const point: Point = {
         type: "Point",
         coordinates: [wellTrajectory.eastingArr[0], wellTrajectory.northingArr[0], -wellTrajectory.tvdMslArr[0]],
@@ -19,11 +30,10 @@ function wellTrajectoryToGeojson(
         coordinates: zipCoords(wellTrajectory.eastingArr, wellTrajectory.northingArr, wellTrajectory.tvdMslArr),
     };
 
-    const color = [100, 100, 100];
     const lineWidth = 2;
     const wellHeadSize = 1;
 
-    const geometryCollection: Feature<GeometryCollection, GeoJsonProperties> = {
+    const geometryCollection: GeoWellFeature = {
         type: "Feature",
         geometry: {
             type: "GeometryCollection",
@@ -33,7 +43,7 @@ function wellTrajectoryToGeojson(
             uuid: wellTrajectory.wellboreUuid,
             name: wellTrajectory.uniqueWellboreIdentifier,
             uwi: wellTrajectory.uniqueWellboreIdentifier,
-            color,
+            color: [100, 100, 100],
             md: [wellTrajectory.mdArr],
             lineWidth,
             wellHeadSize,
@@ -96,13 +106,17 @@ export function makeDrilledWellTrajectoriesLayer({
         name,
         data: {
             type: "FeatureCollection",
-            unit: "m",
             features: wellLayerDataFeatures,
         },
         refine: false,
         lineStyle: { width: getLineStyleWidth, color: getColor },
         wellHeadStyle: { size: getWellHeadStyleWidth, color: getColor },
-        wellNameVisible: true,
+        wellLabel: {
+            getSize: 9,
+            background: true,
+            autoPosition: true,
+            orientation: LabelOrientation.HORIZONTAL,
+        },
         pickable: true,
         ZIncreasingDownwards: false,
         outline: false,
