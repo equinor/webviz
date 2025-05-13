@@ -284,6 +284,9 @@ async def get_wellbore_log_curve_headers(
     if schemas.WellLogCurveSourceEnum.SMDA_STRATIGRAPHY in sources:
         curve_headers += await _get_headers_from_smda_stratigraghpy_async(authenticated_user, wellbore_uuid)
 
+    if schemas.WellLogCurveSourceEnum.SMDA_SURVEY in sources:
+        curve_headers += await _get_headers_from_smda_survey_async(authenticated_user, wellbore_uuid)
+
     return curve_headers
 
 
@@ -324,6 +327,22 @@ async def _get_headers_from_smda_stratigraghpy_async(
         strat_columns = []
 
     return [converters.convert_strat_column_to_well_log_header(col) for col in strat_columns if col.strat_column_type]
+
+
+async def _get_headers_from_smda_survey_async(
+    authenticated_user: AuthenticatedUser, wellbore_uuid: str
+) -> list[schemas.WellboreLogCurveHeader]:
+    survey_access = SmdaAccess(authenticated_user.get_smda_access_token())
+
+    try:
+        survey_headers = await survey_access.get_survey_headers_for_wellbore_async(wellbore_uuid)
+    except NoDataError:
+        return []
+
+    # Unsure if there can ever be more than one; will make more robust handling when implementing the data provider framework, but for now we just take the first (most recent one)
+    log_headers = converters.convert_survey_header_to_well_log_headers(survey_headers[0])
+
+    return log_headers
 
 
 @router.get("/log_curve_data/")
@@ -379,5 +398,22 @@ async def get_log_curve_data(
         wellbore_strat_units = await smda_access.get_stratigraphy_for_wellbore_and_column_async(wellbore_uuid, log_name)
 
         return converters.convert_strat_unit_data_to_log_curve_schema(wellbore_strat_units)
+
+    if source == schemas.WellLogCurveSourceEnum.SMDA_SURVEY:
+        # Here, the log name is a single survey identifier, and the curve name is **either AZI, INCL, or DSL**, which are within that sample
+        smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
+
+        # Header needed again to get curve units, and the correct samples (incase there's multiple surveys)
+        survey_headers = await smda_access.get_survey_headers_for_wellbore_async(wellbore_uuid)
+        # As mentioned in the header endpoint, we assume there's only one
+        survey_header = survey_headers[0]
+        if not survey_header:
+            raise ValueError(f"Could not find survey header for {log_name}")
+
+        survey_samples = await smda_access.get_survey_samples_for_wellbore_async(
+            wellbore_uuid, survey_header.survey_identifier
+        )
+
+        return converters.convert_survey_sample_to_log_curve_schemas(survey_samples, survey_header, curve_name)
 
     raise ValueError(f"Unknown source {source}")

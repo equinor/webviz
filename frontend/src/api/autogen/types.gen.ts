@@ -1073,6 +1073,7 @@ export enum WellLogCurveSourceEnum_api {
     SSDL_WELL_LOG = "ssdl.well_log",
     SMDA_GEOLOGY = "smda.geology",
     SMDA_STRATIGRAPHY = "smda.stratigraphy",
+    SMDA_SURVEY = "smda.survey",
 }
 
 export enum WellLogCurveTypeEnum_api {

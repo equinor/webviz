@@ -16,6 +16,8 @@ from .types import (
     StratigraphicSurface,
     StratigraphicColumn,
     WellboreStratigraphicUnit,
+    WellboreSurveyHeader,
+    WellboreSurveySample,
 )
 from .utils.queries import data_model_to_projection_param
 from .stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
@@ -124,6 +126,39 @@ class SmdaAccess:
             )
 
         return [WellboreStratigraphicUnit(**result) for result in results]
+
+    async def get_survey_headers_for_wellbore_async(self, wellbore_uuid: str) -> list[WellboreSurveyHeader]:
+        """
+        Fetches all survey headers for a given wellbore
+        """
+        params = {
+            "wellbore_uuid": wellbore_uuid,
+            "_projection": data_model_to_projection_param(WellboreSurveyHeader),
+            "_sort": "survey_date",
+            "_order": "desc",
+        }
+
+        results = await self._smda_get_request_async(endpoint=SmdaEndpoints.WELLBORE_SURVEY_HEADERS, params=params)
+
+        return [WellboreSurveyHeader(**result) for result in results]
+
+    async def get_survey_samples_for_wellbore_async(
+        self, wellbore_uuid: str, survey_identifier: str
+    ) -> list[WellboreSurveySample]:
+        """
+        Fetches all survey sample data for a survey on a wellbore
+        """
+
+        params = {
+            "wellbore_uuid": wellbore_uuid,
+            "survey_identifier": survey_identifier,
+            "_projection": data_model_to_projection_param(WellboreSurveySample),
+            "_sort": "md",
+        }
+
+        results = await self._smda_get_request_async(endpoint=SmdaEndpoints.WELLBORE_SURVEY_SAMPLES, params=params)
+
+        return [WellboreSurveySample(**result) for result in results]
 
     async def get_wellbore_headers_async(self, field_identifier: str) -> List[WellboreHeader]:
         """
