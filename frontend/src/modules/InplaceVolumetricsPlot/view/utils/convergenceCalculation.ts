@@ -1,4 +1,4 @@
-import { computeQuantile } from "@modules/_shared/statistics";
+import { computeQuantile } from "@modules/_shared/utils/math/statistics";
 
 export type RealizationAndResult = {
     realization: number;

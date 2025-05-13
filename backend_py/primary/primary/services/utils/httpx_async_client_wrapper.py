@@ -28,8 +28,11 @@ class HTTPXAsyncClientWrapper:
     def start(self) -> None:
         """Instantiate the client. Call from the FastAPI startup hook."""
         if self._async_client is None:
-            self._async_client = httpx.AsyncClient()
-            LOGGER.info(f"httpx AsyncClient instantiated. Id {id(self._async_client)}")
+            # Try and increase the maximum number of concurrent connections and the max number of
+            # keep-alive connections from their defualts of 100 and 20 respectively.
+            limits = httpx.Limits(max_connections=300, max_keepalive_connections=100)
+            self._async_client = httpx.AsyncClient(limits=limits)
+            LOGGER.info(f"httpx AsyncClient instantiated: id={id(self._async_client)}, {limits=}")
 
     async def stop_async(self) -> None:
         """Gracefully shutdown. Call from FastAPI shutdown hook."""

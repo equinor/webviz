@@ -16,6 +16,8 @@ export function curveSourceToText(source: WellLogCurveSourceEnum_api) {
             return "Stratigraphy";
         case WellLogCurveSourceEnum_api.SSDL_WELL_LOG:
             return "Well-log";
+        case WellLogCurveSourceEnum_api.SMDA_SURVEY:
+            return "Well Geometry";
     }
 }
 

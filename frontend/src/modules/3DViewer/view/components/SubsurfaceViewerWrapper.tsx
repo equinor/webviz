@@ -4,7 +4,7 @@ import type { Layer, PickingInfo } from "@deck.gl/core";
 import { ColumnLayer, SolidPolygonLayer } from "@deck.gl/layers";
 import { Add, FilterCenterFocus, Polyline, Remove } from "@mui/icons-material";
 import type { LayerPickInfo, ViewStateType } from "@webviz/subsurface-viewer";
-import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
+import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 import type { MapMouseEvent } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 import type { Feature } from "geojson";
 import { isEqual } from "lodash";
@@ -25,7 +25,6 @@ import { createContinuousColorScaleForMap } from "../utils/colorTables";
 import { PolylineEditingPanel } from "./PolylineEditingPanel";
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 
-
 export type BoundingBox3D = {
     xmin: number;
     ymin: number;
@@ -44,6 +43,7 @@ export type BoundingBox2D = {
 
 export type SubsurfaceViewerWrapperProps = {
     ref?: React.ForwardedRef<HTMLDivElement>;
+    fieldId: string;
     boundingBox: BoundingBox2D | BoundingBox3D;
     layers: Layer[];
     show3D?: boolean;
@@ -370,6 +370,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
             if (props.onAddIntersectionPolyline && currentlyEditedPolyline.length > 1) {
                 props.onAddIntersectionPolyline({
                     name,
+                    fieldId: props.fieldId,
                     path: currentlyEditedPolyline,
                 });
             }
