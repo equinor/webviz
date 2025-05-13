@@ -2,6 +2,8 @@ import { isEqual } from "lodash";
 
 import { getSeismicCubeMetaListOptions, postGetSeismicFenceOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
+import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
+import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
 import { createSectionWiseResampledPolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineUtils";
 import type { SeismicFenceData_trans } from "@modules/_shared/Intersection/seismicIntersectionTransform";
@@ -73,9 +75,23 @@ export class IntersectionRealizationSeismicProvider
     }
 
     getDefaultSettingsValues() {
+        const defaultColorPalette =
+            defaultContinuousDivergingColorPalettes.find((elm) => elm.getId() === "red-to-blue") ??
+            defaultContinuousDivergingColorPalettes[0];
+        const defaultColorScale = new ColorScale({
+            colorPalette: defaultColorPalette,
+            gradientType: ColorScaleGradientType.Diverging,
+            type: ColorScaleType.Continuous,
+            steps: 6,
+        });
+
         return {
             [Setting.WELLBORE_EXTENSION_LENGTH]: 500.0,
             [Setting.SAMPLE_RESOLUTION_IN_METERS]: 1.0,
+            [Setting.COLOR_SCALE]: {
+                colorScale: defaultColorScale,
+                areBoundariesUserDefined: false,
+            },
         };
     }
 
@@ -150,7 +166,7 @@ export class IntersectionRealizationSeismicProvider
             const intersection = getLocalSetting(Setting.INTERSECTION);
 
             const isEnabled = intersection?.type === IntersectionType.WELLBORE;
-            return { enabled: isEnabled, visible: true };
+            return { enabled: isEnabled };
         });
 
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
