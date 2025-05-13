@@ -5,7 +5,6 @@ import { getDrilledWellboreHeadersOptions, getWellTrajectoriesOptions } from "@a
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-
 import type {
     CustomDataProviderImplementation,
     FetchDataParams,

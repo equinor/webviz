@@ -3,7 +3,6 @@ import React from "react";
 import { ColorSelect } from "@lib/components/ColorSelect";
 import { SortableListGroup } from "@lib/components/SortableList";
 
-
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import type { ActionGroup } from "../../Actions";
 import { Actions } from "../../Actions";
@@ -11,7 +10,7 @@ import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import type { SettingManager } from "../SettingManager/SettingManager";
-import { SettingComponent } from "../SettingManager/SettingManagerComponent";
+import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
@@ -49,7 +48,9 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
         if (!manager) {
             return null;
         }
-        return <SettingComponent key={setting.getId()} setting={setting} manager={manager} sharedSetting={false} />;
+        return (
+            <SettingManagerComponent key={setting.getId()} setting={setting} manager={manager} sharedSetting={false} />
+        );
     }
 
     function makeSettings(settings: SettingManager<any>[]): React.ReactNode[] {

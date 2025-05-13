@@ -16,7 +16,6 @@ import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataT
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
-
 const realizationSurfaceSettings = [
     Setting.ENSEMBLE,
     Setting.REALIZATION,
@@ -247,9 +246,7 @@ export class RealizationSurfaceProvider
         registerQueryKey(surfaceDataOptions.queryKey);
 
         const promise = queryClient
-            .fetchQuery(
-                surfaceDataOptions,
-            )
+            .fetchQuery(surfaceDataOptions)
             .then((data) => ({ format: this._dataFormat, surfaceData: transformSurfaceData(data) }));
 
         return promise as Promise<RealizationSurfaceData>;

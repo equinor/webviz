@@ -6,6 +6,7 @@ import jotaiDebugLabel from "jotai/babel/plugin-debug-label";
 import jotaiReactRefresh from "jotai/babel/plugin-react-refresh";
 import { defineConfig } from "vite";
 import vitePluginChecker from "vite-plugin-checker";
+import glsl from "vite-plugin-glsl";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 import aliases from "./aliases.json";
@@ -31,12 +32,23 @@ export default defineConfig(({ mode }) => {
     return {
         plugins: [
             tailwindPlugin(),
+            {
+                name: "isolation",
+                configureServer(server) {
+                    server.middlewares.use((_req, res, next) => {
+                        res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+                        res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+                        next();
+                    });
+                },
+            },
             react({
                 babel: {
                     plugins: [jotaiDebugLabel, jotaiReactRefresh],
                 },
             }),
             vitePluginChecker({ typescript: true }),
+            glsl(),
             // Polyfill is only needed to solve an import issue in a nested dep in the subsurface-viewer component
             // See webviz-subsurface-components issue #2540 for details.
             nodePolyfills({

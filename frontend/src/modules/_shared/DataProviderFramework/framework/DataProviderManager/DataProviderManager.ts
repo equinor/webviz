@@ -12,7 +12,6 @@ import {
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorPaletteType } from "@framework/WorkbenchSettings";
 
-
 import type { PublishSubscribe } from "../../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../../utils/PublishSubscribeDelegate";
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
@@ -24,26 +23,22 @@ import { type SerializedDataProviderManager, SerializedType } from "../../interf
 export enum DataProviderManagerTopic {
     ITEMS = "ITEMS",
     SETTINGS_CHANGED = "SETTINGS_CHANGED",
-    AVAILABLE_SETTINGS_CHANGED = "AVAILABLE_SETTINGS_CHANGED",
     DATA_REVISION = "DATA_REVISION",
     GLOBAL_SETTINGS = "GLOBAL_SETTINGS",
-    SHARED_SETTINGS_CHANGED = "SHARED_SETTINGS_CHANGED",
 }
 
 export type DataProviderManagerTopicPayload = {
     [DataProviderManagerTopic.ITEMS]: Item[];
     [DataProviderManagerTopic.SETTINGS_CHANGED]: void;
-    [DataProviderManagerTopic.AVAILABLE_SETTINGS_CHANGED]: void;
     [DataProviderManagerTopic.DATA_REVISION]: number;
     [DataProviderManagerTopic.GLOBAL_SETTINGS]: GlobalSettings;
-    [DataProviderManagerTopic.SHARED_SETTINGS_CHANGED]: void;
 };
 
 export type GlobalSettings = {
     fieldId: string | null;
     ensembles: readonly RegularEnsemble[];
     realizationFilterFunction: EnsembleRealizationFilterFunction;
-    intersectionPolylines: IntersectionPolyline[];
+    intersectionPolylines: readonly IntersectionPolyline[];
 };
 
 /*
@@ -164,17 +159,11 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             if (topic === DataProviderManagerTopic.SETTINGS_CHANGED) {
                 return;
             }
-            if (topic === DataProviderManagerTopic.AVAILABLE_SETTINGS_CHANGED) {
-                return;
-            }
             if (topic === DataProviderManagerTopic.DATA_REVISION) {
                 return this._dataRevision;
             }
             if (topic === DataProviderManagerTopic.GLOBAL_SETTINGS) {
                 return this._globalSettings;
-            }
-            if (topic === DataProviderManagerTopic.SHARED_SETTINGS_CHANGED) {
-                return;
             }
         };
 
@@ -186,6 +175,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     }
 
     beforeDestroy() {
+        this._groupDelegate.beforeDestroy();
         this._subscriptionsHandler.unsubscribeAll();
     }
 
@@ -198,6 +188,10 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         };
     }
 
+    isDeserializing(): boolean {
+        return this._deserializing;
+    }
+
     deserializeState(serializedState: SerializedDataProviderManager): void {
         this._deserializing = true;
         this._itemDelegate.deserializeState(serializedState);
@@ -205,7 +199,6 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         this._deserializing = false;
 
         this.publishTopic(DataProviderManagerTopic.ITEMS);
-        this.publishTopic(DataProviderManagerTopic.GLOBAL_SETTINGS);
     }
 
     makeGroupColor(): string {

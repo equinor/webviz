@@ -1,4 +1,3 @@
-
 import type { Rgb } from "culori";
 import { parse } from "culori";
 
@@ -27,3 +26,4 @@ export function makeColorMapFunctionFromColorScale(
         return [color.r * 255, color.g * 255, color.b * 255];
     };
 }
+0;

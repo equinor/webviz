@@ -55,7 +55,7 @@ export type SubsurfaceViewerWrapperProps = {
     onIntersectionPolylineEditCancel?: () => void;
     onVerticalScaleChange?: (verticalScale: number) => void;
     intersectionPolyline?: IntersectionPolyline;
-    intersectionPolylines?: IntersectionPolyline[];
+    intersectionPolylines?: readonly IntersectionPolyline[];
 };
 
 type IntersectionZValues = {
@@ -372,6 +372,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                     name,
                     fieldId: props.fieldId,
                     path: currentlyEditedPolyline,
+                    color: [255, 0, 0],
                 });
             }
             handlePolylineEditingCancel();

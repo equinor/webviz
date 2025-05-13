@@ -22,7 +22,6 @@ import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataT
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
-
 const statisicalSurfaceSettings = [
     Setting.ENSEMBLE,
     Setting.STATISTIC_FUNCTION,
@@ -65,7 +64,10 @@ export class StatisticalSurfaceProvider
         return "Statistical Surface";
     }
 
-    doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
+    doSettingsChangesRequireDataRefetch(
+        prevSettings: SettingsWithTypes | null,
+        newSettings: SettingsWithTypes,
+    ): boolean {
         return !isEqual(prevSettings, newSettings);
     }
 
