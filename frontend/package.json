@@ -19,9 +19,12 @@
         "test:ct": "playwright test -c playwright.ct.config.ts",
         "test:ct:ui": "playwright test -c playwright.ct.config.ts --ui"
     },
+    "-- Comments --": [
+        "vite-plugin-node-polyfills is only installed as a workaround for an import issue in the map module. See webviz-subsurface-components issue #2540 for details"
+    ],
     "dependencies": {
-        "@equinor/eds-core-react": "^0.42.5",
-        "@equinor/esv-intersection": "^3.0.10",
+        "@equinor/eds-core-react": "^0.45.1",
+        "@equinor/esv-intersection": "^3.1.2",
         "@headlessui/react": "^1.7.8",
         "@hey-api/client-axios": "^0.4.0",
         "@mui/base": "^5.0.0-beta.3",
@@ -29,11 +32,10 @@
         "@tanstack/query-core": "^5.62.16",
         "@tanstack/react-query": "^5.63",
         "@tanstack/react-query-devtools": "^5.63",
-        "@types/geojson": "^7946.0.14",
-        "@webviz/group-tree-plot": "^1.4.0",
-        "@webviz/subsurface-viewer": "^1.1.1",
-        "@webviz/well-completions-plot": "^1.5.11",
-        "@webviz/well-log-viewer": "^2.1.0",
+        "@webviz/group-tree-plot": "^1.5.3",
+        "@webviz/subsurface-viewer": "^1.11.1",
+        "@webviz/well-completions-plot": "^1.7.3",
+        "@webviz/well-log-viewer": "^2.4.4",
         "animate.css": "^4.1.1",
         "axios": "^1.8.3",
         "culori": "^3.2.0",
@@ -49,6 +51,7 @@
         "react-plotly.js": "^2.6.0",
         "simplify-js": "^1.2.4",
         "uuid": "^9.0.0",
+        "vite-plugin-node-polyfills": "^0.23.0",
         "wonka": "^6.3.4"
     },
     "devDependencies": {
@@ -57,13 +60,14 @@
         "@playwright/test": "^1.50.1",
         "@tailwindcss/vite": "^4.0.9",
         "@types/culori": "^2.0.0",
+        "@types/geojson": "^7946.0.16",
         "@types/lodash-es": "^4.17.9",
         "@types/node": "^18.11.18",
         "@types/react": "^18.2.21",
         "@types/react-dom": "^18.2.7",
         "@types/react-plotly.js": "^2.6.0",
         "@types/uuid": "^9.0.0",
-        "@vitejs/plugin-react": "^4.3.4",
+        "@vitejs/plugin-react": "^4.4.1",
         "@vitest/coverage-istanbul": "^3.0.7",
         "dependency-cruiser": "^14.0.0",
         "eslint": "^9.15.0",
@@ -79,7 +83,7 @@
         "tailwindcss": "^4.0.9",
         "typescript": "^5.3.3",
         "typescript-eslint": "^8.25.0",
-        "vite": "^6.2.3",
+        "vite": "^6.3.5",
         "vite-plugin-checker": "^0.9.0",
         "vitest": "^3.0.7"
     }
