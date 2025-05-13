@@ -32,6 +32,14 @@ export class ExternalSettingController<
         const dataProviderManager = parentItem.getItemDelegate().getDataProviderManager();
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "data-provider-manager",
+            dataProviderManager
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE)(() => {
+                this.unregisterAllControlledSettings();
+            }),
+        );
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "data-provider-manager",
             dataProviderManager.getPublishSubscribeDelegate().makeSubscriberFunction(DataProviderManagerTopic.ITEMS)(
                 () => {
                     this.updateControlledSettings();
@@ -60,8 +68,15 @@ export class ExternalSettingController<
 
     private findControlledSettingsRecursively(
         groupDelegate: GroupDelegate,
+        thisItem?: Item,
     ): SettingManager<TSetting, TValue, TCategory>[] {
-        const children = groupDelegate.getChildren();
+        let children = groupDelegate.getChildren();
+        if (thisItem) {
+            const position = children.indexOf(thisItem);
+            if (position !== -1) {
+                children = children.slice(position + 1, children.length);
+            }
+        }
         const foundSettings: SettingManager<TSetting, TValue, TCategory>[] = [];
 
         for (const child of children) {
@@ -77,8 +92,17 @@ export class ExternalSettingController<
                 const setting = child.getSharedSettingsDelegate().getWrappedSettings()[this._setting.getType()];
                 if (setting) {
                     foundSettings.push(setting);
+                    break;
                 }
             } else if (child instanceof Group) {
+                const sharedSettingsDelegate = child.getSharedSettingsDelegate();
+                if (sharedSettingsDelegate) {
+                    const setting = sharedSettingsDelegate.getWrappedSettings()[this._setting.getType()];
+                    if (setting) {
+                        foundSettings.push(setting);
+                        break;
+                    }
+                }
                 foundSettings.push(...this.findControlledSettingsRecursively(child.getGroupDelegate()));
             }
         }
@@ -87,10 +111,6 @@ export class ExternalSettingController<
     }
 
     private updateControlledSettings(): void {
-        const oldControlledSettings = new Map(this._controlledSettings);
-        this._controlledSettings.clear();
-        this._availableValuesMap.clear();
-
         let parentGroup = this._parentItem.getItemDelegate().getParentGroup();
         if (this._parentItem instanceof Group) {
             parentGroup = this._parentItem.getGroupDelegate();
@@ -100,7 +120,7 @@ export class ExternalSettingController<
             return;
         }
 
-        const settings = this.findControlledSettingsRecursively(parentGroup);
+        const settings = this.findControlledSettingsRecursively(parentGroup, this._parentItem);
         for (const setting of settings) {
             if (setting.isExternallyControlled()) {
                 continue;
@@ -111,36 +131,6 @@ export class ExternalSettingController<
                 setting.getAvailableValues() as AvailableValuesType<TSetting>,
             );
             setting.registerExternalSettingController(this);
-        }
-
-        /*
-
-        const sharedSettingsProviders = parentGroup.getDescendantItems(
-            (item) => item instanceof DataProvider || item instanceof SharedSetting || item instanceof Group,
-        );
-
-        for (const provider of sharedSettingsProviders) {
-            if (provider instanceof DataProvider) {
-                const setting = provider.getSettingsContextDelegate().getSettings()[this._setting.getType()];
-                if (setting) {
-                    if (setting.isExternallyControlled()) {
-                        continue;
-                    }
-                    this._controlledSettings.set(setting.getId(), setting);
-                    this._availableValuesMap.set(setting.getId(), setting.getAvailableValues());
-                    setting.registerExternalSettingController(this);
-                }
-            }
-        }
-        */
-
-        for (const settingId of oldControlledSettings.keys()) {
-            if (!this._controlledSettings.has(settingId)) {
-                const setting = oldControlledSettings.get(settingId);
-                if (setting) {
-                    setting.unregisterExternalSettingController();
-                }
-            }
         }
 
         if (this._controlledSettings.size === 0) {

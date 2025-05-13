@@ -21,6 +21,7 @@ import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { type SerializedDataProviderManager, SerializedType } from "../../interfacesAndTypes/serialization";
 
 export enum DataProviderManagerTopic {
+    ITEMS_ABOUT_TO_CHANGE = "ITEMS_ABOUT_TO_CHANGE",
     ITEMS = "ITEMS",
     SETTINGS_CHANGED = "SETTINGS_CHANGED",
     DATA_REVISION = "DATA_REVISION",
@@ -29,6 +30,7 @@ export enum DataProviderManagerTopic {
 
 export type DataProviderManagerTopicPayload = {
     [DataProviderManagerTopic.ITEMS]: Item[];
+    [DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE]: void;
     [DataProviderManagerTopic.SETTINGS_CHANGED]: void;
     [DataProviderManagerTopic.DATA_REVISION]: number;
     [DataProviderManagerTopic.GLOBAL_SETTINGS]: GlobalSettings;
@@ -97,6 +99,14 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             "groupDelegate",
             this._groupDelegate
                 .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER_ABOUT_TO_CHANGE)(() => {
+                this.publishTopic(DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE);
+            }),
+        );
+        this._subscriptionsHandler.registerUnsubscribeFunction(
+            "groupDelegate",
+            this._groupDelegate
+                .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(() => {
                 this.publishTopic(DataProviderManagerTopic.DATA_REVISION);
                 this.publishTopic(DataProviderManagerTopic.ITEMS);
@@ -160,6 +170,9 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         const snapshotGetter = (): any => {
             if (topic === DataProviderManagerTopic.ITEMS) {
                 return this._groupDelegate.getChildren();
+            }
+            if (topic === DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE) {
+                return;
             }
             if (topic === DataProviderManagerTopic.SETTINGS_CHANGED) {
                 return;
