@@ -9,7 +9,6 @@ import removePathIcon from "@assets/remove_path.svg";
 
 import { type PublishSubscribe, PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
-
 import {
     AllowHoveringOf,
     EditablePolylineLayer,

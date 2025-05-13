@@ -6,9 +6,8 @@ import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { converter } from "culori";
 
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
-import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
+import { IntersectionPolylinesEvent, IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
-
 
 import { DeckGlInstanceManager, DeckGlInstanceManagerTopic } from "../utils/DeckGlInstanceManager";
 import { type Polyline, PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";
@@ -17,11 +16,19 @@ import { ContextMenu } from "./ContextMenu";
 import { ReadoutWrapper, type ReadoutWrapperProps } from "./ReadoutWrapper";
 import { Toolbar } from "./Toolbar";
 
-
 export type InteractionWrapperProps = Omit<
     ReadoutWrapperProps,
     "deckGlManager" | "triggerHome" | "verticalScale" | "deckGlRef"
->;
+> & {
+    fieldId: string;
+};
+
+function convertPolylines(polylines: Polyline[], fieldId: string): IntersectionPolyline[] {
+    return polylines.map((polyline) => ({
+        ...polyline,
+        fieldId,
+    }));
+}
 
 export function InteractionWrapper(props: InteractionWrapperProps): React.ReactNode {
     const deckGlRef = React.useRef<DeckGLRef>(null);
@@ -67,7 +74,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(PolylinesPluginTopic.EDITING_POLYLINE_ID)(() => {
                 if (polylinesPlugin.getCurrentEditingPolylineId() === null) {
-                    intersectionPolylines.setPolylines(polylinesPlugin.getPolylines());
+                    intersectionPolylines.setPolylines(convertPolylines(polylinesPlugin.getPolylines(), props.fieldId));
                 }
             });
 

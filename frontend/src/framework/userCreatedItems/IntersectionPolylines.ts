@@ -60,7 +60,7 @@ export class IntersectionPolylines implements UserCreatedItemSet {
         if (isEqual(this._polylines, polylines)) {
             return;
         }
-        this._polylines = polylines;
+        this._polylines = [...polylines];
         this.notifySubscribers(IntersectionPolylinesEvent.CHANGE);
     }
 
