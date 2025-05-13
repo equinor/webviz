@@ -42,7 +42,7 @@ export class WellborePicksProvider
 
             return queryClient.fetchQuery({
                 ...getWellborePicksInStratColumnOptions({
-                    query: { wellbore_uuid: wellboreUuid, strat_column: stratColumn },
+                    query: { wellbore_uuid: wellboreUuid, strat_column_identifier: stratColumn },
                     signal: abortSignal,
                 }),
             });
