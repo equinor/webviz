@@ -2,8 +2,8 @@ import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dat
 
 import { CustomDataProviderType } from "./dataProviderTypes";
 import { RealizationSeismicCrosslineProvider } from "./RealizationSeismicCrosslineProvider";
-import { RealizationSeismicInlineProvider } from "./RealizationSeismicInlineProvider";
 import { RealizationSeismicDepthSliceProvider } from "./RealizationSeismicDepthProvider";
+import { RealizationSeismicInlineProvider } from "./RealizationSeismicInlineProvider";
 
 DataProviderRegistry.registerDataProvider(
     CustomDataProviderType.REALIZATION_SEISMIC_CROSSLINE,
