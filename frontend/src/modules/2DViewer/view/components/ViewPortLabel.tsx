@@ -1,9 +1,9 @@
 import type React from "react";
 
-import type { ViewPortTypeExt } from "./SubsurfaceViewerWrapper";
+import type { ViewPortTypeExtended } from "./SubsurfaceViewerWrapper";
 
 export type ViewPortLabelProps = {
-    viewPort: ViewPortTypeExt;
+    viewPort: ViewPortTypeExtended;
 };
 
 export function ViewPortLabel(props: ViewPortLabelProps): React.ReactNode {

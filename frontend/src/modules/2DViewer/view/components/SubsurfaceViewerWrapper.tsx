@@ -2,9 +2,9 @@ import React from "react";
 
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
 import { View as DeckGlView } from "@deck.gl/core";
+import type { DeckGLRef } from "@deck.gl/react";
 import type { BoundingBox2D, MapMouseEvent, ViewStateType, ViewportType, ViewsType } from "@webviz/subsurface-viewer";
 import { useMultiViewCursorTracking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewCursorTracking";
-import type { UseMultiViewPickingProps } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking";
 import { useMultiViewPicking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -17,34 +17,31 @@ import { Toolbar } from "./Toolbar";
 import { ViewPortLabel } from "./ViewPortLabel";
 
 export type SubsurfaceViewerWrapperProps = {
-    views: ViewsTypeExt;
+    views: ViewsTypeExtended;
     layers: DeckGlLayer[];
     bounds?: BoundingBox2D;
 };
 
-export type ViewPortTypeExt = ViewportType & {
+export interface ViewPortTypeExtended extends ViewportType {
     color: string | null;
     colorScales: ColorScaleWithId[];
-};
-
-export interface ViewsTypeExt extends ViewsType {
-    viewports: ViewPortTypeExt[];
 }
 
-// Type is not exported from subsurface-components
-type SubsurfaceDeckRef = UseMultiViewPickingProps["deckGlRef"];
+export interface ViewsTypeExtended extends ViewsType {
+    viewports: ViewPortTypeExtended[];
+}
 
 export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): React.ReactNode {
     const id = React.useId();
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
-    const deckGlRef = React.useRef(null) as SubsurfaceDeckRef;
+    const deckGlRef = React.useRef<DeckGLRef | null>(null);
 
     const [cameraPositionSetByAction, setCameraPositionSetByAction] = React.useState<ViewStateType | null>(null);
     const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
     const [hideReadout, setHideReadout] = React.useState<boolean>(false);
 
-    const [numCols] = props.views.layout;
+    const [numRows] = props.views.layout;
 
     const viewports = props.views?.viewports ?? [];
     const layers = props.layers ?? [];
@@ -126,7 +123,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
 
                         <ColorLegendsContainer
                             colorScales={viewport.colorScales}
-                            height={((mainDivSize.height / 3) * 2) / numCols - 20}
+                            height={((mainDivSize.height / 3) * 2) / numRows - 20}
                             position="left"
                         />
 

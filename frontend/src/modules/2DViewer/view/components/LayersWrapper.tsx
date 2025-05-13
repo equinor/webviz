@@ -46,7 +46,7 @@ import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSub
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
-import type { ViewPortTypeExt, ViewsTypeExt } from "./SubsurfaceViewerWrapper";
+import type { ViewPortTypeExtended, ViewsTypeExtended } from "./SubsurfaceViewerWrapper";
 import { SubsurfaceViewerWrapper } from "./SubsurfaceViewerWrapper";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
@@ -129,17 +129,49 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.layerManager);
 
-    const viewports: ViewPortTypeExt[] = [];
+    const viewports: ViewPortTypeExtended[] = [];
     const deckGlLayers: Layer<any>[] = [];
     const globalAnnotations: Annotation[] = [];
     const globalColorScales = globalAnnotations.filter((el) => "colorScale" in el);
 
     const globalLayerIds: string[] = ["placeholder"];
 
-    const views: ViewsTypeExt = {
+    for (const item of assemblerProduct.children) {
+        if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
+            const colorScales = item.annotations.filter((el) => "colorScale" in el);
+            const layerIds: string[] = [];
+
+            for (const child of item.children) {
+                if (child.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
+                    const layer = child.visualization;
+                    layerIds.push(layer.id);
+                    deckGlLayers.push(layer);
+                }
+            }
+
+            viewports.push({
+                id: item.id,
+                name: item.name,
+                color: item.color,
+                isSync: true,
+                layerIds,
+                colorScales,
+            });
+        } else if (item.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
+            deckGlLayers.push(item.visualization);
+            globalLayerIds.push(item.visualization.id);
+        }
+    }
+
+    const views: ViewsTypeExtended = {
         layout: [0, 0],
-        viewports: viewports,
         showLabel: false,
+        viewports: viewports.map((viewport) => ({
+            ...viewport,
+            // Apply global layers/annotations
+            layerIds: [...globalLayerIds, ...viewport.layerIds!],
+            colorScales: [...globalColorScales, ...viewport.colorScales!],
+        })),
     };
 
     const numViews = assemblerProduct.children.filter(
@@ -154,33 +186,6 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     if (props.preferredViewLayout === PreferredViewLayout.HORIZONTAL) {
         views.layout = [views.layout[1], views.layout[0]];
-    }
-
-    for (const item of assemblerProduct.children) {
-        if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
-            const viewColorScales = item.annotations.filter((el) => "colorScale" in el);
-
-            const layerIds: string[] = [];
-            for (const child of item.children) {
-                if (child.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
-                    const layer = child.visualization;
-                    layerIds.push(layer.id);
-                    deckGlLayers.push(layer);
-                }
-            }
-
-            viewports.push({
-                id: item.id,
-                name: item.name,
-                color: item.color,
-                isSync: true,
-                layerIds: [...globalLayerIds, ...layerIds],
-                colorScales: [...viewColorScales, ...globalColorScales],
-            });
-        } else if (item.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
-            deckGlLayers.push(item.visualization);
-            globalLayerIds.push(item.visualization.id);
-        }
     }
 
     if (assemblerProduct.combinedBoundingBox !== null) {
