@@ -74,12 +74,9 @@ import type {
     GetMisfitSurfaceDataData_api,
     GetMisfitSurfaceDataResponse_api,
     GetMisfitSurfaceDataError_api,
-    GetWellboreStratigraphicColumnsData_api,
-    GetWellboreStratigraphicColumnsResponse_api,
-    GetWellboreStratigraphicColumnsError_api,
-    GetStratigraphicUnitsData_api,
-    GetStratigraphicUnitsResponse_api,
-    GetStratigraphicUnitsError_api,
+    DeprecatedGetStratigraphicUnitsData_api,
+    DeprecatedGetStratigraphicUnitsResponse_api,
+    DeprecatedGetStratigraphicUnitsError_api,
     GetParameterNamesAndDescriptionData_api,
     GetParameterNamesAndDescriptionResponse_api,
     GetParameterNamesAndDescriptionError_api,
@@ -128,12 +125,15 @@ import type {
     GetWellborePicksForPickIdentifierData_api,
     GetWellborePicksForPickIdentifierResponse_api,
     GetWellborePicksForPickIdentifierError_api,
-    GetWellborePicksForWellboreData_api,
-    GetWellborePicksForWellboreResponse_api,
-    GetWellborePicksForWellboreError_api,
+    DeprecatedGetWellborePicksForWellboreData_api,
+    DeprecatedGetWellborePicksForWellboreResponse_api,
+    DeprecatedGetWellborePicksForWellboreError_api,
     GetWellborePicksInStratColumnData_api,
     GetWellborePicksInStratColumnResponse_api,
     GetWellborePicksInStratColumnError_api,
+    GetWellboreStratigraphicColumnsData_api,
+    GetWellboreStratigraphicColumnsResponse_api,
+    GetWellboreStratigraphicColumnsError_api,
     GetWellboreCompletionsData_api,
     GetWellboreCompletionsResponse_api,
     GetWellboreCompletionsError_api,
@@ -628,30 +628,19 @@ export const getMisfitSurfaceData = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get Wellbore Stratigraphic Columns
+ * Deprecated Get Stratigraphic Units
+ * NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
  */
-export const getWellboreStratigraphicColumns = <ThrowOnError extends boolean = false>(
-    options: Options<GetWellboreStratigraphicColumnsData_api, ThrowOnError>,
+export const deprecatedGetStratigraphicUnits = <ThrowOnError extends boolean = false>(
+    options: Options<DeprecatedGetStratigraphicUnitsData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
-        GetWellboreStratigraphicColumnsResponse_api,
-        GetWellboreStratigraphicColumnsError_api,
+        DeprecatedGetStratigraphicUnitsResponse_api,
+        DeprecatedGetStratigraphicUnitsError_api,
         ThrowOnError
     >({
         ...options,
-        url: "/surface/wellbore_stratigraphic_columns/",
-    });
-};
-
-/**
- * Get Stratigraphic Units
- */
-export const getStratigraphicUnits = <ThrowOnError extends boolean = false>(
-    options: Options<GetStratigraphicUnitsData_api, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<GetStratigraphicUnitsResponse_api, GetStratigraphicUnitsError_api, ThrowOnError>({
-        ...options,
-        url: "/surface/stratigraphic_units",
+        url: "/surface/deprecated_stratigraphic_units",
     });
 };
 
@@ -872,7 +861,10 @@ export const getWellborePickIdentifiers = <ThrowOnError extends boolean = false>
 
 /**
  * Get Wellbore Picks For Pick Identifier
- * Get wellbore picks for field and pick identifier
+ * Get picks for wellbores for field and pick identifier
+ *
+ * This implies picks for multiple wellbores for given field and pick identifier.
+ * E.g. picks for all wellbores in a given surface in a field.
  */
 export const getWellborePicksForPickIdentifier = <ThrowOnError extends boolean = false>(
     options: Options<GetWellborePicksForPickIdentifierData_api, ThrowOnError>,
@@ -888,24 +880,27 @@ export const getWellborePicksForPickIdentifier = <ThrowOnError extends boolean =
 };
 
 /**
- * Get Wellbore Picks For Wellbore
+ * Deprecated Get Wellbore Picks For Wellbore
  * Get wellbore picks for field and pick identifier
+ *
+ * NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
  */
-export const getWellborePicksForWellbore = <ThrowOnError extends boolean = false>(
-    options: Options<GetWellborePicksForWellboreData_api, ThrowOnError>,
+export const deprecatedGetWellborePicksForWellbore = <ThrowOnError extends boolean = false>(
+    options: Options<DeprecatedGetWellborePicksForWellboreData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<
-        GetWellborePicksForWellboreResponse_api,
-        GetWellborePicksForWellboreError_api,
+        DeprecatedGetWellborePicksForWellboreResponse_api,
+        DeprecatedGetWellborePicksForWellboreError_api,
         ThrowOnError
     >({
         ...options,
-        url: "/well/wellbore_picks_for_wellbore/",
+        url: "/well/deprecated_wellbore_picks_for_wellbore/",
     });
 };
 
 /**
  * Get Wellbore Picks In Strat Column
+ * Get wellbore picks for a single wellbore with stratigraphic column identifier
  */
 export const getWellborePicksInStratColumn = <ThrowOnError extends boolean = false>(
     options: Options<GetWellborePicksInStratColumnData_api, ThrowOnError>,
@@ -917,6 +912,22 @@ export const getWellborePicksInStratColumn = <ThrowOnError extends boolean = fal
     >({
         ...options,
         url: "/well/wellbore_picks_in_strat_column",
+    });
+};
+
+/**
+ * Get Wellbore Stratigraphic Columns
+ */
+export const getWellboreStratigraphicColumns = <ThrowOnError extends boolean = false>(
+    options: Options<GetWellboreStratigraphicColumnsData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<
+        GetWellboreStratigraphicColumnsResponse_api,
+        GetWellboreStratigraphicColumnsError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/well/wellbore_stratigraphic_columns/",
     });
 };
 
