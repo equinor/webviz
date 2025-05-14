@@ -310,15 +310,16 @@ export class SettingManager<
     }
 
     setLoading(loading: boolean): void {
-        if (this._loading === loading) {
-            return;
-        }
-
         if (this._externalController) {
             this._externalController.getSetting().setLoading(loading);
         }
 
+        if (this._loading === loading) {
+            return;
+        }
+
         this._loading = loading;
+
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
     }
 
@@ -498,7 +499,7 @@ export class SettingManager<
         if (this._externalController) {
             this._availableValues = availableValues;
             this.maybeResetPersistedValue();
-            this.setLoading(false);
+            this._loading = false;
             this.initialize();
             this._externalController.setAvailableValues(this.getId(), availableValues);
             return;
