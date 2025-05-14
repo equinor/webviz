@@ -1,4 +1,3 @@
-
 import type { Rgb } from "culori";
 import { parse } from "culori";
 

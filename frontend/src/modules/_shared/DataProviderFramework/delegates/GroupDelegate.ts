@@ -1,4 +1,3 @@
-
 import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import { DataProvider } from "../framework/DataProvider/DataProvider";
@@ -14,6 +13,7 @@ import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 export enum GroupDelegateTopic {
     CHILDREN = "CHILDREN",
+    TREE_REVISION_NUMBER_ABOUT_TO_CHANGE = "TREE_REVISION_NUMBER_ABOUT_TO_CHANGE",
     TREE_REVISION_NUMBER = "TREE_REVISION_NUMBER",
     COLOR = "COLOR",
     CHILDREN_EXPANSION_STATES = "CHILDREN_EXPANSION_STATES",
@@ -22,6 +22,7 @@ export enum GroupDelegateTopic {
 export type GroupDelegateTopicPayloads = {
     [GroupDelegateTopic.CHILDREN]: Item[];
     [GroupDelegateTopic.TREE_REVISION_NUMBER]: number;
+    [GroupDelegateTopic.TREE_REVISION_NUMBER_ABOUT_TO_CHANGE]: void;
     [GroupDelegateTopic.COLOR]: string | null;
     [GroupDelegateTopic.CHILDREN_EXPANSION_STATES]: { [id: string]: boolean };
 };
@@ -180,6 +181,9 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
             if (topic === GroupDelegateTopic.CHILDREN) {
                 return this._children;
             }
+            if (topic === GroupDelegateTopic.TREE_REVISION_NUMBER_ABOUT_TO_CHANGE) {
+                return;
+            }
             if (topic === GroupDelegateTopic.TREE_REVISION_NUMBER) {
                 return this._treeRevisionNumber;
             }
@@ -223,6 +227,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
     }
 
     private incrementTreeRevisionNumber() {
+        this.publishTopic(GroupDelegateTopic.TREE_REVISION_NUMBER_ABOUT_TO_CHANGE);
         this._treeRevisionNumber++;
         this.publishTopic(GroupDelegateTopic.TREE_REVISION_NUMBER);
     }
@@ -314,5 +319,12 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         }
 
         return [startIndex, endIndex];
+    }
+
+    beforeDestroy() {
+        this._unsubscribeHandlerDelegate.unsubscribeAll();
+        for (const child of this._children) {
+            child.beforeDestroy?.();
+        }
     }
 }

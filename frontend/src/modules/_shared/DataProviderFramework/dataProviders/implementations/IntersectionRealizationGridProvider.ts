@@ -297,34 +297,32 @@ export class IntersectionRealizationGridProvider
 
                     registerQueryKey(wellboreQueryOptions.queryKey);
 
-                    return queryClient
-                        .fetchQuery(wellboreQueryOptions)
-                        .then((data) => {
-                            const path: number[][] = [];
-                            for (const [index, northing] of data[0].northingArr.entries()) {
-                                const easting = data[0].eastingArr[index];
-                                const tvd_msl = data[0].tvdMslArr[index];
+                    return queryClient.fetchQuery(wellboreQueryOptions).then((data) => {
+                        const path: number[][] = [];
+                        for (const [index, northing] of data[0].northingArr.entries()) {
+                            const easting = data[0].eastingArr[index];
+                            const tvd_msl = data[0].tvdMslArr[index];
 
-                                path.push([easting, northing, tvd_msl]);
-                            }
-                            const offset = data[0].tvdMslArr[0];
+                            path.push([easting, northing, tvd_msl]);
+                        }
+                        const offset = data[0].tvdMslArr[0];
 
-                            const intersectionReferenceSystem = new IntersectionReferenceSystem(path);
-                            intersectionReferenceSystem.offset = offset;
+                        const intersectionReferenceSystem = new IntersectionReferenceSystem(path);
+                        intersectionReferenceSystem.offset = offset;
 
-                            const polylineUtmXy: number[] = [];
-                            polylineUtmXy.push(
-                                ...calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
-                                    path,
-                                    0,
-                                    5,
-                                ).simplifiedWellboreTrajectoryXy.flat(),
-                            );
+                        const polylineUtmXy: number[] = [];
+                        polylineUtmXy.push(
+                            ...calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
+                                path,
+                                0,
+                                5,
+                            ).simplifiedWellboreTrajectoryXy.flat(),
+                        );
 
-                            resolve(polylineUtmXy);
-                        });
+                        resolve(polylineUtmXy);
+                    });
                 } else {
-                    const intersectionPolyline = getGlobalSetting("intersectionPolylines").find(
+                    const intersectionPolyline = getGlobalSetting("intersectionPolylines")?.find(
                         (polyline) => polyline.id === intersection.uuid,
                     );
                     if (!intersectionPolyline) {
@@ -344,7 +342,6 @@ export class IntersectionRealizationGridProvider
 
         const gridIntersectionPromise = makePolylinePromise
             .then((polyline_utm_xy) => {
-
                 const intersectionQueryOptions = postGetPolylineIntersectionOptions({
                     query: {
                         case_uuid: ensembleIdent?.getCaseUuid() ?? "",

@@ -64,7 +64,7 @@ export class IntersectionPolylines implements UserCreatedItemSet {
         this.notifySubscribers(IntersectionPolylinesEvent.CHANGE);
     }
 
-    getPolylines(): IntersectionPolyline[] {
+    getPolylines(): readonly IntersectionPolyline[] {
         return this._polylines;
     }
 

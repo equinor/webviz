@@ -4,13 +4,12 @@ import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "ge
 import type { PolygonData_api } from "@api";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-
 import type {
     RealizationPolygonsData,
     RealizationPolygonsSettings,
 } from "../../dataProviders/implementations/RealizationPolygonsProvider";
 
-function zipCoords(xArr: number[], yArr: number[], zArr: number[]): number[][] {
+function zipCoords(xArr: readonly number[], yArr: readonly number[], zArr: readonly number[]): number[][] {
     const coords: number[][] = [];
     for (let i = 0; i < xArr.length; i++) {
         coords.push([xArr[i], yArr[i], -zArr[i]]);
