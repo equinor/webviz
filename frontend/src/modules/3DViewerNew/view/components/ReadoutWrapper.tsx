@@ -80,7 +80,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     return (
         <div
             ref={mainDivRef}
-            className="h-full w-full"
+            className="h-full w-full relative"
             onMouseEnter={handleMainDivEnter}
             onMouseLeave={handleMainDivLeave}
         >
