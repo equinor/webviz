@@ -67,7 +67,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             setDeckGlManager(manager);
 
             const polylinesPlugin = new PolylinesPlugin(manager, colorGenerator());
-            polylinesPlugin.setPolylines(intersectionPolylines.getPolylines());
+            polylinesPlugin.setPolylines([...intersectionPolylines.getPolylines()]);
             manager.addPlugin(polylinesPlugin);
             setPolylinesPlugin(polylinesPlugin);
 
@@ -82,7 +82,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             const unsubscribeFromIntersectionPolylines = intersectionPolylines.subscribe(
                 IntersectionPolylinesEvent.CHANGE,
                 () => {
-                    polylinesPlugin.setPolylines(intersectionPolylines.getPolylines());
+                    polylinesPlugin.setPolylines([...intersectionPolylines.getPolylines()]);
                 },
             );
 

@@ -106,7 +106,7 @@ export function makeIntersectionLayer({
             data.max_grid_prop_value,
         ),
         ZIncreasingDownwards: false,
-        gridLines: showGridLines,
+        gridLines: showGridLines ?? false,
         material: { ambient: 0.4, diffuse: 0.7, shininess: 8, specularColor: [25, 25, 25] },
         pickable: true,
     });
