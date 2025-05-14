@@ -24,7 +24,7 @@ import { SettingRegistry } from "./_SettingRegistry";
 
 SettingRegistry.registerSetting(Setting.STRAT_COLUMN, "Stratigraphic Column", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.SMDA_INTERPRETER, "Interpreter", DropdownStringSetting);
-SettingRegistry.registerSetting(Setting.WELL_PICKS, "Interpreter", ObjectSelectionSetting<WellborePick_api>, {
+SettingRegistry.registerSetting(Setting.WELLBORE_PICKS, "Interpreter", ObjectSelectionSetting<WellborePick_api>, {
     customConstructorParameters: ["pickIdentifier"],
 });
 

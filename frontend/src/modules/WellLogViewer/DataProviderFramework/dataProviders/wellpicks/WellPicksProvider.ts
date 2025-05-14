@@ -10,7 +10,7 @@ import type {
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-export const wellPickSettings = [Setting.STRAT_COLUMN, Setting.SMDA_INTERPRETER, Setting.WELL_PICKS] as const;
+export const wellPickSettings = [Setting.STRAT_COLUMN, Setting.SMDA_INTERPRETER, Setting.WELLBORE_PICKS] as const;
 export type WellPickSettingTypes = typeof wellPickSettings;
 type SettingsTypeMap = MakeSettingTypesMap<WellPickSettingTypes>;
 
@@ -65,7 +65,7 @@ export class WellborePicksProvider
             return _.keys(picksByInterpreter);
         });
 
-        availableSettingsUpdater(Setting.WELL_PICKS, ({ getLocalSetting, getHelperDependency }) => {
+        availableSettingsUpdater(Setting.WELLBORE_PICKS, ({ getLocalSetting, getHelperDependency }) => {
             const wellPicks = getHelperDependency(wellPickOptions);
             // const pickUnits = getHelperDependency(wellPickUnits);
             const interpreter = getLocalSetting(Setting.SMDA_INTERPRETER);
@@ -81,7 +81,7 @@ export class WellborePicksProvider
     fetchData(args: FetchDataParams<WellPickSettingTypes, WellborePick_api[]>): Promise<WellborePick_api[]> {
         const { getSetting } = args;
 
-        const chosenWellPicks = getSetting(Setting.WELL_PICKS);
+        const chosenWellPicks = getSetting(Setting.WELLBORE_PICKS);
 
         // ! Not actually any reason for this to be a promise. No data to fetch, it's already available in the well-picks
         return new Promise((resolve) => {
