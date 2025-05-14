@@ -229,7 +229,9 @@ export const getCasesOptions = (options: Options<GetCasesData_api>) => {
     });
 };
 
-export const getEnsemblesQueryKey = (options: Options<GetEnsemblesData_api>) => [createQueryKey("getEnsembles", options)];
+export const getEnsemblesQueryKey = (options: Options<GetEnsemblesData_api>) => [
+    createQueryKey("getEnsembles", options),
+];
 
 export const getEnsemblesOptions = (options: Options<GetEnsemblesData_api>) => {
     return queryOptions({
@@ -675,7 +677,9 @@ export const postGetSampleSurfaceInPointsOptions = (options: Options<PostGetSamp
     });
 };
 
-export const postGetSampleSurfaceInPointsMutation = (options?: Partial<Options<PostGetSampleSurfaceInPointsData_api>>) => {
+export const postGetSampleSurfaceInPointsMutation = (
+    options?: Partial<Options<PostGetSampleSurfaceInPointsData_api>>,
+) => {
     const mutationOptions: UseMutationOptions<
         PostGetSampleSurfaceInPointsResponse_api,
         AxiosError<PostGetSampleSurfaceInPointsError_api>,
@@ -769,7 +773,9 @@ export const getParameterNamesAndDescriptionOptions = (options: Options<GetParam
     });
 };
 
-export const getParameterQueryKey = (options: Options<GetParameterData_api>) => [createQueryKey("getParameter", options)];
+export const getParameterQueryKey = (options: Options<GetParameterData_api>) => [
+    createQueryKey("getParameter", options),
+];
 
 export const getParameterOptions = (options: Options<GetParameterData_api>) => {
     return queryOptions({
@@ -919,7 +925,9 @@ export const postGetPolylineIntersectionOptions = (options: Options<PostGetPolyl
     });
 };
 
-export const postGetPolylineIntersectionMutation = (options?: Partial<Options<PostGetPolylineIntersectionData_api>>) => {
+export const postGetPolylineIntersectionMutation = (
+    options?: Partial<Options<PostGetPolylineIntersectionData_api>>,
+) => {
     const mutationOptions: UseMutationOptions<
         PostGetPolylineIntersectionResponse_api,
         AxiosError<PostGetPolylineIntersectionError_api>,
@@ -956,7 +964,9 @@ export const getRealizationFlowNetworkOptions = (options: Options<GetRealization
     });
 };
 
-export const getTableDataQueryKey = (options: Options<GetTableDataData_api>) => [createQueryKey("getTableData", options)];
+export const getTableDataQueryKey = (options: Options<GetTableDataData_api>) => [
+    createQueryKey("getTableData", options),
+];
 
 export const getTableDataOptions = (options: Options<GetTableDataData_api>) => {
     return queryOptions({
@@ -1049,11 +1059,13 @@ export const getWellborePickIdentifiersOptions = (options: Options<GetWellborePi
     });
 };
 
-export const getWellborePicksForPickIdentifierQueryKey = (options: Options<GetWellborePicksForPickIdentifierData_api>) => [
-    createQueryKey("getWellborePicksForPickIdentifier", options),
-];
+export const getWellborePicksForPickIdentifierQueryKey = (
+    options: Options<GetWellborePicksForPickIdentifierData_api>,
+) => [createQueryKey("getWellborePicksForPickIdentifier", options)];
 
-export const getWellborePicksForPickIdentifierOptions = (options: Options<GetWellborePicksForPickIdentifierData_api>) => {
+export const getWellborePicksForPickIdentifierOptions = (
+    options: Options<GetWellborePicksForPickIdentifierData_api>,
+) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
             const { data } = await getWellborePicksForPickIdentifier({
@@ -1373,7 +1385,9 @@ export const getPolygonsDataOptions = (options: Options<GetPolygonsDataData_api>
     });
 };
 
-export const getUserPhotoQueryKey = (options: Options<GetUserPhotoData_api>) => [createQueryKey("getUserPhoto", options)];
+export const getUserPhotoQueryKey = (options: Options<GetUserPhotoData_api>) => [
+    createQueryKey("getUserPhoto", options),
+];
 
 export const getUserPhotoOptions = (options: Options<GetUserPhotoData_api>) => {
     return queryOptions({
@@ -1573,7 +1587,11 @@ export const postLogoutOptions = (options?: Options<PostLogoutData_api>) => {
 };
 
 export const postLogoutMutation = (options?: Partial<Options<PostLogoutData_api>>) => {
-    const mutationOptions: UseMutationOptions<PostLogoutResponse_api, AxiosError<DefaultError>, Options<PostLogoutData_api>> = {
+    const mutationOptions: UseMutationOptions<
+        PostLogoutResponse_api,
+        AxiosError<DefaultError>,
+        Options<PostLogoutData_api>
+    > = {
         mutationFn: async (localOptions) => {
             const { data } = await postLogout({
                 ...options,

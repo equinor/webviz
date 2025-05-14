@@ -67,8 +67,13 @@ class WellAccess:
             raise InvalidDataError(f"Invalid log curve headers for field {field_uuid}", Service.SSDL) from error
         return result
 
-    async def get_log_curve_data_async(self, wellbore_uuid: str, curve_name: str) -> types.WellboreLogCurveData:
-        params = {"normalized_data": False}
+    async def get_log_curve_data_async(
+        self, wellbore_uuid: str, curve_name: str, log_name: str
+    ) -> types.WellboreLogCurveData:
+        # ! Note: SSDL does not actually take the curve name into account when fetching data, but curve names are not unique across
+        # ! all logs, and there's no documentation about how one should specify the log, when picking curves. For now, I'm including
+        # ! log name as an argument, since we should fix that at some point in the future.
+        params = {"normalized_data": False, "log_name": log_name}
         endpoint = f"WellLog/{wellbore_uuid}/{curve_name}"
         ssdl_data = await ssdl_get_request_async(access_token=self._ssdl_token, endpoint=endpoint, params=params)
         try:
