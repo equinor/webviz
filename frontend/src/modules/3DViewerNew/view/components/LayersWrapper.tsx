@@ -1,13 +1,11 @@
-import React from "react";
+import type React from "react";
 
-import { View as DeckGlView, type Layer } from "@deck.gl/core";
-import type { ViewportType } from "@webviz/subsurface-viewer";
+import { type Layer } from "@deck.gl/core";
 
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { RealizationSeismicCrosslineProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicCrosslineProvider";
@@ -18,7 +16,6 @@ import {
     makeSeismicFenceMeshLayerFunction,
     Plane,
 } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeSeismicFenceMeshLayer";
-import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
@@ -41,14 +38,12 @@ import { makeRealizationGridLayer } from "@modules/_shared/DataProviderFramework
 import { makeRealizationPolygonsLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationPolygonsLayer";
 import { makeRealizationSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationSurfaceLayer";
 import { makeStatisticalSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeStatisticalSurfaceLayer";
-import type {
-    Annotation,
-    VisualizationTarget,
-} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import {
     VisualizationAssembler,
     VisualizationItemType,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
@@ -56,14 +51,6 @@ import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/Placeholde
 import { InteractionWrapper } from "./InteractionWrapper";
 
 import "../../DataProviderFramework/registerAllDataProviders";
-
-export type LayersWrapperProps = {
-    layerManager: DataProviderManager;
-    preferredViewLayout: PreferredViewLayout;
-    viewContext: ViewContext<Interfaces>;
-    workbenchSession: WorkbenchSession;
-    workbenchSettings: WorkbenchSettings;
-};
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
 
@@ -137,27 +124,33 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     },
 );
 
+export type LayersWrapperProps = {
+    fieldId: string;
+    layerManager: DataProviderManager;
+    preferredViewLayout: PreferredViewLayout;
+    viewContext: ViewContext<Interfaces>;
+    workbenchSession: WorkbenchSession;
+    workbenchSettings: WorkbenchSettings;
+};
+
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
-    const mainDivRef = React.useRef<HTMLDivElement>(null);
-    const mainDivSize = useElementSize(mainDivRef);
     const statusWriter = useViewStatusWriter(props.viewContext);
 
     usePublishSubscribeTopicValue(props.layerManager, DataProviderManagerTopic.DATA_REVISION);
 
-    const viewports: ViewportType[] = [];
-    const deckGlLayers: Layer<any>[] = [];
-    const viewportAnnotations: React.ReactNode[] = [];
-    const globalAnnotations: Annotation[] = [];
-    const globalLayerIds: string[] = ["placeholder"];
-
-    let numCols = 0;
-    let numRows = 0;
-
     const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.layerManager);
+
+    const viewports: ViewportTypeExtended[] = [];
+    const deckGlLayers: Layer<any>[] = [];
+    const globalAnnotations = assemblerProduct.annotations;
+    const globalColorScales = globalAnnotations.filter((el) => "colorScale" in el);
+    const globalLayerIds: string[] = ["placeholder"];
 
     for (const item of assemblerProduct.children) {
         if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
+            const colorScales = item.annotations.filter((el) => "colorScale" in el);
             const layerIds: string[] = [];
+
             for (const child of item.children) {
                 if (child.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
                     const layer = child.visualization;
@@ -168,42 +161,40 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
             viewports.push({
                 id: item.id,
                 name: item.name,
+                color: item.color,
                 isSync: true,
                 show3D: true,
                 layerIds,
+                colorScales,
             });
-
-            viewportAnnotations.push(
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                /* @ts-expect-error */
-                <DeckGlView key={item.id} id={item.id}>
-                    <ColorLegendsContainer
-                        colorScales={[...item.annotations.filter((el) => "colorScale" in el), ...globalAnnotations]}
-                        height={((mainDivSize.height / 3) * 2) / numCols - 20}
-                        position="left"
-                    />
-                    <div className="font-bold text-lg flex gap-2 justify-center items-center">
-                        <div className="flex gap-2 items-center bg-white/50 p-2 backdrop-blur-sm rounded-sm">
-                            <div
-                                className="rounded-full h-3 w-3 border border-white"
-                                style={{ backgroundColor: item.color ?? undefined }}
-                            />
-                            <div className="">{item.name}</div>
-                        </div>
-                    </div>
-                </DeckGlView>,
-            );
         } else if (item.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
             deckGlLayers.push(item.visualization);
             globalLayerIds.push(item.visualization.id);
         }
     }
 
-    numCols = Math.ceil(Math.sqrt(viewports.length));
-    numRows = Math.ceil(viewports.length / numCols);
+    const views: ViewsTypeExtended = {
+        layout: [0, 0],
+        showLabel: false,
+        viewports: viewports.map((viewport) => ({
+            ...viewport,
+            layerIds: [...globalLayerIds, ...viewport.layerIds!],
+            colorScales: [...globalColorScales, ...viewport.colorScales!],
+        })),
+    };
+
+    const numViews = assemblerProduct.children.filter(
+        (item) => item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW,
+    ).length;
+
+    if (numViews) {
+        const numCols = Math.ceil(Math.sqrt(numViews));
+        const numRows = Math.ceil(numViews / numCols);
+        views.layout = [numCols, numRows];
+    }
 
     if (props.preferredViewLayout === PreferredViewLayout.HORIZONTAL) {
-        [numCols, numRows] = [numRows, numCols];
+        views.layout = [views.layout[1], views.layout[0]];
     }
 
     statusWriter.setLoading(assemblerProduct.numLoadingDataProviders > 0);
@@ -217,20 +208,12 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     deckGlLayers.reverse();
 
     return (
-        <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
-            <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
-                <InteractionWrapper
-                    views={{
-                        layout: [numCols, numRows],
-                        viewports: viewports,
-                        showLabel: false,
-                    }}
-                    viewportAnnotations={viewportAnnotations}
-                    layers={deckGlLayers}
-                    workbenchSession={props.workbenchSession}
-                    workbenchSettings={props.workbenchSettings}
-                />
-            </div>
-        </div>
+        <InteractionWrapper
+            views={views}
+            fieldId={props.fieldId}
+            layers={deckGlLayers}
+            workbenchSession={props.workbenchSession}
+            workbenchSettings={props.workbenchSettings}
+        />
     );
 }

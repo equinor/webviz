@@ -6,7 +6,8 @@ import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { converter } from "culori";
 
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
-import { IntersectionPolylinesEvent, IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
+import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
+import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
 import { DeckGlInstanceManager, DeckGlInstanceManagerTopic } from "../utils/DeckGlInstanceManager";
@@ -91,7 +92,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 unsubscribeFromIntersectionPolylines();
             };
         },
-        [intersectionPolylines, colorGenerator],
+        [intersectionPolylines, colorGenerator, props.fieldId],
     );
 
     const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
@@ -141,7 +142,14 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
     }
 
     return (
-        <>
+        <ReadoutWrapper
+            {...props}
+            deckGlRef={deckGlRef}
+            layers={adjustedLayers}
+            deckGlManager={deckGlManager}
+            verticalScale={verticalScale}
+            triggerHome={triggerHomeCounter}
+        >
             <Toolbar
                 onFitInView={handleFitInViewClick}
                 onGridVisibilityChange={handleGridVisibilityChange}
@@ -153,15 +161,6 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 activePolylineName={polylines.find((p) => p.id === activePolylineId)?.name}
             />
             <ContextMenu deckGlManager={deckGlManager} />
-            <ReadoutWrapper
-                {...props}
-                deckGlRef={deckGlRef}
-                viewportAnnotations={props.viewportAnnotations}
-                layers={adjustedLayers}
-                deckGlManager={deckGlManager}
-                verticalScale={verticalScale}
-                triggerHome={triggerHomeCounter}
-            />
-        </>
+        </ReadoutWrapper>
     );
 }
