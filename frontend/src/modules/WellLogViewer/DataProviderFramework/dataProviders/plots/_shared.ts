@@ -35,7 +35,10 @@ export function defineBaseContinuousDependencies<T extends readonly Setting[]>(a
 
         return await args.queryClient.fetchQuery({
             ...getWellboreLogCurveHeadersOptions({
-                query: { wellbore_uuid: wellboreId, sources: [WellLogCurveSourceEnum_api.SSDL_WELL_LOG] },
+                query: {
+                    wellbore_uuid: wellboreId,
+                    sources: [WellLogCurveSourceEnum_api.SSDL_WELL_LOG, WellLogCurveSourceEnum_api.SMDA_SURVEY],
+                },
                 signal: abortSignal,
             }),
         });
