@@ -12,6 +12,9 @@ import {
     DataProviderManager,
     DataProviderManagerTopic,
 } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
+import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
+import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 
 import type { Interfaces } from "../interfaces";
 
@@ -22,6 +25,7 @@ import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrap
 export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const queryClient = useQueryClient();
+    const colorSet = props.workbenchSettings.useColorSet();
 
     const [dataProviderManager, setDataProviderManager] = useAtom(dataProviderManagerAtom);
 
@@ -54,6 +58,22 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                 `${props.settingsContext.getInstanceIdString()}-settings`,
             );
             if (!serializedState) {
+                // Default view layout
+                const groupDelegate = dataProviderManager.getGroupDelegate();
+
+                const hasIntersectionView =
+                    groupDelegate.getDescendantItems(
+                        (item) => item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW,
+                    ).length > 0;
+                if (!hasIntersectionView) {
+                    groupDelegate.appendChild(
+                        GroupRegistry.makeGroup(
+                            GroupType.INTERSECTION_VIEW,
+                            dataProviderManager,
+                            colorSet.getNextColor(),
+                        ),
+                    );
+                }
                 return;
             }
 
@@ -72,7 +92,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                 dataProviderManager.deserializeState(parsedState.dataProviderManager);
             }
         },
-        [setSelectedFieldIdentifier, setPreferredViewLayout, props.settingsContext],
+        [setSelectedFieldIdentifier, setPreferredViewLayout, props.settingsContext, colorSet],
     );
 
     React.useEffect(

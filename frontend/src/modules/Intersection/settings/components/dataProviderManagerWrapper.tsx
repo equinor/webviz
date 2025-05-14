@@ -45,6 +45,7 @@ export type DataProviderManagerWrapperProps = {
 
 export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProps) {
     const colorSet = props.workbenchSettings.useColorSet();
+
     const [preferredViewLayout, setPreferredViewLayout] = useAtom(preferredViewLayoutAtom);
 
     const groupDelegate = props.dataProviderManager.getGroupDelegate();
@@ -135,22 +136,10 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
         }
     }
 
-    function checkIfItemMoveIsAllowed(movedItem: Item, destinationItem: ItemGroup): boolean {
+    function checkIfItemMoveIsAllowed(_: Item, destinationItem: ItemGroup): boolean {
         if (!(destinationItem instanceof Group)) {
             return false;
         }
-
-        // if (movedItem instanceof SettingsGroup) {
-        //     return false;
-        // }
-
-        // if (movedItem instanceof SharedSetting) {
-        //     return false;
-        // }
-
-        // if (movedItem instanceof Group && movedItem.getGroupType() === GroupType.SETTINGS_GROUP) {
-        //     return false;
-        // }
 
         return true;
     }
