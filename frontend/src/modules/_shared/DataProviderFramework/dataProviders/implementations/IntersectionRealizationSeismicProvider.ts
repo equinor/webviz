@@ -222,9 +222,10 @@ export class IntersectionRealizationSeismicProvider
             return availableAttributes;
         });
 
-        const wellboreHeadersDep = helperDependency(({ getLocalSetting, abortSignal }) =>
-            fetchWellboreHeaders(getLocalSetting(Setting.ENSEMBLE), abortSignal, workbenchSession, queryClient),
-        );
+        const wellboreHeadersDep = helperDependency(({ getLocalSetting, abortSignal }) => {
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
+            return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
+        });
 
         availableSettingsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];

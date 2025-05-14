@@ -213,7 +213,8 @@ export class IntersectionRealizationGridProvider
         });
 
         const wellboreHeadersDep = helperDependency(({ getLocalSetting, abortSignal }) => {
-            return fetchWellboreHeaders(getLocalSetting(Setting.ENSEMBLE), abortSignal, workbenchSession, queryClient);
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
+            return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
         });
 
         availableSettingsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
