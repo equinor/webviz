@@ -18,15 +18,14 @@ import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
-
 import type { InterfaceTypes } from "../interfaces";
 
-import { providerManagerAtom, userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./atoms/baseAtoms";
+import { providerManagerAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom, selectedWellboreHeaderAtom } from "./atoms/derivedAtoms";
+import { userSelectedFieldIdentAtom, userSelectedWellboreUuidAtom } from "./atoms/persistedAtoms";
 import { availableFieldsQueryAtom, drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
 import { ProviderManagerComponentWrapper } from "./components/ProviderManagerComponentWrapper";
 import { ViewerSettings } from "./components/ViewerSettings";
-
 
 function useSyncedWellboreSetting(
     syncHelper: SyncSettingsHelper,
@@ -67,7 +66,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     // Field selection
     const availableFields = useAtomValue(availableFieldsQueryAtom)?.data ?? [];
     const selectedField = useAtomValue(selectedFieldIdentifierAtom);
-    const setSelectedField = useSetAtom(userSelectedFieldIdentifierAtom);
+    const setSelectedField = useSetAtom(userSelectedFieldIdentAtom);
 
     const fieldOptions = availableFields.map<DropdownOption>((f) => ({
         value: f.field_identifier,

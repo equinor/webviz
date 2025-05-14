@@ -2,12 +2,12 @@ import { atom } from "jotai";
 
 import type { WellboreHeader_api } from "@api";
 
-import { userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./baseAtoms";
+import { userSelectedFieldIdentAtom, userSelectedWellboreUuidAtom } from "./persistedAtoms";
 import { availableFieldsQueryAtom, drilledWellboreHeadersQueryAtom } from "./queryAtoms";
 
 export const selectedFieldIdentifierAtom = atom((get) => {
     const availableFields = get(availableFieldsQueryAtom).data ?? [];
-    const selectedFieldId = get(userSelectedFieldIdentifierAtom);
+    const selectedFieldId = get(userSelectedFieldIdentAtom);
 
     // Fixup selected field id
     if (!availableFields.length) return null;

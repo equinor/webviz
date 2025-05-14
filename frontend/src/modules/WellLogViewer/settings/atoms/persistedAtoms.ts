@@ -19,6 +19,16 @@ function setPersistentModuleField(get: Getter, set: Setter, valueKey: string, ne
     set(moduleSettingsAtom, storageCopy);
 }
 
+export const userSelectedFieldIdentAtom = atom<string | null, [string | null], void>(
+    (get) => getPersistentModuleField(get, "selectedField", false),
+    (get, set, newVal) => setPersistentModuleField(get, set, "selectedField", newVal),
+);
+
+export const userSelectedWellboreUuidAtom = atom<string | null, [string | null], void>(
+    (get) => getPersistentModuleField(get, "wellboreUuid", false),
+    (get, set, newVal) => setPersistentModuleField(get, set, "wellboreUuid", newVal),
+);
+
 export const viewerHorizontalAtom = atom<boolean, [boolean], void>(
     (get) => getPersistentModuleField(get, "viewerHorizontal", false),
     (get, set, newVal) => setPersistentModuleField(get, set, "viewerHorizontal", newVal),
