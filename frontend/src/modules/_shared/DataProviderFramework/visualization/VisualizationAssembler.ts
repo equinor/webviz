@@ -1,12 +1,12 @@
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
 import type { Layer as EsvLayer } from "@equinor/esv-intersection";
+import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
 import * as bbox from "@lib/utils/bbox";
-import type { TemplatePlot } from "@modules/WellLogViewer/types";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
-import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
+import type { TemplatePlot } from "@modules/WellLogViewer/types";
 
 import type { GroupDelegate } from "../delegates/GroupDelegate";
 import { DataProvider, DataProviderStatus } from "../framework/DataProvider/DataProvider";

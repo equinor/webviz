@@ -1,10 +1,10 @@
 import type React from "react";
 
+import _ from "lodash";
+
 import type { WellboreLogCurveHeader_api } from "@api";
 import { Dropdown, type DropdownOptionGroup } from "@lib/components/Dropdown";
 import { makeSelectValueForCurveHeader } from "@modules/WellLogViewer/utils/strings";
-
-import _ from "lodash";
 
 import type {
     CustomSettingImplementation,
