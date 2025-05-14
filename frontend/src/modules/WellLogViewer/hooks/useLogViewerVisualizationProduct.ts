@@ -71,7 +71,6 @@ VISUALIZATION_FACTORY.registerGroupCustomPropsCollector(
 
 VISUALIZATION_FACTORY.registerDataProviderTransformers(WellborePicksProvider.name, WellborePicksProvider, {
     transformToVisualization: makeLogViewerWellPicks,
-    // transformToBoundingBox: computeWellPickBBox,
 });
 
 export type WellLogFactoryProduct = ReturnType<(typeof VISUALIZATION_FACTORY)["make"]>;

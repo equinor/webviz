@@ -1,7 +1,6 @@
 import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
 import type { WellborePick_api } from "@api";
-// import { BBox } from "@lib/utils/bbox";
 import {
     type DataProviderVisualization,
     type TransformerArgs,
@@ -11,7 +10,7 @@ import {
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { createLogViewerWellPicks } from "@modules/WellLogViewer/utils/queryDataTransform";
 
-import type { WellPickSettingTypes } from "../dataProviders/wellpicks/WellPicksProvider";
+import { WellborePicksProvider, type WellPickSettingTypes } from "../dataProviders/wellpicks/WellPicksProvider";
 
 type WellpickTransformerArgs = TransformerArgs<WellPickSettingTypes, WellborePick_api[]>;
 
@@ -29,7 +28,5 @@ export function isWellPickVisualization(
     item: VisualizationGroup<any, any, any, any> | DataProviderVisualization<any, any>,
 ): item is WellPickVisualization {
     if (item.itemType !== VisualizationItemType.DATA_PROVIDER_VISUALIZATION) return false;
-
-    // TODO: Check item.providerType once that's implemented
-    return "wellpick" in item.visualization;
+    return item.type === WellborePicksProvider.name;
 }

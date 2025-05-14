@@ -94,3 +94,11 @@ export function fetchData<T extends Settings>(
         }),
     });
 }
+
+export function doSettingsChangesRequireDataRefetch(
+    // ? How can I type these in a way that makes it clear that the settings at least have "logCurve"
+    prevSettings: any,
+    newSettings: any,
+): boolean {
+    return !_.isEqual(prevSettings?.logCurve, newSettings?.logCurve);
+}

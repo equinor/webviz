@@ -17,6 +17,8 @@ type SettingsTypeMap = MakeSettingTypesMap<WellPickSettingTypes>;
 export class WellborePicksProvider
     implements CustomDataProviderImplementation<WellPickSettingTypes, WellborePick_api[]>
 {
+    settings = wellPickSettings;
+
     // Uses the same external things as the other types
     defineDependencies(args: DefineDependenciesArgs<WellPickSettingTypes>) {
         const { helperDependency, availableSettingsUpdater, queryClient } = args;
@@ -67,7 +69,6 @@ export class WellborePicksProvider
 
         availableSettingsUpdater(Setting.WELLBORE_PICKS, ({ getLocalSetting, getHelperDependency }) => {
             const wellPicks = getHelperDependency(wellPickOptions);
-            // const pickUnits = getHelperDependency(wellPickUnits);
             const interpreter = getLocalSetting(Setting.SMDA_INTERPRETER);
 
             if (!wellPicks || !interpreter) return [];
@@ -75,8 +76,6 @@ export class WellborePicksProvider
             return _.filter(wellPicks, ["interpreter", interpreter]);
         });
     }
-
-    settings = wellPickSettings;
 
     fetchData(args: FetchDataParams<WellPickSettingTypes, WellborePick_api[]>): Promise<WellborePick_api[]> {
         const { getSetting } = args;
@@ -97,10 +96,7 @@ export class WellborePicksProvider
         return accessor.getSetting(Setting.STRAT_COLUMN) != null;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsTypeMap, newSettings: SettingsTypeMap): boolean {
-        // TODO: Refetch if wellbore changed, which is a global value
-        return true;
-        // return prevSettings?.stratColumn !== newSettings?.stratColumn;
+        return prevSettings?.stratColumn !== newSettings?.stratColumn;
     }
 }

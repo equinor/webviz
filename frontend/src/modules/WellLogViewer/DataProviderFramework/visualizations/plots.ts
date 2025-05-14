@@ -57,7 +57,6 @@ function getCommonConfig(args: PlotVisualizationArgs<AreaPlotSettingTypes>): Tem
         name: data.name,
         logName: data.logName,
         color,
-        // TODO: main curve color
     };
 }
 

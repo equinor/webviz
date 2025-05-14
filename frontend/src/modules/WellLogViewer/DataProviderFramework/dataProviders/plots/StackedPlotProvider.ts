@@ -4,7 +4,12 @@ import type { CustomDataProviderImplementation } from "@modules/_shared/DataProv
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-import { baseDiscreteSettings, fetchData, verifyBasePlotSettings } from "./_shared";
+import {
+    baseDiscreteSettings,
+    doSettingsChangesRequireDataRefetch,
+    fetchData,
+    verifyBasePlotSettings,
+} from "./_shared";
 
 export const stackedPlotSettings = [...baseDiscreteSettings, Setting.LABEL_ROTATION] as const;
 export type StackedPlotSettingTypes = typeof stackedPlotSettings;
@@ -13,6 +18,7 @@ type SettingsTypeMap = MakeSettingTypesMap<StackedPlotSettingTypes>;
 export class StackedPlotProvider
     implements CustomDataProviderImplementation<StackedPlotSettingTypes, WellboreLogCurveData_api>
 {
+    doSettingsChangesRequireDataRefetch = doSettingsChangesRequireDataRefetch;
     areCurrentSettingsValid = verifyBasePlotSettings<StackedPlotSettingTypes>;
     fetchData = fetchData<StackedPlotSettingTypes>;
     settings = stackedPlotSettings;
@@ -62,12 +68,5 @@ export class StackedPlotProvider
 
     getDefaultName() {
         return "Stacked plot";
-    }
-
-    // TODO: Figure out why prev-settings is undefined
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    doSettingsChangesRequireDataRefetch(prevSettings: SettingsTypeMap, newSettings: SettingsTypeMap): boolean {
-        // return !_.isEqual(prevSettings?.logCurve, newSettings?.logCurve);
-        return true;
     }
 }
