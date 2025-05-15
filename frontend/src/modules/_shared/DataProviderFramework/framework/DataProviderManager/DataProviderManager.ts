@@ -229,11 +229,10 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     }
 
     private initializeGlobalSettings(): Partial<GlobalSettings> {
-        const ensembles = this._workbenchSession.getEnsembleSet().getRegularEnsembleArray();
-        const intersectionPolylines = this._workbenchSession
-            .getUserCreatedItems()
-            .getIntersectionPolylines()
-            .getPolylines();
+        const ensembles = clone(this._workbenchSession.getEnsembleSet().getRegularEnsembleArray());
+        const intersectionPolylines = clone(
+            this._workbenchSession.getUserCreatedItems().getIntersectionPolylines().getPolylines(),
+        );
 
         return {
             ensembles,
