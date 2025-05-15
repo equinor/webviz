@@ -70,7 +70,7 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
                 return;
             }
             case "settings-group":
-                groupDelegate.appendChild(new SettingsGroup("Settings group", props.dataProviderManager));
+                groupDelegate.prependChild(new SettingsGroup("Settings group", props.dataProviderManager));
                 return;
             case "color-scale":
                 groupDelegate.appendChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
@@ -133,6 +133,9 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
             case "realization":
                 groupDelegate.appendChild(new SharedSetting(Setting.REALIZATION, null, props.dataProviderManager));
                 return;
+            case "attribute":
+                groupDelegate.appendChild(new SharedSetting(Setting.ATTRIBUTE, null, props.dataProviderManager));
+                return;
             case "date":
                 groupDelegate.appendChild(new SharedSetting(Setting.TIME_OR_INTERVAL, null, props.dataProviderManager));
                 return;
@@ -140,14 +143,11 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
     }
 
     function checkIfItemMoveIsAllowed(_: Item, destinationItem: ItemGroup): boolean {
-        if (destinationItem instanceof SettingsGroup) {
+        if (destinationItem instanceof SettingsGroup || destinationItem instanceof Group) {
             return true;
         }
-        if (!(destinationItem instanceof Group)) {
-            return false;
-        }
 
-        return true;
+        return false;
     }
 
     function makeActionsForGroup(group: ItemGroup): ActionGroup[] {
@@ -313,15 +313,15 @@ const ACTIONS: ActionGroup[] = [
                 label: "Realization",
             },
             {
+                identifier: "attribute",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Attribute",
+            },
+            {
                 identifier: "date",
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Date",
             },
-            // {
-            //     identifier: "attribute",
-            //     icon: <Icon data={settings} fontSize="small" />,
-            //     label: "Attribute",
-            // },
         ],
     },
     {
