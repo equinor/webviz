@@ -133,10 +133,16 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
             case "realization":
                 groupDelegate.appendChild(new SharedSetting(Setting.REALIZATION, null, props.dataProviderManager));
                 return;
+            case "date":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_OR_INTERVAL, null, props.dataProviderManager));
+                return;
         }
     }
 
     function checkIfItemMoveIsAllowed(_: Item, destinationItem: ItemGroup): boolean {
+        if (destinationItem instanceof SettingsGroup) {
+            return true;
+        }
         if (!(destinationItem instanceof Group)) {
             return false;
         }
@@ -154,10 +160,11 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
             return INITIAL_ACTIONS;
         }
 
-        if (group instanceof Group) {
-            if (group.getGroupType() === GroupType.INTERSECTION_VIEW) {
-                return ACTIONS;
-            }
+        if (
+            group instanceof SettingsGroup ||
+            (group instanceof Group && group.getGroupType() === GroupType.INTERSECTION_VIEW)
+        ) {
+            return ACTIONS;
         }
 
         return [];
@@ -189,7 +196,6 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
                     </Menu>
                 </Dropdown>
             }
-            // layerActions={adjustedLayerActions}
             groupActions={makeActionsForGroup}
             onAction={handleAction}
             isMoveAllowed={checkIfItemMoveIsAllowed}
@@ -306,20 +312,15 @@ const ACTIONS: ActionGroup[] = [
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Realization",
             },
-            // {
-            //     identifier: "surface-name",
-            //     icon: <Icon data={settings} fontSize="small" />,
-            //     label: "Surface Name",
-            // },
+            {
+                identifier: "date",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Date",
+            },
             // {
             //     identifier: "attribute",
             //     icon: <Icon data={settings} fontSize="small" />,
             //     label: "Attribute",
-            // },
-            // {
-            //     identifier: "date",
-            //     icon: <Icon data={settings} fontSize="small" />,
-            //     label: "Date",
             // },
         ],
     },

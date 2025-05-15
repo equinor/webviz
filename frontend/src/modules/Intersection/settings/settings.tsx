@@ -58,14 +58,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                 `${props.settingsContext.getInstanceIdString()}-settings`,
             );
             if (!serializedState) {
-                // Default view layout
                 const groupDelegate = dataProviderManager.getGroupDelegate();
 
-                const hasIntersectionView =
+                const doAddDefaultIntersectionView =
                     groupDelegate.getDescendantItems(
                         (item) => item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW,
-                    ).length > 0;
-                if (!hasIntersectionView) {
+                    ).length === 0;
+                if (doAddDefaultIntersectionView) {
                     groupDelegate.appendChild(
                         GroupRegistry.makeGroup(
                             GroupType.INTERSECTION_VIEW,
@@ -74,6 +73,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                         ),
                     );
                 }
+
                 return;
             }
 
