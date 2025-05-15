@@ -177,8 +177,8 @@ export class Dependency<
             });
         }
 
-        if (this._globalSettingGetter(settingName) === undefined) {
-            throw new DependencyLoadingError("Setting is loading");
+        if (this._globalSettingGetter(settingName) === null) {
+            throw new DependencyLoadingError("Setting is not set yet");
         }
 
         if (this._cachedGlobalSettingsMap.has(settingName as string)) {
