@@ -127,7 +127,7 @@ export class SharedSettingsDelegate<
 
         const makeGlobalSettingGetter = <K extends keyof GlobalSettings>(
             key: K,
-            handler: (value: GlobalSettings[K] | undefined) => void,
+            handler: (value: GlobalSettings[K] | null) => void,
         ) => {
             const handleChange = (): void => {
                 handler(this._parentItem.getItemDelegate().getDataProviderManager().getGlobalSetting(key));
@@ -152,7 +152,7 @@ export class SharedSettingsDelegate<
             return this._wrappedSettings[key];
         };
 
-        const globalSettingGetter = <K extends keyof GlobalSettings>(key: K): GlobalSettings[K] | undefined => {
+        const globalSettingGetter = <K extends keyof GlobalSettings>(key: K): GlobalSettings[K] | null => {
             return this._parentItem.getItemDelegate().getDataProviderManager().getGlobalSetting(key);
         };
 

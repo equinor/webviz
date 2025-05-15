@@ -14,6 +14,7 @@ import type { Setting, SettingCategories, SettingCategory, SettingTypes } from "
 import { settingCategoryFixupMap, settingCategoryIsValueValidMap } from "../../settings/settingsDefinitions";
 import type { ExternalSettingController } from "../ExternalSettingController/ExternalSettingController";
 import { Group } from "../Group/Group";
+import { SharedSetting } from "../SharedSetting/SharedSetting";
 
 export enum SettingTopic {
     VALUE = "VALUE",
@@ -34,7 +35,7 @@ export type SettingTopicPayloads<TValue, TCategory extends SettingCategory> = {
     [SettingTopic.IS_VALID]: boolean;
     [SettingTopic.AVAILABLE_VALUES]: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> | null;
     [SettingTopic.IS_EXTERNALLY_CONTROLLED]: boolean;
-    [SettingTopic.EXTERNAL_CONTROLLER_PROVIDER]: OverriddenValueProviderType | undefined;
+    [SettingTopic.EXTERNAL_CONTROLLER_PROVIDER]: ExternalControllerProviderType | undefined;
     [SettingTopic.IS_LOADING]: boolean;
     [SettingTopic.IS_INITIALIZED]: boolean;
     [SettingTopic.IS_PERSISTED]: boolean;
@@ -53,7 +54,7 @@ export type SettingManagerParams<
     customSettingImplementation: CustomSettingImplementation<TValue, TCategory>;
 };
 
-export enum OverriddenValueProviderType {
+export enum ExternalControllerProviderType {
     GROUP = "GROUP",
     SHARED_SETTING = "SHARED_SETTING",
 }
@@ -388,9 +389,14 @@ export class SettingManager<
                     return true;
                 }
                 if (topic === SettingTopic.EXTERNAL_CONTROLLER_PROVIDER) {
-                    return externalController.getParentItem() instanceof Group
-                        ? OverriddenValueProviderType.GROUP
-                        : OverriddenValueProviderType.SHARED_SETTING;
+                    const controllerParentItem = externalController.getParentItem();
+                    if (controllerParentItem instanceof Group) {
+                        return ExternalControllerProviderType.GROUP;
+                    }
+                    if (controllerParentItem instanceof SharedSetting) {
+                        return ExternalControllerProviderType.SHARED_SETTING;
+                    }
+                    throw new Error("Unknown external controller provider type");
                 }
                 return externalController.getSetting().makeSnapshotGetter(topic)();
             };
@@ -409,9 +415,7 @@ export class SettingManager<
                 case SettingTopic.IS_EXTERNALLY_CONTROLLED:
                     return this._externalController !== null;
                 case SettingTopic.EXTERNAL_CONTROLLER_PROVIDER:
-                    return this._externalController?.getParentItem() instanceof Group
-                        ? OverriddenValueProviderType.GROUP
-                        : OverriddenValueProviderType.SHARED_SETTING;
+                    return undefined;
                 case SettingTopic.IS_LOADING:
                     return this.isLoading();
                 case SettingTopic.IS_PERSISTED:

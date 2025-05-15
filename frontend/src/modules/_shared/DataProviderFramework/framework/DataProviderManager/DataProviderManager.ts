@@ -136,8 +136,8 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         this.publishTopic(DataProviderManagerTopic.GLOBAL_SETTINGS);
     }
 
-    getGlobalSetting<T extends keyof GlobalSettings>(key: T): GlobalSettings[T] | undefined {
-        return this._globalSettings[key];
+    getGlobalSetting<T extends keyof GlobalSettings>(key: T): GlobalSettings[T] | null {
+        return this._globalSettings[key] ?? null;
     }
 
     publishTopic(topic: DataProviderManagerTopic): void {
@@ -229,11 +229,10 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     }
 
     private initializeGlobalSettings(): Partial<GlobalSettings> {
-        const ensembles = this._workbenchSession.getEnsembleSet().getRegularEnsembleArray();
-        const intersectionPolylines = this._workbenchSession
-            .getUserCreatedItems()
-            .getIntersectionPolylines()
-            .getPolylines();
+        const ensembles = clone(this._workbenchSession.getEnsembleSet().getRegularEnsembleArray());
+        const intersectionPolylines = clone(
+            this._workbenchSession.getUserCreatedItems().getIntersectionPolylines().getPolylines(),
+        );
 
         return {
             ensembles,

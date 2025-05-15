@@ -121,10 +121,10 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     usePublishSubscribeTopicValue(props.layerManager, DataProviderManagerTopic.DATA_REVISION);
 
     const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.layerManager);
+    const globalAnnotations = assemblerProduct.annotations.filter((el) => "colorScale" in el);
 
     const viewports: ViewportTypeExtended[] = [];
     const deckGlLayers: Layer<any>[] = [];
-    const globalAnnotations = assemblerProduct.annotations.filter((el) => "colorScale" in el);
     const globalColorScales = globalAnnotations.filter((el) => "colorScale" in el);
     const globalLayerIds: string[] = ["placeholder"];
 

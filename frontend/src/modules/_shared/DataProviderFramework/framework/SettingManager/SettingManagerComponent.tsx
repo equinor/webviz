@@ -10,7 +10,7 @@ import type { SettingComponentProps as SettingComponentPropsInterface } from "..
 import type { Setting, SettingCategories, SettingTypes } from "../../settings/settingsDefinitions";
 import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
 
-import { OverriddenValueProviderType, SettingTopic } from "./SettingManager";
+import { ExternalControllerProviderType, SettingTopic } from "./SettingManager";
 import type { SettingManager } from "./SettingManager";
 
 export type SettingComponentProps<
@@ -68,7 +68,7 @@ export function SettingManagerComponent<
     }
 
     if (isExternallyControlled) {
-        if (externalControllerProvider !== OverriddenValueProviderType.SHARED_SETTING) {
+        if (externalControllerProvider !== ExternalControllerProviderType.SHARED_SETTING) {
             return null;
         }
         const valueAsString = props.setting.valueToRepresentation(
