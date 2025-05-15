@@ -63,7 +63,6 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         } else {
             this.insertChild(child, startIndex);
         }
-        this.takeOwnershipOfChild(child);
     }
 
     appendChild(child: Item) {
