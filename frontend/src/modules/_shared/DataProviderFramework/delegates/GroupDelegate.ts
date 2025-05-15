@@ -5,7 +5,7 @@ import { DataProviderManagerTopic } from "../framework/DataProviderManager/DataP
 import { Group } from "../framework/Group/Group";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
 import { DeserializationAssistant } from "../framework/utils/DeserializationAssistant";
-import type { Item } from "../interfacesAndTypes/entities";
+import { instanceofItemGroup, type Item } from "../interfacesAndTypes/entities";
 import type { SerializedItem } from "../interfacesAndTypes/serialization";
 
 import { ItemDelegateTopic } from "./ItemDelegate";
@@ -248,7 +248,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
             );
         }
 
-        if (child instanceof Group) {
+        if (instanceofItemGroup(child)) {
             this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
                 child.getItemDelegate().getId(),
                 child
