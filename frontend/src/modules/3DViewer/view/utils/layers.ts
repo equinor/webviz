@@ -168,6 +168,8 @@ export function wellTrajectoryToGeojson(
     let wellHeadSize = 1;
     if (wellTrajectory.wellboreUuid === selectedWellboreUuid) {
         color = [255, 0, 0];
+        lineWidth = 5;
+        wellHeadSize = 10;
     }
 
     const geometryCollection: GeoWellFeature = {
@@ -177,6 +179,10 @@ export function wellTrajectoryToGeojson(
             geometries: [wellHeadPoint, trajectoryLineString],
         },
         properties: {
+            uuid: wellTrajectory.wellboreUuid,
+            uwi: wellTrajectory.uniqueWellboreIdentifier,
+            lineWidth,
+            wellHeadSize,
             name: wellTrajectory.uniqueWellboreIdentifier,
             color,
             md: [wellTrajectory.mdArr],
