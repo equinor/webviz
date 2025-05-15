@@ -14,7 +14,6 @@ import {
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { mergeResults } from "@modules/WellLogViewer/utils/queries";
 
-
 import { selectedFieldIdentifierAtom, selectedWellPickColumnAtom, selectedWellboreHeaderAtom } from "./derivedAtoms";
 
 export const availableFieldsQueryAtom = atomWithQuery(() => {
@@ -39,6 +38,7 @@ export const wellLogCurveHeadersQueryAtom = atomWithQueries((get) => {
         WellLogCurveSourceEnum_api.SSDL_WELL_LOG,
         WellLogCurveSourceEnum_api.SMDA_GEOLOGY,
         WellLogCurveSourceEnum_api.SMDA_STRATIGRAPHY,
+        WellLogCurveSourceEnum_api.SMDA_SURVEY,
     ];
 
     // We *could* fetch all headers within a single query, but doing them seperately here for parallelism
@@ -78,7 +78,7 @@ export const wellborePicksQueryAtom = atomWithQuery((get) => {
         ...getWellborePicksInStratColumnOptions({
             query: {
                 wellbore_uuid: selectedWellboreUuid,
-                strat_column: selectedStratColumn,
+                strat_column_identifier: selectedStratColumn,
             },
         }),
         enabled: Boolean(selectedWellboreUuid),

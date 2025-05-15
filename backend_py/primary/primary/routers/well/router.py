@@ -103,7 +103,11 @@ async def get_wellbore_picks_for_pick_identifier(
     pick_identifier: str = Query(description="Pick identifier")
     # fmt:on
 ) -> List[schemas.WellborePick]:
-    """Get wellbore picks for field and pick identifier"""
+    """Get picks for wellbores for field and pick identifier
+
+    This implies picks for multiple wellbores for given field and pick identifier.
+    E.g. picks for all wellbores in a given surface in a field.
+    """
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
     if is_drogon_identifier(field_identifier=field_identifier):
         # Handle DROGON
@@ -119,14 +123,17 @@ async def get_wellbore_picks_for_pick_identifier(
     return [converters.convert_wellbore_pick_to_schema(wellbore_pick) for wellbore_pick in wellbore_picks]
 
 
-@router.get("/wellbore_picks_for_wellbore/")
-async def get_wellbore_picks_for_wellbore(
+@router.get("/deprecated_wellbore_picks_for_wellbore/")
+async def deprecated_get_wellbore_picks_for_wellbore(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid")
     # fmt:on
 ) -> List[schemas.WellborePick]:
-    """Get wellbore picks for field and pick identifier"""
+    """Get wellbore picks for field and pick identifier
+
+    NOTE: This endpoint is deprecated and is to be deleted when refactoring intersection module
+    """
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
 
     if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
@@ -144,21 +151,42 @@ async def get_wellbore_picks_for_wellbore(
 async def get_wellbore_picks_in_strat_column(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid"),
-    strat_column: str = Query(description="Optional - Filter by stratigraphic column"),
+    strat_column_identifier: str = Query(description="Filter by stratigraphic column"),
 ) -> list[schemas.WellborePick]:
+    """
+    Get wellbore picks for a single wellbore with stratigraphic column identifier
+    """
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
 
-    if is_drogon_identifier(strat_column_identifier=strat_column):
+    if is_drogon_identifier(strat_column_identifier=strat_column_identifier):
         # Handle DROGON
         well_access = DrogonSmdaAccess()
     else:
         well_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
     wellbore_picks = await well_access.get_wellbore_picks_in_stratigraphic_column_async(
-        wellbore_uuid=wellbore_uuid, strat_column_identifier=strat_column
+        wellbore_uuid=wellbore_uuid, strat_column_identifier=strat_column_identifier
     )
 
     return [converters.convert_wellbore_pick_to_schema(wellbore_pick) for wellbore_pick in wellbore_picks]
+
+
+@router.get("/wellbore_stratigraphic_columns/")
+async def get_wellbore_stratigraphic_columns(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    wellbore_uuid: str = Query(description="Wellbore uuid"),
+) -> list[schemas.StratigraphicColumn]:
+
+    smda_access: SmdaAccess | DrogonSmdaAccess
+    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
+        # Handle DROGON
+        smda_access = DrogonSmdaAccess()
+    else:
+        smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
+
+    strat_columns = await smda_access.get_stratigraphic_columns_for_wellbore_async(wellbore_uuid)
+
+    return [converters.to_api_stratigraphic_column(col) for col in strat_columns]
 
 
 @router.get("/wellbore_completions/")
@@ -256,6 +284,9 @@ async def get_wellbore_log_curve_headers(
     if schemas.WellLogCurveSourceEnum.SMDA_STRATIGRAPHY in sources:
         curve_headers += await _get_headers_from_smda_stratigraghpy_async(authenticated_user, wellbore_uuid)
 
+    if schemas.WellLogCurveSourceEnum.SMDA_SURVEY in sources:
+        curve_headers += await _get_headers_from_smda_survey_async(authenticated_user, wellbore_uuid)
+
     return curve_headers
 
 
@@ -296,6 +327,22 @@ async def _get_headers_from_smda_stratigraghpy_async(
         strat_columns = []
 
     return [converters.convert_strat_column_to_well_log_header(col) for col in strat_columns if col.strat_column_type]
+
+
+async def _get_headers_from_smda_survey_async(
+    authenticated_user: AuthenticatedUser, wellbore_uuid: str
+) -> list[schemas.WellboreLogCurveHeader]:
+    survey_access = SmdaAccess(authenticated_user.get_smda_access_token())
+
+    try:
+        survey_headers = await survey_access.get_survey_headers_for_wellbore_async(wellbore_uuid)
+    except NoDataError:
+        return []
+
+    # Unsure if there can ever be more than one; will make more robust handling when implementing the data provider framework, but for now we just take the first (most recent one)
+    log_headers = converters.convert_survey_header_to_well_log_headers(survey_headers[0])
+
+    return log_headers
 
 
 @router.get("/log_curve_data/")
@@ -351,5 +398,22 @@ async def get_log_curve_data(
         wellbore_strat_units = await smda_access.get_stratigraphy_for_wellbore_and_column_async(wellbore_uuid, log_name)
 
         return converters.convert_strat_unit_data_to_log_curve_schema(wellbore_strat_units)
+
+    if source == schemas.WellLogCurveSourceEnum.SMDA_SURVEY:
+        # Here, the log name is a single survey identifier, and the curve name is **either AZI, INCL, or DSL**, which are within that sample
+        smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
+
+        # Header needed again to get curve units, and the correct samples (incase there's multiple surveys)
+        survey_headers = await smda_access.get_survey_headers_for_wellbore_async(wellbore_uuid)
+        # As mentioned in the header endpoint, we assume there's only one
+        survey_header = survey_headers[0]
+        if not survey_header:
+            raise ValueError(f"Could not find survey header for {log_name}")
+
+        survey_samples = await smda_access.get_survey_samples_for_wellbore_async(
+            wellbore_uuid, survey_header.survey_identifier
+        )
+
+        return converters.convert_survey_sample_to_log_curve_schemas(survey_samples, survey_header, curve_name)
 
     raise ValueError(f"Unknown source {source}")
