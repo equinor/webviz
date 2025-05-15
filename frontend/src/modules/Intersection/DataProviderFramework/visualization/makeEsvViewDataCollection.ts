@@ -4,16 +4,18 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import type { GroupCustomPropsCollector } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { TargetViewReturnTypes } from "@modules/Intersection/view/components/DataProvidersWrapper";
 
+import { createValidExtensionLength } from "../utils.ts/extensionLengthUtils";
+
 export const makeEsvViewDataCollection: GroupCustomPropsCollector<
     IntersectionViewSettings,
     GroupType.INTERSECTION_VIEW,
     TargetViewReturnTypes
 > = ({ getSetting }) => {
     const intersection = getSetting(Setting.INTERSECTION);
-    const wellboreExtensionLength = getSetting(Setting.WELLBORE_EXTENSION_LENGTH);
+    const extensionLength = createValidExtensionLength(intersection, getSetting(Setting.WELLBORE_EXTENSION_LENGTH));
 
     return {
         intersection: intersection,
-        extensionLength: wellboreExtensionLength,
+        extensionLength: extensionLength,
     };
 };

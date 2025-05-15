@@ -13,6 +13,7 @@ import type {
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import { createSeismicColorScaleValues } from "../utils.ts/colorScaleUtils";
+import { createValidExtensionLength } from "../utils.ts/extensionLengthUtils";
 
 /**
  * Make a trajectory in the uz-plane of a fence made from a polyline in the xy-plane of a
@@ -62,9 +63,13 @@ export function createSeismicLayerItemsMaker({
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
     const colorOpacityPercent = getSetting(Setting.OPACITY_PERCENT) ?? 100;
     const useCustomColorScaleBoundaries = getSetting(Setting.COLOR_SCALE)?.areBoundariesUserDefined ?? false;
-    const extensionLength = getSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
     const attribute = getSetting(Setting.ATTRIBUTE);
     const valueRange = getValueRange();
+
+    const extensionLength = createValidExtensionLength(
+        getSetting(Setting.INTERSECTION),
+        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
+    );
 
     const seismicFenceSectionLengths = getStoredData("seismicFencePolylineWithSectionLengths")?.actualSectionLengths;
 

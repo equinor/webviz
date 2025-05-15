@@ -14,6 +14,7 @@ import type {
 import { createTransformedPolylineIntersectionResult } from "@modules/_shared/Intersection/gridIntersectionTransform";
 
 import { createGridColorScaleValues } from "../utils.ts/colorScaleUtils";
+import { createValidExtensionLength } from "../utils.ts/extensionLengthUtils";
 
 export function createGridLayerItemsMaker({
     id,
@@ -33,11 +34,15 @@ export function createGridLayerItemsMaker({
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
     const colorOpacityPercent = getSetting(Setting.OPACITY_PERCENT) ?? 100;
     const useCustomColorScaleBoundaries = getSetting(Setting.COLOR_SCALE)?.areBoundariesUserDefined ?? false;
-    const extensionLength = getSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
     const showGridLines = getSetting(Setting.SHOW_GRID_LINES);
     const selectedAttribute = getSetting(Setting.ATTRIBUTE);
     const sourcePolylineWithSectionLengths = getStoredData("polylineWithSectionLengths");
     const valueRange = getValueRange();
+
+    const extensionLength = createValidExtensionLength(
+        getSetting(Setting.INTERSECTION),
+        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
+    );
 
     if (!intersectionData || !sourcePolylineWithSectionLengths || !colorScale || isLoading || !valueRange) {
         return null;

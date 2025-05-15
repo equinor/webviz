@@ -7,6 +7,8 @@ import type {
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
+import { createValidExtensionLength } from "../utils.ts/extensionLengthUtils";
+
 /**
  * Build a bounding box for the intersection seismic data.
  *
@@ -25,8 +27,11 @@ export function makeSeismicBoundingBox({
     any
 >): BBox | null {
     const data = getData();
-    const extensionLength = getSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
     const polylineActualSectionLengths = getStoredData("sourcePolylineWithSectionLengths")?.actualSectionLengths;
+    const extensionLength = createValidExtensionLength(
+        getSetting(Setting.INTERSECTION),
+        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
+    );
 
     if (!data || !polylineActualSectionLengths || isLoading) {
         return null;

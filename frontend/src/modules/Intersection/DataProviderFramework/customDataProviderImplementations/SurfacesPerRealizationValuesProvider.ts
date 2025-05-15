@@ -25,6 +25,8 @@ import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramew
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
+import { createValidExtensionLength } from "../utils.ts/extensionLengthUtils";
+
 import { createResampledPolylinePointsAndCumulatedLengthArray } from "./utils";
 
 const surfacesPerRealizationValuesSettings = [
@@ -205,8 +207,11 @@ export class SurfacesPerRealizationValuesProvider
             const intersectionPolylineWithSectionLengths = getHelperDependency(
                 intersectionPolylineWithSectionLengthsDep,
             );
-            const extensionLength = getLocalSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
             const sampleResolutionInMeters = getLocalSetting(Setting.SAMPLE_RESOLUTION_IN_METERS) ?? 1;
+            const extensionLength = createValidExtensionLength(
+                getLocalSetting(Setting.INTERSECTION),
+                getLocalSetting(Setting.WELLBORE_EXTENSION_LENGTH),
+            );
 
             // If no intersection is selected, or polyline is empty, cancel update
             if (

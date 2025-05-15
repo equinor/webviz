@@ -7,6 +7,7 @@ import type {
     RealizationSurfacesSettings,
     RealizationSurfacesStoredData,
 } from "../customDataProviderImplementations/RealizationSurfacesProvider";
+import { createValidExtensionLength } from "../utils.ts/extensionLengthUtils";
 
 /**
  * Build a bounding box for the intersection surface data.
@@ -26,8 +27,11 @@ export function makeSurfacesBoundingBox({
     any
 >): BBox | null {
     const data = getData();
-    const extensionLength = getSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
     const polylineActualSectionLengths = getStoredData("polylineWithSectionLengths")?.actualSectionLengths;
+    const extensionLength = createValidExtensionLength(
+        getSetting(Setting.INTERSECTION),
+        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
+    );
 
     if (!data || !polylineActualSectionLengths || isLoading) {
         return null;

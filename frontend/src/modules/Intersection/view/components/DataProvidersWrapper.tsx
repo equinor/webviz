@@ -147,7 +147,6 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     SurfacesPerRealizationValuesProvider,
     {
         transformToVisualization: createUncertaintySurfacesLayerItemsMaker,
-        // transformToBoundingBox: makeSurfacesBoundingBox,
     },
 );
 

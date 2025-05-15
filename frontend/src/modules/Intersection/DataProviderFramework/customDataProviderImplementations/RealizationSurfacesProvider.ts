@@ -26,6 +26,8 @@ import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
 
+import { createValidExtensionLength } from "../utils.ts/extensionLengthUtils";
+
 import { createResampledPolylinePointsAndCumulatedLengthArray } from "./utils";
 
 const realizationSurfacesSettings = [
@@ -232,7 +234,10 @@ export class RealizationSurfacesProvider
         const attribute = getSetting(Setting.ATTRIBUTE);
         const surfaceNames = getSetting(Setting.SURFACE_NAMES);
         const sampleResolutionInMeters = getSetting(Setting.SAMPLE_RESOLUTION_IN_METERS) ?? 1;
-        const extensionLength = getSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
+        const extensionLength = createValidExtensionLength(
+            getSetting(Setting.INTERSECTION),
+            getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
+        );
 
         if (sampleResolutionInMeters === null || !surfaceNames || !attribute) {
             throw new Error("Invalid settings: Sample resolution, surface names or attribute are not set");

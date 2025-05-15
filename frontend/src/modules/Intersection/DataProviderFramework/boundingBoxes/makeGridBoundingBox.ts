@@ -8,6 +8,8 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { createTransformedPolylineIntersectionResult } from "@modules/_shared/Intersection/gridIntersectionTransform";
 
+import { createValidExtensionLength } from "../utils.ts/extensionLengthUtils";
+
 /**
  * Build a bounding box for the intersection grid data.
  *
@@ -26,8 +28,11 @@ export function makeGridBoundingBox({
     any
 >): BBox | null {
     const polylineIntersectionData = getData();
-    const extensionLength = getSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
     const polylineActualSectionLengths = getStoredData("polylineWithSectionLengths")?.actualSectionLengths;
+    const extensionLength = createValidExtensionLength(
+        getSetting(Setting.INTERSECTION),
+        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
+    );
 
     if (!polylineIntersectionData || !polylineActualSectionLengths || isLoading) {
         return null;
