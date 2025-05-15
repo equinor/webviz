@@ -1,6 +1,6 @@
 import type { GroupDelegate } from "../../delegates/GroupDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import type { Item } from "../../interfacesAndTypes/entities";
+import { instanceofItemGroup, type Item } from "../../interfacesAndTypes/entities";
 import type { AvailableValuesType } from "../../interfacesAndTypes/utils";
 import {
     type Setting,
@@ -104,6 +104,11 @@ export class ExternalSettingController<
                     }
                 }
                 foundSettings.push(...this.findControlledSettingsRecursively(child.getGroupDelegate()));
+            } else if (instanceofItemGroup(child)) {
+                const group = child.getGroupDelegate();
+                if (group) {
+                    foundSettings.push(...this.findControlledSettingsRecursively(group));
+                }
             }
         }
 
