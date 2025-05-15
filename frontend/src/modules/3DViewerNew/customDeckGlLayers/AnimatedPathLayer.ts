@@ -29,17 +29,22 @@ export class AnimatedPathLayer extends PathLayer {
 
     getShaders() {
         const shaders = super.getShaders();
+        const inject = shaders.inject ?? {};
+        const injectDecl = inject["vs:#decl"] ?? "";
+        const injectMainEnd = inject["vs:#main-end"] ?? "";
         return {
             ...shaders,
             inject: {
-                ...shaders.inject,
+                ...inject,
                 "vs:#decl":
-                    shaders.inject["vs:#decl"] +
-                    `\
+                    injectDecl ??
+                    "" +
+                        `\
         uniform float dashStart;`,
                 "vs:#main-end":
-                    shaders.inject["vs:#main-end"] +
-                    `\
+                    injectMainEnd ??
+                    "" +
+                        `\
         vDashOffset += dashStart;`,
             },
         };

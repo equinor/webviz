@@ -3,10 +3,10 @@ import {
     type FilterContext,
     type GetPickingInfoParams,
     type Layer,
+    type LayerContext,
     type PickingInfo,
 } from "@deck.gl/core";
 import { PathLayer, TextLayer } from "@deck.gl/layers";
-
 import type { Polyline } from "@modules/3DViewerNew/view/utils/PolylinesPlugin";
 
 export type PolylinesLayerProps = {
@@ -31,6 +31,12 @@ export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
     state!: {
         hoveredPolylineIndex: number | null;
     };
+
+    initializeState(_: LayerContext): void {
+        this.setState({
+            hoveredPolylineIndex: null,
+        });
+    }
 
     onHover(info: PickingInfo): boolean {
         if (!this.props.hoverable) {
@@ -111,6 +117,9 @@ export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
 
         const polylineLabels: { label: string; position: number[]; angle: number; color: number[] }[] = [];
         for (const polyline of this.props.polylines) {
+            if (polyline.path.length < 2) {
+                continue;
+            }
             const vector = [
                 polyline.path[1][0] - polyline.path[0][0],
                 polyline.path[1][1] - polyline.path[0][1],

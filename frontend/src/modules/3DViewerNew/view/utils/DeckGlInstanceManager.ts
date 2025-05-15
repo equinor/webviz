@@ -294,13 +294,19 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     }
 
     makeDeckGlComponentProps(props: SubsurfaceViewerWithCameraStateProps): SubsurfaceViewerWithCameraStateProps {
+        const pluginLayerIds: string[] = [];
         const layers = [...(props.layers ?? [])];
         for (const plugin of this._plugins) {
             const pluginLayers = plugin.getLayers?.() ?? [];
             layers.push(...pluginLayers);
             for (const layer of pluginLayers) {
                 this._layersIdPluginMap.set(layer.id, plugin);
+                pluginLayerIds.push(layer.id);
             }
+        }
+        const viewports = props.views?.viewports ?? [];
+        for (const viewport of viewports) {
+            viewport.layerIds = [...(viewport.layerIds ?? []), ...pluginLayerIds];
         }
         return {
             ...props,
@@ -311,6 +317,14 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
             },
             getCursor: (state) => this.getCursor(state),
             layers,
+            views: {
+                ...props.views,
+                viewports: viewports.map((viewport) => ({
+                    ...viewport,
+                    layerIds: [...(viewport.layerIds ?? []), ...pluginLayerIds],
+                })),
+                layout: props.views?.layout ?? [1, 1],
+            },
         };
     }
 

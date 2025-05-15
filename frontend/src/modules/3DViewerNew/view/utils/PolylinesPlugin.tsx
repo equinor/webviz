@@ -3,9 +3,9 @@ import { Edit, Remove } from "@mui/icons-material";
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import addPathIcon from "@assets/add_path.svg";
-import continuePathIcon from "@assets/continue_path.svg";
-import removePathIcon from "@assets/remove_path.svg";
+import addPathIcon from "@assets/add_path.svg?url";
+import continuePathIcon from "@assets/continue_path.svg?url";
+import removePathIcon from "@assets/remove_path.svg?url";
 
 import { type PublishSubscribe, PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
@@ -406,7 +406,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 [PolylineEditingMode.DRAW, PolylineEditingMode.ADD_POINT].includes(this._editingMode) &&
                 pickingInfo.editableEntity.type === "line"
             ) {
-                return `url(${addPathIcon}) 4 2, crosshair`;
+                return `url("${addPathIcon}") 4 2, auto`;
             }
 
             if (
@@ -420,10 +420,10 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                     index !== this._currentEditingPolylinePathReferencePointIndex &&
                     this._editingMode === PolylineEditingMode.DRAW
                 ) {
-                    return `url(${continuePathIcon}) 4 2, crosshair`;
+                    return `url("${continuePathIcon}") 4 2, crosshair`;
                 }
 
-                return `url(${removePathIcon}) 4 2, crosshair`;
+                return `url("${removePathIcon}") 4 2, crosshair`;
             }
 
             if (this._editingMode === PolylineEditingMode.IDLE && pickingInfo.editableEntity.type === "point") {
