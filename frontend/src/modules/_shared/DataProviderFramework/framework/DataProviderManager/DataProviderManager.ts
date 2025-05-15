@@ -23,7 +23,6 @@ import { type SerializedDataProviderManager, SerializedType } from "../../interf
 export enum DataProviderManagerTopic {
     ITEMS_ABOUT_TO_CHANGE = "ITEMS_ABOUT_TO_CHANGE",
     ITEMS = "ITEMS",
-    SETTINGS_CHANGED = "SETTINGS_CHANGED",
     DATA_REVISION = "DATA_REVISION",
     GLOBAL_SETTINGS = "GLOBAL_SETTINGS",
 }
@@ -31,7 +30,6 @@ export enum DataProviderManagerTopic {
 export type DataProviderManagerTopicPayload = {
     [DataProviderManagerTopic.ITEMS]: Item[];
     [DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE]: void;
-    [DataProviderManagerTopic.SETTINGS_CHANGED]: void;
     [DataProviderManagerTopic.DATA_REVISION]: number;
     [DataProviderManagerTopic.GLOBAL_SETTINGS]: GlobalSettings;
 };
@@ -172,9 +170,6 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
                 return this._groupDelegate.getChildren();
             }
             if (topic === DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE) {
-                return;
-            }
-            if (topic === DataProviderManagerTopic.SETTINGS_CHANGED) {
                 return;
             }
             if (topic === DataProviderManagerTopic.DATA_REVISION) {
