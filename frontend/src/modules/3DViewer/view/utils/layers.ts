@@ -1,7 +1,8 @@
 import type { Layer } from "@deck.gl/core";
 import { TGrid3DColoringMode } from "@webviz/subsurface-viewer";
 import { AxesLayer, Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
-import type { Feature } from "geojson";
+import type { GeoJsonWellProperties } from "@webviz/subsurface-viewer/dist/layers/wells/types";
+import type { Feature, Geometry, GeometryCollection } from "geojson";
 
 import type { BoundingBox3D_api, WellboreTrajectory_api } from "@api";
 import type { ColorScale } from "@lib/utils/ColorScale";
@@ -136,7 +137,6 @@ export function makeWellsLayer(
         id: "wells-layer",
         data: {
             type: "FeatureCollection",
-            unit: "m",
             features: wellLayerDataFeatures,
         },
         refine: false,
@@ -152,39 +152,31 @@ export function makeWellsLayer(
 export function wellTrajectoryToGeojson(
     wellTrajectory: WellboreTrajectory_api,
     selectedWellboreUuid: string | null,
-): Record<string, unknown> {
-    const point: Record<string, unknown> = {
+): Feature<GeometryCollection<Geometry>, GeoJsonWellProperties> {
+    const point: Geometry = {
         type: "Point",
         coordinates: [wellTrajectory.eastingArr[0], wellTrajectory.northingArr[0], -wellTrajectory.tvdMslArr[0]],
     };
-    const coordinates: Record<string, unknown> = {
+    const coordinates: Geometry = {
         type: "LineString",
         coordinates: zipCoords(wellTrajectory.eastingArr, wellTrajectory.northingArr, wellTrajectory.tvdMslArr),
     };
 
-    let color = [150, 150, 150];
-    let lineWidth = 2;
-    let wellHeadSize = 1;
+    let color: [number, number, number] = [150, 150, 150];
     if (wellTrajectory.wellboreUuid === selectedWellboreUuid) {
         color = [255, 0, 0];
-        lineWidth = 5;
-        wellHeadSize = 10;
     }
 
-    const geometryCollection: Record<string, unknown> = {
+    const geometryCollection: Feature<GeometryCollection<Geometry>, GeoJsonWellProperties> = {
         type: "Feature",
         geometry: {
             type: "GeometryCollection",
             geometries: [point, coordinates],
         },
         properties: {
-            uuid: wellTrajectory.wellboreUuid,
             name: wellTrajectory.uniqueWellboreIdentifier,
-            uwi: wellTrajectory.uniqueWellboreIdentifier,
             color,
             md: [wellTrajectory.mdArr],
-            lineWidth,
-            wellHeadSize,
         },
     };
 

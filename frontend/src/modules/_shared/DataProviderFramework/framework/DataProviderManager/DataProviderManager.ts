@@ -136,8 +136,8 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         this.publishTopic(DataProviderManagerTopic.GLOBAL_SETTINGS);
     }
 
-    getGlobalSetting<T extends keyof GlobalSettings>(key: T): GlobalSettings[T] | undefined {
-        return this._globalSettings[key];
+    getGlobalSetting<T extends keyof GlobalSettings>(key: T): GlobalSettings[T] | null {
+        return this._globalSettings[key] ?? null;
     }
 
     publishTopic(topic: DataProviderManagerTopic): void {

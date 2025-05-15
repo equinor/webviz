@@ -4,7 +4,7 @@ import type { Layer, PickingInfo } from "@deck.gl/core";
 import { ColumnLayer, SolidPolygonLayer } from "@deck.gl/layers";
 import { Add, FilterCenterFocus, Polyline, Remove } from "@mui/icons-material";
 import type { LayerPickInfo, ViewStateType } from "@webviz/subsurface-viewer";
-import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
+import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 import type { MapMouseEvent } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 import type { Feature } from "geojson";
 import { isEqual } from "lodash";
