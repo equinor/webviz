@@ -1,9 +1,6 @@
 import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import { DataProvider } from "../framework/DataProvider/DataProvider";
-import { DataProviderManagerTopic } from "../framework/DataProviderManager/DataProviderManager";
-import { Group } from "../framework/Group/Group";
-import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
 import { DeserializationAssistant } from "../framework/utils/DeserializationAssistant";
 import { instanceofItemGroup, type Item } from "../interfacesAndTypes/entities";
 import type { SerializedItem } from "../interfacesAndTypes/serialization";
@@ -118,7 +115,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
                 return child;
             }
 
-            if (child instanceof Group) {
+            if (instanceofItemGroup(child)) {
                 const descendant = child.getGroupDelegate().findDescendantById(id);
                 if (descendant) {
                     return descendant;
@@ -167,7 +164,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
                 items.push(child);
             }
 
-            if (child instanceof Group) {
+            if (instanceofItemGroup(child)) {
                 items.push(...child.getGroupDelegate().getDescendantItems(predicate));
             }
         }
@@ -189,7 +186,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
             if (topic === GroupDelegateTopic.CHILDREN_EXPANSION_STATES) {
                 const expansionState: { [id: string]: boolean } = {};
                 for (const child of this._children) {
-                    if (child instanceof Group) {
+                    if (instanceofItemGroup(child)) {
                         expansionState[child.getItemDelegate().getId()] = child.getItemDelegate().isExpanded();
                     }
                 }
@@ -283,13 +280,6 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
     private disposeOwnershipOfChild(child: Item) {
         this._unsubscribeHandlerDelegate.unsubscribe(child.getItemDelegate().getId());
         child.getItemDelegate().setParentGroup(null);
-
-        if (child instanceof SharedSetting) {
-            this._owner
-                ?.getItemDelegate()
-                .getDataProviderManager()
-                .publishTopic(DataProviderManagerTopic.SETTINGS_CHANGED);
-        }
 
         this.publishTopic(GroupDelegateTopic.CHILDREN);
     }
