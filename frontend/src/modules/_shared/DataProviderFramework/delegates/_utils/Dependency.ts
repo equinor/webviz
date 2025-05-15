@@ -125,7 +125,7 @@ export class Dependency<
             });
         }
 
-        if (this._localSettingLoadingStateGetter(settingName)) {
+        if (this._localSettingLoadingStateGetter(settingName) && this._isInitialized) {
             throw new DependencyLoadingError("Setting is loading");
         }
 
@@ -177,8 +177,8 @@ export class Dependency<
             });
         }
 
-        if (this._globalSettingGetter(settingName) === null) {
-            throw new DependencyLoadingError("Setting is not set yet");
+        if (this._globalSettingGetter(settingName) === null && this._isInitialized) {
+            throw new DependencyLoadingError("Setting is not yet set");
         }
 
         if (this._cachedGlobalSettingsMap.has(settingName as string)) {
@@ -194,7 +194,7 @@ export class Dependency<
             this._numParentDependencies++;
         }
 
-        if (dep.getIsLoading()) {
+        if (dep.getIsLoading() && this._isInitialized) {
             throw new DependencyLoadingError("Dependency is loading");
         }
 
