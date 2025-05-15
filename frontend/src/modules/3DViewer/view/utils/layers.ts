@@ -1,11 +1,11 @@
-import type { Layer } from "@deck.gl/core";
+import type { Color, Layer } from "@deck.gl/core";
 import { TGrid3DColoringMode } from "@webviz/subsurface-viewer";
 import { AxesLayer, Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
-import type { GeoJsonWellProperties } from "@webviz/subsurface-viewer/dist/layers/wells/types";
-import type { Feature, Geometry, GeometryCollection } from "geojson";
+import type { Feature, LineString, Point } from "geojson";
 
 import type { BoundingBox3D_api, WellboreTrajectory_api } from "@api";
 import type { ColorScale } from "@lib/utils/ColorScale";
+import type { GeoWellFeature } from "@modules/3DViewer/typesAndEnums";
 
 import type {
     FenceMeshSection_trans,
@@ -143,6 +143,7 @@ export function makeWellsLayer(
         lineStyle: { width: getLineStyleWidth, color: getColor },
         wellHeadStyle: { size: getWellHeadStyleWidth, color: getColor },
         pickable: true,
+        wellNameVisible: true,
         ZIncreasingDownwards: false,
     });
 
@@ -152,26 +153,28 @@ export function makeWellsLayer(
 export function wellTrajectoryToGeojson(
     wellTrajectory: WellboreTrajectory_api,
     selectedWellboreUuid: string | null,
-): Feature<GeometryCollection<Geometry>, GeoJsonWellProperties> {
-    const point: Geometry = {
+): GeoWellFeature {
+    const wellHeadPoint: Point = {
         type: "Point",
         coordinates: [wellTrajectory.eastingArr[0], wellTrajectory.northingArr[0], -wellTrajectory.tvdMslArr[0]],
     };
-    const coordinates: Geometry = {
+    const trajectoryLineString: LineString = {
         type: "LineString",
         coordinates: zipCoords(wellTrajectory.eastingArr, wellTrajectory.northingArr, wellTrajectory.tvdMslArr),
     };
 
-    let color: [number, number, number] = [150, 150, 150];
+    let color = [150, 150, 150] as Color;
+    let lineWidth = 2;
+    let wellHeadSize = 1;
     if (wellTrajectory.wellboreUuid === selectedWellboreUuid) {
         color = [255, 0, 0];
     }
 
-    const geometryCollection: Feature<GeometryCollection<Geometry>, GeoJsonWellProperties> = {
+    const geometryCollection: GeoWellFeature = {
         type: "Feature",
         geometry: {
             type: "GeometryCollection",
-            geometries: [point, coordinates],
+            geometries: [wellHeadPoint, trajectoryLineString],
         },
         properties: {
             name: wellTrajectory.uniqueWellboreIdentifier,

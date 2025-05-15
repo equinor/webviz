@@ -6,6 +6,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 // Base state wrapper props
 export type PendingWrapperProps = {
     isPending: boolean;
+    className?: string;
     errorMessage?: string;
     children: React.ReactNode;
 };
@@ -13,7 +14,7 @@ export type PendingWrapperProps = {
 export const PendingWrapper: React.FC<PendingWrapperProps> = (props) => {
     return (
         <div
-            className={resolveClassNames("relative rounded-sm", {
+            className={resolveClassNames("relative rounded-sm", props.className, {
                 "outline outline-blue-100 outline-offset-2": props.isPending,
                 "outline outline-red-100 outline-offset-2": Boolean(!props.isPending && props.errorMessage),
             })}

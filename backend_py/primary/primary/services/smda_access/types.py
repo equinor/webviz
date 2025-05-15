@@ -34,6 +34,47 @@ class WellboreTrajectory(BaseModel):
     northing_arr: List[float]
 
 
+class WellboreSurveyHeader(BaseModel):
+    survey_identifier: str
+    well_uuid: str
+    wellbore_uuid: str
+    unique_wellbore_identifier: str
+    wellbore_content: str
+    wellbore_status: str
+
+    azimuth_unit: str
+    dogleg_severity_unit: str
+    inclination_unit: str
+
+
+class WellboreSurveySample(BaseModel):
+    uuid: str
+    wellbore_uuid: str
+    survey_header_uuid: str
+    survey_identifier: str
+    # Classification of the record, values like Open, Internal, Restricted and Confidential
+    classification: str
+
+    ### Wellbore position
+    md: float
+    tvd: float
+    md_msl: float
+    tvd_msl: float
+
+    ### Well geometry
+    azimuth: float
+    inclination: float
+    dogleg_severity: float
+
+    ### World position
+    easting: float
+    northing: float
+    delta_easting: float
+    delta_northing: float
+    latitude_wgs84: float
+    longitude_wgs84: float
+
+
 class WellboreHeader(BaseModel):
     wellbore_uuid: str
     unique_wellbore_identifier: str
