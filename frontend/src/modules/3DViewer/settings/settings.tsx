@@ -32,7 +32,6 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { isoIntervalStringToDateLabel, isoStringToDateLabel } from "@modules/_shared/utils/isoDatetimeStringFormatting";
 
-
 import type { Interfaces } from "../interfaces";
 import type { GridCellIndexRanges } from "../typesAndEnums";
 
@@ -70,7 +69,6 @@ import {
 import { drilledWellboreHeadersQueryAtom, gridModelInfosQueryAtom } from "./atoms/queryAtoms";
 import { GridCellIndexFilter } from "./components/gridCellIndexFilter";
 import { WellboreSelector } from "./components/wellboreSelector";
-
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -515,7 +513,7 @@ function makeWellHeaderOptions(wellHeaders: WellboreHeader_api[]): SelectOption[
 }
 
 function makeCustomIntersectionPolylineOptions(
-    polylines: IntersectionPolyline[],
+    polylines: readonly IntersectionPolyline[],
     selectedId: string | null,
     filter: string,
     actions: React.ReactNode,

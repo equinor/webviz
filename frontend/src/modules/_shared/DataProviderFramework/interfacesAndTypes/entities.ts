@@ -1,4 +1,3 @@
-
 import type { GroupDelegate } from "../delegates/GroupDelegate";
 import type { ItemDelegate } from "../delegates/ItemDelegate";
 import type { SharedSettingsDelegate } from "../delegates/SharedSettingsDelegate";
@@ -14,6 +13,7 @@ export interface Item {
     getItemDelegate(): ItemDelegate;
     serializeState(): SerializedItem;
     deserializeState(serialized: SerializedItem): void;
+    beforeDestroy?(): void;
 }
 
 export function instanceofItem(item: any): item is Item {

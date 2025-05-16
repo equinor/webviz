@@ -180,12 +180,12 @@ export function wellTrajectoryToGeojson(
         },
         properties: {
             uuid: wellTrajectory.wellboreUuid,
-            name: wellTrajectory.uniqueWellboreIdentifier,
             uwi: wellTrajectory.uniqueWellboreIdentifier,
-            color,
-            md: [wellTrajectory.mdArr],
             lineWidth,
             wellHeadSize,
+            name: wellTrajectory.uniqueWellboreIdentifier,
+            color,
+            md: [wellTrajectory.mdArr],
         },
     };
 
