@@ -34,10 +34,7 @@ import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProvid
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
 import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
-import type {
-    Annotation,
-    VisualizationTarget,
-} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import {
     VisualizationAssembler,
     VisualizationItemType,
@@ -128,12 +125,11 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     usePublishSubscribeTopicValue(props.layerManager, DataProviderManagerTopic.DATA_REVISION);
 
     const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.layerManager);
+    const globalAnnotations = assemblerProduct.annotations.filter((el) => "colorScale" in el);
 
     const viewports: ViewportTypeExtended[] = [];
     const deckGlLayers: Layer<any>[] = [];
-    const globalAnnotations: Annotation[] = [];
     const globalColorScales = globalAnnotations.filter((el) => "colorScale" in el);
-
     const globalLayerIds: string[] = ["placeholder"];
 
     for (const item of assemblerProduct.children) {

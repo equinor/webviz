@@ -10,7 +10,6 @@ import type { MakeSettingTypesMap, Settings } from "../settings/settingsDefiniti
 import type { NullableStoredData, StoredData } from "./sharedTypes";
 import type { AvailableValuesType, SettingsKeysFromTuple } from "./utils";
 
-
 export interface GetHelperDependency<
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
@@ -24,8 +23,6 @@ export type SettingAttributes = {
     enabled: boolean;
 };
 
-export const CancelUpdate = Symbol("CancelUpdate");
-
 export interface UpdateFunc<
     TReturnValue,
     TSettings extends Settings,
@@ -37,7 +34,18 @@ export interface UpdateFunc<
         getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
         getHelperDependency: GetHelperDependency<TSettings, TSettingTypes, TKey>;
         abortSignal: AbortSignal;
-    }): TReturnValue | typeof CancelUpdate;
+    }): TReturnValue;
+}
+
+export interface DefineBasicDependenciesArgs<
+    TSettings extends Settings,
+    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+    TKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
+> {
+    settingAttributesUpdater: <TSettingKey extends TKey>(
+        settingKey: TSettingKey,
+        update: UpdateFunc<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>,
+    ) => Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>;
 }
 
 export interface DefineDependenciesArgs<
@@ -46,7 +54,7 @@ export interface DefineDependenciesArgs<
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData,
-> {
+> extends DefineBasicDependenciesArgs<TSettings, TSettingTypes, TKey> {
     availableSettingsUpdater: <TSettingKey extends TKey>(
         settingKey: TSettingKey,
         update: UpdateFunc<AvailableValuesType<TSettingKey>, TSettings, TSettingTypes, TKey>,
@@ -55,10 +63,6 @@ export interface DefineDependenciesArgs<
         key: K,
         update: UpdateFunc<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>,
     ) => Dependency<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>;
-    settingAttributesUpdater: <TSettingKey extends TKey>(
-        settingKey: TSettingKey,
-        update: UpdateFunc<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>,
-    ) => Dependency<Partial<SettingAttributes>, TSettings, TSettingTypes, TKey>;
     helperDependency: <T>(
         update: (args: {
             getLocalSetting: <T extends TKey>(settingName: T) => TSettingTypes[T];
