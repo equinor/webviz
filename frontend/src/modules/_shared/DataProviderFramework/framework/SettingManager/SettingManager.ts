@@ -114,6 +114,7 @@ export class SettingManager<
         externalController: ExternalSettingController<TSetting, TValue, TCategory>,
     ): void {
         this._externalController = externalController;
+        this._value = externalController.getSetting().getValue();
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "external-setting-controller",
             externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(
@@ -188,6 +189,7 @@ export class SettingManager<
     }
 
     unregisterExternalSettingController(): void {
+        this._value = this._externalController?.getSetting().getValue() ?? this._value;
         this._externalController = null;
         this._unsubscribeHandler.unsubscribe("external-setting-controller");
         this.applyAvailableValues();
