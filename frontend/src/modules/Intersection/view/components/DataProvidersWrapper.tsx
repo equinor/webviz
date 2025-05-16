@@ -164,7 +164,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
 
     usePublishSubscribeTopicValue(props.dataProviderManager, DataProviderManagerTopic.DATA_REVISION);
 
-    const fieldIdentifier: string | null = props.dataProviderManager.getGlobalSetting("fieldId");
+    const fieldIdentifier = props.dataProviderManager.getGlobalSetting("fieldId");
 
     // Assemble visualization of providers
     const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.dataProviderManager);
@@ -195,7 +195,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     // Create intersection reference system for view
     const intersectionReferenceSystem: IntersectionReferenceSystem | null = useCreateIntersectionReferenceSystem(
         viewIntersection,
-        fieldIdentifier,
+        fieldIdentifier ?? null,
         props.workbenchSession,
     );
 
@@ -342,7 +342,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         }
     }
 
-    const colorScales = assemblerProduct.annotations.filter((elm) => isColorScaleWithId(elm));
+    const colorScales = view?.annotations.filter((elm) => isColorScaleWithId(elm)) ?? [];
 
     return (
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
