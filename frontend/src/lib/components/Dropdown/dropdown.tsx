@@ -9,7 +9,6 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 
-
 import type { BaseComponentProps } from "../BaseComponent";
 import { BaseComponent } from "../BaseComponent";
 import { IconButton } from "../IconButton";
@@ -540,7 +539,10 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
                             <IconButton
                                 size="small"
                                 className="align-sub"
-                                onClick={() => setDropdownVisible((prev) => !prev)}
+                                onClick={(evt) => {
+                                    if (dropdownVisible) evt.stopPropagation();
+                                    setDropdownVisible((prev) => !prev);
+                                }}
                             >
                                 {dropdownVisible ? (
                                     <ExpandLess fontSize="inherit" />
