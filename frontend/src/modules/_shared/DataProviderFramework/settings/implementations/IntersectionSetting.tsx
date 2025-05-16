@@ -17,10 +17,11 @@ export type IntersectionSettingValue = {
     name: string;
     uuid: string;
 };
-
 type ValueType = IntersectionSettingValue | null;
 
 export class IntersectionSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_SELECT> {
+    private _activeType = IntersectionType.WELLBORE;
+
     isValueValid(
         value: IntersectionSettingValue | null,
         availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_SELECT>,
@@ -37,7 +38,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
         availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_SELECT>,
     ): ValueType {
         if (currentValue === null) {
-            return availableValues.find((v) => v.type === IntersectionType.WELLBORE) ?? null;
+            return availableValues.find((v) => v.type === this._activeType) ?? null;
         }
 
         if (availableValues.some((v) => v.uuid === currentValue.uuid && v.type === currentValue.type)) {
@@ -48,12 +49,19 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
-        return function Realization(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
-            const availableValues = props.availableValues ?? [];
+        const activeType = this._activeType;
+        const setActiveType = (type: IntersectionType) => {
+            this._activeType = type;
+        };
 
-            const [type, setType] = React.useState<IntersectionSettingValue["type"]>(
-                props.value?.type ?? IntersectionType.WELLBORE,
-            );
+        return function IntersectionSetting(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
+            const availableValues = props.availableValues ?? [];
+            const [type, setType] = React.useState<IntersectionSettingValue["type"]>(props.value?.type ?? activeType);
+
+            React.useEffect(() => {
+                setActiveType(type);
+            }, [type]);
+
             function handleSelectionChange(selectedValue: string) {
                 const newValue = availableValues.find((v) => v.uuid === selectedValue) ?? null;
                 props.onValueChange(newValue);
