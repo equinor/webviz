@@ -8,7 +8,7 @@ const DEBUG_FLAG_PREFIX = "webviz-debug:";
 export function tanstackCacheTime(time: number) {
     const cacheFlag = localStorage.getItem(DEBUG_FLAG_PREFIX + "disable-tanstack-cache");
 
-    if (!cacheFlag || ["true", true, 1].includes(cacheFlag)) return 0;
+    if (["true", true, 1].includes(cacheFlag as any)) return 0;
 
     return time;
 }
