@@ -193,8 +193,8 @@ export class IntersectionRealizationSeismicProvider
             return await queryClient.fetchQuery({
                 ...getSeismicCubeMetaListOptions({
                     query: {
-                        case_uuid: ensembleIdent?.getCaseUuid() ?? "",
-                        ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+                        case_uuid: ensembleIdent.getCaseUuid() ?? "",
+                        ensemble_name: ensembleIdent.getEnsembleName() ?? "",
                     },
 
                     signal: abortSignal,
