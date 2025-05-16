@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import { type Layer } from "@deck.gl/core";
 
@@ -36,7 +36,6 @@ import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFram
 import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import { makeRealizationGridLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationGridLayer";
 import { makeRealizationPolygonsLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationPolygonsLayer";
-import { makeRealizationSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationSurfaceLayer";
 import { makeStatisticalSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeStatisticalSurfaceLayer";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import {
@@ -45,17 +44,32 @@ import {
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
+import * as bbox from "@lib/utils/bbox";
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
 import { InteractionWrapper } from "./InteractionWrapper";
 
 import "../../DataProviderFramework/registerAllDataProviders";
+import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
+import type { BoundingBox3D } from "@webviz/subsurface-viewer";
+import { makeRealizationSurfaceLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeRealizationSurfaceLayer";
+import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
+import { makeIntersectionLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeIntersectionGrid3dLayer";
+import {
+    accumulatePolylineIds,
+    type AccumulatedData,
+} from "@modules/3DViewerNew/DataProviderFramework/accumulators/polylineIdsAccumulator";
 
-const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<VisualizationTarget.DECK_GL>();
+const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
+    VisualizationTarget.DECK_GL,
+    never,
+    never,
+    AccumulatedData
+>();
 
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
-    DataProviderType.REALIZATION_SURFACE,
+    DataProviderType.REALIZATION_SURFACE_3D,
     RealizationSurfaceProvider,
     {
         transformToVisualization: makeRealizationSurfaceLayer,
@@ -123,6 +137,15 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
         transformToVisualization: makeSeismicFenceMeshLayerFunction(Plane.DEPTH),
     },
 );
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    DataProviderType.INTERSECTION_REALIZATION_GRID,
+    IntersectionRealizationGridProvider,
+    {
+        transformToVisualization: makeIntersectionLayer,
+        transformToAnnotations: makeColorScaleAnnotation,
+        reduceAccumulatedData: accumulatePolylineIds,
+    },
+);
 
 export type LayersWrapperProps = {
     fieldId: string;
@@ -134,17 +157,21 @@ export type LayersWrapperProps = {
 };
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
+    const [prevBoundingBox, setPrevBoundingBox] = React.useState<bbox.BBox | null>(null);
     const statusWriter = useViewStatusWriter(props.viewContext);
 
     usePublishSubscribeTopicValue(props.layerManager, DataProviderManagerTopic.DATA_REVISION);
 
-    const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.layerManager);
+    const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.layerManager, {
+        initialAccumulatedData: { polylineIds: [] },
+    });
 
     const viewports: ViewportTypeExtended[] = [];
     const deckGlLayers: Layer<any>[] = [];
     const globalAnnotations = assemblerProduct.annotations;
     const globalColorScales = globalAnnotations.filter((el) => "colorScale" in el);
-    const globalLayerIds: string[] = ["placeholder"];
+    const globalLayerIds: string[] = ["placeholder", "axes"];
+    const usedPolylineIds = assemblerProduct.accumulatedData.polylineIds;
 
     for (const item of assemblerProduct.children) {
         if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
@@ -203,7 +230,32 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         statusWriter.addError(message);
     }
 
-    deckGlLayers.push(new PlaceholderLayer({ id: "placeholder" }));
+    if (assemblerProduct.combinedBoundingBox !== null) {
+        if (prevBoundingBox !== null) {
+            if (!bbox.outerBoxcontainsInnerBox(prevBoundingBox, assemblerProduct.combinedBoundingBox)) {
+                setPrevBoundingBox(assemblerProduct.combinedBoundingBox);
+            }
+        } else {
+            setPrevBoundingBox(assemblerProduct.combinedBoundingBox);
+        }
+    }
+
+    let bounds: BoundingBox3D | undefined = undefined;
+    if (prevBoundingBox) {
+        bounds = [
+            prevBoundingBox.min.x,
+            prevBoundingBox.min.y,
+            -prevBoundingBox.min.z,
+            prevBoundingBox.max.x,
+            prevBoundingBox.max.y,
+            -prevBoundingBox.max.z,
+        ];
+    }
+
+    deckGlLayers.push(
+        new PlaceholderLayer({ id: "placeholder" }),
+        new AxesLayer({ id: "axes", bounds, ZIncreasingDownwards: true }),
+    );
 
     deckGlLayers.reverse();
 
@@ -214,6 +266,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
             layers={deckGlLayers}
             workbenchSession={props.workbenchSession}
             workbenchSettings={props.workbenchSettings}
+            usedPolylineIds={usedPolylineIds}
         />
     );
 }

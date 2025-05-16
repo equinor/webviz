@@ -12,6 +12,7 @@ function makePositionReadout(coordinates: number[]): ReadoutItem | null {
     if (coordinates === undefined || coordinates.length < 2) {
         return null;
     }
+
     const readout = {
         label: "Position",
         info: [

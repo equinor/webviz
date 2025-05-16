@@ -22,6 +22,7 @@ export type InteractionWrapperProps = Omit<
     "deckGlManager" | "triggerHome" | "verticalScale" | "deckGlRef"
 > & {
     fieldId: string;
+    usedPolylineIds: string[];
 };
 
 function convertPolylines(polylines: Polyline[], fieldId: string): IntersectionPolyline[] {
@@ -59,6 +60,15 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             }
         },
         [colorSet],
+    );
+
+    React.useEffect(
+        function updateVisiblePolylines() {
+            if (polylinesPlugin) {
+                polylinesPlugin.setVisiblePolylineIds(props.usedPolylineIds);
+            }
+        },
+        [props.usedPolylineIds, polylinesPlugin],
     );
 
     React.useEffect(
@@ -137,8 +147,13 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
     );
 
     let adjustedLayers: DeckGlLayer[] = [...props.layers];
+    let adjustedViewports = [...props.views.viewports];
     if (!gridVisible) {
         adjustedLayers = adjustedLayers.filter((layer) => !(layer instanceof AxesLayer));
+        adjustedViewports = adjustedViewports.map((viewport) => ({
+            ...viewport,
+            layerIds: viewport.layerIds?.filter((layerId) => layerId !== "axes"),
+        }));
     }
 
     return (
@@ -146,6 +161,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             {...props}
             deckGlRef={deckGlRef}
             layers={adjustedLayers}
+            views={{ ...props.views, viewports: adjustedViewports }}
             deckGlManager={deckGlManager}
             verticalScale={verticalScale}
             triggerHome={triggerHomeCounter}

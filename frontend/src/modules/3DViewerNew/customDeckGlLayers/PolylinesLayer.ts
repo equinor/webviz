@@ -18,6 +18,7 @@ export type PolylinesLayerProps = {
 
 export type PolylinesLayerPickingInfo = PickingInfo & {
     polylineId?: string;
+    name?: string;
 };
 
 export function isPolylinesLayerPickingInfo(info: PickingInfo): info is PolylinesLayerPickingInfo {
@@ -56,6 +57,7 @@ export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
         if (info && info.sourceLayer && info.object !== undefined) {
             return {
                 ...info,
+                name: info.object.name,
                 polylineId: info.object.id,
             };
         }
@@ -65,7 +67,7 @@ export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
 
     filterSubLayer(context: FilterContext): boolean {
         if (context.layer.id.includes("labels")) {
-            return context.viewport.zoom > -4;
+            return context.viewport.zoom > -5;
         }
 
         return true;

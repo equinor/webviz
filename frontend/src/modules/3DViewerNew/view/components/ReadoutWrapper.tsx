@@ -1,9 +1,9 @@
 import React from "react";
 
-import type { Layer as DeckGlLayer } from "@deck.gl/core";
+import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import { View as DeckGlView } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
-import type { MapMouseEvent } from "@webviz/subsurface-viewer";
+import type { LayerPickInfo, MapMouseEvent } from "@webviz/subsurface-viewer";
 import { useMultiViewCursorTracking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewCursorTracking";
 import { useMultiViewPicking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking";
 
@@ -18,6 +18,10 @@ import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 import type { DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
 
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
+import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/types";
+import { WellLabelLayer } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
+import type { Feature } from "geojson";
+import { PolylinesLayer } from "@modules/3DViewerNew/customDeckGlLayers/PolylinesLayer";
 
 export type ReadoutWrapperProps = {
     views: ViewsTypeExtended;
@@ -74,6 +78,23 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         }
     }
 
+    function tooltip(info: PickingInfo): string {
+        if (
+            (info.layer?.constructor === WellLabelLayer || info.sourceLayer?.constructor === WellLabelLayer) &&
+            info.object?.wellLabels
+        ) {
+            return info.object.wellLabels?.join("\n");
+        } else if ((info as WellsPickInfo)?.logName) {
+            return (info as WellsPickInfo)?.logName;
+        } else if (info.layer?.id === "drawing-layer") {
+            return (info as LayerPickInfo).propertyValue?.toFixed(2) ?? "";
+        } else if (info.layer?.constructor === PolylinesLayer) {
+            return info.object.name;
+        }
+        const feat = info.object as Feature;
+        return feat?.properties?.["name"];
+    }
+
     const handleMainDivLeave = React.useCallback(() => setHideReadout(true), []);
     const handleMainDivEnter = React.useCallback(() => setHideReadout(false), []);
 
@@ -109,6 +130,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                     pickingRadius: 5,
                     layers: adjustedLayers,
                     onMouseEvent: handleMouseEvent,
+                    getTooltip: tooltip,
                 })}
             >
                 {props.views.viewports.map((viewport) => (

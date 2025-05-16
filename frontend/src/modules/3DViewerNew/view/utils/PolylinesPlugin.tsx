@@ -76,6 +76,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     private _appendToPathLocation: AppendToPathLocation = AppendToPathLocation.END;
     private _selectedPolylineId: string | null = null;
     private _hoverPoint: number[] | null = null;
+    private _visiblePolylineIds: string[] = [];
     private _colorGenerator: Generator<[number, number, number]>;
 
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<PolylinesPluginTopicPayloads>();
@@ -88,6 +89,10 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     constructor(manager: DeckGlInstanceManager, colorGenerator?: Generator<[number, number, number]>) {
         super(manager);
         this._colorGenerator = colorGenerator ?? defaultColorGenerator();
+    }
+
+    setVisiblePolylineIds(visiblePolylineIds: string[]): void {
+        this._visiblePolylineIds = visiblePolylineIds;
     }
 
     getActivePolyline(): Polyline | undefined {
@@ -469,7 +474,12 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         const layers: Layer<any>[] = [
             new PolylinesLayer({
                 id: "polylines-layer",
-                polylines: this._polylines.filter((polyline) => polyline.id !== this._currentEditingPolylineId),
+                polylines: this._polylines.filter(
+                    (polyline) =>
+                        polyline.id !== this._currentEditingPolylineId &&
+                        (this._visiblePolylineIds.includes(polyline.id) ||
+                            this._editingMode !== PolylineEditingMode.NONE),
+                ),
                 selectedPolylineId:
                     this._editingMode === PolylineEditingMode.NONE
                         ? undefined

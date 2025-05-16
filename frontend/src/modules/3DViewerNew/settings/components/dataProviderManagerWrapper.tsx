@@ -84,7 +84,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "realization-surface":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
-                        DataProviderType.REALIZATION_SURFACE,
+                        DataProviderType.REALIZATION_SURFACE_3D,
                         props.dataProviderManager,
                     ),
                 );
