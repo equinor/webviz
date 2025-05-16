@@ -22,7 +22,6 @@ import { Select } from "@lib/components/Select";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
-
 import type { Interfaces } from "../interfaces";
 
 import {
@@ -42,7 +41,6 @@ import {
 } from "./atoms/derivedAtoms";
 import { drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
 import { Layers } from "./components/layers";
-
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const ensembleSet = useEnsembleSet(props.workbenchSession);

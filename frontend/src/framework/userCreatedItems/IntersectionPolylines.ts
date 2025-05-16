@@ -1,5 +1,5 @@
 import { atom } from "jotai";
-import { cloneDeep } from "lodash";
+import { cloneDeep, isEqual } from "lodash";
 import { v4 } from "uuid";
 
 import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
@@ -8,6 +8,7 @@ import type { UserCreatedItemSet } from "@framework/UserCreatedItems";
 export type IntersectionPolyline = {
     id: string;
     name: string;
+    color: [number, number, number];
     path: number[][];
     fieldId: string;
 };
@@ -55,7 +56,15 @@ export class IntersectionPolylines implements UserCreatedItemSet {
         this.notifySubscribers(IntersectionPolylinesEvent.CHANGE);
     }
 
-    getPolylines(): IntersectionPolyline[] {
+    setPolylines(polylines: IntersectionPolyline[]): void {
+        if (isEqual(this._polylines, polylines)) {
+            return;
+        }
+        this._polylines = [...polylines];
+        this.notifySubscribers(IntersectionPolylinesEvent.CHANGE);
+    }
+
+    getPolylines(): readonly IntersectionPolyline[] {
         return this._polylines;
     }
 
