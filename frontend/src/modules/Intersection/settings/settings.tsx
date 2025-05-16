@@ -13,13 +13,11 @@ import {
     DataProviderManagerTopic,
 } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 
-
 import type { Interfaces } from "../interfaces";
 
 import { dataProviderManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
-
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const ensembleSet = useEnsembleSet(props.workbenchSession);

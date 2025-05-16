@@ -22,7 +22,6 @@ import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { Vec2 } from "@lib/utils/vec2";
 import { point2Distance } from "@lib/utils/vec2";
 
-
 export type ColorScaleSpecification = {
     colorScale: ColorScale;
     areBoundariesUserDefined: boolean;
@@ -54,6 +53,7 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
         setPrevColorScaleSpecification(props.colorScaleSpecification);
         if (props.colorScaleSpecification) {
             setColorScaleSpecification(props.colorScaleSpecification);
+            setTempColorScaleSpecification(props.colorScaleSpecification);
         }
     }
 

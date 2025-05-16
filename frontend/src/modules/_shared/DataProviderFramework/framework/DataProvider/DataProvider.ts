@@ -31,6 +31,7 @@ export enum DataProviderTopic {
     STATUS = "STATUS",
     DATA = "DATA",
     SUBORDINATED = "SUBORDINATED",
+    REVISION_NUMBER = "REVISION_NUMBER",
 }
 
 export enum DataProviderStatus {
@@ -45,6 +46,7 @@ export type DataProviderPayloads<TData> = {
     [DataProviderTopic.STATUS]: DataProviderStatus;
     [DataProviderTopic.DATA]: TData;
     [DataProviderTopic.SUBORDINATED]: boolean;
+    [DataProviderTopic.REVISION_NUMBER]: number;
 };
 
 export function isDataProvider(obj: any): obj is DataProvider<any, any> {
@@ -116,10 +118,13 @@ export class DataProvider<
     private _status: DataProviderStatus = DataProviderStatus.IDLE;
     private _data: TData | null = null;
     private _error: StatusMessage | string | null = null;
-    private _valueRange: [number, number] | null = null;
+    private _valueRange: readonly [number, number] | null = null;
     private _isSubordinated: boolean = false;
     private _prevSettings: TSettingTypes | null = null;
     private _prevStoredData: NullableStoredData<TStoredData> | null = null;
+    private _currentTransactionId: number = 0;
+    private _settingsErrorMessages: string[] = [];
+    private _revisionNumber: number = 0;
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
         const {
@@ -131,7 +136,6 @@ export class DataProvider<
         this._type = type;
         this._dataProviderManager = dataProviderManager;
         this._settingsContextDelegate = new SettingsContextDelegate<TSettings, TSettingTypes, TStoredData, TSettingKey>(
-            this,
             customDataProviderImplementation,
             dataProviderManager,
             makeSettings<TSettings, TSettingTypes, TSettingKey>(
@@ -150,16 +154,7 @@ export class DataProvider<
             "settings-context",
             this._settingsContextDelegate
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_CHANGED)(() => {
-                this.handleSettingsAndStoredDataChange();
-            }),
-        );
-
-        this._unsubscribeHandler.registerUnsubscribeFunction(
-            "settings-context",
-            this._settingsContextDelegate
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(SettingsContextDelegateTopic.STORED_DATA_CHANGED)(() => {
+                .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_AND_STORED_DATA_CHANGED)(() => {
                 this.handleSettingsAndStoredDataChange();
             }),
         );
@@ -172,15 +167,6 @@ export class DataProvider<
                 this.handleSettingsStatusChange();
             }),
         );
-
-        this._unsubscribeHandler.registerUnsubscribeFunction(
-            "data-provider-manager",
-            dataProviderManager
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(DataProviderManagerTopic.GLOBAL_SETTINGS)(() => {
-                this.handleSettingsAndStoredDataChange();
-            }),
-        );
     }
 
     areCurrentSettingsValid(): boolean {
@@ -188,10 +174,23 @@ export class DataProvider<
             return true;
         }
 
-        return this._customDataProviderImpl.areCurrentSettingsValid(this.makeAccessors());
+        this._settingsErrorMessages = [];
+        const reportError = (message: string) => {
+            this._settingsErrorMessages.push(message);
+        };
+        return this._customDataProviderImpl.areCurrentSettingsValid({ ...this.makeAccessors(), reportError });
+    }
+
+    getSettingsErrorMessages(): string[] {
+        return this._settingsErrorMessages;
     }
 
     handleSettingsAndStoredDataChange(): void {
+        if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
+            this.setStatus(DataProviderStatus.LOADING);
+            return;
+        }
+
         if (!this.areCurrentSettingsValid()) {
             this._error = "Invalid settings";
             this.setStatus(DataProviderStatus.INVALID_SETTINGS);
@@ -223,13 +222,21 @@ export class DataProvider<
         }
 
         if (!refetchRequired) {
-            this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
-            this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
+            // If the settings have changed but no refetch is required, it might be that the settings changes
+            // still require a rerender of the data provider.
+            if (this._status === DataProviderStatus.SUCCESS) {
+                this.incrementRevisionNumber();
+                return;
+            }
             this.setStatus(DataProviderStatus.SUCCESS);
             return;
         }
 
         this._cancellationPending = true;
+
+        // It might be that we started a new transaction while the previous one was still running.
+        // In this case, we need to make sure that we only use the latest transaction and cancel the previous one.
+        this._currentTransactionId += 1;
 
         this.maybeCancelQuery().then(() => {
             this.maybeRefetchData().then(() => {
@@ -288,7 +295,7 @@ export class DataProvider<
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.SUBORDINATED);
     }
 
-    getValueRange(): [number, number] | null {
+    getValueRange(): readonly [number, number] | null {
         return this._valueRange;
     }
 
@@ -306,6 +313,9 @@ export class DataProvider<
             }
             if (topic === DataProviderTopic.SUBORDINATED) {
                 return this._isSubordinated;
+            }
+            if (topic === DataProviderTopic.REVISION_NUMBER) {
+                return this._revisionNumber;
             }
         };
 
@@ -347,6 +357,8 @@ export class DataProvider<
     }
 
     async maybeRefetchData(): Promise<void> {
+        const thisTransactionId = this._currentTransactionId;
+
         const queryClient = this.getQueryClient();
 
         if (!queryClient) {
@@ -373,6 +385,15 @@ export class DataProvider<
                 queryClient,
                 registerQueryKey: (key) => this.registerQueryKey(key),
             });
+
+            // This is a security check to make sure that we are not using a stale transaction id.
+            // This can happen if the transaction id is incremented while the async fetch data function is still running.
+            // Queries are cancelled in the maybeCancelQuery function and should, hence, throw a cancelled error.
+            // However, there might me some operations following after the query execution that are not cancelled.
+            if (this._currentTransactionId !== thisTransactionId) {
+                return;
+            }
+
             if (this._customDataProviderImpl.makeValueRange) {
                 this._valueRange = this._customDataProviderImpl.makeValueRange(accessors);
             }
@@ -383,7 +404,6 @@ export class DataProvider<
             }
             this._queryKeys = [];
             this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
-            this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
             this.setStatus(DataProviderStatus.SUCCESS);
         } catch (error: any) {
             if (isCancelledError(error)) {
@@ -419,13 +439,19 @@ export class DataProvider<
         this._unsubscribeHandler.unsubscribeAll();
     }
 
+    private incrementRevisionNumber(): void {
+        this._revisionNumber += 1;
+        this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.REVISION_NUMBER);
+        this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
+    }
+
     private setStatus(status: DataProviderStatus): void {
         if (this._status === status) {
             return;
         }
 
         this._status = status;
-        this._dataProviderManager.publishTopic(DataProviderManagerTopic.DATA_REVISION);
+        this.incrementRevisionNumber();
         this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.STATUS);
     }
 
