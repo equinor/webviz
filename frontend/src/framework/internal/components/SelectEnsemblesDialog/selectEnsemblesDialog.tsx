@@ -8,7 +8,7 @@ import { v4 } from "uuid";
 import type { CaseInfo_api } from "@api";
 import { getCasesOptions, getEnsemblesOptions, getFieldsOptions } from "@api";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
-import { tanstackCacheTime } from "@framework/internal/utils/tanstackCacheTime";
+import { tanstackCacheTime } from "@framework/internal/utils/debug";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorSelect } from "@lib/components/ColorSelect";

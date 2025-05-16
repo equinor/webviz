@@ -5,7 +5,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Provider } from "jotai";
 
 import { HydrateQueryClientAtom } from "../components/HydrateQueryClientAtom";
-import { tanstackCacheTime } from "../utils/tanstackCacheTime";
+import { tanstackCacheTime } from "../utils/debug";
 
 import { AuthState, useAuthProvider } from "./AuthProvider";
 

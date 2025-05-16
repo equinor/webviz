@@ -13,7 +13,7 @@ import { EnsembleSet } from "../EnsembleSet";
 import { RegularEnsemble } from "../RegularEnsemble";
 import type { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
-import { tanstackCacheTime } from "./utils/tanstackCacheTime";
+import { tanstackCacheTime } from "./utils/debug";
 
 type EnsembleApiData = {
     ensembleDetails: EnsembleDetails_api;
