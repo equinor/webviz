@@ -1,5 +1,4 @@
 import { CompositeLayer, type GetPickingInfoParams, type Layer, type PickingInfo } from "@deck.gl/core";
-import { PathStyleExtension } from "@deck.gl/extensions";
 import { LineLayer, PathLayer, ScatterplotLayer } from "@deck.gl/layers";
 import type { Polyline } from "@modules/3DViewerNew/view/utils/PolylinesPlugin";
 
@@ -171,12 +170,13 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                 getColor: polyline.color,
                 getPath: (d) => d,
                 getDashArray: [10, 10],
+                getDashOffset: this.state.dashStart,
+                dashJustified: true,
                 getWidth: 10,
                 billboard: true,
                 widthUnits: "meters",
                 widthMinPixels: 3,
                 widthMaxPixels: 10,
-                extensions: [new PathStyleExtension({ highPrecisionDash: true })],
                 parameters: {
                     // @ts-expect-error - deck.gl types are wrong
                     depthTest: false,

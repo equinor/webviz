@@ -1,56 +1,80 @@
-import type { UpdateParameters } from "@deck.gl/core";
-import { PathLayer } from "@deck.gl/layers";
+import { CompositeLayer, type Color } from "@deck.gl/core";
+import { PathStyleExtension, type PathStyleExtensionProps } from "@deck.gl/extensions";
+import { PathLayer, type PathLayerProps } from "@deck.gl/layers";
 
-export class AnimatedPathLayer extends PathLayer {
-    static layerName = "AnimatedPathLayer";
+type AnimatedPathLayerProps = PathLayerProps<any> & PathStyleExtensionProps<any>;
 
-    private _dashStart: number = 0;
-    private _requestId: ReturnType<typeof requestAnimationFrame> | null = null;
+export class AnimatedPathLayer extends CompositeLayer<AnimatedPathLayerProps> {
+    static layerName = "AnimatedPathCompositeLayer";
+
+    // @ts-ignore
+    state!: {
+        dashOffset: number;
+    };
+
+    private _animationFrame: number | null = null;
 
     initializeState() {
-        super.initializeState();
-        this.animate();
+        this.state = { dashOffset: 0 };
+        this._startAnimation();
     }
 
-    updateState(params: UpdateParameters<this>): void {
-        super.updateState(params);
-        if (this._requestId) {
-            cancelAnimationFrame(this._requestId);
-        }
-        this.animate();
+    finalizeState() {
+        this._stopAnimation();
     }
 
-    private animate() {
-        this._dashStart = (Date.now() / 50) % 1000;
-
-        this.setNeedsRedraw();
-        this._requestId = requestAnimationFrame(() => this.animate());
-    }
-
-    getShaders() {
-        const shaders = super.getShaders();
-        const inject = shaders.inject ?? {};
-        const injectDecl = inject["vs:#decl"] ?? "";
-        const injectMainEnd = inject["vs:#main-end"] ?? "";
-        return {
-            ...shaders,
-            inject: {
-                ...inject,
-                "vs:#decl":
-                    injectDecl ??
-                    "" +
-                        `\
-        uniform float dashStart;`,
-                "vs:#main-end":
-                    injectMainEnd ??
-                    "" +
-                        `\
-        vDashOffset += dashStart;`,
-            },
+    private _startAnimation() {
+        const animate = () => {
+            this.setState({ dashOffset: (Date.now() / 10) % 1000 });
+            this.setNeedsUpdate();
+            this._animationFrame = requestAnimationFrame(animate);
         };
+        animate();
     }
 
-    draw({ uniforms }: Record<string, any>) {
-        super.draw({ uniforms: { ...uniforms, dashStart: this._dashStart } });
+    private _stopAnimation() {
+        if (this._animationFrame) {
+            cancelAnimationFrame(this._animationFrame);
+            this._animationFrame = null;
+        }
+    }
+
+    renderLayers() {
+        const {
+            data,
+            getPath,
+            getColor = () => [255, 0, 0] as Color,
+            getWidth = () => 5,
+            getDashArray = () => [10, 5],
+        } = this.props;
+        const { dashOffset } = this.state;
+
+        return new PathLayer({
+            id: `${this.id}-path`,
+            data,
+            getPath,
+            getColor,
+            getWidth,
+            getDashArray: () => {
+                const base = 10;
+                const gap = 5;
+
+                const phase = (Math.sin(dashOffset / 100) + 1) / 2; // 0 to 1
+                const scale = 0.5 + 0.5 * phase; // avoid 0
+
+                return [base * scale, gap * scale];
+            },
+            billboard: true,
+            widthUnits: "meters",
+            widthMinPixels: 3,
+            widthMaxPixels: 10,
+            extensions: [new PathStyleExtension({ highPrecisionDash: true, dash: true, offset: true })],
+            updateTriggers: {
+                getDashArray: { dashOffset },
+            },
+            parameters: {
+                depthTest: false,
+            },
+        });
     }
 }
