@@ -283,8 +283,8 @@ export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
 export const settingCategoryAvailableValuesIntersectionReducerMap: SettingCategoryAvailableValuesIntersectionReducerMap =
     {
         [SettingCategory.SINGLE_SELECT]: {
-            reducer: (accumulator, currentAvailableValues) => {
-                if (accumulator.length === 0) {
+            reducer: (accumulator, currentAvailableValues, index) => {
+                if (index === 0) {
                     return currentAvailableValues;
                 }
                 return accumulator.filter((value) => currentAvailableValues.some((av) => isEqual(av, value)));
@@ -293,8 +293,8 @@ export const settingCategoryAvailableValuesIntersectionReducerMap: SettingCatego
             isValid: (availableValues) => availableValues.length > 0,
         },
         [SettingCategory.MULTI_SELECT]: {
-            reducer: (accumulator, currentAvailableValues) => {
-                if (accumulator.length === 0) {
+            reducer: (accumulator, currentAvailableValues, index) => {
+                if (index === 0) {
                     return currentAvailableValues;
                 }
                 return accumulator.filter((value) => currentAvailableValues.some((av) => isEqual(av, value)));
