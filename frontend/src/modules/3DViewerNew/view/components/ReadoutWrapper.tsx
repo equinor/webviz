@@ -89,7 +89,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         } else if (info.layer?.id === "drawing-layer") {
             return (info as LayerPickInfo).propertyValue?.toFixed(2) ?? "";
         } else if (info.layer?.constructor === PolylinesLayer) {
-            return info.object.name;
+            return info?.object?.name;
         }
         const feat = info.object as Feature;
         return feat?.properties?.["name"];
