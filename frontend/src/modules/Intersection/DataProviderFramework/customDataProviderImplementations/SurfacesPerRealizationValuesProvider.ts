@@ -178,14 +178,18 @@ export class SurfacesPerRealizationValuesProvider
             return Array.from(new Set(depthSurfacesMetadata.map((elm) => elm.attribute_name))).sort();
         });
 
-        availableSettingsUpdater(Setting.SURFACE_NAMES, ({ getHelperDependency }) => {
+        availableSettingsUpdater(Setting.SURFACE_NAMES, ({ getLocalSetting, getHelperDependency }) => {
+            const attribute = getLocalSetting(Setting.ATTRIBUTE);
             const depthSurfacesMetadata = getHelperDependency(depthSurfaceMetadataDep);
 
-            if (!depthSurfacesMetadata) {
+            if (!attribute || !depthSurfacesMetadata) {
                 return [];
             }
 
-            return Array.from(new Set(depthSurfacesMetadata.map((elm) => elm.name))).sort();
+            // Filter depth surfaces metadata by the selected attribute
+            return Array.from(
+                new Set(depthSurfacesMetadata.filter((elm) => elm.attribute_name === attribute).map((elm) => elm.name)),
+            ).sort();
         });
 
         // Create intersection polyline and actual section lengths data asynchronously
