@@ -41,6 +41,7 @@ import {
 import { makeGridBoundingBox } from "@modules/Intersection/DataProviderFramework/boundingBoxes/makeGridBoundingBox";
 import { makeSeismicBoundingBox } from "@modules/Intersection/DataProviderFramework/boundingBoxes/makeSeismicBoundingBox";
 import { makeSurfacesBoundingBox } from "@modules/Intersection/DataProviderFramework/boundingBoxes/makeSurfacesBoundingBox";
+import { makeSurfacesUncertaintiesBoundingBox } from "@modules/Intersection/DataProviderFramework/boundingBoxes/makeSurfacesUncertaintiesBoundingBox";
 import { CustomDataProviderType } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { EnsembleWellborePicksProvider } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/EnsembleWellborePicksProvider";
 import { RealizationSurfacesProvider } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/RealizationSurfacesProvider";
@@ -49,7 +50,7 @@ import type { IntersectionInjectedData } from "@modules/Intersection/DataProvide
 import { createGridLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createGridLayerItemsMaker";
 import { createSeismicLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createSeismicLayerItemsMaker";
 import { createSurfacesLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createSurfacesLayerItemsMaker";
-import { createUncertaintySurfacesLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createUncertaintySurfacesLayerItemsMaker";
+import { createSurfacesUncertaintiesLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createSurfacesUncertaintiesLayerItemsMaker";
 import { createWellborePicksLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createWellborePicksLayerItemsMaker";
 import { makeEsvViewDataCollection } from "@modules/Intersection/DataProviderFramework/visualization/makeEsvViewDataCollection";
 import type { Interfaces } from "@modules/Intersection/interfaces";
@@ -146,7 +147,8 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     CustomDataProviderType.SURFACES_REALIZATIONS_UNCERTAINTY,
     SurfacesPerRealizationValuesProvider,
     {
-        transformToVisualization: createUncertaintySurfacesLayerItemsMaker,
+        transformToVisualization: createSurfacesUncertaintiesLayerItemsMaker,
+        transformToBoundingBox: makeSurfacesUncertaintiesBoundingBox,
     },
 );
 

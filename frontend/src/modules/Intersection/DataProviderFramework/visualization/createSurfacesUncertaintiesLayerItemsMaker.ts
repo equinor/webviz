@@ -15,7 +15,7 @@ import type {
     SurfacesPerRealizationValuesStoredData,
 } from "../customDataProviderImplementations/SurfacesPerRealizationValuesProvider";
 
-export function createUncertaintySurfacesLayerItemsMaker({
+export function createSurfacesUncertaintiesLayerItemsMaker({
     id,
     name,
     isLoading,
@@ -76,7 +76,7 @@ export function createUncertaintySurfacesLayerItemsMaker({
         currentColor = colorSet.getNextColor();
     }
 
-    const uncertaintySurfaceIntersectionLayerItemsMaker: EsvLayerItemsMaker = {
+    const surfacesUncertaintiesLayerItemsMaker: EsvLayerItemsMaker = {
         makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null) => {
             if (!intersectionReferenceSystem) {
                 throw new Error("IntersectionReferenceSystem is required to create intersection surface layer items");
@@ -112,5 +112,5 @@ export function createUncertaintySurfacesLayerItemsMaker({
         },
     };
 
-    return uncertaintySurfaceIntersectionLayerItemsMaker;
+    return surfacesUncertaintiesLayerItemsMaker;
 }
