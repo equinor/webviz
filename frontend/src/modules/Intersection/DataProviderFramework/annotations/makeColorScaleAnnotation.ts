@@ -5,7 +5,7 @@ import type {
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 
-import { createGridColorScaleValues, createSeismicColorScaleValues } from "../utils.ts/colorScaleUtils";
+import { createGridColorScaleValues, createSeismicColorScaleValues } from "../utils/colorScaleUtils";
 
 function makeColorScaleAnnotation({
     getSetting,

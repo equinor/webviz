@@ -7,7 +7,7 @@ import type {
     RealizationSurfacesSettings,
     RealizationSurfacesStoredData,
 } from "../customDataProviderImplementations/RealizationSurfacesProvider";
-import { createValidExtensionLength } from "../utils.ts/extensionLengthUtils";
+import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 /**
  * Build a bounding box for the intersection surface data.

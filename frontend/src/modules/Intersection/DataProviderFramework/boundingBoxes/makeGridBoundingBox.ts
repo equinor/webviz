@@ -8,7 +8,7 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { createTransformedPolylineIntersectionResult } from "@modules/_shared/Intersection/gridIntersectionTransform";
 
-import { createValidExtensionLength } from "../utils.ts/extensionLengthUtils";
+import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 /**
  * Build a bounding box for the intersection grid data.

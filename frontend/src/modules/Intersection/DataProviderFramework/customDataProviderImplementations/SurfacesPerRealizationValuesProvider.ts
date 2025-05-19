@@ -25,7 +25,7 @@ import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramew
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-import { createValidExtensionLength } from "../utils.ts/extensionLengthUtils";
+import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 import { createResampledPolylinePointsAndCumulatedLengthArray } from "./utils";
 

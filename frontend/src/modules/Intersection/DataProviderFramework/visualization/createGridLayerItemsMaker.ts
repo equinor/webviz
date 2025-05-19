@@ -13,8 +13,8 @@ import type {
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { createTransformedPolylineIntersectionResult } from "@modules/_shared/Intersection/gridIntersectionTransform";
 
-import { createGridColorScaleValues } from "../utils.ts/colorScaleUtils";
-import { createValidExtensionLength } from "../utils.ts/extensionLengthUtils";
+import { createGridColorScaleValues } from "../utils/colorScaleUtils";
+import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 export function createGridLayerItemsMaker({
     id,

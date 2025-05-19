@@ -12,8 +12,8 @@ import type {
     TransformerArgs,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-import { createSeismicColorScaleValues } from "../utils.ts/colorScaleUtils";
-import { createValidExtensionLength } from "../utils.ts/extensionLengthUtils";
+import { createSeismicColorScaleValues } from "../utils/colorScaleUtils";
+import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 /**
  * Make a trajectory in the uz-plane of a fence made from a polyline in the xy-plane of a

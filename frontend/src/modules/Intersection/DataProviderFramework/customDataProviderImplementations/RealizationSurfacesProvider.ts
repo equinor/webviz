@@ -26,7 +26,7 @@ import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
 
-import { createValidExtensionLength } from "../utils.ts/extensionLengthUtils";
+import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 import { createResampledPolylinePointsAndCumulatedLengthArray } from "./utils";
 

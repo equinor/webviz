@@ -4,7 +4,7 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import type { GroupCustomPropsCollector } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { TargetViewReturnTypes } from "@modules/Intersection/view/components/DataProvidersWrapper";
 
-import { createValidExtensionLength } from "../utils.ts/extensionLengthUtils";
+import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 export const makeEsvViewDataCollection: GroupCustomPropsCollector<
     IntersectionViewSettings,
