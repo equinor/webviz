@@ -138,8 +138,10 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     setEditingMode(mode: PolylineEditingMode): void {
         this._editingMode = mode;
         this._hoverPoint = null;
-        this._currentEditingPolylineId = null;
-        this._currentEditingPolylinePathReferencePointIndex = null;
+        if (mode === PolylineEditingMode.NONE || mode === PolylineEditingMode.IDLE) {
+            this._currentEditingPolylinePathReferencePointIndex = null;
+            this.setCurrentEditingPolylineId(null);
+        }
         this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.EDITING_MODE);
         if (mode === PolylineEditingMode.NONE) {
             this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);

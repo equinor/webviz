@@ -73,14 +73,6 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "color-scale":
                 groupDelegate.prependChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
                 return;
-            case "statistical-surface":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(
-                        DataProviderType.STATISTICAL_SURFACE,
-                        props.dataProviderManager,
-                    ),
-                );
-                return;
             case "realization-surface":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
@@ -328,16 +320,6 @@ const ACTIONS: ActionGroup[] = [
             {
                 label: "Surfaces",
                 children: [
-                    {
-                        identifier: "observed-surface",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Observed Surface",
-                    },
-                    {
-                        identifier: "statistical-surface",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Statistical Surface",
-                    },
                     {
                         identifier: "realization-surface",
                         icon: <Icon data={surface_layer} fontSize="small" />,
