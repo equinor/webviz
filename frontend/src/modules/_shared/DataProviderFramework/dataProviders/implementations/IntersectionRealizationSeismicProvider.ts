@@ -83,7 +83,7 @@ export class IntersectionRealizationSeismicProvider
             colorPalette: defaultColorPalette,
             gradientType: ColorScaleGradientType.Diverging,
             type: ColorScaleType.Continuous,
-            steps: 6,
+            steps: 10,
         });
 
         return {

@@ -1,4 +1,5 @@
 import type {
+    LayerOptions,
     OnMountEvent,
     OnRescaleEvent,
     OnUpdateEvent,
@@ -40,12 +41,62 @@ export type SeismicLayerData = {
 };
 
 export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
+    // The image is generated in preRender and updated in onUpdate/onRescale
     private _image: ImageBitmap | null = null;
+
+    // The data options and info for generating the seismic slice image
+    private _isPreRendered = false;
     private _canvasDataOptions: SeismicCanvasDataOptions | null = null;
+    private _seismicSliceImageOptions: SeismicSliceImageOptions | null = null;
     private _seismicInfo: SeismicInfo | null = null;
+
+    constructor(id: string, options: LayerOptions<SeismicLayerData>) {
+        super(id, options);
+    }
 
     getSeismicInfo(): SeismicInfo | null {
         return this._seismicInfo;
+    }
+
+    preRender(): void {
+        if (!this.data) {
+            return;
+        }
+
+        // Create seismic info and canvas data options
+        const datapoints = createSeismicSliceImageDatapointsArrayFromFenceTracesArray(
+            this.data.fenceTracesArray,
+            this.data.numTraces,
+            this.data.numSamplesPerTrace,
+        );
+        const yAxisValues = createSeismicSliceImageYAxisValuesArrayForFence(
+            this.data.numSamplesPerTrace,
+            this.data.minFenceDepth,
+            this.data.maxFenceDepth,
+        );
+        this._seismicInfo = getSeismicInfo({ datapoints, yAxisValues }, this.data.trajectoryFenceProjection);
+        this._canvasDataOptions = getSeismicOptions(this._seismicInfo);
+
+        const colorScale = this.data.colorScale.clone();
+        const opacityPercent = this.data.opacityPercent ?? 100;
+
+        this._seismicSliceImageOptions = {
+            datapoints,
+            yAxisValues,
+            trajectory: this.data.trajectoryFenceProjection,
+            colorScale,
+            opacityPercent,
+        };
+
+        this._isPreRendered = true;
+    }
+
+    clearImageAndInternalData(): void {
+        this._image = null;
+        this._canvasDataOptions = null;
+        this._seismicSliceImageOptions = null;
+        this._seismicInfo = null;
+        this._isPreRendered = false;
     }
 
     override onMount(event: OnMountEvent): void {
@@ -55,38 +106,18 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
     override onUpdate(event: OnUpdateEvent<SeismicLayerData>): void {
         super.onUpdate(event);
 
-        if (!event.data) {
-            return;
-        }
+        // Clear the internal image and canvas data options
+        this.clearImageAndInternalData();
 
         // Create seismic info and canvas data options
-        const datapoints = createSeismicSliceImageDatapointsArrayFromFenceTracesArray(
-            event.data.fenceTracesArray,
-            event.data.numTraces,
-            event.data.numSamplesPerTrace,
-        );
-        const yAxisValues = createSeismicSliceImageYAxisValuesArrayForFence(
-            event.data.numSamplesPerTrace,
-            event.data.minFenceDepth,
-            event.data.maxFenceDepth,
-        );
-        this._seismicInfo = getSeismicInfo({ datapoints, yAxisValues }, event.data.trajectoryFenceProjection);
-        this._canvasDataOptions = getSeismicOptions(this._seismicInfo);
+        this.preRender();
 
-        const colorScale = event.data.colorScale.clone();
-        const opacityPercent = event.data.opacityPercent ?? 100;
-
-        // Create image
-        const seismicSliceImageOptions: SeismicSliceImageOptions = {
-            datapoints,
-            yAxisValues,
-            trajectory: event.data.trajectoryFenceProjection,
-            colorScale,
-            opacityPercent,
-        };
+        if (!this._seismicSliceImageOptions) {
+            throw new Error("Seismic slice image options are not set, ensure preRender() is called");
+        }
 
         // Generate image and render when done
-        this.generateImage(seismicSliceImageOptions).then((image) => {
+        this.generateImage(this._seismicSliceImageOptions).then((image) => {
             this._image = image;
             this.render();
         });
@@ -95,7 +126,23 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
     override onRescale(event: OnRescaleEvent): void {
         super.onRescale(event);
         this.setTransform(event);
-        this.render();
+
+        if (this._isPreRendered) {
+            this.render();
+            return;
+        }
+
+        this.clearImageAndInternalData();
+        this.preRender();
+
+        if (!this._seismicSliceImageOptions) {
+            throw new Error("Seismic slice image options are not set, ensure preRender() is called");
+        }
+
+        this.generateImage(this._seismicSliceImageOptions).then((image) => {
+            this._image = image;
+            this.render();
+        });
     }
 
     render(): void {
