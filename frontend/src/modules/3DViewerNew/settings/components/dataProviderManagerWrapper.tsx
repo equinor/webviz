@@ -107,7 +107,10 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                 return;
             case "realization-grid":
                 groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(DataProviderType.REALIZATION_GRID, props.dataProviderManager),
+                    DataProviderRegistry.makeDataProvider(
+                        CustomDataProviderType.REALIIZATION_GRID_3D,
+                        props.dataProviderManager,
+                    ),
                 );
                 return;
             case "realization-seismic-inline":

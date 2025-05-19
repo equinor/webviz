@@ -5,11 +5,11 @@ import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/C
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-import type {
-    RealizationGridData,
-    RealizationGridSettings,
-} from "../../dataProviders/implementations/RealizationGridProvider";
 import { makeColorMapFunctionFromColorScale } from "../utils/colors";
+import type { RealizationGridData } from "../utils/types";
+
+const realizationGridSettings = [Setting.SHOW_GRID_LINES, Setting.COLOR_SCALE] as const;
+type RealizationGridSettings = typeof realizationGridSettings;
 
 export function makeRealizationGridLayer(
     args: TransformerArgs<RealizationGridSettings, RealizationGridData>,

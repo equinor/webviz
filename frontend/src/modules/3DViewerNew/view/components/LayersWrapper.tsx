@@ -19,7 +19,6 @@ import {
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
-import { RealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationGridProvider";
 import { RealizationPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationPolygonsProvider";
 import { RealizationSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationSurfaceProvider";
 import { StatisticalSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/StatisticalSurfaceProvider";
@@ -60,6 +59,7 @@ import {
     accumulatePolylineIds,
     type AccumulatedData,
 } from "@modules/3DViewerNew/DataProviderFramework/accumulators/polylineIdsAccumulator";
+import { RealizationGridProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
     VisualizationTarget.DECK_GL,
@@ -95,11 +95,15 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
         transformToAnnotations: makeColorScaleAnnotation,
     },
 );
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(DataProviderType.REALIZATION_GRID, RealizationGridProvider, {
-    transformToVisualization: makeRealizationGridLayer,
-    transformToBoundingBox: makeRealizationGridBoundingBox,
-    transformToAnnotations: makeColorScaleAnnotation,
-});
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    CustomDataProviderType.REALIIZATION_GRID_3D,
+    RealizationGridProvider,
+    {
+        transformToVisualization: makeRealizationGridLayer,
+        transformToBoundingBox: makeRealizationGridBoundingBox,
+        transformToAnnotations: makeColorScaleAnnotation,
+    },
+);
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.DRILLED_WELLBORE_PICKS,
     DrilledWellborePicksProvider,

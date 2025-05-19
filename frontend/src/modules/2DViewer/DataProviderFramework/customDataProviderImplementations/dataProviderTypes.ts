@@ -1,3 +1,4 @@
 export enum CustomDataProviderType {
     OBSERVED_SURFACE = "OBSERVED_SURFACE",
+    REALIZATION_GRID_2D = "REALIZATION_GRID_2D",
 }

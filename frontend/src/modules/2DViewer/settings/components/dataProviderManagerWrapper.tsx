@@ -124,7 +124,10 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                 return;
             case "realization-grid":
                 groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(DataProviderType.REALIZATION_GRID, props.dataProviderManager),
+                    DataProviderRegistry.makeDataProvider(
+                        CustomDataProviderType.REALIZATION_GRID_2D,
+                        props.dataProviderManager,
+                    ),
                 );
                 return;
             case "ensemble":

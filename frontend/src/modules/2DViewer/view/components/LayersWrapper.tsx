@@ -15,7 +15,6 @@ import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
-import { RealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationGridProvider";
 import { RealizationPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationPolygonsProvider";
 import { RealizationSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationSurfaceProvider";
 import { StatisticalSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/StatisticalSurfaceProvider";
@@ -47,6 +46,7 @@ import { makeRealizationSurfaceLayer } from "@modules/_shared/DataProviderFramew
 import { makeStatisticalSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeStatisticalSurfaceLayer";
 import { makeRealizationPolygonsLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationPolygonsLayer";
 import { makeRealizationGridLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationGridLayer";
+import { RealizationGridProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
 
 export type LayersWrapperProps = {
     layerManager: DataProviderManager;
@@ -91,11 +91,15 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
         transformToBoundingBox: makePolygonDataBoundingBox,
     },
 );
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(DataProviderType.REALIZATION_GRID, RealizationGridProvider, {
-    transformToVisualization: makeRealizationGridLayer,
-    transformToBoundingBox: makeRealizationGridBoundingBox,
-    transformToAnnotations: makeColorScaleAnnotation,
-});
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    CustomDataProviderType.REALIZATION_GRID_2D,
+    RealizationGridProvider,
+    {
+        transformToVisualization: makeRealizationGridLayer,
+        transformToBoundingBox: makeRealizationGridBoundingBox,
+        transformToAnnotations: makeColorScaleAnnotation,
+    },
+);
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.DRILLED_WELLBORE_PICKS,
     DrilledWellborePicksProvider,
