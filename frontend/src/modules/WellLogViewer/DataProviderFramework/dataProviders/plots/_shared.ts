@@ -60,7 +60,7 @@ export function verifyBasePlotSettings<T extends readonly Setting[]>(
     const availableCurves = accessor.getAvailableSettingValues(Setting.LOG_CURVE) ?? [];
     const selectedCurve = accessor.getSetting(Setting.LOG_CURVE);
 
-    return selectedCurve && !!_.find(availableCurves, (curve) => curve.curveName === selectedCurve.curveName);
+    return !!selectedCurve && !!_.find(availableCurves, (curve) => curve.curveName === selectedCurve.curveName);
 }
 
 export function verifyContinuousPlotSetting<T extends readonly Setting[]>(

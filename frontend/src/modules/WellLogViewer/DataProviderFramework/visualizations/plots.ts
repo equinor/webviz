@@ -108,8 +108,8 @@ export function makeStackedPlotConfig(args: PlotVisualizationArgs<StackedPlotSet
 
     const data = args.getData()!;
 
-    const showLabels = args.getSetting(Setting.SHOW_LABELS);
-    const showLines = args.getSetting(Setting.SHOW_LINES);
+    const showLabels = args.getSetting(Setting.SHOW_LABELS) ?? true;
+    const showLines = args.getSetting(Setting.SHOW_LINES) ?? true;
     const rotation = args.getSetting(Setting.LABEL_ROTATION) ?? 90;
 
     return {
@@ -118,7 +118,8 @@ export function makeStackedPlotConfig(args: PlotVisualizationArgs<StackedPlotSet
         type: "stacked",
         showLabels,
         showLines,
-        // ! The number used in WSC is a little unintuitive (no rotation == -90 degrees), so we offset the  the rotation to make it work as expected in the setting form
+        // ! The number used in WSC is a little unintuitive (horizontal text == -90 degrees), so we
+        // ! offset the rotation to make it work as expected in the setting form
         labelRotation: rotation - 90,
     };
 }

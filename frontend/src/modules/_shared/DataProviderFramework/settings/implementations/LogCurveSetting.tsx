@@ -3,7 +3,8 @@ import type React from "react";
 import _ from "lodash";
 
 import type { WellboreLogCurveHeader_api } from "@api";
-import { Dropdown, type DropdownOptionGroup } from "@lib/components/Dropdown";
+import type { DropdownOption, DropdownOptionGroup } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 import { makeSelectValueForCurveHeader } from "@modules/WellLogViewer/utils/strings";
 
 import type {
@@ -32,6 +33,26 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, S
     //     else return null
     // }
 
+    fixupValue(currentValue: ValueType, availableValues: WellboreLogCurveHeader_api[]): ValueType {
+        if (!currentValue) {
+            // Match sorting used in dropdown
+            return _.sortBy(availableValues, [sortStatLogsToTop, "logName", "curveName"])[0] ?? null;
+        }
+        // We look for any curve that at the least matches on curve name. Optimally, there's an entry that matches both
+        // on curve *and* log name, but we'll accept it if at least the name matches
+        let bestMatch = null;
+
+        for (const value of availableValues) {
+            if (value.curveName === currentValue?.curveName) {
+                bestMatch = value;
+                // If the both matches, there well be no better alternatives
+                if (value.logName === currentValue.logName) break;
+            }
+        }
+
+        return bestMatch;
+    }
+
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
         return function DrilledWellbores(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
             const selectedValue = makeSelectValueForCurveHeader(props.value);
@@ -40,13 +61,8 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, S
             const curveOptions = _.chain(availableValues)
                 .groupBy("logName")
                 .entries()
-                .map<DropdownOptionGroup>(([logName, curves]) => ({
-                    label: logName,
-                    options: curves.map((curve) => ({
-                        value: makeSelectValueForCurveHeader(curve),
-                        label: curve.curveName,
-                    })),
-                }))
+                .map(makeLogOptionGroup)
+                .sortBy([sortStatLogsToTop, "label"])
                 .value();
 
             function handleChange(selectedIdent: string) {
@@ -66,4 +82,27 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, S
             );
         };
     }
+}
+
+function makeCurveOption(curve: WellboreLogCurveHeader_api): DropdownOption {
+    return {
+        value: makeSelectValueForCurveHeader(curve),
+        label: curve.curveName,
+    };
+}
+
+function makeLogOptionGroup([logName, logCurves]: [string, WellboreLogCurveHeader_api[]]): DropdownOptionGroup {
+    return {
+        label: logName,
+        options: _.chain(logCurves).map(makeCurveOption).sortBy("label").value(),
+    };
+}
+
+// It's my understanding that the STAT logs are the main curves users' would care about, so sorting them to the top first
+function sortStatLogsToTop(group: DropdownOptionGroup | WellboreLogCurveHeader_api) {
+    let logName = "";
+    if ("logName" in group) logName = group.logName;
+    if ("label" in group) logName = group.label;
+
+    return logName.startsWith("STAT_") ? 0 : 1;
 }
