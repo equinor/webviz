@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { isEqual } from "lodash";
+import { clone, isEqual } from "lodash";
 
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
@@ -12,7 +12,6 @@ import {
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorPaletteType } from "@framework/WorkbenchSettings";
 
-
 import type { PublishSubscribe } from "../../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../../utils/PublishSubscribeDelegate";
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
@@ -22,21 +21,17 @@ import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { type SerializedDataProviderManager, SerializedType } from "../../interfacesAndTypes/serialization";
 
 export enum DataProviderManagerTopic {
+    ITEMS_ABOUT_TO_CHANGE = "ITEMS_ABOUT_TO_CHANGE",
     ITEMS = "ITEMS",
-    SETTINGS_CHANGED = "SETTINGS_CHANGED",
-    AVAILABLE_SETTINGS_CHANGED = "AVAILABLE_SETTINGS_CHANGED",
     DATA_REVISION = "DATA_REVISION",
     GLOBAL_SETTINGS = "GLOBAL_SETTINGS",
-    SHARED_SETTINGS_CHANGED = "SHARED_SETTINGS_CHANGED",
 }
 
 export type DataProviderManagerTopicPayload = {
     [DataProviderManagerTopic.ITEMS]: Item[];
-    [DataProviderManagerTopic.SETTINGS_CHANGED]: void;
-    [DataProviderManagerTopic.AVAILABLE_SETTINGS_CHANGED]: void;
+    [DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE]: void;
     [DataProviderManagerTopic.DATA_REVISION]: number;
     [DataProviderManagerTopic.GLOBAL_SETTINGS]: GlobalSettings;
-    [DataProviderManagerTopic.SHARED_SETTINGS_CHANGED]: void;
 };
 
 export type GlobalSettings = {
@@ -44,7 +39,7 @@ export type GlobalSettings = {
     wellboreUuid: string | null;
     ensembles: readonly RegularEnsemble[];
     realizationFilterFunction: EnsembleRealizationFilterFunction;
-    intersectionPolylines: IntersectionPolyline[];
+    intersectionPolylines: readonly IntersectionPolyline[];
 };
 
 /*
@@ -64,7 +59,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<DataProviderManagerTopicPayload>();
     private _itemDelegate: ItemDelegate;
     private _dataRevision: number = 0;
-    private _globalSettings: GlobalSettings;
+    private _globalSettings: Partial<GlobalSettings>;
     private _subscriptionsHandler = new UnsubscribeHandlerDelegate();
     private _deserializing = false;
     private _groupColorGenerator: Generator<string, string>;
@@ -103,6 +98,14 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             "groupDelegate",
             this._groupDelegate
                 .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER_ABOUT_TO_CHANGE)(() => {
+                this.publishTopic(DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE);
+            }),
+        );
+        this._subscriptionsHandler.registerUnsubscribeFunction(
+            "groupDelegate",
+            this._groupDelegate
+                .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(() => {
                 this.publishTopic(DataProviderManagerTopic.DATA_REVISION);
                 this.publishTopic(DataProviderManagerTopic.ITEMS);
@@ -125,12 +128,17 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             return;
         }
 
-        this._globalSettings[key] = value;
+        if (typeof value === "function") {
+            this._globalSettings[key] = value;
+        } else {
+            this._globalSettings[key] = clone(value);
+        }
+
         this.publishTopic(DataProviderManagerTopic.GLOBAL_SETTINGS);
     }
 
-    getGlobalSetting<T extends keyof GlobalSettings>(key: T): GlobalSettings[T] {
-        return this._globalSettings[key];
+    getGlobalSetting<T extends keyof GlobalSettings>(key: T): GlobalSettings[T] | null {
+        return this._globalSettings[key] ?? null;
     }
 
     publishTopic(topic: DataProviderManagerTopic): void {
@@ -162,10 +170,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             if (topic === DataProviderManagerTopic.ITEMS) {
                 return this._groupDelegate.getChildren();
             }
-            if (topic === DataProviderManagerTopic.SETTINGS_CHANGED) {
-                return;
-            }
-            if (topic === DataProviderManagerTopic.AVAILABLE_SETTINGS_CHANGED) {
+            if (topic === DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE) {
                 return;
             }
             if (topic === DataProviderManagerTopic.DATA_REVISION) {
@@ -173,9 +178,6 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             }
             if (topic === DataProviderManagerTopic.GLOBAL_SETTINGS) {
                 return this._globalSettings;
-            }
-            if (topic === DataProviderManagerTopic.SHARED_SETTINGS_CHANGED) {
-                return;
             }
         };
 
@@ -187,6 +189,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     }
 
     beforeDestroy() {
+        this._groupDelegate.beforeDestroy();
         this._subscriptionsHandler.unsubscribeAll();
     }
 
@@ -199,6 +202,10 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         };
     }
 
+    isDeserializing(): boolean {
+        return this._deserializing;
+    }
+
     deserializeState(serializedState: SerializedDataProviderManager): void {
         this._deserializing = true;
         this._itemDelegate.deserializeState(serializedState);
@@ -206,7 +213,6 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         this._deserializing = false;
 
         this.publishTopic(DataProviderManagerTopic.ITEMS);
-        this.publishTopic(DataProviderManagerTopic.GLOBAL_SETTINGS);
     }
 
     makeGroupColor(): string {
@@ -223,40 +229,35 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         }
     }
 
-    private initializeGlobalSettings(): GlobalSettings {
-        const ensembles = this._workbenchSession.getEnsembleSet().getRegularEnsembleArray();
+    private initializeGlobalSettings(): Partial<GlobalSettings> {
+        const ensembles = clone(this._workbenchSession.getEnsembleSet().getRegularEnsembleArray());
+        const intersectionPolylines = clone(
+            this._workbenchSession.getUserCreatedItems().getIntersectionPolylines().getPolylines(),
+        );
+
         return {
-            fieldId: null,
-            wellboreUuid: null,
             ensembles,
             realizationFilterFunction: createEnsembleRealizationFilterFuncForWorkbenchSession(this._workbenchSession),
-            intersectionPolylines: this._workbenchSession
-                .getUserCreatedItems()
-                .getIntersectionPolylines()
-                .getPolylines(),
+            intersectionPolylines,
         };
     }
 
     private handleRealizationFilterSetChanged() {
-        this._globalSettings.realizationFilterFunction = createEnsembleRealizationFilterFuncForWorkbenchSession(
-            this._workbenchSession,
+        this.updateGlobalSetting(
+            "realizationFilterFunction",
+            createEnsembleRealizationFilterFuncForWorkbenchSession(this._workbenchSession),
         );
-
-        this.publishTopic(DataProviderManagerTopic.GLOBAL_SETTINGS);
     }
 
     private handleEnsembleSetChanged() {
         const ensembles = this._workbenchSession.getEnsembleSet().getRegularEnsembleArray();
-        this._globalSettings.ensembles = ensembles;
-
-        this.publishTopic(DataProviderManagerTopic.GLOBAL_SETTINGS);
+        this.updateGlobalSetting("ensembles", ensembles);
     }
 
     private handleIntersectionPolylinesChanged() {
-        this._globalSettings.intersectionPolylines = this._workbenchSession
-            .getUserCreatedItems()
-            .getIntersectionPolylines()
-            .getPolylines();
-        this.publishTopic(DataProviderManagerTopic.GLOBAL_SETTINGS);
+        this.updateGlobalSetting(
+            "intersectionPolylines",
+            this._workbenchSession.getUserCreatedItems().getIntersectionPolylines().getPolylines(),
+        );
     }
 }
