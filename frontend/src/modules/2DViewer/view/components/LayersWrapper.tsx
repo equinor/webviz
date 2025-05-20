@@ -30,6 +30,7 @@ import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFr
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import { useVisualizationAssemblerProduct } from "@modules/_shared/DataProviderFramework/hooks/useVisualizationProduct";
 import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
@@ -124,7 +125,10 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     usePublishSubscribeTopicValue(props.layerManager, DataProviderManagerTopic.DATA_REVISION);
 
-    const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.layerManager);
+    // const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.layerManager);
+
+    const assemblerProduct = useVisualizationAssemblerProduct(props.layerManager, VISUALIZATION_ASSEMBLER);
+
     const globalAnnotations = assemblerProduct.annotations.filter((el) => "colorScale" in el);
 
     const viewports: ViewportTypeExtended[] = [];
