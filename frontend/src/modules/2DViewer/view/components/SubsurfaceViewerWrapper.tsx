@@ -126,7 +126,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                         />
 
                         <ReadoutBoxWrapper
-                            compact={props.views.viewports.length > 1}
+                            compact={true}
                             viewportPickInfo={pickingInfoPerView[viewport.id]}
                             visible={!hideReadout && !!pickingInfoPerView[viewport.id]}
                         />
