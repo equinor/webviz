@@ -2,6 +2,7 @@ import { isEqual } from "lodash";
 
 import { getGridModelsInfoOptions, postGetPolylineIntersectionOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
+import { assertNonNull } from "@lib/utils/assertNonNull";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { PolylineIntersection_trans } from "@modules/_shared/Intersection/gridIntersectionTransform";
@@ -79,7 +80,16 @@ export class IntersectionRealizationGridProvider
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
-        return !isEqual(prevSettings, newSettings);
+        return (
+            !prevSettings ||
+            !isEqual(prevSettings.intersection, newSettings.intersection) ||
+            !isEqual(prevSettings.wellboreExtensionLength, newSettings.wellboreExtensionLength) ||
+            !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
+            !isEqual(prevSettings.realization, newSettings.realization) ||
+            !isEqual(prevSettings.gridName, newSettings.gridName) ||
+            !isEqual(prevSettings.attribute, newSettings.attribute) ||
+            !isEqual(prevSettings.timeOrInterval, newSettings.timeOrInterval)
+        );
     }
 
     makeValueRange({
@@ -247,7 +257,11 @@ export class IntersectionRealizationGridProvider
                         .filter((attr) => attr.property_name === gridAttribute)
                         .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
                 ),
-            ).sort();
+            ).sort((a, b) => {
+                if (a === "NO_TIME") return -1;
+                if (b === "NO_TIME") return 1;
+                return a.localeCompare(b);
+            });
 
             return availableTimeOrIntervals;
         });
@@ -294,31 +308,31 @@ export class IntersectionRealizationGridProvider
         IntersectionRealizationGridData,
         IntersectionRealizationGridStoredData
     >): Promise<IntersectionRealizationGridData> {
-        const ensembleIdent = getSetting(Setting.ENSEMBLE);
-        const realizationNum = getSetting(Setting.REALIZATION);
-        const gridName = getSetting(Setting.GRID_NAME);
-        const parameterName = getSetting(Setting.ATTRIBUTE);
+        const ensembleIdent = assertNonNull(getSetting(Setting.ENSEMBLE), "No ensemble selected");
+        const realizationNum = assertNonNull(getSetting(Setting.REALIZATION), "No realization number selected");
+        const gridName = assertNonNull(getSetting(Setting.GRID_NAME), "No grid name selected");
+        const parameterName = assertNonNull(getSetting(Setting.ATTRIBUTE), "No attribute selected");
         let timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
         if (timeOrInterval === "NO_TIME") {
             timeOrInterval = null;
         }
 
-        const polylineWithSectionLengths = getStoredData("polylineWithSectionLengths");
-        if (!polylineWithSectionLengths) {
-            throw new Error("No polyline and actual section lengths found in stored data");
-        }
+        const polylineWithSectionLengths = assertNonNull(
+            getStoredData("polylineWithSectionLengths"),
+            "No polyline and actual section lengths found in stored data",
+        );
         if (polylineWithSectionLengths.polylineUtmXy.length < 4) {
             throw new Error("Invalid polyline in stored data. Must contain at least two (x,y)-points");
         }
 
         const queryOptions = postGetPolylineIntersectionOptions({
             query: {
-                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
-                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
-                grid_name: gridName ?? "",
-                parameter_name: parameterName ?? "",
+                case_uuid: ensembleIdent.getCaseUuid(),
+                ensemble_name: ensembleIdent.getEnsembleName(),
+                grid_name: gridName,
+                parameter_name: parameterName,
                 parameter_time_or_interval_str: timeOrInterval,
-                realization_num: realizationNum ?? 0,
+                realization_num: realizationNum,
             },
             body: { polyline_utm_xy: polylineWithSectionLengths.polylineUtmXy },
         });

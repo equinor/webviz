@@ -13,7 +13,7 @@ ModuleRegistry.registerModule<Interfaces>({
     defaultTitle: "Intersection",
     category: ModuleCategory.MAIN,
     devState: ModuleDevState.DEV,
-    description: "Generic intersection viewer for co-visualization of intersection data from various sources.",
+    description: "Generic intersection viewer for co-visualization of data from various sources.",
     preview,
     dataTagIds: [
         ModuleDataTagId.GRID3D,

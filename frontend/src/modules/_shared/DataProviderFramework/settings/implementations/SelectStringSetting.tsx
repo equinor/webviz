@@ -1,9 +1,7 @@
 import React from "react";
 
-import { Deselect, SelectAll } from "@mui/icons-material";
 import { upperFirst } from "lodash";
 
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 
@@ -30,31 +28,14 @@ export class SelectStringSetting implements CustomSettingImplementation<ValueTyp
                 props.onValueChange(selectedUuids);
             }
 
-            function selectAll() {
-                handleChange(props.availableValues ?? []);
-            }
-
-            function selectNone() {
-                handleChange([]);
-            }
-
             return (
                 <div className="flex flex-col gap-1 mt-1">
-                    <div className="flex items-center gap-2">
-                        <DenseIconButton onClick={selectAll} title="Select all">
-                            <SelectAll fontSize="inherit" />
-                            Select all
-                        </DenseIconButton>
-                        <DenseIconButton onClick={selectNone} title="Clear selection">
-                            <Deselect fontSize="inherit" />
-                            Clear selection
-                        </DenseIconButton>
-                    </div>
                     <Select
                         filter
                         options={options}
                         value={props.value ?? undefined}
                         onChange={handleChange}
+                        showQuickSelectButtons={true}
                         disabled={props.isOverridden}
                         multiple={true}
                         size={5}

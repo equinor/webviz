@@ -2,6 +2,22 @@ import type { Vec2 } from "@lib/utils/vec2";
 import { normalizeVec2, point2Distance } from "@lib/utils/vec2";
 
 /**
+ * Validate that the xPoints, yPoints, and cumulatedHorizontalPolylineLengthArr arrays have the same length.
+ */
+function validatePolylinePointsAndCumulatedLengthArray(
+    xPoints: readonly number[],
+    yPoints: readonly number[],
+    cumulatedHorizontalPolylineLengthArr: readonly number[],
+): void {
+    if (xPoints.length !== yPoints.length) {
+        throw new Error("Invalid polyline: xPoints and yPoints arrays must have the same length");
+    }
+    if (xPoints.length !== cumulatedHorizontalPolylineLengthArr.length) {
+        throw new Error("Number of cumulated lengths must be equal to number of polyline points");
+    }
+}
+
+/**
  * Create resampled polyline and provide the cumulated horizontal length per point in resampled polyline.
  *
  */
@@ -53,6 +69,9 @@ export function createResampledPolylinePointsAndCumulatedLengthArray(
 
         cumulatedHorizontalPolylineLengthArr.push(cumulatedPolylineLength);
     }
+
+    // Validate output
+    validatePolylinePointsAndCumulatedLengthArray(xPoints, yPoints, cumulatedHorizontalPolylineLengthArr);
 
     return {
         xPoints,

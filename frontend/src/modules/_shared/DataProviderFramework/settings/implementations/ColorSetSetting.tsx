@@ -18,7 +18,7 @@ export class ColorSetSetting implements CustomSettingImplementation<ValueType, S
     defaultValue: ValueType = new ColorSet(defaultColorPalettes[0]);
 
     getLabel(): string {
-        return "Coloring";
+        return "Colors";
     }
 
     getIsStatic(): boolean {

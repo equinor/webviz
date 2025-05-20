@@ -41,7 +41,7 @@ export function makeGridBoundingBox({
     // Ensure consistency between fetched data and requested polyline
     if (polylineIntersectionData.fenceMeshSections.length !== polylineActualSectionLengths.length) {
         throw new Error(
-            `Number of fence mesh sections (${polylineIntersectionData.fenceMeshSections.length}) does not match  number of actual section
+            `Number of fence mesh sections (${polylineIntersectionData.fenceMeshSections.length}) does not match number of actual section
             lengths (${polylineActualSectionLengths.length}) for requested polyline`,
         );
     }

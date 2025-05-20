@@ -54,7 +54,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     }
 
     if (!isEqual(props.viewport, prevViewport)) {
-        setPrevViewport(cloneDeep(viewport));
+        setPrevViewport(viewport);
         if (props.viewport) {
             // Override viewport if prop changes
             setViewport(cloneDeep(props.viewport));

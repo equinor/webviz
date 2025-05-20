@@ -17,10 +17,10 @@ type ValueType = number | null;
 export class SliderNumberSetting implements CustomSettingImplementation<ValueType, SettingCategory.NUMBER_WITH_STEP> {
     private _staticOptions: { minMax: { min: number; max: number }; step: number } | null;
 
-    constructor(staticOptions: { minMax: { min: number; max: number }; step: number }) {
+    constructor(staticOptions?: { minMax: { min: number; max: number }; step: number }) {
         if (staticOptions) {
-            if (staticOptions.minMax.min > staticOptions.minMax.max || staticOptions.minMax.min < 0) {
-                throw new Error("Min value cannot be greater than max value or less than 0");
+            if (staticOptions.minMax.min > staticOptions.minMax.max) {
+                throw new Error("Min value cannot be greater than max value");
             }
             if (staticOptions.step <= 0) {
                 throw new Error("Step value must be greater than 0");
@@ -34,6 +34,7 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
     }
 
     getIsStatic(): boolean {
+        // If static options are provided in constructor, the setting is defined as static
         return this._staticOptions !== null;
     }
 
@@ -41,13 +42,10 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
         value: ValueType,
         availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER_WITH_STEP>,
     ): boolean {
-        // If static, return the current value
-        if (this.getIsStatic()) {
+        // If static limits are provided, Input- and Slider-component limits the value
+        // i.e. no need to run fixupValue()
+        if (this._staticOptions) {
             return true;
-        }
-
-        if (availableValues.length < 2) {
-            return value === null;
         }
 
         const min = availableValues[0];
@@ -64,13 +62,9 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
         currentValue: ValueType,
         availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER_WITH_STEP>,
     ): ValueType {
-        // If static, return the current value
-        if (this.getIsStatic()) {
+        // If static options are provided, return value as Input- and Slider-component controls the value
+        if (this._staticOptions) {
             return currentValue;
-        }
-
-        if (availableValues.length < 2) {
-            return null;
         }
 
         const min = availableValues[0];

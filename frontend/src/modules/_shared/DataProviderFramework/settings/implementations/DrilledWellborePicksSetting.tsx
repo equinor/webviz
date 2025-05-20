@@ -1,9 +1,6 @@
 import React from "react";
 
-import { Deselect, SelectAll } from "@mui/icons-material";
-
 import type { WellborePick_api } from "@api";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 
@@ -29,12 +26,8 @@ export class DrilledWellborePicksSetting
         currentValue: ValueType,
         availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_SELECT>,
     ): boolean {
-        if (!currentValue && availableValues.length === 0) {
-            return false;
-        }
-
         if (!currentValue) {
-            return true;
+            return availableValues.length !== 0;
         }
 
         // Check if every element in currentValue is in availableValues
@@ -72,25 +65,19 @@ export class DrilledWellborePicksSetting
         return function DrilledWellborePicks(props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) {
             const availableValues = props.availableValues ?? [];
 
-            const options: SelectOption[] = availableValues?.map((ident) => ({
-                value: ident.pickIdentifier,
-                label: ident.pickIdentifier,
+            // Prevent duplicated pickIdentifiers in the options
+            const uniquePickIdentifiers = Array.from(new Set(availableValues.map((ident) => ident.pickIdentifier)));
+            const options: SelectOption[] = uniquePickIdentifiers.map((pickIdentifier) => ({
+                value: pickIdentifier,
+                label: pickIdentifier,
             }));
 
             function handleChange(selectedIdentifiers: string[]) {
+                // Match all WellborePicks with selected pickIdentifiers
                 const selectedWellbores = availableValues.filter((elm) =>
                     selectedIdentifiers.includes(elm.pickIdentifier),
                 );
                 props.onValueChange(selectedWellbores);
-            }
-
-            function selectAll() {
-                const allUuids = availableValues.map((ident) => ident.pickIdentifier);
-                handleChange(allUuids);
-            }
-
-            function selectNone() {
-                handleChange([]);
             }
 
             const selectedValues = React.useMemo(
@@ -100,21 +87,12 @@ export class DrilledWellborePicksSetting
 
             return (
                 <div className="flex flex-col gap-1 mt-1">
-                    <div className="flex items-center gap-2">
-                        <DenseIconButton onClick={selectAll} title="Select all">
-                            <SelectAll fontSize="inherit" />
-                            Select all
-                        </DenseIconButton>
-                        <DenseIconButton onClick={selectNone} title="Clear selection">
-                            <Deselect fontSize="inherit" />
-                            Clear selection
-                        </DenseIconButton>
-                    </div>
                     <Select
                         filter
                         options={options}
                         value={selectedValues}
                         onChange={handleChange}
+                        showQuickSelectButtons={true}
                         disabled={props.isOverridden}
                         multiple={true}
                         size={5}

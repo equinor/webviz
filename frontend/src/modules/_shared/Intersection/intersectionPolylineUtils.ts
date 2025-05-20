@@ -33,7 +33,7 @@ export type IntersectionSpecification = PolylineIntersectionSpecification | Well
  * Returns promise with array of polyline XY UTM coordinates and actual section lengths.
  *
  * Actual section lengths are the actual lengths of the polyline sections for polyline which can be
- * down sampled or simplified.
+ * down-sampled or simplified.
  */
 export function makeIntersectionPolylineWithSectionLengthsPromise(
     intersectionSpecification: IntersectionSpecification,

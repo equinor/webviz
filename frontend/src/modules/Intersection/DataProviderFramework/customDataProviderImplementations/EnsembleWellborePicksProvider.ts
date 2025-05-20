@@ -1,4 +1,4 @@
-import { filter, groupBy, isEqual, keys } from "lodash";
+import { groupBy, isEqual, keys } from "lodash";
 
 import { type WellborePick_api, getWellborePicksInStratColumnOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
@@ -101,13 +101,17 @@ export class EnsembleWellborePicksProvider
 
         availableSettingsUpdater(Setting.WELLBORE_PICKS, ({ getLocalSetting, getHelperDependency }) => {
             const wellborePicks = getHelperDependency(wellborePicksDep);
-            const interpreter = getLocalSetting(Setting.WELLBORE_PICK_IDENTIFIER);
+            const selectedInterpreter = getLocalSetting(Setting.WELLBORE_PICK_IDENTIFIER);
 
-            if (!wellborePicks || !interpreter) {
+            if (!wellborePicks || !selectedInterpreter) {
                 return [];
             }
 
-            return filter(wellborePicks, ["interpreter", interpreter]).sort();
+            return wellborePicks
+                .filter((elm) => elm.interpreter === selectedInterpreter)
+                .sort((a, b) => {
+                    return a.pickIdentifier.localeCompare(b.pickIdentifier);
+                });
         });
     }
 

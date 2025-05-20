@@ -3,6 +3,7 @@ import { isEqual } from "lodash";
 import { getSeismicCubeMetaListOptions, postGetSeismicFenceOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
+import { assertNonNull } from "@lib/utils/assertNonNull";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
 import { createSectionWiseResampledPolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineUtils";
@@ -103,7 +104,16 @@ export class IntersectionRealizationSeismicProvider
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
-        return !isEqual(prevSettings, newSettings);
+        return (
+            !prevSettings ||
+            !isEqual(prevSettings.intersection, newSettings.intersection) ||
+            !isEqual(prevSettings.wellboreExtensionLength, newSettings.wellboreExtensionLength) ||
+            !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
+            !isEqual(prevSettings.realization, newSettings.realization) ||
+            !isEqual(prevSettings.attribute, newSettings.attribute) ||
+            !isEqual(prevSettings.timeOrInterval, newSettings.timeOrInterval) ||
+            !isEqual(prevSettings.sampleResolutionInMeters, newSettings.sampleResolutionInMeters)
+        );
     }
 
     makeValueRange({
@@ -118,19 +128,15 @@ export class IntersectionRealizationSeismicProvider
             return null;
         }
 
-        if (data) {
-            // Fill value is NaN
-            const minValue = data.fenceTracesFloat32Arr
-                .filter((value) => !Number.isNaN(value))
-                .reduce((acc, value) => Math.min(acc, value), Infinity);
-            const maxValue = data.fenceTracesFloat32Arr
-                .filter((value) => !Number.isNaN(value))
-                .reduce((acc, value) => Math.max(acc, value), -Infinity);
+        // Fill value is NaN
+        const minValue = data.fenceTracesFloat32Arr
+            .filter((value) => !Number.isNaN(value))
+            .reduce((acc, value) => Math.min(acc, value), Infinity);
+        const maxValue = data.fenceTracesFloat32Arr
+            .filter((value) => !Number.isNaN(value))
+            .reduce((acc, value) => Math.max(acc, value), -Infinity);
 
-            return [minValue, maxValue];
-        }
-
-        return null;
+        return [minValue, maxValue];
     }
 
     areCurrentSettingsValid({
@@ -325,15 +331,15 @@ export class IntersectionRealizationSeismicProvider
         IntersectionRealizationSeismicData,
         IntersectionRealizationSeismicStoredData
     >): Promise<IntersectionRealizationSeismicData> {
-        const ensembleIdent = getSetting(Setting.ENSEMBLE);
-        const realization = getSetting(Setting.REALIZATION);
-        const attribute = getSetting(Setting.ATTRIBUTE);
+        const ensembleIdent = assertNonNull(getSetting(Setting.ENSEMBLE), "No ensemble selected");
+        const realization = assertNonNull(getSetting(Setting.REALIZATION), "No realization number selected");
+        const attribute = assertNonNull(getSetting(Setting.ATTRIBUTE), "No attribute selected");
         const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
-        const seismicFencePolylineUtmXy = getStoredData("seismicFencePolylineWithSectionLengths")?.polylineUtmXy;
+        const seismicFencePolylineUtmXy = assertNonNull(
+            getStoredData("seismicFencePolylineWithSectionLengths"),
+            "No seismic fence polyline found in stored data",
+        ).polylineUtmXy;
 
-        if (!seismicFencePolylineUtmXy) {
-            throw new Error("No seismic fence polyline found in stored data");
-        }
         if (seismicFencePolylineUtmXy.length < 4) {
             throw new Error("Invalid seismic fence polyline in stored data. Must contain at least two (x,y)-points");
         }
@@ -341,10 +347,10 @@ export class IntersectionRealizationSeismicProvider
         const apiSeismicFencePolyline = createSeismicFencePolylineFromPolylineXy(seismicFencePolylineUtmXy);
         const queryOptions = postGetSeismicFenceOptions({
             query: {
-                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
-                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
-                realization_num: realization ?? 0,
-                seismic_attribute: attribute ?? "",
+                case_uuid: ensembleIdent.getCaseUuid(),
+                ensemble_name: ensembleIdent.getEnsembleName(),
+                realization_num: realization,
+                seismic_attribute: attribute,
                 time_or_interval_str: timeOrInterval ?? "",
                 observed: this._dataSource === SeismicDataSource.OBSERVED,
             },

@@ -1,5 +1,3 @@
-import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-
 import { LayerType } from "@modules/_shared/components/EsvIntersection";
 import type {
     IntersectionRealizationGridData,
@@ -54,7 +52,7 @@ export function createGridLayerItemsMaker({
 
     if (intersectionData.fenceMeshSections.length !== sourcePolylineWithSectionLengths.actualSectionLengths.length) {
         throw new Error(
-            `Number of fence mesh sections (${intersectionData.fenceMeshSections.length}) does not match  number of actual section
+            `Number of fence mesh sections (${intersectionData.fenceMeshSections.length}) does not match number of actual section
             lengths (${sourcePolylineWithSectionLengths.actualSectionLengths.length}) for requested polyline`,
         );
     }
@@ -71,8 +69,7 @@ export function createGridLayerItemsMaker({
     }
 
     const gridIntersectionLayerItemsMaker: EsvLayerItemsMaker = {
-        makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null) => {
-            void intersectionReferenceSystem; // Not used for this layer
+        makeLayerItems: () => {
             return [
                 {
                     id: `${id}-grid-layer`,

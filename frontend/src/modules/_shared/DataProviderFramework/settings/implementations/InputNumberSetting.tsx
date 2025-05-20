@@ -10,31 +10,29 @@ import type { SettingCategory } from "../settingsDefinitions";
 type ValueType = number | null;
 
 export class InputNumberSetting implements CustomSettingImplementation<ValueType, SettingCategory.NUMBER> {
-    private _minMax: { min: number; max: number } | null;
+    private _staticMinMax: { min: number; max: number } | null;
 
     constructor(minMax?: { min: number; max: number }) {
-        if (minMax && (minMax.min > minMax.max || minMax.min < 0)) {
-            throw new Error("Min value cannot be greater than max value or less than 0");
+        if (minMax && minMax.min > minMax.max) {
+            throw new Error("Min value cannot be greater than max value ");
         }
 
-        this._minMax = minMax ?? null;
+        this._staticMinMax = minMax ?? null;
     }
 
     getIsStatic(): boolean {
-        return this._minMax !== null;
+        // If minMax is provided in constructor, the setting is defined as static
+        return this._staticMinMax !== null;
     }
 
     isValueValid(
         value: ValueType,
         availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>,
     ): boolean {
-        // If static, return the current value
-        if (this.getIsStatic()) {
+        // If static limits are provided, Input component limits the value
+        // i.e. no need to run fixupValue()
+        if (this._staticMinMax) {
             return true;
-        }
-
-        if (availableValues.length < 2) {
-            return value === null;
         }
 
         const min = availableValues[0];
@@ -51,13 +49,9 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
         currentValue: ValueType,
         availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>,
     ): ValueType {
-        // If static, return the current value
-        if (this.getIsStatic()) {
+        // If static limits are provided, return value as Input component controls the value
+        if (this._staticMinMax) {
             return currentValue;
-        }
-
-        if (availableValues.length < 2) {
-            return null;
         }
 
         const min = availableValues[0];
@@ -75,7 +69,7 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.NUMBER>) => React.ReactNode {
         const isStatic = this.getIsStatic();
-        const minMax = this._minMax;
+        const minMax = this._staticMinMax;
 
         return function InputNumberSetting(props: SettingComponentProps<ValueType, SettingCategory.NUMBER>) {
             const min = isStatic ? (minMax?.min ?? 0) : (props.availableValues?.[0] ?? 0);

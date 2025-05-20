@@ -1,5 +1,3 @@
-import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-
 import { LayerType } from "@modules/_shared/components/EsvIntersection";
 import type {
     IntersectionRealizationSeismicData,
@@ -98,9 +96,7 @@ export function createSeismicLayerItemsMaker({
 
     // The layer has to be created inside EsvIntersection, so we need to return a LayerItem
     const intersectionSeismicLayerItemsMaker: EsvLayerItemsMaker = {
-        makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null) => {
-            void intersectionReferenceSystem; // Not used for this layer
-
+        makeLayerItems: () => {
             return [
                 {
                     id: `${id}-seismic-layer`,

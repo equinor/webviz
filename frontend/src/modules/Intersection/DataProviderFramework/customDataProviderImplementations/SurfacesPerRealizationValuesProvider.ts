@@ -7,6 +7,7 @@ import {
     postGetSampleSurfaceInPointsOptions,
 } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
+import { assertNonNull } from "@lib/utils/assertNonNull";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
     fetchWellboreHeaders,
@@ -75,7 +76,16 @@ export class SurfacesPerRealizationValuesProvider
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
-        return !isEqual(prevSettings, newSettings);
+        return (
+            !prevSettings ||
+            !isEqual(prevSettings.intersection, newSettings.intersection) ||
+            !isEqual(prevSettings.wellboreExtensionLength, newSettings.wellboreExtensionLength) ||
+            !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
+            !isEqual(prevSettings.realizations, newSettings.realizations) ||
+            !isEqual(prevSettings.attribute, newSettings.attribute) ||
+            !isEqual(prevSettings.surfaceNames, newSettings.surfaceNames) ||
+            !isEqual(prevSettings.sampleResolutionInMeters, newSettings.sampleResolutionInMeters)
+        );
     }
 
     areCurrentSettingsValid({
@@ -256,36 +266,18 @@ export class SurfacesPerRealizationValuesProvider
         SurfacesPerRealizationValuesData,
         SurfacesPerRealizationValuesStoredData
     >): Promise<SurfacesPerRealizationValuesData> {
-        const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        const ensembleIdent = assertNonNull(getSetting(Setting.ENSEMBLE), "No ensemble selected");
         const realizations = getSetting(Setting.REALIZATIONS);
-        const attribute = getSetting(Setting.ATTRIBUTE);
-        const surfaceNames = getSetting(Setting.SURFACE_NAMES);
+        const attribute = assertNonNull(getSetting(Setting.ATTRIBUTE), "No attribute selected");
+        const surfaceNames = assertNonNull(getSetting(Setting.SURFACE_NAMES), "No surface names selected");
+        const requestedPolylineWithCumulatedLengths = assertNonNull(
+            getStoredData("requestedPolylineWithCumulatedLengths"),
+            "No polyline and cumulated lengths found in stored data",
+        );
 
-        if (!surfaceNames || !attribute) {
-            throw new Error("Invalid settings: Sample resolution, surface names or attribute are not set");
-        }
-
-        const requestedPolylineWithCumulatedLengths = getStoredData("requestedPolylineWithCumulatedLengths");
-        if (!requestedPolylineWithCumulatedLengths) {
-            throw new Error("No polyline and cumulated lengths found in stored data");
-        }
         if (requestedPolylineWithCumulatedLengths.xUtmPoints.length < 2) {
             throw new Error(
                 "Invalid polyline in stored data. Must contain at least two (x,y)-points, and cumulated length per polyline section",
-            );
-        }
-        if (
-            requestedPolylineWithCumulatedLengths.xUtmPoints.length !==
-            requestedPolylineWithCumulatedLengths.yUtmPoints.length
-        ) {
-            throw new Error("Invalid polyline points in stored data. Must have same number of X and Y points");
-        }
-        if (
-            requestedPolylineWithCumulatedLengths.xUtmPoints.length !==
-            requestedPolylineWithCumulatedLengths.cumulatedHorizontalPolylineLengthArr.length
-        ) {
-            throw new Error(
-                "Invalid polyline in stored data. Number of cumulated lengths must be equal to number of polyline points",
             );
         }
 
@@ -293,10 +285,10 @@ export class SurfacesPerRealizationValuesProvider
         const surfaceNameAndFetchList = surfaceNames.map((surfaceName) => {
             const queryOptions = postGetSampleSurfaceInPointsOptions({
                 query: {
-                    case_uuid: ensembleIdent?.getCaseUuid() ?? "",
-                    ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+                    case_uuid: ensembleIdent.getCaseUuid(),
+                    ensemble_name: ensembleIdent.getEnsembleName(),
                     surface_name: surfaceName,
-                    surface_attribute: attribute ?? "",
+                    surface_attribute: attribute,
                     realization_nums: realizations ?? [],
                 },
                 body: {

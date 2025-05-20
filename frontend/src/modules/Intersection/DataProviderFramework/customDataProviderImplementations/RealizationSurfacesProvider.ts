@@ -7,6 +7,7 @@ import {
     postGetSurfaceIntersectionOptions,
 } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
+import { assertNonNull } from "@lib/utils/assertNonNull";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
     fetchWellboreHeaders,
@@ -71,7 +72,16 @@ export class RealizationSurfacesProvider
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
-        return !isEqual(prevSettings, newSettings);
+        return (
+            !prevSettings ||
+            !isEqual(prevSettings.intersection, newSettings.intersection) ||
+            !isEqual(prevSettings.wellboreExtensionLength, newSettings.wellboreExtensionLength) ||
+            !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
+            !isEqual(prevSettings.realization, newSettings.realization) ||
+            !isEqual(prevSettings.attribute, newSettings.attribute) ||
+            !isEqual(prevSettings.surfaceNames, newSettings.surfaceNames) ||
+            !isEqual(prevSettings.sampleResolutionInMeters, newSettings.sampleResolutionInMeters)
+        );
     }
 
     areCurrentSettingsValid({
@@ -233,24 +243,23 @@ export class RealizationSurfacesProvider
         RealizationSurfacesData,
         RealizationSurfacesStoredData
     >): Promise<RealizationSurfacesData> {
-        const ensembleIdent = getSetting(Setting.ENSEMBLE);
-        const realization = getSetting(Setting.REALIZATION);
-        const attribute = getSetting(Setting.ATTRIBUTE);
-        const surfaceNames = getSetting(Setting.SURFACE_NAMES);
-        const sampleResolutionInMeters = getSetting(Setting.SAMPLE_RESOLUTION_IN_METERS) ?? 1;
+        const ensembleIdent = assertNonNull(getSetting(Setting.ENSEMBLE), "No ensemble selected");
+        const realization = assertNonNull(getSetting(Setting.REALIZATION), "No realization number selected");
+        const attribute = assertNonNull(getSetting(Setting.ATTRIBUTE), "No attribute selected");
+        const surfaceNames = assertNonNull(getSetting(Setting.SURFACE_NAMES), "No surface names selected");
+        const sampleResolutionInMeters = assertNonNull(
+            getSetting(Setting.SAMPLE_RESOLUTION_IN_METERS),
+            "No sample resolution selected",
+        );
+        const polylineWithSectionLengths = assertNonNull(
+            getStoredData("polylineWithSectionLengths"),
+            "No polyline and actual section lengths found in stored data",
+        );
         const extensionLength = createValidExtensionLength(
             getSetting(Setting.INTERSECTION),
             getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
         );
 
-        if (sampleResolutionInMeters === null || !surfaceNames || !attribute) {
-            throw new Error("Invalid settings: Sample resolution, surface names or attribute are not set");
-        }
-
-        const polylineWithSectionLengths = getStoredData("polylineWithSectionLengths");
-        if (!polylineWithSectionLengths) {
-            throw new Error("No polyline and actual section lengths found in stored data");
-        }
         if (polylineWithSectionLengths.polylineUtmXy.length < 4) {
             throw new Error("Invalid polyline in stored data. Must contain at least two (x,y)-points");
         }
@@ -267,11 +276,11 @@ export class RealizationSurfacesProvider
             surfaceNames.map((surfaceName) => {
                 const queryOptions = postGetSurfaceIntersectionOptions({
                     query: {
-                        case_uuid: ensembleIdent?.getCaseUuid() ?? "",
-                        ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
-                        realization_num: realization ?? 0,
+                        case_uuid: ensembleIdent.getCaseUuid(),
+                        ensemble_name: ensembleIdent.getEnsembleName(),
+                        realization_num: realization,
                         name: surfaceName,
-                        attribute: attribute ?? "",
+                        attribute: attribute,
                     },
                     body: {
                         cumulative_length_polyline: {

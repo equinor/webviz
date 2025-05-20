@@ -1,4 +1,4 @@
-import type { BBox } from "@lib/utils/bbox";
+import { fromNumArray, type BBox } from "@lib/utils/bbox";
 import type {
     IntersectionRealizationSeismicData,
     IntersectionRealizationSeismicSettings,
@@ -42,16 +42,5 @@ export function makeSeismicBoundingBox({
     const minY = data.min_fence_depth;
     const maxY = data.max_fence_depth;
 
-    return {
-        min: {
-            x: minX,
-            y: minY,
-            z: 0.0,
-        },
-        max: {
-            x: maxX,
-            y: maxY,
-            z: 0.0,
-        },
-    };
+    return fromNumArray([minX, minY, 0, maxX, maxY, 0]);
 }

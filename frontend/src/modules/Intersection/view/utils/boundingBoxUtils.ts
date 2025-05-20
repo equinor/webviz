@@ -1,4 +1,4 @@
-import type { BBox } from "@lib/utils/bbox";
+import { fromNumArray, type BBox } from "@lib/utils/bbox";
 
 /**
  * Create bound box for a projected wellbore path and chosen extension length.
@@ -7,21 +7,10 @@ import type { BBox } from "@lib/utils/bbox";
  * extensionLength: length to extend the bound box in each direction
  */
 export function createBBoxForWellborePath(wellborePath: number[][], extensionLength: number): BBox {
-    const minX = Math.min(...wellborePath.map((point) => point[0]));
-    const maxX = Math.max(...wellborePath.map((point) => point[0]));
+    const minX = Math.min(...wellborePath.map((point) => point[0])) - extensionLength;
+    const maxX = Math.max(...wellborePath.map((point) => point[0])) + extensionLength;
     const minY = Math.min(...wellborePath.map((point) => point[1]));
     const maxY = Math.max(...wellborePath.map((point) => point[1]));
 
-    return {
-        min: {
-            x: minX - extensionLength,
-            y: minY,
-            z: 0.0,
-        },
-        max: {
-            x: maxX + extensionLength,
-            y: maxY,
-            z: 0.0,
-        },
-    } as BBox;
+    return fromNumArray([minX, minY, 0.0, maxX, maxY, 0.0]);
 }
