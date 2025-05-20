@@ -42,6 +42,14 @@ export class DeckGlPlugin {
         return this._manager.pickFirstLayerUnderCursorInfo(x, y);
     }
 
+    protected setDragStart() {
+        this._manager.setDragStart();
+    }
+
+    protected setDragEnd() {
+        this._manager.setDragEnd();
+    }
+
     handleDrag?(pickingInfo: PickingInfo): void;
     handleLayerHover?(pickingInfo: PickingInfo): void;
     handleLayerClick?(pickingInfo: PickingInfo): void;
@@ -65,18 +73,13 @@ export type DeckGlInstanceManagerPayloads = {
     [DeckGlInstanceManagerTopic.CONTEXT_MENU]: ContextMenu | null;
 };
 
-type HoverPoint = {
-    worldCoordinates: number[];
-    screenCoordinates: [number, number];
-};
-
 type KeyboardEventListener = (event: KeyboardEvent) => void;
 
 export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceManagerPayloads> {
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<DeckGlInstanceManagerPayloads>();
 
+    private _isDragging: boolean = false;
     private _ref: DeckGLRef | null;
-    private _hoverPoint: HoverPoint | null = null;
     private _plugins: DeckGlPlugin[] = [];
     private _layersIdPluginMap = new Map<string, DeckGlPlugin>();
     private _cursor: string = "auto";
@@ -128,6 +131,7 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     redraw() {
         this._redrawCycle++;
         this._publishSubscribeDelegate.notifySubscribers(DeckGlInstanceManagerTopic.REDRAW);
+        this._ref?.deck?.redraw("deckgl-instance-manager");
     }
 
     disablePanning() {
@@ -179,6 +183,14 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
         return pickingInfo.layer?.id;
     }
 
+    setDragStart() {
+        this._isDragging = true;
+    }
+
+    setDragEnd() {
+        this._isDragging = false;
+    }
+
     handleDrag(pickingInfo: PickingInfo): void {
         const layerId = this.getLayerIdFromPickingInfo(pickingInfo);
         if (!layerId) {
@@ -193,19 +205,11 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
         plugin.handleDrag?.(pickingInfo);
     }
 
-    handleDragStart(pickingInfo: PickingInfo) {
-        const layerId = this.getLayerIdFromPickingInfo(pickingInfo);
-        if (!layerId) {
-            return;
-        }
-
-        const plugin = this._layersIdPluginMap.get(layerId);
-        if (!plugin) {
-            return;
-        }
-    }
-
     handleMouseEvent(event: MapMouseEvent) {
+        if (this._isDragging) {
+            return;
+        }
+
         if (event.type !== "hover") {
             this._contextMenu = null;
             this._publishSubscribeDelegate.notifySubscribers(DeckGlInstanceManagerTopic.CONTEXT_MENU);
@@ -213,14 +217,8 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
 
         const firstLayerInfo = this.getFirstLayerUnderCursorInfo(event);
         if (!firstLayerInfo || !firstLayerInfo.coordinate) {
-            this._hoverPoint = null;
             return;
         }
-
-        this._hoverPoint = {
-            worldCoordinates: firstLayerInfo.coordinate,
-            screenCoordinates: [firstLayerInfo.x, firstLayerInfo.y],
-        };
 
         const layerId = this.getLayerIdFromPickingInfo(firstLayerInfo);
         const plugin = this._layersIdPluginMap.get(layerId ?? "");
@@ -304,10 +302,7 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
                 pluginLayerIds.push(layer.id);
             }
         }
-        const viewports = props.views?.viewports ?? [];
-        for (const viewport of viewports) {
-            viewport.layerIds = [...(viewport.layerIds ?? []), ...pluginLayerIds];
-        }
+
         return {
             ...props,
             onDrag: this.handleDrag.bind(this),
@@ -319,7 +314,7 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
             layers,
             views: {
                 ...props.views,
-                viewports: viewports.map((viewport) => ({
+                viewports: (props.views?.viewports ?? []).map((viewport) => ({
                     ...viewport,
                     layerIds: [...(viewport.layerIds ?? []), ...pluginLayerIds],
                 })),
@@ -329,6 +324,7 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     }
 
     beforeDestroy() {
+        this.enablePanning();
         this.maybeRemoveKeyboardEventListeners();
     }
 }

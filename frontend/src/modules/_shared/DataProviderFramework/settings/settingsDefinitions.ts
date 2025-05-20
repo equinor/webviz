@@ -33,6 +33,7 @@ export enum Setting {
     INTERSECTION = "intersection",
     POLYGONS_ATTRIBUTE = "polygonsAttribute",
     POLYGONS_NAME = "polygonsName",
+    POLYLINES = "polylines",
     REALIZATION = "realization",
     SEISMIC_CROSSLINE = "seismicCrossline",
     SEISMIC_DEPTH_SLICE = "seismicDepthSlice",
@@ -59,6 +60,7 @@ export const settingCategories = {
     [Setting.INTERSECTION]: SettingCategory.SINGLE_SELECT,
     [Setting.POLYGONS_ATTRIBUTE]: SettingCategory.SINGLE_SELECT,
     [Setting.POLYGONS_NAME]: SettingCategory.SINGLE_SELECT,
+    [Setting.POLYLINES]: SettingCategory.MULTI_SELECT,
     [Setting.REALIZATION]: SettingCategory.SINGLE_SELECT,
     [Setting.SEISMIC_CROSSLINE]: SettingCategory.NUMBER_WITH_STEP,
     [Setting.SEISMIC_DEPTH_SLICE]: SettingCategory.NUMBER_WITH_STEP,
@@ -87,6 +89,7 @@ export type SettingTypes = {
     [Setting.INTERSECTION]: IntersectionSettingValue | null;
     [Setting.POLYGONS_ATTRIBUTE]: string | null;
     [Setting.POLYGONS_NAME]: string | null;
+    [Setting.POLYLINES]: { value: string; label: string }[] | null;
     [Setting.REALIZATION]: number | null;
     [Setting.SEISMIC_CROSSLINE]: number | null;
     [Setting.SEISMIC_DEPTH_SLICE]: number | null;

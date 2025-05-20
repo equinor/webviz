@@ -7,9 +7,11 @@ import {
     type PickingInfo,
 } from "@deck.gl/core";
 import { PathLayer, TextLayer } from "@deck.gl/layers";
+import type { ExtendedLayerProps } from "@webviz/subsurface-viewer";
+
 import type { Polyline } from "@modules/3DViewerNew/view/utils/PolylinesPlugin";
 
-export type PolylinesLayerProps = {
+export type PolylinesLayerProps = ExtendedLayerProps & {
     id: string;
     polylines: Polyline[];
     selectedPolylineId?: string;
@@ -83,17 +85,19 @@ export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
             if (selectedPolylineIndex !== -1) {
                 layers.push(
                     new PathLayer({
-                        id: `selected`,
-                        data: [this.props.polylines[selectedPolylineIndex]],
-                        getPath: (d) => d.path,
-                        getColor: (d: Polyline) => [d.color[0], d.color[1], d.color[2], 200],
-                        getWidth: 30,
-                        widthUnits: "meters",
-                        widthMinPixels: 5,
-                        parameters: {
-                            depthTest: false,
-                        },
-                        billboard: true,
+                        ...this.getSubLayerProps({
+                            id: `selected`,
+                            data: [this.props.polylines[selectedPolylineIndex]],
+                            getPath: (d: Polyline) => d.path,
+                            getColor: (d: Polyline) => [d.color[0], d.color[1], d.color[2], 200],
+                            getWidth: 30,
+                            widthUnits: "meters",
+                            widthMinPixels: 5,
+                            parameters: {
+                                depthTest: false,
+                            },
+                            billboard: true,
+                        }),
                     }),
                 );
             }
@@ -102,17 +106,19 @@ export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
         if (hoveredPolylineIndex !== null && this.props.polylines[hoveredPolylineIndex] && this.props.hoverable) {
             layers.push(
                 new PathLayer({
-                    id: `hovered`,
-                    data: [this.props.polylines[hoveredPolylineIndex]],
-                    getPath: (d) => d.path,
-                    getColor: (d: Polyline) => [d.color[0], d.color[1], d.color[2], 100],
-                    getWidth: 30,
-                    widthUnits: "meters",
-                    widthMinPixels: 6,
-                    parameters: {
-                        depthTest: false,
-                    },
-                    billboard: true,
+                    ...this.getSubLayerProps({
+                        id: `hovered`,
+                        data: [this.props.polylines[hoveredPolylineIndex]],
+                        getPath: (d: Polyline) => d.path,
+                        getColor: (d: Polyline) => [d.color[0], d.color[1], d.color[2], 100],
+                        getWidth: 30,
+                        widthUnits: "meters",
+                        widthMinPixels: 6,
+                        parameters: {
+                            depthTest: false,
+                        },
+                        billboard: true,
+                    }),
                 }),
             );
         }
@@ -147,54 +153,60 @@ export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
 
         layers.push(
             new PathLayer({
-                id: `polylines`,
-                data: this.props.polylines,
-                getPath: (d) => d.path,
-                getColor: (d: Polyline) => d.color,
-                getWidth: 10,
-                widthUnits: "meters",
-                widthMinPixels: 3,
-                widthMaxPixels: 10,
-                pickable: false,
-                parameters: {
-                    depthTest: false,
-                },
-                billboard: true,
+                ...this.getSubLayerProps({
+                    id: `polylines`,
+                    data: this.props.polylines,
+                    getPath: (d: Polyline) => d.path,
+                    getColor: (d: Polyline) => d.color,
+                    getWidth: 10,
+                    widthUnits: "meters",
+                    widthMinPixels: 3,
+                    widthMaxPixels: 10,
+                    pickable: false,
+                    parameters: {
+                        depthTest: false,
+                    },
+                    billboard: true,
+                }),
             }),
             new TextLayer({
-                id: `polylines-labels`,
-                data: polylineLabels,
-                getPosition: (d) => d.position,
-                getText: (d) => d.label,
-                getSize: 12,
-                sizeUnits: "meters",
-                sizeMinPixels: 16,
-                getAngle: (d) => d.angle,
-                getColor: [0, 0, 0],
-                parameters: {
-                    depthTest: false,
-                },
-                billboard: false,
-                getBackgroundColor: [255, 255, 255, 100],
-                getBackgroundPadding: [10, 10],
-                getBackgroundBorderColor: [0, 0, 0, 255],
-                getBackgroundBorderWidth: 2,
-                getBackgroundElevation: 1,
-                background: true,
+                ...this.getSubLayerProps({
+                    id: `polylines-labels`,
+                    data: polylineLabels,
+                    getPosition: (d: any) => d.position,
+                    getText: (d: any) => d.label,
+                    getSize: 12,
+                    sizeUnits: "meters",
+                    sizeMinPixels: 16,
+                    getAngle: (d: any) => d.angle,
+                    getColor: [0, 0, 0],
+                    parameters: {
+                        depthTest: false,
+                    },
+                    billboard: false,
+                    getBackgroundColor: [255, 255, 255, 100],
+                    getBackgroundPadding: [10, 10],
+                    getBackgroundBorderColor: [0, 0, 0, 255],
+                    getBackgroundBorderWidth: 2,
+                    getBackgroundElevation: 1,
+                    background: true,
+                }),
             }),
             new PathLayer({
-                id: `polylines-hoverable`,
-                data: this.props.polylines,
-                getPath: (d) => d.path,
-                getColor: (d: Polyline) => [d.color[0], d.color[1], d.color[2], 1],
-                getWidth: 50,
-                widthUnits: "meters",
-                widthMinPixels: 10,
-                widthMaxPixels: 20,
-                pickable: true,
-                parameters: {
-                    depthTest: false,
-                },
+                ...this.getSubLayerProps({
+                    id: `polylines-hoverable`,
+                    data: this.props.polylines,
+                    getPath: (d: Polyline) => d.path,
+                    getColor: (d: Polyline) => [d.color[0], d.color[1], d.color[2], 1],
+                    getWidth: 50,
+                    widthUnits: "meters",
+                    widthMinPixels: 10,
+                    widthMaxPixels: 20,
+                    pickable: true,
+                    parameters: {
+                        depthTest: false,
+                    },
+                }),
             }),
         );
 

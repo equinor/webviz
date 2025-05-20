@@ -1,27 +1,32 @@
 import React from "react";
 
-import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
+import type { Layer as DeckGlLayer, Layer, PickingInfo } from "@deck.gl/core";
 import { View as DeckGlView } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
 import type { LayerPickInfo, MapMouseEvent } from "@webviz/subsurface-viewer";
 import { useMultiViewCursorTracking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewCursorTracking";
 import { useMultiViewPicking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking";
+import { WellLabelLayer } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
+import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/types";
+import type { Feature } from "geojson";
+import { isEqual } from "lodash";
 
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { PolylinesLayer } from "@modules/3DViewerNew/customDeckGlLayers/PolylinesLayer";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
-import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
+import {
+    SubsurfaceViewerWithCameraState,
+    type SubsurfaceViewerWithCameraStateProps,
+} from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
 import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
+import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
-import type { DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
+import { DeckGlInstanceManagerTopic, type DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
 
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
-import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/types";
-import { WellLabelLayer } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
-import type { Feature } from "geojson";
-import { PolylinesLayer } from "@modules/3DViewerNew/customDeckGlLayers/PolylinesLayer";
 
 export type ReadoutWrapperProps = {
     views: ViewsTypeExtended;
@@ -38,12 +43,15 @@ export type ReadoutWrapperProps = {
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const id = React.useId();
     const [hideReadout, setHideReadout] = React.useState<boolean>(false);
+    const [storedDeckGlViews, setStoredDeckGlViews] =
+        React.useState<SubsurfaceViewerWithCameraStateProps["views"]>(undefined);
 
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
     const deckGlRef = React.useRef<DeckGLRef | null>(null);
 
     React.useImperativeHandle(props.deckGlRef, () => deckGlRef.current);
+    usePublishSubscribeTopicValue(props.deckGlManager, DeckGlInstanceManagerTopic.REDRAW);
 
     const [numRows] = props.views.layout;
 
@@ -95,6 +103,43 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         return feat?.properties?.["name"];
     }
 
+    const deckGlProps = props.deckGlManager.makeDeckGlComponentProps({
+        deckGlRef,
+        id: `subsurface-viewer-${id}`,
+        views: { ...props.views, viewports: adjustedViewports },
+        verticalScale: props.verticalScale,
+        scale: {
+            visible: true,
+            incrementValue: 100,
+            widthPerUnit: 100,
+            cssStyle: {
+                right: 10,
+                top: 10,
+            },
+        },
+        coords: {
+            visible: false,
+            multiPicking: true,
+            pickDepth: 2,
+        },
+        triggerHome: props.triggerHome,
+        pickingRadius: 5,
+        layers: adjustedLayers,
+        onMouseEvent: handleMouseEvent,
+        getTooltip: tooltip,
+    });
+
+    let filteredLayers = deckGlProps.layers as Layer<any>[];
+    if (filteredLayers.filter((layer) => layer.id.includes("polylines-layer") && layer.props.visible).length >= 2) {
+        filteredLayers = filteredLayers.filter(
+            (layer) => !layer.id.includes("polylines-layer") || layer.id === "polylines-layer",
+        );
+    }
+
+    if (!isEqual(deckGlProps.views, storedDeckGlViews)) {
+        setStoredDeckGlViews(deckGlProps.views);
+    }
+
     const handleMainDivLeave = React.useCallback(() => setHideReadout(true), []);
     const handleMainDivEnter = React.useCallback(() => setHideReadout(false), []);
 
@@ -106,33 +151,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onMouseLeave={handleMainDivLeave}
         >
             {props.children}
-            <SubsurfaceViewerWithCameraState
-                {...props.deckGlManager.makeDeckGlComponentProps({
-                    deckGlRef,
-                    id: `subsurface-viewer-${id}`,
-                    views: { ...props.views, viewports: adjustedViewports },
-                    verticalScale: props.verticalScale,
-                    scale: {
-                        visible: true,
-                        incrementValue: 100,
-                        widthPerUnit: 100,
-                        cssStyle: {
-                            right: 10,
-                            top: 10,
-                        },
-                    },
-                    coords: {
-                        visible: false,
-                        multiPicking: true,
-                        pickDepth: 2,
-                    },
-                    triggerHome: props.triggerHome,
-                    pickingRadius: 5,
-                    layers: adjustedLayers,
-                    onMouseEvent: handleMouseEvent,
-                    getTooltip: tooltip,
-                })}
-            >
+            <SubsurfaceViewerWithCameraState {...deckGlProps} layers={filteredLayers} views={storedDeckGlViews}>
                 {props.views.viewports.map((viewport) => (
                     // @ts-expect-error -- This class is marked as abstract, but seems to just work as is
                     // ? Should we do a proper implementation of the class??

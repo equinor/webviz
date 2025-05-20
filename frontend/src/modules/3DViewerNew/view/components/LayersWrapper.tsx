@@ -6,8 +6,13 @@ import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import * as bbox from "@lib/utils/bbox";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
+import {
+    accumulatePolylineIds,
+    type AccumulatedData,
+} from "@modules/3DViewerNew/DataProviderFramework/accumulators/polylineIdsAccumulator";
 import { RealizationSeismicCrosslineProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicCrosslineProvider";
 import { RealizationSeismicDepthSliceProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicDepthProvider";
 import { RealizationSeismicInlineProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicInlineProvider";
@@ -43,7 +48,6 @@ import {
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import * as bbox from "@lib/utils/bbox";
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
@@ -52,14 +56,13 @@ import { InteractionWrapper } from "./InteractionWrapper";
 import "../../DataProviderFramework/registerAllDataProviders";
 import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 import type { BoundingBox3D } from "@webviz/subsurface-viewer";
+
 import { makeRealizationSurfaceLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeRealizationSurfaceLayer";
 import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { makeIntersectionLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeIntersectionGrid3dLayer";
-import {
-    accumulatePolylineIds,
-    type AccumulatedData,
-} from "@modules/3DViewerNew/DataProviderFramework/accumulators/polylineIdsAccumulator";
 import { RealizationGridProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
+import { PolylinesProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/PolylinesProvider";
+import { makePolylinesLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makePolylinesLayer";
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
     VisualizationTarget.DECK_GL,
@@ -96,7 +99,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
-    CustomDataProviderType.REALIIZATION_GRID_3D,
+    CustomDataProviderType.REALIZATION_GRID_3D,
     RealizationGridProvider,
     {
         transformToVisualization: makeRealizationGridLayer,
@@ -150,6 +153,9 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
         reduceAccumulatedData: accumulatePolylineIds,
     },
 );
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomDataProviderType.POLYLINES, PolylinesProvider, {
+    transformToVisualization: makePolylinesLayer,
+});
 
 export type LayersWrapperProps = {
     fieldId: string;

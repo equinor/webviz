@@ -1,5 +1,3 @@
-import { isEqual } from "lodash";
-
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
 import type { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import { transformGridMappedProperty, transformGridSurface } from "@modules/3DViewer/view/queries/queryDataTransforms";
@@ -29,16 +27,8 @@ const realizationGridSettings = [
 export type RealizationGridSettings = typeof realizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationGridSettings>;
 
-type StoredData = {
-    availableGridDimensions: {
-        i: number;
-        j: number;
-        k: number;
-    };
-};
-
 export class RealizationGridProvider
-    implements CustomDataProviderImplementation<RealizationGridSettings, RealizationGridData, StoredData>
+    implements CustomDataProviderImplementation<RealizationGridSettings, RealizationGridData>
 {
     settings = realizationGridSettings;
 
@@ -52,15 +42,31 @@ export class RealizationGridProvider
         return "Realization Grid";
     }
 
-    doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
-        return !isEqual(prevSettings, newSettings);
+    doSettingsChangesRequireDataRefetch(
+        prevSettings: SettingsWithTypes | null,
+        newSettings: SettingsWithTypes,
+    ): boolean {
+        if (prevSettings === null) {
+            return true;
+        }
+        if (
+            prevSettings[Setting.ENSEMBLE] !== newSettings[Setting.ENSEMBLE] ||
+            prevSettings[Setting.REALIZATION] !== newSettings[Setting.REALIZATION] ||
+            prevSettings[Setting.GRID_NAME] !== newSettings[Setting.GRID_NAME] ||
+            prevSettings[Setting.ATTRIBUTE] !== newSettings[Setting.ATTRIBUTE] ||
+            prevSettings[Setting.TIME_OR_INTERVAL] !== newSettings[Setting.TIME_OR_INTERVAL] ||
+            prevSettings[Setting.GRID_LAYER_I_RANGE] !== newSettings[Setting.GRID_LAYER_I_RANGE] ||
+            prevSettings[Setting.GRID_LAYER_J_RANGE] !== newSettings[Setting.GRID_LAYER_J_RANGE] ||
+            prevSettings[Setting.GRID_LAYER_K_RANGE] !== newSettings[Setting.GRID_LAYER_K_RANGE]
+        ) {
+            return true;
+        }
+        return false;
     }
 
     makeValueRange({
         getData,
-    }: DataProviderInformationAccessors<RealizationGridSettings, RealizationGridData, StoredData>):
-        | [number, number]
-        | null {
+    }: DataProviderInformationAccessors<RealizationGridSettings, RealizationGridData>): [number, number] | null {
         const data = getData();
         if (!data) {
             return null;
@@ -71,10 +77,9 @@ export class RealizationGridProvider
 
     fetchData({
         getSetting,
-        getStoredData,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<RealizationGridSettings, RealizationGridData, StoredData>): Promise<{
+    }: FetchDataParams<RealizationGridSettings, RealizationGridData>): Promise<{
         gridSurfaceData: GridSurface_trans;
         gridParameterData: GridMappedProperty_trans;
     }> {
@@ -86,7 +91,6 @@ export class RealizationGridProvider
         if (timeOrInterval === "NO_TIME") {
             timeOrInterval = null;
         }
-        const availableDimensions = getStoredData("availableGridDimensions");
         const rangeI = getSetting(Setting.GRID_LAYER_I_RANGE);
         const rangeJ = getSetting(Setting.GRID_LAYER_J_RANGE);
         const rangeK = getSetting(Setting.GRID_LAYER_K_RANGE);
@@ -143,7 +147,7 @@ export class RealizationGridProvider
 
     areCurrentSettingsValid({
         getSetting,
-    }: AreSettingsValidArgs<RealizationGridSettings, RealizationGridData, StoredData>): boolean {
+    }: AreSettingsValidArgs<RealizationGridSettings, RealizationGridData>): boolean {
         return (
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&
@@ -159,9 +163,8 @@ export class RealizationGridProvider
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
-        storedDataUpdater,
         queryClient,
-    }: DefineDependenciesArgs<RealizationGridSettings, StoredData>) {
+    }: DefineDependenciesArgs<RealizationGridSettings>) {
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -306,26 +309,6 @@ export class RealizationGridProvider
             ];
 
             return availableTimeOrIntervals;
-        });
-
-        storedDataUpdater("availableGridDimensions", ({ getHelperDependency }) => {
-            const data = getHelperDependency(realizationGridDataDep);
-
-            if (!data) {
-                return {
-                    i: 0,
-                    j: 0,
-                    k: 0,
-                };
-            }
-
-            const gridDimensions = data[0].dimensions;
-
-            return {
-                i: gridDimensions.i_count,
-                j: gridDimensions.j_count,
-                k: gridDimensions.k_count,
-            };
         });
     }
 }

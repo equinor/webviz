@@ -1,14 +1,19 @@
 import React from "react";
 
+import { Check } from "@mui/icons-material";
+import { isEqual } from "lodash";
+
+import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
+import { useElementSize } from "@lib/hooks/useElementSize";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SettingCategory } from "../settingsDefinitions";
-import { Input } from "@lib/components/Input";
-import { isEqual } from "lodash";
 
 type ValueType = [number, number] | null;
 
@@ -40,7 +45,9 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.RANGE>) => React.ReactNode {
         return function RangeSlider(props: SettingComponentProps<ValueType, SettingCategory.RANGE>) {
-            const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+            const divRef = React.useRef<HTMLDivElement>(null);
+            const divSize = useElementSize(divRef);
+
             const [internalValue, setInternalValue] = React.useState<ValueType>(props.value);
             const [prevValue, setPrevValue] = React.useState<ValueType>(props.value);
 
@@ -49,30 +56,33 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
                 setPrevValue(props.value);
             }
 
-            React.useEffect(function handleMount() {
-                return function handleUnmount() {
-                    if (timeoutRef.current) {
-                        clearTimeout(timeoutRef.current);
-                    }
-                };
-            }, []);
-
             function handleChange(_: any, value: number | number[]) {
                 if (!Array.isArray(value)) {
                     return;
                 }
 
                 setInternalValue([value[0], value[1]]);
+            }
 
-                if (timeoutRef.current) {
-                    clearTimeout(timeoutRef.current);
+            function handleClick() {
+                if (internalValue) {
+                    props.onValueChange([internalValue[0], internalValue[1]]);
                 }
-                timeoutRef.current = setTimeout(() => props.onValueChange([value[0], value[1]]), 500);
+            }
+
+            const hasChanges = !isEqual(internalValue, props.value);
+            const MIN_SIZE = 250;
+            let inputsVisible = true;
+            if (divSize.width < MIN_SIZE) {
+                inputsVisible = false;
             }
 
             return (
-                <div className="flex flex-row gap-2">
-                    <div className="flex-1 min-w-16">
+                <div
+                    className={resolveClassNames("flex flex-row gap-2", { "outline-2 outline-amber-400": hasChanges })}
+                    ref={divRef}
+                >
+                    <div className={resolveClassNames("flex-1 min-w-16", { hidden: !inputsVisible })}>
                         <Input
                             type="number"
                             value={internalValue?.[0] ?? 0}
@@ -88,12 +98,17 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
                             valueLabelDisplay="auto"
                         />
                     </div>
-                    <div className="flex-1 min-w-16">
+                    <div className={resolveClassNames("flex-1 min-w-16", { hidden: !inputsVisible })}>
                         <Input
                             type="number"
                             value={internalValue?.[1] ?? 1}
                             onChange={(e) => handleChange(e, [props.value?.[0] ?? 0, Number(e.target.value)])}
                         />
+                    </div>
+                    <div className="flex-1 w-16">
+                        <DenseIconButton onClick={handleClick} title="Apply" disabled={!hasChanges}>
+                            <Check fontSize="small" />
+                        </DenseIconButton>
                     </div>
                 </div>
             );

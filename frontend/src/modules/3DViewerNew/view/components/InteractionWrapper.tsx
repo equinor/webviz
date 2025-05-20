@@ -8,9 +8,8 @@ import { converter } from "culori";
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
-import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
-import { DeckGlInstanceManager, DeckGlInstanceManagerTopic } from "../utils/DeckGlInstanceManager";
+import { DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
 import { type Polyline, PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";
 
 import { ContextMenu } from "./ContextMenu";
@@ -27,7 +26,10 @@ export type InteractionWrapperProps = Omit<
 
 function convertPolylines(polylines: Polyline[], fieldId: string): IntersectionPolyline[] {
     return polylines.map((polyline) => ({
-        ...polyline,
+        id: polyline.id,
+        name: polyline.name,
+        color: polyline.color,
+        path: polyline.path,
         fieldId,
     }));
 }
@@ -38,8 +40,6 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
         new DeckGlInstanceManager(deckGlRef.current),
     );
     const [polylinesPlugin, setPolylinesPlugin] = React.useState<PolylinesPlugin>(new PolylinesPlugin(deckGlManager));
-
-    usePublishSubscribeTopicValue(deckGlManager, DeckGlInstanceManagerTopic.REDRAW);
 
     const intersectionPolylines = useIntersectionPolylines(props.workbenchSession);
     const colorSet = props.workbenchSettings.useColorSet();
@@ -71,7 +71,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
         [props.usedPolylineIds, polylinesPlugin],
     );
 
-    React.useEffect(
+    React.useLayoutEffect(
         function setupDeckGlManager() {
             const manager = new DeckGlInstanceManager(deckGlRef.current);
             setDeckGlManager(manager);
@@ -172,7 +172,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 polylinesPlugin={polylinesPlugin}
                 onVerticalScaleChange={handleVerticalScaleChange}
                 verticalScale={verticalScale}
-                hasActivePolyline={Boolean()}
+                hasActivePolyline={Boolean(activePolylineId)}
                 onPolylineNameChange={handlePolylineNameChange}
                 activePolylineName={polylines.find((p) => p.id === activePolylineId)?.name}
             />

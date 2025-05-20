@@ -2,6 +2,18 @@ import type React from "react";
 
 import { Icon } from "@equinor/eds-core-react";
 import { color_palette, fault, grid_layer, settings, surface_layer, wellbore } from "@equinor/eds-icons";
+import { Dropdown } from "@mui/base";
+import {
+    Check,
+    Panorama,
+    SettingsApplications,
+    Settings as SettingsIcon,
+    Share,
+    TableRowsOutlined,
+    ViewColumnOutlined,
+} from "@mui/icons-material";
+import { useAtom } from "jotai";
+
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { Menu } from "@lib/components/Menu";
@@ -31,16 +43,6 @@ import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/int
 import { instanceofItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import { Dropdown } from "@mui/base";
-import {
-    Check,
-    Panorama,
-    SettingsApplications,
-    Settings as SettingsIcon,
-    TableRowsOutlined,
-    ViewColumnOutlined,
-} from "@mui/icons-material";
-import { useAtom } from "jotai";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 
@@ -89,6 +91,11 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                     ),
                 );
                 return;
+            case "polylines":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(CustomDataProviderType.POLYLINES, props.dataProviderManager),
+                );
+                return;
             case "drilled-wellbore-trajectories":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
@@ -108,7 +115,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "realization-grid":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
-                        CustomDataProviderType.REALIIZATION_GRID_3D,
+                        CustomDataProviderType.REALIZATION_GRID_3D,
                         props.dataProviderManager,
                     ),
                 );
@@ -342,6 +349,16 @@ const ACTIONS: ActionGroup[] = [
                         identifier: "drilled-wellbore-picks",
                         icon: <Icon data={wellbore} fontSize="small" />,
                         label: "Drilled Wellbore Picks",
+                    },
+                ],
+            },
+            {
+                label: "Polylines",
+                children: [
+                    {
+                        identifier: "polylines",
+                        icon: <Share fontSize="small" />,
+                        label: "Intersection Polylines",
                     },
                 ],
             },

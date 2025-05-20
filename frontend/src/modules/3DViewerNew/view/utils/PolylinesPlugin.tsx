@@ -23,6 +23,7 @@ export type Polyline = {
     name: string;
     color: [number, number, number];
     path: number[][];
+    version?: number;
 };
 
 export enum PolylineEditingMode {
@@ -138,7 +139,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     setEditingMode(mode: PolylineEditingMode): void {
         this._editingMode = mode;
         this._hoverPoint = null;
-        if (mode === PolylineEditingMode.NONE || mode === PolylineEditingMode.IDLE) {
+        if (mode === PolylineEditingMode.NONE) {
             this._currentEditingPolylinePathReferencePointIndex = null;
             this.setCurrentEditingPolylineId(null);
         }
@@ -280,6 +281,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 return {
                     ...polyline,
                     path: newPath,
+                    version: (polyline.version ?? 0) + 1,
                 };
             }
             return polyline;
@@ -290,6 +292,10 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
 
     handleClickAway(): void {
         this._selectedPolylineId = null;
+        if (this._editingMode !== PolylineEditingMode.DRAW) {
+            this.setCurrentEditingPolylineId(null);
+            this.setEditingMode(PolylineEditingMode.IDLE);
+        }
         this.requireRedraw();
     }
 
@@ -323,6 +329,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 name: "New polyline",
                 color: this._colorGenerator.next().value,
                 path: [[...pickingInfo.coordinate]],
+                version: 0,
             });
             this._polylines = [...this._polylines];
             this._currentEditingPolylinePathReferencePointIndex = 0;
@@ -373,6 +380,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         if (pickingInfo.editableEntity?.type === "point") {
             this._draggedPathPointIndex = pickingInfo.index;
             this.requestDisablePanning();
+            this.setDragStart();
         }
     }
 
@@ -403,6 +411,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     handleDragEnd(): void {
         this._draggedPathPointIndex = null;
         this.requestEnablePanning();
+        this.setDragEnd();
     }
 
     getCursor(pickingInfo: PickingInfo): string | null {
@@ -491,6 +500,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                         ? undefined
                         : (this._selectedPolylineId ?? undefined),
                 hoverable: this._editingMode === PolylineEditingMode.IDLE,
+                visible: this._editingMode !== PolylineEditingMode.NONE,
             }),
         ];
 
@@ -503,22 +513,25 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         }
 
         const activePolyline = this.getActivePolyline();
-        if (activePolyline) {
-            layers.push(
-                new EditablePolylineLayer({
-                    id: "editable-polylines-layer",
-                    polyline: activePolyline,
-                    mouseHoverPoint: this._hoverPoint ?? undefined,
-                    referencePathPointIndex:
-                        this._editingMode === PolylineEditingMode.DRAW
-                            ? (this._currentEditingPolylinePathReferencePointIndex ?? undefined)
-                            : undefined,
-                    onDragStart: this.handleDragStart.bind(this),
-                    onDragEnd: this.handleDragEnd.bind(this),
-                    allowHoveringOf,
-                }),
-            );
-        }
+        layers.push(
+            new EditablePolylineLayer({
+                id: `editable-polyline-layer`,
+                polyline: activePolyline,
+                polylineVersion: activePolyline?.version ?? 0,
+                mouseHoverPoint: this._hoverPoint ?? undefined,
+                referencePathPointIndex:
+                    this._editingMode === PolylineEditingMode.DRAW
+                        ? (this._currentEditingPolylinePathReferencePointIndex ?? undefined)
+                        : undefined,
+                onDragStart: this.handleDragStart.bind(this),
+                onDragEnd: this.handleDragEnd.bind(this),
+                allowHoveringOf,
+                visible: activePolyline !== undefined,
+                updateTriggers: {
+                    renderLayers: [this._hoverPoint],
+                },
+            }),
+        );
 
         return layers;
     }
