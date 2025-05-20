@@ -53,7 +53,7 @@ function wellTrajectoryToGeojson(wellTrajectory: WellboreTrajectory_api): GeoWel
     return geometryCollection;
 }
 
-function zipCoords(xArr: number[], yArr: number[], zArr: number[]): number[][] {
+function zipCoords(xArr: readonly number[], yArr: readonly number[], zArr: readonly number[]): number[][] {
     const coords: number[][] = [];
     for (let i = 0; i < xArr.length; i++) {
         coords.push([xArr[i], yArr[i], -zArr[i]]);
