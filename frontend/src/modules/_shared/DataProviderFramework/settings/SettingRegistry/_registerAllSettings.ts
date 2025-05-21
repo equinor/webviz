@@ -8,6 +8,7 @@ import { Direction as GridLayerRangeDirection, GridLayerRangeSetting } from "../
 import { Direction as GridLayerDirection, GridLayerSetting } from "../implementations/GridLayerSetting";
 import { IntersectionSetting } from "../implementations/IntersectionSetting";
 import { SeismicSliceDirection, SeismicSliceSetting } from "../implementations/SeismicSliceSetting";
+import { SelectStringSetting } from "../implementations/SelectStringSetting";
 import { SensitivitySetting } from "../implementations/SensitivitySetting";
 import { StatisticFunctionSetting } from "../implementations/StatisticFunctionSetting";
 import { Setting } from "../settingsDefinitions";
@@ -50,3 +51,4 @@ SettingRegistry.registerSetting(Setting.SMDA_WELLBORE_HEADERS, "SMDA Wellbore He
 SettingRegistry.registerSetting(Setting.STATISTIC_FUNCTION, "Statistic Function", StatisticFunctionSetting);
 SettingRegistry.registerSetting(Setting.SURFACE_NAME, "Surface Name", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.TIME_OR_INTERVAL, "Time or Interval", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.POLYLINES, "Polylines", SelectStringSetting);

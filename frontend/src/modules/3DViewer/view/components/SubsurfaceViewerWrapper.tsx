@@ -372,6 +372,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                     name,
                     fieldId: props.fieldId,
                     path: currentlyEditedPolyline,
+                    color: [255, 0, 0],
                 });
             }
             handlePolylineEditingCancel();
