@@ -67,6 +67,7 @@ def get_drogon_well_trajectories() -> List[WellboreTrajectory]:
 def get_drogon_well_picks() -> List[WellborePick]:
     return [
         WellborePick(
+            obs_no=1,
             interpreter="DROGON_STAT",
             easting=462480.0,
             northing=5934232.0,
@@ -82,6 +83,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            obs_no=1,
             interpreter="DROGON_STAT",
             easting=462480.0,
             northing=5934232.0,
@@ -97,6 +99,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            obs_no=1,
             interpreter="DROGON_STAT",
             easting=462480.0,
             northing=5934232.0,
@@ -112,6 +115,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            obs_no=1,
             interpreter="DROGON_STAT",
             easting=462480.0,
             northing=5934232.0,
@@ -127,6 +131,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            obs_no=1,
             interpreter="DROGON_STAT",
             easting=462480.0,
             northing=5934232.0,
@@ -142,6 +147,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            obs_no=1,
             interpreter="DROGON_STAT",
             easting=463256.9114,
             northing=5930542.2944,
@@ -157,6 +163,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            obs_no=1,
             interpreter="DROGON_STAT",
             easting=464220.0686875976,
             northing=5932289.733486914,
@@ -172,6 +179,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            obs_no=1,
             interpreter="DROGON_STAT",
             easting=463849.68880478514,
             northing=5931573.151211523,
@@ -187,6 +195,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            obs_no=1,
             interpreter="DROGON_STAT",
             easting=464220.0686875976,
             northing=5932289.733486914,
@@ -202,6 +211,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            obs_no=1,
             interpreter="DROGON_STAT",
             easting=463256.9114,
             northing=5930542.2944,
@@ -217,6 +227,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            obs_no=1,
             interpreter="DROGON_FMU",
             easting=464220.0686875976,
             northing=5932289.733486914,
@@ -232,6 +243,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            obs_no=1,
             interpreter="DROGON_STAT",
             easting=463849.68880478514,
             northing=5931573.151211523,
@@ -247,6 +259,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            obs_no=1,
             interpreter="DROGON_FMU",
             easting=464220.0686875976,
             northing=5932289.733486914,

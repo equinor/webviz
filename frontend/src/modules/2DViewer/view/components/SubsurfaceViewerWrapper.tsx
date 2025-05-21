@@ -5,7 +5,7 @@ import { View as DeckGlView } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
-import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
+import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import type { BoundingBox2D, MapMouseEvent, ViewStateType, ViewportType, ViewsType } from "@webviz/subsurface-viewer";
 import { useMultiViewCursorTracking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewCursorTracking";

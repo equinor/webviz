@@ -9,16 +9,16 @@ import type { Viewport } from "@framework/types/viewport";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
+import { isValidViewport } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import type { Interfaces } from "@modules/Intersection/interfaces";
-
 
 import { ReadoutWrapper } from "./readoutWrapper";
 
 export type ViewportWrapperProps = {
     wellboreHeaderUuid: string | null;
     referenceSystem?: IntersectionReferenceSystem;
-    layers: LayerItem[];
-    layerIdToNameMap: Record<string, string>;
+    layerItems: LayerItem[];
+    layerItemIdToNameMap: Record<string, string>;
     bounds: {
         x: [number, number];
         y: [number, number];
@@ -54,8 +54,9 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     }
 
     if (!isEqual(props.viewport, prevViewport)) {
-        setPrevViewport(cloneDeep(viewport));
+        setPrevViewport(viewport);
         if (props.viewport) {
+            // Override viewport if prop changes
             setViewport(cloneDeep(props.viewport));
             props.workbenchServices.publishGlobalData(
                 "global.syncValue.cameraPositionIntersection",
@@ -76,6 +77,10 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
 
     const handleViewportChange = React.useCallback(
         function handleViewportChange(newViewport: Viewport) {
+            if (!isValidViewport(newViewport)) {
+                throw new Error("Got invalid viewport: " + newViewport);
+            }
+
             setViewport((prev) => {
                 if (!isEqual(newViewport, prev)) {
                     return newViewport;
@@ -93,22 +98,27 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
 
     const handleFitInViewClick = React.useCallback(
         function handleFitInViewClick(): void {
-            if (props.referenceSystem) {
-                const newViewport: [number, number, number] = [0, 0, 2000];
-                const firstPoint = props.referenceSystem.projectedPath[0];
-                const lastPoint = props.referenceSystem.projectedPath[props.referenceSystem.projectedPath.length - 1];
-                const xMax = Math.max(firstPoint[0], lastPoint[0]);
-                const xMin = Math.min(firstPoint[0], lastPoint[0]);
-                const yMax = Math.max(firstPoint[1], lastPoint[1]);
-                const yMin = Math.min(firstPoint[1], lastPoint[1]);
+            if (props.bounds) {
+                let [xMin, xMax] = props.bounds.x;
+                let [yMin, yMax] = props.bounds.y;
 
-                newViewport[0] = xMin + (xMax - xMin) / 2;
-                newViewport[1] = yMin + (yMax - yMin) / 2;
-                newViewport[2] = Math.max(xMax - xMin, yMax - yMin) * 1.2;
+                // Ensure that the bounds are finite numbers
+                if (!Number.isFinite(xMin)) xMin = 0;
+                if (!Number.isFinite(xMax)) xMax = 0;
+                if (!Number.isFinite(yMin)) yMin = 0;
+                if (!Number.isFinite(yMax)) yMax = 0;
+
+                const centerX = xMin + (xMax - xMin) / 2;
+                const centerY = yMin + (yMax - yMin) / 2;
+                const newViewport: [number, number, number] = [
+                    centerX,
+                    centerY,
+                    Math.max(xMax - xMin, yMax - yMin) * 1.2,
+                ];
                 setViewport(newViewport);
             }
         },
-        [props.referenceSystem],
+        [props.bounds],
     );
 
     const handleShowGridToggle = React.useCallback(function handleGridLinesToggle(active: boolean): void {
@@ -154,8 +164,8 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 showGrid={showGrid}
                 verticalScale={verticalScale}
                 referenceSystem={props.referenceSystem ?? undefined}
-                layers={props.layers}
-                layerIdToNameMap={props.layerIdToNameMap}
+                layers={props.layerItems}
+                layerIdToNameMap={props.layerItemIdToNameMap}
                 bounds={props.bounds}
                 viewport={viewport ?? undefined}
                 onViewportChange={handleViewportChange}

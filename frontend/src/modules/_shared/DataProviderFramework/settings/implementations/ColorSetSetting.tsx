@@ -1,10 +1,9 @@
 import type React from "react";
 
-import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
-import { ColorScaleSelector } from "@framework/components/ColorScaleSelector/colorScaleSelector";
-import { defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
-import { ColorScalePreview } from "@lib/components/ColorScalePreview";
-import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
+import { defaultColorPalettes } from "@framework/utils/colorPalettes";
+import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/components/ColorPaletteSelector";
+import type { ColorPalette } from "@lib/utils/ColorPalette";
+import { ColorSet } from "@lib/utils/ColorSet";
 
 import type {
     CustomSettingImplementation,
@@ -13,21 +12,13 @@ import type {
 } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SettingCategory } from "../settingsDefinitions";
 
-type ValueType = ColorScaleSpecification | null;
+type ValueType = ColorSet | null;
 
-export class ColorScaleSetting implements CustomSettingImplementation<ValueType, SettingCategory.STATIC> {
-    defaultValue: ValueType = {
-        areBoundariesUserDefined: false,
-        colorScale: new ColorScale({
-            colorPalette: defaultContinuousSequentialColorPalettes[0],
-            gradientType: ColorScaleGradientType.Sequential,
-            type: ColorScaleType.Continuous,
-            steps: 10,
-        }),
-    };
+export class ColorSetSetting implements CustomSettingImplementation<ValueType, SettingCategory.STATIC> {
+    defaultValue: ValueType = new ColorSet(defaultColorPalettes[0]);
 
     getLabel(): string {
-        return "Coloring";
+        return "Colors";
     }
 
     getIsStatic(): boolean {
@@ -39,34 +30,28 @@ export class ColorScaleSetting implements CustomSettingImplementation<ValueType,
     }
 
     serializeValue(value: ValueType): string {
-        const serializedValue = {
-            areBoundariesUserDefined: value?.areBoundariesUserDefined ?? false,
-            colorScale: value?.colorScale.serialize() ?? this.defaultValue?.colorScale.serialize(),
-        };
-
+        const serializedValue = value?.serialize();
         return JSON.stringify(serializedValue);
     }
 
     deserializeValue?(serializedValue: string): ValueType {
         const parsedValue = JSON.parse(serializedValue);
-
-        return {
-            areBoundariesUserDefined: parsedValue.areBoundariesUserDefined,
-            colorScale: ColorScale.fromSerialized(parsedValue.colorScale),
-        };
+        return ColorSet.fromSerialized(parsedValue);
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.STATIC>) => React.ReactNode {
         return function ColorScaleSelectorDialog(props: SettingComponentProps<ValueType, SettingCategory.STATIC>) {
-            function handleChange(value: ColorScaleSpecification) {
-                props.onValueChange(value);
+            function handleColorPaletteChange(value: ColorPalette) {
+                const newColorSet = new ColorSet(value);
+                props.onValueChange(newColorSet);
             }
 
             return (
-                <ColorScaleSelector
-                    workbenchSettings={props.workbenchSettings}
-                    colorScaleSpecification={props.value ?? undefined}
-                    onChange={handleChange}
+                <ColorPaletteSelector
+                    selectedColorPaletteId={props.value?.getColorPalette().getId() ?? ""}
+                    colorPalettes={defaultColorPalettes}
+                    type={ColorPaletteSelectorType.Categorical}
+                    onChange={handleColorPaletteChange}
                 />
             );
         };
@@ -77,15 +62,10 @@ export class ColorScaleSetting implements CustomSettingImplementation<ValueType,
             return "-";
         }
         return (
-            <ColorScalePreview
-                colorPalette={value.colorScale.getColorPalette()}
-                gradientType={value.colorScale.getGradientType()}
-                discrete={value.colorScale.getType() === ColorScaleType.Discrete}
-                steps={value.colorScale.getNumSteps()}
-                min={value.colorScale.getMin()}
-                max={value.colorScale.getMax()}
-                divMidPoint={value.colorScale.getDivMidPoint()}
-                id="color-scale-preview"
+            <ColorPaletteSelector
+                selectedColorPaletteId={value.getColorPalette().getId()}
+                colorPalettes={defaultColorPalettes}
+                type={ColorPaletteSelectorType.Categorical}
             />
         );
     }

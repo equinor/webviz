@@ -48,10 +48,13 @@ export enum Setting {
     GRID_LAYER_K_RANGE = "gridLayerKRange",
     GRID_NAME = "gridName",
     INTERSECTION = "intersection",
+    OPACITY_PERCENT = "opacityPercent",
     POLYGONS_ATTRIBUTE = "polygonsAttribute",
     POLYGONS_NAME = "polygonsName",
     POLYLINES = "polylines",
     REALIZATION = "realization",
+    REALIZATIONS = "realizations",
+    SAMPLE_RESOLUTION_IN_METERS = "sampleResolutionInMeters",
     STRAT_COLUMN = "stratColumn",
     SEISMIC_CROSSLINE = "seismicCrossline",
     SEISMIC_DEPTH_SLICE = "seismicDepthSlice",
@@ -64,7 +67,11 @@ export enum Setting {
     WELLBORE_PICKS = "well_picks",
     STATISTIC_FUNCTION = "statisticFunction",
     SURFACE_NAME = "surfaceName",
+    SURFACE_NAMES = "surfaceNames",
     TIME_OR_INTERVAL = "timeOrInterval",
+    WELLBORE_EXTENSION_LENGTH = "wellboreExtensionLength",
+    WELLBORE_PICKS = "wellborePicks",
+    WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
 }
 
 export const settingCategories = {
@@ -86,10 +93,13 @@ export const settingCategories = {
     [Setting.GRID_LAYER_K_RANGE]: SettingCategory.RANGE,
     [Setting.GRID_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.INTERSECTION]: SettingCategory.SINGLE_SELECT,
+    [Setting.OPACITY_PERCENT]: SettingCategory.NUMBER_WITH_STEP,
     [Setting.POLYGONS_ATTRIBUTE]: SettingCategory.SINGLE_SELECT,
     [Setting.POLYGONS_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.POLYLINES]: SettingCategory.MULTI_SELECT,
     [Setting.REALIZATION]: SettingCategory.SINGLE_SELECT,
+    [Setting.REALIZATIONS]: SettingCategory.MULTI_SELECT,
+    [Setting.SAMPLE_RESOLUTION_IN_METERS]: SettingCategory.NUMBER,
     [Setting.SEISMIC_CROSSLINE]: SettingCategory.NUMBER_WITH_STEP,
     [Setting.SEISMIC_DEPTH_SLICE]: SettingCategory.NUMBER_WITH_STEP,
     [Setting.SEISMIC_INLINE]: SettingCategory.NUMBER_WITH_STEP,
@@ -101,9 +111,11 @@ export const settingCategories = {
     [Setting.STATISTIC_FUNCTION]: SettingCategory.SINGLE_SELECT,
     [Setting.STRAT_COLUMN]: SettingCategory.SINGLE_SELECT,
     [Setting.SURFACE_NAME]: SettingCategory.SINGLE_SELECT,
+    [Setting.SURFACE_NAMES]: SettingCategory.MULTI_SELECT,
     [Setting.TIME_OR_INTERVAL]: SettingCategory.SINGLE_SELECT,
-    // ? Use SMDA wellbore picks instead?
+    [Setting.WELLBORE_EXTENSION_LENGTH]: SettingCategory.NUMBER,
     [Setting.WELLBORE_PICKS]: SettingCategory.MULTI_SELECT,
+    [Setting.WELLBORE_PICK_IDENTIFIER]: SettingCategory.SINGLE_SELECT,
 } as const;
 
 export type SettingCategories = typeof settingCategories;
@@ -127,10 +139,13 @@ export type SettingTypes = {
     [Setting.GRID_LAYER_K_RANGE]: [number, number] | null;
     [Setting.GRID_NAME]: string | null;
     [Setting.INTERSECTION]: IntersectionSettingValue | null;
+    [Setting.OPACITY_PERCENT]: number | null;
     [Setting.POLYGONS_ATTRIBUTE]: string | null;
     [Setting.POLYGONS_NAME]: string | null;
     [Setting.POLYLINES]: { value: string; label: string }[] | null;
     [Setting.REALIZATION]: number | null;
+    [Setting.REALIZATIONS]: number[] | null;
+    [Setting.SAMPLE_RESOLUTION_IN_METERS]: number | null;
     [Setting.SEISMIC_CROSSLINE]: number | null;
     [Setting.SEISMIC_DEPTH_SLICE]: number | null;
     [Setting.SEISMIC_INLINE]: number | null;
@@ -142,8 +157,11 @@ export type SettingTypes = {
     [Setting.STATISTIC_FUNCTION]: SurfaceStatisticFunction_api;
     [Setting.STRAT_COLUMN]: string | null;
     [Setting.SURFACE_NAME]: string | null;
+    [Setting.SURFACE_NAMES]: string[] | null;
     [Setting.TIME_OR_INTERVAL]: string | null;
+    [Setting.WELLBORE_EXTENSION_LENGTH]: number | null;
     [Setting.WELLBORE_PICKS]: WellborePick_api[] | null;
+    [Setting.WELLBORE_PICK_IDENTIFIER]: string | null;
 };
 
 export type PossibleSettingsForCategory<TCategory extends SettingCategory> = {

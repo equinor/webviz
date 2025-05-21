@@ -1,4 +1,5 @@
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
+import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
@@ -12,8 +13,15 @@ ModuleRegistry.registerModule<Interfaces>({
     defaultTitle: "Intersection",
     category: ModuleCategory.MAIN,
     devState: ModuleDevState.DEV,
-    description: "Intersection",
+    description: "Generic intersection viewer for co-visualization of data from various sources.",
     preview,
+    dataTagIds: [
+        ModuleDataTagId.GRID3D,
+        ModuleDataTagId.DRILLED_WELLS,
+        ModuleDataTagId.POLYGONS,
+        ModuleDataTagId.SURFACE,
+        ModuleDataTagId.SEISMIC,
+    ],
     syncableSettingKeys: [
         SyncSettingKey.ENSEMBLE,
         SyncSettingKey.INTERSECTION,

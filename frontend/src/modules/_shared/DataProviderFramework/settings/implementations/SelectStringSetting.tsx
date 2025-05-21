@@ -1,5 +1,8 @@
-import type React from "react";
+import React from "react";
 
+import { upperFirst } from "lodash";
+
+import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 
 import type {
@@ -8,31 +11,36 @@ import type {
 } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SettingCategory } from "../settingsDefinitions";
 
-type ValueType = { value: string; label: string }[] | null;
+type ValueType = string[] | null;
 
 export class SelectStringSetting implements CustomSettingImplementation<ValueType, SettingCategory.MULTI_SELECT> {
-    defaultValue: ValueType = null;
-
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) => React.ReactNode {
-        return function SelectSetting(props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) {
-            const availableValues = props.availableValues ?? [];
+        return function SelectStringSetting(props: SettingComponentProps<ValueType, SettingCategory.MULTI_SELECT>) {
+            const options: SelectOption[] = React.useMemo(() => {
+                const availableValues = props.availableValues ?? [];
+                return availableValues.map((stringVals) => ({
+                    value: stringVals,
+                    label: upperFirst(stringVals),
+                }));
+            }, [props.availableValues]);
 
-            function handleChange(selection: string[]) {
-                const selectedOptions = availableValues.filter((val) => selection.includes(val.value));
-                props.onValueChange(selectedOptions);
+            function handleChange(selectedUuids: string[]) {
+                props.onValueChange(selectedUuids);
             }
 
             return (
-                <Select
-                    multiple
-                    filter
-                    value={props.value?.map((val) => val.value) ?? []}
-                    onChange={handleChange}
-                    options={availableValues}
-                    debounceTimeMs={500}
-                    showQuickSelectButtons
-                    size={5}
-                />
+                <div className="flex flex-col gap-1 mt-1">
+                    <Select
+                        filter
+                        options={options}
+                        value={props.value ?? undefined}
+                        onChange={handleChange}
+                        showQuickSelectButtons={true}
+                        disabled={props.isOverridden}
+                        multiple={true}
+                        size={5}
+                    />
+                </div>
             );
         };
     }
