@@ -7,9 +7,9 @@ import type { ViewContext } from "@framework/ModuleContext";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import type { Viewport } from "@framework/types/viewport";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
-import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
+import type { Bounds, LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
-import { isValidViewport } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
+import { isValidNumber, isValidViewport } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 
 import { ReadoutWrapper } from "./readoutWrapper";
@@ -19,10 +19,7 @@ export type ViewportWrapperProps = {
     referenceSystem?: IntersectionReferenceSystem;
     layerItems: LayerItem[];
     layerItemIdToNameMap: Record<string, string>;
-    bounds: {
-        x: [number, number];
-        y: [number, number];
-    };
+    bounds: Bounds;
     viewport: Viewport | null;
     workbenchServices: WorkbenchServices;
     viewContext: ViewContext<Interfaces>;
@@ -103,10 +100,10 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 let [yMin, yMax] = props.bounds.y;
 
                 // Ensure that the bounds are finite numbers
-                if (!Number.isFinite(xMin)) xMin = 0;
-                if (!Number.isFinite(xMax)) xMax = 0;
-                if (!Number.isFinite(yMin)) yMin = 0;
-                if (!Number.isFinite(yMax)) yMax = 0;
+                if (!isValidNumber(xMin)) xMin = 0;
+                if (!isValidNumber(xMax)) xMax = 0;
+                if (!isValidNumber(yMin)) yMin = 0;
+                if (!isValidNumber(yMax)) yMax = 0;
 
                 const centerX = xMin + (xMax - xMin) / 2;
                 const centerY = yMin + (yMax - yMin) / 2;

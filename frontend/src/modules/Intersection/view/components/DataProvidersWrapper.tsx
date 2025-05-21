@@ -15,8 +15,8 @@ import type { BBox } from "@lib/utils/bbox";
 import { combine } from "@lib/utils/bbox";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { isColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
-import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
-import { areValidBounds, isValidViewport } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
+import type { Bounds, LayerItem } from "@modules/_shared/components/EsvIntersection";
+import { areBoundsValid, isValidViewport } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { IntersectionRealizationSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
@@ -60,8 +60,11 @@ import "../../DataProviderFramework/customDataProviderImplementations/registerAl
 import { useWellboreCasingsQuery } from "../hooks/queryHooks";
 import { useCreateIntersectionReferenceSystem } from "../hooks/useIntersectionReferenceSystem";
 import { createBBoxForWellborePath } from "../utils/boundingBoxUtils";
-import { createReferenceLinesLayerItem } from "../utils/createReferenceLines";
-import { createWellboreLayerItems } from "../utils/createWellboreLayerItems";
+import { createBoundsForView, DEFAULT_INTERSECTION_VIEW_BOUNDS } from "../utils/boundsUtils";
+import {
+    createLayerItemsForIntersectionType,
+    makeViewProvidersVisualizationLayerItems,
+} from "../utils/createLayerItemsUtils";
 
 import { ViewportWrapper } from "./viewportWrapper";
 
@@ -160,7 +163,8 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     const [prevReferenceSystem, setPrevReferenceSystem] = React.useState<IntersectionReferenceSystem | null>(null);
     const [viewport, setViewport] = React.useState<Viewport>([0, 0, 2000]);
     const [prevViewport, setPrevViewport] = React.useState<Viewport | null>(null);
-    const [prevBounds, setPrevBounds] = React.useState<{ x: [number, number]; y: [number, number] } | null>(null);
+    const [bounds, setBounds] = React.useState<Bounds>(DEFAULT_INTERSECTION_VIEW_BOUNDS);
+    const [prevBounds, setPrevBounds] = React.useState<Bounds | null>(null);
     const [isInitialViewportSet, setIsInitialViewportSet] = React.useState<boolean>(false);
 
     usePublishSubscribeTopicValue(props.dataProviderManager, DataProviderManagerTopic.DATA_REVISION);
@@ -181,6 +185,10 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         statusWriter.addError(error);
     }
 
+    // Set loading status
+    const isLoading = assemblerProduct.numLoadingDataProviders > 0;
+    statusWriter.setLoading(isLoading);
+
     // View of interest when supporting only one view
     const viewCandidate = assemblerProduct.children.find((child) => child.itemType === VisualizationItemType.GROUP);
     const view = viewCandidate ?? null;
@@ -191,7 +199,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     // Additional visualization for wellbore
     const wellboreHeadersQuery = useDrilledWellboreHeadersQuery(fieldIdentifier ?? undefined);
     const wellboreUuid = viewIntersection?.type === IntersectionType.WELLBORE ? viewIntersection.uuid : null;
-    const wellboreCasings = useWellboreCasingsQuery(wellboreUuid);
+    const wellboreCasingsQuery = useWellboreCasingsQuery(wellboreUuid);
 
     // Create intersection reference system for view
     const intersectionReferenceSystem: IntersectionReferenceSystem | null = useCreateIntersectionReferenceSystem(
@@ -207,59 +215,32 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         setPrevViewport(null);
     }
 
-    // Make layers using intersection reference system
-    const assemblerLayerItems: LayerItem[] = [];
-
-    // Layers to be visualized in esv intersection
+    // Make layer items for the view providers using intersection reference system
     const visualizationLayerItems: LayerItem[] = [];
+    if (view && intersectionReferenceSystem) {
+        // LayerItem elements for the view providers
+        visualizationLayerItems.push(...makeViewProvidersVisualizationLayerItems(view, intersectionReferenceSystem));
+    }
 
-    // Make layers for visualizations
+    // Create elements based on intersection type
+    // - LayerItems for intersection type
+    // - Bounding box for wellbore path
     let wellborePathBoundingBox: BBox | null = null;
-    if (view && viewIntersection && intersectionReferenceSystem) {
-        // Make LayerItems per provider, using maker function
-        const perProviderLayerItems: LayerItem[][] = [];
-        for (const item of view.children) {
-            if (item.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
-                perProviderLayerItems.push(item.visualization.makeLayerItems(intersectionReferenceSystem));
-            }
-        }
+    if (viewIntersection && intersectionReferenceSystem) {
+        // Place layers on top of view provider layers
+        const intersectionTypeLayerOrder = visualizationLayerItems.length + 1;
+        visualizationLayerItems.push(
+            ...createLayerItemsForIntersectionType(
+                viewIntersection.type,
+                intersectionReferenceSystem,
+                intersectionTypeLayerOrder,
+                wellboreHeadersQuery,
+                wellboreCasingsQuery,
+            ),
+        );
 
-        // Assign esv LayerItem order, reverse
-        const numProviders = perProviderLayerItems.length;
-        for (const [index, providerLayerItems] of perProviderLayerItems.entries()) {
-            const layerItemOrder = numProviders - index;
-            for (const providerItem of providerLayerItems) {
-                if (providerItem.options) {
-                    providerItem.options.order = layerItemOrder;
-                }
-            }
-        }
-
-        // Add ordered layers to assembler layers
-        assemblerLayerItems.push(...perProviderLayerItems.flat());
-
-        // Add layers to be visualized based on selected polyline
-        if (viewIntersection.type === IntersectionType.CUSTOM_POLYLINE) {
-            visualizationLayerItems.push(createReferenceLinesLayerItem());
-        }
+        // Bound box for wellbore path (uz-coordinates)
         if (viewIntersection.type === IntersectionType.WELLBORE) {
-            if (wellboreHeadersQuery.data && wellboreHeadersQuery.data.length > 0) {
-                visualizationLayerItems.push(
-                    createReferenceLinesLayerItem({
-                        depthReferenceElevation: wellboreHeadersQuery.data[0].depthReferenceElevation,
-                        depthReferencePoint: wellboreHeadersQuery.data[0].depthReferencePoint,
-                    }),
-                );
-            }
-
-            const layerOrder = numProviders * 2 + 1; // Place layers on top of factory layers
-            const wellboreCasingsData =
-                wellboreCasings.data && wellboreCasings.data.length > 0 ? wellboreCasings.data : null;
-            visualizationLayerItems.push(
-                ...createWellboreLayerItems(wellboreCasingsData, intersectionReferenceSystem, layerOrder),
-            );
-
-            // Bound box for wellbore path (uz-coordinates)
             wellborePathBoundingBox = createBBoxForWellborePath(
                 intersectionReferenceSystem.projectedPath,
                 extensionLength ?? 0,
@@ -267,61 +248,28 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         }
     }
 
-    // Append the assembler layers to the visualization layers
-    visualizationLayerItems.push(...assemblerLayerItems);
-
-    const layerIdToNameMap = Object.fromEntries(visualizationLayerItems.map((layer) => [layer.id, layer.name]));
-
-    const isLoading = assemblerProduct.numLoadingDataProviders > 0;
-    statusWriter.setLoading(isLoading);
-
     // Create bounding box for the visualization layers
-    let combinedBoundingBox = wellborePathBoundingBox;
-    if (combinedBoundingBox && assemblerProduct.combinedBoundingBox) {
-        combinedBoundingBox = combine(combinedBoundingBox, assemblerProduct.combinedBoundingBox);
+    let viewBoundingBox = wellborePathBoundingBox;
+    if (viewBoundingBox && assemblerProduct.combinedBoundingBox) {
+        viewBoundingBox = combine(viewBoundingBox, assemblerProduct.combinedBoundingBox);
     } else if (assemblerProduct.combinedBoundingBox) {
-        combinedBoundingBox = assemblerProduct.combinedBoundingBox;
+        viewBoundingBox = assemblerProduct.combinedBoundingBox;
     }
 
-    // Create bounds for the view from the bounding box
-    const bounds: { x: [number, number]; y: [number, number] } = {
-        x: [0.0, 0.0],
-        y: [0.0, 0.0],
-    };
-    let isBoundsSetByProvider = false;
-    if (combinedBoundingBox) {
-        bounds.x = [combinedBoundingBox.min.x, combinedBoundingBox.max.x];
-        bounds.y = [combinedBoundingBox.min.y, combinedBoundingBox.max.y];
-        isBoundsSetByProvider = true;
+    // Create new bounds for the view
+    const newBounds = createBoundsForView(viewBoundingBox, intersectionReferenceSystem, prevBounds);
+    let isBoundsSetByProvider = viewBoundingBox !== null;
+    if (!areBoundsValid(newBounds)) {
+        newBounds.x = DEFAULT_INTERSECTION_VIEW_BOUNDS.x;
+        newBounds.y = DEFAULT_INTERSECTION_VIEW_BOUNDS.y;
+
+        isBoundsSetByProvider = false;
     }
 
-    if (!isBoundsSetByProvider && intersectionReferenceSystem) {
-        // The intersection uz-coordinate system correspond to the esv intersection internal xy-coordinate system.
-        // Create bound from intersectionReferenceSystem (i.e. the polyline)
-        const firstPoint = intersectionReferenceSystem.projectedPath[0];
-        const numPoints = intersectionReferenceSystem.projectedPath.length;
-        const lastPoint = intersectionReferenceSystem.projectedPath[numPoints - 1];
-        const uMax = Math.max(firstPoint[0], lastPoint[0], 1000);
-        const uMin = Math.min(firstPoint[0], lastPoint[0], -1000);
-        const zMax = Math.max(firstPoint[1], lastPoint[1]);
-        const zMin = Math.min(firstPoint[1], lastPoint[1]);
-
-        // Set the (x,y)-bounds of esv intersection with uz-coordinates
-        bounds.x = [uMin, uMax];
-        bounds.y = [zMin, zMax];
-    } else if (!isBoundsSetByProvider) {
-        bounds.x = prevBounds?.x ?? [0, 2000];
-        bounds.y = prevBounds?.y ?? [0, 1000];
-    }
-
-    // Set valid bound for the view
-    if (!areValidBounds(bounds)) {
-        bounds.x = [0, 2000];
-        bounds.y = [0, 1000];
-    }
-
-    if (!isEqual(bounds, prevBounds)) {
+    // Check if bounds have changed
+    if (!isEqual(newBounds, bounds)) {
         setPrevBounds(bounds);
+        setBounds(newBounds);
     }
 
     // Create candidate viewport from bounds
@@ -333,9 +281,8 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         Math.max(Math.abs(bounds.y[1] - bounds.y[0]) * viewportRatio, Math.abs(bounds.x[1] - bounds.x[0])) * 1.2,
     ];
 
-    let actualViewport = viewport;
+    // Update viewport
     if (!isEqual(candidateViewport, prevViewport) && isValidViewport(candidateViewport) && !isInitialViewportSet) {
-        actualViewport = candidateViewport;
         setViewport(candidateViewport);
         setPrevViewport(candidateViewport);
         if (isBoundsSetByProvider) {
@@ -343,6 +290,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         }
     }
 
+    const layerIdToNameMap = Object.fromEntries(visualizationLayerItems.map((layer) => [layer.id, layer.name]));
     const colorScales = view?.annotations.filter((elm) => isColorScaleWithId(elm)) ?? [];
 
     return (
@@ -353,7 +301,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
                     layerItems={visualizationLayerItems}
                     layerItemIdToNameMap={layerIdToNameMap}
                     bounds={bounds}
-                    viewport={actualViewport}
+                    viewport={viewport}
                     workbenchServices={props.workbenchServices}
                     viewContext={props.viewContext}
                     wellboreHeaderUuid={wellboreHeadersQuery.data?.[0].wellboreUuid ?? null}

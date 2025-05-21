@@ -26,7 +26,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
         value: IntersectionSettingValue | null,
         availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_SELECT>,
     ): boolean {
-        if (value === null) {
+        if (!value) {
             return false;
         }
 

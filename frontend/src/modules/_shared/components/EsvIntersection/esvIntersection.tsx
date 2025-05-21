@@ -49,7 +49,7 @@ import { SeismicLayer } from "./layers/SeismicLayer";
 import type { SurfaceStatisticalFanchartsData } from "./layers/SurfaceStatisticalFanchartCanvasLayer";
 import { SurfaceStatisticalFanchartsCanvasLayer } from "./layers/SurfaceStatisticalFanchartCanvasLayer";
 import type { HighlightItem, ReadoutItem } from "./types/types";
-import { isValidBound, isValidViewport } from "./utils/validationUtils";
+import { isBoundValid, isValidViewport } from "./utils/validationUtils";
 
 export enum LayerType {
     CALLOUT_CANVAS = "callout-canvas",
@@ -298,7 +298,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
         }
 
         if (!isEqual(prevBounds, props.bounds)) {
-            if (props.bounds && isValidBound(props.bounds.x) && isValidBound(props.bounds.y)) {
+            if (props.bounds && isBoundValid(props.bounds.x) && isBoundValid(props.bounds.y)) {
                 esvController.setBounds(props.bounds.x, props.bounds.y);
             }
             setPrevBounds(props.bounds);

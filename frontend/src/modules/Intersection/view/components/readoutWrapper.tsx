@@ -7,7 +7,7 @@ import type { ViewContext } from "@framework/ModuleContext";
 import type { Viewport } from "@framework/types/viewport";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
-import type { EsvIntersectionReadoutEvent, LayerItem } from "@modules/_shared/components/EsvIntersection";
+import type { Bounds, EsvIntersectionReadoutEvent, LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { EsvIntersection } from "@modules/_shared/components/EsvIntersection";
 import type { ReadoutItem as EsvReadoutItem, HighlightItem } from "@modules/_shared/components/EsvIntersection/types";
 import { HighlightItemShape } from "@modules/_shared/components/EsvIntersection/types";
@@ -28,10 +28,7 @@ export type ReadoutWrapperProps = {
     layerIdToNameMap: Record<string, string>;
     viewport?: Viewport;
     onViewportChange: (viewport: Viewport) => void;
-    bounds: {
-        x: [number, number];
-        y: [number, number];
-    };
+    bounds: Bounds;
     verticalScale: number;
     workbenchServices: WorkbenchServices;
     viewContext: ViewContext<Interfaces>;
