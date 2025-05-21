@@ -1,4 +1,5 @@
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+
 import type { BBox } from "@lib/utils/bbox";
 import type { Bounds } from "@modules/_shared/components/EsvIntersection";
 

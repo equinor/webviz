@@ -20,19 +20,16 @@ import { areBoundsValid, isValidViewport } from "@modules/_shared/components/Esv
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { IntersectionRealizationSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
-import {
-    type DataProviderManager,
-    DataProviderManagerTopic,
-} from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { type DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import { IntersectionView } from "@modules/_shared/DataProviderFramework/groups/implementations/IntersectionView";
+import { useVisualizationAssemblerProduct } from "@modules/_shared/DataProviderFramework/hooks/useVisualizationProduct";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 import {
     VisualizationAssembler,
     VisualizationItemType,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore";
 import {
     makeGridColorScaleAnnotation,
@@ -167,12 +164,10 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     const [prevBounds, setPrevBounds] = React.useState<Bounds | null>(null);
     const [isInitialViewportSet, setIsInitialViewportSet] = React.useState<boolean>(false);
 
-    usePublishSubscribeTopicValue(props.dataProviderManager, DataProviderManagerTopic.DATA_REVISION);
-
     const fieldIdentifier = props.dataProviderManager.getGlobalSetting("fieldId");
 
     // Assemble visualization of providers
-    const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.dataProviderManager);
+    const assemblerProduct = useVisualizationAssemblerProduct(props.dataProviderManager, VISUALIZATION_ASSEMBLER);
     if (assemblerProduct.children.length === 0) {
         statusWriter.addWarning("Create intersection view to visualize");
     }
