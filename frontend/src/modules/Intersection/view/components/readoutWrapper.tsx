@@ -52,7 +52,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         props.viewContext.getInstanceIdString(),
     );
 
-    if (!isEqual(syncedHoveredMd, prevSyncedHoveredMd)) {
+    if (!isEqual(syncedHoverMd, prevSyncedHoveredMd)) {
         setPrevSyncedHoveredMd(syncedHoverMd);
         if (syncedHoverMd?.wellboreUuid === props.wellboreHeaderUuid) {
             setSyncedHoveredMd(syncedHoverMd?.md ?? null);
