@@ -362,7 +362,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
                     viewport={actualViewport}
                     workbenchServices={props.workbenchServices}
                     viewContext={props.viewContext}
-                    wellboreHeaderUuid={wellboreHeadersQuery.data?.[0].wellboreUuid ?? null}
+                    wellboreHeaderUuid={wellboreUuid ?? null}
                 />
                 <ColorLegendsContainer colorScales={colorScales} height={mainDivSize.height / 2 - 50} />
             </div>
