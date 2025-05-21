@@ -35,6 +35,7 @@ export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
         hoveredPolylineIndex: number | null;
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     initializeState(_: LayerContext): void {
         this.setState({
             hoveredPolylineIndex: null,

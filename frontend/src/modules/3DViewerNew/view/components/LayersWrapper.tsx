@@ -1,6 +1,8 @@
 import React from "react";
 
 import { type Layer } from "@deck.gl/core";
+import type { BoundingBox3D } from "@webviz/subsurface-viewer";
+import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -13,10 +15,13 @@ import {
     accumulatePolylineIds,
     type AccumulatedData,
 } from "@modules/3DViewerNew/DataProviderFramework/accumulators/polylineIdsAccumulator";
+import { RealizationGridProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
 import { RealizationSeismicCrosslineProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicCrosslineProvider";
 import { RealizationSeismicDepthSliceProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicDepthProvider";
 import { RealizationSeismicInlineProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicInlineProvider";
 import { CustomDataProviderType } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderTypes";
+import { makeIntersectionLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeIntersectionGrid3dLayer";
+import { makeRealizationSurfaceLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeRealizationSurfaceLayer";
 import {
     makeSeismicFenceMeshLayerFunction,
     Plane,
@@ -24,6 +29,7 @@ import {
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
+import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { RealizationPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationPolygonsProvider";
 import { RealizationSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationSurfaceProvider";
 import { StatisticalSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/StatisticalSurfaceProvider";
@@ -52,17 +58,6 @@ import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSub
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
 import { InteractionWrapper } from "./InteractionWrapper";
-
-import "../../DataProviderFramework/registerAllDataProviders";
-import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
-import type { BoundingBox3D } from "@webviz/subsurface-viewer";
-
-import { makeRealizationSurfaceLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeRealizationSurfaceLayer";
-import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
-import { makeIntersectionLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeIntersectionGrid3dLayer";
-import { RealizationGridProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
-import { PolylinesProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/PolylinesProvider";
-import { makePolylinesLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makePolylinesLayer";
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
     VisualizationTarget.DECK_GL,
@@ -95,7 +90,6 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     {
         transformToVisualization: makeRealizationPolygonsLayer,
         transformToBoundingBox: makePolygonDataBoundingBox,
-        transformToAnnotations: makeColorScaleAnnotation,
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
@@ -153,9 +147,6 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
         reduceAccumulatedData: accumulatePolylineIds,
     },
 );
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomDataProviderType.POLYLINES, PolylinesProvider, {
-    transformToVisualization: makePolylinesLayer,
-});
 
 export type LayersWrapperProps = {
     fieldId: string;

@@ -8,7 +8,6 @@ import {
     Panorama,
     SettingsApplications,
     Settings as SettingsIcon,
-    Share,
     TableRowsOutlined,
     ViewColumnOutlined,
 } from "@mui/icons-material";
@@ -89,11 +88,6 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                         DataProviderType.REALIZATION_POLYGONS,
                         props.dataProviderManager,
                     ),
-                );
-                return;
-            case "polylines":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(CustomDataProviderType.POLYLINES, props.dataProviderManager),
                 );
                 return;
             case "drilled-wellbore-trajectories":
@@ -349,16 +343,6 @@ const ACTIONS: ActionGroup[] = [
                         identifier: "drilled-wellbore-picks",
                         icon: <Icon data={wellbore} fontSize="small" />,
                         label: "Drilled Wellbore Picks",
-                    },
-                ],
-            },
-            {
-                label: "Polylines",
-                children: [
-                    {
-                        identifier: "polylines",
-                        icon: <Share fontSize="small" />,
-                        label: "Intersection Polylines",
                     },
                 ],
             },

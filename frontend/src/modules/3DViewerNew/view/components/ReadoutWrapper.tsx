@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { Layer as DeckGlLayer, Layer, PickingInfo } from "@deck.gl/core";
+import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import { View as DeckGlView } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
 import type { LayerPickInfo, MapMouseEvent } from "@webviz/subsurface-viewer";
@@ -129,13 +129,6 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         getTooltip: tooltip,
     });
 
-    let filteredLayers = deckGlProps.layers as Layer<any>[];
-    if (filteredLayers.filter((layer) => layer.id.includes("polylines-layer") && layer.props.visible).length >= 2) {
-        filteredLayers = filteredLayers.filter(
-            (layer) => !layer.id.includes("polylines-layer") || layer.id === "polylines-layer",
-        );
-    }
-
     if (!isEqual(deckGlProps.views, storedDeckGlViews)) {
         setStoredDeckGlViews(deckGlProps.views);
     }
@@ -151,7 +144,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onMouseLeave={handleMainDivLeave}
         >
             {props.children}
-            <SubsurfaceViewerWithCameraState {...deckGlProps} layers={filteredLayers} views={storedDeckGlViews}>
+            <SubsurfaceViewerWithCameraState {...deckGlProps} views={storedDeckGlViews}>
                 {props.views.viewports.map((viewport) => (
                     // @ts-expect-error -- This class is marked as abstract, but seems to just work as is
                     // ? Should we do a proper implementation of the class??

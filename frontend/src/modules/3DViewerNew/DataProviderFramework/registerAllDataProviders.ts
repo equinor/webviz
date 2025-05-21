@@ -1,6 +1,5 @@
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 
-import { PolylinesProvider } from "./customDataProviderImplementations/PolylinesProvider";
 import { RealizationGridProvider } from "./customDataProviderImplementations/RealizationGridProvider";
 import { RealizationSeismicCrosslineProvider } from "./customDataProviderImplementations/RealizationSeismicCrosslineProvider";
 import { RealizationSeismicDepthSliceProvider } from "./customDataProviderImplementations/RealizationSeismicDepthProvider";
@@ -20,4 +19,3 @@ DataProviderRegistry.registerDataProvider(
     RealizationSeismicDepthSliceProvider,
 );
 DataProviderRegistry.registerDataProvider(CustomDataProviderType.REALIZATION_GRID_3D, RealizationGridProvider);
-DataProviderRegistry.registerDataProvider(CustomDataProviderType.POLYLINES, PolylinesProvider);
