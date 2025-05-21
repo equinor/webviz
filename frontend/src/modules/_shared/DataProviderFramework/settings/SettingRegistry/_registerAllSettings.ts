@@ -1,5 +1,3 @@
-import type { WellborePick_api } from "@api";
-
 import { BooleanSetting } from "../implementations/BooleanSetting";
 import { ColorScaleSetting } from "../implementations/ColorScaleSetting";
 import { ColorSetSetting } from "../implementations/ColorSetSetting";
@@ -14,13 +12,12 @@ import { InputNumberSetting } from "../implementations/InputNumberSetting";
 import { IntersectionSetting } from "../implementations/IntersectionSetting";
 import { LogCurveSetting } from "../implementations/LogCurveSetting";
 import { NumberSetting } from "../implementations/NumberSetting";
-import { ObjectSelectionSetting } from "../implementations/ObjectSelectionSetting";
 import { SeismicSliceDirection, SeismicSliceSetting } from "../implementations/SeismicSliceSetting";
 import { SelectNumberSetting } from "../implementations/SelectNumberSetting";
 import { SelectStringSetting } from "../implementations/SelectStringSetting";
 import { SensitivitySetting } from "../implementations/SensitivitySetting";
-import { SliderNumberSetting } from "../implementations/SliderNumberSettig";
 import { SingleColorSetting } from "../implementations/SingleColorSetting";
+import { SliderNumberSetting } from "../implementations/SliderNumberSettig";
 import { StaticDropdownStringSetting } from "../implementations/StaticDropdownStringSetting";
 import { StaticRotationSetting } from "../implementations/StaticRotationSetting";
 import { StatisticFunctionSetting } from "../implementations/StatisticFunctionSetting";
@@ -31,9 +28,6 @@ import { SettingRegistry } from "./_SettingRegistry";
 
 SettingRegistry.registerSetting(Setting.STRAT_COLUMN, "Stratigraphic Column", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.SMDA_INTERPRETER, "Interpreter", DropdownStringSetting);
-SettingRegistry.registerSetting(Setting.WELLBORE_PICKS, "Interpreter", ObjectSelectionSetting<WellborePick_api>, {
-    customConstructorParameters: ["pickIdentifier"],
-});
 
 SettingRegistry.registerSetting(Setting.TRACK_WIDTH, "Track width", NumberSetting, {
     customConstructorParameters: [{ minMax: [1, 6] }],
@@ -55,6 +49,7 @@ SettingRegistry.registerSetting(Setting.LOG_CURVE, "Log curve", LogCurveSetting)
 SettingRegistry.registerSetting(Setting.SHOW_LABELS, "Show labels", BooleanSetting);
 SettingRegistry.registerSetting(Setting.LABEL_ROTATION, "Label rotation", StaticRotationSetting);
 SettingRegistry.registerSetting(Setting.SHOW_LINES, "Show lines", BooleanSetting);
+SettingRegistry.registerSetting(Setting.COLOR, "Color", SingleColorSetting);
 
 SettingRegistry.registerSetting(Setting.ATTRIBUTE, "Attribute", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.ENSEMBLE, "Ensemble", EnsembleSetting);
@@ -111,4 +106,3 @@ SettingRegistry.registerSetting(Setting.WELLBORE_EXTENSION_LENGTH, "Wellbore Ext
 });
 SettingRegistry.registerSetting(Setting.WELLBORE_PICK_IDENTIFIER, "Wellbore Pick Identifier", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.WELLBORE_PICKS, "Wellbore Picks", DrilledWellborePicksSetting);
-SettingRegistry.registerSetting(Setting.TIME_OR_INTERVAL, "Time or Interval", DropdownStringSetting);

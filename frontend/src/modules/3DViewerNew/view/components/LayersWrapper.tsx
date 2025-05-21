@@ -56,6 +56,7 @@ import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/t
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
+import "../../DataProviderFramework/registerAllDataProviders";
 
 import { InteractionWrapper } from "./InteractionWrapper";
 

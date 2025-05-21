@@ -1,6 +1,6 @@
 import type { ViewportType, ViewsType } from "@webviz/subsurface-viewer";
 
-import type { ColorScaleWithId } from "../components/ColorLegendsContainer/colorLegendsContainer";
+import type { ColorScaleWithId } from "../components/ColorLegendsContainer/colorScaleWithId";
 
 export interface ViewportTypeExtended extends ViewportType {
     color: string | null;

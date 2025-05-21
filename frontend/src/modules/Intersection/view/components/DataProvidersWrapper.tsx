@@ -1,8 +1,6 @@
 import React from "react";
 
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { isEqual } from "lodash";
-
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { IntersectionType } from "@framework/types/intersection";
@@ -31,7 +29,10 @@ import {
     VisualizationAssembler,
     VisualizationItemType,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type {
+    VisualizationGroup,
+    VisualizationTarget,
+} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore";
 import {
@@ -55,6 +56,7 @@ import { createWellborePicksLayerItemsMaker } from "@modules/Intersection/DataPr
 import { makeEsvViewDataCollection } from "@modules/Intersection/DataProviderFramework/visualization/makeEsvViewDataCollection";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 import type { PreferredViewLayout } from "@modules/Intersection/typesAndEnums";
+import { isEqual } from "lodash";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 import { useWellboreCasingsQuery } from "../hooks/queryHooks";
@@ -182,7 +184,11 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     }
 
     // View of interest when supporting only one view
-    const viewCandidate = assemblerProduct.children.find((child) => child.itemType === VisualizationItemType.GROUP);
+    const viewCandidate = assemblerProduct.children.find(
+        (child) => child.itemType === VisualizationItemType.GROUP && child.groupType === GroupType.INTERSECTION_VIEW,
+    ) as
+        | VisualizationGroup<VisualizationTarget.ESV, TargetViewReturnTypes, any, GroupType.INTERSECTION_VIEW>
+        | undefined;
     const view = viewCandidate ?? null;
 
     const viewIntersection = view?.customProps.intersection ?? null;

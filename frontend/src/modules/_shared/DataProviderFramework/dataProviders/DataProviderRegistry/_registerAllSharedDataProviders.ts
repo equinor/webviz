@@ -2,6 +2,10 @@ import { DataProviderType } from "../dataProviderTypes";
 import { DrilledWellborePicksProvider } from "../implementations/DrilledWellborePicksProvider";
 import { DrilledWellTrajectoriesProvider } from "../implementations/DrilledWellTrajectoriesProvider";
 import { IntersectionRealizationGridProvider } from "../implementations/IntersectionRealizationGridProvider";
+import {
+    IntersectionRealizationSeismicProvider,
+    SeismicDataSource,
+} from "../implementations/IntersectionRealizationSeismicProvider";
 import { RealizationPolygonsProvider } from "../implementations/RealizationPolygonsProvider";
 import {
     RealizationSurfaceProvider,
@@ -9,11 +13,6 @@ import {
     VisualizationSpace,
 } from "../implementations/RealizationSurfaceProvider";
 import { StatisticalSurfaceProvider } from "../implementations/StatisticalSurfaceProvider";
-import { IntersectionRealizationGridProvider } from "../implementations/IntersectionRealizationGridProvider";
-import {
-    IntersectionRealizationSeismicProvider,
-    SeismicDataSource,
-} from "../implementations/IntersectionRealizationSeismicProvider";
 
 import { DataProviderRegistry } from "./_DataProviderRegistry";
 

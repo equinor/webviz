@@ -64,7 +64,6 @@ export enum Setting {
     SMDA_WELLBORE_HEADER = "smdaWellboreHeader",
     SMDA_WELLBORE_HEADERS = "smdaWellboreHeaders",
     SMDA_INTERPRETER = "smdaInterpreter",
-    WELLBORE_PICKS = "well_picks",
     STATISTIC_FUNCTION = "statisticFunction",
     SURFACE_NAME = "surfaceName",
     SURFACE_NAMES = "surfaceNames",

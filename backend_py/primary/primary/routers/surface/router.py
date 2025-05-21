@@ -68,6 +68,8 @@ async def get_realization_surfaces_metadata(
     Get metadata for realization surfaces in a Sumo ensemble
     """
     perf_metrics = ResponsePerfMetrics(response)
+    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
 
     async with asyncio.TaskGroup() as tg:
         access = SurfaceAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
@@ -75,7 +77,7 @@ async def get_realization_surfaces_metadata(
         surf_meta_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-meta"))
 
         strat_units_task = tg.create_task(
-            _get_stratigraphic_units_for_strat_column_async(authenticated_user, case_uuid)
+            _get_stratigraphic_units_for_strat_column_async(authenticated_user, strat_column_identifier)
         )
         strat_units_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-strat"))
 
@@ -103,13 +105,16 @@ async def get_observed_surfaces_metadata(
     """
     perf_metrics = ResponsePerfMetrics(response)
 
+    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
+
     async with asyncio.TaskGroup() as tg:
         access = SurfaceAccess.from_case_uuid_no_iteration(authenticated_user.get_sumo_access_token(), case_uuid)
         surf_meta_task = tg.create_task(access.get_observed_surfaces_metadata_async())
         surf_meta_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-meta"))
 
         strat_units_task = tg.create_task(
-            _get_stratigraphic_units_for_strat_column_async(authenticated_user, case_uuid)
+            _get_stratigraphic_units_for_strat_column_async(authenticated_user, strat_column_identifier)
         )
         strat_units_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("get-strat"))
 
