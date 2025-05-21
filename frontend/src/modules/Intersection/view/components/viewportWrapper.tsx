@@ -110,12 +110,12 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 const newViewport: [number, number, number] = [
                     centerX,
                     centerY,
-                    Math.max(xMax - xMin, yMax - yMin) * 1.2,
+                    Math.max(xMax - xMin, (yMax - yMin) * verticalScale) * 1.2,
                 ];
                 setViewport(newViewport);
             }
         },
-        [props.bounds],
+        [props.bounds, verticalScale],
     );
 
     const handleShowGridToggle = React.useCallback(function handleGridLinesToggle(active: boolean): void {
