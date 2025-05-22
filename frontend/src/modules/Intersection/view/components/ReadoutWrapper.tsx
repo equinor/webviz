@@ -37,24 +37,24 @@ export type ReadoutWrapperProps = {
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const [readoutItems, setReadoutItems] = React.useState<ReadoutItem[]>([]);
 
-    const [syncedHoveredMd, setSyncedHoveredMd] = React.useState<number | null>(null);
+    const [storedGlobalHoverMd, setStoredGlobalHoverMd] = React.useState<number | null>(null);
     const [readoutMd, setReadoutMd] = React.useState<number | null>(null);
-    const [prevSyncedHoveredMd, setPrevSyncedHoveredMd] = React.useState<
+    const [prevStoredGlobalHoverMd, setPrevSyncedHoverMd] = React.useState<
         GlobalTopicDefinitions["global.hoverMd"] | null
     >(null);
 
-    const syncedHoverMd = useSubscribedValue(
+    const globalHoverMd = useSubscribedValue(
         "global.hoverMd",
         props.workbenchServices,
         props.viewContext.getInstanceIdString(),
     );
 
-    if (!isEqual(syncedHoveredMd, prevSyncedHoveredMd)) {
-        setPrevSyncedHoveredMd(syncedHoverMd);
-        if (syncedHoverMd?.wellboreUuid === props.wellboreHeaderUuid) {
-            setSyncedHoveredMd(syncedHoverMd?.md ?? null);
+    if (!isEqual(globalHoverMd, prevStoredGlobalHoverMd)) {
+        setPrevSyncedHoverMd(globalHoverMd);
+        if (globalHoverMd?.wellboreUuid === props.wellboreHeaderUuid) {
+            setStoredGlobalHoverMd(globalHoverMd?.md ?? null);
         } else {
-            setSyncedHoveredMd(null);
+            setStoredGlobalHoverMd(null);
         }
     }
 
@@ -99,8 +99,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     );
 
     const highlightItems: HighlightItem[] = [];
-    if (props.referenceSystem && syncedHoveredMd) {
-        const point = props.referenceSystem.project(syncedHoveredMd);
+    if (props.referenceSystem && storedGlobalHoverMd) {
+        const point = props.referenceSystem.project(storedGlobalHoverMd);
         highlightItems.push({
             point: [point[0], point[1]],
             color: "red",
