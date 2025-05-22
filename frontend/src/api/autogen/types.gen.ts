@@ -1208,6 +1208,7 @@ export type GetCasesData_api = {
          * Field identifier
          */
         field_identifier: string;
+        t?: number;
     };
     url: "/cases";
 };
@@ -1238,7 +1239,9 @@ export type GetEnsemblesData_api = {
          */
         case_uuid: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/cases/{case_uuid}/ensembles";
 };
 
@@ -1272,7 +1275,9 @@ export type GetEnsembleDetailsData_api = {
          */
         ensemble_name: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/cases/{case_uuid}/ensembles/{ensemble_name}";
 };
 

@@ -1,5 +1,7 @@
 import { defaultPlugins, defineConfig } from "@hey-api/openapi-ts";
 
+import { makePlugin as cacheBustingPlugin } from "./open-api/cachebusting-plugin";
+
 export default defineConfig({
     client: "@hey-api/client-axios",
     input: "http://localhost:5000/openapi.json",
@@ -10,6 +12,7 @@ export default defineConfig({
     },
     experimentalParser: true,
     plugins: [
+        cacheBustingPlugin({ name: "cache-busting", targets: ["getEnsembles", "getCases", "getEnsembleDetails"] }),
         ...defaultPlugins,
         "@tanstack/react-query",
         {
