@@ -3,7 +3,7 @@ import React from "react";
 import { ChevronLeft, ChevronRight, GridView, Link, List, Palette, Settings, WebAsset } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 
-import WebvizLogo from "@assets/webviz.svg";
+import FmuLogo from "@assets/fmu.svg";
 
 import { GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { LoginButton } from "@framework/internal/components/LoginButton";
@@ -196,8 +196,9 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
             )}
         >
             <div className="flex flex-col gap-2 grow">
-                <div className="w-full flex justify-center mb-2 mt-1 p-2">
-                    <img src={WebvizLogo} alt="Webviz logo" className="w-20 h-20" />
+                <div className="w-full flex flex-col justify-center items-center gap-4 mb-2 mt-1 p-2 h-30">
+                    <img src={FmuLogo} alt="FMU Analysis" className="w-20 h-20" />
+                    {collapsed ? null : <h1 className="text-xl text-slate-800">FMU Analysis</h1>}
                 </div>
                 <div
                     className="bg-orange-600 text-white p-1 rounded-sm text-xs text-center cursor-help shadow-sm"

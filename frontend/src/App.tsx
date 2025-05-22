@@ -2,7 +2,8 @@ import React from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
 
-import WebvizLogo from "@assets/webviz.svg";
+import FmuLogo from "@assets/fmu.svg";
+import FmuLogoAnimated from "@assets/fmuAnimated.svg";
 
 import { GuiState, LeftDrawerContent } from "@framework/GuiMessageBroker";
 import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
@@ -12,7 +13,6 @@ import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthPr
 import { Workbench } from "@framework/Workbench";
 import type { LayoutElement } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
-import { WebvizSpinner } from "@lib/components/WebvizSpinner";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import "./modules/registerAllModules";
@@ -151,7 +151,8 @@ function App() {
         <>
             {authState === AuthState.NotLoggedIn ? (
                 <div className="w-screen h-screen flex flex-col items-center justify-center gap-8">
-                    <img src={WebvizLogo} alt="Webviz logo" className="w-32 h-32" />
+                    <img src={FmuLogo} alt="FMU Analysis" className="w-32 h-32" />
+                    <h1 className="text-3xl font-bold">FMU Analysis</h1>
                     <DataSharingLabel />
                     <p className="text-lg">Please sign in to continue.</p>
                     <Button onClick={signIn}>Sign in</Button>
@@ -167,7 +168,7 @@ function App() {
                             },
                         )}
                     >
-                        <WebvizSpinner size={100} />
+                        <img src={FmuLogoAnimated} alt="FMU Analysis" className="w-32 h-32" />
                         {makeStateMessages()}
                         <DevLabel />
                     </div>
