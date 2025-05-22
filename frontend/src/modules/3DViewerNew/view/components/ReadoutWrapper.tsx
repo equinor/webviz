@@ -11,6 +11,7 @@ import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/
 import type { Feature } from "geojson";
 import { isEqual } from "lodash";
 
+import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -21,6 +22,11 @@ import {
     type SubsurfaceViewerWithCameraStateProps,
 } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
+import { useProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useProviderHoverVisualizations";
+import type {
+    HoverVisualizationsFunctions,
+    VisualizationTarget,
+} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
@@ -33,11 +39,13 @@ export type ReadoutWrapperProps = {
     layers: DeckGlLayer[];
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
+    workbenchServices: WorkbenchServices;
     deckGlManager: DeckGlInstanceManager;
     verticalScale: number;
     triggerHome: number;
     deckGlRef: React.RefObject<DeckGLRef | null>;
     children?: React.ReactNode;
+    hoverVisualizationFunctions: HoverVisualizationsFunctions<VisualizationTarget.DECK_GL>;
 };
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
@@ -52,6 +60,11 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     React.useImperativeHandle(props.deckGlRef, () => deckGlRef.current);
     usePublishSubscribeTopicValue(props.deckGlManager, DeckGlInstanceManagerTopic.REDRAW);
+
+    const hoverLayers = useProviderHoverVisualizations<VisualizationTarget.DECK_GL>(
+        props.hoverVisualizationFunctions,
+        props.workbenchServices,
+    );
 
     const [numRows] = props.views.layout;
 
@@ -106,7 +119,14 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const deckGlProps = props.deckGlManager.makeDeckGlComponentProps({
         deckGlRef,
         id: `subsurface-viewer-${id}`,
-        views: { ...props.views, viewports: adjustedViewports },
+        views: {
+            ...props.views,
+            viewports: adjustedViewports.map((viewport) => ({
+                ...viewport,
+                layerIds: [...(viewport.layerIds ?? []), ...hoverLayers.map((layer) => layer.id)],
+            })),
+            layout: props.views?.layout ?? [1, 1],
+        },
         verticalScale: props.verticalScale,
         scale: {
             visible: true,
@@ -124,7 +144,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         },
         triggerHome: props.triggerHome,
         pickingRadius: 5,
-        layers: adjustedLayers,
+        layers: [...adjustedLayers, ...hoverLayers],
         onMouseEvent: handleMouseEvent,
         getTooltip: tooltip,
     });

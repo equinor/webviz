@@ -6,6 +6,7 @@ import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import * as bbox from "@lib/utils/bbox";
@@ -59,6 +60,7 @@ import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/Placeholde
 import { InteractionWrapper } from "./InteractionWrapper";
 
 import { makeDrilledWellTrajectoriesLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer";
+import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
     VisualizationTarget.DECK_GL,
@@ -116,6 +118,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     {
         transformToVisualization: makeDrilledWellTrajectoriesLayer,
         transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
+        transformToHoverVisualization: makeDrilledWellTrajectoriesHoverVisualizationFunctions,
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
@@ -156,6 +159,7 @@ export type LayersWrapperProps = {
     viewContext: ViewContext<Interfaces>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
+    workbenchServices: WorkbenchServices;
 };
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
@@ -174,6 +178,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const globalColorScales = globalAnnotations.filter((el) => "colorScale" in el);
     const globalLayerIds: string[] = ["placeholder", "axes"];
     const usedPolylineIds = assemblerProduct.accumulatedData.polylineIds;
+    const hoverVisualizationFunctions = assemblerProduct.hoverVisualizationsFunctions;
 
     for (const item of assemblerProduct.children) {
         if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
@@ -268,7 +273,9 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
             layers={deckGlLayers}
             workbenchSession={props.workbenchSession}
             workbenchSettings={props.workbenchSettings}
+            workbenchServices={props.workbenchServices}
             usedPolylineIds={usedPolylineIds}
+            hoverVisualizationFunctions={hoverVisualizationFunctions}
         />
     );
 }
