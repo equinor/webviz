@@ -16,13 +16,15 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
 ): HoverVisualizationsFunctions<VisualizationTarget.DECK_GL> {
     const { id, getData } = args;
 
-    if (!getData) {
+    const wellboreTrajectories = getData();
+
+    if (!wellboreTrajectories) {
         return {};
     }
 
     return {
         "global.hoverMd": (hoveredMd: GlobalTopicDefinitions["global.hoverMd"] | null) => {
-            const wellboreTrajectory = getData()?.find(
+            const wellboreTrajectory = wellboreTrajectories.find(
                 (wellTrajectory) => wellTrajectory.wellboreUuid === hoveredMd?.wellboreUuid,
             );
 
