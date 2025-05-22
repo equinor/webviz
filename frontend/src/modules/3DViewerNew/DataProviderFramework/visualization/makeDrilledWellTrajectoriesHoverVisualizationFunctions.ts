@@ -1,7 +1,7 @@
 import type { WellboreTrajectory_api } from "@api";
 import type { Color } from "@deck.gl/core";
-import { GeoJsonLayer } from "@deck.gl/layers";
 import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
+import { DiscLayer } from "@modules/3DViewerNew/customDeckGlLayers/DiscLayer";
 import type { GeoWellFeature } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import type {
     HoverVisualizationsFunctions,
@@ -32,7 +32,8 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
                 return [];
             }
 
-            let hoveredMdPoint3d: number[] = [0, 0, 0];
+            let hoveredMdPoint3d: [number, number, number] = [0, 0, 0];
+            let normal: [number, number, number] = [0, 0, 1];
 
             for (const [index, point] of wellboreTrajectory.mdArr.entries()) {
                 if (point >= hoveredMd.md) {
@@ -52,6 +53,15 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
                     const y = prevY + ratio * (thisY - prevY);
                     const z = prevZ + ratio * (thisZ - prevZ);
                     hoveredMdPoint3d = [x, y, -z];
+
+                    const dx = thisX - prevX;
+                    const dy = thisY - prevY;
+                    const dz = thisZ - prevZ;
+
+                    const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+                    normal = length === 0 ? [0, 0, 1] : [dx / length, dy / length, -dz / length];
+
                     break;
                 }
             }
@@ -60,7 +70,7 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
 
             return [
                 new WellsLayer({
-                    id,
+                    id: `${id}-hovered-well`,
                     data: {
                         type: "FeatureCollection",
                         features: wellLayerDataFeatures,
@@ -74,30 +84,15 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
                     wellNameVisible: false,
                     ZIncreasingDownwards: false,
                 }),
-                new GeoJsonLayer({
+                new DiscLayer({
                     id: `${id}-hovered-md-point`,
-                    data: {
-                        type: "FeatureCollection",
-                        features: [
-                            {
-                                type: "Feature",
-                                geometry: {
-                                    type: "Point",
-                                    coordinates: hoveredMdPoint3d,
-                                },
-                                properties: {
-                                    color: [255, 0, 0], // Custom property to use in styling (optional)
-                                },
-                            },
-                        ],
-                    },
-                    pickable: false,
-                    getPosition: (d: number[]) => d,
-                    getRadius: 10,
-                    pointRadiusUnits: "pixels",
-                    getFillColor: [255, 0, 0],
-                    getLineColor: [255, 0, 0],
-                    getLineWidth: 2,
+                    centerPoint: hoveredMdPoint3d,
+                    radius: 100,
+                    height: 50,
+                    normalVector: normal,
+                    numberOfSegments: 32,
+                    color: [255, 0, 0],
+                    opacity: 1,
                 }),
             ];
         },

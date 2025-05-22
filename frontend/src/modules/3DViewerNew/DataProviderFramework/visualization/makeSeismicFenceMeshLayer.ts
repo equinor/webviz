@@ -4,7 +4,7 @@ import * as bbox from "@lib/utils/bbox";
 import { type Geometry, ShapeType, degreesToRadians } from "@lib/utils/geometry";
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import * as vec3 from "@lib/utils/vec3";
-import { SeismicFenceMeshLayer } from "@modules/3DViewerNew/customDeckGlLayers/SeismicFenceMeshLayer copy/SeismicFenceMeshLayer";
+import { SeismicFenceMeshLayer } from "@modules/3DViewerNew/customDeckGlLayers/SeismicFenceMeshLayer/SeismicFenceMeshLayer";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
