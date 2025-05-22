@@ -6,7 +6,6 @@ import { useStableProp } from "@lib/hooks/useStableProp";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 
-
 export type ReadoutItem = {
     label: string;
     info: InfoItem[];
@@ -119,7 +118,7 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
             ))}
 
             {props.readoutItems.length > maxNumItemsOrDefault && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 col-span-4">
                     ...and {props.readoutItems.length - maxNumItemsOrDefault} more
                 </div>
             )}
