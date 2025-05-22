@@ -63,7 +63,7 @@ import {
     makeViewProvidersVisualizationLayerItems,
 } from "../utils/createLayerItemsUtils";
 
-import { ViewportWrapper } from "./viewportWrapper";
+import { ViewportWrapper } from "./ViewportWrapper";
 
 export type DataProvidersWrapperProps = {
     dataProviderManager: DataProviderManager;
@@ -159,10 +159,11 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
 
     const [prevReferenceSystem, setPrevReferenceSystem] = React.useState<IntersectionReferenceSystem | null>(null);
     const [viewport, setViewport] = React.useState<Viewport>([0, 0, 2000]);
-    const [prevViewport, setPrevViewport] = React.useState<Viewport | null>(null);
     const [bounds, setBounds] = React.useState<Bounds>(DEFAULT_INTERSECTION_VIEW_BOUNDS);
     const [prevBounds, setPrevBounds] = React.useState<Bounds | null>(null);
-    const [isInitialViewportSet, setIsInitialViewportSet] = React.useState<boolean>(false);
+    const [previousIntersection, setPreviousIntersection] = React.useState<IntersectionSettingValue | null>(null);
+    const [previousExtensionLength, setPreviousExtensionLength] = React.useState<number | null>(null);
+    const [doUpdateViewport, setDoUpdateViewport] = React.useState(true);
 
     const fieldIdentifier = props.dataProviderManager.getGlobalSetting("fieldId");
 
@@ -203,11 +204,20 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         props.workbenchSession,
     );
 
+    // Update viewport if intersection or extension length changes
+    if (!isEqual(viewIntersection, previousIntersection)) {
+        setDoUpdateViewport(true);
+        setPreviousIntersection(viewIntersection);
+    }
+    if (!isEqual(extensionLength, previousExtensionLength)) {
+        setDoUpdateViewport(true);
+        setPreviousExtensionLength(extensionLength);
+    }
+
     // Detect if intersection reference system has changed
     if (intersectionReferenceSystem && !isEqual(intersectionReferenceSystem, prevReferenceSystem)) {
+        setDoUpdateViewport(true);
         setPrevReferenceSystem(intersectionReferenceSystem);
-        setIsInitialViewportSet(false);
-        setPrevViewport(null);
     }
 
     // Make layer items for the view providers using intersection reference system
@@ -243,7 +253,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         }
     }
 
-    // Create bounding box for the visualization layers
+    // Create data bounds for the view, by use of bounding box for the visualization layers
     let viewBoundingBox = wellborePathBoundingBox;
     if (viewBoundingBox && assemblerProduct.combinedBoundingBox) {
         viewBoundingBox = combine(viewBoundingBox, assemblerProduct.combinedBoundingBox);
@@ -251,14 +261,15 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         viewBoundingBox = assemblerProduct.combinedBoundingBox;
     }
 
-    // Create new bounds for the view
-    const newBounds = createBoundsForView(viewBoundingBox, intersectionReferenceSystem, prevBounds);
-    let isBoundsSetByProvider = viewBoundingBox !== null;
+    // Create bounds for data in the view (neglect wellbore path)
+    const newBounds = createBoundsForView(
+        assemblerProduct.combinedBoundingBox,
+        intersectionReferenceSystem,
+        prevBounds,
+    );
     if (!areBoundsValid(newBounds)) {
         newBounds.x = DEFAULT_INTERSECTION_VIEW_BOUNDS.x;
         newBounds.y = DEFAULT_INTERSECTION_VIEW_BOUNDS.y;
-
-        isBoundsSetByProvider = false;
     }
 
     // Check if bounds have changed
@@ -267,21 +278,31 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         setBounds(newBounds);
     }
 
-    // Create candidate viewport from bounds
-    const viewportRatioCandidate = mainDivSize.width / mainDivSize.height;
-    const viewportRatio = Number.isNaN(viewportRatioCandidate) ? 1 : viewportRatioCandidate;
-    const candidateViewport: [number, number, number] = [
-        bounds.x[0] + (bounds.x[1] - bounds.x[0]) / 2,
-        bounds.y[0] + (bounds.y[1] - bounds.y[0]) / 2,
-        Math.max(Math.abs(bounds.y[1] - bounds.y[0]) * viewportRatio, Math.abs(bounds.x[1] - bounds.x[0])) * 1.2,
-    ];
-
     // Update viewport
-    if (!isEqual(candidateViewport, prevViewport) && isValidViewport(candidateViewport) && !isInitialViewportSet) {
-        setViewport(candidateViewport);
-        setPrevViewport(candidateViewport);
-        if (isBoundsSetByProvider) {
-            setIsInitialViewportSet(true);
+    const boundingBoxForViewport = assemblerProduct.combinedBoundingBox;
+    if (doUpdateViewport && boundingBoxForViewport) {
+        // Get bounds for the view, to create viewport for the intersection data (not wellpath and wellpicks)
+        // NB: The wellpicks provider does not have a bounding box, thereby we can use the combined bounding box
+        const viewportBounds: Bounds = {
+            x: [boundingBoxForViewport.min.x, boundingBoxForViewport.max.x],
+            y: [boundingBoxForViewport.min.y, boundingBoxForViewport.max.y],
+        };
+
+        // Create candidate viewport from bounds of data
+        const viewportRatioCandidate = mainDivSize.width / mainDivSize.height;
+        const viewportRatio = Number.isNaN(viewportRatioCandidate) ? 1 : viewportRatioCandidate;
+        const candidateViewport: [number, number, number] = [
+            viewportBounds.x[0] + (viewportBounds.x[1] - viewportBounds.x[0]) / 2,
+            viewportBounds.y[0] + (viewportBounds.y[1] - viewportBounds.y[0]) / 2,
+            Math.max(
+                Math.abs(viewportBounds.y[1] - viewportBounds.y[0]) * viewportRatio,
+                Math.abs(viewportBounds.x[1] - viewportBounds.x[0]),
+            ) * 1.2,
+        ];
+
+        if (isValidViewport(candidateViewport) && !isEqual(candidateViewport, viewport)) {
+            setViewport(candidateViewport);
+            setDoUpdateViewport(false);
         }
     }
 

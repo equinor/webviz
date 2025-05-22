@@ -12,7 +12,7 @@ import { Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComp
 import { isValidNumber, isValidViewport } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 
-import { ReadoutWrapper } from "./readoutWrapper";
+import { ReadoutWrapper } from "./ReadoutWrapper";
 
 export type ViewportWrapperProps = {
     wellboreHeaderUuid: string | null;
@@ -20,14 +20,15 @@ export type ViewportWrapperProps = {
     layerItems: LayerItem[];
     layerItemIdToNameMap: Record<string, string>;
     bounds: Bounds;
-    viewport: Viewport | null;
+    viewport: Viewport;
     workbenchServices: WorkbenchServices;
     viewContext: ViewContext<Interfaces>;
 };
 
 export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
+    const [prevPropViewport, setPrevPropViewport] = React.useState<Viewport | null>(null);
+
     const [viewport, setViewport] = React.useState<Viewport | null>(null);
-    const [prevViewport, setPrevViewport] = React.useState<Viewport | null>(null);
     const [prevSyncedViewport, setPrevSyncedViewport] = React.useState<Viewport | null>(null);
 
     const [verticalScale, setVerticalScale] = React.useState<number>(1);
@@ -50,17 +51,23 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
         }
     }
 
-    if (!isEqual(props.viewport, prevViewport)) {
-        setPrevViewport(viewport);
-        if (props.viewport) {
-            // Override viewport if prop changes
-            setViewport(cloneDeep(props.viewport));
-            props.workbenchServices.publishGlobalData(
-                "global.syncValue.cameraPositionIntersection",
-                props.viewport,
-                props.viewContext.getInstanceIdString(),
-            );
-        }
+    if (!isEqual(props.viewport, prevPropViewport)) {
+        setPrevPropViewport(props.viewport);
+
+        const newViewport = cloneDeep(props.viewport);
+
+        // Scale displacement based on data bounds
+        const [xMin, xMax] = props.bounds.x;
+        const [yMin, yMax] = props.bounds.y;
+        newViewport[2] = Math.max(xMax - xMin, (yMax - yMin) * verticalScale) * 1.4;
+
+        // Override viewport if prop changes
+        setViewport(newViewport);
+        props.workbenchServices.publishGlobalData(
+            "global.syncValue.cameraPositionIntersection",
+            props.viewport,
+            props.viewContext.getInstanceIdString(),
+        );
     }
 
     const syncedVerticalScale = syncHelper.useValue(SyncSettingKey.VERTICAL_SCALE, "global.syncValue.verticalScale");
@@ -110,7 +117,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 const newViewport: [number, number, number] = [
                     centerX,
                     centerY,
-                    Math.max(xMax - xMin, (yMax - yMin) * verticalScale) * 1.2,
+                    Math.max(xMax - xMin, (yMax - yMin) * verticalScale) * 1.4,
                 ];
                 setViewport(newViewport);
             }
