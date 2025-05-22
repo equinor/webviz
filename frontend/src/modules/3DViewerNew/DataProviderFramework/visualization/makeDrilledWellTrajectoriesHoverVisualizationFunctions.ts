@@ -60,7 +60,7 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
 
             return [
                 new WellsLayer({
-                    id,
+                    id: `${id}-hovered-md-line`,
                     data: {
                         type: "FeatureCollection",
                         features: wellLayerDataFeatures,
