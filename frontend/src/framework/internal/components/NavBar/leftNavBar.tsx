@@ -196,8 +196,8 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
             )}
         >
             <div className="flex flex-col gap-2 grow">
-                <div className="w-full flex flex-col justify-center items-center gap-4 mb-2 mt-1 p-2 h-30">
-                    <img src={FmuLogo} alt="FMU Analysis" className="w-20 h-20" />
+                <div className="w-full flex flex-col justify-center items-center gap-4 mb-2 mt-1 p-2 h-32">
+                    <img src={FmuLogo} alt="FMU Analysis logo" className="w-20 h-20" />
                     {collapsed ? null : <h1 className="text-xl text-slate-800">FMU Analysis</h1>}
                 </div>
                 <div
