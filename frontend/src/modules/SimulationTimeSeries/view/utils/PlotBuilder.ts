@@ -1,6 +1,7 @@
 import type React from "react";
 
 import type { Annotations, PlotMarker, Shape } from "plotly.js";
+import type { PlotParams } from "react-plotly.js";
 
 import type {
     DerivedVectorInfo_api,
@@ -21,7 +22,6 @@ import { simulationUnitReformat, simulationVectorDescription } from "@modules/_s
 import type { VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { FrequencyEnumToStringMapping, SubplotLimitDirection } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
-
 
 import { scaleHexColorLightness } from "./colorUtils";
 import type { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
@@ -259,6 +259,33 @@ export class PlotBuilder {
         }
     }
 
+    buildProps(customProps?: Omit<Partial<PlotParams>, "data" | "layout">): PlotParams {
+        this.createGraphLegends();
+        this.updateSubplotTitles();
+
+        // Add time annotations and shapes
+        for (let index = 0; index < this._numberOfSubplots; index++) {
+            const { row, col } = this.getSubplotRowAndColFromIndex(index);
+            for (const timeAnnotation of this.createTimeAnnotations()) {
+                this._figure.addAnnotation(timeAnnotation, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
+            }
+            for (const timeShape of this.createTimeShapes()) {
+                this._figure.addShape(timeShape, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
+            }
+        }
+
+        return {
+            data: this._figure.makeData(),
+            layout: this._figure.makeLayout(),
+            ...customProps,
+        };
+    }
+
+    /**
+     * @deprecated
+     * @param handleOnClick
+     * @returns
+     */
     build(handleOnClick?: ((event: Readonly<Plotly.PlotMouseEvent>) => void) | undefined): React.ReactNode {
         this.createGraphLegends();
         this.updateSubplotTitles();

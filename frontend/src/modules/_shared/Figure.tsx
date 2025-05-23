@@ -1,5 +1,5 @@
 import { merge } from "lodash";
-import type { Annotations, AxisType, Layout, PlotData, Shape, XAxisName, YAxisName } from "plotly.js";
+import type { Annotations, AxisType, Data, Layout, PlotData, Shape, XAxisName, YAxisName } from "plotly.js";
 import type { PlotParams } from "react-plotly.js";
 import Plot from "react-plotly.js";
 
@@ -168,8 +168,12 @@ export class Figure {
         subplotTitleAnnotation.text = title;
     }
 
+    makeData(): Partial<Data>[] {
+        return [...this._plotData];
+    }
+
     makeLayout(): Partial<Layout> {
-        const layout = { ...this._plotLayout };
+        const layout: Partial<Layout> = { ...this._plotLayout };
         layout.annotations = [
             ...(layout.annotations ?? []),
             ...Array.from(this._axesIndexToSubplotTitleAnnotationMap.values()),
@@ -190,6 +194,9 @@ export class Figure {
         merge(this._plotLayout, patch);
     }
 
+    /**
+     * @deprecated Use the Plot component, combined with makeData() and makeLayout() instead
+     */
     makePlot(plotArgs?: Omit<PlotParams, "data" | "layout">): React.ReactNode {
         const config = plotArgs?.config ?? {
             displaylogo: false,
@@ -318,7 +325,7 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
             t: titleMargin,
             b: 0,
         },
-        title: options.title,
+        title: { text: options.title },
     };
 
     const axesIndexToSubplotTitleAnnotationMap: Map<number, Partial<Annotations>> = new Map();
