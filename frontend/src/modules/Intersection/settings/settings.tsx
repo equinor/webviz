@@ -1,217 +1,173 @@
 import React from "react";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { isEqual } from "lodash";
 
-import type { WellboreHeader_api } from "@api";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
-import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import type { Intersection } from "@framework/types/intersection";
-import { IntersectionType } from "@framework/types/intersection";
-import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Input } from "@lib/components/Input";
-import { Label } from "@lib/components/Label";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
-import { RadioGroup } from "@lib/components/RadioGroup";
-import type { SelectOption } from "@lib/components/Select";
-import { Select } from "@lib/components/Select";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
+import {
+    DataProviderManager,
+    DataProviderManagerTopic,
+} from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
+import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
+import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 
 import type { Interfaces } from "../interfaces";
 
-import {
-    intersectionExtensionLengthAtom,
-    intersectionTypeAtom,
-    userSelectedCustomIntersectionPolylineIdAtom,
-    userSelectedFieldIdentifierAtom,
-    userSelectedWellboreUuidAtom,
-} from "./atoms/baseAtoms";
-import {
-    availableUserCreatedIntersectionPolylinesAtom,
-    filteredEnsembleSetAtom,
-    layerManagerAtom,
-    selectedCustomIntersectionPolylineIdAtom,
-    selectedFieldIdentifierAtom,
-    selectedWellboreAtom,
-} from "./atoms/derivedAtoms";
-import { drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
-import { Layers } from "./components/layers";
+import { dataProviderManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
+import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
+import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
-    const filteredEnsembleSet = useAtomValue(filteredEnsembleSetAtom);
-    const statusWriter = useSettingsStatusWriter(props.settingsContext);
+    const queryClient = useQueryClient();
+    const colorSet = props.workbenchSettings.useColorSet();
 
-    const layerManager = useAtomValue(layerManagerAtom);
+    const [dataProviderManager, setDataProviderManager] = useAtom(dataProviderManagerAtom);
 
-    const selectedField = useAtomValue(selectedFieldIdentifierAtom);
-    const setSelectedField = useSetAtom(userSelectedFieldIdentifierAtom);
+    const selectedFieldIdentifier = useAtomValue(selectedFieldIdentifierAtom);
+    const setSelectedFieldIdentifier = useSetAtom(userSelectedFieldIdentifierAtom);
+    const [preferredViewLayout, setPreferredViewLayout] = useAtom(preferredViewLayoutAtom);
 
-    const [intersectionExtensionLength, setIntersectionExtensionLength] = useAtom(intersectionExtensionLengthAtom);
-
-    const [prevSyncedIntersection, setPrevSyncedIntersection] = React.useState<Intersection | null>(null);
-
-    const syncedSettingKeys = props.settingsContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
-
-    const syncedIntersection = syncHelper.useValue(SyncSettingKey.INTERSECTION, "global.syncValue.intersection");
-
-    const [intersectionType, setIntersectionType] = useAtom(intersectionTypeAtom);
-
-    const wellHeaders = useAtomValue(drilledWellboreHeadersQueryAtom);
-
-    const selectedWellboreHeader = useAtomValue(selectedWellboreAtom);
-    const setSelectedWellboreHeader = useSetAtom(userSelectedWellboreUuidAtom);
-
-    const availableUserCreatedIntersectionPolylines = useAtomValue(availableUserCreatedIntersectionPolylinesAtom);
-    const selectedCustomIntersectionPolylineId = useAtomValue(selectedCustomIntersectionPolylineIdAtom);
-    const setSelectedCustomIntersectionPolylineId = useSetAtom(userSelectedCustomIntersectionPolylineIdAtom);
-
-    if (!isEqual(syncedIntersection, prevSyncedIntersection)) {
-        setPrevSyncedIntersection(syncedIntersection);
-        if (syncedIntersection) {
-            setIntersectionType(syncedIntersection.type);
-
-            if (syncedIntersection.type === IntersectionType.WELLBORE) {
-                setSelectedWellboreHeader(syncedIntersection.uuid);
-            } else if (syncedIntersection.type === IntersectionType.CUSTOM_POLYLINE) {
-                setSelectedCustomIntersectionPolylineId(syncedIntersection.uuid);
+    const persistState = React.useCallback(
+        function persistDataProviderManagerState() {
+            if (!dataProviderManager) {
+                return;
             }
-        }
-    }
 
-    const wellHeadersErrorMessage = usePropagateApiErrorToStatusWriter(wellHeaders, statusWriter) ?? "";
+            const serializedState = {
+                dataProviderManager: dataProviderManager.serializeState(),
+                selectedFieldIdentifier,
+                preferredViewLayout,
+            };
+            window.localStorage.setItem(
+                `${props.settingsContext.getInstanceIdString()}-settings`,
+                JSON.stringify(serializedState),
+            );
+        },
+        [dataProviderManager, selectedFieldIdentifier, preferredViewLayout, props.settingsContext],
+    );
+
+    const applyPersistedState = React.useCallback(
+        function applyPersistedState(dataProviderManager: DataProviderManager) {
+            const serializedState = window.localStorage.getItem(
+                `${props.settingsContext.getInstanceIdString()}-settings`,
+            );
+            if (!serializedState) {
+                const groupDelegate = dataProviderManager.getGroupDelegate();
+
+                const doAddDefaultIntersectionView =
+                    groupDelegate.getDescendantItems(
+                        (item) => item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW,
+                    ).length === 0;
+                if (doAddDefaultIntersectionView) {
+                    groupDelegate.appendChild(
+                        GroupRegistry.makeGroup(
+                            GroupType.INTERSECTION_VIEW,
+                            dataProviderManager,
+                            colorSet.getNextColor(),
+                        ),
+                    );
+                }
+
+                return;
+            }
+
+            const parsedState = JSON.parse(serializedState);
+            if (parsedState.fieldIdentifier) {
+                setSelectedFieldIdentifier(parsedState.fieldIdentifier);
+            }
+            if (parsedState.preferredViewLayout) {
+                setPreferredViewLayout(parsedState.preferredViewLayout);
+            }
+
+            if (parsedState.dataProviderManager) {
+                if (!dataProviderManager) {
+                    return;
+                }
+                dataProviderManager.deserializeState(parsedState.dataProviderManager);
+            }
+        },
+        [setSelectedFieldIdentifier, setPreferredViewLayout, props.settingsContext, colorSet],
+    );
+
+    React.useEffect(
+        function onMountEffect() {
+            const newDataProviderManager = new DataProviderManager(
+                props.workbenchSession,
+                props.workbenchSettings,
+                queryClient,
+            );
+            setDataProviderManager(newDataProviderManager);
+
+            applyPersistedState(newDataProviderManager);
+
+            return function onUnmountEffect() {
+                newDataProviderManager.beforeDestroy();
+            };
+        },
+        [setDataProviderManager, props.workbenchSession, props.workbenchSettings, queryClient, applyPersistedState],
+    );
+
+    React.useEffect(
+        function onDataProviderManagerChangeEffect() {
+            if (!dataProviderManager) {
+                return;
+            }
+
+            persistState();
+
+            const unsubscribeDataRev = dataProviderManager
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION)(persistState);
+
+            const unsubscribeExpands = dataProviderManager
+                .getGroupDelegate()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(persistState);
+
+            return function onUnmountEffect() {
+                unsubscribeDataRev();
+                unsubscribeExpands();
+            };
+        },
+        [dataProviderManager, props.workbenchSession, props.workbenchSettings, persistState],
+    );
+
+    React.useEffect(
+        function onFieldIdentifierChangedEffect() {
+            if (!dataProviderManager) {
+                return;
+            }
+            dataProviderManager.updateGlobalSetting("fieldId", selectedFieldIdentifier);
+        },
+        [selectedFieldIdentifier, dataProviderManager],
+    );
 
     function handleFieldIdentifierChange(fieldIdentifier: string | null) {
-        setSelectedField(fieldIdentifier);
-    }
-
-    function handleWellHeaderSelectionChange(wellHeader: string[]) {
-        const uuid = wellHeader.at(0);
-        setSelectedWellboreHeader(uuid ?? null);
-        const intersection: Intersection = {
-            type: IntersectionType.WELLBORE,
-            uuid: uuid ?? "",
-        };
-        syncHelper.publishValue(SyncSettingKey.INTERSECTION, "global.syncValue.intersection", intersection);
-    }
-
-    function handleIntersectionExtensionLengthChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setIntersectionExtensionLength(parseFloat(event.target.value));
-    }
-
-    function handleIntersectionTypeChange(_: any, type: IntersectionType) {
-        setIntersectionType(type);
-        const uuid =
-            type === IntersectionType.WELLBORE ? selectedWellboreHeader?.uuid : selectedCustomIntersectionPolylineId;
-        const intersection: Intersection = {
-            type: type,
-            uuid: uuid ?? "",
-        };
-        syncHelper.publishValue(SyncSettingKey.INTERSECTION, "global.syncValue.intersection", intersection);
-    }
-
-    function handleCustomPolylineSelectionChange(customPolylineId: string[]) {
-        const uuid = customPolylineId.at(0) ?? null;
-        setSelectedCustomIntersectionPolylineId(uuid);
-        const intersection: Intersection = {
-            type: IntersectionType.CUSTOM_POLYLINE,
-            uuid: uuid ?? "",
-        };
-        syncHelper.publishValue(SyncSettingKey.INTERSECTION, "global.syncValue.intersection", intersection);
+        setSelectedFieldIdentifier(fieldIdentifier);
     }
 
     return (
         <div className="h-full flex flex-col gap-1">
-            <CollapsibleGroup title="Intersection" expanded>
-                <div className="flex flex-col gap-4 text-sm mb-4">
-                    <Label text="Field">
-                        <FieldDropdown
-                            ensembleSet={ensembleSet}
-                            value={selectedField}
-                            onChange={handleFieldIdentifierChange}
-                        />
-                    </Label>
-                    <RadioGroup
-                        options={[
-                            { label: "Wellbore", value: IntersectionType.WELLBORE },
-                            { label: "Custom polyline", value: IntersectionType.CUSTOM_POLYLINE },
-                        ]}
-                        direction="horizontal"
-                        value={intersectionType}
-                        onChange={handleIntersectionTypeChange}
-                    />
-                    <div
-                        className={resolveClassNames("flex flex-col gap-2", {
-                            hidden: intersectionType !== IntersectionType.WELLBORE,
-                        })}
-                    >
-                        <PendingWrapper isPending={wellHeaders.isFetching} errorMessage={wellHeadersErrorMessage}>
-                            <Select
-                                options={makeWellHeaderOptions(wellHeaders.data ?? [])}
-                                value={selectedWellboreHeader ? [selectedWellboreHeader.uuid] : []}
-                                onChange={handleWellHeaderSelectionChange}
-                                size={5}
-                                filter
-                                debounceTimeMs={600}
-                                disabled={intersectionType !== IntersectionType.WELLBORE}
-                            />
-                        </PendingWrapper>
-                    </div>
-                    <div
-                        className={resolveClassNames("flex flex-col gap-2", {
-                            hidden: intersectionType !== IntersectionType.CUSTOM_POLYLINE,
-                        })}
-                    >
-                        <Select
-                            filter
-                            options={makeCustomIntersectionPolylineOptions(availableUserCreatedIntersectionPolylines)}
-                            value={selectedCustomIntersectionPolylineId ? [selectedCustomIntersectionPolylineId] : []}
-                            onChange={handleCustomPolylineSelectionChange}
-                            size={5}
-                            debounceTimeMs={600}
-                            disabled={intersectionType !== IntersectionType.CUSTOM_POLYLINE}
-                            placeholder="No custom polylines"
-                        />
-                    </div>
-                    <Label text="Intersection extension length">
-                        <Input
-                            type="number"
-                            value={intersectionExtensionLength}
-                            min={0}
-                            debounceTimeMs={600}
-                            onChange={handleIntersectionExtensionLengthChange}
-                        />
-                    </Label>
-                </div>
+            <CollapsibleGroup title="Field" expanded>
+                <FieldDropdown
+                    ensembleSet={ensembleSet}
+                    value={selectedFieldIdentifier}
+                    onChange={handleFieldIdentifierChange}
+                />
             </CollapsibleGroup>
-            <div className="grow flex flex-col min-h-0">
-                <Layers
-                    ensembleSet={filteredEnsembleSet}
+            {dataProviderManager && (
+                <DataProviderManagerWrapper
+                    dataProviderManager={dataProviderManager}
                     workbenchSession={props.workbenchSession}
                     workbenchSettings={props.workbenchSettings}
-                    layerManager={layerManager}
                 />
-            </div>
+            )}
         </div>
     );
-}
-
-function makeWellHeaderOptions(wellHeaders: WellboreHeader_api[]): SelectOption[] {
-    return wellHeaders.map((wellHeader) => ({
-        value: wellHeader.wellboreUuid,
-        label: wellHeader.uniqueWellboreIdentifier,
-    }));
-}
-
-function makeCustomIntersectionPolylineOptions(polylines: IntersectionPolyline[]): SelectOption[] {
-    return polylines.map((polyline) => ({
-        label: polyline.name,
-        value: polyline.id,
-    }));
 }

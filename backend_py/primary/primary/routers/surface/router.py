@@ -217,7 +217,7 @@ async def post_get_surface_intersection(
         real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval_str
     )
     if surface is None:
-        raise HTTPException(status_code=404, detail="Surface '{name}' not found")
+        raise HTTPException(status_code=404, detail=f"Surface '{name}' not found")
 
     # Ensure name is applied
     surface.name = name

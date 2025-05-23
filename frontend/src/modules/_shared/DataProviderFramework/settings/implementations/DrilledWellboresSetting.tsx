@@ -1,9 +1,6 @@
 import React from "react";
 
-import { Deselect, SelectAll } from "@mui/icons-material";
-
 import type { WellboreHeader_api } from "@api";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 
@@ -25,14 +22,14 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
 
     fixupValue(
         currentValue: ValueType,
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_SELECT>
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_SELECT>,
     ): ValueType {
         if (!currentValue) {
             return availableValues;
         }
 
         const matchingValues = currentValue.filter((value) =>
-            availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid)
+            availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid),
         );
         if (matchingValues.length === 0) {
             return availableValues;
@@ -54,37 +51,19 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
                 props.onValueChange(selectedWellbores);
             }
 
-            function selectAll() {
-                const allUuids = availableValues.map((ident) => ident.wellboreUuid);
-                handleChange(allUuids);
-            }
-
-            function selectNone() {
-                handleChange([]);
-            }
-
             const selectedValues = React.useMemo(
                 () => props.value?.map((ident) => ident.wellboreUuid) ?? [],
-                [props.value]
+                [props.value],
             );
 
             return (
                 <div className="flex flex-col gap-1 mt-1">
-                    <div className="flex items-center gap-2">
-                        <DenseIconButton onClick={selectAll} title="Select all">
-                            <SelectAll fontSize="inherit" />
-                            Select all
-                        </DenseIconButton>
-                        <DenseIconButton onClick={selectNone} title="Clear selection">
-                            <Deselect fontSize="inherit" />
-                            Clear selection
-                        </DenseIconButton>
-                    </div>
                     <Select
                         filter
                         options={options}
                         value={selectedValues}
                         onChange={handleChange}
+                        showQuickSelectButtons={true}
                         disabled={props.isOverridden}
                         multiple={true}
                         size={5}

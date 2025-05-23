@@ -1,0 +1,190 @@
+import React from "react";
+
+import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { cloneDeep, isEqual } from "lodash";
+
+import type { ViewContext } from "@framework/ModuleContext";
+import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import type { Viewport } from "@framework/types/viewport";
+import type { WorkbenchServices } from "@framework/WorkbenchServices";
+import type { Bounds, LayerItem } from "@modules/_shared/components/EsvIntersection";
+import { Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
+import { isValidNumber, isValidViewport } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
+import type { Interfaces } from "@modules/Intersection/interfaces";
+
+import { ReadoutWrapper } from "./ReadoutWrapper";
+
+export type ViewportWrapperProps = {
+    wellboreHeaderUuid: string | null;
+    referenceSystem?: IntersectionReferenceSystem;
+    layerItems: LayerItem[];
+    layerItemIdToNameMap: Record<string, string>;
+    bounds: Bounds;
+    viewport: Viewport;
+    workbenchServices: WorkbenchServices;
+    viewContext: ViewContext<Interfaces>;
+};
+
+export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
+    const [prevPropViewport, setPrevPropViewport] = React.useState<Viewport | null>(null);
+
+    const [viewport, setViewport] = React.useState<Viewport | null>(null);
+    const [prevSyncedViewport, setPrevSyncedViewport] = React.useState<Viewport | null>(null);
+
+    const [verticalScale, setVerticalScale] = React.useState<number>(1);
+    const [prevSyncedVerticalScale, setPrevSyncedVerticalScale] = React.useState<number | null>(null);
+
+    const [showGrid, setShowGrid] = React.useState<boolean>(true);
+
+    const syncedSettingKeys = props.viewContext.useSyncedSettingKeys();
+    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices, props.viewContext);
+
+    const syncedCameraPosition = syncHelper.useValue(
+        SyncSettingKey.CAMERA_POSITION_INTERSECTION,
+        "global.syncValue.cameraPositionIntersection",
+    );
+
+    if (!isEqual(syncedCameraPosition, prevSyncedViewport)) {
+        setPrevSyncedViewport(cloneDeep(syncedCameraPosition));
+        if (syncedCameraPosition) {
+            setViewport(cloneDeep(syncedCameraPosition));
+        }
+    }
+
+    if (!isEqual(props.viewport, prevPropViewport)) {
+        setPrevPropViewport(props.viewport);
+
+        const newViewport = cloneDeep(props.viewport);
+
+        // Scale displacement based on data bounds
+        const [xMin, xMax] = props.bounds.x;
+        const [yMin, yMax] = props.bounds.y;
+        newViewport[2] = Math.max(xMax - xMin, (yMax - yMin) * verticalScale) * 1.4;
+
+        // Override viewport if prop changes
+        setViewport(newViewport);
+        props.workbenchServices.publishGlobalData(
+            "global.syncValue.cameraPositionIntersection",
+            props.viewport,
+            props.viewContext.getInstanceIdString(),
+        );
+    }
+
+    const syncedVerticalScale = syncHelper.useValue(SyncSettingKey.VERTICAL_SCALE, "global.syncValue.verticalScale");
+
+    if (syncedVerticalScale !== prevSyncedVerticalScale) {
+        setPrevSyncedVerticalScale(syncedVerticalScale);
+        if (syncedVerticalScale !== null) {
+            setVerticalScale(syncedVerticalScale);
+        }
+    }
+
+    const handleViewportChange = React.useCallback(
+        function handleViewportChange(newViewport: Viewport) {
+            if (!isValidViewport(newViewport)) {
+                throw new Error("Got invalid viewport: " + newViewport);
+            }
+
+            setViewport((prev) => {
+                if (!isEqual(newViewport, prev)) {
+                    return newViewport;
+                }
+                return prev;
+            });
+            props.workbenchServices.publishGlobalData(
+                "global.syncValue.cameraPositionIntersection",
+                newViewport,
+                props.viewContext.getInstanceIdString(),
+            );
+        },
+        [props.workbenchServices, props.viewContext],
+    );
+
+    const handleFitInViewClick = React.useCallback(
+        function handleFitInViewClick(): void {
+            if (props.bounds) {
+                let [xMin, xMax] = props.bounds.x;
+                let [yMin, yMax] = props.bounds.y;
+
+                // Ensure that the bounds are finite numbers
+                if (!isValidNumber(xMin)) xMin = 0;
+                if (!isValidNumber(xMax)) xMax = 0;
+                if (!isValidNumber(yMin)) yMin = 0;
+                if (!isValidNumber(yMax)) yMax = 0;
+
+                const centerX = xMin + (xMax - xMin) / 2;
+                const centerY = yMin + (yMax - yMin) / 2;
+                const newViewport: [number, number, number] = [
+                    centerX,
+                    centerY,
+                    Math.max(xMax - xMin, (yMax - yMin) * verticalScale) * 1.4,
+                ];
+                setViewport(newViewport);
+            }
+        },
+        [props.bounds, verticalScale],
+    );
+
+    const handleShowGridToggle = React.useCallback(function handleGridLinesToggle(active: boolean): void {
+        setShowGrid(active);
+    }, []);
+
+    const handleVerticalScaleIncrease = React.useCallback(
+        function handleVerticalScaleIncrease(): void {
+            setVerticalScale((prev) => {
+                const newVerticalScale = prev + 0.1;
+                setVerticalScale(newVerticalScale);
+                props.workbenchServices.publishGlobalData(
+                    "global.syncValue.verticalScale",
+                    newVerticalScale,
+                    props.viewContext.getInstanceIdString(),
+                );
+                return newVerticalScale;
+            });
+        },
+        [props.viewContext, props.workbenchServices],
+    );
+
+    const handleVerticalScaleDecrease = React.useCallback(
+        function handleVerticalScaleIncrease(): void {
+            setVerticalScale((prev) => {
+                const newVerticalScale = Math.max(0.1, prev - 0.1);
+                setVerticalScale(newVerticalScale);
+                props.workbenchServices.publishGlobalData(
+                    "global.syncValue.verticalScale",
+                    newVerticalScale,
+                    props.viewContext.getInstanceIdString(),
+                );
+                return newVerticalScale;
+            });
+        },
+        [props.viewContext, props.workbenchServices],
+    );
+
+    return (
+        <>
+            <ReadoutWrapper
+                wellboreHeaderUuid={props.wellboreHeaderUuid}
+                showGrid={showGrid}
+                verticalScale={verticalScale}
+                referenceSystem={props.referenceSystem ?? undefined}
+                layers={props.layerItems}
+                layerIdToNameMap={props.layerItemIdToNameMap}
+                bounds={props.bounds}
+                viewport={viewport ?? undefined}
+                onViewportChange={handleViewportChange}
+                workbenchServices={props.workbenchServices}
+                viewContext={props.viewContext}
+            />
+            <Toolbar
+                visible
+                zFactor={verticalScale}
+                gridVisible={showGrid}
+                onFitInView={handleFitInViewClick}
+                onGridLinesToggle={handleShowGridToggle}
+                onVerticalScaleIncrease={handleVerticalScaleIncrease}
+                onVerticalScaleDecrease={handleVerticalScaleDecrease}
+            />
+        </>
+    );
+}

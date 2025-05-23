@@ -46,6 +46,7 @@ def convert_wellbore_pick_to_schema(wellbore_pick: WellborePick) -> schemas.Well
         depthReferencePoint=wellbore_pick.depth_reference_point,
         mdUnit=wellbore_pick.md_unit,
         interpreter=wellbore_pick.interpreter,
+        obsNo=wellbore_pick.obs_no,
     )
 
 
