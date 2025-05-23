@@ -291,6 +291,9 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     }
 
     handleClickAway(): void {
+        if (this._editingMode === PolylineEditingMode.NONE) {
+            return;
+        }
         this._selectedPolylineId = null;
         if (this._editingMode !== PolylineEditingMode.DRAW) {
             this.setCurrentEditingPolylineId(null);

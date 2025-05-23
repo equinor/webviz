@@ -2,6 +2,7 @@ import React from "react";
 
 import {
     Add,
+    Check,
     FilterCenterFocus,
     GridOff,
     GridOn,
@@ -35,6 +36,7 @@ export type ToolbarProps = {
 };
 
 export function Toolbar(props: ToolbarProps): React.ReactNode {
+    const [showPolylines, setShowPolylines] = React.useState<boolean>(false);
     const [expanded, setExpanded] = React.useState<boolean>(false);
     const [gridVisible, setGridVisible] = React.useState<boolean>(false);
     const [polylineName, setPolylineName] = React.useState<string | null>(null);
@@ -83,7 +85,14 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
     }
 
     function handlePolylineNameChange(event: React.ChangeEvent<HTMLInputElement>) {
-        props.polylinesPlugin.setActivePolylineName(event.target.value);
+        setPolylineName(event.target.value);
+    }
+
+    function handleSavePolylineClick() {
+        if (!polylineName) {
+            return;
+        }
+        props.polylinesPlugin.handleClickAway();
     }
 
     return (
@@ -177,6 +186,13 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                 value={editingPolylineId ? polylineName : ""}
                                 onChange={handlePolylineNameChange}
                             />
+                            <Button
+                                title={"Save polyline"}
+                                onClick={handleSavePolylineClick}
+                                disabled={!editingPolylineId}
+                            >
+                                <Check fontSize="inherit" />
+                            </Button>
                         </div>
                     </>
                 )}
