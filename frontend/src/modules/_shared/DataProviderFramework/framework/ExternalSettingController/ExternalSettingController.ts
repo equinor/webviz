@@ -11,7 +11,7 @@ import {
 import { DataProvider } from "../DataProvider/DataProvider";
 import { DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
 import { Group } from "../Group/Group";
-import type { SettingManager } from "../SettingManager/SettingManager";
+import { type SettingManager, SettingTopic } from "../SettingManager/SettingManager";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 
 export class ExternalSettingController<
@@ -176,6 +176,11 @@ export class ExternalSettingController<
 
         if (this._setting.isStatic()) {
             this._setting.maybeResetPersistedValue();
+            // As the setting is static, we need to notify the subscribers of the value change
+            // as the shared setting might have a different value than its controlled settings
+            // and setAvailableValues is not called in this case - which would notify the subscribers
+            // of a possible value change.
+            this._setting.getPublishSubscribeDelegate().notifySubscribers(SettingTopic.VALUE);
             return;
         }
 
