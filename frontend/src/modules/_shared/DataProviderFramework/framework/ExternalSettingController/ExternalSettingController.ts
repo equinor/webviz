@@ -11,7 +11,7 @@ import {
 import { DataProvider } from "../DataProvider/DataProvider";
 import { DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
 import { Group } from "../Group/Group";
-import { SettingManager, SettingTopic } from "../SettingManager/SettingManager";
+import { type SettingManager, SettingTopic } from "../SettingManager/SettingManager";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 
 export class ExternalSettingController<
