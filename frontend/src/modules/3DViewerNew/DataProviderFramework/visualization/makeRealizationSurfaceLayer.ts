@@ -16,7 +16,7 @@ export function makeRealizationSurfaceLayer({
     getSetting,
 }: TransformerArgs<RealizationSurfaceSettings, RealizationSurfaceData>): MapLayer | null {
     const data = getData();
-    const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
+    const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
 
     if (!data) {
         return null;
@@ -35,11 +35,11 @@ export function makeRealizationSurfaceLayer({
             },
             valueRange: [data.surfaceData.value_min, data.surfaceData.value_max],
             colorMapRange: [data.surfaceData.value_min, data.surfaceData.value_max],
-            colorMapFunction: makeColorMapFunctionFromColorScale(
-                colorScale,
-                data.surfaceData.value_min,
-                data.surfaceData.value_max,
-            ),
+            colorMapFunction: makeColorMapFunctionFromColorScale(colorScaleSpec, {
+                valueMin: data.surfaceData.value_min,
+                valueMax: data.surfaceData.value_max,
+                unnormalize: true,
+            }),
             gridLines: false,
         });
     }
@@ -56,11 +56,11 @@ export function makeRealizationSurfaceLayer({
         },
         valueRange: [data.surfaceData.value_min, data.surfaceData.value_max],
         colorMapRange: [data.surfaceData.value_min, data.surfaceData.value_max],
-        colorMapFunction: makeColorMapFunctionFromColorScale(
-            colorScale,
-            data.surfaceData.value_min,
-            data.surfaceData.value_max,
-        ),
+        colorMapFunction: makeColorMapFunctionFromColorScale(colorScaleSpec, {
+            valueMin: data.surfaceData.value_min,
+            valueMax: data.surfaceData.value_max,
+            unnormalize: true,
+        }),
         gridLines: false,
     });
 }

@@ -10,6 +10,8 @@ import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramew
 import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { type SeismicSliceData_trans, transformSeismicSlice } from "../utils/transformSeismicSlice";
+import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
+import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
 
 const realizationSeismicCrosslineSettings = [
     Setting.ENSEMBLE,
@@ -37,6 +39,26 @@ export class RealizationSeismicCrosslineProvider
         >
 {
     settings = realizationSeismicCrosslineSettings;
+
+    getDefaultSettingsValues() {
+        const defaultColorPalette =
+            defaultContinuousDivergingColorPalettes.find((elm) => elm.getId() === "red-to-blue") ??
+            defaultContinuousDivergingColorPalettes[0];
+
+        const defaultColorScale = new ColorScale({
+            colorPalette: defaultColorPalette,
+            gradientType: ColorScaleGradientType.Diverging,
+            type: ColorScaleType.Continuous,
+            steps: 10,
+        });
+
+        return {
+            [Setting.COLOR_SCALE]: {
+                colorScale: defaultColorScale,
+                areBoundariesUserDefined: false,
+            },
+        };
+    }
 
     getDefaultName(): string {
         return "Seismic Crossline (realization)";

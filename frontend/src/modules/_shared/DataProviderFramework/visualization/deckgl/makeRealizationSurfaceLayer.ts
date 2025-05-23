@@ -38,7 +38,7 @@ export function makeRealizationSurfaceLayer({
     getSetting,
 }: TransformerArgs<RealizationSurfaceSettings, RealizationSurfaceData>): ColormapLayer | Grid3DLayer | null {
     const data = getData();
-    const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
+    const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
 
     if (!data) {
         return null;
@@ -52,11 +52,11 @@ export function makeRealizationSurfaceLayer({
             parameters: {
                 depthWriteEnabled: false,
             },
-            colorMapFunction: makeColorMapFunctionFromColorScale(
-                colorScale,
-                data.surfaceData.value_min,
-                data.surfaceData.value_max,
-            ),
+            colorMapFunction: makeColorMapFunctionFromColorScale(colorScaleSpec, {
+                valueMin: data.surfaceData.value_min,
+                valueMax: data.surfaceData.value_max,
+                unnormalize: true,
+            }),
         });
     }
 
@@ -72,10 +72,10 @@ export function makeRealizationSurfaceLayer({
         parameters: {
             depthWriteEnabled: false,
         },
-        colorMapFunction: makeColorMapFunctionFromColorScale(
-            colorScale,
-            data.surfaceData.value_min,
-            data.surfaceData.value_max,
-        ),
+        colorMapFunction: makeColorMapFunctionFromColorScale(colorScaleSpec, {
+            valueMin: data.surfaceData.value_min,
+            valueMax: data.surfaceData.value_max,
+            unnormalize: true,
+        }),
     });
 }

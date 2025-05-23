@@ -82,7 +82,7 @@ export function makeIntersectionLayer({
     getSetting,
 }: TransformerArgs<IntersectionRealizationGridSettings, PolylineIntersection_trans>): Grid3DLayer | null {
     const data = getData();
-    const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
+    const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
     const showGridLines = getSetting(Setting.SHOW_GRID_LINES);
 
     if (!data) {
@@ -100,11 +100,11 @@ export function makeIntersectionLayer({
         colorMapRange: [data.min_grid_prop_value, data.max_grid_prop_value],
         colorMapClampColor: true,
         coloringMode: TGrid3DColoringMode.Property,
-        colorMapFunction: makeColorMapFunctionFromColorScale(
-            colorScale,
-            data.min_grid_prop_value,
-            data.max_grid_prop_value,
-        ),
+        colorMapFunction: makeColorMapFunctionFromColorScale(colorScaleSpec, {
+            valueMin: data.min_grid_prop_value,
+            valueMax: data.max_grid_prop_value,
+            unnormalize: true,
+        }),
         ZIncreasingDownwards: false,
         gridLines: showGridLines ?? false,
         material: { ambient: 0.4, diffuse: 0.7, shininess: 8, specularColor: [25, 25, 25] },

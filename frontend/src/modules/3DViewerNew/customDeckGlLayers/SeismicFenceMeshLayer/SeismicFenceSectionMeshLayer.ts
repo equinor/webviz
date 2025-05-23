@@ -15,10 +15,10 @@ import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
 
 import { PreviewLayer } from "../PreviewLayer/PreviewLayer";
 
-import { ExtendedSimpleMeshLayer } from "./_private/ExtendedSimpleMeshLayer";
 // eslint-disable-next-line import/default
 import MeshWorker from "./_private/webworker/makeMesh.worker?worker";
 import { type WebworkerParameters, type WebworkerResult } from "./_private/webworker/types";
+import { ExtendedSimpleMeshLayer } from "./_private/ExtendedSimpleMeshLayer";
 
 export type SeismicFenceMeshLayerPickingInfo = {
     properties?: { name: string; value: number }[];
@@ -28,6 +28,7 @@ export type SeismicFenceSection = {
     numSamplesU: number;
     numSamplesV: number;
     properties: Float32Array;
+    propertiesOffset: number;
     boundingBox: number[][]; // [minX, minY, minZ, maxX, maxY, maxZ]
 };
 
@@ -106,11 +107,11 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
     private initArrayBuffers() {
         const { data } = this.props;
 
-        const totalNumVertices = data.numSamplesU * data.numSamplesV * 3;
+        const totalNumVertices = data.numSamplesU * data.numSamplesV;
         const totalNumIndices = (data.numSamplesU - 1) * (data.numSamplesV - 1) * 6;
 
-        this._verticesArray = new Float32Array(totalNumVertices * Float32Array.BYTES_PER_ELEMENT);
-        this._indicesArray = new Uint32Array(totalNumIndices * Uint32Array.BYTES_PER_ELEMENT);
+        this._verticesArray = new Float32Array(totalNumVertices * 3);
+        this._indicesArray = new Uint32Array(totalNumIndices);
     }
 
     private initColorsArray() {
@@ -234,11 +235,10 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
     private getProperty(vertexIndex: number): number {
         const { data } = this.props;
 
-        let offset = 0;
+        let offset = data.propertiesOffset;
         if (vertexIndex < offset + data.properties.length) {
             return data.properties[vertexIndex - offset];
         }
-        offset += data.properties.length;
 
         return 0;
     }

@@ -21,7 +21,11 @@ export enum Plane {
 function predictDepthSliceGeometry({
     getSetting,
     getStoredData,
-}: TransformerArgs<any, SeismicSliceData_trans, RealizationSeismicDepthSliceStoredData>): Geometry | null {
+}: TransformerArgs<
+    [Setting.ATTRIBUTE, Setting.TIME_OR_INTERVAL, Setting.SEISMIC_DEPTH_SLICE],
+    SeismicSliceData_trans,
+    RealizationSeismicDepthSliceStoredData
+>): Geometry | null {
     const attribute = getSetting(Setting.ATTRIBUTE);
     const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
     const seismicDepthSliceNumber = getSetting(Setting.SEISMIC_DEPTH_SLICE);
@@ -87,7 +91,11 @@ function predictDepthSliceGeometry({
 function predictCrosslineGeometry({
     getSetting,
     getStoredData,
-}: TransformerArgs<any, SeismicSliceData_trans, RealizationSeismicDepthSliceStoredData>): Geometry | null {
+}: TransformerArgs<
+    [Setting.ATTRIBUTE, Setting.TIME_OR_INTERVAL, Setting.SEISMIC_CROSSLINE],
+    SeismicSliceData_trans,
+    RealizationSeismicDepthSliceStoredData
+>): Geometry | null {
     const attribute = getSetting(Setting.ATTRIBUTE);
     const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
     const seismicCrosslineNumber = getSetting(Setting.SEISMIC_CROSSLINE);
@@ -155,7 +163,11 @@ function predictCrosslineGeometry({
 function predictInlineGeometry({
     getSetting,
     getStoredData,
-}: TransformerArgs<any, SeismicSliceData_trans, RealizationSeismicDepthSliceStoredData>): Geometry | null {
+}: TransformerArgs<
+    [Setting.ATTRIBUTE, Setting.TIME_OR_INTERVAL, Setting.SEISMIC_INLINE],
+    SeismicSliceData_trans,
+    RealizationSeismicDepthSliceStoredData
+>): Geometry | null {
     const attribute = getSetting(Setting.ATTRIBUTE);
     const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
     const seismicInlineNumber = getSetting(Setting.SEISMIC_INLINE);
@@ -226,7 +238,7 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
     ): Layer<any> | null {
         const { id, name, getData, getSetting, isLoading } = args;
         const data = getData();
-        const colorScale = getSetting("colorScale")?.colorScale;
+        const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
 
         if (!data) {
             return null;
@@ -243,6 +255,9 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
 
         if (plane === Plane.DEPTH) {
             const seismicDepthSlice = getSetting(Setting.SEISMIC_DEPTH_SLICE);
+            if (seismicDepthSlice === null) {
+                return null;
+            }
             bbox = [
                 [data.bbox_utm[0][0], data.bbox_utm[0][1], seismicDepthSlice],
                 [data.bbox_utm[3][0], data.bbox_utm[3][1], seismicDepthSlice],
@@ -265,12 +280,17 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
                     {
                         boundingBox: bbox,
                         properties: data.dataFloat32Arr,
+                        propertiesOffset: 0,
                         numSamplesU: data.u_num_samples,
                         numSamplesV: data.v_num_samples,
                     },
                 ],
             },
-            colorMapFunction: makeColorMapFunctionFromColorScale(colorScale, data.value_min, data.value_max, false),
+            colorMapFunction: makeColorMapFunctionFromColorScale(colorScaleSpec, {
+                valueMin: data.value_min,
+                valueMax: data.value_max,
+                midPoint: 0,
+            }),
             zIncreaseDownwards: true,
             isLoading,
             loadingGeometry: predictedGeometry ?? undefined,

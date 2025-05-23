@@ -16,14 +16,14 @@ export function makeRealizationGridLayer(
 ): Grid3DLayer | null {
     const { id, getData, getSetting, isLoading } = args;
     const data = getData();
-    let colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
+    let colorScaleSpec = getSetting(Setting.COLOR_SCALE);
 
-    if (!data || !colorScale) {
+    if (!data || !colorScaleSpec) {
         return null;
     }
 
     if (isLoading) {
-        colorScale = new ColorScale({
+        colorScaleSpec.colorScale = new ColorScale({
             colorPalette: new ColorPalette({
                 name: "Loading",
                 colors: ["#EEEEEE", "#EFEFEF"],
@@ -53,11 +53,11 @@ export function makeRealizationGridLayer(
         colorMapName: "Physics",
         colorMapClampColor: true,
         colorMapRange: [gridParameterData.min_grid_prop_value, gridParameterData.max_grid_prop_value],
-        colorMapFunction: makeColorMapFunctionFromColorScale(
-            colorScale,
-            gridParameterData.min_grid_prop_value,
-            gridParameterData.max_grid_prop_value,
-        ),
+        colorMapFunction: makeColorMapFunctionFromColorScale(colorScaleSpec, {
+            valueMin: gridParameterData.min_grid_prop_value,
+            valueMax: gridParameterData.max_grid_prop_value,
+            unnormalize: true,
+        }),
     });
     return grid3dLayer;
 }

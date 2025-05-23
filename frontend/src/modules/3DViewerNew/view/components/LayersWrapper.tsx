@@ -126,6 +126,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     RealizationSeismicInlineProvider,
     {
         transformToVisualization: makeSeismicFenceMeshLayerFunction(Plane.INLINE),
+        transformToAnnotations: makeColorScaleAnnotation,
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
@@ -133,6 +134,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     RealizationSeismicCrosslineProvider,
     {
         transformToVisualization: makeSeismicFenceMeshLayerFunction(Plane.CROSSLINE),
+        transformToAnnotations: makeColorScaleAnnotation,
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
@@ -140,6 +142,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     RealizationSeismicDepthSliceProvider,
     {
         transformToVisualization: makeSeismicFenceMeshLayerFunction(Plane.DEPTH),
+        transformToAnnotations: makeColorScaleAnnotation,
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
