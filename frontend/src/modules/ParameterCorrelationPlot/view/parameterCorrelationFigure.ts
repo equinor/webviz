@@ -64,8 +64,12 @@ export class ParameterCorrelationFigure {
         });
     }
 
-    build(handleOnClick?: ((event: Readonly<Plotly.PlotMouseEvent>) => void) | undefined): React.ReactNode {
-        return this._figure.makePlot({ onClick: handleOnClick });
+    buildData() {
+        return this._figure.makeData();
+    }
+
+    buildLayout() {
+        return this._figure.makeLayout();
     }
 }
 

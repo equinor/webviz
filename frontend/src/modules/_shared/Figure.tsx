@@ -1,7 +1,5 @@
 import { merge } from "lodash";
 import type { Annotations, AxisType, Data, Layout, PlotData, Shape, XAxisName, YAxisName } from "plotly.js";
-import type { PlotParams } from "react-plotly.js";
-import Plot from "react-plotly.js";
 
 /**
  * Enum for axis coordinate domain.
@@ -192,27 +190,6 @@ export class Figure {
 
     updateLayout(patch: Partial<Layout>): void {
         merge(this._plotLayout, patch);
-    }
-
-    /**
-     * @deprecated Use the Plot component, combined with makeData() and makeLayout() instead
-     */
-    makePlot(plotArgs?: Omit<PlotParams, "data" | "layout">): React.ReactNode {
-        const config = plotArgs?.config ?? {
-            displaylogo: false,
-            responsive: true,
-            modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "resetScale2d"],
-        };
-
-        return (
-            <Plot
-                key={this._plotData.length} // Note: Temporary to trigger re-render and remove legends when plotData is empty
-                data={this._plotData}
-                layout={this.makeLayout()}
-                config={config}
-                {...plotArgs}
-            />
-        );
     }
 
     private makeYAxisRef(axisIndex: number, coordinateDomain: CoordinateDomain): YAxisName {

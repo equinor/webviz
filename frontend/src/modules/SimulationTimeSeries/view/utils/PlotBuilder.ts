@@ -1,5 +1,3 @@
-import type React from "react";
-
 import type { Annotations, PlotMarker, Shape } from "plotly.js";
 import type { PlotParams } from "react-plotly.js";
 
@@ -279,29 +277,6 @@ export class PlotBuilder {
             layout: this._figure.makeLayout(),
             ...customProps,
         };
-    }
-
-    /**
-     * @deprecated
-     * @param handleOnClick
-     * @returns
-     */
-    build(handleOnClick?: ((event: Readonly<Plotly.PlotMouseEvent>) => void) | undefined): React.ReactNode {
-        this.createGraphLegends();
-        this.updateSubplotTitles();
-
-        // Add time annotations and shapes
-        for (let index = 0; index < this._numberOfSubplots; index++) {
-            const { row, col } = this.getSubplotRowAndColFromIndex(index);
-            for (const timeAnnotation of this.createTimeAnnotations()) {
-                this._figure.addAnnotation(timeAnnotation, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
-            }
-            for (const timeShape of this.createTimeShapes()) {
-                this._figure.addShape(timeShape, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
-            }
-        }
-
-        return this._figure.makePlot({ onClick: handleOnClick });
     }
 
     addRealizationTracesColoredByParameter(

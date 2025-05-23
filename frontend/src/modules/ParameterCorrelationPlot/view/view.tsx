@@ -15,6 +15,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { Plot } from "@modules/_shared/components/Plot";
 import type { ResponseData } from "@modules/_shared/rankParameter";
 import { createRankedParameterCorrelations } from "@modules/_shared/rankParameter";
 
@@ -46,7 +47,10 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
     const [prevParameterIdentString, setPrevParameterIdentString] = React.useState<string | null>(null);
 
     const syncedSettingKeys = viewContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
+    const syncHelper = React.useMemo(
+        () => new SyncSettingsHelper(syncedSettingKeys, workbenchServices),
+        [syncedSettingKeys, workbenchServices],
+    );
     const globalSyncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
 
     // Receive global string and update local state if different
@@ -59,15 +63,18 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
         [globalSyncedParameter, localParameterString],
     );
 
-    function handleClickInChart(e: PlotMouseEvent) {
-        const clickedPoint: PlotDatum = e.points[0];
-        if (!clickedPoint) {
-            return;
-        }
-        const newParameterString = clickedPoint.customdata as string;
-        syncHelper.publishValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter", newParameterString);
-        setLocalParameterString(newParameterString);
-    }
+    const handleClickInChart = React.useCallback(
+        function handleClickInChart(e: PlotMouseEvent) {
+            const clickedPoint: PlotDatum = e.points[0];
+            if (!clickedPoint) {
+                return;
+            }
+            const newParameterString = clickedPoint.customdata as string;
+            syncHelper.publishValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter", newParameterString);
+            setLocalParameterString(newParameterString);
+        },
+        [syncHelper],
+    );
 
     const numParams = viewContext.useSettingsToViewInterfaceValue("numParams");
     const corrCutOff = viewContext.useSettingsToViewInterfaceValue("corrCutOff");
@@ -189,7 +196,8 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                     cellIndex++;
                 }
             }
-            setContent(figure.build(handleClickInChart));
+
+            setContent(<Plot data={figure.buildData()} layout={figure.buildLayout()} onClick={handleClickInChart} />);
             return;
         });
     }

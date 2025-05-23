@@ -9,6 +9,7 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { Plot } from "@modules/_shared/components/Plot";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 import type { Interfaces } from "./interfaces";
@@ -88,7 +89,7 @@ export function View({ viewContext, workbenchSettings, workbenchSession }: Modul
         pvtPlotBuilder.makeLayout(selectedPhase, selectedPlots, wrapperDivSize);
         pvtPlotBuilder.makeTraces(selectedPlots, selectedPvtNums, selectedPhase, selectedColorBy, colorSet);
 
-        return pvtPlotBuilder.makePlot();
+        return <Plot layout={pvtPlotBuilder.buildLayout()} data={pvtPlotBuilder.buildData()} />;
     }
 
     return (
