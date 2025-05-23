@@ -8,7 +8,7 @@ export type PlotProps = {
     /**
      * Informs if data/layout changes are ready to be applied
      */
-    plotUpdateReady: boolean;
+    plotUpdateReady?: boolean;
 } & PlotParams;
 
 const DEFAULT_CONFIG: Partial<Plotly.Config> = {
@@ -33,6 +33,9 @@ const DEFAULT_LAYOUT: Partial<Plotly.Layout> = {
 export function Plot(props: PlotProps): React.ReactNode {
     const { plotUpdateReady, layout, data, config, ...otherProps } = props;
 
+    // Default to true if not defined
+    const shouldApplyPlotUpdate = plotUpdateReady ?? true;
+
     // Store previous prop to avoid unnecessary rerenders
     const [prevLayout, setPrevLayout] = React.useState<PlotParams["layout"]>(layout);
     const [prevData, setPrevData] = React.useState<PlotParams["data"]>(data);
@@ -46,22 +49,22 @@ export function Plot(props: PlotProps): React.ReactNode {
 
     const [otherPropsStable, setOtherPropsStable] = React.useState<typeof otherProps>(otherProps);
 
-    if (plotUpdateReady && !_.isEqual(prevLayout, layout)) {
+    if (shouldApplyPlotUpdate && !_.isEqual(prevLayout, layout)) {
         setPrevLayout(layout);
         setLayoutStable(_.cloneDeep(layout));
     }
 
-    if (plotUpdateReady && !_.isEqual(prevData, data)) {
+    if (shouldApplyPlotUpdate && !_.isEqual(prevData, data)) {
         setPrevData(data);
         setDataStable(_.cloneDeep(data));
     }
 
-    if (plotUpdateReady && !_.isEqual(prevConfig, config)) {
+    if (shouldApplyPlotUpdate && !_.isEqual(prevConfig, config)) {
         setPrevConfig(config);
         setConfigStable(_.cloneDeep(config));
     }
 
-    if (plotUpdateReady && !_.isEqual(otherPropsStable, otherProps)) {
+    if (shouldApplyPlotUpdate && !_.isEqual(otherPropsStable, otherProps)) {
         setOtherPropsStable(otherProps);
     }
 
