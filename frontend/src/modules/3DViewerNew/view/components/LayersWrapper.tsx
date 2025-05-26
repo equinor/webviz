@@ -181,7 +181,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const globalColorScales = globalAnnotations.filter((el) => "colorScale" in el);
     const globalLayerIds: string[] = ["placeholder", "axes"];
     const usedPolylineIds = assemblerProduct.accumulatedData.polylineIds;
-    const hoverVisualizationFunctions = assemblerProduct.hoverVisualizationsFunctions;
+    const hoverVisualizationFunctions = assemblerProduct.hoverVisualizationFunctions;
 
     for (const item of assemblerProduct.children) {
         if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {

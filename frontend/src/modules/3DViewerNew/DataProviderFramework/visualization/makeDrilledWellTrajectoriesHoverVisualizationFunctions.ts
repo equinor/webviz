@@ -1,10 +1,10 @@
 import type { WellboreTrajectory_api } from "@api";
 import type { Color } from "@deck.gl/core";
 import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
-import { BiconeLayer } from "@modules/3DViewerNew/customDeckGlLayers/DiscLayer";
+import { BiconeLayer } from "@modules/3DViewerNew/customDeckGlLayers/BiconeLayer";
 import type { GeoWellFeature } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import type {
-    HoverVisualizationsFunctions,
+    HoverVisualizationFunctions,
     TransformerArgs,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
@@ -13,7 +13,7 @@ import type { LineString, Point } from "geojson";
 
 export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
     args: TransformerArgs<any, WellboreTrajectory_api[], any>,
-): HoverVisualizationsFunctions<VisualizationTarget.DECK_GL> {
+): HoverVisualizationFunctions<VisualizationTarget.DECK_GL> {
     const { id, getData } = args;
 
     const wellboreTrajectories = getData();

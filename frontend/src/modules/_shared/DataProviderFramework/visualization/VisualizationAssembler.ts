@@ -25,7 +25,6 @@ import { instanceofItemGroup } from "../interfacesAndTypes/entities";
 import type { StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { SettingTypes, Settings } from "../settings/settingsDefinitions";
-import type { HighlightItem } from "@modules/_shared/components/EsvIntersection/types";
 
 export enum VisualizationItemType {
     DATA_PROVIDER_VISUALIZATION = "data-provider-visualization",
@@ -477,7 +476,7 @@ export class VisualizationAssembler<
             return {};
         }
 
-        return func({ ...this.makeFactoryFunctionArgs.bind(this)(dataProvider, injectedData) });
+        return func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
     }
 
     private makeDataProviderBoundingBox(

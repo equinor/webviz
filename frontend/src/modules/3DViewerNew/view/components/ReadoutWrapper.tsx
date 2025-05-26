@@ -22,9 +22,8 @@ import {
     type SubsurfaceViewerWithCameraStateProps,
 } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
-import { useProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useProviderHoverVisualizations";
 import type {
-    HoverVisualizationsFunctions,
+    HoverVisualizationFunctions,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
@@ -33,6 +32,7 @@ import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSub
 import { DeckGlInstanceManagerTopic, type DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
 
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
+import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useProviderHoverVisualizations";
 
 export type ReadoutWrapperProps = {
     views: ViewsTypeExtended;
@@ -45,7 +45,7 @@ export type ReadoutWrapperProps = {
     triggerHome: number;
     deckGlRef: React.RefObject<DeckGLRef | null>;
     children?: React.ReactNode;
-    hoverVisualizationFunctions: HoverVisualizationsFunctions<VisualizationTarget.DECK_GL>;
+    hoverVisualizationFunctions: HoverVisualizationFunctions<VisualizationTarget.DECK_GL>;
 };
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
@@ -61,7 +61,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     React.useImperativeHandle(props.deckGlRef, () => deckGlRef.current);
     usePublishSubscribeTopicValue(props.deckGlManager, DeckGlInstanceManagerTopic.REDRAW);
 
-    const hoverLayers = useProviderHoverVisualizations<VisualizationTarget.DECK_GL>(
+    const hoverLayers = useSubscribedProviderHoverVisualizations<VisualizationTarget.DECK_GL>(
         props.hoverVisualizationFunctions,
         props.workbenchServices,
     );
