@@ -92,7 +92,7 @@ export type VisualizationGroup<
     combinedBoundingBox: bbox.BBox | null;
     numLoadingDataProviders: number;
     accumulatedData: TAccumulatedData;
-    hoverVisualizationsFunctions: HoverVisualizationFunctions<TTarget>;
+    hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget>;
     customProps: TCustomGroupProps[TGroupType];
 };
 
@@ -282,7 +282,7 @@ export class VisualizationAssembler<
         )[] = [];
         const annotations: Annotation[] = [];
         const aggregatedErrorMessages: (StatusMessage | string)[] = [];
-        let hoverVisualizationsFunctions: HoverVisualizationFunctions<TTarget> = {};
+        let hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget> = {};
         let numLoadingDataProviders = 0;
         let combinedBoundingBox: bbox.BBox | null = null;
 
@@ -308,9 +308,9 @@ export class VisualizationAssembler<
 
                 accumulatedData = product.accumulatedData;
                 aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
-                hoverVisualizationsFunctions = this.mergeHoverVisualizationFunctions(
-                    hoverVisualizationsFunctions,
-                    product.hoverVisualizationsFunctions,
+                hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
+                    hoverVisualizationFunctions,
+                    product.hoverVisualizationFunctions,
                 );
                 numLoadingDataProviders += product.numLoadingDataProviders;
                 maybeApplyBoundingBox(product.combinedBoundingBox);
@@ -358,9 +358,9 @@ export class VisualizationAssembler<
                 maybeApplyBoundingBox(providerBoundingBox);
                 children.push(dataProviderVisualization);
                 annotations.push(...this.makeDataProviderAnnotations(child));
-                hoverVisualizationsFunctions = this.mergeHoverVisualizationFunctions(
-                    hoverVisualizationsFunctions,
-                    this.makeDataProviderHoverVisualizationsFunction(child, injectedData),
+                hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
+                    hoverVisualizationFunctions,
+                    this.makeDataProviderHoverVisualizationFunctions(child, injectedData),
                 );
                 accumulatedData = this.accumulateDataProviderData(child, accumulatedData) ?? accumulatedData;
             }
@@ -378,7 +378,7 @@ export class VisualizationAssembler<
             annotations: annotations,
             numLoadingDataProviders: numLoadingDataProviders,
             accumulatedData,
-            hoverVisualizationsFunctions: hoverVisualizationsFunctions,
+            hoverVisualizationFunctions: hoverVisualizationFunctions,
             customProps: {} as TCustomGroupProps,
         };
     }
@@ -408,7 +408,7 @@ export class VisualizationAssembler<
             combinedBoundingBox: null,
             numLoadingDataProviders: 0,
             accumulatedData: {} as TAccumulatedData,
-            hoverVisualizationsFunctions: {},
+            hoverVisualizationFunctions: {},
             customProps:
                 func?.({
                     id: group.getItemDelegate().getId(),
@@ -467,7 +467,7 @@ export class VisualizationAssembler<
         };
     }
 
-    private makeDataProviderHoverVisualizationsFunction(
+    private makeDataProviderHoverVisualizationFunctions(
         dataProvider: DataProvider<any, any, any>,
         injectedData?: TInjectedData,
     ): HoverVisualizationFunctions<TTarget> {
