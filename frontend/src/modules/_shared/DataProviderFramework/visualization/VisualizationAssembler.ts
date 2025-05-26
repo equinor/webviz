@@ -92,7 +92,7 @@ export type VisualizationGroup<
     combinedBoundingBox: bbox.BBox | null;
     numLoadingDataProviders: number;
     accumulatedData: TAccumulatedData;
-    hoverVisualizationsFunctions: HoverVisualizationsFunctions<TTarget>;
+    hoverVisualizationsFunctions: HoverVisualizationFunctions<TTarget>;
     customProps: TCustomGroupProps[TGroupType];
 };
 
@@ -153,7 +153,7 @@ type PickMatching<T, Pattern extends string> = {
 
 export type HoverTopicDefinitions = PickMatching<GlobalTopicDefinitions, `global.hover${string}`>;
 
-export type HoverVisualizationsFunctions<TTarget extends VisualizationTarget> = Partial<{
+export type HoverVisualizationFunctions<TTarget extends VisualizationTarget> = Partial<{
     [K in keyof HoverTopicDefinitions]: (
         hoverInfo: HoverTopicDefinitions[K],
     ) => DataProviderHoverVisualizationTargetTypes[TTarget][];
@@ -176,7 +176,7 @@ export type HoverVisualizationTransformer<
     TTarget extends VisualizationTarget,
     TStoredData extends StoredData = Record<string, never>,
     TInjectedData extends Record<string, any> = never,
-> = (args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>) => HoverVisualizationsFunctions<TTarget>;
+> = (args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>) => HoverVisualizationFunctions<TTarget>;
 
 export type BoundingBoxTransformer<
     TSettings extends Settings,
@@ -282,7 +282,7 @@ export class VisualizationAssembler<
         )[] = [];
         const annotations: Annotation[] = [];
         const aggregatedErrorMessages: (StatusMessage | string)[] = [];
-        let hoverVisualizationsFunctions: HoverVisualizationsFunctions<TTarget> = {};
+        let hoverVisualizationsFunctions: HoverVisualizationFunctions<TTarget> = {};
         let numLoadingDataProviders = 0;
         let combinedBoundingBox: bbox.BBox | null = null;
 
@@ -470,7 +470,7 @@ export class VisualizationAssembler<
     private makeDataProviderHoverVisualizationsFunction(
         dataProvider: DataProvider<any, any, any>,
         injectedData?: TInjectedData,
-    ): HoverVisualizationsFunctions<TTarget> {
+    ): HoverVisualizationFunctions<TTarget> {
         const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToHoverVisualization;
         if (!func) {
             return {};
@@ -517,10 +517,10 @@ export class VisualizationAssembler<
     }
 
     private mergeHoverVisualizationFunctions(
-        base: HoverVisualizationsFunctions<TTarget>,
-        additional: HoverVisualizationsFunctions<TTarget>,
-    ): HoverVisualizationsFunctions<TTarget> {
-        const merged: HoverVisualizationsFunctions<TTarget> = { ...base };
+        base: HoverVisualizationFunctions<TTarget>,
+        additional: HoverVisualizationFunctions<TTarget>,
+    ): HoverVisualizationFunctions<TTarget> {
+        const merged: HoverVisualizationFunctions<TTarget> = { ...base };
 
         for (const key in additional) {
             const typedKey = key as keyof HoverTopicDefinitions;
