@@ -9,7 +9,6 @@ import { useMultiViewPicking } from "@webviz/subsurface-viewer/dist/hooks/useMul
 import { WellLabelLayer } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
 import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 import type { Feature } from "geojson";
-import { isEqual } from "lodash";
 
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
@@ -23,7 +22,7 @@ import {
 } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
 import type {
-    HoverVisualizationFunctions,
+    AssemblerProduct,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
@@ -32,7 +31,7 @@ import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSub
 import { DeckGlInstanceManagerTopic, type DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
 
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
-import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useProviderHoverVisualizations";
+import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
 
 export type ReadoutWrapperProps = {
     views: ViewsTypeExtended;
@@ -45,7 +44,7 @@ export type ReadoutWrapperProps = {
     triggerHome: number;
     deckGlRef: React.RefObject<DeckGLRef | null>;
     children?: React.ReactNode;
-    hoverVisualizationFunctions: HoverVisualizationFunctions<VisualizationTarget.DECK_GL>;
+    assemblerProduct: AssemblerProduct<VisualizationTarget.DECK_GL, any, any>;
 };
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
@@ -61,8 +60,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     React.useImperativeHandle(props.deckGlRef, () => deckGlRef.current);
     usePublishSubscribeTopicValue(props.deckGlManager, DeckGlInstanceManagerTopic.REDRAW);
 
-    const hoverLayers = useSubscribedProviderHoverVisualizations<VisualizationTarget.DECK_GL>(
-        props.hoverVisualizationFunctions,
+    const hoverVisualizations = useSubscribedProviderHoverVisualizations<VisualizationTarget.DECK_GL>(
+        props.assemblerProduct,
         props.workbenchServices,
     );
 
@@ -88,6 +87,21 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             sizePx: 32,
         },
     });
+
+    const adjustedLayersWithHoverVisualizations = [...adjustedLayers];
+    const adjustedViewportsWithHoverVisualizations = [...adjustedViewports];
+
+    for (const hoverVisualization of hoverVisualizations) {
+        for (const viewport of adjustedViewportsWithHoverVisualizations) {
+            if (hoverVisualization.groupId === viewport.id) {
+                viewport.layerIds = [
+                    ...(viewport.layerIds ?? []),
+                    ...hoverVisualization.hoverVisualizations.map((v) => v.id),
+                ];
+                adjustedLayersWithHoverVisualizations.push(...hoverVisualization.hoverVisualizations);
+            }
+        }
+    }
 
     function handleMouseHover(event: MapMouseEvent): void {
         getPickingInfo(event);
@@ -121,10 +135,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         id: `subsurface-viewer-${id}`,
         views: {
             ...props.views,
-            viewports: adjustedViewports.map((viewport) => ({
-                ...viewport,
-                layerIds: [...(viewport.layerIds ?? []), ...hoverLayers.map((layer) => layer.id)],
-            })),
+            viewports: adjustedViewportsWithHoverVisualizations,
             layout: props.views?.layout ?? [1, 1],
         },
         verticalScale: props.verticalScale,
@@ -144,14 +155,16 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         },
         triggerHome: props.triggerHome,
         pickingRadius: 5,
-        layers: [...adjustedLayers, ...hoverLayers],
+        layers: adjustedLayersWithHoverVisualizations,
         onMouseEvent: handleMouseEvent,
         getTooltip: tooltip,
     });
 
+    /*
     if (!isEqual(deckGlProps.views, storedDeckGlViews)) {
         setStoredDeckGlViews(deckGlProps.views);
     }
+    */
 
     const handleMainDivLeave = React.useCallback(() => setHideReadout(true), []);
     const handleMainDivEnter = React.useCallback(() => setHideReadout(false), []);
@@ -164,7 +177,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onMouseLeave={handleMainDivLeave}
         >
             {props.children}
-            <SubsurfaceViewerWithCameraState {...deckGlProps} views={storedDeckGlViews}>
+            <SubsurfaceViewerWithCameraState {...deckGlProps}>
                 {props.views.viewports.map((viewport) => (
                     // @ts-expect-error -- This class is marked as abstract, but seems to just work as is
                     // ? Should we do a proper implementation of the class??

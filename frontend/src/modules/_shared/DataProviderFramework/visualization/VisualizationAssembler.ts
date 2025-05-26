@@ -316,7 +316,12 @@ export class VisualizationAssembler<
                 maybeApplyBoundingBox(product.combinedBoundingBox);
 
                 if (child instanceof Group) {
-                    const group = this.makeGroup(child, product.children, product.annotations);
+                    const group = this.makeGroup(
+                        child,
+                        product.children,
+                        product.annotations,
+                        product.hoverVisualizationFunctions,
+                    );
 
                     children.push(group);
                     continue;
@@ -393,6 +398,7 @@ export class VisualizationAssembler<
             | DataProviderVisualization<TTarget>
         )[],
         annotations: Annotation[],
+        hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget> = {},
     ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
         const func = this._groupCustomPropsCollectors.get(group.getGroupType());
 
@@ -408,7 +414,7 @@ export class VisualizationAssembler<
             combinedBoundingBox: null,
             numLoadingDataProviders: 0,
             accumulatedData: {} as TAccumulatedData,
-            hoverVisualizationFunctions: {},
+            hoverVisualizationFunctions,
             customProps:
                 func?.({
                     id: group.getItemDelegate().getId(),

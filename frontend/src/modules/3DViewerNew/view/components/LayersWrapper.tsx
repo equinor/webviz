@@ -278,7 +278,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
             workbenchSettings={props.workbenchSettings}
             workbenchServices={props.workbenchServices}
             usedPolylineIds={usedPolylineIds}
-            hoverVisualizationFunctions={hoverVisualizationFunctions}
+            assemblerProduct={assemblerProduct}
         />
     );
 }
