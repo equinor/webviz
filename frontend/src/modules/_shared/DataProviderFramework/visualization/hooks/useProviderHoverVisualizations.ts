@@ -5,7 +5,7 @@ import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type {
     DataProviderHoverVisualizationTargetTypes,
     HoverTopicDefinitions,
-    HoverVisualizationFunctions as HoverVisualizationFunctions,
+    HoverVisualizationFunctions,
     VisualizationTarget,
 } from "../VisualizationAssembler";
 
