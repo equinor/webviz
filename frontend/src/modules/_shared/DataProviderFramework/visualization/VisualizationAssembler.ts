@@ -476,7 +476,7 @@ export class VisualizationAssembler<
             return {};
         }
 
-        return func({ ...this.makeFactoryFunctionArgs.bind(this)(dataProvider, injectedData) });
+        return func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
     }
 
     private makeDataProviderBoundingBox(
