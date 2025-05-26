@@ -13,6 +13,7 @@ export enum ModuleDataTagId {
     WELL_COMPLETIONS = "well-completions",
     VFP = "vfp",
     POLYGONS = "polygons",
+    RELPERM = "relperm",
 }
 
 export type ModuleDataTag = {
@@ -36,6 +37,16 @@ export const ModuleDataTags: ModuleDataTag[] = [
         id: ModuleDataTagId.POLYGONS,
         name: "Polygons",
         description: "Polygons",
+    },
+    {
+        id: ModuleDataTagId.VFP,
+        name: "VFP",
+        description: "VFP data",
+    },
+    {
+        id: ModuleDataTagId.RELPERM,
+        name: "Relative permeability",
+        description: "Relative permeability data",
     },
     {
         id: ModuleDataTagId.GROUP_TREE,
