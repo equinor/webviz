@@ -32,6 +32,7 @@ import { DeckGlInstanceManagerTopic, type DeckGlInstanceManager } from "../utils
 
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
+import { cloneDeep, isEqual } from "lodash";
 
 export type ReadoutWrapperProps = {
     views: ViewsTypeExtended;
@@ -88,8 +89,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         },
     });
 
-    const adjustedLayersWithHoverVisualizations = [...adjustedLayers];
-    const adjustedViewportsWithHoverVisualizations = [...adjustedViewports];
+    const adjustedLayersWithHoverVisualizations = cloneDeep(adjustedLayers);
+    const adjustedViewportsWithHoverVisualizations = cloneDeep(adjustedViewports);
 
     for (const hoverVisualization of hoverVisualizations) {
         for (const viewport of adjustedViewportsWithHoverVisualizations) {
@@ -160,11 +161,9 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         getTooltip: tooltip,
     });
 
-    /*
     if (!isEqual(deckGlProps.views, storedDeckGlViews)) {
         setStoredDeckGlViews(deckGlProps.views);
     }
-    */
 
     const handleMainDivLeave = React.useCallback(() => setHideReadout(true), []);
     const handleMainDivEnter = React.useCallback(() => setHideReadout(false), []);
@@ -177,7 +176,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onMouseLeave={handleMainDivLeave}
         >
             {props.children}
-            <SubsurfaceViewerWithCameraState {...deckGlProps}>
+            <SubsurfaceViewerWithCameraState {...deckGlProps} views={storedDeckGlViews}>
                 {props.views.viewports.map((viewport) => (
                     // @ts-expect-error -- This class is marked as abstract, but seems to just work as is
                     // ? Should we do a proper implementation of the class??

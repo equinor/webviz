@@ -59,20 +59,12 @@ export function useSubscribedProviderHoverVisualizations<TTarget extends Visuali
                         workbenchServices.subscribe(typedKey, (value) => {
                             const newVisualizations = [...visualizationsArray];
 
-                            if (value === null) {
-                                // If the value is null, we clear the visualizations for this group
-                                for (const visualization of newVisualizations) {
-                                    if (visualization.groupId === hoverVisualizationFunction.groupId) {
-                                        visualization.hoverVisualizations[typedKey] = [];
-                                    }
-                                }
-                            } else {
-                                for (const visualization of newVisualizations) {
-                                    if (visualization.groupId === hoverVisualizationFunction.groupId) {
-                                        visualization.hoverVisualizations[typedKey] = hoverFunction(value as any);
-                                    }
+                            for (const visualization of newVisualizations) {
+                                if (visualization.groupId === hoverVisualizationFunction.groupId) {
+                                    visualization.hoverVisualizations[typedKey] = hoverFunction(value as any);
                                 }
                             }
+
                             visualizationsArray = newVisualizations;
                             setVisualizations(newVisualizations);
                         }),

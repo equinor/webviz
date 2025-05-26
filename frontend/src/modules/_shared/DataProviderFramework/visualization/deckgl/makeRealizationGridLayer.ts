@@ -22,6 +22,11 @@ export function makeRealizationGridLayer(
         return null;
     }
 
+    colorScaleSpec = {
+        colorScale: colorScaleSpec.colorScale,
+        areBoundariesUserDefined: colorScaleSpec.areBoundariesUserDefined,
+    };
+
     if (isLoading) {
         colorScaleSpec.colorScale = new ColorScale({
             colorPalette: new ColorPalette({
