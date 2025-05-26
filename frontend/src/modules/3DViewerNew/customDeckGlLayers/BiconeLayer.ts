@@ -13,10 +13,10 @@ export type DiscLayerProps = {
     opacity?: number;
 };
 
-export class DiscLayer extends CompositeLayer<DiscLayerProps> {
-    static layerName = "DiscLayer";
+export class BiconeLayer extends CompositeLayer<DiscLayerProps> {
+    static layerName = "BiconeLayer";
 
-    // @ts-expect-error - private
+    // @ts-expect-error - this is how deck.gl expects state to be defined
     state!: {
         geometry: Geometry;
     };
@@ -146,7 +146,7 @@ function normalToOrientation(normal: [number, number, number]): [number, number,
 }
 
 function rotationMatrixToEulerXYZ(m: number[]): [number, number, number] {
-    const [m00, m01, m02, m10, m11, m12, m20, m21, m22] = m;
+    const [m00, m01, _, m10, m11, __, m20, m21, m22] = m;
 
     let pitch, yaw, roll;
 

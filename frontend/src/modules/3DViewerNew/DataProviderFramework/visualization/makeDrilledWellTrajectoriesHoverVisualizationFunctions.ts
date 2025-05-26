@@ -1,7 +1,7 @@
 import type { WellboreTrajectory_api } from "@api";
 import type { Color } from "@deck.gl/core";
 import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
-import { DiscLayer } from "@modules/3DViewerNew/customDeckGlLayers/DiscLayer";
+import { BiconeLayer } from "@modules/3DViewerNew/customDeckGlLayers/DiscLayer";
 import type { GeoWellFeature } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import type {
     HoverVisualizationsFunctions,
@@ -84,7 +84,7 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
                     wellNameVisible: false,
                     ZIncreasingDownwards: false,
                 }),
-                new DiscLayer({
+                new BiconeLayer({
                     id: `${id}-hovered-md-point`,
                     centerPoint: hoveredMdPoint3d,
                     radius: 100,

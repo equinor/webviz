@@ -24,6 +24,7 @@ import { instanceofItemGroup } from "../interfacesAndTypes/entities";
 import type { StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { SettingTypes, Settings } from "../settings/settingsDefinitions";
+import type { HighlightItem } from "@modules/_shared/components/EsvIntersection/types";
 
 export enum VisualizationItemType {
     DATA_PROVIDER_VISUALIZATION = "data-provider-visualization",
@@ -39,6 +40,11 @@ export enum VisualizationTarget {
 export type DataProviderVisualizationTargetTypes = {
     [VisualizationTarget.DECK_GL]: DeckGlLayer<any>;
     [VisualizationTarget.ESV]: EsvLayer<any>;
+};
+
+export type DataProviderHoverVisualizationTargetTypes = {
+    [VisualizationTarget.DECK_GL]: DeckGlLayer<any>;
+    [VisualizationTarget.ESV]: HighlightItem;
 };
 
 export type DataProviderVisualization<
@@ -150,7 +156,7 @@ export type HoverTopicDefinitions = PickMatching<GlobalTopicDefinitions, `global
 export type HoverVisualizationsFunctions<TTarget extends VisualizationTarget> = Partial<{
     [K in keyof HoverTopicDefinitions]: (
         hoverInfo: HoverTopicDefinitions[K],
-    ) => DataProviderVisualizationTargetTypes[TTarget][];
+    ) => DataProviderHoverVisualizationTargetTypes[TTarget][];
 }>;
 
 export type VisualizationTransformer<
