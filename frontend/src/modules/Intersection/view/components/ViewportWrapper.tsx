@@ -8,6 +8,8 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import type { Viewport } from "@framework/types/viewport";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
+import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import type { Bounds, LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { FitInViewStatus, Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
 import {
@@ -29,6 +31,7 @@ export type ViewportWrapperProps = {
     layerItemsBounds: Bounds;
     focusBounds: Bounds | null;
     doRefocus: boolean;
+    colorScales: ColorScaleWithId[];
     workbenchServices: WorkbenchServices;
     viewContext: ViewContext<Interfaces>;
     onViewportRefocused?: () => void;
@@ -241,6 +244,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                     onVerticalScaleIncrease={handleVerticalScaleIncrease}
                     onVerticalScaleDecrease={handleVerticalScaleDecrease}
                 />
+                <ColorLegendsContainer colorScales={props.colorScales} height={mainDivSize.height / 2 - 50} />
             </div>
         </div>
     );

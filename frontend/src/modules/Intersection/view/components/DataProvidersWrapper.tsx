@@ -9,10 +9,8 @@ import { IntersectionType } from "@framework/types/intersection";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { useElementSize } from "@lib/hooks/useElementSize";
 import type { BBox } from "@lib/utils/bbox";
 import { combine } from "@lib/utils/bbox";
-import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { isColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import type { Bounds, LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { areBoundsValid } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
@@ -158,8 +156,6 @@ const enum RefocusRequestState {
 }
 
 export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.ReactNode {
-    const mainDivRef = React.useRef<HTMLDivElement>(null);
-    const mainDivSize = useElementSize(mainDivRef);
     const statusWriter = useViewStatusWriter(props.viewContext);
 
     const [prevReferenceSystem, setPrevReferenceSystem] = React.useState<IntersectionReferenceSystem | null>(null);
@@ -335,22 +331,18 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     const colorScales = view?.annotations.filter((elm) => isColorScaleWithId(elm)) ?? [];
 
     return (
-        <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
-            <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
-                <ViewportWrapper
-                    referenceSystem={intersectionReferenceSystem ?? undefined}
-                    layerItems={visualizationLayerItems}
-                    layerItemIdToNameMap={layerIdToNameMap}
-                    layerItemsBounds={layersBounds}
-                    focusBounds={viewportFocusTarget.bounds}
-                    doRefocus={viewportFocusTarget.requestRefocus}
-                    workbenchServices={props.workbenchServices}
-                    viewContext={props.viewContext}
-                    wellboreHeaderUuid={wellboreUuid}
-                    onViewportRefocused={handleOnViewportRefocused}
-                />
-                <ColorLegendsContainer colorScales={colorScales} height={mainDivSize.height / 2 - 50} />
-            </div>
-        </div>
+        <ViewportWrapper
+            referenceSystem={intersectionReferenceSystem ?? undefined}
+            layerItems={visualizationLayerItems}
+            layerItemIdToNameMap={layerIdToNameMap}
+            layerItemsBounds={layersBounds}
+            focusBounds={viewportFocusTarget.bounds}
+            doRefocus={viewportFocusTarget.requestRefocus}
+            colorScales={colorScales}
+            workbenchServices={props.workbenchServices}
+            viewContext={props.viewContext}
+            wellboreHeaderUuid={wellboreUuid}
+            onViewportRefocused={handleOnViewportRefocused}
+        />
     );
 }
