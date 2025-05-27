@@ -4,16 +4,16 @@ import logging
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
+from fastapi.requests import Request
 from fastapi.utils import is_body_allowed_for_status_code
+
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.requests import Request
-from starlette.responses import JSONResponse, Response
 from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY, HTTP_500_INTERNAL_SERVER_ERROR
 
 from primary.services.service_exceptions import ServiceLayerException
 
 
-def my_http_exception_handler(request: Request, exc: StarletteHTTPException) -> Response | JSONResponse:
+def my_http_exception_handler(_request: Request, exc: StarletteHTTPException) -> Response | JSONResponse:
     # Our customized exception handler for FastAPI/Starlette's HTTPException
     # Based on FastAPI's doc, but with logging added
     # See, https://fastapi.tiangolo.com/tutorial/handling-errors/?h=err#override-the-httpexception-error-handler
@@ -39,7 +39,7 @@ def my_http_exception_handler(request: Request, exc: StarletteHTTPException) -> 
     )
 
 
-def my_request_validation_error_handler(request: Request, exc: RequestValidationError) -> Response:
+def my_request_validation_error_handler(_request: Request, exc: RequestValidationError) -> Response:
     # Our customized exception handler for FastAPI's RequestValidationError that is raised when Pydantic
     # validation detects that a request contains invalid data.
 
@@ -81,7 +81,7 @@ def my_request_validation_error_handler(request: Request, exc: RequestValidation
     )
 
 
-def service_layer_exception_handler(request: Request, exc: ServiceLayerException) -> JSONResponse:
+def service_layer_exception_handler(_request: Request, exc: ServiceLayerException) -> JSONResponse:
     # Log error with the exception message, both for the benefit of the console log itself and to propagate
     # the exception to telemetry. For telemetry, to see this as an exception, exc_info must be passed
     logging.getLogger().error(f"Service exception {exc.get_error_type_str()}: {str(exc)}", exc_info=exc)
@@ -102,12 +102,16 @@ def override_default_fastapi_exception_handlers(app: FastAPI) -> None:
     """
     Override the default exception handlers provided by FastAPI
     """
-    app.add_exception_handler(StarletteHTTPException, my_http_exception_handler)
-    app.add_exception_handler(RequestValidationError, my_request_validation_error_handler)
+
+    # ! Type check is being ignored here because the function type doesn't recognize the extended exceptions.
+    # ! Explicitly handling the *Starlette* exception to catch internal errors, as suggested by the FastAPI docs.
+    app.add_exception_handler(StarletteHTTPException, my_http_exception_handler)  # type: ignore
+    app.add_exception_handler(RequestValidationError, my_request_validation_error_handler)  # type: ignore
 
 
 def configure_service_level_exception_handlers(app: FastAPI) -> None:
     """
     Add exception handler for the exceptions that are raised in the service layer
     """
-    app.add_exception_handler(ServiceLayerException, service_layer_exception_handler)
+    # ! Type check is being ignored here because the function type doesn't recognize the extended exceptions.
+    app.add_exception_handler(ServiceLayerException, service_layer_exception_handler)  # type: ignore

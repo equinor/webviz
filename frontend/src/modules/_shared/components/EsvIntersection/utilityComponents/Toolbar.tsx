@@ -1,7 +1,8 @@
+import { Add, FilterCenterFocus, GridOn, Remove } from "@mui/icons-material";
+
 import { Button } from "@lib/components/Button";
 import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";
 import { ToggleButton } from "@lib/components/ToggleButton";
-import { Add, FilterCenterFocus, GridOn, Remove } from "@mui/icons-material";
 
 export type ToolbarProps = {
     visible: boolean;

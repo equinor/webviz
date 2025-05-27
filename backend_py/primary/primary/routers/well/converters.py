@@ -7,6 +7,8 @@ from primary.services.smda_access.types import (
     WellboreGeoHeader,
     WellboreGeoData,
     WellboreStratigraphicUnit,
+    WellboreSurveyHeader,
+    WellboreSurveySample,
 )
 from primary.services.ssdl_access.types import (
     WellboreCasing,
@@ -18,6 +20,15 @@ from primary.services.ssdl_access.types import (
 
 from . import schemas
 from . import utils
+
+
+def to_api_stratigraphic_column(column: StratigraphicColumn) -> schemas.StratigraphicColumn:
+    return schemas.StratigraphicColumn(
+        identifier=column.strat_column_identifier,
+        areaType=column.strat_column_area_type,
+        status=column.strat_column_status,
+        type=column.strat_column_type,
+    )
 
 
 def convert_wellbore_pick_to_schema(wellbore_pick: WellborePick) -> schemas.WellborePick:
@@ -153,6 +164,29 @@ def convert_strat_column_to_well_log_header(column: StratigraphicColumn) -> sche
         curveName=type_or_default,
         curveUnit=None,
     )
+
+
+# ! Splits a single survey into distinct curves for Azimuth, dogleg, and inclination
+def convert_survey_header_to_well_log_headers(
+    survey_header: WellboreSurveyHeader,
+) -> list[schemas.WellboreLogCurveHeader]:
+    def make_curve(name: str, unit: str) -> schemas.WellboreLogCurveHeader:
+        return schemas.WellboreLogCurveHeader(
+            curveName=name,
+            curveUnit=unit,
+            ### Shared settings
+            # Only expected to have a single survey, so name is static
+            logName="Wellbore Survey",
+            curveType=schemas.WellLogCurveTypeEnum.CONTINUOUS,
+            source=schemas.WellLogCurveSourceEnum.SMDA_SURVEY,
+        )
+
+    return [
+        # It's assumed that all surveys have these 3
+        make_curve("AZI", survey_header.azimuth_unit),
+        make_curve("INCL", survey_header.inclination_unit),
+        make_curve("DLS", survey_header.dogleg_severity_unit),
+    ]
 
 
 def convert_wellbore_log_curve_data_to_schema(
@@ -322,3 +356,63 @@ def _get_strat_unit_at_exit(
             return parent
 
     return None
+
+
+def convert_survey_sample_to_log_curve_schemas(
+    survey_samples: list[WellboreSurveySample],
+    survey_header: WellboreSurveyHeader,
+    curve_name: str,
+) -> schemas.WellboreLogCurveData:
+    (full_name, unit, curve_min, curve_max) = _get_curve_specific_header_values(curve_name, survey_header)
+
+    curve_index_min = float("inf")
+    curve_index_max = float("-inf")
+    data_points: list[tuple[float, float | str | None]] = []
+
+    for sample in survey_samples:
+        curve_index_min = sample.md if sample.md < curve_index_min else curve_index_min
+        curve_index_max = sample.md if sample.md > curve_index_max else curve_index_max
+        data_points.append((sample.md, _get_sample_data_point_for_curve(curve_name, sample)))
+
+    return schemas.WellboreLogCurveData(
+        source=schemas.WellLogCurveSourceEnum.SMDA_SURVEY,
+        curveDescription=f"{full_name} (COMPUTED - Derived from SMDA survey sample entries)",
+        name=curve_name,
+        curveAlias=full_name,
+        unit=unit,
+        # Only expected to have a single survey, so name is static
+        logName="Wellbore Survey",
+        minCurveValue=curve_min,
+        maxCurveValue=curve_max,
+        indexMin=curve_index_min,
+        indexMax=curve_index_max,
+        indexUnit="m",
+        noDataValue=None,
+        curveUnitDesc=None,
+        dataPoints=data_points,
+        discreteValueMetadata=None,
+    )
+
+
+def _get_curve_specific_header_values(
+    curve_name: str, survey_header: WellboreSurveyHeader
+) -> tuple[str, str, float, float]:
+    if curve_name == "AZI":
+        return ("Azimuth", survey_header.azimuth_unit, 0, 360)
+    if curve_name == "INCL":
+        return ("Inclination", survey_header.inclination_unit, 0, 120)
+    if curve_name == "DLS":
+        return ("Dogleg severity", survey_header.dogleg_severity_unit, 0, 6)
+
+    raise ValueError(f"Unrecognized survey geometry curve name, {curve_name}")
+
+
+def _get_sample_data_point_for_curve(curve_name: str, survey_sample: WellboreSurveySample) -> float:
+    if curve_name == "AZI":
+        return survey_sample.azimuth
+    if curve_name == "INCL":
+        return survey_sample.inclination
+    if curve_name == "DLS":
+        return survey_sample.dogleg_severity
+
+    raise ValueError(f"Unrecognized survey geometry curve name, {curve_name}")

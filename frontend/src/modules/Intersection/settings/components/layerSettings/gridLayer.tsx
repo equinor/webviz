@@ -1,26 +1,27 @@
 import React from "react";
 
+import { useQuery } from "@tanstack/react-query";
+import { cloneDeep, isEqual } from "lodash";
+
 import type { Grid3dInfo_api } from "@api";
 import { getGridModelsInfoOptions } from "@api";
+import { ColorScaleSelector } from "@framework/components/ColorScaleSelector";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Switch } from "@lib/components/Switch";
-import type { ColorScale } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { isoIntervalStringToDateLabel, isoStringToDateLabel } from "@modules/_shared/utils/isoDatetimeStringFormatting";
 import { useLayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
 import type { GridLayer, GridLayerSettings } from "@modules/Intersection/utils/layers/GridLayer";
-import { ColorScaleSelector } from "@modules/_shared/components/ColorScaleSelector/colorScaleSelector";
-import { isoIntervalStringToDateLabel, isoStringToDateLabel } from "@modules/_shared/utils/isoDatetimeStringFormatting";
-import { useQuery } from "@tanstack/react-query";
 
-import { cloneDeep, isEqual } from "lodash";
 
 import { fixupSetting } from "./utils";
 
@@ -66,7 +67,7 @@ export function GridLayerSettingsComponent(props: GridLayerSettingsComponentProp
     const datesOrIntervalsForSelectedParameter =
         gridModelInfo?.property_info_arr
             .filter((el) => el.property_name === newSettings.parameterName)
-            .map((el) => el.iso_date_or_interval)
+            .map((el) => el.iso_date_or_interval ?? null)
             .sort() ?? [];
 
     if (gridModelInfosQuery.data) {
@@ -142,9 +143,9 @@ export function GridLayerSettingsComponent(props: GridLayerSettingsComponentProp
         setNewSettings((prev) => ({ ...prev, showMesh }));
     }
 
-    function handleColorScaleChange(newColorScale: ColorScale, areBoundariesUserDefined: boolean) {
-        props.layer.setColorScale(newColorScale);
-        props.layer.setUseCustomColorScaleBoundaries(areBoundariesUserDefined);
+    function handleColorScaleChange(newColorScale: ColorScaleSpecification) {
+        props.layer.setColorScale(newColorScale.colorScale);
+        props.layer.setUseCustomColorScaleBoundaries(newColorScale.areBoundariesUserDefined);
     }
 
     const availableRealizations: number[] = [];
@@ -254,8 +255,10 @@ export function GridLayerSettingsComponent(props: GridLayerSettingsComponentProp
                 <div className="table-cell max-w-0 align-top">Color scale</div>
                 <div className="table-cell">
                     <ColorScaleSelector
-                        colorScale={props.layer.getColorScale()}
-                        areBoundariesUserDefined={props.layer.getUseCustomColorScaleBoundaries()}
+                        colorScaleSpecification={{
+                            colorScale: props.layer.getColorScale(),
+                            areBoundariesUserDefined: props.layer.getUseCustomColorScaleBoundaries(),
+                        }}
                         workbenchSettings={props.workbenchSettings}
                         onChange={handleColorScaleChange}
                     />

@@ -1,6 +1,7 @@
+import type { UseQueryResult } from "@tanstack/react-query";
+
 import type { VfpInjTable_api, VfpProdTable_api } from "@api";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import type { UseQueryResult } from "@tanstack/react-query";
 
 import {
     selectedAlqIndicesAtom,

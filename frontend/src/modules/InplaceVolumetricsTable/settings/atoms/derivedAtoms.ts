@@ -1,3 +1,5 @@
+import { atom } from "jotai";
+
 import type { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
@@ -10,7 +12,6 @@ import {
     makeUniqueTableNamesIntersection,
 } from "@modules_shared/InplaceVolumetrics/TableDefinitionsAccessor";
 
-import { atom } from "jotai";
 
 import {
     selectedIdentifierValueCriteriaAtom,

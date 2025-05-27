@@ -1,14 +1,15 @@
-import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
-import type { UserCreatedItemSet } from "@framework/UserCreatedItems";
-
 import { atom } from "jotai";
 import { cloneDeep } from "lodash";
 import { v4 } from "uuid";
+
+import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
+import type { UserCreatedItemSet } from "@framework/UserCreatedItems";
 
 export type IntersectionPolyline = {
     id: string;
     name: string;
     path: number[][];
+    fieldId: string;
 };
 
 export type IntersectionPolylineWithoutId = Omit<IntersectionPolyline, "id">;
@@ -54,7 +55,7 @@ export class IntersectionPolylines implements UserCreatedItemSet {
         this.notifySubscribers(IntersectionPolylinesEvent.CHANGE);
     }
 
-    getPolylines(): IntersectionPolyline[] {
+    getPolylines(): readonly IntersectionPolyline[] {
         return this._polylines;
     }
 

@@ -1,3 +1,5 @@
+import { describe, expect, test } from "vitest";
+
 import {
     makeRealizationNumberSelectionFromRealizationPickerTag,
     makeRealizationNumberSelectionsFromRealizationPickerTags,
@@ -6,7 +8,6 @@ import {
 } from "@framework/internal/components/EnsembleRealizationFilter/private-utils/realizationPickerUtils";
 import type { RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 
-import { describe, expect, test } from "vitest";
 
 describe("makeRealizationPickerTagFromRealizationNumberSelection", () => {
     test("should convert a single number selection to a string", () => {

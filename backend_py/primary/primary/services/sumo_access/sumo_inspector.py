@@ -31,7 +31,7 @@ class SumoInspector:
         """Get list of fields"""
         timer = PerfMetrics()
         search_context = SearchContext(self._sumo_client)
-        field_names = await search_context.get_field_values_async("masterdata.smda.field.identifier.keyword")
+        field_names = await search_context.fieldidentifiers_async
         timer.record_lap("get_fields")
         field_idents = sorted(list(set(field_names)))
         LOGGER.debug(timer.to_string())
@@ -40,6 +40,7 @@ class SumoInspector:
     async def _get_case_info_async(self, search_context: SearchContext, case_uuid: str) -> CaseInfo:
 
         case = await search_context.get_case_by_uuid_async(case_uuid)
+        print(await case.timestamps_async)
         return CaseInfo(uuid=case.uuid, name=case.name, status=case.status, user=case.user)
 
     async def get_cases_async(self, field_identifier: str) -> List[CaseInfo]:

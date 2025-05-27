@@ -1,6 +1,7 @@
+import { atomWithQuery } from "jotai-tanstack-query";
+
 import { getVectorListOptions } from "@api";
 
-import { atomWithQuery } from "jotai-tanstack-query";
 
 import { selectedRegularEnsembleIdentAtom } from "./derivedAtoms";
 

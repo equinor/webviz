@@ -2,17 +2,17 @@ import React from "react";
 
 import { GeoJsonLayer } from "@deck.gl/layers";
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import type { MapMouseEvent } from "@webviz/subsurface-viewer";
+import type { Feature } from "geojson";
+import _ from "lodash";
+
 import type { HoverData, HoverService } from "@framework/HoverService";
 import { HoverTopic, useHoverValue, usePublishHoverValue } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { getHoverTopicValuesInEvent } from "@modules/_shared/utils/subsurfaceViewerLayers";
-import type { MapMouseEvent } from "@webviz/subsurface-viewer";
 
-import type { Feature } from "geojson";
-import _ from "lodash";
-
-import type { BoundingBox3D, SubsurfaceViewerWrapperProps } from "./SubsurfaceViewerWrapper";
+import type { BoundingBox3D, BoundingBox2D, SubsurfaceViewerWrapperProps } from "./SubsurfaceViewerWrapper";
 import { SubsurfaceViewerWrapper } from "./SubsurfaceViewerWrapper";
 
 export type HoverUpdateWrapperProps = {
@@ -33,13 +33,16 @@ function useValidMdHover(activeWellbore: string | null, hoverService: HoverServi
 }
 
 function useValidWorldPosHover(
-    boundingBox: BoundingBox3D,
+    boundingBox: BoundingBox3D | BoundingBox2D,
     hoverService: HoverService,
     instanceId: string,
 ): HoverData[HoverTopic.WORLD_POS] {
+    const is3Dbox = "zmin" in boundingBox;
+
     const hoveredWorldPos = useHoverValue(HoverTopic.WORLD_POS, hoverService, instanceId) ?? {};
     const { x, y, z } = hoveredWorldPos;
     const coordinates = [x, y, z];
+
     // We need at least 2 values to build a useful feature
     if (coordinates.filter((v) => v !== undefined).length < 2) return null;
 
@@ -47,7 +50,7 @@ function useValidWorldPosHover(
     if (x && !_.inRange(x, boundingBox.xmin, boundingBox.xmax)) return null;
     if (y && !_.inRange(y, boundingBox.ymin, boundingBox.ymax)) return null;
     // ? Should we validate Z? The box is the surface data, but wellbores can be rendered outside this range
-    // if (z && !_.inRange(z, boundingBox.zmin, boundingBox.zmax)) return null;
+    if (z && is3Dbox && !_.inRange(z, boundingBox.zmin, boundingBox.zmax)) return null;
 
     return hoveredWorldPos;
 }
@@ -71,7 +74,7 @@ function makeMdHighlightFeature(md: number, intersectionReferenceSystem: Interse
 
 function makeWorldPosHighlightFeature(
     worldPos: NonNullable<HoverData[HoverTopic.WORLD_POS]>,
-    boundingBox: BoundingBox3D,
+    boundingBox: BoundingBox3D | BoundingBox2D,
 ): Feature {
     const { x, y, z } = worldPos;
     const validCoordinates = [x, y, z].filter((c) => c !== undefined);
@@ -92,7 +95,9 @@ function makeWorldPosHighlightFeature(
     const coordsY = y ? [y, y] : [boundingBox.ymin, boundingBox.ymax];
     // Z bounding box is only based on the grid's own values, and is fairly small,
     // so we expand the z-length somewhat to make it easier to see vertical bars
-    const cordsZ = z ? [z, z] : [0, -boundingBox.zmax];
+
+    const zBoundMax = "zmax" in boundingBox ? boundingBox.zmax : 1000;
+    const cordsZ = z ? [z, z] : [0, -zBoundMax];
 
     return {
         type: "Feature",

@@ -1,12 +1,12 @@
 import React from "react";
 
+import { isEqual } from "lodash";
+
 import { createPortal } from "@lib/utils/createPortal";
 import { MANHATTAN_LENGTH, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 import { point2Distance, vec2FromPointerEvent } from "@lib/utils/vec2";
-
-import { isEqual } from "lodash";
 
 import type { SortableListGroupProps } from "./sortableListGroup";
 import type { SortableListItemProps } from "./sortableListItem";
@@ -215,7 +215,8 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                             if (
                                 content &&
                                 rectContainsPoint(content.getBoundingClientRect(), vec2FromPointerEvent(e)) &&
-                                content.getElementsByClassName("sortable-list-item").length > 0
+                                (content.getElementsByClassName("sortable-list-item").length > 0 ||
+                                    content.getElementsByClassName("sortable-list-group").length > 0)
                             ) {
                                 continue;
                             }

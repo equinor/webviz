@@ -1,17 +1,18 @@
 import React from "react";
 
+import { Provider } from "jotai";
+
+import { ApplyInterfaceEffectsToView } from "@framework/internal/components/ApplyInterfaceEffects/applyInterfaceEffects";
+import { DebugProfiler } from "@framework/internal/components/DebugProfiler";
+import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
+import { HydrateQueryClientAtom } from "@framework/internal/components/HydrateQueryClientAtom";
 import { ImportState } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { ModuleInstanceState, ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
-import { ApplyInterfaceEffectsToView } from "@framework/internal/components/ApplyInterfaceEffects/applyInterfaceEffects";
-import { DebugProfiler } from "@framework/internal/components/DebugProfiler";
-import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
-import { HydrateQueryClientAtom } from "@framework/internal/components/HydrateQueryClientAtom";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
-import { Provider } from "jotai";
 
 import { CrashView } from "./crashView";
 

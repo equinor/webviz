@@ -1,7 +1,9 @@
+import { atom } from "jotai";
+
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 
-import { atom } from "jotai";
+import { createLoadedVectorSpecificationAndDataArray } from "../utils/vectorSpecificationsAndQueriesUtils";
 
 import { userSelectedActiveTimestampUtcMsAtom, vectorSpecificationsAtom } from "./baseAtoms";
 import {
@@ -10,8 +12,6 @@ import {
     vectorObservationsQueriesAtom,
     vectorStatisticsQueriesAtom,
 } from "./queryAtoms";
-
-import { createLoadedVectorSpecificationAndDataArray } from "../utils/vectorSpecificationsAndQueriesUtils";
 
 export const queryIsFetchingAtom = atom((get) => {
     const vectorDataQueries = get(vectorDataQueriesAtom);
@@ -91,9 +91,9 @@ export const activeTimestampUtcMsAtom = atom<number | null>((get) => {
         userSelectedActiveTimestampUtcMs === null &&
         loadedVectorSpecificationsAndRealizationData.length > 0
     ) {
-        const firstTimeStamp =
-            loadedVectorSpecificationsAndRealizationData.at(0)?.data.at(0)?.timestampsUtcMs[0] ?? null;
-        return firstTimeStamp;
+        const lastTimeStamp =
+            loadedVectorSpecificationsAndRealizationData.at(0)?.data.at(0)?.timestampsUtcMs.at(-1) ?? null;
+        return lastTimeStamp;
     }
 
     return userSelectedActiveTimestampUtcMs;

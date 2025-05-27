@@ -8,13 +8,15 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 import { subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
 
+import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
+
 import { ChannelReceiverNodesWrapper } from "./private-components/channelReceiverNodesWrapper";
 import { Header } from "./private-components/header";
 import { ViewContent } from "./private-components/viewContent";
 
-import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
-
 type ViewWrapperProps = {
+    isMaximized?: boolean;
+    isMinimized?: boolean;
     isActive: boolean;
     moduleInstance: ModuleInstance<any>;
     workbench: Workbench;
@@ -87,17 +89,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         [props.moduleInstance, guiMessageBroker],
     );
 
-    const handleRemoveClick = React.useCallback(
-        function handleRemoveClick(e: React.PointerEvent<HTMLDivElement>) {
-            guiMessageBroker.publishEvent(GuiEvent.RemoveModuleInstanceRequest, {
-                moduleInstanceId: props.moduleInstance.getId(),
-            });
-            e.preventDefault();
-            e.stopPropagation();
-        },
-        [props.moduleInstance, guiMessageBroker],
-    );
-
     function handleModuleClick() {
         if (dataChannelConnectionsLayerVisible) {
             return;
@@ -142,6 +133,20 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const showAsActive =
         props.isActive && [LeftDrawerContent.ModuleSettings, LeftDrawerContent.SyncSettings].includes(drawerContent);
 
+    function makeHeader() {
+        return (
+            <Header
+                workbench={props.workbench}
+                isMaximized={props.isMaximized}
+                isMinimized={props.isMinimized}
+                moduleInstance={props.moduleInstance}
+                isDragged={props.isDragged}
+                onPointerDown={handleHeaderPointerDown}
+                onReceiversClick={handleReceiversClick}
+            />
+        );
+    }
+
     return (
         <>
             {props.isDragged && (
@@ -149,9 +154,10 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                     <ViewWrapperPlaceholder width={props.width} height={props.height} x={props.x} y={props.y} />
                 </>
             )}
+            {/* ! Show a placeholder while dragging modules around, since resizing module content while dragging might be costly */}
             {props.changingLayout && (
                 <div
-                    className="absolute box-border p-0.5"
+                    className={resolveClassNames("absolute box-border", { "p-0.5": !props.isMinimized })}
                     style={{
                         width: props.width,
                         height: props.height,
@@ -162,34 +168,29 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                     }}
                 >
                     <div className="bg-white h-full w-full flex flex-col border-solid border-2 box-border shadow-sm">
-                        <Header
-                            moduleInstance={props.moduleInstance}
-                            isDragged={props.isDragged}
-                            onPointerDown={handleHeaderPointerDown}
-                            onRemoveClick={handleRemoveClick}
-                            onReceiversClick={handleReceiversClick}
-                            guiMessageBroker={guiMessageBroker}
-                        />
+                        {makeHeader()}
                     </div>
                 </div>
             )}
             <div
                 ref={ref}
-                className="absolute box-border p-0.5"
+                className={resolveClassNames("absolute box-border contain-content", {
+                    "p-0.5": !props.isMinimized,
+                    invisible: props.changingLayout,
+                })}
                 style={{
                     width: prevWidth,
                     height: prevHeight,
                     left: prevX,
                     top: prevY,
-                    contain: "content",
-                    visibility: props.changingLayout ? "hidden" : "visible",
                 }}
             >
                 <div
                     className={resolveClassNames(
-                        "relative bg-white h-full w-full flex flex-col box-border shadow-sm p-1 border border-slate-100",
+                        "relative bg-white h-full w-full flex flex-col box-border shadow-sm border border-slate-100",
                         {
                             "cursor-grabbing select-none": props.isDragged,
+                            "p-1": !props.isMinimized,
                         },
                     )}
                     onPointerDown={handlePointerDown}
@@ -204,16 +205,11 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                             },
                         )}
                     />
-                    <Header
-                        moduleInstance={props.moduleInstance}
-                        isDragged={props.isDragged}
-                        onPointerDown={handleHeaderPointerDown}
-                        onRemoveClick={handleRemoveClick}
-                        onReceiversClick={handleReceiversClick}
-                        guiMessageBroker={guiMessageBroker}
-                    />
+                    {makeHeader()}
                     <div
-                        className={resolveClassNames("grow overflow-auto h-0", { hidden: props.changingLayout })}
+                        className={resolveClassNames("grow overflow-auto h-0", {
+                            hidden: props.changingLayout || props.isMinimized,
+                        })}
                         onClick={handleModuleClick}
                     >
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />

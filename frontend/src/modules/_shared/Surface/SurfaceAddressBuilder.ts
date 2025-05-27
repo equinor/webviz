@@ -68,7 +68,7 @@ export class SurfaceAddressBuilder {
             throw new Error("Address type is already set to another type than REAL");
         }
 
-        if (this._realizationNum == null) {
+        if (this._realizationNum === null) {
             throw new Error("Realization number not set");
         }
 

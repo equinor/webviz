@@ -4,18 +4,19 @@ import { AtomStoreMaster } from "./AtomStoreMaster";
 import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
 import { HoverService } from "./HoverService";
 import { InitialSettings } from "./InitialSettings";
+import { loadMetadataFromBackendAndCreateEnsembleSet } from "./internal/EnsembleSetLoader";
+import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
+import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
+import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
 import { ImportState } from "./Module";
 import type { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import type { Template } from "./TemplateRegistry";
 import type { WorkbenchServices } from "./WorkbenchServices";
-import { loadMetadataFromBackendAndCreateEnsembleSet } from "./internal/EnsembleSetLoader";
-import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
-import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
-import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
 
 export enum WorkbenchEvents {
+    LayoutChanged = "LayoutChanged",
     ModuleInstancesChanged = "ModuleInstancesChanged",
 }
 
@@ -26,6 +27,8 @@ export type LayoutElement = {
     relY: number;
     relHeight: number;
     relWidth: number;
+    minimized?: boolean;
+    maximized?: boolean;
 };
 
 export type UserEnsembleSetting = {
@@ -166,6 +169,7 @@ export class Workbench {
             this._moduleInstances.push(moduleInstance);
             this._layout[index] = { ...this._layout[index], moduleInstanceId: moduleInstance.getId() };
             this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
+            this.notifySubscribers(WorkbenchEvents.LayoutChanged);
         });
     }
 
@@ -182,6 +186,7 @@ export class Workbench {
         this._moduleInstances = [];
         this._layout = [];
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
+        this.notifySubscribers(WorkbenchEvents.LayoutChanged);
     }
 
     makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
@@ -198,6 +203,7 @@ export class Workbench {
 
         this._layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
+        this.notifySubscribers(WorkbenchEvents.LayoutChanged);
         this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, moduleInstance.getId());
         return moduleInstance;
     }
@@ -233,6 +239,7 @@ export class Workbench {
             return { ...el, moduleInstanceId: undefined };
         });
         localStorage.setItem("layout", JSON.stringify(modifiedLayout));
+        this.notifySubscribers(WorkbenchEvents.LayoutChanged);
     }
 
     maybeMakeFirstModuleInstanceActive(): void {

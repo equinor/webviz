@@ -2,6 +2,13 @@ import React from "react";
 
 import type { Layer, PickingInfo } from "@deck.gl/core";
 import { ColumnLayer, SolidPolygonLayer } from "@deck.gl/layers";
+import { Add, FilterCenterFocus, Polyline, Remove } from "@mui/icons-material";
+import type { LayerPickInfo, ViewStateType } from "@webviz/subsurface-viewer";
+import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/types";
+import type { MapMouseEvent } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
+import type { Feature } from "geojson";
+import { isEqual } from "lodash";
+
 import type {
     IntersectionPolyline,
     IntersectionPolylineWithoutId,
@@ -12,18 +19,11 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import type { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
-import { Add, FilterCenterFocus, Polyline, Remove } from "@mui/icons-material";
-import type { LayerPickInfo, ViewStateType } from "@webviz/subsurface-viewer";
-import type { MapMouseEvent } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
-import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
 
-import type { Feature } from "geojson";
-import { isEqual } from "lodash";
+import { createContinuousColorScaleForMap } from "../utils/colorTables";
 
 import { PolylineEditingPanel } from "./PolylineEditingPanel";
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
-
-import { createContinuousColorScaleForMap } from "../utils/colorTables";
 
 export type BoundingBox3D = {
     xmin: number;
@@ -43,7 +43,8 @@ export type BoundingBox2D = {
 
 export type SubsurfaceViewerWrapperProps = {
     ref?: React.ForwardedRef<HTMLDivElement>;
-    boundingBox: BoundingBox3D;
+    fieldId: string;
+    boundingBox: BoundingBox2D | BoundingBox3D;
     layers: Layer[];
     show3D?: boolean;
     verticalScale?: number;
@@ -55,7 +56,7 @@ export type SubsurfaceViewerWrapperProps = {
     onVerticalScaleChange?: (verticalScale: number) => void;
     onViewerHover?: (mouseEvent: MapMouseEvent) => void;
     intersectionPolyline?: IntersectionPolyline;
-    intersectionPolylines?: IntersectionPolyline[];
+    intersectionPolylines?: readonly IntersectionPolyline[];
 };
 
 type IntersectionZValues = {
@@ -372,6 +373,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
             if (props.onAddIntersectionPolyline && currentlyEditedPolyline.length > 1) {
                 props.onAddIntersectionPolyline({
                     name,
+                    fieldId: props.fieldId,
                     path: currentlyEditedPolyline,
                 });
             }

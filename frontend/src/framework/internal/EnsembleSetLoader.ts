@@ -1,8 +1,9 @@
+import type { QueryClient } from "@tanstack/react-query";
+
 import type { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api } from "@api";
 import { SensitivityType_api, getEnsembleDetailsOptions, getParametersOptions, getSensitivitiesOptions } from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/Workbench";
-import type { QueryClient } from "@tanstack/react-query";
 
 import type { ContinuousParameter, DiscreteParameter, Parameter } from "../EnsembleParameters";
 import { ParameterType } from "../EnsembleParameters";
@@ -289,8 +290,8 @@ function buildParameterArrFromApiResponse(apiParameterArray: EnsembleParameter_a
             const retPar: DiscreteParameter = {
                 type: ParameterType.DISCRETE,
                 name: apiPar.name,
-                groupName: apiPar.group_name,
-                description: apiPar.descriptive_name,
+                groupName: apiPar.group_name ?? null,
+                description: apiPar.descriptive_name ?? null,
                 isConstant: apiPar.is_constant,
                 realizations: apiPar.realizations,
                 values: apiPar.values,
@@ -300,8 +301,8 @@ function buildParameterArrFromApiResponse(apiParameterArray: EnsembleParameter_a
             const retPar: ContinuousParameter = {
                 type: ParameterType.CONTINUOUS,
                 name: apiPar.name,
-                groupName: apiPar.group_name,
-                description: apiPar.descriptive_name,
+                groupName: apiPar.group_name ?? null,
+                description: apiPar.descriptive_name ?? null,
                 isConstant: apiPar.is_constant,
                 isLogarithmic: apiPar.is_logarithmic,
                 realizations: apiPar.realizations,

@@ -1,8 +1,9 @@
+import { useAtomValue } from "jotai";
+
 import type { InplaceStatisticalVolumetricTableData_api, InplaceVolumetricTableData_api } from "@api";
 import type { ViewStatusWriter } from "@framework/StatusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 
-import { useAtomValue } from "jotai";
 
 import { resultNamesAtom } from "../atoms/baseAtoms";
 import { activeQueriesResultAtom, identifiersValuesAtom } from "../atoms/derivedAtoms";

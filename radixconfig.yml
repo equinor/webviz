@@ -5,6 +5,7 @@ metadata:
 spec:
   environments:
     - name: prod
+    - name: preprod
       build:
         from: main
     - name: review
@@ -70,6 +71,23 @@ spec:
                 averageUtilization: 60
               cpu:
                 averageUtilization: 80
+
+        - environment: preprod
+          resources:
+            requests:
+              memory: 4Gi
+              cpu: 500m
+            limits:
+              memory: 4Gi
+          horizontalScaling:
+            minReplicas: 1
+            maxReplicas: 3
+            resources:
+              memory:
+                averageUtilization: 60
+              cpu:
+                averageUtilization: 80
+
         - environment: review
           secretRefs:
             azureKeyVaults:
@@ -78,7 +96,7 @@ spec:
                   - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
                     envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
           variables:
-            OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=review, service.version=tbd0.1.2
+            OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=review
           resources:
             requests:
               memory: 4Gi
@@ -102,7 +120,7 @@ spec:
                   - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-DEV
                     envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
           variables:
-            OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=dev, service.version=tbd0.1.2
+            OTEL_RESOURCE_ATTRIBUTES: service.name=primary-backend, service.namespace=dev
           resources:
             requests:
               memory: 4Gi
@@ -186,6 +204,34 @@ spec:
         UVICORN_PORT: 8002
       payload:
         path: /compute/args
+      environmentConfig:
+        - environment: prod
+          secretRefs:
+            azureKeyVaults:
+              - name: webviz
+                items:
+                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD
+                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
+          variables:
+            OTEL_RESOURCE_ATTRIBUTES: service.name=user-grid3d-ri, service.namespace=prod
+        - environment: review
+          secretRefs:
+            azureKeyVaults:
+              - name: webviz
+                items:
+                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
+                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
+          variables:
+            OTEL_RESOURCE_ATTRIBUTES: service.name=user-grid3d-ri, service.namespace=review
+        - environment: dev
+          secretRefs:
+            azureKeyVaults:
+              - name: webviz
+                items:
+                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-DEV
+                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
+          variables:
+            OTEL_RESOURCE_ATTRIBUTES: service.name=user-grid3d-ri, service.namespace=dev
 
   dnsAppAlias:
     environment: prod

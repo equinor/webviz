@@ -1,9 +1,9 @@
 import React from "react";
 
-import { useElementSize } from "@lib/hooks/useElementSize";
+import { Close } from "@mui/icons-material";
+
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Close } from "@mui/icons-material";
 
 export type DialogProps = {
     title?: string;
@@ -22,8 +22,6 @@ export type DialogProps = {
 export const Dialog: React.FC<DialogProps> = (props) => {
     const wrapperRef = React.useRef<HTMLDivElement>(null);
     const dialogRef = React.useRef<HTMLDivElement>(null);
-
-    const dialogSize = useElementSize(dialogRef);
 
     const handleClose = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         props.onClose?.(e);
@@ -61,8 +59,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     "pointer-events-auto",
                 )}
                 style={{
-                    marginLeft: -dialogSize.width / 2,
-                    marginTop: -dialogSize.height / 2,
+                    transform: `translate(-50%, -50%)`,
                     height: props.height,
                     width: props.width,
                     minWidth: props.minWidth,

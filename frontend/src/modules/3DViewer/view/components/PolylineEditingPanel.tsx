@@ -1,5 +1,7 @@
 import React from "react";
 
+import { ArrowBack, ArrowForward, Delete, Save } from "@mui/icons-material";
+
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { Button } from "@lib/components/Button";
 import { IconButton } from "@lib/components/IconButton";
@@ -7,14 +9,13 @@ import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { ArrowBack, ArrowForward, Delete, Save } from "@mui/icons-material";
 
 export type PolylineEditingPanelProps = {
     currentlyEditedPolyline: number[][];
     currentlyEditedPolylineName?: string;
     selectedPolylineIndex: number | null;
     hoveredPolylineIndex: number | null;
-    intersectionPolylines: IntersectionPolyline[];
+    intersectionPolylines: readonly IntersectionPolyline[];
     onPolylinePointSelectionChange: (index: number | null) => void;
     onPolylineEditingModusChange: (active: boolean) => void;
     onDeleteCurrentlySelectedPoint: () => void;
@@ -203,7 +204,7 @@ function makeSelectOptionsFromPoints(points: number[][]): SelectOption[] {
     }));
 }
 
-function makeUniquePolylineName(intersectionPolylines: IntersectionPolyline[]): string {
+function makeUniquePolylineName(intersectionPolylines: readonly IntersectionPolyline[]): string {
     const names = intersectionPolylines.map((polyline) => polyline.name);
     let i = 1;
     while (names.includes(`Polyline ${i}`)) {

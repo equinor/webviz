@@ -1,4 +1,5 @@
 import React from "react";
+
 import { createRoot } from "react-dom/client";
 
 import { client } from "@api";
@@ -32,6 +33,10 @@ client.setConfig({
 
 // --------------------------------------------------------------------
 
+/*
+    Render the application.
+*/
+
 const container = document.getElementById("root");
 
 if (!container) {
@@ -49,5 +54,5 @@ root.render(
                 </CustomQueryClientProvider>
             </AuthProvider>
         </GlobalErrorBoundary>
-    </React.StrictMode>,
+    </React.StrictMode>
 );

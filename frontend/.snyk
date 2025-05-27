@@ -1,0 +1,10 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.25.1
+# ignores vulnerabilities until expiry date; change duration by modifying expiry date
+ignore:
+    SNYK-JS-ELLIPTIC-8187303:
+        - "vite-plugin-node-polyfills@* *":
+              reason: Crypto polyfill is not being used
+              expires: 2025-06-11T10:25:48.470Z
+              created: 2025-05-12T10:25:48.471Z
+patch: {}

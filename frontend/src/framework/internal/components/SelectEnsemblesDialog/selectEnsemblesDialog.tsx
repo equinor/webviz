@@ -1,5 +1,10 @@
 import React from "react";
 
+import { Add, Check, Info, Remove } from "@mui/icons-material";
+import { useQuery } from "@tanstack/react-query";
+import { isEqual } from "lodash";
+import { v4 } from "uuid";
+
 import type { CaseInfo_api } from "@api";
 import { getCasesOptions, getEnsemblesOptions, getFieldsOptions } from "@api";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
@@ -19,15 +24,11 @@ import { TableSelect } from "@lib/components/TableSelect";
 import { useValidState } from "@lib/hooks/useValidState";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Add, Check, Info, Remove } from "@mui/icons-material";
-import { useQuery } from "@tanstack/react-query";
 
-import { isEqual } from "lodash";
-import { v4 } from "uuid";
+import { LoadingOverlay } from "../LoadingOverlay";
 
 import { UserAvatar } from "./private-components/userAvatar";
 
-import { LoadingOverlay } from "../LoadingOverlay";
 
 const CASE_UUID_ENSEMBLE_NAME_SEPARATOR = "~@@~";
 
@@ -539,7 +540,6 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 modal
                 width={"75%"}
                 minWidth={800}
-                // minHeight={600}
                 height={"75"}
                 actions={
                     <div className="flex gap-4">

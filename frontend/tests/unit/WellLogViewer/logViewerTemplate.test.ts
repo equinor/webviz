@@ -1,12 +1,13 @@
+import type { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import { describe, expect, it, vi } from "vitest";
+
 import type { WellboreLogCurveHeader_api } from "@api";
 import { WellLogCurveSourceEnum_api, WellLogCurveTypeEnum_api } from "@api";
 import type { TemplatePlotConfig, TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { createLogTemplate, makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { MAIN_AXIS_CURVE } from "@modules/WellLogViewer/utils/queryDataTransform";
 import { configToJsonDataBlob, jsonFileToTrackConfigs } from "@modules/WellLogViewer/utils/settingsImport";
-import type { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
-import { describe, expect, it, vi } from "vitest";
 
 // These plot types are "simple", and only require name and color
 const SIMPLE_PLOT_TYPES = ["line", "linestep", "dot", "area"] as TemplatePlotType[];

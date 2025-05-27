@@ -1,8 +1,8 @@
 import React from "react";
 
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import type { Workbench } from "@framework/Workbench";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
+import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 
@@ -14,6 +14,8 @@ type RightSettingsPanelProps = { workbench: Workbench };
 export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
     const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
+
+    const [, setRightDrawerContent] = useGuiState(guiMessageBroker, GuiState.RightDrawerContent);
     const [, setRightSettingsPanelWidth] = useGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
     const [numberOfUnsavedRealizationFilters] = useGuiState(
         guiMessageBroker,
@@ -27,6 +29,7 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
         }
 
         setRightSettingsPanelWidth(0);
+        setRightDrawerContent(undefined);
     }
 
     function handleDialogSaveClick() {

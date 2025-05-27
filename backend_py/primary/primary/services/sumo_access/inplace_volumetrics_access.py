@@ -1,13 +1,17 @@
+import logging
 from typing import List, Optional
 
 import pyarrow as pa
+import pyarrow.compute as pc
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
+from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from primary.services.service_exceptions import InvalidDataError, Service
+
 from ._arrow_table_loader import ArrowTableLoader
-
-
 from .sumo_client_factory import create_sumo_client
+
+LOGGER = logging.getLogger(__name__)
 
 # Index column values to ignore, i.e. remove from the volumetric tables
 IGNORED_IDENTIFIER_COLUMN_VALUES = ["Totals"]
@@ -38,6 +42,21 @@ ALLOWED_RAW_VOLUMETRIC_COLUMNS = [
 ]
 
 POSSIBLE_IDENTIFIER_COLUMNS = ["ZONE", "REGION", "FACIES", "LICENSE"]
+
+
+def _tmp_remove_license_column_if_all_values_are_total(pa_table: pa.Table) -> pa.Table:
+    """
+    Remove the LICENSE column if values in all rows are "Totals"
+    This is a temporary fix. ISSUE: #969
+    """
+    if "LICENSE" in pa_table.column_names:
+        license_col = pa_table.column("LICENSE")
+        is_total_array = pc.equal(license_col, "Totals")
+        all_totals = pc.all(is_total_array).as_py()
+        if all_totals:
+            pa_table = pa_table.drop("LICENSE")
+            LOGGER.debug("Removed LICENSE column from volumetric table as all values were 'Totals'")
+    return pa_table
 
 
 class InplaceVolumetricsAccess:
@@ -83,13 +102,18 @@ class InplaceVolumetricsAccess:
         pa.Table with columns: ZONE, REGION, FACIES, REAL, and the requested column names.
         """
 
+        perf_metrics = PerfMetrics()
+
         table_context = self._ensemble_context.tables.filter(
             name=table_name,
             content="volumes",
             column=column_names if column_names is None else list(column_names),
         )
 
+        perf_metrics.reset_lap_timer()
         available_column_names = await table_context.columns_async
+        perf_metrics.record_lap("get-column-names")
+
         available_response_names = [
             col for col in available_column_names if col not in self.get_possible_selector_columns()
         ]
@@ -105,6 +129,13 @@ class InplaceVolumetricsAccess:
         table_loader.require_content_type("volumes")
         table_loader.require_table_name(table_name)
         pa_table = await table_loader.get_aggregated_multiple_columns_async(requested_columns)
+        perf_metrics.record_lap("load-table")
+
+        pa_table = _tmp_remove_license_column_if_all_values_are_total(pa_table)
+
+        LOGGER.debug(
+            f"get_inplace_volumetrics_aggregated_table_async took: {perf_metrics.to_string()}, {table_name=}, {column_names=}"
+        )
 
         return pa_table
 
@@ -118,7 +149,7 @@ class InplaceVolumetricsAccess:
         pa.Table with columns: ZONE, REGION, FACIES, REAL, and the requested column names.
         """
 
-        realizations = await self._ensemble_context.get_field_values_async("fmu.realization.id")
+        realizations = await self._ensemble_context.realizationids_async
         if len(realizations) == 0:
             raise InvalidDataError(
                 f"No realizations found in the ensemble {self._case_uuid}, {self._iteration_name}",
@@ -129,6 +160,8 @@ class InplaceVolumetricsAccess:
         table_loader.require_table_name(table_name)
 
         pa_table = await table_loader.get_single_realization_async(realizations[0])
+
+        pa_table = _tmp_remove_license_column_if_all_values_are_total(pa_table)
 
         column_names = pa_table.column_names
         column_names_and_values = {}

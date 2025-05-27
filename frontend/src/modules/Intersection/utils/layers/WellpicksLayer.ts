@@ -1,9 +1,9 @@
-import { getStratigraphicUnitsOptions, getWellborePicksForWellboreOptions } from "@api";
 import { transformFormationData } from "@equinor/esv-intersection";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { QueryClient } from "@tanstack/query-core";
-
 import { isEqual } from "lodash";
+
+import { deprecatedGetStratigraphicUnitsOptions, deprecatedGetWellborePicksForWellboreOptions } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import { BaseLayer } from "./BaseLayer";
 
@@ -69,7 +69,7 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
     }
 
     protected async fetchData(queryClient: QueryClient): Promise<WellPicksLayerData> {
-        const wellborePicksQueryOptions = getWellborePicksForWellboreOptions({
+        const wellborePicksQueryOptions = deprecatedGetWellborePicksForWellboreOptions({
             query: {
                 wellbore_uuid: this._settings.wellboreUuid ?? "",
             },
@@ -81,7 +81,7 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
             ...wellborePicksQueryOptions,
         });
 
-        const stratigraphicUnitsQueryOptions = getStratigraphicUnitsOptions({
+        const stratigraphicUnitsQueryOptions = deprecatedGetStratigraphicUnitsOptions({
             query: {
                 case_uuid: this._settings.ensembleIdent?.getCaseUuid() ?? "",
             },
@@ -94,7 +94,8 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
         });
 
         return Promise.all([wellborePicksPromise, stratigraphicUnitsPromise]).then(
-            ([wellborePicks, stratigraphicUnits]) => transformFormationData(wellborePicks, stratigraphicUnits as any),
+            ([wellborePicks, stratigraphicUnits]) =>
+                transformFormationData(wellborePicks as any, stratigraphicUnits as any),
         );
     }
 }

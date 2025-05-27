@@ -1,12 +1,14 @@
 import React from "react";
 
-import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
+import { Close, CloseFullscreen, Error, History, Input, OpenInFull, Output, Warning } from "@mui/icons-material";
+
 import { GuiEvent, GuiState, LeftDrawerContent, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
+import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
-import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
+import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -14,18 +16,21 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Close, Error, History, Input, Output, Warning } from "@mui/icons-material";
 
 export type HeaderProps = {
+    workbench: Workbench;
+    isMaximized?: boolean;
+    isMinimized?: boolean;
     moduleInstance: ModuleInstance<any>;
     isDragged: boolean;
-    onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
-    onRemoveClick: (event: React.PointerEvent<HTMLDivElement>) => void;
-    onReceiversClick: (event: React.PointerEvent<HTMLDivElement>) => void;
-    guiMessageBroker: GuiMessageBroker;
+    onPointerDown?: (event: React.PointerEvent<HTMLDivElement>) => void;
+    onReceiversClick?: (event: React.PointerEvent<HTMLDivElement>) => void;
 };
 
 export const Header: React.FC<HeaderProps> = (props) => {
+    const moduleId = props.moduleInstance.getId();
+    const guiMessageBroker = props.workbench.getGuiMessageBroker();
+
     const dataChannelOriginRef = React.useRef<HTMLDivElement>(null);
     const isLoading = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "loading");
     const hotStatusMessages = useStatusControllerStateValue(
@@ -33,13 +38,49 @@ export const Header: React.FC<HeaderProps> = (props) => {
         "hotMessageCache",
     );
     const log = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "log");
-    const [, setRightDrawerContent] = useGuiState(props.guiMessageBroker, GuiState.RightDrawerContent);
-    const [, setActiveModuleInstanceId] = useGuiState(props.guiMessageBroker, GuiState.ActiveModuleInstanceId);
+    const [, setRightDrawerContent] = useGuiState(guiMessageBroker, GuiState.RightDrawerContent);
+    const [, setActiveModuleInstanceId] = useGuiState(guiMessageBroker, GuiState.ActiveModuleInstanceId);
     const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
-        props.guiMessageBroker,
+        guiMessageBroker,
         GuiState.RightSettingsPanelWidthInPercent,
     );
     const [statusMessagesVisible, setStatusMessagesVisible] = React.useState<boolean>(false);
+
+    const handleMaximizeClick = React.useCallback(
+        function handleMaximizeClick(e: React.PointerEvent<HTMLDivElement>) {
+            const currentLayout = props.workbench.getLayout();
+            const tweakedLayout = currentLayout.map((l) => ({ ...l, maximized: l.moduleInstanceId === moduleId }));
+            props.workbench.setLayout(tweakedLayout);
+
+            guiMessageBroker.setState(GuiState.ActiveModuleInstanceId, moduleId);
+
+            e.preventDefault();
+            e.stopPropagation();
+        },
+        [moduleId, guiMessageBroker, props.workbench],
+    );
+
+    const handleRestoreClick = React.useCallback(
+        function handleRestoreClick(e: React.PointerEvent<HTMLDivElement>) {
+            const currentLayout = props.workbench.getLayout();
+            const tweakedLayout = currentLayout.map((l) => ({ ...l, maximized: false }));
+            props.workbench.setLayout(tweakedLayout);
+
+            e.preventDefault();
+            e.stopPropagation();
+        },
+        [props.workbench],
+    );
+
+    const handleRemoveClick = React.useCallback(
+        function handleRemoveClick(e: React.PointerEvent<HTMLDivElement>) {
+            guiMessageBroker.publishEvent(GuiEvent.RemoveModuleInstanceRequest, { moduleInstanceId: moduleId });
+
+            e.preventDefault();
+            e.stopPropagation();
+        },
+        [guiMessageBroker, moduleId],
+    );
 
     const ref = React.useRef<HTMLDivElement>(null);
     const boundingRect = useElementBoundingRect(ref);
@@ -52,12 +93,12 @@ export const Header: React.FC<HeaderProps> = (props) => {
             setStatusMessagesVisible(false);
             return;
         }
-        props.onPointerDown(e);
+        props.onPointerDown?.(e);
     }
 
     function handleDoubleClick(e: React.PointerEvent<HTMLDivElement>) {
         setStatusMessagesVisible(false);
-        props.guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
+        guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
         e.preventDefault();
         e.stopPropagation();
     }
@@ -66,7 +107,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
         if (!dataChannelOriginRef.current) {
             return;
         }
-        props.guiMessageBroker.publishEvent(GuiEvent.DataChannelOriginPointerDown, {
+        guiMessageBroker.publishEvent(GuiEvent.DataChannelOriginPointerDown, {
             moduleInstanceId: props.moduleInstance.getId(),
             originElement: dataChannelOriginRef.current,
         });
@@ -75,7 +116,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
     }
 
     function handleReceiversPointerUp(e: React.PointerEvent<HTMLDivElement>) {
-        props.onReceiversClick(e);
+        props.onReceiversClick?.(e);
     }
 
     function handleReceiverPointerDown(e: React.PointerEvent<HTMLDivElement>) {
@@ -141,7 +182,12 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     )}
                     onPointerDown={handleStatusPointerDown}
                 >
-                    <Badge badgeContent={numErrors + numWarnings} className="flex p-0.5" title={badgeTitle}>
+                    <Badge
+                        badgeContent={numErrors + numWarnings}
+                        className="flex p-0.5"
+                        invisible={props.isMinimized}
+                        title={badgeTitle}
+                    >
                         <Error
                             fontSize="inherit"
                             color="error"
@@ -203,6 +249,9 @@ export const Header: React.FC<HeaderProps> = (props) => {
     }
 
     const hasErrors = hotStatusMessages.some((entry) => entry.type === StatusMessageType.Error);
+    const hasDataChannel = props.moduleInstance.getChannelManager().getChannels().length > 0;
+    const hasDataReceiver = props.moduleInstance.getChannelManager().getReceivers().length > 0;
+    const showDataChannelButtons = !props.isMinimized && !props.isMaximized && (hasDataChannel || hasDataReceiver);
 
     return (
         <div
@@ -210,7 +259,8 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 "cursor-grabbing": props.isDragged,
                 "cursor-move": !props.isDragged,
                 "bg-red-100": hasErrors,
-                "bg-slate-100": !hasErrors,
+                "bg-slate-300": !hasErrors && props.isMinimized,
+                "bg-slate-100": !hasErrors && !props.isMinimized,
             })}
             onPointerDown={handlePointerDown}
             onDoubleClick={handleDoubleClick}
@@ -248,11 +298,8 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 </>
             </div>
             {makeStatusIndicator()}
-            {(props.moduleInstance.getChannelManager().getReceivers().length > 0 ||
-                props.moduleInstance.getChannelManager().getChannels().length > 0) && (
-                <span className="bg-slate-300 w-px h-1/2 ml-1" />
-            )}
-            {props.moduleInstance.getChannelManager().getChannels().length > 0 && (
+            {showDataChannelButtons && <span className="bg-slate-300 w-px h-1/2 ml-1" />}
+            {showDataChannelButtons && hasDataChannel && (
                 <div
                     id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
                     ref={dataChannelOriginRef}
@@ -263,7 +310,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     <Output fontSize="inherit" />
                 </div>
             )}
-            {props.moduleInstance.getChannelManager().getReceivers().length > 0 && (
+            {showDataChannelButtons && hasDataReceiver && (
                 <div
                     className="hover:text-slate-500 cursor-pointer ml-1"
                     title="Edit input data channels"
@@ -274,9 +321,30 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 </div>
             )}
             <span className="bg-slate-300 w-px h-1/2 ml-1" />
+
+            {props.isMaximized ? (
+                <div
+                    className="hover:text-slate-500 cursor-pointer px-1 text-sm"
+                    onPointerDown={handleRestoreClick}
+                    onPointerUp={handlePointerUp}
+                    title="Restore"
+                >
+                    <CloseFullscreen fontSize="inherit" />
+                </div>
+            ) : (
+                <div
+                    className="hover:text-slate-500 cursor-pointer px-1 text-sm"
+                    onPointerDown={handleMaximizeClick}
+                    onPointerUp={handlePointerUp}
+                    title="Maximize"
+                >
+                    <OpenInFull fontSize="inherit" />
+                </div>
+            )}
+
             <div
                 className="hover:text-slate-500 cursor-pointer px-1"
-                onPointerDown={props.onRemoveClick}
+                onPointerDown={handleRemoveClick}
                 onPointerUp={handlePointerUp}
                 title="Remove this module"
             >

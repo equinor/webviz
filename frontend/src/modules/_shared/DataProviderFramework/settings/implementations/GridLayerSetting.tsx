@@ -1,0 +1,119 @@
+import type React from "react";
+
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
+
+import type {
+    CustomSettingImplementation,
+    SettingComponentProps,
+} from "../../interfacesAndTypes/customSettingImplementation";
+import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
+import type { SettingCategory } from "../settingsDefinitions";
+
+export enum Direction {
+    I,
+    J,
+    K,
+}
+
+type ValueType = number | null;
+
+export class GridLayerSetting implements CustomSettingImplementation<ValueType, SettingCategory.NUMBER> {
+    defaultValue: ValueType = null;
+
+    private _direction: Direction;
+
+    constructor(direction: Direction) {
+        this._direction = direction;
+    }
+
+    getLabel(): string {
+        switch (this._direction) {
+            case Direction.I:
+                return "Grid layer I";
+            case Direction.J:
+                return "Grid layer J";
+            case Direction.K:
+                return "Grid layer K";
+        }
+    }
+
+    isValueValid(
+        value: ValueType,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>,
+    ): boolean {
+        if (value === null) {
+            return false;
+        }
+
+        if (!availableValues) {
+            return false;
+        }
+
+        const min = availableValues[0];
+        const max = availableValues[1];
+
+        if (max === null || min === null) {
+            return false;
+        }
+
+        return value >= min && value <= max;
+    }
+
+    fixupValue(
+        currentValue: ValueType,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>,
+    ): ValueType {
+        if (!availableValues) {
+            return null;
+        }
+
+        const min = availableValues[0];
+        const max = availableValues[1];
+
+        if (max === null || min === null) {
+            return null;
+        }
+
+        if (currentValue === null) {
+            return min;
+        }
+
+        if (currentValue < min) {
+            return min;
+        }
+
+        if (currentValue > max) {
+            return max;
+        }
+
+        return currentValue;
+    }
+
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.NUMBER>) => React.ReactNode {
+        return function Ensemble(props: SettingComponentProps<ValueType, SettingCategory.NUMBER>) {
+            const start = props.availableValues?.[0] ?? 0;
+            const end = props.availableValues?.[1] ?? 0;
+
+            const rangeSize = end - start;
+
+            const options: DropdownOption[] = Array.from({ length: rangeSize }, (_, index) => {
+                const value = start + index;
+                return {
+                    value: value.toString(),
+                    label: value.toString(),
+                };
+            });
+
+            return (
+                <Dropdown
+                    options={options}
+                    value={!props.isOverridden ? props.value?.toString() : props.overriddenValue?.toString()}
+                    onChange={(val: string) => props.onValueChange(parseInt(val))}
+                    disabled={props.isOverridden}
+                    showArrows
+                />
+            );
+        };
+    }
+}

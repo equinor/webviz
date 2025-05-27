@@ -1,5 +1,8 @@
 import React from "react";
 
+import { Input } from "@mui/icons-material";
+import { useSetAtom } from "jotai";
+
 import { KeyKind } from "@framework/DataChannelTypes";
 import type { ModuleViewProps } from "@framework/Module";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
@@ -9,17 +12,15 @@ import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage/contentMessage";
 
-import { useSetAtom } from "jotai";
+import { createSensitivityColorMap } from "../../_shared/sensitivityColors";
+import type { Interfaces } from "../interfaces";
+import { DisplayComponentType } from "../typesAndEnums";
 
 import { selectedSensitivityAtom } from "./atoms/baseAtoms";
 import { SensitivityChart } from "./components/sensitivityChart";
 import SensitivityTable from "./components/sensitivityTable";
 import type { SensitivityResponseDataset } from "./utils/sensitivityResponseCalculator";
 import { SensitivityResponseCalculator } from "./utils/sensitivityResponseCalculator";
-
-import { createSensitivityColorMap } from "../../_shared/sensitivityColors";
-import type { Interfaces } from "../interfaces";
-import { DisplayComponentType } from "../typesAndEnums";
 
 export const View = ({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");
@@ -66,6 +67,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     );
 
     let computedSensitivityResponseDataset: SensitivityResponseDataset | null = null;
+
     if (referenceSensitivityName && sensitivities && realizations.length > 0 && values.length > 0) {
         const sensitivityResponseCalculator = new SensitivityResponseCalculator(
             sensitivities,
@@ -75,7 +77,9 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
                 name: responseReceiver.channel?.contents[0].displayName ?? "",
                 unit: "",
             },
-            referenceSensitivityName,
+            sensitivities.hasSensitivityName(referenceSensitivityName)
+                ? referenceSensitivityName
+                : sensitivities.getSensitivityNames()[0],
         );
         computedSensitivityResponseDataset = sensitivityResponseCalculator.computeSensitivitiesForResponse();
     }
@@ -85,7 +89,11 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
         if (!responseReceiver.channel) {
             return (
                 <ContentInfo>
-                    Connect a data channel to <Tag label="Response" />
+                    <span>
+                        Data channel required for use. Add a main module to the workbench and use the data channels icon{" "}
+                        <Input />
+                    </span>
+                    <Tag label="Response" />
                 </ContentInfo>
             );
         }

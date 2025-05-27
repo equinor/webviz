@@ -1,10 +1,11 @@
 import logging
 from io import BytesIO
 from typing import List, Optional
-import asyncio
 import pandas as pd
 import xtgeo
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
+from fmu.sumo.explorer.objects import Polygons
+
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
@@ -30,15 +31,16 @@ class PolygonsAccess:
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_polygons_directory_async(self) -> List[PolygonsMeta]:
-        realizations = await self._ensemble_context.get_field_values_async("fmu.realization.id")
+        realizations = await self._ensemble_context.realizationids_async
 
         polygons_context = self._ensemble_context.polygons.filter(
             realization=realizations[0],
         )
-        length_polys = await polygons_context.length_async()
-        async with asyncio.TaskGroup() as tg:
-            tasks = [tg.create_task(_get_polygons_meta_async(polygons_context, i)) for i in range(length_polys)]
-        poly_meta_arr: list[PolygonsMeta] = [task.result() for task in tasks]
+
+        poly_meta_arr: list[PolygonsMeta] = []
+        sumo_polygons_object: Polygons
+        async for sumo_polygons_object in polygons_context:
+            poly_meta_arr.append(_create_polygons_meta_from_sumo_polygons_object(sumo_polygons_object))
 
         return poly_meta_arr
 
@@ -102,31 +104,30 @@ class PolygonsAccess:
         return addr_str
 
 
-async def _get_polygons_meta_async(search_context: SearchContext, item_no: int) -> PolygonsMeta:
-    polygons = await search_context.getitem_async(item_no)
-    content = polygons["data"].get("content", SumoContent.DEPTH)
+def _create_polygons_meta_from_sumo_polygons_object(sumo_polygons_object: Polygons) -> PolygonsMeta:
+    content = sumo_polygons_object["data"].get("content", SumoContent.DEPTH)
 
     # Remove this once Sumo enforces content (content-unset)
     # https://github.com/equinor/webviz/issues/433
 
     if content == "unset":
         LOGGER.warning(
-            f"Polygons {polygons['data']['name']} has unset content. Defaulting temporarily to depth until enforced by dataio."
+            f"Polygons {sumo_polygons_object['data']['name']} has unset content. Defaulting temporarily to depth until enforced by dataio."
         )
         content = SumoContent.DEPTH
 
     # Remove this once Sumo enforces tagname (tagname-unset)
     # https://github.com/equinor/webviz/issues/433
-    tagname = polygons["data"].get("tagname", "")
+    tagname = sumo_polygons_object["data"].get("tagname", "")
     if tagname == "":
         LOGGER.warning(
-            f"Surface {polygons['data']['name']} has empty tagname. Defaulting temporarily to Unknown until enforced by dataio."
+            f"Surface {sumo_polygons_object['data']['name']} has empty tagname. Defaulting temporarily to Unknown until enforced by dataio."
         )
         tagname = "Unknown"
     polygons_meta = PolygonsMeta(
-        name=polygons["data"]["name"],
+        name=sumo_polygons_object["data"]["name"],
         tagname=tagname,
         content=content,
-        is_stratigraphic=polygons["data"]["stratigraphic"],
+        is_stratigraphic=sumo_polygons_object["data"]["stratigraphic"],
     )
     return polygons_meta

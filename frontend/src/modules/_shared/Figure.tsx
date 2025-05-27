@@ -1,8 +1,7 @@
-import type { PlotParams } from "react-plotly.js";
-import Plot from "react-plotly.js";
-
 import { merge } from "lodash";
 import type { Annotations, AxisType, Layout, PlotData, Shape, XAxisName, YAxisName } from "plotly.js";
+import type { PlotParams } from "react-plotly.js";
+import Plot from "react-plotly.js";
 
 /**
  * Enum for axis coordinate domain.

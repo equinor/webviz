@@ -1,6 +1,5 @@
 import React from "react";
 
-import type { WellboreCasing_api } from "@api";
 import type {
     Casing,
     IntersectionReferenceSystem,
@@ -9,12 +8,19 @@ import type {
     SurfaceLine,
 } from "@equinor/esv-intersection";
 import { getPicksData, getSeismicOptions } from "@equinor/esv-intersection";
+import _ from "lodash";
+
+import type { WellboreCasing_api } from "@api";
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
-import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { IntersectionType } from "@framework/types/intersection";
 import type { Viewport } from "@framework/types/viewport";
+import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
+import { LayerType } from "@modules/_shared/components/EsvIntersection";
+import type { SurfaceStatisticalFanchart } from "@modules/_shared/components/EsvIntersection/layers/SurfaceStatisticalFanchartCanvasLayer";
+import { makeSurfaceStatisticalFanchartFromRealizationSurface } from "@modules/_shared/components/EsvIntersection/utils/surfaceStatisticalFancharts";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 import type { BaseLayer } from "@modules/Intersection/utils/layers/BaseLayer";
 import { LayerStatus, useLayers } from "@modules/Intersection/utils/layers/BaseLayer";
@@ -25,17 +31,11 @@ import { isSeismicLayer } from "@modules/Intersection/utils/layers/SeismicLayer"
 import { isSurfaceLayer } from "@modules/Intersection/utils/layers/SurfaceLayer";
 import { isSurfacesUncertaintyLayer } from "@modules/Intersection/utils/layers/SurfacesUncertaintyLayer";
 import { isWellpicksLayer } from "@modules/Intersection/utils/layers/WellpicksLayer";
-import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
-import { LayerType } from "@modules/_shared/components/EsvIntersection";
-import type { SurfaceStatisticalFanchart } from "@modules/_shared/components/EsvIntersection/layers/SurfaceStatisticalFanchartCanvasLayer";
-import { makeSurfaceStatisticalFanchartFromRealizationSurface } from "@modules/_shared/components/EsvIntersection/utils/surfaceStatisticalFancharts";
 import { ColorLegendsContainer } from "@modules_shared/components/ColorLegendsContainer";
 
-import { isEqual } from "lodash";
+import type { ColorScaleWithName } from "../../../_shared/utils/ColorScaleWithName";
 
 import { ViewportWrapper } from "./viewportWrapper";
-
-import type { ColorScaleWithName } from "../../../_shared/utils/ColorScaleWithName";
 
 export type LayersWrapperProps = {
     referenceSystem: IntersectionReferenceSystem | null;
@@ -63,7 +63,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const [prevBounds, setPrevBounds] = React.useState<{ x: [number, number]; y: [number, number] } | null>(null);
     const [isInitialLayerViewportSet, setIsInitialLayerViewportSet] = React.useState<boolean>(false);
 
-    if (props.referenceSystem && !isEqual(prevReferenceSystem, props.referenceSystem)) {
+    if (props.referenceSystem && !_.isEqual(prevReferenceSystem, props.referenceSystem)) {
         setIsInitialLayerViewportSet(false);
         setPrevReferenceSystem(props.referenceSystem);
         setPrevLayersViewport(null);
@@ -412,7 +412,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         bounds.y = prevBounds?.y ?? [0, 1000];
     }
 
-    if (!isEqual(bounds, prevBounds)) {
+    if (!_.isEqual(bounds, prevBounds)) {
         setPrevBounds(bounds);
     }
 
@@ -424,7 +424,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         Math.max(Math.abs(bounds.y[1] - bounds.y[0]) * viewportRatio, Math.abs(bounds.x[1] - bounds.x[0])) * 1.2,
     ];
 
-    if (!isEqual(newLayersViewport, prevLayersViewport) && !isInitialLayerViewportSet) {
+    if (!_.isEqual(newLayersViewport, prevLayersViewport) && !isInitialLayerViewportSet) {
         setViewport(newLayersViewport);
         setPrevLayersViewport(newLayersViewport);
         if (boundsSetByLayer) {

@@ -1,6 +1,6 @@
 import type { EnsembleSensitivities, Sensitivity, SensitivityCase } from "@framework/EnsembleSensitivities";
 import { SensitivityType } from "@framework/EnsembleSensitivities";
-import { computeQuantile } from "@modules_shared/statistics";
+import { computeQuantile } from "@modules/_shared/utils/math/statistics";
 
 export type EnsembleScalarResponse = {
     realizations: number[];
@@ -50,14 +50,14 @@ export class SensitivityResponseCalculator {
     constructor(
         sensitivities: EnsembleSensitivities,
         ensembleResponse: EnsembleScalarResponse,
-        referenceSensitivity: string | null,
+        referenceSensitivity: string | null
     ) {
         this._ensembleResponse = ensembleResponse;
         this._sensitivities = sensitivities;
 
         if (!referenceSensitivity || !this._sensitivities.hasSensitivityName(referenceSensitivity)) {
             throw new Error(
-                `SensitivityResponseCalculator: Reference sensitivity ${referenceSensitivity} not found in ensemble`,
+                `SensitivityResponseCalculator: Reference sensitivity ${referenceSensitivity} not found in ensemble`
             );
         }
         this._referenceSensitivity = referenceSensitivity;
@@ -141,14 +141,14 @@ export class SensitivityResponseCalculator {
             (a: SensitivityResponse, b: SensitivityResponse) => {
                 const maxValueA = Math.max(
                     Math.abs(a.lowCaseReferenceDifference),
-                    Math.abs(a.highCaseReferenceDifference),
+                    Math.abs(a.highCaseReferenceDifference)
                 );
                 const maxValueB = Math.max(
                     Math.abs(b.lowCaseReferenceDifference),
-                    Math.abs(b.highCaseReferenceDifference),
+                    Math.abs(b.highCaseReferenceDifference)
                 );
                 return maxValueA - maxValueB;
-            },
+            }
         );
         return sortedSensitivityResponses;
     }
@@ -191,7 +191,7 @@ export class SensitivityResponseCalculator {
         // Compute sensitivity response for Monte Carlo sensitivity
         if (sensitivity.cases.length > 1) {
             throw new Error(
-                `SensitivityResponseCalculator: Monte Carlo sensitivity ${sensitivity.name} has more than 1 case`,
+                `SensitivityResponseCalculator: Monte Carlo sensitivity ${sensitivity.name} has more than 1 case`
             );
         }
         const sensitivityCase: SensitivityCase = sensitivity.cases[0];
@@ -215,7 +215,7 @@ export class SensitivityResponseCalculator {
         // Compute sensitivity response for scenario sensitivity
         if (sensitivity.cases.length > 2) {
             throw new Error(
-                `SensitivityResponseCalculator: Scenario sensitivity ${sensitivity.name} has more than 2 cases`,
+                `SensitivityResponseCalculator: Scenario sensitivity ${sensitivity.name} has more than 2 cases`
             );
         }
         if (sensitivity.cases.length === 1) {

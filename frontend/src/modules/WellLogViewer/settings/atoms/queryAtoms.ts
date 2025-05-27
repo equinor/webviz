@@ -1,3 +1,7 @@
+import type { QueryObserverResult } from "@tanstack/react-query";
+import { atomWithQuery } from "jotai-tanstack-query";
+import _ from "lodash";
+
 import type { StratigraphicColumn_api, WellboreLogCurveHeader_api } from "@api";
 import {
     WellLogCurveSourceEnum_api,
@@ -9,10 +13,6 @@ import {
 } from "@api";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { mergeResults } from "@modules/WellLogViewer/utils/queries";
-import type { QueryObserverResult } from "@tanstack/react-query";
-
-import { atomWithQuery } from "jotai-tanstack-query";
-import _ from "lodash";
 
 import { selectedFieldIdentifierAtom, selectedWellPickColumnAtom, selectedWellboreHeaderAtom } from "./derivedAtoms";
 
@@ -38,6 +38,7 @@ export const wellLogCurveHeadersQueryAtom = atomWithQueries((get) => {
         WellLogCurveSourceEnum_api.SSDL_WELL_LOG,
         WellLogCurveSourceEnum_api.SMDA_GEOLOGY,
         WellLogCurveSourceEnum_api.SMDA_STRATIGRAPHY,
+        WellLogCurveSourceEnum_api.SMDA_SURVEY,
     ];
 
     // We *could* fetch all headers within a single query, but doing them seperately here for parallelism
@@ -77,7 +78,7 @@ export const wellborePicksQueryAtom = atomWithQuery((get) => {
         ...getWellborePicksInStratColumnOptions({
             query: {
                 wellbore_uuid: selectedWellboreUuid,
-                strat_column: selectedStratColumn,
+                strat_column_identifier: selectedStratColumn,
             },
         }),
         enabled: Boolean(selectedWellboreUuid),

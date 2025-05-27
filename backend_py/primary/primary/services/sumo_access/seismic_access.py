@@ -1,8 +1,8 @@
 import logging
 from typing import List
-import asyncio
 from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
+from fmu.sumo.explorer.objects.cube import Cube
 
 from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
 
@@ -27,16 +27,16 @@ class SeismicAccess:
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_seismic_cube_meta_list_async(self) -> List[SeismicCubeMeta]:
-        realizations = await self._ensemble_context.get_field_values_async("fmu.realization.id")
+        realizations = await self._ensemble_context.realizationids_async
 
         seismic_context = self._ensemble_context.cubes.filter(
             realization=realizations[0],
         )
 
-        length_cubes = await seismic_context.length_async()
-        async with asyncio.TaskGroup() as tg:
-            tasks = [tg.create_task(_get_seismic_cube_meta_async(seismic_context, i)) for i in range(length_cubes)]
-        cube_meta_arr: list[SeismicCubeMeta] = [task.result() for task in tasks]
+        cube_meta_arr: list[SeismicCubeMeta] = []
+        sumo_cube_object: Cube
+        async for sumo_cube_object in seismic_context:
+            cube_meta_arr.append(_create_seismic_cube_meta_from_sumo_cube_object(sumo_cube_object))
 
         return cube_meta_arr
 
@@ -74,7 +74,7 @@ class SeismicAccess:
         )
 
         # Filter on observed
-        cubes = []
+        cubes: List[Cube] = []
         async for cube in cube_context:
             if cube["data"]["is_observation"] == observed:
                 cubes.append(cube)
@@ -89,7 +89,8 @@ class SeismicAccess:
 
         cube = cubes[0]
 
-        sas_token, url = await asyncio.gather(cube.sas_async, cube.url_async)
+        url, sas_token = await cube.auth_async
+
         return VdsHandle(
             sas_token=sas_token,
             vds_url=clean_vds_url(url),
@@ -101,13 +102,12 @@ def clean_vds_url(vds_url: str) -> str:
     return vds_url.replace(":443", "")
 
 
-async def _get_seismic_cube_meta_async(search_context: SearchContext, item_no: int) -> SeismicCubeMeta:
-    seismic_cube = await search_context.getitem_async(item_no)
-    t_start = seismic_cube["data"].get("time", {}).get("t0", {}).get("value", None)
-    t_end = seismic_cube["data"].get("time", {}).get("t1", {}).get("value", None)
+def _create_seismic_cube_meta_from_sumo_cube_object(sumo_cube_object: Cube) -> SeismicCubeMeta:
+    t_start = sumo_cube_object["data"].get("time", {}).get("t0", {}).get("value", None)
+    t_end = sumo_cube_object["data"].get("time", {}).get("t1", {}).get("value", None)
 
     if not t_start and not t_end:
-        raise ValueError(f"Cube {seismic_cube['data']['tagname']} has no time information")
+        raise ValueError(f"Cube {sumo_cube_object['data']['tagname']} has no time information")
 
     if t_start and not t_end:
         iso_string_or_time_interval = t_start
@@ -116,26 +116,26 @@ async def _get_seismic_cube_meta_async(search_context: SearchContext, item_no: i
         iso_string_or_time_interval = f"{t_start}/{t_end}"
 
     seismic_spec = SeismicCubeSpec(
-        num_cols=seismic_cube["data"]["spec"]["ncol"],
-        num_rows=seismic_cube["data"]["spec"]["nrow"],
-        num_layers=seismic_cube["data"]["spec"]["nlay"],
-        x_origin=seismic_cube["data"]["spec"]["xori"],
-        y_origin=seismic_cube["data"]["spec"]["yori"],
-        z_origin=seismic_cube["data"]["spec"]["zori"],
-        x_inc=seismic_cube["data"]["spec"]["xinc"],
-        y_inc=seismic_cube["data"]["spec"]["yinc"],
-        z_inc=seismic_cube["data"]["spec"]["zinc"],
-        y_flip=seismic_cube["data"]["spec"]["yflip"],
-        z_flip=seismic_cube["data"]["spec"]["zflip"],
-        rotation=seismic_cube["data"]["spec"]["rotation"],
+        num_cols=sumo_cube_object["data"]["spec"]["ncol"],
+        num_rows=sumo_cube_object["data"]["spec"]["nrow"],
+        num_layers=sumo_cube_object["data"]["spec"]["nlay"],
+        x_origin=sumo_cube_object["data"]["spec"]["xori"],
+        y_origin=sumo_cube_object["data"]["spec"]["yori"],
+        z_origin=sumo_cube_object["data"]["spec"]["zori"],
+        x_inc=sumo_cube_object["data"]["spec"]["xinc"],
+        y_inc=sumo_cube_object["data"]["spec"]["yinc"],
+        z_inc=sumo_cube_object["data"]["spec"]["zinc"],
+        y_flip=sumo_cube_object["data"]["spec"]["yflip"],
+        z_flip=sumo_cube_object["data"]["spec"]["zflip"],
+        rotation=sumo_cube_object["data"]["spec"]["rotation"],
     )
     seismic_meta = SeismicCubeMeta(
-        seismic_attribute=seismic_cube["data"].get("tagname"),
-        unit=seismic_cube["data"].get("unit"),
+        seismic_attribute=sumo_cube_object["data"].get("tagname"),
+        unit=sumo_cube_object["data"].get("unit"),
         iso_date_or_interval=iso_string_or_time_interval,
-        is_observation=seismic_cube["data"]["is_observation"],
-        is_depth=seismic_cube["data"].get("vertical_domain", "depth") == "depth",
-        bbox=seismic_cube["data"]["bbox"],
+        is_observation=sumo_cube_object["data"]["is_observation"],
+        is_depth=sumo_cube_object["data"].get("vertical_domain", "depth") == "depth",
+        bbox=sumo_cube_object["data"]["bbox"],
         spec=seismic_spec,
     )
     return seismic_meta

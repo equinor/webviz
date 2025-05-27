@@ -1,15 +1,20 @@
 import React from "react";
 
+import { FilterAlt } from "@mui/icons-material";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+
 import { Frequency_api, StatisticFunction_api } from "@api";
+import { EnsembleSelect } from "@framework/components/EnsembleSelect";
+import { ParameterListFilter } from "@framework/components/ParameterListFilter";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { Parameter } from "@framework/EnsembleParameters";
 import { ParameterIdent } from "@framework/EnsembleParameters";
+import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
+import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { EnsembleSelect } from "@framework/components/EnsembleSelect";
-import { ParameterListFilter } from "@framework/components/ParameterListFilter";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -24,9 +29,21 @@ import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelect
 import { Switch } from "@lib/components/Switch";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
-import { FilterAlt } from "@mui/icons-material";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import type { Interfaces } from "../interfaces";
+import {
+    FanchartStatisticOption,
+    FanchartStatisticOptionEnumToStringMapping,
+    FrequencyEnumToStringMapping,
+    GroupBy,
+    GroupByEnumToStringMapping,
+    StatisticFunctionEnumToStringMapping,
+    StatisticsType,
+    SubplotLimitDirection,
+    SubplotLimitDirectionEnumToStringMapping,
+    VisualizationMode,
+    VisualizationModeEnumToStringMapping,
+} from "../typesAndEnums";
 
 import {
     colorRealizationsByParameterAtom,
@@ -56,22 +73,12 @@ import {
 import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
-import type { Interfaces } from "../interfaces";
-import {
-    FanchartStatisticOption,
-    FanchartStatisticOptionEnumToStringMapping,
-    FrequencyEnumToStringMapping,
-    GroupBy,
-    GroupByEnumToStringMapping,
-    StatisticFunctionEnumToStringMapping,
-    StatisticsType,
-    SubplotLimitDirection,
-    SubplotLimitDirectionEnumToStringMapping,
-    VisualizationMode,
-    VisualizationModeEnumToStringMapping,
-} from "../typesAndEnums";
-
-export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
+export function Settings({
+    initialSettings,
+    settingsContext,
+    workbenchSession,
+    workbenchServices,
+}: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
 
@@ -100,6 +107,32 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);
     const setUserSelectedParameterIdentStr = useSetAtom(userSelectedParameterIdentStringAtom);
     const selectedParameterIdentStr = useAtomValue(selectedParameterIdentStringAtom);
+
+    useApplyInitialSettingsToState(initialSettings, "selectedVectorTags", "array", setSelectedVectorTags);
+    useApplyInitialSettingsToState(initialSettings, "visualizationMode", "string", setVisualizationMode);
+    useApplyInitialSettingsToState(
+        initialSettings,
+        "colorRealizationsByParameter",
+        "boolean",
+        setColorRealizationsByParameter,
+    );
+    useApplyInitialSettingsToState(
+        initialSettings,
+        "selectedParameterIdentString",
+        "string",
+        setUserSelectedParameterIdentStr,
+    );
+
+    const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
+    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
+    const globalSyncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
+
+    // Receive global parameter string and update local state if different
+    React.useEffect(() => {
+        if (globalSyncedParameter !== null && globalSyncedParameter !== selectedParameterIdentStr) {
+            setUserSelectedParameterIdentStr(globalSyncedParameter);
+        }
+    }, [globalSyncedParameter, setUserSelectedParameterIdentStr, selectedParameterIdentStr]);
 
     useMakeSettingsStatusWriterMessages(statusWriter, selectedVectorTags);
 
@@ -324,6 +357,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             lineBreakAfterTag={true}
                             onChange={handleVectorSelectionChange}
                             customVectorDefinitions={customVectorDefinitions ?? undefined}
+                            selectedTags={selectedVectorTags}
                         />
                     </QueryStateWrapper>
                 </div>

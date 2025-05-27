@@ -1,26 +1,44 @@
 import React from "react";
 
+import { useQueryClient } from "@tanstack/react-query";
+
 import WebvizLogo from "@assets/webviz.svg";
+
 import { GuiState, LeftDrawerContent } from "@framework/GuiMessageBroker";
-import type { LayoutElement } from "@framework/Workbench";
-import { Workbench } from "@framework/Workbench";
 import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
+import { Workbench } from "@framework/Workbench";
+import type { LayoutElement } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { WebvizSpinner } from "@lib/components/WebvizSpinner";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { useQueryClient } from "@tanstack/react-query";
 
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
 
+function DataSharingLabel() {
+    return (
+        <div className="border-2 border-orange-600 px-3 py-2 rounded-sm max-w-[600px] text-justify mt-4 z-50 shadow-sm">
+            <p>
+                <strong>Disclaimer:</strong> Webviz is a service provided by Equinor and is not a way of sharing
+                official data. Data should continue to be shared through L2S, FTP and/or Dasha.
+            </p>
+            <p className="mt-3">
+                References to e.g. earlier models, model results and data should still be done through the mentioned
+                tools, and not Webviz. Since Webviz is currently under heavy development and not production ready, there
+                is no guarantee given as of now that calculations are error-free.
+            </p>
+        </div>
+    );
+}
+
 function DevLabel() {
     return (
-        <div className="bg-orange-600 text-white p-2 rounded-sm max-w-[400px] text-sm text-center mt-4 z-50 shadow-sm">
-            <strong>NOTE:</strong> This application is still under heavy development and bugs are to be expected. Please
-            help us improve Webviz by reporting any undesired behaviour either on{" "}
+        <div className="bg-orange-600 text-white px-3 py-2 rounded-sm max-w-[400px] text-sm text-justify mt-4 z-50 shadow-sm">
+            <strong>NOTE:</strong> This application is still under heavy development; bugs and occasional downtime
+            should be expected. Please help us improve Webviz by reporting any undesired behaviour either on{" "}
             <a href="https://equinor.slack.com/messages/webviz/" target="blank" className="underline cursor-pointer">
                 Slack
             </a>{" "}
@@ -134,6 +152,7 @@ function App() {
             {authState === AuthState.NotLoggedIn ? (
                 <div className="w-screen h-screen flex flex-col items-center justify-center gap-8">
                     <img src={WebvizLogo} alt="Webviz logo" className="w-32 h-32" />
+                    <DataSharingLabel />
                     <p className="text-lg">Please sign in to continue.</p>
                     <Button onClick={signIn}>Sign in</Button>
                     <DevLabel />

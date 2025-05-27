@@ -1,7 +1,8 @@
+import type { UseQueryResult } from "@tanstack/react-query";
+
 import type { VectorDescription_api } from "@api";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { UseQueryResult } from "@tanstack/react-query";
 
 /**
  * Helper class for working with ensembles and corresponding vector list query results
