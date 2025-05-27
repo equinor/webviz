@@ -6,7 +6,6 @@ import { isEqual } from "lodash";
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { IntersectionType } from "@framework/types/intersection";
-import type { Viewport } from "@framework/types/viewport";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
@@ -16,7 +15,7 @@ import { combine } from "@lib/utils/bbox";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { isColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import type { Bounds, LayerItem } from "@modules/_shared/components/EsvIntersection";
-import { areBoundsValid, isValidViewport } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
+import { areBoundsValid } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { IntersectionRealizationSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
@@ -57,7 +56,7 @@ import "../../DataProviderFramework/customDataProviderImplementations/registerAl
 import { useWellboreCasingsQuery } from "../hooks/queryHooks";
 import { useCreateIntersectionReferenceSystem } from "../hooks/useIntersectionReferenceSystem";
 import { createBBoxForWellborePath } from "../utils/boundingBoxUtils";
-import { createBoundsForView, DEFAULT_INTERSECTION_VIEW_BOUNDS } from "../utils/boundsUtils";
+import { createBoundsForIntersectionView, DEFAULT_INTERSECTION_VIEW_BOUNDS } from "../utils/boundsUtils";
 import {
     createLayerItemsForIntersectionType,
     makeViewProvidersVisualizationLayerItems,
@@ -152,18 +151,32 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     },
 );
 
+// State for request of view refocus
+const enum RefocusRequestState {
+    NONE = "None",
+    AWAITING_LOADING_DATA = "Await data loading",
+}
+
 export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.ReactNode {
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
     const statusWriter = useViewStatusWriter(props.viewContext);
 
     const [prevReferenceSystem, setPrevReferenceSystem] = React.useState<IntersectionReferenceSystem | null>(null);
-    const [viewport, setViewport] = React.useState<Viewport>([0, 0, 2000]);
-    const [bounds, setBounds] = React.useState<Bounds>(DEFAULT_INTERSECTION_VIEW_BOUNDS);
-    const [prevBounds, setPrevBounds] = React.useState<Bounds | null>(null);
+    const [layersBounds, setLayersBounds] = React.useState<Bounds>(DEFAULT_INTERSECTION_VIEW_BOUNDS);
+    const [prevLayersBounds, setPrevLayersBounds] = React.useState<Bounds | null>(null);
     const [previousIntersection, setPreviousIntersection] = React.useState<IntersectionSettingValue | null>(null);
     const [previousExtensionLength, setPreviousExtensionLength] = React.useState<number | null>(null);
-    const [doUpdateViewport, setDoUpdateViewport] = React.useState(true);
+
+    // Update of intersection/extension length should trigger refocus of viewport
+    const [refocusRequestState, setRefocusRequestState] = React.useState<RefocusRequestState>(RefocusRequestState.NONE);
+    const [viewportFocusTarget, setViewportFocusTarget] = React.useState<{
+        bounds: Bounds | null;
+        requestRefocus: boolean;
+    }>({
+        bounds: null,
+        requestRefocus: false,
+    });
 
     const fieldIdentifier = props.dataProviderManager.getGlobalSetting("fieldId");
 
@@ -204,20 +217,33 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         props.workbenchSession,
     );
 
-    // Update viewport if intersection or extension length changes
+    // Update focus bounds if intersection or extension length changes
     if (!isEqual(viewIntersection, previousIntersection)) {
-        setDoUpdateViewport(true);
         setPreviousIntersection(viewIntersection);
+        setRefocusRequestState(RefocusRequestState.AWAITING_LOADING_DATA);
+        setViewportFocusTarget({ bounds: null, requestRefocus: false });
     }
     if (!isEqual(extensionLength, previousExtensionLength)) {
-        setDoUpdateViewport(true);
         setPreviousExtensionLength(extensionLength);
+        setRefocusRequestState(RefocusRequestState.AWAITING_LOADING_DATA);
+        setViewportFocusTarget({ bounds: null, requestRefocus: false });
     }
 
     // Detect if intersection reference system has changed
     if (intersectionReferenceSystem && !isEqual(intersectionReferenceSystem, prevReferenceSystem)) {
-        setDoUpdateViewport(true);
         setPrevReferenceSystem(intersectionReferenceSystem);
+        setRefocusRequestState(RefocusRequestState.AWAITING_LOADING_DATA);
+        setViewportFocusTarget({ bounds: null, requestRefocus: false });
+    }
+
+    const isOneOrMoreProvidersReady =
+        viewCandidate &&
+        viewCandidate.children.length > 0 &&
+        viewCandidate.numLoadingDataProviders < viewCandidate.children.length;
+    if (isOneOrMoreProvidersReady && refocusRequestState === RefocusRequestState.AWAITING_LOADING_DATA) {
+        // Set bounds to null to ensure that bounds are recalculated/updated when requesting refocus
+        setViewportFocusTarget({ bounds: null, requestRefocus: true });
+        setRefocusRequestState(RefocusRequestState.NONE);
     }
 
     // Make layer items for the view providers using intersection reference system
@@ -253,57 +279,56 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         }
     }
 
-    // Create data bounds for the view, by use of bounding box for the visualization layers
-    let viewBoundingBox = wellborePathBoundingBox;
-    if (viewBoundingBox && assemblerProduct.combinedBoundingBox) {
-        viewBoundingBox = combine(viewBoundingBox, assemblerProduct.combinedBoundingBox);
+    // Create data bounds for the layers, by use of bounding box for the visualization layers
+    let layersBoundingBox = wellborePathBoundingBox;
+    if (layersBoundingBox && assemblerProduct.combinedBoundingBox) {
+        layersBoundingBox = combine(layersBoundingBox, assemblerProduct.combinedBoundingBox);
     } else if (assemblerProduct.combinedBoundingBox) {
-        viewBoundingBox = assemblerProduct.combinedBoundingBox;
+        layersBoundingBox = assemblerProduct.combinedBoundingBox;
     }
 
-    // Create bounds for data in the view (neglect wellbore path)
-    const newBounds = createBoundsForView(
-        assemblerProduct.combinedBoundingBox,
+    // Create bounds for the layers
+    const newLayersBounds = createBoundsForIntersectionView(
+        layersBoundingBox,
         intersectionReferenceSystem,
-        prevBounds,
+        prevLayersBounds,
     );
-    if (!areBoundsValid(newBounds)) {
-        newBounds.x = DEFAULT_INTERSECTION_VIEW_BOUNDS.x;
-        newBounds.y = DEFAULT_INTERSECTION_VIEW_BOUNDS.y;
+    if (!areBoundsValid(newLayersBounds)) {
+        newLayersBounds.x = DEFAULT_INTERSECTION_VIEW_BOUNDS.x;
+        newLayersBounds.y = DEFAULT_INTERSECTION_VIEW_BOUNDS.y;
     }
 
     // Check if bounds have changed
-    if (!isEqual(newBounds, bounds)) {
-        setPrevBounds(bounds);
-        setBounds(newBounds);
+    if (!isEqual(newLayersBounds, layersBounds)) {
+        setPrevLayersBounds(layersBounds);
+        setLayersBounds(newLayersBounds);
     }
 
-    // Update viewport
-    const boundingBoxForViewport = assemblerProduct.combinedBoundingBox;
-    if (doUpdateViewport && boundingBoxForViewport) {
-        // Get bounds for the view, to create viewport for the intersection data (not wellpath and wellpicks)
-        // NB: The wellpicks provider does not have a bounding box, thereby we can use the combined bounding box
-        const viewportBounds: Bounds = {
-            x: [boundingBoxForViewport.min.x, boundingBoxForViewport.max.x],
-            y: [boundingBoxForViewport.min.y, boundingBoxForViewport.max.y],
+    // Update focus bounds
+    // - Get bounds for the layers to focus on, neglect wellpath and wellpicks
+    // - Wellpicks provider does not have a bounding box, thereby we can use the combined bounding box
+    const focusBoundingBox = assemblerProduct.combinedBoundingBox;
+    if (focusBoundingBox) {
+        const focusBoundsCandidate: Bounds = {
+            x: [focusBoundingBox.min.x, focusBoundingBox.max.x],
+            y: [focusBoundingBox.min.y, focusBoundingBox.max.y],
         };
 
-        // Create candidate viewport from bounds of data
-        const viewportRatioCandidate = mainDivSize.width / mainDivSize.height;
-        const viewportRatio = Number.isNaN(viewportRatioCandidate) ? 1 : viewportRatioCandidate;
-        const candidateViewport: [number, number, number] = [
-            viewportBounds.x[0] + (viewportBounds.x[1] - viewportBounds.x[0]) / 2,
-            viewportBounds.y[0] + (viewportBounds.y[1] - viewportBounds.y[0]) / 2,
-            Math.max(
-                Math.abs(viewportBounds.y[1] - viewportBounds.y[0]) * viewportRatio,
-                Math.abs(viewportBounds.x[1] - viewportBounds.x[0]),
-            ) * 1.2,
-        ];
-
-        if (isValidViewport(candidateViewport) && !isEqual(candidateViewport, viewport)) {
-            setViewport(candidateViewport);
-            setDoUpdateViewport(false);
+        // Update focus bounds if they are valid, independent of the focus state
+        if (areBoundsValid(focusBoundsCandidate) && !isEqual(focusBoundsCandidate, viewportFocusTarget.bounds)) {
+            setViewportFocusTarget((prev) => {
+                return { ...prev, bounds: focusBoundsCandidate };
+            });
         }
+    }
+
+    function handleOnViewportRefocused(): void {
+        setViewportFocusTarget((prev) => {
+            return {
+                ...prev,
+                requestRefocus: false,
+            };
+        });
     }
 
     const layerIdToNameMap = Object.fromEntries(visualizationLayerItems.map((layer) => [layer.id, layer.name]));
@@ -316,11 +341,13 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
                     referenceSystem={intersectionReferenceSystem ?? undefined}
                     layerItems={visualizationLayerItems}
                     layerItemIdToNameMap={layerIdToNameMap}
-                    bounds={bounds}
-                    viewport={viewport}
+                    layerItemsBounds={layersBounds}
+                    focusBounds={viewportFocusTarget.bounds}
+                    doRefocus={viewportFocusTarget.requestRefocus}
                     workbenchServices={props.workbenchServices}
                     viewContext={props.viewContext}
                     wellboreHeaderUuid={wellboreUuid}
+                    onViewportRefocused={handleOnViewportRefocused}
                 />
                 <ColorLegendsContainer colorScales={colorScales} height={mainDivSize.height / 2 - 50} />
             </div>

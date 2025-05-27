@@ -10,18 +10,18 @@ export const DEFAULT_INTERSECTION_VIEW_BOUNDS: Bounds = {
 };
 
 /**
- * Create bounds for the view based on the provided bounding box or intersection reference system.
+ * Create data bounds for the intersection view based on the provided bounding box or intersection reference system.
  */
-export function createBoundsForView(
-    viewBoundingBox: BBox | null,
+export function createBoundsForIntersectionView(
+    dataBoundingBox: BBox | null,
     intersectionReferenceSystem: IntersectionReferenceSystem | null,
     prevBounds: Bounds | null,
 ): Bounds {
     const bounds = DEFAULT_INTERSECTION_VIEW_BOUNDS;
 
-    if (viewBoundingBox) {
-        bounds.x = [viewBoundingBox.min.x, viewBoundingBox.max.x];
-        bounds.y = [viewBoundingBox.min.y, viewBoundingBox.max.y];
+    if (dataBoundingBox) {
+        bounds.x = [dataBoundingBox.min.x, dataBoundingBox.max.x];
+        bounds.y = [dataBoundingBox.min.y, dataBoundingBox.max.y];
         return bounds;
     }
 

@@ -40,16 +40,32 @@ export function makeSurfacesBoundingBox({
     const minX = -extensionLength;
     const maxX = polylineActualSectionLengths.reduce((sum, length) => sum + length, -extensionLength);
 
-    // If no surfaces, return a bounding box with only the x-coordinates
+    // If no surfaces are selected
     if (data.length === 0) {
-        return fromNumArray([minX, 0, 0, maxX, 0, 0]);
+        return null;
     }
 
     let minY = Number.MAX_VALUE;
     let maxY = -Number.MAX_VALUE;
     for (const surface of data) {
-        minY = Math.min(minY, ...surface.z_points);
-        maxY = Math.max(maxY, ...surface.z_points);
+        // Find valid min and max values for the surface
+        const { min: surfaceMin, max: surfaceMax } = surface.z_points.reduce(
+            (acc, z) => {
+                if (z === null) {
+                    return acc;
+                }
+
+                return {
+                    min: Math.min(acc.min, z),
+                    max: Math.max(acc.max, z),
+                };
+            },
+            { min: Number.MAX_VALUE, max: -Number.MAX_VALUE },
+        );
+
+        // Update the overall min and max values
+        minY = Math.min(minY, surfaceMin);
+        maxY = Math.max(maxY, surfaceMax);
     }
 
     return fromNumArray([minX, minY, 0, maxX, maxY, 0]);
