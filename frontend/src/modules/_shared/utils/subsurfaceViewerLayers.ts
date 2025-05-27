@@ -1,12 +1,14 @@
 import type { Layer, PickingInfo } from "@deck.gl/core";
-import type { HoverData } from "@framework/HoverService";
-import { HoverTopic } from "@framework/HoverService";
 import type { MapMouseEvent } from "@webviz/subsurface-viewer";
 import { ColormapLayer, Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
-import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
-
+import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 import type { Feature, GeometryCollection } from "geojson";
 import _ from "lodash";
+
+import { HoverTopic } from "@framework/HoverService";
+import type { HoverData } from "@framework/HoverService";
+
+import { AdvancedWellsLayer } from "../customDeckGlLayers/AdvancedWellsLayer";
 
 export interface WellboreGeoJsonProperties {
     uuid: string;
@@ -20,6 +22,7 @@ export interface WellboreGeoJsonProperties {
 
 export type WellboreGeoFeature = Feature<GeometryCollection, WellboreGeoJsonProperties>;
 
+type WellboreGeoPickInfo = PickingInfo<WellboreGeoFeature>;
 type ColorMapPickInfo = ReturnType<ColormapLayer["getPickingInfo"]>;
 
 function sanitizeMdReadout(readoutValue: string | number | undefined): number | null {
@@ -53,10 +56,10 @@ function getTopicHoverDataFromPicks<TTopic extends keyof HoverData>(
             return sanitizeMdReadout(mdProperty?.value) as HoverData[TTopic];
         }
         case HoverTopic.WELLBORE: {
-            const wellsInfo = getInfoPickForLayer<WellsPickInfo>(pickingInfos, WellsLayer);
-            if (!wellsInfo) return null;
+            const wellsInfo = getInfoPickForLayer<WellboreGeoPickInfo>(pickingInfos, AdvancedWellsLayer);
+            if (!wellsInfo || !wellsInfo.object) return null;
 
-            const wellboreFeature = wellsInfo.object as WellboreGeoFeature;
+            const wellboreFeature = wellsInfo.object;
             return wellboreFeature.properties.uuid as HoverData[TTopic];
         }
 

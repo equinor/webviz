@@ -1,14 +1,12 @@
 import React from "react";
 
-import type { Layer as DeckGlLayer } from "@deck.gl/core";
+import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import { View as DeckGlView } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
 import type { BoundingBox2D, MapMouseEvent, ViewStateType, ViewportType, ViewsType } from "@webviz/subsurface-viewer";
-import { useMultiViewCursorTracking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewCursorTracking";
-import { useMultiViewPicking } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking";
 
 import type { HoverService } from "@framework/HoverService";
-import { HoverTopic, usePublishHoverValue } from "@framework/HoverService";
+import { HoverTopic, useHover, usePublishHoverValue } from "@framework/HoverService";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
@@ -44,74 +42,79 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
 
     const [cameraPositionSetByAction, setCameraPositionSetByAction] = React.useState<ViewStateType | null>(null);
     const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
-    const [hideReadout, setHideReadout] = React.useState<boolean>(false);
 
     const [numRows] = props.views.layout;
 
-    const viewports = props.views?.viewports ?? [];
-    const layers = props.layers ?? [];
+    const [hoveredWorldPos, setHoveredWorldPos] = useHover(HoverTopic.WORLD_POS, props.hoverService, props.instanceId);
 
-    const { pickingInfoPerView, activeViewportId, getPickingInfo } = useMultiViewPicking({
-        deckGlRef,
-        pickDepth: 3,
-        multiPicking: true,
-    });
-
-    const { viewports: adjustedViewports, layers: adjustedLayers } = useMultiViewCursorTracking({
-        activeViewportId,
-        viewports,
-        layers,
-        worldCoordinates: pickingInfoPerView[activeViewportId]?.coordinates ?? null,
-        crosshairProps: {
-            // ! We hide the crosshair by opacity since toggling "visible" causes a full asset load/unload
-            color: [255, 255, 255, hideReadout ? 0 : 255],
-            sizePx: 32,
-        },
-    });
-
-    const setHoveredWorldPos = usePublishHoverValue(HoverTopic.WORLD_POS, props.hoverService, props.instanceId);
     const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, props.hoverService, props.instanceId);
     const setHoveredMd = usePublishHoverValue(HoverTopic.MD, props.hoverService, props.instanceId);
 
-    function handleFitInViewClick() {
+    const handleFitInViewClick = React.useCallback(function handleFitInViewClick() {
         setTriggerHomeCounter((prev) => prev + 1);
-    }
+    }, []);
 
-    function handleMouseHover(event: MapMouseEvent): void {
-        getPickingInfo(event);
+    const handleMouseHover = React.useCallback(
+        function handleMouseHover(event: MapMouseEvent): void {
+            const hoverData = getHoverTopicValuesInEvent(
+                event,
+                HoverTopic.MD,
+                HoverTopic.WELLBORE,
+                HoverTopic.WORLD_POS,
+            );
 
-        const hoverData = getHoverTopicValuesInEvent(event, HoverTopic.MD, HoverTopic.WELLBORE, HoverTopic.WORLD_POS);
+            setHoveredWorldPos(hoverData[HoverTopic.WORLD_POS]);
+            setHoveredWellbore(hoverData[HoverTopic.WELLBORE]);
+            setHoveredMd(hoverData[HoverTopic.MD]);
+        },
+        [setHoveredWorldPos, setHoveredWellbore, setHoveredMd],
+    );
 
-        setHoveredWorldPos(hoverData[HoverTopic.WORLD_POS]);
-        setHoveredWellbore(hoverData[HoverTopic.WELLBORE]);
-        setHoveredMd(hoverData[HoverTopic.MD]);
-    }
+    const handleMouseEvent = React.useCallback(
+        function handleMouseEvent(event: MapMouseEvent): void {
+            if (event.type === "hover") {
+                handleMouseHover(event);
+            }
+        },
+        [handleMouseHover],
+    );
 
-    function handleMouseEvent(event: MapMouseEvent): void {
-        if (event.type === "hover") {
-            handleMouseHover(event);
+    const pickingInfoPerView = React.useMemo(() => {
+        if (!deckGlRef.current?.deck?.isInitialized) return {};
+
+        const deck = deckGlRef.current?.deck;
+        const deckViewports = deck?.getViewports();
+        const { x, y } = hoveredWorldPos ?? {};
+
+        if (!deck || !deckViewports?.length || !x || !y) return {};
+
+        const pickInfoDict: Record<string, PickingInfo[]> = {};
+
+        for (const viewport of deckViewports) {
+            const [screenX, screenY] = viewport.project([x, y]);
+
+            const picks = deck.pickMultipleObjects({
+                x: screenX + viewport.x,
+                y: screenY + viewport.y,
+                radius: 5,
+            });
+
+            pickInfoDict[viewport.id] = picks;
         }
-    }
 
-    // Make hover hide when you leave the module
-    const handleMainDivLeave = React.useCallback(() => setHideReadout(true), []);
-    const handleMainDivEnter = React.useCallback(() => setHideReadout(false), []);
+        return pickInfoDict;
+    }, [hoveredWorldPos]);
 
     return (
-        <div
-            ref={mainDivRef}
-            className="h-full w-full"
-            onMouseEnter={handleMainDivEnter}
-            onMouseLeave={handleMainDivLeave}
-        >
+        <div ref={mainDivRef} className="h-full w-full">
             <Toolbar onFitInView={handleFitInViewClick} />
             <SubsurfaceViewerWithCameraState
                 id={`subsurface-viewer-${id}`}
                 deckGlRef={deckGlRef}
                 bounds={props.bounds}
                 cameraPosition={cameraPositionSetByAction ?? undefined}
-                views={{ ...props.views, viewports: adjustedViewports }}
-                layers={adjustedLayers}
+                views={props.views}
+                layers={props.layers}
                 scale={{
                     visible: true,
                     incrementValue: 100,
@@ -143,8 +146,8 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
 
                         <ReadoutBoxWrapper
                             compact={true}
-                            viewportPickInfo={pickingInfoPerView[viewport.id]}
-                            visible={!hideReadout && !!pickingInfoPerView[viewport.id]}
+                            viewportPicks={pickingInfoPerView[viewport.id]}
+                            visible={!!pickingInfoPerView[viewport.id]}
                         />
                     </DeckGlView>
                 ))}

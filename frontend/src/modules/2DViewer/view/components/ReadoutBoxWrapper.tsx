@@ -1,15 +1,27 @@
 import React from "react";
 
+import type { PickingInfo } from "@deck.gl/core";
+import type { PropertyDataType } from "@webviz/subsurface-viewer";
 import type { PickingInfoPerView } from "@webviz/subsurface-viewer/dist/hooks/useMultiViewPicking";
-import { isEqual } from "lodash";
+import _ from "lodash";
 
-import type { ReadoutItem } from "@modules/_shared/components/ReadoutBox";
+import type { InfoItem, ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
 
 // Needs extra distance for the left side; this avoids overlapping with legend elements
 const READOUT_EDGE_DISTANCE_REM = { left: 6, right: 2 };
 
-function makePositionReadout(coordinates: number[]): ReadoutItem | null {
+// Infering the record type from PickingInfoPerView since it's not exported anywhere
+export type ViewportPickingInfo = PickingInfoPerView extends Record<any, infer V> ? V : never;
+
+export type ReadoutBoxWrapperProps = {
+    viewportPicks?: PickingInfo[];
+    maxNumItems?: number;
+    visible?: boolean;
+    compact?: boolean;
+};
+
+function makePositionReadout(coordinates?: number[]): ReadoutItem | null {
     if (coordinates === undefined || coordinates.length < 2) {
         return null;
     }
@@ -22,65 +34,51 @@ function makePositionReadout(coordinates: number[]): ReadoutItem | null {
     };
 }
 
-// Infering the record type from PickingInfoPerView since it's not exported anywhere
-export type ViewportPickingInfo = PickingInfoPerView extends Record<any, infer V> ? V : never;
+function makeInfoPickReadout(pick: PickingInfo): ReadoutItem | null {
+    // @ts-expect-error -- name injected by subsurface viewer
+    const label = pick.layer?.props.name;
+    const info: InfoItem[] = [];
 
-export type ReadoutBoxWrapperProps = {
-    viewportPickInfo: ViewportPickingInfo;
-    maxNumItems?: number;
-    visible?: boolean;
-    compact?: boolean;
-};
+    // Subsurface has different fields of layers with singular and multiple properties
+    if ("propertyValue" in pick) {
+        const property = pick.propertyValue as number;
+        info.push({ name: "Value", value: property });
+    } else if ("properties" in pick) {
+        const properties = pick.properties as PropertyDataType[];
+
+        for (const property of properties) {
+            info.push({ name: property.name, value: property.value });
+        }
+    }
+
+    if (!info.length) return null;
+    return { label, info };
+}
 
 export function ReadoutBoxWrapper(props: ReadoutBoxWrapperProps): React.ReactNode {
-    const [infoData, setInfoData] = React.useState<ReadoutItem[]>([]);
-    const [prevViewportPickInfo, setPrevViewportPickInfo] = React.useState<ViewportPickingInfo | null>(null);
+    const readoutItems = React.useMemo(() => {
+        if (!props.viewportPicks?.length) return [];
 
-    if (!props.visible) {
-        return null;
-    }
+        const readoutItems: ReadoutItem[] = [];
 
-    if (!isEqual(props.viewportPickInfo, prevViewportPickInfo)) {
-        setPrevViewportPickInfo(props.viewportPickInfo);
-        const newReadoutItems: ReadoutItem[] = [];
-
-        const coordinates = props.viewportPickInfo.coordinates;
-        const layerInfoPicks = props.viewportPickInfo.layerPickingInfo;
-
-        if (!coordinates || coordinates.length < 2) {
-            setInfoData([]);
-            return;
+        // Coordinates can be taken from any of them
+        const position = makePositionReadout(props.viewportPicks[0].coordinate);
+        if (position) {
+            readoutItems.push(position);
         }
 
-        const positionReadout = makePositionReadout(coordinates);
-        if (!positionReadout) {
-            return;
-        }
-        newReadoutItems.push(positionReadout);
-
-        for (const layerPickInfo of layerInfoPicks) {
-            const layerName = layerPickInfo.layerName ?? "Unknown layer";
-            const layerProps = layerPickInfo.properties;
-
-            let layerReadout = newReadoutItems.find((item) => item.label === layerName);
-            if (!layerReadout) {
-                layerReadout = { label: layerName, info: [] };
-                newReadoutItems.push(layerReadout);
-            }
-
-            layerReadout.info = layerProps.map((p) => ({
-                name: p.name,
-                value: p.value,
-            }));
+        for (const pick of _.sortBy(props.viewportPicks, "index")) {
+            const readout = makeInfoPickReadout(pick);
+            if (readout) readoutItems.push(readout);
         }
 
-        setInfoData(newReadoutItems);
-    }
+        return readoutItems;
+    }, [props.viewportPicks]);
 
     return (
         <ReadoutBox
             noLabelColor
-            readoutItems={infoData}
+            readoutItems={readoutItems}
             edgeDistanceRem={READOUT_EDGE_DISTANCE_REM}
             compact={props.compact}
         />
