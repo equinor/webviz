@@ -54,6 +54,7 @@ export type SubsurfaceViewerWrapperProps = {
     onIntersectionPolylineChange?: (intersectionPolyline: IntersectionPolyline) => void;
     onIntersectionPolylineEditCancel?: () => void;
     onVerticalScaleChange?: (verticalScale: number) => void;
+    onViewerHover?: (mouseEvent: MapMouseEvent) => void;
     intersectionPolyline?: IntersectionPolyline;
     intersectionPolylines?: readonly IntersectionPolyline[];
 };
@@ -313,6 +314,8 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
     }
 
     function handleMouseHover(event: MapMouseEvent): void {
+        props.onViewerHover?.(event);
+
         if (!polylineEditPointsModusActive) {
             setLayerPickingInfo(event.infos);
             setHoverPreviewPoint(null);

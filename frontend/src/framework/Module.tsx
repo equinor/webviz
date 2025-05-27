@@ -4,6 +4,7 @@ import type { Getter, Setter } from "jotai";
 
 import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import type { InitialSettings } from "./InitialSettings";
+import type { HoverService } from "./HoverService";
 import type { SettingsContext, ViewContext } from "./ModuleContext";
 import type { ModuleDataTagId } from "./ModuleDataTags";
 import { ModuleInstance, ModuleInstanceTopic } from "./ModuleInstance";
@@ -65,6 +66,7 @@ export type ModuleViewProps<
     viewContext: ViewContext<TInterfaceTypes>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
+    hoverService: HoverService;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
 };

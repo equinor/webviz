@@ -1,8 +1,9 @@
 import React from "react";
 
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { cloneDeep, isEqual } from "lodash";
+import _ from "lodash";
 
+import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import type { Viewport } from "@framework/types/viewport";
@@ -10,7 +11,6 @@ import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
 import type { Interfaces } from "@modules/Intersection/interfaces";
-
 
 import { ReadoutWrapper } from "./readoutWrapper";
 
@@ -25,6 +25,7 @@ export type ViewportWrapperProps = {
     };
     viewport: Viewport | null;
     workbenchServices: WorkbenchServices;
+    hoverService: HoverService;
     viewContext: ViewContext<Interfaces>;
 };
 
@@ -46,17 +47,17 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
         "global.syncValue.cameraPositionIntersection",
     );
 
-    if (!isEqual(syncedCameraPosition, prevSyncedViewport)) {
-        setPrevSyncedViewport(cloneDeep(syncedCameraPosition));
+    if (!_.isEqual(syncedCameraPosition, prevSyncedViewport)) {
+        setPrevSyncedViewport(_.cloneDeep(syncedCameraPosition));
         if (syncedCameraPosition) {
-            setViewport(cloneDeep(syncedCameraPosition));
+            setViewport(_.cloneDeep(syncedCameraPosition));
         }
     }
 
-    if (!isEqual(props.viewport, prevViewport)) {
-        setPrevViewport(cloneDeep(viewport));
+    if (!_.isEqual(props.viewport, prevViewport)) {
+        setPrevViewport(_.cloneDeep(viewport));
         if (props.viewport) {
-            setViewport(cloneDeep(props.viewport));
+            setViewport(_.cloneDeep(props.viewport));
             props.workbenchServices.publishGlobalData(
                 "global.syncValue.cameraPositionIntersection",
                 props.viewport,
@@ -77,7 +78,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const handleViewportChange = React.useCallback(
         function handleViewportChange(newViewport: Viewport) {
             setViewport((prev) => {
-                if (!isEqual(newViewport, prev)) {
+                if (!_.isEqual(newViewport, prev)) {
                     return newViewport;
                 }
                 return prev;
@@ -159,7 +160,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 bounds={props.bounds}
                 viewport={viewport ?? undefined}
                 onViewportChange={handleViewportChange}
-                workbenchServices={props.workbenchServices}
+                hoverService={props.hoverService}
                 viewContext={props.viewContext}
             />
             <Toolbar

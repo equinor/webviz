@@ -1,12 +1,11 @@
 import React from "react";
 
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { isEqual } from "lodash";
 
+import type { HoverService } from "@framework/HoverService";
+import { HoverTopic, useHover, usePublishHoverValue } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { Viewport } from "@framework/types/viewport";
-import { useSubscribedValue } from "@framework/WorkbenchServices";
-import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import type { EsvIntersectionReadoutEvent, LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { EsvIntersection } from "@modules/_shared/components/EsvIntersection";
 import type { ReadoutItem as EsvReadoutItem, HighlightItem } from "@modules/_shared/components/EsvIntersection/types";
@@ -16,7 +15,6 @@ import { esvReadoutToGenericReadout } from "@modules/_shared/components/EsvInter
 import type { ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
 import type { Interfaces } from "@modules/Intersection/interfaces";
-
 
 // Needs extra distance for the left side; this avoids overlapping with legend elements
 const READOUT_EDGE_DISTANCE_REM = { left: 6 };
@@ -34,54 +32,19 @@ export type ReadoutWrapperProps = {
         y: [number, number];
     };
     verticalScale: number;
-    workbenchServices: WorkbenchServices;
+    hoverService: HoverService;
     viewContext: ViewContext<Interfaces>;
 };
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
+    const moduleInstanceId = props.viewContext.getInstanceIdString();
     const [readoutItems, setReadoutItems] = React.useState<ReadoutItem[]>([]);
 
-    const [syncedHoveredMd, setSyncedHoveredMd] = React.useState<number | null>(null);
-    const [readoutMd, setReadoutMd] = React.useState<number | null>(null);
-    const [prevSyncedHoveredMd, setPrevSyncedHoveredMd] = React.useState<
-        GlobalTopicDefinitions["global.hoverMd"] | null
-    >(null);
-
-    const syncedHoverMd = useSubscribedValue(
-        "global.hoverMd",
-        props.workbenchServices,
-        props.viewContext.getInstanceIdString(),
-    );
-
-    if (!isEqual(syncedHoveredMd, prevSyncedHoveredMd)) {
-        setPrevSyncedHoveredMd(syncedHoverMd);
-        if (syncedHoverMd?.wellboreUuid === props.wellboreHeaderUuid) {
-            setSyncedHoveredMd(syncedHoverMd?.md ?? null);
-        } else {
-            setSyncedHoveredMd(null);
-        }
-    }
-
-    const moduleInstanceId = props.viewContext.getInstanceIdString();
-
-    React.useEffect(
-        function propagateReadoutMdChange() {
-            if (!readoutMd || !props.wellboreHeaderUuid) {
-                props.workbenchServices.publishGlobalData("global.hoverMd", null);
-                return;
-            }
-            props.workbenchServices.publishGlobalData(
-                "global.hoverMd",
-                { wellboreUuid: props.wellboreHeaderUuid, md: readoutMd },
-                moduleInstanceId,
-            );
-
-            return function resetPublishedHoverMd() {
-                props.workbenchServices.publishGlobalData("global.hoverMd", null, moduleInstanceId);
-            };
-        },
-        [readoutMd, props.workbenchServices, props.viewContext, props.wellboreHeaderUuid, moduleInstanceId],
-    );
+    // Hover synchronization
+    const hoverIsLocal = props.hoverService.getLastHoveredModule() === moduleInstanceId;
+    const [hoveredMd, setHoveredMd] = useHover(HoverTopic.MD, props.hoverService, moduleInstanceId);
+    const [hoveredWellbore, setHoveredWellbore] = useHover(HoverTopic.WELLBORE, props.hoverService, moduleInstanceId);
+    const setHoveredWorldPos = usePublishHoverValue(HoverTopic.WORLD_POS, props.hoverService, moduleInstanceId);
 
     const formatEsvLayout = React.useCallback(
         function formatEsvLayout(item: EsvReadoutItem, index: number): ReadoutItem {
@@ -90,21 +53,39 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         [props.layerIdToNameMap],
     );
 
+    const publishHoverEvent = React.useCallback(
+        function publishHoverEvent(md: number | null): void {
+            if (md !== null && props.referenceSystem) {
+                const [x, y] = props.referenceSystem.getPosition(md);
+                const [, z] = props.referenceSystem.project(md);
+                // ! We need to flip z since reference system increases downwards
+                setHoveredWorldPos({ x, y, z: -z });
+            } else {
+                setHoveredWorldPos(null);
+            }
+
+            setHoveredWellbore(props.wellboreHeaderUuid);
+            setHoveredMd(md);
+        },
+        [props.referenceSystem, props.wellboreHeaderUuid, setHoveredMd, setHoveredWellbore, setHoveredWorldPos],
+    );
+
     const handleReadoutItemsChange = React.useCallback(
         function handleReadoutItemsChange(event: EsvIntersectionReadoutEvent): void {
             const items = event.readoutItems;
             const wellboreReadoutItem = items.find((item) => isWellborepathLayer(item.layer));
             const md = wellboreReadoutItem?.md;
 
-            setReadoutMd(md ?? null);
+            publishHoverEvent(md ?? null);
             setReadoutItems(event.readoutItems.map(formatEsvLayout));
         },
-        [formatEsvLayout],
+        [formatEsvLayout, publishHoverEvent],
     );
 
     const highlightItems: HighlightItem[] = [];
-    if (props.referenceSystem && syncedHoveredMd) {
-        const point = props.referenceSystem.project(syncedHoveredMd);
+
+    if (props.referenceSystem && !hoverIsLocal && hoveredMd && hoveredWellbore === props.wellboreHeaderUuid) {
+        const point = props.referenceSystem.project(hoveredMd);
         highlightItems.push({
             point: [point[0], point[1]],
             color: "red",

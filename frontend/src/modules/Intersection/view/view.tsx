@@ -132,6 +132,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 intersectionExtensionLength={potentialIntersectionExtensionLength}
                 intersectionType={intersectionType}
                 workbenchServices={props.workbenchServices}
+                hoverService={props.hoverService}
                 viewContext={props.viewContext}
                 wellboreHeaderUuid={wellboreTrajectoryQuery.isFetching ? null : (wellboreHeader?.uuid ?? null)}
                 wellboreHeaderDepthReferencePoint={wellboreHeader?.depthReferencePoint ?? null}

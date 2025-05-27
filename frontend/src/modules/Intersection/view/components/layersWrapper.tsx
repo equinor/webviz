@@ -8,9 +8,10 @@ import type {
     SurfaceLine,
 } from "@equinor/esv-intersection";
 import { getPicksData, getSeismicOptions } from "@equinor/esv-intersection";
-import { isEqual } from "lodash";
+import _ from "lodash";
 
 import type { WellboreCasing_api } from "@api";
+import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import { IntersectionType } from "@framework/types/intersection";
 import type { Viewport } from "@framework/types/viewport";
@@ -32,11 +33,9 @@ import { isSurfacesUncertaintyLayer } from "@modules/Intersection/utils/layers/S
 import { isWellpicksLayer } from "@modules/Intersection/utils/layers/WellpicksLayer";
 import { ColorLegendsContainer } from "@modules_shared/components/ColorLegendsContainer";
 
-
 import type { ColorScaleWithName } from "../../../_shared/utils/ColorScaleWithName";
 
 import { ViewportWrapper } from "./viewportWrapper";
-
 
 export type LayersWrapperProps = {
     referenceSystem: IntersectionReferenceSystem | null;
@@ -45,6 +44,7 @@ export type LayersWrapperProps = {
     intersectionExtensionLength: number;
     intersectionType: IntersectionType;
     workbenchServices: WorkbenchServices;
+    hoverService: HoverService;
     viewContext: ViewContext<Interfaces>;
     wellboreHeaderUuid: string | null;
     wellboreHeaderDepthReferencePoint: string | null;
@@ -63,7 +63,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const [prevBounds, setPrevBounds] = React.useState<{ x: [number, number]; y: [number, number] } | null>(null);
     const [isInitialLayerViewportSet, setIsInitialLayerViewportSet] = React.useState<boolean>(false);
 
-    if (props.referenceSystem && !isEqual(prevReferenceSystem, props.referenceSystem)) {
+    if (props.referenceSystem && !_.isEqual(prevReferenceSystem, props.referenceSystem)) {
         setIsInitialLayerViewportSet(false);
         setPrevReferenceSystem(props.referenceSystem);
         setPrevLayersViewport(null);
@@ -412,7 +412,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         bounds.y = prevBounds?.y ?? [0, 1000];
     }
 
-    if (!isEqual(bounds, prevBounds)) {
+    if (!_.isEqual(bounds, prevBounds)) {
         setPrevBounds(bounds);
     }
 
@@ -424,7 +424,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         Math.max(Math.abs(bounds.y[1] - bounds.y[0]) * viewportRatio, Math.abs(bounds.x[1] - bounds.x[0])) * 1.2,
     ];
 
-    if (!isEqual(newLayersViewport, prevLayersViewport) && !isInitialLayerViewportSet) {
+    if (!_.isEqual(newLayersViewport, prevLayersViewport) && !isInitialLayerViewportSet) {
         setViewport(newLayersViewport);
         setPrevLayersViewport(newLayersViewport);
         if (boundsSetByLayer) {
@@ -441,6 +441,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                 bounds={bounds}
                 viewport={viewport}
                 workbenchServices={props.workbenchServices}
+                hoverService={props.hoverService}
                 viewContext={props.viewContext}
                 wellboreHeaderUuid={props.wellboreHeaderUuid}
             />
