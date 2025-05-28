@@ -56,6 +56,7 @@ class WellborePick(BaseModel):
     depthReferencePoint: str
     mdUnit: str
     interpreter: str | None
+    obsNo: int
 
 
 class WellboreCompletion(BaseModel):

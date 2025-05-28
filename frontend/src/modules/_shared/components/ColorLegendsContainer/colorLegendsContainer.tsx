@@ -5,6 +5,8 @@ import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { ColorScaleWithName } from "@modules_shared/utils/ColorScaleWithName";
 
+import type { ColorScaleWithId } from "./colorScaleWithId";
+
 const STYLE_CONSTANTS = {
     lineWidth: 6,
     lineColor: "#555",
@@ -318,11 +320,6 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
         </g>
     );
 }
-
-export type ColorScaleWithId = {
-    id: string;
-    colorScale: ColorScaleWithName;
-};
 
 export type ColorLegendsContainerProps = {
     colorScales: ColorScaleWithId[];

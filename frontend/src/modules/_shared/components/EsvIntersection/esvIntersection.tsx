@@ -49,6 +49,7 @@ import { SeismicLayer } from "./layers/SeismicLayer";
 import type { SurfaceStatisticalFanchartsData } from "./layers/SurfaceStatisticalFanchartCanvasLayer";
 import { SurfaceStatisticalFanchartsCanvasLayer } from "./layers/SurfaceStatisticalFanchartCanvasLayer";
 import type { HighlightItem, ReadoutItem } from "./types/types";
+import { isValidBounds, isValidViewport } from "./utils/validationUtils";
 
 export enum LayerType {
     CALLOUT_CANVAS = "callout-canvas",
@@ -102,6 +103,7 @@ export type LayerItem = {
     };
 }[keyof LayerOptionsMap] & {
     id: string;
+    name: string;
     hoverable?: boolean;
 };
 
@@ -296,7 +298,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
         }
 
         if (!isEqual(prevBounds, props.bounds)) {
-            if (props.bounds?.x && props.bounds?.y) {
+            if (props.bounds && isValidBounds(props.bounds)) {
                 esvController.setBounds(props.bounds.x, props.bounds.y);
             }
             setPrevBounds(props.bounds);
@@ -418,6 +420,12 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             newEsvController.zoomPanHandler.onRescale = function handleRescale(event: OnRescaleEvent) {
                 if (!automaticChanges.current) {
                     const k = event.transform.k;
+
+                    // Prevent division by zero
+                    if (k === 0 || Number.isNaN(k)) {
+                        return;
+                    }
+
                     const xSpan = newEsvController.zoomPanHandler.xSpan;
                     const displ = xSpan / k;
                     const unitsPerPixel = displ / event.width;
@@ -428,7 +436,11 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                     const dy0 = event.yBounds[0] - event.transform.y * (unitsPerPixel / event.zFactor);
                     const cy = dy0 + displ / event.zFactor / event.viewportRatio / 2;
 
-                    setCurrentViewport([cx, cy, displ]);
+                    const candidateViewport: Viewport = [cx, cy, displ];
+                    if (!isValidViewport(candidateViewport)) {
+                        return;
+                    }
+                    setCurrentViewport(candidateViewport);
                 }
                 automaticChanges.current = false;
                 oldOnRescaleFunction(event);
