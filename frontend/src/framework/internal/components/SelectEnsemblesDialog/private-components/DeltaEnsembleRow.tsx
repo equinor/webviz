@@ -98,8 +98,8 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
             </td>
             <td className="p-2">
                 <Input
+                    value={props.deltaEnsembleItem.customName ?? ""}
                     placeholder="Give a custom name..."
-                    defaultValue={props.deltaEnsembleItem.customName ?? ""}
                     onValueChange={onNameChange}
                 />
             </td>
