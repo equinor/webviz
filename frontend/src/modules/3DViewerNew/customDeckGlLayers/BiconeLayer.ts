@@ -11,6 +11,9 @@ export type DiscLayerProps = {
     numberOfSegments?: number;
     color?: [number, number, number];
     opacity?: number;
+    sizeUnits?: "meters" | "pixels";
+    maxSizeInMeters?: number;
+    minSizeInMeters?: number;
 };
 
 export class BiconeLayer extends CompositeLayer<DiscLayerProps> {
@@ -23,49 +26,83 @@ export class BiconeLayer extends CompositeLayer<DiscLayerProps> {
 
     private makeGeometry(): Geometry {
         const segments = this.props.numberOfSegments ?? 32;
-        const { radius, height } = this.props;
+        const radius = 1;
+        const height = this.props.height / this.props.radius; // Normalize height to radius
 
-        const vertexCount = segments + 2; // ring + 2 tips
+        const halfHeight = height / 2;
+
+        const ringVertexCount = segments;
+        const vertexCount = ringVertexCount * 2 + 2;
         const triangleCount = segments * 2;
         const positions = new Float32Array(vertexCount * 3);
         const normals = new Float32Array(vertexCount * 3);
         const indices = new Uint16Array(triangleCount * 3);
 
-        const halfHeight = height / 2;
+        const slope = halfHeight;
 
-        // Ring vertices on XY plane
+        // Top cone ring
         for (let i = 0; i < segments; i++) {
             const theta = (i / segments) * 2 * Math.PI;
             const x = radius * Math.cos(theta);
             const y = radius * Math.sin(theta);
             const z = 0;
 
-            const nx = x;
-            const ny = y;
-            const nz = halfHeight;
+            const len = Math.sqrt(x * x + y * y + slope * slope);
+            const nx = x / len;
+            const ny = y / len;
+            const nz = slope / len;
 
-            const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
+            const vi = i;
+            positions[vi * 3 + 0] = x;
+            positions[vi * 3 + 1] = y;
+            positions[vi * 3 + 2] = z;
 
-            positions[i * 3 + 0] = x;
-            positions[i * 3 + 1] = y;
-            positions[i * 3 + 2] = z;
-
-            normals[i * 3 + 0] = nx / len;
-            normals[i * 3 + 1] = ny / len;
-            normals[i * 3 + 2] = nz / len;
+            normals[vi * 3 + 0] = nx;
+            normals[vi * 3 + 1] = ny;
+            normals[vi * 3 + 2] = nz;
         }
 
-        // Top tip at (0, 0, +halfHeight)
-        const topIndex = segments;
+        // Bottom cone ring
+        for (let i = 0; i < segments; i++) {
+            const theta = (i / segments) * 2 * Math.PI;
+            const x = radius * Math.cos(theta);
+            const y = radius * Math.sin(theta);
+            const z = 0;
+
+            const len = Math.sqrt(x * x + y * y + slope * slope);
+            const nx = x / len;
+            const ny = y / len;
+            const nz = -slope / len;
+
+            const vi = segments + i;
+            positions[vi * 3 + 0] = x;
+            positions[vi * 3 + 1] = y;
+            positions[vi * 3 + 2] = z;
+
+            normals[vi * 3 + 0] = nx;
+            normals[vi * 3 + 1] = ny;
+            normals[vi * 3 + 2] = nz;
+        }
+
+        // Top tip
+        const topIndex = segments * 2;
+        positions[topIndex * 3 + 0] = 0;
+        positions[topIndex * 3 + 1] = 0;
         positions[topIndex * 3 + 2] = halfHeight;
+        normals[topIndex * 3 + 0] = 0;
+        normals[topIndex * 3 + 1] = 0;
         normals[topIndex * 3 + 2] = 1;
 
-        // Bottom tip at (0, 0, -halfHeight)
-        const bottomIndex = segments + 1;
+        // Bottom tip
+        const bottomIndex = segments * 2 + 1;
+        positions[bottomIndex * 3 + 0] = 0;
+        positions[bottomIndex * 3 + 1] = 0;
         positions[bottomIndex * 3 + 2] = -halfHeight;
+        normals[bottomIndex * 3 + 0] = 0;
+        normals[bottomIndex * 3 + 1] = 0;
         normals[bottomIndex * 3 + 2] = -1;
 
-        // Top triangles
+        // Top cone triangles
         for (let i = 0; i < segments; i++) {
             const i0 = i;
             const i1 = (i + 1) % segments;
@@ -75,10 +112,10 @@ export class BiconeLayer extends CompositeLayer<DiscLayerProps> {
             indices[ti + 2] = i1;
         }
 
-        // Bottom triangles (reverse winding)
+        // Bottom cone triangles (reverse winding)
         for (let i = 0; i < segments; i++) {
-            const i0 = i;
-            const i1 = (i + 1) % segments;
+            const i0 = segments + i;
+            const i1 = segments + ((i + 1) % segments);
             const ti = segments * 3 + i * 3;
             indices[ti + 0] = bottomIndex;
             indices[ti + 1] = i1;
@@ -89,6 +126,10 @@ export class BiconeLayer extends CompositeLayer<DiscLayerProps> {
             topology: "triangle-list",
             attributes: {
                 positions,
+                normals: {
+                    value: normals,
+                    size: 3,
+                },
             },
             indices,
         });
@@ -96,22 +137,32 @@ export class BiconeLayer extends CompositeLayer<DiscLayerProps> {
 
     initializeState(): void {
         this.setState({
-            ...this.state,
-            isHovered: false,
-            isLoaded: false,
+            geometry: this.makeGeometry(),
         });
     }
 
-    updateState({ changeFlags }: UpdateParameters<Layer<DiscLayerProps & Required<CompositeLayerProps>>>) {
-        if (changeFlags.dataChanged) {
-            this.setState({
-                geometry: this.makeGeometry(),
-            });
+    updateState({ oldProps, props }: UpdateParameters<Layer<DiscLayerProps & Required<CompositeLayerProps>>>) {
+        if (
+            props.radius !== oldProps.radius ||
+            props.height !== oldProps.height ||
+            props.numberOfSegments !== oldProps.numberOfSegments
+        ) {
+            this.setState({ geometry: this.makeGeometry() });
         }
     }
 
     renderLayers() {
-        const { id, color, opacity, centerPoint, normalVector } = this.props;
+        const { id, color, opacity, centerPoint, normalVector, sizeUnits, radius } = this.props;
+        const { viewport } = this.context;
+
+        let sizeScale = this.props.radius;
+        if (sizeUnits === "pixels") {
+            sizeScale = radius * viewport.metersPerPixel;
+        }
+        sizeScale = Math.max(
+            Math.min(sizeScale, this.props.maxSizeInMeters ?? Infinity),
+            this.props.minSizeInMeters ?? 0,
+        );
 
         return [
             new SimpleMeshLayer({
@@ -122,8 +173,9 @@ export class BiconeLayer extends CompositeLayer<DiscLayerProps> {
                 getColor: () => color ?? [255, 255, 255],
                 getOrientation: () => normalToOrientation(normalVector),
                 opacity: opacity ?? 1,
-                material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
+                material: true,
                 pickable: false,
+                sizeScale,
             }),
         ];
     }
@@ -146,7 +198,8 @@ function normalToOrientation(normal: [number, number, number]): [number, number,
 }
 
 function rotationMatrixToEulerXYZ(m: number[]): [number, number, number] {
-    const [m00, m01, _, m10, m11, __, m20, m21, m22] = m;
+    // @eslint
+    const [m00, m01, , m10, m11, , m20, m21, m22] = m;
 
     let pitch, yaw, roll;
 

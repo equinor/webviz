@@ -16,6 +16,10 @@ import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { PolylinesLayer } from "@modules/3DViewerNew/customDeckGlLayers/PolylinesLayer";
+import {
+    SeismicFenceSectionMeshLayer,
+    type SeismicFenceSection,
+} from "@modules/3DViewerNew/customDeckGlLayers/SeismicFenceMeshLayer/SeismicFenceSectionMeshLayer";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import {
     SubsurfaceViewerWithCameraState,
@@ -89,8 +93,44 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         },
     });
 
+    const numSamplesU = 2;
+    const numSamplesV = 2;
+
+    // Fill properties column-major (as you described)
+    const properties = new Float32Array([0, 1, 10, 20]);
+
+    const data: SeismicFenceSection = {
+        numSamplesU,
+        numSamplesV,
+        properties,
+        propertiesOffset: 0,
+        boundingBox: [
+            [0, 0, 0], // min corner
+            [0, 1, 0], // top left to bottom left (V vector)
+            [1, 0, 0], // top left to top right (U vector)
+            [1, 1, 0], // max corner
+        ],
+    };
+
+    const colorMapFunction = (value: number): [number, number, number] => {
+        // Simple mapping: darker color for lower values
+        const intensity = Math.round((value / 33) * 255);
+        return [intensity, intensity, intensity];
+    };
+
     const adjustedLayersWithHoverVisualizations = [...adjustedLayers];
     const adjustedViewportsWithHoverVisualizations = cloneDeep(adjustedViewports);
+
+    adjustedLayersWithHoverVisualizations.push(
+        new SeismicFenceSectionMeshLayer({
+            id: "test-seismic-mesh",
+            data,
+            colorMapFunction,
+            zIncreaseDownwards: false,
+            pickable: true,
+            hoverable: true,
+        }),
+    );
 
     for (const hoverVisualization of hoverVisualizations) {
         for (const viewport of adjustedViewportsWithHoverVisualizations) {
@@ -164,8 +204,6 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     if (!isEqual(deckGlProps.views, storedDeckGlViews)) {
         setStoredDeckGlViews(deckGlProps.views);
     }
-
-    console.debug(adjustedViewportsWithHoverVisualizations);
 
     const handleMainDivLeave = React.useCallback(() => setHideReadout(true), []);
     const handleMainDivEnter = React.useCallback(() => setHideReadout(false), []);

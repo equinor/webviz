@@ -89,13 +89,16 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
                 new BiconeLayer({
                     id: `${id}-hovered-md-point`,
                     centerPoint: hoveredMdPoint3d,
-                    radius: 100,
-                    height: 50,
+                    radius: 20,
+                    height: 10,
                     normalVector: normal,
                     numberOfSegments: 32,
                     color: [255, 0, 0],
                     opacity: 1,
                     visible: visible,
+                    sizeUnits: "pixels",
+                    minSizeInMeters: 0,
+                    maxSizeInMeters: 200,
                 }),
             ];
         },
