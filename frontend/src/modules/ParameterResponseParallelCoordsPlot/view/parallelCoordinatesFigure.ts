@@ -54,8 +54,11 @@ export class ParallelCoordinatesFigure {
         this._figure.updateLayout({ width: width });
     }
 
-    build() {
-        return this._figure.makePlot();
+    buildLayout() {
+        return this._figure.makeLayout();
+    }
+    buildData() {
+        return this._figure.makeData();
     }
 }
 
