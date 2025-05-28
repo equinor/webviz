@@ -2,6 +2,8 @@ import type React from "react";
 
 import { MenuButton as MuiMenuButton } from "@mui/base/MenuButton";
 
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
 export type MenuButtonProps = {
     ref?: React.Ref<HTMLButtonElement>;
     label?: string;
@@ -13,7 +15,12 @@ export function MenuButton(props: MenuButtonProps): React.ReactNode {
     return (
         <MuiMenuButton
             {...props}
-            className="hover:bg-blue-200 focus:outline-blue-600 p-1 text-sm rounded-sm flex gap-1 items-center focus:outline focus:outline-1 hover:text-gray-900 text-gray-600"
+            className={resolveClassNames(
+                "p-1 text-sm rounded-sm flex gap-1 items-center text-gray-600",
+                "hover:bg-blue-200 hover:text-gray-900",
+                "focus:outline focus:outline-blue-600",
+                "disabled:pointer-events-none disabled:text-gray-400",
+            )}
         />
     );
 }
