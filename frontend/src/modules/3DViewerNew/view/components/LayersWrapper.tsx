@@ -21,6 +21,8 @@ import { RealizationSeismicCrosslineProvider } from "@modules/3DViewerNew/DataPr
 import { RealizationSeismicDepthSliceProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicDepthProvider";
 import { RealizationSeismicInlineProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicInlineProvider";
 import { CustomDataProviderType } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderTypes";
+import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
+import { makeDrilledWellTrajectoriesLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer";
 import { makeIntersectionLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeIntersectionGrid3dLayer";
 import { makeRealizationSurfaceLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeRealizationSurfaceLayer";
 import {
@@ -58,9 +60,6 @@ import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSub
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
 import { InteractionWrapper } from "./InteractionWrapper";
-
-import { makeDrilledWellTrajectoriesLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer";
-import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
     VisualizationTarget.DECK_GL,
@@ -181,7 +180,6 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const globalColorScales = globalAnnotations.filter((el) => "colorScale" in el);
     const globalLayerIds: string[] = ["placeholder", "axes"];
     const usedPolylineIds = assemblerProduct.accumulatedData.polylineIds;
-    const hoverVisualizationFunctions = assemblerProduct.hoverVisualizationFunctions;
 
     for (const item of assemblerProduct.children) {
         if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {

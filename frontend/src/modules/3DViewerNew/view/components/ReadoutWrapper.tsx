@@ -9,6 +9,7 @@ import { useMultiViewPicking } from "@webviz/subsurface-viewer/dist/hooks/useMul
 import { WellLabelLayer } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
 import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 import type { Feature } from "geojson";
+import { cloneDeep, isEqual } from "lodash";
 
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
@@ -21,6 +22,7 @@ import {
     type SubsurfaceViewerWithCameraStateProps,
 } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
+import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
 import type {
     AssemblerProduct,
     VisualizationTarget,
@@ -31,8 +33,6 @@ import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSub
 import { DeckGlInstanceManagerTopic, type DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
 
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
-import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
-import { cloneDeep, isEqual } from "lodash";
 
 export type ReadoutWrapperProps = {
     views: ViewsTypeExtended;
@@ -89,7 +89,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         },
     });
 
-    const adjustedLayersWithHoverVisualizations = cloneDeep(adjustedLayers);
+    const adjustedLayersWithHoverVisualizations = [...adjustedLayers];
     const adjustedViewportsWithHoverVisualizations = cloneDeep(adjustedViewports);
 
     for (const hoverVisualization of hoverVisualizations) {
@@ -164,6 +164,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     if (!isEqual(deckGlProps.views, storedDeckGlViews)) {
         setStoredDeckGlViews(deckGlProps.views);
     }
+
+    console.debug(adjustedViewportsWithHoverVisualizations);
 
     const handleMainDivLeave = React.useCallback(() => setHideReadout(true), []);
     const handleMainDivEnter = React.useCallback(() => setHideReadout(false), []);
