@@ -13,7 +13,7 @@ import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsC
 import type { Bounds, LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { FitInViewStatus, Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
 import {
-    areBoundsValid,
+    isValidBounds,
     isValidNumber,
     isValidViewport,
 } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
@@ -113,7 +113,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
         }
     }
 
-    if (props.doRefocus && props.focusBounds && areBoundsValid(props.focusBounds)) {
+    if (props.doRefocus && props.focusBounds && isValidBounds(props.focusBounds)) {
         refocusViewport();
     }
 

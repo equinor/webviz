@@ -45,27 +45,17 @@ export function makeSurfacesBoundingBox({
         return null;
     }
 
+    // Find the minimum and maximum z-coordinates (uz-coordinates) across all surfaces
     let minY = Number.MAX_VALUE;
     let maxY = -Number.MAX_VALUE;
     for (const surface of data) {
-        // Find valid min and max values for the surface
-        const { min: surfaceMin, max: surfaceMax } = surface.z_points.reduce(
-            (acc, z) => {
-                if (z === null) {
-                    return acc;
-                }
-
-                return {
-                    min: Math.min(acc.min, z),
-                    max: Math.max(acc.max, z),
-                };
-            },
-            { min: Number.MAX_VALUE, max: -Number.MAX_VALUE },
-        );
-
-        // Update the overall min and max values
-        minY = Math.min(minY, surfaceMin);
-        maxY = Math.max(maxY, surfaceMax);
+        for (const point of surface.z_points) {
+            if (point === null) {
+                continue;
+            }
+            minY = Math.min(minY, point);
+            maxY = Math.max(maxY, point);
+        }
     }
 
     return fromNumArray([minX, minY, 0, maxX, maxY, 0]);

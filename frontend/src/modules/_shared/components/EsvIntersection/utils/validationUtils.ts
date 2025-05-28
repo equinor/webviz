@@ -12,15 +12,15 @@ export function isValidNumber(value: number): boolean {
 /**
  * Validate if the given bound consist of valid numbers
  */
-export function isBoundValid(bound: [number, number]): boolean {
+function isValidBound(bound: [number, number]): boolean {
     return isValidNumber(bound[0]) && isValidNumber(bound[1]);
 }
 
 /**
  * Validate if the given bounds consist of valid numbers
  */
-export function areBoundsValid(bounds: Bounds): boolean {
-    return isBoundValid(bounds.x) && isBoundValid(bounds.y);
+export function isValidBounds(bounds: Bounds): boolean {
+    return isValidBound(bounds.x) && isValidBound(bounds.y);
 }
 
 /**

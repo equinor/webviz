@@ -13,7 +13,7 @@ import type { BBox } from "@lib/utils/bbox";
 import { combine } from "@lib/utils/bbox";
 import { isColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import type { Bounds, LayerItem } from "@modules/_shared/components/EsvIntersection";
-import { areBoundsValid } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
+import { isValidBounds } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { IntersectionRealizationSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
@@ -289,7 +289,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         intersectionReferenceSystem,
         prevLayersBounds,
     );
-    if (!areBoundsValid(newLayersBounds)) {
+    if (!isValidBounds(newLayersBounds)) {
         newLayersBounds.x = DEFAULT_INTERSECTION_VIEW_BOUNDS.x;
         newLayersBounds.y = DEFAULT_INTERSECTION_VIEW_BOUNDS.y;
     }
@@ -311,7 +311,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         };
 
         // Update focus bounds if they are valid, independent of the focus state
-        if (areBoundsValid(focusBoundsCandidate) && !isEqual(focusBoundsCandidate, viewportFocusTarget.bounds)) {
+        if (isValidBounds(focusBoundsCandidate) && !isEqual(focusBoundsCandidate, viewportFocusTarget.bounds)) {
             setViewportFocusTarget((prev) => {
                 return { ...prev, bounds: focusBoundsCandidate };
             });
