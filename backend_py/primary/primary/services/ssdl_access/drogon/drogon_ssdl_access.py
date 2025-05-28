@@ -33,10 +33,15 @@ class WellAccess:
         raise NotImplementedError
 
     # pylint: disable=unused-argument
-    async def get_log_curve_data_async(self, wellbore_uuid: str, curve_name: str) -> types.WellboreLogCurveData:
+    async def get_log_curve_data_async(
+        self, wellbore_uuid: str, curve_name: str, log_name: str
+    ) -> types.WellboreLogCurveData:
         if wellbore_uuid == "drogon_vertical":
             return _drogon_well_data.well_log_data_map_1[curve_name]
         if wellbore_uuid == "drogon_horizontal":
-            return _drogon_well_data.well_log_data_map_2[curve_name]
+            for curve in _drogon_well_data.well_log_data_map_2.values():
+                if curve.name == curve_name and curve.log_name == log_name:
+                    return curve
+            raise ValueError(f"No curve {curve_name=} found for log {log_name=}!")
 
         raise ValueError(f"Unexpected drogon well name: {wellbore_uuid=}!")
