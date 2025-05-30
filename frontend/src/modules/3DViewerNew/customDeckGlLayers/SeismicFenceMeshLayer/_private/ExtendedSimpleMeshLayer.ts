@@ -1,6 +1,7 @@
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 
 import vs from "./shaders/vertexShader.glsl";
+import fs from "./shaders/fragmentShader.glsl";
 import { Model } from "@luma.gl/engine";
 export class ExtendedSimpleMeshLayer extends SimpleMeshLayer {
     static layerName = "ExtendedSimpleMeshLayer";
@@ -47,6 +48,7 @@ export class ExtendedSimpleMeshLayer extends SimpleMeshLayer {
         return {
             ...super.getShaders(),
             vs,
+            fs,
         };
     }
 }

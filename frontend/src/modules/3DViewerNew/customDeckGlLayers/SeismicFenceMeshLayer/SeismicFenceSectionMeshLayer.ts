@@ -49,7 +49,8 @@ function assert(condition: any, msg?: string): asserts condition {
 
 function encodePropertyToColor(property: number, min: number, max: number): [number, number, number] {
     const normalized = (property - min) / (max - min);
-    const colorIndex = Math.floor(normalized * 16777215); // 256^3 - 1
+    const safeNormalized = Math.max(1 / 16777215, normalized); // avoid zero
+    const colorIndex = Math.floor(safeNormalized * 16777215);
     const r = (colorIndex >> 16) & 255;
     const g = (colorIndex >> 8) & 255;
     const b = colorIndex & 255;
@@ -247,8 +248,12 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
         assert(this._colorsArray !== null, "Colors array is null");
         assert(this._pickingColorsArray !== null, "Picking colors array is null");
 
-        const minProperty = Math.min(...data.properties);
-        const maxProperty = Math.max(...data.properties);
+        let minProperty = Number.MAX_VALUE;
+        let maxProperty = -Number.MAX_VALUE;
+        for (let i = 0; i < data.properties.length; i++) {
+            minProperty = Math.min(minProperty, data.properties[i]);
+            maxProperty = Math.max(maxProperty, data.properties[i]);
+        }
 
         this.setState({
             ...this.state,
@@ -293,9 +298,8 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
     getPickingInfo({ info }: GetPickingInfoParams): SeismicFenceMeshLayerPickingInfo {
         if (!info.color) return info;
 
-        const [r, g, b] = info.color;
+        const [r, g, b] = info.color; // Convert from [0, 1] to [0, 255]
         const { minProperty, maxProperty } = this.state;
-        console.debug(info.color);
 
         const property = decodeColorToProperty(r, g, b, minProperty, maxProperty);
 

@@ -178,7 +178,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const deckGlLayers: Layer<any>[] = [];
     const globalAnnotations = assemblerProduct.annotations;
     const globalColorScales = globalAnnotations.filter((el) => "colorScale" in el);
-    const globalLayerIds: string[] = ["placeholder", "axes", "test-seismic-mesh"];
+    const globalLayerIds: string[] = ["placeholder", "axes"];
     const usedPolylineIds = assemblerProduct.accumulatedData.polylineIds;
 
     for (const item of assemblerProduct.children) {
