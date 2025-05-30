@@ -68,7 +68,7 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
     private _verticesArray: Float32Array | null = null;
     private _indicesArray: Uint32Array | null = null;
     private _colorsArray: Float32Array | null = null;
-    private _pickingColorsArray: Uint8Array | null = null;
+    private _pickingColorsArray: Uint8ClampedArray | null = null;
 
     // @ts-expect-error - This is how deck.gl expects the state to be defined
     state!: {
@@ -134,7 +134,7 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
         const { data } = this.props;
 
         this._colorsArray = new Float32Array(data.properties.length * 4);
-        this._pickingColorsArray = new Uint8Array(data.properties.length * 3);
+        this._pickingColorsArray = new Uint8ClampedArray(data.properties.length * 3);
     }
 
     private maybeUpdateGeometry() {
@@ -228,8 +228,9 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
                         },
                         pickingColors: {
                             value: this._pickingColorsArray!,
+                            type: "uint8",
                             size: 3,
-                            type: 5121,
+                            normalized: true,
                         },
                     },
                     topology: "triangle-list",
@@ -292,8 +293,9 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
     getPickingInfo({ info }: GetPickingInfoParams): SeismicFenceMeshLayerPickingInfo {
         if (!info.color) return info;
 
-        const [r, g, b] = info.color.map((c) => Math.round(c * 255));
+        const [r, g, b] = info.color;
         const { minProperty, maxProperty } = this.state;
+        console.debug(info.color);
 
         const property = decodeColorToProperty(r, g, b, minProperty, maxProperty);
 
@@ -343,6 +345,7 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
                     getColor: [255, 255, 255, 255],
                     material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
                     pickable: true,
+                    _instanced: false,
                 }),
             );
         }
