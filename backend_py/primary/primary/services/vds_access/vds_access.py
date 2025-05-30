@@ -94,8 +94,14 @@ class VdsAccess:
         response = await self._query_async(endpoint, slice_request)
 
         parts = self._extract_and_validate_body_parts_from_response(response)
-
-        metadata = VdsSliceMetadata(**json.loads(parts[0].content))
+        response_metadata = json.loads(parts[0].content)
+        metadata = VdsSliceMetadata(
+            format=response_metadata["format"],
+            shape=response_metadata["shape"],
+            x_axis=VdsAxis(**response_metadata["x"]),
+            y_axis=VdsAxis(**response_metadata["y"]),
+            geospatial=response_metadata["geospatial"],
+        )
         self._assert_valid_metadata_format_and_shape(metadata)
 
         byte_array = parts[1].content
@@ -254,7 +260,7 @@ class VdsAccess:
 
         # Convert every value of `hard_coded_fill_value` to np.nan
         flattened_fence_traces_float32_array[flattened_fence_traces_float32_array == hard_coded_fill_value] = np.nan
-
+        print("flattened fence data", flattened_fence_traces_float32_array, len(flattened_fence_traces_float32_array))
         return (flattened_fence_traces_float32_array, num_traces, num_samples_per_trace)
 
     def _extract_and_validate_body_parts_from_response(self, response: httpx.Response) -> Tuple[BodyPart, BodyPart]:

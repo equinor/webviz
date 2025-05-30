@@ -5,58 +5,65 @@ import { describe, expect, test } from "vitest";
 import { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 
-
-const COLOR_SCALE = new ColorScale({
-    colorPalette: new ColorPalette({
-        id: "test",
-        name: "test",
-        colors: ["#000000", "#111111", "#222222", "#333333", "#444444"],
+const COLOR_SCALE_SPEC: ColorScaleSpecification = {
+    colorScale: new ColorScale({
+        colorPalette: new ColorPalette({
+            id: "test",
+            name: "test",
+            colors: ["#000000", "#111111", "#222222", "#333333", "#444444"],
+        }),
+        gradientType: ColorScaleGradientType.Sequential,
+        type: ColorScaleType.Continuous,
+        steps: 5,
+        min: 0,
+        max: 100,
     }),
-    gradientType: ColorScaleGradientType.Sequential,
-    type: ColorScaleType.Continuous,
-    steps: 5,
-    min: 0,
-    max: 100,
-});
+    areBoundariesUserDefined: false,
+};
 
 describe("makeColorMapFunctionFromColorScale", () => {
     test("Maps to expected colors when values are normalized", () => {
-        const colorMapFunc = makeColorMapFunctionFromColorScale(COLOR_SCALE, 0, 100, true);
+        const colorMapFunc = makeColorMapFunctionFromColorScale(COLOR_SCALE_SPEC, {
+            valueMin: 0,
+            valueMax: 100,
+            unnormalize: false,
+        });
 
         expect(colorMapFunc).toBeInstanceOf(Function);
-        if (!colorMapFunc) {
-            throw new Error("Color map function not created");
-        }
+        if (!colorMapFunc) throw new Error("Color map function not created");
 
         for (let i = 0; i < 5; i++) {
             const normalizedValue = i / 4;
             const expectedColorHex = `#${i}${i}${i}${i}${i}${i}`;
             const expectedColorRgb = parse(expectedColorHex) as Rgb;
             expect(colorMapFunc(normalizedValue)).toStrictEqual([
-                (expectedColorRgb?.r ?? 0) * 255,
-                (expectedColorRgb?.g ?? 0) * 255,
-                (expectedColorRgb?.b ?? 0) * 255,
+                (expectedColorRgb.r ?? 0) * 255,
+                (expectedColorRgb.g ?? 0) * 255,
+                (expectedColorRgb.b ?? 0) * 255,
             ]);
         }
     });
 
-    test("Maps to the expected colors when values are not normalized", () => {
-        const colorMapFunc = makeColorMapFunctionFromColorScale(COLOR_SCALE, 0, 100, false);
+    test("Maps to expected colors when values are not normalized", () => {
+        const colorMapFunc = makeColorMapFunctionFromColorScale(COLOR_SCALE_SPEC, {
+            valueMin: 0,
+            valueMax: 100,
+            unnormalize: true,
+        });
 
         expect(colorMapFunc).toBeInstanceOf(Function);
-        if (!colorMapFunc) {
-            throw new Error("Color map function not created");
-        }
+        if (!colorMapFunc) throw new Error("Color map function not created");
 
         for (let i = 0; i < 5; i++) {
-            const nonNormalizedValue = (i / 4) * 100;
+            const nonNormalizedValue = i / 4;
             const expectedColorHex = `#${i}${i}${i}${i}${i}${i}`;
             const expectedColorRgb = parse(expectedColorHex) as Rgb;
             expect(colorMapFunc(nonNormalizedValue)).toStrictEqual([
-                (expectedColorRgb?.r ?? 0) * 255,
-                (expectedColorRgb?.g ?? 0) * 255,
-                (expectedColorRgb?.b ?? 0) * 255,
+                (expectedColorRgb.r ?? 0) * 255,
+                (expectedColorRgb.g ?? 0) * 255,
+                (expectedColorRgb.b ?? 0) * 255,
             ]);
         }
     });

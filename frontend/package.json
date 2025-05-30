@@ -33,11 +33,12 @@
         "@tanstack/react-query": "^5.63",
         "@tanstack/react-query-devtools": "^5.63",
         "@webviz/group-tree-plot": "^1.5.3",
-        "@webviz/subsurface-viewer": "^1.11.1",
+        "@webviz/subsurface-viewer": "^1.11.3",
         "@webviz/well-completions-plot": "^1.7.3",
         "@webviz/well-log-viewer": "^2.4.4",
         "animate.css": "^4.1.1",
         "axios": "^1.8.3",
+        "comlink": "^4.4.2",
         "culori": "^3.2.0",
         "geojson": "^0.5.0",
         "jotai": "^2.6.2",
@@ -67,6 +68,7 @@
         "@types/react-dom": "^18.2.7",
         "@types/react-plotly.js": "^2.6.0",
         "@types/uuid": "^9.0.0",
+        "@types/workerpool": "^6.4.7",
         "@vitejs/plugin-react": "^4.4.1",
         "@vitest/coverage-istanbul": "^3.0.7",
         "dependency-cruiser": "^14.0.0",
@@ -85,6 +87,7 @@
         "typescript-eslint": "^8.25.0",
         "vite": "^6.3.5",
         "vite-plugin-checker": "^0.9.0",
+        "vite-plugin-prebundle-workers": "^0.2.0",
         "vitest": "^3.0.7"
     }
 }
