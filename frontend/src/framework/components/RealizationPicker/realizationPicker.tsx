@@ -4,11 +4,11 @@ import { Close } from "@mui/icons-material";
 import _ from "lodash";
 import { v4 } from "uuid";
 
+import { getNumbersAndRanges, missingNumbers } from "@framework/utils/numberUtils";
 import type { BaseComponentProps } from "@lib/components/BaseComponent";
 import { BaseComponent } from "@lib/components/BaseComponent";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
-
 
 enum SelectionValidity {
     Valid = "valid",
@@ -315,6 +315,14 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
         }, props.debounceTimeMs || 0);
     }
 
+    function addNewSelections(values: string[]) {
+        const newSelections = [...selections, ...values.map((value) => ({ value, uuid: v4() }))];
+
+        setSelections(newSelections);
+        handleSelectionsChange(newSelections);
+        setActiveSelectionUuid(null);
+    }
+
     function addNewSelection(value: string) {
         const newSelections = [...selections, { value, uuid: v4() }];
 
@@ -418,6 +426,40 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
         handleSelectionsChange([]);
     }
 
+    function handlePaste(event: React.ClipboardEvent) {
+        event.preventDefault();
+
+        const pasteText = event.clipboardData.getData("text");
+        // Drop non-accepted characters and remove dangling separators, and make sure it
+        // follows the supported pattern, i.e. comma-separated numbers or ranges
+        const sanitizedValue = pasteText.replace(/[^0-9,-]/g, "").replace(/^[,-]|[,-]$/g, "");
+        if (!/^\d+(-\d+)?(,\d+(-\d+)?)*$/.test(sanitizedValue)) return;
+
+        const validNumbers = props.validRealizations ? missingNumbers(props.validRealizations) : undefined;
+        const realizationNumbers = [];
+        for (const numberOrRange of sanitizedValue.split(",")) {
+            if (/^[0-9]+-[0-9]+$/.test(numberOrRange)) {
+                // Add each number in the range to the list, as we will create optimal ranges later
+                const [start, end] = numberOrRange.split("-");
+                realizationNumbers.push(..._.range(parseFloat(start), parseFloat(end) + 1));
+            } else {
+                // By the regex things above, we can safely assume this is a valid number
+                realizationNumbers.push(parseFloat(numberOrRange));
+            }
+        }
+
+        // Sort them to keep the order, and remove possible duplicates
+        const sortedUniqueRealizationNumbers = _.chain(realizationNumbers).sortBy().uniq().value();
+        const numbersAndRanges = getNumbersAndRanges(sortedUniqueRealizationNumbers, validNumbers);
+
+        const rangesAsValueStrings = numbersAndRanges.map((numberOrRange) => {
+            if (typeof numberOrRange === "number") return numberOrRange.toString();
+            else return [numberOrRange.start, numberOrRange.end].join("-");
+        });
+
+        addNewSelections(rangesAsValueStrings);
+    }
+
     const numSelectedRealizations = calcUniqueSelections(selections, props.validRealizations).length;
 
     function handleInput(evt: React.ChangeEvent<HTMLInputElement>) {
@@ -454,6 +496,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
                             value={currentInputValue}
                             type="text"
                             className="outline-hidden grow"
+                            onPaste={handlePaste}
                             onKeyDown={handleKeyDown}
                             onInput={handleInput}
                         />
