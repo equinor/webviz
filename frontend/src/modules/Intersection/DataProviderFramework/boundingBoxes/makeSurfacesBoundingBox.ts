@@ -37,22 +37,29 @@ export function makeSurfacesBoundingBox({
         return null;
     }
 
-    const minX = -extensionLength;
-    const maxX = polylineActualSectionLengths.reduce((sum, length) => sum + length, -extensionLength);
-
     // If no surfaces are selected
     if (data.length === 0) {
         return null;
     }
 
-    // Find the minimum and maximum z-coordinates (uz-coordinates) across all surfaces
+    // Find the minimum and maximum coordinates (uz-coordinates) across all surfaces
+    let minX = Number.MAX_VALUE;
+    let maxX = -Number.MAX_VALUE;
     let minY = Number.MAX_VALUE;
     let maxY = -Number.MAX_VALUE;
     for (const surface of data) {
-        for (const point of surface.z_points) {
+        if (surface.z_points.length !== surface.cum_lengths.length) {
+            throw new Error("Surface z_points and cum_lengths must have the same length");
+        }
+
+        for (const [index, point] of surface.z_points.entries()) {
+            // Skip invalid points, e.g. points outside of surface
             if (point === null) {
                 continue;
             }
+
+            minX = Math.min(minX, surface.cum_lengths[index]);
+            maxX = Math.max(maxX, surface.cum_lengths[index]);
             minY = Math.min(minY, point);
             maxY = Math.max(maxY, point);
         }

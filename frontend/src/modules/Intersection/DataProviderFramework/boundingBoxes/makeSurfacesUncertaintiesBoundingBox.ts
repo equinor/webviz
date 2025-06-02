@@ -39,28 +39,37 @@ export function makeSurfacesUncertaintiesBoundingBox({
         return null;
     }
 
-    const minX = -extensionLength;
-    const maxX = -minX + cumulatedHorizontalPolylineLengthArr[cumulatedHorizontalPolylineLengthArr.length - 1];
-
-    const numSurfaces = Object.keys(data).length;
-
     // If no surfaces, return a bounding box with only the x-coordinates
+    const numSurfaces = Object.keys(data).length;
     if (numSurfaces === 0) {
-        return fromNumArray([minX, 0, 0, maxX, 0, 0]);
+        return null;
     }
 
-    // Find the min and max z-coordinates of all surfaces
+    // Find the minimum and maximum coordinates (uz-coordinates) across all surfaces
+    let minX = Number.MAX_VALUE;
+    let maxX = -Number.MAX_VALUE;
     let minY = Number.MAX_VALUE;
     let maxY = -Number.MAX_VALUE;
     for (const perRealizationValues of Object.values(data)) {
         for (const realizationValues of perRealizationValues) {
-            const sampledValues = realizationValues.sampled_values;
-            if (sampledValues.length === 0) {
-                continue;
+            if (realizationValues.sampled_values.length !== cumulatedHorizontalPolylineLengthArr.length) {
+                throw new Error(
+                    "Length of requested polyline cumulated lengths does not match the length of received sampled values",
+                );
             }
 
-            minY = realizationValues.sampled_values.reduce((acc, value) => Math.min(acc, value), minY);
-            maxY = realizationValues.sampled_values.reduce((acc, value) => Math.max(acc, value), maxY);
+            // Find min/max values for realization surface
+            for (const [index, zValue] of realizationValues.sampled_values.entries()) {
+                // Skip invalid points, e.g. points outside of surface
+                if (zValue === null || zValue === undefined) {
+                    continue;
+                }
+
+                minX = Math.min(minX, cumulatedHorizontalPolylineLengthArr[index]);
+                maxX = Math.max(maxX, cumulatedHorizontalPolylineLengthArr[index]);
+                minY = Math.min(minY, zValue);
+                maxY = Math.max(maxY, zValue);
+            }
         }
     }
 
