@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Close } from "@mui/icons-material";
-import { isEqual } from "lodash";
+import _ from "lodash";
 import { v4 } from "uuid";
 
 import type { BaseComponentProps } from "@lib/components/BaseComponent";
@@ -200,6 +200,8 @@ export type RealizationPickerProps = {
 } & BaseComponentProps;
 
 function RealizationPickerComponent(props: RealizationPickerProps, ref: React.ForwardedRef<HTMLDivElement>) {
+    const [currentInputValue, setCurrentInputValue] = React.useState<string>("");
+
     const [selections, setSelections] = React.useState<Selection[]>(
         props.initialRangeTags
             ? [...props.initialRangeTags].map((rangeTag) => {
@@ -216,7 +218,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
     const debounceTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const inputRef = React.useRef<HTMLInputElement>(null);
 
-    if (props.selectedRangeTags !== undefined && !isEqual(props.selectedRangeTags, prevSelectedRangeTags)) {
+    if (props.selectedRangeTags !== undefined && !_.isEqual(props.selectedRangeTags, prevSelectedRangeTags)) {
         const newSelections =
             props.selectedRangeTags?.map((rangeTag) => {
                 return { value: rangeTag, uuid: v4() };
@@ -313,13 +315,12 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
         }, props.debounceTimeMs || 0);
     }
 
-    function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
-        const value = event.target.value;
+    function addNewSelection(value: string) {
         const newSelections = [...selections, { value, uuid: v4() }];
+
         setSelections(newSelections);
-        setActiveSelectionUuid(null);
-        event.target.value = "";
         handleSelectionsChange(newSelections);
+        setActiveSelectionUuid(null);
     }
 
     function handlePointerDown() {
@@ -338,57 +339,65 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
         handleSelectionsChange(newSelections);
     }
 
+    function popLastSelection() {
+        if (!selections.length) return undefined;
+
+        const newSelections = [...selections];
+        const lastSelection = newSelections.pop();
+
+        setSelections(newSelections);
+        handleSelectionsChange(newSelections);
+        return lastSelection;
+    }
+
+    function moveActiveSelection(step: -1 | 1) {
+        const currentSelectionIndex = activeSelectionUuid
+            ? _.findIndex(selections, ["uuid", activeSelectionUuid])
+            : selections.length;
+
+        const nextIndex = currentSelectionIndex + step;
+
+        if (_.inRange(nextIndex, 0, selections.length)) {
+            setActiveSelectionUuid(selections[currentSelectionIndex + step].uuid);
+            setCaretPosition(step > 0 ? CaretPosition.Start : CaretPosition.End);
+        }
+
+        // If we're moving out of the last entry, we focus on the input instead
+        if (nextIndex === selections.length) {
+            setActiveSelectionUuid(null);
+            inputRef.current?.focus();
+            inputRef.current?.setSelectionRange(0, 0);
+        }
+    }
+
     function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
         const eventTarget = event.target as HTMLInputElement;
 
-        const allowedChars = "0123456789-,";
-        if (event.key === "Backspace" && event.currentTarget.value === "") {
-            const lastSelection = selections[selections.length - 1];
-            if (lastSelection) {
-                const newSelections = selections.slice(0, -1);
-                setSelections(newSelections);
-            }
-            if (inputRef.current) {
-                inputRef.current.value = lastSelection?.value || "";
-            }
+        if (event.key === "Backspace" && currentInputValue === "") {
+            // Start editing the previous selection
+            const lastSelection = popLastSelection();
+            setCurrentInputValue(lastSelection?.value || "");
             event.preventDefault();
-        } else if (event.key === "Enter" || event.key === ",") {
+        } else if (["Enter", ","].includes(event.key) && currentInputValue) {
+            // Add the current input as a new selection
+            addNewSelection(currentInputValue);
+            setCurrentInputValue("");
             event.preventDefault();
-            handleChange(event as any);
-        } else if (event.key === "Backspace" || event.key === "Delete" || event.key === "Home" || event.key === "End") {
-            return;
         } else if (event.key === "ArrowLeft") {
+            // Jump to the previous selection
             if (eventTarget.selectionStart === 0 && eventTarget.selectionEnd === 0) {
-                let currentSelectionIndex = selections.findIndex((selection) => selection.uuid === activeSelectionUuid);
-                if (activeSelectionUuid === null) {
-                    currentSelectionIndex = selections.length;
-                }
-                if (currentSelectionIndex > 0) {
-                    setActiveSelectionUuid(selections[currentSelectionIndex - 1].uuid);
-                    setCaretPosition(CaretPosition.End);
-                }
+                moveActiveSelection(-1);
                 event.preventDefault();
             }
         } else if (event.key === "ArrowRight") {
+            // Jump to the previous selection
             if (
                 eventTarget.selectionStart === eventTarget.value.length &&
                 eventTarget.selectionEnd === eventTarget.value.length
             ) {
-                const currentSelectionIndex = selections.findIndex(
-                    (selection) => selection.uuid === activeSelectionUuid,
-                );
-                if (currentSelectionIndex !== -1 && currentSelectionIndex < selections.length - 1) {
-                    setActiveSelectionUuid(selections[currentSelectionIndex + 1].uuid);
-                    setCaretPosition(CaretPosition.Start);
-                } else {
-                    setActiveSelectionUuid(null);
-                    inputRef.current?.focus();
-                    inputRef.current?.setSelectionRange(0, 0);
-                }
+                moveActiveSelection(1);
                 event.preventDefault();
             }
-        } else if (!allowedChars.includes(event.key)) {
-            event.preventDefault();
         }
     }
 
@@ -410,6 +419,15 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
     }
 
     const numSelectedRealizations = calcUniqueSelections(selections, props.validRealizations).length;
+
+    function handleInput(evt: React.ChangeEvent<HTMLInputElement>) {
+        const newValue = evt.target.value;
+        const sanitizedValue = newValue.replace(/[^0-9-]/, "").replace(/--/, "-");
+
+        if (sanitizedValue !== currentInputValue) {
+            setCurrentInputValue(sanitizedValue);
+        }
+    }
 
     return (
         <BaseComponent ref={ref} disabled={props.disabled}>
@@ -433,9 +451,11 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
                     <li className="grow flex">
                         <input
                             ref={inputRef}
+                            value={currentInputValue}
                             type="text"
                             className="outline-hidden grow"
                             onKeyDown={handleKeyDown}
+                            onInput={handleInput}
                         />
                     </li>
                 </ul>
