@@ -17,9 +17,7 @@ const realizationGridSettings = [
     Setting.REALIZATION,
     Setting.ATTRIBUTE,
     Setting.GRID_NAME,
-    Setting.GRID_LAYER_I_RANGE,
-    Setting.GRID_LAYER_J_RANGE,
-    Setting.GRID_LAYER_K_RANGE,
+    Setting.GRID_LAYER_RANGE,
     Setting.TIME_OR_INTERVAL,
     Setting.SHOW_GRID_LINES,
     Setting.COLOR_SCALE,
@@ -55,9 +53,7 @@ export class RealizationGridProvider
             prevSettings[Setting.GRID_NAME] !== newSettings[Setting.GRID_NAME] ||
             prevSettings[Setting.ATTRIBUTE] !== newSettings[Setting.ATTRIBUTE] ||
             prevSettings[Setting.TIME_OR_INTERVAL] !== newSettings[Setting.TIME_OR_INTERVAL] ||
-            prevSettings[Setting.GRID_LAYER_I_RANGE] !== newSettings[Setting.GRID_LAYER_I_RANGE] ||
-            prevSettings[Setting.GRID_LAYER_J_RANGE] !== newSettings[Setting.GRID_LAYER_J_RANGE] ||
-            prevSettings[Setting.GRID_LAYER_K_RANGE] !== newSettings[Setting.GRID_LAYER_K_RANGE]
+            prevSettings[Setting.GRID_LAYER_RANGE] !== newSettings[Setting.GRID_LAYER_RANGE]
         ) {
             return true;
         }
@@ -91,11 +87,9 @@ export class RealizationGridProvider
         if (timeOrInterval === "NO_TIME") {
             timeOrInterval = null;
         }
-        const rangeI = getSetting(Setting.GRID_LAYER_I_RANGE);
-        const rangeJ = getSetting(Setting.GRID_LAYER_J_RANGE);
-        const rangeK = getSetting(Setting.GRID_LAYER_K_RANGE);
+        const range = getSetting(Setting.GRID_LAYER_RANGE);
 
-        if (rangeI === null || rangeJ === null || rangeK === null) {
+        if (range === null) {
             throw new Error("Grid ranges are not set");
         }
 
@@ -107,12 +101,12 @@ export class RealizationGridProvider
                 parameter_name: attribute ?? "",
                 parameter_time_or_interval_str: timeOrInterval,
                 realization_num: realizationNum ?? 0,
-                i_min: rangeI[0],
-                i_max: rangeI[1],
-                j_min: rangeJ[0],
-                j_max: rangeJ[1],
-                k_min: rangeK[0],
-                k_max: rangeK[1],
+                i_min: range[0][0],
+                i_max: range[0][1],
+                j_min: range[1][0],
+                j_max: range[1][1],
+                k_min: range[2][0],
+                k_max: range[2][1],
             },
         });
 
@@ -124,12 +118,12 @@ export class RealizationGridProvider
                 ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
                 grid_name: gridName ?? "",
                 realization_num: realizationNum ?? 0,
-                i_min: rangeI[0],
-                i_max: rangeI[1],
-                j_min: rangeJ[0],
-                j_max: rangeJ[1],
-                k_min: rangeK[0],
-                k_max: rangeK[1],
+                i_min: range[0][0],
+                i_max: range[0][1],
+                j_min: range[1][0],
+                j_max: range[1][1],
+                k_min: range[2][0],
+                k_max: range[2][1],
             },
         });
 
@@ -153,9 +147,7 @@ export class RealizationGridProvider
             getSetting(Setting.REALIZATION) !== null &&
             getSetting(Setting.GRID_NAME) !== null &&
             getSetting(Setting.ATTRIBUTE) !== null &&
-            getSetting(Setting.GRID_LAYER_I_RANGE) !== null &&
-            getSetting(Setting.GRID_LAYER_J_RANGE) !== null &&
-            getSetting(Setting.GRID_LAYER_K_RANGE) !== null &&
+            getSetting(Setting.GRID_LAYER_RANGE) !== null &&
             getSetting(Setting.TIME_OR_INTERVAL) !== null
         );
     }
@@ -238,52 +230,32 @@ export class RealizationGridProvider
             return availableGridAttributes;
         });
 
-        availableSettingsUpdater(Setting.GRID_LAYER_I_RANGE, ({ getLocalSetting, getHelperDependency }) => {
+        availableSettingsUpdater(Setting.GRID_LAYER_RANGE, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(Setting.GRID_NAME);
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!gridName || !data) {
-                return [0, 0];
+                return [
+                    [0, 0, 1],
+                    [0, 0, 1],
+                    [0, 0, 1],
+                ];
             }
 
             const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
             if (!gridDimensions) {
-                return [0, 0];
+                return [
+                    [0, 0, 1],
+                    [0, 0, 1],
+                    [0, 0, 1],
+                ];
             }
 
-            return [0, gridDimensions.i_count - 1];
-        });
-
-        availableSettingsUpdater(Setting.GRID_LAYER_J_RANGE, ({ getLocalSetting, getHelperDependency }) => {
-            const gridName = getLocalSetting(Setting.GRID_NAME);
-            const data = getHelperDependency(realizationGridDataDep);
-
-            if (!gridName || !data) {
-                return [0, 0];
-            }
-
-            const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
-            if (!gridDimensions) {
-                return [0, 0];
-            }
-
-            return [0, gridDimensions.j_count - 1];
-        });
-
-        availableSettingsUpdater(Setting.GRID_LAYER_K_RANGE, ({ getLocalSetting, getHelperDependency }) => {
-            const gridName = getLocalSetting(Setting.GRID_NAME);
-            const data = getHelperDependency(realizationGridDataDep);
-
-            if (!gridName || !data) {
-                return [0, 0];
-            }
-
-            const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
-            if (!gridDimensions) {
-                return [0, 0];
-            }
-
-            return [0, gridDimensions.k_count - 1];
+            return [
+                [0, gridDimensions.i_count - 1, 1],
+                [0, gridDimensions.j_count - 1, 1],
+                [0, gridDimensions.k_count - 1, 1],
+            ];
         });
 
         availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {

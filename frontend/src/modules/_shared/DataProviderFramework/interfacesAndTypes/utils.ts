@@ -21,11 +21,13 @@ export type MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory extends Set
     ? RemoveUnknownFromArray<MakeArrayIfNotArray<TValue>>
     : TCategory extends SettingCategory.NUMBER
       ? [Exclude<TValue, null>, Exclude<TValue, null>]
-      : TCategory extends SettingCategory.NUMBER_WITH_STEP
-        ? [Exclude<TValue, null>, Exclude<TValue, null>, Exclude<TValue, null>]
-        : TCategory extends SettingCategory.RANGE
-          ? Exclude<TValue, null>
-          : never;
+      : TCategory extends SettingCategory.RANGE
+        ? [number, number, number]
+        : TCategory extends SettingCategory.XYZ_NUMBER
+          ? [[number, number, number], [number, number, number], [number, number, number]]
+          : TCategory extends SettingCategory.XYZ_RANGE
+            ? [[number, number, number], [number, number, number], [number, number, number]]
+            : never;
 
 export type TupleIndices<T extends readonly any[]> = Extract<keyof T, `${number}`>;
 export type SettingsKeysFromTuple<TSettings extends Settings> = TSettings[TupleIndices<TSettings>];

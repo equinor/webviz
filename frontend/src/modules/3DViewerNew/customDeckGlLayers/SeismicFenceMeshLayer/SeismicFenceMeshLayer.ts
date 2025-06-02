@@ -20,8 +20,9 @@ export interface SeismicFenceMeshLayerProps extends ExtendedLayerProps {
     data: {
         sections: SeismicFenceSection[];
     };
-    colorMapFunction: (value: number) => [number, number, number];
+    colorMapFunction: (value: number) => [number, number, number, number];
     hoverable?: boolean;
+    opacity?: number;
     zIncreaseDownwards?: boolean;
     isLoading?: boolean;
     loadingGeometry?: LoadingGeometry;
@@ -98,7 +99,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     }
 
     renderLayers() {
-        const { isLoading, zIncreaseDownwards, loadingGeometry, data } = this.props;
+        const { isLoading, zIncreaseDownwards, loadingGeometry, data, opacity } = this.props;
 
         const layers: Layer<any>[] = [];
 
@@ -111,6 +112,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
                     zIncreaseDownwards: zIncreaseDownwards,
                     isLoading: isLoading,
                     loadingGeometry: loadingGeometry,
+                    opacity,
                 }),
             );
         }

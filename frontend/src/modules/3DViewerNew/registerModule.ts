@@ -6,6 +6,8 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Interfaces } from "./interfaces";
 import { preview } from "./preview";
 
+import "./DataProviderFramework/registerAllDataProviders";
+
 export const MODULE_NAME = "3DViewerNew";
 
 const description = "Generic 3D viewer for grid, surfaces, and wells.";

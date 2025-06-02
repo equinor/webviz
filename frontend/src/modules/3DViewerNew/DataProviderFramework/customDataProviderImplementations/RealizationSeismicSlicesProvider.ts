@@ -1,6 +1,6 @@
 import { isEqual } from "lodash";
 
-import { type SeismicCubeMeta_api, getCrosslineSliceOptions, getSeismicCubeMetaListOptions } from "@api";
+import { type SeismicCubeMeta_api, getDepthSliceOptions, getSeismicCubeMetaListOptions } from "@api";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
@@ -10,35 +10,37 @@ import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramew
 import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { type SeismicSliceData_trans, transformSeismicSlice } from "../utils/transformSeismicSlice";
-import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
+import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
-const realizationSeismicCrosslineSettings = [
+const realizationSeismicSlicesSettings = [
     Setting.ENSEMBLE,
     Setting.REALIZATION,
     Setting.ATTRIBUTE,
     Setting.TIME_OR_INTERVAL,
-    Setting.SEISMIC_CROSSLINE,
+    Setting.SEISMIC_SLICES,
     Setting.COLOR_SCALE,
+    Setting.OMIT_RANGE,
+    Setting.OMIT_COLOR,
 ] as const;
-export type RealizationSeismicCrosslineSettings = typeof realizationSeismicCrosslineSettings;
-type SettingsWithTypes = MakeSettingTypesMap<RealizationSeismicCrosslineSettings>;
+export type RealizationSeismicSlicesSettings = typeof realizationSeismicSlicesSettings;
+type SettingsWithTypes = MakeSettingTypesMap<RealizationSeismicSlicesSettings>;
 
-export type RealizationSeismicCrosslineData = SeismicSliceData_trans;
+export type RealizationSeismicSlicesData = SeismicSliceData_trans;
 
-export type RealizationSeismicCrosslineStoredData = {
+export type RealizationSeismicSlicesStoredData = {
     seismicCubeMeta: SeismicCubeMeta_api[];
 };
 
-export class RealizationSeismicCrosslineProvider
+export class RealizationSeismicSlicesProvider
     implements
         CustomDataProviderImplementation<
-            RealizationSeismicCrosslineSettings,
-            RealizationSeismicCrosslineData,
-            RealizationSeismicCrosslineStoredData
+            RealizationSeismicSlicesSettings,
+            RealizationSeismicSlicesData,
+            RealizationSeismicSlicesStoredData
         >
 {
-    settings = realizationSeismicCrosslineSettings;
+    settings = realizationSeismicSlicesSettings;
 
     getDefaultSettingsValues() {
         const defaultColorPalette =
@@ -61,18 +63,28 @@ export class RealizationSeismicCrosslineProvider
     }
 
     getDefaultName(): string {
-        return "Seismic Crossline (realization)";
+        return "Seismic Slices (realization)";
     }
 
-    doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
-        return !isEqual(prevSettings, newSettings);
+    doSettingsChangesRequireDataRefetch(
+        prevSettings: SettingsWithTypes | null,
+        newSettings: SettingsWithTypes,
+    ): boolean {
+        return (
+            !prevSettings ||
+            !isEqual(prevSettings[Setting.ENSEMBLE], newSettings[Setting.ENSEMBLE]) ||
+            !isEqual(prevSettings[Setting.REALIZATION], newSettings[Setting.REALIZATION]) ||
+            !isEqual(prevSettings[Setting.ATTRIBUTE], newSettings[Setting.ATTRIBUTE]) ||
+            !isEqual(prevSettings[Setting.TIME_OR_INTERVAL], newSettings[Setting.TIME_OR_INTERVAL]) ||
+            !isEqual(prevSettings[Setting.SEISMIC_SLICES], newSettings[Setting.SEISMIC_SLICES])
+        );
     }
 
     makeValueRange(
         accessors: DataProviderInformationAccessors<
-            RealizationSeismicCrosslineSettings,
-            RealizationSeismicCrosslineData,
-            RealizationSeismicCrosslineStoredData
+            RealizationSeismicSlicesSettings,
+            RealizationSeismicSlicesData,
+            RealizationSeismicSlicesStoredData
         >,
     ): [number, number] | null {
         const data = accessors.getData();
@@ -87,17 +99,16 @@ export class RealizationSeismicCrosslineProvider
         registerQueryKey,
         queryClient,
     }: FetchDataParams<
-        RealizationSeismicCrosslineSettings,
-        RealizationSeismicCrosslineData,
-        RealizationSeismicCrosslineStoredData
-    >): Promise<RealizationSeismicCrosslineData> {
+        RealizationSeismicSlicesSettings,
+        RealizationSeismicSlicesData
+    >): Promise<RealizationSeismicSlicesData> {
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         const realizationNum = getSetting(Setting.REALIZATION);
         const attribute = getSetting(Setting.ATTRIBUTE);
         const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
-        const crosslineNumber = getSetting(Setting.SEISMIC_CROSSLINE);
+        const slices = getSetting(Setting.SEISMIC_SLICES);
 
-        const queryOptions = getCrosslineSliceOptions({
+        const queryOptions = getDepthSliceOptions({
             query: {
                 case_uuid: ensembleIdent?.getCaseUuid() ?? "",
                 ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
@@ -105,7 +116,7 @@ export class RealizationSeismicCrosslineProvider
                 seismic_attribute: attribute ?? "",
                 time_or_interval_str: timeOrInterval ?? "",
                 observed: false,
-                crossline_no: crosslineNumber ?? 0,
+                depth_slice_no: slices?.[2] ?? 0,
             },
         });
 
@@ -123,7 +134,7 @@ export class RealizationSeismicCrosslineProvider
         availableSettingsUpdater,
         storedDataUpdater,
         queryClient,
-    }: DefineDependenciesArgs<RealizationSeismicCrosslineSettings, RealizationSeismicCrosslineStoredData>): void {
+    }: DefineDependenciesArgs<RealizationSeismicSlicesSettings, RealizationSeismicSlicesStoredData>): void {
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -213,23 +224,47 @@ export class RealizationSeismicCrosslineProvider
             return availableTimeOrIntervals;
         });
 
-        availableSettingsUpdater(Setting.SEISMIC_CROSSLINE, ({ getLocalSetting, getHelperDependency }) => {
+        availableSettingsUpdater(Setting.SEISMIC_SLICES, ({ getLocalSetting, getHelperDependency }) => {
             const seismicAttribute = getLocalSetting(Setting.ATTRIBUTE);
             const timeOrInterval = getLocalSetting(Setting.TIME_OR_INTERVAL);
             const data = getHelperDependency(realizationSeismicCrosslineDataDep);
 
             if (!seismicAttribute || !timeOrInterval || !data) {
-                return [0, 0, 0];
+                return [
+                    [0, 0, 1],
+                    [0, 0, 1],
+                    [0, 0, 1],
+                ];
             }
             const seismicInfo = data.filter(
                 (seismicInfos) =>
                     seismicInfos.seismicAttribute === seismicAttribute &&
                     seismicInfos.isoDateOrInterval === timeOrInterval,
             )[0];
-            const jMin = 0;
-            const jMax = seismicInfo.spec.numRows - 1;
 
-            return [jMin, jMax, 1];
+            const xMin = 0;
+            const xMax = seismicInfo.spec.numCols - 1;
+            const xInc = 1;
+
+            const yMin = 0;
+            const yMax = seismicInfo.spec.numRows - 1;
+            const yInc = 1;
+
+            const zMin = seismicInfo.spec.zOrigin;
+            const zMax =
+                seismicInfo.spec.zOrigin +
+                seismicInfo.spec.zInc * seismicInfo.spec.zFlip * (seismicInfo.spec.numLayers - 1);
+            const zInc = seismicInfo.spec.zInc;
+
+            return [
+                [xMin, xMax, xInc],
+                [yMin, yMax, yInc],
+                [zMin, zMax, zInc],
+            ];
+        });
+
+        availableSettingsUpdater(Setting.OMIT_RANGE, () => {
+            return [-10, 10, 0.001];
         });
     }
 }

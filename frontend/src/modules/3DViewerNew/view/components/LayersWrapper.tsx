@@ -17,9 +17,6 @@ import {
     type AccumulatedData,
 } from "@modules/3DViewerNew/DataProviderFramework/accumulators/polylineIdsAccumulator";
 import { RealizationGridProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
-import { RealizationSeismicCrosslineProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicCrosslineProvider";
-import { RealizationSeismicDepthSliceProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicDepthProvider";
-import { RealizationSeismicInlineProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicInlineProvider";
 import { CustomDataProviderType } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderTypes";
 import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
 import { makeDrilledWellTrajectoriesLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer";
@@ -60,6 +57,7 @@ import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSub
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
 import { InteractionWrapper } from "./InteractionWrapper";
+import { RealizationSeismicSlicesProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicSlicesProvider";
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
     VisualizationTarget.DECK_GL,
@@ -121,24 +119,8 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
-    CustomDataProviderType.REALIZATION_SEISMIC_INLINE,
-    RealizationSeismicInlineProvider,
-    {
-        transformToVisualization: makeSeismicFenceMeshLayerFunction(Plane.INLINE),
-        transformToAnnotations: makeColorScaleAnnotation,
-    },
-);
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
-    CustomDataProviderType.REALIZATION_SEISMIC_CROSSLINE,
-    RealizationSeismicCrosslineProvider,
-    {
-        transformToVisualization: makeSeismicFenceMeshLayerFunction(Plane.CROSSLINE),
-        transformToAnnotations: makeColorScaleAnnotation,
-    },
-);
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
-    CustomDataProviderType.REALIZATION_SEISMIC_DEPTH,
-    RealizationSeismicDepthSliceProvider,
+    CustomDataProviderType.REALIZATION_SEISMIC_SLICES,
+    RealizationSeismicSlicesProvider,
     {
         transformToVisualization: makeSeismicFenceMeshLayerFunction(Plane.DEPTH),
         transformToAnnotations: makeColorScaleAnnotation,

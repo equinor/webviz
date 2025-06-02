@@ -114,26 +114,10 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                     ),
                 );
                 return;
-            case "realization-seismic-inline":
+            case "realization-seismic-slices":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
-                        CustomDataProviderType.REALIZATION_SEISMIC_INLINE,
-                        props.dataProviderManager,
-                    ),
-                );
-                return;
-            case "realization-seismic-crossline":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(
-                        CustomDataProviderType.REALIZATION_SEISMIC_CROSSLINE,
-                        props.dataProviderManager,
-                    ),
-                );
-                return;
-            case "realization-seismic-depth-slice":
-                groupDelegate.prependChild(
-                    DataProviderRegistry.makeDataProvider(
-                        CustomDataProviderType.REALIZATION_SEISMIC_DEPTH,
+                        CustomDataProviderType.REALIZATION_SEISMIC_SLICES,
                         props.dataProviderManager,
                     ),
                 );
@@ -363,19 +347,9 @@ const ACTIONS: ActionGroup[] = [
                         label: "Synthetic",
                         children: [
                             {
-                                identifier: "realization-seismic-inline",
+                                identifier: "realization-seismic-slices",
                                 icon: <Icon data={surface_layer} fontSize="small" />,
-                                label: "Realization Inline",
-                            },
-                            {
-                                identifier: "realization-seismic-crossline",
-                                icon: <Icon data={surface_layer} fontSize="small" />,
-                                label: "Realization Crossline",
-                            },
-                            {
-                                identifier: "realization-seismic-depth-slice",
-                                icon: <Icon data={surface_layer} fontSize="small" />,
-                                label: "Realization Depth Slice",
+                                label: "Realization Seismic Slices",
                             },
                         ],
                     },

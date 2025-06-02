@@ -1,75 +1,79 @@
 import React from "react";
 
-import { Check } from "@mui/icons-material";
-import { isEqual } from "lodash";
-
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
-import { useElementSize } from "@lib/hooks/useElementSize";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SettingCategory } from "../settingsDefinitions";
+import { isEqual } from "lodash";
+import { useElementSize } from "@lib/hooks/useElementSize";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Button } from "@lib/components/Button";
 
-type ValueType = [number, number] | null;
+type ValueType = [[number, number], [number, number], [number, number]] | null;
+type Category = SettingCategory.XYZ_RANGE;
 
-export enum Direction {
-    I,
-    J,
-    K,
-}
-
-export class GridLayerRangeSetting implements CustomSettingImplementation<ValueType, SettingCategory.RANGE> {
+export class GridLayerRangeSetting implements CustomSettingImplementation<ValueType, Category> {
     defaultValue: ValueType = null;
 
-    private _direction: Direction;
-
-    constructor(direction: Direction) {
-        this._direction = direction;
-    }
-
     getLabel(): string {
-        switch (this._direction) {
-            case Direction.I:
-                return "Grid layer I";
-            case Direction.J:
-                return "Grid layer J";
-            case Direction.K:
-                return "Grid layer K";
-        }
+        return "Grid ranges";
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.RANGE>) => React.ReactNode {
-        return function RangeSlider(props: SettingComponentProps<ValueType, SettingCategory.RANGE>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, Category>) => React.ReactNode {
+        return function RangeSlider(props: SettingComponentProps<ValueType, Category>) {
             const divRef = React.useRef<HTMLDivElement>(null);
             const divSize = useElementSize(divRef);
 
-            const [internalValue, setInternalValue] = React.useState<ValueType>(props.value);
-            const [prevValue, setPrevValue] = React.useState<ValueType>(props.value);
+            const availableValues = props.availableValues ?? [
+                [0, 0, 1],
+                [0, 0, 1],
+                [0, 0, 1],
+            ];
 
-            if (!isEqual(prevValue, props.value)) {
-                setInternalValue(props.value);
-                setPrevValue(props.value);
+            const [internalValue, setInternalValue] = React.useState<
+                [[number, number], [number, number], [number, number]] | null
+            >(props.value);
+
+            function handleSliderChange(index: number, val: number[]) {
+                const newValue: [[number, number], [number, number], [number, number]] = [
+                    ...(internalValue ?? [
+                        [0, 0],
+                        [0, 0],
+                        [0, 0],
+                    ]),
+                ];
+                newValue[index] = val as [number, number];
+                setInternalValue(newValue);
             }
 
-            function handleChange(_: any, value: number | number[]) {
-                if (!Array.isArray(value)) {
-                    return;
-                }
+            function handleInputChange(outerIndex: number, innerIndex: number, val: number) {
+                const min = availableValues[outerIndex][0];
+                const max = availableValues[outerIndex][1];
+                const step = availableValues[outerIndex][2];
+                const allowedValues = Array.from(
+                    { length: Math.floor((max - min) / step) + 1 },
+                    (_, i) => min + i * step,
+                );
+                const newVal = allowedValues.reduce((prev, curr) =>
+                    Math.abs(curr - val) < Math.abs(prev - val) ? curr : prev,
+                );
 
-                setInternalValue([value[0], value[1]]);
+                const newValue: [[number, number], [number, number], [number, number]] = [
+                    ...(internalValue ?? [
+                        [0, 0],
+                        [0, 0],
+                        [0, 0],
+                    ]),
+                ];
+                newValue[outerIndex][innerIndex] = newVal;
+                setInternalValue(newValue);
             }
 
-            function handleClick() {
-                if (internalValue) {
-                    props.onValueChange([internalValue[0], internalValue[1]]);
-                }
-            }
-
+            const labels: string[] = ["I", "J", "K"];
             const hasChanges = !isEqual(internalValue, props.value);
             const MIN_SIZE = 250;
             let inputsVisible = true;
@@ -77,40 +81,56 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
                 inputsVisible = false;
             }
 
+            function handleApplyChanges() {
+                if (internalValue && !isEqual(internalValue, props.value)) {
+                    props.onValueChange(internalValue);
+                }
+            }
+
             return (
-                <div
-                    className={resolveClassNames("flex flex-row gap-2", { "outline-2 outline-amber-400": hasChanges })}
-                    ref={divRef}
-                >
-                    <div className={resolveClassNames("flex-1 min-w-16", { hidden: !inputsVisible })}>
-                        <Input
-                            type="number"
-                            value={internalValue?.[0] ?? 0}
-                            onChange={(e) => handleChange(e, [Number(e.target.value), props.value?.[1] ?? 1])}
-                        />
+                <>
+                    <div className={resolveClassNames({ "outline-2 outline-amber-400": hasChanges })} ref={divRef}>
+                        {labels.map((label, index) => (
+                            <div key={`setting-${index}`} className="flex items-center gap-x-1">
+                                <div className="w-8 flex flex-col items-start pl-1">{label}</div>
+                                <div className="w-1/5">
+                                    <Input
+                                        type="number"
+                                        value={props.value?.[index][0] ?? 0}
+                                        onChange={(e) => handleInputChange(index, 0, parseInt(e.target.value))}
+                                    />
+                                </div>
+                                <div className="grow">
+                                    <Slider
+                                        min={availableValues[index][0]}
+                                        max={availableValues[index][1]}
+                                        onChange={(_, value) => handleSliderChange(index, value as [number, number])}
+                                        value={
+                                            props.value?.[index] ?? [
+                                                availableValues[index][0],
+                                                availableValues[index][1],
+                                            ]
+                                        }
+                                        valueLabelDisplay="auto"
+                                        step={availableValues[index][2]}
+                                    />
+                                </div>
+                                <div className="w-1/5">
+                                    <Input
+                                        type="number"
+                                        value={props.value?.[index][1] ?? 0}
+                                        onChange={(e) => handleInputChange(index, 1, parseInt(e.target.value))}
+                                    />
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                    <div className="flex-4">
-                        <Slider
-                            min={props.availableValues?.[0] ?? 0}
-                            max={props.availableValues?.[1] ?? 1}
-                            onChange={handleChange}
-                            value={internalValue ?? [props.availableValues?.[0] ?? 0, props.availableValues?.[1] ?? 1]}
-                            valueLabelDisplay="auto"
-                        />
+                    <div className="flex justify-end mt-2">
+                        <Button variant="contained" onClick={handleApplyChanges} disabled={!hasChanges}>
+                            Apply Changes
+                        </Button>
                     </div>
-                    <div className={resolveClassNames("flex-1 min-w-16", { hidden: !inputsVisible })}>
-                        <Input
-                            type="number"
-                            value={internalValue?.[1] ?? 1}
-                            onChange={(e) => handleChange(e, [props.value?.[0] ?? 0, Number(e.target.value)])}
-                        />
-                    </div>
-                    <div className="flex-1 w-16">
-                        <DenseIconButton onClick={handleClick} title="Apply" disabled={!hasChanges}>
-                            <Check fontSize="small" />
-                        </DenseIconButton>
-                    </div>
-                </div>
+                </>
             );
         };
     }

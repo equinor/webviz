@@ -15,7 +15,8 @@ export enum SettingCategory {
     MULTI_SELECT = "multiSelect",
     NUMBER = "number",
     RANGE = "range",
-    NUMBER_WITH_STEP = "numberWithStep",
+    XYZ_NUMBER = "xyzNumber",
+    XYZ_RANGE = "xyzRange",
     BOOLEAN = "boolean",
     STATIC = "static",
 }
@@ -25,19 +26,15 @@ export enum Setting {
     ENSEMBLE = "ensemble",
     COLOR_SCALE = "colorScale",
     COLOR_SET = "colorSet",
-    GRID_LAYER_I_RANGE = "gridLayerIRange",
-    GRID_LAYER_J_RANGE = "gridLayerJRange",
+    GRID_LAYER_RANGE = "gridLayerRange",
     GRID_LAYER_K = "gridLayerK",
-    GRID_LAYER_K_RANGE = "gridLayerKRange",
     GRID_NAME = "gridName",
     INTERSECTION = "intersection",
     POLYGONS_ATTRIBUTE = "polygonsAttribute",
     POLYGONS_NAME = "polygonsName",
     POLYLINES = "polylines",
     REALIZATION = "realization",
-    SEISMIC_CROSSLINE = "seismicCrossline",
-    SEISMIC_DEPTH_SLICE = "seismicDepthSlice",
-    SEISMIC_INLINE = "seismicInline",
+    SEISMIC_SLICES = "seismicSlices",
     SENSITIVITY = "sensitivity",
     SHOW_GRID_LINES = "showGridLines",
     SMDA_WELLBORE_HEADERS = "smdaWellboreHeaders",
@@ -45,6 +42,8 @@ export enum Setting {
     STATISTIC_FUNCTION = "statisticFunction",
     SURFACE_NAME = "surfaceName",
     TIME_OR_INTERVAL = "timeOrInterval",
+    OMIT_RANGE = "omitRange",
+    OMIT_COLOR = "omitColor",
 }
 
 export const settingCategories = {
@@ -52,19 +51,16 @@ export const settingCategories = {
     [Setting.ENSEMBLE]: SettingCategory.SINGLE_SELECT,
     [Setting.COLOR_SCALE]: SettingCategory.STATIC,
     [Setting.COLOR_SET]: SettingCategory.STATIC,
-    [Setting.GRID_LAYER_I_RANGE]: SettingCategory.RANGE,
-    [Setting.GRID_LAYER_J_RANGE]: SettingCategory.RANGE,
+    [Setting.GRID_LAYER_RANGE]: SettingCategory.XYZ_RANGE,
     [Setting.GRID_LAYER_K]: SettingCategory.NUMBER,
-    [Setting.GRID_LAYER_K_RANGE]: SettingCategory.RANGE,
     [Setting.GRID_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.INTERSECTION]: SettingCategory.SINGLE_SELECT,
+    [Setting.OMIT_RANGE]: SettingCategory.RANGE,
     [Setting.POLYGONS_ATTRIBUTE]: SettingCategory.SINGLE_SELECT,
     [Setting.POLYGONS_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.POLYLINES]: SettingCategory.MULTI_SELECT,
     [Setting.REALIZATION]: SettingCategory.SINGLE_SELECT,
-    [Setting.SEISMIC_CROSSLINE]: SettingCategory.NUMBER_WITH_STEP,
-    [Setting.SEISMIC_DEPTH_SLICE]: SettingCategory.NUMBER_WITH_STEP,
-    [Setting.SEISMIC_INLINE]: SettingCategory.NUMBER_WITH_STEP,
+    [Setting.SEISMIC_SLICES]: SettingCategory.XYZ_NUMBER,
     [Setting.SENSITIVITY]: SettingCategory.SINGLE_SELECT,
     [Setting.SHOW_GRID_LINES]: SettingCategory.BOOLEAN,
     [Setting.SMDA_WELLBORE_HEADERS]: SettingCategory.MULTI_SELECT,
@@ -72,6 +68,7 @@ export const settingCategories = {
     [Setting.STATISTIC_FUNCTION]: SettingCategory.SINGLE_SELECT,
     [Setting.SURFACE_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.TIME_OR_INTERVAL]: SettingCategory.SINGLE_SELECT,
+    [Setting.OMIT_COLOR]: SettingCategory.STATIC,
 } as const;
 
 export type SettingCategories = typeof settingCategories;
@@ -81,19 +78,16 @@ export type SettingTypes = {
     [Setting.ENSEMBLE]: RegularEnsembleIdent | null;
     [Setting.COLOR_SCALE]: ColorScaleSpecification | null;
     [Setting.COLOR_SET]: ColorSet | null;
-    [Setting.GRID_LAYER_I_RANGE]: [number, number] | null;
-    [Setting.GRID_LAYER_J_RANGE]: [number, number] | null;
+    [Setting.GRID_LAYER_RANGE]: [[number, number], [number, number], [number, number]] | null;
     [Setting.GRID_LAYER_K]: number | null;
-    [Setting.GRID_LAYER_K_RANGE]: [number, number] | null;
     [Setting.GRID_NAME]: string | null;
     [Setting.INTERSECTION]: IntersectionSettingValue | null;
+    [Setting.OMIT_RANGE]: [number, number] | null;
     [Setting.POLYGONS_ATTRIBUTE]: string | null;
     [Setting.POLYGONS_NAME]: string | null;
     [Setting.POLYLINES]: { value: string; label: string }[] | null;
     [Setting.REALIZATION]: number | null;
-    [Setting.SEISMIC_CROSSLINE]: number | null;
-    [Setting.SEISMIC_DEPTH_SLICE]: number | null;
-    [Setting.SEISMIC_INLINE]: number | null;
+    [Setting.SEISMIC_SLICES]: [number, number, number] | null;
     [Setting.SENSITIVITY]: SensitivityNameCasePair | null;
     [Setting.SHOW_GRID_LINES]: boolean;
     [Setting.SMDA_WELLBORE_HEADERS]: WellboreHeader_api[] | null;
@@ -101,6 +95,7 @@ export type SettingTypes = {
     [Setting.STATISTIC_FUNCTION]: SurfaceStatisticFunction_api;
     [Setting.SURFACE_NAME]: string | null;
     [Setting.TIME_OR_INTERVAL]: string | null;
+    [Setting.OMIT_COLOR]: string | null;
 };
 
 export type PossibleSettingsForCategory<TCategory extends SettingCategory> = {
@@ -198,52 +193,62 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
 
         return value;
     },
-    [SettingCategory.NUMBER_WITH_STEP]: <
-        TSetting extends PossibleSettingsForCategory<SettingCategory.NUMBER_WITH_STEP>,
-    >(
-        value: SettingTypes[TSetting],
-        availableValues: AvailableValuesType<TSetting>,
-    ) => {
-        if (value === null) {
-            return availableValues[0];
-        }
-
-        const [min, max, step] = availableValues;
-
-        if (value < min) {
-            return min;
-        }
-
-        if (value > max) {
-            return max;
-        }
-
-        const steps = Math.round((value - min) / step);
-        return min + steps * step;
-    },
     [SettingCategory.RANGE]: <TSetting extends PossibleSettingsForCategory<SettingCategory.RANGE>>(
         value: SettingTypes[TSetting],
         availableValues: AvailableValuesType<TSetting>,
     ) => {
         if (value === null) {
-            return availableValues;
+            return [availableValues[0], availableValues[1]];
         }
 
         const [min, max] = availableValues;
 
-        if (value[0] < min) {
-            value[0] = min;
+        const newValue: SettingTypes[TSetting] = [Math.max(min, value[0]), Math.min(max, value[1])];
+        return newValue;
+    },
+    [SettingCategory.XYZ_NUMBER]: <TSetting extends PossibleSettingsForCategory<SettingCategory.XYZ_NUMBER>>(
+        value: SettingTypes[TSetting],
+        availableValues: AvailableValuesType<TSetting>,
+    ) => {
+        if (value === null) {
+            return [availableValues[0][0], availableValues[1][0], availableValues[2][0]];
         }
 
-        if (value[1] > max) {
-            value[1] = max;
+        const [xRange, yRange, zRange] = availableValues;
+
+        const newValue: SettingTypes[TSetting] = [
+            Math.max(xRange[0], Math.min(xRange[1], value[0])),
+            Math.max(yRange[0], Math.min(yRange[1], value[1])),
+            Math.max(zRange[0], Math.min(zRange[1], value[2])),
+        ];
+        return newValue;
+    },
+    [SettingCategory.XYZ_RANGE]: <TSetting extends PossibleSettingsForCategory<SettingCategory.XYZ_RANGE>>(
+        value: SettingTypes[TSetting],
+        availableValues: AvailableValuesType<TSetting>,
+    ) => {
+        if (value === null) {
+            return [
+                [availableValues[0][0], availableValues[0][1]],
+                [availableValues[1][0], availableValues[1][1]],
+                [availableValues[2][0], availableValues[2][1]],
+            ];
         }
 
-        return value;
+        const [xRange, yRange, zRange] = availableValues;
+
+        const newValue: SettingTypes[TSetting] = [
+            [Math.max(xRange[0], value[0][0]), Math.min(xRange[1], value[0][1])],
+            [Math.max(yRange[0], value[1][0]), Math.min(yRange[1], value[1][1])],
+            [Math.max(zRange[0], value[2][0]), Math.min(zRange[1], value[2][1])],
+        ];
+        return newValue;
     },
     [SettingCategory.STATIC]: (value) => value,
     [SettingCategory.BOOLEAN]: (value) => value,
 };
+
+type T = AvailableValuesType<Setting.GRID_LAYER_RANGE>;
 
 export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
     [SettingCategory.SINGLE_SELECT]: (value, availableValues) => {
@@ -265,19 +270,46 @@ export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
         const [min, max] = availableValues;
         return value >= min && value <= max;
     },
-    [SettingCategory.NUMBER_WITH_STEP]: (value, availableValues) => {
-        if (value === null) {
-            return false;
-        }
-        const [min, max, step] = availableValues;
-        return value >= min && value <= max && (value - min) % step === 0;
-    },
     [SettingCategory.RANGE]: (value, availableValues) => {
         if (value === null) {
             return false;
         }
         const [min, max] = availableValues;
-        return value[0] >= min && value[1] <= max;
+        return value[0] >= min && value[0] <= max && value[1] >= min && value[1] <= max;
+    },
+    [SettingCategory.XYZ_NUMBER]: (value, availableValues) => {
+        if (value === null) {
+            return false;
+        }
+        const [xRange, yRange, zRange] = availableValues;
+        return (
+            value[0] >= xRange[0] &&
+            value[0] <= xRange[1] &&
+            value[1] >= yRange[0] &&
+            value[1] <= yRange[1] &&
+            value[2] >= zRange[0] &&
+            value[2] <= zRange[1]
+        );
+    },
+    [SettingCategory.XYZ_RANGE]: (value, availableValues) => {
+        if (value === null) {
+            return false;
+        }
+        const [xRange, yRange, zRange] = availableValues;
+        return (
+            value[0][0] >= xRange[0] &&
+            value[0][0] <= xRange[1] &&
+            value[0][1] >= xRange[0] &&
+            value[0][1] <= xRange[1] &&
+            value[1][0] >= yRange[0] &&
+            value[1][0] <= yRange[1] &&
+            value[1][1] >= yRange[0] &&
+            value[1][1] <= yRange[1] &&
+            value[2][0] >= zRange[0] &&
+            value[2][0] <= zRange[1] &&
+            value[2][1] >= zRange[0] &&
+            value[2][1] <= zRange[1]
+        );
     },
     [SettingCategory.STATIC]: () => true,
     [SettingCategory.BOOLEAN]: () => true,
@@ -306,16 +338,6 @@ export const settingCategoryAvailableValuesIntersectionReducerMap: SettingCatego
             isValid: (availableValues) => availableValues.length > 0,
         },
         [SettingCategory.NUMBER]: {
-            reducer: (accumulator, currentAvailableValues) => {
-                const [min, max] = accumulator;
-                const [currentMin, currentMax] = currentAvailableValues;
-
-                return [Math.max(min, currentMin), Math.min(max, currentMax)];
-            },
-            startingValue: [-Number.MAX_VALUE, Number.MAX_VALUE],
-            isValid: (availableValues) => availableValues[0] < availableValues[1],
-        },
-        [SettingCategory.RANGE]: {
             reducer: (accumulator, currentAvailableValues) => {
                 const [min, max] = accumulator;
                 const [currentMin, currentMax] = currentAvailableValues;

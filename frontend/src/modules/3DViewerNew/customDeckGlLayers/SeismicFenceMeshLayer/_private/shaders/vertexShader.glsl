@@ -8,7 +8,7 @@ export default `#version 300 es
 // Primitive attributes
 in vec3 positions;
 in vec3 normals;
-in vec3 colors;
+in vec4 colors;
 in vec2 texCoords;
 in vec3 pickingColors;
 
@@ -37,7 +37,7 @@ void main(void) {
 
   vTexCoord = texCoords;
   cameraPosition = project.cameraPosition;
-  vColor = vec4(colors * instanceColors.rgb, instanceColors.a);
+  vColor = colors;
 
   mat3 instanceModelMatrix = mat3(instanceModelMatrixCol0, instanceModelMatrixCol1, instanceModelMatrixCol2);
   vec3 pos = (instanceModelMatrix * positions) * simpleMesh.sizeScale + instanceTranslation;

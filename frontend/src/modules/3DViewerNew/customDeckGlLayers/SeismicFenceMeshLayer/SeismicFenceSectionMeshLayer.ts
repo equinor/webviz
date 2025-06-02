@@ -34,8 +34,9 @@ export type SeismicFenceSection = {
 export interface SeismicFenceSectionMeshLayerProps extends ExtendedLayerProps {
     id: string;
     data: SeismicFenceSection;
-    colorMapFunction: (value: number) => [number, number, number];
+    colorMapFunction: (value: number) => [number, number, number, number];
     hoverable?: boolean;
+    opacity?: number;
     zIncreaseDownwards?: boolean;
     isLoading?: boolean;
     loadingGeometry?: LoadingGeometry;
@@ -264,11 +265,11 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
         let colorIndex = 0;
         for (let i = 0; i < data.properties.length; i++) {
             const property = data.properties[i];
-            const [r, g, b] = colorMapFunction(property);
+            const [r, g, b, a] = colorMapFunction(property);
             this._colorsArray[colorIndex * 4 + 0] = r / 255;
             this._colorsArray[colorIndex * 4 + 1] = g / 255;
             this._colorsArray[colorIndex * 4 + 2] = b / 255;
-            this._colorsArray[colorIndex * 4 + 3] = 1;
+            this._colorsArray[colorIndex * 4 + 3] = a / 255;
 
             const [r2, g2, b2] = encodePropertyToColor(property, minProperty, maxProperty);
             this._pickingColorsArray[i * 3 + 0] = r2;
@@ -276,23 +277,6 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
             this._pickingColorsArray[i * 3 + 2] = b2;
             colorIndex++;
         }
-    }
-
-    private getProperty(vertexIndex: number): number {
-        const { numSamplesU, numSamplesV, properties, propertiesOffset } = this.props.data;
-
-        const v = Math.floor(vertexIndex / numSamplesU);
-        const u = vertexIndex % numSamplesU;
-
-        const columnMajorIndex = u * numSamplesV + v;
-
-        const globalIndex = columnMajorIndex - propertiesOffset;
-
-        if (globalIndex >= 0 && globalIndex < properties.length) {
-            return properties[globalIndex];
-        }
-
-        return 0;
     }
 
     getPickingInfo({ info }: GetPickingInfoParams): SeismicFenceMeshLayerPickingInfo {
@@ -322,7 +306,7 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
     }
 
     renderLayers() {
-        const { id, isLoading, zIncreaseDownwards, loadingGeometry } = this.props;
+        const { id, isLoading, zIncreaseDownwards, loadingGeometry, opacity } = this.props;
         const { geometry, meshCreated, colorsArrayCreated } = this.state;
 
         const origin = this.calcOrigin();
@@ -347,9 +331,10 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
                     mesh: geometry,
                     getPosition: origin,
                     getColor: [255, 255, 255, 255],
-                    material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
+                    material: { ambient: 0.9, diffuse: 0.1, shininess: 0, specularColor: [0, 0, 0] },
                     pickable: true,
                     _instanced: false,
+                    opacity,
                 }),
             );
         }

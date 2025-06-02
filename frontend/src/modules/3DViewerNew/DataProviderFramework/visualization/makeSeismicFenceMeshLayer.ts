@@ -9,8 +9,9 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-import type { RealizationSeismicDepthSliceStoredData } from "../customDataProviderImplementations/RealizationSeismicDepthProvider";
 import type { SeismicSliceData_trans } from "../utils/transformSeismicSlice";
+import type { RealizationSeismicSlicesStoredData } from "../customDataProviderImplementations/RealizationSeismicSlicesProvider";
+import type { SeismicCubeMeta_api } from "@api";
 
 export enum Plane {
     CROSSLINE = "CROSSLINE",
@@ -18,19 +19,12 @@ export enum Plane {
     DEPTH = "DEPTH",
 }
 
-function predictDepthSliceGeometry({
-    getSetting,
-    getStoredData,
-}: TransformerArgs<
-    [Setting.ATTRIBUTE, Setting.TIME_OR_INTERVAL, Setting.SEISMIC_DEPTH_SLICE],
-    SeismicSliceData_trans,
-    RealizationSeismicDepthSliceStoredData
->): Geometry | null {
-    const attribute = getSetting(Setting.ATTRIBUTE);
-    const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
-    const seismicDepthSliceNumber = getSetting(Setting.SEISMIC_DEPTH_SLICE);
-    const seismicCubeMeta = getStoredData("seismicCubeMeta");
-
+function predictDepthSliceGeometry(
+    seismicCubeMeta: SeismicCubeMeta_api[],
+    seismicDepthSliceNumber: number | null,
+    attribute: string,
+    timeOrInterval: string | null,
+): Geometry | null {
     if (!seismicCubeMeta || seismicDepthSliceNumber === null) {
         return null;
     }
@@ -88,19 +82,12 @@ function predictDepthSliceGeometry({
     return geometry;
 }
 
-function predictCrosslineGeometry({
-    getSetting,
-    getStoredData,
-}: TransformerArgs<
-    [Setting.ATTRIBUTE, Setting.TIME_OR_INTERVAL, Setting.SEISMIC_CROSSLINE],
-    SeismicSliceData_trans,
-    RealizationSeismicDepthSliceStoredData
->): Geometry | null {
-    const attribute = getSetting(Setting.ATTRIBUTE);
-    const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
-    const seismicCrosslineNumber = getSetting(Setting.SEISMIC_CROSSLINE);
-    const seismicCubeMeta = getStoredData("seismicCubeMeta");
-
+function predictCrosslineGeometry(
+    seismicCubeMeta: SeismicCubeMeta_api[],
+    seismicCrosslineNumber: number | null,
+    attribute: string,
+    timeOrInterval: string | null,
+): Geometry | null {
     if (!seismicCubeMeta || seismicCrosslineNumber === null) {
         return null;
     }
@@ -160,19 +147,12 @@ function predictCrosslineGeometry({
     return geometry;
 }
 
-function predictInlineGeometry({
-    getSetting,
-    getStoredData,
-}: TransformerArgs<
-    [Setting.ATTRIBUTE, Setting.TIME_OR_INTERVAL, Setting.SEISMIC_INLINE],
-    SeismicSliceData_trans,
-    RealizationSeismicDepthSliceStoredData
->): Geometry | null {
-    const attribute = getSetting(Setting.ATTRIBUTE);
-    const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
-    const seismicInlineNumber = getSetting(Setting.SEISMIC_INLINE);
-    const seismicCubeMeta = getStoredData("seismicCubeMeta");
-
+function predictInlineGeometry(
+    seismicCubeMeta: SeismicCubeMeta_api[],
+    seismicInlineNumber: number | null,
+    attribute: string,
+    timeOrInterval: string | null,
+): Geometry | null {
     if (!seismicCubeMeta || seismicInlineNumber === null) {
         return null;
     }
@@ -234,13 +214,19 @@ function predictInlineGeometry({
 
 export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
     return function makeSeismicFenceMeshLayer(
-        args: TransformerArgs<any, SeismicSliceData_trans, RealizationSeismicDepthSliceStoredData>,
+        args: TransformerArgs<any, SeismicSliceData_trans, RealizationSeismicSlicesStoredData>,
     ): Layer<any> | null {
-        const { id, name, getData, getSetting, isLoading } = args;
+        const { id, name, getData, getSetting, getStoredData, isLoading } = args;
         const data = getData();
         const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
+        const slices = getSetting(Setting.SEISMIC_SLICES);
+        const seismicCubeMeta = getStoredData("seismicCubeMeta");
+        const attribute = getSetting(Setting.ATTRIBUTE);
+        const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
+        const omitColor = getSetting(Setting.OMIT_COLOR);
+        const omitRange = getSetting(Setting.OMIT_RANGE);
 
-        if (!data) {
+        if (!data || !seismicCubeMeta) {
             return null;
         }
 
@@ -253,24 +239,14 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
 
         let predictedGeometry: Geometry | null = null;
 
-        if (plane === Plane.DEPTH) {
-            const seismicDepthSlice = getSetting(Setting.SEISMIC_DEPTH_SLICE);
-            if (seismicDepthSlice === null) {
-                return null;
-            }
-            bbox = [
-                [data.bbox_utm[0][0], data.bbox_utm[0][1], seismicDepthSlice],
-                [data.bbox_utm[3][0], data.bbox_utm[3][1], seismicDepthSlice],
-                [data.bbox_utm[1][0], data.bbox_utm[1][1], seismicDepthSlice],
-                [data.bbox_utm[2][0], data.bbox_utm[2][1], seismicDepthSlice],
-            ];
+        bbox = [
+            [data.bbox_utm[0][0], data.bbox_utm[0][1], slices[2] ?? 0],
+            [data.bbox_utm[3][0], data.bbox_utm[3][1], slices[2] ?? 0],
+            [data.bbox_utm[1][0], data.bbox_utm[1][1], slices[2] ?? 0],
+            [data.bbox_utm[2][0], data.bbox_utm[2][1], slices[2] ?? 0],
+        ];
 
-            predictedGeometry = predictDepthSliceGeometry(args);
-        } else if (plane === Plane.CROSSLINE) {
-            predictedGeometry = predictCrosslineGeometry(args);
-        } else if (plane === Plane.INLINE) {
-            predictedGeometry = predictInlineGeometry(args);
-        }
+        predictedGeometry = predictDepthSliceGeometry(seismicCubeMeta, slices[2] ?? null, attribute, timeOrInterval);
 
         return new SeismicFenceMeshLayer({
             id,
@@ -290,9 +266,14 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
                 valueMin: data.value_min,
                 valueMax: data.value_max,
                 midPoint: 0,
+                specialColor: {
+                    color: omitColor ?? "#000000",
+                    range: omitRange ?? [0, 0],
+                },
             }),
             zIncreaseDownwards: true,
             isLoading,
+            opacity: 0.5,
             loadingGeometry: predictedGeometry ?? undefined,
         });
     };
