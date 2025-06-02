@@ -1,5 +1,4 @@
 import { fromNumArray, type BBox } from "@lib/utils/bbox";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import type {
@@ -7,7 +6,6 @@ import type {
     RealizationSurfacesSettings,
     RealizationSurfacesStoredData,
 } from "../customDataProviderImplementations/RealizationSurfacesProvider";
-import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 /**
  * Build a bounding box for the intersection surface data.
@@ -17,7 +15,6 @@ import { createValidExtensionLength } from "../utils/extensionLengthUtils";
  */
 export function makeSurfacesBoundingBox({
     getData,
-    getSetting,
     getStoredData,
     isLoading,
 }: TransformerArgs<
@@ -28,10 +25,6 @@ export function makeSurfacesBoundingBox({
 >): BBox | null {
     const data = getData();
     const polylineActualSectionLengths = getStoredData("polylineWithSectionLengths")?.actualSectionLengths;
-    const extensionLength = createValidExtensionLength(
-        getSetting(Setting.INTERSECTION),
-        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
-    );
 
     if (!data || !polylineActualSectionLengths || isLoading) {
         return null;

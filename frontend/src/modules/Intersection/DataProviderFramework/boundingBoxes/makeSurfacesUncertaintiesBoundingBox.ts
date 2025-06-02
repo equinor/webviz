@@ -1,5 +1,4 @@
 import { fromNumArray, type BBox } from "@lib/utils/bbox";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import type {
@@ -7,7 +6,6 @@ import type {
     SurfacesPerRealizationValuesSettings,
     SurfacesPerRealizationValuesStoredData,
 } from "../customDataProviderImplementations/SurfacesPerRealizationValuesProvider";
-import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 /**
  * Build a bounding box for the intersection surfaces realizations uncertainty data.
@@ -17,7 +15,6 @@ import { createValidExtensionLength } from "../utils/extensionLengthUtils";
  */
 export function makeSurfacesUncertaintiesBoundingBox({
     getData,
-    getSetting,
     getStoredData,
     isLoading,
 }: TransformerArgs<
@@ -30,10 +27,6 @@ export function makeSurfacesUncertaintiesBoundingBox({
     const cumulatedHorizontalPolylineLengthArr = getStoredData(
         "requestedPolylineWithCumulatedLengths",
     )?.cumulatedHorizontalPolylineLengthArr;
-    const extensionLength = createValidExtensionLength(
-        getSetting(Setting.INTERSECTION),
-        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
-    );
 
     if (!data || !cumulatedHorizontalPolylineLengthArr || isLoading) {
         return null;
