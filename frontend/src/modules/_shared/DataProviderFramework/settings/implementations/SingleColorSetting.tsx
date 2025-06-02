@@ -93,14 +93,12 @@ export class SingleColorSetting implements CustomSettingImplementation<ValueType
             }
 
             function handleClick() {
-                if (props.value) {
-                    const hexValue =
-                        props.value.slice(0, 7) +
-                        Math.round(alpha * 255)
-                            .toString(16)
-                            .padStart(2, "0");
-                    props.onValueChange(hexValue);
-                }
+                const hexValue =
+                    color +
+                    Math.round(alpha * 255)
+                        .toString(16)
+                        .padStart(2, "0");
+                props.onValueChange(hexValue);
             }
 
             const internalValue =
@@ -112,7 +110,7 @@ export class SingleColorSetting implements CustomSettingImplementation<ValueType
             const hasChanges = !isEqual(internalValue, props.value);
 
             return (
-                <div className="single-color-setting flex flex-row gap-2">
+                <div className="flex flex-row gap-2">
                     <ColorSelect onChange={handleColorChange} value={color!} dense />
                     <div className={resolveClassNames("flex-1 min-w-16", { hidden: !withAlpha })}>
                         <Slider
