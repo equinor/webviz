@@ -4,9 +4,9 @@ import type { ContinuousParameter, DiscreteParameter, Parameter } from "@framewo
 import { EnsembleParameters, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { RealizationFilter } from "@framework/RealizationFilter";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
-import type { NumberRange, ParameterValueSelection } from "@framework/types/realizationFilterTypes";
+import type { ParameterValueSelection } from "@framework/types/realizationFilterTypes";
 import { IncludeExcludeFilter, RealizationFilterType } from "@framework/types/realizationFilterTypes";
-
+import type { NumberRange } from "@framework/utils/numberUtils";
 
 const FIRST_ENSEMBLE_REALIZATIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15];
 
