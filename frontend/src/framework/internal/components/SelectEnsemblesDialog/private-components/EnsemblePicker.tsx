@@ -17,8 +17,8 @@ import type { TableSelectOption } from "@lib/components/TableSelect";
 import { TableSelect } from "@lib/components/TableSelect";
 import { useValidState } from "@lib/hooks/useValidState";
 
+import { isSameEnsembleItem } from "../_utils";
 import type { BaseEnsembleItem, RegularEnsembleItem } from "../types";
-import { isSameEnsembleItem } from "../utils";
 
 import { UserAvatar } from "./userAvatar";
 

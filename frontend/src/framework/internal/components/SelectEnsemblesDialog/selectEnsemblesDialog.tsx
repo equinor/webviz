@@ -11,10 +11,10 @@ import type { ColorSet } from "@lib/utils/ColorSet";
 
 import { LoadingOverlay } from "../LoadingOverlay";
 
+import { isSameEnsembleItem } from "./_utils";
 import { EnsemblePicker } from "./private-components/EnsemblePicker";
 import { EnsembleTables } from "./private-components/EnsembleTables";
 import type { DeltaEnsembleItem, InternalDeltaEnsembleItem, RegularEnsembleItem } from "./types";
-import { isSameEnsembleItem } from "./utils";
 
 export type SelectEnsemblesDialogProps = {
     loadAndSetupEnsembles: (

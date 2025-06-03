@@ -5,8 +5,8 @@ import { v4 } from "uuid";
 
 import { IconButton } from "@lib/components/IconButton";
 
+import { isSameEnsembleItem } from "../_utils";
 import type { InternalDeltaEnsembleItem, RegularEnsembleItem } from "../types";
-import { isSameEnsembleItem } from "../utils";
 
 import { DeltaEnsembleRow } from "./DeltaEnsembleRow";
 import { RegularEnsembleRow } from "./RegularEnsembleRow";
