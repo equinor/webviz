@@ -4,6 +4,8 @@ import { debounce } from "lodash";
 
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
+import { useElementSize } from "@lib/hooks/useElementSize";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {
     CustomSettingImplementation,
@@ -87,6 +89,12 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
         return function InputNumberSetting(props: SettingComponentProps<ValueType, SettingCategory.NUMBER_WITH_STEP>) {
             const { onValueChange } = props;
 
+            const divRef = React.useRef<HTMLDivElement>(null);
+            const divSize = useElementSize(divRef);
+
+            const MIN_DIV_WIDTH = 150;
+            const inputVisible = divSize.width >= MIN_DIV_WIDTH;
+
             const min = isStatic ? (staticOptions.minMax.min ?? 0) : (props.availableValues?.[0] ?? 0);
             const max = isStatic ? (staticOptions.minMax.max ?? 0) : (props.availableValues?.[1] ?? 0);
             const step = isStatic ? (staticOptions.step ?? 1) : (props.availableValues?.[2] ?? 1);
@@ -142,8 +150,8 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
 
             const displayValue = !props.isOverridden ? localValue : (props.overriddenValue ?? min);
             return (
-                <div className="flex items-center gap-x-1">
-                    <div className="grow">
+                <div className="flex flex-row gap-2" ref={divRef}>
+                    <div className="flex-4">
                         <Slider
                             min={min}
                             max={max}
@@ -153,7 +161,7 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
                             step={step}
                         />
                     </div>
-                    <div className="w-1/5">
+                    <div className={resolveClassNames("flex-1 min-w-16", { hidden: !inputVisible })}>
                         <Input type="number" value={displayValue} min={min} max={max} onChange={handleInputChange} />
                     </div>
                 </div>
