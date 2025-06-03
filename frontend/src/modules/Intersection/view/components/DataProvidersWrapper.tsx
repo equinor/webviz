@@ -54,7 +54,11 @@ import "../../DataProviderFramework/customDataProviderImplementations/registerAl
 import { useWellboreCasingsQuery } from "../hooks/queryHooks";
 import { useCreateIntersectionReferenceSystem } from "../hooks/useIntersectionReferenceSystem";
 import { createBBoxForWellborePath } from "../utils/boundingBoxUtils";
-import { createBoundsForIntersectionView, DEFAULT_INTERSECTION_VIEW_BOUNDS } from "../utils/boundsUtils";
+import {
+    createBoundsForIntersectionReferenceSystem,
+    createBoundsForIntersectionView,
+    DEFAULT_INTERSECTION_VIEW_BOUNDS,
+} from "../utils/boundsUtils";
 import {
     createLayerItemsForIntersectionType,
     makeViewProvidersVisualizationLayerItems,
@@ -302,20 +306,28 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
 
     // Update focus bounds
     // - Get bounds for the layers to focus on, neglect wellpath and wellpicks
-    // - Wellpicks provider does not have a bounding box, thereby we can use the combined bounding box
+    // - If no layers are visible: focus on wellpath/reference system
+    let focusBoundsCandidate: Bounds | null = null;
     const focusBoundingBox = assemblerProduct.combinedBoundingBox;
     if (focusBoundingBox) {
-        const focusBoundsCandidate: Bounds = {
+        focusBoundsCandidate = {
             x: [focusBoundingBox.min.x, focusBoundingBox.max.x],
             y: [focusBoundingBox.min.y, focusBoundingBox.max.y],
         };
+    } else if (!focusBoundingBox && !isLoading && intersectionReferenceSystem) {
+        // Bounds are created from the intersection reference system if no layers are visible
+        focusBoundsCandidate = createBoundsForIntersectionReferenceSystem(intersectionReferenceSystem);
+    }
 
-        // Update focus bounds if they are valid, independent of the focus state
-        if (isValidBounds(focusBoundsCandidate) && !isEqual(focusBoundsCandidate, viewportFocusTarget.bounds)) {
-            setViewportFocusTarget((prev) => {
-                return { ...prev, bounds: focusBoundsCandidate };
-            });
-        }
+    // Update focus bounds if they are valid, independent of the focus state
+    if (
+        focusBoundsCandidate &&
+        isValidBounds(focusBoundsCandidate) &&
+        !isEqual(focusBoundsCandidate, viewportFocusTarget.bounds)
+    ) {
+        setViewportFocusTarget((prev) => {
+            return { ...prev, bounds: focusBoundsCandidate };
+        });
     }
 
     function handleOnViewportRefocused(): void {

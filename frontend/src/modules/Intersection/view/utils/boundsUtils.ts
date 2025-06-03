@@ -9,6 +9,27 @@ export const DEFAULT_INTERSECTION_VIEW_BOUNDS: Bounds = {
     y: [0.0, 1000.0],
 };
 
+export function createBoundsForIntersectionReferenceSystem(
+    intersectionReferenceSystem: IntersectionReferenceSystem,
+): Bounds {
+    const bounds = DEFAULT_INTERSECTION_VIEW_BOUNDS;
+
+    // The intersection uz-coordinate system correspond to the esv intersection internal xy-coordinate system.
+    // Create bound from intersectionReferenceSystem (i.e. the polyline)
+    const firstPoint = intersectionReferenceSystem.projectedPath[0];
+    const numPoints = intersectionReferenceSystem.projectedPath.length;
+    const lastPoint = intersectionReferenceSystem.projectedPath[numPoints - 1];
+    const uMax = Math.max(firstPoint[0], lastPoint[0], 500.0);
+    const uMin = Math.min(firstPoint[0], lastPoint[0], -500.0);
+    const zMax = Math.max(firstPoint[1], lastPoint[1]);
+    const zMin = Math.min(firstPoint[1], lastPoint[1]);
+
+    // Set the (x,y)-bounds of esv intersection with uz-coordinates
+    bounds.x = [uMin, uMax];
+    bounds.y = [zMin, zMax];
+
+    return bounds;
+}
 /**
  * Create data bounds for the intersection view based on the provided bounding box or intersection reference system.
  */
@@ -26,21 +47,7 @@ export function createBoundsForIntersectionView(
     }
 
     if (intersectionReferenceSystem) {
-        // The intersection uz-coordinate system correspond to the esv intersection internal xy-coordinate system.
-        // Create bound from intersectionReferenceSystem (i.e. the polyline)
-        const firstPoint = intersectionReferenceSystem.projectedPath[0];
-        const numPoints = intersectionReferenceSystem.projectedPath.length;
-        const lastPoint = intersectionReferenceSystem.projectedPath[numPoints - 1];
-        const uMax = Math.max(firstPoint[0], lastPoint[0], 500.0);
-        const uMin = Math.min(firstPoint[0], lastPoint[0], -500.0);
-        const zMax = Math.max(firstPoint[1], lastPoint[1]);
-        const zMin = Math.min(firstPoint[1], lastPoint[1]);
-
-        // Set the (x,y)-bounds of esv intersection with uz-coordinates
-        bounds.x = [uMin, uMax];
-        bounds.y = [zMin, zMax];
-
-        return bounds;
+        return createBoundsForIntersectionReferenceSystem(intersectionReferenceSystem);
     }
 
     if (prevBounds) {
