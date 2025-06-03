@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Check } from "@mui/icons-material";
-import _, { isEqual } from "lodash";
+import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
 import { Button } from "@lib/components/Button";
@@ -51,11 +51,14 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     }, [props.createdDeltaEnsembles]);
 
     const nextEnsembleColor = React.useMemo(() => {
-        const usedColors = _.map([...newlySelectedRegularEnsembles, ...deltaEnsembles], "color");
+        const usedColors = [...newlySelectedRegularEnsembles, ...deltaEnsembles].map((ens) => ens.color);
 
         for (let i = 0; i < props.colorSet.getColorArray().length; i++) {
             const candidateColor = props.colorSet.getColor(i);
-            if (!usedColors.includes(candidateColor)) return candidateColor;
+
+            if (!usedColors.includes(candidateColor)) {
+                return candidateColor;
+            }
         }
 
         // Default to an existing color (looping)
@@ -171,7 +174,6 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     function handleRemoveRegularEnsemble(removedItem: RegularEnsembleItem) {
         setNewlySelectedRegularEnsembles((prev) => prev.filter((i) => !isSameEnsembleItem(i, removedItem)));
 
-        // Validate delta ensembles
         removeEnsembleFromDeltaEnsembles(removedItem);
     }
 
@@ -183,7 +185,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     return { ...deltaEnsemble, comparisonEnsemble: null };
                 }
                 if (referenceEnsemble && isSameEnsembleItem(referenceEnsemble, removedEnsemble)) {
-                    return { ...deltaEnsemble, comparisonEnsemble: null };
+                    return { ...deltaEnsemble, referenceEnsemble: null };
                 }
                 return deltaEnsemble;
             });
@@ -227,9 +229,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                             onClick={handleClose}
                             color="danger"
                             disabled={
-                                isLoadingEnsembles ||
-                                areAnyDeltaEnsemblesInvalid() ||
-                                !(hasAnyRegularEnsembleChanged() || hasAnyDeltaEnsemblesChanged())
+                                isLoadingEnsembles || !(hasAnyRegularEnsembleChanged() || hasAnyDeltaEnsemblesChanged())
                             }
                         >
                             Discard changes

@@ -30,8 +30,9 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
 
         return props.deltaEnsembles.some((other) => {
             if (other.uuid === uuid) return false;
+
             return (
-                isSameEnsembleItem(other.comparisonEnsemble, comparisonEnsemble) ||
+                isSameEnsembleItem(other.comparisonEnsemble, comparisonEnsemble) &&
                 isSameEnsembleItem(other.referenceEnsemble, referenceEnsemble)
             );
         });
