@@ -9,7 +9,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { SettingComponent } from "../SettingManager/SettingManagerComponent";
+import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
 
 import type { SharedSetting } from "./SharedSetting";
 
@@ -57,7 +57,11 @@ export function SharedSettingComponent(props: SharedSettingComponentProps): Reac
                     hidden: !isExpanded,
                 })}
             >
-                <SettingComponent setting={props.sharedSetting.getWrappedSetting()} manager={manager} sharedSetting />
+                <SettingManagerComponent
+                    setting={props.sharedSetting.getWrappedSetting()}
+                    manager={manager}
+                    sharedSetting
+                />
             </div>
         </SortableListItem>
     );

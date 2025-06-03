@@ -63,7 +63,7 @@ export type TransformerArgs<
     name: string;
     isLoading: boolean;
     getInjectedData: () => TInjectedData;
-    getValueRange: () => [number, number] | null;
+    getValueRange: () => Readonly<[number, number]> | null;
 };
 
 export interface HoverVisualizationsFunction<TTarget extends VisualizationTarget> {
@@ -302,15 +302,16 @@ export class VisualizationAssembler<
                 accumulatedData = product.accumulatedData;
                 aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
                 hoverVisualizationFunctions.push(product.makeHoverVisualizationsFunction);
-                annotations.push(...product.annotations);
                 numLoadingDataProviders += product.numLoadingDataProviders;
                 maybeApplyBoundingBox(product.combinedBoundingBox);
 
                 if (child instanceof Group) {
-                    const group = this.makeGroup(child, product.children, annotations);
+                    const group = this.makeGroup(child, product.children, product.annotations);
 
                     children.push(group);
                     continue;
+                } else {
+                    annotations.push(...product.annotations);
                 }
 
                 children.push(...product.children);
@@ -319,6 +320,10 @@ export class VisualizationAssembler<
             if (child instanceof DataProvider) {
                 if (child.getStatus() === DataProviderStatus.LOADING) {
                     numLoadingDataProviders++;
+                }
+
+                if (child.getStatus() === DataProviderStatus.INVALID_SETTINGS) {
+                    continue;
                 }
 
                 if (child.getStatus() === DataProviderStatus.ERROR) {

@@ -68,7 +68,7 @@ export function Actions(props: ActionsProps): React.ReactNode {
 
     return (
         <Dropdown>
-            <MenuButton label="Add items">
+            <MenuButton label="Add items" disabled={!props.actionGroups.length}>
                 <Add fontSize="inherit" />
                 <span>Add</span>
                 <ArrowDropDown fontSize="inherit" />
