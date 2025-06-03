@@ -8,6 +8,9 @@ import type { MakeSettingTypesMap, Settings } from "../../settings/settingsDefin
 
 class DependencyLoadingError extends Error {}
 
+export const NO_UPDATE = Symbol("NO_UPDATE");
+export type NoUpdate = typeof NO_UPDATE;
+
 /*
  * Dependency class is used to represent a node in the dependency graph of a data provider settings context.
  * It can be compared to an atom in Jotai.
@@ -256,7 +259,7 @@ export class Dependency<
 
         this._abortController = new AbortController();
 
-        let newValue: Awaited<TReturnValue> | null = null;
+        let newValue: Awaited<TReturnValue> | null | NoUpdate = null;
         try {
             newValue = await this._updateFunc({
                 getLocalSetting: this.getLocalSetting,
@@ -282,6 +285,10 @@ export class Dependency<
 
         if (!this._isInitialized && this._numParentDependencies > 0) {
             return;
+        }
+
+        if (newValue === NO_UPDATE) {
+            newValue = this._cachedValue;
         }
 
         this.applyNewValue(newValue);

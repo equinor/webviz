@@ -16,16 +16,20 @@ export type SeismicFenceMeshLayerPickingInfo = {
     properties?: { name: string; value: number }[];
 } & PickingInfo;
 
+export type SeismicFenceMeshSectionWithLoadingGeometry = {
+    id: string;
+    section?: SeismicFenceSection;
+    loadingGeometry?: LoadingGeometry;
+};
+
 export interface SeismicFenceMeshLayerProps extends ExtendedLayerProps {
-    data: {
-        sections: SeismicFenceSection[];
-    };
+    id: string;
+    data: SeismicFenceMeshSectionWithLoadingGeometry[];
     colorMapFunction: (value: number) => [number, number, number, number];
     hoverable?: boolean;
     opacity?: number;
     zIncreaseDownwards?: boolean;
     isLoading?: boolean;
-    loadingGeometry?: LoadingGeometry;
 
     // Non public properties:
     reportBoundingBox?: React.Dispatch<ReportBoundingBoxAction>;
@@ -84,8 +88,11 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
 
         const zFactor = this.props.zIncreaseDownwards ? -1 : 1;
 
-        for (const section of this.props.data.sections) {
-            for (const point of section.boundingBox) {
+        for (const section of this.props.data) {
+            if (!section.section || !section.section.boundingBox) {
+                continue;
+            }
+            for (const point of section.section.boundingBox) {
                 xmin = Math.min(xmin, point[0]);
                 ymin = Math.min(ymin, point[1]);
                 zmin = Math.min(zmin, zFactor * point[2]);
@@ -99,19 +106,20 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     }
 
     renderLayers() {
-        const { isLoading, zIncreaseDownwards, loadingGeometry, data, opacity } = this.props;
+        const { isLoading, zIncreaseDownwards, data, opacity } = this.props;
 
         const layers: Layer<any>[] = [];
 
-        for (const [index, section] of data.sections.entries()) {
+        for (const section of data) {
             layers.push(
                 new SeismicFenceSectionMeshLayer({
-                    id: `${this.props.id}-section-${index}`,
-                    data: section,
+                    id: `${this.props.id}-section-${section.id}`,
+                    data: section.section,
                     colorMapFunction: this.props.colorMapFunction,
                     zIncreaseDownwards: zIncreaseDownwards,
                     isLoading: isLoading,
-                    loadingGeometry: loadingGeometry,
+                    loadingGeometry: section.loadingGeometry,
+
                     opacity,
                 }),
             );

@@ -15,7 +15,7 @@ export enum SettingCategory {
     MULTI_SELECT = "multiSelect",
     NUMBER = "number",
     RANGE = "range",
-    XYZ_NUMBER = "xyzNumber",
+    // XYZ_NUMBER = "xyzNumber",
     XYZ_RANGE = "xyzRange",
     BOOLEAN = "boolean",
     STATIC = "static",
@@ -60,7 +60,7 @@ export const settingCategories = {
     [Setting.POLYGONS_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.POLYLINES]: SettingCategory.MULTI_SELECT,
     [Setting.REALIZATION]: SettingCategory.SINGLE_SELECT,
-    [Setting.SEISMIC_SLICES]: SettingCategory.XYZ_NUMBER,
+    [Setting.SEISMIC_SLICES]: SettingCategory.STATIC,
     [Setting.SENSITIVITY]: SettingCategory.SINGLE_SELECT,
     [Setting.SHOW_GRID_LINES]: SettingCategory.BOOLEAN,
     [Setting.SMDA_WELLBORE_HEADERS]: SettingCategory.MULTI_SELECT,
@@ -87,7 +87,11 @@ export type SettingTypes = {
     [Setting.POLYGONS_NAME]: string | null;
     [Setting.POLYLINES]: { value: string; label: string }[] | null;
     [Setting.REALIZATION]: number | null;
-    [Setting.SEISMIC_SLICES]: [number, number, number] | null;
+    [Setting.SEISMIC_SLICES]: {
+        value: [number, number, number];
+        visible: [boolean, boolean, boolean];
+        applied: boolean;
+    } | null;
     [Setting.SENSITIVITY]: SensitivityNameCasePair | null;
     [Setting.SHOW_GRID_LINES]: boolean;
     [Setting.SMDA_WELLBORE_HEADERS]: WellboreHeader_api[] | null;
@@ -206,6 +210,7 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
         const newValue: SettingTypes[TSetting] = [Math.max(min, value[0]), Math.min(max, value[1])];
         return newValue;
     },
+    /*
     [SettingCategory.XYZ_NUMBER]: <TSetting extends PossibleSettingsForCategory<SettingCategory.XYZ_NUMBER>>(
         value: SettingTypes[TSetting],
         availableValues: AvailableValuesType<TSetting>,
@@ -223,6 +228,7 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
         ];
         return newValue;
     },
+    */
     [SettingCategory.XYZ_RANGE]: <TSetting extends PossibleSettingsForCategory<SettingCategory.XYZ_RANGE>>(
         value: SettingTypes[TSetting],
         availableValues: AvailableValuesType<TSetting>,
@@ -247,8 +253,6 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
     [SettingCategory.STATIC]: (value) => value,
     [SettingCategory.BOOLEAN]: (value) => value,
 };
-
-type T = AvailableValuesType<Setting.GRID_LAYER_RANGE>;
 
 export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
     [SettingCategory.SINGLE_SELECT]: (value, availableValues) => {
@@ -277,6 +281,7 @@ export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
         const [min, max] = availableValues;
         return value[0] >= min && value[0] <= max && value[1] >= min && value[1] <= max;
     },
+    /*
     [SettingCategory.XYZ_NUMBER]: (value, availableValues) => {
         if (value === null) {
             return false;
@@ -291,6 +296,7 @@ export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
             value[2] <= zRange[1]
         );
     },
+    */
     [SettingCategory.XYZ_RANGE]: (value, availableValues) => {
         if (value === null) {
             return false;

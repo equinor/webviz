@@ -1,8 +1,14 @@
 import React from "react";
 
+import { Check } from "@mui/icons-material";
+import { isEqual } from "lodash";
+
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorSelect } from "@lib/components/ColorSelect";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { Slider } from "@lib/components/Slider";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {
     CustomSettingImplementation,
@@ -10,11 +16,6 @@ import type {
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SettingCategory } from "../settingsDefinitions";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Check } from "@mui/icons-material";
-import { Slider } from "@lib/components/Slider";
-import { isEqual } from "lodash";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type ValueType = string | null;
 
@@ -110,8 +111,9 @@ export class SingleColorSetting implements CustomSettingImplementation<ValueType
             const hasChanges = !isEqual(internalValue, props.value);
 
             return (
-                <div className="flex flex-row gap-2">
+                <div className="flex flex-row gap-2 items-center">
                     <ColorSelect onChange={handleColorChange} value={color!} dense />
+                    <span>Opacity</span>
                     <div className={resolveClassNames("flex-1 min-w-16", { hidden: !withAlpha })}>
                         <Slider
                             min={0}
@@ -120,6 +122,7 @@ export class SingleColorSetting implements CustomSettingImplementation<ValueType
                             value={alpha}
                             onChange={(_, value) => handleAlphaChange(value as number)}
                             disabled={!props.value}
+                            valueLabelDisplay="auto"
                         />
                     </div>
                     <div className={resolveClassNames("min-w-16", { hidden: !withAlpha })}>

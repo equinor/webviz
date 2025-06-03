@@ -23,6 +23,7 @@ from .request_types import (
     VdsSliceRequest,
     VdsDirection,
 )
+from primary.services.service_exceptions import ServiceRequestError
 
 
 LOGGER = logging.getLogger(__name__)
@@ -60,16 +61,21 @@ class VdsAccess:
     @staticmethod
     async def _query_async(endpoint: str, request: VdsRequestedResource) -> httpx.Response:
         """Query the service"""
+        try:
+            response = await HTTPX_ASYNC_CLIENT_WRAPPER.client.post(
+                f"{config.VDS_HOST_ADDRESS}/{endpoint}",
+                headers={"Content-Type": "application/json"},
+                content=json.dumps(request.request_parameters()),
+                timeout=60,
+            )
 
-        response = await HTTPX_ASYNC_CLIENT_WRAPPER.client.post(
-            f"{config.VDS_HOST_ADDRESS}/{endpoint}",
-            headers={"Content-Type": "application/json"},
-            content=json.dumps(request.request_parameters()),
-            timeout=60,
-        )
+            if response.is_error:
+                raise ServiceRequestError(
+                    f"({str(response.status_code)})-{response.reason_phrase}-{response.text}", service=Service.VDS
+                )
 
-        if response.is_error:
-            raise RuntimeError(f"({str(response.status_code)})-{response.reason_phrase}-{response.text}")
+        except httpx.RequestError as e:
+            raise ServiceRequestError(e, service=Service.VDS) from e
 
         return response
 

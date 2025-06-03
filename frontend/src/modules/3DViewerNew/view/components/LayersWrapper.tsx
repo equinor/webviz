@@ -17,15 +17,13 @@ import {
     type AccumulatedData,
 } from "@modules/3DViewerNew/DataProviderFramework/accumulators/polylineIdsAccumulator";
 import { RealizationGridProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
+import { RealizationSeismicSlicesProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicSlicesProvider";
 import { CustomDataProviderType } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderTypes";
 import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
 import { makeDrilledWellTrajectoriesLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer";
 import { makeIntersectionLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeIntersectionGrid3dLayer";
 import { makeRealizationSurfaceLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeRealizationSurfaceLayer";
-import {
-    makeSeismicFenceMeshLayerFunction,
-    Plane,
-} from "@modules/3DViewerNew/DataProviderFramework/visualization/makeSeismicFenceMeshLayer";
+import { makeSeismicFenceMeshLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeSeismicFenceMeshLayer";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
@@ -57,7 +55,6 @@ import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSub
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
 import { InteractionWrapper } from "./InteractionWrapper";
-import { RealizationSeismicSlicesProvider } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderImplementations/RealizationSeismicSlicesProvider";
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
     VisualizationTarget.DECK_GL,
@@ -122,7 +119,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     CustomDataProviderType.REALIZATION_SEISMIC_SLICES,
     RealizationSeismicSlicesProvider,
     {
-        transformToVisualization: makeSeismicFenceMeshLayerFunction(Plane.DEPTH),
+        transformToVisualization: makeSeismicFenceMeshLayer,
         transformToAnnotations: makeColorScaleAnnotation,
     },
 );

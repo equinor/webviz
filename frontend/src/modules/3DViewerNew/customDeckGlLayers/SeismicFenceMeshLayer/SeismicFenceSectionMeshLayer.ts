@@ -16,6 +16,7 @@ import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
 import { PreviewLayer } from "../PreviewLayer/PreviewLayer";
 
 import { ExtendedSimpleMeshLayer } from "./_private/ExtendedSimpleMeshLayer";
+// eslint-disable-next-line import/default
 import MeshWorker from "./_private/webworker/makeMesh.worker?worker";
 import { type WebworkerParameters, type WebworkerResult } from "./_private/webworker/types";
 
@@ -105,7 +106,12 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
 
         const colorMapFunctionChanged = !isEqual(oldProps.colorMapFunction, props.colorMapFunction);
 
-        if (!meshRecomputationRequired && !colorMapFunctionChanged) {
+        if (
+            !meshRecomputationRequired &&
+            !colorMapFunctionChanged &&
+            this.state.meshCreated &&
+            this.state.colorsArrayCreated
+        ) {
             return;
         }
 
@@ -113,12 +119,12 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
             return;
         }
 
-        if (meshRecomputationRequired) {
+        if (meshRecomputationRequired || !this.state.meshCreated) {
             this.rebuildMesh();
             return;
         }
 
-        if (colorMapFunctionChanged) {
+        if (colorMapFunctionChanged || !this.state.colorsArrayCreated) {
             this.recolorMesh();
         }
     }
@@ -199,7 +205,6 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
             ]);
             this._verticesArray = result.verticesArray;
             this._indicesArray = result.indicesArray;
-            console.debug("Indices array:", this._indicesArray);
 
             this.maybeUpdateGeometry();
             this.recolorMesh();
@@ -335,6 +340,10 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
                     pickable: true,
                     _instanced: false,
                     opacity,
+                    parameters: {
+                        blend: true,
+                        // depthMask: false, // important for transparency
+                    },
                 }),
             );
         }

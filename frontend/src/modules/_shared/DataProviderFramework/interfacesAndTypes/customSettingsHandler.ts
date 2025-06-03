@@ -3,7 +3,7 @@ import type { QueryClient } from "@tanstack/query-core";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
-import type { Dependency } from "../delegates/_utils/Dependency";
+import type { Dependency, NoUpdate } from "../delegates/_utils/Dependency";
 import type { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
 import type { MakeSettingTypesMap, Settings } from "../settings/settingsDefinitions";
 
@@ -34,7 +34,7 @@ export interface UpdateFunc<
         getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
         getHelperDependency: GetHelperDependency<TSettings, TSettingTypes, TKey>;
         abortSignal: AbortSignal;
-    }): TReturnValue;
+    }): TReturnValue | NoUpdate;
 }
 
 export interface DefineBasicDependenciesArgs<
