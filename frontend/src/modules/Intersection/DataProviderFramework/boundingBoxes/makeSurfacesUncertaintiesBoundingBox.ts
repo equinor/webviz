@@ -32,7 +32,6 @@ export function makeSurfacesUncertaintiesBoundingBox({
         return null;
     }
 
-    // If no surfaces, return a bounding box with only the x-coordinates
     const numSurfaces = Object.keys(data).length;
     if (numSurfaces === 0) {
         return null;
@@ -43,11 +42,11 @@ export function makeSurfacesUncertaintiesBoundingBox({
     let maxX = -Number.MAX_VALUE;
     let minY = Number.MAX_VALUE;
     let maxY = -Number.MAX_VALUE;
-    for (const perRealizationValues of Object.values(data)) {
+    for (const [surfaceName, perRealizationValues] of Object.entries(data)) {
         for (const realizationValues of perRealizationValues) {
             if (realizationValues.sampled_values.length !== cumulatedHorizontalPolylineLengthArr.length) {
                 throw new Error(
-                    "Length of requested polyline cumulated lengths does not match the length of received sampled values",
+                    `Length of requested polyline cumulated lengths (${cumulatedHorizontalPolylineLengthArr.length}) does not match the length of received sampled values (${realizationValues.sampled_values.length}) for surface ${surfaceName}, realization ${realizationValues.realization}.`,
                 );
             }
 
