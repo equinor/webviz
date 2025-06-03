@@ -13,7 +13,7 @@ import { EnsembleSet } from "../EnsembleSet";
 import { RegularEnsemble } from "../RegularEnsemble";
 import type { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
-import { tanstackCacheTime } from "./utils/debug";
+import { tanstackDebugTimeOverride } from "./utils/debug";
 
 type EnsembleApiData = {
     ensembleDetails: EnsembleDetails_api;
@@ -155,8 +155,8 @@ async function loadEnsembleApiDataMapFromBackend(
     ensembleIdents: RegularEnsembleIdent[],
 ): Promise<EnsembleIdentStringToEnsembleApiDataMap> {
     console.debug("loadEnsembleIdentStringToApiDataMapFromBackend", ensembleIdents);
-    const STALE_TIME = tanstackCacheTime(5 * 60 * 1000);
-    const CACHE_TIME = tanstackCacheTime(5 * 60 * 1000);
+    const STALE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
+    const CACHE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
 
     const ensembleDetailsPromiseArray: Promise<EnsembleDetails_api>[] = [];
     const parametersPromiseArray: Promise<EnsembleParameter_api[]>[] = [];

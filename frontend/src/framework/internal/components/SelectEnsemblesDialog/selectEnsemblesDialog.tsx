@@ -8,7 +8,7 @@ import { v4 } from "uuid";
 import type { CaseInfo_api } from "@api";
 import { getCasesOptions, getEnsemblesOptions, getFieldsOptions } from "@api";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
-import { tanstackCacheTime } from "@framework/internal/utils/debug";
+import { tanstackDebugTimeOverride } from "@framework/internal/utils/debug";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorSelect } from "@lib/components/ColorSelect";
@@ -32,8 +32,8 @@ import { UserAvatar } from "./private-components/userAvatar";
 
 const CASE_UUID_ENSEMBLE_NAME_SEPARATOR = "~@@~";
 
-const STALE_TIME = tanstackCacheTime(0);
-const CACHE_TIME = tanstackCacheTime(5 * 60 * 1000);
+const STALE_TIME = tanstackDebugTimeOverride(0);
+const CACHE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
 
 // Base item for ensemble data
 export type BaseEnsembleItem = {

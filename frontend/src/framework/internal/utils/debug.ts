@@ -17,7 +17,7 @@ export function debugFlagIsEnabled(flag: string) {
  * @param time time (ms) that the cache is valid for
  * @returns the given time, or 0 if the debug flag is enabled
  */
-export function tanstackCacheTime(time: number) {
+export function tanstackDebugTimeOverride(time: number) {
     if (debugFlagIsEnabled("disable-tanstack-cache")) return 0;
     return time;
 }
