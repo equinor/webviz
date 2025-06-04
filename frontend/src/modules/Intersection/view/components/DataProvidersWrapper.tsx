@@ -1,8 +1,6 @@
 import React from "react";
 
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { isEqual } from "lodash";
-
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { IntersectionType } from "@framework/types/intersection";
@@ -49,6 +47,7 @@ import { createWellborePicksLayerItemsMaker } from "@modules/Intersection/DataPr
 import { makeEsvViewDataCollection } from "@modules/Intersection/DataProviderFramework/visualization/makeEsvViewDataCollection";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 import type { PreferredViewLayout } from "@modules/Intersection/typesAndEnums";
+import { isEqual } from "lodash";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 import { useWellboreCasingsQuery } from "../hooks/queryHooks";
@@ -217,11 +216,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     );
 
     // If layers are loading, they are not placed in children array for the view
-    const numberOfProvidersToVisualize = !view
-        ? 0
-        : view.numLoadingDataProviders > 0
-          ? view.numLoadingDataProviders
-          : view.children.length;
+    const numberOfProvidersToVisualize = (view?.numLoadingDataProviders ?? 0) + (view?.children.length ?? 0);
     if (numberOfProvidersToVisualize !== prevNumberOfProviders) {
         // Request refocus if no providers were visualized before, or if no providers are visualized now
         if (
