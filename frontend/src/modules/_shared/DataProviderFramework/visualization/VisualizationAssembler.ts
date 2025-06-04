@@ -312,7 +312,7 @@ export class VisualizationAssembler<
                 maybeApplyBoundingBox(product.combinedBoundingBox);
 
                 if (child instanceof Group) {
-                    const group = this.makeGroup(child, product.children, product.annotations);
+                    const group = this.makeGroup(child, product);
 
                     children.push(group);
                     continue;
@@ -389,11 +389,7 @@ export class VisualizationAssembler<
         TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     >(
         group: Group<TSettings>,
-        children: (
-            | VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>
-            | DataProviderVisualization<TTarget>
-        )[],
-        annotations: Annotation[],
+        product: VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData, GroupType>,
     ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
         const func = this._groupCustomPropsCollectors.get(group.getGroupType());
 
@@ -403,13 +399,13 @@ export class VisualizationAssembler<
             color: group.getGroupDelegate().getColor(),
             name: group.getItemDelegate().getName(),
             groupType: group.getGroupType(),
-            children,
-            annotations,
-            aggregatedErrorMessages: [],
-            combinedBoundingBox: null,
-            numLoadingDataProviders: 0,
-            accumulatedData: {} as TAccumulatedData,
-            makeHoverVisualizationsFunction: () => [],
+            children: product.children,
+            annotations: product.annotations,
+            aggregatedErrorMessages: product.aggregatedErrorMessages,
+            combinedBoundingBox: product.combinedBoundingBox,
+            numLoadingDataProviders: product.numLoadingDataProviders,
+            accumulatedData: product.accumulatedData,
+            makeHoverVisualizationsFunction: product.makeHoverVisualizationsFunction,
             customProps:
                 func?.({
                     id: group.getItemDelegate().getId(),
