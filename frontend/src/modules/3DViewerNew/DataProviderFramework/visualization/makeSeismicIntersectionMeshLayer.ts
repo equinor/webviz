@@ -37,9 +37,8 @@ export function makeSeismicIntersectionMeshLayer(
     }
 
     const fence: SeismicFence = {
-        traceXYPointsArray: new Float32Array(polyline.polylineUtmXy),
-        minDepth: fenceData.min_fence_depth,
-        maxDepth: fenceData.max_fence_depth,
+        traceXYZPointsArray: new Float32Array(polyline.polylineUtmXy),
+        vVector: [0, 0, fenceData.max_fence_depth - fenceData.min_fence_depth],
         numSamples: fenceData.num_samples_per_trace,
         properties: fenceData.fenceTracesFloat32Arr,
     };

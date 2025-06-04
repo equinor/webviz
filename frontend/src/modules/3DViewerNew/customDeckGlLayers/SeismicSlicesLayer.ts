@@ -64,25 +64,22 @@ export class SeismicSlicesLayer extends CompositeLayer<SeismicSlicesLayerProps> 
         const zSign = zIncreaseDownwards ? -1 : 1;
 
         for (const section of sections) {
-            if (!section.fence || !section.fence.traceXYPointsArray) {
+            if (!section.fence || !section.fence.traceXYZPointsArray) {
                 continue; // Skip sections without valid fence data
             }
-            const { traceXYPointsArray, minDepth, maxDepth } = section.fence;
+            const { traceXYZPointsArray } = section.fence;
 
-            for (let i = 0; i < traceXYPointsArray.length; i += 2) {
-                const x = traceXYPointsArray[i];
-                const y = traceXYPointsArray[i + 1];
+            for (let i = 0; i < traceXYZPointsArray.length; i += 2) {
+                const x = traceXYZPointsArray[i];
+                const y = traceXYZPointsArray[i + 1];
+                const z = zSign * traceXYZPointsArray[i + 2];
                 xmin = Math.min(xmin, x);
                 ymin = Math.min(ymin, y);
+                zmin = Math.min(zmin, z);
                 xmax = Math.max(xmax, x);
                 ymax = Math.max(ymax, y);
+                zmax = Math.max(zmax, z);
             }
-
-            const z1 = zSign * minDepth;
-            const z2 = zSign * maxDepth;
-
-            zmin = Math.min(zmin, z1, z2);
-            zmax = Math.max(zmax, z1, z2);
         }
 
         return [xmin, ymin, zmin, xmax, ymax, zmax];

@@ -196,12 +196,17 @@ function predictInlineGeometry(
     return geometry;
 }
 
-function interpolateTrace(start: [number, number], end: [number, number], numSamples: number): Float32Array {
-    const result = new Float32Array(numSamples * 2);
+function interpolateTrace(
+    start: [number, number, number],
+    end: [number, number, number],
+    numSamples: number,
+): Float32Array {
+    const result = new Float32Array(numSamples * 3);
     for (let i = 0; i < numSamples; i++) {
         const t = i / (numSamples - 1);
         result[i * 2] = start[0] + t * (end[0] - start[0]);
         result[i * 2 + 1] = start[1] + t * (end[1] - start[1]);
+        result[i * 2 + 2] = start[2] + t * (end[2] - start[2]);
     }
     return result;
 }
@@ -239,13 +244,12 @@ export function makeSeismicSlicesLayer(
             sections.push({
                 id: "inline-slice",
                 fence: {
-                    traceXYPointsArray: interpolateTrace(
-                        [data.inline.bbox_utm[0][0], data.inline.bbox_utm[0][1]],
-                        [data.inline.bbox_utm[1][0], data.inline.bbox_utm[1][1]],
+                    traceXYZPointsArray: interpolateTrace(
+                        [data.inline.bbox_utm[0][0], data.inline.bbox_utm[0][1], data.inline.u_min],
+                        [data.inline.bbox_utm[1][0], data.inline.bbox_utm[1][1], data.inline.u_min],
                         data.inline.u_num_samples,
                     ),
-                    minDepth: data.inline.u_min,
-                    maxDepth: data.inline.u_max,
+                    vVector: [0, 0, data.inline.u_max - data.inline.u_min],
                     numSamples: data.inline.v_num_samples,
                     properties: data.inline.dataFloat32Arr,
                 },
@@ -267,13 +271,12 @@ export function makeSeismicSlicesLayer(
             sections.push({
                 id: "crossline-slice",
                 fence: {
-                    traceXYPointsArray: interpolateTrace(
-                        [data.inline.bbox_utm[0][0], data.inline.bbox_utm[0][1]],
-                        [data.inline.bbox_utm[1][0], data.inline.bbox_utm[1][1]],
+                    traceXYZPointsArray: interpolateTrace(
+                        [data.inline.bbox_utm[0][0], data.inline.bbox_utm[0][1], data.crossline.u_min],
+                        [data.inline.bbox_utm[1][0], data.inline.bbox_utm[1][1], data.crossline.u_min],
                         data.crossline.u_num_samples,
                     ),
-                    minDepth: data.crossline.v_min,
-                    maxDepth: data.crossline.v_max,
+                    vVector: [0, 0, data.crossline.u_max - data.crossline.u_min],
                     numSamples: data.crossline.v_num_samples,
                     properties: data.crossline.dataFloat32Arr,
                 },
@@ -295,13 +298,12 @@ export function makeSeismicSlicesLayer(
             sections.push({
                 id: "depth-slice",
                 fence: {
-                    traceXYPointsArray: interpolateTrace(
-                        [data.depthSlice.bbox_utm[0][0], data.depthSlice.bbox_utm[0][1]],
-                        [data.depthSlice.bbox_utm[1][0], data.depthSlice.bbox_utm[1][1]],
+                    traceXYZPointsArray: interpolateTrace(
+                        [data.depthSlice.bbox_utm[0][0], data.depthSlice.bbox_utm[0][1], data.depthSlice.u_min],
+                        [data.depthSlice.bbox_utm[1][0], data.depthSlice.bbox_utm[1][1], data.depthSlice.u_min],
                         data.depthSlice.u_num_samples,
                     ),
-                    minDepth: data.depthSlice.u_min,
-                    maxDepth: data.depthSlice.u_max,
+                    vVector: [0, 0, data.depthSlice.u_max - data.depthSlice.u_min],
                     numSamples: data.depthSlice.v_num_samples,
                     properties: data.depthSlice.dataFloat32Arr,
                 },

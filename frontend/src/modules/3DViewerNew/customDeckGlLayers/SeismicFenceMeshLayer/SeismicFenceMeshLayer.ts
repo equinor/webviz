@@ -28,9 +28,8 @@ export type SeismicFenceMeshLayerPickingInfo = {
 export type SeismicFence = {
     numSamples: number;
     properties: Float32Array;
-    traceXYPointsArray: Float32Array;
-    minDepth: number;
-    maxDepth: number;
+    traceXYZPointsArray: Float32Array;
+    vVector: [number, number, number];
 };
 
 export interface SeismicFenceMeshLayerProps extends ExtendedLayerProps {
@@ -155,25 +154,27 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     }
 
     private calcBoundingBox(): BoundingBox3D {
-        const { traceXYPointsArray, minDepth, maxDepth } = this.props.data;
+        const { traceXYZPointsArray, vVector } = this.props.data;
         const zFactor = this.props.zIncreaseDownwards ? -1 : 1;
 
         let xmin = Number.POSITIVE_INFINITY;
         let ymin = Number.POSITIVE_INFINITY;
+        let zmin = Number.POSITIVE_INFINITY;
         let xmax = Number.NEGATIVE_INFINITY;
         let ymax = Number.NEGATIVE_INFINITY;
+        let zmax = Number.NEGATIVE_INFINITY;
 
-        for (let i = 0; i < traceXYPointsArray.length; i += 2) {
-            const x = traceXYPointsArray[i];
-            const y = traceXYPointsArray[i + 1];
+        for (let i = 0; i < traceXYZPointsArray.length; i += 2) {
+            const x = traceXYZPointsArray[i] + vVector[0];
+            const y = traceXYZPointsArray[i + 1] + vVector[1];
+            const z = (traceXYZPointsArray[i + 2] + vVector[2]) * zFactor;
             xmin = Math.min(xmin, x);
             ymin = Math.min(ymin, y);
+            zmin = Math.min(zmin, z);
             xmax = Math.max(xmax, x);
             ymax = Math.max(ymax, y);
+            zmax = Math.max(zmax, z);
         }
-
-        const zmin = zFactor * minDepth;
-        const zmax = zFactor * maxDepth;
 
         return [xmin, ymin, Math.min(zmin, zmax), xmax, ymax, Math.max(zmin, zmax)];
     }
@@ -181,7 +182,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     private initArrayBuffers() {
         const { data } = this.props;
 
-        const numSamplesU = data.traceXYPointsArray.length / 2;
+        const numSamplesU = data.traceXYZPointsArray.length / 3;
         const totalNumVertices = numSamplesU * data.numSamples;
         const totalNumIndices = (numSamplesU - 1) * (data.numSamples - 1) * 6;
         this._verticesArray = new Float32Array(totalNumVertices * 3);
@@ -221,13 +222,13 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         const { data, zIncreaseDownwards } = this.props;
         const zSign = zIncreaseDownwards ? -1 : 1;
 
-        if (data.traceXYPointsArray.length < 2) {
+        if (data.traceXYZPointsArray.length < 2) {
             throw new Error("traceXYPointsArray must contain at least two points.");
         }
 
-        const x = data.traceXYPointsArray[0];
-        const y = data.traceXYPointsArray[1];
-        const z = zSign * data.minDepth;
+        const x = data.traceXYZPointsArray[0];
+        const y = data.traceXYZPointsArray[1];
+        const z = zSign * data.traceXYZPointsArray[2];
 
         return [x, y, z];
     }
@@ -244,9 +245,8 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
 
         const params: WebWorkerParameters = {
             numSamples: data.numSamples,
-            minDepth: data.minDepth,
-            maxDepth: data.maxDepth,
-            traceXYPointsArray: data.traceXYPointsArray,
+            traceXYZPointsArray: data.traceXYZPointsArray,
+            vVector: data.vVector,
             verticesArray: this._verticesArray,
             indicesArray: this._indicesArray,
             zIncreasingDownwards: zIncreaseDownwards ?? false,

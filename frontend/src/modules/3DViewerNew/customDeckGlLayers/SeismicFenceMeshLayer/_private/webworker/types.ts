@@ -2,9 +2,8 @@ export type WebWorkerParameters = {
     verticesArray: Float32Array;
     indicesArray: Uint32Array;
     numSamples: number;
-    minDepth: number;
-    maxDepth: number;
-    traceXYPointsArray: Float32Array;
+    vVector: [number, number, number];
+    traceXYZPointsArray: Float32Array;
     zIncreasingDownwards: boolean;
 };
 
