@@ -52,14 +52,20 @@ function predictDepthSliceGeometry(
         vec3.create(Math.max(origin.x, rotatedMaxXY.x), Math.max(origin.y, rotatedMaxXY.y), zmax),
     );
 
+    const vecU = vec3.create(rotatedMaxX.x - origin.x, rotatedMaxX.y - origin.y, 0);
+    const vecV = vec3.create(rotatedMaxY.x - origin.x, rotatedMaxY.y - origin.y, 0);
+
+    const width = vec3.length(vecU);
+    const height = vec3.length(vecV);
+
     const geometry: Geometry = {
         shapes: [
             {
                 type: ShapeType.BOX,
                 centerPoint: vec3.create((origin.x + rotatedMaxXY.x) / 2, (origin.y + rotatedMaxXY.y) / 2, zmin),
                 dimensions: {
-                    width: Math.abs(rotatedMaxX.x - origin.x),
-                    height: Math.abs(rotatedMaxY.y - origin.y),
+                    width,
+                    height,
                     depth: 0,
                 },
                 normalizedEdgeVectors: {

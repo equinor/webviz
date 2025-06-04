@@ -1,17 +1,18 @@
 import React from "react";
 
+import { isEqual } from "lodash";
+
+import { Button } from "@lib/components/Button";
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
+import { useElementSize } from "@lib/hooks/useElementSize";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SettingCategory } from "../settingsDefinitions";
-import { isEqual } from "lodash";
-import { useElementSize } from "@lib/hooks/useElementSize";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Button } from "@lib/components/Button";
 
 type ValueType = [[number, number], [number, number], [number, number]] | null;
 type Category = SettingCategory.XYZ_RANGE;
@@ -96,7 +97,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
                                 <div className="w-1/5">
                                     <Input
                                         type="number"
-                                        value={props.value?.[index][0] ?? 0}
+                                        value={internalValue?.[index][0] ?? 0}
                                         onChange={(e) => handleInputChange(index, 0, parseInt(e.target.value))}
                                     />
                                 </div>
@@ -106,7 +107,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
                                         max={availableValues[index][1]}
                                         onChange={(_, value) => handleSliderChange(index, value as [number, number])}
                                         value={
-                                            props.value?.[index] ?? [
+                                            internalValue?.[index] ?? [
                                                 availableValues[index][0],
                                                 availableValues[index][1],
                                             ]
@@ -118,7 +119,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
                                 <div className="w-1/5">
                                     <Input
                                         type="number"
-                                        value={props.value?.[index][1] ?? 0}
+                                        value={internalValue?.[index][1] ?? 0}
                                         onChange={(e) => handleInputChange(index, 1, parseInt(e.target.value))}
                                     />
                                 </div>
