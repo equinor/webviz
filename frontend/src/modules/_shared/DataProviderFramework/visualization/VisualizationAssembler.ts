@@ -4,7 +4,7 @@ import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
 import * as bbox from "@lib/utils/bbox";
-import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
+import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 import type { HighlightItem } from "@modules/_shared/components/EsvIntersection/types";
 
@@ -410,13 +410,13 @@ export class VisualizationAssembler<
             combinedBoundingBox: product.combinedBoundingBox,
             numLoadingDataProviders: product.numLoadingDataProviders,
             accumulatedData: product.accumulatedData,
-            makeHoverVisualizationsFunction: product.makeHoverVisualizationsFunction,
+            hoverVisualizationFunctions: product.hoverVisualizationFunctions,
             customProps:
                 func?.({
                     id: group.getItemDelegate().getId(),
                     name: group.getItemDelegate().getName(),
                     getSetting: <TKey extends TSettingKey>(setting: TKey) =>
-                        group.getSharedSettingsDelegate()?.getWrappedSettings()[setting].getValue(),
+                        group.getSharedSettingsDelegate()?.getWrappedSettings()[setting].getValue() ?? null,
                 }) ?? ({} as TCustomGroupProps),
         };
     }

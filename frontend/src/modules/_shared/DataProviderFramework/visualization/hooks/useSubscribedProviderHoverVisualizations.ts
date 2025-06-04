@@ -30,7 +30,7 @@ type InternalAssemblerProviderHoverVisualizationFunctions<TTarget extends Visual
 };
 
 export function useSubscribedProviderHoverVisualizations<TTarget extends VisualizationTarget>(
-    visualizationAssemblerProduct: AssemblerProduct<TTarget, any, any>,
+    visualizationAssemblerProduct: AssemblerProduct<TTarget, any | never, any | never>,
     workbenchServices: WorkbenchServices,
 ): AssemblerProviderHoverVisualizations<TTarget>[] {
     const [visualizations, setVisualizations] = React.useState<InternalAssemblerProviderHoverVisualizations<TTarget>[]>(

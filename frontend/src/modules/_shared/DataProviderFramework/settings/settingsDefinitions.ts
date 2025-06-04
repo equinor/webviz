@@ -15,6 +15,7 @@ export enum SettingCategory {
     MULTI_SELECT = "multiSelect",
     NUMBER = "number",
     RANGE = "range",
+    NUMBER_WITH_STEP = "numberWithStep",
     // XYZ_NUMBER = "xyzNumber",
     XYZ_RANGE = "xyzRange",
     BOOLEAN = "boolean",
@@ -33,7 +34,6 @@ export enum Setting {
     OPACITY_PERCENT = "opacityPercent",
     POLYGONS_ATTRIBUTE = "polygonsAttribute",
     POLYGONS_NAME = "polygonsName",
-    POLYLINES = "polylines",
     REALIZATION = "realization",
     REALIZATIONS = "realizations",
     SAMPLE_RESOLUTION_IN_METERS = "sampleResolutionInMeters",
@@ -47,6 +47,8 @@ export enum Setting {
     SURFACE_NAMES = "surfaceNames",
     TIME_OR_INTERVAL = "timeOrInterval",
     WELLBORE_EXTENSION_LENGTH = "wellboreExtensionLength",
+    WELLBORE_PICKS = "wellborePicks",
+    WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
     OMIT_RANGE = "omitRange",
     OMIT_COLOR = "omitColor",
 }
@@ -61,9 +63,9 @@ export const settingCategories = {
     [Setting.GRID_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.INTERSECTION]: SettingCategory.SINGLE_SELECT,
     [Setting.OMIT_RANGE]: SettingCategory.RANGE,
+    [Setting.OPACITY_PERCENT]: SettingCategory.NUMBER_WITH_STEP,
     [Setting.POLYGONS_ATTRIBUTE]: SettingCategory.SINGLE_SELECT,
     [Setting.POLYGONS_NAME]: SettingCategory.SINGLE_SELECT,
-    [Setting.POLYLINES]: SettingCategory.MULTI_SELECT,
     [Setting.REALIZATION]: SettingCategory.SINGLE_SELECT,
     [Setting.REALIZATIONS]: SettingCategory.MULTI_SELECT,
     [Setting.SAMPLE_RESOLUTION_IN_METERS]: SettingCategory.NUMBER,
@@ -97,7 +99,6 @@ export type SettingTypes = {
     [Setting.OPACITY_PERCENT]: number | null;
     [Setting.POLYGONS_ATTRIBUTE]: string | null;
     [Setting.POLYGONS_NAME]: string | null;
-    [Setting.POLYLINES]: { value: string; label: string }[] | null;
     [Setting.REALIZATION]: number | null;
     [Setting.REALIZATIONS]: number[] | null;
     [Setting.SAMPLE_RESOLUTION_IN_METERS]: number | null;
@@ -215,6 +216,29 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
 
         return value;
     },
+    [SettingCategory.NUMBER_WITH_STEP]: <
+        TSetting extends PossibleSettingsForCategory<SettingCategory.NUMBER_WITH_STEP>,
+    >(
+        value: SettingTypes[TSetting],
+        availableValues: AvailableValuesType<TSetting>,
+    ) => {
+        if (value === null) {
+            return availableValues[0];
+        }
+
+        const [min, max, step] = availableValues;
+
+        if (value < min) {
+            return min;
+        }
+
+        if (value > max) {
+            return max;
+        }
+
+        const steps = Math.round((value - min) / step);
+        return min + steps * step;
+    },
     [SettingCategory.RANGE]: <TSetting extends PossibleSettingsForCategory<SettingCategory.RANGE>>(
         value: SettingTypes[TSetting],
         availableValues: AvailableValuesType<TSetting>,
@@ -291,6 +315,13 @@ export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
         }
         const [min, max] = availableValues;
         return value >= min && value <= max;
+    },
+    [SettingCategory.NUMBER_WITH_STEP]: (value, availableValues) => {
+        if (value === null) {
+            return false;
+        }
+        const [min, max, step] = availableValues;
+        return value >= min && value <= max && (value - min) % step === 0;
     },
     [SettingCategory.RANGE]: (value, availableValues) => {
         if (value === null) {

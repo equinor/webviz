@@ -1,7 +1,8 @@
+import { IntersectionType } from "@framework/types/intersection";
 import type { IntersectionRealizationGridSettings } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import type { PolylineIntersection_trans } from "@modules/_shared/utils/wellbore";
+import type { PolylineIntersection_trans } from "@modules/_shared/Intersection/gridIntersectionTransform";
 
 export type AccumulatedData = {
     polylineIds: string[];
@@ -17,7 +18,7 @@ export function accumulatePolylineIds(
         return accumulatedData;
     }
 
-    if (intersection.type !== "polyline") {
+    if (intersection.type !== IntersectionType.CUSTOM_POLYLINE) {
         return accumulatedData;
     }
 

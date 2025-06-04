@@ -27,7 +27,9 @@ export type MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory extends Set
           ? [[number, number, number], [number, number, number], [number, number, number]]*/
           TCategory extends SettingCategory.XYZ_RANGE
           ? [[number, number, number], [number, number, number], [number, number, number]]
-          : never;
+          : TCategory extends SettingCategory.NUMBER_WITH_STEP
+            ? [number, number, number]
+            : never;
 
 export type TupleIndices<T extends readonly any[]> = Extract<keyof T, `${number}`>;
 export type SettingsKeysFromTuple<TSettings extends Settings> = TSettings[TupleIndices<TSettings>];

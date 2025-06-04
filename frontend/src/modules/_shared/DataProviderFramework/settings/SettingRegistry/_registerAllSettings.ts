@@ -10,12 +10,13 @@ import { GridLayerRangeSetting } from "../implementations/GridLayerRangeSetting"
 import { Direction as GridLayerDirection, GridLayerSetting } from "../implementations/GridLayerSetting";
 import { InputNumberSetting } from "../implementations/InputNumberSetting";
 import { IntersectionSetting } from "../implementations/IntersectionSetting";
+import { RangeSetting } from "../implementations/RangeSetting";
 import { SeismicSliceSetting } from "../implementations/SeismicSliceSetting";
 import { SelectNumberSetting } from "../implementations/SelectNumberSetting";
 import { SelectStringSetting } from "../implementations/SelectStringSetting";
 import { SensitivitySetting } from "../implementations/SensitivitySetting";
-import { SliderNumberSetting } from "../implementations/SliderNumberSettig";
 import { SingleColorSetting } from "../implementations/SingleColorSetting";
+import { SliderNumberSetting } from "../implementations/SliderNumberSettig";
 import { StatisticFunctionSetting } from "../implementations/StatisticFunctionSetting";
 import { TimeOrIntervalSetting } from "../implementations/TimeOrIntervalSetting";
 import { Setting } from "../settingsDefinitions";
@@ -63,6 +64,5 @@ SettingRegistry.registerSetting(Setting.WELLBORE_PICK_IDENTIFIER, "Wellbore Pick
 SettingRegistry.registerSetting(Setting.WELLBORE_PICKS, "Wellbore Picks", DrilledWellborePicksSetting);
 SettingRegistry.registerSetting(Setting.OMIT_RANGE, "Omit Value Range", RangeSetting);
 SettingRegistry.registerSetting(Setting.OMIT_COLOR, "Color for omitted Values", SingleColorSetting, {
-});
     customConstructorParameters: [true],
-SettingRegistry.registerSetting(Setting.POLYLINES, "Polylines", SelectStringSetting);
+});
