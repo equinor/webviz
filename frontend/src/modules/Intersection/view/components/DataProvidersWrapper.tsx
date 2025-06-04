@@ -1,6 +1,8 @@
 import React from "react";
 
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { isEqual } from "lodash";
+
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { IntersectionType } from "@framework/types/intersection";
@@ -47,7 +49,6 @@ import { createWellborePicksLayerItemsMaker } from "@modules/Intersection/DataPr
 import { makeEsvViewDataCollection } from "@modules/Intersection/DataProviderFramework/visualization/makeEsvViewDataCollection";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 import type { PreferredViewLayout } from "@modules/Intersection/typesAndEnums";
-import { isEqual } from "lodash";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 import { useWellboreCasingsQuery } from "../hooks/queryHooks";
