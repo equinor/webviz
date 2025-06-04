@@ -15,9 +15,10 @@ export function useVisualizationAssemblerProduct<
     TTarget extends VisualizationTarget,
     TCustomGroupProps extends CustomGroupPropsMap,
     TAccumulatedData extends Record<string, any>,
+    TInjectedData extends Record<string, any>,
 >(
     dataProviderManager: DataProviderManager,
-    visualizationAssembler: VisualizationAssembler<TTarget, TCustomGroupProps, TAccumulatedData>,
+    visualizationAssembler: VisualizationAssembler<TTarget, TCustomGroupProps, TInjectedData, TAccumulatedData>,
 ): AssemblerProduct<TTarget, TCustomGroupProps, TAccumulatedData> {
     const latestRevision = React.useSyncExternalStore(
         dataProviderManager

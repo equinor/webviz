@@ -1,9 +1,6 @@
 import React from "react";
 
 import { type Layer } from "@deck.gl/core";
-import type { BoundingBox3D } from "@webviz/subsurface-viewer";
-import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
-
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
@@ -23,11 +20,13 @@ import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules
 import { makeDrilledWellTrajectoriesLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer";
 import { makeIntersectionLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeIntersectionGrid3dLayer";
 import { makeRealizationSurfaceLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeRealizationSurfaceLayer";
-import { makeSeismicFenceMeshLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeSeismicFenceMeshLayer";
+import { makeSeismicIntersectionMeshLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeSeismicIntersectionMeshLayer";
+import { makeSeismicSlicesLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeSeismicSlicesLayer";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
 import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
+import { IntersectionRealizationSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
 import { RealizationPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationPolygonsProvider";
 import { RealizationSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationSurfaceProvider";
 import { StatisticalSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/StatisticalSurfaceProvider";
@@ -51,6 +50,8 @@ import {
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
+import type { BoundingBox3D } from "@webviz/subsurface-viewer";
+import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
@@ -58,8 +59,8 @@ import { InteractionWrapper } from "./InteractionWrapper";
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
     VisualizationTarget.DECK_GL,
-    never,
-    never,
+    Record<string, never>,
+    Record<string, never>,
     AccumulatedData
 >();
 
@@ -119,17 +120,31 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     CustomDataProviderType.REALIZATION_SEISMIC_SLICES,
     RealizationSeismicSlicesProvider,
     {
-        transformToVisualization: makeSeismicFenceMeshLayer,
+        transformToVisualization: makeSeismicSlicesLayer,
         transformToAnnotations: makeColorScaleAnnotation,
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
-    DataProviderType.INTERSECTION_REALIZATION_GRID,
+    DataProviderType.INTERSECTION_WITH_WELLBORE_EXTENSION_REALIZATION_GRID,
     IntersectionRealizationGridProvider,
     {
         transformToVisualization: makeIntersectionLayer,
         transformToAnnotations: makeColorScaleAnnotation,
         reduceAccumulatedData: accumulatePolylineIds,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    DataProviderType.INTERSECTION_REALIZATION_OBSERVED_SEISMIC,
+    IntersectionRealizationSeismicProvider,
+    {
+        transformToVisualization: makeSeismicIntersectionMeshLayer,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    DataProviderType.INTERSECTION_REALIZATION_SIMULATED_SEISMIC,
+    IntersectionRealizationSeismicProvider,
+    {
+        transformToVisualization: makeSeismicIntersectionMeshLayer,
     },
 );
 
@@ -143,7 +158,7 @@ export type LayersWrapperProps = {
     workbenchServices: WorkbenchServices;
 };
 
-export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
+export function DataProvidersWrapper(props: LayersWrapperProps): React.ReactNode {
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<bbox.BBox | null>(null);
     const statusWriter = useViewStatusWriter(props.viewContext);
 

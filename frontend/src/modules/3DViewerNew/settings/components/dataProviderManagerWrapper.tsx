@@ -1,7 +1,7 @@
 import type React from "react";
 
 import { Icon } from "@equinor/eds-core-react";
-import { color_palette, fault, grid_layer, settings, surface_layer, wellbore } from "@equinor/eds-icons";
+import { color_palette, fault, grid_layer, settings, surface_layer, timeline, wellbore } from "@equinor/eds-icons";
 import { Dropdown } from "@mui/base";
 import {
     Check,
@@ -122,11 +122,30 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                     ),
                 );
                 return;
+            case "realization-simulated-seismic":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        DataProviderType.INTERSECTION_REALIZATION_SIMULATED_SEISMIC,
+                        props.dataProviderManager,
+                        "Realization Simulated Seismic",
+                    ),
+                );
+                return;
+            case "realization-observed-seismic":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        DataProviderType.INTERSECTION_REALIZATION_OBSERVED_SEISMIC,
+                        props.dataProviderManager,
+                        "Realization Observed Seismic",
+                    ),
+                );
+                return;
             case "intersection-realization-grid":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
-                        DataProviderType.INTERSECTION_REALIZATION_GRID,
+                        DataProviderType.INTERSECTION_WITH_WELLBORE_EXTENSION_REALIZATION_GRID,
                         props.dataProviderManager,
+                        "Realization Grid",
                     ),
                 );
                 return;
@@ -344,14 +363,19 @@ const ACTIONS: ActionGroup[] = [
                 label: "Seismic",
                 children: [
                     {
-                        label: "Synthetic",
-                        children: [
-                            {
-                                identifier: "realization-seismic-slices",
-                                icon: <Icon data={surface_layer} fontSize="small" />,
-                                label: "Realization Seismic Slices",
-                            },
-                        ],
+                        identifier: "realization-seismic-slices",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        label: "Realization Seismic Slices",
+                    },
+                    {
+                        identifier: "realization-simulated-seismic",
+                        icon: <Icon data={timeline} fontSize="small" />,
+                        label: "Realization Simulated Seismic",
+                    },
+                    {
+                        identifier: "realization-observed-seismic",
+                        icon: <Icon data={timeline} fontSize="small" />,
+                        label: "Realization Observed Seismic",
                     },
                 ],
             },

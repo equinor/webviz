@@ -4,7 +4,7 @@ import type { ModuleViewProps } from "@framework/Module";
 
 import type { Interfaces } from "../interfaces";
 
-import { LayersWrapper } from "./components/LayersWrapper";
+import { DataProvidersWrapper } from "./components/DataProvidersWrapper";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const preferredViewLayout = props.viewContext.useSettingsToViewInterfaceValue("preferredViewLayout");
@@ -20,7 +20,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     }
 
     return (
-        <LayersWrapper
+        <DataProvidersWrapper
             fieldId={fieldId}
             layerManager={layerManager}
             preferredViewLayout={preferredViewLayout}

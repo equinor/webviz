@@ -69,7 +69,7 @@ export type TransformerArgs<
     TSettings extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = Record<string, never>,
 > = DataProviderInformationAccessors<TSettings, TData, TStoredData> & {
     id: string;
     name: string;
@@ -89,7 +89,7 @@ export type VisualizationGroupMetadata<TGroupType extends GroupType> = {
 export type VisualizationGroup<
     TTarget extends VisualizationTarget,
     TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
-    TAccumulatedData extends Record<string, any> = never,
+    TAccumulatedData extends Record<string, any> = Record<string, never>,
     TGroupType extends GroupType = GroupType,
 > = VisualizationGroupMetadata<TGroupType> & {
     children: (VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> | DataProviderVisualization<TTarget>)[];
@@ -127,8 +127,8 @@ export type DataProviderTransformers<
     TData,
     TTarget extends VisualizationTarget,
     TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = never,
-    TAccumulatedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = Record<string, never>,
+    TAccumulatedData extends Record<string, any> = Record<string, never>,
 > = {
     transformToVisualization: VisualizationTransformer<TSettings, TData, TTarget, TStoredData, TInjectedData>;
     transformToBoundingBox?: BoundingBoxTransformer<TSettings, TData, TStoredData, TInjectedData>;
@@ -170,7 +170,7 @@ export type VisualizationTransformer<
     TData,
     TTarget extends VisualizationTarget,
     TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = Record<string, never>,
 > = (
     args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>,
 ) => DataProviderVisualizationTargetTypes[TTarget] | null;
@@ -181,21 +181,21 @@ export type HoverVisualizationTransformer<
     TData,
     TTarget extends VisualizationTarget,
     TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = Record<string, never>,
 > = (args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>) => HoverVisualizationFunctions<TTarget>;
 
 export type BoundingBoxTransformer<
     TSettings extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = Record<string, never>,
 > = (args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>) => bbox.BBox | null;
 
 export type AnnotationsTransformer<
     TSettings extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = Record<string, never>,
 > = (args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>) => Annotation[];
 
 export type ReduceAccumulatedDataFunction<
@@ -203,7 +203,7 @@ export type ReduceAccumulatedDataFunction<
     TData,
     TAccumulatedData,
     TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = Record<string, never>,
 > = (
     accumulatedData: TAccumulatedData,
     args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>,
@@ -212,7 +212,7 @@ export type ReduceAccumulatedDataFunction<
 export type AssemblerProduct<
     TTarget extends VisualizationTarget,
     TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
-    TAccumulatedData extends Record<string, any> = never,
+    TAccumulatedData extends Record<string, any> = Record<string, never>,
 > = Omit<VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>, keyof VisualizationGroupMetadata<any>>;
 
 export type CustomGroupPropsMap = Partial<Record<GroupType, Record<string, any>>>;
@@ -220,8 +220,8 @@ export type CustomGroupPropsMap = Partial<Record<GroupType, Record<string, any>>
 export class VisualizationAssembler<
     TTarget extends VisualizationTarget,
     TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
-    TInjectedData extends Record<string, any> = never,
-    TAccumulatedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = Record<string, never>,
+    TAccumulatedData extends Record<string, any> = Record<string, never>,
 > {
     private _dataProviderTransformers: Map<
         string,
