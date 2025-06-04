@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import logging
 from typing import Annotated
 
@@ -172,6 +173,16 @@ async def get_bgtask() -> str:
     LOGGER.debug(f"bgtask() - done")
 
     return "Background tasks were run"
+
+
+@router.get("/longtask/{duration_s}")
+async def get_longtask(duration_s: int) -> str:
+    LOGGER.debug(f"get_longtask() {duration_s=} - start")
+
+    await asyncio.sleep(duration_s)
+    LOGGER.debug(f"get_longtask() {duration_s=} - done")
+
+    return f"Long task with {duration_s=} done at: {datetime.datetime.now()}"
 
 
 @router.get("/ri_surf")
