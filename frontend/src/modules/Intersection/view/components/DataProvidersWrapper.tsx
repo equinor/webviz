@@ -167,6 +167,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     const [prevLayersBounds, setPrevLayersBounds] = React.useState<Bounds | null>(null);
     const [previousIntersection, setPreviousIntersection] = React.useState<IntersectionSettingValue | null>(null);
     const [previousExtensionLength, setPreviousExtensionLength] = React.useState<number | null>(null);
+    const [prevNumberOfProviders, setPrevNumberOfProviders] = React.useState<number>(0);
 
     // Update of intersection/extension length should trigger refocus of viewport
     const [refocusRequestState, setRefocusRequestState] = React.useState<RefocusRequestState>(RefocusRequestState.NONE);
@@ -199,11 +200,9 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     statusWriter.setLoading(isLoading);
 
     // View of interest when supporting only one view
-    const viewCandidate = assemblerProduct.children.find((child) => child.itemType === VisualizationItemType.GROUP);
-    const view = viewCandidate ?? null;
-
+    const view = assemblerProduct.children.find((child) => child.itemType === VisualizationItemType.GROUP);
     const viewIntersection = view?.customProps.intersection ?? null;
-    const extensionLength = view?.customProps.extensionLength ?? null;
+    const viewExtensionLength = view?.customProps.extensionLength ?? null;
 
     // Additional visualization for wellbore
     const wellboreHeadersQuery = useDrilledWellboreHeadersQuery(fieldIdentifier ?? undefined);
@@ -217,14 +216,27 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         props.workbenchSession,
     );
 
+    const numberOfProvidersToVisualize = view?.children.length ?? 0;
+    if (numberOfProvidersToVisualize !== prevNumberOfProviders) {
+        // Request refocus if no providers were visualized before, or if no providers are visualized now
+        if (
+            (numberOfProvidersToVisualize > 0 && prevNumberOfProviders === 0) ||
+            (numberOfProvidersToVisualize === 0 && prevNumberOfProviders > 0)
+        ) {
+            setRefocusRequestState(RefocusRequestState.AWAITING_LOADING_DATA);
+            setViewportFocusTarget({ bounds: null, requestRefocus: false });
+        }
+        setPrevNumberOfProviders(numberOfProvidersToVisualize);
+    }
+
     // Update focus bounds if intersection or extension length changes
     if (!isEqual(viewIntersection, previousIntersection)) {
         setPreviousIntersection(viewIntersection);
         setRefocusRequestState(RefocusRequestState.AWAITING_LOADING_DATA);
         setViewportFocusTarget({ bounds: null, requestRefocus: false });
     }
-    if (!isEqual(extensionLength, previousExtensionLength)) {
-        setPreviousExtensionLength(extensionLength);
+    if (!isEqual(viewExtensionLength, previousExtensionLength)) {
+        setPreviousExtensionLength(viewExtensionLength);
         setRefocusRequestState(RefocusRequestState.AWAITING_LOADING_DATA);
         setViewportFocusTarget({ bounds: null, requestRefocus: false });
     }
@@ -236,11 +248,13 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         setViewportFocusTarget({ bounds: null, requestRefocus: false });
     }
 
+    const hasNoProvidersToVisualize = view && view.children.length === 0;
     const isOneOrMoreProvidersReady =
-        viewCandidate &&
-        viewCandidate.children.length > 0 &&
-        viewCandidate.numLoadingDataProviders < viewCandidate.children.length;
-    if (isOneOrMoreProvidersReady && refocusRequestState === RefocusRequestState.AWAITING_LOADING_DATA) {
+        view && view.children.length > 0 && view.numLoadingDataProviders < view.children.length;
+    if (
+        (hasNoProvidersToVisualize || isOneOrMoreProvidersReady) &&
+        refocusRequestState === RefocusRequestState.AWAITING_LOADING_DATA
+    ) {
         // Set bounds to null to ensure that bounds are recalculated/updated when requesting refocus
         setViewportFocusTarget({ bounds: null, requestRefocus: true });
         setRefocusRequestState(RefocusRequestState.NONE);
@@ -274,7 +288,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         if (viewIntersection.type === IntersectionType.WELLBORE) {
             wellborePathBoundingBox = createBBoxForWellborePath(
                 intersectionReferenceSystem.projectedPath,
-                extensionLength ?? 0,
+                viewExtensionLength ?? 0,
             );
         }
     }
