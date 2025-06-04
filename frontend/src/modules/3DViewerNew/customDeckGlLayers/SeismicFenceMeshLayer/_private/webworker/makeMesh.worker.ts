@@ -8,13 +8,12 @@ import type { WebWorkerParameters } from "./types";
  * - verticesArray: The Float32Array to be filled with vertex positions (x, y, z)
  * - indicesArray: The Uint32Array to be filled with triangle indices
  * - numSamples: The number of vertical samples (depth levels)
- * - minDepth: The minimum depth (z-value) of the mesh
- * - maxDepth: The maximum depth (z-value) of the mesh
+ * - vVector: A 3D vector representing the vertical direction
  * - traceXYPointsArray: A flat Float32Array of XY coordinate pairs representing the fence trace
  * - zIncreasingDownwards: Whether the Z axis increases downwards (true for depth-based systems)
  */
 function makeMesh(parameters: WebWorkerParameters) {
-    const { verticesArray, indicesArray, numSamples, minDepth, maxDepth, traceXYPointsArray, zIncreasingDownwards } =
+    const { verticesArray, indicesArray, numSamples, vVector, origin, traceXYPointsArray, zIncreasingDownwards } =
         parameters;
 
     const numTraces = traceXYPointsArray.length / 2;
@@ -25,13 +24,13 @@ function makeMesh(parameters: WebWorkerParameters) {
 
     const zSign = zIncreasingDownwards ? -1 : 1;
     const stepV = 1.0 / (numSamples - 1);
-    const depthRange = maxDepth - minDepth;
+    const vRange = vVector[2];
 
     let vertexIndex = 0;
     let indexIndex = 0;
 
     for (let v = 0; v < numSamples; v++) {
-        const depth = minDepth + v * stepV * depthRange * zSign;
+        const depth = origin[2] + v * stepV * vRange * zSign;
 
         for (let u = 0; u < numTraces; u++) {
             const x = traceXYPointsArray[u * 2];
