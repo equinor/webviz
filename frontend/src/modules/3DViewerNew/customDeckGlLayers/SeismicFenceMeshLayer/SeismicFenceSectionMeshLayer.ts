@@ -342,7 +342,6 @@ export class SeismicFenceSectionMeshLayer extends CompositeLayer<SeismicFenceSec
                     opacity,
                     parameters: {
                         blend: true,
-                        // depthMask: false, // important for transparency
                     },
                 }),
             );

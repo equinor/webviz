@@ -94,7 +94,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
                         {labels.map((label, index) => (
                             <div key={`setting-${index}`} className="flex items-center gap-x-1">
                                 <div className="w-8 flex flex-col items-start pl-1">{label}</div>
-                                <div className="w-1/5">
+                                <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
                                     <Input
                                         type="number"
                                         value={internalValue?.[index][0] ?? 0}
@@ -116,7 +116,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
                                         step={availableValues[index][2]}
                                     />
                                 </div>
-                                <div className="w-1/5">
+                                <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
                                     <Input
                                         type="number"
                                         value={internalValue?.[index][1] ?? 0}

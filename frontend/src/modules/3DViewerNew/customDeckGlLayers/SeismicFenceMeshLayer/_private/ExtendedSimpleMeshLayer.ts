@@ -1,8 +1,8 @@
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
-
-import vs from "./shaders/vertexShader.glsl";
-import fs from "./shaders/fragmentShader.glsl";
 import { Model } from "@luma.gl/engine";
+
+import fs from "./shaders/fragmentShader.glsl";
+import vs from "./shaders/vertexShader.glsl";
 export class ExtendedSimpleMeshLayer extends SimpleMeshLayer {
     static layerName = "ExtendedSimpleMeshLayer";
 
@@ -14,15 +14,6 @@ export class ExtendedSimpleMeshLayer extends SimpleMeshLayer {
         // in the fragment color output which we want to use for our own picking color.
 
         attributeManager.remove(["instancePickingColors"]);
-
-        attributeManager.add({
-            pickingColors: {
-                size: 3,
-                type: "uint8",
-                stepMode: "vertex",
-                defaultValue: [0, 0, 0],
-            },
-        });
     }
 
     protected getModel(mesh: any): Model {
