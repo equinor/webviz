@@ -156,7 +156,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
 // State for request of view refocus
 const enum RefocusRequestState {
     NONE = "None",
-    AWAITING_LOADING_DATA = "Await data loading",
+    AWAITING_PROVIDERS = "Awaiting providers",
 }
 
 export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.ReactNode {
@@ -223,7 +223,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
             (numberOfProvidersToVisualize > 0 && prevNumberOfProviders === 0) ||
             (numberOfProvidersToVisualize === 0 && prevNumberOfProviders > 0)
         ) {
-            setRefocusRequestState(RefocusRequestState.AWAITING_LOADING_DATA);
+            setRefocusRequestState(RefocusRequestState.AWAITING_PROVIDERS);
             setViewportFocusTarget({ bounds: null, requestRefocus: false });
         }
         setPrevNumberOfProviders(numberOfProvidersToVisualize);
@@ -232,19 +232,19 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     // Update focus bounds if intersection or extension length changes
     if (!isEqual(viewIntersection, previousIntersection)) {
         setPreviousIntersection(viewIntersection);
-        setRefocusRequestState(RefocusRequestState.AWAITING_LOADING_DATA);
+        setRefocusRequestState(RefocusRequestState.AWAITING_PROVIDERS);
         setViewportFocusTarget({ bounds: null, requestRefocus: false });
     }
     if (!isEqual(viewExtensionLength, previousExtensionLength)) {
         setPreviousExtensionLength(viewExtensionLength);
-        setRefocusRequestState(RefocusRequestState.AWAITING_LOADING_DATA);
+        setRefocusRequestState(RefocusRequestState.AWAITING_PROVIDERS);
         setViewportFocusTarget({ bounds: null, requestRefocus: false });
     }
 
     // Detect if intersection reference system has changed
     if (intersectionReferenceSystem && !isEqual(intersectionReferenceSystem, prevReferenceSystem)) {
         setPrevReferenceSystem(intersectionReferenceSystem);
-        setRefocusRequestState(RefocusRequestState.AWAITING_LOADING_DATA);
+        setRefocusRequestState(RefocusRequestState.AWAITING_PROVIDERS);
         setViewportFocusTarget({ bounds: null, requestRefocus: false });
     }
 
@@ -253,7 +253,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         view && view.children.length > 0 && view.numLoadingDataProviders < view.children.length;
     if (
         (hasNoProvidersToVisualize || isOneOrMoreProvidersReady) &&
-        refocusRequestState === RefocusRequestState.AWAITING_LOADING_DATA
+        refocusRequestState === RefocusRequestState.AWAITING_PROVIDERS
     ) {
         // Set bounds to null to ensure that bounds are recalculated/updated when requesting refocus
         setViewportFocusTarget({ bounds: null, requestRefocus: true });
