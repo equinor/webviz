@@ -216,7 +216,12 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         props.workbenchSession,
     );
 
-    const numberOfProvidersToVisualize = view?.children.length ?? 0;
+    // If layers are loading, they are not placed in children array for the view
+    const numberOfProvidersToVisualize = !view
+        ? 0
+        : view.numLoadingDataProviders > 0
+          ? view.numLoadingDataProviders
+          : view.children.length;
     if (numberOfProvidersToVisualize !== prevNumberOfProviders) {
         // Request refocus if no providers were visualized before, or if no providers are visualized now
         if (
