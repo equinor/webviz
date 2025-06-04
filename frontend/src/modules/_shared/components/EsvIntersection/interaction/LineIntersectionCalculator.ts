@@ -1,4 +1,3 @@
-
 import type { IntersectedItem, IntersectionCalculator } from "../types/types";
 import { IntersectionItemShape } from "../types/types";
 
@@ -73,13 +72,13 @@ export class LineIntersectionCalculator implements IntersectionCalculator {
     private makeBoundingBoxAndSubLines(): BoundingBox2D {
         let minX = Number.MAX_VALUE;
         let minY = Number.MAX_VALUE;
-        let maxX = Number.MIN_VALUE;
-        let maxY = Number.MIN_VALUE;
+        let maxX = -Number.MAX_VALUE;
+        let maxY = -Number.MAX_VALUE;
 
         let localMinX = Number.MAX_VALUE;
         let localMinY = Number.MAX_VALUE;
-        let localMaxX = Number.MIN_VALUE;
-        let localMaxY = Number.MIN_VALUE;
+        let localMaxX = -Number.MAX_VALUE;
+        let localMaxY = -Number.MAX_VALUE;
 
         let lastIndex = 0;
 
@@ -105,8 +104,8 @@ export class LineIntersectionCalculator implements IntersectionCalculator {
 
                 localMinX = Number.MAX_VALUE;
                 localMinY = Number.MAX_VALUE;
-                localMaxX = Number.MIN_VALUE;
-                localMaxY = Number.MIN_VALUE;
+                localMaxX = -Number.MAX_VALUE;
+                localMaxY = -Number.MAX_VALUE;
             }
         }
 

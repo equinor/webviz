@@ -4,7 +4,6 @@ import { Graphics } from "pixi.js";
 
 import type { ColorScale } from "@lib/utils/ColorScale";
 
-
 import { polygonFromVerticesAndIndices } from "../utils/geometry";
 
 export type FenceMeshSection = {
@@ -30,6 +29,7 @@ export type PolylineIntersectionData = {
     extensionLengthStart?: number;
     hideGridlines?: boolean;
     colorScale: ColorScale;
+    opacityPercent?: number;
     propertyName: string;
     propertyUnit: string;
 };
@@ -94,8 +94,8 @@ export class PolylineIntersectionLayer extends PixiLayer<PolylineIntersectionDat
             let color = "transparent";
             let alpha = 0.0;
             if (!Number.isNaN(propValue) && this.data) {
-                alpha = 1.0;
-                color = this.data?.colorScale.getColorForValue(propValue);
+                alpha = this.data.opacityPercent === undefined ? 1.0 : this.data.opacityPercent / 100.0;
+                color = this.data.colorScale.getColorForValue(propValue);
             }
 
             if (showGridlines) {

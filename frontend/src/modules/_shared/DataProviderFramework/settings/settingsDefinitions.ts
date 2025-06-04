@@ -1,6 +1,6 @@
 import { isEqual } from "lodash";
 
-import type { SurfaceStatisticFunction_api, WellboreHeader_api } from "@api";
+import type { SurfaceStatisticFunction_api, WellboreHeader_api, WellborePick_api } from "@api";
 import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ColorSet } from "@lib/utils/ColorSet";
@@ -30,10 +30,13 @@ export enum Setting {
     GRID_LAYER_K = "gridLayerK",
     GRID_NAME = "gridName",
     INTERSECTION = "intersection",
+    OPACITY_PERCENT = "opacityPercent",
     POLYGONS_ATTRIBUTE = "polygonsAttribute",
     POLYGONS_NAME = "polygonsName",
     POLYLINES = "polylines",
     REALIZATION = "realization",
+    REALIZATIONS = "realizations",
+    SAMPLE_RESOLUTION_IN_METERS = "sampleResolutionInMeters",
     SEISMIC_SLICES = "seismicSlices",
     SENSITIVITY = "sensitivity",
     SHOW_GRID_LINES = "showGridLines",
@@ -41,7 +44,9 @@ export enum Setting {
     SMDA_WELLBORE_PICKS = "smdaWellborePicks",
     STATISTIC_FUNCTION = "statisticFunction",
     SURFACE_NAME = "surfaceName",
+    SURFACE_NAMES = "surfaceNames",
     TIME_OR_INTERVAL = "timeOrInterval",
+    WELLBORE_EXTENSION_LENGTH = "wellboreExtensionLength",
     OMIT_RANGE = "omitRange",
     OMIT_COLOR = "omitColor",
 }
@@ -60,6 +65,8 @@ export const settingCategories = {
     [Setting.POLYGONS_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.POLYLINES]: SettingCategory.MULTI_SELECT,
     [Setting.REALIZATION]: SettingCategory.SINGLE_SELECT,
+    [Setting.REALIZATIONS]: SettingCategory.MULTI_SELECT,
+    [Setting.SAMPLE_RESOLUTION_IN_METERS]: SettingCategory.NUMBER,
     [Setting.SEISMIC_SLICES]: SettingCategory.STATIC,
     [Setting.SENSITIVITY]: SettingCategory.SINGLE_SELECT,
     [Setting.SHOW_GRID_LINES]: SettingCategory.BOOLEAN,
@@ -67,7 +74,11 @@ export const settingCategories = {
     [Setting.SMDA_WELLBORE_PICKS]: SettingCategory.MULTI_SELECT,
     [Setting.STATISTIC_FUNCTION]: SettingCategory.SINGLE_SELECT,
     [Setting.SURFACE_NAME]: SettingCategory.SINGLE_SELECT,
+    [Setting.SURFACE_NAMES]: SettingCategory.MULTI_SELECT,
     [Setting.TIME_OR_INTERVAL]: SettingCategory.SINGLE_SELECT,
+    [Setting.WELLBORE_EXTENSION_LENGTH]: SettingCategory.NUMBER,
+    [Setting.WELLBORE_PICKS]: SettingCategory.MULTI_SELECT,
+    [Setting.WELLBORE_PICK_IDENTIFIER]: SettingCategory.SINGLE_SELECT,
     [Setting.OMIT_COLOR]: SettingCategory.STATIC,
 } as const;
 
@@ -83,10 +94,13 @@ export type SettingTypes = {
     [Setting.GRID_NAME]: string | null;
     [Setting.INTERSECTION]: IntersectionSettingValue | null;
     [Setting.OMIT_RANGE]: [number, number] | null;
+    [Setting.OPACITY_PERCENT]: number | null;
     [Setting.POLYGONS_ATTRIBUTE]: string | null;
     [Setting.POLYGONS_NAME]: string | null;
     [Setting.POLYLINES]: { value: string; label: string }[] | null;
     [Setting.REALIZATION]: number | null;
+    [Setting.REALIZATIONS]: number[] | null;
+    [Setting.SAMPLE_RESOLUTION_IN_METERS]: number | null;
     [Setting.SEISMIC_SLICES]: {
         value: [number, number, number];
         visible: [boolean, boolean, boolean];
@@ -98,7 +112,11 @@ export type SettingTypes = {
     [Setting.SMDA_WELLBORE_PICKS]: string[] | null;
     [Setting.STATISTIC_FUNCTION]: SurfaceStatisticFunction_api;
     [Setting.SURFACE_NAME]: string | null;
+    [Setting.SURFACE_NAMES]: string[] | null;
     [Setting.TIME_OR_INTERVAL]: string | null;
+    [Setting.WELLBORE_EXTENSION_LENGTH]: number | null;
+    [Setting.WELLBORE_PICKS]: WellborePick_api[] | null;
+    [Setting.WELLBORE_PICK_IDENTIFIER]: string | null;
     [Setting.OMIT_COLOR]: string | null;
 };
 
