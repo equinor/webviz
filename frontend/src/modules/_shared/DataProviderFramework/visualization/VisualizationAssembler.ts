@@ -1,10 +1,11 @@
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
-import type { Layer as EsvLayer } from "@equinor/esv-intersection";
+import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
 import * as bbox from "@lib/utils/bbox";
-import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
+import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
+import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 
 import type { GroupDelegate } from "../delegates/GroupDelegate";
 import { DataProvider, DataProviderStatus } from "../framework/DataProvider/DataProvider";
@@ -36,9 +37,14 @@ export enum VisualizationTarget {
     // VIDEX = "videx",
 }
 
+export interface EsvLayerItemsMaker {
+    // Each layer has to be made inside EsvIntersection with the same pixiApplication, therefore the return type is LayerItem and not EsvLayer<any>
+    makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null) => LayerItem[];
+}
+
 export type DataProviderVisualizationTargetTypes = {
     [VisualizationTarget.DECK_GL]: DeckGlLayer<any>;
-    [VisualizationTarget.ESV]: EsvLayer<any>;
+    [VisualizationTarget.ESV]: EsvLayerItemsMaker;
 };
 
 export type DataProviderVisualization<
