@@ -5,9 +5,9 @@ import { degreesToRadians, ShapeType, type Geometry } from "@lib/utils/geometry"
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import * as vec3 from "@lib/utils/vec3";
 import {
-    SeismicFenceMeshLayer,
-    type SeismicFenceMeshSectionWithLoadingGeometry,
-} from "@modules/3DViewerNew/customDeckGlLayers/SeismicFenceMeshLayer/SeismicFenceMeshLayer";
+    SeismicSlicesLayer,
+    type SeismicFenceWithId,
+} from "@modules/3DViewerNew/customDeckGlLayers/SeismicSlicesLayer";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
@@ -196,6 +196,16 @@ function predictInlineGeometry(
     return geometry;
 }
 
+function interpolateTrace(start: [number, number], end: [number, number], numSamples: number): Float32Array {
+    const result = new Float32Array(numSamples * 2);
+    for (let i = 0; i < numSamples; i++) {
+        const t = i / (numSamples - 1);
+        result[i * 2] = start[0] + t * (end[0] - start[0]);
+        result[i * 2 + 1] = start[1] + t * (end[1] - start[1]);
+    }
+    return result;
+}
+
 export function makeSeismicSlicesLayer(
     args: TransformerArgs<
         RealizationSeismicSlicesSettings,
@@ -219,28 +229,25 @@ export function makeSeismicSlicesLayer(
 
     const previewOrLoading = !slicesSettings.applied || isLoading;
 
-    const predictedGeometries: Geometry[] = [];
-    const sections: SeismicFenceMeshSectionWithLoadingGeometry[] = [];
+    const sections: SeismicFenceWithId[] = [];
 
     // Inline slice
     if (slicesSettings.visible[0]) {
         const inlinePreviewGeometry = predictInlineGeometry(seismicCubeMeta, slicesSettings.value[0]);
 
         if (slices && data) {
-            const inlineBbox: number[][] = [
-                [data.inline.bbox_utm[0][0], data.inline.bbox_utm[0][1], data.inline.u_min],
-                [data.inline.bbox_utm[1][0], data.inline.bbox_utm[1][1], data.inline.u_min],
-                [data.inline.bbox_utm[0][0], data.inline.bbox_utm[0][1], data.inline.u_max],
-                [data.inline.bbox_utm[1][0], data.inline.bbox_utm[1][1], data.inline.u_max],
-            ];
             sections.push({
                 id: "inline-slice",
-                section: {
-                    boundingBox: inlineBbox,
+                fence: {
+                    traceXYPointsArray: interpolateTrace(
+                        [data.inline.bbox_utm[0][0], data.inline.bbox_utm[0][1]],
+                        [data.inline.bbox_utm[1][0], data.inline.bbox_utm[1][1]],
+                        data.inline.u_num_samples,
+                    ),
+                    minDepth: data.inline.u_min,
+                    maxDepth: data.inline.u_max,
+                    numSamples: data.inline.v_num_samples,
                     properties: data.inline.dataFloat32Arr,
-                    propertiesOffset: 0,
-                    numSamplesU: data.inline.u_num_samples,
-                    numSamplesV: data.inline.v_num_samples,
                 },
                 loadingGeometry: inlinePreviewGeometry ?? undefined,
             });
@@ -255,25 +262,20 @@ export function makeSeismicSlicesLayer(
     // Crossline slice
     if (slicesSettings.visible[1]) {
         const crosslinePreviewGeometry = predictCrosslineGeometry(seismicCubeMeta, slicesSettings.value[1]);
-        if (crosslinePreviewGeometry) {
-            predictedGeometries.push(crosslinePreviewGeometry);
-        }
 
         if (slices && data) {
-            const crosslineBbox: number[][] = [
-                [data.crossline.bbox_utm[0][0], data.crossline.bbox_utm[0][1], data.crossline.u_min],
-                [data.crossline.bbox_utm[1][0], data.crossline.bbox_utm[1][1], data.crossline.u_min],
-                [data.crossline.bbox_utm[0][0], data.crossline.bbox_utm[0][1], data.crossline.u_max],
-                [data.crossline.bbox_utm[1][0], data.crossline.bbox_utm[1][1], data.crossline.u_max],
-            ];
             sections.push({
                 id: "crossline-slice",
-                section: {
-                    boundingBox: crosslineBbox,
+                fence: {
+                    traceXYPointsArray: interpolateTrace(
+                        [data.inline.bbox_utm[0][0], data.inline.bbox_utm[0][1]],
+                        [data.inline.bbox_utm[1][0], data.inline.bbox_utm[1][1]],
+                        data.crossline.u_num_samples,
+                    ),
+                    minDepth: data.crossline.v_min,
+                    maxDepth: data.crossline.v_max,
+                    numSamples: data.crossline.v_num_samples,
                     properties: data.crossline.dataFloat32Arr,
-                    propertiesOffset: 0,
-                    numSamplesU: data.crossline.u_num_samples,
-                    numSamplesV: data.crossline.v_num_samples,
                 },
                 loadingGeometry: crosslinePreviewGeometry ?? undefined,
             });
@@ -288,25 +290,20 @@ export function makeSeismicSlicesLayer(
     // Depth slice
     if (slicesSettings.visible[2]) {
         const depthPreviewGeometry = predictDepthSliceGeometry(seismicCubeMeta, slicesSettings.value[2] ?? null);
-        if (depthPreviewGeometry) {
-            predictedGeometries.push(depthPreviewGeometry);
-        }
 
         if (slices && data) {
-            const depthBbox = [
-                [data.depthSlice.bbox_utm[0][0], data.depthSlice.bbox_utm[0][1], slices[2]],
-                [data.depthSlice.bbox_utm[3][0], data.depthSlice.bbox_utm[3][1], slices[2]],
-                [data.depthSlice.bbox_utm[1][0], data.depthSlice.bbox_utm[1][1], slices[2]],
-                [data.depthSlice.bbox_utm[2][0], data.depthSlice.bbox_utm[2][1], slices[2]],
-            ];
             sections.push({
                 id: "depth-slice",
-                section: {
-                    boundingBox: depthBbox,
+                fence: {
+                    traceXYPointsArray: interpolateTrace(
+                        [data.depthSlice.bbox_utm[0][0], data.depthSlice.bbox_utm[0][1]],
+                        [data.depthSlice.bbox_utm[1][0], data.depthSlice.bbox_utm[1][1]],
+                        data.depthSlice.u_num_samples,
+                    ),
+                    minDepth: data.depthSlice.u_min,
+                    maxDepth: data.depthSlice.u_max,
+                    numSamples: data.depthSlice.v_num_samples,
                     properties: data.depthSlice.dataFloat32Arr,
-                    propertiesOffset: 0,
-                    numSamplesU: data.depthSlice.u_num_samples,
-                    numSamplesV: data.depthSlice.v_num_samples,
                 },
                 loadingGeometry: depthPreviewGeometry ?? undefined,
             });
@@ -318,10 +315,10 @@ export function makeSeismicSlicesLayer(
         }
     }
 
-    return new SeismicFenceMeshLayer({
+    return new SeismicSlicesLayer({
         id,
         name,
-        data: sections,
+        sections,
         colorMapFunction: makeColorMapFunctionFromColorScale(colorScaleSpec, {
             valueMin: valueRange?.[0] ?? 0,
             valueMax: valueRange?.[1] ?? 0,

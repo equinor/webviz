@@ -1,8 +1,7 @@
 import type { Layer } from "@deck.gl/core";
-import * as vec3 from "@lib/utils/vec3";
 import {
     SeismicFenceMeshLayer,
-    type SeismicFenceMeshSectionWithLoadingGeometry,
+    type SeismicFence,
 } from "@modules/3DViewerNew/customDeckGlLayers/SeismicFenceMeshLayer/SeismicFenceMeshLayer";
 import type {
     IntersectionRealizationSeismicData,
@@ -37,49 +36,18 @@ export function makeSeismicIntersectionMeshLayer(
         );
     }
 
-    const sections: SeismicFenceMeshSectionWithLoadingGeometry[] = [];
-
-    let sampleIndex = 0;
-    for (let polylinePointIndex = 0; polylinePointIndex < polyline.polylineUtmXy.length - 1; polylinePointIndex += 2) {
-        const point = vec3.create(
-            polyline.polylineUtmXy[polylinePointIndex * 2],
-            polyline.polylineUtmXy[polylinePointIndex * 2 + 1],
-            fenceData.min_fence_depth,
-        );
-        const nextPoint = vec3.create(
-            polyline.polylineUtmXy[(polylinePointIndex + 1) * 2],
-            polyline.polylineUtmXy[(polylinePointIndex + 1) * 2 + 1],
-            fenceData.min_fence_depth,
-        );
-
-        const boundingBox = [
-            [point.x, point.y, fenceData.min_fence_depth],
-            [nextPoint.x, nextPoint.y, fenceData.min_fence_depth],
-            [point.x, point.y, fenceData.max_fence_depth],
-            [nextPoint.x, nextPoint.y, fenceData.max_fence_depth],
-        ];
-
-        sections.push({
-            id: `section-${polylinePointIndex}`,
-            section: {
-                boundingBox,
-                properties: fenceData.fenceTracesFloat32Arr.slice(
-                    sampleIndex,
-                    sampleIndex + fenceData.num_samples_per_trace * 2,
-                ),
-                propertiesOffset: 0,
-                numSamplesU: fenceData.num_samples_per_trace,
-                numSamplesV: 2,
-            },
-        });
-
-        sampleIndex += fenceData.num_samples_per_trace;
-    }
+    const fence: SeismicFence = {
+        traceXYPointsArray: new Float32Array(polyline.polylineUtmXy),
+        minDepth: fenceData.min_fence_depth,
+        maxDepth: fenceData.max_fence_depth,
+        numSamples: fenceData.num_samples_per_trace,
+        properties: fenceData.fenceTracesFloat32Arr,
+    };
 
     return new SeismicFenceMeshLayer({
         id,
         name,
-        data: sections,
+        data: fence,
         colorMapFunction: makeColorMapFunctionFromColorScale(colorScaleSpec, {
             valueMin: valueRange?.[0] ?? 0,
             valueMax: valueRange?.[1] ?? 0,

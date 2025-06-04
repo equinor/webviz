@@ -1,56 +1,61 @@
 import { expose } from "comlink";
 
-import type { WebworkerParameters } from "./types";
+import type { WebWorkerParameters } from "./types";
 
-/*
-Generates a mesh for a seismic fence.
-@param parameters The parameters for generating the mesh
-- offset: The offset of the mesh
-- verticesArray: The Float32Array for the vertices transferred from the main thread
-- indicesArray: The Uint32Array for the indices transferred from the main thread
-- numSamplesU: The number of samples in the U direction
-- numSamplesV: The number of samples in the V direction
-- boundingBox: The bounding box of the mesh - used to transform UV coordinates to XYZ coordinates
-- zIncreasingDownwards: Whether the Z axis increases downwards
+/**
+ * Generates a mesh for a seismic fence based on an array of XY points and a vertical sampling range.
+ * @param parameters The parameters for generating the mesh:
+ * - verticesArray: The Float32Array to be filled with vertex positions (x, y, z)
+ * - indicesArray: The Uint32Array to be filled with triangle indices
+ * - numSamples: The number of vertical samples (depth levels)
+ * - minDepth: The minimum depth (z-value) of the mesh
+ * - maxDepth: The maximum depth (z-value) of the mesh
+ * - traceXYPointsArray: A flat Float32Array of XY coordinate pairs representing the fence trace
+ * - zIncreasingDownwards: Whether the Z axis increases downwards (true for depth-based systems)
+ */
+function makeMesh(parameters: WebWorkerParameters) {
+    const { verticesArray, indicesArray, numSamples, minDepth, maxDepth, traceXYPointsArray, zIncreasingDownwards } =
+        parameters;
 
-*/
-function makeMesh(parameters: WebworkerParameters) {
-    const bbox = parameters.boundingBox;
+    const numTraces = traceXYPointsArray.length / 2;
 
-    const vectorV = [bbox[1][0] - bbox[0][0], bbox[1][1] - bbox[0][1], bbox[1][2] - bbox[0][2]];
-    const vectorU = [bbox[2][0] - bbox[0][0], bbox[2][1] - bbox[0][1], bbox[2][2] - bbox[0][2]];
-
-    function transformUVToXYZ(u: number, v: number): [number, number, number] {
-        const x = u * vectorU[0] + v * vectorV[0];
-        const y = u * vectorU[1] + v * vectorV[1];
-        const z = (parameters.zIncreasingDownwards ? -1 : 1) * (v * vectorV[2] + u * vectorU[2]);
-        return [x, y, z];
+    if (!Number.isInteger(numTraces)) {
+        throw new Error("traceXYPointsArray must contain an even number of elements (pairs of XY).");
     }
 
-    const verticesArray = new Float32Array(parameters.verticesArray);
-    const indicesArray = new Uint32Array(parameters.indicesArray);
+    const zSign = zIncreasingDownwards ? -1 : 1;
+    const stepV = 1.0 / (numSamples - 1);
+    const depthRange = maxDepth - minDepth;
 
-    const stepU = 1.0 / (parameters.numSamplesU - 1);
-    const stepV = 1.0 / (parameters.numSamplesV - 1);
+    let vertexIndex = 0;
+    let indexIndex = 0;
 
-    let verticesIndex = 0;
-    let indicesIndex = 0;
+    for (let v = 0; v < numSamples; v++) {
+        const depth = minDepth + v * stepV * depthRange * zSign;
 
-    for (let v = 0; v < parameters.numSamplesV; v++) {
-        for (let u = 0; u < parameters.numSamplesU; u++) {
-            const [x, y, z] = transformUVToXYZ(u * stepU, v * stepV);
-            verticesArray[verticesIndex++] = x;
-            verticesArray[verticesIndex++] = y;
-            verticesArray[verticesIndex++] = z;
+        for (let u = 0; u < numTraces; u++) {
+            const x = traceXYPointsArray[u * 2];
+            const y = traceXYPointsArray[u * 2 + 1];
+            const z = depth;
+
+            verticesArray[vertexIndex++] = x;
+            verticesArray[vertexIndex++] = y;
+            verticesArray[vertexIndex++] = z;
 
             if (u > 0 && v > 0) {
-                indicesArray[indicesIndex++] = (v - 1) * parameters.numSamplesU + u - 1;
-                indicesArray[indicesIndex++] = (v - 1) * parameters.numSamplesU + u;
-                indicesArray[indicesIndex++] = v * parameters.numSamplesU + u - 1;
+                const rowStride = numTraces;
+                const i00 = (v - 1) * rowStride + (u - 1);
+                const i01 = (v - 1) * rowStride + u;
+                const i10 = v * rowStride + (u - 1);
+                const i11 = v * rowStride + u;
 
-                indicesArray[indicesIndex++] = v * parameters.numSamplesU + u - 1;
-                indicesArray[indicesIndex++] = (v - 1) * parameters.numSamplesU + u;
-                indicesArray[indicesIndex++] = v * parameters.numSamplesU + u;
+                indicesArray[indexIndex++] = i00;
+                indicesArray[indexIndex++] = i01;
+                indicesArray[indexIndex++] = i10;
+
+                indicesArray[indexIndex++] = i10;
+                indicesArray[indexIndex++] = i01;
+                indicesArray[indexIndex++] = i11;
             }
         }
     }

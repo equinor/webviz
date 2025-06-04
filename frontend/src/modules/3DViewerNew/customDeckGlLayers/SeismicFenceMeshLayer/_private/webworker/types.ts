@@ -1,9 +1,10 @@
-export type WebworkerParameters = {
+export type WebWorkerParameters = {
     verticesArray: Float32Array;
     indicesArray: Uint32Array;
-    numSamplesU: number;
-    numSamplesV: number;
-    boundingBox: number[][];
+    numSamples: number;
+    minDepth: number;
+    maxDepth: number;
+    traceXYPointsArray: Float32Array;
     zIncreasingDownwards: boolean;
 };
 
