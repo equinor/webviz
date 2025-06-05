@@ -15,6 +15,7 @@ import { type Polyline, PolylinesPlugin, PolylinesPluginTopic } from "../utils/P
 import { ContextMenu } from "./ContextMenu";
 import { ReadoutWrapper, type ReadoutWrapperProps } from "./ReadoutWrapper";
 import { Toolbar } from "./Toolbar";
+import { ControlsInfoBox } from "./ControlsInfoBox";
 
 export type InteractionWrapperProps = Omit<
     ReadoutWrapperProps,
@@ -177,6 +178,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 activePolylineName={polylines.find((p) => p.id === activePolylineId)?.name}
             />
             <ContextMenu deckGlManager={deckGlManager} />
+            <ControlsInfoBox />
         </ReadoutWrapper>
     );
 }
