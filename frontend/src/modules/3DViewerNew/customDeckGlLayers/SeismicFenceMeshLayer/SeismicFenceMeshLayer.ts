@@ -33,11 +33,9 @@ export type SeismicFence = {
 };
 
 export interface SeismicFenceMeshLayerProps extends ExtendedLayerProps {
-    id: string;
     data: SeismicFence;
     colorMapFunction: (value: number) => [number, number, number, number];
     hoverable?: boolean;
-    opacity?: number;
     zIncreaseDownwards?: boolean;
     isLoading?: boolean;
     loadingGeometry?: LoadingGeometry;
@@ -103,11 +101,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     ): boolean {
         const { changeFlags } = params;
 
-        if (changeFlags.dataChanged) {
-            return true;
-        }
-
-        if (this.props.isLoading) {
+        if (changeFlags.propsOrDataChanged) {
             return true;
         }
 
@@ -164,7 +158,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         let ymax = Number.NEGATIVE_INFINITY;
         let zmax = Number.NEGATIVE_INFINITY;
 
-        for (let i = 0; i < traceXYZPointsArray.length; i += 2) {
+        for (let i = 0; i < traceXYZPointsArray.length; i += 3) {
             const x = traceXYZPointsArray[i] + vVector[0];
             const y = traceXYZPointsArray[i + 1] + vVector[1];
             const z = (traceXYZPointsArray[i + 2] + vVector[2]) * zFactor;
@@ -182,9 +176,9 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     private initArrayBuffers() {
         const { data } = this.props;
 
-        const numSamplesU = data.traceXYZPointsArray.length / 3;
-        const totalNumVertices = numSamplesU * data.numSamples;
-        const totalNumIndices = (numSamplesU - 1) * (data.numSamples - 1) * 6;
+        const numTraces = data.traceXYZPointsArray.length / 3;
+        const totalNumVertices = numTraces * data.numSamples;
+        const totalNumIndices = (numTraces - 1) * (data.numSamples - 1) * 6;
         this._verticesArray = new Float32Array(totalNumVertices * 3);
         this._indicesArray = new Uint32Array(totalNumIndices);
     }
@@ -216,21 +210,6 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
             }),
             meshCreated: true,
         });
-    }
-
-    private calcOrigin(): [number, number, number] {
-        const { data, zIncreaseDownwards } = this.props;
-        const zSign = zIncreaseDownwards ? -1 : 1;
-
-        if (data.traceXYZPointsArray.length < 2) {
-            throw new Error("traceXYPointsArray must contain at least two points.");
-        }
-
-        const x = data.traceXYZPointsArray[0];
-        const y = data.traceXYZPointsArray[1];
-        const z = zSign * data.traceXYZPointsArray[2];
-
-        return [x, y, z];
     }
 
     private async rebuildMesh() {
@@ -268,6 +247,10 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
 
             this.maybeUpdateGeometry();
             this.recolorMesh();
+
+            this.props.reportBoundingBox?.({
+                layerBoundingBox: this.calcBoundingBox(),
+            });
         } catch (error) {
             console.error("Error in worker:", error);
         }
@@ -378,30 +361,34 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
 
         if ((isLoading || !meshCreated || !colorsArrayCreated) && loadingGeometry) {
             layers.push(
-                new PreviewLayer({
-                    id: `${id}-loading`,
-                    data: {
-                        geometry: loadingGeometry,
-                    },
-                    zIncreaseDownwards,
-                }),
+                new PreviewLayer(
+                    super.getSubLayerProps({
+                        id: `${id}-loading`,
+                        data: {
+                            geometry: loadingGeometry,
+                        },
+                        zIncreaseDownwards,
+                    }),
+                ),
             );
         } else {
             layers.push(
-                new ExtendedSimpleMeshLayer({
-                    id: `${id}-mesh`,
-                    data: [0],
-                    mesh: geometry,
-                    getPosition: [0, 0, 0],
-                    getColor: [255, 255, 255, 255],
-                    material: { ambient: 0.9, diffuse: 0.1, shininess: 0, specularColor: [0, 0, 0] },
-                    pickable: true,
-                    _instanced: false,
-                    opacity,
-                    parameters: {
-                        blend: true,
-                    },
-                }),
+                new ExtendedSimpleMeshLayer(
+                    super.getSubLayerProps({
+                        id: `${id}-mesh`,
+                        data: [0],
+                        mesh: geometry,
+                        getPosition: [0, 0, 0],
+                        getColor: [255, 255, 255, 255],
+                        material: { ambient: 0.9, diffuse: 0.1, shininess: 0, specularColor: [0, 0, 0] },
+                        pickable: true,
+                        _instanced: false,
+                        opacity,
+                        parameters: {
+                            blend: true,
+                        },
+                    }),
+                ),
             );
         }
 

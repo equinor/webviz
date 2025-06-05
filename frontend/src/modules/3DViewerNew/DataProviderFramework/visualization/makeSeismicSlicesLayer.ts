@@ -199,14 +199,14 @@ function predictInlineGeometry(
 function interpolateTrace(
     start: [number, number, number],
     end: [number, number, number],
-    numSamples: number,
+    numTraces: number,
 ): Float32Array {
-    const result = new Float32Array(numSamples * 3);
-    for (let i = 0; i < numSamples; i++) {
-        const t = i / (numSamples - 1);
-        result[i * 2] = start[0] + t * (end[0] - start[0]);
-        result[i * 2 + 1] = start[1] + t * (end[1] - start[1]);
-        result[i * 2 + 2] = start[2] + t * (end[2] - start[2]);
+    const result = new Float32Array(numTraces * 3);
+    for (let i = 0; i < numTraces; i++) {
+        const t = i / (numTraces - 1);
+        result[i * 3] = start[0] + t * (end[0] - start[0]);
+        result[i * 3 + 1] = start[1] + t * (end[1] - start[1]);
+        result[i * 3 + 2] = start[2] + t * (end[2] - start[2]);
     }
     return result;
 }
@@ -224,8 +224,7 @@ export function makeSeismicSlicesLayer(
     const slicesSettings = getSetting(Setting.SEISMIC_SLICES);
     const slices = getStoredData("seismicSlices");
     const seismicCubeMeta = getStoredData("seismicCubeMeta");
-    const omitColor = getSetting(Setting.OMIT_COLOR);
-    const omitRange = getSetting(Setting.OMIT_RANGE);
+    const opacityPercent = getSetting(Setting.OPACITY_PERCENT) ?? 100;
     const valueRange = getValueRange();
 
     if (!seismicCubeMeta || !slicesSettings) {
@@ -247,10 +246,10 @@ export function makeSeismicSlicesLayer(
                     traceXYZPointsArray: interpolateTrace(
                         [data.inline.bbox_utm[0][0], data.inline.bbox_utm[0][1], data.inline.u_min],
                         [data.inline.bbox_utm[1][0], data.inline.bbox_utm[1][1], data.inline.u_min],
-                        data.inline.u_num_samples,
+                        data.inline.v_num_samples,
                     ),
                     vVector: [0, 0, data.inline.u_max - data.inline.u_min],
-                    numSamples: data.inline.v_num_samples,
+                    numSamples: data.inline.u_num_samples,
                     properties: data.inline.dataFloat32Arr,
                 },
                 loadingGeometry: inlinePreviewGeometry ?? undefined,
@@ -272,12 +271,12 @@ export function makeSeismicSlicesLayer(
                 id: "crossline-slice",
                 fence: {
                     traceXYZPointsArray: interpolateTrace(
-                        [data.inline.bbox_utm[0][0], data.inline.bbox_utm[0][1], data.crossline.u_min],
-                        [data.inline.bbox_utm[1][0], data.inline.bbox_utm[1][1], data.crossline.u_min],
-                        data.crossline.u_num_samples,
+                        [data.crossline.bbox_utm[0][0], data.crossline.bbox_utm[0][1], data.crossline.u_min],
+                        [data.crossline.bbox_utm[1][0], data.crossline.bbox_utm[1][1], data.crossline.u_min],
+                        data.crossline.v_num_samples,
                     ),
                     vVector: [0, 0, data.crossline.u_max - data.crossline.u_min],
-                    numSamples: data.crossline.v_num_samples,
+                    numSamples: data.crossline.u_num_samples,
                     properties: data.crossline.dataFloat32Arr,
                 },
                 loadingGeometry: crosslinePreviewGeometry ?? undefined,
@@ -299,12 +298,17 @@ export function makeSeismicSlicesLayer(
                 id: "depth-slice",
                 fence: {
                     traceXYZPointsArray: interpolateTrace(
-                        [data.depthSlice.bbox_utm[0][0], data.depthSlice.bbox_utm[0][1], data.depthSlice.u_min],
-                        [data.depthSlice.bbox_utm[1][0], data.depthSlice.bbox_utm[1][1], data.depthSlice.u_min],
-                        data.depthSlice.u_num_samples,
+                        [data.depthSlice.bbox_utm[2][0], data.depthSlice.bbox_utm[2][1], slices[2]],
+                        [data.depthSlice.bbox_utm[3][0], data.depthSlice.bbox_utm[3][1], slices[2]],
+                        data.depthSlice.v_num_samples,
                     ),
-                    vVector: [0, 0, data.depthSlice.u_max - data.depthSlice.u_min],
-                    numSamples: data.depthSlice.v_num_samples,
+                    vVector: vec3.toArray(
+                        vec3.subtract(
+                            vec3.fromArray([...data.depthSlice.bbox_utm[0], 0]),
+                            vec3.fromArray([...data.depthSlice.bbox_utm[3], 0]),
+                        ),
+                    ),
+                    numSamples: data.depthSlice.u_num_samples,
                     properties: data.depthSlice.dataFloat32Arr,
                 },
                 loadingGeometry: depthPreviewGeometry ?? undefined,
@@ -320,17 +324,14 @@ export function makeSeismicSlicesLayer(
     return new SeismicSlicesLayer({
         id,
         name,
-        sections,
+        data: sections,
         colorMapFunction: makeColorMapFunctionFromColorScale(colorScaleSpec, {
             valueMin: valueRange?.[0] ?? 0,
             valueMax: valueRange?.[1] ?? 0,
             midPoint: 0,
-            specialColor: {
-                color: omitColor ?? "#000000",
-                range: omitRange ?? [0, 0],
-            },
         }),
         zIncreaseDownwards: true,
         isLoading: previewOrLoading,
+        opacity: opacityPercent / 100,
     });
 }

@@ -1,6 +1,7 @@
 import { CompositeLayer, type CompositeLayerProps, type Layer, type UpdateParameters } from "@deck.gl/core";
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 import { Geometry } from "@luma.gl/engine";
+import type { ExtendedLayerProps } from "@webviz/subsurface-viewer";
 
 import * as vec3 from "@lib/utils/vec3";
 
@@ -10,12 +11,11 @@ export type RectangleLayerData = {
     normalizedEdgeVectors: [[number, number, number], [number, number, number]];
 };
 
-export type RectangleLayerProps = {
-    id: string;
+export type BoxLayerProps = ExtendedLayerProps & {
     data: RectangleLayerData;
 };
 
-export class BoxLayer extends CompositeLayer<RectangleLayerProps> {
+export class BoxLayer extends CompositeLayer<BoxLayerProps> {
     static layerName = "BoxLayer";
 
     // @ts-expect-error - private
@@ -175,7 +175,7 @@ export class BoxLayer extends CompositeLayer<RectangleLayerProps> {
         });
     }
 
-    updateState({ changeFlags }: UpdateParameters<Layer<RectangleLayerProps & Required<CompositeLayerProps>>>) {
+    updateState({ changeFlags }: UpdateParameters<Layer<BoxLayerProps & Required<CompositeLayerProps>>>) {
         if (changeFlags.dataChanged) {
             this.setState({
                 geometry: this.makeGeometry(),
@@ -185,15 +185,17 @@ export class BoxLayer extends CompositeLayer<RectangleLayerProps> {
 
     renderLayers() {
         return [
-            new SimpleMeshLayer({
-                id: `${this.props.id}-mesh`,
-                data: [0],
-                mesh: this.state.geometry,
-                getPosition: () => [0, 0, 0],
-                getColor: [100, 100, 100, 100],
-                material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
-                pickable: false,
-            }),
+            new SimpleMeshLayer(
+                super.getSubLayerProps({
+                    id: `${this.props.id}-mesh`,
+                    data: [0],
+                    mesh: this.state.geometry,
+                    getPosition: () => [0, 0, 0],
+                    getColor: [100, 100, 100, 100],
+                    material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
+                    pickable: false,
+                }),
+            ),
         ];
     }
 }

@@ -16,7 +16,7 @@ import { SelectNumberSetting } from "../implementations/SelectNumberSetting";
 import { SelectStringSetting } from "../implementations/SelectStringSetting";
 import { SensitivitySetting } from "../implementations/SensitivitySetting";
 import { SingleColorSetting } from "../implementations/SingleColorSetting";
-import { SliderNumberSetting } from "../implementations/SliderNumberSettig";
+import { SliderNumberSetting } from "../implementations/SliderNumberSetting";
 import { StatisticFunctionSetting } from "../implementations/StatisticFunctionSetting";
 import { TimeOrIntervalSetting } from "../implementations/TimeOrIntervalSetting";
 import { Setting } from "../settingsDefinitions";

@@ -38,6 +38,12 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
             const [internalValue, setInternalValue] = React.useState<
                 [[number, number], [number, number], [number, number]] | null
             >(props.value);
+            const [prevValue, setPrevValue] = React.useState<ValueType>(props.value);
+
+            if (!isEqual(props.value, prevValue)) {
+                setInternalValue(props.value);
+                setPrevValue(props.value);
+            }
 
             function handleSliderChange(index: number, val: number[]) {
                 const newValue: [[number, number], [number, number], [number, number]] = [

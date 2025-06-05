@@ -17,7 +17,7 @@ export type SeismicFenceWithId = {
 };
 
 export type SeismicSlicesLayerProps = ExtendedLayerProps & {
-    sections: Array<SeismicFenceWithId>;
+    data: Array<SeismicFenceWithId>;
     colorMapFunction: SeismicFenceMeshLayerProps["colorMapFunction"];
     zIncreaseDownwards?: boolean;
     isLoading?: boolean;
@@ -38,21 +38,23 @@ export class SeismicSlicesLayer extends CompositeLayer<SeismicSlicesLayerProps> 
     }
 
     renderLayers(): Layer[] {
-        const { id, sections, colorMapFunction, zIncreaseDownwards, isLoading } = this.props;
+        const { id, data: sections, colorMapFunction, zIncreaseDownwards, isLoading } = this.props;
         return sections.map((section) => {
-            return new SeismicFenceMeshLayer({
-                id: `${id}-${section.id}`,
-                data: section.fence,
-                loadingGeometry: section.loadingGeometry,
-                colorMapFunction,
-                zIncreaseDownwards,
-                isLoading,
-            });
+            return new SeismicFenceMeshLayer(
+                super.getSubLayerProps({
+                    id: `${id}-${section.id}`,
+                    data: section.fence,
+                    loadingGeometry: section.loadingGeometry,
+                    colorMapFunction,
+                    zIncreaseDownwards,
+                    isLoading,
+                }),
+            );
         });
     }
 
     private calcBoundingBox(): BoundingBox3D {
-        const { sections, zIncreaseDownwards } = this.props;
+        const { data: sections, zIncreaseDownwards } = this.props;
 
         let xmin = Number.POSITIVE_INFINITY;
         let ymin = Number.POSITIVE_INFINITY;
@@ -69,7 +71,7 @@ export class SeismicSlicesLayer extends CompositeLayer<SeismicSlicesLayerProps> 
             }
             const { traceXYZPointsArray } = section.fence;
 
-            for (let i = 0; i < traceXYZPointsArray.length; i += 2) {
+            for (let i = 0; i < traceXYZPointsArray.length; i += 3) {
                 const x = traceXYZPointsArray[i];
                 const y = traceXYZPointsArray[i + 1];
                 const z = zSign * traceXYZPointsArray[i + 2];

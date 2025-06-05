@@ -14,6 +14,7 @@ export type DiscLayerProps = {
     sizeUnits?: "meters" | "pixels";
     maxSizeInMeters?: number;
     minSizeInMeters?: number;
+    depthTest?: boolean;
 };
 
 export class BiconeLayer extends CompositeLayer<DiscLayerProps> {
@@ -152,7 +153,7 @@ export class BiconeLayer extends CompositeLayer<DiscLayerProps> {
     }
 
     renderLayers() {
-        const { id, color, opacity, centerPoint, normalVector, sizeUnits, radius } = this.props;
+        const { id, color, opacity, centerPoint, normalVector, sizeUnits, radius, depthTest } = this.props;
         const { viewport } = this.context;
 
         let sizeScale = this.props.radius;
@@ -176,6 +177,9 @@ export class BiconeLayer extends CompositeLayer<DiscLayerProps> {
                 material: true,
                 pickable: false,
                 sizeScale,
+                parameters: {
+                    depthTest,
+                },
             }),
         ];
     }

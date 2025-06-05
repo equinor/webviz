@@ -138,6 +138,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     IntersectionRealizationSeismicProvider,
     {
         transformToVisualization: makeSeismicIntersectionMeshLayer,
+        transformToAnnotations: makeColorScaleAnnotation,
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
@@ -145,6 +146,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     IntersectionRealizationSeismicProvider,
     {
         transformToVisualization: makeSeismicIntersectionMeshLayer,
+        transformToAnnotations: makeColorScaleAnnotation,
     },
 );
 

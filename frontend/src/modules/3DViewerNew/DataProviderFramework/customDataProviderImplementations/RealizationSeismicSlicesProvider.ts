@@ -23,8 +23,7 @@ const realizationSeismicSlicesSettings = [
     Setting.TIME_OR_INTERVAL,
     Setting.SEISMIC_SLICES,
     Setting.COLOR_SCALE,
-    Setting.OMIT_RANGE,
-    Setting.OMIT_COLOR,
+    Setting.OPACITY_PERCENT,
 ] as const;
 export type RealizationSeismicSlicesSettings = typeof realizationSeismicSlicesSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationSeismicSlicesSettings>;
@@ -67,6 +66,7 @@ export class RealizationSeismicSlicesProvider
                 colorScale: defaultColorScale,
                 areBoundariesUserDefined: false,
             },
+            [Setting.OPACITY_PERCENT]: 100,
         };
     }
 
@@ -246,9 +246,9 @@ export class RealizationSeismicSlicesProvider
                 return [];
             }
 
-            const availableSeismicAttributes = [
-                ...Array.from(new Set(data.map((seismicInfos) => seismicInfos.seismicAttribute))),
-            ];
+            const availableSeismicAttributes = Array.from(
+                new Set(data.filter((el) => el.isDepth).map((el) => el.seismicAttribute)),
+            ).sort();
 
             return availableSeismicAttributes;
         });
@@ -326,10 +326,6 @@ export class RealizationSeismicSlicesProvider
             }
 
             return NO_UPDATE;
-        });
-
-        availableSettingsUpdater(Setting.OMIT_RANGE, () => {
-            return [-10, 10, 0.001];
         });
     }
 }

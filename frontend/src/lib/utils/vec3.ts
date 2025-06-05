@@ -111,11 +111,28 @@ export function subtract(minuend: Vec3, subtrahend: Vec3): Vec3 {
  * Adds two vectors.
  *
  * @param vector1 The first vector.
- * @param vector2 The second vector.
+ * @param vectors The other vectors.
  * @returns A new vector that is the result of the addition.
  */
-export function add(vector1: Vec3, vector2: Vec3): Vec3 {
-    return { x: vector1.x + vector2.x, y: vector1.y + vector2.y, z: vector1.z + vector2.z };
+export function add(vector1: Vec3, ...vectors: Vec3[]): Vec3 {
+    if (vectors.length === 0) {
+        return clone(vector1);
+    }
+
+    return vectors.reduce((acc, vector2) => {
+        if (!vector2) {
+            throw new Error("Cannot add undefined or null vector.");
+        }
+        if (typeof vector2.x !== "number" || typeof vector2.y !== "number" || typeof vector2.z !== "number") {
+            throw new Error("Invalid vector: must have numeric x, y, and z properties.");
+        }
+
+        if (typeof acc.x !== "number" || typeof acc.y !== "number" || typeof acc.z !== "number") {
+            throw new Error("Invalid accumulator vector: must have numeric x, y, and z properties.");
+        }
+
+        return { x: acc.x + vector2.x, y: acc.y + vector2.y, z: acc.z + vector2.z };
+    }, vector1);
 }
 
 /**

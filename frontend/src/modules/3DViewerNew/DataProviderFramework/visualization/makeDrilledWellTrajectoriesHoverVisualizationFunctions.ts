@@ -1,5 +1,8 @@
-import type { WellboreTrajectory_api } from "@api";
 import type { Color } from "@deck.gl/core";
+import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
+import type { LineString, Point } from "geojson";
+
+import type { WellboreTrajectory_api } from "@api";
 import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
 import { BiconeLayer } from "@modules/3DViewerNew/customDeckGlLayers/BiconeLayer";
 import type { GeoWellFeature } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
@@ -8,8 +11,6 @@ import type {
     TransformerArgs,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
-import type { LineString, Point } from "geojson";
 
 export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
     args: TransformerArgs<any, WellboreTrajectory_api[], any>,
@@ -85,6 +86,7 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
                     wellNameVisible: false,
                     ZIncreasingDownwards: false,
                     visible: visible,
+                    depthTest: false,
                 }),
                 new BiconeLayer({
                     id: `${id}-hovered-md-point`,
@@ -99,6 +101,7 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
                     sizeUnits: "pixels",
                     minSizeInMeters: 0,
                     maxSizeInMeters: 200,
+                    depthTest: false,
                 }),
             ];
         },

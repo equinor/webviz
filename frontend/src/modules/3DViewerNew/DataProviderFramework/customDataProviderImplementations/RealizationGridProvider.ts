@@ -1,6 +1,7 @@
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
 import type { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import { transformGridMappedProperty, transformGridSurface } from "@modules/3DViewer/view/queries/queryDataTransforms";
+import { NO_UPDATE } from "@modules/_shared/DataProviderFramework/delegates/_utils/Dependency";
 import type {
     AreSettingsValidArgs,
     CustomDataProviderImplementation,
@@ -15,12 +16,13 @@ import type { RealizationGridData } from "@modules/_shared/DataProviderFramework
 const realizationGridSettings = [
     Setting.ENSEMBLE,
     Setting.REALIZATION,
-    Setting.ATTRIBUTE,
     Setting.GRID_NAME,
+    Setting.ATTRIBUTE,
     Setting.GRID_LAYER_RANGE,
     Setting.TIME_OR_INTERVAL,
     Setting.SHOW_GRID_LINES,
     Setting.COLOR_SCALE,
+    Setting.OPACITY_PERCENT,
 ] as const;
 export type RealizationGridSettings = typeof realizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationGridSettings>;
@@ -33,6 +35,7 @@ export class RealizationGridProvider
     getDefaultSettingsValues() {
         return {
             [Setting.SHOW_GRID_LINES]: false,
+            [Setting.OPACITY_PERCENT]: 100,
         };
     }
 
@@ -235,20 +238,12 @@ export class RealizationGridProvider
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!gridName || !data) {
-                return [
-                    [0, 0, 1],
-                    [0, 0, 1],
-                    [0, 0, 1],
-                ];
+                return NO_UPDATE;
             }
 
             const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
             if (!gridDimensions) {
-                return [
-                    [0, 0, 1],
-                    [0, 0, 1],
-                    [0, 0, 1],
-                ];
+                return NO_UPDATE;
             }
 
             return [

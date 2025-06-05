@@ -122,21 +122,21 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                     ),
                 );
                 return;
-            case "realization-simulated-seismic":
+            case "simulated-seismic-fence":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
                         DataProviderType.INTERSECTION_REALIZATION_SIMULATED_SEISMIC,
                         props.dataProviderManager,
-                        "Realization Simulated Seismic",
+                        "Seismic fence (simulated)",
                     ),
                 );
                 return;
-            case "realization-observed-seismic":
+            case "observed-seismic-fence":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
                         DataProviderType.INTERSECTION_REALIZATION_OBSERVED_SEISMIC,
                         props.dataProviderManager,
-                        "Realization Observed Seismic",
+                        "Seismic fence (observed)",
                     ),
                 );
                 return;
@@ -145,7 +145,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                     DataProviderRegistry.makeDataProvider(
                         DataProviderType.INTERSECTION_WITH_WELLBORE_EXTENSION_REALIZATION_GRID,
                         props.dataProviderManager,
-                        "Realization Grid",
+                        "Intersection Grid",
                     ),
                 );
                 return;
@@ -312,6 +312,16 @@ const ACTIONS: ActionGroup[] = [
                         icon: <Icon data={grid_layer} fontSize="small" />,
                         label: "Intersection Realization Grid",
                     },
+                    {
+                        identifier: "simulated-seismic-fence",
+                        icon: <Icon data={timeline} fontSize="small" />,
+                        label: "Seismic Fence (Simulated)",
+                    },
+                    {
+                        identifier: "observed-seismic-fence",
+                        icon: <Icon data={timeline} fontSize="small" />,
+                        label: "Seismic Fence (Observed)",
+                    },
                 ],
             },
             {
@@ -366,16 +376,6 @@ const ACTIONS: ActionGroup[] = [
                         identifier: "realization-seismic-slices",
                         icon: <Icon data={surface_layer} fontSize="small" />,
                         label: "Realization Seismic Slices",
-                    },
-                    {
-                        identifier: "realization-simulated-seismic",
-                        icon: <Icon data={timeline} fontSize="small" />,
-                        label: "Realization Simulated Seismic",
-                    },
-                    {
-                        identifier: "realization-observed-seismic",
-                        icon: <Icon data={timeline} fontSize="small" />,
-                        label: "Realization Observed Seismic",
                     },
                 ],
             },

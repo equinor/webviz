@@ -1,11 +1,10 @@
 import React from "react";
 
-import { debounce } from "lodash";
-
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { debounce } from "lodash";
 
 import type {
     CustomSettingImplementation,

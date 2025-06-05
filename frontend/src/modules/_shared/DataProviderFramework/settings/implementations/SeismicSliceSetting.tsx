@@ -1,6 +1,7 @@
 import React from "react";
 
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { isEqual } from "lodash";
 
 import { Button } from "@lib/components/Button";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
@@ -23,7 +24,11 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
         availableValues: [[number, number, number], [number, number, number], [number, number, number]],
     ): ValueType {
         if (!currentValue || !Array.isArray(currentValue.value) || currentValue.value.length !== 3) {
-            return { value: [0, 0, 0], visible: [true, true, true], applied: false };
+            return {
+                value: [availableValues[0][0], availableValues[1][0], availableValues[2][0]],
+                visible: [true, true, true],
+                applied: true,
+            };
         }
 
         const fixedValue: [number, number, number] = currentValue.value.map((val, index) => {
@@ -61,6 +66,12 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
             const [internalValue, setInternalValue] = React.useState<[number, number, number] | null>(
                 props.value?.value ?? null,
             );
+            const [prevValue, setPrevValue] = React.useState<[number, number, number] | null>(null);
+
+            if (!isEqual(prevValue, props.value?.value ?? null)) {
+                setInternalValue(props.value?.value ?? [0, 0, 0]);
+                setPrevValue(props.value?.value ?? null);
+            }
 
             const [visible, setVisible] = React.useState<[boolean, boolean, boolean]>(
                 props.value?.visible ?? [true, true, true],

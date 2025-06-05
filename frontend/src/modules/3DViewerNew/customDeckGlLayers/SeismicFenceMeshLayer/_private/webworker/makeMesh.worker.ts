@@ -1,7 +1,8 @@
 import { expose } from "comlink";
 
-import type { WebWorkerParameters } from "./types";
 import * as vec3 from "@lib/utils/vec3";
+
+import type { WebWorkerParameters } from "./types";
 
 /**
  * Generates a mesh for a seismic fence based on an array of XY points and a vertical sampling range.
@@ -17,10 +18,10 @@ import * as vec3 from "@lib/utils/vec3";
 function makeMesh(parameters: WebWorkerParameters) {
     const { verticesArray, indicesArray, numSamples, vVector, traceXYZPointsArray, zIncreasingDownwards } = parameters;
 
-    const numTraces = traceXYZPointsArray.length / 2;
+    const numTraces = traceXYZPointsArray.length / 3;
 
     if (!Number.isInteger(numTraces)) {
-        throw new Error("traceXYPointsArray must contain an even number of elements (pairs of XY).");
+        throw new Error("traceXYZPointsArray must contain a multiple of 3 elements ([x, y, z] triplets).");
     }
 
     const zSign = zIncreasingDownwards ? -1 : 1;
@@ -29,24 +30,25 @@ function makeMesh(parameters: WebWorkerParameters) {
     let vertexIndex = 0;
     let indexIndex = 0;
 
-    for (let v = 0; v < numSamples; v++) {
-        const vec = vec3.scale(vec3.fromArray(vVector), stepV * v);
+    for (let u = 0; u < numTraces; u++) {
+        for (let v = 0; v < numSamples; v++) {
+            const vec = vec3.scale(vec3.fromArray(vVector), stepV * v);
 
-        for (let u = 0; u < numTraces; u++) {
-            const x = traceXYZPointsArray[u * 3] + vec.x;
-            const y = traceXYZPointsArray[u * 3 + 1] + vec.y;
-            const z = (traceXYZPointsArray[u * 3 + 2] + vec.z) * zSign;
+            const index = u * 3;
+            const x = traceXYZPointsArray[index] + vec.x;
+            const y = traceXYZPointsArray[index + 1] + vec.y;
+            const z = (traceXYZPointsArray[index + 2] + vec.z) * zSign;
 
             verticesArray[vertexIndex++] = x;
             verticesArray[vertexIndex++] = y;
             verticesArray[vertexIndex++] = z;
 
             if (u > 0 && v > 0) {
-                const rowStride = numTraces;
-                const i00 = (v - 1) * rowStride + (u - 1);
-                const i01 = (v - 1) * rowStride + u;
-                const i10 = v * rowStride + (u - 1);
-                const i11 = v * rowStride + u;
+                const rowStride = numSamples;
+                const i00 = (u - 1) * rowStride + (v - 1);
+                const i01 = u * rowStride + (v - 1);
+                const i10 = (u - 1) * rowStride + v;
+                const i11 = u * rowStride + v;
 
                 indicesArray[indexIndex++] = i00;
                 indicesArray[indexIndex++] = i01;

@@ -87,6 +87,7 @@ export function makeIntersectionLayer({
     const data = getData();
     const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
     const showGridLines = getSetting(Setting.SHOW_GRID_LINES);
+    const opacity = getSetting(Setting.OPACITY_PERCENT) ?? 100;
 
     if (!data) {
         return null;
@@ -112,6 +113,7 @@ export function makeIntersectionLayer({
         gridLines: showGridLines ?? false,
         material: { ambient: 0.4, diffuse: 0.7, shininess: 8, specularColor: [25, 25, 25] },
         pickable: true,
+        opacity: opacity / 100,
     });
 
     return grid3dIntersectionLayer;
