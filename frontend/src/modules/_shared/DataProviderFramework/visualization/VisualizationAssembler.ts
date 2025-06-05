@@ -6,6 +6,7 @@ import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
 import * as bbox from "@lib/utils/bbox";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
+import type { HighlightItem } from "@modules/_shared/components/EsvIntersection/types";
 
 import type { GroupDelegate } from "../delegates/GroupDelegate";
 import { DataProvider, DataProviderStatus } from "../framework/DataProvider/DataProvider";
@@ -47,6 +48,11 @@ export type DataProviderVisualizationTargetTypes = {
     [VisualizationTarget.ESV]: EsvLayerItemsMaker;
 };
 
+export type DataProviderHoverVisualizationTargetTypes = {
+    [VisualizationTarget.DECK_GL]: DeckGlLayer<any>;
+    [VisualizationTarget.ESV]: HighlightItem;
+};
+
 export type DataProviderVisualization<
     TTarget extends VisualizationTarget,
     TVisualization extends
@@ -63,7 +69,7 @@ export type TransformerArgs<
     TSettings extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = Record<string, never>,
 > = DataProviderInformationAccessors<TSettings, TData, TStoredData> & {
     id: string;
     name: string;
@@ -71,12 +77,6 @@ export type TransformerArgs<
     getInjectedData: () => TInjectedData;
     getValueRange: () => Readonly<[number, number]> | null;
 };
-
-export interface HoverVisualizationsFunction<TTarget extends VisualizationTarget> {
-    (
-        hoverInfo: GlobalTopicDefinitions[FilterHoverKeys<GlobalTopicDefinitions>],
-    ): DataProviderVisualizationTargetTypes[TTarget][];
-}
 
 export type VisualizationGroupMetadata<TGroupType extends GroupType> = {
     itemType: VisualizationItemType.GROUP;
@@ -89,7 +89,7 @@ export type VisualizationGroupMetadata<TGroupType extends GroupType> = {
 export type VisualizationGroup<
     TTarget extends VisualizationTarget,
     TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
-    TAccumulatedData extends Record<string, any> = never,
+    TAccumulatedData extends Record<string, any> = Record<string, never>,
     TGroupType extends GroupType = GroupType,
 > = VisualizationGroupMetadata<TGroupType> & {
     children: (VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> | DataProviderVisualization<TTarget>)[];
@@ -98,7 +98,7 @@ export type VisualizationGroup<
     combinedBoundingBox: bbox.BBox | null;
     numLoadingDataProviders: number;
     accumulatedData: TAccumulatedData;
-    makeHoverVisualizationsFunction: HoverVisualizationsFunction<TTarget>;
+    hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget>;
     customProps: TCustomGroupProps[TGroupType];
 };
 
@@ -127,8 +127,8 @@ export type DataProviderTransformers<
     TData,
     TTarget extends VisualizationTarget,
     TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = never,
-    TAccumulatedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = Record<string, never>,
+    TAccumulatedData extends Record<string, any> = Record<string, never>,
 > = {
     transformToVisualization: VisualizationTransformer<TSettings, TData, TTarget, TStoredData, TInjectedData>;
     transformToBoundingBox?: BoundingBoxTransformer<TSettings, TData, TStoredData, TInjectedData>;
@@ -149,12 +149,28 @@ export type DataProviderTransformers<
     >;
 };
 
+type KeysMatching<T, Pattern extends string> = {
+    [K in keyof T]: K extends Pattern ? K : never;
+}[keyof T];
+
+type PickMatching<T, Pattern extends string> = {
+    [K in KeysMatching<T, Pattern>]: T[K];
+};
+
+export type HoverTopicDefinitions = PickMatching<GlobalTopicDefinitions, `global.hover${string}`>;
+
+export type HoverVisualizationFunctions<TTarget extends VisualizationTarget> = Partial<{
+    [K in keyof HoverTopicDefinitions]: (
+        hoverInfo: HoverTopicDefinitions[K],
+    ) => DataProviderHoverVisualizationTargetTypes[TTarget][];
+}>;
+
 export type VisualizationTransformer<
     TSettings extends Settings,
     TData,
     TTarget extends VisualizationTarget,
     TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = Record<string, never>,
 > = (
     args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>,
 ) => DataProviderVisualizationTargetTypes[TTarget] | null;
@@ -165,24 +181,21 @@ export type HoverVisualizationTransformer<
     TData,
     TTarget extends VisualizationTarget,
     TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = never,
-> = (
-    args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>,
-    hoverInfo: GlobalTopicDefinitions[FilterHoverKeys<GlobalTopicDefinitions>],
-) => DataProviderVisualizationTargetTypes[TTarget][];
+    TInjectedData extends Record<string, any> = Record<string, never>,
+> = (args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>) => HoverVisualizationFunctions<TTarget>;
 
 export type BoundingBoxTransformer<
     TSettings extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = Record<string, never>,
 > = (args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>) => bbox.BBox | null;
 
 export type AnnotationsTransformer<
     TSettings extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = Record<string, never>,
 > = (args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>) => Annotation[];
 
 export type ReduceAccumulatedDataFunction<
@@ -190,20 +203,16 @@ export type ReduceAccumulatedDataFunction<
     TData,
     TAccumulatedData,
     TStoredData extends StoredData = Record<string, never>,
-    TInjectedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = Record<string, never>,
 > = (
     accumulatedData: TAccumulatedData,
     args: TransformerArgs<TSettings, TData, TStoredData, TInjectedData>,
 ) => TAccumulatedData;
 
-type FilterHoverKeys<T> = {
-    [K in keyof T]: K extends `global.hover${string}` ? K : never;
-}[keyof T];
-
 export type AssemblerProduct<
     TTarget extends VisualizationTarget,
     TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
-    TAccumulatedData extends Record<string, any> = never,
+    TAccumulatedData extends Record<string, any> = Record<string, never>,
 > = Omit<VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>, keyof VisualizationGroupMetadata<any>>;
 
 export type CustomGroupPropsMap = Partial<Record<GroupType, Record<string, any>>>;
@@ -211,8 +220,8 @@ export type CustomGroupPropsMap = Partial<Record<GroupType, Record<string, any>>
 export class VisualizationAssembler<
     TTarget extends VisualizationTarget,
     TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
-    TInjectedData extends Record<string, any> = never,
-    TAccumulatedData extends Record<string, any> = never,
+    TInjectedData extends Record<string, any> = Record<string, never>,
+    TAccumulatedData extends Record<string, any> = Record<string, never>,
 > {
     private _dataProviderTransformers: Map<
         string,
@@ -279,9 +288,7 @@ export class VisualizationAssembler<
         )[] = [];
         const annotations: Annotation[] = [];
         const aggregatedErrorMessages: (StatusMessage | string)[] = [];
-        const hoverVisualizationFunctions: ((
-            hoverInfo: GlobalTopicDefinitions[FilterHoverKeys<GlobalTopicDefinitions>],
-        ) => DataProviderVisualizationTargetTypes[TTarget][])[] = [];
+        let hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget> = {};
         let numLoadingDataProviders = 0;
         let combinedBoundingBox: bbox.BBox | null = null;
 
@@ -307,7 +314,10 @@ export class VisualizationAssembler<
 
                 accumulatedData = product.accumulatedData;
                 aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
-                hoverVisualizationFunctions.push(product.makeHoverVisualizationsFunction);
+                hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
+                    hoverVisualizationFunctions,
+                    product.hoverVisualizationFunctions,
+                );
                 numLoadingDataProviders += product.numLoadingDataProviders;
                 maybeApplyBoundingBox(product.combinedBoundingBox);
 
@@ -354,7 +364,10 @@ export class VisualizationAssembler<
                 maybeApplyBoundingBox(providerBoundingBox);
                 children.push(dataProviderVisualization);
                 annotations.push(...this.makeDataProviderAnnotations(child));
-                hoverVisualizationFunctions.push(this.makeDataProviderHoverVisualizationsFunction(child, injectedData));
+                hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
+                    hoverVisualizationFunctions,
+                    this.makeDataProviderHoverVisualizationFunctions(child, injectedData),
+                );
                 accumulatedData = this.accumulateDataProviderData(child, accumulatedData) ?? accumulatedData;
             }
         }
@@ -371,15 +384,7 @@ export class VisualizationAssembler<
             annotations: annotations,
             numLoadingDataProviders: numLoadingDataProviders,
             accumulatedData,
-            makeHoverVisualizationsFunction: (
-                hoverInfo: GlobalTopicDefinitions[FilterHoverKeys<GlobalTopicDefinitions>],
-            ) => {
-                const collectedHoverVisualizations: DataProviderVisualizationTargetTypes[TTarget][] = [];
-                for (const makeHoverVisualizationFunction of hoverVisualizationFunctions) {
-                    collectedHoverVisualizations.push(...makeHoverVisualizationFunction(hoverInfo));
-                }
-                return collectedHoverVisualizations;
-            },
+            hoverVisualizationFunctions: hoverVisualizationFunctions,
             customProps: {} as TCustomGroupProps,
         };
     }
@@ -405,13 +410,13 @@ export class VisualizationAssembler<
             combinedBoundingBox: product.combinedBoundingBox,
             numLoadingDataProviders: product.numLoadingDataProviders,
             accumulatedData: product.accumulatedData,
-            makeHoverVisualizationsFunction: product.makeHoverVisualizationsFunction,
+            hoverVisualizationFunctions: product.hoverVisualizationFunctions,
             customProps:
                 func?.({
                     id: group.getItemDelegate().getId(),
                     name: group.getItemDelegate().getName(),
                     getSetting: <TKey extends TSettingKey>(setting: TKey) =>
-                        group.getSharedSettingsDelegate()?.getWrappedSettings()[setting].getValue(),
+                        group.getSharedSettingsDelegate()?.getWrappedSettings()[setting].getValue() ?? null,
                 }) ?? ({} as TCustomGroupProps),
         };
     }
@@ -464,18 +469,16 @@ export class VisualizationAssembler<
         };
     }
 
-    private makeDataProviderHoverVisualizationsFunction(
+    private makeDataProviderHoverVisualizationFunctions(
         dataProvider: DataProvider<any, any, any>,
         injectedData?: TInjectedData,
-    ): HoverVisualizationsFunction<TTarget> {
+    ): HoverVisualizationFunctions<TTarget> {
         const func = this._dataProviderTransformers.get(dataProvider.getType())?.transformToHoverVisualization;
         if (!func) {
-            return () => [];
+            return {};
         }
 
-        return (hoverInfo: GlobalTopicDefinitions[FilterHoverKeys<GlobalTopicDefinitions>]) => {
-            return func({ ...this.makeFactoryFunctionArgs.bind(this)(dataProvider, injectedData) }, hoverInfo);
-        };
+        return func(this.makeFactoryFunctionArgs(dataProvider, injectedData));
     }
 
     private makeDataProviderBoundingBox(
@@ -513,5 +516,30 @@ export class VisualizationAssembler<
         }
 
         return func(accumulatedData, this.makeFactoryFunctionArgs(dataProvider, injectedData));
+    }
+
+    private mergeHoverVisualizationFunctions(
+        base: HoverVisualizationFunctions<TTarget>,
+        additional: HoverVisualizationFunctions<TTarget>,
+    ): HoverVisualizationFunctions<TTarget> {
+        const merged: HoverVisualizationFunctions<TTarget> = { ...base };
+
+        for (const key in additional) {
+            const typedKey = key as keyof HoverTopicDefinitions;
+            const baseFn = base[typedKey];
+            const additionalFn = additional[typedKey];
+
+            if (baseFn && additionalFn) {
+                // TypeScript can't narrow K per key in a dynamic loop; we assert here intentionally
+                merged[typedKey] = ((hoverInfo: any) => [
+                    ...(baseFn as any)(hoverInfo),
+                    ...(additionalFn as any)(hoverInfo),
+                ]) as any;
+            } else if (additionalFn) {
+                merged[typedKey] = additionalFn as any;
+            }
+        }
+
+        return merged;
     }
 }

@@ -16,6 +16,11 @@ function ToggleButtonComponent(props: ToggleButtonProps, ref: React.ForwardedRef
     const [isActive, setIsActive] = React.useState<boolean>(active);
     const [prevIsActive, setPrevIsActive] = React.useState<boolean>(active);
 
+    if (active !== prevIsActive) {
+        setIsActive(active);
+        setPrevIsActive(active);
+    }
+
     const buttonRef = React.useRef<HTMLButtonElement>(null);
     React.useImperativeHandle<HTMLButtonElement | null, HTMLButtonElement | null>(
         props.buttonRef,

@@ -12,6 +12,7 @@ import type {
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type { RealizationGridData } from "@modules/_shared/DataProviderFramework/visualization/utils/types";
 
 const realizationGridSettings = [
     Setting.ENSEMBLE,
@@ -25,11 +26,6 @@ const realizationGridSettings = [
 ] as const;
 export type RealizationGridSettings = typeof realizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationGridSettings>;
-
-export type RealizationGridData = {
-    gridSurfaceData: GridSurface_trans;
-    gridParameterData: GridMappedProperty_trans;
-};
 
 type StoredData = {
     availableGridDimensions: {
