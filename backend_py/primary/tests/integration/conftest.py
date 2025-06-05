@@ -24,6 +24,17 @@ def fixture_sumo_test_ensemble_ahm() -> SumoTestEnsemble:
     )
 
 
+# Eventually all tests should use this
+@pytest.fixture(name="sumo_test_ensemble_ahm_new", scope="session")
+def fixture_sumo_test_ensemble_ahm_new() -> SumoTestEnsemble:
+    return SumoTestEnsemble(
+        field_identifier="DROGON",
+        case_name="webviz_ahm_case_new",
+        case_uuid="b182dc88-9bb5-4076-ad33-1905c3d8c10b",
+        ensemble_name="iter-0",
+    )
+
+
 @pytest.fixture(name="sumo_test_ensemble_design", scope="session")
 def fixture_sumo_test_ensemble_design() -> SumoTestEnsemble:
     return SumoTestEnsemble(
