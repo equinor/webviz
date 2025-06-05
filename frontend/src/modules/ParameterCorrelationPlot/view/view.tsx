@@ -177,7 +177,7 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                     // const color = responseChannelData.metaData.preferredColor;
 
                     const channelTitle = responseChannelData.metaData.displayString;
-
+                    const color = responseChannelData.metaData.preferredColor;
                     figure.addCorrelationTrace(
                         rankedParameters,
                         localParameterString,
@@ -185,6 +185,7 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                         colIndex + 1,
                         cellIndex,
                         channelTitle ?? "",
+                        color,
                     );
                     cellIndex++;
                 }

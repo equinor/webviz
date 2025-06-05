@@ -167,13 +167,14 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
 
                     const responseName = responseChannelData.displayName;
                     const parameterName = parameterData.name;
-
+                    const color = responseChannelData.metaData.preferredColor ?? "#000000";
                     const scatterPlotData: scatterPlotParameterResponseData = {
                         responseValues,
                         parameterValues,
                         realizationValues,
                         parameterName,
                         responseName,
+                        color,
                     };
 
                     const channelTitle = `${parameterIdent.name} / <b>${responseChannelData.metaData.displayString}`;

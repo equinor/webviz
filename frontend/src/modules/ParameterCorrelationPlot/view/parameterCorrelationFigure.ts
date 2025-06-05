@@ -46,8 +46,9 @@ export class ParameterCorrelationFigure {
         columnIndex: number,
         cellIndex: number,
         title: string,
+        color?: string,
     ) {
-        const correlationTrace = createCorrelationTrace(data, highlightedParameterString, this._showLabel);
+        const correlationTrace = createCorrelationTrace(data, highlightedParameterString, this._showLabel, color);
 
         this._figure.addTrace(correlationTrace, rowIndex, columnIndex);
 
@@ -72,22 +73,24 @@ export class ParameterCorrelationFigure {
 function createCorrelationTrace(
     rankedParameters: RankedParameterCorrelation[],
     highlightedParameterString: string | null,
+
     showLabel: boolean,
+    color?: string,
 ): Partial<PlotData> {
     const identStrings = rankedParameters.map((p) => p.ident.toString());
     const names = rankedParameters.map((p) => p.ident.name);
     const correlations = rankedParameters.map((p) => p.correlation!);
     const colors = identStrings.map((identString) => {
         if (highlightedParameterString && identString === highlightedParameterString) {
-            return "rgba(255, 18, 67, .5)";
+            return `${color}FF`;
         }
-        return "rgba(0.0, 112.0, 121.0, .5)";
+        return highlightedParameterString ? `${color}80` : `${color}FF`;
     });
     const lineColors = identStrings.map((identString) => {
         if (highlightedParameterString && identString === highlightedParameterString) {
-            return "rgba(255, 18, 67, 1)";
+            return "#000000FF";
         }
-        return "rgba(0.0, 112.0, 121.0, 1)";
+        return `${color}80`;
     });
     let trace: Partial<PlotData> = {
         x: correlations,
