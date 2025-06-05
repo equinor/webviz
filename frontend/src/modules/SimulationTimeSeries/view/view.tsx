@@ -10,17 +10,16 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
-
+import { Plot } from "@modules/_shared/components/Plot";
 
 import type { Interfaces } from "../interfaces";
 
 import { userSelectedActiveTimestampUtcMsAtom } from "./atoms/baseAtoms";
-import { realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
+import { queryIsFetchingAtom, realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { usePlotBuilder } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
-
 
 export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -34,6 +33,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const selectedDeltaEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedDeltaEnsembles");
     const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
     const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
+    const anyLoading = useAtomValue(queryIsFetchingAtom);
 
     const setActiveTimestampUtcMs = useSetAtom(userSelectedActiveTimestampUtcMsAtom);
 
@@ -64,26 +64,33 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     useMakeViewStatusWriterMessages(viewContext, statusWriter, parameterDisplayName, ensemblesWithoutParameter);
     usePublishToDataChannels(viewContext);
 
-    function handleClickInChart(e: PlotMouseEvent) {
-        const clickedPoint: PlotDatum = e.points[0];
-        if (!clickedPoint) {
-            return;
-        }
-
-        if (clickedPoint.pointIndex >= 0 && clickedPoint.pointIndex < clickedPoint.data.x.length) {
-            const timestampUtcMs = clickedPoint.data.x[clickedPoint.pointIndex];
-            if (typeof timestampUtcMs === "number") {
-                setActiveTimestampUtcMs(timestampUtcMs);
+    const handleClickInChart = React.useCallback(
+        function handleClickInChart(e: PlotMouseEvent) {
+            const clickedPoint: PlotDatum = e.points[0];
+            if (!clickedPoint) {
+                return;
             }
-        }
-    }
 
-    const plot = usePlotBuilder(viewContext, wrapperDivSize, colorSet, ensemblesParameterColoring, handleClickInChart);
+            if (clickedPoint.pointIndex >= 0 && clickedPoint.pointIndex < clickedPoint.data.x.length) {
+                const timestampUtcMs = clickedPoint.data.x[clickedPoint.pointIndex];
+                if (typeof timestampUtcMs === "number") {
+                    setActiveTimestampUtcMs(timestampUtcMs);
+                }
+            }
+        },
+        [setActiveTimestampUtcMs],
+    );
+
+    const plotBuilder = usePlotBuilder(viewContext, wrapperDivSize, colorSet, ensemblesParameterColoring);
     const hasNoQueryErrors = !hasRealizationsQueryError && !hasStatisticsQueryError;
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            {hasNoQueryErrors ? plot : <ContentError>One or more queries have an error state.</ContentError>}
+            {hasNoQueryErrors ? (
+                <Plot plotUpdateReady={!anyLoading} onClick={handleClickInChart} {...plotBuilder.buildProps()} />
+            ) : (
+                <ContentError>One or more queries have an error state.</ContentError>
+            )}
         </div>
     );
 };

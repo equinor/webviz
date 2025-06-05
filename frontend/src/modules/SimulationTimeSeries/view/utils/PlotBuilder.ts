@@ -1,6 +1,5 @@
-import type React from "react";
-
 import type { Annotations, PlotMarker, Shape } from "plotly.js";
+import type { PlotParams } from "react-plotly.js";
 
 import type {
     DerivedVectorInfo_api,
@@ -21,7 +20,6 @@ import { simulationUnitReformat, simulationVectorDescription } from "@modules/_s
 import type { VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { FrequencyEnumToStringMapping, SubplotLimitDirection } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
-
 
 import { scaleHexColorLightness } from "./colorUtils";
 import type { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
@@ -259,7 +257,7 @@ export class PlotBuilder {
         }
     }
 
-    build(handleOnClick?: ((event: Readonly<Plotly.PlotMouseEvent>) => void) | undefined): React.ReactNode {
+    buildProps(customProps?: Omit<Partial<PlotParams>, "data" | "layout">): PlotParams {
         this.createGraphLegends();
         this.updateSubplotTitles();
 
@@ -274,7 +272,11 @@ export class PlotBuilder {
             }
         }
 
-        return this._figure.makePlot({ onClick: handleOnClick });
+        return {
+            data: this._figure.makeData(),
+            layout: this._figure.makeLayout(),
+            ...customProps,
+        };
     }
 
     addRealizationTracesColoredByParameter(
