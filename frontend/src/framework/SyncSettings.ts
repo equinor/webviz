@@ -25,8 +25,8 @@ export enum SyncSettingKey {
     WELLBORE = "WELLBORE",
     INTERSECTION = "INTERSECTION",
     VERTICAL_SCALE = "VERTICAL_SCALE",
-    INPLACE_VOLUMETRICS_FILTER = "INPLACE_VOLUMETRICS_FILTER",
-    INPLACE_VOLUMETRICS_RESULT_NAME = "INPLACE_VOLUMETRICS_RESULT_NAME",
+    INPLACE_VOLUMES_FILTER = "INPLACE_VOLUMES_FILTER",
+    INPLACE_VOLUMES_RESULT_NAME = "INPLACE_VOLUMES_RESULT_NAME",
     PARAMETER = "PARAMETER",
 }
 
@@ -43,8 +43,8 @@ export const SyncSettingsMeta = {
         abbreviation: "CAM",
     },
     [SyncSettingKey.VERTICAL_SCALE]: { name: "Vertical Scale", abbreviation: "VSCAL" },
-    [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER]: { name: "Inplace Volumetrics Filter", abbreviation: "IVF" },
-    [SyncSettingKey.INPLACE_VOLUMETRICS_RESULT_NAME]: { name: "Inplace Volumetrics Result Name", abbreviation: "IVRN" },
+    [SyncSettingKey.INPLACE_VOLUMES_FILTER]: { name: "Inplace Volumes Filter", abbreviation: "IVF" },
+    [SyncSettingKey.INPLACE_VOLUMES_RESULT_NAME]: { name: "Inplace Volumes Result Name", abbreviation: "IVRN" },
     [SyncSettingKey.PARAMETER]: { name: "Parameter", abbreviation: "Param" },
 };
 

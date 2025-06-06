@@ -1,1 +1,0 @@
-export { InplaceVolumetricsFilterComponent } from "./inplaceVolumetricsFilterComponent";

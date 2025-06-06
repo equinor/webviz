@@ -42,16 +42,16 @@ class InplaceVolumetricsIdentifier(StrEnum):
 
 
 class FluidZone(StrEnum):
-    OIL = "Oil"
-    GAS = "Gas"
-    WATER = "Water"
+    OIL = "oil"
+    GAS = "gas"
+    WATER = "water"
 
 
 class FluidSelection(StrEnum):
-    OIL = "Oil"
-    GAS = "Gas"
-    WATER = "Water"
-    ACCUMULATED = "Accumulated"
+    OIL = "oil"
+    GAS = "gas"
+    WATER = "water"
+    ACCUMULATED = "accumulated"
 
 
 class CalculatedVolume(StrEnum):
