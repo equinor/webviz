@@ -1,6 +1,6 @@
-import "./fieldProduction";
-import "./wellVectors";
-import "./inplaceParameterCorrelation";
-import "./fieldProductionParameterCorrelation";
+import "./timeseriesFieldProduction";
+import "./timeSeriesWellVectors";
+import "./correlationInplaceVolumes";
+import "./correlationFieldProduction";
 import "./oatTimeSeries";
 import "./oatInplace";

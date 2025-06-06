@@ -174,8 +174,6 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                         corrCutOff,
                     );
 
-                    // const color = responseChannelData.metaData.preferredColor;
-
                     const channelTitle = responseChannelData.metaData.displayString;
                     const color = responseChannelData.metaData.preferredColor;
                     figure.addCorrelationTrace(
