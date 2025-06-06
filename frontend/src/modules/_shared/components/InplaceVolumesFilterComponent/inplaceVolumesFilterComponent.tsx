@@ -300,7 +300,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                             />
                         </ErrorWrapper>
                     </CollapsibleGroup>
-                    <CollapsibleGroup title="Indices filters" expanded>
+                    <CollapsibleGroup title="Index filters" expanded>
                         <div className="flex flex-col gap-2">
                             <div className="flex flex-row items-center gap-2">
                                 <div className="grow">Allow intersection of values</div>

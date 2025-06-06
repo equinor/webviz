@@ -123,13 +123,13 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
             subHeading: subHeading,
         };
 
-        if (numberOfRows !== resultStatisticalTable.getNumRows()) {
+        if (resultStatisticalTable.getNumRows() > 0 && numberOfRows !== resultStatisticalTable.getNumRows()) {
             throw new Error(
                 "Number of rows in statistical table does not match the number of rows in the non-statistical table.",
             );
         }
 
-        for (let i = 0; i < numberOfRows; i++) {
+        for (let i = 0; i < resultStatisticalTable.getNumRows(); i++) {
             const statisticalRow = resultStatisticalTable.getRow(i);
 
             // Add resultName as prefix to column names

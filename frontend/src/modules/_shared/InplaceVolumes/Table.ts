@@ -103,7 +103,7 @@ export class Table {
     }
 
     private assertColumnLengthsMatch(): void {
-        const numRows = this._columns[0].getNumRows();
+        const numRows = this._columns[0]?.getNumRows() ?? 0;
         for (const column of this._columns) {
             if (column.getNumRows() !== numRows) {
                 throw new Error("Column lengths do not match");
@@ -116,7 +116,7 @@ export class Table {
     }
 
     getNumRows(): number {
-        return this._columns[0].getNumRows();
+        return this._columns[0]?.getNumRows() ?? 0;
     }
 
     getColumns(): Column<any>[] {
