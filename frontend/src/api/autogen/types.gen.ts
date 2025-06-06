@@ -24,16 +24,16 @@ export type B64UintArray_api = {
 
 export type BodyPostGetAggregatedPerRealizationTableData_api = {
     /**
-     * Selected identifiers and wanted values
+     * Selected indices and wanted values
      */
-    identifiers_with_values: Array<InplaceVolumetricsIdentifierWithValues_api>;
+    indices_with_values: Array<InplaceVolumesIndexWithValues_api>;
 };
 
 export type BodyPostGetAggregatedStatisticalTableData_api = {
     /**
-     * Selected identifiers and wanted values
+     * Selected indices and wanted values
      */
-    identifiers_with_values: Array<InplaceVolumetricsIdentifierWithValues_api>;
+    indices_with_values: Array<InplaceVolumesIndexWithValues_api>;
 };
 
 export type BodyPostGetPolylineIntersection_api = {
@@ -210,12 +210,6 @@ export enum FlowRateType_api {
     WAT = "WAT",
 }
 
-export enum FluidZone_api {
-    OIL = "Oil",
-    GAS = "Gas",
-    WATER = "Water",
-}
-
 export enum Frequency_api {
     DAILY = "DAILY",
     WEEKLY = "WEEKLY",
@@ -302,52 +296,36 @@ export type HttpValidationError_api = {
     detail?: Array<ValidationError_api>;
 };
 
-/**
- * Statistical volumetric data for single volume table
- *
- * Contains data for a single fluid zone, e.g. Oil, Gas, Water, or sum of fluid zones
- */
-export type InplaceStatisticalVolumetricTableData_api = {
-    fluidSelectionName: string;
-    selectorColumns: Array<RepeatedTableColumnData_api>;
-    resultColumnStatistics: Array<TableColumnStatisticalData_api>;
-};
+export enum InplaceVolumesFluid_api {
+    OIL = "oil",
+    GAS = "gas",
+    WATER = "water",
+}
 
-/**
- * Statistical volumetric data for a single table per fluid selection
- *
- * Fluid selection can be single fluid zones, e.g. Oil, Gas, Water, or sum of fluid zones - Oil + Gas + Water
- */
-export type InplaceStatisticalVolumetricTableDataPerFluidSelection_api = {
-    tableDataPerFluidSelection: Array<InplaceStatisticalVolumetricTableData_api>;
-};
-
-/**
- * Allowed volumetric response names
- */
-export enum InplaceVolumetricResultName_api {
-    BULK = "BULK",
-    NET = "NET",
-    PORO = "PORO",
-    PORO_NET = "PORO_NET",
-    PORV = "PORV",
-    HCPV = "HCPV",
-    STOIIP = "STOIIP",
-    GIIP = "GIIP",
-    NTG = "NTG",
-    ASSOCIATEDGAS = "ASSOCIATEDGAS",
-    ASSOCIATEDOIL = "ASSOCIATEDOIL",
-    BO = "BO",
-    BG = "BG",
-    SW = "SW",
-    STOIIP_TOTAL = "STOIIP_TOTAL",
-    GIIP_TOTAL = "GIIP_TOTAL",
+export enum InplaceVolumesIndex_api {
+    ZONE = "ZONE",
+    REGION = "REGION",
+    FACIES = "FACIES",
+    LICENSE = "LICENSE",
+    FLUID = "FLUID",
 }
 
 /**
- * Definition of possible statistics for a result column in an inplace volumetrics table
+ * Unique values for an index column in an inplace volumes table
+ *
+ * If a column contain
+ *
+ * All values should ideally be strings, but it is common to see integers, especially for REGION
  */
-export enum InplaceVolumetricStatistic_api {
+export type InplaceVolumesIndexWithValues_api = {
+    indexColumn: InplaceVolumesIndex_api;
+    values: Array<string | number>;
+};
+
+/**
+ * Definition of possible statistics for a result column in an inplace volumes table
+ */
+export enum InplaceVolumesStatistic_api {
     MEAN = "mean",
     STDDEV = "stddev",
     MAX = "max",
@@ -357,49 +335,53 @@ export enum InplaceVolumetricStatistic_api {
 }
 
 /**
- * Volumetric data for a single table
+ * Statistical inplace volumes data for single volume table
  *
- * Contains data for a single fluid zone, e.g. Oil, Gas, Water, or sum of fluid zones
+ * Contains data for a single fluid selection, e.g. Oil, Gas, Water, or sum of fluids
  */
-export type InplaceVolumetricTableData_api = {
+export type InplaceVolumesStatisticalTableData_api = {
+    fluidSelectionName: string;
+    selectorColumns: Array<RepeatedTableColumnData_api>;
+    resultColumnStatistics: Array<TableColumnStatisticalData_api>;
+};
+
+/**
+ * Statistical inplace volumes data for a single table per fluid selection
+ *
+ * Fluid selection can be single fluid (Oil, Gas, Water) or sum of fluids (Oil + Gas + Water)
+ */
+export type InplaceVolumesStatisticalTableDataPerFluidSelection_api = {
+    tableDataPerFluidSelection: Array<InplaceVolumesStatisticalTableData_api>;
+};
+
+/**
+ * Inplace volumes data for a single table
+ *
+ * Contains data for a single fluid selection, e.g. Oil, Gas, Water, or sum of fluids
+ */
+export type InplaceVolumesTableData_api = {
     fluidSelectionName: string;
     selectorColumns: Array<RepeatedTableColumnData_api>;
     resultColumns: Array<TableColumnData_api>;
 };
 
 /**
- * Volumetric data for a single table per fluid selection
+ * Inplace volumes data for a single table per fluid selection
  *
- * Fluid selection can be single fluid zones, e.g. Oil, Gas, Water, or sum of fluid zones - Oil + Gas + Water
+ * Fluid selection can be single fluid (Oil, Gas, Water) or sum of fluids (Oil + Gas + Water)
  */
-export type InplaceVolumetricTableDataPerFluidSelection_api = {
-    tableDataPerFluidSelection: Array<InplaceVolumetricTableData_api>;
-};
-
-export enum InplaceVolumetricsIdentifier_api {
-    ZONE = "ZONE",
-    REGION = "REGION",
-    FACIES = "FACIES",
-    LICENSE = "LICENSE",
-}
-
-/**
- * Unique values for an index column in a volumetric table
- * All values should ideally be strings, but it is common to see integers, especially for REGION
- */
-export type InplaceVolumetricsIdentifierWithValues_api = {
-    identifier: InplaceVolumetricsIdentifier_api;
-    values: Array<string | number>;
+export type InplaceVolumesTableDataPerFluidSelection_api = {
+    tableDataPerFluidSelection: Array<InplaceVolumesTableData_api>;
 };
 
 /**
- * Definition of a volumetric table
+ * Definition of a inplace volumes table
  */
-export type InplaceVolumetricsTableDefinition_api = {
+export type InplaceVolumesTableDefinition_api = {
     tableName: string;
-    fluidZones: Array<FluidZone_api>;
-    resultNames: Array<InplaceVolumetricResultName_api>;
-    identifiersWithValues: Array<InplaceVolumetricsIdentifierWithValues_api>;
+    fluids: Array<InplaceVolumesFluid_api>;
+    resultNames: Array<string>;
+    indicesWithValues: Array<InplaceVolumesIndexWithValues_api>;
 };
 
 export type NetworkNode_api = {
@@ -1782,7 +1764,7 @@ export type GetTableDefinitionsData_api = {
          */
         ensemble_name: string;
     };
-    url: "/inplace_volumetrics/table_definitions/";
+    url: "/inplace_volumes/table_definitions/";
 };
 
 export type GetTableDefinitionsErrors_api = {
@@ -1798,7 +1780,7 @@ export type GetTableDefinitionsResponses_api = {
     /**
      * Successful Response
      */
-    200: Array<InplaceVolumetricsTableDefinition_api>;
+    200: Array<InplaceVolumesTableDefinition_api>;
 };
 
 export type GetTableDefinitionsResponse_api = GetTableDefinitionsResponses_api[keyof GetTableDefinitionsResponses_api];
@@ -1820,27 +1802,27 @@ export type PostGetAggregatedPerRealizationTableDataData_api = {
          */
         table_name: string;
         /**
-         * The name of the volumetric results
+         * The name of the inplace volumes results
          */
         result_names: Array<string>;
         /**
-         * The fluid zones to aggregate by
+         * The fluids to aggregate by
          */
-        fluid_zones: Array<FluidZone_api>;
+        fluids: Array<InplaceVolumesFluid_api>;
         /**
-         * Whether to accumulate fluid zones
+         * Whether to accumulate fluids
          */
-        accumulate_fluid_zones: boolean;
+        accumulate_fluids: boolean;
         /**
-         * The identifiers to group table data by
+         * The indices to group table data by
          */
-        group_by_identifiers?: Array<InplaceVolumetricsIdentifier_api> | null;
+        group_by_indices?: Array<string> | null;
         /**
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
     };
-    url: "/inplace_volumetrics/get_aggregated_per_realization_table_data/";
+    url: "/inplace_volumes/get_aggregated_per_realization_table_data/";
 };
 
 export type PostGetAggregatedPerRealizationTableDataErrors_api = {
@@ -1857,7 +1839,7 @@ export type PostGetAggregatedPerRealizationTableDataResponses_api = {
     /**
      * Successful Response
      */
-    200: InplaceVolumetricTableDataPerFluidSelection_api;
+    200: InplaceVolumesTableDataPerFluidSelection_api;
 };
 
 export type PostGetAggregatedPerRealizationTableDataResponse_api =
@@ -1880,27 +1862,27 @@ export type PostGetAggregatedStatisticalTableDataData_api = {
          */
         table_name: string;
         /**
-         * The name of the volumetric results
+         * The name of the inplace volumes results
          */
         result_names: Array<string>;
         /**
-         * The fluid zones to aggregate by
+         * The fluids to aggregate by
          */
-        fluid_zones: Array<FluidZone_api>;
+        fluids: Array<InplaceVolumesFluid_api>;
         /**
-         * Whether to accumulate fluid zones
+         * Whether to accumulate fluids
          */
-        accumulate_fluid_zones: boolean;
+        accumulate_fluids: boolean;
         /**
-         * The identifiers to group table data by
+         * The indices to group table data by
          */
-        group_by_identifiers?: Array<InplaceVolumetricsIdentifier_api> | null;
+        group_by_indices?: Array<string> | null;
         /**
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
     };
-    url: "/inplace_volumetrics/get_aggregated_statistical_table_data/";
+    url: "/inplace_volumes/get_aggregated_statistical_table_data/";
 };
 
 export type PostGetAggregatedStatisticalTableDataErrors_api = {
@@ -1917,7 +1899,7 @@ export type PostGetAggregatedStatisticalTableDataResponses_api = {
     /**
      * Successful Response
      */
-    200: InplaceStatisticalVolumetricTableDataPerFluidSelection_api;
+    200: InplaceVolumesStatisticalTableDataPerFluidSelection_api;
 };
 
 export type PostGetAggregatedStatisticalTableDataResponse_api =
