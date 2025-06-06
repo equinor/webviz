@@ -20,6 +20,7 @@ class InplaceVolumes:
     class Fluid(str, Enum):
         """Fluid types used as values in the FLUID column."""
 
+        # pylint: disable=invalid-name
         oil = "oil"
         gas = "gas"
         water = "water"

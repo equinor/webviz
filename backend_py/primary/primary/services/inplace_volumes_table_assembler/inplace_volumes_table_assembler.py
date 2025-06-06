@@ -108,7 +108,7 @@ class InplaceVolumesTableAssembler:
             volume_column_names = columns_meta.volume_columns
 
             unique_fluids = index_columns_uniques_dict.get(InplaceVolumes.TableIndexColumns.FLUID.value, [])
-            fluids = [get_fluid_from_string(elm) for elm in unique_fluids]
+            fluids = [get_fluid_from_string(str(elm)) for elm in unique_fluids]
             valid_fluids = [elm for elm in fluids if elm is not None]
 
             calculated_volumes = get_available_calculated_volumes_from_volume_names(volume_column_names)

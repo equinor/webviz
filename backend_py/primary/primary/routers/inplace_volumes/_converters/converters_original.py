@@ -8,14 +8,15 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
 )
 
 from ._shared_converters import (
-    _convert_table_data_per_fluid_selection_to_schema,
-    _convert_statistical_table_data_per_fluid_selection_to_schema,
+    convert_table_data_per_fluid_selection_to_schema,
+    convert_statistical_table_data_per_fluid_selection_to_schema,
 )
 
 from .. import schemas
 
 
 class ConverterOriginal:
+    @staticmethod
     def convert_schema_to_identifiers_with_values(
         identifiers_with_values: list[schemas.InplaceVolumesIndexWithValues],
     ) -> list[InplaceVolumetricsIdentifierWithValues]:
@@ -26,10 +27,12 @@ class ConverterOriginal:
             converted.append(InplaceVolumetricsIdentifierWithValues(identifier, values))
         return converted
 
+    @staticmethod
     def convert_schema_to_fluid_zones(fluids: list[schemas.InplaceVolumesFluid]) -> list[FluidZone]:
         """Converts the fluids from the API format to the sumo service format"""
         return [FluidZone(fluid_zone.value) for fluid_zone in fluids]
 
+    @staticmethod
     def convert_schema_to_identifiers(
         indices: list[str] | None,
     ) -> list[InplaceVolumetricsIdentifier] | None:
@@ -39,6 +42,7 @@ class ConverterOriginal:
 
         return [ConverterOriginal._convert_schema_to_identifier(index) for index in indices]
 
+    @staticmethod
     def _convert_schema_to_identifier(index_string: str) -> InplaceVolumetricsIdentifier:
         """Converts the index from the API format to the sumo service format"""
         if index_string not in InplaceVolumetricsIdentifier.__members__:
@@ -48,10 +52,12 @@ class ConverterOriginal:
 
         return InplaceVolumetricsIdentifier(index_string)
 
+    @staticmethod
     def _convert_fluid_zones_to_schema(fluid_zones: list[FluidZone]) -> list[schemas.InplaceVolumesFluid]:
         """Converts the fluid zones from the sumo service to the API format"""
         return [schemas.InplaceVolumesFluid(fluid_zone.value.lower()) for fluid_zone in fluid_zones]
 
+    @staticmethod
     def to_api_table_definitions(
         table_definitions: list[InplaceVolumetricsTableDefinition],
     ) -> list[schemas.InplaceVolumesTableDefinition]:
@@ -72,12 +78,14 @@ class ConverterOriginal:
             for table_definition in table_definitions
         ]
 
+    @staticmethod
     def convert_table_data_per_fluid_selection_to_schema(
         table_per_fluid_selection: InplaceVolumetricTableDataPerFluidSelection,
     ) -> schemas.InplaceVolumesTableDataPerFluidSelection:
-        return _convert_table_data_per_fluid_selection_to_schema(table_per_fluid_selection)
+        return convert_table_data_per_fluid_selection_to_schema(table_per_fluid_selection)
 
+    @staticmethod
     def convert_statistical_table_data_per_fluid_selection_to_schema(
         table_data_per_fluid_selection: InplaceStatisticalVolumetricTableDataPerFluidSelection,
     ) -> schemas.InplaceVolumesStatisticalTableDataPerFluidSelection:
-        return _convert_statistical_table_data_per_fluid_selection_to_schema(table_data_per_fluid_selection)
+        return convert_statistical_table_data_per_fluid_selection_to_schema(table_data_per_fluid_selection)

@@ -2,7 +2,8 @@ import type React from "react";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
-import { InplaceVolumesIndex_api, InplaceVolumesStatistic_api } from "@api";
+import type { InplaceVolumesIndex_api } from "@api";
+import { InplaceVolumesStatistic_api } from "@api";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";

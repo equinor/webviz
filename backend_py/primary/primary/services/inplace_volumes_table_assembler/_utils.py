@@ -415,7 +415,7 @@ def create_property_column_expressions(
         )
     ):
         expression = pl.col(InplaceVolumes.VolumetricColumns.HCPV.value) / pl.col(
-            InplaceVolumes.VolumetricColumns.HCPV.STOIIP.value
+            InplaceVolumes.VolumetricColumns.STOIIP.value
         )
         calculated_property_expressions.append(_create_named_expression_with_nan_for_inf(expression, Property.BO.value))
 

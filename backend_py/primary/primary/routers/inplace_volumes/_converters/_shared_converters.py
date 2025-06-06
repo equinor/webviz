@@ -1,10 +1,11 @@
 from primary.services.sumo_access.inplace_volumetrics_types import (
-    Statistic,
+    Statistic as InplaceVolumetricsStatistic,
     InplaceVolumetricTableDataPerFluidSelection,
     InplaceStatisticalVolumetricTableDataPerFluidSelection,
 )
 
 from primary.services.sumo_access.inplace_volumes_table_types import (
+    Statistic as InplaceVolumesStatistic,
     InplaceVolumesTableDataPerFluidSelection,
     InplaceVolumesStatisticalTableDataPerFluidSelection,
 )
@@ -19,7 +20,7 @@ from .. import schemas
 ################################################################################################################################
 
 
-def _convert_table_data_per_fluid_selection_to_schema(
+def convert_table_data_per_fluid_selection_to_schema(
     table_per_fluid_selection: InplaceVolumetricTableDataPerFluidSelection | InplaceVolumesTableDataPerFluidSelection,
 ) -> schemas.InplaceVolumesTableDataPerFluidSelection:
     """Converts the table data from the sumo service to the schema format"""
@@ -52,7 +53,7 @@ def _convert_table_data_per_fluid_selection_to_schema(
     return schemas.InplaceVolumesTableDataPerFluidSelection(tableDataPerFluidSelection=tables)
 
 
-def _convert_statistical_table_data_per_fluid_selection_to_schema(
+def convert_statistical_table_data_per_fluid_selection_to_schema(
     table_data_per_fluid_selection: InplaceStatisticalVolumetricTableDataPerFluidSelection
     | InplaceVolumesStatisticalTableDataPerFluidSelection,
 ) -> schemas.InplaceVolumesStatisticalTableDataPerFluidSelection:
@@ -90,7 +91,7 @@ def _convert_statistical_table_data_per_fluid_selection_to_schema(
 
 
 def _convert_statistic_values_dict_to_schema(
-    statistic_values: dict[Statistic, list[float]],
+    statistic_values: dict[InplaceVolumesStatistic, list[float]] | dict[InplaceVolumetricsStatistic, list[float]]
 ) -> dict[schemas.InplaceVolumesStatistic, list[float]]:
     """Converts the statistic values dictionary from the service layer format to API format"""
     return {
@@ -100,20 +101,20 @@ def _convert_statistic_values_dict_to_schema(
 
 
 def _convert_statistic_enum_to_inplace_volumetric_statistic_enum(
-    statistic: Statistic,
+    statistic: InplaceVolumesStatistic | InplaceVolumetricsStatistic,
 ) -> schemas.InplaceVolumesStatistic:
     """Converts the statistic enum from the service layer format to API enum"""
-    if statistic == Statistic.MEAN:
+    if statistic == InplaceVolumesStatistic.MEAN or statistic == InplaceVolumetricsStatistic.MEAN:
         return schemas.InplaceVolumesStatistic.MEAN
-    if statistic == Statistic.STD_DEV:
+    if statistic == InplaceVolumesStatistic.STD_DEV or statistic == InplaceVolumetricsStatistic.STD_DEV:
         return schemas.InplaceVolumesStatistic.STD_DEV
-    if statistic == Statistic.MIN:
+    if statistic == InplaceVolumesStatistic.MIN or statistic == InplaceVolumetricsStatistic.MIN:
         return schemas.InplaceVolumesStatistic.MIN
-    if statistic == Statistic.MAX:
+    if statistic == InplaceVolumesStatistic.MAX or statistic == InplaceVolumetricsStatistic.MAX:
         return schemas.InplaceVolumesStatistic.MAX
-    if statistic == Statistic.P10:
+    if statistic == InplaceVolumesStatistic.P10 or statistic == InplaceVolumetricsStatistic.P10:
         return schemas.InplaceVolumesStatistic.P10
-    if statistic == Statistic.P90:
+    if statistic == InplaceVolumesStatistic.P90 or statistic == InplaceVolumetricsStatistic.P90:
         return schemas.InplaceVolumesStatistic.P90
 
     raise ValueError(f"Unhandled statistic value: {statistic.value}")

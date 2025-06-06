@@ -34,6 +34,7 @@ async def get_table_definitions(
 ) -> list[schemas.InplaceVolumesTableDefinition]:
     """Get the inplace volumes tables definitions for a given ensemble."""
     # Try th inplace volumes table access first
+    # pylint: disable=fixme
     # TODO: Investigate how to handle data versions, without having to check for the existence of the table names
     access = InplaceVolumesTableAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
@@ -43,18 +44,18 @@ async def get_table_definitions(
         assembler = InplaceVolumesTableAssembler(access)
         tables = await assembler.get_inplace_volumes_tables_metadata_async()
         return ConverterFmuDataIo.to_api_volumes_table_definitions(tables)
-    
+
     # If the inplace volumes table does not exist, try the InplaceVolumetricsAccess
-    access = InplaceVolumetricsAccess.from_iteration_name(
+    secondary_access = InplaceVolumetricsAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    assembler = InplaceVolumetricsAssembler(access)
-    tables = await assembler.get_volumetric_table_metadata_async()
-    return ConverterOriginal.to_api_table_definitions(tables)
+    secondary_assembler = InplaceVolumetricsAssembler(secondary_access)
+    secondary_tables = await secondary_assembler.get_volumetric_table_metadata_async()
+    return ConverterOriginal.to_api_table_definitions(secondary_tables)
 
 
 @router.post("/get_aggregated_per_realization_table_data/", tags=["inplace_volumes"])
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments, too-many-locals
 async def post_get_aggregated_per_realization_table_data(
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
@@ -91,12 +92,13 @@ async def post_get_aggregated_per_realization_table_data(
     perf_metrics.record_lap("decode realizations array")
 
     # Try th inplace volumes table access first
+    # pylint: disable=fixme
     # TODO: Investigate how to handle data versions, without having to check for the existence of the table names
     access = InplaceVolumesTableAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
-    perf_metrics.record_lap("get-access")    
+    perf_metrics.record_lap("get-access")
 
     inplace_volume_table_names = await access.get_inplace_volumes_table_names_async()
     if inplace_volume_table_names != []:
@@ -117,33 +119,35 @@ async def post_get_aggregated_per_realization_table_data(
         LOGGER.info(f"Got aggregated inplace volumes data in: {perf_metrics.to_string()}")
 
         return ConverterFmuDataIo.convert_table_data_per_fluid_selection_to_schema(data)
-    
+
     # If the inplace volumes table does not exist, try the InplaceVolumetricsTableAssembler
-    access = InplaceVolumetricsAccess.from_iteration_name(
+    secondary_access = InplaceVolumetricsAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
     perf_metrics.record_lap("get-access-secondary")
 
-    assembler = InplaceVolumetricsAssembler(access)
-    data = await assembler.create_accumulated_by_selection_per_realization_volumetric_table_data_async(
-        table_name=table_name,
-        result_names=set(result_names),
-        fluid_zones=ConverterOriginal.convert_schema_to_fluid_zones(fluids),
-        identifiers_with_values=ConverterOriginal.convert_schema_to_identifiers_with_values(indices_with_values),
-        group_by_identifiers= ConverterOriginal.convert_schema_to_identifiers(group_by_indices),
-        realizations=realizations,
-        accumulate_fluid_zones= accumulate_fluids,
+    secondary_assembler = InplaceVolumetricsAssembler(secondary_access)
+    secondary_data = (
+        await secondary_assembler.create_accumulated_by_selection_per_realization_volumetric_table_data_async(
+            table_name=table_name,
+            result_names=set(result_names),
+            fluid_zones=ConverterOriginal.convert_schema_to_fluid_zones(fluids),
+            identifiers_with_values=ConverterOriginal.convert_schema_to_identifiers_with_values(indices_with_values),
+            group_by_identifiers=ConverterOriginal.convert_schema_to_identifiers(group_by_indices),
+            realizations=realizations,
+            accumulate_fluid_zones=accumulate_fluids,
+        )
     )
 
     perf_metrics.record_lap("calculate-accumulated-data-secondary")
     LOGGER.info(f"Got aggregated inplace volumes data in: {perf_metrics.to_string()}")
 
-    ConverterOriginal.convert_table_data_per_fluid_selection_to_schema(data)
+    return ConverterOriginal.convert_table_data_per_fluid_selection_to_schema(secondary_data)
 
 
 @router.post("/get_aggregated_statistical_table_data/", tags=["inplace_volumes"])
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments, too-many-locals
 async def post_get_aggregated_statistical_table_data(
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
@@ -180,6 +184,7 @@ async def post_get_aggregated_statistical_table_data(
     perf_metrics.record_lap("decode realizations array")
 
     # Try th inplace volumes table access first
+    # pylint: disable=fixme
     # TODO: Investigate how to handle data versions, without having to check for the existence of the table names
     access = InplaceVolumesTableAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
@@ -206,17 +211,17 @@ async def post_get_aggregated_statistical_table_data(
         LOGGER.info(f"Got aggregated statistical inplace volumes data in: {perf_metrics.to_string()}")
 
         return ConverterFmuDataIo.convert_statistical_table_data_per_fluid_selection_to_schema(data)
-    
-     # If the inplace volumes table does not exist, try the InplaceVolumetricsTableAssembler
-    access = InplaceVolumetricsAccess.from_iteration_name(
+
+    # If the inplace volumes table does not exist, try the InplaceVolumetricsTableAssembler
+    secondary_access = InplaceVolumetricsAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
     perf_metrics.record_lap("get-access-secondary")
 
-    assembler = InplaceVolumetricsAssembler(access)
+    secondary_assembler = InplaceVolumetricsAssembler(secondary_access)
 
-    data = await assembler.create_accumulated_by_selection_statistical_volumetric_table_data_async(
+    secondary_data = await secondary_assembler.create_accumulated_by_selection_statistical_volumetric_table_data_async(
         table_name=table_name,
         result_names=set(result_names),
         fluid_zones=ConverterOriginal.convert_schema_to_fluid_zones(fluids),
@@ -229,4 +234,4 @@ async def post_get_aggregated_statistical_table_data(
     perf_metrics.record_lap("calculate-accumulated-data-secondary")
     LOGGER.info(f"Got aggregated statistical inplace volumes data in: {perf_metrics.to_string()}")
 
-    return ConverterOriginal.convert_statistical_table_data_per_fluid_selection_to_schema(data)
+    return ConverterOriginal.convert_statistical_table_data_per_fluid_selection_to_schema(secondary_data)
