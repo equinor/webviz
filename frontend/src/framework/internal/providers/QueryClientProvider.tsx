@@ -5,9 +5,9 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Provider } from "jotai";
 
 import { HydrateQueryClientAtom } from "../components/HydrateQueryClientAtom";
+import { tanstackDebugTimeOverride } from "../utils/debug";
 
 import { AuthState, useAuthProvider } from "./AuthProvider";
-
 
 type QueryError = {
     url: string;
@@ -29,8 +29,8 @@ export const CustomQueryClientProvider: React.FC<{ children: React.ReactElement 
                     refetchOnWindowFocus: false,
                     refetchOnMount: false,
                     refetchOnReconnect: true,
-                    gcTime: 1000 * 60, // 1 minute
-                    staleTime: 1000 * 60, // 1 minute
+                    gcTime: tanstackDebugTimeOverride(1000 * 60), // 1 minute
+                    staleTime: tanstackDebugTimeOverride(1000 * 60), // 1 minute
                 },
             },
             queryCache: new QueryCache({

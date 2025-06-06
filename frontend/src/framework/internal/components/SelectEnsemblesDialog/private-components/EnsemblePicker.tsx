@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { CaseInfo_api } from "@api";
 import { getCasesOptions, getEnsemblesOptions, getFieldsOptions } from "@api";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
+import { tanstackDebugTimeOverride } from "@framework/internal/utils/debug";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -28,8 +29,8 @@ export type EnsemblePickerProps = {
     onAddEnsemble: (newEnsemble: RegularEnsembleItem) => void;
 };
 
-const STALE_TIME = 0;
-const CACHE_TIME = 5 * 60 * 1000;
+const STALE_TIME = tanstackDebugTimeOverride(0);
+const CACHE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
 
 interface CaseFilterSettings {
     keep: boolean;
