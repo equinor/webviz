@@ -1,7 +1,6 @@
+import { PlotData } from "plotly.js";
 import { formatRgb, modeRgb, useMode } from "culori";
 import type { ScatterLine } from "plotly.js";
-
-import type { TimeSeriesPlotData } from "../timeSeriesPlotData";
 
 /**
     Definition of statistics data for free line trace in fanchart
@@ -175,7 +174,7 @@ export function createFanchartTraces({
     hoverText = "",
     name = undefined,
     type = "scatter",
-}: CreateFanchartTracesOptions): Partial<TimeSeriesPlotData>[] {
+}: CreateFanchartTracesOptions): Partial<PlotData>[] {
     // NOTE:
     // - hovermode? not exposed?
 
@@ -194,8 +193,8 @@ export function createFanchartTraces({
     const fillColorDark = formatRgb({ ...rgb, alpha: 0.6 });
     const lineColor = formatRgb({ ...rgb, alpha: 1.0 });
 
-    function getDefaultTrace(statisticsName: string, values: number[]): Partial<TimeSeriesPlotData> {
-        const trace: Partial<TimeSeriesPlotData> = {
+    function getDefaultTrace(statisticsName: string, values: number[]): Partial<PlotData> {
+        const trace: Partial<PlotData> = {
             name: name ?? legendGroup,
             x: direction === TraceDirection.HORIZONTAL ? data.samples : values,
             y: direction === TraceDirection.HORIZONTAL ? values : data.samples,
@@ -223,7 +222,7 @@ export function createFanchartTraces({
         return trace;
     }
 
-    const traces: Partial<TimeSeriesPlotData>[] = [];
+    const traces: Partial<PlotData>[] = [];
 
     // Minimum
     if (data.minimumMaximum !== undefined) {

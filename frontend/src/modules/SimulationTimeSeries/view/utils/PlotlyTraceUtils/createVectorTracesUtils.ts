@@ -6,13 +6,17 @@ import type {
 } from "@api";
 import { DerivedVectorType_api, StatisticFunction_api } from "@api";
 
-import type { TimeSeriesPlotData } from "../timeSeriesPlotData";
+import type { PlotData } from "plotly.js";
 
-import type { FanchartData, FreeLineData, LowHighData, MinMaxData } from "./fanchartPlotting";
-import { createFanchartTraces } from "./fanchartPlotting";
-import type { LineData, StatisticsData } from "./statisticsPlotting";
-import { createStatisticsTraces } from "./statisticsPlotting";
-
+import type {
+    FanchartData,
+    FreeLineData,
+    LowHighData,
+    MinMaxData,
+} from "@modules/_shared/plotly/PlotlyTraceUtils/fanchartPlotting";
+import { createFanchartTraces } from "@modules/_shared/plotly/PlotlyTraceUtils/fanchartPlotting";
+import type { LineData, StatisticsData } from "@modules/_shared/plotly/PlotlyTraceUtils/statisticsPlotting";
+import { createStatisticsTraces } from "@modules/_shared/plotly/PlotlyTraceUtils/statisticsPlotting";
 
 function isDerivedVectorOfType(
     vectorData: VectorRealizationData_api | VectorStatisticData_api | VectorHistoricalData_api,
@@ -76,7 +80,7 @@ export function createVectorRealizationTrace({
     yaxis = "y",
     xaxis = "x",
     type = "scatter",
-}: CreateVectorRealizationTraceOptions): Partial<TimeSeriesPlotData> {
+}: CreateVectorRealizationTraceOptions): Partial<PlotData> {
     // TODO:
     // - type: "scattergl" or "scatter"? Maximum 8 WebGL contexts in Chrome gives issues?
     //         "scattergl" hides traces when zooming and panning for Ruben on work computer.
@@ -93,7 +97,7 @@ export function createVectorRealizationTrace({
         showlegend: vectorRealizationData.realization === 0 && showLegend ? true : false,
         yaxis: yaxis,
         xaxis: xaxis,
-    } as Partial<TimeSeriesPlotData>;
+    } as Partial<PlotData>;
 }
 
 /**
@@ -114,7 +118,7 @@ export function createVectorRealizationTraces({
     yaxis = "y",
     xaxis = "x",
     type = "scatter",
-}: CreateVectorRealizationTracesOptions): Partial<TimeSeriesPlotData>[] {
+}: CreateVectorRealizationTracesOptions): Partial<PlotData>[] {
     return vectorRealizationDataArray.map((realization) => {
         return createVectorRealizationTrace({
             vectorRealizationData: realization,
@@ -155,7 +159,7 @@ export function createHistoricalVectorTrace({
     lineShape = "linear",
     name: name,
     legendRank,
-}: CreateHistoricalVectorTraceOptions): Partial<TimeSeriesPlotData> {
+}: CreateHistoricalVectorTraceOptions): Partial<PlotData> {
     const hoverText = name ? `History: ${name}` : "History";
     return {
         line: { shape: lineShape, color: color },
@@ -195,7 +199,7 @@ export function createVectorObservationsTraces({
     showLegend = false,
     name = undefined,
     type = "scatter",
-}: CreateVectorObservationTraceOptions): Partial<TimeSeriesPlotData>[] {
+}: CreateVectorObservationTraceOptions): Partial<PlotData>[] {
     // NB: "scattergl" does not include "+/- error" in the hover template `(%{x}, %{y})`, "scatter" does.
 
     const traceName = name ? `Observation<br>${name}` : "Observation";
@@ -264,7 +268,7 @@ export function createVectorFanchartTraces({
     showLegend = false,
     type = "scatter",
     legendRank,
-}: CreateVectorFanchartTracesOptions): Partial<TimeSeriesPlotData>[] {
+}: CreateVectorFanchartTracesOptions): Partial<PlotData>[] {
     const lowData = vectorStatisticData.valueObjects.find((v) => v.statisticFunction === StatisticFunction_api.P90);
     const highData = vectorStatisticData.valueObjects.find((v) => v.statisticFunction === StatisticFunction_api.P10);
     let lowHighData: LowHighData | undefined = undefined;
@@ -351,7 +355,7 @@ export function createVectorStatisticsTraces({
     showLegend = false,
     type = "scatter",
     legendRank,
-}: CreateVectorStatisticsTracesOptions): Partial<TimeSeriesPlotData>[] {
+}: CreateVectorStatisticsTracesOptions): Partial<PlotData>[] {
     const lowData = getVectorStatisticLineDataForFunction(vectorStatisticData, StatisticFunction_api.P90);
     const midData = getVectorStatisticLineDataForFunction(vectorStatisticData, StatisticFunction_api.P50);
     const highData = getVectorStatisticLineDataForFunction(vectorStatisticData, StatisticFunction_api.P10);
