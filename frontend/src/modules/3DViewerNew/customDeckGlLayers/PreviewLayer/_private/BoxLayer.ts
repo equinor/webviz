@@ -26,142 +26,96 @@ export class BoxLayer extends CompositeLayer<BoxLayerProps> {
     private makeGeometry(): Geometry {
         const { data } = this.props;
 
-        const vertices: Float32Array = new Float32Array(8 * 3);
-        const indices: Uint16Array = new Uint16Array(3 * 2 * 6);
-
         const [centerX, centerY, centerZ] = data.centerPoint;
-        const [width, height, depth] = data.dimensions;
         const [[uX, uY, uZ], [vX, vY, vZ]] = data.normalizedEdgeVectors;
+        const [clampedWidth, clampedHeight, clampedDepth] = data.dimensions.map((dim) => Math.max(dim, 0.001));
 
-        const halfWidth = width / 2;
-        const halfHeight = height / 2;
-        const halfDepth = depth / 2;
+        const halfWidth = clampedWidth / 2;
+        const halfHeight = clampedHeight / 2;
+        const halfDepth = clampedDepth / 2;
 
-        const center = vec3.fromArray([centerX, centerY, centerZ]);
-        const vecU = vec3.fromArray([uX, uY, uZ]);
-        const vecV = vec3.fromArray([vX, vY, vZ]);
+        const [wX, wY, wZ] = vec3.toArray(vec3.normalize(vec3.cross(vec3.create(uX, uY, uZ), vec3.create(vX, vY, vZ))));
 
-        // Make normal vector from u and v
-        const vecW = vec3.cross(vecU, vecV);
-
-        // Make vertices wrt to vectors
-        vertices.set(
-            vec3.toArray(
-                vec3.concat(
-                    center,
-                    vec3.scale(vecU, halfWidth),
-                    vec3.scale(vecV, halfHeight),
-                    vec3.scale(vecW, halfDepth),
-                ),
+        const corners = [
+            // Front face (+W)
+            vec3.create(
+                centerX + halfWidth * uX + halfHeight * vX + halfDepth * wX,
+                centerY + halfWidth * uY + halfHeight * vY + halfDepth * wY,
+                centerZ + halfWidth * uZ + halfHeight * vZ + halfDepth * wZ,
             ),
-            0,
-        );
-        vertices.set(
-            vec3.toArray(
-                vec3.concat(
-                    center,
-                    vec3.scale(vecU, halfWidth),
-                    vec3.scale(vecV, -halfHeight),
-                    vec3.scale(vecW, halfDepth),
-                ),
+            vec3.create(
+                centerX - halfWidth * uX + halfHeight * vX + halfDepth * wX,
+                centerY - halfWidth * uY + halfHeight * vY + halfDepth * wY,
+                centerZ - halfWidth * uZ + halfHeight * vZ + halfDepth * wZ,
             ),
-            3,
-        );
-        vertices.set(
-            vec3.toArray(
-                vec3.concat(
-                    center,
-                    vec3.scale(vecU, -halfWidth),
-                    vec3.scale(vecV, -halfHeight),
-                    vec3.scale(vecW, halfDepth),
-                ),
+            vec3.create(
+                centerX - halfWidth * uX - halfHeight * vX + halfDepth * wX,
+                centerY - halfWidth * uY - halfHeight * vY + halfDepth * wY,
+                centerZ - halfWidth * uZ - halfHeight * vZ + halfDepth * wZ,
             ),
-            6,
-        );
-        vertices.set(
-            vec3.toArray(
-                vec3.concat(
-                    center,
-                    vec3.scale(vecU, -halfWidth),
-                    vec3.scale(vecV, halfHeight),
-                    vec3.scale(vecW, halfDepth),
-                ),
+            vec3.create(
+                centerX + halfWidth * uX - halfHeight * vX + halfDepth * wX,
+                centerY + halfWidth * uY - halfHeight * vY + halfDepth * wY,
+                centerZ + halfWidth * uZ - halfHeight * vZ + halfDepth * wZ,
             ),
-            9,
-        );
-        vertices.set(
-            vec3.toArray(
-                vec3.concat(
-                    center,
-                    vec3.scale(vecU, halfWidth),
-                    vec3.scale(vecV, halfHeight),
-                    vec3.scale(vecW, -halfDepth),
-                ),
+            // Back face (-W)
+            vec3.create(
+                centerX + halfWidth * uX + halfHeight * vX - halfDepth * wX,
+                centerY + halfWidth * uY + halfHeight * vY - halfDepth * wY,
+                centerZ + halfWidth * uZ + halfHeight * vZ - halfDepth * wZ,
             ),
-            12,
-        );
-        vertices.set(
-            vec3.toArray(
-                vec3.concat(
-                    center,
-                    vec3.scale(vecU, halfWidth),
-                    vec3.scale(vecV, -halfHeight),
-                    vec3.scale(vecW, -halfDepth),
-                ),
+            vec3.create(
+                centerX - halfWidth * uX + halfHeight * vX - halfDepth * wX,
+                centerY - halfWidth * uY + halfHeight * vY - halfDepth * wY,
+                centerZ - halfWidth * uZ + halfHeight * vZ - halfDepth * wZ,
             ),
-            15,
-        );
-        vertices.set(
-            vec3.toArray(
-                vec3.concat(
-                    center,
-                    vec3.scale(vecU, -halfWidth),
-                    vec3.scale(vecV, -halfHeight),
-                    vec3.scale(vecW, -halfDepth),
-                ),
+            vec3.create(
+                centerX - halfWidth * uX - halfHeight * vX - halfDepth * wX,
+                centerY - halfWidth * uY - halfHeight * vY - halfDepth * wY,
+                centerZ - halfWidth * uZ - halfHeight * vZ - halfDepth * wZ,
             ),
-            18,
-        );
-        vertices.set(
-            vec3.toArray(
-                vec3.concat(
-                    center,
-                    vec3.scale(vecU, -halfWidth),
-                    vec3.scale(vecV, halfHeight),
-                    vec3.scale(vecW, -halfDepth),
-                ),
+            vec3.create(
+                centerX + halfWidth * uX - halfHeight * vX - halfDepth * wX,
+                centerY + halfWidth * uY - halfHeight * vY - halfDepth * wY,
+                centerZ + halfWidth * uZ - halfHeight * vZ - halfDepth * wZ,
             ),
-            21,
-        );
+        ];
 
-        // Front
-        indices.set([0, 1, 2], 0);
-        indices.set([0, 2, 3], 3);
+        const faces = [
+            { indices: [0, 1, 2, 3], normal: vec3.create(wX, wY, wZ) }, // +W (front)
+            { indices: [4, 5, 6, 7], normal: vec3.create(-wX, -wY, -wZ) }, // -W (back)
+            { indices: [1, 5, 6, 2], normal: vec3.create(-uX, -uY, -uZ) }, // -U (left)
+            { indices: [4, 0, 3, 7], normal: vec3.create(uX, uY, uZ) }, // +U (right)
+            { indices: [4, 5, 1, 0], normal: vec3.create(vX, vY, vZ) }, // +V (top)
+            { indices: [3, 2, 6, 7], normal: vec3.create(-vX, -vY, -vZ) }, // -V (bottom)
+        ];
 
-        // Back
-        indices.set([4, 6, 5], 6);
-        indices.set([4, 7, 6], 9);
+        const positions = new Float32Array(faces.length * 4 * 3);
+        const normals = new Float32Array(positions.length);
+        const indices = new Uint32Array(faces.length * 2 * 3);
 
-        // Left
-        indices.set([0, 7, 4], 12);
-        indices.set([0, 3, 7], 15);
+        let p = 0;
+        let i = 0;
+        for (let f = 0; f < faces.length; f++) {
+            const { indices: face, normal } = faces[f];
 
-        // Right
-        indices.set([1, 5, 6], 18);
-        indices.set([1, 6, 2], 21);
+            for (let v = 0; v < 4; v++) {
+                const corner = corners[face[v]];
+                positions.set([corner.x, corner.y, corner.z], p);
+                normals.set([normal.x, normal.y, normal.z], p);
+                p += 3;
+            }
 
-        // Top
-        indices.set([3, 2, 6], 24);
-        indices.set([3, 6, 7], 27);
-
-        // Bottom
-        indices.set([0, 4, 5], 30);
-        indices.set([0, 5, 1], 33);
+            const base = f * 4;
+            indices.set([base, base + 1, base + 2, base, base + 2, base + 3], i);
+            i += 6;
+        }
 
         return new Geometry({
             topology: "triangle-list",
             attributes: {
-                positions: vertices,
+                positions,
+                // normals: { value: normals, size: 3 },
             },
             indices,
         });
@@ -191,9 +145,10 @@ export class BoxLayer extends CompositeLayer<BoxLayerProps> {
                     data: [0],
                     mesh: this.state.geometry,
                     getPosition: () => [0, 0, 0],
-                    getColor: [100, 100, 100, 100],
-                    material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
+                    getColor: [200, 200, 200, 255],
+                    material: { ambient: 0.9, diffuse: 0.3, shininess: 0, specularColor: [0, 0, 0] },
                     pickable: false,
+                    parameters: { cull: false },
                 }),
             ),
         ];

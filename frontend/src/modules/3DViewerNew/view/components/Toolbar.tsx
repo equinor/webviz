@@ -36,7 +36,6 @@ export type ToolbarProps = {
 };
 
 export function Toolbar(props: ToolbarProps): React.ReactNode {
-    const [showPolylines, setShowPolylines] = React.useState<boolean>(false);
     const [expanded, setExpanded] = React.useState<boolean>(false);
     const [gridVisible, setGridVisible] = React.useState<boolean>(false);
     const [polylineName, setPolylineName] = React.useState<string | null>(null);
@@ -99,7 +98,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
         <GenericToolbar>
             <div className="flex flex-col items-center gap-1 text-sm">
                 <div className="flex items-center gap-1">
-                    <Button onClick={handleFitInViewClick} title="Focus top view">
+                    <Button onClick={handleFitInViewClick} title="Reset view to fit all objects">
                         <FilterCenterFocus fontSize="inherit" />
                     </Button>
                     <div className={resolveClassNames("flex gap-1 items-center", expanded ? "flex" : "hidden")}>

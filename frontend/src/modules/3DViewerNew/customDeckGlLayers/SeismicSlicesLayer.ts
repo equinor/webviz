@@ -30,7 +30,7 @@ export class SeismicSlicesLayer extends CompositeLayer<SeismicSlicesLayerProps> 
     static layerName = "SeismicSlicesLayer";
 
     updateState({ changeFlags, props }: UpdateParameters<this>): void {
-        if (props.reportBoundingBox && changeFlags.dataChanged) {
+        if (props.reportBoundingBox && changeFlags.propsOrDataChanged) {
             props.reportBoundingBox({
                 layerBoundingBox: this.calcBoundingBox(),
             });

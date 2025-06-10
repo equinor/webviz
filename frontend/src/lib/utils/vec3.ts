@@ -153,6 +153,7 @@ export function concat(...vectors: Vec3[]): Vec3 {
  */
 export function normalize(vector: Vec3): Vec3 {
     const len = length(vector);
+    if (len === 0) return { x: 0, y: 0, z: 0 };
     return { x: vector.x / len, y: vector.y / len, z: vector.z / len };
 }
 
