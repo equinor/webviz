@@ -1,6 +1,8 @@
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Info, Mouse } from "@mui/icons-material";
 import React from "react";
+
+import { Info, Mouse } from "@mui/icons-material";
+
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export function ControlsInfoBox() {
     const [expanded, setExpanded] = React.useState<boolean>(false);

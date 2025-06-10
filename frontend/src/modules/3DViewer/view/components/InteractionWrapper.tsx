@@ -13,9 +13,9 @@ import { DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
 import { type Polyline, PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";
 
 import { ContextMenu } from "./ContextMenu";
+import { ControlsInfoBox } from "./ControlsInfoBox";
 import { ReadoutWrapper, type ReadoutWrapperProps } from "./ReadoutWrapper";
 import { Toolbar } from "./Toolbar";
-import { ControlsInfoBox } from "./ControlsInfoBox";
 
 export type InteractionWrapperProps = Omit<
     ReadoutWrapperProps,

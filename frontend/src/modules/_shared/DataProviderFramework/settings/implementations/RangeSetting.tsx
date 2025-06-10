@@ -1,18 +1,20 @@
 import React from "react";
 
+import { Check } from "@mui/icons-material";
+import { isEqual } from "lodash";
+
+import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
+import { useElementSize } from "@lib/hooks/useElementSize";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SettingCategory } from "../settingsDefinitions";
-import { isEqual } from "lodash";
-import { useElementSize } from "@lib/hooks/useElementSize";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Check } from "@mui/icons-material";
+
 
 type ValueType = [number, number] | null;
 type Category = SettingCategory.RANGE;

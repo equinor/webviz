@@ -1,5 +1,7 @@
-import type { WellboreCasing_api, WellboreHeader_api } from "@api";
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import type { UseQueryResult } from "@tanstack/react-query";
+
+import type { WellboreCasing_api, WellboreHeader_api } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 import type { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
@@ -8,7 +10,7 @@ import {
     type VisualizationGroup,
     type VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import type { UseQueryResult } from "@tanstack/react-query";
+
 
 import type { TargetViewReturnTypes } from "../components/DataProvidersWrapper";
 

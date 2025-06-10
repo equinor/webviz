@@ -1,5 +1,6 @@
 import type { BBox } from "@lib/utils/bbox";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+
 import type { RealizationGridData } from "../utils/types";
 
 export function makeRealizationGridBoundingBox({ getData }: TransformerArgs<any, RealizationGridData>): BBox | null {

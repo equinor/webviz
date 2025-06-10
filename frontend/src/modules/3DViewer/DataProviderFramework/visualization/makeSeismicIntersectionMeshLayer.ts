@@ -1,4 +1,5 @@
 import type { Layer } from "@deck.gl/core";
+
 import {
     SeismicFenceMeshLayer,
     type SeismicFence,
@@ -8,7 +9,6 @@ import type {
     IntersectionRealizationSeismicSettings,
     IntersectionRealizationSeismicStoredData,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
-
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";

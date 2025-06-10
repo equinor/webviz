@@ -1,3 +1,5 @@
+import { isEqual } from "lodash";
+
 import { getSeismicCubeMetaListOptions, postGetSeismicFenceOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
@@ -8,7 +10,6 @@ import { createSectionWiseResampledPolylineWithSectionLengths } from "@modules/_
 import type { SeismicFenceData_trans } from "@modules/_shared/Intersection/seismicIntersectionTransform";
 import { transformSeismicFenceData } from "@modules/_shared/Intersection/seismicIntersectionTransform";
 import { createSeismicFencePolylineFromPolylineXy } from "@modules/_shared/Intersection/seismicIntersectionUtils";
-import { isEqual } from "lodash";
 
 import type { MakeSettingTypesMap } from "../../../DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "../../../DataProviderFramework/settings/settingsDefinitions";

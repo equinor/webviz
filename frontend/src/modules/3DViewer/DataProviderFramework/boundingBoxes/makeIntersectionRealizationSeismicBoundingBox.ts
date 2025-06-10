@@ -12,10 +12,10 @@ export function makeIntersectionRealizationSeismicBoundingBox({
 
     let minX = Number.POSITIVE_INFINITY;
     let minY = Number.POSITIVE_INFINITY;
-    let minZ = data.min_fence_depth;
+    const minZ = data.min_fence_depth;
     let maxX = Number.NEGATIVE_INFINITY;
     let maxY = Number.NEGATIVE_INFINITY;
-    let maxZ = data.max_fence_depth;
+    const maxZ = data.max_fence_depth;
 
     for (let i = 0; i < data.fenceTracesFloat32Arr.length; i += 2) {
         const x = data.fenceTracesFloat32Arr[i];

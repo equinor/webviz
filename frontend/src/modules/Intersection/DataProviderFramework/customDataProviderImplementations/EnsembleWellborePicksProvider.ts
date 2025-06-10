@@ -1,3 +1,5 @@
+import { groupBy, isEqual, keys } from "lodash";
+
 import { type WellborePick_api, getWellborePicksInStratColumnOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
 import { fetchWellboreHeaders } from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedHelperDependencyFunctions";
@@ -11,7 +13,6 @@ import type {
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import { groupBy, isEqual, keys } from "lodash";
 
 const ensembleWellborePicksSettings = [
     Setting.INTERSECTION,

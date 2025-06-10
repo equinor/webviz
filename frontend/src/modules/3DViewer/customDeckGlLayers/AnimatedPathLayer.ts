@@ -7,7 +7,7 @@ type AnimatedPathLayerProps = PathLayerProps<any> & PathStyleExtensionProps<any>
 export class AnimatedPathLayer extends CompositeLayer<AnimatedPathLayerProps> {
     static layerName = "AnimatedPathCompositeLayer";
 
-    // @ts-ignore
+    // @ts-expect-error - this is how deck.gl defines state
     state!: {
         dashOffset: number;
     };
@@ -40,13 +40,7 @@ export class AnimatedPathLayer extends CompositeLayer<AnimatedPathLayerProps> {
     }
 
     renderLayers() {
-        const {
-            data,
-            getPath,
-            getColor = () => [255, 0, 0] as Color,
-            getWidth = () => 5,
-            getDashArray = () => [10, 5],
-        } = this.props;
+        const { data, getPath, getColor = () => [255, 0, 0] as Color, getWidth = () => 5 } = this.props;
         const { dashOffset } = this.state;
 
         return new PathLayer({

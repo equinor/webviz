@@ -2,10 +2,10 @@ import type { Rgb } from "culori";
 import { parse } from "culori";
 import { describe, expect, test } from "vitest";
 
+import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
-import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 
 const COLOR_SCALE_SPEC: ColorScaleSpecification = {
     colorScale: new ColorScale({

@@ -1,6 +1,9 @@
 import React from "react";
 
 import { type Layer } from "@deck.gl/core";
+import type { BoundingBox3D } from "@webviz/subsurface-viewer";
+import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
+
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
@@ -11,6 +14,9 @@ import {
     accumulatePolylineIds,
     type AccumulatedData,
 } from "@modules/3DViewer/DataProviderFramework/accumulators/polylineIdsAccumulator";
+import { makeIntersectionRealizationGridBoundingBox } from "@modules/3DViewer/DataProviderFramework/boundingBoxes/makeIntersectionRealizationGridBoundingBox";
+import { makeIntersectionRealizationSeismicBoundingBox } from "@modules/3DViewer/DataProviderFramework/boundingBoxes/makeIntersectionRealizationSeismicBoundingBox";
+import { makeRealizationSeismicSlicesBoundingBox } from "@modules/3DViewer/DataProviderFramework/boundingBoxes/makeRealizationSeismicSlicesBoundingBox";
 import { RealizationGridProvider } from "@modules/3DViewer/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
 import { RealizationSeismicSlicesProvider } from "@modules/3DViewer/DataProviderFramework/customDataProviderImplementations/RealizationSeismicSlicesProvider";
 import { CustomDataProviderType } from "@modules/3DViewer/DataProviderFramework/customDataProviderTypes";
@@ -20,6 +26,7 @@ import { makeIntersectionRealizationGridLayer } from "@modules/3DViewer/DataProv
 import { makeRealizationSurfaceLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeRealizationSurfaceLayer";
 import { makeSeismicIntersectionMeshLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeSeismicIntersectionMeshLayer";
 import { makeSeismicSlicesLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeSeismicSlicesLayer";
+import type { Interfaces } from "@modules/3DViewer/interfaces";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
@@ -48,17 +55,12 @@ import {
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import type { BoundingBox3D } from "@webviz/subsurface-viewer";
-import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
+import { PreferredViewLayout } from "../typesAndEnums";
 
 import { InteractionWrapper } from "./InteractionWrapper";
-import { makeIntersectionRealizationGridBoundingBox } from "@modules/3DViewer/DataProviderFramework/boundingBoxes/makeIntersectionRealizationGridBoundingBox";
-import { makeIntersectionRealizationSeismicBoundingBox } from "@modules/3DViewer/DataProviderFramework/boundingBoxes/makeIntersectionRealizationSeismicBoundingBox";
-import { makeRealizationSeismicSlicesBoundingBox } from "@modules/3DViewer/DataProviderFramework/boundingBoxes/makeRealizationSeismicSlicesBoundingBox";
-import { PreferredViewLayout } from "../typesAndEnums";
-import type { Interfaces } from "@modules/3DViewer/interfaces";
+
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
     VisualizationTarget.DECK_GL,

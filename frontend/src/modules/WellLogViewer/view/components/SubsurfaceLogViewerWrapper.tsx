@@ -12,6 +12,7 @@ import type { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { createContinuousColorScaleForMap } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 
 import type { InterfaceTypes } from "../../interfaces";
@@ -20,7 +21,6 @@ import { createLogViewerWellPicks, createWellLogSets } from "../../utils/queryDa
 import { nonUniqueCurveNamesAtom } from "../atoms/derivedAtoms";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
-import { createContinuousColorScaleForMap } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 
 const AXIS_MNEMOS = {
     md: ["RKB", "DEPTH", "DEPT", "MD", "TDEP", "MD_RKB"],

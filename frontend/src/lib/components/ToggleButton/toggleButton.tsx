@@ -3,8 +3,9 @@ import React from "react";
 import type { ButtonProps as ButtonUnstyledProps } from "@mui/base";
 import { Button as ButtonUnstyled } from "@mui/base";
 
-import { BaseComponent } from "../BaseComponent";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+import { BaseComponent } from "../BaseComponent";
 
 type Variant = "outlined" | "contained" | "text";
 type Color = "primary" | "danger" | "success" | "secondary";
@@ -83,7 +84,7 @@ export type ToggleButtonProps = ButtonUnstyledProps & {
 };
 
 function ToggleButtonComponent(props: ToggleButtonProps, ref: React.ForwardedRef<HTMLDivElement>) {
-    const { active, onToggle, color, variant, size, ...other } = props;
+    const { active, onToggle, color, variant, ...other } = props;
     const [isActive, setIsActive] = React.useState<boolean>(active);
     const [prevIsActive, setPrevIsActive] = React.useState<boolean>(active);
 

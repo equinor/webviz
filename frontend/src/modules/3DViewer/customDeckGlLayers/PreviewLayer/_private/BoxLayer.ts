@@ -3,8 +3,8 @@ import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 import { Geometry } from "@luma.gl/engine";
 import type { ExtendedLayerProps } from "@webviz/subsurface-viewer";
 
-import * as vec3 from "@lib/utils/vec3";
 import { fuzzyCompare } from "@lib/utils/fuzzyCompare";
+import * as vec3 from "@lib/utils/vec3";
 
 export type RectangleLayerData = {
     centerPoint: [number, number, number];

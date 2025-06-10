@@ -1,8 +1,8 @@
+import type { colorTablesObj } from "@emerson-eps/color-tables";
 import { parse, type Color, type Rgb } from "culori";
 
 import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import type { ColorScale } from "@lib/utils/ColorScale";
-import type { colorTablesObj } from "@emerson-eps/color-tables";
 
 export function makeColorMapFunctionFromColorScale(
     colorScaleSpec: ColorScaleSpecification | null,
