@@ -150,6 +150,7 @@ async def get_depth_slice(
 
 
 @router.get("/get_seismic_slices/")
+# pylint: disable=too-many-arguments
 async def get_seismic_slices(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
