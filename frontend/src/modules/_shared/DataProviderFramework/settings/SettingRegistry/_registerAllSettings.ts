@@ -1,5 +1,3 @@
-import type { WellborePick_api } from "@api";
-
 import { BooleanSetting } from "../implementations/BooleanSetting";
 import { ColorScaleSetting } from "../implementations/ColorScaleSetting";
 import { ColorSetSetting } from "../implementations/ColorSetSetting";
@@ -14,7 +12,6 @@ import { InputNumberSetting } from "../implementations/InputNumberSetting";
 import { IntersectionSetting } from "../implementations/IntersectionSetting";
 import { LogCurveSetting } from "../implementations/LogCurveSetting";
 import { NumberSetting } from "../implementations/NumberSetting";
-import { ObjectSelectionSetting } from "../implementations/ObjectSelectionSetting";
 import { SeismicSliceDirection, SeismicSliceSetting } from "../implementations/SeismicSliceSetting";
 import { SelectNumberSetting } from "../implementations/SelectNumberSetting";
 import { SelectStringSetting } from "../implementations/SelectStringSetting";
