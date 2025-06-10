@@ -36,6 +36,7 @@ export type DataProviderManagerTopicPayload = {
 
 export type GlobalSettings = {
     fieldId: string | null;
+    wellboreUuid: string | null;
     ensembles: readonly RegularEnsemble[];
     realizationFilterFunction: EnsembleRealizationFilterFunction;
     intersectionPolylines: readonly IntersectionPolyline[];

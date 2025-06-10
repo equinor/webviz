@@ -82,6 +82,9 @@ export type EsvView = {
 
 export type TargetViewReturnTypes = {
     [GroupType.VIEW]: Record<string, never>; // No data needed for the view?
+    [GroupType.WELL_LOG_TRACK_CONT]: Record<string, never>;
+    [GroupType.WELL_LOG_TRACK_DISC]: Record<string, never>;
+    [GroupType.WELL_LOG_DIFF_GROUP]: Record<string, never>;
     [GroupType.INTERSECTION_VIEW]: EsvView;
 };
 
