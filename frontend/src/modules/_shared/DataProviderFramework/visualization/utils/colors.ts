@@ -1,6 +1,8 @@
-import { parse } from "culori";
+import { parse, type Color, type Rgb } from "culori";
 
 import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
+import type { ColorScale } from "@lib/utils/ColorScale";
+import type { colorTablesObj } from "@emerson-eps/color-tables";
 
 export function makeColorMapFunctionFromColorScale(
     colorScaleSpec: ColorScaleSpecification | null,
@@ -52,4 +54,19 @@ export function makeColorMapFunctionFromColorScale(
 
         return [parsed.r * 255, parsed.g * 255, parsed.b * 255, (parsed.alpha ?? 1) * 255];
     };
+}
+
+export function createContinuousColorScaleForMap(colorScale: ColorScale): colorTablesObj[] {
+    const hexColors = colorScale.getPlotlyColorScale();
+    const rgbArr: [number, number, number, number][] = [];
+    hexColors.forEach((hexColor) => {
+        const color: Color | undefined = parse(hexColor[1]); // Returns object with r, g, b items for hex strings
+
+        if (color && "r" in color && "g" in color && "b" in color) {
+            const rgbColor = color as Rgb;
+            rgbArr.push([hexColor[0], rgbColor.r * 255, rgbColor.g * 255, rgbColor.b * 255]);
+        }
+    });
+
+    return [{ name: "Continuous", discrete: false, colors: rgbArr }];
 }
