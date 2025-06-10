@@ -125,18 +125,26 @@ export class BoxLayer extends CompositeLayer<BoxLayerProps> {
         props,
         oldProps,
     }: UpdateParameters<Layer<BoxLayerProps & Required<CompositeLayerProps>>>) {
-        if (changeFlags.dataChanged) {
+        if (changeFlags.dataChanged && props.data) {
             let changeDetected = false;
-            if (!fuzzyCompareArrays(props.data.dimensions, oldProps.data.dimensions, 0.01)) {
+            if (!fuzzyCompareArrays(props.data?.dimensions, oldProps.data?.dimensions, 0.0001)) {
                 changeDetected = true;
             }
             if (
-                !fuzzyCompareArrays(props.data.normalizedEdgeVectors[0], oldProps.data.normalizedEdgeVectors[0], 0.0001)
+                !fuzzyCompareArrays(
+                    props.data?.normalizedEdgeVectors[0],
+                    oldProps.data?.normalizedEdgeVectors[0],
+                    0.0001,
+                )
             ) {
                 changeDetected = true;
             }
             if (
-                !fuzzyCompareArrays(props.data.normalizedEdgeVectors[1], oldProps.data.normalizedEdgeVectors[1], 0.0001)
+                !fuzzyCompareArrays(
+                    props.data?.normalizedEdgeVectors[1],
+                    oldProps.data?.normalizedEdgeVectors[1],
+                    0.0001,
+                )
             ) {
                 changeDetected = true;
             }
@@ -169,7 +177,7 @@ export class BoxLayer extends CompositeLayer<BoxLayerProps> {
     }
 }
 
-function fuzzyCompareArrays(arr1: number[], arr2: number[], tolerance = 0.01): boolean {
+function fuzzyCompareArrays(arr1?: number[], arr2?: number[], tolerance = 0.01): boolean {
     if (!arr1 || !arr2 || arr1.length !== arr2.length) {
         return false;
     }
