@@ -2,29 +2,29 @@ import type { SurfaceStatisticalFanchart } from "../layers/SurfaceStatisticalFan
 
 export type StratigraphyColorMap = { [name: string]: string };
 
-function calcMean(values: number[]): number {
+function calcMean(values: readonly number[]): number {
     return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
-function calcPercentile(values: number[], percentile: number): number {
-    values.sort((a, b) => a - b);
-    const index = ((values.length - 1) * percentile) / 100;
+function calcPercentile(values: readonly number[], percentile: number): number {
+    const sortedValues = [...values].sort((a, b) => a - b);
+    const index = ((sortedValues.length - 1) * percentile) / 100;
     const base = Math.floor(index);
     const rest = index - base;
-    if (values[base + 1] !== undefined) {
-        return values[base] + rest * (values[base + 1] - values[base]);
+    if (sortedValues[base + 1] !== undefined) {
+        return sortedValues[base] + rest * (sortedValues[base + 1] - sortedValues[base]);
     } else {
-        return values[base];
+        return sortedValues[base];
     }
 }
 
-function mergeXAndYArrays(arrayX: number[], arrayY: number[]): number[][] {
+function mergeXAndYArrays(arrayX: readonly number[], arrayY: number[]): number[][] {
     return arrayX.map((x, i) => [x, arrayY[i]]);
 }
 
 export function makeSurfaceStatisticalFanchartFromRealizationSurface(
-    realizationSamplePoints: number[][],
-    cumulatedLength: number[],
+    realizationSamplePoints: readonly number[][],
+    cumulatedLength: readonly number[],
     surfaceName: string,
     color: string,
     visibility?: {

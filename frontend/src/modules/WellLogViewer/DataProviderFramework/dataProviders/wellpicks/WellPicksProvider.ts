@@ -1,4 +1,4 @@
-import _ from "lodash";
+import { filter, groupBy, isEqual, keys, map } from "lodash";
 
 import type { WellborePick_api } from "@api";
 import { getWellborePicksInStratColumnOptions, getWellboreStratigraphicColumnsOptions } from "@api";
@@ -54,7 +54,7 @@ export class WellborePicksProvider
             const columns = getHelperDependency(columnOptions);
 
             if (!columns) return [];
-            return _.map(columns, "identifier");
+            return map(columns, "identifier");
         });
 
         availableSettingsUpdater(Setting.SMDA_INTERPRETER, ({ getHelperDependency }) => {
@@ -62,9 +62,9 @@ export class WellborePicksProvider
 
             if (!wellPicks) return [];
 
-            const picksByInterpreter = _.groupBy(wellPicks, "interpreter");
+            const picksByInterpreter = groupBy(wellPicks, "interpreter");
 
-            return _.keys(picksByInterpreter);
+            return keys(picksByInterpreter);
         });
 
         availableSettingsUpdater(Setting.WELLBORE_PICKS, ({ getLocalSetting, getHelperDependency }) => {
@@ -73,16 +73,15 @@ export class WellborePicksProvider
 
             if (!wellPicks || !interpreter) return [];
 
-            return _.filter(wellPicks, ["interpreter", interpreter]);
+            return filter(wellPicks, ["interpreter", interpreter]);
         });
     }
 
     fetchData(args: FetchDataParams<WellPickSettingTypes, WellborePick_api[]>): Promise<WellborePick_api[]> {
-        const { getSetting } = args;
+        const chosenWellPicks = args.getSetting(Setting.WELLBORE_PICKS);
 
-        const chosenWellPicks = getSetting(Setting.WELLBORE_PICKS);
-
-        // ! Not actually any reason for this to be a promise. No data to fetch, it's already available in the well-picks
+        // ! Not actually any reason for this to be a promise.
+        // No data to fetch, it's already available in the well-picks
         return new Promise((resolve) => {
             resolve(chosenWellPicks ?? []);
         });
@@ -97,6 +96,6 @@ export class WellborePicksProvider
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsTypeMap, newSettings: SettingsTypeMap): boolean {
-        return prevSettings?.stratColumn !== newSettings?.stratColumn;
+        return isEqual(prevSettings, newSettings);
     }
 }

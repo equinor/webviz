@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="-100 -100 668.8 676.6" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <filter id="motion-blur">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4.5" />
+    </filter>
+  </defs>
+  <style><![CDATA[
+    @keyframes spin {
+      0%, 10% { transform: rotate(0deg); }
+      50% { transform: rotate(12960deg); }
+      100% { transform: rotate(12960deg); }
+    }
+    @keyframes blurToggle {
+      0%, 10%, 100% { filter: none; }
+      15%, 45% { filter: url(#motion-blur); }
+    }
+    .spinner {
+      animation: spin 4s cubic-bezier(0.65, 0, 0.35, 1) infinite,
+                 blurToggle 4s ease-in-out infinite;
+      transform-box: fill-box;
+      transform-origin: 234.4px 238.3px;
+    }
+    
+@keyframes ghostFade {
+  0%, 10%, 100% { opacity: 0; }
+  15%, 45% { opacity: 1; }
+}
+.ghost-layer {
+  animation: spin 4s cubic-bezier(0.65, 0, 0.35, 1) infinite,
+             ghostFade 4s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: 234.4px 238.3px;
+}
+.ghost1 { opacity: 0.3; }
+.ghost2 { opacity: 0.2; }
+.ghost3 { opacity: 0.1; }
+
+    
+svg {
+  overflow: visible;
+}
+.scene {
+  transform-origin: 50% 50%;
+}
+.spinner {
+  transform-origin: 50% 50%;
+  animation: spin 4s ease-in-out infinite;
+}
+@keyframes spin {
+  0%, 10% { transform: rotate(0deg); }
+  50% { transform: rotate(1080deg); }
+  100% { transform: rotate(1080deg); }
+}
+
+.orbit-group.g1 .path {
+  animation: pathPushg1 4s ease-in-out infinite;
+}
+@keyframes pathPushg1 {
+  0%, 100% { transform: translate(0, 0); }
+  10%, 50% { transform: translate(-2.71%, -5.70%); }
+  65% { transform: translate(0, 0); }
+}
+
+.orbit-group.g1 .circle {
+  animation: circlePushg1 4s ease-in-out infinite;
+}
+@keyframes circlePushg1 {
+  0%, 100% { transform: translate(0, 0); }
+  10%, 50% { transform: translate(-4.75%, -9.98%); }
+  65% { transform: translate(0, 0); }
+}
+
+.orbit-group.g2 .path {
+  animation: pathPushg2 4s ease-in-out infinite;
+}
+@keyframes pathPushg2 {
+  0%, 100% { transform: translate(0, 0); }
+  10%, 50% { transform: translate(-6.38%, -0.55%); }
+  65% { transform: translate(0, 0); }
+}
+
+.orbit-group.g2 .circle {
+  animation: circlePushg2 4s ease-in-out infinite;
+}
+@keyframes circlePushg2 {
+  0%, 100% { transform: translate(0, 0); }
+  10%, 50% { transform: translate(-11.16%, -0.98%); }
+  65% { transform: translate(0, 0); }
+}
+
+.orbit-group.g3 .path {
+  animation: pathPushg3 4s ease-in-out infinite;
+}
+@keyframes pathPushg3 {
+  0%, 100% { transform: translate(0, 0); }
+  10%, 50% { transform: translate(3.68%, -5.15%); }
+  65% { transform: translate(0, 0); }
+}
+
+.orbit-group.g3 .circle {
+  animation: circlePushg3 4s ease-in-out infinite;
+}
+@keyframes circlePushg3 {
+  0%, 100% { transform: translate(0, 0); }
+  10%, 50% { transform: translate(6.44%, -9.02%); }
+  65% { transform: translate(0, 0); }
+}
+
+.orbit-group.g4 .path {
+  animation: pathPushg4 4s ease-in-out infinite;
+}
+@keyframes pathPushg4 {
+  0%, 100% { transform: translate(0, 0); }
+  10%, 50% { transform: translate(2.71%, 5.70%); }
+  65% { transform: translate(0, 0); }
+}
+
+.orbit-group.g4 .circle {
+  animation: circlePushg4 4s ease-in-out infinite;
+}
+@keyframes circlePushg4 {
+  0%, 100% { transform: translate(0, 0); }
+  10%, 50% { transform: translate(4.75%, 9.98%); }
+  65% { transform: translate(0, 0); }
+}
+
+.orbit-group.g5 .path {
+  animation: pathPushg5 4s ease-in-out infinite;
+}
+@keyframes pathPushg5 {
+  0%, 100% { transform: translate(0, 0); }
+  10%, 50% { transform: translate(6.38%, 0.55%); }
+  65% { transform: translate(0, 0); }
+}
+
+.orbit-group.g5 .circle {
+  animation: circlePushg5 4s ease-in-out infinite;
+}
+@keyframes circlePushg5 {
+  0%, 100% { transform: translate(0, 0); }
+  10%, 50% { transform: translate(11.16%, 0.98%); }
+  65% { transform: translate(0, 0); }
+}
+
+.orbit-group.g6 .path {
+  animation: pathPushg6 4s ease-in-out infinite;
+}
+@keyframes pathPushg6 {
+  0%, 100% { transform: translate(0, 0); }
+  10%, 50% { transform: translate(-3.68%, 5.15%); }
+  65% { transform: translate(0, 0); }
+}
+
+.orbit-group.g6 .circle {
+  animation: circlePushg6 4s ease-in-out infinite;
+}
+@keyframes circlePushg6 {
+  0%, 100% { transform: translate(0, 0); }
+  10%, 50% { transform: translate(-6.44%, 9.02%); }
+  65% { transform: translate(0, 0); }
+}
+
+  ]]></style>
+  <g class="scene">
+    <g class="ghost-layer ghost1 spinner" transform="rotate(-2 234.4 238.3)">
+<g class="orbit-group g1">
+<path class="path" d="M182.5,1c-2.3-2.1-6-0.6-6.2,2.5l-4.5,67.9c-0.1,2-1.9,3.6-3.9,3.5l-79.3-4.7c-3.5-0.2-5.3,4.1-2.7,6.5l141.6,126.1
+          c2.4,2.1,6.2,0.4,6.2-2.8L234.1,50c0-1,0.3-2.8-0.5-3.6L182.5,1z"></path>
+<circle class="circle" cx="142.7" cy="42.9" r="16.7"></circle>
+</g>
+<g class="orbit-group g2">
+<path class="path" d="M200.4,219.4L70.8,144.1c-0.9-0.5-2.3-1.7-3.3-1.4L2.6,164.2c-3,0.9-3.5,4.9-1,6.6l56.5,37.9c1.7,1.1,2.2,3.4,1,5.1
+          l-43.8,66.3c-1.9,2.9,0.9,6.7,4.3,5.6l180-59.5C202.8,225.1,203.2,221,200.4,219.4L200.4,219.4z"></path>
+<circle class="circle" cx="20.2" cy="219.3" r="16.7"></circle>
+</g>
+<g class="orbit-group g3">
+<path class="path" d="M267.3,218.8l130-74.6c0.9-0.5,2.6-1.2,2.8-2.2L414,75.1c0.7-3-2.5-5.5-5.3-4.1l-61,30c-1.8,0.9-4,0.2-5-1.7l-35.6-71.1
+          c-1.6-3.1-6.2-2.5-7,0.9l-38.5,185.7C261.1,218,264.5,220.4,267.3,218.8L267.3,218.8z"></path>
+<circle class="circle" cx="358.6" cy="61.4" r="16.7"></circle>
+</g>
+<g class="orbit-group g4">
+<path class="path" d="M286.2,475.6c2.3,2.1,6,0.6,6.2-2.5l4.5-67.9c0.1-2,1.9-3.6,3.9-3.5l79.3,4.7c3.5,0.2,5.3-4.1,2.7-6.5L241.4,273.9
+          c-2.4-2.1-6.2-0.4-6.2,2.8l-0.4,149.9c0,1-0.3,2.9,0.5,3.6L286.2,475.6z"></path>
+<circle class="circle" cx="326.1" cy="433.7" r="16.7"></circle>
+</g>
+<g class="orbit-group g5">
+<path class="path" d="M268.4,257.2L398,332.5c0.9,0.5,2.3,1.7,3.3,1.4l64.9-21.5c3-0.9,3.5-4.9,1-6.6l-56.5-37.9c-1.7-1.1-2.2-3.4-1-5.1
+          l43.8-66.3c1.9-2.9-0.9-6.7-4.3-5.6l-180,59.6C266,251.4,265.6,255.6,268.4,257.2L268.4,257.2z"></path>
+<circle class="circle" cx="448.6" cy="257.3" r="16.7"></circle>
+</g>
+<g class="orbit-group g6">
+<path class="path" d="M201.5,257.8l-130,74.6c-0.9,0.5-2.6,1.2-2.8,2.2l-13.9,66.9c-0.7,3,2.5,5.5,5.3,4.1l61-30c1.8-0.9,4-0.1,5,1.7l35.6,71.1
+          c1.6,3.2,6.2,2.5,7-0.9L207,261.7C207.6,258.6,204.3,256.2,201.5,257.8L201.5,257.8z"></path>
+<circle class="circle" cx="110.2" cy="415.2" r="16.7"></circle>
+</g>
+</g>
+<g class="ghost-layer ghost2 spinner" transform="rotate(-4 234.4 238.3)">
+<g class="orbit-group g1">
+<path class="path" d="M182.5,1c-2.3-2.1-6-0.6-6.2,2.5l-4.5,67.9c-0.1,2-1.9,3.6-3.9,3.5l-79.3-4.7c-3.5-0.2-5.3,4.1-2.7,6.5l141.6,126.1
+          c2.4,2.1,6.2,0.4,6.2-2.8L234.1,50c0-1,0.3-2.8-0.5-3.6L182.5,1z"></path>
+<circle class="circle" cx="142.7" cy="42.9" r="16.7"></circle>
+</g>
+<g class="orbit-group g2">
+<path class="path" d="M200.4,219.4L70.8,144.1c-0.9-0.5-2.3-1.7-3.3-1.4L2.6,164.2c-3,0.9-3.5,4.9-1,6.6l56.5,37.9c1.7,1.1,2.2,3.4,1,5.1
+          l-43.8,66.3c-1.9,2.9,0.9,6.7,4.3,5.6l180-59.5C202.8,225.1,203.2,221,200.4,219.4L200.4,219.4z"></path>
+<circle class="circle" cx="20.2" cy="219.3" r="16.7"></circle>
+</g>
+<g class="orbit-group g3">
+<path class="path" d="M267.3,218.8l130-74.6c0.9-0.5,2.6-1.2,2.8-2.2L414,75.1c0.7-3-2.5-5.5-5.3-4.1l-61,30c-1.8,0.9-4,0.2-5-1.7l-35.6-71.1
+          c-1.6-3.1-6.2-2.5-7,0.9l-38.5,185.7C261.1,218,264.5,220.4,267.3,218.8L267.3,218.8z"></path>
+<circle class="circle" cx="358.6" cy="61.4" r="16.7"></circle>
+</g>
+<g class="orbit-group g4">
+<path class="path" d="M286.2,475.6c2.3,2.1,6,0.6,6.2-2.5l4.5-67.9c0.1-2,1.9-3.6,3.9-3.5l79.3,4.7c3.5,0.2,5.3-4.1,2.7-6.5L241.4,273.9
+          c-2.4-2.1-6.2-0.4-6.2,2.8l-0.4,149.9c0,1-0.3,2.9,0.5,3.6L286.2,475.6z"></path>
+<circle class="circle" cx="326.1" cy="433.7" r="16.7"></circle>
+</g>
+<g class="orbit-group g5">
+<path class="path" d="M268.4,257.2L398,332.5c0.9,0.5,2.3,1.7,3.3,1.4l64.9-21.5c3-0.9,3.5-4.9,1-6.6l-56.5-37.9c-1.7-1.1-2.2-3.4-1-5.1
+          l43.8-66.3c1.9-2.9-0.9-6.7-4.3-5.6l-180,59.6C266,251.4,265.6,255.6,268.4,257.2L268.4,257.2z"></path>
+<circle class="circle" cx="448.6" cy="257.3" r="16.7"></circle>
+</g>
+<g class="orbit-group g6">
+<path class="path" d="M201.5,257.8l-130,74.6c-0.9,0.5-2.6,1.2-2.8,2.2l-13.9,66.9c-0.7,3,2.5,5.5,5.3,4.1l61-30c1.8-0.9,4-0.1,5,1.7l35.6,71.1
+          c1.6,3.2,6.2,2.5,7-0.9L207,261.7C207.6,258.6,204.3,256.2,201.5,257.8L201.5,257.8z"></path>
+<circle class="circle" cx="110.2" cy="415.2" r="16.7"></circle>
+</g>
+</g>
+<g class="ghost-layer ghost3 spinner" transform="rotate(-6 234.4 238.3)">
+<g class="orbit-group g1">
+<path class="path" d="M182.5,1c-2.3-2.1-6-0.6-6.2,2.5l-4.5,67.9c-0.1,2-1.9,3.6-3.9,3.5l-79.3-4.7c-3.5-0.2-5.3,4.1-2.7,6.5l141.6,126.1
+          c2.4,2.1,6.2,0.4,6.2-2.8L234.1,50c0-1,0.3-2.8-0.5-3.6L182.5,1z"></path>
+<circle class="circle" cx="142.7" cy="42.9" r="16.7"></circle>
+</g>
+<g class="orbit-group g2">
+<path class="path" d="M200.4,219.4L70.8,144.1c-0.9-0.5-2.3-1.7-3.3-1.4L2.6,164.2c-3,0.9-3.5,4.9-1,6.6l56.5,37.9c1.7,1.1,2.2,3.4,1,5.1
+          l-43.8,66.3c-1.9,2.9,0.9,6.7,4.3,5.6l180-59.5C202.8,225.1,203.2,221,200.4,219.4L200.4,219.4z"></path>
+<circle class="circle" cx="20.2" cy="219.3" r="16.7"></circle>
+</g>
+<g class="orbit-group g3">
+<path class="path" d="M267.3,218.8l130-74.6c0.9-0.5,2.6-1.2,2.8-2.2L414,75.1c0.7-3-2.5-5.5-5.3-4.1l-61,30c-1.8,0.9-4,0.2-5-1.7l-35.6-71.1
+          c-1.6-3.1-6.2-2.5-7,0.9l-38.5,185.7C261.1,218,264.5,220.4,267.3,218.8L267.3,218.8z"></path>
+<circle class="circle" cx="358.6" cy="61.4" r="16.7"></circle>
+</g>
+<g class="orbit-group g4">
+<path class="path" d="M286.2,475.6c2.3,2.1,6,0.6,6.2-2.5l4.5-67.9c0.1-2,1.9-3.6,3.9-3.5l79.3,4.7c3.5,0.2,5.3-4.1,2.7-6.5L241.4,273.9
+          c-2.4-2.1-6.2-0.4-6.2,2.8l-0.4,149.9c0,1-0.3,2.9,0.5,3.6L286.2,475.6z"></path>
+<circle class="circle" cx="326.1" cy="433.7" r="16.7"></circle>
+</g>
+<g class="orbit-group g5">
+<path class="path" d="M268.4,257.2L398,332.5c0.9,0.5,2.3,1.7,3.3,1.4l64.9-21.5c3-0.9,3.5-4.9,1-6.6l-56.5-37.9c-1.7-1.1-2.2-3.4-1-5.1
+          l43.8-66.3c1.9-2.9-0.9-6.7-4.3-5.6l-180,59.6C266,251.4,265.6,255.6,268.4,257.2L268.4,257.2z"></path>
+<circle class="circle" cx="448.6" cy="257.3" r="16.7"></circle>
+</g>
+<g class="orbit-group g6">
+<path class="path" d="M201.5,257.8l-130,74.6c-0.9,0.5-2.6,1.2-2.8,2.2l-13.9,66.9c-0.7,3,2.5,5.5,5.3,4.1l61-30c1.8-0.9,4-0.1,5,1.7l35.6,71.1
+          c1.6,3.2,6.2,2.5,7-0.9L207,261.7C207.6,258.6,204.3,256.2,201.5,257.8L201.5,257.8z"></path>
+<circle class="circle" cx="110.2" cy="415.2" r="16.7"></circle>
+</g>
+</g>
+    <g class="spinner">
+      <g class="orbit-group g1">
+<path class="path" d="M182.5,1c-2.3-2.1-6-0.6-6.2,2.5l-4.5,67.9c-0.1,2-1.9,3.6-3.9,3.5l-79.3-4.7c-3.5-0.2-5.3,4.1-2.7,6.5l141.6,126.1
+          c2.4,2.1,6.2,0.4,6.2-2.8L234.1,50c0-1,0.3-2.8-0.5-3.6L182.5,1z"></path>
+<circle class="circle" cx="142.7" cy="42.9" r="16.7"></circle>
+</g>
+<g class="orbit-group g2">
+<path class="path" d="M200.4,219.4L70.8,144.1c-0.9-0.5-2.3-1.7-3.3-1.4L2.6,164.2c-3,0.9-3.5,4.9-1,6.6l56.5,37.9c1.7,1.1,2.2,3.4,1,5.1
+          l-43.8,66.3c-1.9,2.9,0.9,6.7,4.3,5.6l180-59.5C202.8,225.1,203.2,221,200.4,219.4L200.4,219.4z"></path>
+<circle class="circle" cx="20.2" cy="219.3" r="16.7"></circle>
+</g>
+<g class="orbit-group g3">
+<path class="path" d="M267.3,218.8l130-74.6c0.9-0.5,2.6-1.2,2.8-2.2L414,75.1c0.7-3-2.5-5.5-5.3-4.1l-61,30c-1.8,0.9-4,0.2-5-1.7l-35.6-71.1
+          c-1.6-3.1-6.2-2.5-7,0.9l-38.5,185.7C261.1,218,264.5,220.4,267.3,218.8L267.3,218.8z"></path>
+<circle class="circle" cx="358.6" cy="61.4" r="16.7"></circle>
+</g>
+<g class="orbit-group g4">
+<path class="path" d="M286.2,475.6c2.3,2.1,6,0.6,6.2-2.5l4.5-67.9c0.1-2,1.9-3.6,3.9-3.5l79.3,4.7c3.5,0.2,5.3-4.1,2.7-6.5L241.4,273.9
+          c-2.4-2.1-6.2-0.4-6.2,2.8l-0.4,149.9c0,1-0.3,2.9,0.5,3.6L286.2,475.6z"></path>
+<circle class="circle" cx="326.1" cy="433.7" r="16.7"></circle>
+</g>
+<g class="orbit-group g5">
+<path class="path" d="M268.4,257.2L398,332.5c0.9,0.5,2.3,1.7,3.3,1.4l64.9-21.5c3-0.9,3.5-4.9,1-6.6l-56.5-37.9c-1.7-1.1-2.2-3.4-1-5.1
+          l43.8-66.3c1.9-2.9-0.9-6.7-4.3-5.6l-180,59.6C266,251.4,265.6,255.6,268.4,257.2L268.4,257.2z"></path>
+<circle class="circle" cx="448.6" cy="257.3" r="16.7"></circle>
+</g>
+<g class="orbit-group g6">
+<path class="path" d="M201.5,257.8l-130,74.6c-0.9,0.5-2.6,1.2-2.8,2.2l-13.9,66.9c-0.7,3,2.5,5.5,5.3,4.1l61-30c1.8-0.9,4-0.1,5,1.7l35.6,71.1
+          c1.6,3.2,6.2,2.5,7-0.9L207,261.7C207.6,258.6,204.3,256.2,201.5,257.8L201.5,257.8z"></path>
+<circle class="circle" cx="110.2" cy="415.2" r="16.7"></circle>
+</g>
+    </g>
+  </g>
+</svg>
