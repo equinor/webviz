@@ -75,7 +75,7 @@ class VdsAccess:
                 )
 
         except httpx.RequestError as error:
-            raise ServiceRequestError(error, service=Service.VDS) from error
+            raise ServiceRequestError(f"{error}", service=Service.VDS) from error
 
         return response
 

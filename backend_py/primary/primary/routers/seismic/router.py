@@ -188,13 +188,13 @@ async def get_seismic_slices(
     crossline_tuple = await vds_access.get_crossline_slice_async(line_no=crossline_no)
     depth_slice_tuple = await vds_access.get_depth_slice_async(depth_slice_no=depth_slice_no)
 
-    return [
+    return (
         converters.to_api_vds_slice_data(flattened_slice_traces_array=inline_tuple[0], metadata=inline_tuple[1]),
         converters.to_api_vds_slice_data(flattened_slice_traces_array=crossline_tuple[0], metadata=crossline_tuple[1]),
         converters.to_api_vds_slice_data(
             flattened_slice_traces_array=depth_slice_tuple[0], metadata=depth_slice_tuple[1]
         ),
-    ]
+    )
 
 
 @router.post("/get_seismic_fence/")
