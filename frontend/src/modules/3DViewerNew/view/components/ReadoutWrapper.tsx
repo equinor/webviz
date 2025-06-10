@@ -179,10 +179,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             <SubsurfaceViewerWithCameraState {...deckGlProps} views={storedDeckGlViews}>
                 {props.views.viewports.map((viewport) => (
                     // @ts-expect-error -- This class is marked as abstract, but seems to just work as is
-                    // ? Should we do a proper implementation of the class??
                     <DeckGlView key={viewport.id} id={viewport.id}>
                         <ViewportLabel viewport={viewport} />
-
                         <ColorLegendsContainer
                             colorScales={viewport.colorScales}
                             height={((mainDivSize.height / 3) * 2) / numRows - 20}

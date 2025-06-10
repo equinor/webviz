@@ -97,6 +97,7 @@ export type VisualizationGroup<
     aggregatedErrorMessages: (StatusMessage | string)[];
     combinedBoundingBox: bbox.BBox | null;
     numLoadingDataProviders: number;
+    numDataProviders: number;
     accumulatedData: TAccumulatedData;
     hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget>;
     customProps: TCustomGroupProps[TGroupType];
@@ -290,6 +291,7 @@ export class VisualizationAssembler<
         const aggregatedErrorMessages: (StatusMessage | string)[] = [];
         let hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget> = {};
         let numLoadingDataProviders = 0;
+        let numDataProviders = 0;
         let combinedBoundingBox: bbox.BBox | null = null;
 
         const maybeApplyBoundingBox = (boundingBox: bbox.BBox | null) => {
@@ -319,6 +321,7 @@ export class VisualizationAssembler<
                     product.hoverVisualizationFunctions,
                 );
                 numLoadingDataProviders += product.numLoadingDataProviders;
+                numDataProviders += product.numDataProviders;
                 maybeApplyBoundingBox(product.combinedBoundingBox);
 
                 if (child instanceof Group) {
@@ -334,6 +337,8 @@ export class VisualizationAssembler<
             }
 
             if (child instanceof DataProvider) {
+                numDataProviders++;
+
                 if (child.getStatus() === DataProviderStatus.LOADING) {
                     numLoadingDataProviders++;
                 }
@@ -382,7 +387,8 @@ export class VisualizationAssembler<
             aggregatedErrorMessages: aggregatedErrorMessages,
             combinedBoundingBox: combinedBoundingBox,
             annotations: annotations,
-            numLoadingDataProviders: numLoadingDataProviders,
+            numLoadingDataProviders,
+            numDataProviders,
             accumulatedData,
             hoverVisualizationFunctions: hoverVisualizationFunctions,
             customProps: {} as TCustomGroupProps,
@@ -409,6 +415,7 @@ export class VisualizationAssembler<
             aggregatedErrorMessages: product.aggregatedErrorMessages,
             combinedBoundingBox: product.combinedBoundingBox,
             numLoadingDataProviders: product.numLoadingDataProviders,
+            numDataProviders: product.numDataProviders,
             accumulatedData: product.accumulatedData,
             hoverVisualizationFunctions: product.hoverVisualizationFunctions,
             customProps:

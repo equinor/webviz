@@ -78,7 +78,7 @@ function buildVtkStylePolyDataFromFenceSections(fenceSections: FenceMeshSection_
     };
 }
 
-export function makeIntersectionLayer({
+export function makeIntersectionRealizationGridLayer({
     id,
     name,
     getData,

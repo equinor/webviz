@@ -18,7 +18,7 @@ import { RealizationSeismicSlicesProvider } from "@modules/3DViewerNew/DataProvi
 import { CustomDataProviderType } from "@modules/3DViewerNew/DataProviderFramework/customDataProviderTypes";
 import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
 import { makeDrilledWellTrajectoriesLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer";
-import { makeIntersectionLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeIntersectionGrid3dLayer";
+import { makeIntersectionRealizationGridLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeIntersectionRealizationGridLayer";
 import { makeRealizationSurfaceLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeRealizationSurfaceLayer";
 import { makeSeismicIntersectionMeshLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeSeismicIntersectionMeshLayer";
 import { makeSeismicSlicesLayer } from "@modules/3DViewerNew/DataProviderFramework/visualization/makeSeismicSlicesLayer";
@@ -56,6 +56,9 @@ import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
 import { InteractionWrapper } from "./InteractionWrapper";
+import { makeIntersectionRealizationGridBoundingBox } from "@modules/3DViewerNew/DataProviderFramework/boundingBoxes/makeIntersectionRealizationGridBoundingBox";
+import { makeIntersectionRealizationSeismicBoundingBox } from "@modules/3DViewerNew/DataProviderFramework/boundingBoxes/makeIntersectionRealizationSeismicBoundingBox";
+import { makeRealizationSeismicSlicesBoundingBox } from "@modules/3DViewerNew/DataProviderFramework/boundingBoxes/makeRealizationSeismicSlicesBoundingBox";
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<
     VisualizationTarget.DECK_GL,
@@ -122,15 +125,17 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     {
         transformToVisualization: makeSeismicSlicesLayer,
         transformToAnnotations: makeColorScaleAnnotation,
+        transformToBoundingBox: makeRealizationSeismicSlicesBoundingBox,
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.INTERSECTION_WITH_WELLBORE_EXTENSION_REALIZATION_GRID,
     IntersectionRealizationGridProvider,
     {
-        transformToVisualization: makeIntersectionLayer,
+        transformToVisualization: makeIntersectionRealizationGridLayer,
         transformToAnnotations: makeColorScaleAnnotation,
         reduceAccumulatedData: accumulatePolylineIds,
+        transformToBoundingBox: makeIntersectionRealizationGridBoundingBox,
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
@@ -139,6 +144,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     {
         transformToVisualization: makeSeismicIntersectionMeshLayer,
         transformToAnnotations: makeColorScaleAnnotation,
+        transformToBoundingBox: makeIntersectionRealizationSeismicBoundingBox,
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
@@ -147,6 +153,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     {
         transformToVisualization: makeSeismicIntersectionMeshLayer,
         transformToAnnotations: makeColorScaleAnnotation,
+        transformToBoundingBox: makeIntersectionRealizationSeismicBoundingBox,
     },
 );
 
@@ -161,6 +168,8 @@ export type LayersWrapperProps = {
 };
 
 export function DataProvidersWrapper(props: LayersWrapperProps): React.ReactNode {
+    const [changingFields, setChangingFields] = React.useState<boolean>(false);
+    const [prevFieldId, setPrevFieldId] = React.useState<string | null>(null);
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<bbox.BBox | null>(null);
     const statusWriter = useViewStatusWriter(props.viewContext);
 
@@ -263,11 +272,36 @@ export function DataProvidersWrapper(props: LayersWrapperProps): React.ReactNode
 
     deckGlLayers.reverse();
 
+    // We are using this pattern (emptying the layers list + setting a new key for the InteractionWrapper)
+    // as a workaround due to subsurface-viewer's bounding box model not respecting the removal of layers.
+    // In case of a field change, the total accumulated bounding box would become very large and homing wouldn't work properly.
+    //
+    // This is a temporary solution until the subsurface-viewer is updated to handle
+    // bounding boxes more correctly.
+    //
+    // See: https://github.com/equinor/webviz-subsurface-components/pull/2573
+    if (prevFieldId !== props.fieldId) {
+        setChangingFields(true);
+        setPrevFieldId(props.fieldId);
+    }
+
+    const finalLayers: Layer<any>[] = [];
+    if (changingFields && assemblerProduct.numLoadingDataProviders === 0) {
+        setChangingFields(false);
+    }
+
+    if (!changingFields) {
+        finalLayers.push(...deckGlLayers);
+    }
+
+    // -----------------------------------------------------------------------------
+
     return (
         <InteractionWrapper
+            key={`interaction-wrapper-${props.fieldId}`}
             views={views}
             fieldId={props.fieldId}
-            layers={deckGlLayers}
+            layers={finalLayers}
             workbenchSession={props.workbenchSession}
             workbenchSettings={props.workbenchSettings}
             workbenchServices={props.workbenchServices}

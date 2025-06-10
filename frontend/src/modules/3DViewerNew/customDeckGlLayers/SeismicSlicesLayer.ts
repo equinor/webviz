@@ -67,7 +67,17 @@ export class SeismicSlicesLayer extends CompositeLayer<SeismicSlicesLayerProps> 
 
         for (const section of sections) {
             if (!section.fence || !section.fence.traceXYZPointsArray) {
-                continue; // Skip sections without valid fence data
+                if (section.loadingGeometry) {
+                    // If the fence is not loaded, we can use the loading geometry to calculate the bounding box.
+                    const { boundingBox } = section.loadingGeometry;
+                    xmin = Math.min(xmin, boundingBox.min.x);
+                    ymin = Math.min(ymin, boundingBox.min.y);
+                    zmin = Math.min(zmin, boundingBox.min.z * zSign);
+                    xmax = Math.max(xmax, boundingBox.max.x);
+                    ymax = Math.max(ymax, boundingBox.max.y);
+                    zmax = Math.max(zmax, boundingBox.max.z * zSign);
+                }
+                continue;
             }
             const { traceXYZPointsArray } = section.fence;
 
