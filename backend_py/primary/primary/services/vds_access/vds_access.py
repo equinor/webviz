@@ -11,6 +11,7 @@ from primary.services.service_exceptions import InvalidDataError, Service
 
 from primary import config
 from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
+from primary.services.service_exceptions import ServiceRequestError
 
 from .response_types import VdsArray, VdsAxis, VdsMetadata, VdsFenceMetadata, VdsSliceMetadata
 from .request_types import (
@@ -23,7 +24,6 @@ from .request_types import (
     VdsSliceRequest,
     VdsDirection,
 )
-from primary.services.service_exceptions import ServiceRequestError
 
 
 LOGGER = logging.getLogger(__name__)
@@ -74,8 +74,8 @@ class VdsAccess:
                     f"({str(response.status_code)})-{response.reason_phrase}-{response.text}", service=Service.VDS
                 )
 
-        except httpx.RequestError as e:
-            raise ServiceRequestError(e, service=Service.VDS) from e
+        except httpx.RequestError as error:
+            raise ServiceRequestError(error, service=Service.VDS) from error
 
         return response
 
