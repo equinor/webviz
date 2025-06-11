@@ -112,7 +112,6 @@ export class BoxLayer extends CompositeLayer<BoxLayerProps> {
     }
 
     initializeState(): void {
-        console.debug("BoxLayer: initializeState");
         this.setState({
             ...this.state,
             isHovered: false,
