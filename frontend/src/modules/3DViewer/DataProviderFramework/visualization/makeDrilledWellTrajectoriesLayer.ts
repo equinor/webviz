@@ -1,16 +1,15 @@
 import type { Color } from "@deck.gl/core";
-import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 import type { Feature, LineString, Point } from "geojson";
 
 import type { WellboreTrajectory_api } from "@api";
+import { AdvancedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdvancedWellsLayer";
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import type { GeoWellFeature } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { AdvancedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdvancedWellsLayer";
 
 export function makeDrilledWellTrajectoriesLayer(
     args: TransformerArgs<any, WellboreTrajectory_api[], any>,
-): WellsLayer | null {
+): AdvancedWellsLayer | null {
     const { id, getData, name } = args;
 
     const fieldWellboreTrajectoriesData = getData();

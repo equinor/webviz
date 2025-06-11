@@ -24,46 +24,52 @@ const COLOR_SCALE_SPEC: ColorScaleSpecification = {
 };
 
 describe("makeColorMapFunctionFromColorScale", () => {
-    test("Maps to expected colors when values are normalized", () => {
+    test("Maps to expected colors when values are unnormalized (raw values)", () => {
         const colorMapFunc = makeColorMapFunctionFromColorScale(COLOR_SCALE_SPEC, {
             valueMin: 0,
             valueMax: 100,
-            unnormalize: false,
+            unnormalize: false, // use raw values as-is
         });
 
         expect(colorMapFunc).toBeInstanceOf(Function);
         if (!colorMapFunc) throw new Error("Color map function not created");
 
+        const expectedHexes = ["#000000", "#111111", "#222222", "#333333", "#444444"];
+
         for (let i = 0; i < 5; i++) {
-            const normalizedValue = i / 4;
-            const expectedColorHex = `#${i}${i}${i}${i}${i}${i}`;
-            const expectedColorRgb = parse(expectedColorHex) as Rgb;
-            expect(colorMapFunc(normalizedValue)).toStrictEqual([
+            const value = i * 25; // 0, 25, 50, 75, 100
+            const expectedColorRgb = parse(expectedHexes[i]) as Rgb;
+
+            expect(colorMapFunc(value)).toStrictEqual([
                 (expectedColorRgb.r ?? 0) * 255,
                 (expectedColorRgb.g ?? 0) * 255,
                 (expectedColorRgb.b ?? 0) * 255,
+                (expectedColorRgb.alpha ?? 1) * 255,
             ]);
         }
     });
 
-    test("Maps to expected colors when values are not normalized", () => {
+    test("Maps to expected colors when values are normalized", () => {
         const colorMapFunc = makeColorMapFunctionFromColorScale(COLOR_SCALE_SPEC, {
             valueMin: 0,
             valueMax: 100,
-            unnormalize: true,
+            unnormalize: true, // normalized inputs
         });
 
         expect(colorMapFunc).toBeInstanceOf(Function);
         if (!colorMapFunc) throw new Error("Color map function not created");
 
+        const expectedHexes = ["#000000", "#111111", "#222222", "#333333", "#444444"];
+
         for (let i = 0; i < 5; i++) {
-            const nonNormalizedValue = i / 4;
-            const expectedColorHex = `#${i}${i}${i}${i}${i}${i}`;
-            const expectedColorRgb = parse(expectedColorHex) as Rgb;
-            expect(colorMapFunc(nonNormalizedValue)).toStrictEqual([
+            const normalizedValue = i / 4; // 0, 0.25, ..., 1
+            const expectedColorRgb = parse(expectedHexes[i]) as Rgb;
+
+            expect(colorMapFunc(normalizedValue)).toStrictEqual([
                 (expectedColorRgb.r ?? 0) * 255,
                 (expectedColorRgb.g ?? 0) * 255,
                 (expectedColorRgb.b ?? 0) * 255,
+                (expectedColorRgb.alpha ?? 1) * 255,
             ]);
         }
     });
