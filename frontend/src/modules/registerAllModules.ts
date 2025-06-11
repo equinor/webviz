@@ -11,6 +11,7 @@ import "./Map/registerModule";
 import "./ParameterDistributionMatrix/registerModule";
 import "./ParameterResponseParallelCoordsPlot/registerModule";
 import "./ParameterCorrelationPlot/registerModule";
+import "./ParameterCorrelationMatrix/registerModule";
 import "./ParameterResponseCrossPlot/registerModule";
 import "./Pvt/registerModule";
 import "./Rft/registerModule";

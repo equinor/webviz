@@ -84,3 +84,31 @@ export function getRankedParameterData(
 
     return rankedParameters;
 }
+
+export type CorrelationMatrix = {
+    labels: string[];
+    matrix: (number | null)[][];
+};
+export const createCorrelationMatrix = (
+    parameters: ContinuousParameter[],
+    responseArr: ResponseData[],
+): CorrelationMatrix => {
+    const responseItems = responseArr.map((r) => ({ name: r.displayName, values: r.values }));
+    const allItems = [...responseItems, ...parameters];
+    const labels = allItems.map((item) => item.name);
+    const matrix: (number | null)[][] = Array(allItems.length)
+        .fill(null)
+        .map(() => Array(allItems.length).fill(null));
+
+    for (let i = 0; i < allItems.length; i++) {
+        for (let j = i; j < allItems.length; j++) {
+            const item1 = allItems[i];
+            const item2 = allItems[j];
+            const correlation = pearsonCorrelation(item1.values, item2.values);
+            matrix[i][j] = correlation;
+            matrix[j][i] = correlation; // Symmetric matrix
+        }
+    }
+
+    return { labels, matrix };
+};

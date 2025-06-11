@@ -1,6 +1,6 @@
 import "./timeseriesFieldProduction";
 import "./timeSeriesWellVectors";
 import "./correlationInplaceVolumes";
-import "./correlationFieldProduction";
+import "./correlationTimeSeries";
 import "./oatTimeSeries";
 import "./oatInplace";
