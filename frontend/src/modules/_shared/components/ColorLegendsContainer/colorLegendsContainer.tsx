@@ -441,10 +441,10 @@ function countDecimalPlaces(value: number): number {
     return decimalIndex >= 0 ? value.toString().length - decimalIndex - 1 : 0;
 }
 
-function formatLegendValue(value: number): string {
+function formatLegendValue(value: number, maxNumDecimalPlaces: number = 3): string {
     const numDecimalPlaces = countDecimalPlaces(value);
-    if (Math.log10(Math.abs(value)) > 2) {
-        return value.toExponential(numDecimalPlaces > 2 ? 2 : numDecimalPlaces);
+    if (Math.log10(Math.abs(value)) > maxNumDecimalPlaces) {
+        return value.toExponential(numDecimalPlaces > maxNumDecimalPlaces ? maxNumDecimalPlaces : numDecimalPlaces);
     }
-    return value.toFixed(numDecimalPlaces > 2 ? 2 : numDecimalPlaces);
+    return value.toFixed(numDecimalPlaces > maxNumDecimalPlaces ? maxNumDecimalPlaces : numDecimalPlaces);
 }

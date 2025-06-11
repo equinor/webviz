@@ -82,15 +82,18 @@ export class SeismicSlicesLayer extends CompositeLayer<SeismicSlicesLayerProps> 
             const { traceXYZPointsArray } = section.fence;
 
             for (let i = 0; i < traceXYZPointsArray.length; i += 3) {
-                const x = traceXYZPointsArray[i];
-                const y = traceXYZPointsArray[i + 1];
-                const z = zSign * traceXYZPointsArray[i + 2];
-                xmin = Math.min(xmin, x);
-                ymin = Math.min(ymin, y);
-                zmin = Math.min(zmin, z);
-                xmax = Math.max(xmax, x);
-                ymax = Math.max(ymax, y);
-                zmax = Math.max(zmax, z);
+                const sectionXMin = traceXYZPointsArray[i];
+                const sectionXMax = sectionXMin + section.fence.vVector[0];
+                const sectionYMin = traceXYZPointsArray[i + 1];
+                const sectionYMax = traceXYZPointsArray[i + 1] + section.fence.vVector[1];
+                const sectionZMin = zSign * traceXYZPointsArray[i + 2];
+                const sectionZMax = zSign * traceXYZPointsArray[i + 2] + section.fence.vVector[2];
+                xmin = Math.min(xmin, sectionXMin, sectionXMax);
+                ymin = Math.min(ymin, sectionYMin, sectionYMax);
+                zmin = Math.min(zmin, sectionZMin, sectionZMax);
+                xmax = Math.max(xmax, sectionXMin, sectionXMax);
+                ymax = Math.max(ymax, sectionYMin, sectionYMax);
+                zmax = Math.max(zmax, sectionZMin, sectionZMax);
             }
         }
 
