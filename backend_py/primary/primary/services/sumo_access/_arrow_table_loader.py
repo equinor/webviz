@@ -6,7 +6,7 @@ from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects import Table
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
-from primary.services.service_exceptions import MultipleDataMatchesError, NoDataError, Service
+from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
 
 LOGGER = logging.getLogger(__name__)
 
@@ -114,23 +114,47 @@ class ArrowTableLoader:
         self,
         column_names: list[str],
     ) -> pa.Table:
-        """Fetches multiple columns async and aggregates them into a single Arrow table"""
+        """
+        Fetches aggregated table for multiple columns async and assembles them into a single Arrow table
+        """
 
         async with asyncio.TaskGroup() as tg:
             tasks = [
                 tg.create_task(self.get_aggregated_single_column_async(column_name)) for column_name in column_names
             ]
 
-        table_arr: list[pa.Table] = [task.result() for task in tasks]
+        aggregated_table_per_column_name: list[pa.Table] = [task.result() for task in tasks]
 
-        ret_table: pa.Table | None = None
-        for column_table, column_name in zip(table_arr, column_names):
-            if ret_table is None:
-                ret_table = column_table
-            else:
-                ret_table = ret_table.append_column(column_name, column_table[column_name])
+        merged_aggregated_table: pa.Table | None = None
+        shared_columns: set[str] = {}
+        sort_by_tuples: list[tuple[str, str]] = [] # Sort by (column_name, "ascending")
+        for aggregated_table, column_name in zip(aggregated_table_per_column_name, column_names):
+            if merged_aggregated_table is None:
+                shared_columns = {col for col in aggregated_table.column_names if col != column_name}
+                sort_by_tuples = [(col, "ascending") for col in shared_columns]
+                merged_aggregated_table = aggregated_table.sort_by(sort_by_tuples)
+            else:        
+                # Check if tables has same shared columns
+                aggregated_table_shared_columns = set(aggregated_table.column_names) - {column_name}
+                if shared_columns != aggregated_table_shared_columns:
+                    raise InvalidDataError(
+                        f"Aggregated table for column {column_name} does not contain the required shared columns: {shared_columns}. Got: {aggregated_table_shared_columns}",
+                        Service.SUMO,
+                    )
+                
+                # Sort to make shared columns comparable
+                aggregated_table = aggregated_table.sort_by(sort_by_tuples)        
+                if not merged_aggregated_table.select(shared_columns).equals(
+                    aggregated_table.select(shared_columns)
+                ):
+                    raise InvalidDataError(
+                        f"Shared table columns {shared_columns} are not equal between the existing table and the aggregated table for {column_name}.",
+                        Service.SUMO,
+                    )
 
-        return ret_table
+                merged_aggregated_table = merged_aggregated_table.append_column(column_name, aggregated_table[column_name])
+
+        return merged_aggregated_table
 
     async def get_single_realization_async(self, realization: int) -> pa.Table:
         """Get a pyarrow table for a given realization"""
