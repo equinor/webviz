@@ -9,7 +9,7 @@ import { useMultiViewPicking } from "@webviz/subsurface-viewer/dist/hooks/useMul
 import { WellLabelLayer } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
 import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 import type { Feature } from "geojson";
-import { cloneDeep, isEqual } from "lodash";
+import { isEqual } from "lodash";
 
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
@@ -22,7 +22,6 @@ import {
     type SubsurfaceViewerWithCameraStateProps,
 } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
-import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
 import type {
     AssemblerProduct,
     VisualizationTarget,
@@ -61,11 +60,6 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     React.useImperativeHandle(props.deckGlRef, () => deckGlRef.current);
     usePublishSubscribeTopicValue(props.deckGlManager, DeckGlInstanceManagerTopic.REDRAW);
 
-    const hoverVisualizations = useSubscribedProviderHoverVisualizations<VisualizationTarget.DECK_GL>(
-        props.assemblerProduct,
-        props.workbenchServices,
-    );
-
     const [numRows] = props.views.layout;
 
     const viewports = props.views?.viewports ?? [];
@@ -88,21 +82,6 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             sizePx: 32,
         },
     });
-
-    const adjustedLayersWithHoverVisualizations = [...adjustedLayers];
-    const adjustedViewportsWithHoverVisualizations = cloneDeep(adjustedViewports);
-
-    for (const hoverVisualization of hoverVisualizations) {
-        for (const viewport of adjustedViewportsWithHoverVisualizations) {
-            if (hoverVisualization.groupId === viewport.id) {
-                viewport.layerIds = [
-                    ...(viewport.layerIds ?? []),
-                    ...hoverVisualization.hoverVisualizations.map((v) => v.id),
-                ];
-                adjustedLayersWithHoverVisualizations.push(...hoverVisualization.hoverVisualizations);
-            }
-        }
-    }
 
     function handleMouseHover(event: MapMouseEvent): void {
         getPickingInfo(event);
@@ -136,7 +115,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         id: `subsurface-viewer-${id}`,
         views: {
             ...props.views,
-            viewports: adjustedViewportsWithHoverVisualizations,
+            viewports: adjustedViewports,
             layout: props.views?.layout ?? [1, 1],
         },
         verticalScale: props.verticalScale,
@@ -156,7 +135,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         },
         triggerHome: props.triggerHome,
         pickingRadius: 5,
-        layers: adjustedLayersWithHoverVisualizations,
+        layers: adjustedLayers,
         onMouseEvent: handleMouseEvent,
         getTooltip: tooltip,
     });

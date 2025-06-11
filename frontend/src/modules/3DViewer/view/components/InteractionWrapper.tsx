@@ -14,8 +14,9 @@ import { type Polyline, PolylinesPlugin, PolylinesPluginTopic } from "../utils/P
 
 import { ContextMenu } from "./ContextMenu";
 import { ControlsInfoBox } from "./ControlsInfoBox";
-import { ReadoutWrapper, type ReadoutWrapperProps } from "./ReadoutWrapper";
+import { type ReadoutWrapperProps } from "./ReadoutWrapper";
 import { Toolbar } from "./Toolbar";
+import { HoverVisualizationWrapper } from "./HoverVisualizationWrapper";
 
 export type InteractionWrapperProps = Omit<
     ReadoutWrapperProps,
@@ -158,7 +159,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
     }
 
     return (
-        <ReadoutWrapper
+        <HoverVisualizationWrapper
             {...props}
             deckGlRef={deckGlRef}
             layers={adjustedLayers}
@@ -179,6 +180,6 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             />
             <ContextMenu deckGlManager={deckGlManager} />
             <ControlsInfoBox />
-        </ReadoutWrapper>
+        </HoverVisualizationWrapper>
     );
 }
