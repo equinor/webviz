@@ -127,12 +127,10 @@ class ArrowTableLoader:
 
         merged_aggregated_table: pa.Table | None = None
         shared_columns: set[str] = {}
-        sort_by_tuples: list[tuple[str, str]] = [] # Sort by (column_name, "ascending")
         for aggregated_table, column_name in zip(aggregated_table_per_column_name, column_names):
             if merged_aggregated_table is None:
-                shared_columns = {col for col in aggregated_table.column_names if col != column_name}
-                sort_by_tuples = [(col, "ascending") for col in shared_columns]
-                merged_aggregated_table = aggregated_table.sort_by(sort_by_tuples)
+                shared_columns = set(aggregated_table.column_names) - {column_name}
+                merged_aggregated_table = aggregated_table
             else:        
                 # Check if tables has same shared columns
                 aggregated_table_shared_columns = set(aggregated_table.column_names) - {column_name}
@@ -142,8 +140,7 @@ class ArrowTableLoader:
                         Service.SUMO,
                     )
                 
-                # Sort to make shared columns comparable
-                aggregated_table = aggregated_table.sort_by(sort_by_tuples)        
+                # Ensure equal shared columns        
                 if not merged_aggregated_table.select(shared_columns).equals(
                     aggregated_table.select(shared_columns)
                 ):
@@ -151,7 +148,7 @@ class ArrowTableLoader:
                         f"Shared table columns {shared_columns} are not equal between the existing table and the aggregated table for {column_name}.",
                         Service.SUMO,
                     )
-
+                            
                 merged_aggregated_table = merged_aggregated_table.append_column(column_name, aggregated_table[column_name])
 
         return merged_aggregated_table
