@@ -1,6 +1,6 @@
 import React from "react";
 
-import { isEqual } from "lodash";
+import { cloneDeep, isEqual } from "lodash";
 
 import { Button } from "@lib/components/Button";
 import { Input } from "@lib/components/Input";
@@ -37,12 +37,12 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
 
             const [internalValue, setInternalValue] = React.useState<
                 [[number, number], [number, number], [number, number]] | null
-            >(props.value);
-            const [prevValue, setPrevValue] = React.useState<ValueType>(props.value);
+            >(cloneDeep(props.value));
+            const [prevValue, setPrevValue] = React.useState<ValueType>(cloneDeep(props.value));
 
             if (!isEqual(props.value, prevValue)) {
-                setInternalValue(props.value);
-                setPrevValue(props.value);
+                setInternalValue(cloneDeep(props.value));
+                setPrevValue(cloneDeep(props.value));
             }
 
             function handleSliderChange(index: number, val: number[]) {
