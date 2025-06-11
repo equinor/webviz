@@ -6,6 +6,7 @@ import type { WellboreTrajectory_api } from "@api";
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import type { GeoWellFeature } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { AdvancedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdvancedWellsLayer";
 
 export function makeDrilledWellTrajectoriesLayer(
     args: TransformerArgs<any, WellboreTrajectory_api[], any>,
@@ -51,7 +52,7 @@ export function makeDrilledWellTrajectoriesLayer(
         return null;
     }
 
-    const wellsLayer = new WellsLayer({
+    const wellsLayer = new AdvancedWellsLayer({
         id,
         data: {
             type: "FeatureCollection",

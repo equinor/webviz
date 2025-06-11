@@ -218,6 +218,14 @@ export type AssemblerProduct<
 
 export type CustomGroupPropsMap = Partial<Record<GroupType, Record<string, any>>>;
 
+type DataProviderObjects<TTarget extends VisualizationTarget, TAccumulatedData extends Record<string, any>> = {
+    visualization: DataProviderVisualization<TTarget> | null;
+    hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget>;
+    annotations: Annotation[];
+    boundingBox: bbox.BBox | null;
+    accumulatedData: TAccumulatedData | null;
+};
+
 export class VisualizationAssembler<
     TTarget extends VisualizationTarget,
     TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
@@ -232,6 +240,14 @@ export class VisualizationAssembler<
     private _groupCustomPropsCollectors: Map<
         keyof TCustomGroupProps,
         GroupCustomPropsCollector<any, any, TCustomGroupProps>
+    > = new Map();
+
+    private _cachedDataProviderVisualizationsMap: Map<
+        string,
+        {
+            revisionNumber: number;
+            objects: DataProviderObjects<TTarget, TAccumulatedData>;
+        }
     > = new Map();
 
     registerDataProviderTransformers<
@@ -359,21 +375,20 @@ export class VisualizationAssembler<
                     continue;
                 }
 
-                const dataProviderVisualization = this.makeDataProviderVisualization(child, injectedData);
+                const dataProviderObjects = this.makeDataProviderObjects(child, injectedData);
 
-                if (!dataProviderVisualization) {
+                if (!dataProviderObjects.visualization) {
                     continue;
                 }
 
-                const providerBoundingBox = this.makeDataProviderBoundingBox(child);
-                maybeApplyBoundingBox(providerBoundingBox);
-                children.push(dataProviderVisualization);
-                annotations.push(...this.makeDataProviderAnnotations(child));
+                maybeApplyBoundingBox(dataProviderObjects.boundingBox);
+                children.push(dataProviderObjects.visualization);
+                annotations.push(...dataProviderObjects.annotations);
                 hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
                     hoverVisualizationFunctions,
-                    this.makeDataProviderHoverVisualizationFunctions(child, injectedData),
+                    dataProviderObjects.hoverVisualizationFunctions,
                 );
-                accumulatedData = this.accumulateDataProviderData(child, accumulatedData) ?? accumulatedData;
+                accumulatedData = dataProviderObjects.accumulatedData ?? accumulatedData;
             }
         }
 
@@ -393,6 +408,42 @@ export class VisualizationAssembler<
             hoverVisualizationFunctions: hoverVisualizationFunctions,
             customProps: {} as TCustomGroupProps,
         };
+    }
+
+    private makeDataProviderObjects(
+        dataProvider: DataProvider<any, any, any>,
+        injectedData?: TInjectedData,
+    ): DataProviderObjects<TTarget, TAccumulatedData> {
+        if (this._cachedDataProviderVisualizationsMap.has(dataProvider.getItemDelegate().getId())) {
+            const cached = this._cachedDataProviderVisualizationsMap.get(dataProvider.getItemDelegate().getId());
+            if (cached && cached.revisionNumber === dataProvider.getRevisionNumber()) {
+                return cached.objects;
+            }
+        }
+
+        const visualization = this.makeDataProviderVisualization(dataProvider, injectedData);
+        const hoverVisualizationFunctions = this.makeDataProviderHoverVisualizationFunctions(
+            dataProvider,
+            injectedData,
+        );
+        const annotations = this.makeDataProviderAnnotations(dataProvider, injectedData);
+        const boundingBox = this.makeDataProviderBoundingBox(dataProvider);
+        const accumulatedData = this.accumulateDataProviderData(dataProvider, {} as TAccumulatedData, injectedData);
+
+        const objects: DataProviderObjects<TTarget, TAccumulatedData> = {
+            visualization,
+            hoverVisualizationFunctions,
+            annotations,
+            boundingBox,
+            accumulatedData,
+        };
+
+        this._cachedDataProviderVisualizationsMap.set(dataProvider.getItemDelegate().getId(), {
+            revisionNumber: dataProvider.getRevisionNumber(),
+            objects,
+        });
+
+        return objects;
     }
 
     private makeGroup<
@@ -467,13 +518,15 @@ export class VisualizationAssembler<
             return null;
         }
 
-        return {
+        const visualizationObj: DataProviderVisualization<TTarget> = {
             itemType: VisualizationItemType.DATA_PROVIDER_VISUALIZATION,
             id: dataProvider.getItemDelegate().getId(),
             name: dataProvider.getItemDelegate().getName(),
             type: dataProvider.getType(),
             visualization,
         };
+
+        return visualizationObj;
     }
 
     private makeDataProviderHoverVisualizationFunctions(

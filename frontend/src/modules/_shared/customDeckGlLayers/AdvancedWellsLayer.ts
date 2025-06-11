@@ -1,7 +1,9 @@
-import type { FilterContext, LayersList } from "@deck.gl/core";
+import type { FilterContext, LayersList, UpdateParameters } from "@deck.gl/core";
 import { Layer } from "@deck.gl/core";
 import { GeoJsonLayer } from "@deck.gl/layers";
+import type { BoundingBox3D } from "@webviz/subsurface-viewer";
 import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { GetBoundingBox } from "@webviz/subsurface-viewer/dist/layers/wells/utils/spline";
 
 export class AdvancedWellsLayer extends WellsLayer {
     static layerName: string = "WellsLayer";
@@ -12,6 +14,24 @@ export class AdvancedWellsLayer extends WellsLayer {
         }
 
         return true;
+    }
+
+    updateState(params: UpdateParameters<WellsLayer>): void {
+        super.updateState(params);
+        const { props, changeFlags } = params;
+        if (props.reportBoundingBox && changeFlags.dataChanged) {
+            props.reportBoundingBox({
+                layerBoundingBox: this.calcBoundingBox(),
+            });
+        }
+    }
+
+    private calcBoundingBox(): BoundingBox3D {
+        if (!this.state.data) {
+            return [0, 0, 0, 0, 0, 0];
+        }
+
+        return GetBoundingBox(this.state.data);
     }
 
     renderLayers(): LayersList {
