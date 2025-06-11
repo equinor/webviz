@@ -300,26 +300,6 @@ const ACTIONS: ActionGroup[] = [
         label: "Layers",
         children: [
             {
-                label: "Intersection",
-                children: [
-                    {
-                        identifier: "intersection-realization-grid",
-                        icon: <Icon data={grid_layer} fontSize="small" />,
-                        label: "Intersection Realization Grid",
-                    },
-                    {
-                        identifier: "simulated-seismic-fence",
-                        icon: <Icon data={timeline} fontSize="small" />,
-                        label: "Seismic Fence (Simulated)",
-                    },
-                    {
-                        identifier: "observed-seismic-fence",
-                        icon: <Icon data={timeline} fontSize="small" />,
-                        label: "Seismic Fence (Observed)",
-                    },
-                ],
-            },
-            {
                 label: "Reservoir grid",
                 children: [
                     {
@@ -351,6 +331,26 @@ const ACTIONS: ActionGroup[] = [
                         identifier: "drilled-wellbore-picks",
                         icon: <Icon data={wellbore} fontSize="small" />,
                         label: "Drilled Wellbore Picks",
+                    },
+                ],
+            },
+            {
+                label: "Intersection",
+                children: [
+                    {
+                        identifier: "intersection-realization-grid",
+                        icon: <Icon data={grid_layer} fontSize="small" />,
+                        label: "Intersection Realization Grid",
+                    },
+                    {
+                        identifier: "simulated-seismic-fence",
+                        icon: <Icon data={timeline} fontSize="small" />,
+                        label: "Seismic Fence (Simulated)",
+                    },
+                    {
+                        identifier: "observed-seismic-fence",
+                        icon: <Icon data={timeline} fontSize="small" />,
+                        label: "Seismic Fence (Observed)",
                     },
                 ],
             },
