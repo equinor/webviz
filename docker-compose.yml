@@ -32,8 +32,7 @@ services:
       - WEBVIZ_SUMO_ENV
       - WEBVIZ_VDS_HOST_ADDRESS
       - APPLICATIONINSIGHTS_CONNECTION_STRING
-      - OTEL_SERVICE_NAME=primary-backend
-      - OTEL_RESOURCE_ATTRIBUTES=service.namespace=local, service.version=dummy0.1.2
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=primary-backend, service.namespace=local
       - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
       - WEBVIZ_DB_CONNECTION_STRING
     volumes:
@@ -76,6 +75,8 @@ services:
     environment:
       - UVICORN_PORT=8002
       - UVICORN_RELOAD=true
+      - APPLICATIONINSIGHTS_CONNECTION_STRING
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=user-grid3d-ri, service.namespace=local
     volumes:
       - ./backend_py/user_grid3d_ri/user_grid3d_ri:/home/appuser/backend_py/user_grid3d_ri/user_grid3d_ri
       - ./backend_py/libs:/home/appuser/backend_py/libs

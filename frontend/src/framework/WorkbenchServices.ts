@@ -39,6 +39,7 @@ export type GlobalTopicDefinitions = {
     "global.syncValue.verticalScale": number;
     "global.syncValue.inplaceVolumetricsFilterSettings": InplaceVolumetricsFilterSettings;
     "global.syncValue.inplaceVolumetricsResultName": string;
+    "global.syncValue.parameter": string;
 };
 
 export type AllTopicDefinitions = NavigatorTopicDefinitions & GlobalTopicDefinitions;

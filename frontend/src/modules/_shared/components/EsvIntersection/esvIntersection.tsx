@@ -31,6 +31,7 @@ import {
     WellborepathLayer,
 } from "@equinor/esv-intersection";
 import { cloneDeep, isEqual } from "lodash";
+import { Renderer, RENDERER_TYPE, utils } from "pixi.js";
 
 import type { Viewport } from "@framework/types/viewport";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -38,7 +39,6 @@ import type { ColorScale } from "@lib/utils/ColorScale";
 import { fuzzyCompare } from "@lib/utils/fuzzyCompare";
 import type { Size2D } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
 
 import type { InteractionHandlerTopicPayload } from "./interaction/InteractionHandler";
 import { InteractionHandler, InteractionHandlerTopic } from "./interaction/InteractionHandler";
@@ -49,6 +49,7 @@ import { SeismicLayer } from "./layers/SeismicLayer";
 import type { SurfaceStatisticalFanchartsData } from "./layers/SurfaceStatisticalFanchartCanvasLayer";
 import { SurfaceStatisticalFanchartsCanvasLayer } from "./layers/SurfaceStatisticalFanchartCanvasLayer";
 import type { HighlightItem, ReadoutItem } from "./types/types";
+import { isValidBounds, isValidViewport } from "./utils/validationUtils";
 
 export enum LayerType {
     CALLOUT_CANVAS = "callout-canvas",
@@ -102,6 +103,7 @@ export type LayerItem = {
     };
 }[keyof LayerOptionsMap] & {
     id: string;
+    name: string;
     hoverable?: boolean;
 };
 
@@ -296,7 +298,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
         }
 
         if (!isEqual(prevBounds, props.bounds)) {
-            if (props.bounds?.x && props.bounds?.y) {
+            if (props.bounds && isValidBounds(props.bounds)) {
                 esvController.setBounds(props.bounds.x, props.bounds.y);
             }
             setPrevBounds(props.bounds);
@@ -418,6 +420,12 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             newEsvController.zoomPanHandler.onRescale = function handleRescale(event: OnRescaleEvent) {
                 if (!automaticChanges.current) {
                     const k = event.transform.k;
+
+                    // Prevent division by zero
+                    if (k === 0 || Number.isNaN(k)) {
+                        return;
+                    }
+
                     const xSpan = newEsvController.zoomPanHandler.xSpan;
                     const displ = xSpan / k;
                     const unitsPerPixel = displ / event.width;
@@ -428,7 +436,11 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                     const dy0 = event.yBounds[0] - event.transform.y * (unitsPerPixel / event.zFactor);
                     const cy = dy0 + displ / event.zFactor / event.viewportRatio / 2;
 
-                    setCurrentViewport([cx, cy, displ]);
+                    const candidateViewport: Viewport = [cx, cy, displ];
+                    if (!isValidViewport(candidateViewport)) {
+                        return;
+                    }
+                    setCurrentViewport(candidateViewport);
                 }
                 automaticChanges.current = false;
                 oldOnRescaleFunction(event);
@@ -440,7 +452,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             newEsvController.addLayer(gridLayer);
             newEsvController.hideLayer("grid");
 
-            const newPixiRenderApplication = new PixiRenderApplication({
+            const newPixiRenderApplication = new CustomPixiRenderApplication({
                 context: null,
                 antialias: true,
                 hello: false,
@@ -475,8 +487,8 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                 setPrevShowAxesLabels(undefined);
                 setPrevShowAxes(undefined);
                 setInteractionHandler(null);
+                newPixiRenderApplication.destroy();
                 newInteractionHandler.destroy();
-                newEsvController.removeAllLayers();
                 newEsvController.destroy();
             };
         },
@@ -548,4 +560,40 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             ></div>
         </>
     );
+}
+
+class CustomPixiRenderApplication extends PixiRenderApplication {
+    constructor(options: any) {
+        super(options);
+    }
+
+    destroy() {
+        this.stage?.destroy({
+            children: true,
+            texture: true,
+            baseTexture: true,
+        });
+
+        this.stage = undefined;
+
+        const renderType = this.renderer?.type;
+        const glContext = this.renderer instanceof Renderer ? this.renderer?.gl : undefined;
+
+        this.renderer?.destroy(true);
+
+        if (renderType === RENDERER_TYPE.WEBGL && glContext) {
+            const loseContextExt = glContext.getExtension("WEBGL_lose_context");
+            if (loseContextExt && !glContext.isContextLost()) {
+                loseContextExt.loseContext();
+            }
+        }
+
+        utils.clearTextureCache();
+
+        if (this.renderer?.view?.parentNode) {
+            this.renderer.view.parentNode.removeChild(this.renderer.view);
+        }
+
+        this.renderer = undefined;
+    }
 }

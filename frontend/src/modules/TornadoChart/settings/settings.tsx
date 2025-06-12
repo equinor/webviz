@@ -3,13 +3,13 @@ import React from "react";
 import { useAtom, useSetAtom } from "jotai";
 
 import { KeyKind } from "@framework/DataChannelTypes";
+import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { RadioGroup } from "@lib/components/RadioGroup";
-
 
 import type { Interfaces } from "../interfaces";
 import { DisplayComponentType } from "../typesAndEnums";
@@ -22,15 +22,19 @@ import {
     showRealizationPointsAtom,
 } from "./atoms/baseAtoms";
 
-
-export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>): React.ReactNode {
+export function Settings({
+    initialSettings,
+    settingsContext,
+    workbenchSession,
+}: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const [displayComponentType, setDisplayComponentType] = useAtom(displayComponentTypeAtom);
     const [hideZeroY, setHideZeroY] = useAtom(hideZeroYAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
     const [showRealizationPoints, setShowRealizationPoints] = useAtom(showRealizationPointsAtom);
     const setModuleReferenceSensitivityName = useSetAtom(referenceSensitivityNameAtom);
-    // const selectedSensitivity = settingsContext.useViewToSettingsInterfaceValue("selectedSensitivity");
     const [referenceSensitivityName, setReferenceSensitivityName] = React.useState<string | null>(null);
+
+    useApplyInitialSettingsToState(initialSettings, "displayComponentType", "string", setDisplayComponentType);
 
     const ensembleSet = workbenchSession.getEnsembleSet();
 

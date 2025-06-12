@@ -1,10 +1,11 @@
-import type { Layer } from "@deck.gl/core";
+import type { Color, Layer } from "@deck.gl/core";
 import { TGrid3DColoringMode } from "@webviz/subsurface-viewer";
 import { AxesLayer, Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
-import type { Feature } from "geojson";
+import type { Feature, LineString, Point } from "geojson";
 
 import type { BoundingBox3D_api, WellboreTrajectory_api } from "@api";
 import type { ColorScale } from "@lib/utils/ColorScale";
+import type { GeoWellFeature } from "@modules/3DViewer/typesAndEnums";
 
 import type {
     FenceMeshSection_trans,
@@ -136,13 +137,13 @@ export function makeWellsLayer(
         id: "wells-layer",
         data: {
             type: "FeatureCollection",
-            unit: "m",
             features: wellLayerDataFeatures,
         },
         refine: false,
         lineStyle: { width: getLineStyleWidth, color: getColor },
         wellHeadStyle: { size: getWellHeadStyleWidth, color: getColor },
         pickable: true,
+        wellNameVisible: true,
         ZIncreasingDownwards: false,
     });
 
@@ -152,17 +153,17 @@ export function makeWellsLayer(
 export function wellTrajectoryToGeojson(
     wellTrajectory: WellboreTrajectory_api,
     selectedWellboreUuid: string | null,
-): Record<string, unknown> {
-    const point: Record<string, unknown> = {
+): GeoWellFeature {
+    const wellHeadPoint: Point = {
         type: "Point",
         coordinates: [wellTrajectory.eastingArr[0], wellTrajectory.northingArr[0], -wellTrajectory.tvdMslArr[0]],
     };
-    const coordinates: Record<string, unknown> = {
+    const trajectoryLineString: LineString = {
         type: "LineString",
         coordinates: zipCoords(wellTrajectory.eastingArr, wellTrajectory.northingArr, wellTrajectory.tvdMslArr),
     };
 
-    let color = [150, 150, 150];
+    let color = [150, 150, 150] as Color;
     let lineWidth = 2;
     let wellHeadSize = 1;
     if (wellTrajectory.wellboreUuid === selectedWellboreUuid) {
@@ -171,20 +172,20 @@ export function wellTrajectoryToGeojson(
         wellHeadSize = 10;
     }
 
-    const geometryCollection: Record<string, unknown> = {
+    const geometryCollection: GeoWellFeature = {
         type: "Feature",
         geometry: {
             type: "GeometryCollection",
-            geometries: [point, coordinates],
+            geometries: [wellHeadPoint, trajectoryLineString],
         },
         properties: {
             uuid: wellTrajectory.wellboreUuid,
-            name: wellTrajectory.uniqueWellboreIdentifier,
             uwi: wellTrajectory.uniqueWellboreIdentifier,
-            color,
-            md: [wellTrajectory.mdArr],
             lineWidth,
             wellHeadSize,
+            name: wellTrajectory.uniqueWellboreIdentifier,
+            color,
+            md: [wellTrajectory.mdArr],
         },
     };
 

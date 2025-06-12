@@ -25,6 +25,17 @@ class WellboreTrajectory(BaseModel):
     northingArr: List[float]
 
 
+class StratigraphicColumn(BaseModel):
+    """
+    Stratigraphic column from SMDA
+    """
+
+    identifier: str
+    areaType: str
+    status: str
+    type: str | None
+
+
 class WellborePick(BaseModel):
     """
     Wellbore pick from SMDA
@@ -45,6 +56,7 @@ class WellborePick(BaseModel):
     depthReferencePoint: str
     mdUnit: str
     interpreter: str | None
+    obsNo: int
 
 
 class WellboreCompletion(BaseModel):
@@ -83,6 +95,7 @@ class WellLogCurveSourceEnum(Enum):
     SSDL_WELL_LOG = "ssdl.well_log"
     SMDA_GEOLOGY = "smda.geology"
     SMDA_STRATIGRAPHY = "smda.stratigraphy"
+    SMDA_SURVEY = "smda.survey"
 
 
 class WellLogCurveTypeEnum(str, Enum):
