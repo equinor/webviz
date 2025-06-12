@@ -76,6 +76,7 @@ export type CaseInfo_api = {
     name: string;
     status: string;
     user: string;
+    updated_at: string;
 };
 
 export type Completions_api = {
@@ -118,11 +119,13 @@ export type EnsembleDetails_api = {
     case_uuid: string;
     realizations: Array<number>;
     stratigraphic_column_identifier: string;
+    timestamps: EnsembleTimestamps_api;
 };
 
 export type EnsembleInfo_api = {
     name: string;
     realization_count: number;
+    timestamps: EnsembleTimestamps_api;
 };
 
 /**
@@ -171,6 +174,11 @@ export type EnsembleSensitivity_api = {
 export type EnsembleSensitivityCase_api = {
     name: string;
     realizations: Array<number>;
+};
+
+export type EnsembleTimestamps_api = {
+    case_updated_at: string;
+    data_updated_at: string;
 };
 
 export type FenceMeshSection_api = {
@@ -1208,7 +1216,7 @@ export type GetCasesData_api = {
          * Field identifier
          */
         field_identifier: string;
-        t?: number;
+        t?: string;
     };
     url: "/cases";
 };
@@ -1231,6 +1239,38 @@ export type GetCasesResponses_api = {
 
 export type GetCasesResponse_api = GetCasesResponses_api[keyof GetCasesResponses_api];
 
+export type GetCaseData_api = {
+    body?: never;
+    path: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+    };
+    query?: {
+        t?: string;
+    };
+    url: "/cases/{case_uuid}";
+};
+
+export type GetCaseErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetCaseError_api = GetCaseErrors_api[keyof GetCaseErrors_api];
+
+export type GetCaseResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: CaseInfo_api;
+};
+
+export type GetCaseResponse_api = GetCaseResponses_api[keyof GetCaseResponses_api];
+
 export type GetEnsemblesData_api = {
     body?: never;
     path: {
@@ -1240,7 +1280,7 @@ export type GetEnsemblesData_api = {
         case_uuid: string;
     };
     query?: {
-        t?: number;
+        t?: string;
     };
     url: "/cases/{case_uuid}/ensembles";
 };
@@ -1276,7 +1316,7 @@ export type GetEnsembleDetailsData_api = {
         ensemble_name: string;
     };
     query?: {
-        t?: number;
+        t?: string;
     };
     url: "/cases/{case_uuid}/ensembles/{ensemble_name}";
 };
@@ -1298,6 +1338,40 @@ export type GetEnsembleDetailsResponses_api = {
 };
 
 export type GetEnsembleDetailsResponse_api = GetEnsembleDetailsResponses_api[keyof GetEnsembleDetailsResponses_api];
+
+export type GetEnsembleTimestampsData_api = {
+    body?: never;
+    path: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble name
+         */
+        ensemble_name: string;
+    };
+    query?: never;
+    url: "/cases/{case_uuid}/ensembles/{ensemble_name}/timestamps";
+};
+
+export type GetEnsembleTimestampsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetEnsembleTimestampsError_api = GetEnsembleTimestampsErrors_api[keyof GetEnsembleTimestampsErrors_api];
+
+export type GetEnsembleTimestampsResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: EnsembleTimestamps_api;
+};
+
+export type GetEnsembleTimestampsResponse_api = GetEnsembleTimestampsResponses_api[keyof GetEnsembleTimestampsResponses_api];
 
 export type GetVectorListData_api = {
     body?: never;
@@ -2351,6 +2425,7 @@ export type GetParametersData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        t?: string;
     };
     url: "/parameters/parameters/";
 };
@@ -2419,6 +2494,7 @@ export type GetSensitivitiesData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        t?: string;
     };
     url: "/parameters/sensitivities/";
 };

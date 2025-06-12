@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import type { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api } from "@api";
+import type { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api, EnsembleTimestamps_api } from "@api";
 import { SensitivityType_api, getEnsembleDetailsOptions, getParametersOptions, getSensitivitiesOptions } from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/Workbench";
@@ -30,7 +30,16 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
     userDeltaEnsembleSettings: UserDeltaEnsembleSetting[],
 ): Promise<EnsembleSet> {
     // Get ensemble idents to load
-    const ensembleIdentsToLoad: RegularEnsembleIdent[] = userEnsembleSettings.map((setting) => setting.ensembleIdent);
+    const ensembleTimestampMap = {} as Record<string, EnsembleTimestamps_api>;
+    const ensembleIdentsToLoad = [] as RegularEnsembleIdent[];
+
+    for (const ensembleSetting of userEnsembleSettings) {
+        if (ensembleSetting.timestamps) {
+            ensembleTimestampMap[ensembleSetting.ensembleIdent.toString()] = ensembleSetting.timestamps;
+        }
+        ensembleIdentsToLoad.push(ensembleSetting.ensembleIdent);
+    }
+
     for (const deltaEnsembleSetting of userDeltaEnsembleSettings) {
         if (!ensembleIdentsToLoad.includes(deltaEnsembleSetting.comparisonEnsembleIdent)) {
             ensembleIdentsToLoad.push(deltaEnsembleSetting.comparisonEnsembleIdent);
@@ -41,7 +50,11 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
     }
 
     // Fetch from back-end
-    const ensembleApiDataMap = await loadEnsembleApiDataMapFromBackend(queryClient, ensembleIdentsToLoad);
+    const ensembleApiDataMap = await loadEnsembleApiDataMapFromBackend(
+        queryClient,
+        ensembleIdentsToLoad,
+        ensembleTimestampMap,
+    );
 
     // Create regular ensembles
     const outEnsembleArray: RegularEnsemble[] = [];
@@ -67,6 +80,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                 sensitivityArray,
                 ensembleSetting.color,
                 ensembleSetting.customName,
+                ensembleApiData.ensembleDetails.timestamps,
             ),
         );
     }
@@ -120,6 +134,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                   nullSensitivityArray,
                   emptyColor,
                   comparisonEnsembleCustomName,
+                  comparisonEnsembleApiData.ensembleDetails.timestamps,
               );
 
         const referenceEnsemble = existingReferenceEnsemble
@@ -135,6 +150,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                   nullSensitivityArray,
                   emptyColor,
                   referenceEnsembleCustomName,
+                  referenceEnsembleApiData.ensembleDetails.timestamps,
               );
 
         outDeltaEnsembleArray.push(
@@ -153,6 +169,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
 async function loadEnsembleApiDataMapFromBackend(
     queryClient: QueryClient,
     ensembleIdents: RegularEnsembleIdent[],
+    ensembleTimestampMap: Record<string, EnsembleTimestamps_api>,
 ): Promise<EnsembleIdentStringToEnsembleApiDataMap> {
     console.debug("loadEnsembleIdentStringToApiDataMapFromBackend", ensembleIdents);
     const STALE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
@@ -165,9 +182,12 @@ async function loadEnsembleApiDataMapFromBackend(
     for (const ensembleIdent of ensembleIdents) {
         const caseUuid = ensembleIdent.getCaseUuid();
         const ensembleName = ensembleIdent.getEnsembleName();
+        const timestamps = ensembleTimestampMap[ensembleIdent.toString()];
 
         const ensembleDetailsPromise = queryClient.fetchQuery({
             ...getEnsembleDetailsOptions({
+                // ? These data should only be affected by the case timestamp, right?
+                query: { t: timestamps.case_updated_at ?? Date.now().toString() },
                 path: {
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
@@ -181,6 +201,8 @@ async function loadEnsembleApiDataMapFromBackend(
         const parametersPromise = queryClient.fetchQuery({
             ...getParametersOptions({
                 query: {
+                    // ? These are only affected by the "data" timestamp, right?
+                    t: timestamps.data_updated_at,
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
                 },
@@ -193,6 +215,8 @@ async function loadEnsembleApiDataMapFromBackend(
         const sensitivitiesPromise = queryClient.fetchQuery({
             ...getSensitivitiesOptions({
                 query: {
+                    // ? These are only affected by the "data" timestamp, right?
+                    t: timestamps.data_updated_at,
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
                 },

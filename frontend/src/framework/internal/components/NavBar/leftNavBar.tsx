@@ -132,6 +132,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
             ensembleIdent: new RegularEnsembleIdent(ens.caseUuid, ens.ensembleName),
             customName: ens.customName,
             color: ens.color,
+            timestamps: ens.timestamps,
         }));
         const deltaEnsembleSettings: UserDeltaEnsembleSetting[] = createdDeltaEnsembles.map((deltaEns) => ({
             comparisonEnsembleIdent: new RegularEnsembleIdent(
@@ -158,6 +159,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         ensembleName: ens.getEnsembleName(),
         color: ens.getColor(),
         customName: ens.getCustomName(),
+        timestamps: ens.getTimestamps(),
     }));
 
     let fixedSelectedEnsembles = selectedEnsembles;

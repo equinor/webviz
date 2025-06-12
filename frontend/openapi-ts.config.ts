@@ -12,7 +12,20 @@ export default defineConfig({
     },
     experimentalParser: true,
     plugins: [
-        cacheBustingPlugin({ name: "cache-busting", targets: ["getEnsembles", "getCases", "getEnsembleDetails"] }),
+        cacheBustingPlugin({
+            name: "cache-busting",
+            // ? Should we just make every single endpoint have this?
+            targets: [
+                "getEnsembles",
+                "getCases",
+                "getEnsembleDetails",
+                "getCase",
+                "getEnsembleDetails",
+                "getParameters",
+                "getSensitivities",
+            ],
+        }),
+
         ...defaultPlugins,
         "@tanstack/react-query",
         {
