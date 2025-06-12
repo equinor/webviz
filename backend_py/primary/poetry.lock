@@ -2448,6 +2448,7 @@ version = "0.52b1"
 description = "OpenTelemetry HTTPX Instrumentation"
 optional = false
 python-versions = ">=3.8"
+groups = ["main"]
 files = [
     {file = "opentelemetry_instrumentation_httpx-0.52b1-py3-none-any.whl", hash = "sha256:8476c3133dc28c7192e17f0f7a28170d2410b125551b7c450dd76eb7192cb89f"},
     {file = "opentelemetry_instrumentation_httpx-0.52b1.tar.gz", hash = "sha256:b32252f21fff7f1bd88cc42716dcf948b3f9e8fc689d3d5d479222491f443c8d"},
@@ -2489,6 +2490,7 @@ version = "0.52b1"
 description = "OpenTelemetry Redis instrumentation"
 optional = false
 python-versions = ">=3.8"
+groups = ["main"]
 files = [
     {file = "opentelemetry_instrumentation_redis-0.52b1-py3-none-any.whl", hash = "sha256:77293e2fd4cb36d28a68ec9e8b05fdc24859f016b25bc9f6efa06999901e93bf"},
     {file = "opentelemetry_instrumentation_redis-0.52b1.tar.gz", hash = "sha256:68c700e066fb0aed402aad2645a5af8133bf6cbe4520ada4f626ecbf1ae49628"},
@@ -3535,7 +3537,7 @@ name = "python-dotenv"
 version = "1.1.0"
 description = "Read key-value pairs from a .env file and set them as environment variables"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
     {file = "python_dotenv-1.1.0-py3-none-any.whl", hash = "sha256:d7c01d9e2293916c18baf562d95698754b0dbbb5e74d457c45d4f6561fb9d55d"},
@@ -4577,4 +4579,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "2fd9dbb2e01003a33ce0cd7456de6cc8d52f1a8dd5dc0c8eced4e8fd93a88b99"
+content-hash = "4dde8e382c647a57c41c92ca5f25a9cdb9c0493fdaa0a9bfac8a3e46df3724f2"
