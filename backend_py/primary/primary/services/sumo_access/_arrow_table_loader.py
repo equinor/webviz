@@ -136,6 +136,9 @@ class ArrowTableLoader:
             }
         column_name_and_aggregated_table_pairs = [(name, task.result()) for name, task in column_name_task_dict.items()]
 
+        if not column_name_and_aggregated_table_pairs:
+            raise NoDataError(f"No aggregated tables found for: {self._make_req_info_str()}", Service.SUMO)
+
         # If we only have one table, we can just return it directly
         if len(column_name_and_aggregated_table_pairs) == 1:
             return column_name_and_aggregated_table_pairs[0][1]
@@ -148,22 +151,21 @@ class ArrowTableLoader:
             this_column_name, this_aggregated_table = column_name_and_aggregated_table_pairs[i]
             shared_columns_this_table = this_aggregated_table.drop(this_column_name)
             if not shared_columns_first_table.equals(shared_columns_this_table):
+                if shared_columns_first_table.column_names != shared_columns_this_table.column_names:
+                    raise InvalidDataError(
+                        f"The shared columns are not equal: Aggregated table for {first_column_name} has shared columns {shared_columns_first_table.column_names}, and aggregated table for {this_column_name} has shared columns {shared_columns_this_table.column_names}",
+                        Service.SUMO,
+                    )
                 raise InvalidDataError(
-                    f"The shared columns are not equal: Aggregated table for {first_column_name} has shared columns {shared_columns_first_table.column_names}, and aggregated table for {this_column_name} has shared columns {shared_columns_this_table.column_names}. Although the column names may match, their contents (values or order) differ.",
+                    f"The shared columns are not equal: Aggregated table for {first_column_name} and aggregated table for {this_column_name} has same shared columns {shared_columns_this_table.column_names}. Although the column names match, their contents (values or order) differ.",
                     Service.SUMO,
                 )
 
-        merged_aggregated_table: pa.Table | None = None
-        for column_name, aggregated_table in column_name_and_aggregated_table_pairs:
-            if merged_aggregated_table is None:
-                merged_aggregated_table = aggregated_table
-            else:
-                merged_aggregated_table = merged_aggregated_table.append_column(
-                    column_name, aggregated_table[column_name]
-                )
-
-        if merged_aggregated_table is None:
-            raise NoDataError(f"No aggregated tables found for: {self._make_req_info_str()}", Service.SUMO)
+        # Now we can merge the tables by appending the "value" columns
+        merged_aggregated_table = first_aggregated_table
+        for i in range(1, len(column_name_and_aggregated_table_pairs)):
+            column_name, aggregated_table = column_name_and_aggregated_table_pairs[i]
+            merged_aggregated_table = merged_aggregated_table.append_column(column_name, aggregated_table[column_name])
 
         return merged_aggregated_table
 
