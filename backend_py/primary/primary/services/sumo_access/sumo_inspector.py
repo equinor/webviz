@@ -21,6 +21,7 @@ class CaseInfo(BaseModel):
     name: str
     status: str
     user: str
+    updated_at: str
 
 
 class SumoInspector:
@@ -38,9 +39,15 @@ class SumoInspector:
         return [FieldInfo(identifier=field_ident) for field_ident in field_idents]
 
     async def _get_case_info_async(self, search_context: SearchContext, case_uuid: str) -> CaseInfo:
-
         case = await search_context.get_case_by_uuid_async(case_uuid)
-        return CaseInfo(uuid=case.uuid, name=case.name, status=case.status, user=case.user)
+
+        return CaseInfo(
+            uuid=case.uuid,
+            name=case.name,
+            status=case.status,
+            user=case.user,
+            updated_at=case.metadata["_sumo"]["timestamp"],
+        )
 
     async def get_cases_async(self, field_identifier: str) -> List[CaseInfo]:
         """Get list of cases for specified field"""
