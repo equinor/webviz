@@ -64,11 +64,11 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
     }
 
     function handleVerticalScaleIncrease() {
-        props.onVerticalScaleChange(props.verticalScale + 0.1);
+        props.onVerticalScaleChange(props.verticalScale + 1);
     }
 
     function handleVerticalScaleDecrease() {
-        props.onVerticalScaleChange(props.verticalScale - 0.1);
+        props.onVerticalScaleChange(props.verticalScale - 1);
     }
 
     function handleTogglePolylineEditing() {
@@ -121,7 +121,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                             <Remove fontSize="inherit" />
                         </HoldPressedIntervalCallbackButton>
                         <span title="Vertical scale" className="w-8 text-center">
-                            {props.verticalScale.toFixed(2)}
+                            {props.verticalScale}
                         </span>
                         <HoldPressedIntervalCallbackButton
                             onHoldPressedIntervalCallback={handleVerticalScaleIncrease}

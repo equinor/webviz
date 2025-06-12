@@ -7,7 +7,7 @@ import type {
 import type { Feature, LineString, Point } from "geojson";
 
 import type { WellboreTrajectory_api } from "@api";
-import { AdvancedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdvancedWellsLayer";
+import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
 
 import type { TransformerArgs } from "../VisualizationAssembler";
 
@@ -100,7 +100,7 @@ export function makeDrilledWellTrajectoriesLayer({
         return [50, 50, 50, 100];
     }
 
-    const wellsLayer = new AdvancedWellsLayer({
+    const wellsLayer = new AdjustedWellsLayer({
         id: id,
         data: {
             type: "FeatureCollection",

@@ -5,8 +5,8 @@ import type { BoundingBox3D } from "@webviz/subsurface-viewer";
 import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { GetBoundingBox } from "@webviz/subsurface-viewer/dist/layers/wells/utils/spline";
 
-export class AdvancedWellsLayer extends WellsLayer {
-    static layerName: string = "WellsLayer";
+export class AdjustedWellsLayer extends WellsLayer {
+    static layerName: string = "AdjustedWellsLayer";
 
     filterSubLayer(context: FilterContext): boolean {
         if (context.layer.id.includes("names")) {
@@ -54,27 +54,19 @@ export class AdvancedWellsLayer extends WellsLayer {
         }
 
         const newColorsLayer = new GeoJsonLayer({
+            ...colorsLayer.props,
             data: colorsLayer.props.data,
             pickable: true,
             stroked: false,
-            positionFormat: colorsLayer.props.positionFormat,
             pointRadiusUnits: "meters",
             lineWidthUnits: "meters",
             pointRadiusScale: this.props.pointRadiusScale,
             lineWidthScale: this.props.lineWidthScale,
-            getLineWidth: colorsLayer.props.getLineWidth,
-            getPointRadius: colorsLayer.props.getPointRadius,
             lineBillboard: true,
             pointBillboard: true,
-            parameters: colorsLayer.props.parameters,
-            visible: colorsLayer.props.visible,
             id: "colors",
             lineWidthMinPixels: 1,
             lineWidthMaxPixels: 5,
-            extensions: colorsLayer.props.extensions,
-            getDashArray: colorsLayer.props.getDashArray,
-            getLineColor: colorsLayer.props.getLineColor,
-            getFillColor: colorsLayer.props.getFillColor,
             autoHighlight: true,
             onHover: () => {},
         });

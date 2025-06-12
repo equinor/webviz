@@ -14,9 +14,9 @@ import { type Polyline, PolylinesPlugin, PolylinesPluginTopic } from "../utils/P
 
 import { ContextMenu } from "./ContextMenu";
 import { ControlsInfoBox } from "./ControlsInfoBox";
+import { HoverVisualizationWrapper } from "./HoverVisualizationWrapper";
 import { type ReadoutWrapperProps } from "./ReadoutWrapper";
 import { Toolbar } from "./Toolbar";
-import { HoverVisualizationWrapper } from "./HoverVisualizationWrapper";
 
 export type InteractionWrapperProps = Omit<
     ReadoutWrapperProps,
@@ -109,7 +109,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
 
     const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
     const [gridVisible, setGridVisible] = React.useState<boolean>(false);
-    const [verticalScale, setVerticalScale] = React.useState<number>(1);
+    const [verticalScale, setVerticalScale] = React.useState<number>(10);
     const [polylines, setPolylines] = React.useState<Polyline[]>([]);
 
     function handleFitInViewClick() {
