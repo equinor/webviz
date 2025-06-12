@@ -6,7 +6,13 @@ from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects import Table
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
-from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
+from primary.services.service_exceptions import (
+    InvalidDataError,
+    InvalidParameterError,
+    MultipleDataMatchesError,
+    NoDataError,
+    Service,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -117,6 +123,10 @@ class ArrowTableLoader:
         """
         Fetches aggregated table for multiple columns async and assembles them into a single Arrow table
         """
+        if not column_names:
+            raise InvalidParameterError(
+                f"Cannot fetch aggregated tables for empty column list: {self._make_req_info_str()}", Service.SUMO
+            )
 
         async with asyncio.TaskGroup() as tg:
             tasks = [
@@ -150,6 +160,9 @@ class ArrowTableLoader:
                 merged_aggregated_table = merged_aggregated_table.append_column(
                     column_name, aggregated_table[column_name]
                 )
+
+        if merged_aggregated_table is None:
+            raise NoDataError(f"No aggregated tables found for: {self._make_req_info_str()}", Service.SUMO)
 
         return merged_aggregated_table
 
