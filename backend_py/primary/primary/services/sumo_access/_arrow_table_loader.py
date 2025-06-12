@@ -128,35 +128,36 @@ class ArrowTableLoader:
                 f"Cannot fetch aggregated tables for empty column list: {self._make_req_info_str()}", Service.SUMO
             )
 
+        # Fetch the aggregated table for each column
         async with asyncio.TaskGroup() as tg:
-            tasks = [
-                tg.create_task(self.get_aggregated_single_column_async(column_name)) for column_name in column_names
-            ]
+            column_name_task_dict = {
+                column_name: tg.create_task(self.get_aggregated_single_column_async(column_name))
+                for column_name in column_names
+            }
+        column_name_and_aggregated_table_pairs = [(name, task.result()) for name, task in column_name_task_dict.items()]
 
-        aggregated_table_per_column_name: list[pa.Table] = [task.result() for task in tasks]
+        # If we only have one table, we can just return it directly
+        if len(column_name_and_aggregated_table_pairs) == 1:
+            return column_name_and_aggregated_table_pairs[0][1]
+
+        # Since we're going to just append the "value" columns below, we need to ensure that the shared columns
+        # (the columns that are not in column_names) are equal across all tables.
+        first_column_name, first_aggregated_table = column_name_and_aggregated_table_pairs[0]
+        shared_columns_first_table = first_aggregated_table.drop(first_column_name)
+        for i in range(1, len(column_name_and_aggregated_table_pairs)):
+            this_column_name, this_aggregated_table = column_name_and_aggregated_table_pairs[i]
+            shared_columns_this_table = this_aggregated_table.drop(this_column_name)
+            if not shared_columns_first_table.equals(shared_columns_this_table):
+                raise InvalidDataError(
+                    f"The shared columns are not equal: Aggregated table for {first_column_name} has shared columns {shared_columns_first_table.column_names}, and aggregated table for {this_column_name} has shared columns {shared_columns_this_table.column_names}. Although the column names may match, their contents (values or order) differ.",
+                    Service.SUMO,
+                )
 
         merged_aggregated_table: pa.Table | None = None
-        shared_columns: set[str] = set()
-        for aggregated_table, column_name in zip(aggregated_table_per_column_name, column_names):
+        for column_name, aggregated_table in column_name_and_aggregated_table_pairs:
             if merged_aggregated_table is None:
-                shared_columns = set(aggregated_table.column_names) - {column_name}
                 merged_aggregated_table = aggregated_table
             else:
-                # Check if tables has same shared columns
-                aggregated_table_shared_columns = set(aggregated_table.column_names) - {column_name}
-                if shared_columns != aggregated_table_shared_columns:
-                    raise InvalidDataError(
-                        f"Aggregated table for column {column_name} does not contain the required shared columns: {shared_columns}. Got: {aggregated_table_shared_columns}",
-                        Service.SUMO,
-                    )
-
-                # Ensure equal shared columns
-                if not merged_aggregated_table.select(shared_columns).equals(aggregated_table.select(shared_columns)):
-                    raise InvalidDataError(
-                        f"Shared table columns {shared_columns} are not equal between the existing table and the aggregated table for {column_name}.",
-                        Service.SUMO,
-                    )
-
                 merged_aggregated_table = merged_aggregated_table.append_column(
                     column_name, aggregated_table[column_name]
                 )
