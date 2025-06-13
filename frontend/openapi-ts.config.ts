@@ -1,5 +1,7 @@
 import { defaultPlugins, defineConfig } from "@hey-api/openapi-ts";
 
+import { makePlugin as cacheBustingPlugin } from "./open-api/cachebusting-plugin";
+
 export default defineConfig({
     client: "@hey-api/client-axios",
     input: "http://localhost:5000/openapi.json",
@@ -10,6 +12,20 @@ export default defineConfig({
     },
     experimentalParser: true,
     plugins: [
+        cacheBustingPlugin({
+            name: "cache-busting",
+            // ? Should we just make every single endpoint have this?
+            targets: [
+                "getEnsembles",
+                "getCases",
+                "getEnsembleDetails",
+                "getCase",
+                "getEnsembleDetails",
+                "getParameters",
+                "getSensitivities",
+            ],
+        }),
+
         ...defaultPlugins,
         "@tanstack/react-query",
         {

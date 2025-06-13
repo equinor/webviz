@@ -1,5 +1,8 @@
 import type { QueryClient } from "@tanstack/react-query";
 
+import type { EnsembleTimestamps_api } from "@api";
+import { getEnsembleTimestampsOptions } from "@api";
+
 import { AtomStoreMaster } from "./AtomStoreMaster";
 import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
 import { InitialSettings } from "./InitialSettings";
@@ -10,8 +13,10 @@ import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
 import { ImportState } from "./Module";
 import type { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
+import type { RegularEnsemble } from "./RegularEnsemble";
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import type { Template } from "./TemplateRegistry";
+import { isEnsembleOutdated } from "./utils/ensembleTimestampUtils";
 import type { WorkbenchServices } from "./WorkbenchServices";
 
 export enum WorkbenchEvents {
@@ -34,6 +39,7 @@ export type UserEnsembleSetting = {
     ensembleIdent: RegularEnsembleIdent;
     customName: string | null;
     color: string;
+    timestamps: EnsembleTimestamps_api | null;
 };
 
 export type UserDeltaEnsembleSetting = {
@@ -47,6 +53,7 @@ export type StoredUserEnsembleSetting = {
     ensembleIdent: string;
     customName: string | null;
     color: string;
+    timestamps: EnsembleTimestamps_api | null;
 };
 
 export type StoredUserDeltaEnsembleSetting = {
@@ -55,6 +62,17 @@ export type StoredUserDeltaEnsembleSetting = {
     customName: string | null;
     color: string;
 };
+
+function ensembleToUserSettings(ensemble: RegularEnsemble): UserEnsembleSetting {
+    return {
+        color: ensemble.getColor(),
+        customName: ensemble.getCustomName(),
+        ensembleIdent: ensemble.getIdent(),
+        timestamps: ensemble.getTimestamps(),
+    };
+}
+
+const ENSEMBLE_POLLING_INTERVAL = 60000; // 1 minute
 
 export class Workbench {
     private _moduleInstances: ModuleInstance<any>[];
@@ -260,6 +278,8 @@ export class Workbench {
             storedUserEnsembleSettings ?? [],
             storedUserDeltaEnsembleSettings ?? [],
         );
+
+        this.beginEnsembleUpdatePolling(queryClient);
     }
 
     async storeSettingsInLocalStorageAndLoadAndSetupEnsembleSetInSession(
@@ -289,6 +309,98 @@ export class Workbench {
         console.debug("loadAndSetupEnsembleSetInSession - publishing");
         this._workbenchSession.setEnsembleSetLoadingState(false);
         this._workbenchSession.setEnsembleSet(newEnsembleSet);
+    }
+
+    private _pollingEnabled = false;
+    private _pollingInProgress = false;
+    private _waitingPollingRun?: NodeJS.Timeout;
+
+    beginEnsembleUpdatePolling(queryClient: QueryClient) {
+        // A polling is actively in progress, don't start a new one
+        if (this._pollingInProgress) return;
+        // If the next polling attempt is already waiting, cancel the timeout, and run this new one immediately instead
+        clearTimeout(this._waitingPollingRun);
+
+        // Start polling
+        console.debug("checkForEnsembleUpdate - initializing...");
+        this._pollingEnabled = true;
+        this._queueEnsemblePolling(queryClient);
+    }
+
+    stopEnsembleUpdatePolling() {
+        clearTimeout(this._waitingPollingRun);
+        this._pollingEnabled = false;
+    }
+
+    private _queueEnsemblePolling(queryClient: QueryClient) {
+        if (!this._pollingEnabled) return;
+
+        this._waitingPollingRun = setTimeout(async () => {
+            if (!this._pollingEnabled) return;
+
+            await this._recursivelyPollForEnsembleChange(queryClient);
+        }, ENSEMBLE_POLLING_INTERVAL);
+    }
+
+    private async _recursivelyPollForEnsembleChange(queryClient: QueryClient) {
+        console.debug("checkForEnsembleUpdate - fetching...");
+        this._pollingInProgress = true;
+
+        const regularEnsembleSet = this._workbenchSession.getEnsembleSet().getRegularEnsembleArray();
+
+        const latestTimeStampPromises = regularEnsembleSet.map(async (ens) => {
+            return [ens, await this._getLatestEnsembleTimestamp(queryClient, ens)] as const;
+        });
+        const latestTimestamps = await Promise.all(latestTimeStampPromises);
+
+        const newSettings = latestTimestamps.reduce((acc, [ens, ts]) => {
+            if (!isEnsembleOutdated(ens, ts)) return acc;
+
+            return acc.concat({
+                ...ensembleToUserSettings(ens),
+                // ? Should we store both, or just the latest one?
+                timestamps: ts,
+            });
+        }, [] as UserEnsembleSetting[]);
+
+        if (newSettings.length) {
+            this._updateExistingUserEnsembleSettings(queryClient, newSettings);
+        }
+
+        console.debug("checkForEnsembleUpdate - done...");
+        console.debug("checkForEnsembleUpdate - queueing next...");
+
+        this._pollingInProgress = false;
+
+        this._queueEnsemblePolling(queryClient);
+    }
+
+    private async _getLatestEnsembleTimestamp(queryClient: QueryClient, ensemble: RegularEnsemble) {
+        return await queryClient.fetchQuery({
+            ...getEnsembleTimestampsOptions({
+                path: { case_uuid: ensemble.getCaseUuid(), ensemble_name: ensemble.getEnsembleName() },
+            }),
+            staleTime: 0,
+            gcTime: 0,
+        });
+    }
+
+    private async _updateExistingUserEnsembleSettings(queryClient: QueryClient, newSettings: UserEnsembleSetting[]) {
+        if (newSettings.length === 0) return;
+
+        const existingEnsembleSettings = this.maybeLoadEnsembleSettingsFromLocalStorage() ?? [];
+        const existingDeltaEnsembleSettings = this.maybeLoadDeltaEnsembleSettingsFromLocalStorage() ?? [];
+
+        const newEnsembleSettings = existingEnsembleSettings.map((el) => {
+            const newSetting = newSettings.find((newEl) => newEl.ensembleIdent.equals(el.ensembleIdent));
+            if (newSetting) return newSetting;
+            return el;
+        });
+
+        await this.storeSettingsInLocalStorageAndLoadAndSetupEnsembleSetInSession(
+            queryClient,
+            newEnsembleSettings, existingDeltaEnsembleSettings
+        )
     }
 
     private storeEnsembleSetInLocalStorage(ensembleSettingsToStore: UserEnsembleSetting[]): void {

@@ -8,12 +8,18 @@ import type {
     GetCasesData_api,
     GetCasesResponse_api,
     GetCasesError_api,
+    GetCaseData_api,
+    GetCaseResponse_api,
+    GetCaseError_api,
     GetEnsemblesData_api,
     GetEnsemblesResponse_api,
     GetEnsemblesError_api,
     GetEnsembleDetailsData_api,
     GetEnsembleDetailsResponse_api,
     GetEnsembleDetailsError_api,
+    GetEnsembleTimestampsData_api,
+    GetEnsembleTimestampsResponse_api,
+    GetEnsembleTimestampsError_api,
     GetVectorListData_api,
     GetVectorListResponse_api,
     GetVectorListError_api,
@@ -229,6 +235,17 @@ export const getCases = <ThrowOnError extends boolean = false>(options: Options<
 };
 
 /**
+ * Get Case
+ * Get list of cases for specified field
+ */
+export const getCase = <ThrowOnError extends boolean = false>(options: Options<GetCaseData_api, ThrowOnError>) => {
+    return (options?.client ?? client).get<GetCaseResponse_api, GetCaseError_api, ThrowOnError>({
+        ...options,
+        url: "/cases/{case_uuid}",
+    });
+};
+
+/**
  * Get Ensembles
  * Get list of ensembles for a case
  */
@@ -251,6 +268,19 @@ export const getEnsembleDetails = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetEnsembleDetailsResponse_api, GetEnsembleDetailsError_api, ThrowOnError>({
         ...options,
         url: "/cases/{case_uuid}/ensembles/{ensemble_name}",
+    });
+};
+
+/**
+ * Get Ensemble Timestamps
+ * Gets timestamps for an ensemble. Note, an ensemble doesnt have it's own timestamps, so the values recieved are based on the parent case, and the most recent update timestamp from it's data
+ */
+export const getEnsembleTimestamps = <ThrowOnError extends boolean = false>(
+    options: Options<GetEnsembleTimestampsData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetEnsembleTimestampsResponse_api, GetEnsembleTimestampsError_api, ThrowOnError>({
+        ...options,
+        url: "/cases/{case_uuid}/ensembles/{ensemble_name}/timestamps",
     });
 };
 

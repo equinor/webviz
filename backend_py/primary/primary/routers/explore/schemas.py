@@ -12,11 +12,18 @@ class CaseInfo(BaseModel):
     name: str
     status: str
     user: str
+    updated_at: str
+
+
+class EnsembleTimestamps(BaseModel):
+    case_updated_at: str
+    data_updated_at: str
 
 
 class EnsembleInfo(BaseModel):
     name: str
     realization_count: int
+    timestamps: EnsembleTimestamps
 
 
 class EnsembleDetails(BaseModel):
@@ -26,3 +33,4 @@ class EnsembleDetails(BaseModel):
     case_uuid: str
     realizations: Sequence[int]
     stratigraphic_column_identifier: str
+    timestamps: EnsembleTimestamps

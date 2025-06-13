@@ -7,8 +7,10 @@ import type { AxiosError } from "axios";
 import {
     getFields,
     getCases,
+    getCase,
     getEnsembles,
     getEnsembleDetails,
+    getEnsembleTimestamps,
     getVectorList,
     getDeltaEnsembleVectorList,
     getRealizationsVectorData,
@@ -79,8 +81,10 @@ import {
 import type {
     GetFieldsData_api,
     GetCasesData_api,
+    GetCaseData_api,
     GetEnsemblesData_api,
     GetEnsembleDetailsData_api,
+    GetEnsembleTimestampsData_api,
     GetVectorListData_api,
     GetDeltaEnsembleVectorListData_api,
     GetRealizationsVectorDataData_api,
@@ -229,6 +233,23 @@ export const getCasesOptions = (options: Options<GetCasesData_api>) => {
     });
 };
 
+export const getCaseQueryKey = (options: Options<GetCaseData_api>) => [createQueryKey("getCase", options)];
+
+export const getCaseOptions = (options: Options<GetCaseData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getCase({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getCaseQueryKey(options),
+    });
+};
+
 export const getEnsemblesQueryKey = (options: Options<GetEnsemblesData_api>) => [createQueryKey("getEnsembles", options)];
 
 export const getEnsemblesOptions = (options: Options<GetEnsemblesData_api>) => {
@@ -262,6 +283,25 @@ export const getEnsembleDetailsOptions = (options: Options<GetEnsembleDetailsDat
             return data;
         },
         queryKey: getEnsembleDetailsQueryKey(options),
+    });
+};
+
+export const getEnsembleTimestampsQueryKey = (options: Options<GetEnsembleTimestampsData_api>) => [
+    createQueryKey("getEnsembleTimestamps", options),
+];
+
+export const getEnsembleTimestampsOptions = (options: Options<GetEnsembleTimestampsData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getEnsembleTimestamps({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getEnsembleTimestampsQueryKey(options),
     });
 };
 
