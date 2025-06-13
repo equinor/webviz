@@ -11,9 +11,9 @@ import {
 } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorPaletteType } from "@framework/WorkbenchSettings";
+import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
-import type { PublishSubscribe } from "../../../utils/PublishSubscribeDelegate";
-import { PublishSubscribeDelegate } from "../../../utils/PublishSubscribeDelegate";
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";

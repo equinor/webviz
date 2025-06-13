@@ -1,9 +1,9 @@
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
+import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
-import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
-import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import {
     type DataProviderManager,
     DataProviderManagerTopic,

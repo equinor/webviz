@@ -5,8 +5,8 @@ import { clone, isEqual } from "lodash";
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
-import type { PublishSubscribe } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import { PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
+import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import {

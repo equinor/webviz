@@ -3,8 +3,8 @@ import { v4 } from "uuid";
 
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import type { PublishSubscribe } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import { PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
+import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import type { CustomSettingImplementation } from "../../interfacesAndTypes/customSettingImplementation";
