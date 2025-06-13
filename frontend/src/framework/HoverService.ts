@@ -1,8 +1,8 @@
 import React from "react";
 
-import { PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
+import { throttle } from "lodash";
 
-import _ from "lodash";
+import { PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
 export enum HoverTopic {
     MD = "hover.md",
@@ -50,15 +50,11 @@ export class HoverService {
 
     private _getOrCreateTopicThrottleMethod(topic: keyof HoverData): ThrottledPublishFunc {
         if (!this._topicThrottleMap.has(topic)) {
-            const throttledMethod = _.throttle(
-                this._doThrottledHoverDataUpdate.bind(this),
-                this._dataUpdateThrottleMs,
-                {
-                    // These settings make it so notifications are only pushed *after* the throttle timer elapses
-                    leading: false,
-                    trailing: true,
-                },
-            );
+            const throttledMethod = throttle(this._doThrottledHoverDataUpdate.bind(this), this._dataUpdateThrottleMs, {
+                // These settings make it so notifications are only pushed *after* the throttle timer elapses
+                leading: false,
+                trailing: true,
+            });
 
             this._topicThrottleMap.set(topic, throttledMethod);
         }

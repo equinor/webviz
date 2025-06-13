@@ -3,8 +3,8 @@ import type React from "react";
 import type { Getter, Setter } from "jotai";
 
 import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
-import type { InitialSettings } from "./InitialSettings";
 import type { HoverService } from "./HoverService";
+import type { InitialSettings } from "./InitialSettings";
 import type { SettingsContext, ViewContext } from "./ModuleContext";
 import type { ModuleDataTagId } from "./ModuleDataTags";
 import { ModuleInstance, ModuleInstanceTopic } from "./ModuleInstance";
