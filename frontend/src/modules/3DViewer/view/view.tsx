@@ -306,6 +306,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 wellboreUuid={highlightedWellboreUuid}
                 intersectionReferenceSystem={intersectionReferenceSystem ?? undefined}
                 workbenchServices={props.workbenchServices}
+                hoverService={props.hoverService}
                 viewContext={props.viewContext}
             />
         </div>
