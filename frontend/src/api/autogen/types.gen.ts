@@ -87,6 +87,25 @@ export type Completions_api = {
     khMax: Array<number>;
 };
 
+export type DashboardContent_api = {
+    layout: Array<{
+        [key: string]: unknown;
+    }>;
+    moduleStates: Array<ModuleState_api>;
+    crossModuleState: {
+        [key: string]: unknown;
+    };
+};
+
+export type DashboardMetadata_api = {
+    dashboardId: string;
+    title: string;
+    description?: string | null;
+    createdBy: string;
+    createdAt: string;
+    updatedAt: string | null;
+};
+
 export type DatedFlowNetwork_api = {
     dates: Array<string>;
     network: NetworkNode_api;
@@ -402,6 +421,14 @@ export type InplaceVolumetricsTableDefinition_api = {
     identifiersWithValues: Array<InplaceVolumetricsIdentifierWithValues_api>;
 };
 
+export type ModuleState_api = {
+    moduleName: string;
+    moduleInstanceId: string;
+    state: {
+        [key: string]: unknown;
+    };
+};
+
 export type NetworkNode_api = {
     node_type: "Group" | "Well";
     node_label: string;
@@ -474,6 +501,22 @@ export type PolylineIntersection_api = {
     grid_dimensions: GridDimensions_api;
     min_grid_prop_value: number;
     max_grid_prop_value: number;
+};
+
+export type PrivateDashboardInput_api = {
+    id: string;
+    userId: string;
+    metadata: DashboardMetadata_api;
+    content: DashboardContent_api;
+    version: number;
+};
+
+export type PrivateDashboardOutput_api = {
+    id: string;
+    userId: string;
+    metadata: DashboardMetadata_api;
+    content: DashboardContent_api;
+    version: number;
 };
 
 export type PvtData_api = {
@@ -3737,6 +3780,124 @@ export type GetVfpTableResponses_api = {
 };
 
 export type GetVfpTableResponse_api = GetVfpTableResponses_api[keyof GetVfpTableResponses_api];
+
+export type GetDashboardsMetadataData_api = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: "/persistence/dashboards";
+};
+
+export type GetDashboardsMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<DashboardMetadata_api>;
+};
+
+export type GetDashboardsMetadataResponse_api = GetDashboardsMetadataResponses_api[keyof GetDashboardsMetadataResponses_api];
+
+export type CreateDashboardData_api = {
+    body: PrivateDashboardInput_api;
+    path?: never;
+    query?: never;
+    url: "/persistence/dashboards";
+};
+
+export type CreateDashboardErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type CreateDashboardError_api = CreateDashboardErrors_api[keyof CreateDashboardErrors_api];
+
+export type CreateDashboardResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type CreateDashboardResponse_api = CreateDashboardResponses_api[keyof CreateDashboardResponses_api];
+
+export type DeleteDashboardData_api = {
+    body?: never;
+    path: {
+        dashboard_id: string;
+    };
+    query?: never;
+    url: "/persistence/dashboards/{dashboard_id}";
+};
+
+export type DeleteDashboardErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type DeleteDashboardError_api = DeleteDashboardErrors_api[keyof DeleteDashboardErrors_api];
+
+export type DeleteDashboardResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetDashboardData_api = {
+    body?: never;
+    path: {
+        dashboard_id: string;
+    };
+    query?: never;
+    url: "/persistence/dashboards/{dashboard_id}";
+};
+
+export type GetDashboardErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetDashboardError_api = GetDashboardErrors_api[keyof GetDashboardErrors_api];
+
+export type GetDashboardResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: PrivateDashboardOutput_api;
+};
+
+export type GetDashboardResponse_api = GetDashboardResponses_api[keyof GetDashboardResponses_api];
+
+export type UpdateDashboardData_api = {
+    body: PrivateDashboardInput_api;
+    path: {
+        dashboard_id: string;
+    };
+    query?: never;
+    url: "/persistence/dashboards/{dashboard_id}";
+};
+
+export type UpdateDashboardErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type UpdateDashboardError_api = UpdateDashboardErrors_api[keyof UpdateDashboardErrors_api];
+
+export type UpdateDashboardResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type LoginRouteData_api = {
     body?: never;

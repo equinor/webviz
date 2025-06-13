@@ -4,8 +4,8 @@ import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { LayoutElement, Workbench } from "@framework/Workbench";
 import { WorkbenchEvents } from "@framework/Workbench";
 
-export function useModuleInstances(workbench: Workbench): ModuleInstance<any>[] {
-    const [moduleInstances, setModuleInstances] = React.useState<ModuleInstance<any>[]>([]);
+export function useModuleInstances(workbench: Workbench): ModuleInstance<any, any>[] {
+    const [moduleInstances, setModuleInstances] = React.useState<ModuleInstance<any, any>[]>([]);
 
     React.useEffect(() => {
         function handleModuleInstancesChange() {

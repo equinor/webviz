@@ -16,10 +16,9 @@ import { ErrorWrapper } from "@lib/components/ErrorWrapper";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
 
-
 export type InplaceVolumetricsFilterComponentProps = {
     ensembleSet: EnsembleSet;
-    settingsContext: SettingsContext<any>;
+    settingsContext: SettingsContext<any, any>;
     workbenchServices: WorkbenchServices;
     availableTableNames: string[];
     availableFluidZones: FluidZone_api[];

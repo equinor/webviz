@@ -2,6 +2,8 @@ import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannel
 import { ModuleNotFoundPlaceholder } from "./internal/ModuleNotFoundPlaceholder";
 import type {
     InterfaceEffects,
+    JTDBaseType,
+    MakeReadonly,
     ModuleCategory,
     ModuleDevState,
     ModuleInterfaceTypes,
@@ -13,7 +15,7 @@ import type { DrawPreviewFunc } from "./Preview";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 
-export type RegisterModuleOptions = {
+export type RegisterModuleOptions<TSerializedStateDef extends JTDBaseType> = {
     moduleName: string;
     category: ModuleCategory;
     devState: ModuleDevState;
@@ -25,6 +27,7 @@ export type RegisterModuleOptions = {
     preview?: DrawPreviewFunc;
     description?: string;
     onInstanceUnload?: OnInstanceUnloadFunc;
+    serializedStateDefinition?: MakeReadonly<TSerializedStateDef>;
 };
 
 export class ModuleNotFoundError extends Error {
@@ -38,15 +41,16 @@ export class ModuleNotFoundError extends Error {
 }
 
 export class ModuleRegistry {
-    private static _registeredModules: Record<string, Module<any>> = {};
-    private static _moduleNotFoundPlaceholders: Record<string, Module<any>> = {};
+    private static _registeredModules: Record<string, Module<any, any>> = {};
+    private static _moduleNotFoundPlaceholders: Record<string, Module<any, any>> = {};
 
     private constructor() {}
 
-    static registerModule<TInterfaceTypes extends ModuleInterfaceTypes>(
-        options: RegisterModuleOptions,
-    ): Module<TInterfaceTypes> {
-        const module = new Module<TInterfaceTypes>({
+    static registerModule<
+        TInterfaceTypes extends ModuleInterfaceTypes,
+        TSerializedStateDef extends JTDBaseType = Record<string, never>,
+    >(options: RegisterModuleOptions<TSerializedStateDef>): Module<TInterfaceTypes, TSerializedStateDef> {
+        const module = new Module<TInterfaceTypes, TSerializedStateDef>({
             name: options.moduleName,
             defaultTitle: options.defaultTitle,
             category: options.category,
@@ -63,7 +67,10 @@ export class ModuleRegistry {
         return module;
     }
 
-    static initModule<TInterfaceTypes extends ModuleInterfaceTypes>(
+    static initModule<
+        TInterfaceTypes extends ModuleInterfaceTypes,
+        TSerializedStateDef extends JTDBaseType = Record<string, never>,
+    >(
         moduleName: string,
         options: {
             settingsToViewInterfaceInitialization?: TInterfaceTypes["settingsToView"] extends undefined
@@ -75,7 +82,7 @@ export class ModuleRegistry {
             viewToSettingsInterfaceEffects?: InterfaceEffects<Exclude<TInterfaceTypes["viewToSettings"], undefined>>;
             settingsToViewInterfaceEffects?: InterfaceEffects<Exclude<TInterfaceTypes["settingsToView"], undefined>>;
         },
-    ): Module<TInterfaceTypes> {
+    ): Module<TInterfaceTypes, TSerializedStateDef> {
         const module = this._registeredModules[moduleName];
         if (module) {
             if (options.settingsToViewInterfaceInitialization) {
@@ -90,25 +97,25 @@ export class ModuleRegistry {
             if (options.settingsToViewInterfaceEffects) {
                 module.setSettingsToViewInterfaceEffects(options.settingsToViewInterfaceEffects);
             }
-            return module as Module<TInterfaceTypes>;
+            return module as Module<TInterfaceTypes, TSerializedStateDef>;
         }
         throw new ModuleNotFoundError(moduleName);
     }
 
-    static getModule(moduleName: string): Module<any> {
+    static getModule(moduleName: string): Module<any, any> {
         const module = this._registeredModules[moduleName];
         if (module) {
-            return module as Module<any>;
+            return module as Module<any, any>;
         }
         const placeholder = this._moduleNotFoundPlaceholders[moduleName];
         if (placeholder) {
-            return placeholder as Module<any>;
+            return placeholder as Module<any, any>;
         }
         this._moduleNotFoundPlaceholders[moduleName] = new ModuleNotFoundPlaceholder(moduleName);
-        return this._moduleNotFoundPlaceholders[moduleName] as Module<any>;
+        return this._moduleNotFoundPlaceholders[moduleName] as Module<any, any>;
     }
 
-    static getRegisteredModules(): Record<string, Module<any>> {
+    static getRegisteredModules(): Record<string, Module<any, any>> {
         return this._registeredModules;
     }
 }

@@ -1,70 +1,57 @@
 import logging
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
-from primary.services.database_access.dashboard_access import DashboardAccess
-from primary.routers.persistence import schemas
+from primary.services.database_access.private_dashboard_access import PrivateDashboardAccess
+from primary.services.database_access.types import PrivateDashboard, DashboardMetadata
+from primary.auth.auth_helper import AuthHelper
+from primary.auth.auth_helper import AuthenticatedUser
 
 LOGGER = logging.getLogger(__name__)
-
 router = APIRouter()
 
 
-@router.get("/dashboards/", response_model=List[schemas.Dashboard])
-async def get_dashboards(
-    dashboard_access: DashboardAccess = DashboardAccess.fastapi_dependency(),
-):
-    """
-    Get all dashboards for the authenticated user.
-    """
-    return await dashboard_access.get_all_dashboards_for_user()
+@router.get("/dashboards", response_model=List[DashboardMetadata])
+async def get_dashboards_metadata(user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
+    access = await PrivateDashboardAccess.create(user.get_user_id())
+    async with access:
+        return await access.get_all_dashboards_metadata_for_user()
 
 
-@router.get("/dashboard/", response_model=schemas.Dashboard)
-async def get_dashboard(
-    dashboard_id: str,
-    dashboard_access: DashboardAccess = DashboardAccess.fastapi_dependency(),
-):
-    """
-    Get a specific dashboard by ID for the authenticated user.
-    """
-    dashboard = await dashboard_access.get_dashboard_by_id(dashboard_id)
-    if not dashboard:
-        # You could raise HTTPException(404) here if desired
-        raise ValueError("Dashboard not found")
-    return dashboard
+@router.get("/dashboards/{dashboard_id}", response_model=PrivateDashboard)
+async def get_dashboard(dashboard_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
+    access = await PrivateDashboardAccess.create(user.get_user_id())
+    async with access:
+        dashboard = await access.get_dashboard_by_id(dashboard_id)
+        if not dashboard:
+            raise HTTPException(status_code=404, detail="Dashboard not found")
+        return dashboard
 
 
-@router.post("/dashboard/")
+@router.post("/dashboards", response_model=str)
 async def create_dashboard(
-    dashboard: schemas.Dashboard,
-    dashboard_access: DashboardAccess = DashboardAccess.fastapi_dependency(),
-) -> None:
-    """
-    Create a new dashboard for the authenticated user.
-    """
-    await dashboard_access.insert_dashboard(dashboard)
+    dashboard: PrivateDashboard, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+):
+    access = await PrivateDashboardAccess.create(user.get_user_id())
+    async with access:
+        await access.insert_dashboard(dashboard)
+        return dashboard.id
 
 
-@router.delete("/dashboard/")
-async def delete_dashboard(
-    dashboard_id: str,
-    dashboard_access: DashboardAccess = DashboardAccess.fastapi_dependency(),
-) -> None:
-    """
-    Delete a specific dashboard by ID for the authenticated user.
-    """
-    await dashboard_access.delete_dashboard(dashboard_id)
-
-
-@router.put("/dashboard/")
+@router.put("/dashboards/{dashboard_id}")
 async def update_dashboard(
     dashboard_id: str,
-    updated_dashboard: schemas.Dashboard,
-    dashboard_access: DashboardAccess = DashboardAccess.fastapi_dependency(),
-) -> None:
-    """
-    Update a specific dashboard by ID for the authenticated user.
-    """
-    await dashboard_access.update_dashboard(dashboard_id, updated_dashboard)
+    updated_dashboard: PrivateDashboard,
+    user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+):
+    access = await PrivateDashboardAccess.create(user.get_user_id())
+    async with access:
+        await access.update_dashboard(dashboard_id, updated_dashboard)
+
+
+@router.delete("/dashboards/{dashboard_id}")
+async def delete_dashboard(dashboard_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
+    access = await PrivateDashboardAccess.create(user.get_user_id())
+    async with access:
+        await access.delete_dashboard(dashboard_id)

@@ -13,7 +13,7 @@
 import type { ChannelContentDefinition, KeyKind } from "./DataChannelTypes";
 import { useChannelReceiver } from "./internal/DataChannels/hooks/useChannelReceiver";
 import { usePublishChannelContents } from "./internal/DataChannels/hooks/usePublishChannelContents";
-import type { ModuleInterfaceTypes } from "./Module";
+import type { JTDBaseType, ModuleInterfaceTypes } from "./Module";
 import type { ModuleInstance, ModuleInstanceTopicValueTypes } from "./ModuleInstance";
 import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "./ModuleInstance";
 import type { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
@@ -21,10 +21,10 @@ import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceBaseType } from "./UniDirectionalModuleComponentsInterface";
 import { useInterfaceValue } from "./UniDirectionalModuleComponentsInterface";
 
-export class ModuleContext<TInterfaceTypes extends ModuleInterfaceTypes> {
-    protected _moduleInstance: ModuleInstance<TInterfaceTypes>;
+export class ModuleContext<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedStateDef extends JTDBaseType> {
+    protected _moduleInstance: ModuleInstance<TInterfaceTypes, TSerializedStateDef>;
 
-    constructor(moduleInstance: ModuleInstance<TInterfaceTypes>) {
+    constructor(moduleInstance: ModuleInstance<TInterfaceTypes, TSerializedStateDef>) {
         this._moduleInstance = moduleInstance;
     }
 
@@ -92,12 +92,18 @@ export class ModuleContext<TInterfaceTypes extends ModuleInterfaceTypes> {
     }
 }
 
-export type ViewContext<TInterfaceType extends InterfaceBaseType> = Omit<
-    ModuleContext<TInterfaceType>,
+export type ViewContext<
+    TInterfaceType extends InterfaceBaseType,
+    TSerializedStateDef extends JTDBaseType = Record<string, never>,
+> = Omit<
+    ModuleContext<TInterfaceType, TSerializedStateDef>,
     "useViewToSettingsInterfaceValue" | "useSettingsAtom" | "useSetSettingsAtom" | "useSettingsAtomValue"
 >;
 
-export type SettingsContext<TInterfaceType extends InterfaceBaseType> = Omit<
-    ModuleContext<TInterfaceType>,
+export type SettingsContext<
+    TInterfaceType extends InterfaceBaseType,
+    TSerializedStateDef extends JTDBaseType = Record<string, never>,
+> = Omit<
+    ModuleContext<TInterfaceType, TSerializedStateDef>,
     "useSettingsToViewInterfaceValue" | "useViewAtom" | "useViewAtomValue" | "useSetViewAtom"
 >;

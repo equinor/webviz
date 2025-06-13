@@ -16,7 +16,7 @@ import { ChannelReceiverNode } from "./channelReceiverNode";
 
 export type ChannelReceiverNodesWrapperProps = {
     forwardedRef: React.RefObject<HTMLDivElement>;
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     workbench: Workbench;
 };
 

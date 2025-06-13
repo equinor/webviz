@@ -5,9 +5,8 @@ import { useAtom } from "jotai";
 import type { ModuleInterfaceTypes } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 
-
 export type ApplyInterfaceEffectsProps<TInterfaces extends ModuleInterfaceTypes> = {
-    moduleInstance: ModuleInstance<TInterfaces>;
+    moduleInstance: ModuleInstance<TInterfaces, any>;
     children?: React.ReactNode;
 };
 

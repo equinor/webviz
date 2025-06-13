@@ -48,8 +48,9 @@ export type ModuleSettingsProps<
         settingsToView: Record<string, never>;
         viewToSettings: Record<string, never>;
     },
+    TSerializedStateDef extends JTDBaseType = Record<string, never>,
 > = {
-    settingsContext: SettingsContext<TInterfaceTypes>;
+    settingsContext: SettingsContext<TInterfaceTypes, TSerializedStateDef>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
     workbenchSettings: WorkbenchSettings;
@@ -61,8 +62,9 @@ export type ModuleViewProps<
         settingsToView: Record<string, never>;
         viewToSettings: Record<string, never>;
     },
+    TSerializedStateDef extends JTDBaseType = Record<string, never>,
 > = {
-    viewContext: ViewContext<TInterfaceTypes>;
+    viewContext: ViewContext<TInterfaceTypes, TSerializedStateDef>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
     workbenchSettings: WorkbenchSettings;
@@ -74,6 +76,12 @@ export type InterfaceEffects<TInterfaceType extends InterfaceBaseType> = ((
     setAtomValue: Setter,
     getAtomValue: Getter,
 ) => void)[];
+
+export type JTDBaseType = Record<string, unknown>;
+
+export type MakeReadonly<T> = {
+    readonly [P in keyof T]: T[P];
+};
 
 export type ModuleSettings<
     TInterfaceTypes extends ModuleInterfaceTypes = {
@@ -96,7 +104,7 @@ export enum ImportState {
     Failed = "Failed",
 }
 
-export interface ModuleOptions {
+export interface ModuleOptions<TSerializedStateDefinition extends JTDBaseType> {
     name: string;
     defaultTitle: string;
     category: ModuleCategory;
@@ -108,15 +116,16 @@ export interface ModuleOptions {
     channelDefinitions?: ChannelDefinition[];
     channelReceiverDefinitions?: ChannelReceiverDefinition[];
     onInstanceUnloadFunc?: OnInstanceUnloadFunc;
+    serializedStateDefinition?: TSerializedStateDefinition;
 }
 
-export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
+export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedStateDef extends JTDBaseType> {
     private _name: string;
     private _defaultTitle: string;
     public viewFC: ModuleView<TInterfaceTypes>;
     public settingsFC: ModuleSettings<TInterfaceTypes>;
     protected _importState: ImportState = ImportState.NotImported;
-    private _moduleInstances: ModuleInstance<TInterfaceTypes>[] = [];
+    private _moduleInstances: ModuleInstance<TInterfaceTypes, TSerializedStateDef>[] = [];
     private _settingsToViewInterfaceInitialization: InterfaceInitialization<
         Exclude<TInterfaceTypes["settingsToView"], undefined>
     > | null = null;
@@ -137,8 +146,9 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
     private _category: ModuleCategory;
     private _devState: ModuleDevState;
     private _dataTagIds: ModuleDataTagId[];
+    private _serializedStateDef: TSerializedStateDef | null;
 
-    constructor(options: ModuleOptions) {
+    constructor(options: ModuleOptions<TSerializedStateDef>) {
         this._name = options.name;
         this._defaultTitle = options.defaultTitle;
         this._category = options.category;
@@ -152,6 +162,11 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
         this._channelDefinitions = options.channelDefinitions ?? null;
         this._channelReceiverDefinitions = options.channelReceiverDefinitions ?? null;
         this._dataTagIds = options.dataTagIds ?? [];
+        this._serializedStateDef = options.serializedStateDefinition ?? null;
+    }
+
+    getSerializedStateDef(): TSerializedStateDef | null {
+        return this._serializedStateDef;
     }
 
     getDrawPreviewFunc(): DrawPreviewFunc | null {
@@ -230,12 +245,12 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
         return this._syncableSettingKeys.includes(key);
     }
 
-    makeInstance(instanceNumber: number): ModuleInstance<TInterfaceTypes> {
+    makeInstance(instanceNumber: number): ModuleInstance<TInterfaceTypes, TSerializedStateDef> {
         if (!this._workbench) {
             throw new Error("Module must be added to a workbench before making an instance");
         }
 
-        const instance = new ModuleInstance<TInterfaceTypes>({
+        const instance = new ModuleInstance<TInterfaceTypes, TSerializedStateDef>({
             module: this,
             workbench: this._workbench,
             instanceNumber,
@@ -262,7 +277,7 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
         }
     }
 
-    private initializeModuleInstance(instance: ModuleInstance<TInterfaceTypes>): void {
+    private initializeModuleInstance(instance: ModuleInstance<TInterfaceTypes, TSerializedStateDef>): void {
         instance.initialize();
         if (this._settingsToViewInterfaceInitialization) {
             instance.makeSettingsToViewInterface(this._settingsToViewInterfaceInitialization);

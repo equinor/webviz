@@ -21,7 +21,7 @@ export type HeaderProps = {
     workbench: Workbench;
     isMaximized?: boolean;
     isMinimized?: boolean;
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     isDragged: boolean;
     onPointerDown?: (event: React.PointerEvent<HTMLDivElement>) => void;
     onReceiversClick?: (event: React.PointerEvent<HTMLDivElement>) => void;

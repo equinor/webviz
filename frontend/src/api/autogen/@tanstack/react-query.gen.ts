@@ -67,6 +67,11 @@ import {
     getRealizationData,
     getVfpTableNames,
     getVfpTable,
+    getDashboardsMetadata,
+    createDashboard,
+    deleteDashboard,
+    getDashboard,
+    updateDashboard,
     loginRoute,
     authorizedCallbackRoute,
     getAlive,
@@ -151,6 +156,15 @@ import type {
     GetRealizationDataData_api,
     GetVfpTableNamesData_api,
     GetVfpTableData_api,
+    GetDashboardsMetadataData_api,
+    CreateDashboardData_api,
+    CreateDashboardError_api,
+    CreateDashboardResponse_api,
+    DeleteDashboardData_api,
+    DeleteDashboardError_api,
+    GetDashboardData_api,
+    UpdateDashboardData_api,
+    UpdateDashboardError_api,
     LoginRouteData_api,
     AuthorizedCallbackRouteData_api,
     GetAliveData_api,
@@ -1481,6 +1495,115 @@ export const getVfpTableOptions = (options: Options<GetVfpTableData_api>) => {
         },
         queryKey: getVfpTableQueryKey(options),
     });
+};
+
+export const getDashboardsMetadataQueryKey = (options?: Options<GetDashboardsMetadataData_api>) => [
+    createQueryKey("getDashboardsMetadata", options),
+];
+
+export const getDashboardsMetadataOptions = (options?: Options<GetDashboardsMetadataData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getDashboardsMetadata({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getDashboardsMetadataQueryKey(options),
+    });
+};
+
+export const createDashboardQueryKey = (options: Options<CreateDashboardData_api>) => [
+    createQueryKey("createDashboard", options),
+];
+
+export const createDashboardOptions = (options: Options<CreateDashboardData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await createDashboard({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: createDashboardQueryKey(options),
+    });
+};
+
+export const createDashboardMutation = (options?: Partial<Options<CreateDashboardData_api>>) => {
+    const mutationOptions: UseMutationOptions<
+        CreateDashboardResponse_api,
+        AxiosError<CreateDashboardError_api>,
+        Options<CreateDashboardData_api>
+    > = {
+        mutationFn: async (localOptions) => {
+            const { data } = await createDashboard({
+                ...options,
+                ...localOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
+};
+
+export const deleteDashboardMutation = (options?: Partial<Options<DeleteDashboardData_api>>) => {
+    const mutationOptions: UseMutationOptions<
+        unknown,
+        AxiosError<DeleteDashboardError_api>,
+        Options<DeleteDashboardData_api>
+    > = {
+        mutationFn: async (localOptions) => {
+            const { data } = await deleteDashboard({
+                ...options,
+                ...localOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
+};
+
+export const getDashboardQueryKey = (options: Options<GetDashboardData_api>) => [createQueryKey("getDashboard", options)];
+
+export const getDashboardOptions = (options: Options<GetDashboardData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getDashboard({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getDashboardQueryKey(options),
+    });
+};
+
+export const updateDashboardMutation = (options?: Partial<Options<UpdateDashboardData_api>>) => {
+    const mutationOptions: UseMutationOptions<
+        unknown,
+        AxiosError<UpdateDashboardError_api>,
+        Options<UpdateDashboardData_api>
+    > = {
+        mutationFn: async (localOptions) => {
+            const { data } = await updateDashboard({
+                ...options,
+                ...localOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
 };
 
 export const loginRouteQueryKey = (options?: Options<LoginRouteData_api>) => [createQueryKey("loginRoute", options)];

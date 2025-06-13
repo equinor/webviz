@@ -9,7 +9,7 @@ import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannel
 import type { InitialSettings } from "./InitialSettings";
 import { ChannelManager } from "./internal/DataChannels/ChannelManager";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
-import type { ImportState, Module, ModuleInterfaceTypes, ModuleSettings, ModuleView } from "./Module";
+import type { ImportState, JTDBaseType, Module, ModuleInterfaceTypes, ModuleSettings, ModuleView } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
@@ -37,23 +37,26 @@ export type ModuleInstanceTopicValueTypes = {
     [ModuleInstanceTopic.IMPORT_STATE]: ImportState;
 };
 
-export interface ModuleInstanceOptions<TInterfaceTypes extends ModuleInterfaceTypes> {
-    module: Module<TInterfaceTypes>;
+export interface ModuleInstanceOptions<
+    TInterfaceTypes extends ModuleInterfaceTypes,
+    TSerializedStateDef extends JTDBaseType,
+> {
+    module: Module<TInterfaceTypes, TSerializedStateDef>;
     workbench: Workbench;
     instanceNumber: number;
     channelDefinitions: ChannelDefinition[] | null;
     channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
 }
 
-export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
+export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedStateDef extends JTDBaseType> {
     private _id: string;
     private _title: string;
     private _initialized: boolean = false;
     private _moduleInstanceState: ModuleInstanceState = ModuleInstanceState.INITIALIZING;
     private _fatalError: { err: Error; errInfo: ErrorInfo } | null = null;
     private _syncedSettingKeys: SyncSettingKey[] = [];
-    private _module: Module<TInterfaceTypes>;
-    private _context: ModuleContext<TInterfaceTypes> | null = null;
+    private _module: Module<TInterfaceTypes, TSerializedStateDef>;
+    private _context: ModuleContext<TInterfaceTypes, TSerializedStateDef> | null = null;
     private _subscribers: Map<keyof ModuleInstanceTopicValueTypes, Set<() => void>> = new Map();
     private _initialSettings: InitialSettings | null = null;
     private _statusController: ModuleInstanceStatusControllerInternal = new ModuleInstanceStatusControllerInternal();
@@ -67,7 +70,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     private _settingsToViewInterfaceEffectsAtom: Atom<void> | null = null;
     private _viewToSettingsInterfaceEffectsAtom: Atom<void> | null = null;
 
-    constructor(options: ModuleInstanceOptions<TInterfaceTypes>) {
+    constructor(options: ModuleInstanceOptions<TInterfaceTypes, TSerializedStateDef>) {
         this._id = `${options.module.getName()}-${options.instanceNumber}`;
         this._title = options.module.getDefaultTitle();
         this._module = options.module;
@@ -111,7 +114,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     }
 
     initialize(): void {
-        this._context = new ModuleContext<TInterfaceTypes>(this);
+        this._context = new ModuleContext<TInterfaceTypes, TSerializedStateDef>(this);
         this._initialized = true;
         this.setModuleInstanceState(ModuleInstanceState.OK);
     }
@@ -232,7 +235,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
         return this._module.getImportState();
     }
 
-    getContext(): ModuleContext<TInterfaceTypes> {
+    getContext(): ModuleContext<TInterfaceTypes, TSerializedStateDef> {
         if (!this._context) {
             throw `Module context is not available yet. Did you forget to init the module '${this._title}.'?`;
         }
@@ -299,7 +302,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
         return snapshotGetter;
     }
 
-    getModule(): Module<TInterfaceTypes> {
+    getModule(): Module<TInterfaceTypes, TSerializedStateDef> {
         return this._module;
     }
 
@@ -356,7 +359,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
 }
 
 export function useModuleInstanceTopicValue<T extends ModuleInstanceTopic>(
-    moduleInstance: ModuleInstance<any>,
+    moduleInstance: ModuleInstance<any, any>,
     topic: T,
 ): ModuleInstanceTopicValueTypes[T] {
     const value = React.useSyncExternalStore<ModuleInstanceTopicValueTypes[T]>(

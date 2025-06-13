@@ -13,11 +13,10 @@ import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
-
 import { CrashView } from "./crashView";
 
 type ViewContentProps = {
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     workbench: Workbench;
 };
 

@@ -18,7 +18,7 @@ type ViewWrapperProps = {
     isMaximized?: boolean;
     isMinimized?: boolean;
     isActive: boolean;
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     workbench: Workbench;
     width: number;
     height: number;

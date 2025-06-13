@@ -188,6 +188,18 @@ import type {
     GetVfpTableData_api,
     GetVfpTableResponse_api,
     GetVfpTableError_api,
+    GetDashboardsMetadataData_api,
+    GetDashboardsMetadataResponse_api,
+    CreateDashboardData_api,
+    CreateDashboardResponse_api,
+    CreateDashboardError_api,
+    DeleteDashboardData_api,
+    DeleteDashboardError_api,
+    GetDashboardData_api,
+    GetDashboardResponse_api,
+    GetDashboardError_api,
+    UpdateDashboardData_api,
+    UpdateDashboardError_api,
     LoginRouteData_api,
     LoginRouteError_api,
     AuthorizedCallbackRouteData_api,
@@ -1172,6 +1184,74 @@ export const getVfpTable = <ThrowOnError extends boolean = false>(options: Optio
     return (options?.client ?? client).get<GetVfpTableResponse_api, GetVfpTableError_api, ThrowOnError>({
         ...options,
         url: "/vfp/vfp_table/",
+    });
+};
+
+/**
+ * Get Dashboards Metadata
+ */
+export const getDashboardsMetadata = <ThrowOnError extends boolean = false>(
+    options?: Options<GetDashboardsMetadataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetDashboardsMetadataResponse_api, unknown, ThrowOnError>({
+        ...options,
+        url: "/persistence/dashboards",
+    });
+};
+
+/**
+ * Create Dashboard
+ */
+export const createDashboard = <ThrowOnError extends boolean = false>(
+    options: Options<CreateDashboardData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).post<CreateDashboardResponse_api, CreateDashboardError_api, ThrowOnError>({
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options?.headers,
+        },
+        url: "/persistence/dashboards",
+    });
+};
+
+/**
+ * Delete Dashboard
+ */
+export const deleteDashboard = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteDashboardData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).delete<unknown, DeleteDashboardError_api, ThrowOnError>({
+        ...options,
+        url: "/persistence/dashboards/{dashboard_id}",
+    });
+};
+
+/**
+ * Get Dashboard
+ */
+export const getDashboard = <ThrowOnError extends boolean = false>(
+    options: Options<GetDashboardData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetDashboardResponse_api, GetDashboardError_api, ThrowOnError>({
+        ...options,
+        url: "/persistence/dashboards/{dashboard_id}",
+    });
+};
+
+/**
+ * Update Dashboard
+ */
+export const updateDashboard = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateDashboardData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).put<unknown, UpdateDashboardError_api, ThrowOnError>({
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options?.headers,
+        },
+        url: "/persistence/dashboards/{dashboard_id}",
     });
 };
 

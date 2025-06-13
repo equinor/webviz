@@ -165,7 +165,7 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
 type LogListProps = {
     onShowDetails: (details: Record<string, unknown>, yPos: number) => void;
     onHideDetails: () => void;
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
 };
 
 function LogList(props: LogListProps): React.ReactNode {
