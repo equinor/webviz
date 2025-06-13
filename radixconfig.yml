@@ -22,6 +22,10 @@ spec:
       ports:
         - name: http
           port: 8080
+      network:
+        ingress:
+          public:
+            proxyReadTimeout: 120
 
     - name: backend-primary
       dockerFileName: ./backend_py/primary/Dockerfile

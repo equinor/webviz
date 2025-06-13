@@ -31,7 +31,7 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, S
             const availableValues = props.availableValues ?? [];
 
             const ensembles = props.globalSettings.ensembles.filter((ensemble) =>
-                availableValues.includes(ensemble.getIdent())
+                availableValues.some((value) => value.equals(ensemble.getIdent())),
             );
 
             return (

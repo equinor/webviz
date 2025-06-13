@@ -9,7 +9,7 @@ import type { HoverService } from "@framework/HoverService";
 import { HoverTopic, useHover, usePublishHoverValue } from "@framework/HoverService";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
-import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
+import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { getHoverTopicValuesInEvent } from "@modules/_shared/utils/subsurfaceViewerLayers";
 
