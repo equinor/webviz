@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 
-import type { InplaceVolumesFluid_api, InplaceVolumesIndex_api, InplaceVolumesIndexWithValues_api } from "@api";
+import type { InplaceVolumesIndex_api, InplaceVolumesIndexWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
@@ -12,9 +12,8 @@ import {
 
 import {
     selectedIndexValueCriteriaAtom,
-    userSelectedAccumulationOptionsAtom,
+    userSelectedGroupByIndicesAtom,
     userSelectedEnsembleIdentsAtom,
-    userSelectedFluidsAtom,
     userSelectedIndicesWithValuesAtom,
     userSelectedResultNamesAtom,
     userSelectedTableNamesAtom,
@@ -57,7 +56,6 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
     const selectedTableNames = get(selectedTableNamesAtom);
-    const selectedFluids = get(selectedFluidsAtom);
     const selectedResultNames = get(selectedResultNamesAtom);
     const selectedIndicesWithValues = get(selectedIndicesWithValuesAtom);
 
@@ -72,10 +70,6 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
     }
 
     if (!tableDefinitionsAccessor.hasTableNames(selectedTableNames)) {
-        return false;
-    }
-
-    if (!tableDefinitionsAccessor.hasFluids(selectedFluids)) {
         return false;
     }
 
@@ -108,21 +102,6 @@ export const selectedTableNamesAtom = atom<string[]>((get) => {
     return fixupUserSelection(userSelectedTableNames, uniqueTableNames);
 });
 
-export const selectedFluidsAtom = atom<InplaceVolumesFluid_api[]>((get) => {
-    const userSelectedFluids = get(userSelectedFluidsAtom);
-    const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
-
-    if (!userSelectedFluids) {
-        return tableDefinitionsAccessor.getFluidsIntersection();
-    }
-
-    return fixupUserSelection(
-        userSelectedFluids,
-        tableDefinitionsAccessor.getFluidsIntersection(),
-        FixupSelection.SELECT_ALL,
-    );
-});
-
 export const selectedResultNamesAtom = atom<string[]>((get) => {
     const userSelectedResultNames = get(userSelectedResultNamesAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
@@ -135,20 +114,20 @@ export const selectedResultNamesAtom = atom<string[]>((get) => {
     return fixedSelection;
 });
 
-export const selectedAccumulationOptionsAtom = atom<InplaceVolumesIndex_api[]>((get) => {
-    const userSelectedAccumulation = get(userSelectedAccumulationOptionsAtom);
+export const selectedGroupByIndicesAtom = atom<InplaceVolumesIndex_api[]>((get) => {
+    const userSelectedGroupByIndices = get(userSelectedGroupByIndicesAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
-    const availableUniqueAccumulationOptions: InplaceVolumesIndex_api[] = [];
+    const availableUniqueGroupByIndices: InplaceVolumesIndex_api[] = [];
     for (const indicesWithValues of tableDefinitionsAccessor.getCommonIndicesWithValues()) {
-        availableUniqueAccumulationOptions.push(indicesWithValues.indexColumn);
+        availableUniqueGroupByIndices.push(indicesWithValues.indexColumn);
     }
 
-    if (!userSelectedAccumulation || userSelectedAccumulation.length === 0) {
+    if (!userSelectedGroupByIndices || userSelectedGroupByIndices.length === 0) {
         return [];
     }
 
-    return fixupUserSelection(userSelectedAccumulation, availableUniqueAccumulationOptions, FixupSelection.SELECT_NONE);
+    return fixupUserSelection(userSelectedGroupByIndices, availableUniqueGroupByIndices, FixupSelection.SELECT_NONE);
 });
 
 export const selectedIndicesWithValuesAtom = atom<InplaceVolumesIndexWithValues_api[]>((get) => {

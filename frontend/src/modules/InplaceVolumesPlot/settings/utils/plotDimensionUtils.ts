@@ -1,4 +1,4 @@
-import { InplaceVolumesIndex_api } from "@api";
+// import { InplaceVolumesIndex_api } from "@api";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import type { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import type { TableSourceAndIndexUnion } from "@modules/_shared/InplaceVolumes/types";
@@ -33,10 +33,10 @@ export function makeSubplotByOptions(
             value: TableSource.TABLE_NAME,
             label: "TABLE NAME",
         },
-        {
-            value: InplaceVolumesIndex_api.FLUID,
-            label: "FLUID",
-        },
+        // {
+        //     value: InplaceVolumesIndex_api.FLUID,
+        //     label: "FLUID",
+        // },
     ];
 
     for (const indexWithValues of tableDefinitionsAccessor.getCommonIndicesWithValues()) {
@@ -93,12 +93,12 @@ export function makeColorByOptions(
         return options;
     }
 
-    if (selectedSubplotBy !== InplaceVolumesIndex_api.FLUID) {
-        options.push({
-            value: InplaceVolumesIndex_api.FLUID,
-            label: "FLUID",
-        });
-    }
+    // if (selectedSubplotBy !== InplaceVolumesIndex_api.FLUID) {
+    //     options.push({
+    //         value: InplaceVolumesIndex_api.FLUID,
+    //         label: "FLUID",
+    //     });
+    // }
 
     for (const indexWithValues of tableDefinitionsAccessor.getCommonIndicesWithValues()) {
         if (selectedSubplotBy !== indexWithValues.indexColumn) {

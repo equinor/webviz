@@ -4,9 +4,7 @@ import { useGetAggregatedPerRealizationTableDataQueries } from "@modules/_shared
 import { areTableDefinitionSelectionsValidAtom, resultName2Atom, resultNameAtom } from "./baseAtoms";
 import {
     areSelectedTablesComparableAtom,
-    doAccumulateFluidsAtom,
     ensembleIdentsWithRealizationsAtom,
-    fluidsAtom,
     groupByIndicesAtom,
     indicesWithValuesAtom,
     tableNamesAtom,
@@ -23,10 +21,8 @@ export const aggregatedTableDataQueriesAtom = atomWithQueries((get) => {
         resultNames.push(resultName2);
     }
 
-    const doAccumulateFluids = get(doAccumulateFluidsAtom);
     const groupByIndices = get(groupByIndicesAtom);
     const tableNames = get(tableNamesAtom);
-    const fluids = get(fluidsAtom);
     const indicesWithValues = get(indicesWithValuesAtom);
     const ensembleIdentsWithRealizations = get(ensembleIdentsWithRealizationsAtom);
     const areSelectedTablesComparable = get(areSelectedTablesComparableAtom);
@@ -38,9 +34,7 @@ export const aggregatedTableDataQueriesAtom = atomWithQueries((get) => {
         ensembleIdentsWithRealizations,
         tableNames,
         resultNames,
-        fluids,
         groupByIndices,
-        doAccumulateFluids,
         indicesWithValues,
         enableQueries,
     );

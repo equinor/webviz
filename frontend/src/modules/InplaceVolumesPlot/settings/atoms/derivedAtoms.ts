@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 
-import type { InplaceVolumesFluid_api, InplaceVolumesIndexWithValues_api } from "@api";
+import type { InplaceVolumesIndexWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
@@ -18,7 +18,6 @@ import {
     selectedIndexValueCriteriaAtom,
     userSelectedColorByAtom,
     userSelectedEnsembleIdentsAtom,
-    userSelectedFluidsAtom,
     userSelectedIndicesWithValuesAtom,
     userSelectedResultName2Atom,
     userSelectedResultNameAtom,
@@ -64,7 +63,6 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
     const selectedTableNames = get(selectedTableNamesAtom);
-    const selectedFluids = get(selectedFluidsAtom);
     const selectedResultName = get(selectedResultNameAtom);
     const selectedResultName2 = get(selectedResultName2Atom);
     const selectedIndicesWithValues = get(selectedIndicesWithValuesAtom);
@@ -80,10 +78,6 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
     }
 
     if (!tableDefinitionsAccessor.hasTableNames(selectedTableNames)) {
-        return false;
-    }
-
-    if (!tableDefinitionsAccessor.hasFluids(selectedFluids)) {
         return false;
     }
 
@@ -118,21 +112,6 @@ export const selectedTableNamesAtom = atom<string[]>((get) => {
     }
 
     return fixupUserSelection(userSelectedTableNames, uniqueTableNames);
-});
-
-export const selectedFluidsAtom = atom<InplaceVolumesFluid_api[]>((get) => {
-    const userSelectedFluids = get(userSelectedFluidsAtom);
-    const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
-
-    if (!userSelectedFluids) {
-        return tableDefinitionsAccessor.getFluidsIntersection();
-    }
-
-    return fixupUserSelection(
-        userSelectedFluids,
-        tableDefinitionsAccessor.getFluidsIntersection(),
-        FixupSelection.SELECT_ALL,
-    );
 });
 
 export const selectedResultNameAtom = atom<string | null>((get) => {

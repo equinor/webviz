@@ -30,17 +30,15 @@ import {
     selectedIndexValueCriteriaAtom,
     selectedStatisticOptionsAtom,
     selectedTableTypeAtom,
-    userSelectedAccumulationOptionsAtom,
+    userSelectedGroupByIndicesAtom,
     userSelectedEnsembleIdentsAtom,
-    userSelectedFluidsAtom,
     userSelectedIndicesWithValuesAtom,
     userSelectedResultNamesAtom,
     userSelectedTableNamesAtom,
 } from "./atoms/baseAtoms";
 import {
-    selectedAccumulationOptionsAtom,
+    selectedGroupByIndicesAtom,
     selectedEnsembleIdentsAtom,
-    selectedFluidsAtom,
     selectedIndicesWithValuesAtom,
     selectedResultNamesAtom,
     selectedTableNamesAtom,
@@ -59,17 +57,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const selectedTableNames = useAtomValue(selectedTableNamesAtom);
     const setSelectedTableNames = useSetAtom(userSelectedTableNamesAtom);
 
-    const selectedFluids = useAtomValue(selectedFluidsAtom);
-    const setSelectedFluids = useSetAtom(userSelectedFluidsAtom);
-
     const selectedIndicesWithValues = useAtomValue(selectedIndicesWithValuesAtom);
     const setSelectedIndicesWithValues = useSetAtom(userSelectedIndicesWithValuesAtom);
 
     const selectedResultNames = useAtomValue(selectedResultNamesAtom);
     const setSelectedResultNames = useSetAtom(userSelectedResultNamesAtom);
 
-    const selectedAccumulationOptions = useAtomValue(selectedAccumulationOptionsAtom);
-    const setSelectedAccumulationOptions = useSetAtom(userSelectedAccumulationOptionsAtom);
+    const selectedGroupByIndices = useAtomValue(selectedGroupByIndicesAtom);
+    const setSelectedGroupByIndices = useSetAtom(userSelectedGroupByIndicesAtom);
 
     const [selectedTableType, setSelectedTableType] = useAtom(selectedTableTypeAtom);
     const [selectedStatisticOptions, setSelectedStatisticOptions] = useAtom(selectedStatisticOptionsAtom);
@@ -83,7 +78,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     function handleFilterChange(newFilter: InplaceVolumesFilterSettings) {
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);
-        setSelectedFluids(newFilter.fluids);
         setSelectedIndicesWithValues(newFilter.indicesWithValues);
         setSelectedIndexValueCriteria(
             newFilter.allowIndicesValuesIntersection
@@ -92,8 +86,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         );
     }
 
-    function handleAccumulationOptionsChange(newAccumulationOptions: InplaceVolumesIndex_api[]) {
-        setSelectedAccumulationOptions(newAccumulationOptions);
+    function handleGroupByIndicesChange(newGroupByIndices: InplaceVolumesIndex_api[]) {
+        setSelectedGroupByIndices(newGroupByIndices);
     }
 
     function handleStatisticOptionsChange(newStatistics: InplaceVolumesStatistic_api[]) {
@@ -108,9 +102,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         .getResultNamesIntersection()
         .map((name) => ({ label: name, value: name, hoverText: createHoverTextForVolume(name) }));
 
-    const accumulateOptions: TagOption<InplaceVolumesIndex_api>[] = [];
+    const groupByIndicesOptions: TagOption<InplaceVolumesIndex_api>[] = [];
     for (const indicesWithValues of tableDefinitionsAccessor.getCommonIndicesWithValues()) {
-        accumulateOptions.push({ label: indicesWithValues.indexColumn, value: indicesWithValues.indexColumn });
+        groupByIndicesOptions.push({ label: indicesWithValues.indexColumn, value: indicesWithValues.indexColumn });
     }
 
     const statisticOptions: TagOption<InplaceVolumesStatistic_api>[] = Object.values(InplaceVolumesStatistic_api).map(
@@ -152,9 +146,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 </Label>
                 <Label text="Grouping">
                     <TagPicker
-                        value={selectedAccumulationOptions}
-                        tags={accumulateOptions}
-                        onChange={handleAccumulationOptionsChange}
+                        value={selectedGroupByIndices}
+                        tags={groupByIndicesOptions}
+                        onChange={handleGroupByIndicesChange}
                         debounceTimeMs={1500}
                     />
                 </Label>
@@ -168,11 +162,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             settingsContext={props.settingsContext}
             workbenchServices={props.workbenchServices}
             isPending={tableDefinitionsQueryResult.isLoading}
-            availableFluids={tableDefinitionsAccessor.getFluidsIntersection()}
             availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
             availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
             selectedEnsembleIdents={selectedEnsembleIdents}
-            selectedFluids={selectedFluids}
             selectedIndicesWithValues={selectedIndicesWithValues}
             selectedTableNames={selectedTableNames}
             selectedAllowIndicesValuesIntersection={

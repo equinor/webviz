@@ -11,11 +11,6 @@ export const tableNamesAtom = atom((get) => {
     return filter?.tableNames ?? [];
 });
 
-export const fluidsAtom = atom((get) => {
-    const filter = get(filterAtom);
-    return filter?.fluids ?? [];
-});
-
 export const indicesWithValuesAtom = atom((get) => {
     const filter = get(filterAtom);
     return filter?.indicesWithValues ?? [];
@@ -24,14 +19,6 @@ export const indicesWithValuesAtom = atom((get) => {
 export const areSelectedTablesComparableAtom = atom((get) => {
     const filter = get(filterAtom);
     return filter?.areSelectedTablesComparable ?? false;
-});
-
-export const doAccumulateFluidsAtom = atom((get) => {
-    const subplotBy = get(subplotByAtom);
-    const colorBy = get(colorByAtom);
-
-    const doAccumulateFluids = subplotBy !== InplaceVolumesIndex_api.FLUID && colorBy !== InplaceVolumesIndex_api.FLUID;
-    return doAccumulateFluids;
 });
 
 export const groupByIndicesAtom = atom((get) => {

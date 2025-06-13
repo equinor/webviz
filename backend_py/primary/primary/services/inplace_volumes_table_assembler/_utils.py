@@ -1,10 +1,18 @@
-from typing import Callable
+from typing import Callable, Iterable
 
 import numpy as np
 import polars as pl
 
+from ._conversion._conversion import (
+    get_calculated_volumes_among_result_names,
+    get_properties_among_result_names,
+    get_required_volume_names_from_calculated_volumes,
+    get_required_volume_names_from_properties,
+)
+
 from primary.services.sumo_access.inplace_volumes_table_types import (
     CalculatedVolume,
+    CategorizedResultNames,
     Property,
     InplaceVolumes,
     InplaceVolumesTableData,
@@ -18,9 +26,9 @@ from primary.services.sumo_access.inplace_volumes_table_types import (
 from primary.services.sumo_access.inplace_volumes_table_access import InplaceVolumesTableAccess
 
 """
-This file contains general utility functions for the Inplace Volumetrics provider
+This file contains general utility functions for the Inplace Volumes Table Assembler.
 
-The methods can be used to calculate, aggregate and create data for the Inplace Volumetrics provider
+The methods can be used to calculate, aggregate and create data for the Inplace Volumes Table Assembler
 """
 
 
@@ -35,12 +43,12 @@ def get_valid_result_names_from_list(result_names: list[str]) -> list[str]:
     return valid_result_names
 
 
-def create_per_group_summed_realization_volume_df(
-    volume_df: pl.DataFrame,
+def create_per_group_summed_realization_volumes_df(
+    volumes_df: pl.DataFrame,
     group_by_indices: list[InplaceVolumes.TableIndexColumns] | None,
 ) -> pl.DataFrame:
     """
-    Create volume DataFrame with sum per selected group. The sum volumes are grouped per realization, i.e. a column named "REAL"
+    Create volumes DataFrame with sum per selected group. The sum volumes are grouped per realization, i.e. a column named "REAL"
     should always be among the output columns.
 
     Note that selector columns are not aggregated, only the volume columns are aggregated. Thus the selector columns not among
@@ -48,8 +56,16 @@ def create_per_group_summed_realization_volume_df(
 
     After accumulating the sum, the properties can be calculated across realizations for each group.
     """
-    if "REAL" not in volume_df.columns:
+    if "REAL" not in volumes_df.columns:
         raise ValueError("REAL column not found in volume DataFrame")
+
+    # Verify that the group by indices are valid
+    if group_by_indices is not None:
+        missing_columns = {i.value for i in group_by_indices} - set(volumes_df.columns)
+        if missing_columns:
+            raise ValueError(
+                f"Not all group by indices are present in volume DataFrame. Missing columns: {missing_columns}."
+            )
 
     # Group by each of the indices (always accumulate by realization - i.e. max one value per realization)
     columns_to_group_by_for_sum = ["REAL"]
@@ -60,7 +76,7 @@ def create_per_group_summed_realization_volume_df(
     possible_selector_columns = InplaceVolumesTableAccess.get_selector_column_names()
 
     # Selector columns not in group by will be excluded, these should not be aggregated
-    per_group_summed_df = volume_df.group_by(columns_to_group_by_for_sum).agg(
+    per_group_summed_df = volumes_df.group_by(columns_to_group_by_for_sum).agg(
         [pl.sum("*").exclude(possible_selector_columns)]
     )
 
@@ -321,10 +337,6 @@ def create_inplace_volumes_df_per_fluid(
     if InplaceVolumes.TableIndexColumns.FLUID.value not in column_names:
         raise ValueError("FLUID column is required in volumetric DataFrame")
 
-    # Iterate over column_names to keep order of inplace_volumes_table_df.columns
-    column_to_exclude = InplaceVolumes.TableIndexColumns.FLUID.value
-    columns_to_include = [col for col in column_names if col != column_to_exclude]
-
     fluid_to_df_map: dict[InplaceVolumes.Fluid, pl.DataFrame] = {}
     for group_name, grouped_df in inplace_volumes_table_df.group_by(
         InplaceVolumes.TableIndexColumns.FLUID.value
@@ -332,7 +344,7 @@ def create_inplace_volumes_df_per_fluid(
         fluid = InplaceVolumes.Fluid(group_name[0])
 
         # DataFrame with all columns except the FLUID column
-        fluid_to_df_map[fluid] = grouped_df.select(columns_to_include)
+        fluid_to_df_map[fluid] = grouped_df.drop(InplaceVolumes.TableIndexColumns.FLUID.value)
 
     return fluid_to_df_map
 
@@ -368,12 +380,12 @@ def create_inplace_volumes_summed_fluids_df(
 
     # Iterate over columns to keep order of inplace_volumes_table_df columns
     selector_columns = [col for col in column_names if col in InplaceVolumesTableAccess.get_selector_column_names()]
-    volumetric_columns = [col for col in column_names if col not in selector_columns]
+    volume_columns = [col for col in column_names if col not in selector_columns]
     group_by_columns = [col for col in selector_columns if col != InplaceVolumes.TableIndexColumns.FLUID.value]
 
     # Group by the index columns except fluid and sum the volumetric columns
     volumes_summed_across_fluids_df = inplace_volumes_table_df.group_by(group_by_columns).agg(
-        [pl.col(col).sum().alias(col) for col in volumetric_columns if col not in selector_columns]
+        [pl.col(col).sum().alias(col) for col in volume_columns if col not in selector_columns]
     )
 
     return volumes_summed_across_fluids_df
@@ -557,3 +569,38 @@ def _are_all_column_values_null_or_nan(df: pl.DataFrame, column: str) -> bool:
 
     validation_mask = pl.col(column).is_null()
     return df.select(validation_mask).to_series().all()
+
+
+def get_required_volume_names_and_categorized_result_names(
+    result_names: Iterable[str],
+) -> tuple[set[str], CategorizedResultNames]:
+    """
+    Function to get all required volume names based on result names, and categorize the result names.
+
+    `returns`: A tuple of two elements:
+    - A list of all required volume names: volume columns, and volumes needed to calculate properties and calculated volumes
+    - Categorize result name
+
+    Note: result_names = volume columns + properties + calculated volumes
+    """
+    # Detect properties and find volume names needed to calculate properties
+    properties = get_properties_among_result_names(result_names)
+    required_volume_names_for_properties = get_required_volume_names_from_properties(properties)
+
+    # Detect calculated volumes among result names and find volume names needed for calculation
+    calculated_volume_names = get_calculated_volumes_among_result_names(result_names)
+    required_volume_names_for_calculated_volumes = get_required_volume_names_from_calculated_volumes(
+        calculated_volume_names
+    )
+
+    # Extract volume names among result names (excluding all properties, not just valid properties)
+    volume_names = list(set(result_names) - set(properties) - set(calculated_volume_names))
+
+    # Find all volume names needed from Sumo
+    all_required_volume_names = set(
+        volume_names + required_volume_names_for_properties + required_volume_names_for_calculated_volumes
+    )
+
+    return all_required_volume_names, CategorizedResultNames(
+        volume_names=volume_names, calculated_volume_names=calculated_volume_names, property_names=properties
+    )

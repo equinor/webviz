@@ -6,9 +6,8 @@ import { selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./settings/
 import {
     areSelectedTablesComparableAtom,
     areTableDefinitionSelectionsValidAtom,
-    selectedAccumulationOptionsAtom,
+    selectedGroupByIndicesAtom,
     selectedEnsembleIdentsAtom,
-    selectedFluidsAtom,
     selectedIndicesWithValuesAtom,
     selectedResultNamesAtom,
     selectedTableNamesAtom,
@@ -18,7 +17,7 @@ import type { InplaceVolumesFilterSelections } from "./types";
 export type SettingsToViewInterface = {
     filter: InplaceVolumesFilterSelections;
     resultNames: string[];
-    accumulationOptions: InplaceVolumesIndex_api[];
+    groupByIndices: InplaceVolumesIndex_api[];
     tableType: TableType;
     statisticOptions: InplaceVolumesStatistic_api[];
     areTableDefinitionSelectionsValid: boolean;
@@ -33,13 +32,12 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
         return {
             ensembleIdents: get(selectedEnsembleIdentsAtom),
             tableNames: get(selectedTableNamesAtom),
-            fluids: get(selectedFluidsAtom),
             indicesWithValues: get(selectedIndicesWithValuesAtom),
             areSelectedTablesComparable: get(areSelectedTablesComparableAtom),
         };
     },
     resultNames: (get) => get(selectedResultNamesAtom),
-    accumulationOptions: (get) => get(selectedAccumulationOptionsAtom),
+    groupByIndices: (get) => get(selectedGroupByIndicesAtom),
     tableType: (get) => get(selectedTableTypeAtom),
     statisticOptions: (get) => get(selectedStatisticOptionsAtom),
     areTableDefinitionSelectionsValid: (get) => get(areTableDefinitionSelectionsValidAtom),

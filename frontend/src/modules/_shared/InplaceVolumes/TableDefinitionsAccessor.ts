@@ -1,7 +1,6 @@
 import { isEqual } from "lodash";
 
 import type {
-    InplaceVolumesFluid_api,
     InplaceVolumesIndex_api,
     InplaceVolumesIndexWithValues_api,
     InplaceVolumesTableDefinition_api,
@@ -58,7 +57,6 @@ export class TableDefinitionsAccessor {
     private _tableNamesFilter: string[];
     private _uniqueEnsembleIdents: RegularEnsembleIdent[];
     private _tableNamesIntersection: string[];
-    private _fluidsIntersection: InplaceVolumesFluid_api[] = [];
     private _resultNamesIntersection: string[] = [];
 
     private _commonIndicesWithValues: InplaceVolumesIndexWithValues_api[] = [];
@@ -86,7 +84,6 @@ export class TableDefinitionsAccessor {
             return;
         }
 
-        const fluids: Set<InplaceVolumesFluid_api> = new Set();
         const resultNames: Set<string> = new Set();
         const commonIndicesWithValuesMap: Map<InplaceVolumesIndex_api, InplaceVolumesIndexWithValues_api> = new Map();
 
@@ -98,7 +95,6 @@ export class TableDefinitionsAccessor {
 
             if (!isInitialized) {
                 // Initialize sets and arrays with the first valid tableDefinition
-                tableDefinition.fluids.forEach((fluid) => fluids.add(fluid));
                 tableDefinition.resultNames.forEach((resultName) => resultNames.add(resultName));
 
                 for (const indexWithValues of tableDefinition.indicesWithValues) {
@@ -112,11 +108,6 @@ export class TableDefinitionsAccessor {
                 continue;
             }
 
-            for (const fluid of fluids) {
-                if (!tableDefinition.fluids.includes(fluid)) {
-                    fluids.delete(fluid);
-                }
-            }
             for (const resultName of resultNames) {
                 if (!tableDefinition.resultNames.includes(resultName)) {
                     resultNames.delete(resultName);
@@ -158,7 +149,6 @@ export class TableDefinitionsAccessor {
             }
         }
 
-        this._fluidsIntersection = Array.from(fluids).sort();
         this._resultNamesIntersection = sortResultNameStrings(Array.from(resultNames));
         this._commonIndicesWithValues = Array.from(commonIndicesWithValuesMap.values());
 
@@ -174,10 +164,6 @@ export class TableDefinitionsAccessor {
 
     getTableNamesIntersection(): string[] {
         return this._tableNamesIntersection;
-    }
-
-    getFluidsIntersection(): InplaceVolumesFluid_api[] {
-        return this._fluidsIntersection;
     }
 
     getResultNamesIntersection(): string[] {
@@ -205,16 +191,6 @@ export class TableDefinitionsAccessor {
     hasTableNames(tableNames: string[]): boolean {
         for (const tableName of tableNames) {
             if (!this._tableNamesIntersection.includes(tableName)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    hasFluids(fluids: InplaceVolumesFluid_api[]): boolean {
-        for (const fluid of fluids) {
-            if (!this._fluidsIntersection.includes(fluid)) {
                 return false;
             }
         }

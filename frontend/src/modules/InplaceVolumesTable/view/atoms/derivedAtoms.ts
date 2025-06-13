@@ -1,21 +1,15 @@
 import { atom } from "jotai";
 
-import { InplaceVolumesIndex_api } from "@api";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import type { EnsembleIdentWithRealizations } from "@modules/_shared/InplaceVolumes/queryHooks";
 import { TableType } from "@modules/_shared/InplaceVolumes/types";
 
-import { accumulationOptionsAtom, filterAtom, tableTypeAtom } from "./baseAtoms";
+import { filterAtom, tableTypeAtom } from "./baseAtoms";
 import { perRealizationTableDataResultsAtom, statisticalTableDataResultsAtom } from "./queryAtoms";
 
 export const tableNamesAtom = atom((get) => {
     const filter = get(filterAtom);
     return filter?.tableNames ?? [];
-});
-
-export const fluidsAtom = atom((get) => {
-    const filter = get(filterAtom);
-    return filter?.fluids ?? [];
 });
 
 export const indicesWithValuesAtom = atom((get) => {
@@ -42,18 +36,6 @@ export const ensembleIdentsWithRealizationsAtom = atom((get) => {
     }
 
     return ensembleIdentsWithRealizations;
-});
-
-export const accumulateFluidsAtom = atom((get) => {
-    const accumulationOptions = get(accumulationOptionsAtom);
-
-    return !accumulationOptions.includes(InplaceVolumesIndex_api.FLUID);
-});
-
-export const groupByIndicesAtom = atom((get) => {
-    const accumulationOptions = get(accumulationOptionsAtom);
-
-    return accumulationOptions.filter((el) => el !== InplaceVolumesIndex_api.FLUID) as InplaceVolumesIndex_api[];
 });
 
 export const activeQueriesResultAtom = atom((get) => {
