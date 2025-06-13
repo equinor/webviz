@@ -4,7 +4,7 @@ import type { Point2D, Point3D } from "@webviz/subsurface-viewer";
 import { isEqual } from "lodash";
 
 import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
-import type { InplaceVolumetricsFilterSettings } from "./types/inplaceVolumetricsFilterSettings";
+import type { InplaceVolumesFilterSettings } from "./types/inplaceVolumesFilterSettings";
 import type { Intersection } from "./types/intersection";
 import type { Viewport } from "./types/viewport";
 import type { Wellbore } from "./types/wellbore";
@@ -37,8 +37,8 @@ export type GlobalTopicDefinitions = {
     "global.syncValue.intersection": Intersection;
     "global.syncValue.cameraPositionIntersection": Viewport;
     "global.syncValue.verticalScale": number;
-    "global.syncValue.inplaceVolumetricsFilterSettings": InplaceVolumetricsFilterSettings;
-    "global.syncValue.inplaceVolumetricsResultName": string;
+    "global.syncValue.inplaceVolumesFilterSettings": InplaceVolumesFilterSettings;
+    "global.syncValue.inplaceVolumesResultName": string;
     "global.syncValue.parameter": string;
 };
 

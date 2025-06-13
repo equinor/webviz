@@ -524,7 +524,7 @@ class InplaceVolumetricsAssembler:
         # - Hard fail: get_inplace_volumetrics_aggregated_table_async() throws an exception if requested column names are not found
         inplace_volumetrics_table: pa.Table = (
             await self._inplace_volumetrics_access.get_inplace_volumetrics_aggregated_table_async(
-                table_name=table_name, column_names=volumetric_columns
+                table_name=table_name, volumetric_columns=volumetric_columns
             )
         )
 
