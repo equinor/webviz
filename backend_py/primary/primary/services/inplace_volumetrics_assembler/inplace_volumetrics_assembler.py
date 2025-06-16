@@ -357,7 +357,7 @@ class InplaceVolumetricsAssembler:
         volume_names: set[str],
         fluid_zones: list[FluidZone],
         realizations: list[int] | None,
-        identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues] | None = None,
+        identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues],
         accumulate_fluid_zones: bool = False,
     ) -> dict[FluidSelection, pl.DataFrame]:
         """
@@ -440,7 +440,7 @@ class InplaceVolumetricsAssembler:
         table_name: str,
         inplace_volumetrics_df: pl.DataFrame,
         realizations: list[int] | None,
-        identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues] | None = None,
+        identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues],
     ) -> pl.DataFrame | None:
         """
         Create DataFrame filtered on identifier values and realizations
@@ -450,9 +450,6 @@ class InplaceVolumetricsAssembler:
         """
         if realizations is not None and len(realizations) == 0:
             raise InvalidParameterError("Realizations must be a non-empty list or None", Service.GENERAL)
-
-        if identifiers_with_values is None:
-            identifiers_with_values = []
 
         column_names = inplace_volumetrics_df.columns
 
