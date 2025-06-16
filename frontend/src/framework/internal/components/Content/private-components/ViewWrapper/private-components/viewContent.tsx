@@ -109,6 +109,13 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                                     workbenchServices={props.workbench.getWorkbenchServices()}
                                     workbenchSettings={props.workbench.getWorkbenchSettings()}
                                     initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                                    persistence={{
+                                        serializedState:
+                                            props.moduleInstance.getSerializedState()?.["view"] ?? undefined,
+                                        serializeState: props.moduleInstance.serializeViewState.bind(
+                                            props.moduleInstance,
+                                        ),
+                                    }}
                                 />
                             </ApplyInterfaceEffectsToView>
                         </HydrateQueryClientAtom>

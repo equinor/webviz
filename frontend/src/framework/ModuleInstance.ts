@@ -9,12 +9,21 @@ import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannel
 import type { InitialSettings } from "./InitialSettings";
 import { ChannelManager } from "./internal/DataChannels/ChannelManager";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
-import type { ImportState, JTDBaseType, Module, ModuleInterfaceTypes, ModuleSettings, ModuleView } from "./Module";
+import type {
+    ImportState,
+    Module,
+    ModuleBaseState,
+    ModuleInterfaceTypes,
+    ModuleSettings,
+    ModuleState,
+    ModuleView,
+} from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import { UniDirectionalModuleComponentsInterface } from "./UniDirectionalModuleComponentsInterface";
 import type { Workbench } from "./Workbench";
+import type { JTDDataType } from "ajv/dist/core";
 
 export enum ModuleInstanceState {
     INITIALIZING,
@@ -28,6 +37,7 @@ export enum ModuleInstanceTopic {
     SYNCED_SETTINGS = "synced-settings",
     STATE = "state",
     IMPORT_STATE = "import-state",
+    SERIALIZED_STATE = "serialized-state",
 }
 
 export type ModuleInstanceTopicValueTypes = {
@@ -35,11 +45,12 @@ export type ModuleInstanceTopicValueTypes = {
     [ModuleInstanceTopic.SYNCED_SETTINGS]: SyncSettingKey[];
     [ModuleInstanceTopic.STATE]: ModuleInstanceState;
     [ModuleInstanceTopic.IMPORT_STATE]: ImportState;
+    [ModuleInstanceTopic.SERIALIZED_STATE]: ModuleBaseState;
 };
 
 export interface ModuleInstanceOptions<
     TInterfaceTypes extends ModuleInterfaceTypes,
-    TSerializedStateDef extends JTDBaseType,
+    TSerializedStateDef extends ModuleBaseState,
 > {
     module: Module<TInterfaceTypes, TSerializedStateDef>;
     workbench: Workbench;
@@ -48,7 +59,7 @@ export interface ModuleInstanceOptions<
     channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
 }
 
-export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedStateDef extends JTDBaseType> {
+export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedStateDef extends ModuleBaseState> {
     private _id: string;
     private _title: string;
     private _initialized: boolean = false;
@@ -69,6 +80,8 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes, TSeria
     > | null = null;
     private _settingsToViewInterfaceEffectsAtom: Atom<void> | null = null;
     private _viewToSettingsInterfaceEffectsAtom: Atom<void> | null = null;
+    private _initialSerializedState: ModuleState<TSerializedStateDef> | null = null;
+    private _serializedState: ModuleState<TSerializedStateDef> | null = null;
 
     constructor(options: ModuleInstanceOptions<TInterfaceTypes, TSerializedStateDef>) {
         this._id = `${options.module.getName()}-${options.instanceNumber}`;
@@ -89,6 +102,34 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes, TSeria
         if (options.channelDefinitions) {
             this._channelManager.registerChannels(options.channelDefinitions);
         }
+    }
+
+    setSerializedState(serializedState: ModuleState<TSerializedStateDef>): void {
+        this._serializedState = serializedState;
+    }
+
+    getSerializedState(): ModuleState<TSerializedStateDef> | null {
+        return this._initialSerializedState;
+    }
+
+    getMostRecentSerializedState(): ModuleState<TSerializedStateDef> | null {
+        return this._serializedState ?? this._initialSerializedState;
+    }
+
+    serializeSettingsState(state: JTDDataType<TSerializedStateDef["settings"]>): void {
+        this._serializedState = {
+            ...(this._serializedState ?? ({} as ModuleState<TSerializedStateDef>)),
+            settings: state,
+        };
+        this.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE);
+    }
+
+    serializeViewState(state: JTDDataType<TSerializedStateDef["view"]>): void {
+        this._serializedState = {
+            ...(this._serializedState ?? ({} as ModuleState<TSerializedStateDef>)),
+            view: state,
+        };
+        this.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE);
     }
 
     getUniDirectionalSettingsToViewInterface(): UniDirectionalModuleComponentsInterface<
@@ -223,11 +264,11 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes, TSeria
         return this._initialized;
     }
 
-    getViewFC(): ModuleView<TInterfaceTypes> {
+    getViewFC(): ModuleView<TInterfaceTypes, TSerializedStateDef> {
         return this._module.viewFC;
     }
 
-    getSettingsFC(): ModuleSettings<TInterfaceTypes> {
+    getSettingsFC(): ModuleSettings<TInterfaceTypes, TSerializedStateDef> {
         return this._module.settingsFC;
     }
 
@@ -296,6 +337,9 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes, TSeria
             }
             if (topic === ModuleInstanceTopic.IMPORT_STATE) {
                 return this.getImportState();
+            }
+            if (topic === ModuleInstanceTopic.SERIALIZED_STATE) {
+                return this.getSerializedState();
             }
         };
 

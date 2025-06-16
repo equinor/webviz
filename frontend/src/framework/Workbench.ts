@@ -7,8 +7,8 @@ import { loadMetadataFromBackendAndCreateEnsembleSet } from "./internal/Ensemble
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
 import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
-import { ImportState } from "./Module";
-import type { ModuleInstance } from "./ModuleInstance";
+import { ImportState, type ModuleState } from "./Module";
+import { ModuleInstanceTopic, type ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import type { Template } from "./TemplateRegistry";
@@ -158,12 +158,21 @@ export class Workbench {
 
             module.setWorkbench(this);
             const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
+            moduleInstance.makeSubscriberFunction(ModuleInstanceTopic.SERIALIZED_STATE)(() => {
+                const state = moduleInstance.getMostRecentSerializedState();
+                if (!state) return;
+                this.handleModuleInstanceStateChange(moduleInstance.getId(), state);
+            });
             this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
             this._moduleInstances.push(moduleInstance);
             this._layout[index] = { ...this._layout[index], moduleInstanceId: moduleInstance.getId() };
             this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
             this.notifySubscribers(WorkbenchEvents.LayoutChanged);
         });
+    }
+
+    handleModuleInstanceStateChange(moduleInstanceId: string, state: ModuleState<any>): void {
+        console.debug(`Module instance ${moduleInstanceId} state changed to ${JSON.stringify(state)}`);
     }
 
     resetModuleInstanceNumbers(): void {
@@ -191,6 +200,11 @@ export class Workbench {
         module.setWorkbench(this);
 
         const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
+        moduleInstance.makeSubscriberFunction(ModuleInstanceTopic.SERIALIZED_STATE)(() => {
+            const state = moduleInstance.getSerializedState();
+            if (!state) return;
+            this.handleModuleInstanceStateChange(moduleInstance.getId(), state);
+        });
         this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
         this._moduleInstances.push(moduleInstance);
 

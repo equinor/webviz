@@ -4,9 +4,11 @@ import type {
     InterfaceEffects,
     JTDBaseType,
     MakeReadonly,
+    ModuleBaseState,
     ModuleCategory,
     ModuleDevState,
     ModuleInterfaceTypes,
+    NoModuleBaseState,
     OnInstanceUnloadFunc,
 } from "./Module";
 import { Module } from "./Module";
@@ -15,7 +17,7 @@ import type { DrawPreviewFunc } from "./Preview";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 
-export type RegisterModuleOptions<TSerializedStateDef extends JTDBaseType> = {
+export type RegisterModuleOptions<TSerializedStateDef extends JTDBaseType = NoModuleBaseState> = {
     moduleName: string;
     category: ModuleCategory;
     devState: ModuleDevState;
@@ -48,7 +50,7 @@ export class ModuleRegistry {
 
     static registerModule<
         TInterfaceTypes extends ModuleInterfaceTypes,
-        TSerializedStateDef extends JTDBaseType = Record<string, never>,
+        TSerializedStateDef extends ModuleBaseState = NoModuleBaseState,
     >(options: RegisterModuleOptions<TSerializedStateDef>): Module<TInterfaceTypes, TSerializedStateDef> {
         const module = new Module<TInterfaceTypes, TSerializedStateDef>({
             name: options.moduleName,
@@ -69,7 +71,7 @@ export class ModuleRegistry {
 
     static initModule<
         TInterfaceTypes extends ModuleInterfaceTypes,
-        TSerializedStateDef extends JTDBaseType = Record<string, never>,
+        TSerializedStateDef extends ModuleBaseState = NoModuleBaseState,
     >(
         moduleName: string,
         options: {

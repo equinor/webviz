@@ -14,6 +14,7 @@ import type { Workbench } from "./Workbench";
 import type { WorkbenchServices } from "./WorkbenchServices";
 import type { WorkbenchSession } from "./WorkbenchSession";
 import type { WorkbenchSettings } from "./WorkbenchSettings";
+import type { JTDDataType } from "ajv/dist/core";
 
 export type OnInstanceUnloadFunc = (instanceId: string) => void;
 
@@ -48,13 +49,14 @@ export type ModuleSettingsProps<
         settingsToView: Record<string, never>;
         viewToSettings: Record<string, never>;
     },
-    TSerializedStateDef extends JTDBaseType = Record<string, never>,
+    TSerializedStateDef extends ModuleBaseState = NoModuleBaseState,
 > = {
     settingsContext: SettingsContext<TInterfaceTypes, TSerializedStateDef>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
+    persistence: ModulePersistence<TSerializedStateDef["settings"]>;
 };
 
 export type ModuleViewProps<
@@ -62,13 +64,19 @@ export type ModuleViewProps<
         settingsToView: Record<string, never>;
         viewToSettings: Record<string, never>;
     },
-    TSerializedStateDef extends JTDBaseType = Record<string, never>,
+    TSerializedStateDef extends ModuleBaseState = NoModuleBaseState,
 > = {
     viewContext: ViewContext<TInterfaceTypes, TSerializedStateDef>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
+    persistence: ModulePersistence<TSerializedStateDef["view"]>;
+};
+
+export type ModulePersistence<TSerializedStateDef extends JTDBaseType> = {
+    serializedState: JTDDataType<TSerializedStateDef>;
+    serializeState: (state: JTDDataType<TSerializedStateDef>) => void;
 };
 
 export type InterfaceEffects<TInterfaceType extends InterfaceBaseType> = ((
@@ -79,6 +87,21 @@ export type InterfaceEffects<TInterfaceType extends InterfaceBaseType> = ((
 
 export type JTDBaseType = Record<string, unknown>;
 
+export type ModuleBaseState = {
+    settings: JTDBaseType;
+    view: JTDBaseType;
+};
+
+export type NoModuleBaseState = {
+    settings: Record<string, never>;
+    view: Record<string, never>;
+};
+
+export type ModuleState<TSerializedStateDef extends ModuleBaseState> = {
+    view: JTDDataType<TSerializedStateDef["view"]>;
+    settings: JTDDataType<TSerializedStateDef["settings"]>;
+};
+
 export type MakeReadonly<T> = {
     readonly [P in keyof T]: T[P];
 };
@@ -88,14 +111,16 @@ export type ModuleSettings<
         settingsToView: Record<string, never>;
         viewToSettings: Record<string, never>;
     },
-> = React.FC<ModuleSettingsProps<TInterfaceTypes>>;
+    TSerializedStateDef extends ModuleBaseState = NoModuleBaseState,
+> = React.FC<ModuleSettingsProps<TInterfaceTypes, TSerializedStateDef>>;
 
 export type ModuleView<
     TInterfaceTypes extends ModuleInterfaceTypes = {
         settingsToView: Record<string, never>;
         viewToSettings: Record<string, never>;
     },
-> = React.FC<ModuleViewProps<TInterfaceTypes>>;
+    TSerializedStateDef extends ModuleBaseState = NoModuleBaseState,
+> = React.FC<ModuleViewProps<TInterfaceTypes, TSerializedStateDef>>;
 
 export enum ImportState {
     NotImported = "NotImported",
@@ -104,7 +129,7 @@ export enum ImportState {
     Failed = "Failed",
 }
 
-export interface ModuleOptions<TSerializedStateDefinition extends JTDBaseType> {
+export interface ModuleOptions<TSerializedStateDefinition extends ModuleBaseState> {
     name: string;
     defaultTitle: string;
     category: ModuleCategory;
@@ -119,11 +144,11 @@ export interface ModuleOptions<TSerializedStateDefinition extends JTDBaseType> {
     serializedStateDefinition?: TSerializedStateDefinition;
 }
 
-export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedStateDef extends JTDBaseType> {
+export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedStateDef extends ModuleBaseState> {
     private _name: string;
     private _defaultTitle: string;
-    public viewFC: ModuleView<TInterfaceTypes>;
-    public settingsFC: ModuleSettings<TInterfaceTypes>;
+    public viewFC: ModuleView<TInterfaceTypes, TSerializedStateDef>;
+    public settingsFC: ModuleSettings<TInterfaceTypes, TSerializedStateDef>;
     protected _importState: ImportState = ImportState.NotImported;
     private _moduleInstances: ModuleInstance<TInterfaceTypes, TSerializedStateDef>[] = [];
     private _settingsToViewInterfaceInitialization: InterfaceInitialization<

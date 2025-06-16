@@ -97,6 +97,14 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                                             workbenchServices={props.workbench.getWorkbenchServices()}
                                             workbenchSettings={props.workbench.getWorkbenchSettings()}
                                             initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                                            persistence={{
+                                                serializedState:
+                                                    props.moduleInstance.getSerializedState()?.["settings"] ??
+                                                    undefined,
+                                                serializeState: props.moduleInstance.serializeSettingsState.bind(
+                                                    props.moduleInstance,
+                                                ),
+                                            }}
                                         />
                                     </ApplyInterfaceEffectsToSettings>
                                 </HydrateQueryClientAtom>

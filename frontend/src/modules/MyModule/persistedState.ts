@@ -1,7 +1,12 @@
 export const SERIALIZED_STATE = {
-    myData: {
-        type: "string",
+    settings: {
+        properties: {
+            myData: {
+                type: "string",
+            },
+        },
     },
+    view: {},
 } as const;
 
 export type SerializedState = typeof SERIALIZED_STATE;
