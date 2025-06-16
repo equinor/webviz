@@ -1,4 +1,9 @@
-import { getDashboardOptions, getDashboardsMetadataOptions, type ModuleState_api } from "@api";
+import {
+    createDashboard,
+    getDashboardOptions,
+    getDashboardsMetadataOptions,
+    type PrivateDashboardUpdate_api,
+} from "@api";
 import type { QueryClient } from "@tanstack/query-core";
 import type { PrivateDashboard } from "./types";
 import type { ModuleState } from "@framework/Module";
@@ -18,25 +23,29 @@ export class DashboardPersistenceService {
     private _lastBufferUpdateMs: number = 0;
     private _bufferedDashboard: PrivateDashboard | null = null;
     private _timeoutId: ReturnType<typeof setTimeout> | null = null;
-    private _dashboardName: string;
+    private _metadata: {
+        title: string;
+        description?: string;
+    } = {
+        title: "",
+        description: undefined,
+    };
     private _dashboardId: string;
 
-    constructor(queryClient: QueryClient, dashboardId?: string, dashboardName: string) {
+    constructor(queryClient: QueryClient, dashboardId?: string, dashboardName?: string) {
         this._queryClient = queryClient;
 
         this._dashboardId = dashboardId ?? v4();
-        this._dashboardName = dashboardName;
+
+        this._metadata.title = dashboardName ?? "New Dashboard";
     }
 
     updateModuleState(moduleInstanceId: string, moduleName: string, moduleState: ModuleState<any>) {
-        const module = this._bufferedModuleInstanceStates.find(
-            (state) => state.moduleInstanceId === moduleInstanceId
-        );
+        const module = this._bufferedModuleInstanceStates.find((state) => state.moduleInstanceId === moduleInstanceId);
 
         if (module) {
             module.state = moduleState;
-        }
-        else {
+        } else {
             this._bufferedModuleInstanceStates.push({
                 moduleInstanceId,
                 moduleName: moduleName,
@@ -44,7 +53,7 @@ export class DashboardPersistenceService {
             });
         }
 
-            this.resetFlushTimeout();
+        this.resetFlushTimeout();
     }
 
     resetFlushTimeout() {
@@ -56,41 +65,39 @@ export class DashboardPersistenceService {
 
         this._timeoutId = setTimeout(() => {
             this.flushBufferedModuleStates();
-        },  FLUSH_BUFFER_TIMEOUT_MS);
+        }, FLUSH_BUFFER_TIMEOUT_MS);
     }
 
-    flushBufferedModuleStates() {
+    async flushBufferedModuleStates() {
         if (this._bufferedModuleInstanceStates.length === 0) {
             return;
         }
 
-        const moduleStates: ModuleState<any>[] = Array.from(this._bufferedModuleInstanceStates.values());
-        this._bufferedModuleInstanceStates.clear();
-        this._lastBufferUpdateMs = Date.now();
-
-        this._queryClient.setQueryData({
-            queryKey: ["moduleStates"],
-            queryFn: () => moduleStates,
+        const dashboard = this.buildDashboard();
+        await createDashboard({
+            body: dashboard,
         });
+
+        this._bufferedModuleInstanceStates = [];
+        this._lastBufferUpdateMs = Date.now();
     }
 
-    private buildDashboard(): PrivateDashboard {
-        const moduleStates: ModuleState_api[] = [];
-
-        const dashboard: PrivateDashboard = {
+    private buildDashboard(): PrivateDashboardUpdate_api {
+        const dashboard: PrivateDashboardUpdate_api = {
             id: this._dashboardId,
-            metadata: {
-                title
-            }
+            title: this._metadata.title,
+            description: this._metadata.description,
             content: {
                 moduleStates: this._bufferedModuleInstanceStates,
                 crossModuleState: {
                     dataChannels: {},
                     syncedSettings: {},
                 },
-                layout: this._bufferedLayout
-            }
+                layout: this._bufferedLayout,
+            },
         };
+
+        return dashboard;
     }
 
     async fetchPrivateDashboard(dashboardId: string) {

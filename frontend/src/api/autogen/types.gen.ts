@@ -519,6 +519,13 @@ export type PrivateDashboardOutput_api = {
     version: number;
 };
 
+export type PrivateDashboardUpdate_api = {
+    id: string;
+    title?: string | null;
+    description?: string | null;
+    content?: DashboardContent_api | null;
+};
+
 export type PvtData_api = {
     name: string;
     phase: string;
@@ -3798,7 +3805,7 @@ export type GetDashboardsMetadataResponses_api = {
 export type GetDashboardsMetadataResponse_api = GetDashboardsMetadataResponses_api[keyof GetDashboardsMetadataResponses_api];
 
 export type CreateDashboardData_api = {
-    body: PrivateDashboardInput_api;
+    body: PrivateDashboardUpdate_api;
     path?: never;
     query?: never;
     url: "/persistence/dashboards";

@@ -3,7 +3,7 @@ from datetime import datetime
 
 from primary.services.service_exceptions import Service, ServiceRequestError
 from primary.services.database_access.container_access import ContainerAccess
-from primary.services.database_access.types import PrivateDashboard, DashboardMetadata
+from primary.services.database_access.types import PrivateDashboard, DashboardMetadata, PrivateDashboardUpdate
 
 
 class PrivateDashboardAccess:
@@ -32,8 +32,23 @@ class PrivateDashboardAccess:
         items = await self.container_access.query_items(query)
         return [DashboardMetadata(**item.metadata) for item in items]
 
-    async def insert_dashboard(self, dashboard: PrivateDashboard):
+    async def insert_dashboard(self, dashboard: PrivateDashboardUpdate):
         item = dashboard.model_dump(by_alias=True, mode="json")
+        dashboard = PrivateDashboard(
+            id=item["id"],
+            user_id=self.user_id,
+            metadata=DashboardMetadata(
+                dashboard_id=item["id"],
+                title=item["metadata"]["title"],
+                description=item["metadata"].get("description"),
+                created_by=self.user_id,
+                # Do we need timezone-aware timestamps?
+                created_at=datetime.now(),
+                updated_at=datetime.now(),
+            ),
+            content=item["content"],
+            version=1,  # Initial version
+        )
         await self.container_access.insert_item(item)
 
     async def delete_dashboard(self, dashboard_id: str):

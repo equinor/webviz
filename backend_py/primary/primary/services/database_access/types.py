@@ -57,3 +57,13 @@ class PrivateDashboard(BaseModel):
     class Config:
         populate_by_name = True
         allow_population_by_field_name = True
+
+class PrivateDashboardUpdate(BaseModel):
+    id: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+    content: Optional[DashboardContent] = None
+
+    class Config:
+        populate_by_name = True
+        allow_population_by_field_name = True

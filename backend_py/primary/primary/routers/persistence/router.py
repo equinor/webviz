@@ -4,7 +4,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 
 from primary.services.database_access.private_dashboard_access import PrivateDashboardAccess
-from primary.services.database_access.types import PrivateDashboard, DashboardMetadata
+from primary.services.database_access.types import PrivateDashboard, DashboardMetadata, PrivateDashboardUpdate
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.auth_helper import AuthenticatedUser
 
@@ -31,7 +31,7 @@ async def get_dashboard(dashboard_id: str, user: AuthenticatedUser = Depends(Aut
 
 @router.post("/dashboards", response_model=str)
 async def create_dashboard(
-    dashboard: PrivateDashboard, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+    dashboard: PrivateDashboardUpdate, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ):
     access = await PrivateDashboardAccess.create(user.get_user_id())
     async with access:
