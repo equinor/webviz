@@ -1,6 +1,6 @@
 from functools import wraps
 from contextvars import ContextVar
-from typing import Dict, Any, Callable, Awaitable, Union, Never
+from typing import Dict, Any, Callable
 
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Scope, Receive, Send, Message
