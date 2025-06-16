@@ -1,4 +1,4 @@
-const DEBUG_FLAG_PREFIX = "webviz-debug:";
+const DEBUG_FLAG_PREFIX = "webvizDebug_";
 
 /**
  * Checks if a stored debug flag is true (as in, "true" or "1", case insensitive)
@@ -18,6 +18,6 @@ export function debugFlagIsEnabled(flag: string) {
  * @returns the given time, or 0 if the debug flag is enabled
  */
 export function tanstackDebugTimeOverride(time: number) {
-    if (debugFlagIsEnabled("disable-tanstack-cache")) return 0;
+    if (debugFlagIsEnabled("disableTanstackCache")) return 0;
     return time;
 }
