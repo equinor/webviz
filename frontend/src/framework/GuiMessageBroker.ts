@@ -23,7 +23,6 @@ export enum GuiState {
     LeftDrawerContent = "leftDrawerContent",
     RightDrawerContent = "rightDrawerContent",
     LeftSettingsPanelWidthInPercent = "leftSettingsPanelWidthInPercent",
-    ActiveModuleInstanceId = "activeModuleInstanceId",
     DataChannelConnectionLayerVisible = "dataChannelConnectionLayerVisible",
     DevToolsVisible = "devToolsVisible",
     EditDataChannelConnections = "editDataChannelConnections",
@@ -88,7 +87,6 @@ type GuiStateValueTypes = {
     [GuiState.LeftDrawerContent]: LeftDrawerContent;
     [GuiState.RightDrawerContent]: RightDrawerContent | undefined;
     [GuiState.LeftSettingsPanelWidthInPercent]: number;
-    [GuiState.ActiveModuleInstanceId]: string;
     [GuiState.DataChannelConnectionLayerVisible]: boolean;
     [GuiState.DevToolsVisible]: boolean;
     [GuiState.EditDataChannelConnections]: boolean;
@@ -101,7 +99,6 @@ const defaultStates: Map<GuiState, any> = new Map();
 defaultStates.set(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
 defaultStates.set(GuiState.RightDrawerContent, undefined);
 defaultStates.set(GuiState.LeftSettingsPanelWidthInPercent, 30);
-defaultStates.set(GuiState.ActiveModuleInstanceId, "");
 defaultStates.set(GuiState.DataChannelConnectionLayerVisible, false);
 defaultStates.set(GuiState.DevToolsVisible, isDevMode());
 defaultStates.set(GuiState.RightSettingsPanelWidthInPercent, 0);

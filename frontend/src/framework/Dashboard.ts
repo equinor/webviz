@@ -37,6 +37,7 @@ export class Dashboard {
     private _description?: string;
     private _layout: LayoutElement[] = [];
     private _moduleInstances: ModuleInstance<any, any>[] = [];
+    private _activeModuleInstanceId: string | null = null;
     private _subscribersMap: Map<string, Set<() => void>> = new Map();
     private _atomStoreMaster: AtomStoreMaster;
 
@@ -44,6 +45,14 @@ export class Dashboard {
         this._id = v4();
         this._name = "New Dashboard";
         this._atomStoreMaster = atomStoreMaster;
+    }
+
+    getId(): string {
+        return this._id;
+    }
+
+    getName(): string {
+        return this._name;
     }
 
     getLayout(): LayoutElement[] {
@@ -54,10 +63,127 @@ export class Dashboard {
         this._layout = layout;
     }
 
+    serializeState(): SerializedDashboard {
+        const moduleInstances = this._moduleInstances.map((moduleInstance) => {
+            const fullState = moduleInstance.getFullState();
+
+            const layoutInfo = this._layout.find((el) => el.moduleInstanceId === moduleInstance.getId());
+
+            if (!layoutInfo) {
+                throw new Error(`Layout info for module instance ${moduleInstance.getId()} not found`);
+            }
+
+            return {
+                ...fullState,
+                layoutInfo: {
+                    relX: layoutInfo.relX,
+                    relY: layoutInfo.relY,
+                    relHeight: layoutInfo.relHeight,
+                    relWidth: layoutInfo.relWidth,
+                    minimized: layoutInfo.minimized ?? false,
+                    maximized: layoutInfo.maximized ?? false,
+                },
+            };
+        });
+
+        return {
+            id: this._id,
+            name: this._name,
+            description: this._description,
+            moduleInstances,
+        };
+    }
+
+    deserializeState(serializedDashboard: SerializedDashboard): void {
+        this._id = serializedDashboard.id;
+        this._name = serializedDashboard.name;
+        this._description = serializedDashboard.description;
+
+        this.clearLayout();
+
+        for (const serializedInstance of serializedDashboard.moduleInstances) {
+            const { id, name, layoutInfo } = serializedInstance;
+
+            const module = ModuleRegistry.getModule(name);
+            if (!module) {
+                throw new Error(`Module ${name} not found`);
+            }
+            const moduleInstance = module.makeInstance(id);
+            moduleInstance.setFullState(serializedInstance);
+            this.registerModuleInstance(moduleInstance);
+
+            this._layout.push({
+                moduleInstanceId: id,
+                moduleName: name,
+                relX: layoutInfo.relX,
+                relY: layoutInfo.relY,
+                relHeight: layoutInfo.relHeight,
+                relWidth: layoutInfo.relWidth,
+                minimized: layoutInfo.minimized,
+                maximized: layoutInfo.maximized,
+            });
+        }
+
+        this.notifySubscribers(DashboardEvent.LayoutChanged);
+    }
+
+    clearLayout(): void {
+        for (const moduleInstance of this._moduleInstances) {
+            moduleInstance.beforeDestroy();
+        }
+        this._moduleInstances = [];
+        this._layout = [];
+        this.notifySubscribers(DashboardEvent.LayoutChanged);
+    }
+
     registerModuleInstance(moduleInstance: ModuleInstance<any, any>): void {
         this._moduleInstances.push(moduleInstance);
         this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
         this.notifySubscribers(DashboardEvent.ModuleInstancesChanged);
+    }
+
+    makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any, any> {
+        const module = ModuleRegistry.getModule(moduleName);
+        if (!module) {
+            throw new Error(`Module ${moduleName} not found`);
+        }
+
+        const moduleInstance = module.makeInstance(v4());
+        this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
+        this._moduleInstances.push(moduleInstance);
+
+        this._layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
+        this._activeModuleInstanceId = moduleInstance.getId();
+        this.notifySubscribers(DashboardEvent.ModuleInstancesChanged);
+        this.notifySubscribers(DashboardEvent.LayoutChanged);
+        return moduleInstance;
+    }
+
+    removeModuleInstance(moduleInstanceId: string): void {
+        const moduleInstance = this.getModuleInstance(moduleInstanceId);
+
+        if (moduleInstance) {
+            const manager = moduleInstance.getChannelManager();
+
+            moduleInstance.unload();
+            manager.unregisterAllChannels();
+            manager.unregisterAllReceivers();
+        }
+
+        this._moduleInstances = this._moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
+
+        this._atomStoreMaster.removeAtomStoreForModuleInstance(moduleInstanceId);
+
+        const newLayout = this._layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
+        this.setLayout(newLayout);
+        if (this._activeModuleInstanceId === moduleInstanceId) {
+            this._activeModuleInstanceId = null;
+        }
+        this.notifySubscribers(DashboardEvent.ModuleInstancesChanged);
+    }
+
+    getModuleInstance(id: string): ModuleInstance<any, any> | undefined {
+        return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
     }
 
     static fromPersistedState(serializedDashboard: SerializedDashboard, atomStoreMaster: AtomStoreMaster): Dashboard {

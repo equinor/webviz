@@ -267,10 +267,10 @@ export class Module<
         return this._syncableSettingKeys.includes(key);
     }
 
-    makeInstance(instanceNumber: number): ModuleInstance<TInterfaceTypes, TSerializedStateSchema> {
+    makeInstance(id: string): ModuleInstance<TInterfaceTypes, TSerializedStateSchema> {
         const instance = new ModuleInstance<TInterfaceTypes, TSerializedStateSchema>({
             module: this,
-            instanceNumber,
+            id,
             channelDefinitions: this._channelDefinitions,
             channelReceiverDefinitions: this._channelReceiverDefinitions,
         });

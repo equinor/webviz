@@ -1,47 +1,13 @@
 import type { QueryClient } from "@tanstack/react-query";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
-import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
-import { InitialSettings } from "./InitialSettings";
+import { GuiMessageBroker } from "./GuiMessageBroker";
 import { loadMetadataFromBackendAndCreateEnsembleSet } from "./internal/EnsembleSetLoader";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
 import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
-import { ImportStatus, type SerializedModuleState } from "./Module";
-import { ModuleInstanceTopic, type ModuleInstance } from "./ModuleInstance";
-import { ModuleRegistry } from "./ModuleRegistry";
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
-import type { Template } from "./TemplateRegistry";
 import type { WorkbenchServices } from "./WorkbenchServices";
-
-export enum WorkbenchEvents {
-    LayoutChanged = "LayoutChanged",
-    ModuleInstancesChanged = "ModuleInstancesChanged",
-}
-
-export type LayoutElement = {
-    moduleInstanceId?: string;
-    moduleName: string;
-    relX: number;
-    relY: number;
-    relHeight: number;
-    relWidth: number;
-    minimized?: boolean;
-    maximized?: boolean;
-};
-
-export type UserEnsembleSetting = {
-    ensembleIdent: RegularEnsembleIdent;
-    customName: string | null;
-    color: string;
-};
-
-export type UserDeltaEnsembleSetting = {
-    comparisonEnsembleIdent: RegularEnsembleIdent;
-    referenceEnsembleIdent: RegularEnsembleIdent;
-    customName: string | null;
-    color: string;
-};
 
 export type StoredUserEnsembleSetting = {
     ensembleIdent: string;
@@ -57,39 +23,22 @@ export type StoredUserDeltaEnsembleSetting = {
 };
 
 export class Workbench {
-    private _moduleInstances: ModuleInstance<any, any>[];
     private _workbenchSession: WorkbenchSessionPrivate;
     private _workbenchServices: PrivateWorkbenchServices;
     private _workbenchSettings: PrivateWorkbenchSettings;
     private _guiMessageBroker: GuiMessageBroker;
-    private _subscribersMap: { [key: string]: Set<() => void> };
-    private _layout: LayoutElement[];
-    private _perModuleRunningInstanceNumber: Record<string, number>;
     private _atomStoreMaster: AtomStoreMaster;
 
     constructor() {
-        this._moduleInstances = [];
         this._atomStoreMaster = new AtomStoreMaster();
         this._workbenchSession = new WorkbenchSessionPrivate(this._atomStoreMaster);
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._workbenchSettings = new PrivateWorkbenchSettings();
         this._guiMessageBroker = new GuiMessageBroker();
-        this._subscribersMap = {};
-        this._layout = [];
-        this._perModuleRunningInstanceNumber = {};
     }
 
-    loadLayoutFromLocalStorage(): boolean {
-        const layoutString = localStorage.getItem("layout");
-        if (!layoutString) return false;
-
-        const layout = JSON.parse(layoutString) as LayoutElement[];
-        this.makeLayout(layout);
-        return true;
-    }
-
-    getLayout(): LayoutElement[] {
-        return this._layout;
+    initialize(): void {
+        this._workbenchSession.maybeInitializeFromLocalStorage();
     }
 
     getAtomStoreMaster(): AtomStoreMaster {
@@ -110,155 +59,6 @@ export class Workbench {
 
     getGuiMessageBroker(): GuiMessageBroker {
         return this._guiMessageBroker;
-    }
-
-    private notifySubscribers(event: WorkbenchEvents): void {
-        const subscribers = this._subscribersMap[event];
-        if (!subscribers) return;
-
-        subscribers.forEach((subscriber) => {
-            subscriber();
-        });
-    }
-
-    subscribe(event: WorkbenchEvents, cb: () => void) {
-        const subscribersSet = this._subscribersMap[event] || new Set();
-        subscribersSet.add(cb);
-        this._subscribersMap[event] = subscribersSet;
-        return () => {
-            subscribersSet.delete(cb);
-        };
-    }
-
-    getModuleInstances(): ModuleInstance<any, any>[] {
-        return this._moduleInstances;
-    }
-
-    getModuleInstance(id: string): ModuleInstance<any, any> | undefined {
-        return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
-    }
-
-    private getNextModuleInstanceNumber(moduleName: string): number {
-        if (moduleName in this._perModuleRunningInstanceNumber) {
-            this._perModuleRunningInstanceNumber[moduleName] += 1;
-        } else {
-            this._perModuleRunningInstanceNumber[moduleName] = 1;
-        }
-        return this._perModuleRunningInstanceNumber[moduleName];
-    }
-
-    makeLayout(layout: LayoutElement[]): void {
-        this._moduleInstances = [];
-        this.setLayout(layout);
-        layout.forEach((element, index: number) => {
-            const module = ModuleRegistry.getModule(element.moduleName);
-            if (!module) {
-                throw new Error(`Module ${element.moduleName} not found`);
-            }
-
-            module.setWorkbench(this);
-            const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
-            moduleInstance.makeSubscriberFunction(ModuleInstanceTopic.SERIALIZED_STATE)(() => {
-                const state = moduleInstance.getSerializedState();
-                if (!state) return;
-                this.handleModuleInstanceStateChange(moduleInstance.getId(), state);
-            });
-            this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
-            this._moduleInstances.push(moduleInstance);
-            this._layout[index] = { ...this._layout[index], moduleInstanceId: moduleInstance.getId() };
-            this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
-            this.notifySubscribers(WorkbenchEvents.LayoutChanged);
-        });
-    }
-
-    handleModuleInstanceStateChange(moduleInstanceId: string, state: SerializedModuleState<any>): void {
-        console.debug(`Module instance ${moduleInstanceId} state changed to ${JSON.stringify(state)}`);
-    }
-
-    resetModuleInstanceNumbers(): void {
-        this._perModuleRunningInstanceNumber = {};
-    }
-
-    clearLayout(): void {
-        for (const moduleInstance of this._moduleInstances) {
-            const manager = moduleInstance.getChannelManager();
-            manager.unregisterAllChannels();
-            manager.unregisterAllReceivers();
-        }
-        this._moduleInstances = [];
-        this._layout = [];
-        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
-        this.notifySubscribers(WorkbenchEvents.LayoutChanged);
-    }
-
-    makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any, any> {
-        const module = ModuleRegistry.getModule(moduleName);
-        if (!module) {
-            throw new Error(`Module ${moduleName} not found`);
-        }
-
-        module.setWorkbench(this);
-
-        const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
-        moduleInstance.makeSubscriberFunction(ModuleInstanceTopic.SERIALIZED_STATE)(() => {
-            const state = moduleInstance.getSerializedState();
-            if (!state) return;
-            this.handleModuleInstanceStateChange(moduleInstance.getId(), state);
-        });
-        this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
-        this._moduleInstances.push(moduleInstance);
-
-        this._layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
-        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
-        this.notifySubscribers(WorkbenchEvents.LayoutChanged);
-        this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, moduleInstance.getId());
-        return moduleInstance;
-    }
-
-    removeModuleInstance(moduleInstanceId: string): void {
-        const moduleInstance = this.getModuleInstance(moduleInstanceId);
-
-        if (moduleInstance) {
-            const manager = moduleInstance.getChannelManager();
-
-            moduleInstance.unload();
-            manager.unregisterAllChannels();
-            manager.unregisterAllReceivers();
-        }
-
-        this._moduleInstances = this._moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
-
-        this._atomStoreMaster.removeAtomStoreForModuleInstance(moduleInstanceId);
-
-        const newLayout = this._layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
-        this.setLayout(newLayout);
-        const activeModuleInstanceId = this.getGuiMessageBroker().getState(GuiState.ActiveModuleInstanceId);
-        if (activeModuleInstanceId === moduleInstanceId) {
-            this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, "");
-        }
-        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
-    }
-
-    setLayout(layout: LayoutElement[]): void {
-        this._layout = layout;
-
-        const modifiedLayout = layout.map((el) => {
-            return { ...el, moduleInstanceId: undefined };
-        });
-        localStorage.setItem("layout", JSON.stringify(modifiedLayout));
-        this.notifySubscribers(WorkbenchEvents.LayoutChanged);
-    }
-
-    maybeMakeFirstModuleInstanceActive(): void {
-        const activeModuleInstanceId = this.getGuiMessageBroker().getState(GuiState.ActiveModuleInstanceId);
-        if (!this._moduleInstances.some((el) => el.getId() === activeModuleInstanceId)) {
-            const newActiveModuleInstanceId =
-                this._moduleInstances
-                    .filter((el) => el.getImportState() === ImportStatus.Imported)
-                    .at(0)
-                    ?.getId() || "";
-            this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, newActiveModuleInstanceId);
-        }
     }
 
     async initWorkbenchFromLocalStorage(queryClient: QueryClient): Promise<void> {
@@ -351,6 +151,7 @@ export class Workbench {
         return parsedDeltaEnsembleSettingsArray;
     }
 
+    /*
     applyTemplate(template: Template): void {
         this.clearLayout();
 
@@ -407,4 +208,5 @@ export class Workbench {
 
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
     }
+        */
 }

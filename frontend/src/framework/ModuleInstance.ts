@@ -133,6 +133,7 @@ export class ModuleInstance<
     getFullState(): ModuleInstanceFullState<TSerializedStateSchema> {
         return {
             id: this._id,
+            name: this._module.getName(),
             dataChannelReceiverSubscriptions: this._channelManager
                 .getReceivers()
                 .filter((receiver) => receiver.hasActiveSubscription())
@@ -430,6 +431,16 @@ export class ModuleInstance<
 
     unload() {
         this._module.onInstanceUnload(this._id);
+    }
+
+    beforeDestroy(): void {
+        this._channelManager.unregisterAllChannels();
+        this._channelManager.unregisterAllReceivers();
+        this._context = null;
+        this._settingsToViewInterface = null;
+        this._viewToSettingsInterface = null;
+        this._settingsToViewInterfaceEffectsAtom = null;
+        this._viewToSettingsInterfaceEffectsAtom = null;
     }
 }
 
