@@ -10,5 +10,5 @@ ModuleRegistry.registerModule<InterfaceTypes, SerializedState>({
     category: ModuleCategory.DEBUG,
     devState: ModuleDevState.DEV,
     description: "My module description",
-    serializedStateDefinition: SERIALIZED_STATE,
+    serializedStateSchema: SERIALIZED_STATE,
 });

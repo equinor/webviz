@@ -1,6 +1,7 @@
 import type { ErrorInfo } from "react";
 import React from "react";
 
+import type { JTDDataType } from "ajv/dist/core";
 import type { Atom } from "jotai";
 import { atom } from "jotai";
 import { atomEffect } from "jotai-effect";
@@ -10,22 +11,20 @@ import type { InitialSettings } from "./InitialSettings";
 import { ChannelManager } from "./internal/DataChannels/ChannelManager";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
 import type {
-    ImportState,
+    ImportStatus,
     Module,
-    ModuleBaseState,
+    ModuleStateBaseSchema,
     ModuleInterfaceTypes,
     ModuleSettings,
-    ModuleState,
+    SerializedModuleState,
     ModuleView,
 } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import { UniDirectionalModuleComponentsInterface } from "./UniDirectionalModuleComponentsInterface";
-import type { Workbench } from "./Workbench";
-import type { JTDDataType } from "ajv/dist/core";
 
-export enum ModuleInstanceState {
+export enum ModuleInstanceLifeCycleState {
     INITIALIZING,
     OK,
     ERROR,
@@ -35,39 +34,54 @@ export enum ModuleInstanceState {
 export enum ModuleInstanceTopic {
     TITLE = "title",
     SYNCED_SETTINGS = "synced-settings",
-    STATE = "state",
-    IMPORT_STATE = "import-state",
+    LIFECYCLE_STATE = "state",
+    IMPORT_STATUS = "import-status",
     SERIALIZED_STATE = "serialized-state",
 }
 
 export type ModuleInstanceTopicValueTypes = {
     [ModuleInstanceTopic.TITLE]: string;
     [ModuleInstanceTopic.SYNCED_SETTINGS]: SyncSettingKey[];
-    [ModuleInstanceTopic.STATE]: ModuleInstanceState;
-    [ModuleInstanceTopic.IMPORT_STATE]: ImportState;
-    [ModuleInstanceTopic.SERIALIZED_STATE]: ModuleBaseState;
+    [ModuleInstanceTopic.LIFECYCLE_STATE]: ModuleInstanceLifeCycleState;
+    [ModuleInstanceTopic.IMPORT_STATUS]: ImportStatus;
+    [ModuleInstanceTopic.SERIALIZED_STATE]: ModuleStateBaseSchema;
 };
 
 export interface ModuleInstanceOptions<
     TInterfaceTypes extends ModuleInterfaceTypes,
-    TSerializedStateDef extends ModuleBaseState,
+    TSerializedStateSchema extends ModuleStateBaseSchema,
 > {
-    module: Module<TInterfaceTypes, TSerializedStateDef>;
-    workbench: Workbench;
-    instanceNumber: number;
+    module: Module<TInterfaceTypes, TSerializedStateSchema>;
+    id: string;
     channelDefinitions: ChannelDefinition[] | null;
     channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
 }
 
-export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedStateDef extends ModuleBaseState> {
+export type ModuleInstanceFullState<TSerializedStateSchema extends ModuleStateBaseSchema> = {
+    id: string;
+    name: string;
+    dataChannelReceiverSubscriptions: {
+        idString: string;
+        listensToModuleInstanceId: string;
+        channelIdString: string;
+        contentIdStrings: string[];
+    }[];
+    syncedSettingKeys: SyncSettingKey[];
+    serializedState: SerializedModuleState<TSerializedStateSchema> | null;
+};
+
+export class ModuleInstance<
+    TInterfaceTypes extends ModuleInterfaceTypes,
+    TSerializedStateSchema extends ModuleStateBaseSchema,
+> {
     private _id: string;
     private _title: string;
     private _initialized: boolean = false;
-    private _moduleInstanceState: ModuleInstanceState = ModuleInstanceState.INITIALIZING;
+    private _moduleInstanceState: ModuleInstanceLifeCycleState = ModuleInstanceLifeCycleState.INITIALIZING;
     private _fatalError: { err: Error; errInfo: ErrorInfo } | null = null;
     private _syncedSettingKeys: SyncSettingKey[] = [];
-    private _module: Module<TInterfaceTypes, TSerializedStateDef>;
-    private _context: ModuleContext<TInterfaceTypes, TSerializedStateDef> | null = null;
+    private _module: Module<TInterfaceTypes, TSerializedStateSchema>;
+    private _context: ModuleContext<TInterfaceTypes, TSerializedStateSchema> | null = null;
     private _subscribers: Map<keyof ModuleInstanceTopicValueTypes, Set<() => void>> = new Map();
     private _initialSettings: InitialSettings | null = null;
     private _statusController: ModuleInstanceStatusControllerInternal = new ModuleInstanceStatusControllerInternal();
@@ -80,11 +94,10 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes, TSeria
     > | null = null;
     private _settingsToViewInterfaceEffectsAtom: Atom<void> | null = null;
     private _viewToSettingsInterfaceEffectsAtom: Atom<void> | null = null;
-    private _initialSerializedState: ModuleState<TSerializedStateDef> | null = null;
-    private _serializedState: ModuleState<TSerializedStateDef> | null = null;
+    private _serializedState: SerializedModuleState<TSerializedStateSchema> | null = null;
 
-    constructor(options: ModuleInstanceOptions<TInterfaceTypes, TSerializedStateDef>) {
-        this._id = `${options.module.getName()}-${options.instanceNumber}`;
+    constructor(options: ModuleInstanceOptions<TInterfaceTypes, TSerializedStateSchema>) {
+        this._id = options.id;
         this._title = options.module.getDefaultTitle();
         this._module = options.module;
 
@@ -104,29 +117,47 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes, TSeria
         }
     }
 
-    setSerializedState(serializedState: ModuleState<TSerializedStateDef>): void {
+    setSerializedState(serializedState: SerializedModuleState<TSerializedStateSchema>): void {
         this._serializedState = serializedState;
     }
 
-    getSerializedState(): ModuleState<TSerializedStateDef> | null {
-        return this._initialSerializedState;
+    getSerializedState(): SerializedModuleState<TSerializedStateSchema> | null {
+        return this._serializedState;
     }
 
-    getMostRecentSerializedState(): ModuleState<TSerializedStateDef> | null {
-        return this._serializedState ?? this._initialSerializedState;
+    setFullState(fullState: ModuleInstanceFullState<TSerializedStateSchema>): void {
+        this._syncedSettingKeys = fullState.syncedSettingKeys;
+        this._serializedState = fullState.serializedState ?? null;
     }
 
-    serializeSettingsState(state: JTDDataType<TSerializedStateDef["settings"]>): void {
+    getFullState(): ModuleInstanceFullState<TSerializedStateSchema> {
+        return {
+            id: this._id,
+            dataChannelReceiverSubscriptions: this._channelManager
+                .getReceivers()
+                .filter((receiver) => receiver.hasActiveSubscription())
+                .map((receiver) => ({
+                    idString: receiver.getIdString(),
+                    listensToModuleInstanceId: receiver.getChannel()?.getManager().getModuleInstanceId() ?? "",
+                    channelIdString: receiver.getChannel()?.getIdString() ?? "",
+                    contentIdStrings: receiver.getContentIdStrings(),
+                })),
+            syncedSettingKeys: this._syncedSettingKeys,
+            serializedState: this._serializedState,
+        };
+    }
+
+    serializeSettingsState(state: JTDDataType<TSerializedStateSchema["settings"]>): void {
         this._serializedState = {
-            ...(this._serializedState ?? ({} as ModuleState<TSerializedStateDef>)),
+            ...(this._serializedState ?? ({} as SerializedModuleState<TSerializedStateSchema>)),
             settings: state,
         };
         this.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE);
     }
 
-    serializeViewState(state: JTDDataType<TSerializedStateDef["view"]>): void {
+    serializeViewState(state: JTDDataType<TSerializedStateSchema["view"]>): void {
         this._serializedState = {
-            ...(this._serializedState ?? ({} as ModuleState<TSerializedStateDef>)),
+            ...(this._serializedState ?? ({} as SerializedModuleState<TSerializedStateSchema>)),
             view: state,
         };
         this.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE);
@@ -155,9 +186,9 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes, TSeria
     }
 
     initialize(): void {
-        this._context = new ModuleContext<TInterfaceTypes, TSerializedStateDef>(this);
+        this._context = new ModuleContext<TInterfaceTypes, TSerializedStateSchema>(this);
         this._initialized = true;
-        this.setModuleInstanceState(ModuleInstanceState.OK);
+        this.setModuleInstanceState(ModuleInstanceLifeCycleState.OK);
     }
 
     makeSettingsToViewInterface(
@@ -264,19 +295,19 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes, TSeria
         return this._initialized;
     }
 
-    getViewFC(): ModuleView<TInterfaceTypes, TSerializedStateDef> {
+    getViewFC(): ModuleView<TInterfaceTypes, TSerializedStateSchema> {
         return this._module.viewFC;
     }
 
-    getSettingsFC(): ModuleSettings<TInterfaceTypes, TSerializedStateDef> {
+    getSettingsFC(): ModuleSettings<TInterfaceTypes, TSerializedStateSchema> {
         return this._module.settingsFC;
     }
 
-    getImportState(): ImportState {
+    getImportState(): ImportStatus {
         return this._module.getImportState();
     }
 
-    getContext(): ModuleContext<TInterfaceTypes, TSerializedStateDef> {
+    getContext(): ModuleContext<TInterfaceTypes, TSerializedStateSchema> {
         if (!this._context) {
             throw `Module context is not available yet. Did you forget to init the module '${this._title}.'?`;
         }
@@ -332,10 +363,10 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes, TSeria
             if (topic === ModuleInstanceTopic.SYNCED_SETTINGS) {
                 return this.getSyncedSettingKeys();
             }
-            if (topic === ModuleInstanceTopic.STATE) {
+            if (topic === ModuleInstanceTopic.LIFECYCLE_STATE) {
                 return this.getModuleInstanceState();
             }
-            if (topic === ModuleInstanceTopic.IMPORT_STATE) {
+            if (topic === ModuleInstanceTopic.IMPORT_STATUS) {
                 return this.getImportState();
             }
             if (topic === ModuleInstanceTopic.SERIALIZED_STATE) {
@@ -346,7 +377,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes, TSeria
         return snapshotGetter;
     }
 
-    getModule(): Module<TInterfaceTypes, TSerializedStateDef> {
+    getModule(): Module<TInterfaceTypes, TSerializedStateSchema> {
         return this._module;
     }
 
@@ -354,17 +385,17 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes, TSeria
         return this._statusController;
     }
 
-    private setModuleInstanceState(moduleInstanceState: ModuleInstanceState): void {
+    private setModuleInstanceState(moduleInstanceState: ModuleInstanceLifeCycleState): void {
         this._moduleInstanceState = moduleInstanceState;
-        this.notifySubscribers(ModuleInstanceTopic.STATE);
+        this.notifySubscribers(ModuleInstanceTopic.LIFECYCLE_STATE);
     }
 
-    getModuleInstanceState(): ModuleInstanceState {
+    getModuleInstanceState(): ModuleInstanceLifeCycleState {
         return this._moduleInstanceState;
     }
 
     setFatalError(err: Error, errInfo: ErrorInfo): void {
-        this.setModuleInstanceState(ModuleInstanceState.ERROR);
+        this.setModuleInstanceState(ModuleInstanceLifeCycleState.ERROR);
         this._fatalError = {
             err,
             errInfo,
@@ -379,7 +410,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes, TSeria
     }
 
     reset(): Promise<void> {
-        this.setModuleInstanceState(ModuleInstanceState.RESETTING);
+        this.setModuleInstanceState(ModuleInstanceLifeCycleState.RESETTING);
 
         return new Promise((resolve) => {
             this._module.onInstanceUnload(this._id);

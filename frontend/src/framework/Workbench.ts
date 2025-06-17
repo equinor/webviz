@@ -7,7 +7,7 @@ import { loadMetadataFromBackendAndCreateEnsembleSet } from "./internal/Ensemble
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
 import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
-import { ImportState, type ModuleState } from "./Module";
+import { ImportStatus, type SerializedModuleState } from "./Module";
 import { ModuleInstanceTopic, type ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
@@ -159,7 +159,7 @@ export class Workbench {
             module.setWorkbench(this);
             const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
             moduleInstance.makeSubscriberFunction(ModuleInstanceTopic.SERIALIZED_STATE)(() => {
-                const state = moduleInstance.getMostRecentSerializedState();
+                const state = moduleInstance.getSerializedState();
                 if (!state) return;
                 this.handleModuleInstanceStateChange(moduleInstance.getId(), state);
             });
@@ -171,7 +171,7 @@ export class Workbench {
         });
     }
 
-    handleModuleInstanceStateChange(moduleInstanceId: string, state: ModuleState<any>): void {
+    handleModuleInstanceStateChange(moduleInstanceId: string, state: SerializedModuleState<any>): void {
         console.debug(`Module instance ${moduleInstanceId} state changed to ${JSON.stringify(state)}`);
     }
 
@@ -254,7 +254,7 @@ export class Workbench {
         if (!this._moduleInstances.some((el) => el.getId() === activeModuleInstanceId)) {
             const newActiveModuleInstanceId =
                 this._moduleInstances
-                    .filter((el) => el.getImportState() === ImportState.Imported)
+                    .filter((el) => el.getImportState() === ImportStatus.Imported)
                     .at(0)
                     ?.getId() || "";
             this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, newActiveModuleInstanceId);

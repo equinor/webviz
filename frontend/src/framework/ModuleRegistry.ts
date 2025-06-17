@@ -4,11 +4,11 @@ import type {
     InterfaceEffects,
     JTDBaseType,
     MakeReadonly,
-    ModuleBaseState,
+    ModuleStateBaseSchema,
     ModuleCategory,
     ModuleDevState,
     ModuleInterfaceTypes,
-    NoModuleBaseState,
+    NoModuleStateSchema,
     OnInstanceUnloadFunc,
 } from "./Module";
 import { Module } from "./Module";
@@ -17,7 +17,7 @@ import type { DrawPreviewFunc } from "./Preview";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 
-export type RegisterModuleOptions<TSerializedStateDef extends JTDBaseType = NoModuleBaseState> = {
+export type RegisterModuleOptions<TSerializedStateDef extends JTDBaseType = NoModuleStateSchema> = {
     moduleName: string;
     category: ModuleCategory;
     devState: ModuleDevState;
@@ -29,7 +29,7 @@ export type RegisterModuleOptions<TSerializedStateDef extends JTDBaseType = NoMo
     preview?: DrawPreviewFunc;
     description?: string;
     onInstanceUnload?: OnInstanceUnloadFunc;
-    serializedStateDefinition?: MakeReadonly<TSerializedStateDef>;
+    serializedStateSchema?: MakeReadonly<TSerializedStateDef>;
 };
 
 export class ModuleNotFoundError extends Error {
@@ -50,7 +50,7 @@ export class ModuleRegistry {
 
     static registerModule<
         TInterfaceTypes extends ModuleInterfaceTypes,
-        TSerializedStateDef extends ModuleBaseState = NoModuleBaseState,
+        TSerializedStateDef extends ModuleStateBaseSchema = NoModuleStateSchema,
     >(options: RegisterModuleOptions<TSerializedStateDef>): Module<TInterfaceTypes, TSerializedStateDef> {
         const module = new Module<TInterfaceTypes, TSerializedStateDef>({
             name: options.moduleName,
@@ -71,7 +71,7 @@ export class ModuleRegistry {
 
     static initModule<
         TInterfaceTypes extends ModuleInterfaceTypes,
-        TSerializedStateDef extends ModuleBaseState = NoModuleBaseState,
+        TSerializedStateDef extends ModuleStateBaseSchema = NoModuleStateSchema,
     >(
         moduleName: string,
         options: {

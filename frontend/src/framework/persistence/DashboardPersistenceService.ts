@@ -4,11 +4,13 @@ import {
     getDashboardsMetadataOptions,
     type PrivateDashboardUpdate_api,
 } from "@api";
-import type { QueryClient } from "@tanstack/query-core";
-import type { PrivateDashboard } from "./types";
-import type { ModuleState } from "@framework/Module";
-import { v4 } from "uuid";
+import type { SerializedModuleState } from "@framework/Module";
+import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { LayoutElement } from "@framework/Workbench";
+import type { QueryClient } from "@tanstack/query-core";
+import { v4 } from "uuid";
+
+import type { PrivateDashboard } from "./types";
 
 const FLUSH_BUFFER_TIMEOUT_MS = 1000;
 
@@ -17,7 +19,7 @@ export class DashboardPersistenceService {
     private _bufferedModuleInstanceStates: {
         moduleInstanceId: string;
         moduleName: string;
-        state: ModuleState<any>;
+        state: SerializedModuleState<any>;
     }[] = [];
     private _bufferedLayout: LayoutElement[] = [];
     private _lastBufferUpdateMs: number = 0;
@@ -40,7 +42,17 @@ export class DashboardPersistenceService {
         this._metadata.title = dashboardName ?? "New Dashboard";
     }
 
-    updateModuleState(moduleInstanceId: string, moduleName: string, moduleState: ModuleState<any>) {
+    registerModuleInstance(moduleInstance: ModuleInstance<any>) {
+        this._bufferedModuleInstanceStates.push({
+            moduleInstanceId: moduleInstance.getId(),
+            moduleName: moduleInstance.getModuleName(),
+            state: moduleInstance.getState(),
+        });
+
+        this.resetFlushTimeout();
+    }
+
+    updateModuleState(moduleInstanceId: string, moduleName: string, moduleState: SerializedModuleState<any>) {
         const module = this._bufferedModuleInstanceStates.find((state) => state.moduleInstanceId === moduleInstanceId);
 
         if (module) {

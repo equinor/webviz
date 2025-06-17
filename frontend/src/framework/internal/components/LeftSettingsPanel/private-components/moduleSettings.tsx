@@ -4,9 +4,13 @@ import { Settings as SettingsIcon } from "@mui/icons-material";
 import { Provider } from "jotai";
 
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
-import { ImportState } from "@framework/Module";
+import { ImportStatus } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
-import { ModuleInstanceState, ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/ModuleInstance";
+import {
+    ModuleInstanceTopic,
+    ModuleInstanceLifeCycleState,
+    useModuleInstanceTopicValue,
+} from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -23,19 +27,25 @@ type ModuleSettingsProps = {
 };
 
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
-    const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATE);
-    const moduleInstanceState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.STATE);
+    const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
+    const moduleInstanceLifecycleState = useModuleInstanceTopicValue(
+        props.moduleInstance,
+        ModuleInstanceTopic.LIFECYCLE_STATE,
+    );
     const atomStore = props.workbench.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
 
-    if (importState !== ImportState.Imported || !props.moduleInstance.isInitialized()) {
+    if (importState !== ImportStatus.Imported || !props.moduleInstance.isInitialized()) {
         return null;
     }
 
     if (
-        moduleInstanceState === ModuleInstanceState.INITIALIZING ||
-        moduleInstanceState === ModuleInstanceState.RESETTING
+        moduleInstanceLifecycleState === ModuleInstanceLifeCycleState.INITIALIZING ||
+        moduleInstanceLifecycleState === ModuleInstanceLifeCycleState.RESETTING
     ) {
-        const text = moduleInstanceState === ModuleInstanceState.INITIALIZING ? "Initializing..." : "Resetting...";
+        const text =
+            moduleInstanceLifecycleState === ModuleInstanceLifeCycleState.INITIALIZING
+                ? "Initializing..."
+                : "Resetting...";
         return (
             <div className="h-full w-full flex flex-col justify-center items-center m-2">
                 <CircularProgress />
@@ -44,7 +54,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         );
     }
 
-    if (moduleInstanceState === ModuleInstanceState.ERROR) {
+    if (moduleInstanceLifecycleState === ModuleInstanceLifeCycleState.ERROR) {
         const errorObject = props.moduleInstance.getFatalError();
         if (errorObject) {
             return (

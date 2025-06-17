@@ -1,6 +1,7 @@
 import React from "react";
 
 import type { AtomStoreMaster } from "./AtomStoreMaster";
+import type { Dashboard } from "./Dashboard";
 import type { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import { EnsembleSet } from "./EnsembleSet";
 import { RealizationFilterSet } from "./RealizationFilterSet";
@@ -25,6 +26,8 @@ export type WorkbenchSessionPayloads = {
 
 export class WorkbenchSession {
     private _subscribersMap: Map<keyof WorkbenchSessionEvent, Set<(payload: any) => void>> = new Map();
+    private _dashboards: Dashboard[] = [];
+
     protected _ensembleSet: EnsembleSet = new EnsembleSet([]);
     protected _realizationFilterSet = new RealizationFilterSet();
     protected _userCreatedItems: UserCreatedItems;
