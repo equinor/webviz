@@ -48,7 +48,7 @@ export function makeTableFromApiData(data: InplaceVolumesTableData[]): Table {
                     if (!mainColumnsAdded) {
                         columns.get("ensemble")?.addRowValue(tableSet.ensembleIdent);
                         columns.get("table")?.addRowValue(tableSet.tableName);
-                        columns.get("fluid")?.addRowValue(perFluidTable.fluidSelectionName);
+                        columns.get("fluid")?.addRowValue(perFluidTable.fluidSelection);
                     }
                 }
                 mainColumnsAdded = true;
@@ -66,7 +66,7 @@ export function makeTableFromApiData(data: InplaceVolumesTableData[]): Table {
                     if (!mainColumnsAdded) {
                         columns.get("ensemble")?.addRowValue(tableSet.ensembleIdent);
                         columns.get("table")?.addRowValue(tableSet.tableName);
-                        columns.get("fluid")?.addRowValue(perFluidTable.fluidSelectionName);
+                        columns.get("fluid")?.addRowValue(perFluidTable.fluidSelection);
                     }
                 }
                 mainColumnsAdded = true;
@@ -159,7 +159,7 @@ export function makeStatisticalTableColumnDataFromApiData(
             for (let i = 0; i < numRows; i++) {
                 nonStatisticalColumns.get("ensemble")?.addRowValue(tableSet.ensembleIdent);
                 nonStatisticalColumns.get("table")?.addRowValue(tableSet.tableName);
-                nonStatisticalColumns.get("fluid")?.addRowValue(perFluidTableData.fluidSelectionName);
+                nonStatisticalColumns.get("fluid")?.addRowValue(perFluidTableData.fluidSelection);
             }
 
             // Build selector columns

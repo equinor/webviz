@@ -19,7 +19,7 @@ def test_create_inplace_volumetric_table_data_from_result_df() -> None:
 
     result = create_inplace_volumetric_table_data_from_result_df(result_df, selection_name)
 
-    assert result.fluid_selection_name == selection_name
+    assert result.fluid_selection == selection_name
     assert len(result.selector_columns) == 4
     assert len(result.result_columns) == 2
 
@@ -31,7 +31,7 @@ def test_create_inplace_volumetric_table_data_from_result_df_no_selector_columns
 
     result = create_inplace_volumetric_table_data_from_result_df(result_df, selection_name)
 
-    assert result.fluid_selection_name == selection_name
+    assert result.fluid_selection == selection_name
     assert len(result.selector_columns) == 0
     assert len(result.result_columns) == 2
 
@@ -45,7 +45,7 @@ def test_create_inplace_volumetric_table_data_from_result_df_no_result_columns()
 
     result = create_inplace_volumetric_table_data_from_result_df(result_df, selection_name)
 
-    assert result.fluid_selection_name == selection_name
+    assert result.fluid_selection == selection_name
     assert len(result.selector_columns) == 4
     assert len(result.result_columns) == 0
 
@@ -57,6 +57,6 @@ def test_create_inplace_volumetric_table_data_from_result_df_empty_df() -> None:
 
     result = create_inplace_volumetric_table_data_from_result_df(result_df, selection_name)
 
-    assert result.fluid_selection_name == selection_name
+    assert result.fluid_selection == selection_name
     assert len(result.selector_columns) == 0
     assert len(result.result_columns) == 0

@@ -22,7 +22,6 @@ import {
     selectedIndexValueCriteriaAtom,
     userSelectedColorByAtom,
     userSelectedEnsembleIdentsAtom,
-    userSelectedFluidsAtom,
     userSelectedIndicesWithValuesAtom,
     userSelectedPlotTypeAtom,
     userSelectedResultName2Atom,
@@ -34,7 +33,6 @@ import {
 import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
-    selectedFluidsAtom,
     selectedIndicesWithValuesAtom,
     selectedResultName2Atom,
     selectedResultNameAtom,
@@ -59,9 +57,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const selectedSelectorColumn = useAtomValue(selectedSelectorColumnAtom);
     const setSelectedSelectorColumn = useSetAtom(userSelectedSelectorColumnAtom);
-
-    const selectedFluids = useAtomValue(selectedFluidsAtom);
-    const setSelectedFluids = useSetAtom(userSelectedFluidsAtom);
 
     const selectedIndicesWithValues = useAtomValue(selectedIndicesWithValuesAtom);
     const setSelectedIndicesWithValues = useSetAtom(userSelectedIndicesWithValuesAtom);
@@ -90,7 +85,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     function handleFilterChange(newFilter: InplaceVolumesFilterSettings) {
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);
-        setSelectedFluids(newFilter.fluids);
         setSelectedIndicesWithValues(newFilter.indicesWithValues);
         setSelectedIndexValueCriteria(
             newFilter.allowIndicesValuesIntersection
@@ -175,11 +169,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             settingsContext={props.settingsContext}
             workbenchServices={props.workbenchServices}
             isPending={tableDefinitionsQueryResult.isLoading}
-            availableFluids={tableDefinitionsAccessor.getFluidsIntersection()}
             availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
             availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
             selectedEnsembleIdents={selectedEnsembleIdents}
-            selectedFluids={selectedFluids}
             selectedIndicesWithValues={selectedIndicesWithValues}
             selectedTableNames={selectedTableNames}
             selectedAllowIndicesValuesIntersection={

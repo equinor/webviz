@@ -235,7 +235,7 @@ class InplaceVolumetricsAssembler:
 
             statistical_table_data_per_fluid_selection.append(
                 InplaceStatisticalVolumetricTableData(
-                    fluid_selection_name=fluid_selection_name,
+                    fluid_selection=fluid_selection_name,
                     selector_columns=selector_column_data_list,
                     result_column_statistics=result_column_data_list,
                 )

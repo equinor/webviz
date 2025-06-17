@@ -5,13 +5,10 @@ import {
 } from "@modules/_shared/InplaceVolumes/queryHooks";
 import { TableType } from "@modules/_shared/InplaceVolumes/types";
 
-import { areTableDefinitionSelectionsValidAtom, resultNamesAtom, tableTypeAtom } from "./baseAtoms";
+import { groupByIndicesAtom, areTableDefinitionSelectionsValidAtom, resultNamesAtom, tableTypeAtom } from "./baseAtoms";
 import {
-    accumulateFluidsAtom,
     areSelectedTablesComparableAtom,
     ensembleIdentsWithRealizationsAtom,
-    fluidsAtom,
-    groupByIndicesAtom,
     indicesWithValuesAtom,
     tableNamesAtom,
 } from "./derivedAtoms";
@@ -20,10 +17,8 @@ export const perRealizationTableDataResultsAtom = atomWithQueries((get) => {
     const resultNames = get(resultNamesAtom);
     const tableType = get(tableTypeAtom);
 
-    const accumulateFluids = get(accumulateFluidsAtom);
     const groupByIndices = get(groupByIndicesAtom);
     const tableNames = get(tableNamesAtom);
-    const fluids = get(fluidsAtom);
     const indicesWithValues = get(indicesWithValuesAtom);
     const ensembleIdentsWithRealizations = get(ensembleIdentsWithRealizationsAtom);
     const areSelectedTablesComparable = get(areSelectedTablesComparableAtom);
@@ -36,9 +31,7 @@ export const perRealizationTableDataResultsAtom = atomWithQueries((get) => {
         ensembleIdentsWithRealizations,
         tableNames,
         resultNames,
-        fluids,
         groupByIndices,
-        accumulateFluids,
         indicesWithValues,
         enableQueries,
     );
@@ -48,10 +41,8 @@ export const statisticalTableDataResultsAtom = atomWithQueries((get) => {
     const resultNames = get(resultNamesAtom);
     const tableType = get(tableTypeAtom);
 
-    const accumulateFluids = get(accumulateFluidsAtom);
     const groupByIndices = get(groupByIndicesAtom);
     const tableNames = get(tableNamesAtom);
-    const fluids = get(fluidsAtom);
     const indicesWithValues = get(indicesWithValuesAtom);
     const ensembleIdentsWithRealizations = get(ensembleIdentsWithRealizationsAtom);
     const areSelectedTablesComparable = get(areSelectedTablesComparableAtom);
@@ -64,9 +55,7 @@ export const statisticalTableDataResultsAtom = atomWithQueries((get) => {
         ensembleIdentsWithRealizations,
         tableNames,
         resultNames,
-        fluids,
         groupByIndices,
-        accumulateFluids,
         indicesWithValues,
         enableQueries,
     );

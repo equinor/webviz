@@ -63,12 +63,10 @@ async def post_get_aggregated_per_realization_table_data(
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     table_name: Annotated[str, Query(description="Table name")],
     result_names: Annotated[list[str], Query(description="The name of the inplace volumes results")],
-    fluids: Annotated[list[schemas.InplaceVolumesFluid], Query(description="The fluids to aggregate by")],
     indices_with_values: Annotated[
         list[schemas.InplaceVolumesIndexWithValues],
         Body(embed=True, description="Selected indices and wanted values"),
     ],
-    accumulate_fluids: Annotated[bool, Query(description="Whether to accumulate fluids")],
     group_by_indices: Annotated[list[str] | None, Query(description="The indices to group table data by")] = None,
     realizations_encoded_as_uint_list_str: Annotated[
         str | None,
@@ -108,11 +106,9 @@ async def post_get_aggregated_per_realization_table_data(
         data = await assembler.create_accumulated_by_selection_per_realization_volumes_table_data_async(
             table_name=table_name,
             result_names=set(result_names),
-            fluids=ConverterFmuDataIo.convert_schema_to_fluids(fluids),
             indices_with_values=ConverterFmuDataIo.convert_schema_to_indices_with_values(indices_with_values),
             group_by_indices=ConverterFmuDataIo.convert_schema_to_indices(group_by_indices),
             realizations=realizations,
-            accumulate_fluids=accumulate_fluids,
         )
 
         perf_metrics.record_lap("calculate-accumulated-data")
@@ -127,16 +123,21 @@ async def post_get_aggregated_per_realization_table_data(
 
     perf_metrics.record_lap("get-access-secondary")
 
+    accumulate_fluid_zones = group_by_indices is not None and "FLUID" in group_by_indices
+    adjusted_group_by_indices = [elm for elm in group_by_indices if elm != "FLUID"] if group_by_indices else None
+    if not adjusted_group_by_indices:
+        adjusted_group_by_indices = None
+
     secondary_assembler = InplaceVolumetricsAssembler(secondary_access)
     secondary_data = (
         await secondary_assembler.create_accumulated_by_selection_per_realization_volumetric_table_data_async(
             table_name=table_name,
             result_names=set(result_names),
-            fluid_zones=ConverterOriginal.convert_schema_to_fluid_zones(fluids),
+            fluid_zones=ConverterOriginal.convert_schema_to_fluid_zones(indices_with_values),
             identifiers_with_values=ConverterOriginal.convert_schema_to_identifiers_with_values(indices_with_values),
-            group_by_identifiers=ConverterOriginal.convert_schema_to_identifiers(group_by_indices),
+            group_by_identifiers=ConverterOriginal.convert_schema_to_identifiers(adjusted_group_by_indices),
             realizations=realizations,
-            accumulate_fluid_zones=accumulate_fluids,
+            accumulate_fluid_zones=accumulate_fluid_zones,
         )
     )
 
@@ -155,12 +156,10 @@ async def post_get_aggregated_statistical_table_data(
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     table_name: Annotated[str, Query(description="Table name")],
     result_names: Annotated[list[str], Query(description="The name of the inplace volumes results")],
-    fluids: Annotated[list[schemas.InplaceVolumesFluid], Query(description="The fluids to aggregate by")],
     indices_with_values: Annotated[
         list[schemas.InplaceVolumesIndexWithValues],
         Body(embed=True, description="Selected indices and wanted values"),
     ],
-    accumulate_fluids: Annotated[bool, Query(description="Whether to accumulate fluids")],
     group_by_indices: Annotated[list[str] | None, Query(description="The indices to group table data by")] = None,
     realizations_encoded_as_uint_list_str: Annotated[
         str | None,
@@ -200,11 +199,9 @@ async def post_get_aggregated_statistical_table_data(
         data = await assembler.create_accumulated_by_selection_statistical_volumes_table_data_async(
             table_name=table_name,
             result_names=set(result_names),
-            fluids=ConverterFmuDataIo.convert_schema_to_fluids(fluids),
             indices_with_values=ConverterFmuDataIo.convert_schema_to_indices_with_values(indices_with_values),
             group_by_indices=ConverterFmuDataIo.convert_schema_to_indices(group_by_indices),
             realizations=realizations,
-            accumulate_fluids=accumulate_fluids,
         )
 
         perf_metrics.record_lap("calculate-accumulated-data")
@@ -219,16 +216,20 @@ async def post_get_aggregated_statistical_table_data(
 
     perf_metrics.record_lap("get-access-secondary")
 
-    secondary_assembler = InplaceVolumetricsAssembler(secondary_access)
+    accumulate_fluid_zones = group_by_indices is not None and "FLUID" in group_by_indices
+    adjusted_group_by_indices = [elm for elm in group_by_indices if elm != "FLUID"] if group_by_indices else None
+    if not adjusted_group_by_indices:
+        adjusted_group_by_indices = None
 
+    secondary_assembler = InplaceVolumetricsAssembler(secondary_access)
     secondary_data = await secondary_assembler.create_accumulated_by_selection_statistical_volumetric_table_data_async(
         table_name=table_name,
         result_names=set(result_names),
-        fluid_zones=ConverterOriginal.convert_schema_to_fluid_zones(fluids),
+        fluid_zones=ConverterOriginal.convert_schema_to_fluid_zones(indices_with_values),
         identifiers_with_values=ConverterOriginal.convert_schema_to_identifiers_with_values(indices_with_values),
-        group_by_identifiers=ConverterOriginal.convert_schema_to_identifiers(group_by_indices),
+        group_by_identifiers=ConverterOriginal.convert_schema_to_identifiers(adjusted_group_by_indices),
         realizations=realizations,
-        accumulate_fluid_zones=accumulate_fluids,
+        accumulate_fluid_zones=accumulate_fluid_zones,
     )
 
     perf_metrics.record_lap("calculate-accumulated-data-secondary")

@@ -11,12 +11,6 @@ class InplaceVolumesIndex(StrEnum):
     FLUID = "FLUID"
 
 
-class InplaceVolumesFluid(StrEnum):
-    OIL = "oil"
-    GAS = "gas"
-    WATER = "water"
-
-
 class InplaceVolumesIndexWithValues(BaseModel):
     """
     Unique values for an index column in an inplace volumes table
@@ -47,7 +41,6 @@ class InplaceVolumesTableDefinition(BaseModel):
     """Definition of a inplace volumes table"""
 
     tableName: str
-    fluids: list[InplaceVolumesFluid]
     resultNames: list[str]
     indicesWithValues: list[InplaceVolumesIndexWithValues]
 
@@ -95,8 +88,8 @@ class InplaceVolumesTableData(BaseModel):
     Contains data for a single fluid selection, e.g. Oil, Gas, Water, or sum of fluids
     """
 
-    fluidSelectionName: str  # Oil, Gas, Water or "Oil + Gas", etc.
-    selectorColumns: list[RepeatedTableColumnData]  # Index columns and realizations
+    fluidSelection: str  # Oil, Gas, Water or "Oil + Gas", etc.
+    selectorColumns: list[RepeatedTableColumnData]  # Index columns (excluding FLUID) and realizations
     resultColumns: list[TableColumnData]  # Volumetric columns, properties, and calculated volumes
 
 
@@ -107,8 +100,8 @@ class InplaceVolumesStatisticalTableData(BaseModel):
     Contains data for a single fluid selection, e.g. Oil, Gas, Water, or sum of fluids
     """
 
-    fluidSelectionName: str  # Oil, Gas, Water or "Oil + Gas", etc.
-    selectorColumns: list[RepeatedTableColumnData]  # Index columns and realizations
+    fluidSelection: str  # Oil, Gas, Water or "Oil + Gas", etc.
+    selectorColumns: list[RepeatedTableColumnData]  # Index columns (excluding FLUID) and realizations
     resultColumnStatistics: list[TableColumnStatisticalData]  # Volumetric columns, properties, and calculated volumes
 
 

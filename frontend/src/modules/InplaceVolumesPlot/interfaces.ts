@@ -7,7 +7,6 @@ import {
     areTableDefinitionSelectionsValidAtom,
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
-    selectedFluidsAtom,
     selectedIndicesWithValuesAtom,
     selectedResultName2Atom,
     selectedResultNameAtom,
@@ -37,7 +36,6 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
         return {
             ensembleIdents: get(selectedEnsembleIdentsAtom),
             tableNames: get(selectedTableNamesAtom),
-            fluids: get(selectedFluidsAtom),
             indicesWithValues: get(selectedIndicesWithValuesAtom),
             areSelectedTablesComparable: get(areSelectedTablesComparableAtom),
         };

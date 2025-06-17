@@ -1,45 +1,45 @@
 from typing import Iterable
 
+import polars as pl
+
 from primary.services.sumo_access.inplace_volumes_table_types import (
     CalculatedVolume,
-    FluidSelection,
-    Property,
+    CategorizedResultNames,
     InplaceVolumes,
+    InplaceVolumesResultName,
+    InplaceVolumesTableData,
+    RepeatedTableColumnData,
+    Property,
+    TableColumnData,
 )
+
+from primary.services.sumo_access.inplace_volumes_table_access import InplaceVolumesTableAccess
 
 """
 This file contains helper functions for conversion between different data types used in the Inplace Volumes Table Assembler.
-
-The table data from Sumo retrieves Inplace Volumes, and the assembler is responsible for calculating properties and volumes based
-on the volumetric columns from Sumo.
 """
 
-# TODO: REMOVE? Seems unused
-def get_index_from_string(index_str: str) -> InplaceVolumes.TableIndexColumns | None:
-    """
-    Function to convert string to InplaceVolumes.TableIndexColumns
-    """
-    if index_str in InplaceVolumes.TableIndexColumns.__members__:
-        return InplaceVolumes.TableIndexColumns(index_str)
 
-    return None
+def get_valid_result_names_from_list(result_names: list[str]) -> list[str]:
+    """
+    Get valid result names from list of result names
+    """
+    valid_result_names = []
+    for result_name in result_names:
+        if result_name in InplaceVolumesResultName.__members__:
+            valid_result_names.append(result_name)
+    return valid_result_names
 
 
 def get_fluid_from_string(fluid_str: str) -> InplaceVolumes.Fluid | None:
     """
     Function to convert string to InplaceVolumes.Fluid
     """
+    # Check if the value is among InplaceVolumes.Fluid options
     if fluid_str in InplaceVolumes.Fluid.__members__:
         return InplaceVolumes.Fluid(fluid_str)
 
     return None
-
-
-def create_fluid_selection_name(fluid_selection: FluidSelection, fluids: list[InplaceVolumes.Fluid]) -> str:
-    if fluid_selection != FluidSelection.ACCUMULATED:
-        return fluid_selection.value
-
-    return "+".join([fluid.value for fluid in fluids])
 
 
 def get_index_column_from_string(index_str: str) -> InplaceVolumes.TableIndexColumns | None:
@@ -50,18 +50,6 @@ def get_index_column_from_string(index_str: str) -> InplaceVolumes.TableIndexCol
         return InplaceVolumes.TableIndexColumns(index_str)
 
     return None
-
-
-def get_fluid_from_selection(fluid_selection: FluidSelection) -> InplaceVolumes.Fluid | None:
-    # Check if the value is among InplaceVolumes.Fluid options
-    if fluid_selection in InplaceVolumes.Fluid.__members__.values():
-        return InplaceVolumes.Fluid(fluid_selection)
-
-    return None
-
-
-def convert_fluid_to_fluid_selection(fluid: InplaceVolumes.Fluid) -> FluidSelection:
-    return FluidSelection(fluid)
 
 
 def get_calculated_volumes_among_result_names(result_names: Iterable[str]) -> list[str]:
@@ -181,3 +169,93 @@ def get_available_calculated_volumes_from_volume_names(volume_names: Iterable[st
         calculated_volumes.append(CalculatedVolume.GIIP_TOTAL.value)
 
     return calculated_volumes
+
+
+def get_required_volume_names_and_categorized_result_names(
+    result_names: Iterable[str],
+) -> tuple[set[str], CategorizedResultNames]:
+    """
+    Function to get all required volume names based on result names, and categorize the result names.
+
+    `returns`: A tuple of two elements:
+    - A list of all required volume names: volume columns, and volumes needed to calculate properties and calculated volumes
+    - Categorize result name
+
+    Note: result_names = volume columns + properties + calculated volumes
+    """
+    # Detect properties and find volume names needed to calculate properties
+    properties = get_properties_among_result_names(result_names)
+    required_volume_names_for_properties = get_required_volume_names_from_properties(properties)
+
+    # Detect calculated volumes among result names and find volume names needed for calculation
+    calculated_volume_names = get_calculated_volumes_among_result_names(result_names)
+    required_volume_names_for_calculated_volumes = get_required_volume_names_from_calculated_volumes(
+        calculated_volume_names
+    )
+
+    # Extract volume names among result names (excluding all properties, not just valid properties)
+    volume_names = list(set(result_names) - set(properties) - set(calculated_volume_names))
+
+    # Find all volume names needed from Sumo
+    all_required_volume_names = set(
+        volume_names + required_volume_names_for_properties + required_volume_names_for_calculated_volumes
+    )
+
+    return all_required_volume_names, CategorizedResultNames(
+        volume_names=volume_names, calculated_volume_names=calculated_volume_names, property_names=properties
+    )
+
+
+def create_repeated_table_column_data_from_polars_column(
+    column_name: str, column_values: pl.Series
+) -> RepeatedTableColumnData:
+    """
+    Create repeated table column data from column name and column values as Polars Series
+
+    Note that the unique values are not sorted, but the indices vector is built to preserve order
+    in the input column values.
+    """
+
+    # unique() method might not preserve the order of the unique values
+    unique_values: list[str | int] = column_values.unique().to_list()
+    value_to_index_map = {value: index for index, value in enumerate(unique_values)}
+    indices: list[int] = [value_to_index_map[value] for value in column_values.to_list()]
+
+    return RepeatedTableColumnData(column_name=column_name, unique_values=unique_values, indices=indices)
+
+
+def create_inplace_volumes_table_data_from_fluid_results_df(
+    fluid_results_df: pl.DataFrame, fluid_value: str
+) -> InplaceVolumesTableData:
+    """
+    Create Inplace Volumetric Table Data from result DataFrame and fluid value.
+
+    The result DataFrame is expected to be for a specific fluid value, i.e. the "FLUID" column is not present in the DataFrame.
+    """
+    if fluid_results_df.is_empty():
+        return InplaceVolumesTableData(fluid_selection=fluid_value, selector_columns=[], result_columns=[])
+
+    if InplaceVolumes.TableIndexColumns.FLUID.value in fluid_results_df.columns:
+        raise ValueError(
+            f"Results DataFrame for specified fluid should not contain 'FLUID' column, but found it in the input DataFrame: {fluid_results_df.columns}"
+        )
+
+    possible_selector_columns = InplaceVolumesTableAccess.get_selector_column_names()
+    existing_selector_columns = [name for name in fluid_results_df.columns if name in possible_selector_columns]
+    selector_column_data_list: list[RepeatedTableColumnData] = []
+    for column_name in existing_selector_columns:
+        column = fluid_results_df[column_name]
+        selector_column_data_list.append(create_repeated_table_column_data_from_polars_column(column_name, column))
+
+    existing_result_column_names = [name for name in fluid_results_df.columns if name not in existing_selector_columns]
+    result_column_data_list: list[TableColumnData] = []
+    for column_name in existing_result_column_names:
+        result_column_data_list.append(
+            TableColumnData(column_name=column_name, values=fluid_results_df[column_name].to_list())
+        )
+
+    return InplaceVolumesTableData(
+        fluid_selection=fluid_value,
+        selector_columns=selector_column_data_list,
+        result_columns=result_column_data_list,
+    )

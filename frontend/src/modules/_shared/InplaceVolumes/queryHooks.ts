@@ -2,9 +2,9 @@ import type { UseQueryResult } from "@tanstack/react-query";
 
 import type {
     InplaceVolumesStatisticalTableDataPerFluidSelection_api,
-    InplaceVolumesFluid_api,
     InplaceVolumesIndexWithValues_api,
     InplaceVolumesTableDataPerFluidSelection_api,
+    InplaceVolumesIndex_api,
 } from "@api";
 import { postGetAggregatedPerRealizationTableDataOptions, postGetAggregatedStatisticalTableDataOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -39,9 +39,7 @@ export function useGetAggregatedStatisticalTableDataQueries(
     ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[],
     tableNames: string[],
     resultNames: string[],
-    fluids: InplaceVolumesFluid_api[],
-    groupByIndices: string[],
-    accumulateFluids: boolean,
+    groupByIndices: InplaceVolumesIndex_api[],
     indicesWithValues: InplaceVolumesIndexWithValues_api[],
     allowEnable: boolean,
 ) {
@@ -66,8 +64,6 @@ export function useGetAggregatedStatisticalTableDataQueries(
                     case_uuid: source.ensembleIdent.getCaseUuid(),
                     table_name: source.tableName,
                     result_names: resultNames,
-                    fluids: fluids,
-                    accumulate_fluids: accumulateFluids,
                     group_by_indices: validGroupByIndices,
                     realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
                 },
@@ -81,7 +77,6 @@ export function useGetAggregatedStatisticalTableDataQueries(
                     source.tableName &&
                     validRealizationsEncodedAsUintListStr &&
                     validRealizations?.length &&
-                    fluids.length &&
                     resultNames.length &&
                     eachIndexHasValues,
             ),
@@ -125,9 +120,7 @@ export function useGetAggregatedPerRealizationTableDataQueries(
     ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[],
     tableNames: string[],
     resultNames: string[],
-    fluids: InplaceVolumesFluid_api[],
-    groupByIndices: string[],
-    accumulateFluids: boolean,
+    groupByIndices: InplaceVolumesIndex_api[],
     indicesWithValues: InplaceVolumesIndexWithValues_api[],
     allowEnable: boolean,
 ) {
@@ -152,8 +145,6 @@ export function useGetAggregatedPerRealizationTableDataQueries(
                     case_uuid: source.ensembleIdent.getCaseUuid(),
                     table_name: source.tableName,
                     result_names: resultNames,
-                    fluids: fluids,
-                    accumulate_fluids: accumulateFluids,
                     group_by_indices: validGroupByIndices,
                     realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
                 },
@@ -167,7 +158,6 @@ export function useGetAggregatedPerRealizationTableDataQueries(
                     source.tableName &&
                     validRealizationsEncodedAsUintListStr &&
                     validRealizations?.length &&
-                    fluids.length &&
                     resultNames.length &&
                     eachIndexHasValues,
             ),

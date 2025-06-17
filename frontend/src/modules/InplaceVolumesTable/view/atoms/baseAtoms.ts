@@ -7,12 +7,11 @@ import type { InplaceVolumesFilterSelections } from "@modules/InplaceVolumesTabl
 export const filterAtom = atom<InplaceVolumesFilterSelections>({
     ensembleIdents: [],
     tableNames: [],
-    fluids: [],
     indicesWithValues: [],
     areSelectedTablesComparable: false,
 });
 export const resultNamesAtom = atom<string[]>([]);
-export const accumulationOptionsAtom = atom<InplaceVolumesIndex_api[]>([]);
+export const groupByIndicesAtom = atom<InplaceVolumesIndex_api[]>([]);
 export const tableTypeAtom = atom<TableType>(TableType.STATISTICAL);
 export const statisticOptionsAtom = atom<InplaceVolumesStatistic_api[]>([]);
 export const areTableDefinitionSelectionsValidAtom = atom<boolean>(false);

@@ -2,7 +2,7 @@ import type { InterfaceEffects } from "@framework/Module";
 import type { SettingsToViewInterface } from "@modules/InplaceVolumesTable/interfaces";
 
 import {
-    accumulationOptionsAtom,
+    groupByIndicesAtom,
     areTableDefinitionSelectionsValidAtom,
     filterAtom,
     resultNamesAtom,
@@ -20,8 +20,8 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
         setAtomValue(resultNamesAtom, resultNames);
     },
     (getInterfaceValue, setAtomValue) => {
-        const accumulationOptions = getInterfaceValue("accumulationOptions");
-        setAtomValue(accumulationOptionsAtom, accumulationOptions);
+        const groupByIndices = getInterfaceValue("groupByIndices");
+        setAtomValue(groupByIndicesAtom, groupByIndices);
     },
     (getInterfaceValue, setAtomValue) => {
         const tableType = getInterfaceValue("tableType");

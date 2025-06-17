@@ -2,7 +2,7 @@ import React from "react";
 
 import { cloneDeep, isEqual } from "lodash";
 
-import type { InplaceVolumesFluid_api, InplaceVolumesIndex_api, InplaceVolumesIndexWithValues_api } from "@api";
+import type { InplaceVolumesIndex_api, InplaceVolumesIndexWithValues_api } from "@api";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { SettingsContext } from "@framework/ModuleContext";
@@ -21,11 +21,9 @@ export type InplaceVolumesFilterComponentProps = {
     settingsContext: SettingsContext<any>;
     workbenchServices: WorkbenchServices;
     availableTableNames: string[];
-    availableFluids: InplaceVolumesFluid_api[];
     availableIndicesWithValues: InplaceVolumesIndexWithValues_api[];
     selectedEnsembleIdents: RegularEnsembleIdent[];
     selectedTableNames: string[];
-    selectedFluids: InplaceVolumesFluid_api[];
     selectedIndicesWithValues: InplaceVolumesIndexWithValues_api[];
     selectedAllowIndicesValuesIntersection: boolean;
     onChange: (filter: InplaceVolumesFilterSettings) => void;
@@ -39,7 +37,6 @@ export type InplaceVolumesFilterComponentProps = {
 export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterComponentProps): React.ReactNode {
     const [ensembleIdents, setEnsembleIdents] = React.useState<RegularEnsembleIdent[]>(props.selectedEnsembleIdents);
     const [tableNames, setTableNames] = React.useState<string[]>(props.selectedTableNames);
-    const [fluids, setFluids] = React.useState<InplaceVolumesFluid_api[]>(props.selectedFluids);
     const [indicesWithValues, setIndicesWithValues] = React.useState<InplaceVolumesIndexWithValues_api[]>(
         props.selectedIndicesWithValues,
     );
@@ -48,7 +45,6 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
         props.selectedEnsembleIdents,
     );
     const [prevTableNames, setPrevTableNames] = React.useState<string[]>(props.selectedTableNames);
-    const [prevFluids, setPrevFluids] = React.useState<string[]>(props.selectedFluids);
     const [prevIndicesWithValues, setPrevIndicesWithValues] = React.useState<InplaceVolumesIndexWithValues_api[]>(
         props.selectedIndicesWithValues,
     );
@@ -64,11 +60,6 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     if (!isEqual(props.selectedTableNames, prevTableNames)) {
         setTableNames(props.selectedTableNames);
         setPrevTableNames(props.selectedTableNames);
-    }
-
-    if (!isEqual(props.selectedFluids, prevFluids)) {
-        setFluids(props.selectedFluids);
-        setPrevFluids(props.selectedFluids);
     }
 
     if (!isEqual(props.selectedIndicesWithValues, prevIndicesWithValues)) {
@@ -103,7 +94,6 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
             const filter = {
                 ensembleIdents,
                 tableNames,
-                fluids,
                 indicesWithValues,
                 allowIndicesValuesIntersection: props.selectedAllowIndicesValuesIntersection,
             };
@@ -114,10 +104,6 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
 
             if (!isEqual(syncedFilter.tableNames, tableNames)) {
                 filter.tableNames = [...syncedFilter.tableNames];
-            }
-
-            if (!isEqual(syncedFilter.fluids, fluids)) {
-                filter.fluids = [...syncedFilter.fluids];
             }
 
             if (syncedFilter.allowIndicesValuesIntersection !== props.selectedAllowIndicesValuesIntersection) {
@@ -192,7 +178,6 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
         const filter = {
             ensembleIdents: newEnsembleIdents,
             tableNames,
-            fluids,
             indicesWithValues,
             allowIndicesValuesIntersection: props.selectedAllowIndicesValuesIntersection,
         };
@@ -204,30 +189,16 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
         const filter = {
             ensembleIdents,
             tableNames: newTableNames,
-            fluids,
             indicesWithValues,
             allowIndicesValuesIntersection: props.selectedAllowIndicesValuesIntersection,
         };
         callOnChangeAndMaybePublish(filter, publish);
     }
 
-    function handleFluidsChange(newFluids: InplaceVolumesFluid_api[], publish = true): void {
-        setFluids(newFluids);
-        const filter = {
-            ensembleIdents,
-            tableNames,
-            fluids: newFluids,
-            indicesWithValues,
-            allowIndicesValuesIntersection: props.selectedAllowIndicesValuesIntersection,
-        };
-        maybeDebounceOnChange(filter, publish);
-    }
-
     function handleAllowIndexValueIntersectionChange(checked: boolean): void {
         const filter = {
             ensembleIdents,
             tableNames,
-            fluids,
             indicesWithValues,
             allowIndicesValuesIntersection: checked,
         };
@@ -252,7 +223,6 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
         const filter = {
             ensembleIdents,
             tableNames,
-            fluids,
             indicesWithValues: newIndicesWithValues,
             allowIndicesValuesIntersection: props.selectedAllowIndicesValuesIntersection,
         };
@@ -260,7 +230,6 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     }
 
     const tableSourceOptions = props.availableTableNames.map((source) => ({ value: source, label: source }));
-    const fluidOptions = props.availableFluids.map((fluid) => ({ value: fluid, label: fluid }));
 
     return (
         <>
@@ -284,17 +253,6 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                                 options={tableSourceOptions}
                                 value={tableNames}
                                 onChange={handleTableNamesChange}
-                                multiple
-                                size={3}
-                            />
-                        </ErrorWrapper>
-                    </CollapsibleGroup>
-                    <CollapsibleGroup title="Fluids" expanded>
-                        <ErrorWrapper isError={fluidOptions.length === 0 && !props.isPending} message={"No fluids"}>
-                            <Select
-                                options={fluidOptions}
-                                value={fluids}
-                                onChange={handleFluidsChange}
                                 multiple
                                 size={3}
                             />

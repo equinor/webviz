@@ -44,7 +44,7 @@ def convert_table_data_per_fluid_selection_to_schema(
 
         tables.append(
             schemas.InplaceVolumesTableData(
-                fluidSelectionName=table.fluid_selection_name,
+                fluidSelection=table.fluid_selection,
                 selectorColumns=selector_columns,
                 resultColumns=result_columns,
             )
@@ -81,7 +81,7 @@ def convert_statistical_table_data_per_fluid_selection_to_schema(
 
         tables.append(
             schemas.InplaceVolumesStatisticalTableData(
-                fluidSelectionName=table.fluid_selection_name,
+                fluidSelection=table.fluid_selection,
                 selectorColumns=selector_columns,
                 resultColumnStatistics=result_columns_statistics,
             )

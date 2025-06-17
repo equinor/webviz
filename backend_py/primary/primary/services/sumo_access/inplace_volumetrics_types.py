@@ -144,11 +144,10 @@ class TableColumnStatisticalData:
 class InplaceVolumetricTableData:
     """Volumetric data for a single table
 
-    Contains data for a single fluid zone, e.g. Oil, Gas, Water, or sum of fluid zones
+    Contains data for a single fluid selection, e.g. Oil, Gas, Water, or sum of fluids
     """
 
-    # fluid_zones: list[FluidZone]  # Oil, Gas, Water or "Oil + Gas", etc.
-    fluid_selection_name: str  # Oil, Gas, Water or "Oil + Gas", etc.
+    fluid_selection: str  # Oil, Gas, Water or "Oil + Gas", etc.
     selector_columns: list[RepeatedTableColumnData]  # Index columns and realizations
     result_columns: list[TableColumnData]
 
@@ -158,10 +157,10 @@ class InplaceStatisticalVolumetricTableData:
     """
     Statistical volumetric data for single volume table
 
-    Contains data for a single fluid zone, e.g. Oil, Gas, Water, or sum of fluid zones
+    Contains data for a single fluid selection, e.g. Oil, Gas, Water, or sum of fluids
     """
 
-    fluid_selection_name: str  # Oil, Gas, Water or "Oil + Gas", etc.
+    fluid_selection: str  # Oil, Gas, Water or "Oil + Gas", etc.
     selector_columns: list[RepeatedTableColumnData]  # Index columns and realizations
     result_column_statistics: list[TableColumnStatisticalData]
 
@@ -171,7 +170,7 @@ class InplaceVolumetricTableDataPerFluidSelection:
     """
     Volumetric data for a single table per fluid selection
 
-    Fluid selection can be single fluid zones, e.g. Oil, Gas, Water, or sum of fluid zones - Oil + Gas + Water
+    Fluid selection can be single fluid, e.g. Oil, Gas, Water, or sum of fluids - Oil + Gas + Water
     """
 
     table_data_per_fluid_selection: list[InplaceVolumetricTableData]
@@ -182,7 +181,7 @@ class InplaceStatisticalVolumetricTableDataPerFluidSelection:
     """
     Statistical volumetric data for a single table per fluid selection
 
-    Fluid selection can be single fluid zones, e.g. Oil, Gas, Water, or sum of fluid zones - Oil + Gas + Water
+    Fluid selection can be single fluid, e.g. Oil, Gas, Water, or sum of fluids - Oil + Gas + Water
     """
 
     table_data_per_fluid_selection: list[InplaceStatisticalVolumetricTableData]

@@ -1,5 +1,4 @@
 import type { InplaceVolumesStatistic_api } from "@api";
-import { InplaceVolumesFluid_api } from "@api";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -153,13 +152,13 @@ function makeStyleFormattingFunc(column: Column): ((value: number | string | nul
         return (value: number | string | null) => {
             const style: React.CSSProperties = { textAlign: "right", fontWeight: "bold" };
 
-            if (value === InplaceVolumesFluid_api.OIL) {
+            if (value?.toString().toLowerCase() === "oil") {
                 style.color = "#0b8511";
             }
-            if (value === InplaceVolumesFluid_api.WATER) {
+            if (value?.toString().toLowerCase() === "water") {
                 style.color = "#0c24ab";
             }
-            if (value === InplaceVolumesFluid_api.GAS) {
+            if (value?.toString().toLowerCase() === "gas") {
                 style.color = "#ab110c";
             }
 

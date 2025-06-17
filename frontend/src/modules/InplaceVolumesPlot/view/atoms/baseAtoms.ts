@@ -8,7 +8,6 @@ import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 export const filterAtom = atom<InplaceVolumesFilterSelections>({
     ensembleIdents: [],
     tableNames: [],
-    fluids: [],
     indicesWithValues: [],
     areSelectedTablesComparable: false,
 });

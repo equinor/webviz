@@ -296,12 +296,6 @@ export type HttpValidationError_api = {
     detail?: Array<ValidationError_api>;
 };
 
-export enum InplaceVolumesFluid_api {
-    OIL = "oil",
-    GAS = "gas",
-    WATER = "water",
-}
-
 export enum InplaceVolumesIndex_api {
     ZONE = "ZONE",
     REGION = "REGION",
@@ -340,7 +334,7 @@ export enum InplaceVolumesStatistic_api {
  * Contains data for a single fluid selection, e.g. Oil, Gas, Water, or sum of fluids
  */
 export type InplaceVolumesStatisticalTableData_api = {
-    fluidSelectionName: string;
+    fluidSelection: string;
     selectorColumns: Array<RepeatedTableColumnData_api>;
     resultColumnStatistics: Array<TableColumnStatisticalData_api>;
 };
@@ -360,7 +354,7 @@ export type InplaceVolumesStatisticalTableDataPerFluidSelection_api = {
  * Contains data for a single fluid selection, e.g. Oil, Gas, Water, or sum of fluids
  */
 export type InplaceVolumesTableData_api = {
-    fluidSelectionName: string;
+    fluidSelection: string;
     selectorColumns: Array<RepeatedTableColumnData_api>;
     resultColumns: Array<TableColumnData_api>;
 };
@@ -379,7 +373,6 @@ export type InplaceVolumesTableDataPerFluidSelection_api = {
  */
 export type InplaceVolumesTableDefinition_api = {
     tableName: string;
-    fluids: Array<InplaceVolumesFluid_api>;
     resultNames: Array<string>;
     indicesWithValues: Array<InplaceVolumesIndexWithValues_api>;
 };
@@ -1806,14 +1799,6 @@ export type PostGetAggregatedPerRealizationTableDataData_api = {
          */
         result_names: Array<string>;
         /**
-         * The fluids to aggregate by
-         */
-        fluids: Array<InplaceVolumesFluid_api>;
-        /**
-         * Whether to accumulate fluids
-         */
-        accumulate_fluids: boolean;
-        /**
          * The indices to group table data by
          */
         group_by_indices?: Array<string> | null;
@@ -1865,14 +1850,6 @@ export type PostGetAggregatedStatisticalTableDataData_api = {
          * The name of the inplace volumes results
          */
         result_names: Array<string>;
-        /**
-         * The fluids to aggregate by
-         */
-        fluids: Array<InplaceVolumesFluid_api>;
-        /**
-         * Whether to accumulate fluids
-         */
-        accumulate_fluids: boolean;
         /**
          * The indices to group table data by
          */

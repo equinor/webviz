@@ -85,20 +85,6 @@ class InplaceVolumes:
         return InplaceVolumes.index_columns() + InplaceVolumes.value_columns()
 
 
-class FluidSelection(StrEnum):
-    """
-    Definition of valid fluid selections for an inplace volumes table
-    """
-
-    # From InplaceVolumes.Fluid
-    OIL = InplaceVolumes.Fluid.oil.value
-    GAS = InplaceVolumes.Fluid.gas.value
-    WATER = InplaceVolumes.Fluid.water.value
-
-    # Additional fluid selection for accumulated volumes
-    ACCUMULATED = "Accumulated"
-
-
 class CalculatedVolume(StrEnum):
     STOIIP_TOTAL = "STOIIP_TOTAL"
     GIIP_TOTAL = "GIIP_TOTAL"
@@ -230,12 +216,11 @@ class InplaceVolumesTableData:
     """
     Inplace volumes data for a single table
 
-    Contains data for a single fluid zone, e.g. Oil, Gas, Water, or sum of fluid zoness
+    Contains data for a single fluid selection, e.g. Oil, Gas, Water, or sum of fluid zones
     """
 
-    # fluid_zones: list[FluidZone]  # Oil, Gas, Water or "Oil + Gas", etc.
-    fluid_selection_name: str  # Oil, Gas, Water or "Oil + Gas", etc.
-    selector_columns: list[RepeatedTableColumnData]  # Index columns and realizations
+    fluid_selection: str  # Oil, Gas, Water or "Oil + Gas", etc.
+    selector_columns: list[RepeatedTableColumnData]  # Index columns (excluding FLUID) and realizations
     result_columns: list[TableColumnData]  # Volumetric columns, properties, and calculated volumes
 
 
@@ -244,11 +229,11 @@ class InplaceVolumesStatisticalTableData:
     """
     Statistical inplace volumes data for single volume table
 
-    Contains data for a single fluid zone, e.g. Oil, Gas, Water, or sum of fluid zones
+    Contains data for a single fluid selection, e.g. Oil, Gas, Water, or sum of fluid zones
     """
 
-    fluid_selection_name: str  # Oil, Gas, Water or "Oil + Gas", etc.
-    selector_columns: list[RepeatedTableColumnData]  # Index columns and realizations
+    fluid_selection: str  # Oil, Gas, Water or "Oil + Gas", etc.
+    selector_columns: list[RepeatedTableColumnData]  # Index columns (excluding FLUID) and realizations
     result_column_statistics: list[TableColumnStatisticalData]  # Volumetric columns, properties, and calculated volumes
 
 

@@ -20,17 +20,39 @@ class ConverterOriginal:
     def convert_schema_to_identifiers_with_values(
         identifiers_with_values: list[schemas.InplaceVolumesIndexWithValues],
     ) -> list[InplaceVolumetricsIdentifierWithValues]:
+        """
+        Converts the identifiers with values from the API format to the sumo service format
+        This function filters out the identifiers with values that have the index column as FLUID is not an identifier column in
+        the original format.
+        """
         converted = []
         for identifier_with_values in identifiers_with_values:
+            if identifier_with_values.indexColumn == schemas.InplaceVolumesIndex.FLUID:
+                continue
+
             identifier = ConverterOriginal._convert_schema_to_identifier(identifier_with_values.indexColumn.value)
             values = identifier_with_values.values
             converted.append(InplaceVolumetricsIdentifierWithValues(identifier, values))
         return converted
 
     @staticmethod
-    def convert_schema_to_fluid_zones(fluids: list[schemas.InplaceVolumesFluid]) -> list[FluidZone]:
-        """Converts the fluids from the API format to the sumo service format"""
-        return [FluidZone(fluid_zone.value) for fluid_zone in fluids]
+    def convert_schema_to_fluid_zones(
+        identifiers_with_values: list[schemas.InplaceVolumesIndexWithValues],
+    ) -> list[FluidZone]:
+        """
+        Converts the fluids from the API format to the sumo service format
+
+        Extract fluids from the identifiers with values, which are expected to have the index column as FLUID.
+        """
+        for identifier_with_values in identifiers_with_values:
+            if identifier_with_values.indexColumn != schemas.InplaceVolumesIndex.FLUID:
+                continue
+
+            fluids = [FluidZone(str(fluid)) for fluid in identifier_with_values.values]
+
+        if not fluids:
+            raise ValueError("No fluids found in the identifiers with values")
+        return fluids
 
     @staticmethod
     def convert_schema_to_identifiers(
@@ -53,11 +75,6 @@ class ConverterOriginal:
         return InplaceVolumetricsIdentifier(index_string)
 
     @staticmethod
-    def _convert_fluid_zones_to_schema(fluid_zones: list[FluidZone]) -> list[schemas.InplaceVolumesFluid]:
-        """Converts the fluid zones from the sumo service to the API format"""
-        return [schemas.InplaceVolumesFluid(fluid_zone.value.lower()) for fluid_zone in fluid_zones]
-
-    @staticmethod
     def to_api_table_definitions(
         table_definitions: list[InplaceVolumetricsTableDefinition],
     ) -> list[schemas.InplaceVolumesTableDefinition]:
@@ -65,9 +82,14 @@ class ConverterOriginal:
         return [
             schemas.InplaceVolumesTableDefinition(
                 tableName=table_definition.table_name,
-                fluids=ConverterOriginal._convert_fluid_zones_to_schema(table_definition.fluid_zones),
                 resultNames=table_definition.result_names,
                 indicesWithValues=[
+                    schemas.InplaceVolumesIndexWithValues(
+                        indexColumn=schemas.InplaceVolumesIndex.FLUID,
+                        values=[elm.value for elm in table_definition.fluid_zones],
+                    )
+                ]
+                + [
                     schemas.InplaceVolumesIndexWithValues(
                         indexColumn=schemas.InplaceVolumesIndex(identifier_with_values.identifier.value),
                         values=identifier_with_values.values,
