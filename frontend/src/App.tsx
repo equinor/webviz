@@ -11,7 +11,6 @@ import { SettingsContentPanels } from "@framework/internal/components/SettingsCo
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { Workbench } from "@framework/Workbench";
-import type { LayoutElement } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -61,18 +60,16 @@ enum InitAppState {
     InitCompleted = "init-completed",
 }
 
-const layout: LayoutElement[] = [];
-
 function App() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
     // Otherwise, the workbench will be reset on every code change. This would cause it to loose its state and will
     // cause the app to crash.
-    const [workbench] = React.useState(new Workbench());
+    const queryClient = useQueryClient();
+    const [workbench] = React.useState(new Workbench(queryClient));
 
     const [isMounted, setIsMounted] = React.useState<boolean>(false);
     const [initAppState, setInitAppState] = React.useState<InitAppState>(InitAppState.CheckingIfUserIsSignedIn);
 
-    const queryClient = useQueryClient();
     const { authState } = useAuthProvider();
 
     function signIn() {
@@ -82,11 +79,9 @@ function App() {
     React.useEffect(
         function handleMountWhenSignedIn() {
             function initApp() {
-                if (!workbench.loadLayoutFromLocalStorage()) {
-                    workbench.makeLayout(layout);
-                }
+                workbench.initialize();
 
-                if (workbench.getLayout().length === 0) {
+                if (workbench.getWorkbenchSession().getActiveDashboard()?.getLayout().length === 0) {
                     workbench.getGuiMessageBroker().setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModulesList);
                 } else {
                     workbench
@@ -109,8 +104,7 @@ function App() {
             });
 
             return function handleUnmount() {
-                workbench.clearLayout();
-                workbench.resetModuleInstanceNumbers();
+                workbench.clear();
             };
         },
         [authState, isMounted, queryClient, workbench],

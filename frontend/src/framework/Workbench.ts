@@ -29,16 +29,16 @@ export class Workbench {
     private _guiMessageBroker: GuiMessageBroker;
     private _atomStoreMaster: AtomStoreMaster;
 
-    constructor() {
+    constructor(queryClient: QueryClient) {
         this._atomStoreMaster = new AtomStoreMaster();
-        this._workbenchSession = new WorkbenchSessionPrivate(this._atomStoreMaster);
+        this._workbenchSession = new WorkbenchSessionPrivate(this._atomStoreMaster, queryClient);
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._workbenchSettings = new PrivateWorkbenchSettings();
         this._guiMessageBroker = new GuiMessageBroker();
     }
 
     initialize(): void {
-        this._workbenchSession.maybeInitializeFromLocalStorage();
+        this._workbenchSession.makeDefaultDashboard();
     }
 
     getAtomStoreMaster(): AtomStoreMaster {
@@ -149,6 +149,10 @@ export class Workbench {
         }));
 
         return parsedDeltaEnsembleSettingsArray;
+    }
+
+    clear(): void {
+        this._workbenchSession.clear();
     }
 
     /*

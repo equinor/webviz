@@ -102,6 +102,29 @@ export class WorkbenchSessionPrivate extends WorkbenchSession {
         await this.loadAndSetupEnsembleSetInSession(this._queryClient, userEnsembleSettings, userDeltaEnsembleSettings);
     }
 
+    getActiveDashboard(): Dashboard {
+        if (this._activeDashboardId === null) {
+            this._activeDashboardId = this._dashboards.length > 0 ? this._dashboards[0].getId() : null;
+        }
+
+        if (this._activeDashboardId === null) {
+            throw new Error("No active dashboard set and no dashboards available.");
+        }
+
+        const dashboard = this._dashboards.find((dashboard) => dashboard.getId() === this._activeDashboardId);
+
+        if (!dashboard) {
+            throw new Error(`Active dashboard with ID ${this._activeDashboardId} not found.`);
+        }
+
+        return dashboard;
+    }
+
+    clear() {
+        this._dashboards = [];
+        this._activeDashboardId = null;
+    }
+
     private async loadAndSetupEnsembleSetInSession(
         queryClient: QueryClient,
         userEnsembleSettings: UserEnsembleSetting[],

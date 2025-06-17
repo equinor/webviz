@@ -16,8 +16,8 @@ export class ModuleNotFoundPlaceholder extends Module<any, any> {
         this._importState = ImportStatus.Imported;
     }
 
-    makeInstance(instanceNumber: number): ModuleInstance<any, any> {
-        const instance = super.makeInstance(instanceNumber);
+    makeInstance(id: string): ModuleInstance<any, any> {
+        const instance = super.makeInstance(id);
         return instance;
     }
 

@@ -8,7 +8,7 @@ import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent } from "@framework/GuiMessageBroker";
 import { useModuleInstances, useModuleLayout } from "@framework/internal/hooks/workbenchHooks";
 import type { ModuleInstance } from "@framework/ModuleInstance";
-import type { LayoutElement, Workbench } from "@framework/Workbench";
+import type { Workbench } from "@framework/Workbench";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Rect2D, Size2D } from "@lib/utils/geometry";
 import { MANHATTAN_LENGTH, addMarginToRect, pointRelativeToDomRect, rectContainsPoint } from "@lib/utils/geometry";
@@ -18,6 +18,7 @@ import { multiplyVec2, point2Distance, scaleVec2NonUniform, subtractVec2, vec2Fr
 
 import { ViewWrapper } from "./ViewWrapper";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
+import type { LayoutElement } from "@framework/Dashboard";
 
 type LayoutProps = {
     workbench: Workbench;
@@ -34,6 +35,7 @@ function convertLayoutRectToRealRect(element: LayoutElement, size: Size2D): Rect
 }
 
 export const Layout: React.FC<LayoutProps> = (props) => {
+    const dashboard = props.workbench.getWorkbenchSession().getActiveDashboard();
     const [draggedModuleInstanceId, setDraggedModuleInstanceId] = React.useState<string | null>(null);
     const [position, setPosition] = React.useState<Vec2>({ x: 0, y: 0 });
     const [pointer, setPointer] = React.useState<Vec2>({ x: -1, y: -1 });
@@ -50,7 +52,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const trueLayout = useModuleLayout(props.workbench);
     const layout = tempLayout ?? trueLayout;
 
-    React.useEffect(() => {
+    React.useEffect(() => 
         let pointerDownPoint: Vec2 | null = null;
         let pointerDownElementPosition: Vec2 | null = null;
         let pointerDownElementId: string | null = null;
