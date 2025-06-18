@@ -15,7 +15,6 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     InplaceVolumetricsIdentifierWithValues,
     InplaceVolumetricsTableDefinition,
     InplaceStatisticalVolumetricTableData,
-    InplaceVolumetricsTableDefinition,
     InplaceVolumetricTableData,
     InplaceVolumetricTableDataPerFluidSelection,
     InplaceStatisticalVolumetricTableDataPerFluidSelection,
@@ -292,10 +291,10 @@ class InplaceVolumetricsAssembler:
         )
 
         # Get volume table per fluid selection - requested volumes and volumes needed for properties
-        volume_df_per_fluid_selection: dict[
-            FluidSelection, pl.DataFrame
-        ] = await self._create_volume_df_per_fluid_selection(
-            table_name, all_volume_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
+        volume_df_per_fluid_selection: dict[FluidSelection, pl.DataFrame] = (
+            await self._create_volume_df_per_fluid_selection_async(
+                table_name, all_volume_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
+            )
         )
 
         # If accumulate_fluid_zones is True, exclude BO and BG from valid properties
@@ -352,13 +351,13 @@ class InplaceVolumetricsAssembler:
 
         return result_df
 
-    async def _create_volume_df_per_fluid_selection(
+    async def _create_volume_df_per_fluid_selection_async(
         self,
         table_name: str,
         volume_names: set[str],
         fluid_zones: list[FluidZone],
         realizations: list[int] | None,
-        identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues] = [],
+        identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues],
         accumulate_fluid_zones: bool = False,
     ) -> dict[FluidSelection, pl.DataFrame]:
         """
@@ -441,7 +440,7 @@ class InplaceVolumetricsAssembler:
         table_name: str,
         inplace_volumetrics_df: pl.DataFrame,
         realizations: list[int] | None,
-        identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues] = [],
+        identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues],
     ) -> pl.DataFrame | None:
         """
         Create DataFrame filtered on identifier values and realizations

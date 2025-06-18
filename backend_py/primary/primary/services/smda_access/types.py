@@ -23,6 +23,7 @@ class WellborePick(BaseModel):
     depth_reference_point: str
     md_unit: str
     interpreter: str | None
+    obs_no: int
 
 
 class WellboreTrajectory(BaseModel):

@@ -1,4 +1,9 @@
-import type { ColorPalette } from "@lib/utils/ColorPalette";
+import type { ColorPaletteSerialization } from "@lib/utils/ColorPalette";
+import { ColorPalette } from "@lib/utils/ColorPalette";
+
+export type ColorSetSerialization = {
+    colorPalette: ColorPaletteSerialization;
+};
 
 export class ColorSet {
     private _colorPalette: ColorPalette;
@@ -49,5 +54,16 @@ export class ColorSet {
         const color = this._colorPalette.getColors()[this._runningIndex];
         this._runningIndex = (this._runningIndex + 1) % this._colorPalette.getColors().length;
         return color;
+    }
+
+    serialize(): ColorSetSerialization {
+        return {
+            colorPalette: this._colorPalette.serialize(),
+        };
+    }
+
+    static fromSerialized(serialized: ColorSetSerialization): ColorSet {
+        const colorPalette = ColorPalette.fromSerialized(serialized.colorPalette);
+        return new ColorSet(colorPalette);
     }
 }

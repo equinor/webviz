@@ -12,7 +12,7 @@ import type {
     BaseEnsembleItem,
     DeltaEnsembleItem,
     RegularEnsembleItem,
-} from "@framework/internal/components/SelectEnsemblesDialog/selectEnsemblesDialog";
+} from "@framework/internal/components/SelectEnsemblesDialog";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { UserDeltaEnsembleSetting, UserEnsembleSetting, Workbench } from "@framework/Workbench";
 import { WorkbenchEvents } from "@framework/Workbench";

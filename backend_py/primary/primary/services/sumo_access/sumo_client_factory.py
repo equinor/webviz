@@ -32,6 +32,7 @@ def create_sumo_client(access_token: str) -> SumoClient:
             retry_strategy=RetryStrategy(stop_after=1),
             http_client=_FakeSyncHttpClient(),
             async_http_client=HTTPX_ASYNC_CLIENT_WRAPPER.client,
+            timeout=120,
         )
 
     LOGGER.debug(f"create_sumo_client() took: {timer.elapsed_ms()}ms")
