@@ -399,8 +399,9 @@ export class Workbench {
 
         await this.storeSettingsInLocalStorageAndLoadAndSetupEnsembleSetInSession(
             queryClient,
-            newEnsembleSettings, existingDeltaEnsembleSettings
-        )
+            newEnsembleSettings,
+            existingDeltaEnsembleSettings,
+        );
     }
 
     private storeEnsembleSetInLocalStorage(ensembleSettingsToStore: UserEnsembleSetting[]): void {
