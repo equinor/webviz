@@ -123,7 +123,7 @@ async def post_get_aggregated_per_realization_table_data(
 
     perf_metrics.record_lap("get-access-secondary")
 
-    accumulate_fluid_zones = group_by_indices is not None and "FLUID" in group_by_indices
+    accumulate_fluid_zones = accumulate_fluid_zones = group_by_indices is None or "FLUID" not in group_by_indices
     adjusted_group_by_indices = [elm for elm in group_by_indices if elm != "FLUID"] if group_by_indices else None
     if not adjusted_group_by_indices:
         adjusted_group_by_indices = None
@@ -216,7 +216,7 @@ async def post_get_aggregated_statistical_table_data(
 
     perf_metrics.record_lap("get-access-secondary")
 
-    accumulate_fluid_zones = group_by_indices is not None and "FLUID" in group_by_indices
+    accumulate_fluid_zones = accumulate_fluid_zones = group_by_indices is None or "FLUID" not in group_by_indices
     adjusted_group_by_indices = [elm for elm in group_by_indices if elm != "FLUID"] if group_by_indices else None
     if not adjusted_group_by_indices:
         adjusted_group_by_indices = None
