@@ -321,9 +321,9 @@ class InplaceVolumesTableAssembler:
             # Accumulated fluids
             unique_fluids = row_filtered_volumes_df[InplaceVolumes.TableIndexColumns.FLUID.value].unique().to_list()
             summed_fluids_string = " + ".join(unique_fluids)
-            accumulated_inplace_volumes_real_df_per_fluid_value_dict[
-                summed_fluids_string
-            ] = volume_sums_by_indices_and_real_df
+            accumulated_inplace_volumes_real_df_per_fluid_value_dict[summed_fluids_string] = (
+                volume_sums_by_indices_and_real_df
+            )
 
         return (
             accumulated_inplace_volumes_real_df_per_fluid_value_dict,

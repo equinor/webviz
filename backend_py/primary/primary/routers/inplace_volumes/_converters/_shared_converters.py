@@ -54,8 +54,9 @@ def convert_table_data_per_fluid_selection_to_schema(
 
 
 def convert_statistical_table_data_per_fluid_selection_to_schema(
-    table_data_per_fluid_selection: InplaceStatisticalVolumetricTableDataPerFluidSelection
-    | InplaceVolumesStatisticalTableDataPerFluidSelection,
+    table_data_per_fluid_selection: (
+        InplaceStatisticalVolumetricTableDataPerFluidSelection | InplaceVolumesStatisticalTableDataPerFluidSelection
+    ),
 ) -> schemas.InplaceVolumesStatisticalTableDataPerFluidSelection:
     """Converts the table data from the sumo service to the schema format"""
 
@@ -91,7 +92,7 @@ def convert_statistical_table_data_per_fluid_selection_to_schema(
 
 
 def _convert_statistic_values_dict_to_schema(
-    statistic_values: dict[InplaceVolumesStatistic, list[float]] | dict[InplaceVolumetricsStatistic, list[float]]
+    statistic_values: dict[InplaceVolumesStatistic, list[float]] | dict[InplaceVolumetricsStatistic, list[float]],
 ) -> dict[schemas.InplaceVolumesStatistic, list[float]]:
     """Converts the statistic values dictionary from the service layer format to API format"""
     return {

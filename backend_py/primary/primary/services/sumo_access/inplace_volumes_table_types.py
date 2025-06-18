@@ -13,6 +13,7 @@ from dataclasses import dataclass
 #
 #############################################################################################
 
+
 # NOTE: This is a direct copy from fmu-dataio v. 2.12.0
 class InplaceVolumes:
     """Enumerations relevant to inplace volumes tables."""
