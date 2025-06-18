@@ -1,10 +1,11 @@
 from functools import wraps
 from contextvars import ContextVar
-from typing import Dict, Any, Callable, Awaitable, Union, Never
+from typing import Dict, Any, Callable
 
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Scope, Receive, Send, Message
 from primary.config import DEFAULT_CACHE_MAX_AGE, DEFAULT_STALE_WHILE_REVALIDATE
+
 
 # Initialize with a factory function to ensure a new dict for each context
 def get_default_context() -> Dict[str, Any]:
