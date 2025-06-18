@@ -1,6 +1,6 @@
+import type { LayoutElement } from "./Dashboard";
 import type { KeyKind } from "./DataChannelTypes";
 import type { SyncSettingKey } from "./SyncSettings";
-import type { LayoutElement } from "./Workbench";
 
 export type DataChannelTemplate = {
     listensToInstanceRef: string;

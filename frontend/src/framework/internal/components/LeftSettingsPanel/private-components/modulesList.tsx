@@ -14,7 +14,7 @@ import {
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
+import { useModuleInstances } from "@framework/internal/hooks/dashboardHooks";
 import type { Module } from "@framework/Module";
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";

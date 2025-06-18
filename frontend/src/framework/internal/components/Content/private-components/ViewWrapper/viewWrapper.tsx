@@ -17,7 +17,6 @@ import { ViewContent } from "./private-components/viewContent";
 type ViewWrapperProps = {
     isMaximized?: boolean;
     isMinimized?: boolean;
-    isActive: boolean;
     moduleInstance: ModuleInstance<any, any>;
     workbench: Workbench;
     width: number;
@@ -34,6 +33,8 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const [prevHeight, setPrevHeight] = React.useState<number>(props.height);
     const [prevX, setPrevX] = React.useState<number>(props.x);
     const [prevY, setPrevY] = React.useState<number>(props.y);
+
+    const isActive = usePubli;
 
     const ref = React.useRef<HTMLDivElement>(null);
     const [drawerContent, setDrawerContent] = useGuiState(

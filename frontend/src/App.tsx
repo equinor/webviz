@@ -99,9 +99,12 @@ function App() {
             setIsMounted(true);
 
             // Initialize the workbench
+            initApp();
+            /*
             workbench.initWorkbenchFromLocalStorage(queryClient).finally(() => {
                 initApp();
             });
+            */
 
             return function handleUnmount() {
                 workbench.clear();

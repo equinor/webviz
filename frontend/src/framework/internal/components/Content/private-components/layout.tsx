@@ -4,9 +4,10 @@ import { v4 } from "uuid";
 
 import type { LayoutBox } from "@framework/components/LayoutBox";
 import { LayoutBoxComponents, makeLayoutBoxes } from "@framework/components/LayoutBox";
+import type { LayoutElement } from "@framework/Dashboard";
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent } from "@framework/GuiMessageBroker";
-import { useModuleInstances, useModuleLayout } from "@framework/internal/hooks/workbenchHooks";
+import { useModuleInstances, useModuleLayout } from "@framework/internal/hooks/dashboardHooks";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -18,11 +19,9 @@ import { multiplyVec2, point2Distance, scaleVec2NonUniform, subtractVec2, vec2Fr
 
 import { ViewWrapper } from "./ViewWrapper";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
-import type { LayoutElement } from "@framework/Dashboard";
 
 type LayoutProps = {
     workbench: Workbench;
-    activeModuleInstanceId: string | null;
 };
 
 function convertLayoutRectToRealRect(element: LayoutElement, size: Size2D): Rect2D {
@@ -44,15 +43,15 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const mainRef = React.useRef<HTMLDivElement>(null);
     const layoutDivSize = useElementSize(ref);
     const layoutBoxRef = React.useRef<LayoutBox | null>(null);
-    const moduleInstances = useModuleInstances(props.workbench);
+    const moduleInstances = useModuleInstances(dashboard);
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     // We use a temporary layout while dragging elements around
     const [tempLayout, setTempLayout] = React.useState<LayoutElement[] | null>(null);
-    const trueLayout = useModuleLayout(props.workbench);
+    const trueLayout = useModuleLayout(dashboard);
     const layout = tempLayout ?? trueLayout;
 
-    React.useEffect(() => 
+    React.useEffect(() => {
         let pointerDownPoint: Vec2 | null = null;
         let pointerDownElementPosition: Vec2 | null = null;
         let pointerDownElementId: string | null = null;
@@ -62,8 +61,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         let dragging = false;
         let moduleInstanceId: string | null = null;
         let moduleName: string | null = null;
-        let originalLayout: LayoutElement[] = props.workbench.getLayout();
-        let currentLayout: LayoutElement[] = props.workbench.getLayout();
+        let originalLayout: LayoutElement[] = dashboard.getLayout();
+        let currentLayout: LayoutElement[] = dashboard.getLayout();
         let originalLayoutBox = makeLayoutBoxes(originalLayout);
         let currentLayoutBox = originalLayoutBox;
         layoutBoxRef.current = currentLayoutBox;
@@ -115,7 +114,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 if (isNewModule && moduleName) {
                     const layoutElement = currentLayout.find((el) => el.moduleInstanceId === pointerDownElementId);
                     if (layoutElement) {
-                        const instance = props.workbench.makeAndAddModuleInstance(moduleName, layoutElement);
+                        const instance = dashboard.makeAndAddModuleInstance(moduleName, layoutElement);
                         layoutElement.moduleInstanceId = instance.getId();
                         layoutElement.moduleName = instance.getName();
                     }
@@ -128,7 +127,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 originalLayoutBox = currentLayoutBox;
                 layoutBoxRef.current = currentLayoutBox;
                 setTempLayout(null);
-                props.workbench.setLayout(currentLayout);
+                dashboard.setLayout(currentLayout);
                 setPosition({ x: 0, y: 0 });
                 setPointer({ x: -1, y: -1 });
 
@@ -258,12 +257,12 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             if (dragging) {
                 return;
             }
-            props.workbench.removeModuleInstance(payload.moduleInstanceId);
+            dashboard.removeModuleInstance(payload.moduleInstanceId);
             currentLayoutBox.removeLayoutElement(payload.moduleInstanceId);
             currentLayout = currentLayoutBox.toLayout();
             originalLayout = currentLayout;
             originalLayoutBox = currentLayoutBox;
-            props.workbench.setLayout(currentLayout);
+            dashboard.setLayout(currentLayout);
         }
 
         function addDraggingEventListeners() {
@@ -325,7 +324,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 clearTimeout(delayTimer);
             }
         };
-    }, [layoutDivSize, moduleInstances, guiMessageBroker, props.workbench]);
+    }, [layoutDivSize, moduleInstances, guiMessageBroker, dashboard]);
 
     function makeTempViewWrapperPlaceholder() {
         if (!tempLayoutBoxId) {
@@ -437,7 +436,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                             key={instance.getId()}
                             moduleInstance={instance}
                             workbench={props.workbench}
-                            isActive={props.activeModuleInstanceId === instance.getId()}
                             isDragged={isDragged}
                             dragPosition={position}
                             changingLayout={draggedModuleInstanceId !== null}

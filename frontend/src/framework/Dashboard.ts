@@ -1,3 +1,4 @@
+import { PublishSubscribeDelegate, type PublishSubscribe } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { v4 } from "uuid";
 
 import type { AtomStoreMaster } from "./AtomStoreMaster";
@@ -26,12 +27,21 @@ export type SerializedDashboard = {
     moduleInstances: ModuleInstanceStateAndLayoutInfo[];
 };
 
-export enum DashboardEvent {
-    LayoutChanged = "LayoutChanged",
-    ModuleInstancesChanged = "ModuleInstancesChanged",
+export enum DashboardTopic {
+    Layout = "Layout",
+    ModuleInstances = "ModuleInstances",
+    ActiveModuleInstanceId = "ActiveModuleInstanceId",
 }
 
-export class Dashboard {
+export type DashboardTopicPayloads = {
+    [DashboardTopic.Layout]: LayoutElement[];
+    [DashboardTopic.ModuleInstances]: ModuleInstance<any, any>[];
+    [DashboardTopic.ActiveModuleInstanceId]: string | null;
+};
+
+export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<DashboardTopicPayloads>();
+
     private _id: string;
     private _name: string;
     private _description?: string;
@@ -45,6 +55,28 @@ export class Dashboard {
         this._id = v4();
         this._name = "New Dashboard";
         this._atomStoreMaster = atomStoreMaster;
+    }
+
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<DashboardTopicPayloads> {
+        return this._publishSubscribeDelegate;
+    }
+
+    makeSnapshotGetter<T extends DashboardTopic>(topic: T): () => DashboardTopicPayloads[T] {
+        const snapshotGetter = (): any => {
+            if (topic === DashboardTopic.Layout) {
+                return this._layout;
+            }
+            if (topic === DashboardTopic.ModuleInstances) {
+                return this._moduleInstances;
+            }
+            if (topic === DashboardTopic.ActiveModuleInstanceId) {
+                return this._activeModuleInstanceId;
+            }
+
+            throw new Error(`No snapshot getter for topic ${topic}`);
+        };
+
+        return snapshotGetter;
     }
 
     getId(): string {
@@ -61,6 +93,10 @@ export class Dashboard {
 
     setLayout(layout: LayoutElement[]): void {
         this._layout = layout;
+    }
+
+    getModuleInstances(): ModuleInstance<any, any>[] {
+        return this._moduleInstances;
     }
 
     serializeState(): SerializedDashboard {
@@ -124,7 +160,7 @@ export class Dashboard {
             });
         }
 
-        this.notifySubscribers(DashboardEvent.LayoutChanged);
+        this.notifySubscribers(DashboardTopic.Layout);
     }
 
     clearLayout(): void {
@@ -133,13 +169,13 @@ export class Dashboard {
         }
         this._moduleInstances = [];
         this._layout = [];
-        this.notifySubscribers(DashboardEvent.LayoutChanged);
+        this.notifySubscribers(DashboardTopic.Layout);
     }
 
     registerModuleInstance(moduleInstance: ModuleInstance<any, any>): void {
         this._moduleInstances.push(moduleInstance);
         this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
-        this.notifySubscribers(DashboardEvent.ModuleInstancesChanged);
+        this.notifySubscribers(DashboardTopic.ModuleInstances);
     }
 
     makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any, any> {
@@ -154,8 +190,8 @@ export class Dashboard {
 
         this._layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
         this._activeModuleInstanceId = moduleInstance.getId();
-        this.notifySubscribers(DashboardEvent.ModuleInstancesChanged);
-        this.notifySubscribers(DashboardEvent.LayoutChanged);
+        this.notifySubscribers(DashboardTopic.ModuleInstances);
+        this.notifySubscribers(DashboardTopic.Layout);
         return moduleInstance;
     }
 
@@ -179,7 +215,7 @@ export class Dashboard {
         if (this._activeModuleInstanceId === moduleInstanceId) {
             this._activeModuleInstanceId = null;
         }
-        this.notifySubscribers(DashboardEvent.ModuleInstancesChanged);
+        this.notifySubscribers(DashboardTopic.ModuleInstances);
     }
 
     getModuleInstance(id: string): ModuleInstance<any, any> | undefined {
@@ -222,7 +258,7 @@ export class Dashboard {
         return dashboard;
     }
 
-    private notifySubscribers(event: DashboardEvent): void {
+    private notifySubscribers(event: DashboardTopic): void {
         const subscribers = this._subscribersMap.get(event);
         if (!subscribers) return;
 
@@ -231,7 +267,7 @@ export class Dashboard {
         });
     }
 
-    subscribe(event: DashboardEvent, cb: () => void) {
+    subscribe(event: DashboardTopic, cb: () => void) {
         const subscribersSet = this._subscribersMap.get(event) ?? new Set();
         subscribersSet.add(cb);
         this._subscribersMap.set(event, subscribersSet);

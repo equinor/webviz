@@ -2,11 +2,9 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
 import { GuiMessageBroker } from "./GuiMessageBroker";
-import { loadMetadataFromBackendAndCreateEnsembleSet } from "./internal/EnsembleSetLoader";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
 import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
-import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import type { WorkbenchServices } from "./WorkbenchServices";
 
 export type StoredUserEnsembleSetting = {
@@ -61,6 +59,7 @@ export class Workbench {
         return this._guiMessageBroker;
     }
 
+    /*
     async initWorkbenchFromLocalStorage(queryClient: QueryClient): Promise<void> {
         const storedUserEnsembleSettings = this.maybeLoadEnsembleSettingsFromLocalStorage();
         const storedUserDeltaEnsembleSettings = this.maybeLoadDeltaEnsembleSettingsFromLocalStorage();
@@ -104,7 +103,9 @@ export class Workbench {
         this._workbenchSession.setEnsembleSetLoadingState(false);
         this._workbenchSession.setEnsembleSet(newEnsembleSet);
     }
+        */
 
+    /*
     private storeEnsembleSetInLocalStorage(ensembleSettingsToStore: UserEnsembleSetting[]): void {
         const ensembleSettingsArrayToStore: StoredUserEnsembleSetting[] = ensembleSettingsToStore.map((el) => ({
             ...el,
@@ -150,6 +151,7 @@ export class Workbench {
 
         return parsedDeltaEnsembleSettingsArray;
     }
+        */
 
     clear(): void {
         this._workbenchSession.clear();

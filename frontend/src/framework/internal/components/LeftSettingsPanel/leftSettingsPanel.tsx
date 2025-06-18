@@ -3,7 +3,7 @@ import React from "react";
 import { Settings as SettingsIcon } from "@mui/icons-material";
 
 import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
-import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
+import { useModuleInstances } from "@framework/internal/hooks/dashboardHooks";
 import type { Workbench } from "@framework/Workbench";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
