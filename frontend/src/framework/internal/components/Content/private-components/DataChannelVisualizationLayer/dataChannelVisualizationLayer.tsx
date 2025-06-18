@@ -2,9 +2,11 @@ import React from "react";
 
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 
@@ -24,6 +26,10 @@ type DataChannelPath = {
 };
 
 export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationProps> = (props) => {
+    const dashboard = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.ActiveDashboard,
+    );
     const ref = React.useRef<SVGSVGElement>(null);
     const [visible, setVisible] = React.useState<boolean>(false);
     const [originPoint, setOriginPoint] = React.useState<Vec2>({ x: 0, y: 0 });
@@ -69,7 +75,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             setShowDataChannelConnections(true);
             addDraggingEventListeners();
 
-            const moduleInstance = props.workbench.getModuleInstance(payload.moduleInstanceId);
+            const moduleInstance = dashboard.getModuleInstance(payload.moduleInstanceId);
             if (!moduleInstance) {
                 return;
             }
@@ -243,7 +249,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             removeDraggingEventListeners();
             disconnectResizeObserver();
         };
-    }, [forceRerender, guiMessageBroker, props.workbench, setShowDataChannelConnections]);
+    }, [forceRerender, guiMessageBroker, dashboard, setShowDataChannelConnections]);
 
     let midPointY = (originPoint.y + currentPointerPosition.y) / 2;
 
@@ -263,7 +269,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
 
     function makeDataChannelPaths() {
         const dataChannelPaths: DataChannelPath[] = [];
-        for (const moduleInstance of props.workbench.getModuleInstances()) {
+        for (const moduleInstance of dashboard.getModuleInstances()) {
             if (
                 editDataChannelConnectionsForModuleInstanceId &&
                 moduleInstance.getId() !== editDataChannelConnectionsForModuleInstanceId
@@ -282,7 +288,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 }
 
                 const originModuleInstanceId = channel.getManager().getModuleInstanceId();
-                const originModuleInstance = props.workbench.getModuleInstance(originModuleInstanceId);
+                const originModuleInstance = dashboard.getModuleInstance(originModuleInstanceId);
                 if (!originModuleInstance) {
                     continue;
                 }

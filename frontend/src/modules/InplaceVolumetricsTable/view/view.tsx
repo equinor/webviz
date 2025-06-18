@@ -5,12 +5,12 @@ import { useAtomValue } from "jotai";
 import { InplaceVolumetricsIdentifier_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Table as TableComponent } from "@lib/components/Table";
 import type { TableHeading, TableRow } from "@lib/components/Table/table";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { Interfaces } from "../interfaces";
 
@@ -18,9 +18,8 @@ import { areSelectedTablesComparableAtom, haveAllQueriesFailedAtom, isQueryFetch
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useTableBuilder } from "./hooks/useTableBuilder";
 
-
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
-    const ensembleSet = useEnsembleSet(props.workbenchSession);
+    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
     const statusWriter = useViewStatusWriter(props.viewContext);
 
     const divRef = React.useRef<HTMLDivElement>(null);

@@ -6,9 +6,9 @@ import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ModuleViewProps } from "@framework/Module";
 import { timestampUtcMsToIsoString } from "@framework/utils/timestampUtils";
 import type { AllTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { Button } from "@lib/components/Button";
-
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { Interfaces } from "./interfaces";
 
@@ -26,7 +26,7 @@ export function WorkbenchSpySettings() {
 
 //-----------------------------------------------------------------------------------------------------------
 export function WorkbenchSpyView(props: ModuleViewProps<Interfaces>) {
-    const ensembleSet = useEnsembleSet(props.workbenchSession);
+    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
     const [hoverRealization, hoverRealization_TS] = useServiceValueWithTS(
         "global.hoverRealization",
         props.workbenchServices,

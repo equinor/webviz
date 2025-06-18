@@ -3,10 +3,12 @@ import React from "react";
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 
@@ -21,6 +23,11 @@ export type ChannelReceiverNodesWrapperProps = {
 };
 
 export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperProps> = (props) => {
+    const dashboard = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.ActiveDashboard,
+    );
+
     const [visible, setVisible] = React.useState<boolean>(false);
     const [currentReceiver, setCurrentReceiver] = React.useState<ChannelReceiver | null>(null);
     const [currentOriginModuleInstanceId, setCurrentOriginModuleInstanceId] = React.useState<string | null>(null);
@@ -109,7 +116,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
 
     const handleChannelConnect = React.useCallback(
         function handleChannelConnect(receiverIdString: string, moduleInstanceId: string, destinationPoint: Vec2) {
-            const originModuleInstance = props.workbench.getModuleInstance(moduleInstanceId);
+            const originModuleInstance = dashboard.getModuleInstance(moduleInstanceId);
 
             if (!originModuleInstance) {
                 guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
@@ -198,7 +205,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
             guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
             guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange);
         },
-        [props.moduleInstance, props.workbench, guiMessageBroker],
+        [props.moduleInstance, dashboard, guiMessageBroker],
     );
 
     const handleChannelDisconnect = React.useCallback(
@@ -231,7 +238,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
         if (!currentOriginModuleInstanceId) {
             return;
         }
-        const originModuleInstance = props.workbench.getModuleInstance(currentOriginModuleInstanceId);
+        const originModuleInstance = dashboard.getModuleInstance(currentOriginModuleInstanceId);
 
         if (!originModuleInstance) {
             return;

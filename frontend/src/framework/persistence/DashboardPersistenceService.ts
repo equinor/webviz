@@ -1,14 +1,15 @@
+import type { QueryClient } from "@tanstack/query-core";
+import { v4 } from "uuid";
+
 import {
     createDashboard,
     getDashboardOptions,
     getDashboardsMetadataOptions,
     type PrivateDashboardUpdate_api,
 } from "@api";
+import type { LayoutElement } from "@framework/Dashboard";
 import type { SerializedModuleState } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
-import type { LayoutElement } from "@framework/Workbench";
-import type { QueryClient } from "@tanstack/query-core";
-import { v4 } from "uuid";
 
 import type { PrivateDashboard } from "./types";
 
@@ -42,11 +43,11 @@ export class DashboardPersistenceService {
         this._metadata.title = dashboardName ?? "New Dashboard";
     }
 
-    registerModuleInstance(moduleInstance: ModuleInstance<any>) {
+    registerModuleInstance(moduleInstance: ModuleInstance<any, any>) {
         this._bufferedModuleInstanceStates.push({
             moduleInstanceId: moduleInstance.getId(),
-            moduleName: moduleInstance.getModuleName(),
-            state: moduleInstance.getState(),
+            moduleName: moduleInstance.getModule().getName(),
+            state: moduleInstance.getFullState(),
         });
 
         this.resetFlushTimeout();

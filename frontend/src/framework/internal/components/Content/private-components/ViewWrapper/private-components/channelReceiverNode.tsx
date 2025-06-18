@@ -6,9 +6,11 @@ import type { KeyKind } from "@framework/DataChannelTypes";
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { ChannelReceiverNotificationTopic } from "@framework/internal/DataChannels/ChannelReceiver";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { IconButton } from "@lib/components/IconButton";
 import { rectContainsPoint } from "@lib/utils/geometry";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 import { vec2FromPointerEvent } from "@lib/utils/vec2";
@@ -26,6 +28,11 @@ export type ChannelReceiverNodeProps = {
 
 export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) => {
     const { onChannelConnect, onChannelConnectionDisconnect } = props;
+
+    const dashboard = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.ActiveDashboard,
+    );
 
     const ref = React.useRef<HTMLDivElement>(null);
     const removeButtonRef = React.useRef<HTMLButtonElement>(null);
@@ -45,14 +52,14 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
         let localConnectable = false;
         let localModuleInstanceId = "";
 
-        const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
+        const moduleInstance = dashboard.getModuleInstance(props.moduleInstanceId);
 
         function handleDataChannelOriginPointerDown(payload: GuiEventPayloads[GuiEvent.DataChannelOriginPointerDown]) {
             localConnectable = false;
             setConnectable(false);
             localModuleInstanceId = "";
 
-            const originModuleInstance = props.workbench.getModuleInstance(payload.moduleInstanceId);
+            const originModuleInstance = dashboard.getModuleInstance(payload.moduleInstanceId);
             if (!originModuleInstance) {
                 return;
             }
@@ -120,7 +127,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
         }
 
         function checkIfConnection() {
-            const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
+            const moduleInstance = dashboard.getModuleInstance(props.moduleInstanceId);
             if (!moduleInstance) {
                 return;
             }
@@ -163,7 +170,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
     }, [
         onChannelConnect,
         onChannelConnectionDisconnect,
-        props.workbench,
+        dashboard,
         props.moduleInstanceId,
         props.idString,
         props.supportedKindsOfKeys,
@@ -188,7 +195,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
         guiMessageBroker.publishEvent(GuiEvent.DataChannelNodeUnhover);
     }
 
-    const moduleInstance = props.workbench.getModuleInstance(props.moduleInstanceId);
+    const moduleInstance = dashboard.getModuleInstance(props.moduleInstanceId);
     const receiver = moduleInstance?.getChannelManager().getReceiver(props.idString);
     const channel = receiver?.getChannel();
 

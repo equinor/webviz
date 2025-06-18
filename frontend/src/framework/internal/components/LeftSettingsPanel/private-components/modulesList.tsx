@@ -11,10 +11,11 @@ import {
     WebAsset,
 } from "@mui/icons-material";
 
+import { DashboardTopic } from "@framework/Dashboard";
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { useModuleInstances } from "@framework/internal/hooks/dashboardHooks";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
 import type { Module } from "@framework/Module";
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";
@@ -27,6 +28,7 @@ import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
 import type { Size2D } from "@lib/utils/geometry";
 import { MANHATTAN_LENGTH, pointRelativeToDomRect } from "@lib/utils/geometry";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { Vec2 } from "@lib/utils/vec2";
@@ -458,8 +460,12 @@ if (isDevMode()) {
 }
 
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
+    const dashboard = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.ActiveDashboard,
+    );
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.LeftDrawerContent);
-    const moduleInstances = useModuleInstances(props.workbench);
+    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances);
 
     const ref = React.useRef<HTMLDivElement>(null);
     const boundingClientRect = useElementBoundingRect(ref);

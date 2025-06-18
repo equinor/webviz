@@ -1,5 +1,6 @@
-import { PublishSubscribeDelegate, type PublishSubscribe } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { v4 } from "uuid";
+
+import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { AtomStoreMaster } from "./AtomStoreMaster";
 import type { ModuleInstance, ModuleInstanceFullState } from "./ModuleInstance";
@@ -48,7 +49,6 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     private _layout: LayoutElement[] = [];
     private _moduleInstances: ModuleInstance<any, any>[] = [];
     private _activeModuleInstanceId: string | null = null;
-    private _subscribersMap: Map<string, Set<() => void>> = new Map();
     private _atomStoreMaster: AtomStoreMaster;
 
     constructor(atomStoreMaster: AtomStoreMaster) {
@@ -160,7 +160,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             });
         }
 
-        this.notifySubscribers(DashboardTopic.Layout);
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.Layout);
     }
 
     clearLayout(): void {
@@ -169,13 +169,13 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         }
         this._moduleInstances = [];
         this._layout = [];
-        this.notifySubscribers(DashboardTopic.Layout);
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.Layout);
     }
 
     registerModuleInstance(moduleInstance: ModuleInstance<any, any>): void {
         this._moduleInstances.push(moduleInstance);
         this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
-        this.notifySubscribers(DashboardTopic.ModuleInstances);
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
     }
 
     makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any, any> {
@@ -190,8 +190,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
         this._layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
         this._activeModuleInstanceId = moduleInstance.getId();
-        this.notifySubscribers(DashboardTopic.ModuleInstances);
-        this.notifySubscribers(DashboardTopic.Layout);
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.Layout);
         return moduleInstance;
     }
 
@@ -215,11 +215,23 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         if (this._activeModuleInstanceId === moduleInstanceId) {
             this._activeModuleInstanceId = null;
         }
-        this.notifySubscribers(DashboardTopic.ModuleInstances);
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
     }
 
     getModuleInstance(id: string): ModuleInstance<any, any> | undefined {
         return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
+    }
+
+    setActiveModuleInstanceId(moduleInstanceId: string | null): void {
+        if (moduleInstanceId !== null && !this.getModuleInstance(moduleInstanceId)) {
+            throw new Error(`Module instance with ID ${moduleInstanceId} not found`);
+        }
+        this._activeModuleInstanceId = moduleInstanceId;
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ActiveModuleInstanceId);
+    }
+
+    getActiveModuleInstanceId(): string | null {
+        return this._activeModuleInstanceId;
     }
 
     static fromPersistedState(serializedDashboard: SerializedDashboard, atomStoreMaster: AtomStoreMaster): Dashboard {
@@ -256,24 +268,5 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         dashboard.setLayout(layout);
 
         return dashboard;
-    }
-
-    private notifySubscribers(event: DashboardTopic): void {
-        const subscribers = this._subscribersMap.get(event);
-        if (!subscribers) return;
-
-        subscribers.forEach((subscriber) => {
-            subscriber();
-        });
-    }
-
-    subscribe(event: DashboardTopic, cb: () => void) {
-        const subscribersSet = this._subscribersMap.get(event) ?? new Set();
-        subscribersSet.add(cb);
-        this._subscribersMap.set(event, subscribersSet);
-
-        return () => {
-            subscribersSet.delete(cb);
-        };
     }
 }

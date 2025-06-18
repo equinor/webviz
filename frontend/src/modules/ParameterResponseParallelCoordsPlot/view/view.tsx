@@ -20,7 +20,7 @@ import type { Interfaces } from "../interfaces";
 
 import { ParallelCoordinatesFigure } from "./parallelCoordinatesFigure";
 
-export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfaces>) {
+export function View({ viewContext, workbenchSession: workbenchSession }: ModuleViewProps<Interfaces>) {
     const [isPending, startTransition] = React.useTransition();
     const [content, setContent] = React.useState<React.ReactNode>(null);
     const [revNumberResponse, setRevNumberResponse] = React.useState<number>(0);

@@ -4,15 +4,14 @@ import { v4 } from "uuid";
 
 import type { LayoutBox } from "@framework/components/LayoutBox";
 import { LayoutBoxComponents, makeLayoutBoxes } from "@framework/components/LayoutBox";
-import type { LayoutElement } from "@framework/Dashboard";
-import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
-import { GuiEvent } from "@framework/GuiMessageBroker";
-import { useModuleInstances, useModuleLayout } from "@framework/internal/hooks/dashboardHooks";
+import { DashboardTopic, type LayoutElement } from "@framework/Dashboard";
+import { GuiEvent, type GuiEventPayloads } from "@framework/GuiMessageBroker";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Rect2D, Size2D } from "@lib/utils/geometry";
 import { MANHATTAN_LENGTH, addMarginToRect, pointRelativeToDomRect, rectContainsPoint } from "@lib/utils/geometry";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { Vec2 } from "@lib/utils/vec2";
 import { multiplyVec2, point2Distance, scaleVec2NonUniform, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
@@ -43,12 +42,12 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const mainRef = React.useRef<HTMLDivElement>(null);
     const layoutDivSize = useElementSize(ref);
     const layoutBoxRef = React.useRef<LayoutBox | null>(null);
-    const moduleInstances = useModuleInstances(dashboard);
+    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances);
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     // We use a temporary layout while dragging elements around
     const [tempLayout, setTempLayout] = React.useState<LayoutElement[] | null>(null);
-    const trueLayout = useModuleLayout(dashboard);
+    const trueLayout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.Layout);
     const layout = tempLayout ?? trueLayout;
 
     React.useEffect(() => {

@@ -4,6 +4,7 @@ import { Close, CloseFullscreen, Error, History, Input, OpenInFull, Output, Warn
 
 import { GuiEvent, GuiState, LeftDrawerContent, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
 import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
@@ -15,6 +16,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type HeaderProps = {
@@ -28,7 +30,11 @@ export type HeaderProps = {
 };
 
 export const Header: React.FC<HeaderProps> = (props) => {
-    const moduleId = props.moduleInstance.getId();
+    const dashboard = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.ActiveDashboard,
+    );
+    const moduleInstanceId = props.moduleInstance.getId();
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     const dataChannelOriginRef = React.useRef<HTMLDivElement>(null);
@@ -39,7 +45,6 @@ export const Header: React.FC<HeaderProps> = (props) => {
     );
     const log = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "log");
     const [, setRightDrawerContent] = useGuiState(guiMessageBroker, GuiState.RightDrawerContent);
-    const [, setActiveModuleInstanceId] = useGuiState(guiMessageBroker, GuiState.ActiveModuleInstanceId);
     const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
         guiMessageBroker,
         GuiState.RightSettingsPanelWidthInPercent,
@@ -48,38 +53,40 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
     const handleMaximizeClick = React.useCallback(
         function handleMaximizeClick(e: React.PointerEvent<HTMLDivElement>) {
-            const currentLayout = props.workbench.getLayout();
-            const tweakedLayout = currentLayout.map((l) => ({ ...l, maximized: l.moduleInstanceId === moduleId }));
-            props.workbench.setLayout(tweakedLayout);
-
-            guiMessageBroker.setState(GuiState.ActiveModuleInstanceId, moduleId);
+            const currentLayout = dashboard.getLayout();
+            const tweakedLayout = currentLayout.map((l) => ({
+                ...l,
+                maximized: l.moduleInstanceId === moduleInstanceId,
+            }));
+            dashboard.setLayout(tweakedLayout);
+            dashboard.setActiveModuleInstanceId(moduleInstanceId);
 
             e.preventDefault();
             e.stopPropagation();
         },
-        [moduleId, guiMessageBroker, props.workbench],
+        [moduleInstanceId, dashboard],
     );
 
     const handleRestoreClick = React.useCallback(
         function handleRestoreClick(e: React.PointerEvent<HTMLDivElement>) {
-            const currentLayout = props.workbench.getLayout();
+            const currentLayout = dashboard.getLayout();
             const tweakedLayout = currentLayout.map((l) => ({ ...l, maximized: false }));
-            props.workbench.setLayout(tweakedLayout);
+            dashboard.setLayout(tweakedLayout);
 
             e.preventDefault();
             e.stopPropagation();
         },
-        [props.workbench],
+        [dashboard],
     );
 
     const handleRemoveClick = React.useCallback(
         function handleRemoveClick(e: React.PointerEvent<HTMLDivElement>) {
-            guiMessageBroker.publishEvent(GuiEvent.RemoveModuleInstanceRequest, { moduleInstanceId: moduleId });
+            guiMessageBroker.publishEvent(GuiEvent.RemoveModuleInstanceRequest, { moduleInstanceId: moduleInstanceId });
 
             e.preventDefault();
             e.stopPropagation();
         },
-        [guiMessageBroker, moduleId],
+        [guiMessageBroker, moduleInstanceId],
     );
 
     const ref = React.useRef<HTMLDivElement>(null);
@@ -140,7 +147,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
             setRightSettingsPanelWidth(15);
         }
 
-        setActiveModuleInstanceId(props.moduleInstance.getId());
+        dashboard.setActiveModuleInstanceId(props.moduleInstance.getId());
         setRightDrawerContent(RightDrawerContent.ModuleInstanceLog);
 
         setStatusMessagesVisible(false);

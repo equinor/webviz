@@ -5,19 +5,19 @@ import Plot from "react-plotly.js";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
-
 import type { Interfaces } from "./interfaces";
 import { VfpDataAccessor } from "./utils/vfpDataAccessor";
 import { VfpPlotBuilder } from "./utils/vfpPlotBuilder";
 
 export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) {
-    const colorScale = workbenchSettings.useContinuousColorScale({ gradientType: ColorScaleGradientType.Sequential });
+    const colorScale = useContinuousColorScale(workbenchSettings, { gradientType: ColorScaleGradientType.Sequential });
 
     const vfpDataQuery = viewContext.useSettingsToViewInterfaceValue("vfpDataQuery");
     const selectedThpIndices = viewContext.useSettingsToViewInterfaceValue("selectedThpIndices");

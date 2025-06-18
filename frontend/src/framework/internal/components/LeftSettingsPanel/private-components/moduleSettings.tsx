@@ -3,7 +3,9 @@ import type React from "react";
 import { Settings as SettingsIcon } from "@mui/icons-material";
 import { Provider } from "jotai";
 
+import { DashboardTopic } from "@framework/Dashboard";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
 import { ImportStatus } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import {
@@ -13,7 +15,9 @@ import {
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ApplyInterfaceEffectsToSettings } from "../../ApplyInterfaceEffects/applyInterfaceEffects";
@@ -22,12 +26,18 @@ import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
 
 type ModuleSettingsProps = {
     moduleInstance: ModuleInstance<any, any>;
-    activeModuleInstanceId: string;
     workbench: Workbench;
 };
 
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
+    const dashboard = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.ActiveDashboard,
+    );
+
+    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ActiveModuleInstanceId);
+
     const moduleInstanceLifecycleState = useModuleInstanceTopicValue(
         props.moduleInstance,
         ModuleInstanceTopic.LIFECYCLE_STATE,
@@ -61,7 +71,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                 <div
                     className="text-red-600 m-2"
                     style={{
-                        display: props.activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "none",
+                        display: activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "none",
                     }}
                 >
                     This module instance has encountered an error. Please see its view for more details.
@@ -75,7 +85,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         <div
             key={props.moduleInstance.getId()}
             className={resolveClassNames(
-                props.activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "hidden",
+                activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "hidden",
                 "flex-col h-full w-full relative",
             )}
             style={{ contain: "content" }}
@@ -103,7 +113,9 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                                     <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
                                         <Settings
                                             settingsContext={props.moduleInstance.getContext()}
-                                            workbenchSession={props.workbench.getWorkbenchSession()}
+                                            workbenchSession={
+                                                props.workbench.getWorkbenchSession() as unknown as WorkbenchSession
+                                            }
                                             workbenchServices={props.workbench.getWorkbenchServices()}
                                             workbenchSettings={props.workbench.getWorkbenchSettings()}
                                             initialSettings={props.moduleInstance.getInitialSettings() || undefined}

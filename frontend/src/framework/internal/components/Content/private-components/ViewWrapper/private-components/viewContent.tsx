@@ -15,6 +15,7 @@ import {
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
 import { CrashView } from "./crashView";
@@ -120,7 +121,9 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                             <ApplyInterfaceEffectsToView moduleInstance={props.moduleInstance}>
                                 <View
                                     viewContext={props.moduleInstance.getContext()}
-                                    workbenchSession={props.workbench.getWorkbenchSession()}
+                                    workbenchSession={
+                                        props.workbench.getWorkbenchSession() as unknown as WorkbenchSession
+                                    }
                                     workbenchServices={props.workbench.getWorkbenchServices()}
                                     workbenchSettings={props.workbench.getWorkbenchSettings()}
                                     initialSettings={props.moduleInstance.getInitialSettings() || undefined}

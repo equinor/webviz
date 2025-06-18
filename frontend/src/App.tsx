@@ -79,8 +79,6 @@ function App() {
     React.useEffect(
         function handleMountWhenSignedIn() {
             function initApp() {
-                workbench.initialize();
-
                 if (workbench.getWorkbenchSession().getActiveDashboard()?.getLayout().length === 0) {
                     workbench.getGuiMessageBroker().setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModulesList);
                 } else {
@@ -99,12 +97,10 @@ function App() {
             setIsMounted(true);
 
             // Initialize the workbench
-            initApp();
-            /*
-            workbench.initWorkbenchFromLocalStorage(queryClient).finally(() => {
+
+            workbench.initialize().finally(() => {
                 initApp();
             });
-            */
 
             return function handleUnmount() {
                 workbench.clear();

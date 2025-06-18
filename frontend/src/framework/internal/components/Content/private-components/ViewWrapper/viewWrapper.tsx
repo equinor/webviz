@@ -1,9 +1,12 @@
 import React from "react";
 
+import { DashboardTopic } from "@framework/Dashboard";
 import { GuiEvent, GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
 import { pointRelativeToDomRect } from "@lib/utils/geometry";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 import { subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
@@ -29,12 +32,17 @@ type ViewWrapperProps = {
 };
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
+    const dashboard = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.ActiveDashboard,
+    );
     const [prevWidth, setPrevWidth] = React.useState<number>(props.width);
     const [prevHeight, setPrevHeight] = React.useState<number>(props.height);
     const [prevX, setPrevX] = React.useState<number>(props.x);
     const [prevY, setPrevY] = React.useState<number>(props.y);
 
-    const isActive = usePubli;
+    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ActiveModuleInstanceId);
+    const isActive = props.moduleInstance.getId() === activeModuleInstanceId;
 
     const ref = React.useRef<HTMLDivElement>(null);
     const [drawerContent, setDrawerContent] = useGuiState(
@@ -100,8 +108,8 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         if (drawerContent !== LeftDrawerContent.SyncSettings) {
             setDrawerContent(LeftDrawerContent.ModuleSettings);
         }
-        if (props.isActive) return;
-        props.workbench.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, props.moduleInstance.getId());
+        if (isActive) return;
+        dashboard.setActiveModuleInstanceId(props.moduleInstance.getId());
     }
 
     function handlePointerDown() {
@@ -132,7 +140,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     }
 
     const showAsActive =
-        props.isActive && [LeftDrawerContent.ModuleSettings, LeftDrawerContent.SyncSettings].includes(drawerContent);
+        isActive && [LeftDrawerContent.ModuleSettings, LeftDrawerContent.SyncSettings].includes(drawerContent);
 
     function makeHeader() {
         return (

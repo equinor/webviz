@@ -2,6 +2,7 @@ import React from "react";
 
 import { CheckCircle, ClearAll, CloudDone, CloudDownload, Error, History, Warning } from "@mui/icons-material";
 
+import { DashboardTopic } from "@framework/Dashboard";
 import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
 import type { LogEntry } from "@framework/internal/ModuleInstanceStatusControllerInternal";
@@ -9,11 +10,13 @@ import {
     LogEntryType,
     useStatusControllerStateValue,
 } from "@framework/internal/ModuleInstanceStatusControllerInternal";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 
@@ -23,18 +26,24 @@ export type ModuleInstanceLogProps = {
 };
 
 export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNode {
+    const dashboard = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.ActiveDashboard,
+    );
     const [details, setDetails] = React.useState<Record<string, unknown> | null>(null);
     const [detailsPosY, setDetailsPosY] = React.useState<number>(0);
     const [pointerOverDetails, setPointerOverDetails] = React.useState<boolean>(false);
 
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
-    const activeModuleInstanceId = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.ActiveModuleInstanceId);
+    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ActiveModuleInstanceId);
 
     const ref = React.useRef<HTMLDivElement>(null);
     const boundingClientRect = useElementBoundingRect(ref);
     const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const moduleInstance = props.workbench.getModuleInstance(activeModuleInstanceId);
+    const moduleInstance = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances).find(
+        (instance) => instance.getId() === activeModuleInstanceId,
+    );
 
     React.useEffect(function handleMount() {
         const currentTimeoutRef = timeoutRef.current;

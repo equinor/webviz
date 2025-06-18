@@ -2,23 +2,32 @@ import React from "react";
 
 import { Link, PinDrop, Public } from "@mui/icons-material";
 
+import { DashboardTopic } from "@framework/Dashboard";
 import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
 import type { SyncSettingKey } from "@framework/SyncSettings";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
 import { Checkbox } from "@lib/components/Checkbox";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 type ModulesListProps = {
     workbench: Workbench;
 };
 
 export const SyncSettings: React.FC<ModulesListProps> = (props) => {
+    const dashboard = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.ActiveDashboard,
+    );
+    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances);
+    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ActiveModuleInstanceId);
+
     const forceRerender = React.useReducer((x) => x + 1, 0)[1];
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.LeftDrawerContent);
-    const activeModuleInstanceId = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.ActiveModuleInstanceId);
 
-    const activeModuleInstance = props.workbench.getModuleInstance(activeModuleInstanceId);
+    const activeModuleInstance = moduleInstances.find((instance) => instance.getId() === activeModuleInstanceId);
 
     function handleSyncSettingChange(setting: SyncSettingKey, value: boolean) {
         if (activeModuleInstance === undefined) {
@@ -37,8 +46,6 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
     }
 
     function handleGlobalSyncSettingChange(setting: SyncSettingKey, value: boolean) {
-        const moduleInstances = props.workbench.getModuleInstances();
-
         // @rmt: This has to be changed as soon as we support multiple pages
         for (const moduleInstance of moduleInstances) {
             if (moduleInstance.getModule().hasSyncableSettingKey(setting)) {
@@ -56,8 +63,6 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
     }
 
     function isGlobalSyncSetting(setting: SyncSettingKey): boolean {
-        const moduleInstances = props.workbench.getModuleInstances();
-
         // @rmt: This has to be changed as soon as we support multiple pages
         for (const moduleInstance of moduleInstances) {
             if (moduleInstance.getModule().hasSyncableSettingKey(setting)) {

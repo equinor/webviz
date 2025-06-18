@@ -6,7 +6,7 @@ import type { IntersectionPolyline } from "@framework/userCreatedItems/Intersect
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
 import type { EnsembleRealizationFilterFunction, WorkbenchSession } from "@framework/WorkbenchSession";
 import {
-    WorkbenchSessionEvent,
+    WorkbenchSessionTopic,
     createEnsembleRealizationFilterFuncForWorkbenchSession,
 } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
@@ -74,15 +74,17 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
 
         this._subscriptionsHandler.registerUnsubscribeFunction(
             "workbenchSession",
-            this._workbenchSession.subscribe(
-                WorkbenchSessionEvent.EnsembleSetChanged,
+            this._workbenchSession
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(WorkbenchSessionTopic.EnsembleSet)(() =>
                 this.handleEnsembleSetChanged.bind(this),
             ),
         );
         this._subscriptionsHandler.registerUnsubscribeFunction(
             "workbenchSession",
-            this._workbenchSession.subscribe(
-                WorkbenchSessionEvent.RealizationFilterSetChanged,
+            this._workbenchSession
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(WorkbenchSessionTopic.RealizationFilterSet)(() =>
                 this.handleRealizationFilterSetChanged.bind(this),
             ),
         );

@@ -9,6 +9,7 @@ import { GuiEvent, GuiState, RightDrawerContent, useGuiState, useGuiValue } from
 import { Drawer } from "@framework/internal/components/Drawer";
 import type { EnsembleRealizationFilterSelections } from "@framework/internal/components/EnsembleRealizationFilter";
 import { EnsembleRealizationFilter } from "@framework/internal/components/EnsembleRealizationFilter";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
 import { areUnsortedArraysEqual } from "@framework/utils/arrayUtils";
@@ -16,8 +17,7 @@ import { getEnsembleIdentFromString } from "@framework/utils/ensembleIdentUtils"
 import { countTrueValues } from "@framework/utils/objectUtils";
 import { areParameterIdentStringToValueSelectionMapCandidatesEqual } from "@framework/utils/realizationFilterTypesUtils";
 import type { Workbench } from "@framework/Workbench";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
-
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 export type RealizationFilterSettingsProps = { workbench: Workbench; onClose: () => void };
 
@@ -25,7 +25,10 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
     const drawerContent = useGuiValue(guiMessageBroker, GuiState.RightDrawerContent);
     const rightSettingsPanelWidth = useGuiValue(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
-    const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
+    const ensembleSet = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.EnsembleSet,
+    );
     const realizationFilterSet = props.workbench.getWorkbenchSession().getRealizationFilterSet();
     const [, setNumberOfUnsavedRealizationFilters] = useGuiState(
         guiMessageBroker,

@@ -6,7 +6,6 @@ import type { Interfaces } from "../interfaces";
 
 import { DataProvidersWrapper } from "./components/DataProvidersWrapper";
 
-
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const preferredViewLayout = props.viewContext.useSettingsToViewInterfaceValue("preferredViewLayout");
     const dataProviderManager = props.viewContext.useSettingsToViewInterfaceValue("dataProviderManager");

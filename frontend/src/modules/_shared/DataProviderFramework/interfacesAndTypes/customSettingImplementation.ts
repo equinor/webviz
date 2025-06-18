@@ -1,7 +1,6 @@
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
-
 import type { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
 import type { SettingCategory } from "../settings/settingsDefinitions";
 

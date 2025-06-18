@@ -3,6 +3,7 @@ import type React from "react";
 import { useAtom } from "jotai";
 
 import type { ModuleSettingsProps } from "@framework/Module";
+import { useContinuousColorScale, useDiscreteColorScale } from "@framework/WorkbenchSettings";
 import { ColorGradient } from "@lib/components/ColorGradient/colorGradient";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
@@ -10,9 +11,9 @@ import { RadioGroup } from "@lib/components/RadioGroup";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 import type { Interfaces } from "../interfaces";
+import type { SerializedState } from "../persistedState";
 
 import { divMidPointAtom, gradientTypeAtom, maxAtom, minAtom, typeAtom } from "./atoms/baseAtoms";
-import type { SerializedState } from "../persistedState";
 
 export function Settings(props: ModuleSettingsProps<Interfaces, SerializedState>): React.ReactNode {
     const [type, setType] = useAtom(typeAtom);
@@ -32,14 +33,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces, SerializedState>
         });
     }
 
-    const colorScale =
-        type === ColorScaleType.Continuous
-            ? props.workbenchSettings.useContinuousColorScale({
-                  gradientType,
-              })
-            : props.workbenchSettings.useDiscreteColorScale({
-                  gradientType,
-              });
+    const continuousColorScale = useContinuousColorScale(props.workbenchSettings, { gradientType });
+    const discreteColorScale = useDiscreteColorScale(props.workbenchSettings, { gradientType });
+
+    const colorScale = type === ColorScaleType.Continuous ? continuousColorScale : discreteColorScale;
 
     return (
         <div className="flex flex-col gap-4">

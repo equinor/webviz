@@ -2,9 +2,11 @@ import React from "react";
 
 import { Settings as SettingsIcon } from "@mui/icons-material";
 
+import { DashboardTopic } from "@framework/Dashboard";
 import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
-import { useModuleInstances } from "@framework/internal/hooks/dashboardHooks";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ColorPaletteSettings } from "./private-components/colorPaletteSettings";
@@ -18,9 +20,11 @@ type LeftSettingsPanelProps = {
 };
 
 export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
-    const moduleInstances = useModuleInstances(props.workbench);
-    const activeModuleInstanceId = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.ActiveModuleInstanceId);
-
+    const dashboard = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.ActiveDashboard,
+    );
+    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances);
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.LeftDrawerContent);
 
     const mainRef = React.useRef<HTMLDivElement>(null);
@@ -43,12 +47,7 @@ export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
                 )}
             >
                 {moduleInstances.map((instance) => (
-                    <ModuleSettings
-                        key={instance.getId()}
-                        moduleInstance={instance}
-                        activeModuleInstanceId={activeModuleInstanceId}
-                        workbench={props.workbench}
-                    />
+                    <ModuleSettings key={instance.getId()} moduleInstance={instance} workbench={props.workbench} />
                 ))}
                 {moduleInstances.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full">

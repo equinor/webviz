@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import FmuLogo from "@assets/fmu.svg";
 
+import { DashboardTopic } from "@framework/Dashboard";
 import { GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { LoginButton } from "@framework/internal/components/LoginButton";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
@@ -13,15 +14,17 @@ import type {
     DeltaEnsembleItem,
     RegularEnsembleItem,
 } from "@framework/internal/components/SelectEnsemblesDialog";
+import type { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { UserDeltaEnsembleSetting, UserEnsembleSetting, Workbench } from "@framework/Workbench";
-import { WorkbenchEvents } from "@framework/Workbench";
-import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
+import type { Workbench } from "@framework/Workbench";
+import { useColorSet } from "@framework/WorkbenchSettings";
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
 import { isDevMode } from "@lib/utils/devMode";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { UserSessionState } from "./private-components/UserSessionState";
@@ -31,14 +34,25 @@ type LeftNavBarProps = {
 };
 
 export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
-    const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
+    const ensembleSet = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.EnsembleSet,
+    );
+    const dashboard = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.ActiveDashboard,
+    );
+    const layout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.Layout);
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
     const [newSelectedEnsembles, setNewSelectedEnsembles] = React.useState<RegularEnsembleItem[]>([]);
     const [newCreatedDeltaEnsembles, setNewCreatedDeltaEnsembles] = React.useState<DeltaEnsembleItem[]>([]);
-    const [layoutEmpty, setLayoutEmpty] = React.useState<boolean>(props.workbench.getLayout().length === 0);
+    const [layoutEmpty, setLayoutEmpty] = React.useState<boolean>(dashboard.getLayout().length === 0);
     const [collapsed, setCollapsed] = React.useState<boolean>(localStorage.getItem("navBarCollapsed") === "true");
     const [prevIsAppInitialized, setPrevIsAppInitialized] = React.useState<boolean>(false);
-    const loadingEnsembleSet = useIsEnsembleSetLoading(props.workbench.getWorkbenchSession());
+    const loadingEnsembleSet = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.IsEnsembleSetLoading,
+    );
     const [drawerContent, setDrawerContent] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.LeftDrawerContent,
@@ -55,27 +69,19 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     }
 
     const queryClient = useQueryClient();
-    const colorSet = props.workbench.getWorkbenchSettings().useColorSet();
+    const colorSet = useColorSet(props.workbench.getWorkbenchSettings());
 
     React.useEffect(
         function reactToModuleInstancesChanged() {
-            function listener() {
-                if (
-                    props.workbench.getLayout().length === 0 &&
-                    [LeftDrawerContent.ModuleSettings, LeftDrawerContent.SyncSettings].includes(drawerContent)
-                ) {
-                    setDrawerContent(LeftDrawerContent.ModulesList);
-                }
-                setLayoutEmpty(props.workbench.getLayout().length === 0);
+            if (
+                layout.length === 0 &&
+                [LeftDrawerContent.ModuleSettings, LeftDrawerContent.SyncSettings].includes(drawerContent)
+            ) {
+                setDrawerContent(LeftDrawerContent.ModulesList);
             }
-
-            const unsubscribeFunc = props.workbench.subscribe(WorkbenchEvents.ModuleInstancesChanged, listener);
-
-            return () => {
-                unsubscribeFunc();
-            };
+            setLayoutEmpty(layout.length === 0);
         },
-        [drawerContent, props.workbench, setDrawerContent],
+        [layout, drawerContent, setDrawerContent],
     );
 
     function ensureSettingsPanelIsVisible() {
@@ -145,11 +151,13 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
             customName: deltaEns.customName,
             color: deltaEns.color,
         }));
-        return props.workbench.storeSettingsInLocalStorageAndLoadAndSetupEnsembleSetInSession(
-            queryClient,
-            ensembleSettings,
-            deltaEnsembleSettings,
-        );
+        return props.workbench
+            .getWorkbenchSession()
+            .storeSettingsInLocalStorageAndLoadAndSetupEnsembleSetInSession(
+                queryClient,
+                ensembleSettings,
+                deltaEnsembleSettings,
+            );
     }
 
     const selectedEnsembles: RegularEnsembleItem[] = ensembleSet.getRegularEnsembleArray().map((ens) => ({

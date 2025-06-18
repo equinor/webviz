@@ -11,11 +11,10 @@ import type { WellboreHeader_api, WellboreLogCurveData_api, WellborePick_api, We
 import type { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
+import { useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { createContinuousColorScaleForMap } from "@modules/3DViewer/view/utils/colorTables";
 import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
-
-
 
 import type { InterfaceTypes } from "../../interfaces";
 import { createLogTemplate } from "../../utils/logViewerTemplate";
@@ -185,7 +184,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
 
     const { template, welllog, wellpicks } = useViewerDataTransform(props);
 
-    const colorScale = props.moduleProps.workbenchSettings.useContinuousColorScale({
+    const colorScale = useContinuousColorScale(props.moduleProps.workbenchSettings, {
         gradientType: ColorScaleGradientType.Sequential,
     });
     const colorTables = React.useMemo(() => createContinuousColorScaleForMap(colorScale), [colorScale]);
