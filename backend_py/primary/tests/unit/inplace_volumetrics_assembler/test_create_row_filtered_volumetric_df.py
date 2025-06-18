@@ -21,7 +21,10 @@ def test_create_row_filtered_volumetric_df_no_realizations(inplace_volumetrics_d
     empty_realizations_list: List[int] = []
     with pytest.raises(InvalidParameterError, match="Realizations must be a non-empty list or None"):
         InplaceVolumetricsAssembler._create_row_filtered_volumetric_df(
-            table_name="test_table", inplace_volumetrics_df=inplace_volumetrics_df, realizations=empty_realizations_list
+            table_name="test_table",
+            inplace_volumetrics_df=inplace_volumetrics_df,
+            realizations=empty_realizations_list,
+            identifiers_with_values=[],
         )
 
     # assert result_df is None
@@ -33,14 +36,20 @@ def test_create_row_filtered_volumetric_df_no_data_found(inplace_volumetrics_df:
         match=re.escape("Missing data error. The following realization values do not exist in 'REAL' column: [4, 5]"),
     ):
         InplaceVolumetricsAssembler._create_row_filtered_volumetric_df(
-            table_name="test_table", inplace_volumetrics_df=inplace_volumetrics_df, realizations=[4, 5]
+            table_name="test_table",
+            inplace_volumetrics_df=inplace_volumetrics_df,
+            realizations=[4, 5],
+            identifiers_with_values=[],
         )
 
 
 def test_create_row_filtered_volumetric_df_with_realizations(inplace_volumetrics_df: pl.DataFrame) -> None:
     valid_realizations = [1, 2]
     result_df = InplaceVolumetricsAssembler._create_row_filtered_volumetric_df(
-        table_name="test_table", inplace_volumetrics_df=inplace_volumetrics_df, realizations=valid_realizations
+        table_name="test_table",
+        inplace_volumetrics_df=inplace_volumetrics_df,
+        realizations=valid_realizations,
+        identifiers_with_values=[],
     )
 
     expected_df = pl.DataFrame({"REAL": [1, 2], "ZONE": ["A", "B"], "VOLUME": [10, 20]})
