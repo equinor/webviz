@@ -132,11 +132,17 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
         gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
     });
+
     const [selectedEnsembleName, setSelectedEnsembleName] = useValidState<string>({
         initialState: "",
         validStates: ensemblesQuery.data?.map((el) => el.name) ?? [],
         keepStateWhenInvalid: true,
     });
+
+    const selectedEnsemble = React.useMemo(() => {
+        const ensembles = ensemblesQuery.data ?? [];
+        return ensembles.find((ens) => ens.name === selectedEnsembleName);
+    }, [ensemblesQuery.data, selectedEnsembleName]);
 
     const ensembleOpts =
         ensemblesQuery.data?.map((e) => ({
@@ -171,6 +177,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
 
     function handleAddRegularEnsemble() {
         if (ensembleAlreadySelected) return;
+        if (!selectedEnsemble) return;
 
         const caseName = casesQuery.data?.find((c) => c.uuid === selectedCaseId)?.name ?? "UNKNOWN";
 
@@ -180,6 +187,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
             ensembleName: selectedEnsembleName,
             color: props.nextEnsembleColor,
             customName: null,
+            timestamps: selectedEnsemble.timestamps,
         });
     }
 

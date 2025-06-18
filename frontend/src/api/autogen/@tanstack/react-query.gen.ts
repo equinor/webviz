@@ -9,6 +9,7 @@ import {
     getCases,
     getEnsembles,
     getEnsembleDetails,
+    getEnsembleTimestamps,
     getVectorList,
     getDeltaEnsembleVectorList,
     getRealizationsVectorData,
@@ -81,6 +82,7 @@ import type {
     GetCasesData_api,
     GetEnsemblesData_api,
     GetEnsembleDetailsData_api,
+    GetEnsembleTimestampsData_api,
     GetVectorListData_api,
     GetDeltaEnsembleVectorListData_api,
     GetRealizationsVectorDataData_api,
@@ -262,6 +264,25 @@ export const getEnsembleDetailsOptions = (options: Options<GetEnsembleDetailsDat
             return data;
         },
         queryKey: getEnsembleDetailsQueryKey(options),
+    });
+};
+
+export const getEnsembleTimestampsQueryKey = (options: Options<GetEnsembleTimestampsData_api>) => [
+    createQueryKey("getEnsembleTimestamps", options),
+];
+
+export const getEnsembleTimestampsOptions = (options: Options<GetEnsembleTimestampsData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getEnsembleTimestamps({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getEnsembleTimestampsQueryKey(options),
     });
 };
 
