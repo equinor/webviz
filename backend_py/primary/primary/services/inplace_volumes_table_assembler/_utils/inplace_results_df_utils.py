@@ -214,7 +214,7 @@ def _convert_statistical_results_df_to_statistical_results_table_data(
     requested_statistics: list[Statistic],
 ) -> tuple[list[RepeatedTableColumnData], list[TableColumnStatisticalData]]:
     """
-    Convert statistical DataFrame to statistical result table data
+    Convert statistical results DataFrame to statistical result table data
 
     Expect the statistical DataFrame to have one unique column per requested statistic per result name, i.e. "result_name_mean", "result_name_stddev", etc.
     """

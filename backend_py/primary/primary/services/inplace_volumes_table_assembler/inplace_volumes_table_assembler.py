@@ -35,7 +35,7 @@ from ._utils.inplace_results_df_utils import create_per_fluid_results_df, create
 from ._utils.inplace_volumes_df_utils import (
     create_inplace_volumes_df_per_unique_fluid_value,
     remove_invalid_optional_index_columns,
-    sum_inplace_volumes_by_indices_and_realizations_df,
+    sum_inplace_volumes_grouped_by_indices_and_real_df,
     validate_inplace_volumes_df_selector_columns,
 )
 
@@ -142,38 +142,40 @@ class InplaceVolumesTableAssembler:
         Thereafter calculate the requested properties and calculated volumes, and sum the results by group_by_indices, before
         returning per realization data.
         """
-        # Accumulated inplace volumes DataFrame: Get all necessary volumes, filter on indices values and realizations, and sum the volumes by
-        # group_by_indices and realizations. Store DataFrame per unique fluid value in a dictionary.
+        # Accumulated inplace volumes realization DataFrame:
+        # - Get all necessary volumes, filter on indices values and realizations, and sum the volumes by group_by_indices and realizations.
+        # - Store DataFrame per unique fluid value in a dictionary.
         # - All necessary volumes: volume columns, and volumes needed to calculate properties and calculated volumes
         # - Fluid value: The unique fluid value for the DataFrame, e.g. "Oil", "Gas", "Water", or "Oil + Gas" (if fluids are accumulated)
         (
-            accumulated_inplace_volumes_df_per_fluid_value,
+            accumulated_inplace_volumes_real_df_per_fluid_value,
             categorized_result_names,
-        ) = await self._create_accumulated_inplace_volumes_df_per_fluid_and_categorized_result_names_async(
+        ) = await self._create_accumulated_real_inplace_volumes_df_per_fluid_and_categorized_result_names_async(
             table_name, result_names, group_by_indices, indices_with_values, realizations
         )
 
         # Create Results DataFrame from the Inplace Volumes DataFrame w/ all required volumes
-        # - All necessary inplace volumes are retrieved, filtered by wanted index values and realizations, and accumulated by selected indices and realization.
+        # - All necessary inplace volumes are retrieved, filtered by wanted index values and realizations, and accumulated per realization and selected index.
         # - Create result DataFrame, i.e. calculate wanted properties and calculated volumes per fluid value.
         # - Provide inplace results api-data per fluid value.
         table_data_per_fluid_value: list[InplaceVolumesTableData] = []
-        for fluid_value, accumulated_fluid_volumes_df in accumulated_inplace_volumes_df_per_fluid_value.items():
-            if "REAL" not in accumulated_fluid_volumes_df.columns:
+        for fluid_value, accumulated_volumes_real_df in accumulated_inplace_volumes_real_df_per_fluid_value.items():
+            if "REAL" not in accumulated_volumes_real_df.columns:
                 raise NoDataError("No realization data found in dataframe", Service.GENERAL)
-            if InplaceVolumes.TableIndexColumns.FLUID.value in accumulated_fluid_volumes_df.columns:
+            if InplaceVolumes.TableIndexColumns.FLUID.value in accumulated_volumes_real_df.columns:
                 raise InvalidDataError(
                     "The DataFrame should not contain FLUID column when DataFrame is per unique fluid value",
                     Service.GENERAL,
                 )
 
-            # Create result df - requested volumes and calculated properties
-            accumulated_result_df = create_per_fluid_results_df(
-                accumulated_fluid_volumes_df, categorized_result_names, fluid_value
+            # Create result df from inplace volumes df and categorized result names
+            # - Calculate properties and calculated volumes
+            accumulated_result_real_df = create_per_fluid_results_df(
+                accumulated_volumes_real_df, categorized_result_names, fluid_value
             )
 
             table_data_per_fluid_value.append(
-                create_inplace_volumes_table_data_from_fluid_results_df(accumulated_result_df, fluid_value)
+                create_inplace_volumes_table_data_from_fluid_results_df(accumulated_result_real_df, fluid_value)
             )
 
         return InplaceVolumesTableDataPerFluidSelection(table_data_per_fluid_selection=table_data_per_fluid_value)
@@ -195,47 +197,49 @@ class InplaceVolumesTableAssembler:
         Thereafter calculate the requested properties and calculated volumes, and accumulate the results by group_by_indices, before
         calculating statistics across realizations.
         """
-        # Accumulated inplace volumes DataFrame: Get all necessary volumes, filter on indices values and realizations, and sum the volumes by
-        # group_by_indices and realizations. Store DataFrame per unique fluid value in a dictionary.
+        # Accumulated inplace volumes realization DataFrame:
+        # - Get all necessary volumes, filter on indices values and realizations, and sum the volumes by group_by_indices and realizations.
+        # - Store DataFrame per unique fluid value in a dictionary.
         # - All necessary volumes: volume columns, and volumes needed to calculate properties and calculated volumes
         # - Fluid value: The unique fluid value for the DataFrame, e.g. "Oil", "Gas", "Water", or "Oil + Gas" (if fluids are accumulated)
         (
-            accumulated_inplace_volumes_df_per_fluid_value,
+            accumulated_inplace_volumes_real_df_per_fluid_value,
             categorized_result_names,
-        ) = await self._create_accumulated_inplace_volumes_df_per_fluid_and_categorized_result_names_async(
+        ) = await self._create_accumulated_real_inplace_volumes_df_per_fluid_and_categorized_result_names_async(
             table_name, result_names, group_by_indices, indices_with_values, realizations
         )
 
         # Create Results DataFrame from the Inplace Volumes DataFrame w/ all required volumes
-        # - All necessary inplace volumes are retrieved, filtered by wanted index values and realizations, and accumulated by selected indices and realization.
+        # - All necessary inplace volumes are retrieved, filtered by wanted index values and realizations, and accumulated per realization and selected index.
         # - Create result DataFrame, i.e. calculate wanted properties and calculated volumes per fluid value.
         # - Calculate statistical results data across realizations for each fluid value.
         # - Provide inplace results statistical api-data per fluid value.
         statistical_table_data_per_fluid_value: list[InplaceVolumesStatisticalTableData] = []
-        for fluid_value, accumulated_fluid_volumes_df in accumulated_inplace_volumes_df_per_fluid_value.items():
-            if "REAL" not in accumulated_fluid_volumes_df.columns:
+        for fluid_value, accumulated_volumes_real_df in accumulated_inplace_volumes_real_df_per_fluid_value.items():
+            if "REAL" not in accumulated_volumes_real_df.columns:
                 raise NoDataError("No realization data found in dataframe", Service.GENERAL)
-            if InplaceVolumes.TableIndexColumns.FLUID.value in accumulated_fluid_volumes_df.columns:
+            if InplaceVolumes.TableIndexColumns.FLUID.value in accumulated_volumes_real_df.columns:
                 raise InvalidDataError(
                     "The DataFrame should not contain FLUID column when DataFrame is per unique fluid value",
                     Service.GENERAL,
                 )
 
-            # Create result df - requested volumes and calculated properties
-            accumulated_result_df = create_per_fluid_results_df(
-                accumulated_fluid_volumes_df, categorized_result_names, fluid_value
+            # Create result df from inplace volumes df and categorized result names
+            # - Calculate properties and calculated volumes
+            accumulated_result_real_df = create_per_fluid_results_df(
+                accumulated_volumes_real_df, categorized_result_names, fluid_value
             )
 
             # Create statistical table data across realization
-            selector_column_data_list, result_column_data_list = create_statistical_result_table_data_from_df(
-                accumulated_result_df
+            statistical_selector_columns, statistical_result_columns = create_statistical_result_table_data_from_df(
+                accumulated_result_real_df
             )
 
             statistical_table_data_per_fluid_value.append(
                 InplaceVolumesStatisticalTableData(
                     fluid_selection=fluid_value,
-                    selector_columns=selector_column_data_list,
-                    result_column_statistics=result_column_data_list,
+                    selector_columns=statistical_selector_columns,
+                    result_column_statistics=statistical_result_columns,
                 )
             )
 
@@ -243,7 +247,7 @@ class InplaceVolumesTableAssembler:
             table_data_per_fluid_selection=statistical_table_data_per_fluid_value
         )
 
-    async def _create_accumulated_inplace_volumes_df_per_fluid_and_categorized_result_names_async(
+    async def _create_accumulated_real_inplace_volumes_df_per_fluid_and_categorized_result_names_async(
         self,
         table_name: str,
         result_names: set[str],
@@ -252,19 +256,22 @@ class InplaceVolumesTableAssembler:
         realizations: list[int] | None,
     ) -> tuple[dict[str, pl.DataFrame], CategorizedResultNames]:
         """
-        Get a dictionary with DataFrame per unique fluid value, and object with categorized result names for the given DataFrame.
+        Get a dictionary with accumulated Inplace Volumes DataFrame per unique fluid value, and categorized result names for the given DataFrame.
 
-        `Accumulation`: Sum the volumes by the grouping indices and realizations.
+        Derives necessary volumes from the provided result names list, gets inplace volumes and filters the inplace volumes DataFrame on indices values and realizations,
+        thereafter groups the DataFrame by the provided group_by_indices and realization, and sums the volumes per group. Provides dictionary with DataFrame per
+        unique fluid value.
 
-        `Inplace volumes`: All necessary volumes: volume columns, and volumes needed to calculate properties and calculated volumes.
+        - Inplace Volumes DataFrame: Accumulated Inplace Volumes realization data, i.e. summed volumes per index to group by and realization.
+        - Categorized result names: Categorized result names for the given DataFrame: volume names, calculated volume names, and property names.
+        - `Accumulation`: Sum the volumes by the grouping indices and realizations.
+        - `Inplace volumes`: All necessary volumes: volume columns, and volumes needed to calculate properties and calculated volumes.
 
-        - This function retrieves all necessary volumes DataFrame from Sumo, filters the DataFrame on the provided indices values and realizations, and
-        sum the volumes by the provided group_by_indices and realizations. Thereafter the function creates a dictionary with DataFrame per unique fluid value.
+        Expected DataFrame columns: group by indices (except FLUID), realization column "REAL", and volume columns (needed for deriving all results).
 
-        - It also categorizes the result names into volume names, calculated volume names, and property names.
-
-        Note: If group_by_indices is None or does not include FLUID, the fluids will be summed in the result, and BO and BG
-        properties will be excluded from the result names.
+        Note:
+        - This function finds all necessary volumes from requested result names. Calculation of properties and calculated volumes has to be done outside this function.
+        - If group_by_indices is None or does not include FLUID, the fluids will be summed in the result, and BO and BG properties will be excluded from the result names.
         """
 
         if group_by_indices == []:
@@ -289,7 +296,7 @@ class InplaceVolumesTableAssembler:
             table_name, all_necessary_volume_names, realizations, indices_with_values
         )
 
-        if row_filtered_volumes_df is None:
+        if row_filtered_volumes_df.is_empty():
             # If no data is found for the given indices and realizations, return empty dictionary
             empty_dict: dict[str, pl.DataFrame] = {}
             return (empty_dict, categorized_result_names)
@@ -297,28 +304,29 @@ class InplaceVolumesTableAssembler:
         # Ensure valid inplace volumes DataFrame (contains necessary index columns and realization column)
         validate_inplace_volumes_df_selector_columns(row_filtered_volumes_df)
 
-        # Create summed inplace volumes table data grouped by selected index columns and realizations
+        # Create summed inplace volumes table data grouped by selected index columns and realization
         # - Resulting DataFrame has selector columns: REAL + index columns in group_by_indices
-        summed_volumes_by_indices_and_reals_df = sum_inplace_volumes_by_indices_and_realizations_df(
+        volume_sums_by_indices_and_real_df = sum_inplace_volumes_grouped_by_indices_and_real_df(
             row_filtered_volumes_df, group_by_indices
         )
 
-        # Create dictionary with DataFrame per unique fluid value
-        accumulated_inplace_volumes_df_per_fluid_value_dict: dict[str, pl.DataFrame] = {}
-        if InplaceVolumes.TableIndexColumns.FLUID in summed_volumes_by_indices_and_reals_df.columns:
-            accumulated_inplace_volumes_df_per_fluid_value_dict = create_inplace_volumes_df_per_unique_fluid_value(
-                summed_volumes_by_indices_and_reals_df
+        # Dictionary with DataFrame per unique fluid value
+        # - If not grouped by fluid, the fluids are accumulated and column FLUID is not present in the DataFrame
+        accumulated_inplace_volumes_real_df_per_fluid_value_dict: dict[str, pl.DataFrame] = {}
+        if InplaceVolumes.TableIndexColumns.FLUID in volume_sums_by_indices_and_real_df.columns:
+            accumulated_inplace_volumes_real_df_per_fluid_value_dict = create_inplace_volumes_df_per_unique_fluid_value(
+                volume_sums_by_indices_and_real_df
             )
         else:
-            # If not grouped by fluid, the fluids are summed and column FLUID is not present in the DataFrame
+            # Accumulated fluids
             unique_fluids = row_filtered_volumes_df[InplaceVolumes.TableIndexColumns.FLUID.value].unique().to_list()
             summed_fluids_string = " + ".join(unique_fluids)
-            accumulated_inplace_volumes_df_per_fluid_value_dict[
+            accumulated_inplace_volumes_real_df_per_fluid_value_dict[
                 summed_fluids_string
-            ] = summed_volumes_by_indices_and_reals_df
+            ] = volume_sums_by_indices_and_real_df
 
         return (
-            accumulated_inplace_volumes_df_per_fluid_value_dict,
+            accumulated_inplace_volumes_real_df_per_fluid_value_dict,
             categorized_result_names,
         )
 
@@ -328,20 +336,15 @@ class InplaceVolumesTableAssembler:
         volume_names: set[str],
         realizations: list[int] | None,
         indices_with_values: list[InplaceVolumesIndexWithValues],
-    ) -> pl.DataFrame | None:
+    ) -> pl.DataFrame:
         """
-        This function creates a volumes DataFrame filtered on the provided indices values and realizations.
+        This function creates an inplace volumes DataFrame for requested volumes, filtered on the provided indices values and realizations.
 
-        The requested volume names is the set of volume columns, and necessary volume names to calculate properties and calculated volumes.
-        Calculation of properties and calculated volumes are handled outside this function.
+        - The requested volume names: Set of volume columns, and necessary volume names to calculate properties and calculated volumes.
+        - The calculation of properties and calculated volumes are handled outside this function.
 
-        The DataFrame is create by filtering the raw inplace volumes table on provided indices values and realizations.
-
-        Input:
-        - table_name: str - Name of the table in Sumo
-        - volume_names: set[str] - All volume names needed from Sumo, including volume names needed for properties and calculated volumes
-        - realizations: list[int] - Realizations to include in the volumetric table
-        - indices_with_values: list[InplaceVolumesIndexWithValues] - Index values to filter the inplace volumes table, i.e. row filtering
+        ### Returns:
+            - pl.DataFrame: A Polars DataFrame with selector (index + "REAL") and volume columns.
         """
         # Check for empty identifier selections
         has_empty_index_selection = any(not index_with_values.values for index_with_values in indices_with_values)
@@ -374,9 +377,18 @@ class InplaceVolumesTableAssembler:
         self, table_name: str, volume_columns: set[str]
     ) -> pl.DataFrame:
         """
-        Get the inplace volumes table as Polars DataFrame
+        Get the inplace volumes realizations table as Polars DataFrame
 
-        Table columns: index columns + requested `volume_columns`
+        - **Selector columns**: Index columns and `"REAL"` column for realizations.
+            - Index columns: `"ZONE"`, `"REGION"`, `"FACIES"`, etc.
+            - Some index columns are optional, while others are required.
+        - **Volume columns**: All requested volume columns represent volumetric data
+            - E.g. `"STOIIP"`, `"GIIP"`, `"HCPV"`, etc.
+
+        The returned DataFrame contains one row per unique combination of the selector columns.
+
+        Returns:
+            pl.DataFrame: A Polars DataFrame with selector and volume columns.
         """
 
         # Get the inplace volumes table from collection in Sumo
@@ -395,6 +407,7 @@ class InplaceVolumesTableAssembler:
 
         # For non-empty DataFrame, remove index columns with invalid values
         inplace_volumes_table_df = remove_invalid_optional_index_columns(inplace_volumes_table_df)
+
         return inplace_volumes_table_df
 
     @staticmethod
@@ -403,9 +416,9 @@ class InplaceVolumesTableAssembler:
         inplace_volumes_table_df: pl.DataFrame,
         realizations: list[int] | None,
         indices_with_values: list[InplaceVolumesIndexWithValues],
-    ) -> pl.DataFrame | None:
+    ) -> pl.DataFrame:
         """
-        Create DataFrame filtered on indices values and realizations
+        Create DataFrame filtered on indices values and realizations - i.e. selector column values.
 
         The function filters the provided inplace volumes table DataFrame based on the indices and realizations provided.
         If realizations is None, all realizations are included.

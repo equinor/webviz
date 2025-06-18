@@ -41,12 +41,12 @@ def validate_inplace_volumes_df_selector_columns(
         )
 
 
-def sum_inplace_volumes_by_indices_and_realizations_df(
+def sum_inplace_volumes_grouped_by_indices_and_real_df(
     inplace_volumes_df: pl.DataFrame,
     group_by_indices: list[InplaceVolumes.TableIndexColumns] | None,
 ) -> pl.DataFrame:
     """
-    Create a Polars DataFrame with summed volumes per index to group by and realizations.
+    Create a Polars DataFrame with summed volumes per index to group by and realization.
 
     This function groups a DataFrame of inplace volumes by specified index columns and realizations,
     summing the volume columns within each group. The result is a single row per realization and requested group by index.
