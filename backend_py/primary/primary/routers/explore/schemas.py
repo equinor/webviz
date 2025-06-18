@@ -12,12 +12,12 @@ class CaseInfo(BaseModel):
     name: str
     status: str
     user: str
-    updated_at: str
+    updated_at_utc_ms: int
 
 
 class EnsembleTimestamps(BaseModel):
-    case_updated_at: str
-    data_updated_at: str
+    case_updated_at_utc_ms: int
+    data_updated_at_utc_ms: int
 
 
 class EnsembleInfo(BaseModel):

@@ -9,6 +9,8 @@ from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from .sumo_client_factory import create_sumo_client
 
+from ._helpers import datetime_string_to_utc_ms
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -21,7 +23,7 @@ class CaseInfo(BaseModel):
     name: str
     status: str
     user: str
-    updated_at: str
+    updated_at_utc_ms: int
 
 
 class SumoInspector:
@@ -41,12 +43,14 @@ class SumoInspector:
     async def _get_case_info_async(self, search_context: SearchContext, case_uuid: str) -> CaseInfo:
         case = await search_context.get_case_by_uuid_async(case_uuid)
 
+        timestamp_str = case.metadata["_sumo"]["timestamp"]
+
         return CaseInfo(
             uuid=case.uuid,
             name=case.name,
             status=case.status,
             user=case.user,
-            updated_at=case.metadata["_sumo"]["timestamp"],
+            updated_at_utc_ms=datetime_string_to_utc_ms(timestamp_str),
         )
 
     async def get_cases_async(self, field_identifier: str) -> List[CaseInfo]:

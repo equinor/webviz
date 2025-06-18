@@ -46,30 +46,12 @@ async def get_cases(
             name=ci.name,
             status=ci.status,
             user=ci.user,
-            updated_at=ci.updated_at,
+            updated_at_utc_ms=ci.updated_at_utc_ms,
         )
         for ci in case_info_arr
     ]
 
     return ret_arr
-
-
-@router.get("/cases/{case_uuid}")
-async def get_case(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Path(description="Sumo case uuid"),
-) -> schemas.CaseInfo:
-    """Get list of cases for specified field"""
-    sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
-    case_info = await sumo_inspector._get_case_info_async(case_uuid=case_uuid)
-
-    return schemas.CaseInfo(
-        uuid=case_info.uuid,
-        name=case_info.name,
-        status=case_info.status,
-        user=case_info.user,
-        updated_at=case_info.updated_at,
-    )
 
 
 @router.get("/cases/{case_uuid}/ensembles")
@@ -78,6 +60,7 @@ async def get_ensembles(
     case_uuid: str = Path(description="Sumo case uuid"),
 ) -> List[schemas.EnsembleInfo]:
     """Get list of ensembles for a case"""
+
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     iteration_info_arr = await case_inspector.get_iterations_async()
 
@@ -107,7 +90,6 @@ async def get_ensemble_details(
     realizations = await case_inspector.get_realizations_in_iteration_async(ensemble_name)
     field_identifiers = await case_inspector.get_field_identifiers_async()
     stratigraphic_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
-
     timestamps = await case_inspector.get_iteration_timestamps_async(ensemble_name)
 
     if len(field_identifiers) != 1:
@@ -121,8 +103,8 @@ async def get_ensemble_details(
         field_identifier=field_identifiers[0],
         stratigraphic_column_identifier=stratigraphic_column_identifier,
         timestamps=schemas.EnsembleTimestamps(
-            case_updated_at=timestamps.case_updated_at,
-            data_updated_at=timestamps.data_updated_at,
+            case_updated_at_utc_ms=timestamps.case_updated_at_utc_ms,
+            data_updated_at_utc_ms=timestamps.data_updated_at_utc_ms,
         ),
     )
 
@@ -143,6 +125,6 @@ async def get_ensemble_timestamps(
     timestamps = await case_inspector.get_iteration_timestamps_async(ensemble_name)
 
     return schemas.EnsembleTimestamps(
-        case_updated_at=timestamps.case_updated_at,
-        data_updated_at=timestamps.data_updated_at,
+        case_updated_at_utc_ms=timestamps.case_updated_at_utc_ms,
+        data_updated_at_utc_ms=timestamps.data_updated_at_utc_ms,
     )
