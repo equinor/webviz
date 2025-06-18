@@ -64,26 +64,6 @@ def get_calculated_volumes_among_result_names(result_names: Iterable[str]) -> li
     return list(possible_calculated_volumes)
 
 
-def get_required_volume_names_from_calculated_volumes(calculated_volumes: Iterable[str]) -> list[str]:
-    """
-    Function to convert calculated volumes to list of required volume names
-
-    NOTE: This function lists all volume names needed, but fluid zone is not considered
-    """
-
-    volume_names = set()
-    if CalculatedVolume.STOIIP_TOTAL in calculated_volumes:
-        volume_names.update(
-            [InplaceVolumes.VolumetricColumns.STOIIP.value, InplaceVolumes.VolumetricColumns.ASSOCIATEDOIL.value]
-        )
-    if CalculatedVolume.GIIP_TOTAL in calculated_volumes:
-        volume_names.update(
-            [InplaceVolumes.VolumetricColumns.GIIP.value, InplaceVolumes.VolumetricColumns.ASSOCIATEDGAS.value]
-        )
-
-    return list(volume_names)
-
-
 def get_properties_among_result_names(result_names: Iterable[str]) -> list[str]:
     """
     Function to get properties among result names
@@ -152,6 +132,26 @@ def get_available_properties_from_volume_names(volume_names: Iterable[str]) -> l
     return list(properties)
 
 
+def get_required_volume_names_from_calculated_volumes(calculated_volumes: Iterable[str]) -> list[str]:
+    """
+    Function to convert calculated volumes to list of required volume names
+
+    NOTE: This function lists all volume names needed, but fluid is not considered
+    """
+
+    volume_names = []
+    if CalculatedVolume.STOIIP_TOTAL in calculated_volumes:
+        volume_names.extend(
+            [InplaceVolumes.VolumetricColumns.STOIIP.value, InplaceVolumes.VolumetricColumns.ASSOCIATEDOIL.value]
+        )
+    if CalculatedVolume.GIIP_TOTAL in calculated_volumes:
+        volume_names.extend(
+            [InplaceVolumes.VolumetricColumns.GIIP.value, InplaceVolumes.VolumetricColumns.ASSOCIATEDGAS.value]
+        )
+
+    return volume_names
+
+
 def get_available_calculated_volumes_from_volume_names(volume_names: Iterable[str]) -> list[str]:
     """
     Function to get available calculated volumes from volume names
@@ -194,7 +194,8 @@ def get_required_volume_names_and_categorized_result_names(
     )
 
     # Extract volume names among result names (excluding all properties, not just valid properties)
-    volume_names = list(set(result_names) - set(properties) - set(calculated_volume_names))
+    valid_volume_names = set(InplaceVolumes.value_columns())
+    volume_names = list(set(result_names) & valid_volume_names)
 
     # Find all volume names needed from Sumo
     all_required_volume_names = set(

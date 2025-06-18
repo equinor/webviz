@@ -361,9 +361,9 @@ class InplaceVolumesTableAssembler:
         )
 
         # Create dataframe filtered on indices and realizations
-        row_filtered_volumes_table_df = InplaceVolumesTableAssembler._create_row_filtered_inplace_volumes_table_df(
+        row_filtered_volumes_table_df = InplaceVolumesTableAssembler._create_row_filtered_inplace_volumes_df(
             table_name=table_name,
-            inplace_volumes_table_df=volumes_table_df,
+            inplace_volumes_df=volumes_table_df,
             realizations=realizations,
             indices_with_values=indices_with_values,
         )
@@ -411,9 +411,9 @@ class InplaceVolumesTableAssembler:
         return inplace_volumes_table_df
 
     @staticmethod
-    def _create_row_filtered_inplace_volumes_table_df(
+    def _create_row_filtered_inplace_volumes_df(
         table_name: str,
-        inplace_volumes_table_df: pl.DataFrame,
+        inplace_volumes_df: pl.DataFrame,
         realizations: list[int] | None,
         indices_with_values: list[InplaceVolumesIndexWithValues],
     ) -> pl.DataFrame:
@@ -426,7 +426,7 @@ class InplaceVolumesTableAssembler:
         if realizations is not None and len(realizations) == 0:
             raise InvalidParameterError("Realizations must be a non-empty list or None", Service.GENERAL)
 
-        column_names = inplace_volumes_table_df.columns
+        column_names = inplace_volumes_df.columns
 
         # If any index column name is not found in the table, raise an error
         for elm in indices_with_values:
@@ -438,24 +438,22 @@ class InplaceVolumesTableAssembler:
                 )
 
         timer = PerfTimer()
-        column_names = inplace_volumes_table_df.columns
+        column_names = inplace_volumes_df.columns
 
         # Build mask for rows - default all rows
-        num_rows = inplace_volumes_table_df.height
+        num_rows = inplace_volumes_df.height
         mask = pl.Series([True] * num_rows)
 
         # Mask/filter out rows with ignored identifier values
         for index_name in InplaceVolumes.TableIndexColumns:
             if index_name.value in column_names:
-                ignored_index_values_mask = inplace_volumes_table_df[index_name.value].is_in(
-                    IGNORED_INDEX_COLUMN_VALUES
-                )
+                ignored_index_values_mask = inplace_volumes_df[index_name.value].is_in(IGNORED_INDEX_COLUMN_VALUES)
                 mask = mask & ~ignored_index_values_mask
 
         # Add mask for realizations
         if realizations is not None:
             # Check if every element in realizations exists in inplace_volumes_table_df["REAL"]
-            real_values_set = set(inplace_volumes_table_df["REAL"].to_list())
+            real_values_set = set(inplace_volumes_df["REAL"].to_list())
             missing_realizations_set = set(realizations) - real_values_set
 
             if missing_realizations_set:
@@ -464,7 +462,7 @@ class InplaceVolumesTableAssembler:
                     Service.GENERAL,
                 )
 
-            realization_mask = inplace_volumes_table_df["REAL"].is_in(realizations)
+            realization_mask = inplace_volumes_df["REAL"].is_in(realizations)
             mask = mask & realization_mask
 
         # Add mask for each identifier filter
@@ -474,10 +472,10 @@ class InplaceVolumesTableAssembler:
                 break
 
             index_column_name = index_with_values.index.value
-            index_mask = inplace_volumes_table_df[index_column_name].is_in(index_with_values.values)
+            index_mask = inplace_volumes_df[index_column_name].is_in(index_with_values.values)
             mask = mask & index_mask
 
-        filtered_df = inplace_volumes_table_df.filter(mask)
+        filtered_df = inplace_volumes_df.filter(mask)
         time_row_filtering = timer.lap_ms()
         print(f"DATAFRAME row filtering (based on selectors): {time_row_filtering}ms")
 
