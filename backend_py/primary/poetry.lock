@@ -839,13 +839,13 @@ dev = ["Sphinx", "astroid", "autoapi", "coverage", "mypy", "myst-parser", "pylin
 
 [[package]]
 name = "fmu-dataio"
-version = "2.12.0"
+version = "2.13.0"
 description = "Facilitate data io in FMU with rich metadata"
 optional = false
 python-versions = ">=3.11"
 files = [
-    {file = "fmu_dataio-2.12.0-py3-none-any.whl", hash = "sha256:1dc98022812e05e5152b18e557501d0f98e80ba52a910d3c9e6abf8ed0821938"},
-    {file = "fmu_dataio-2.12.0.tar.gz", hash = "sha256:736526bd9951348c5762c942746117288fbfe641ff847dd6a9f3d8c1124ee8ca"},
+    {file = "fmu_dataio-2.13.0-py3-none-any.whl", hash = "sha256:8e0eec8b85f85bb0c6c0c30377be805075f513750501c085ce1c4296e956e2e7"},
+    {file = "fmu_dataio-2.13.0.tar.gz", hash = "sha256:4d3899a005ad169815c3db71264a15c8c626d30de28b6c13c20e66dd3dabdea9"},
 ]
 
 [package.dependencies]
@@ -4057,4 +4057,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "90400687dfba55ca63d8514ad0ee29bf1e6c9edfe67b4cd7f124343a93ddbc39"
+content-hash = "9ddf2c33610c3433665321225d2a4f0d609e3eb79a3529c19f7710471f1e1f41"
