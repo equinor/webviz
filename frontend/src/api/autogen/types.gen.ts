@@ -76,7 +76,7 @@ export type CaseInfo_api = {
     name: string;
     status: string;
     user: string;
-    updated_at: string;
+    updated_at_utc_ms: number;
 };
 
 export type Completions_api = {
@@ -177,8 +177,8 @@ export type EnsembleSensitivityCase_api = {
 };
 
 export type EnsembleTimestamps_api = {
-    case_updated_at: string;
-    data_updated_at: string;
+    case_updated_at_utc_ms: number;
+    data_updated_at_utc_ms: number;
 };
 
 export type FenceMeshSection_api = {
@@ -1216,7 +1216,7 @@ export type GetCasesData_api = {
          * Field identifier
          */
         field_identifier: string;
-        t?: string;
+        t?: number;
     };
     url: "/cases";
 };
@@ -1239,38 +1239,6 @@ export type GetCasesResponses_api = {
 
 export type GetCasesResponse_api = GetCasesResponses_api[keyof GetCasesResponses_api];
 
-export type GetCaseData_api = {
-    body?: never;
-    path: {
-        /**
-         * Sumo case uuid
-         */
-        case_uuid: string;
-    };
-    query?: {
-        t?: string;
-    };
-    url: "/cases/{case_uuid}";
-};
-
-export type GetCaseErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type GetCaseError_api = GetCaseErrors_api[keyof GetCaseErrors_api];
-
-export type GetCaseResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: CaseInfo_api;
-};
-
-export type GetCaseResponse_api = GetCaseResponses_api[keyof GetCaseResponses_api];
-
 export type GetEnsemblesData_api = {
     body?: never;
     path: {
@@ -1280,7 +1248,7 @@ export type GetEnsemblesData_api = {
         case_uuid: string;
     };
     query?: {
-        t?: string;
+        t?: number;
     };
     url: "/cases/{case_uuid}/ensembles";
 };
@@ -1316,7 +1284,7 @@ export type GetEnsembleDetailsData_api = {
         ensemble_name: string;
     };
     query?: {
-        t?: string;
+        t?: number;
     };
     url: "/cases/{case_uuid}/ensembles/{ensemble_name}";
 };
@@ -2425,7 +2393,7 @@ export type GetParametersData_api = {
          * Ensemble name
          */
         ensemble_name: string;
-        t?: string;
+        t?: number;
     };
     url: "/parameters/parameters/";
 };
@@ -2494,7 +2462,7 @@ export type GetSensitivitiesData_api = {
          * Ensemble name
          */
         ensemble_name: string;
-        t?: string;
+        t?: number;
     };
     url: "/parameters/sensitivities/";
 };

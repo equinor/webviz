@@ -8,9 +8,6 @@ import type {
     GetCasesData_api,
     GetCasesResponse_api,
     GetCasesError_api,
-    GetCaseData_api,
-    GetCaseResponse_api,
-    GetCaseError_api,
     GetEnsemblesData_api,
     GetEnsemblesResponse_api,
     GetEnsemblesError_api,
@@ -231,17 +228,6 @@ export const getCases = <ThrowOnError extends boolean = false>(options: Options<
     return (options?.client ?? client).get<GetCasesResponse_api, GetCasesError_api, ThrowOnError>({
         ...options,
         url: "/cases",
-    });
-};
-
-/**
- * Get Case
- * Get list of cases for specified field
- */
-export const getCase = <ThrowOnError extends boolean = false>(options: Options<GetCaseData_api, ThrowOnError>) => {
-    return (options?.client ?? client).get<GetCaseResponse_api, GetCaseError_api, ThrowOnError>({
-        ...options,
-        url: "/cases/{case_uuid}",
     });
 };
 

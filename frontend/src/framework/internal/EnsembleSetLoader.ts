@@ -187,7 +187,7 @@ async function loadEnsembleApiDataMapFromBackend(
         const ensembleDetailsPromise = queryClient.fetchQuery({
             ...getEnsembleDetailsOptions({
                 // ? These data should only be affected by the case timestamp, right?
-                query: { t: timestamps.case_updated_at ?? Date.now().toString() },
+                query: { t: timestamps?.case_updated_at_utc_ms ?? Date.now() },
                 path: {
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
@@ -202,7 +202,7 @@ async function loadEnsembleApiDataMapFromBackend(
             ...getParametersOptions({
                 query: {
                     // ? These are only affected by the "data" timestamp, right?
-                    t: timestamps.data_updated_at,
+                    t: timestamps?.data_updated_at_utc_ms ?? Date.now(),
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
                 },
@@ -216,7 +216,7 @@ async function loadEnsembleApiDataMapFromBackend(
             ...getSensitivitiesOptions({
                 query: {
                     // ? These are only affected by the "data" timestamp, right?
-                    t: timestamps.data_updated_at,
+                    t: timestamps?.data_updated_at_utc_ms ?? Date.now(),
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
                 },

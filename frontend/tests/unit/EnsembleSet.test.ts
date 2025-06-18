@@ -5,45 +5,11 @@ import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { makeEnsembleTimeStamp } from "tests/utils/ensemble";
 
 const regularEnsembleArray = [
-    new RegularEnsemble(
-        "DROGON",
-        "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa",
-        "case1",
-        "ens1",
-        "sc1",
-        [],
-        [],
-        null,
-        "",
-        makeEnsembleTimeStamp(),
-    ),
-    new RegularEnsemble(
-        "DROGON",
-        "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa",
-        "case1",
-        "ens2",
-        "sc2",
-        [],
-        [],
-        null,
-        "",
-        makeEnsembleTimeStamp(),
-    ),
-    new RegularEnsemble(
-        "DROGON",
-        "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa",
-        "case2",
-        "ens1",
-        "sc3",
-        [],
-        [],
-        null,
-        "",
-        makeEnsembleTimeStamp(),
-    ),
+    new RegularEnsemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens1", "sc1", [], [], null, ""),
+    new RegularEnsemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens2", "sc2", [], [], null, ""),
+    new RegularEnsemble("DROGON", "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", "case2", "ens1", "sc3", [], [], null, ""),
 ];
 
 const deltaEnsembleArray = [
