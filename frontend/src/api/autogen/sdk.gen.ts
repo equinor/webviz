@@ -161,6 +161,9 @@ import type {
     GetDepthSliceData_api,
     GetDepthSliceResponse_api,
     GetDepthSliceError_api,
+    GetSeismicSlicesData_api,
+    GetSeismicSlicesResponse_api,
+    GetSeismicSlicesError_api,
     PostGetSeismicFenceData_api,
     PostGetSeismicFenceResponse_api,
     PostGetSeismicFenceError_api,
@@ -1052,6 +1055,19 @@ export const getDepthSlice = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetDepthSliceResponse_api, GetDepthSliceError_api, ThrowOnError>({
         ...options,
         url: "/seismic/get_depth_slice/",
+    });
+};
+
+/**
+ * Get Seismic Slices
+ * Get a seismic depth slice from a seismic cube.
+ */
+export const getSeismicSlices = <ThrowOnError extends boolean = false>(
+    options: Options<GetSeismicSlicesData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetSeismicSlicesResponse_api, GetSeismicSlicesError_api, ThrowOnError>({
+        ...options,
+        url: "/seismic/get_seismic_slices/",
     });
 };
 
