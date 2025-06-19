@@ -1,22 +1,19 @@
 import React from "react";
 
 import { Input, Warning } from "@mui/icons-material";
-import type { PlotDatum, PlotMouseEvent } from "plotly.js";
 
 import { ChannelReceiverChannelContent, KeyKind } from "@framework/DataChannelTypes";
-import type { ContinuousParameter } from "@framework/EnsembleParameters";
-import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
 import type { ResponseData } from "@modules/_shared/rankParameter";
-import { createCorrelationMatrix, createRankedParameterCorrelations } from "@modules/_shared/rankParameter";
+import { createCorrelationMatrix } from "@modules/_shared/rankParameter";
 
 import type { Interfaces } from "../interfaces";
 
@@ -41,29 +38,16 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
     const [isPending, startTransition] = React.useTransition();
     const [content, setContent] = React.useState<React.ReactNode>(null);
     const [revNumberResponses, setRevNumberResponses] = React.useState<number[]>([]);
-    const [prevNumParams, setPrevNumParams] = React.useState<number>(10);
-    const [prevCorrCutOff, setPrevCorrCutOff] = React.useState<number>(0.0);
     const [prevShowLabels, setPrevShowLabels] = React.useState<boolean | null>(null);
     const [prevSize, setPrevSize] = React.useState<Size2D | null>(null);
-    const [localParameterString, setLocalParameterString] = React.useState<string | null>(null);
     const [prevParameterIdentStrings, setPrevParameterIdentStrings] = React.useState<string[]>([]);
-
-    const syncedSettingKeys = viewContext.useSyncedSettingKeys();
-    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
-    const globalSyncedParameter = syncHelper.useValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter");
-
-    function handleClickInChart(e: PlotMouseEvent) {
-        const clickedPoint: PlotDatum = e.points[0];
-        if (!clickedPoint) {
-            return;
-        }
-        const newParameterString = clickedPoint.customdata as string;
-        syncHelper.publishValue(SyncSettingKey.PARAMETER, "global.syncValue.parameter", newParameterString);
-        setLocalParameterString(newParameterString);
-    }
-
+    const [prevShowSelfCorrelation, setPrevShowSelfCorrelation] = React.useState<boolean>(true);
+    const [prevUseFixedColorRange, setPrevUseFixedColorRange] = React.useState<boolean>(true);
     const parameterIdentStrings = viewContext.useSettingsToViewInterfaceValue("parameterIdentStrings");
     const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");
+    const showSelfCorrelation = viewContext.useSettingsToViewInterfaceValue("showSelfCorrelation");
+    const useFixedColorRange = viewContext.useSettingsToViewInterfaceValue("useFixedColorRange");
+
     const ensembleSet = workbenchSession.getEnsembleSet();
 
     const statusWriter = useViewStatusWriter(viewContext);
@@ -94,13 +78,17 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
         !isEqual(receiverResponseRevisionNumbers, revNumberResponses) ||
         !isEqual(parameterIdentStrings, prevParameterIdentStrings) ||
         showLabels !== prevShowLabels ||
-        wrapperDivSize !== prevSize
+        wrapperDivSize !== prevSize ||
+        showSelfCorrelation !== prevShowSelfCorrelation ||
+        useFixedColorRange !== prevUseFixedColorRange
     ) {
         setRevNumberResponses(receiverResponseRevisionNumbers);
 
         setPrevParameterIdentStrings(parameterIdentStrings);
         setPrevShowLabels(showLabels);
         setPrevSize(wrapperDivSize);
+        setPrevShowSelfCorrelation(showSelfCorrelation);
+        setPrevUseFixedColorRange(useFixedColorRange);
 
         startTransition(function makeContent() {
             if (receiverResponses.every((response) => !response.channel)) {
@@ -181,9 +169,16 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
             }
             const numCols = Math.floor(Math.sqrt(numContents));
             const numRows = Math.ceil(numContents / numCols);
-            const figure = new ParameterCorrelationMatrixFigure(wrapperDivSize, numCols, numRows, showLabels);
+            const figure = new ParameterCorrelationMatrixFigure({
+                wrapperDivSize,
+                numCols,
+                numRows,
+                showLabels,
+                showSelfCorrelation,
+                useFixedColorRange,
+            });
 
-            // Loop through the channels and plot the correlations
+            //  each ensemble and plot all the correlations
             let cellIndex = 0;
             for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
                 for (let colIndex = 0; colIndex < numCols; colIndex++) {
@@ -205,10 +200,9 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                     }
                     const selectedParameters = parameterArr.filter((param) => {
                         const parameterIdent = ParameterIdent.fromNameAndGroup(param.name, param.groupName);
-                        // console.log("Checking parameter:", parameterIdent.toString());
                         return parameterIdentStrings.includes(parameterIdent.toString());
                     });
-                    console.log("Selected parameters:", selectedParameters);
+
                     const responseDataArr: ResponseData[] = ensembleReceiverChannelContents.map((content) => {
                         return {
                             realizations: content.dataArray.map((dataPoint) => dataPoint.key as number),
@@ -218,19 +212,18 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                     });
 
                     const corr = createCorrelationMatrix(selectedParameters, responseDataArr);
-                    figure.addCorrelationMatrixTrace(
-                        corr,
-                        null,
-                        rowIndex + 1,
-                        colIndex + 1,
+                    figure.addCorrelationMatrixTrace({
+                        data: corr,
+                        rowIndex: rowIndex + 1,
+                        columnIndex: colIndex + 1,
                         cellIndex,
-                        ensemble.getDisplayName(),
-                    );
+                        title: ensemble.getDisplayName(),
+                    });
 
                     cellIndex++;
                 }
             }
-            setContent(figure.build(handleClickInChart));
+            setContent(figure.build());
             return;
         });
     }

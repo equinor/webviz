@@ -6,7 +6,7 @@ import { ChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
 import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 const template: Template = {
-    description: "Correlate one or more simulation vectors (e.g. Field oil production) against all input parameters.",
+    description: "Correlate one or more simulation vectors (e.g. Field oil production) against input parameters.",
     moduleInstances: [
         {
             instanceRef: "MainSimulationTimeSeriesInstance",
@@ -76,4 +76,4 @@ const template: Template = {
     ],
 };
 
-TemplateRegistry.registerTemplate("Correlations between Input Parameters and Simulation timeseries", template);
+TemplateRegistry.registerTemplate("Correlations between input parameters and simulation timeseries", template);

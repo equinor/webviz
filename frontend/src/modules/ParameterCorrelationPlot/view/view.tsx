@@ -4,8 +4,6 @@ import { Input, Warning } from "@mui/icons-material";
 import type { PlotDatum, PlotMouseEvent } from "plotly.js";
 
 import { KeyKind } from "@framework/DataChannelTypes";
-import type { ContinuousParameter } from "@framework/EnsembleParameters";
-import { ParameterType } from "@framework/EnsembleParameters";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";

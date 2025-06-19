@@ -3,106 +3,95 @@ import React from "react";
 import { useAtom } from "jotai";
 
 import { KeyKind } from "@framework/DataChannelTypes";
-import { ParameterIdent } from "@framework/EnsembleParameters";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { Select } from "@lib/components/Select";
 import { getContinuousAndNonConstantParameterIdentsInEnsembles } from "@modules/_shared/parameterUnions";
 
 import type { Interfaces } from "../interfaces";
 
-import { parameterIdentStringsAtom, showLabelsAtom } from "./atoms/baseAtoms";
+import {
+    parameterIdentStringsAtom,
+    showLabelsAtom,
+    showSelfCorrelationAtom,
+    useFixedColorRangeAtom,
+} from "./atoms/baseAtoms";
 import ParametersSelector from "./components/parameterSelector";
 
-//-----------------------------------------------------------------------------------------------------------
-export function Settings({
-    initialSettings,
-    settingsContext,
-    workbenchSession,
-    workbenchServices,
-}: ModuleSettingsProps<Interfaces>) {
+export function Settings({ initialSettings, settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const [parameterIdentStrings, setParameterIdentStrings] = useAtom(parameterIdentStringsAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
+    const [showSelfCorrelation, setShowSelfCorrelation] = useAtom(showSelfCorrelationAtom);
+    const [useFixedColorRange, setUseFixedColorRange] = useAtom(useFixedColorRangeAtom);
 
-    useApplyInitialSettingsToState(initialSettings, "parameterIdentStrings", "string", setParameterIdentStrings);
+    useApplyInitialSettingsToState(initialSettings, "parameterIdentStrings", "array", setParameterIdentStrings);
     useApplyInitialSettingsToState(initialSettings, "showLabels", "boolean", setShowLabels);
-    // Need to get the ensemble idents from the channel to get relevant parameters
+
     const receiverResponse = settingsContext.useChannelReceiver({
         receiverIdString: "channelResponse",
         expectedKindsOfKeys: [KeyKind.REALIZATION],
     });
 
     let ensembleIdentStringsFromChannels: string[] = [];
-    if (!receiverResponse.channel || !receiverResponse.channel.contents) {
-        ensembleIdentStringsFromChannels = [];
-    } else {
-        ensembleIdentStringsFromChannels = receiverResponse.channel.contents.map((content) => {
-            return content.metaData.ensembleIdentString;
-        });
+    if (receiverResponse.channel && receiverResponse.channel.contents) {
+        ensembleIdentStringsFromChannels = receiverResponse.channel.contents.map(
+            (content) => content.metaData.ensembleIdentString,
+        );
     }
-
     const ensembleSet = workbenchSession.getEnsembleSet();
 
-    // The channel could have non-regular ensembles (?)
-    const regularEnsembleIdentsFromChannels: RegularEnsembleIdent[] = ensembleIdentStringsFromChannels.flatMap((id) => {
-        const ensemble = ensembleSet.findEnsembleByIdentString(id);
-        return ensemble instanceof RegularEnsemble ? [RegularEnsembleIdent.fromString(id)] : [];
-    });
+    const regularEnsembleIdentsFromChannels: RegularEnsembleIdent[] = React.useMemo(() => {
+        return ensembleIdentStringsFromChannels.flatMap((id) => {
+            const ensemble = ensembleSet.findEnsembleByIdentString(id);
+            return ensemble instanceof RegularEnsemble ? [RegularEnsembleIdent.fromString(id)] : [];
+        });
+    }, [ensembleIdentStringsFromChannels, ensembleSet]);
 
-    const parameterIdents = getContinuousAndNonConstantParameterIdentsInEnsembles(
+    const allAvailableParameterObjects = getContinuousAndNonConstantParameterIdentsInEnsembles(
         ensembleSet,
         regularEnsembleIdentsFromChannels,
     );
 
-    if (ensembleIdentStringsFromChannels.length === 0) {
-        return;
-    }
-
-    // function handleParametersChanged(value: string[]) {
-    //     setParameterIdentStrings(value);
-    // }
-    const parameterOptions = parameterIdents.map((parameterIdent) => ({
-        value: parameterIdent.toString(),
-        label: `${parameterIdent.name} (${parameterIdent.groupName})`,
-    }));
+    const allParameterIdentStringsForSelector: string[] = React.useMemo(() => {
+        return allAvailableParameterObjects.map((p) => p.toString());
+    }, [allAvailableParameterObjects]);
 
     function handleParametersChanged(value: string[]) {
-        // const selectedParameters = value.map((paramIdent) => {
-        //     return parameterIdents.find((p) => p.equals(paramIdent)) || paramIdent;
-        // });
-        console.log("Selected parameters:", value);
         setParameterIdentStrings(value);
     }
+
     return (
         <div className="flex flex-col gap-2">
             <CollapsibleGroup title="Plot settings" expanded>
-                <Label text="Show parameter labels (Max 50)" position="left" key="show-labels">
-                    <Checkbox checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} />
-                </Label>
+                <div className="flex flex-col gap-2">
+                    <Label text="Show parameter labels (Max 50)" position="left" key="show-labels">
+                        <Checkbox checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} />
+                    </Label>
+                    <Label text="Show self-correlation" position="left">
+                        <Checkbox
+                            checked={showSelfCorrelation}
+                            onChange={(e) => setShowSelfCorrelation(e.target.checked)}
+                        />
+                    </Label>
+                    <Label text="Use fixed color range (-1 / 1)" position="left">
+                        <Checkbox
+                            checked={useFixedColorRange}
+                            onChange={(e) => setUseFixedColorRange(e.target.checked)}
+                        />
+                    </Label>
+                </div>
             </CollapsibleGroup>
             <CollapsibleGroup title="Parameter selection" expanded>
-                {/* <Select
-                    value={parameterIdentStrings}
-                    onChange={handleParametersChanged}
-                    options={parameterOptions}
-                    multiple={true}
-                    size={40}
-                    filter
-                /> */}
                 <ParametersSelector
-                    parameterIdents={parameterIdents}
-                    selectedParameterIdentStrings={parameterIdentStrings}
+                    allParameterIdentStrings={allParameterIdentStringsForSelector}
+                    selectedParameterStrings={parameterIdentStrings}
                     onChange={handleParametersChanged}
                 />
             </CollapsibleGroup>
         </div>
     );
 }
-//-----------------------------------------------------------------------------------------------------------
