@@ -6,7 +6,6 @@ import { isEqual } from "lodash";
 import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
 import { KeyKind } from "@framework/DataChannelTypes";
 import { ParameterIdent } from "@framework/EnsembleParameters";
-import type { ChannelReceiverReturnData } from "@framework/internal/DataChannels/hooks/useChannelReceiver";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -72,9 +71,7 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
     ];
 
     statusWriter.setLoading(isPending || receiverResponses.some((r) => r.isPending));
-    const receiverResponseRevisionNumbers = receiverResponses.map(
-        (response: ChannelReceiverReturnData<KeyKind.REALIZATION[]>) => response.revisionNumber,
-    );
+    const receiverResponseRevisionNumbers = receiverResponses.map((response) => response.revisionNumber);
     if (
         !isEqual(receiverResponseRevisionNumbers, revNumberResponses) ||
         !isEqual(parameterIdentStrings, prevParameterIdentStrings) ||
