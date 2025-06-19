@@ -8,4 +8,16 @@ export const receiverDefs: ChannelReceiverDefinition[] = [
         supportedKindsOfKeys: [KeyKind.REALIZATION],
         supportsMultiContents: true,
     },
+    {
+        idString: "channelResponse2",
+        displayName: "Response",
+        supportedKindsOfKeys: [KeyKind.REALIZATION],
+        supportsMultiContents: true,
+    },
+    {
+        idString: "channelResponse3",
+        displayName: "Response",
+        supportedKindsOfKeys: [KeyKind.REALIZATION],
+        supportsMultiContents: true,
+    },
 ];

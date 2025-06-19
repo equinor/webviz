@@ -1,9 +1,10 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
-import { parameterIdentStringsAtom } from "./settings/atoms/baseAtoms";
+import { parameterIdentStringsAtom, showLabelsAtom } from "./settings/atoms/baseAtoms";
 
 type SettingsToViewInterface = {
     parameterIdentStrings: string[];
+    showLabels: boolean;
 };
 
 export type Interfaces = {
@@ -12,4 +13,5 @@ export type Interfaces = {
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     parameterIdentStrings: (get) => get(parameterIdentStringsAtom),
+    showLabels: (get) => get(showLabelsAtom),
 };

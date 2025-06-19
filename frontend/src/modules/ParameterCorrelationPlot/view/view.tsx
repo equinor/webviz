@@ -21,6 +21,7 @@ import { createRankedParameterCorrelations } from "@modules/_shared/rankParamete
 import type { Interfaces } from "../interfaces";
 
 import { ParameterCorrelationFigure } from "./parameterCorrelationFigure";
+import { getContinuousParameterArray } from "@modules/_shared/parameterUtils";
 
 const MAX_NUM_PLOTS = 12;
 
@@ -147,18 +148,8 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                     if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
                         continue;
                     }
-                    const parameterArr = ensemble.getParameters().getParameterArr();
-                    const parameters: ContinuousParameter[] = [];
-                    if (parameterArr) {
-                        parameterArr.forEach((parameter) => {
-                            if (parameter.isConstant || parameter.type !== ParameterType.CONTINUOUS) {
-                                return;
-                            }
-                            parameters.push(parameter);
-                        });
-                    }
-
-                    if (!parameters) {
+                    const parameterArr = getContinuousParameterArray(ensemble);
+                    if (!parameterArr) {
                         continue;
                     }
                     const responseData: ResponseData = {
@@ -168,7 +159,7 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                     };
 
                     const rankedParameters = createRankedParameterCorrelations(
-                        parameters,
+                        parameterArr,
                         responseData,
                         numParams,
                         corrCutOff,

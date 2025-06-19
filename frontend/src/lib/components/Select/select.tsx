@@ -42,7 +42,7 @@ export type SelectProps<TValue = string> = {
 const noMatchingOptionsText = "No matching options";
 
 function ensureKeyboardSelectionInView(
-    prevViewStartIndex: number,
+    prevViewStartIndex: number, 
     reportedViewStartIndex: number,
     keyboardFocusIndex: number,
     viewSize: number,

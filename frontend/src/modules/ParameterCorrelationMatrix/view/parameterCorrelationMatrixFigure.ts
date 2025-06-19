@@ -11,6 +11,20 @@ export class ParameterCorrelationMatrixFigure {
     private _showLabel: boolean;
 
     constructor(wrapperDivSize: Size2D, numCols: number, numRows: number, showLabel: boolean) {
+        this._showLabel = showLabel;
+        const margin = this._showLabel
+            ? {
+                  t: 20,
+                  r: 20,
+                  b: 200,
+                  l: 200,
+              }
+            : {
+                  t: 20,
+                  r: 20,
+                  b: 20,
+                  l: 20,
+              };
         this._figure = makeSubplots({
             numRows: numRows,
             numCols: numCols,
@@ -19,12 +33,7 @@ export class ParameterCorrelationMatrixFigure {
             sharedXAxes: true,
             sharedYAxes: false,
             horizontalSpacing: 0,
-            margin: {
-                t: 20,
-                r: 20,
-                b: 200,
-                l: 200,
-            },
+            margin: margin,
             showGrid: true,
         });
         this._figure.updateLayout({
@@ -35,8 +44,6 @@ export class ParameterCorrelationMatrixFigure {
                 color: "#333",
             },
         });
-
-        this._showLabel = showLabel;
     }
 
     addCorrelationMatrixTrace(
@@ -49,17 +56,16 @@ export class ParameterCorrelationMatrixFigure {
         color?: string,
     ) {
         const matrixTrace = createCorrelationMatrixTrace(data, highlightedParameterString, this._showLabel, color);
-        const showLabels = matrixTrace.x && matrixTrace.x.length > 50 ? false : true;
         this._figure.updateLayout({
             [`xaxis${cellIndex + 1}`]: {
-                showticklabels: showLabels,
+                showticklabels: this._showLabel,
                 tickangle: 45,
                 autosize: false,
                 ticks: "",
                 ticksuffix: " ",
             },
             [`yaxis${cellIndex + 1}`]: {
-                showticklabels: showLabels,
+                showticklabels: this._showLabel,
                 tickangle: -45,
                 autosize: false,
                 ticks: "",
