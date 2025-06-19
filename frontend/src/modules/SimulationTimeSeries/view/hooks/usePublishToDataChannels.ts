@@ -5,20 +5,26 @@ import type { ChannelContentDefinition } from "@framework/DataChannelTypes";
 import type { ViewContext } from "@framework/ModuleContext";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
+import { ChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
+import type { RegularEnsembleVectorSpec } from "@modules/SimulationTimeSeries/dataGenerators";
+import { makeVectorGroupDataGenerator } from "@modules/SimulationTimeSeries/dataGenerators";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
+import type { VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
 
-import { ChannelIds } from "../../channelDefs";
-import type { RegularEnsembleVectorSpec } from "../../dataGenerators";
-import { makeVectorGroupDataGenerator } from "../../dataGenerators";
 import {
     activeTimestampUtcMsAtom,
     loadedVectorSpecificationsAndRealizationDataAtom,
     queryIsFetchingAtom,
 } from "../atoms/derivedAtoms";
+import { SubplotOwner } from "../utils/PlotBuilder";
 
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
-export function usePublishToDataChannels(viewContext: ViewContext<Interfaces>) {
+export function usePublishToDataChannels(
+    viewContext: ViewContext<Interfaces>,
+    subplotOwner: SubplotOwner,
+    vectorHexColors: { [key: string]: string },
+): void {
     const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
     const isQueryFetching = useAtomValue(queryIsFetchingAtom);
@@ -48,6 +54,7 @@ export function usePublishToDataChannels(viewContext: ViewContext<Interfaces>) {
 
     const contents: ChannelContentDefinition[] = [];
     for (const elm of regularEnsembleVectorSpecificationsAndRealizationData) {
+        const hexColor = getHexColorFromOwner(subplotOwner, elm.vectorSpecification, vectorHexColors);
         contents.push({
             contentIdString: `${elm.vectorSpecification.vectorName}-::-${elm.vectorSpecification.ensembleIdent}`,
             displayName: `${elm.vectorSpecification.vectorName} (${makeEnsembleDisplayName(
@@ -58,14 +65,29 @@ export function usePublishToDataChannels(viewContext: ViewContext<Interfaces>) {
                 regularEnsembleVectorSpecificationsAndRealizationData,
                 activeTimestampUtcMs ?? 0,
                 makeEnsembleDisplayName,
+                hexColor,
             ),
         });
     }
 
     viewContext.usePublishChannelContents({
         channelIdString: ChannelIds.TIME_SERIES,
-        dependencies: [regularEnsembleVectorSpecificationsAndRealizationData, activeTimestampUtcMs],
+        dependencies: [regularEnsembleVectorSpecificationsAndRealizationData, activeTimestampUtcMs, subplotOwner],
         enabled: !isQueryFetching,
         contents,
     });
+}
+
+function getHexColorFromOwner(
+    owner: SubplotOwner,
+    vectorSpec: VectorSpec,
+    vectorHexColors: { [key: string]: string },
+): string {
+    let color: string | null = null;
+    if (owner === SubplotOwner.ENSEMBLE) {
+        color = vectorHexColors[vectorSpec.vectorName];
+    } else if (owner === SubplotOwner.VECTOR) {
+        color = vectorSpec.color;
+    }
+    return color ?? "#000000";
 }

@@ -4,8 +4,6 @@ import { Input, Warning } from "@mui/icons-material";
 import type { PlotDatum, PlotMouseEvent } from "plotly.js";
 
 import { KeyKind } from "@framework/DataChannelTypes";
-import type { ContinuousParameter } from "@framework/EnsembleParameters";
-import { ParameterType } from "@framework/EnsembleParameters";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -15,6 +13,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { getContinuousParameterArray } from "@modules/_shared/parameterUtils";
 import type { ResponseData } from "@modules/_shared/rankParameter";
 import { createRankedParameterCorrelations } from "@modules/_shared/rankParameter";
 
@@ -147,18 +146,8 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                     if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
                         continue;
                     }
-                    const parameterArr = ensemble.getParameters().getParameterArr();
-                    const parameters: ContinuousParameter[] = [];
-                    if (parameterArr) {
-                        parameterArr.forEach((parameter) => {
-                            if (parameter.isConstant || parameter.type !== ParameterType.CONTINUOUS) {
-                                return;
-                            }
-                            parameters.push(parameter);
-                        });
-                    }
-
-                    if (!parameters) {
+                    const parameterArr = getContinuousParameterArray(ensemble);
+                    if (!parameterArr) {
                         continue;
                     }
                     const responseData: ResponseData = {
@@ -168,16 +157,14 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                     };
 
                     const rankedParameters = createRankedParameterCorrelations(
-                        parameters,
+                        parameterArr,
                         responseData,
                         numParams,
                         corrCutOff,
                     );
 
-                    // const color = responseChannelData.metaData.preferredColor;
-
                     const channelTitle = responseChannelData.metaData.displayString;
-
+                    const color = responseChannelData.metaData.preferredColor;
                     figure.addCorrelationTrace(
                         rankedParameters,
                         localParameterString,
@@ -185,6 +172,7 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                         colIndex + 1,
                         cellIndex,
                         channelTitle ?? "",
+                        color,
                     );
                     cellIndex++;
                 }

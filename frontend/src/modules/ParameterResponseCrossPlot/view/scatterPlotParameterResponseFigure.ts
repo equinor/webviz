@@ -76,11 +76,13 @@ export type scatterPlotParameterResponseData = {
     realizationValues: number[];
     parameterName: string;
     responseName: string;
+    color: string;
 };
 
 function createPlotlyParameterResponseScatterTrace(data: scatterPlotParameterResponseData): Partial<PlotData> {
-    const basePlotColor = "rgba(0, 112, 121, 1)";
-    const markerPlotColor = "rgba(0, 112, 121, 0.5)";
+    const markerColor = `${data.color}80`;
+    const lineColor = `${data.color}FF`;
+
     const { responseValues, parameterValues, realizationValues, parameterName, responseName } = data;
     const scatterTrace: Partial<PlotData> = {
         x: parameterValues,
@@ -90,10 +92,10 @@ function createPlotlyParameterResponseScatterTrace(data: scatterPlotParameterRes
         marker: {
             symbol: "circle",
             size: 10,
-            color: markerPlotColor,
-            opacity: 0.5,
+            color: markerColor,
+            opacity: 1,
             line: {
-                color: basePlotColor,
+                color: lineColor,
                 width: 1,
             },
         },
