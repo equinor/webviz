@@ -1,10 +1,10 @@
 import React from "react";
 
 import { ParameterIdent } from "@framework/EnsembleParameters";
+import { Checkbox } from "@lib/components/Checkbox";
 import { Label } from "@lib/components/Label";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { Switch } from "@lib/components/Switch";
 
 type ParametersSelectorProps = {
     allParameterIdentStrings: string[];
@@ -107,12 +107,11 @@ function ParametersSelector({
             </Label>
             <Label text="Select Parameter(s)">
                 <>
-                    <Label text="Auto-select all on group change" position="left">
-                        <Switch
-                            checked={autoSelectAllOnGroupChange}
-                            onChange={(e) => setAutoSelectAllOnGroupChange(e.target.checked)}
-                        />
-                    </Label>
+                    <Checkbox
+                        label="Auto-select all on group change"
+                        checked={autoSelectAllOnGroupChange}
+                        onChange={(e) => setAutoSelectAllOnGroupChange(e.target.checked)}
+                    />
                     <Select
                         value={selectedParameterValuesForSelect}
                         onChange={handleParameterChange}

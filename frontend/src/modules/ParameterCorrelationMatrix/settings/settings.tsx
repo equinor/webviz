@@ -9,7 +9,6 @@ import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Label } from "@lib/components/Label";
 import { getContinuousAndNonConstantParameterIdentsInEnsembles } from "@modules/_shared/parameterUnions";
 
 import type { Interfaces } from "../interfaces";
@@ -69,21 +68,21 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
         <div className="flex flex-col gap-2">
             <CollapsibleGroup title="Plot settings" expanded>
                 <div className="flex flex-col gap-2">
-                    <Label text="Show parameter labels (Max 50)" position="left" key="show-labels">
-                        <Checkbox checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} />
-                    </Label>
-                    <Label text="Show self-correlation" position="left">
-                        <Checkbox
-                            checked={showSelfCorrelation}
-                            onChange={(e) => setShowSelfCorrelation(e.target.checked)}
-                        />
-                    </Label>
-                    <Label text="Use fixed color range (-1 / 1)" position="left">
-                        <Checkbox
-                            checked={useFixedColorRange}
-                            onChange={(e) => setUseFixedColorRange(e.target.checked)}
-                        />
-                    </Label>
+                    <Checkbox
+                        label="Show parameter labels (Max 50)"
+                        checked={showLabels}
+                        onChange={(e) => setShowLabels(e.target.checked)}
+                    />
+                    <Checkbox
+                        label="Show self-correlation"
+                        checked={showSelfCorrelation}
+                        onChange={(e) => setShowSelfCorrelation(e.target.checked)}
+                    />
+                    <Checkbox
+                        label="Use fixed color range (-1 / 1)"
+                        checked={useFixedColorRange}
+                        onChange={(e) => setUseFixedColorRange(e.target.checked)}
+                    />
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup title="Parameter selection" expanded>
