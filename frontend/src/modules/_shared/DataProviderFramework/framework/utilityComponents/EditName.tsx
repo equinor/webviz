@@ -2,7 +2,8 @@ import React from "react";
 
 import { Edit } from "@mui/icons-material";
 
-import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { Item } from "../../interfacesAndTypes/entities";
 
