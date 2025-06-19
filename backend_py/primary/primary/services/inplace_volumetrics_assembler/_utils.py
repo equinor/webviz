@@ -280,7 +280,7 @@ def create_inplace_volumetric_table_data_from_result_df(
     Create Inplace Volumetric Table Data from result DataFrame, selection name and specified selector columns
     """
     if result_df.is_empty():
-        return InplaceVolumetricTableData(fluid_selection_name=selection_name, selector_columns=[], result_columns=[])
+        return InplaceVolumetricTableData(fluid_selection=selection_name, selector_columns=[], result_columns=[])
 
     possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
     existing_selector_columns = [name for name in result_df.columns if name in possible_selector_columns]
@@ -297,7 +297,7 @@ def create_inplace_volumetric_table_data_from_result_df(
         )
 
     return InplaceVolumetricTableData(
-        fluid_selection_name=selection_name,
+        fluid_selection=selection_name,
         selector_columns=selector_column_data_list,
         result_columns=result_column_data_list,
     )

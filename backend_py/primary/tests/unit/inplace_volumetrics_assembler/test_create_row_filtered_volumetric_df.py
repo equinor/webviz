@@ -27,8 +27,6 @@ def test_create_row_filtered_volumetric_df_no_realizations(inplace_volumetrics_d
             identifiers_with_values=[],
         )
 
-    # assert result_df is None
-
 
 def test_create_row_filtered_volumetric_df_no_data_found(inplace_volumetrics_df: pl.DataFrame) -> None:
     with pytest.raises(

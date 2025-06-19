@@ -91,15 +91,15 @@ class InplaceVolumetricsAccess:
         return table_names
 
     async def get_inplace_volumetrics_aggregated_table_async(
-        self, table_name: str, column_names: Optional[set[str]] = None
+        self, table_name: str, volumetric_columns: Optional[set[str]] = None
     ) -> pa.Table:
         """
-        Get inplace volumetrics data for list of columns for given case and iteration as a pyarrow table.
+        Get inplace volumes table data for list of volumetric columns for given case and iteration as a pyarrow table.
 
         The volumes are fetched from collection in Sumo and put together in a single table, i.e. a column per response.
 
         Returns:
-        pa.Table with columns: ZONE, REGION, FACIES, REAL, and the requested column names.
+        pa.Table with columns: ZONE, REGION, FACIES, LICENSE, REAL and the requested volumetric column names.
         """
 
         perf_metrics = PerfMetrics()
@@ -107,7 +107,7 @@ class InplaceVolumetricsAccess:
         table_context = self._ensemble_context.tables.filter(
             name=table_name,
             content="volumes",
-            column=column_names if column_names is None else list(column_names),
+            column=volumetric_columns if volumetric_columns is None else list(volumetric_columns),
         )
 
         perf_metrics.reset_lap_timer()
@@ -117,13 +117,13 @@ class InplaceVolumetricsAccess:
         available_response_names = [
             col for col in available_column_names if col not in self.get_possible_selector_columns()
         ]
-        if column_names is not None and not column_names.issubset(set(available_response_names)):
+        if volumetric_columns is not None and not volumetric_columns.issubset(set(available_response_names)):
             raise InvalidDataError(
-                f"Missing requested columns: {column_names}, in the volumetric table {self._case_uuid}, {table_name}",
+                f"Missing requested columns: {volumetric_columns}, in the volumetric table {self._case_uuid}, {table_name}",
                 Service.SUMO,
             )
 
-        requested_columns = available_response_names if column_names is None else list(column_names)
+        requested_columns = available_response_names if volumetric_columns is None else list(volumetric_columns)
 
         table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
         table_loader.require_content_type("volumes")
@@ -134,7 +134,7 @@ class InplaceVolumetricsAccess:
         pa_table = _tmp_remove_license_column_if_all_values_are_total(pa_table)
 
         LOGGER.debug(
-            f"get_inplace_volumetrics_aggregated_table_async took: {perf_metrics.to_string()}, {table_name=}, {column_names=}"
+            f"get_inplace_volumetrics_aggregated_table_async took: {perf_metrics.to_string()}, {table_name=}, {volumetric_columns=}"
         )
 
         return pa_table

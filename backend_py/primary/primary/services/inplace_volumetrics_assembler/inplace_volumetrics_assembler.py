@@ -234,7 +234,7 @@ class InplaceVolumetricsAssembler:
 
             statistical_table_data_per_fluid_selection.append(
                 InplaceStatisticalVolumetricTableData(
-                    fluid_selection_name=fluid_selection_name,
+                    fluid_selection=fluid_selection_name,
                     selector_columns=selector_column_data_list,
                     result_column_statistics=result_column_data_list,
                 )
@@ -523,7 +523,7 @@ class InplaceVolumetricsAssembler:
         # - Hard fail: get_inplace_volumetrics_aggregated_table_async() throws an exception if requested column names are not found
         inplace_volumetrics_table: pa.Table = (
             await self._inplace_volumetrics_access.get_inplace_volumetrics_aggregated_table_async(
-                table_name=table_name, column_names=volumetric_columns
+                table_name=table_name, volumetric_columns=volumetric_columns
             )
         )
 
