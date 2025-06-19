@@ -1,5 +1,7 @@
 import React from "react";
 
+import { Tooltip } from "@equinor/eds-core-react";
+
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { Button } from "../Button";
@@ -15,17 +17,9 @@ export type NavBarButtonProps = {
      */
     activeIcon?: React.ReactNode;
     /**
-     * Collapses the button (rendering only the icon)
-     */
-    collapsed?: boolean;
-    /**
      * Renders the button in it's active state
      */
     active?: boolean;
-    /**
-     * Text shown next to the button
-     */
-    text?: string;
     /**
      * Tooltip text
      */
@@ -36,7 +30,7 @@ function NavBarButtonComponent(
     props: NavBarButtonProps & ButtonProps,
     ref: React.ForwardedRef<HTMLDivElement>,
 ): React.ReactNode {
-    const { icon, activeIcon, text, collapsed, active, ...baseProps } = props;
+    const { icon, activeIcon, active, ...baseProps } = props;
 
     let buttonIcon: React.ReactNode;
 
@@ -44,14 +38,18 @@ function NavBarButtonComponent(
     else buttonIcon = icon;
 
     return (
-        <Button
-            {...baseProps}
-            ref={ref}
-            className={resolveClassNames("w-full", "h-10", active ? "text-cyan-600" : "text-slate-800!")}
-        >
-            {buttonIcon}
-            {!collapsed && <span className="ml-2">{text}</span>}
-        </Button>
+        <Tooltip title={props.title} placement="right">
+            <Button
+                {...baseProps}
+                ref={ref}
+                className={resolveClassNames(
+                    "w-full h-10 text-center px-3!",
+                    active ? "text-cyan-600" : "text-slate-800!",
+                )}
+            >
+                {buttonIcon}
+            </Button>
+        </Tooltip>
     );
 }
 

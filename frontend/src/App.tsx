@@ -9,6 +9,7 @@ import { GuiState, LeftDrawerContent } from "@framework/GuiMessageBroker";
 import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
+import { TopBar } from "@framework/internal/components/TopBar/topBar";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
@@ -38,14 +39,20 @@ function DevLabel() {
         <div className="bg-orange-600 text-white px-3 py-2 rounded-sm max-w-[400px] text-sm text-justify mt-4 z-50 shadow-sm">
             <strong>NOTE:</strong> This application is still under heavy development; bugs and occasional downtime
             should be expected. Please help us improve Webviz by reporting any undesired behaviour either on{" "}
-            <a href="https://equinor.slack.com/messages/webviz/" target="blank" className="underline cursor-pointer">
+            <a
+                href="https://equinor.slack.com/messages/webviz/"
+                target="blank"
+                className="underline cursor-pointer"
+                rel="noopener noreferrer"
+            >
                 Slack
             </a>{" "}
             or{" "}
             <a
-                href="(https://web.yammer.com/main/groups/eyJfdHlwZSI6Ikdyb3VwIiwiaWQiOiIxMzM5NzE0NyJ9"
+                href="https://web.yammer.com/main/groups/eyJfdHlwZSI6Ikdyb3VwIiwiaWQiOiIxMzM5NzE0NyJ9"
                 target="blank"
                 className="underline cursor-pointer"
+                rel="noopener noreferrer"
             >
                 Yammer
             </a>
@@ -168,16 +175,21 @@ function App() {
                 )
             )}
             <div
-                className={resolveClassNames("h-screen flex flex-row transition-opacity ease-in-out duration-1000", {
+                className={resolveClassNames("h-screen flex flex-col transition-opacity ease-in-out duration-1000", {
                     "opacity-0": isInitializingApp,
                     "opacity-100": !isInitializingApp,
                 })}
             >
-                <>
-                    <LeftNavBar workbench={workbench} />
-                    <SettingsContentPanels workbench={workbench} />
-                    <RightNavBar workbench={workbench} />
-                </>
+                {!isInitializingApp && (
+                    <>
+                        <TopBar workbench={workbench} />
+                        <div className="grow flex flex-row">
+                            <LeftNavBar workbench={workbench} />
+                            <SettingsContentPanels workbench={workbench} />
+                            <RightNavBar workbench={workbench} />
+                        </div>
+                    </>
+                )}
             </div>
             <ToggleDevToolsButton guiMessageBroker={workbench.getGuiMessageBroker()} />
         </>

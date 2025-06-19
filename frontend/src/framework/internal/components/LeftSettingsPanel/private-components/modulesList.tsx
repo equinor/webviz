@@ -462,7 +462,7 @@ if (isDevMode()) {
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
     const dashboard = usePublishSubscribeTopicValue(
         props.workbench.getWorkbenchSession(),
-        PrivateWorkbenchSessionTopic.ActiveDashboard,
+        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
     );
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.LeftDrawerContent);
     const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances);

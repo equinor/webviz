@@ -1,3 +1,5 @@
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
+
 import { DataProviderManagerTopic, type GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
 import { ExternalSettingController } from "../framework/ExternalSettingController/ExternalSettingController";
 import { SettingTopic, type SettingManager } from "../framework/SettingManager/SettingManager";
@@ -11,7 +13,6 @@ import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { MakeSettingTypesMap, SettingTypes, Settings } from "../settings/settingsDefinitions";
 
 import { Dependency } from "./_utils/Dependency";
-import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 export class SharedSettingsDelegate<
     TSettings extends Settings,
@@ -24,7 +25,8 @@ export class SharedSettingsDelegate<
     private _wrappedSettings: { [K in TSettingKey]: SettingManager<K> } = {} as {
         [K in TSettingKey]: SettingManager<K>;
     };
-    private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
+    private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
+        new UnsubscribeFunctionsManagerDelegate();
     private _dependencies: Dependency<any, TSettings, any, any>[] = [];
     private _parentItem: Item;
     private _customDependenciesDefinition:
@@ -61,11 +63,11 @@ export class SharedSettingsDelegate<
     }
 
     unsubscribeAll(): void {
-        this._unsubscribeHandler.unsubscribeAll();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
     }
 
     beforeDestroy(): void {
-        this._unsubscribeHandler.unsubscribeAll();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
         for (const key in this._externalSettingControllers) {
             const externalSettingController = this._externalSettingControllers[key];
             externalSettingController.beforeDestroy();
@@ -81,7 +83,7 @@ export class SharedSettingsDelegate<
     }
 
     createDependencies(): void {
-        this._unsubscribeHandler.unsubscribe("dependencies");
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("dependencies");
 
         this._dependencies = [];
 
@@ -90,14 +92,14 @@ export class SharedSettingsDelegate<
                 const setting = this._wrappedSettings[key];
                 handler(setting.getValue() as unknown as TSettingTypes[K]);
             };
-            this._unsubscribeHandler.registerUnsubscribeFunction(
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dependencies",
                 this._wrappedSettings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(
                     handleChange,
                 ),
             );
 
-            this._unsubscribeHandler.registerUnsubscribeFunction(
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dependencies",
                 this._wrappedSettings[key]
                     .getPublishSubscribeDelegate()
@@ -108,14 +110,14 @@ export class SharedSettingsDelegate<
                 }),
             );
 
-            this._unsubscribeHandler.registerUnsubscribeFunction(
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dependencies",
                 this._wrappedSettings[key]
                     .getPublishSubscribeDelegate()
                     .makeSubscriberFunction(SettingTopic.IS_PERSISTED)(handleChange),
             );
 
-            this._unsubscribeHandler.registerUnsubscribeFunction(
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dependencies",
                 this._wrappedSettings[key]
                     .getPublishSubscribeDelegate()
@@ -132,7 +134,7 @@ export class SharedSettingsDelegate<
             const handleChange = (): void => {
                 handler(this._parentItem.getItemDelegate().getDataProviderManager().getGlobalSetting(key));
             };
-            this._unsubscribeHandler.registerUnsubscribeFunction(
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dependencies",
                 this._parentItem
                     .getItemDelegate()

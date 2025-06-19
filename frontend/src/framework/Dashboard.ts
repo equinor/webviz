@@ -93,6 +93,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
     setLayout(layout: LayoutElement[]): void {
         this._layout = layout;
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.Layout);
     }
 
     getModuleInstances(): ModuleInstance<any, any>[] {

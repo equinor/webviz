@@ -32,7 +32,7 @@ export type HeaderProps = {
 export const Header: React.FC<HeaderProps> = (props) => {
     const dashboard = usePublishSubscribeTopicValue(
         props.workbench.getWorkbenchSession(),
-        PrivateWorkbenchSessionTopic.ActiveDashboard,
+        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
     );
     const moduleInstanceId = props.moduleInstance.getId();
     const guiMessageBroker = props.workbench.getGuiMessageBroker();

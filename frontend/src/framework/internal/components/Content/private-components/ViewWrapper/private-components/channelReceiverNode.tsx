@@ -31,7 +31,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
 
     const dashboard = usePublishSubscribeTopicValue(
         props.workbench.getWorkbenchSession(),
-        PrivateWorkbenchSessionTopic.ActiveDashboard,
+        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
     );
 
     const ref = React.useRef<HTMLDivElement>(null);

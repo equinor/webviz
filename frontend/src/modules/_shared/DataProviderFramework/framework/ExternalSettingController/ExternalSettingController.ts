@@ -1,5 +1,6 @@
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
+
 import type { GroupDelegate } from "../../delegates/GroupDelegate";
-import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import { instanceofItemGroup, type Item } from "../../interfacesAndTypes/entities";
 import type { AvailableValuesType } from "../../interfacesAndTypes/utils";
 import {
@@ -23,14 +24,15 @@ export class ExternalSettingController<
     private _setting: SettingManager<TSetting, TValue, TCategory>;
     private _controlledSettings: Map<string, SettingManager<TSetting, TValue, TCategory>> = new Map();
     private _availableValuesMap: Map<string, AvailableValuesType<TSetting>> = new Map();
-    private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
+    private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
+        new UnsubscribeFunctionsManagerDelegate();
 
     constructor(parentItem: Item, setting: SettingManager<TSetting, TValue, TCategory>) {
         this._parentItem = parentItem;
         this._setting = setting;
 
         const dataProviderManager = parentItem.getItemDelegate().getDataProviderManager();
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "data-provider-manager",
             dataProviderManager
                 .getPublishSubscribeDelegate()
@@ -38,7 +40,7 @@ export class ExternalSettingController<
                 this.unregisterAllControlledSettings();
             }),
         );
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "data-provider-manager",
             dataProviderManager.getPublishSubscribeDelegate().makeSubscriberFunction(DataProviderManagerTopic.ITEMS)(
                 () => {
@@ -49,7 +51,7 @@ export class ExternalSettingController<
     }
 
     beforeDestroy(): void {
-        this._unsubscribeHandler.unsubscribeAll();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
         this.unregisterAllControlledSettings();
     }
 

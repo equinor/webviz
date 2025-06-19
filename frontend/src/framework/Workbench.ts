@@ -5,6 +5,7 @@ import { GuiMessageBroker } from "./GuiMessageBroker";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSession } from "./internal/PrivateWorkbenchSession";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
+import { WorkbenchSessionPersistenceService } from "./persistence/WorkbenchSessionPersistenceService";
 import type { WorkbenchServices } from "./WorkbenchServices";
 
 export type StoredUserEnsembleSetting = {
@@ -24,14 +25,20 @@ export class Workbench {
     private _workbenchSession: PrivateWorkbenchSession;
     private _workbenchServices: PrivateWorkbenchServices;
     private _workbenchSettings: PrivateWorkbenchSettings;
+    private _workbenchSessionPersistenceService: WorkbenchSessionPersistenceService;
     private _guiMessageBroker: GuiMessageBroker;
     private _atomStoreMaster: AtomStoreMaster;
 
     constructor(queryClient: QueryClient) {
         this._atomStoreMaster = new AtomStoreMaster();
         this._workbenchSession = new PrivateWorkbenchSession(this._atomStoreMaster, queryClient);
+        this._workbenchSessionPersistenceService = new WorkbenchSessionPersistenceService(
+            this._workbenchSession,
+            queryClient,
+        );
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._workbenchSettings = new PrivateWorkbenchSettings();
+
         this._guiMessageBroker = new GuiMessageBroker();
     }
 
@@ -53,6 +60,10 @@ export class Workbench {
 
     getWorkbenchSettings(): PrivateWorkbenchSettings {
         return this._workbenchSettings;
+    }
+
+    getWorkbenchSessionPersistenceService(): WorkbenchSessionPersistenceService {
+        return this._workbenchSessionPersistenceService;
     }
 
     getGuiMessageBroker(): GuiMessageBroker {

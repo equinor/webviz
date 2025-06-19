@@ -1,5 +1,6 @@
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import { DataProvider } from "../framework/DataProvider/DataProvider";
 import { DeserializationAssistant } from "../framework/utils/DeserializationAssistant";
@@ -7,7 +8,6 @@ import { instanceofItemGroup, type Item } from "../interfacesAndTypes/entities";
 import type { SerializedItem } from "../interfacesAndTypes/serialization";
 
 import { ItemDelegateTopic } from "./ItemDelegate";
-import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 export enum GroupDelegateTopic {
     CHILDREN = "CHILDREN",
@@ -35,7 +35,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
     private _color: string | null = null;
     private _children: Item[] = [];
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<GroupDelegateTopicPayloads>();
-    private _unsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
+    private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
     private _treeRevisionNumber: number = 0;
     private _deserializing = false;
 
@@ -232,10 +232,10 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
     private takeOwnershipOfChild(child: Item) {
         child.getItemDelegate().setParentGroup(this);
 
-        this._unsubscribeHandlerDelegate.unsubscribe(child.getItemDelegate().getId());
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe(child.getItemDelegate().getId());
 
         if (child instanceof DataProvider) {
-            this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 child.getItemDelegate().getId(),
                 child
                     .getItemDelegate()
@@ -247,7 +247,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         }
 
         if (instanceofItemGroup(child)) {
-            this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 child.getItemDelegate().getId(),
                 child
                     .getGroupDelegate()
@@ -256,7 +256,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
                     this.incrementTreeRevisionNumber();
                 }),
             );
-            this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 child.getItemDelegate().getId(),
                 child
                     .getGroupDelegate()
@@ -279,7 +279,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
     }
 
     private disposeOwnershipOfChild(child: Item) {
-        this._unsubscribeHandlerDelegate.unsubscribe(child.getItemDelegate().getId());
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe(child.getItemDelegate().getId());
         child.getItemDelegate().setParentGroup(null);
 
         this.publishTopic(GroupDelegateTopic.CHILDREN);
@@ -312,7 +312,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
     }
 
     beforeDestroy() {
-        this._unsubscribeHandlerDelegate.unsubscribeAll();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
         for (const child of this._children) {
             child.beforeDestroy?.();
         }

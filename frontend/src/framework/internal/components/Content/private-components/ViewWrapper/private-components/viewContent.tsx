@@ -55,7 +55,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
             );
         }
 
-        if (props.moduleInstance.isInitialized()) {
+        if (!props.moduleInstance.isInitialized()) {
             return (
                 <>
                     <CircularProgress />

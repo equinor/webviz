@@ -27,7 +27,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     const rightSettingsPanelWidth = useGuiValue(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
     const ensembleSet = usePublishSubscribeTopicValue(
         props.workbench.getWorkbenchSession(),
-        PrivateWorkbenchSessionTopic.EnsembleSet,
+        PrivateWorkbenchSessionTopic.ENSEMBLE_SET,
     );
     const realizationFilterSet = props.workbench.getWorkbenchSession().getRealizationFilterSet();
     const [, setNumberOfUnsavedRealizationFilters] = useGuiState(
