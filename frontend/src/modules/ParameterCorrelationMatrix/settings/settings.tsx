@@ -36,12 +36,13 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
         expectedKindsOfKeys: [KeyKind.REALIZATION],
     });
 
-    let ensembleIdentStringsFromChannels: string[] = [];
-    if (receiverResponse.channel && receiverResponse.channel.contents) {
-        ensembleIdentStringsFromChannels = receiverResponse.channel.contents.map(
-            (content) => content.metaData.ensembleIdentString,
-        );
-    }
+    const ensembleIdentStringsFromChannels: string[] = React.useMemo(() => {
+        if (receiverResponse.channel && receiverResponse.channel.contents) {
+            return receiverResponse.channel.contents.map((content) => content.metaData.ensembleIdentString);
+        }
+        return [];
+    }, [receiverResponse.channel]);
+
     const ensembleSet = workbenchSession.getEnsembleSet();
 
     const regularEnsembleIdentsFromChannels: RegularEnsembleIdent[] = React.useMemo(() => {

@@ -13,13 +13,13 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { getContinuousParameterArray } from "@modules/_shared/parameterUtils";
 import type { ResponseData } from "@modules/_shared/rankParameter";
 import { createRankedParameterCorrelations } from "@modules/_shared/rankParameter";
 
 import type { Interfaces } from "../interfaces";
 
 import { ParameterCorrelationFigure } from "./parameterCorrelationFigure";
-import { getContinuousParameterArray } from "@modules/_shared/parameterUtils";
 
 const MAX_NUM_PLOTS = 12;
 

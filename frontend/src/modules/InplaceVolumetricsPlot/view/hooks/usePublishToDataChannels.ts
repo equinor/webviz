@@ -3,10 +3,11 @@ import type { ChannelContentDefinition, ChannelContentMetaData, DataGenerator } 
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewContext } from "@framework/ModuleContext";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { ColorSet } from "@lib/utils/ColorSet";
+import type { ColorSet } from "@lib/utils/ColorSet";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import type { Table } from "@modules/_shared/InplaceVolumetrics/Table";
-import { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
+import type { SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
+import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 import { ChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
 import type { Interfaces } from "@modules/InplaceVolumetricsPlot/interfaces";
 

@@ -12,6 +12,7 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import type { Interfaces } from "../interfaces";
+import { GroupBy } from "../typesAndEnums";
 
 import { userSelectedActiveTimestampUtcMsAtom } from "./atoms/baseAtoms";
 import { realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
@@ -19,7 +20,6 @@ import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriter
 import { usePlotBuilder } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
-import { GroupBy } from "../typesAndEnums";
 import { SubplotOwner } from "./utils/PlotBuilder";
 
 type HexColorMap = { [key: string]: string };

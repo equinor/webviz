@@ -1,9 +1,12 @@
 import React from "react";
 
 import { Input, Warning } from "@mui/icons-material";
+import { isEqual } from "lodash";
 
-import { ChannelReceiverChannelContent, KeyKind } from "@framework/DataChannelTypes";
+import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
+import { KeyKind } from "@framework/DataChannelTypes";
 import { ParameterIdent } from "@framework/EnsembleParameters";
+import type { ChannelReceiverReturnData } from "@framework/internal/DataChannels/hooks/useChannelReceiver";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -12,15 +15,13 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { getContinuousParameterArray } from "@modules/_shared/parameterUtils";
 import type { ResponseData } from "@modules/_shared/rankParameter";
 import { createCorrelationMatrix } from "@modules/_shared/rankParameter";
 
 import type { Interfaces } from "../interfaces";
 
 import { ParameterCorrelationMatrixFigure } from "./parameterCorrelationMatrixFigure";
-import { ChannelReceiverReturnData } from "@framework/internal/DataChannels/hooks/useChannelReceiver";
-import { isEqual } from "lodash";
-import { getContinuousParameterArray } from "@modules/_shared/parameterUtils";
 
 const MAX_NUM_PLOTS = 12;
 
@@ -34,7 +35,7 @@ function MaxNumberPlotsExceededMessage() {
     );
 }
 
-export function View({ viewContext, workbenchSession, workbenchServices }: ModuleViewProps<Interfaces>) {
+export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfaces>) {
     const [isPending, startTransition] = React.useTransition();
     const [content, setContent] = React.useState<React.ReactNode>(null);
     const [revNumberResponses, setRevNumberResponses] = React.useState<number[]>([]);

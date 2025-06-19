@@ -18,7 +18,8 @@ import {
 } from "../atoms/derivedAtoms";
 import { vectorObservationsQueriesAtom } from "../atoms/queryAtoms";
 import type { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
-import { PlotBuilder, SubplotOwner } from "../utils/PlotBuilder";
+import { PlotBuilder } from "../utils/PlotBuilder";
+import type { SubplotOwner } from "../utils/PlotBuilder";
 import {
     filterVectorSpecificationAndFanchartStatisticsDataArray,
     filterVectorSpecificationAndIndividualStatisticsDataArray,

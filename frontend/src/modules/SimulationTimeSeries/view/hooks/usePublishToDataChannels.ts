@@ -5,20 +5,20 @@ import type { ChannelContentDefinition } from "@framework/DataChannelTypes";
 import type { ViewContext } from "@framework/ModuleContext";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
+import { ChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
+import type { RegularEnsembleVectorSpec } from "@modules/SimulationTimeSeries/dataGenerators";
+import { makeVectorGroupDataGenerator } from "@modules/SimulationTimeSeries/dataGenerators";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
+import type { VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
 
-import { ChannelIds } from "../../channelDefs";
-import type { RegularEnsembleVectorSpec } from "../../dataGenerators";
-import { makeVectorGroupDataGenerator } from "../../dataGenerators";
 import {
     activeTimestampUtcMsAtom,
     loadedVectorSpecificationsAndRealizationDataAtom,
     queryIsFetchingAtom,
 } from "../atoms/derivedAtoms";
+import { SubplotOwner } from "../utils/PlotBuilder";
 
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
-import { SubplotOwner } from "../utils/PlotBuilder";
-import { VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 export function usePublishToDataChannels(
     viewContext: ViewContext<Interfaces>,

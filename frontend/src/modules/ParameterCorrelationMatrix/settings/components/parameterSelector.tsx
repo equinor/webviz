@@ -1,8 +1,9 @@
 import React from "react";
-import { ParameterIdent } from "@framework/EnsembleParameters";
-import { Select, SelectOption } from "@lib/components/Select";
 
+import { ParameterIdent } from "@framework/EnsembleParameters";
 import { Label } from "@lib/components/Label";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
 
 type ParametersSelectorProps = {

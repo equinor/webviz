@@ -14,7 +14,6 @@ import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
-
 import type { Figure } from "@modules/_shared/Figure";
 import { CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";

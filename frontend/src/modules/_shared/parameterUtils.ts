@@ -1,7 +1,8 @@
-import { ContinuousParameter, ParameterType } from "@framework/EnsembleParameters";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { ContinuousParameter } from "@framework/EnsembleParameters";
+import { ParameterType } from "@framework/EnsembleParameters";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
 
-export function getContinuousParameterArray(regularEnsemble: RegularEnsemble, ): ContinuousParameter[] | null {
+export function getContinuousParameterArray(regularEnsemble: RegularEnsemble): ContinuousParameter[] | null {
     const parameterArr = regularEnsemble.getParameters().getParameterArr();
     const parameters: ContinuousParameter[] = [];
     if (parameterArr) {
