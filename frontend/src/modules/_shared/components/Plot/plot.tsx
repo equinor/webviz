@@ -15,7 +15,7 @@ const DEFAULT_CONFIG: Partial<Plotly.Config> = {
     modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "resetScale2d"],
     displaylogo: false,
     responsive: true,
-    displayModeBar: true,
+    displayModeBar: "hover",
 };
 
 const DEFAULT_LAYOUT: Partial<Plotly.Layout> = {
