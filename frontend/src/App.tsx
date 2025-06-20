@@ -17,6 +17,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
+import { ToastContainer } from "react-toastify";
 
 function DataSharingLabel() {
     return (
@@ -183,6 +184,7 @@ function App() {
                 {!isInitializingApp && (
                     <>
                         <TopBar workbench={workbench} />
+                        <ToastContainer stacked newestOnTop limit={3} position="bottom-right" />
                         <div className="grow min-h-0">
                             <div className="w-full h-full flex flex-row">
                                 <LeftNavBar workbench={workbench} />

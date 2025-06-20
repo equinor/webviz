@@ -14,6 +14,7 @@ import {
     objectToJsonString,
     updateSessionWithCacheUpdate,
 } from "./utils";
+import { toast } from "react-toastify";
 
 export type WorkbenchSessionPersistenceInfo = {
     lastModifiedMs: number;
@@ -89,8 +90,6 @@ export class WorkbenchSessionPersistenceService
                 this.pullFullSessionState();
             }),
         );
-
-        this.pullFullSessionState();
     }
 
     beforeDestroy(): void {
@@ -129,12 +128,60 @@ export class WorkbenchSessionPersistenceService
         return snapshotGetter;
     }
 
+    private getLocalStorageKey(sessionId: string | null): string {
+        return sessionId ? `workbench-session:${sessionId}` : "workbench-session:unsaved";
+    }
+
+    private saveToLocalStorage() {
+        const key = this.getLocalStorageKey(null);
+
+        if (this._currentStateString) {
+            localStorage.setItem(
+                key,
+                JSON.stringify({
+                    id: this._workbenchSession.getId(),
+                    content: this._currentStateString,
+                }),
+            );
+        }
+    }
+
+    private loadFromLocalStorage(): string | null {
+        const key = this.getLocalStorageKey(this._workbenchSession.getId());
+        return localStorage.getItem(key);
+    }
+
     private async pullFullSessionState() {
         const workbenchSessionState = this._workbenchSession.serializeState();
         this._currentStateString = objectToJsonString(workbenchSessionState);
         this._currentHash = await hashJsonString(this._currentStateString);
 
+        this.saveToLocalStorage();
         this.updatePersistenceInfo();
+    }
+
+    async tryLoadSessionStateFromStorage(): Promise<boolean> {
+        const saved = this.loadFromLocalStorage();
+        if (!saved) return false;
+
+        try {
+            const state = JSON.parse(saved);
+            const content = JSON.parse(state.content);
+
+            this._workbenchSession.deserializeState(content);
+            this._currentStateString = state.content;
+            this._currentHash = await hashJsonString(state.content);
+            this._workbenchSession.setId(state.id);
+
+            this.updatePersistenceInfo();
+            this.subscribeToDashboardUpdates();
+            this.subscribeToModuleInstanceUpdates();
+        } catch (error) {
+            console.warn("Failed to load or apply session state from localStorage", error);
+            return false;
+        }
+
+        return true;
     }
 
     async persistSessionState() {
@@ -142,11 +189,9 @@ export class WorkbenchSessionPersistenceService
             throw new Error("Current state string is not set. Cannot persist session state.");
         }
 
-        this._lastPersistedMs = Date.now();
-        this._lastPersistedHash = this._currentHash;
-
         const metadata = this._workbenchSession.getMetadata();
         const id = this._workbenchSession.getId();
+        const toastId = toast.loading("Persisting session state...");
 
         try {
             if (this._workbenchSession.getIsPersisted()) {
@@ -161,6 +206,8 @@ export class WorkbenchSessionPersistenceService
                         description: metadata.description,
                     },
                 });
+                toast.dismiss(toastId);
+                toast.success("Session state updated successfully.");
             } else {
                 const id = await createSessionWithCacheUpdate(this._queryClient, {
                     title: metadata.title,
@@ -168,14 +215,19 @@ export class WorkbenchSessionPersistenceService
                     content: this._currentStateString,
                 });
                 this._workbenchSession.setId(id);
+                toast.dismiss(toastId);
+                toast.success("Session successfully created and persisted.");
             }
+
+            this._lastPersistedMs = Date.now();
+            this._lastPersistedHash = this._currentHash;
+            this._workbenchSession.setIsPersisted(true);
+            this.updatePersistenceInfo();
         } catch (error) {
             console.error("Failed to persist session state:", error);
-            throw new Error("Failed to persist session state. Please try again later.");
+            toast.dismiss(toastId);
+            toast.error("Failed to persist session state. Please try again later.");
         }
-
-        this.updatePersistenceInfo();
-        this._workbenchSession.setIsPersisted(true);
     }
 
     private updatePersistenceInfo() {
@@ -207,6 +259,14 @@ export class WorkbenchSessionPersistenceService
                     this.pullFullSessionState();
                     this.subscribeToModuleInstanceUpdates();
                 }),
+            );
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "dashboards",
+                dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.ActiveModuleInstanceId)(
+                    () => {
+                        this.pullFullSessionState();
+                    },
+                ),
             );
         }
     }

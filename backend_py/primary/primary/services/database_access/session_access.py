@@ -54,7 +54,7 @@ class SessionAccess:
 
     async def delete_session(self, session_id: str):
         await self._assert_ownership(session_id)
-        await self.container_access.delete_item(session_id)
+        await self.container_access.delete_item(session_id, partition_key=self.user_id)
 
     async def update_session(self, session_id: str, session_update: SessionUpdate):
         existing = await self._assert_ownership(session_id)
@@ -66,9 +66,9 @@ class SessionAccess:
                 "version": existing.metadata.version + 1,
             }
         )
-        updated_session = session_update.model_copy(update={"metadata": updated_metadata})
+        updated_session = existing.model_copy(update={"metadata": updated_metadata})
 
-        await self.container_access.update_item(session_id, updated_session.model_dump(by_alias=True, mode="json"))
+        await self.container_access.update_item(session_id, updated_session.model_dump(by_alias=True, mode="json"), partition_key=self.user_id)
 
     async def _assert_ownership(self, session_id: str) -> SessionRecord:
         session = await self._get_session_raw_by_id(session_id)
@@ -81,4 +81,9 @@ class SessionAccess:
     async def _get_session_raw_by_id(self, session_id: str) -> Optional[SessionRecord]:
         query = f"SELECT * FROM c WHERE c.id = '{session_id}'"
         items = await self.container_access.query_items(query)
-        return SessionRecord(**items[0]) if items else None
+        return SessionRecord(
+            id= session_id,
+            user_id=self.user_id,
+            metadata=SessionMetadata(**items[0]["metadata"]),
+            content=items[0]["content"]
+        ) if items else None

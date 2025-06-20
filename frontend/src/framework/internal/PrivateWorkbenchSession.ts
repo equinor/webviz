@@ -230,7 +230,7 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     clear() {
         this._dashboards = [];
         this._activeDashboardId = null;
-        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+        // this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
     }
 
     private async loadAndSetupEnsembleSetInSession(

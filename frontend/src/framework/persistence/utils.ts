@@ -12,8 +12,8 @@ export function objectToJsonString(obj: unknown): string {
     try {
         return JSON.stringify(obj, null, 2);
     } catch (error) {
-        console.error("Failed to convert object to JSON string:", error);
-        return "";
+        console.error("Failed to convert object to JSON string. Offending object:", obj, "Error:", error);
+        throw error; // or return fallback JSON string like '{}'
     }
 }
 
@@ -32,6 +32,7 @@ export async function createSessionWithCacheUpdate(
     sessionData: NewSession_api,
 ): Promise<string> {
     const response = await createSession<true>({
+        throwOnError: true,
         body: sessionData,
     });
 
@@ -48,6 +49,7 @@ export async function updateSessionWithCacheUpdate(
     sessionData: SessionUpdate_api,
 ): Promise<void> {
     await updateSession<true>({
+        throwOnError: true,
         path: {
             session_id: sessionData.id,
         },

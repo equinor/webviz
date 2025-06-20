@@ -43,7 +43,9 @@ export class Workbench {
     }
 
     async initialize() {
-        await this._workbenchSession.initFromLocalStorage();
+        if (!(await this._workbenchSessionPersistenceService.tryLoadSessionStateFromStorage())) {
+            await this._workbenchSession.initFromLocalStorage();
+        }
     }
 
     getAtomStoreMaster(): AtomStoreMaster {
@@ -71,7 +73,7 @@ export class Workbench {
     }
 
     clear(): void {
-        this._workbenchSession.clear();
+        // this._workbenchSession.clear();
     }
 
     /*

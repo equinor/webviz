@@ -19,6 +19,7 @@ import FmuLogo from "@assets/fmu.svg";
 
 import { LoginButton } from "../LoginButton";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
 
 export type TopBarProps = {
     workbench: Workbench;
@@ -253,6 +254,8 @@ function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNode {
             });
     }
 
+    const layout = props.workbench.getWorkbenchSession().getActiveDashboard()?.getLayout() || [];
+
     return (
         <Dialog
             open={props.open}
@@ -268,33 +271,38 @@ function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNode {
                 </>
             }
         >
-            <div className="flex flex-col gap-2">
-                <Label text="Title">
-                    <>
-                        <Input
-                            placeholder="Enter session title"
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            error={!!inputFeedback.title}
-                        />
-                        {inputFeedback.title && <div className="text-red-600 text-sm mt-1">{inputFeedback.title}</div>}
-                    </>
-                </Label>
-                <Label text="Description">
-                    <>
-                        <Input
-                            placeholder="Enter session description"
-                            value={description}
-                            multiline
-                            onChange={(e) => setDescription(e.target.value)}
-                            error={!!inputFeedback.description}
-                        />
-                        {inputFeedback.description && (
-                            <div className="text-red-600 text-sm mt-1">{inputFeedback.description}</div>
-                        )}
-                    </>
-                </Label>
+            <div className="flex gap-4 items-center">
+                <DashboardPreview height={100} width={100} layout={layout} />
+                <div className="flex flex-col gap-2 grow min-w-0">
+                    <Label text="Title">
+                        <>
+                            <Input
+                                placeholder="Enter session title"
+                                type="text"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                error={!!inputFeedback.title}
+                            />
+                            {inputFeedback.title && (
+                                <div className="text-red-600 text-sm mt-1">{inputFeedback.title}</div>
+                            )}
+                        </>
+                    </Label>
+                    <Label text="Description">
+                        <>
+                            <Input
+                                placeholder="Enter session description"
+                                value={description}
+                                multiline
+                                onChange={(e) => setDescription(e.target.value)}
+                                error={!!inputFeedback.description}
+                            />
+                            {inputFeedback.description && (
+                                <div className="text-red-600 text-sm mt-1">{inputFeedback.description}</div>
+                            )}
+                        </>
+                    </Label>
+                </div>
             </div>
         </Dialog>
     );

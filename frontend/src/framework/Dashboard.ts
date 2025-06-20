@@ -25,6 +25,7 @@ export type SerializedDashboard = {
     id: string;
     name: string;
     description?: string;
+    activeModuleInstanceId: string | null;
     moduleInstances: ModuleInstanceStateAndLayoutInfo[];
 };
 
@@ -127,6 +128,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             id: this._id,
             name: this._name,
             description: this._description,
+            activeModuleInstanceId: this._activeModuleInstanceId,
             moduleInstances,
         };
     }
@@ -160,6 +162,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
                 maximized: layoutInfo.maximized,
             });
         }
+
+        this.setActiveModuleInstanceId(serializedDashboard.activeModuleInstanceId);
 
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.Layout);
     }
