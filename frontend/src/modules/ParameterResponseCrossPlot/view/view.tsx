@@ -185,7 +185,7 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                 }
             }
 
-            setContent(<Plot data={figure.buildData()} layout={figure.buildLayout()} />);
+            setContent(<Plot data={figure.makePlotData()} layout={figure.makePlotLayout()} />);
             return;
         }
     }

@@ -89,7 +89,7 @@ export function View({ viewContext, workbenchSettings, workbenchSession }: Modul
         pvtPlotBuilder.makeLayout(selectedPhase, selectedPlots, wrapperDivSize);
         pvtPlotBuilder.makeTraces(selectedPlots, selectedPvtNums, selectedPhase, selectedColorBy, colorSet);
 
-        return <Plot layout={pvtPlotBuilder.buildLayout()} data={pvtPlotBuilder.buildData()} />;
+        return <Plot layout={pvtPlotBuilder.makePlotLayout()} data={pvtPlotBuilder.makePlotData()} />;
     }
 
     return (

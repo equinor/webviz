@@ -197,7 +197,9 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                 }
             }
 
-            setContent(<Plot data={figure.buildData()} layout={figure.buildLayout()} onClick={handleClickInChart} />);
+            setContent(
+                <Plot data={figure.makePlotData()} layout={figure.makePlotLayout()} onClick={handleClickInChart} />,
+            );
             return;
         });
     }

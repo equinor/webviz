@@ -135,5 +135,8 @@ export function usePlotBuilder(
         plotBuilder.addTimeAnnotation(activeTimestampUtcMs);
     }
 
+    plotBuilder.prepareLegendsAndTitles();
+    plotBuilder.prepareAnnotations();
+
     return plotBuilder;
 }

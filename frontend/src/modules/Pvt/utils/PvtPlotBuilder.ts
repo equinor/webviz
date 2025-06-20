@@ -285,11 +285,11 @@ export class PvtPlotBuilder {
         }
     }
 
-    buildData() {
+    makePlotData() {
         return this.getFigureAndAssertValidity().makeData();
     }
 
-    buildLayout() {
+    makePlotLayout() {
         return this.getFigureAndAssertValidity().makeLayout();
     }
 

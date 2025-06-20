@@ -87,7 +87,12 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
             {hasNoQueryErrors ? (
-                <Plot plotUpdateReady={!anyLoading} onClick={handleClickInChart} {...plotBuilder.buildProps()} />
+                <Plot
+                    plotUpdateReady={!anyLoading}
+                    onClick={handleClickInChart}
+                    data={plotBuilder.makePlotData()}
+                    layout={plotBuilder.makePlotLayout()}
+                />
             ) : (
                 <ContentError>One or more queries have an error state.</ContentError>
             )}

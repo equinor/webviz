@@ -64,11 +64,11 @@ export class ParameterCorrelationFigure {
         });
     }
 
-    buildData() {
+    makePlotData() {
         return this._figure.makeData();
     }
 
-    buildLayout() {
+    makePlotLayout() {
         return this._figure.makeLayout();
     }
 }

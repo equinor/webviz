@@ -1,5 +1,4 @@
-import type { Annotations, PlotMarker, Shape } from "plotly.js";
-import type { PlotParams } from "react-plotly.js";
+import type { Annotations, Data, Layout, PlotMarker, Shape } from "plotly.js";
 
 import type {
     DerivedVectorInfo_api,
@@ -257,10 +256,12 @@ export class PlotBuilder {
         }
     }
 
-    buildProps(customProps?: Omit<Partial<PlotParams>, "data" | "layout">): PlotParams {
+    prepareLegendsAndTitles(): void {
         this.createGraphLegends();
         this.updateSubplotTitles();
+    }
 
+    prepareAnnotations(): void {
         // Add time annotations and shapes
         for (let index = 0; index < this._numberOfSubplots; index++) {
             const { row, col } = this.getSubplotRowAndColFromIndex(index);
@@ -271,12 +272,14 @@ export class PlotBuilder {
                 this._figure.addShape(timeShape, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
             }
         }
+    }
 
-        return {
-            data: this._figure.makeData(),
-            layout: this._figure.makeLayout(),
-            ...customProps,
-        };
+    makePlotData(): Data[] {
+        return this._figure.makeData();
+    }
+
+    makePlotLayout(): Partial<Layout> {
+        return this._figure.makeLayout();
     }
 
     addRealizationTracesColoredByParameter(

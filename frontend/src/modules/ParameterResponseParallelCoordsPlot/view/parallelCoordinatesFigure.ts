@@ -54,11 +54,12 @@ export class ParallelCoordinatesFigure {
         this._figure.updateLayout({ width: width });
     }
 
-    buildLayout() {
-        return this._figure.makeLayout();
-    }
-    buildData() {
+    makePlotData() {
         return this._figure.makeData();
+    }
+
+    makePlotLayout() {
+        return this._figure.makeLayout();
     }
 }
 

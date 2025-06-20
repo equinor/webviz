@@ -141,7 +141,7 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
             const figure = new ParallelCoordinatesFigure(wrapperDivSize);
             figure.addPlot(responseData, rankedParametersData, {});
 
-            setContent(<Plot data={figure.buildData()} layout={figure.buildLayout()} />);
+            setContent(<Plot data={figure.makePlotData()} layout={figure.makePlotLayout()} />);
             return;
         });
     }

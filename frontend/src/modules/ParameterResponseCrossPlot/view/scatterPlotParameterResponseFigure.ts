@@ -67,10 +67,10 @@ export class ScatterPlotParameterResponseFigure {
         this._figure.updateLayout(layoutPatch);
     }
 
-    buildData() {
+    makePlotData() {
         return this._figure.makeData();
     }
-    buildLayout() {
+    makePlotLayout() {
         return this._figure.makeLayout();
     }
 }
