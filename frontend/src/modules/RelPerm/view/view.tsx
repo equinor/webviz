@@ -1,11 +1,13 @@
 import React from "react";
 
+import { useAtomValue } from "jotai";
+
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
-import { useAtomValue } from "jotai";
+import type { Interfaces } from "../interfaces";
 
 import {
     realizationQueryIsFetchingAtom,
@@ -14,8 +16,6 @@ import {
     statisticsQueryIsFetchingAtom,
 } from "./atoms/derivedAtoms";
 import { usePlotBuilder } from "./hooks/usePlotBuilder";
-
-import type { Interfaces } from "../interfaces";
 
 export const View = ({ viewContext, workbenchSettings, workbenchSession }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);

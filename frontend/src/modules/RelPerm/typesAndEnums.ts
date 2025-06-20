@@ -29,6 +29,4 @@ export interface RelPermSpec {
 export interface VisualizationSettings {
     colorBy: ColorBy;
     groupBy: GroupBy;
-    opacity: number;
-    lineWidth: number;
 }

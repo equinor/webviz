@@ -1,3 +1,5 @@
+import type { PlotData } from "plotly.js";
+
 import type {
     SummaryVectorDateObservation_api,
     VectorHistoricalData_api,
@@ -5,9 +7,6 @@ import type {
     VectorStatisticData_api,
 } from "@api";
 import { DerivedVectorType_api, StatisticFunction_api } from "@api";
-
-import type { PlotData } from "plotly.js";
-
 import type {
     FanchartData,
     FreeLineData,

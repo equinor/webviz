@@ -1,27 +1,27 @@
 import type React from "react";
 
 import { CircularProgress } from "@equinor/eds-core-react";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+
+import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
-import { Label } from "@lib/components/Label";
 import { QueriesErrorCriteria, QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { Slider } from "@lib/components/Slider";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import type { Interfaces } from "../interfaces";
+import { ColorBy, CurveType, GroupBy, VisualizationType } from "../typesAndEnums";
+import { visualizationTypeAtom } from "../view/atoms/baseAtoms";
 
 import {
     selectedColorByAtom,
     selectedCurveTypeAtom,
     selectedGroupByAtom,
-    selectedLineWidthAtom,
-    selectedOpacityAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedRelPermCurveNamesAtom,
     userSelectedSatNumsAtom,
@@ -40,10 +40,6 @@ import {
     selectedSatNumsAtom,
 } from "./atoms/derivedAtoms";
 import { relPermTableInfoQueriesAtom, relPermTableNamesQueriesAtom } from "./atoms/queryAtoms";
-
-import type { Interfaces } from "../interfaces";
-import { ColorBy, CurveType, GroupBy, VisualizationType } from "../typesAndEnums";
-import { visualizationTypeAtom } from "../view/atoms/baseAtoms";
 
 //Helpers to populate dropdowns
 const stringToOptions = (strings: string[]): SelectOption[] => {
@@ -78,9 +74,6 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
     const selectedSatNums = useAtomValue(selectedSatNumsAtom);
     const setUserSelectedSatNums = useSetAtom(userSelectedSatNumsAtom);
 
-    const [selectedOpacity, setSelectedOpacity] = useAtom(selectedOpacityAtom);
-    const [selectedLineWidth, setSelectedLineWidth] = useAtom(selectedLineWidthAtom);
-
     function handleEnsembleSelectChange(ensembleIdentArray: RegularEnsembleIdent[]) {
         setUserSelectedEnsembleIdents(ensembleIdentArray);
     }
@@ -98,12 +91,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
     function handleCurveTypeChange(_: React.ChangeEvent<HTMLInputElement>, curveType: CurveType) {
         setSelectedCurveType(curveType);
     }
-    function handleOpacityChange(event: Event, value: number | number[]) {
-        setSelectedOpacity(value as number);
-    }
-    function handleLineWidthChange(event: Event, value: number | number[]) {
-        setSelectedLineWidth(value as number);
-    }
+
     function handleSaturationAxisChange(_: React.ChangeEvent<HTMLInputElement>, axisname: string) {
         setUserSelectedRelPermSaturationAxis(axisname);
     }
@@ -190,7 +178,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                         onChange={handleColorByChange}
                     />
                 </CollapsibleGroup>
-                <CollapsibleGroup expanded={true} title="Group by">
+                <CollapsibleGroup expanded={true} title="Subplot by">
                     <RadioGroup
                         options={[
                             { label: "None", value: GroupBy.NONE },
@@ -211,28 +199,6 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                     />
                 </CollapsibleGroup>
             </QueryStateWrapper>
-            <CollapsibleGroup expanded={true} title="Visualization">
-                <Label text="Opacity" key="opacity">
-                    <Slider
-                        min={0.05}
-                        max={1}
-                        step={0.001}
-                        debounceTimeMs={200}
-                        value={selectedOpacity}
-                        onChange={handleOpacityChange}
-                    />
-                </Label>
-                <Label text="Line width" key="line-width">
-                    <Slider
-                        min={1}
-                        max={20}
-                        step={0.1}
-                        debounceTimeMs={200}
-                        value={selectedLineWidth}
-                        onChange={handleLineWidthChange}
-                    />
-                </Label>
-            </CollapsibleGroup>
         </div>
     );
 }

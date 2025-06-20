@@ -1,3 +1,5 @@
+import type { Axis, PlotData } from "plotly.js";
+
 import type { RelPermRealizationData_api, RelPermStatisticalData_api } from "@api";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -5,18 +7,17 @@ import type { ColorSet } from "@lib/utils/ColorSet";
 import type { Figure } from "@modules/_shared/Figure";
 import { makeSubplots } from "@modules/_shared/Figure";
 
-import type { Rgb } from "culori";
-import { formatRgb, parseHex } from "culori";
-import type { Axis, PlotData } from "plotly.js";
+
+import { ColorBy, GroupBy } from "../../typesAndEnums";
+import type { RelPermSpec } from "../../typesAndEnums";
 
 import {
+    createRelPermFanchartHovertext,
     createRelPermFanchartTraces,
     createRelPermRealizationTrace,
     createRelPermRealizationTraceHovertext,
 } from "./createRelPermTracesUtils";
 
-import { ColorBy, GroupBy } from "../../typesAndEnums";
-import type { RelPermSpec } from "../../typesAndEnums";
 
 export enum SubplotLimitDirection {
     NONE = "none",
@@ -47,9 +48,9 @@ export class PlotBuilder {
     private _numCols = 1;
     private _width = 0;
     private _height = 0;
-    private _ensColors: Map<string, Rgb> = new Map<string, Rgb>();
-    private _satNumColors: Map<number, Rgb> = new Map<number, Rgb>();
-    private _curveColors: Map<string, Rgb> = new Map<string, Rgb>();
+    private _ensColors: Map<string, string> = new Map<string, string>();
+    private _satNumColors: Map<number, string> = new Map<number, string>();
+    private _curveColors: Map<string, string> = new Map<string, string>();
     private _axesOptions: { x: Partial<Axis> | null; y: Partial<Axis> | null } = { x: null, y: null };
     private _limitDirection: SubplotLimitDirection = SubplotLimitDirection.NONE;
     private _limitDirectionMaxElements = 0;
@@ -100,8 +101,7 @@ export class PlotBuilder {
     }
     addRealizationsTraces(
         relPermRealizationData: { relPermSpecification: RelPermSpec; data: RelPermRealizationData_api[] }[],
-        opacity: number,
-        lineWidth: number,
+
     ): void {
         const showLegendMapper = new Map<string, boolean>();
         for (const relPermSpecAndData of relPermRealizationData) {
@@ -124,21 +124,21 @@ export class PlotBuilder {
                     );
                     let showLegend = false;
                     let name = "";
-                    let rgbColor: Rgb | undefined = undefined;
+                    let hexColor: string|undefined =""
                     if (ColorBy.ENSEMBLE === this._colorBy) {
-                        rgbColor = this._ensColors.get(ensemble.getDisplayName());
+                        hexColor = this._ensColors.get(ensemble.getDisplayName());
                         showLegend = !showLegendMapper.has(ensemble.getDisplayName());
                         showLegendMapper.set(ensemble.getDisplayName(), true);
                         name = ensemble.getDisplayName();
                     }
                     if (ColorBy.CURVE === this._colorBy) {
-                        rgbColor = this._curveColors.get(curve.curve_name);
+                        hexColor = this._curveColors.get(curve.curve_name);
                         showLegend = !showLegendMapper.has(curve.curve_name);
                         showLegendMapper.set(curve.curve_name, true);
                         name = curve.curve_name;
                     }
                     if (ColorBy.SATNUM === this._colorBy) {
-                        rgbColor = this._satNumColors.get(satNum);
+                        hexColor = this._satNumColors.get(satNum);
                         showLegend = !showLegendMapper.has(satNum.toString());
                         showLegendMapper.set(satNum.toString(), true);
                         name = satNum.toString();
@@ -154,9 +154,7 @@ export class PlotBuilder {
                             showLegend: showLegend,
                             legendGroupTitle: this._colorBy,
                             legendGroup: this._colorBy,
-                            opacity: opacity,
-                            lineWidth: lineWidth,
-                            rgbColor: rgbColor ? rgbColor : (parseHex("#000000") as Rgb),
+                            hexColor: hexColor ? hexColor :"#000000",
                         }),
                     );
                 });
@@ -179,30 +177,30 @@ export class PlotBuilder {
             const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
 
             relPermSpecAndData.data.curve_statistics.forEach((curve) => {
-                // const hoverLabel = createRelPermRealizationTraceHovertext(
-                //     ensemble.getDisplayName(),
-                //     satNum.toString(),
-                //     curve.curve_name,
-                //     realizationData.realization_id,
-                // );
+                const hoverTemplate = createRelPermFanchartHovertext(
+                    ensemble.getDisplayName(),
+                    satNum.toString(),
+                    curve.curve_name,
+                    relPermSpecAndData.relPermSpecification.saturationAxisName,
+                );
 
                 let showLegend = false;
                 let name = "";
-                let rgbColor: Rgb | undefined = undefined;
+                let hexColor: string | undefined = undefined;
                 if (ColorBy.ENSEMBLE === this._colorBy) {
-                    rgbColor = this._ensColors.get(ensemble.getDisplayName());
+                    hexColor = this._ensColors.get(ensemble.getDisplayName());
                     showLegend = !showLegendMapper.has(ensemble.getDisplayName());
                     showLegendMapper.set(ensemble.getDisplayName(), true);
                     name = ensemble.getDisplayName();
                 }
                 if (ColorBy.CURVE === this._colorBy) {
-                    rgbColor = this._curveColors.get(curve.curve_name);
+                    hexColor = this._curveColors.get(curve.curve_name);
                     showLegend = !showLegendMapper.has(curve.curve_name);
                     showLegendMapper.set(curve.curve_name, true);
                     name = curve.curve_name;
                 }
                 if (ColorBy.SATNUM === this._colorBy) {
-                    rgbColor = this._satNumColors.get(satNum);
+                    hexColor = this._satNumColors.get(satNum);
                     showLegend = !showLegendMapper.has(satNum.toString());
                     showLegendMapper.set(satNum.toString(), true);
                     name = satNum.toString();
@@ -211,8 +209,8 @@ export class PlotBuilder {
                 const fanChartTraces = createRelPermFanchartTraces(
                     curve,
                     relPermSpecAndData.data.saturation_values,
-                    rgbColor ? rgbColor : (parseHex("#000000") as Rgb),
-                    // legendGroupTitle: this._colorBy,
+                    hexColor ? hexColor : "#000000",
+                    hoverTemplate,
                     name,
                     this._colorBy,
                     showLegend,
@@ -320,10 +318,10 @@ export class PlotBuilder {
             }
         }
     }
-    private getRGBColorFromColorSet(index: number): Rgb {
+    private getHexColorFromColorSet(index: number): string {
         const validIndex = index % this._colorSet.getColorArray().length;
 
-        return parseHex(this._colorSet.getColor(validIndex)) as Rgb;
+        return this._colorSet.getColor(validIndex)
     }
     private makeColorMaps(): void {
         const satNums = Array.from(new Set(this._relPermSpecs.map((spec) => spec.satNum)));
@@ -332,14 +330,14 @@ export class PlotBuilder {
             new Set(this._relPermSpecs.map((spec) => this._ensembleSet.getEnsemble(spec.ensembleIdent))),
         );
         satNums.forEach((satNum) => {
-            this._satNumColors.set(satNum, this.getRGBColorFromColorSet(satNum));
+            this._satNumColors.set(satNum, this.getHexColorFromColorSet(satNum));
         });
 
         curveNames.forEach((curveName) => {
-            this._curveColors.set(curveName, this.getRGBColorFromColorSet(curveNames.indexOf(curveName)));
+            this._curveColors.set(curveName, this.getHexColorFromColorSet(curveNames.indexOf(curveName)));
         });
         ensembles.forEach((ensemble) => {
-            this._ensColors.set(ensemble.getDisplayName(), parseHex(ensemble.getColor()) as Rgb);
+            this._ensColors.set(ensemble.getDisplayName(), ensemble.getColor());
         });
     }
 

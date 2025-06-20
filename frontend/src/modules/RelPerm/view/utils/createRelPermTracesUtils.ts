@@ -1,22 +1,22 @@
-import { StatisticalCurveData_api } from "@api";
-import {
-    createFanchartTraces,
+import type { PlotData } from "plotly.js";
+
+import type { StatisticalCurveData_api } from "@api";
+import type {
     FanchartData,
     FreeLineData,
     LowHighData,
-    MinMaxData,
+    MinMaxData} from "@modules/_shared/plotly/PlotlyTraceUtils/fanchartPlotting";
+import {
+    createFanchartTraces
 } from "@modules/_shared/plotly/PlotlyTraceUtils/fanchartPlotting";
-import { formatRgb, type Rgb } from "culori";
-import type { PlotData } from "plotly.js";
 
 export type createRelPermRealizationTraceOptions = {
     hoverLabel: string;
     saturationValues: number[];
     curveValues: number[];
     useGl: boolean;
-    opacity: number;
-    lineWidth: number;
-    rgbColor: Rgb;
+
+    hexColor: string;
     showLegend: boolean;
     legendGroupTitle: string;
     legendGroup: string;
@@ -27,9 +27,7 @@ export function createRelPermRealizationTrace({
     saturationValues,
     curveValues,
     useGl,
-    opacity,
-    lineWidth,
-    rgbColor,
+    hexColor,
     showLegend,
     name,
     legendGroupTitle,
@@ -38,23 +36,18 @@ export function createRelPermRealizationTrace({
     const trace: Partial<PlotData> = {
         x: saturationValues,
         y: curveValues,
-
         type: useGl ? "scattergl" : "scatter",
         mode: "lines",
         showlegend: showLegend,
-        line: {
-            width: lineWidth,
-        },
         legendgrouptitle: { text: legendGroupTitle },
         legendgroup: legendGroup,
         name,
         marker: {
-            color: `rgba(${rgbColor.r * 255}, ${rgbColor.g * 255}, ${rgbColor.b * 255}, ${opacity})`,
+            color: hexColor,
         },
-
         hovertext: hoverLabel,
     };
-    console.log(`rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${opacity})`);
+
     return trace;
 }
 
@@ -66,11 +59,20 @@ export function createRelPermRealizationTraceHovertext(
 ): string {
     return `${ensembleName} </br>Satnum: ${satNum} </br>Curve: ${curveName} </br>Realization: <b>${realization}</b>`;
 }
-
+export function createRelPermFanchartHovertext(
+    ensembleName: string,
+    satNum: string,
+    curveName: string,
+    saturationName: string,
+    
+): string {
+    return`${curveName}: <b>%{y}</b><br>${saturationName}: <b>%{x}</b></br>Satnum: <b>${satNum}</b></br>Ensemble: <b>${ensembleName}</b><extra></extra>`;
+}
 export function createRelPermFanchartTraces(
     curveData: StatisticalCurveData_api,
     saturationCurveValues: number[],
-    rgbColor: Rgb,
+    hexColor: string,
+    hoverTemplate:string,
     name: string | null,
     legendGroup: string,
     showLegend: boolean,
@@ -115,13 +117,12 @@ export function createRelPermFanchartTraces(
 
     return createFanchartTraces({
         data: fanchartData,
-        //red hex
-        hexColor: formatRgb(rgbColor),
+        hexColor: hexColor,
         legendGroup: legendGroup,
         name: name ?? legendGroup,
         lineShape: "linear",
         showLegend: showLegend,
-        hoverTemplate: "",
+        hoverTemplate:  hoverTemplate,
         legendRank: 1,
         yaxis: "y",
         xaxis: "x",

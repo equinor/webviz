@@ -2,9 +2,9 @@ import { getRelpermRealizationsCurveData, getRelpermStatisticalCurveData } from 
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
+import { VisualizationType } from "@modules/RelPerm/typesAndEnums";
 
 import { relPermSpecificationsAtom, visualizationTypeAtom } from "./baseAtoms";
-import { VisualizationType } from "@modules/RelPerm/typesAndEnums";
 
 export const relPermRealizationDataQueryAtom = atomWithQueries((get) => {
     const relPermSpecifications = get(relPermSpecificationsAtom);

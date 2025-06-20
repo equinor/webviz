@@ -1,5 +1,7 @@
 import type React from "react";
 
+import { useAtomValue } from "jotai";
+
 import type { ViewContext } from "@framework/ModuleContext";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -7,7 +9,6 @@ import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import type { Size2D } from "@lib/utils/geometry";
 import { CurveType, VisualizationType } from "@modules/RelPerm/typesAndEnums";
 
-import { useAtomValue } from "jotai";
 
 import type { Interfaces } from "../../interfaces";
 import {
@@ -48,8 +49,7 @@ export function usePlotBuilder(
     if (visualizationType === VisualizationType.INDIVIDUAL_REALIZATIONS) {
         plotBuilder.addRealizationsTraces(
             loadedRelPermSpecificationsAndRealizationData,
-            visualizationSettings.opacity,
-            visualizationSettings.lineWidth,
+
         );
     }
     if (visualizationType === VisualizationType.STATISTICAL_FANCHART) {

@@ -1,6 +1,5 @@
-import { PlotData } from "plotly.js";
 import { formatRgb, modeRgb, useMode } from "culori";
-import type { ScatterLine } from "plotly.js";
+import type { PlotData , ScatterLine } from "plotly.js";
 
 /**
     Definition of statistics data for free line trace in fanchart
@@ -204,7 +203,10 @@ export function createFanchartTraces({
             type: type,
             line: { width: 0, color: lineColor, shape: lineShape },
             legendgroup: legendGroup,
-            showlegend: false,
+            showlegend: false,        hoverlabel: {
+            bgcolor: "white",
+            font: { size: 12, color: "black" },
+        },
         };
 
         if (legendRank !== undefined) {
@@ -215,7 +217,7 @@ export function createFanchartTraces({
             return trace;
         }
         if (hoverTemplate !== undefined) {
-            trace.hovertemplate = hoverTemplate + statisticsName;
+            trace.hovertemplate = `Statistics: <b>${statisticsName}</b><br>` + hoverTemplate;
         } else {
             trace.hovertext = statisticsName + " " + hoverText;
         }

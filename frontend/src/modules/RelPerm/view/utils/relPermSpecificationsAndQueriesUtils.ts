@@ -1,5 +1,6 @@
-import type { RelPermSpec } from "@modules/RelPerm/typesAndEnums";
 import type { UseQueryResult } from "@tanstack/react-query";
+
+import type { RelPermSpec } from "@modules/RelPerm/typesAndEnums";
 
 export function createLoadedRelPermSpecificationAndDataArray<T>(
     relPermSpecifications: RelPermSpec[],

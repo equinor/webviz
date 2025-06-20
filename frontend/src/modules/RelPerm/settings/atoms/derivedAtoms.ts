@@ -1,9 +1,12 @@
+import { atom } from "jotai";
+
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import type { RelPermSpec } from "@modules/RelPerm/typesAndEnums";
 
-import { atom } from "jotai";
+
+import { relPermTablesInfoHelper } from "../utils/relPermTableInfoHelper";
 
 import {
     selectedCurveTypeAtom,
@@ -15,7 +18,6 @@ import {
 } from "./baseAtoms";
 import { relPermTableInfoQueriesAtom, relPermTableNamesQueriesAtom } from "./queryAtoms";
 
-import { relPermTablesInfoHelper } from "../utils/relPermTableInfoHelper";
 
 function fixupSelectedOrFirstValue<T extends string | number>(selectedValue: T | null, values: T[]): T | null {
     const includes = (value: T | null): value is T => {

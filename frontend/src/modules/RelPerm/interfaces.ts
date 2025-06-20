@@ -4,8 +4,7 @@ import {
     selectedColorByAtom,
     selectedCurveTypeAtom,
     selectedGroupByAtom,
-    selectedLineWidthAtom,
-    selectedOpacityAtom,
+
 } from "./settings/atoms/baseAtoms";
 import { relPermSpecificationsAtom } from "./settings/atoms/derivedAtoms";
 import type { CurveType, RelPermSpec, VisualizationSettings, VisualizationType } from "./typesAndEnums";
@@ -32,8 +31,7 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
         return {
             colorBy: get(selectedColorByAtom),
             groupBy: get(selectedGroupByAtom),
-            opacity: get(selectedOpacityAtom),
-            lineWidth: get(selectedLineWidthAtom),
+
         };
     },
     curveType: (get) => {
