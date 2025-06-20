@@ -165,7 +165,9 @@ class RelPermAssembler:
 
         if not shared_saturation_points.is_empty():
             # Case 1: Shared axis found - calculate statistics directly
-
+            LOGGER.info(
+                f"Found {shared_saturation_points.shape[0]} shared saturation axis points for SATNUM {satnum} across all realizations."
+            )
             # Filter the original filtered_table to include only rows at shared saturation points
             shared_axis_table = filtered_table.join(
                 shared_saturation_points,
@@ -181,107 +183,109 @@ class RelPermAssembler:
             )
             return statistical_data_result
 
-        else:
-            # Case 2: No shared axis found - perform interpolation
+        LOGGER.info(
+            f"No shared saturation axis points found for SATNUM {satnum} across all realizations. Proceeding with interpolation."
+        )
+        # Case 2: No shared axis found - perform interpolation
 
-            # Determine common interpolation axis (linearly spaced)
-            min_sat = 0.0  # filtered_table[saturation_axis_name].min()
-            max_sat = 1.0  # filtered_table[saturation_axis_name].max()
+        # Determine common interpolation axis (linearly spaced)
+        min_sat = 0.0  # filtered_table[saturation_axis_name].min()
+        max_sat = 1.0  # filtered_table[saturation_axis_name].max()
 
-            if not isinstance(min_sat, (int, float)) or not isinstance(max_sat, (int, float)):
-                raise InvalidDataError(
-                    f"Min/max saturation values for axis '{saturation_axis_name}' are not numeric (got {type(min_sat)}, {type(max_sat)}).",
-                    Service.SUMO,
-                )
-
-            if np.isclose(min_sat, max_sat):
-                raise InvalidDataError(
-                    f"Min and max saturation values are the same ({min_sat}). Cannot create interpolation axis.",
-                    Service.SUMO,
-                )
-
-            interpolation_axis = np.linspace(min_sat, max_sat, num_interpolation_points)
-
-            interpolated_data_list = []  # List to hold interpolated dataframes per realization
-
-            # Interpolate data for each realization and curve
-            for real_id in filtered_table["REAL"].unique().to_list():
-                real_df = filtered_table.filter(pl.col("REAL") == real_id).sort(saturation_axis_name)
-                original_sat_values = real_df[saturation_axis_name].to_numpy()
-
-                # Skip realizations with insufficient data points for interpolation
-                # Probably not needed...
-                if len(original_sat_values) <= 1 or np.all(original_sat_values == original_sat_values[0]):
-                    LOGGER.warning(
-                        f"Skipping interpolation for Realization {real_id}: Insufficient unique saturation points ({len(original_sat_values)})."
-                    )
-                    continue
-
-                interpolated_real_data = {"REAL": real_id, saturation_axis_name: interpolation_axis}
-
-                for curve_name in existing_curve_names:
-                    original_curve_values = real_df[curve_name].to_numpy()
-
-                    try:
-                        interp_func = interp1d(
-                            original_sat_values,
-                            original_curve_values,
-                            kind="linear",
-                            bounds_error=False,
-                            fill_value=np.nan,
-                        )
-                        interpolated_curve_values = interp_func(interpolation_axis)
-
-                    except Exception as exc:
-                        raise InvalidDataError(
-                            f"Interpolation error for Realization {real_id}, Curve {curve_name}: {exc}",
-                            Service.SUMO,
-                        ) from exc
-
-                    # Clamp extrapolated values to the original range min/max if interpolation occurred
-                    # Should we extrapolate to 0-1?
-                    if len(original_curve_values) > 0 and not np.all(np.isnan(original_curve_values)):
-                        min_original_curve = np.nanmin(original_curve_values)
-                        max_original_curve = np.nanmax(original_curve_values)
-                        # Only clamp values that are not NaN (results from fill_value=np.nan)
-                        non_nan_mask = ~np.isnan(interpolated_curve_values)
-                        interpolated_curve_values[non_nan_mask] = np.clip(
-                            interpolated_curve_values[non_nan_mask], min_original_curve, max_original_curve
-                        )
-                    else:
-                        # If original curve values were all NaN or empty, the interpolated values should also be NaN
-                        interpolated_curve_values = np.full_like(interpolation_axis, np.nan)
-
-                    interpolated_real_data[curve_name] = interpolated_curve_values
-
-                # Add interpolated data for this realization to the list
-                interpolated_data_list.append(pl.DataFrame(interpolated_real_data))
-
-            if not interpolated_data_list:
-                raise NoDataError(
-                    f"No realizations had sufficient data for interpolation for SATNUM {satnum}.",
-                    Service.SUMO,
-                )
-
-            # Combine interpolated data from all realizations into a single DataFrame
-            interpolated_table = pl.concat(interpolated_data_list)
-            LOGGER.info(f"Shape of combined interpolated table: {interpolated_table.shape}")
-
-            # Calculate statistics on the interpolated data
-            # Drop any rows where all curve values are null AFTER interpolation
-            # This handles cases where interpolation might have produced NaNs for some points/realizations
-            interpolated_table_cleaned = interpolated_table.drop_nulls(subset=existing_curve_names)
-
-            if interpolated_table_cleaned.is_empty():
-                raise NoDataError(
-                    f"Interpolated table is empty after dropping nulls for SATNUM {satnum}. Cannot calculate statistics.",
-                    Service.SUMO,
-                )
-
-            statistical_data_result = self._calculate_statistics(
-                interpolated_table_cleaned, saturation_axis_name, existing_curve_names, satnum
+        if not isinstance(min_sat, (int, float)) or not isinstance(max_sat, (int, float)):
+            raise InvalidDataError(
+                f"Min/max saturation values for axis '{saturation_axis_name}' are not numeric (got {type(min_sat)}, {type(max_sat)}).",
+                Service.SUMO,
             )
-            return statistical_data_result
+
+        if np.isclose(min_sat, max_sat):
+            raise InvalidDataError(
+                f"Min and max saturation values are the same ({min_sat}). Cannot create interpolation axis.",
+                Service.SUMO,
+            )
+
+        interpolation_axis = np.linspace(min_sat, max_sat, num_interpolation_points)
+
+        interpolated_data_list = []  # List to hold interpolated dataframes per realization
+
+        # Interpolate data for each realization and curve
+        for real_id in filtered_table["REAL"].unique().to_list():
+            real_df = filtered_table.filter(pl.col("REAL") == real_id).sort(saturation_axis_name)
+            original_sat_values = real_df[saturation_axis_name].to_numpy()
+
+            # Skip realizations with insufficient data points for interpolation
+            # Probably not needed...
+            if len(original_sat_values) <= 1 or np.all(original_sat_values == original_sat_values[0]):
+                LOGGER.warning(
+                    f"Skipping interpolation for Realization {real_id}: Insufficient unique saturation points ({len(original_sat_values)})."
+                )
+                continue
+
+            interpolated_real_data = {"REAL": real_id, saturation_axis_name: interpolation_axis}
+
+            for curve_name in existing_curve_names:
+                original_curve_values = real_df[curve_name].to_numpy()
+
+                try:
+                    interp_func = interp1d(
+                        original_sat_values,
+                        original_curve_values,
+                        kind="linear",
+                        bounds_error=False,
+                        fill_value=np.nan,
+                    )
+                    interpolated_curve_values = interp_func(interpolation_axis)
+
+                except Exception as exc:
+                    raise InvalidDataError(
+                        f"Interpolation error for Realization {real_id}, Curve {curve_name}: {exc}",
+                        Service.SUMO,
+                    ) from exc
+
+                # Clamp extrapolated values to the original range min/max if interpolation occurred
+                # Should we extrapolate to 0-1?
+                if len(original_curve_values) > 0 and not np.all(np.isnan(original_curve_values)):
+                    min_original_curve = np.nanmin(original_curve_values)
+                    max_original_curve = np.nanmax(original_curve_values)
+                    # Only clamp values that are not NaN (results from fill_value=np.nan)
+                    non_nan_mask = ~np.isnan(interpolated_curve_values)
+                    interpolated_curve_values[non_nan_mask] = np.clip(
+                        interpolated_curve_values[non_nan_mask], min_original_curve, max_original_curve
+                    )
+                else:
+                    # If original curve values were all NaN or empty, the interpolated values should also be NaN
+                    interpolated_curve_values = np.full_like(interpolation_axis, np.nan)
+
+                interpolated_real_data[curve_name] = interpolated_curve_values
+
+            # Add interpolated data for this realization to the list
+            interpolated_data_list.append(pl.DataFrame(interpolated_real_data))
+
+        if not interpolated_data_list:
+            raise NoDataError(
+                f"No realizations had sufficient data for interpolation for SATNUM {satnum}.",
+                Service.SUMO,
+            )
+
+        # Combine interpolated data from all realizations into a single DataFrame
+        interpolated_table = pl.concat(interpolated_data_list)
+        LOGGER.info(f"Shape of combined interpolated table: {interpolated_table.shape}")
+
+        # Calculate statistics on the interpolated data
+        # Drop any rows where all curve values are null AFTER interpolation
+        # This handles cases where interpolation might have produced NaNs for some points/realizations
+        interpolated_table_cleaned = interpolated_table.drop_nulls(subset=existing_curve_names)
+
+        if interpolated_table_cleaned.is_empty():
+            raise NoDataError(
+                f"Interpolated table is empty after dropping nulls for SATNUM {satnum}. Cannot calculate statistics.",
+                Service.SUMO,
+            )
+
+        statistical_data_result = self._calculate_statistics(
+            interpolated_table_cleaned, saturation_axis_name, existing_curve_names, satnum
+        )
+        return statistical_data_result
 
     def _calculate_statistics(
         self,

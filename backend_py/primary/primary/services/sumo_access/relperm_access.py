@@ -102,6 +102,8 @@ class RelPermAccess:
             raise NoDataError(f"Table '{table_name}' not found in iteration '{self._iteration_name}'", Service.SUMO)
         table_context = table_context.filter(name=table_name)
         columns = await table_context.columns_async
+
+        # TODO: Fix/remove
         meta_version = await table_context._get_field_values_async("version.keyword")
         if meta_version[0] != "0.8.0":
             # Sumo 0.8.0 and later versions
