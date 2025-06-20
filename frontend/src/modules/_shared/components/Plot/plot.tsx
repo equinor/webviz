@@ -27,8 +27,6 @@ const DEFAULT_LAYOUT: Partial<Plotly.Layout> = {
  * A wrapper utility of react-plotly that avoids the loss of UI state (zoom/pan/select)
  * ! This component is still a bit unstable, and might reset if re-rendered multiple
  * ! times in succession. Try to keep property references as stable as possible
- * @param props
- * @returns
  */
 export function Plot(props: PlotProps): React.ReactNode {
     const { plotUpdateReady, layout, data, config, ...otherProps } = props;
@@ -41,39 +39,39 @@ export function Plot(props: PlotProps): React.ReactNode {
     const [prevData, setPrevData] = React.useState<PlotParams["data"]>(data);
     const [prevConfig, setPrevConfig] = React.useState<PlotParams["config"]>(config);
 
-    // ! Plotly seems to mutate objects given to it as props, so we need to clone them when
+    // ! Plotly seems to mutate objects given to it as props, so we need to clone them
     // ! For example, it changed the data's xAxis from "x1" to "x"
-    const [layoutStable, setLayoutStable] = React.useState<PlotParams["layout"]>(layout);
-    const [dataStable, setDataStable] = React.useState<PlotParams["data"]>(data);
-    const [configStable, setConfigStable] = React.useState<PlotParams["config"]>(config);
+    const [stableLayout, setStableLayout] = React.useState<PlotParams["layout"]>(layout);
+    const [stableData, setStableData] = React.useState<PlotParams["data"]>(data);
+    const [stableConfig, setStableConfig] = React.useState<PlotParams["config"]>(config);
 
-    const [otherPropsStable, setOtherPropsStable] = React.useState<typeof otherProps>(otherProps);
+    const [stableOtherProps, setStableOtherProps] = React.useState<typeof otherProps>(otherProps);
 
     if (shouldApplyPlotUpdate && !_.isEqual(prevLayout, layout)) {
         setPrevLayout(layout);
-        setLayoutStable(_.cloneDeep(layout));
+        setStableLayout(_.cloneDeep(layout));
     }
 
     if (shouldApplyPlotUpdate && !_.isEqual(prevData, data)) {
         setPrevData(data);
-        setDataStable(_.cloneDeep(data));
+        setStableData(_.cloneDeep(data));
     }
 
     if (shouldApplyPlotUpdate && !_.isEqual(prevConfig, config)) {
         setPrevConfig(config);
-        setConfigStable(_.cloneDeep(config));
+        setStableConfig(_.cloneDeep(config));
     }
 
-    if (shouldApplyPlotUpdate && !_.isEqual(otherPropsStable, otherProps)) {
-        setOtherPropsStable(otherProps);
+    if (shouldApplyPlotUpdate && !_.isEqual(stableOtherProps, otherProps)) {
+        setStableOtherProps(otherProps);
     }
 
     return React.useMemo(() => {
-        const layoutWithRevision = _.defaults({}, layoutStable, DEFAULT_LAYOUT);
-        const configWithDefaults = _.defaults({}, configStable, DEFAULT_CONFIG);
+        const layoutWithDefaults = _.defaults({}, stableLayout, DEFAULT_LAYOUT);
+        const configWithDefaults = _.defaults({}, stableConfig, DEFAULT_CONFIG);
 
         return (
-            <BasePlot data={dataStable} layout={layoutWithRevision} config={configWithDefaults} {...otherPropsStable} />
+            <BasePlot data={stableData} layout={layoutWithDefaults} config={configWithDefaults} {...stableOtherProps} />
         );
-    }, [configStable, dataStable, layoutStable, otherPropsStable]);
+    }, [stableConfig, stableData, stableLayout, stableOtherProps]);
 }
