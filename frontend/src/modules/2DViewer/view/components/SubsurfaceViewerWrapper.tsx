@@ -9,7 +9,7 @@ import { useMultiViewPicking } from "@webviz/subsurface-viewer/dist/hooks/useMul
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
-import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
+import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
@@ -127,7 +127,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                         />
 
                         <ReadoutBoxWrapper
-                            compact={props.views.viewports.length > 1}
+                            compact={true}
                             viewportPickInfo={pickingInfoPerView[viewport.id]}
                             visible={!hideReadout && !!pickingInfoPerView[viewport.id]}
                         />

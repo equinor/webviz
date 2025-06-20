@@ -28,21 +28,17 @@ import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataPro
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import { DrilledWellTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellTrajectoriesProvider";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
-import { DataProviderManagerTopic } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import { useVisualizationAssemblerProduct } from "@modules/_shared/DataProviderFramework/hooks/useVisualizationProduct";
 import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
 import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
-import type {
-    Annotation,
-    VisualizationTarget,
-} from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import {
     VisualizationAssembler,
     VisualizationItemType,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
@@ -125,15 +121,13 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     const statusWriter = useViewStatusWriter(props.viewContext);
 
-    usePublishSubscribeTopicValue(props.layerManager, DataProviderManagerTopic.DATA_REVISION);
+    const assemblerProduct = useVisualizationAssemblerProduct(props.layerManager, VISUALIZATION_ASSEMBLER);
 
-    const assemblerProduct = VISUALIZATION_ASSEMBLER.make(props.layerManager);
+    const globalAnnotations = assemblerProduct.annotations.filter((el) => "colorScale" in el);
 
     const viewports: ViewportTypeExtended[] = [];
     const deckGlLayers: Layer<any>[] = [];
-    const globalAnnotations: Annotation[] = [];
     const globalColorScales = globalAnnotations.filter((el) => "colorScale" in el);
-
     const globalLayerIds: string[] = ["placeholder"];
 
     for (const item of assemblerProduct.children) {

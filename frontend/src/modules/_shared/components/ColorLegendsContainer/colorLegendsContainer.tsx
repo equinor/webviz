@@ -1,9 +1,11 @@
-import type React from "react";
+import React from "react";
 
 import type { ColorScale } from "@lib/utils/ColorScale";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { ColorScaleWithName } from "@modules_shared/utils/ColorScaleWithName";
+
+import type { ColorScaleWithId } from "./colorScaleWithId";
 
 const STYLE_CONSTANTS = {
     lineWidth: 6,
@@ -143,6 +145,7 @@ type ColorLegendProps = {
 };
 
 function ColorLegend(props: ColorLegendProps): React.ReactNode {
+    const clipPathId = React.useId();
     const barHeight = props.totalHeight - STYLE_CONSTANTS.offset;
 
     const barStartPosition = props.left + STYLE_CONSTANTS.nameLabelWidth + STYLE_CONSTANTS.textGap;
@@ -280,7 +283,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
 
     return (
         <g key={`color-scale-${makeGradientId(props.id)}`}>
-            <clipPath id={`clip-${props.id}`}>
+            <clipPath id={`clip-${clipPathId}`}>
                 <rect
                     x={props.left - props.totalHeight / 2}
                     y={props.top + STYLE_CONSTANTS.offset + props.totalHeight / 2}
@@ -309,7 +312,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
                 alignmentBaseline="baseline"
                 transform={`rotate(270, ${props.left}, ${props.top + STYLE_CONSTANTS.offset + props.totalHeight / 2})`}
                 style={TEXT_STYLE}
-                clipPath={`url(#clip-${props.id})`}
+                clipPath={`url(#clip-${clipPathId})`}
             >
                 {props.colorScale.getName()}
             </text>
@@ -317,11 +320,6 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
         </g>
     );
 }
-
-export type ColorScaleWithId = {
-    id: string;
-    colorScale: ColorScaleWithName;
-};
 
 export type ColorLegendsContainerProps = {
     colorScales: ColorScaleWithId[];

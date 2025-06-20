@@ -49,7 +49,7 @@ export class DeltaSurface implements ItemGroup {
                     child
                         .getSettingsContextDelegate()
                         .getPublishSubscribeDelegate()
-                        .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_CHANGED)(() => {
+                        .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_AND_STORED_DATA_CHANGED)(() => {
                         this.handleSettingsChange();
                     }),
                 );

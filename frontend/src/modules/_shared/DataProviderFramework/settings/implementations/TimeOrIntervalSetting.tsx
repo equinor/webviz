@@ -3,6 +3,12 @@ import type React from "react";
 import { SurfaceTimeType_api } from "@api";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
+import {
+    isIsoIntervalString,
+    isIsoString,
+    isoIntervalStringToDateLabel,
+    isoStringToDateLabel,
+} from "@modules/_shared/utils/isoDatetimeStringFormatting";
 
 import type {
     CustomSettingImplementation,
@@ -21,7 +27,7 @@ export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueT
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) => React.ReactNode {
-        return function Ensemble(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
+        return function TimeOrIntervalSetting(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_SELECT>) {
             const availableValues = props.availableValues ?? [];
 
             const options: DropdownOption[] = availableValues.map((value) => {
@@ -34,6 +40,7 @@ export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueT
             return (
                 <Dropdown
                     options={options}
+                    placeholder="Select a date"
                     value={!props.isOverridden ? props.value?.toString() : props.overriddenValue?.toString()}
                     onChange={props.onValueChange}
                     disabled={props.isOverridden}
@@ -54,21 +61,14 @@ export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueT
 
 function timeTypeToLabel(input: string): string {
     if (input === SurfaceTimeType_api.NO_TIME) {
-        return "Initial / No date";
+        return "No date";
     }
-    const [start, end] = input.split("/");
-    if (end) {
-        return isoIntervalStringToDateLabel(start, end);
+    if (isIsoIntervalString(input)) {
+        return isoIntervalStringToDateLabel(input);
     }
-    return isoStringToDateLabel(start);
-}
-function isoStringToDateLabel(isoDatestring: string): string {
-    const date = isoDatestring.split("T")[0];
-    return `${date}`;
-}
-
-function isoIntervalStringToDateLabel(startIsoDateString: string, endIsoDateString: string): string {
-    const startDate = startIsoDateString.split("T")[0];
-    const endDate = endIsoDateString.split("T")[0];
-    return `${startDate}/${endDate}`;
+    if (isIsoString(input)) {
+        return isoStringToDateLabel(input);
+    }
+    // Fallback to the original input if it doesn't match any known format
+    return input;
 }
