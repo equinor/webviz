@@ -21,6 +21,7 @@ const DEFAULT_CONFIG: Partial<Plotly.Config> = {
 const DEFAULT_LAYOUT: Partial<Plotly.Layout> = {
     // By default, we try to keep the ui changes stable
     uirevision: "revision_stable",
+    modebar: { orientation: "v" },
 };
 
 /**
