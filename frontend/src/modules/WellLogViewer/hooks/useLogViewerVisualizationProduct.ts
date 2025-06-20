@@ -14,6 +14,7 @@ import { DiffPlotProvider } from "../DataProviderFramework/dataProviders/plots/D
 import { LinearPlotProvider } from "../DataProviderFramework/dataProviders/plots/LinearPlotProvider";
 import { StackedPlotProvider } from "../DataProviderFramework/dataProviders/plots/StackedPlotProvider";
 import { WellborePicksProvider } from "../DataProviderFramework/dataProviders/wellpicks/WellPicksProvider";
+import { CustomDataProviderType } from "../DataProviderFramework/dataProviderTypes";
 import { ContinuousLogTrack } from "../DataProviderFramework/groups/ContinuousLogTrack";
 import { DiscreteLogTrack } from "../DataProviderFramework/groups/DiscreteLogTrack";
 import type { FactoryAccResult as PlotFactoryAccResult } from "../DataProviderFramework/visualizations/plots";
@@ -39,20 +40,20 @@ const VISUALIZATION_FACTORY = new VisualizationAssembler<
     FactoryAccResult
 >();
 
-VISUALIZATION_FACTORY.registerDataProviderTransformers(LinearPlotProvider.name, LinearPlotProvider, {
+VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomDataProviderType.LINEAR_PLOT, LinearPlotProvider, {
     transformToVisualization: makeLinePlotConfig,
     reduceAccumulatedData: plotDataAccumulator,
 });
-VISUALIZATION_FACTORY.registerDataProviderTransformers(AreaPlotProvider.name, AreaPlotProvider, {
+VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomDataProviderType.AREA_PLOT, AreaPlotProvider, {
     transformToVisualization: makeAreaPlotConfig,
     reduceAccumulatedData: plotDataAccumulator,
 });
-VISUALIZATION_FACTORY.registerDataProviderTransformers(DiffPlotProvider.name, DiffPlotProvider, {
+VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomDataProviderType.DIFF_PLOT, DiffPlotProvider, {
     transformToVisualization: makeDiffPlotConfig,
     reduceAccumulatedData: plotDataAccumulator,
 });
 
-VISUALIZATION_FACTORY.registerDataProviderTransformers(StackedPlotProvider.name, StackedPlotProvider, {
+VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomDataProviderType.STACKED_PLOT, StackedPlotProvider, {
     transformToVisualization: makeStackedPlotConfig,
     reduceAccumulatedData: plotDataAccumulator,
 });
@@ -69,7 +70,7 @@ VISUALIZATION_FACTORY.registerGroupCustomPropsCollector(
     collectDiscreteTrackConfig,
 );
 
-VISUALIZATION_FACTORY.registerDataProviderTransformers(WellborePicksProvider.name, WellborePicksProvider, {
+VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomDataProviderType.WELLBORE_PICKS, WellborePicksProvider, {
     transformToVisualization: makeLogViewerWellPicks,
 });
 
@@ -87,6 +88,8 @@ export function useLogViewerVisualizationProduct(
             .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION),
         dataProviderManager.makeSnapshotGetter(DataProviderManagerTopic.DATA_REVISION),
     );
+
+    console.log(latestRevision);
 
     if (previousRevision !== latestRevision) {
         setPreviousRevision(latestRevision);

@@ -5,13 +5,13 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 
 import {
     doSettingsChangesRequireDataRefetch,
-    baseLinearSettings,
+    baseContinuousSettings,
     defineBaseContinuousDependencies,
-    fetchData,
+    fetchLogCurveData,
     verifyBasePlotSettings,
 } from "./_shared";
 
-export const AreaPlotSettings = [Setting.PLOT_VARIANT, ...baseLinearSettings, Setting.COLOR_SCALE] as const;
+export const AreaPlotSettings = [Setting.PLOT_VARIANT, ...baseContinuousSettings, Setting.COLOR_SCALE] as const;
 export type AreaPlotSettingTypes = typeof AreaPlotSettings;
 
 export class AreaPlotProvider
@@ -19,7 +19,7 @@ export class AreaPlotProvider
 {
     doSettingsChangesRequireDataRefetch = doSettingsChangesRequireDataRefetch;
     areCurrentSettingsValid = verifyBasePlotSettings<AreaPlotSettingTypes>;
-    fetchData = fetchData<AreaPlotSettingTypes>;
+    fetchData = fetchLogCurveData<AreaPlotSettingTypes>;
     settings = AreaPlotSettings;
 
     defineDependencies(args: DefineDependenciesArgs<AreaPlotSettingTypes>) {

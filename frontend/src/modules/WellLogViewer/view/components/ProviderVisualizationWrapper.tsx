@@ -171,6 +171,11 @@ export function ProviderVisualizationWrapper(props: ProviderVisualizationWrapper
         );
     }
 
+    // TODO: Why are the logs not showing
+    console.log(wellLogSets);
+
+    console.log(template);
+
     return (
         <SubsurfaceLogViewerWrapper
             viewerTemplate={template}

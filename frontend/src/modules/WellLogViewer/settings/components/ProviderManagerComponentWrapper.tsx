@@ -23,11 +23,7 @@ import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/Gro
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { TrackIcon } from "@modules/WellLogViewer/_shared/components/icons";
-import { AreaPlotProvider } from "@modules/WellLogViewer/DataProviderFramework/dataProviders/plots/AreaPlotProvider";
-import { DiffPlotProvider } from "@modules/WellLogViewer/DataProviderFramework/dataProviders/plots/DiffPlotProvider";
-import { LinearPlotProvider } from "@modules/WellLogViewer/DataProviderFramework/dataProviders/plots/LinearPlotProvider";
-import { StackedPlotProvider } from "@modules/WellLogViewer/DataProviderFramework/dataProviders/plots/StackedPlotProvider";
-import { WellborePicksProvider } from "@modules/WellLogViewer/DataProviderFramework/dataProviders/wellpicks/WellPicksProvider";
+import { CustomDataProviderType } from "@modules/WellLogViewer/DataProviderFramework/dataProviderTypes";
 
 import { providerManagerAtom } from "../atoms/baseAtoms";
 import { serializedManagerStateAtom } from "../atoms/persistedAtoms";
@@ -159,6 +155,7 @@ function makeOptionsForGroup(group: ItemGroup): ActionGroup[] {
             ];
 
         case GroupType.WELL_LOG_DIFF_GROUP:
+            if (group.getGroupDelegate().getChildren().length >= 2) return [];
             return [
                 {
                     label: "Plots",
@@ -201,17 +198,17 @@ function makeOptionsForGroup(group: ItemGroup): ActionGroup[] {
 const ALLOWED_CHILDREN = {
     [GroupType.VIEW]: {
         groups: [GroupType.WELL_LOG_TRACK_CONT, GroupType.WELL_LOG_TRACK_DISC],
-        providers: [WellborePicksProvider.name],
+        providers: [CustomDataProviderType.WELLBORE_PICKS],
     },
     [GroupType.WELL_LOG_TRACK_CONT]: {
         groups: [GroupType.WELL_LOG_DIFF_GROUP],
-        providers: [LinearPlotProvider.name, AreaPlotProvider.name],
+        providers: [CustomDataProviderType.LINEAR_PLOT, CustomDataProviderType.AREA_PLOT],
     },
     [GroupType.WELL_LOG_TRACK_DISC]: {
-        providers: [StackedPlotProvider.name],
+        providers: [CustomDataProviderType.STACKED_PLOT],
     },
     [GroupType.WELL_LOG_DIFF_GROUP]: {
-        providers: [DiffPlotProvider.name],
+        providers: [CustomDataProviderType.DIFF_PLOT],
     },
 } as const;
 
@@ -253,7 +250,7 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
             switch (identifier) {
                 case RootActionIdents.WELL_PICKS:
                     return groupDelegate.appendChild(
-                        DataProviderRegistry.makeDataProvider(WellborePicksProvider.name, providerManager),
+                        DataProviderRegistry.makeDataProvider(CustomDataProviderType.WELLBORE_PICKS, providerManager),
                     );
 
                 case RootActionIdents.CONTINUOUS_TRACK:
@@ -273,7 +270,7 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
                         .getGroupDelegate()
                         .appendChild(
                             DataProviderRegistry.makeDataProvider(
-                                DiffPlotProvider.name,
+                                CustomDataProviderType.DIFF_PLOT,
                                 providerManager,
                                 "Primary curve",
                             ),
@@ -282,7 +279,7 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
                         .getGroupDelegate()
                         .appendChild(
                             DataProviderRegistry.makeDataProvider(
-                                DiffPlotProvider.name,
+                                CustomDataProviderType.DIFF_PLOT,
                                 providerManager,
                                 "Secondary curve",
                             ),
@@ -293,21 +290,21 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
 
                 case PlotActionIdents.DIFF_CURVE:
                     return groupDelegate.appendChild(
-                        DataProviderRegistry.makeDataProvider(DiffPlotProvider.name, providerManager),
+                        DataProviderRegistry.makeDataProvider(CustomDataProviderType.DIFF_PLOT, providerManager),
                     );
 
                 case PlotActionIdents.LINE:
                     return groupDelegate.appendChild(
-                        DataProviderRegistry.makeDataProvider(LinearPlotProvider.name, providerManager),
+                        DataProviderRegistry.makeDataProvider(CustomDataProviderType.LINEAR_PLOT, providerManager),
                     );
                 case PlotActionIdents.AREA:
                     return groupDelegate.appendChild(
-                        DataProviderRegistry.makeDataProvider(AreaPlotProvider.name, providerManager),
+                        DataProviderRegistry.makeDataProvider(CustomDataProviderType.AREA_PLOT, providerManager),
                     );
 
                 case PlotActionIdents.STACKED:
                     return groupDelegate.appendChild(
-                        DataProviderRegistry.makeDataProvider(StackedPlotProvider.name, providerManager),
+                        DataProviderRegistry.makeDataProvider(CustomDataProviderType.STACKED_PLOT, providerManager),
                     );
 
                 default:

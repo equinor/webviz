@@ -4,14 +4,14 @@ import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramew
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import {
-    baseLinearSettings,
+    baseContinuousSettings,
     defineBaseContinuousDependencies,
     doSettingsChangesRequireDataRefetch,
-    fetchData,
+    fetchLogCurveData,
     verifyBasePlotSettings,
 } from "./_shared";
 
-export const linearPlotSettings = [Setting.PLOT_VARIANT, ...baseLinearSettings] as const;
+export const linearPlotSettings = [Setting.PLOT_VARIANT, ...baseContinuousSettings] as const;
 export type LinearPlotSettingTypes = typeof linearPlotSettings;
 
 export class LinearPlotProvider
@@ -19,7 +19,7 @@ export class LinearPlotProvider
 {
     doSettingsChangesRequireDataRefetch = doSettingsChangesRequireDataRefetch;
     areCurrentSettingsValid = verifyBasePlotSettings<LinearPlotSettingTypes>;
-    fetchData = fetchData<LinearPlotSettingTypes>;
+    fetchData = fetchLogCurveData<LinearPlotSettingTypes>;
     settings = linearPlotSettings;
 
     // Uses the same external things as the other types

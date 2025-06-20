@@ -2,14 +2,14 @@ import type { WellboreLogCurveData_api } from "@api";
 import type { CustomDataProviderImplementation } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 
 import {
-    baseLinearSettings,
+    baseContinuousSettings,
     defineBaseContinuousDependencies,
     doSettingsChangesRequireDataRefetch,
-    fetchData,
+    fetchLogCurveData,
     verifyBasePlotSettings,
 } from "./_shared";
 
-export const differentialPlotSettings = [...baseLinearSettings] as const;
+export const differentialPlotSettings = [...baseContinuousSettings] as const;
 export type DiffPlotSettingTypes = typeof differentialPlotSettings;
 
 export class DiffPlotProvider
@@ -18,7 +18,7 @@ export class DiffPlotProvider
     doSettingsChangesRequireDataRefetch = doSettingsChangesRequireDataRefetch;
     areCurrentSettingsValid = verifyBasePlotSettings<DiffPlotSettingTypes>;
     defineDependencies = defineBaseContinuousDependencies<DiffPlotSettingTypes>;
-    fetchData = fetchData<DiffPlotSettingTypes>;
+    fetchData = fetchLogCurveData<DiffPlotSettingTypes>;
     settings = differentialPlotSettings;
 
     getDefaultName() {

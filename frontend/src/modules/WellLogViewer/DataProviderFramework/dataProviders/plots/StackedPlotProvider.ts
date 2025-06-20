@@ -7,7 +7,7 @@ import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProvider
 import {
     baseDiscreteSettings,
     doSettingsChangesRequireDataRefetch,
-    fetchData,
+    fetchLogCurveData,
     verifyBasePlotSettings,
 } from "./_shared";
 
@@ -20,7 +20,7 @@ export class StackedPlotProvider
 {
     doSettingsChangesRequireDataRefetch = doSettingsChangesRequireDataRefetch;
     areCurrentSettingsValid = verifyBasePlotSettings<StackedPlotSettingTypes>;
-    fetchData = fetchData<StackedPlotSettingTypes>;
+    fetchData = fetchLogCurveData<StackedPlotSettingTypes>;
     settings = stackedPlotSettings;
 
     getDefaultSettingsValues(): Partial<SettingsTypeMap> {

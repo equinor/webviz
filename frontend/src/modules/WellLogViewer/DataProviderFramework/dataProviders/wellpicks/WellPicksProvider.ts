@@ -96,6 +96,6 @@ export class WellborePicksProvider
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsTypeMap, newSettings: SettingsTypeMap): boolean {
-        return isEqual(prevSettings, newSettings);
+        return !isEqual(prevSettings, newSettings);
     }
 }

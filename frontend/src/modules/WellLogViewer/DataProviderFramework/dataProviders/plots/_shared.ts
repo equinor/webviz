@@ -17,7 +17,7 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 
 export const baseSettings = [Setting.LOG_CURVE] as const;
 
-export const baseLinearSettings = [...baseSettings, Setting.SCALE, Setting.COLOR] as const;
+export const baseContinuousSettings = [...baseSettings, Setting.SCALE, Setting.COLOR] as const;
 export const baseDiscreteSettings = [
     ...baseSettings,
     // These might be a bit too specific to the stacked plot.
@@ -63,17 +63,7 @@ export function verifyBasePlotSettings<T extends readonly Setting[]>(
     return !!selectedCurve && !!_.find(availableCurves, (curve) => curve.curveName === selectedCurve.curveName);
 }
 
-export function verifyContinuousPlotSetting<T extends readonly Setting[]>(
-    accessor: DataProviderInformationAccessors<T, WellboreLogCurveData_api>,
-) {
-    if (!verifyBasePlotSettings(accessor)) return false;
-
-    const selectedCurve = accessor.getSetting(Setting.LOG_CURVE)!;
-
-    return [WellLogCurveTypeEnum_api.CONTINUOUS, WellLogCurveTypeEnum_api.FLAG].includes(selectedCurve.curveType);
-}
-
-export function fetchData<T extends Settings>(
+export function fetchLogCurveData<T extends Settings>(
     args: FetchDataParams<T, WellboreLogCurveData_api>,
 ): Promise<WellboreLogCurveData_api> {
     const { getSetting, getGlobalSetting, queryClient } = args;
