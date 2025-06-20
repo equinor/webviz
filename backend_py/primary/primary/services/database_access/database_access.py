@@ -22,7 +22,6 @@ class DatabaseAccess:
                 "No Cosmos DB production connection string or emulator URI/key provided.", Service.DATABASE
             )
         self = cls(database_name, client)
-        await client.create_database_if_not_exists(database_name)  # ✅ make sure db exists and safe async
         return self
 
     async def __aenter__(self):

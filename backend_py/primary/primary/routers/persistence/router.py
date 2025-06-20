@@ -3,55 +3,54 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from primary.services.database_access.private_dashboard_access import PrivateDashboardAccess
-from primary.services.database_access.types import PrivateDashboard, DashboardMetadata, PrivateDashboardUpdate
-from primary.auth.auth_helper import AuthHelper
-from primary.auth.auth_helper import AuthenticatedUser
+from primary.services.database_access.session_access import SessionAccess
+from primary.auth.auth_helper import AuthHelper, AuthenticatedUser
+from primary.services.database_access.types import NewSession, SessionMetadata, SessionMetadataSummary, SessionRecord, SessionUpdate
+
+from . import schemas
 
 LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/dashboards", response_model=List[DashboardMetadata])
-async def get_dashboards_metadata(user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
-    access = await PrivateDashboardAccess.create(user.get_user_id())
+@router.get("/sessions", response_model=List[schemas.SessionMetadataSummary])
+async def get_sessions_metadata(user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
+    access = await SessionAccess.create(user.get_user_id())
     async with access:
-        return await access.get_all_dashboards_metadata_for_user()
+        return await access.get_all_sessions_metadata_for_user()
 
 
-@router.get("/dashboards/{dashboard_id}", response_model=PrivateDashboard)
-async def get_dashboard(dashboard_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
-    access = await PrivateDashboardAccess.create(user.get_user_id())
+@router.get("/sessions/{session_id}", response_model=SessionRecord)
+async def get_session(session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
+    access = await SessionAccess.create(user.get_user_id())
     async with access:
-        dashboard = await access.get_dashboard_by_id(dashboard_id)
-        if not dashboard:
-            raise HTTPException(status_code=404, detail="Dashboard not found")
-        return dashboard
+        session = await access.get_session_by_id(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return session
 
 
-@router.post("/dashboards", response_model=str)
-async def create_dashboard(
-    dashboard: PrivateDashboardUpdate, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
-):
-    access = await PrivateDashboardAccess.create(user.get_user_id())
+@router.post("/sessions", response_model=str)
+async def create_session(session: NewSession, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
+    access = await SessionAccess.create(user.get_user_id())
     async with access:
-        await access.insert_dashboard(dashboard)
-        return dashboard.id
+        id = await access.insert_session(session)
+        return id
 
 
-@router.put("/dashboards/{dashboard_id}")
-async def update_dashboard(
-    dashboard_id: str,
-    updated_dashboard: PrivateDashboard,
+@router.put("/sessions/{session_id}")
+async def update_session(
+    session_id: str,
+    session_update: SessionUpdate,
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ):
-    access = await PrivateDashboardAccess.create(user.get_user_id())
+    access = await SessionAccess.create(user.get_user_id())
     async with access:
-        await access.update_dashboard(dashboard_id, updated_dashboard)
+        await access.update_session(session_id, session_update)
 
 
-@router.delete("/dashboards/{dashboard_id}")
-async def delete_dashboard(dashboard_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
-    access = await PrivateDashboardAccess.create(user.get_user_id())
+@router.delete("/sessions/{session_id}")
+async def delete_session(session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
+    access = await SessionAccess.create(user.get_user_id())
     async with access:
-        await access.delete_dashboard(dashboard_id)
+        await access.delete_session(session_id)

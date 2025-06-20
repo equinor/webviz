@@ -1,10 +1,25 @@
+from datetime import datetime
 from enum import Enum
-from typing import List, Optional, TypeAlias
+from typing import List, Optional
 from pydantic import BaseModel
 
-
-class Dashboard(BaseModel):
+class SessionMetadataSummary(BaseModel):
     id: str
-    name: str
-    description: str
-    layout: str
+    title: str
+    description: Optional[str]
+    createdAt: str
+    updatedAt: str
+    version: int
+
+class SessionMetadata(BaseModel):
+    title: str
+    description: Optional[str]
+    createdAt: str
+    updatedAt: str
+    version: int
+
+class SessionRecord(BaseModel):
+    id: str
+    userId: str
+    metadata: SessionMetadata
+    content: str

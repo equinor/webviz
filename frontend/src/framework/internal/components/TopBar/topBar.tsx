@@ -18,6 +18,7 @@ import { Edit, Refresh, Save } from "@mui/icons-material";
 import FmuLogo from "@assets/fmu.svg";
 
 import { LoginButton } from "../LoginButton";
+import { CircularProgress } from "@lib/components/CircularProgress";
 
 export type TopBarProps = {
     workbench: Workbench;
@@ -93,6 +94,7 @@ type SessionSaveButtonProps = {
 
 function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
     const [saveAsDialogOpen, setSaveAsDialogOpen] = React.useState<boolean>(false);
+    const [isSaving, setIsSaving] = React.useState<boolean>(false);
 
     const persistenceInfo = usePublishSubscribeTopicValue(
         props.workbench.getWorkbenchSessionPersistenceService(),
@@ -109,6 +111,17 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
             setSaveAsDialogOpen(true);
             return;
         }
+        setIsSaving(true);
+        props.workbench
+            .getWorkbenchSessionPersistenceService()
+            .persistSessionState()
+            .then(() => {
+                setIsSaving(false);
+            })
+            .catch((error) => {
+                console.error("Failed to save session:", error);
+                // Optionally, you can show an error message here.
+            });
     };
 
     function makeText() {
@@ -130,14 +143,22 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
             })}
         >
             {makeText()}
-            <TopBarButton
-                onClick={handleSaveClick}
-                title={persistenceInfo.hasChanges ? "Save session" : "No changes to save"}
-                disabled={!persistenceInfo.hasChanges}
-            >
-                <Save className="size-5" />
-            </TopBarButton>
-            <SaveSessionDialog open={saveAsDialogOpen} onClose={() => setSaveAsDialogOpen(false)} />
+            {isSaving ? (
+                <CircularProgress size="small" className="text-amber-600" />
+            ) : (
+                <TopBarButton
+                    onClick={handleSaveClick}
+                    title={persistenceInfo.hasChanges ? "Save session" : "No changes to save"}
+                    disabled={!persistenceInfo.hasChanges}
+                >
+                    <Save className="size-5" />
+                </TopBarButton>
+            )}
+            <SaveSessionDialog
+                open={saveAsDialogOpen}
+                onClose={() => setSaveAsDialogOpen(false)}
+                workbench={props.workbench}
+            />
         </div>
     );
 }
@@ -192,9 +213,46 @@ function RefreshSessionButton(props: RefreshSessionButtonProps): React.ReactNode
 type SaveSessionDialogProps = {
     open: boolean;
     onClose: () => void;
+    workbench: Workbench;
+};
+
+type SaveSessionDialogInputFeedback = {
+    title?: string;
+    description?: string;
 };
 
 function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNode {
+    const [title, setTitle] = React.useState<string>("");
+    const [description, setDescription] = React.useState<string>("");
+    const [isSaving, setIsSaving] = React.useState<boolean>(false);
+    const [inputFeedback, setInputFeedback] = React.useState<SaveSessionDialogInputFeedback>({});
+
+    function handleSave() {
+        if (title.trim() === "") {
+            setInputFeedback((prev) => ({ ...prev, title: "Title is required." }));
+            return;
+        } else {
+            setInputFeedback((prev) => ({ ...prev, title: undefined }));
+        }
+
+        if (description.trim() === "") {
+            setInputFeedback((prev) => ({ ...prev, description: "Description is required." }));
+            return;
+        } else {
+            setInputFeedback((prev) => ({ ...prev, description: undefined }));
+        }
+        const sessionData = { title, description };
+        props.workbench.getWorkbenchSession().setMetadata(sessionData);
+        setIsSaving(true);
+        props.workbench
+            .getWorkbenchSessionPersistenceService()
+            .persistSessionState()
+            .then(() => {
+                setIsSaving(false);
+                props.onClose();
+            });
+    }
+
     return (
         <Dialog
             open={props.open}
@@ -204,16 +262,38 @@ function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNode {
             showCloseCross
             actions={
                 <>
-                    <Button variant="text">Save</Button>
+                    <Button variant="text" disabled={isSaving} onClick={handleSave}>
+                        {isSaving && <CircularProgress size="small" />} Save
+                    </Button>
                 </>
             }
         >
             <div className="flex flex-col gap-2">
-                <Label text="Name">
-                    <Input placeholder="Enter session name" type="text" />
+                <Label text="Title">
+                    <>
+                        <Input
+                            placeholder="Enter session title"
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            error={!!inputFeedback.title}
+                        />
+                        {inputFeedback.title && <div className="text-red-600 text-sm mt-1">{inputFeedback.title}</div>}
+                    </>
                 </Label>
                 <Label text="Description">
-                    <Input placeholder="Enter session description" multiline />
+                    <>
+                        <Input
+                            placeholder="Enter session description"
+                            value={description}
+                            multiline
+                            onChange={(e) => setDescription(e.target.value)}
+                            error={!!inputFeedback.description}
+                        />
+                        {inputFeedback.description && (
+                            <div className="text-red-600 text-sm mt-1">{inputFeedback.description}</div>
+                        )}
+                    </>
                 </Label>
             </div>
         </Dialog>

@@ -67,11 +67,11 @@ import {
     getRealizationData,
     getVfpTableNames,
     getVfpTable,
-    getDashboardsMetadata,
-    createDashboard,
-    deleteDashboard,
-    getDashboard,
-    updateDashboard,
+    getSessionsMetadata,
+    createSession,
+    deleteSession,
+    getSession,
+    updateSession,
     loginRoute,
     authorizedCallbackRoute,
     getAlive,
@@ -156,15 +156,15 @@ import type {
     GetRealizationDataData_api,
     GetVfpTableNamesData_api,
     GetVfpTableData_api,
-    GetDashboardsMetadataData_api,
-    CreateDashboardData_api,
-    CreateDashboardError_api,
-    CreateDashboardResponse_api,
-    DeleteDashboardData_api,
-    DeleteDashboardError_api,
-    GetDashboardData_api,
-    UpdateDashboardData_api,
-    UpdateDashboardError_api,
+    GetSessionsMetadataData_api,
+    CreateSessionData_api,
+    CreateSessionError_api,
+    CreateSessionResponse_api,
+    DeleteSessionData_api,
+    DeleteSessionError_api,
+    GetSessionData_api,
+    UpdateSessionData_api,
+    UpdateSessionError_api,
     LoginRouteData_api,
     AuthorizedCallbackRouteData_api,
     GetAliveData_api,
@@ -1497,14 +1497,14 @@ export const getVfpTableOptions = (options: Options<GetVfpTableData_api>) => {
     });
 };
 
-export const getDashboardsMetadataQueryKey = (options?: Options<GetDashboardsMetadataData_api>) => [
-    createQueryKey("getDashboardsMetadata", options),
+export const getSessionsMetadataQueryKey = (options?: Options<GetSessionsMetadataData_api>) => [
+    createQueryKey("getSessionsMetadata", options),
 ];
 
-export const getDashboardsMetadataOptions = (options?: Options<GetDashboardsMetadataData_api>) => {
+export const getSessionsMetadataOptions = (options?: Options<GetSessionsMetadataData_api>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getDashboardsMetadata({
+            const { data } = await getSessionsMetadata({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -1512,18 +1512,18 @@ export const getDashboardsMetadataOptions = (options?: Options<GetDashboardsMeta
             });
             return data;
         },
-        queryKey: getDashboardsMetadataQueryKey(options),
+        queryKey: getSessionsMetadataQueryKey(options),
     });
 };
 
-export const createDashboardQueryKey = (options: Options<CreateDashboardData_api>) => [
-    createQueryKey("createDashboard", options),
+export const createSessionQueryKey = (options: Options<CreateSessionData_api>) => [
+    createQueryKey("createSession", options),
 ];
 
-export const createDashboardOptions = (options: Options<CreateDashboardData_api>) => {
+export const createSessionOptions = (options: Options<CreateSessionData_api>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await createDashboard({
+            const { data } = await createSession({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -1531,18 +1531,18 @@ export const createDashboardOptions = (options: Options<CreateDashboardData_api>
             });
             return data;
         },
-        queryKey: createDashboardQueryKey(options),
+        queryKey: createSessionQueryKey(options),
     });
 };
 
-export const createDashboardMutation = (options?: Partial<Options<CreateDashboardData_api>>) => {
+export const createSessionMutation = (options?: Partial<Options<CreateSessionData_api>>) => {
     const mutationOptions: UseMutationOptions<
-        CreateDashboardResponse_api,
-        AxiosError<CreateDashboardError_api>,
-        Options<CreateDashboardData_api>
+        CreateSessionResponse_api,
+        AxiosError<CreateSessionError_api>,
+        Options<CreateSessionData_api>
     > = {
         mutationFn: async (localOptions) => {
-            const { data } = await createDashboard({
+            const { data } = await createSession({
                 ...options,
                 ...localOptions,
                 throwOnError: true,
@@ -1553,14 +1553,10 @@ export const createDashboardMutation = (options?: Partial<Options<CreateDashboar
     return mutationOptions;
 };
 
-export const deleteDashboardMutation = (options?: Partial<Options<DeleteDashboardData_api>>) => {
-    const mutationOptions: UseMutationOptions<
-        unknown,
-        AxiosError<DeleteDashboardError_api>,
-        Options<DeleteDashboardData_api>
-    > = {
+export const deleteSessionMutation = (options?: Partial<Options<DeleteSessionData_api>>) => {
+    const mutationOptions: UseMutationOptions<unknown, AxiosError<DeleteSessionError_api>, Options<DeleteSessionData_api>> = {
         mutationFn: async (localOptions) => {
-            const { data } = await deleteDashboard({
+            const { data } = await deleteSession({
                 ...options,
                 ...localOptions,
                 throwOnError: true,
@@ -1571,12 +1567,12 @@ export const deleteDashboardMutation = (options?: Partial<Options<DeleteDashboar
     return mutationOptions;
 };
 
-export const getDashboardQueryKey = (options: Options<GetDashboardData_api>) => [createQueryKey("getDashboard", options)];
+export const getSessionQueryKey = (options: Options<GetSessionData_api>) => [createQueryKey("getSession", options)];
 
-export const getDashboardOptions = (options: Options<GetDashboardData_api>) => {
+export const getSessionOptions = (options: Options<GetSessionData_api>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getDashboard({
+            const { data } = await getSession({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -1584,18 +1580,14 @@ export const getDashboardOptions = (options: Options<GetDashboardData_api>) => {
             });
             return data;
         },
-        queryKey: getDashboardQueryKey(options),
+        queryKey: getSessionQueryKey(options),
     });
 };
 
-export const updateDashboardMutation = (options?: Partial<Options<UpdateDashboardData_api>>) => {
-    const mutationOptions: UseMutationOptions<
-        unknown,
-        AxiosError<UpdateDashboardError_api>,
-        Options<UpdateDashboardData_api>
-    > = {
+export const updateSessionMutation = (options?: Partial<Options<UpdateSessionData_api>>) => {
+    const mutationOptions: UseMutationOptions<unknown, AxiosError<UpdateSessionError_api>, Options<UpdateSessionData_api>> = {
         mutationFn: async (localOptions) => {
-            const { data } = await updateDashboard({
+            const { data } = await updateSession({
                 ...options,
                 ...localOptions,
                 throwOnError: true,

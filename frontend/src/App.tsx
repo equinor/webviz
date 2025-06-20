@@ -183,10 +183,12 @@ function App() {
                 {!isInitializingApp && (
                     <>
                         <TopBar workbench={workbench} />
-                        <div className="grow flex flex-row">
-                            <LeftNavBar workbench={workbench} />
-                            <SettingsContentPanels workbench={workbench} />
-                            <RightNavBar workbench={workbench} />
+                        <div className="grow min-h-0">
+                            <div className="w-full h-full flex flex-row">
+                                <LeftNavBar workbench={workbench} />
+                                <SettingsContentPanels workbench={workbench} />
+                                <RightNavBar workbench={workbench} />
+                            </div>
                         </div>
                     </>
                 )}

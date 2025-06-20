@@ -188,18 +188,18 @@ import type {
     GetVfpTableData_api,
     GetVfpTableResponse_api,
     GetVfpTableError_api,
-    GetDashboardsMetadataData_api,
-    GetDashboardsMetadataResponse_api,
-    CreateDashboardData_api,
-    CreateDashboardResponse_api,
-    CreateDashboardError_api,
-    DeleteDashboardData_api,
-    DeleteDashboardError_api,
-    GetDashboardData_api,
-    GetDashboardResponse_api,
-    GetDashboardError_api,
-    UpdateDashboardData_api,
-    UpdateDashboardError_api,
+    GetSessionsMetadataData_api,
+    GetSessionsMetadataResponse_api,
+    CreateSessionData_api,
+    CreateSessionResponse_api,
+    CreateSessionError_api,
+    DeleteSessionData_api,
+    DeleteSessionError_api,
+    GetSessionData_api,
+    GetSessionResponse_api,
+    GetSessionError_api,
+    UpdateSessionData_api,
+    UpdateSessionError_api,
     LoginRouteData_api,
     LoginRouteError_api,
     AuthorizedCallbackRouteData_api,
@@ -1188,70 +1188,68 @@ export const getVfpTable = <ThrowOnError extends boolean = false>(options: Optio
 };
 
 /**
- * Get Dashboards Metadata
+ * Get Sessions Metadata
  */
-export const getDashboardsMetadata = <ThrowOnError extends boolean = false>(
-    options?: Options<GetDashboardsMetadataData_api, ThrowOnError>,
+export const getSessionsMetadata = <ThrowOnError extends boolean = false>(
+    options?: Options<GetSessionsMetadataData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).get<GetDashboardsMetadataResponse_api, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetSessionsMetadataResponse_api, unknown, ThrowOnError>({
         ...options,
-        url: "/persistence/dashboards",
+        url: "/persistence/sessions",
     });
 };
 
 /**
- * Create Dashboard
+ * Create Session
  */
-export const createDashboard = <ThrowOnError extends boolean = false>(
-    options: Options<CreateDashboardData_api, ThrowOnError>,
+export const createSession = <ThrowOnError extends boolean = false>(
+    options: Options<CreateSessionData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).post<CreateDashboardResponse_api, CreateDashboardError_api, ThrowOnError>({
+    return (options?.client ?? client).post<CreateSessionResponse_api, CreateSessionError_api, ThrowOnError>({
         ...options,
         headers: {
             "Content-Type": "application/json",
             ...options?.headers,
         },
-        url: "/persistence/dashboards",
+        url: "/persistence/sessions",
     });
 };
 
 /**
- * Delete Dashboard
+ * Delete Session
  */
-export const deleteDashboard = <ThrowOnError extends boolean = false>(
-    options: Options<DeleteDashboardData_api, ThrowOnError>,
+export const deleteSession = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteSessionData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).delete<unknown, DeleteDashboardError_api, ThrowOnError>({
+    return (options?.client ?? client).delete<unknown, DeleteSessionError_api, ThrowOnError>({
         ...options,
-        url: "/persistence/dashboards/{dashboard_id}",
+        url: "/persistence/sessions/{session_id}",
     });
 };
 
 /**
- * Get Dashboard
+ * Get Session
  */
-export const getDashboard = <ThrowOnError extends boolean = false>(
-    options: Options<GetDashboardData_api, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<GetDashboardResponse_api, GetDashboardError_api, ThrowOnError>({
+export const getSession = <ThrowOnError extends boolean = false>(options: Options<GetSessionData_api, ThrowOnError>) => {
+    return (options?.client ?? client).get<GetSessionResponse_api, GetSessionError_api, ThrowOnError>({
         ...options,
-        url: "/persistence/dashboards/{dashboard_id}",
+        url: "/persistence/sessions/{session_id}",
     });
 };
 
 /**
- * Update Dashboard
+ * Update Session
  */
-export const updateDashboard = <ThrowOnError extends boolean = false>(
-    options: Options<UpdateDashboardData_api, ThrowOnError>,
+export const updateSession = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateSessionData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).put<unknown, UpdateDashboardError_api, ThrowOnError>({
+    return (options?.client ?? client).put<unknown, UpdateSessionError_api, ThrowOnError>({
         ...options,
         headers: {
             "Content-Type": "application/json",
             ...options?.headers,
         },
-        url: "/persistence/dashboards/{dashboard_id}",
+        url: "/persistence/sessions/{session_id}",
     });
 };
 

@@ -1,4 +1,3 @@
-import { getDashboardOptions, getDashboardsMetadataOptions } from "@api";
 import { DashboardTopic } from "@framework/Dashboard";
 import {
     PrivateWorkbenchSessionTopic,
@@ -9,7 +8,12 @@ import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/Publ
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 import type { QueryClient } from "@tanstack/query-core";
 
-import { hashJsonString, objectToJsonString } from "./utils";
+import {
+    createSessionWithCacheUpdate,
+    hashJsonString,
+    objectToJsonString,
+    updateSessionWithCacheUpdate,
+} from "./utils";
 
 export type WorkbenchSessionPersistenceInfo = {
     lastModifiedMs: number;
@@ -141,10 +145,34 @@ export class WorkbenchSessionPersistenceService
         this._lastPersistedMs = Date.now();
         this._lastPersistedHash = this._currentHash;
 
-        // Here you would typically send the _currentStateString to your backend or storage.
-        // For example:
-        // await this._apiClient.persistSessionState(this._currentStateString);
-        console.debug("Persisting session state:", this._currentStateString);
+        const metadata = this._workbenchSession.getMetadata();
+        const id = this._workbenchSession.getId();
+
+        try {
+            if (this._workbenchSession.getIsPersisted()) {
+                if (!id) {
+                    throw new Error("Session ID is not set. Cannot update session state.");
+                }
+                await updateSessionWithCacheUpdate(this._queryClient, {
+                    id,
+                    content: this._currentStateString,
+                    metadata: {
+                        title: metadata.title,
+                        description: metadata.description,
+                    },
+                });
+            } else {
+                const id = await createSessionWithCacheUpdate(this._queryClient, {
+                    title: metadata.title,
+                    description: metadata.description ?? null,
+                    content: this._currentStateString,
+                });
+                this._workbenchSession.setId(id);
+            }
+        } catch (error) {
+            console.error("Failed to persist session state:", error);
+            throw new Error("Failed to persist session state. Please try again later.");
+        }
 
         this.updatePersistenceInfo();
         this._workbenchSession.setIsPersisted(true);
@@ -198,21 +226,5 @@ export class WorkbenchSessionPersistenceService
                 );
             }
         }
-    }
-
-    async fetchPrivateDashboard(dashboardId: string) {
-        return this._queryClient.fetchQuery({
-            ...getDashboardOptions({
-                path: {
-                    dashboard_id: dashboardId,
-                },
-            }),
-        });
-    }
-
-    async fetchPrivateDashboardsMetadata() {
-        return this._queryClient.fetchQuery({
-            ...getDashboardsMetadataOptions(),
-        });
     }
 }

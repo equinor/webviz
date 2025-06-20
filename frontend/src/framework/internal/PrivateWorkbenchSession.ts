@@ -1,5 +1,4 @@
 import type { QueryClient } from "@tanstack/query-core";
-import { v4 } from "uuid";
 
 import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import { Dashboard, type SerializedDashboard } from "@framework/Dashboard";
@@ -72,7 +71,7 @@ export type PrivateWorkbenchSessionTopicPayloads = {
 export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenchSessionTopicPayloads> {
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<PrivateWorkbenchSessionTopicPayloads>();
 
-    private _id: string;
+    private _id: string | null = null;
     private _isPersisted: boolean = false;
     private _atomStoreMaster: AtomStoreMaster;
     private _activeDashboardId: string | null = null;
@@ -88,7 +87,6 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     };
 
     constructor(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient) {
-        this._id = v4();
         this._atomStoreMaster = atomStoreMaster;
         this._userCreatedItems = new UserCreatedItems(atomStoreMaster);
 
@@ -98,6 +96,30 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
 
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<PrivateWorkbenchSessionTopicPayloads> {
         return this._publishSubscribeDelegate;
+    }
+
+    getIsPersisted(): boolean {
+        return this._isPersisted;
+    }
+
+    setId(id: string): void {
+        if (this._id) {
+            throw new Error("ID is already set and cannot be changed.");
+        }
+        this._id = id;
+    }
+
+    getId(): string | null {
+        return this._id;
+    }
+
+    getMetadata(): PrivateWorkbenchSessionMetadata {
+        return this._metadata;
+    }
+
+    setMetadata(metadata: PrivateWorkbenchSessionMetadata): void {
+        this._metadata = metadata;
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.METADATA);
     }
 
     setIsPersisted(isPersisted: boolean): void {

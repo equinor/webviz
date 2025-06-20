@@ -87,25 +87,6 @@ export type Completions_api = {
     khMax: Array<number>;
 };
 
-export type DashboardContent_api = {
-    layout: Array<{
-        [key: string]: unknown;
-    }>;
-    moduleStates: Array<ModuleState_api>;
-    crossModuleState: {
-        [key: string]: unknown;
-    };
-};
-
-export type DashboardMetadata_api = {
-    dashboardId: string;
-    title: string;
-    description?: string | null;
-    createdBy: string;
-    createdAt: string;
-    updatedAt: string | null;
-};
-
 export type DatedFlowNetwork_api = {
     dates: Array<string>;
     network: NetworkNode_api;
@@ -421,14 +402,6 @@ export type InplaceVolumetricsTableDefinition_api = {
     identifiersWithValues: Array<InplaceVolumetricsIdentifierWithValues_api>;
 };
 
-export type ModuleState_api = {
-    moduleName: string;
-    moduleInstanceId: string;
-    state: {
-        [key: string]: unknown;
-    };
-};
-
 export type NetworkNode_api = {
     node_type: "Group" | "Well";
     node_label: string;
@@ -440,6 +413,12 @@ export type NetworkNode_api = {
         [key: string]: Array<number>;
     };
     children: Array<NetworkNode_api>;
+};
+
+export type NewSession_api = {
+    title: string;
+    description: string | null;
+    content: string;
 };
 
 export enum NodeType_api {
@@ -501,29 +480,6 @@ export type PolylineIntersection_api = {
     grid_dimensions: GridDimensions_api;
     min_grid_prop_value: number;
     max_grid_prop_value: number;
-};
-
-export type PrivateDashboardInput_api = {
-    id: string;
-    userId: string;
-    metadata: DashboardMetadata_api;
-    content: DashboardContent_api;
-    version: number;
-};
-
-export type PrivateDashboardOutput_api = {
-    id: string;
-    userId: string;
-    metadata: DashboardMetadata_api;
-    content: DashboardContent_api;
-    version: number;
-};
-
-export type PrivateDashboardUpdate_api = {
-    id: string;
-    title?: string | null;
-    description?: string | null;
-    content?: DashboardContent_api | null;
 };
 
 export type PvtData_api = {
@@ -749,6 +705,41 @@ export enum SensitivityType_api {
     MONTECARLO = "montecarlo",
     SCENARIO = "scenario",
 }
+
+export type SessionMetadata_api = {
+    created_at: string;
+    updated_at: string;
+    version: number;
+    title: string;
+    description?: string | null;
+};
+
+export type SessionMetadataExternal_api = {
+    title: string;
+    description?: string | null;
+};
+
+export type SessionMetadataSummary_api = {
+    id: string;
+    title: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
+    version: number;
+};
+
+export type SessionRecord_api = {
+    id: string;
+    user_id: string;
+    metadata: SessionMetadata_api;
+    content: string;
+};
+
+export type SessionUpdate_api = {
+    id: string;
+    metadata: SessionMetadataExternal_api;
+    content: string;
+};
 
 export enum StatisticFunction_api {
     MEAN = "MEAN",
@@ -3788,118 +3779,118 @@ export type GetVfpTableResponses_api = {
 
 export type GetVfpTableResponse_api = GetVfpTableResponses_api[keyof GetVfpTableResponses_api];
 
-export type GetDashboardsMetadataData_api = {
+export type GetSessionsMetadataData_api = {
     body?: never;
     path?: never;
     query?: never;
-    url: "/persistence/dashboards";
+    url: "/persistence/sessions";
 };
 
-export type GetDashboardsMetadataResponses_api = {
+export type GetSessionsMetadataResponses_api = {
     /**
      * Successful Response
      */
-    200: Array<DashboardMetadata_api>;
+    200: Array<SessionMetadataSummary_api>;
 };
 
-export type GetDashboardsMetadataResponse_api = GetDashboardsMetadataResponses_api[keyof GetDashboardsMetadataResponses_api];
+export type GetSessionsMetadataResponse_api = GetSessionsMetadataResponses_api[keyof GetSessionsMetadataResponses_api];
 
-export type CreateDashboardData_api = {
-    body: PrivateDashboardUpdate_api;
+export type CreateSessionData_api = {
+    body: NewSession_api;
     path?: never;
     query?: never;
-    url: "/persistence/dashboards";
+    url: "/persistence/sessions";
 };
 
-export type CreateDashboardErrors_api = {
+export type CreateSessionErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type CreateDashboardError_api = CreateDashboardErrors_api[keyof CreateDashboardErrors_api];
+export type CreateSessionError_api = CreateSessionErrors_api[keyof CreateSessionErrors_api];
 
-export type CreateDashboardResponses_api = {
+export type CreateSessionResponses_api = {
     /**
      * Successful Response
      */
     200: string;
 };
 
-export type CreateDashboardResponse_api = CreateDashboardResponses_api[keyof CreateDashboardResponses_api];
+export type CreateSessionResponse_api = CreateSessionResponses_api[keyof CreateSessionResponses_api];
 
-export type DeleteDashboardData_api = {
+export type DeleteSessionData_api = {
     body?: never;
     path: {
-        dashboard_id: string;
+        session_id: string;
     };
     query?: never;
-    url: "/persistence/dashboards/{dashboard_id}";
+    url: "/persistence/sessions/{session_id}";
 };
 
-export type DeleteDashboardErrors_api = {
+export type DeleteSessionErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type DeleteDashboardError_api = DeleteDashboardErrors_api[keyof DeleteDashboardErrors_api];
+export type DeleteSessionError_api = DeleteSessionErrors_api[keyof DeleteSessionErrors_api];
 
-export type DeleteDashboardResponses_api = {
+export type DeleteSessionResponses_api = {
     /**
      * Successful Response
      */
     200: unknown;
 };
 
-export type GetDashboardData_api = {
+export type GetSessionData_api = {
     body?: never;
     path: {
-        dashboard_id: string;
+        session_id: string;
     };
     query?: never;
-    url: "/persistence/dashboards/{dashboard_id}";
+    url: "/persistence/sessions/{session_id}";
 };
 
-export type GetDashboardErrors_api = {
+export type GetSessionErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type GetDashboardError_api = GetDashboardErrors_api[keyof GetDashboardErrors_api];
+export type GetSessionError_api = GetSessionErrors_api[keyof GetSessionErrors_api];
 
-export type GetDashboardResponses_api = {
+export type GetSessionResponses_api = {
     /**
      * Successful Response
      */
-    200: PrivateDashboardOutput_api;
+    200: SessionRecord_api;
 };
 
-export type GetDashboardResponse_api = GetDashboardResponses_api[keyof GetDashboardResponses_api];
+export type GetSessionResponse_api = GetSessionResponses_api[keyof GetSessionResponses_api];
 
-export type UpdateDashboardData_api = {
-    body: PrivateDashboardInput_api;
+export type UpdateSessionData_api = {
+    body: SessionUpdate_api;
     path: {
-        dashboard_id: string;
+        session_id: string;
     };
     query?: never;
-    url: "/persistence/dashboards/{dashboard_id}";
+    url: "/persistence/sessions/{session_id}";
 };
 
-export type UpdateDashboardErrors_api = {
+export type UpdateSessionErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type UpdateDashboardError_api = UpdateDashboardErrors_api[keyof UpdateDashboardErrors_api];
+export type UpdateSessionError_api = UpdateSessionErrors_api[keyof UpdateSessionErrors_api];
 
-export type UpdateDashboardResponses_api = {
+export type UpdateSessionResponses_api = {
     /**
      * Successful Response
      */
