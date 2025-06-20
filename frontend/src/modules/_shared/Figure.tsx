@@ -3,7 +3,6 @@ import type { Annotations, AxisType, Layout, PlotData, Shape, XAxisName, YAxisNa
 import type { PlotParams } from "react-plotly.js";
 import Plot from "react-plotly.js";
 
-
 /**
  * Enum for axis coordinate domain.
  *

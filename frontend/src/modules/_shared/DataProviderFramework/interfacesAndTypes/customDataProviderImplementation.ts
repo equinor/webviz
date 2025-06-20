@@ -10,7 +10,6 @@ import type { CustomSettingsHandler } from "./customSettingsHandler";
 import type { NullableStoredData, StoredData } from "./sharedTypes";
 import type { AvailableValuesType, SettingsKeysFromTuple } from "./utils";
 
-
 /**
  * This type is used to pass parameters to the fetchData method of a CustomDataProviderImplementation.
  * It contains accessors to the data and settings of the provider and other useful information.
@@ -38,7 +37,7 @@ export type DataProviderInformationAccessors<
      * const value = getSetting("settingName");
      * ```
      */
-    getSetting: <K extends TSettingKey>(settingName: K) => TSettingTypes[K];
+    getSetting: <K extends TSettingKey>(settingName: K) => TSettingTypes[K] | null;
 
     /**
      * Access the available values of a setting.
@@ -63,7 +62,7 @@ export type DataProviderInformationAccessors<
      * const value = getGlobalSetting("settingName");
      * ```
      */
-    getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
+    getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T] | null;
 
     /**
      * Access the stored data of the provider.
@@ -89,6 +88,16 @@ export type DataProviderInformationAccessors<
      * @returns The workbench settings.
      */
     getWorkbenchSettings: () => WorkbenchSettings;
+};
+
+export type AreSettingsValidArgs<
+    TSettings extends Settings,
+    TData,
+    TStoredData extends StoredData = Record<string, never>,
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
+    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+> = DataProviderInformationAccessors<TSettings, TData, TStoredData, TSettingKey, TSettingTypes> & {
+    reportError: (error: string) => void;
 };
 
 /**
@@ -162,15 +171,16 @@ export interface CustomDataProviderImplementation<
      */
     makeValueRange?(
         accessors: DataProviderInformationAccessors<TSettings, TData, TStoredData>,
-    ): [number, number] | null;
+    ): readonly [number, number] | null;
 
     /**
      * This method is called to check if the current settings are valid. It should return true if the settings are valid
      * and false if they are not.
      * As long as the settings are not valid, the provider will not fetch data.
      *
-     * @param accessors Accessors to the data and settings of the provider.
-     * @returns
+     * @param args Accessors to the data and settings of the provider plus a function that can be used to report an error if
+     * some settings are not valid. It can be called multiple times if multiple settings are not valid.
+     * @returns true if the settings are valid, false otherwise.
      */
-    areCurrentSettingsValid?: (accessors: DataProviderInformationAccessors<TSettings, TData, TStoredData>) => boolean;
+    areCurrentSettingsValid?: (args: AreSettingsValidArgs<TSettings, TData, TStoredData>) => boolean;
 }

@@ -3,7 +3,7 @@ import React from "react";
 import { ChevronLeft, ChevronRight, GridView, Link, List, Palette, Settings, WebAsset } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 
-import WebvizLogo from "@assets/webviz.svg";
+import FmuLogo from "@assets/fmu.svg";
 
 import { GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { LoginButton } from "@framework/internal/components/LoginButton";
@@ -12,7 +12,7 @@ import type {
     BaseEnsembleItem,
     DeltaEnsembleItem,
     RegularEnsembleItem,
-} from "@framework/internal/components/SelectEnsemblesDialog/selectEnsemblesDialog";
+} from "@framework/internal/components/SelectEnsemblesDialog";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { UserDeltaEnsembleSetting, UserEnsembleSetting, Workbench } from "@framework/Workbench";
 import { WorkbenchEvents } from "@framework/Workbench";
@@ -20,6 +20,7 @@ import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSes
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -27,10 +28,6 @@ import { UserSessionState } from "./private-components/UserSessionState";
 
 type LeftNavBarProps = {
     workbench: Workbench;
-};
-
-const NavBarDivider: React.FC = () => {
-    return <div className="bg-slate-200 h-px w-full mt-4 mb-4" />;
 };
 
 export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
@@ -199,8 +196,9 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
             )}
         >
             <div className="flex flex-col gap-2 grow">
-                <div className="w-full flex justify-center mb-2 mt-1 p-2">
-                    <img src={WebvizLogo} alt="Webviz logo" className="w-20 h-20" />
+                <div className="w-full flex flex-col justify-center items-center gap-4 mb-2 mt-1 p-2 h-32">
+                    <img src={FmuLogo} alt="FMU Analysis logo" className="w-20 h-20" />
+                    {collapsed ? null : <h1 className="text-xl text-slate-800">FMU Analysis</h1>}
                 </div>
                 <div
                     className="bg-orange-600 text-white p-1 rounded-sm text-xs text-center cursor-help shadow-sm"
@@ -218,99 +216,89 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     </Button>
                 </div>
                 <NavBarDivider />
-                <Button
+
+                <NavBarButton
+                    collapsed={collapsed}
+                    active={ensembleDialogOpen}
                     title="Open ensemble selection dialog"
-                    onClick={handleEnsembleClick}
-                    className="w-full text-slate-800! h-10"
-                    startIcon={
-                        selectedEnsembles.length === 0 && createdDeltaEnsembles.length === 0 && !loadingEnsembleSet ? (
-                            <List fontSize="small" className="w-5 h-5 mr-2" />
-                        ) : (
-                            <Badge
-                                className="mr-2"
-                                color="bg-blue-500"
-                                badgeContent={
-                                    loadingEnsembleSet ? (
-                                        <CircularProgress size="extra-small" color="inherit" />
-                                    ) : (
-                                        selectedEnsembles.length + createdDeltaEnsembles.length
-                                    )
-                                }
-                            >
-                                <List fontSize="small" className="w-5 h-5" />
-                            </Badge>
-                        )
+                    text="Ensembles"
+                    icon={
+                        <Badge
+                            invisible={
+                                selectedEnsembles.length === 0 &&
+                                createdDeltaEnsembles.length === 0 &&
+                                !loadingEnsembleSet
+                            }
+                            color="bg-blue-500"
+                            badgeContent={
+                                loadingEnsembleSet ? (
+                                    <CircularProgress size="extra-small" color="inherit" />
+                                ) : (
+                                    selectedEnsembles.length + createdDeltaEnsembles.length
+                                )
+                            }
+                        >
+                            <List fontSize="small" className="size-5" />
+                        </Badge>
                     }
-                >
-                    {!collapsed ? "Ensembles" : ""}
-                </Button>
+                    onClick={handleEnsembleClick}
+                />
+
                 <NavBarDivider />
-                <Button
+
+                <NavBarButton
+                    active={drawerContent === LeftDrawerContent.ModuleSettings}
+                    collapsed={collapsed}
                     title="Show module settings"
+                    text="Module settings"
+                    icon={<Settings fontSize="small" className="size-5" />}
                     onClick={handleModuleSettingsClick}
-                    startIcon={<Settings fontSize="small" className="w-5 h-5 mr-2" />}
-                    className={resolveClassNames(
-                        "w-full",
-                        "h-10",
-                        drawerContent === LeftDrawerContent.ModuleSettings ? "text-cyan-600" : "text-slate-800!",
-                    )}
                     disabled={layoutEmpty}
-                >
-                    {!collapsed ? "Module settings" : ""}
-                </Button>
-                <Button
+                />
+                <NavBarButton
+                    active={drawerContent === LeftDrawerContent.SyncSettings}
+                    collapsed={collapsed}
+                    disabled={layoutEmpty}
                     title="Show sync settings"
+                    text="Sync settings"
+                    icon={<Link fontSize="small" className="size-5" />}
                     onClick={handleSyncSettingsClick}
-                    startIcon={<Link fontSize="small" className="w-5 h-5 mr-2" />}
-                    className={resolveClassNames(
-                        "w-full",
-                        "h-10",
-                        drawerContent === LeftDrawerContent.SyncSettings ? "text-cyan-600" : "text-slate-800!",
-                    )}
-                    disabled={layoutEmpty}
-                >
-                    {!collapsed ? "Sync settings" : ""}
-                </Button>
+                />
+
                 <NavBarDivider />
-                <Button
+
+                <NavBarButton
+                    active={drawerContent === LeftDrawerContent.ModulesList}
+                    collapsed={collapsed}
                     title="Show modules list"
+                    text="Add modules"
+                    icon={<WebAsset fontSize="small" className="size-5" />}
                     onClick={handleModulesListClick}
-                    startIcon={<WebAsset fontSize="small" className="w-5 h-5 mr-2" />}
-                    className={resolveClassNames(
-                        "w-full",
-                        "h-10",
-                        drawerContent === LeftDrawerContent.ModulesList ? "text-cyan-600" : "text-slate-800!",
-                    )}
-                >
-                    {!collapsed ? "Add modules" : ""}
-                </Button>
-                <Button
+                />
+                <NavBarButton
+                    active={drawerContent === LeftDrawerContent.TemplatesList}
+                    collapsed={collapsed}
                     title="Show templates list"
+                    text="Use templates"
+                    icon={<GridView fontSize="small" className="size-5" />}
                     onClick={handleTemplatesListClick}
-                    startIcon={<GridView fontSize="small" className="w-5 h-5 mr-2" />}
-                    className={resolveClassNames(
-                        "w-full",
-                        "h-10",
-                        drawerContent === LeftDrawerContent.TemplatesList ? "text-cyan-600" : "text-slate-800!",
-                    )}
-                >
-                    {!collapsed ? "Use templates" : ""}
-                </Button>
+                />
+
                 <NavBarDivider />
-                <Button
+
+                <NavBarButton
+                    active={drawerContent === LeftDrawerContent.ColorPaletteSettings}
+                    collapsed={collapsed}
                     title="Show color settings"
+                    text="Color settings"
+                    icon={<Palette fontSize="small" className="size-5" />}
                     onClick={handleColorPaletteSettingsClick}
-                    startIcon={<Palette fontSize="small" className="w-5 h-5 mr-2" />}
-                    className={resolveClassNames(
-                        "w-full",
-                        "h-10",
-                        drawerContent === LeftDrawerContent.ColorPaletteSettings ? "text-cyan-600" : "text-slate-800!",
-                    )}
-                >
-                    {!collapsed ? "Color settings" : ""}
-                </Button>
+                />
+
                 <NavBarDivider />
+
                 <LoginButton className="w-full text-slate-800! h-10" showText={!collapsed} />
+
                 <div className="grow h-5" />
                 <div className={isDevMode() ? "mb-16" : ""}>
                     <NavBarDivider />

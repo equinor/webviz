@@ -1,12 +1,9 @@
+import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
-import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
-import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import { DataProvider } from "../framework/DataProvider/DataProvider";
-import { DataProviderManagerTopic } from "../framework/DataProviderManager/DataProviderManager";
-import { Group } from "../framework/Group/Group";
-import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
 import { DeserializationAssistant } from "../framework/utils/DeserializationAssistant";
-import type { Item } from "../interfacesAndTypes/entities";
+import { instanceofItemGroup, type Item } from "../interfacesAndTypes/entities";
 import type { SerializedItem } from "../interfacesAndTypes/serialization";
 
 import { ItemDelegateTopic } from "./ItemDelegate";
@@ -14,6 +11,7 @@ import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 export enum GroupDelegateTopic {
     CHILDREN = "CHILDREN",
+    TREE_REVISION_NUMBER_ABOUT_TO_CHANGE = "TREE_REVISION_NUMBER_ABOUT_TO_CHANGE",
     TREE_REVISION_NUMBER = "TREE_REVISION_NUMBER",
     COLOR = "COLOR",
     CHILDREN_EXPANSION_STATES = "CHILDREN_EXPANSION_STATES",
@@ -22,6 +20,7 @@ export enum GroupDelegateTopic {
 export type GroupDelegateTopicPayloads = {
     [GroupDelegateTopic.CHILDREN]: Item[];
     [GroupDelegateTopic.TREE_REVISION_NUMBER]: number;
+    [GroupDelegateTopic.TREE_REVISION_NUMBER_ABOUT_TO_CHANGE]: void;
     [GroupDelegateTopic.COLOR]: string | null;
     [GroupDelegateTopic.CHILDREN_EXPANSION_STATES]: { [id: string]: boolean };
 };
@@ -62,7 +61,6 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         } else {
             this.insertChild(child, startIndex);
         }
-        this.takeOwnershipOfChild(child);
     }
 
     appendChild(child: Item) {
@@ -118,7 +116,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
                 return child;
             }
 
-            if (child instanceof Group) {
+            if (instanceofItemGroup(child)) {
                 const descendant = child.getGroupDelegate().findDescendantById(id);
                 if (descendant) {
                     return descendant;
@@ -167,7 +165,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
                 items.push(child);
             }
 
-            if (child instanceof Group) {
+            if (instanceofItemGroup(child)) {
                 items.push(...child.getGroupDelegate().getDescendantItems(predicate));
             }
         }
@@ -180,13 +178,16 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
             if (topic === GroupDelegateTopic.CHILDREN) {
                 return this._children;
             }
+            if (topic === GroupDelegateTopic.TREE_REVISION_NUMBER_ABOUT_TO_CHANGE) {
+                return;
+            }
             if (topic === GroupDelegateTopic.TREE_REVISION_NUMBER) {
                 return this._treeRevisionNumber;
             }
             if (topic === GroupDelegateTopic.CHILDREN_EXPANSION_STATES) {
                 const expansionState: { [id: string]: boolean } = {};
                 for (const child of this._children) {
-                    if (child instanceof Group) {
+                    if (instanceofItemGroup(child)) {
                         expansionState[child.getItemDelegate().getId()] = child.getItemDelegate().isExpanded();
                     }
                 }
@@ -223,6 +224,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
     }
 
     private incrementTreeRevisionNumber() {
+        this.publishTopic(GroupDelegateTopic.TREE_REVISION_NUMBER_ABOUT_TO_CHANGE);
         this._treeRevisionNumber++;
         this.publishTopic(GroupDelegateTopic.TREE_REVISION_NUMBER);
     }
@@ -244,7 +246,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
             );
         }
 
-        if (child instanceof Group) {
+        if (instanceofItemGroup(child)) {
             this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
                 child.getItemDelegate().getId(),
                 child
@@ -280,13 +282,6 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         this._unsubscribeHandlerDelegate.unsubscribe(child.getItemDelegate().getId());
         child.getItemDelegate().setParentGroup(null);
 
-        if (child instanceof SharedSetting) {
-            this._owner
-                ?.getItemDelegate()
-                .getDataProviderManager()
-                .publishTopic(DataProviderManagerTopic.SETTINGS_CHANGED);
-        }
-
         this.publishTopic(GroupDelegateTopic.CHILDREN);
     }
 
@@ -314,5 +309,12 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         }
 
         return [startIndex, endIndex];
+    }
+
+    beforeDestroy() {
+        this._unsubscribeHandlerDelegate.unsubscribeAll();
+        for (const child of this._children) {
+            child.beforeDestroy?.();
+        }
     }
 }

@@ -29,8 +29,7 @@ import {
     postGetSampleSurfaceInPoints,
     getDeltaSurfaceData,
     getMisfitSurfaceData,
-    getWellboreStratigraphicColumns,
-    getStratigraphicUnits,
+    deprecatedGetStratigraphicUnits,
     getParameterNamesAndDescription,
     getParameter,
     getParameters,
@@ -51,8 +50,9 @@ import {
     getWellTrajectories,
     getWellborePickIdentifiers,
     getWellborePicksForPickIdentifier,
-    getWellborePicksForWellbore,
+    deprecatedGetWellborePicksForWellbore,
     getWellborePicksInStratColumn,
+    getWellboreStratigraphicColumns,
     getWellboreCompletions,
     getWellboreCasings,
     getWellborePerforations,
@@ -113,8 +113,7 @@ import type {
     PostGetSampleSurfaceInPointsResponse_api,
     GetDeltaSurfaceDataData_api,
     GetMisfitSurfaceDataData_api,
-    GetWellboreStratigraphicColumnsData_api,
-    GetStratigraphicUnitsData_api,
+    DeprecatedGetStratigraphicUnitsData_api,
     GetParameterNamesAndDescriptionData_api,
     GetParameterData_api,
     GetParametersData_api,
@@ -137,8 +136,9 @@ import type {
     GetWellTrajectoriesData_api,
     GetWellborePickIdentifiersData_api,
     GetWellborePicksForPickIdentifierData_api,
-    GetWellborePicksForWellboreData_api,
+    DeprecatedGetWellborePicksForWellboreData_api,
     GetWellborePicksInStratColumnData_api,
+    GetWellboreStratigraphicColumnsData_api,
     GetWellboreCompletionsData_api,
     GetWellboreCasingsData_api,
     GetWellborePerforationsData_api,
@@ -739,14 +739,14 @@ export const getMisfitSurfaceDataOptions = (options: Options<GetMisfitSurfaceDat
     });
 };
 
-export const getWellboreStratigraphicColumnsQueryKey = (options: Options<GetWellboreStratigraphicColumnsData_api>) => [
-    createQueryKey("getWellboreStratigraphicColumns", options),
+export const deprecatedGetStratigraphicUnitsQueryKey = (options: Options<DeprecatedGetStratigraphicUnitsData_api>) => [
+    createQueryKey("deprecatedGetStratigraphicUnits", options),
 ];
 
-export const getWellboreStratigraphicColumnsOptions = (options: Options<GetWellboreStratigraphicColumnsData_api>) => {
+export const deprecatedGetStratigraphicUnitsOptions = (options: Options<DeprecatedGetStratigraphicUnitsData_api>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getWellboreStratigraphicColumns({
+            const { data } = await deprecatedGetStratigraphicUnits({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -754,26 +754,7 @@ export const getWellboreStratigraphicColumnsOptions = (options: Options<GetWellb
             });
             return data;
         },
-        queryKey: getWellboreStratigraphicColumnsQueryKey(options),
-    });
-};
-
-export const getStratigraphicUnitsQueryKey = (options: Options<GetStratigraphicUnitsData_api>) => [
-    createQueryKey("getStratigraphicUnits", options),
-];
-
-export const getStratigraphicUnitsOptions = (options: Options<GetStratigraphicUnitsData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getStratigraphicUnits({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getStratigraphicUnitsQueryKey(options),
+        queryKey: deprecatedGetStratigraphicUnitsQueryKey(options),
     });
 };
 
@@ -1171,14 +1152,16 @@ export const getWellborePicksForPickIdentifierOptions = (options: Options<GetWel
     });
 };
 
-export const getWellborePicksForWellboreQueryKey = (options: Options<GetWellborePicksForWellboreData_api>) => [
-    createQueryKey("getWellborePicksForWellbore", options),
-];
+export const deprecatedGetWellborePicksForWellboreQueryKey = (
+    options: Options<DeprecatedGetWellborePicksForWellboreData_api>,
+) => [createQueryKey("deprecatedGetWellborePicksForWellbore", options)];
 
-export const getWellborePicksForWellboreOptions = (options: Options<GetWellborePicksForWellboreData_api>) => {
+export const deprecatedGetWellborePicksForWellboreOptions = (
+    options: Options<DeprecatedGetWellborePicksForWellboreData_api>,
+) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getWellborePicksForWellbore({
+            const { data } = await deprecatedGetWellborePicksForWellbore({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -1186,7 +1169,7 @@ export const getWellborePicksForWellboreOptions = (options: Options<GetWellboreP
             });
             return data;
         },
-        queryKey: getWellborePicksForWellboreQueryKey(options),
+        queryKey: deprecatedGetWellborePicksForWellboreQueryKey(options),
     });
 };
 
@@ -1206,6 +1189,25 @@ export const getWellborePicksInStratColumnOptions = (options: Options<GetWellbor
             return data;
         },
         queryKey: getWellborePicksInStratColumnQueryKey(options),
+    });
+};
+
+export const getWellboreStratigraphicColumnsQueryKey = (options: Options<GetWellboreStratigraphicColumnsData_api>) => [
+    createQueryKey("getWellboreStratigraphicColumns", options),
+];
+
+export const getWellboreStratigraphicColumnsOptions = (options: Options<GetWellboreStratigraphicColumnsData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getWellboreStratigraphicColumns({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getWellboreStratigraphicColumnsQueryKey(options),
     });
 };
 

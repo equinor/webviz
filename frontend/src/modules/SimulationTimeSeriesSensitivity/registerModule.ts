@@ -5,6 +5,7 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { channelDefs } from "./channelDefs";
 import type { Interfaces } from "./interfaces";
+import { preview } from "./preview";
 
 export const MODULE_NAME = "SimulationTimeSeriesSensitivity";
 
@@ -19,4 +20,5 @@ ModuleRegistry.registerModule<Interfaces>({
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
     channelDefinitions: channelDefs,
     description,
+    preview,
 });

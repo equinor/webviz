@@ -1,10 +1,11 @@
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
-import type { Layer as EsvLayer } from "@equinor/esv-intersection";
+import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
 import * as bbox from "@lib/utils/bbox";
-import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
+import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
+import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 
 import type { GroupDelegate } from "../delegates/GroupDelegate";
 import { DataProvider, DataProviderStatus } from "../framework/DataProvider/DataProvider";
@@ -36,9 +37,14 @@ export enum VisualizationTarget {
     // VIDEX = "videx",
 }
 
+export interface EsvLayerItemsMaker {
+    // Each layer has to be made inside EsvIntersection with the same pixiApplication, therefore the return type is LayerItem and not EsvLayer<any>
+    makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null) => LayerItem[];
+}
+
 export type DataProviderVisualizationTargetTypes = {
     [VisualizationTarget.DECK_GL]: DeckGlLayer<any>;
-    [VisualizationTarget.ESV]: EsvLayer<any>;
+    [VisualizationTarget.ESV]: EsvLayerItemsMaker;
 };
 
 export type DataProviderVisualization<
@@ -63,7 +69,7 @@ export type TransformerArgs<
     name: string;
     isLoading: boolean;
     getInjectedData: () => TInjectedData;
-    getValueRange: () => [number, number] | null;
+    getValueRange: () => Readonly<[number, number]> | null;
 };
 
 export interface HoverVisualizationsFunction<TTarget extends VisualizationTarget> {
@@ -302,15 +308,16 @@ export class VisualizationAssembler<
                 accumulatedData = product.accumulatedData;
                 aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
                 hoverVisualizationFunctions.push(product.makeHoverVisualizationsFunction);
-                annotations.push(...product.annotations);
                 numLoadingDataProviders += product.numLoadingDataProviders;
                 maybeApplyBoundingBox(product.combinedBoundingBox);
 
                 if (child instanceof Group) {
-                    const group = this.makeGroup(child, product.children, annotations);
+                    const group = this.makeGroup(child, product);
 
                     children.push(group);
                     continue;
+                } else {
+                    annotations.push(...product.annotations);
                 }
 
                 children.push(...product.children);
@@ -319,6 +326,10 @@ export class VisualizationAssembler<
             if (child instanceof DataProvider) {
                 if (child.getStatus() === DataProviderStatus.LOADING) {
                     numLoadingDataProviders++;
+                }
+
+                if (child.getStatus() === DataProviderStatus.INVALID_SETTINGS) {
+                    continue;
                 }
 
                 if (child.getStatus() === DataProviderStatus.ERROR) {
@@ -378,11 +389,7 @@ export class VisualizationAssembler<
         TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     >(
         group: Group<TSettings>,
-        children: (
-            | VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>
-            | DataProviderVisualization<TTarget>
-        )[],
-        annotations: Annotation[],
+        product: VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData, GroupType>,
     ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
         const func = this._groupCustomPropsCollectors.get(group.getGroupType());
 
@@ -392,13 +399,13 @@ export class VisualizationAssembler<
             color: group.getGroupDelegate().getColor(),
             name: group.getItemDelegate().getName(),
             groupType: group.getGroupType(),
-            children,
-            annotations,
-            aggregatedErrorMessages: [],
-            combinedBoundingBox: null,
-            numLoadingDataProviders: 0,
-            accumulatedData: {} as TAccumulatedData,
-            makeHoverVisualizationsFunction: () => [],
+            children: product.children,
+            annotations: product.annotations,
+            aggregatedErrorMessages: product.aggregatedErrorMessages,
+            combinedBoundingBox: product.combinedBoundingBox,
+            numLoadingDataProviders: product.numLoadingDataProviders,
+            accumulatedData: product.accumulatedData,
+            makeHoverVisualizationsFunction: product.makeHoverVisualizationsFunction,
             customProps:
                 func?.({
                     id: group.getItemDelegate().getId(),

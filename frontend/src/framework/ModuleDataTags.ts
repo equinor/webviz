@@ -5,6 +5,7 @@ export enum ModuleDataTagId {
     DRILLED_WELLS = "drilled-wells",
     SUMMARY = "summary",
     INPLACE_VOLUMETRICS = "inplace-volumetrics",
+    PARAMETERS = "parameters",
     PVT = "pvt",
     RFT = "rft",
     OBSERVATIONS = "observations",
@@ -66,6 +67,11 @@ export const ModuleDataTags: ModuleDataTag[] = [
         id: ModuleDataTagId.INPLACE_VOLUMETRICS,
         name: "In-place volumetrics",
         description: "In-place volumetrics",
+    },
+    {
+        id: ModuleDataTagId.PARAMETERS,
+        name: "Parameters",
+        description: "Model parameters",
     },
     {
         id: ModuleDataTagId.PVT,

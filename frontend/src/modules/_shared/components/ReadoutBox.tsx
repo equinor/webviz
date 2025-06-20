@@ -3,8 +3,8 @@ import React from "react";
 import _ from "lodash";
 
 import { useStableProp } from "@lib/hooks/useStableProp";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-
 
 export type ReadoutItem = {
     label: string;
@@ -34,6 +34,7 @@ export type ReadoutBoxProps = {
     flipDisabled?: boolean;
     /** The distance between the box and the edges of the parent container. Give a single number for equal distance on all sides */
     edgeDistanceRem?: number | PartialEdgeDistance;
+    compact?: boolean;
 };
 
 export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
@@ -94,8 +95,17 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
     return (
         <div
             ref={readoutRoot}
-            className="absolute z-9999 w-72 flex flex-col gap-2 p-2 text-sm rounded-sm border border-neutral-300 bg-white/75 backdrop-blur-xs pointer-events-none"
-            style={boxPositionStyle}
+            className={resolveClassNames(
+                "absolute z-9999 grid items-center rounded-sm border border-neutral-300 bg-white/75 backdrop-blur-xs pointer-events-none",
+                {
+                    "gap-2 p-2 text-sm w-72": !props.compact,
+                    "gap-y-0.5 gap-x-2 py-1 px-2 text-xs min-w-52": props.compact,
+                },
+            )}
+            style={{
+                ...boxPositionStyle,
+                gridTemplateColumns: "1rem auto 1fr auto",
+            }}
         >
             {visibleReadoutItems.map((item, idx) => (
                 <React.Fragment key={idx}>
@@ -108,7 +118,7 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
             ))}
 
             {props.readoutItems.length > maxNumItemsOrDefault && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 col-span-4">
                     ...and {props.readoutItems.length - maxNumItemsOrDefault} more
                 </div>
             )}
@@ -116,9 +126,9 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
     );
 }
 
-function InfoLabel(props: { item: ReadoutItem; noLabelColor?: boolean }): React.ReactNode {
+function InfoLabel(props: { item: ReadoutItem; noLabelColor?: boolean; compact?: boolean }): React.ReactNode {
     return (
-        <div className="flex gap-2 font-bold items-center">
+        <div className="col-span-4 flex gap-2 font-bold items-center">
             {!props.noLabelColor && (
                 <div
                     className="rounded-full w-3 h-3 border border-slate-500"
@@ -132,12 +142,12 @@ function InfoLabel(props: { item: ReadoutItem; noLabelColor?: boolean }): React.
 
 function InfoItem(props: InfoItem): React.ReactNode {
     return (
-        <div className="grid gap-x-1 gap-y-3 items-center" style={{ gridTemplateColumns: "1rem 8rem 1fr auto" }}>
+        <>
             <div>{props.adornment}</div>
             <div>{props.name}:</div>
-            <div>{makeFormattedInfoValue(props.value)}</div>
+            <div className="text-right">{makeFormattedInfoValue(props.value)}</div>
             <div className="text-right">{props.unit}</div>
-        </div>
+        </>
     );
 }
 
