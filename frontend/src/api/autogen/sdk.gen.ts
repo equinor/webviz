@@ -190,6 +190,7 @@ import type {
     GetVfpTableError_api,
     GetSessionsMetadataData_api,
     GetSessionsMetadataResponse_api,
+    GetSessionsMetadataError_api,
     CreateSessionData_api,
     CreateSessionResponse_api,
     CreateSessionError_api,
@@ -1193,7 +1194,7 @@ export const getVfpTable = <ThrowOnError extends boolean = false>(options: Optio
 export const getSessionsMetadata = <ThrowOnError extends boolean = false>(
     options?: Options<GetSessionsMetadataData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).get<GetSessionsMetadataResponse_api, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetSessionsMetadataResponse_api, GetSessionsMetadataError_api, ThrowOnError>({
         ...options,
         url: "/persistence/sessions",
     });

@@ -1,10 +1,11 @@
 from typing import Optional, List
 from datetime import datetime, timezone
 from uuid import uuid4
+from operator import attrgetter
 
 from primary.services.service_exceptions import Service, ServiceRequestError
 from primary.services.database_access.container_access import ContainerAccess
-from primary.services.database_access.types import NewSession, SessionMetadataSummary, SessionRecord, SessionMetadata, SessionUpdate
+from primary.services.database_access.types import NewSession, SessionMetadataSummary, SessionRecord, SessionMetadata, SessionUpdate, SortBy, SortDirection
 
 
 class SessionAccess:
@@ -33,6 +34,26 @@ class SessionAccess:
         query = f"SELECT * FROM c WHERE c.user_id = '{self.user_id}'"
         items = await self.container_access.query_items(query)
         return [SessionMetadataSummary(**item) for item in items]
+    
+    async def get_filtered_sessions_metadata(
+        self, sort_by: Optional[SortBy] = None, sort_direction: Optional[SortDirection] = None, limit: Optional[int] = None
+    ) -> List[SessionMetadataSummary]:
+        all_metadata = await self.get_all_sessions_metadata_for_user()
+
+        if sort_by:
+            try:
+                reverse = sort_direction == SortDirection.DESC
+                if sort_by == SortBy.title:
+                    all_metadata.sort(key=lambda s: s.title.lower() if s.title else "", reverse=reverse)
+                else:
+                    all_metadata.sort(key=attrgetter(sort_by.value), reverse=reverse)
+            except AttributeError:
+                raise ServiceRequestError(f"Invalid sort field: {sort_by}", Service.DATABASE)
+
+        if limit is not None:
+            return all_metadata[:limit]
+
+        return all_metadata
 
     async def insert_session(self, new_session: NewSession) -> str:
         now = datetime.now(timezone.utc)

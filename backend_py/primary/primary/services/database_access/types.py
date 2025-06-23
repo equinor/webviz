@@ -1,6 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel
 from datetime import datetime
+from enum import Enum
 
 class SessionMetadataExternal(BaseModel):
     title: str
@@ -35,3 +36,12 @@ class NewSession(BaseModel):
     title: str
     description: Optional[str]
     content: str
+
+class SortBy(str, Enum):
+    CREATED_AT = "createdAt"
+    UPDATED_AT = "updatedAt"
+    TITLE = "title"
+
+class SortDirection(str, Enum):
+    ASC = "asc"
+    DESC = "desc"

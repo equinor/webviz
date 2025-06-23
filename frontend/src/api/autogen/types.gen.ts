@@ -741,6 +741,17 @@ export type SessionUpdate_api = {
     content: string;
 };
 
+export enum SortBy_api {
+    CREATED_AT = "createdAt",
+    UPDATED_AT = "updatedAt",
+    TITLE = "title",
+}
+
+export enum SortDirection_api {
+    ASC = "asc",
+    DESC = "desc",
+}
+
 export enum StatisticFunction_api {
     MEAN = "MEAN",
     MIN = "MIN",
@@ -3782,9 +3793,31 @@ export type GetVfpTableResponse_api = GetVfpTableResponses_api[keyof GetVfpTable
 export type GetSessionsMetadataData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Sort the result by
+         */
+        sort_by?: SortBy_api | null;
+        /**
+         * Sort direction: 'asc' or 'desc'
+         */
+        sort_direction?: SortDirection_api | null;
+        /**
+         * Limit the number of results
+         */
+        limit?: number | null;
+    };
     url: "/persistence/sessions";
 };
+
+export type GetSessionsMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSessionsMetadataError_api = GetSessionsMetadataErrors_api[keyof GetSessionsMetadataErrors_api];
 
 export type GetSessionsMetadataResponses_api = {
     /**

@@ -1,5 +1,5 @@
-from backend_py.primary.primary.services.database_access.types import SessionMetadata, SessionMetadataSummary, SessionRecord
-import schemas
+from primary.services.database_access.types import SessionMetadata, SessionMetadataSummary, SessionRecord
+from . import schemas
 
 
 def to_api_session_metadata_summary(session: SessionMetadataSummary) -> schemas.SessionMetadataSummary:

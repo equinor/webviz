@@ -3,7 +3,7 @@ import React from "react";
 import { Tooltip } from "@equinor/eds-core-react";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
 import { WorkbenchSessionPersistenceServiceTopic } from "@framework/persistence/WorkbenchSessionPersistenceService";
-import type { Workbench } from "@framework/Workbench";
+import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import type { ButtonProps } from "@lib/components/Button/button";
 import { Dialog } from "@lib/components/Dialog";
@@ -26,12 +26,27 @@ export type TopBarProps = {
 };
 
 export function TopBar(props: TopBarProps): React.ReactNode {
+    const hasActiveSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.HAS_ACTIVE_SESSION);
     return (
-        <div className="bg-white p-2 border-b-2 border-slate-200 z-50 shadow-lg flex flex-row gap-12 px-4 pl-6 items-center">
+        <div
+            className={resolveClassNames(
+                "p-2 border-b-2 border-slate-200 z-50 shadow-lg flex flex-row gap-12 px-4 pl-6 items-center",
+                {
+                    "bg-white": hasActiveSession,
+                    "bg-transparent": !hasActiveSession,
+                },
+            )}
+        >
             <LogoWithText />
-            <SessionTitle workbench={props.workbench} />
-            <RefreshSessionButton workbench={props.workbench} />
-            <SessionSaveButton workbench={props.workbench} />
+            {hasActiveSession ? (
+                <>
+                    <SessionTitle workbench={props.workbench} />
+                    <RefreshSessionButton workbench={props.workbench} />
+                    <SessionSaveButton workbench={props.workbench} />
+                </>
+            ) : (
+                <div className="grow" />
+            )}
             <LoginButton showText={false} />
         </div>
     );
@@ -98,7 +113,7 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
     const [isSaving, setIsSaving] = React.useState<boolean>(false);
 
     const persistenceInfo = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSessionPersistenceService(),
+        props.workbench.getWorkbenchSession().getWorkbenchSessionPersistenceService(),
         WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO,
     );
 
@@ -114,6 +129,7 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
         }
         setIsSaving(true);
         props.workbench
+            .getWorkbenchSession()
             .getWorkbenchSessionPersistenceService()
             .persistSessionState()
             .then(() => {
@@ -246,6 +262,7 @@ function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNode {
         props.workbench.getWorkbenchSession().setMetadata(sessionData);
         setIsSaving(true);
         props.workbench
+            .getWorkbenchSession()
             .getWorkbenchSessionPersistenceService()
             .persistSessionState()
             .then(() => {

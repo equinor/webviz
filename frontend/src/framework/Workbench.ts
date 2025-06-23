@@ -5,8 +5,8 @@ import { GuiMessageBroker } from "./GuiMessageBroker";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSession } from "./internal/PrivateWorkbenchSession";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
-import { WorkbenchSessionPersistenceService } from "./persistence/WorkbenchSessionPersistenceService";
 import type { WorkbenchServices } from "./WorkbenchServices";
+import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 export type StoredUserEnsembleSetting = {
     ensembleIdent: string;
@@ -21,31 +21,53 @@ export type StoredUserDeltaEnsembleSetting = {
     color: string;
 };
 
-export class Workbench {
-    private _workbenchSession: PrivateWorkbenchSession;
+export enum WorkbenchTopic {
+    HAS_ACTIVE_SESSION = "hasActiveSession",
+}
+
+export type WorkbenchTopicPayloads = {
+    [WorkbenchTopic.HAS_ACTIVE_SESSION]: boolean;
+};
+export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<WorkbenchTopicPayloads>();
+
+    private _workbenchSession: PrivateWorkbenchSession | null = null;
     private _workbenchServices: PrivateWorkbenchServices;
     private _workbenchSettings: PrivateWorkbenchSettings;
-    private _workbenchSessionPersistenceService: WorkbenchSessionPersistenceService;
     private _guiMessageBroker: GuiMessageBroker;
     private _atomStoreMaster: AtomStoreMaster;
+    private _queryClient: QueryClient;
 
     constructor(queryClient: QueryClient) {
+        this._queryClient = queryClient;
         this._atomStoreMaster = new AtomStoreMaster();
-        this._workbenchSession = new PrivateWorkbenchSession(this._atomStoreMaster, queryClient);
-        this._workbenchSessionPersistenceService = new WorkbenchSessionPersistenceService(
-            this._workbenchSession,
-            queryClient,
-        );
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._workbenchSettings = new PrivateWorkbenchSettings();
 
         this._guiMessageBroker = new GuiMessageBroker();
     }
 
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<WorkbenchTopicPayloads> {
+        return this._publishSubscribeDelegate;
+    }
+
+    makeSnapshotGetter<T extends WorkbenchTopic>(topic: T): () => WorkbenchTopicPayloads[T] {
+        const snapshotGetter = (): any => {
+            if (topic === WorkbenchTopic.HAS_ACTIVE_SESSION) {
+                return this._workbenchSession !== null;
+            }
+            throw new Error(`No snapshot getter implemented for topic ${topic}`);
+        };
+        return snapshotGetter;
+    }
+
     async initialize() {
-        if (!(await this._workbenchSessionPersistenceService.tryLoadSessionStateFromStorage())) {
-            await this._workbenchSession.initFromLocalStorage();
-        }
+        return;
+    }
+
+    startNewSession(): void {
+        // Clear / save the current session?
+        this._workbenchSession = new PrivateWorkbenchSession(this._atomStoreMaster, this._queryClient);
     }
 
     getAtomStoreMaster(): AtomStoreMaster {
@@ -53,6 +75,9 @@ export class Workbench {
     }
 
     getWorkbenchSession(): PrivateWorkbenchSession {
+        if (!this._workbenchSession) {
+            throw new Error("Workbench session has not been started. Call startNewSession() first.");
+        }
         return this._workbenchSession;
     }
 
@@ -62,10 +87,6 @@ export class Workbench {
 
     getWorkbenchSettings(): PrivateWorkbenchSettings {
         return this._workbenchSettings;
-    }
-
-    getWorkbenchSessionPersistenceService(): WorkbenchSessionPersistenceService {
-        return this._workbenchSessionPersistenceService;
     }
 
     getGuiMessageBroker(): GuiMessageBroker {

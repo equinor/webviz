@@ -15,6 +15,7 @@ import {
     type UserDeltaEnsembleSetting,
     type UserEnsembleSetting,
 } from "./EnsembleSetLoader";
+import { WorkbenchSessionPersistenceService } from "@framework/persistence/WorkbenchSessionPersistenceService";
 
 type CustomEnsembleProperties = {
     name: string | null;
@@ -70,6 +71,7 @@ export type PrivateWorkbenchSessionTopicPayloads = {
 
 export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenchSessionTopicPayloads> {
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<PrivateWorkbenchSessionTopicPayloads>();
+    private _workbenchSessionPersistenceService: WorkbenchSessionPersistenceService;
 
     private _id: string | null = null;
     private _isPersisted: boolean = false;
@@ -92,10 +94,16 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
 
         this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, this._realizationFilterSet);
         this._queryClient = queryClient;
+
+        this._workbenchSessionPersistenceService = new WorkbenchSessionPersistenceService(this, queryClient);
     }
 
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<PrivateWorkbenchSessionTopicPayloads> {
         return this._publishSubscribeDelegate;
+    }
+
+    getWorkbenchSessionPersistenceService(): WorkbenchSessionPersistenceService {
+        return this._workbenchSessionPersistenceService;
     }
 
     getIsPersisted(): boolean {

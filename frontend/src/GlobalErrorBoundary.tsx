@@ -59,7 +59,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                         </div>
                         <div className="w-full grow p-4 flex flex-col gap-2">
                             The application was terminated due to the following error:
-                            <div className="bg-slate-200 p-4 my-2 whitespace-nowrap font-mono text-sm">
+                            <div className="bg-slate-200 p-4 my-2 whitespace-nowrap font-mono text-sm overflow-x-scroll">
                                 <strong>{this.state.error.name}</strong>: {this.state.error.message}
                             </div>
                             You can use the following URL to start a clean session:

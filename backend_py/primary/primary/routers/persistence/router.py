@@ -1,11 +1,12 @@
 import logging
-from typing import List
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from primary.services.database_access.session_access import SessionAccess
 from primary.auth.auth_helper import AuthHelper, AuthenticatedUser
-from primary.services.database_access.types import NewSession, SessionMetadata, SessionMetadataSummary, SessionRecord, SessionUpdate
+from primary.services.database_access.types import NewSession, SessionMetadata, SessionMetadataSummary, SessionRecord, SessionUpdate, SortBy, SortDirection
+from primary.routers.persistence.converters import to_api_session_metadata_summary
 
 from . import schemas
 
@@ -14,10 +15,16 @@ router = APIRouter()
 
 
 @router.get("/sessions", response_model=List[schemas.SessionMetadataSummary])
-async def get_sessions_metadata(user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
+async def get_sessions_metadata(
+    user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user), 
+    sort_by: Optional[SortBy] = Query(None, description="Sort the result by"), 
+    sort_direction: Optional[SortDirection] = Query(SortDirection.ASC, description="Sort direction: 'asc' or 'desc'"),
+    limit: Optional[int] = Query(10, ge=1, le=100, description="Limit the number of results")
+):
     access = await SessionAccess.create(user.get_user_id())
     async with access:
-        return await access.get_all_sessions_metadata_for_user()
+        items = await access.get_filtered_sessions_metadata(sort_by=sort_by, sort_direction=sort_direction, limit=limit)
+        return [to_api_session_metadata_summary(item) for item in items]
 
 
 @router.get("/sessions/{session_id}", response_model=SessionRecord)
