@@ -37,11 +37,9 @@ export type SerializedEnsembleSet = {
 };
 
 export type SerializedWorkbenchSession = {
-    id: string | null;
     activeDashboardId: string | null;
     dashboards: SerializedDashboard[];
     ensembleSet: SerializedEnsembleSet;
-    metadata: PrivateWorkbenchSessionMetadata;
 };
 
 export enum PrivateWorkbenchSessionTopic {
@@ -228,8 +226,6 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
 
     serializeState(): SerializedWorkbenchSession {
         return {
-            id: this._id,
-            metadata: this._metadata,
             activeDashboardId: this._activeDashboardId,
             dashboards: this._dashboards.map((dashboard) => dashboard.serializeState()),
             ensembleSet: {
@@ -249,8 +245,6 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     }
 
     async deserializeState(serializedState: SerializedWorkbenchSession) {
-        this._id = serializedState.id;
-        this._metadata = serializedState.metadata;
         this._isPersisted = this._id !== null;
         this._activeDashboardId = serializedState.activeDashboardId;
         this._dashboards = serializedState.dashboards.map((dashboard) => {

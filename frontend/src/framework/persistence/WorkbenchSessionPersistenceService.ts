@@ -28,6 +28,13 @@ export enum WorkbenchSessionPersistenceServiceTopic {
     PERSISTENCE_INFO = "PersistenceInfo",
 }
 
+export type SerializedWorkbenchSessionWithMetadata = Omit<SerializedWorkbenchSession, "metadata"> & {
+    metadata: {
+        title: string;
+        description?: string;
+    };
+};
+
 export type WorkbenchSessionPersistenceServiceTopicPayloads = {
     [WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO]: WorkbenchSessionPersistenceInfo;
 };
@@ -162,15 +169,15 @@ export class WorkbenchSessionPersistenceService
 
             const content = JSON.parse(this._currentStateString);
 
-            const data: SerializedWorkbenchSession = {
-                ...content,
-                metadata: {
-                    title: sessionData.metadata.title,
-                    description: sessionData.metadata.description ?? undefined,
-                },
-                id: sessionData.id,
-            };
+            const data: SerializedWorkbenchSession = content;
             this._workbenchSession.deserializeState(data);
+
+            this._workbenchSession.setId(sessionId);
+            this._workbenchSession.setIsPersisted(true);
+            this._workbenchSession.setMetadata({
+                title: sessionData.metadata.title,
+                description: sessionData.metadata.description ?? undefined,
+            });
 
             this.updatePersistenceInfo();
             toast.dismiss(toastId);
