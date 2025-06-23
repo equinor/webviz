@@ -33,7 +33,14 @@ class SessionAccess:
     async def get_all_sessions_metadata_for_user(self) -> List[SessionMetadataSummary]:
         query = f"SELECT * FROM c WHERE c.user_id = '{self.user_id}'"
         items = await self.container_access.query_items(query)
-        return [SessionMetadataSummary(**item) for item in items]
+        return [SessionMetadataSummary(
+            id=item["id"],
+            title=item["metadata"]["title"],
+            description=item["metadata"].get("description"),
+            created_at=datetime.fromisoformat(item["metadata"]["created_at"]),
+            updated_at=datetime.fromisoformat(item["metadata"]["updated_at"]),
+            version=item["metadata"]["version"]
+        ) for item in items]
     
     async def get_filtered_sessions_metadata(
         self, sort_by: Optional[SortBy] = None, sort_direction: Optional[SortDirection] = None, limit: Optional[int] = None

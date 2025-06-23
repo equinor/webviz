@@ -38,8 +38,8 @@ class NewSession(BaseModel):
     content: str
 
 class SortBy(str, Enum):
-    CREATED_AT = "createdAt"
-    UPDATED_AT = "updatedAt"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
     TITLE = "title"
 
 class SortDirection(str, Enum):

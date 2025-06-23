@@ -2,6 +2,7 @@ import { DashboardTopic } from "@framework/Dashboard";
 import {
     PrivateWorkbenchSessionTopic,
     type PrivateWorkbenchSession,
+    type SerializedWorkbenchSession,
 } from "@framework/internal/PrivateWorkbenchSession";
 import { ModuleInstanceTopic } from "@framework/ModuleInstance";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
@@ -15,6 +16,7 @@ import {
     updateSessionWithCacheUpdate,
 } from "./utils";
 import { toast } from "react-toastify";
+import { getSessionOptions } from "@api";
 
 export type WorkbenchSessionPersistenceInfo = {
     lastModifiedMs: number;
@@ -92,6 +94,10 @@ export class WorkbenchSessionPersistenceService
         );
     }
 
+    hasChanges(): boolean {
+        return this._persistenceInfo.hasChanges;
+    }
+
     beforeDestroy(): void {
         this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
     }
@@ -128,27 +134,51 @@ export class WorkbenchSessionPersistenceService
         return snapshotGetter;
     }
 
-    private getLocalStorageKey(sessionId: string | null): string {
-        return sessionId ? `workbench-session:${sessionId}` : "workbench-session:unsaved";
+    private getLocalStorageKey(): string {
+        return "workbench-session";
     }
 
     private saveToLocalStorage() {
-        const key = this.getLocalStorageKey(null);
+        const key = this.getLocalStorageKey();
 
         if (this._currentStateString) {
-            localStorage.setItem(
-                key,
-                JSON.stringify({
-                    id: this._workbenchSession.getId(),
-                    content: this._currentStateString,
-                }),
-            );
+            localStorage.setItem(key, this._currentStateString);
         }
     }
 
-    private loadFromLocalStorage(): string | null {
-        const key = this.getLocalStorageKey(this._workbenchSession.getId());
-        return localStorage.getItem(key);
+    async loadFromBackend(sessionId: string): Promise<void> {
+        const toastId = toast.loading("Loading session state from backend...");
+        try {
+            const sessionData = await this._queryClient.fetchQuery({
+                ...getSessionOptions({
+                    path: {
+                        session_id: sessionId,
+                    },
+                }),
+            });
+
+            this._currentStateString = sessionData.content;
+            this._currentHash = await hashJsonString(this._currentStateString);
+
+            const content = JSON.parse(this._currentStateString);
+
+            const data: SerializedWorkbenchSession = {
+                ...content,
+                metadata: {
+                    title: sessionData.metadata.title,
+                    description: sessionData.metadata.description ?? undefined,
+                },
+                id: sessionData.id,
+            };
+            this._workbenchSession.deserializeState(data);
+
+            this.updatePersistenceInfo();
+            toast.dismiss(toastId);
+        } catch (error) {
+            console.error("Failed to load session state from backend:", error);
+            toast.dismiss(toastId);
+            toast.error("Failed to load session state. Please try again later.");
+        }
     }
 
     private async pullFullSessionState() {
@@ -158,30 +188,6 @@ export class WorkbenchSessionPersistenceService
 
         this.saveToLocalStorage();
         this.updatePersistenceInfo();
-    }
-
-    async tryLoadSessionStateFromStorage(): Promise<boolean> {
-        const saved = this.loadFromLocalStorage();
-        if (!saved) return false;
-
-        try {
-            const state = JSON.parse(saved);
-            const content = JSON.parse(state.content);
-
-            this._workbenchSession.deserializeState(content);
-            this._currentStateString = state.content;
-            this._currentHash = await hashJsonString(state.content);
-            this._workbenchSession.setId(state.id);
-
-            this.updatePersistenceInfo();
-            this.subscribeToDashboardUpdates();
-            this.subscribeToModuleInstanceUpdates();
-        } catch (error) {
-            console.warn("Failed to load or apply session state from localStorage", error);
-            return false;
-        }
-
-        return true;
     }
 
     async persistSessionState() {

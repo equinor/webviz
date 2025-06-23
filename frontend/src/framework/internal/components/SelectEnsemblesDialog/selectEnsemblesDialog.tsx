@@ -271,7 +271,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         />
                     </div>
                 </div>
-                {isLoadingEnsembles && <LoadingOverlay />}
+                {isLoadingEnsembles && <LoadingOverlay text="Loading ensembles..." />}
             </Dialog>
             <Dialog
                 open={confirmCancel}

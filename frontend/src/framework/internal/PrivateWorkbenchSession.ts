@@ -37,9 +37,11 @@ export type SerializedEnsembleSet = {
 };
 
 export type SerializedWorkbenchSession = {
+    id: string | null;
     activeDashboardId: string | null;
     dashboards: SerializedDashboard[];
     ensembleSet: SerializedEnsembleSet;
+    metadata: PrivateWorkbenchSessionMetadata;
 };
 
 export enum PrivateWorkbenchSessionTopic {
@@ -96,6 +98,65 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         this._queryClient = queryClient;
 
         this._workbenchSessionPersistenceService = new WorkbenchSessionPersistenceService(this, queryClient);
+    }
+
+    static makeNew(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient): PrivateWorkbenchSession {
+        const session = new PrivateWorkbenchSession(atomStoreMaster, queryClient);
+        session.makeDefaultDashboard();
+        session.setMetadata({
+            title: "Unsaved Workbench Session",
+        });
+
+        return session;
+    }
+
+    static async loadSessionFromBackend(
+        atomStoreMaster: AtomStoreMaster,
+        queryClient: QueryClient,
+        sessionId: string,
+    ): Promise<PrivateWorkbenchSession> {
+        const session = new PrivateWorkbenchSession(atomStoreMaster, queryClient);
+
+        await session.getWorkbenchSessionPersistenceService().loadFromBackend(sessionId);
+
+        session._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.METADATA);
+        session._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.IS_PERSISTED);
+        session._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+        session._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        session._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ENSEMBLE_SET);
+        session._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET);
+
+        return session;
+    }
+
+    static async loadLastSessionFromLocalStorage(
+        atomStoreMaster: AtomStoreMaster,
+        queryClient: QueryClient,
+    ): Promise<PrivateWorkbenchSession | null> {
+        const key = "workbench-session";
+        const serializedSession = localStorage.getItem(key);
+        if (!serializedSession) {
+            return null;
+        }
+
+        try {
+            const parsedSession = JSON.parse(serializedSession);
+
+            const session = new PrivateWorkbenchSession(atomStoreMaster, queryClient);
+            await session.deserializeState(parsedSession);
+
+            session._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.METADATA);
+            session._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.IS_PERSISTED);
+            session._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+            session._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+            session._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ENSEMBLE_SET);
+            session._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET);
+
+            return session;
+        } catch (error) {
+            console.error("Failed to load workbench session from local storage:", error);
+            return null;
+        }
     }
 
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<PrivateWorkbenchSessionTopicPayloads> {
@@ -167,6 +228,8 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
 
     serializeState(): SerializedWorkbenchSession {
         return {
+            id: this._id,
+            metadata: this._metadata,
             activeDashboardId: this._activeDashboardId,
             dashboards: this._dashboards.map((dashboard) => dashboard.serializeState()),
             ensembleSet: {
@@ -186,6 +249,9 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     }
 
     async deserializeState(serializedState: SerializedWorkbenchSession) {
+        this._id = serializedState.id;
+        this._metadata = serializedState.metadata;
+        this._isPersisted = this._id !== null;
         this._activeDashboardId = serializedState.activeDashboardId;
         this._dashboards = serializedState.dashboards.map((dashboard) => {
             const newDashboard = new Dashboard(this._atomStoreMaster);
@@ -367,5 +433,9 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         );
 
         this.makeDefaultDashboard();
+    }
+
+    beforeDestroy(): void {
+        this._workbenchSessionPersistenceService.beforeDestroy();
     }
 }

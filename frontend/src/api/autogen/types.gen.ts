@@ -742,8 +742,8 @@ export type SessionUpdate_api = {
 };
 
 export enum SortBy_api {
-    CREATED_AT = "createdAt",
-    UPDATED_AT = "updatedAt",
+    CREATED_AT = "created_at",
+    UPDATED_AT = "updated_at",
     TITLE = "title",
 }
 

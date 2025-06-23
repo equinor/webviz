@@ -62,12 +62,52 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     }
 
     async initialize() {
+        // Trying to load the last session from local storage
+        const lastSession = await PrivateWorkbenchSession.loadLastSessionFromLocalStorage(
+            this._atomStoreMaster,
+            this._queryClient,
+        );
+        if (lastSession) {
+            this._workbenchSession = lastSession;
+            this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
+        }
         return;
+    }
+
+    async openSession(sessionId: string): Promise<void> {
+        if (this._workbenchSession) {
+            console.warn("A workbench session is already active. Please close it before opening a new one.");
+            return;
+        }
+
+        this._workbenchSession = await PrivateWorkbenchSession.loadSessionFromBackend(
+            this._atomStoreMaster,
+            this._queryClient,
+            sessionId,
+        );
+
+        if (!this._workbenchSession) {
+            throw new Error(`Could not load workbench session with ID ${sessionId}`);
+        }
+
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
     }
 
     startNewSession(): void {
         // Clear / save the current session?
-        this._workbenchSession = new PrivateWorkbenchSession(this._atomStoreMaster, this._queryClient);
+        this._workbenchSession = PrivateWorkbenchSession.makeNew(this._atomStoreMaster, this._queryClient);
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
+    }
+
+    closeCurrentSession(): void {
+        if (!this._workbenchSession) {
+            console.warn("No active workbench session to close.");
+            return;
+        }
+
+        this._workbenchSession.beforeDestroy();
+        this._workbenchSession = null;
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
     }
 
     getAtomStoreMaster(): AtomStoreMaster {

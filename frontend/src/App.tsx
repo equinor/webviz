@@ -13,6 +13,7 @@ import "./templates/registerAllTemplates";
 import { AuthenticationBoundary } from "@framework/internal/components/AuthenticationBoundary";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { StartPage } from "@framework/internal/components/StartPage/StartPage";
+import { LoadingOverlay } from "@framework/internal/components/LoadingOverlay";
 
 function App() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
@@ -20,10 +21,22 @@ function App() {
     // cause the app to crash.
     const queryClient = useQueryClient();
     const [workbench] = React.useState(new Workbench(queryClient));
+    const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
     const hasActiveSession = usePublishSubscribeTopicValue(workbench, WorkbenchTopic.HAS_ACTIVE_SESSION);
 
+    React.useEffect(
+        function initApp() {
+            workbench.initialize().then(() => {
+                setIsInitialized(true);
+            });
+        },
+        [workbench],
+    );
+
     let content: React.ReactNode;
-    if (hasActiveSession) {
+    if (!isInitialized) {
+        content = <LoadingOverlay text="Initializing application..." />;
+    } else if (hasActiveSession) {
         content = (
             <>
                 <div className="grow min-h-0">

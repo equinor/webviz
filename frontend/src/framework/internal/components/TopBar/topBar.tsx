@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Tooltip } from "@equinor/eds-core-react";
+import { Tooltip, Typography } from "@equinor/eds-core-react";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
 import { WorkbenchSessionPersistenceServiceTopic } from "@framework/persistence/WorkbenchSessionPersistenceService";
 import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
@@ -13,7 +13,7 @@ import { Label } from "@lib/components/Label";
 import { timeAgo } from "@lib/utils/dates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Edit, Refresh, Save } from "@mui/icons-material";
+import { Close, Edit, Refresh, Save } from "@mui/icons-material";
 
 import FmuLogo from "@assets/fmu.svg";
 
@@ -56,7 +56,7 @@ function LogoWithText(): React.ReactNode {
     return (
         <div className="flex flex-row items-center gap-4">
             <img src={FmuLogo} alt="FMU Analysis logo" className="w-8 h-8" />
-            <h1 className="text-md text-slate-800">FMU Analysis</h1>
+            <h1 className="text-md text-slate-800 whitespace-nowrap">FMU Analysis</h1>
             <div
                 className="bg-orange-600 text-white p-1 rounded-sm text-xs text-center cursor-help shadow-sm"
                 title="NOTE: This application is still under heavy development and bugs are to be expected. Please help us improve Webviz by reporting any undesired behaviour either on Slack or Yammer."
@@ -86,22 +86,70 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
         alert("Edit title functionality is not implemented yet.");
     }
 
-    function makeContent() {
+    function handleCloseSessionClick() {
         if (!isPersisted) {
-            return null;
+            props.workbench.closeCurrentSession();
+            return;
+        }
+
+        if (props.workbench.getWorkbenchSession().getWorkbenchSessionPersistenceService().hasChanges()) {
+            const confirmClose = window.confirm(
+                "You have unsaved changes. Are you sure you want to close the session? Your changes might be lost.",
+            );
+
+            if (!confirmClose) {
+                return;
+            }
+
+            props.workbench
+                .getWorkbenchSession()
+                .getWorkbenchSessionPersistenceService()
+                .persistSessionState()
+                .then(() => {
+                    props.workbench.closeCurrentSession();
+                });
+            return;
+        }
+
+        props.workbench.closeCurrentSession();
+    }
+
+    function makeContent() {
+        let content: React.ReactNode = null;
+        if (!isPersisted) {
+            content = (
+                <Typography variant="h4" className="italic overflow-ellipsis min-w-0 whitespace-nowrap">
+                    {metadata.title}
+                </Typography>
+            );
+        } else {
+            content = (
+                <>
+                    <Typography variant="h4" className="overflow-ellipsis min-w-0 whitespace-nowrap">
+                        {metadata.title}
+                    </Typography>
+                    <Tooltip title="Edit session" placement="bottom">
+                        <IconButton onClick={handleEditTitleClick} title="Edit session">
+                            <Edit fontSize="inherit" />
+                        </IconButton>
+                    </Tooltip>
+                </>
+            );
         }
 
         return (
             <>
-                <h1>{metadata.title}</h1>
-                <IconButton onClick={handleEditTitleClick} title="Edit session">
-                    <Edit fontSize="inherit" />
-                </IconButton>
+                {content}
+                <Tooltip title="Close session" placement="bottom">
+                    <IconButton onClick={handleCloseSessionClick} title="Close session">
+                        <Close fontSize="inherit" />
+                    </IconButton>
+                </Tooltip>
             </>
         );
     }
 
-    return <div className="grow flex gap-2">{makeContent()}</div>;
+    return <div className="grow flex gap-2 overflow-hidden items-center">{makeContent()}</div>;
 }
 
 type SessionSaveButtonProps = {

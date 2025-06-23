@@ -1,9 +1,20 @@
 import { getSessionsMetadataOptions, SortBy_api, SortDirection_api } from "@api";
+import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type React from "react";
 
-export function RecentSessions() {
+export type RecentSessionsProps = {
+    workbench: Workbench;
+};
+
+export function RecentSessions(props: RecentSessionsProps) {
     const queryClient = useQueryClient();
+
+    function handleSessionClick(e: React.MouseEvent, sessionId: string) {
+        e.preventDefault();
+        props.workbench.openSession(sessionId);
+    }
 
     const sessionsQuery = useQuery({
         ...getSessionsMetadataOptions({
@@ -30,11 +41,17 @@ export function RecentSessions() {
 
     return (
         <div className="flex flex-col gap-2">
-            <h3 className="text-lg font-semibold">Recent Sessions</h3>
-            <ul className="list-disc pl-5">
+            <ul className="pl-5">
                 {sessionsQuery.data.map((session) => (
-                    <li key={session.id} className="text-gray-800">
-                        {session.title} - Last updated: {new Date(session.updatedAt).toLocaleString()}
+                    <li key={session.id} className="flex items-center gap-4">
+                        <a
+                            href="#"
+                            onClick={(e) => handleSessionClick(e, session.id)}
+                            className="text-blue-600 hover:underline"
+                        >
+                            {session.title}
+                        </a>
+                        <span className="text-gray-500">~ {new Date(session.updatedAt).toLocaleString()}</span>
                     </li>
                 ))}
             </ul>
