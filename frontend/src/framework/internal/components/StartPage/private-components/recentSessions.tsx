@@ -24,6 +24,7 @@ export function RecentSessions(props: RecentSessionsProps) {
                 limit: 5,
             },
         }),
+        refetchInterval: 5000,
     });
 
     if (sessionsQuery.isFetching || sessionsQuery.isError) {

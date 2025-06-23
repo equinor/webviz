@@ -18,8 +18,9 @@ import {
 import { dataProviderManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
+import type { SerializedState } from "../persistedState";
 
-export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
+export function Settings(props: ModuleSettingsProps<any, SerializedState>): React.ReactNode {
     const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
     const queryClient = useQueryClient();
 
@@ -40,19 +41,27 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 fieldIdentifier,
                 preferredViewLayout,
             };
+            /*
             window.localStorage.setItem(
                 `${props.settingsContext.getInstanceIdString()}-settings`,
                 JSON.stringify(serializedState),
             );
+            */
+            props.persistence.serializeState({
+                dataProviderData: JSON.stringify(serializedState),
+            });
         },
         [dataProviderManager, fieldIdentifier, preferredViewLayout, props.settingsContext],
     );
 
     const applyPersistedState = React.useCallback(
         function applyPersistedState(layerManager: DataProviderManager) {
-            const serializedState = window.localStorage.getItem(
+            /*const serializedState = window.localStorage.getItem(
                 `${props.settingsContext.getInstanceIdString()}-settings`,
-            );
+            );*/
+
+            const serializedState = props.persistence.serializedState?.dataProviderData;
+
             if (!serializedState) {
                 return;
             }

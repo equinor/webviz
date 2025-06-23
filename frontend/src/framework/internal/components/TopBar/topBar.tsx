@@ -216,7 +216,7 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
                     title={persistenceInfo.hasChanges ? "Save session" : "No changes to save"}
                     disabled={!persistenceInfo.hasChanges}
                 >
-                    <Save className="size-5" />
+                    <Save fontSize="small" />
                 </TopBarButton>
             )}
             <SaveSessionDialog
@@ -270,7 +270,7 @@ function RefreshSessionButton(props: RefreshSessionButtonProps): React.ReactNode
 
     return (
         <TopBarButton onClick={handleRefreshClick} title="Refresh session">
-            <Refresh className="size-5" />
+            <Refresh fontSize="small" />
         </TopBarButton>
     );
 }
