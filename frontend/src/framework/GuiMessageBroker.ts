@@ -29,6 +29,10 @@ export enum GuiState {
     RightSettingsPanelWidthInPercent = "rightSettingsPanelWidthInPercent",
     AppInitialized = "appInitialized",
     NumberOfUnsavedRealizationFilters = "numberOfUnsavedRealizationFilters",
+    SaveSessionDialogOpen = "saveSessionDialogOpen",
+    SessionHasUnsavedChanges = "sessionHasUnsavedChanges",
+    IsSavingSession = "isSavingSession",
+    IsLoadingSession = "isLoadingSession",
 }
 
 export enum GuiEvent {
@@ -93,6 +97,10 @@ type GuiStateValueTypes = {
     [GuiState.RightSettingsPanelWidthInPercent]: number;
     [GuiState.AppInitialized]: boolean;
     [GuiState.NumberOfUnsavedRealizationFilters]: number;
+    [GuiState.SaveSessionDialogOpen]: boolean;
+    [GuiState.IsSavingSession]: boolean;
+    [GuiState.IsLoadingSession]: boolean;
+    [GuiState.SessionHasUnsavedChanges]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -104,6 +112,10 @@ defaultStates.set(GuiState.DevToolsVisible, isDevMode());
 defaultStates.set(GuiState.RightSettingsPanelWidthInPercent, 0);
 defaultStates.set(GuiState.AppInitialized, false);
 defaultStates.set(GuiState.NumberOfUnsavedRealizationFilters, 0);
+defaultStates.set(GuiState.SaveSessionDialogOpen, false);
+defaultStates.set(GuiState.IsSavingSession, false);
+defaultStates.set(GuiState.IsLoadingSession, false);
+defaultStates.set(GuiState.SessionHasUnsavedChanges, false);
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelWidthInPercent,

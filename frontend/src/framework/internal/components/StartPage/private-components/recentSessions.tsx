@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import { getSessionsMetadataOptions, SortBy_api, SortDirection_api } from "@api";
 import type { Workbench } from "@framework/Workbench";
@@ -9,6 +9,8 @@ export type RecentSessionsProps = {
 };
 
 export function RecentSessions(props: RecentSessionsProps) {
+    const [prevState, setPrevState] = React.useState<"loading" | "error" | "success">("loading");
+
     function handleSessionClick(e: React.MouseEvent, sessionId: string) {
         e.preventDefault();
         props.workbench.openSession(sessionId);
@@ -25,9 +27,21 @@ export function RecentSessions(props: RecentSessionsProps) {
         refetchInterval: 5000,
     });
 
+    if (!sessionsQuery.isFetching) {
+        if (sessionsQuery.isError) {
+            if (prevState !== "error") {
+                setPrevState("error");
+            }
+        } else if (sessionsQuery.isSuccess) {
+            if (prevState !== "success") {
+                setPrevState("success");
+            }
+        }
+    }
+
     if (sessionsQuery.isError) {
         return (
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center w-62">
                 {sessionsQuery.isError && <span className="text-red-800">Could not fetch recent sessions...</span>}
             </div>
         );
@@ -38,7 +52,7 @@ export function RecentSessions(props: RecentSessionsProps) {
     }
 
     return (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 w-62">
             <ul className="pl-5">
                 {sessionsQuery.data.map((session) => (
                     <li key={session.id} className="flex items-center gap-4">

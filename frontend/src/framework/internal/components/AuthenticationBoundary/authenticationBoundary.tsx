@@ -43,9 +43,9 @@ export function AuthenticationBoundary(props: AuthenticationBoundaryProps) {
         <div className="relative">
             <div
                 className={resolveClassNames(
-                    "absolute inset-0 w-screen h-screen flex flex-col items-center justify-center gap-8 transition-opacity ease-in-out duration-1000",
+                    "absolute inset-0 z-1 w-screen h-screen flex flex-col items-center justify-center gap-8 transition-opacity ease-in-out duration-1000",
                     {
-                        "opacity-0": authState === AuthState.LoggedIn,
+                        "opacity-0 pointer-events-none": authState === AuthState.LoggedIn,
                         "opacity-100": authState !== AuthState.LoggedIn,
                     },
                 )}

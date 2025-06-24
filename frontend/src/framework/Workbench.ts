@@ -3,7 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
-import { GuiMessageBroker } from "./GuiMessageBroker";
+import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
 import { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
@@ -94,6 +94,22 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this.setWorkbenchSession(session);
     }
 
+    async saveCurrentSession(forceSave = false): Promise<void> {
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to save.");
+        }
+
+        if (this._workbenchSession.getIsPersisted() || forceSave) {
+            this._guiMessageBroker.setState(GuiState.IsSavingSession, true);
+            await this._workbenchSessionPersistenceService.persistSessionState();
+            this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
+            return;
+        }
+
+        this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
+        this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, true);
+    }
+
     private setWorkbenchSession(session: PrivateWorkbenchSession): void {
         if (this._workbenchSession) {
             console.warn(
@@ -117,6 +133,20 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         await this._workbenchSessionPersistenceService.setWorkbenchSession(session);
 
         this.setWorkbenchSession(session);
+    }
+
+    maybeCloseCurrentSession(): void {
+        if (!this._workbenchSession) {
+            console.warn("No active workbench session to close.");
+            return;
+        }
+
+        if (this._workbenchSessionPersistenceService.hasChanges()) {
+            this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, true);
+            return;
+        }
+
+        this.closeCurrentSession();
     }
 
     closeCurrentSession(): void {

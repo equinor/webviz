@@ -14,6 +14,9 @@ import { AuthenticationBoundary } from "@framework/internal/components/Authentic
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { StartPage } from "@framework/internal/components/StartPage/StartPage";
 import { LoadingOverlay } from "@framework/internal/components/LoadingOverlay";
+import { ActiveSessionBoundary } from "@framework/internal/components/ActiveSessionBoundary";
+import { SaveSessionDialog } from "@framework/internal/components/SaveSessionDialog/saveSessionDialog";
+import { UnsavedSessionChangesDialog } from "@framework/internal/components/UnsavedSessionChangesDialog/unsavedSessionChangesDialog";
 
 function App() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
@@ -57,6 +60,11 @@ function App() {
             <AuthenticationBoundary>
                 <>
                     <TopBar workbench={workbench} />
+                    <ActiveSessionBoundary workbench={workbench}>
+                        {/* Later, add the ensemble dialog here */}
+                        <SaveSessionDialog workbench={workbench} />
+                        <UnsavedSessionChangesDialog workbench={workbench} />
+                    </ActiveSessionBoundary>
                     {content}
                 </>
             </AuthenticationBoundary>
