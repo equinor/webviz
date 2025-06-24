@@ -81,6 +81,11 @@ export class ParameterCorrelationMatrixFigure {
                 autosize: false,
                 ticks: "",
                 ticksuffix: " ",
+                spikemode: "across",
+                spikesnap: "cursor",
+                spikethickness: 1,
+                spikedash: "line",
+                spikecolor: "black",
             },
             [`yaxis${cellIndex + 1}`]: {
                 showticklabels: this._showLabels,
@@ -88,6 +93,12 @@ export class ParameterCorrelationMatrixFigure {
                 autosize: false,
                 ticks: "",
                 ticksuffix: " ",
+                showspikes: true,
+                spikemode: "across",
+                spikesnap: "cursor",
+                spikethickness: 1,
+                spikedash: "line",
+                spikecolor: "black",
             },
         });
         this._figure.updateSubplotTitle(`${title}`, rowIndex, columnIndex);
@@ -131,6 +142,11 @@ function createCorrelationMatrixTrace(
         zmax: useFixedColorRange ? 1 : undefined,
         showscale: true,
         hoverongaps: false,
+        hovertemplate: "X-axis = <b>%{x}</b><br>Y-axis = <b>%{y}</b><br>Correlation = <b>%{x}</b><extra></extra>",
+        hoverlabel: {
+            bgcolor: "white",
+            font: { size: 12, color: "black" },
+        },
     };
 
     return trace;

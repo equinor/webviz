@@ -11,14 +11,14 @@ import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 import { ChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
 import type { Interfaces } from "@modules/InplaceVolumetricsPlot/interfaces";
 
-function makeDataGeneratorFunc(
+function makeResultRealizationDataGenerator(
     ensembleName: string,
     ensembleIdent: RegularEnsembleIdent,
     tableName: string,
     fluidZone: string,
     table: Table,
     resultName: string,
-    color?: string,
+    preferredColor?: string,
 ): DataGenerator {
     return () => {
         const realColumn = table.getColumn("REAL");
@@ -39,7 +39,7 @@ function makeDataGeneratorFunc(
             unit: "",
             ensembleIdentString: ensembleIdent.toString(),
             displayString: `${resultName} (${ensembleName}, ${tableName}, ${fluidZone})`,
-            preferredColor: color,
+            preferredColor: preferredColor,
         };
 
         return {
@@ -59,67 +59,75 @@ export function usePublishToDataChannels(
 ) {
     const contents: ChannelContentDefinition[] = [];
 
-    if (table && resultName) {
-        const colorByMap = new Map<string | number, string>();
-        const colorByColumnExists = table.getColumn(colorBy);
-        if (colorByColumnExists) {
-            const collectionToColor = table.splitByColumn(colorBy);
-            let currentBaseColorFromSet = colorSet.getFirstColor();
+    if (!table || !resultName || table.getColumn("REAL") === undefined || table.getColumn(resultName) === undefined) {
+        viewContext.usePublishChannelContents({
+            channelIdString: ChannelIds.RESPONSE_PER_REAL,
+            dependencies: [table, ensembleSet, resultName, colorBy, colorSet],
+            enabled: Boolean(table && resultName),
+            contents,
+        });
+        return;
+    }
 
-            for (const [keyOfColorByItem] of collectionToColor.getCollectionMap()) {
-                let effectiveColor = currentBaseColorFromSet;
+    const colorByMap = new Map<string | number, string>();
+    const colorByColumnExists = table.getColumn(colorBy);
+    if (colorByColumnExists) {
+        const collectionToColor = table.splitByColumn(colorBy);
+        let currentBaseColorFromSet = colorSet.getFirstColor();
 
-                if (colorBy === SourceIdentifier.ENSEMBLE) {
-                    const currentEnsembleIdent = RegularEnsembleIdent.fromString(keyOfColorByItem.toString());
-                    const ensemble = ensembleSet.findEnsemble(currentEnsembleIdent);
-                    const ensembleSpecificColor = ensemble?.getColor();
+        for (const [keyOfColorByItem] of collectionToColor.getCollectionMap()) {
+            let effectiveColor = currentBaseColorFromSet;
 
-                    if (ensembleSpecificColor !== undefined) {
-                        effectiveColor = ensembleSpecificColor;
-                    }
+            if (colorBy === SourceIdentifier.ENSEMBLE) {
+                const currentEnsembleIdent = RegularEnsembleIdent.fromString(keyOfColorByItem.toString());
+                const ensemble = ensembleSet.findEnsemble(currentEnsembleIdent);
+                const ensembleSpecificColor = ensemble?.getColor();
+
+                if (ensembleSpecificColor !== undefined) {
+                    effectiveColor = ensembleSpecificColor;
                 }
-
-                colorByMap.set(keyOfColorByItem, effectiveColor);
-                currentBaseColorFromSet = colorSet.getNextColor();
             }
+
+            colorByMap.set(keyOfColorByItem, effectiveColor);
+            currentBaseColorFromSet = colorSet.getNextColor();
         }
-        const ensembleCollection = table.splitByColumn(SourceIdentifier.ENSEMBLE);
-        for (const [ensembleIdentStr, ensembleTable] of ensembleCollection.getCollectionMap()) {
-            const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentStr.toString());
-            const ensembleName = makeDistinguishableEnsembleDisplayName(
-                ensembleIdent,
-                ensembleSet.getRegularEnsembleArray(),
-            );
+    }
+    const ensembleCollection = table.splitByColumn(SourceIdentifier.ENSEMBLE);
+    for (const [ensembleIdentStr, ensembleTable] of ensembleCollection.getCollectionMap()) {
+        const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentStr.toString());
+        const ensembleName = makeDistinguishableEnsembleDisplayName(
+            ensembleIdent,
+            ensembleSet.getRegularEnsembleArray(),
+        );
 
-            const tableCollection = ensembleTable.splitByColumn(SourceIdentifier.TABLE_NAME);
-            for (const [tableNameStr, tableForFluidZone] of tableCollection.getCollectionMap()) {
-                const fluidZoneCollection = tableForFluidZone.splitByColumn(SourceIdentifier.FLUID_ZONE);
-                for (const [fluidZoneStr, fluidZoneTable] of fluidZoneCollection.getCollectionMap()) {
-                    let keyForColorLookup: string | number = ensembleIdentStr;
+        const tableCollection = ensembleTable.splitByColumn(SourceIdentifier.TABLE_NAME);
+        for (const [tableName, tableForTableName] of tableCollection.getCollectionMap()) {
+            const fluidZoneCollection = tableForTableName.splitByColumn(SourceIdentifier.FLUID_ZONE);
+            for (const [fluidZone, fluidZoneTable] of fluidZoneCollection.getCollectionMap()) {
+                let keyForColorLookup: string | number = ensembleIdentStr;
 
-                    if (colorBy === SourceIdentifier.TABLE_NAME) {
-                        keyForColorLookup = tableNameStr;
-                    } else if (colorBy === SourceIdentifier.FLUID_ZONE) {
-                        keyForColorLookup = fluidZoneStr;
-                    }
-                    const determinedColor = colorByMap.get(keyForColorLookup);
-
-                    const dataGenerator = makeDataGeneratorFunc(
-                        ensembleName,
-                        ensembleIdent,
-                        tableNameStr.toString(),
-                        fluidZoneStr.toString(),
-                        fluidZoneTable,
-                        resultName,
-                        determinedColor,
-                    );
-
-                    contents.push({
-                        contentIdString: `${fluidZoneStr}-${tableNameStr}-${ensembleIdentStr}`,
-                        displayName: `${resultName} (${ensembleName}, ${tableNameStr}, ${fluidZoneStr})`,
-                        dataGenerator,
-                    });
+                if (colorBy === SourceIdentifier.TABLE_NAME) {
+                    keyForColorLookup = tableName;
+                } else if (colorBy === SourceIdentifier.FLUID_ZONE) {
+                    keyForColorLookup = fluidZone;
                 }
+                const determinedColor = colorByMap.get(keyForColorLookup);
+
+                const dataGenerator = makeResultRealizationDataGenerator(
+                    ensembleName,
+                    ensembleIdent,
+                    tableName.toString(),
+                    fluidZone.toString(),
+                    fluidZoneTable,
+                    resultName,
+                    determinedColor,
+                );
+
+                contents.push({
+                    contentIdString: `${fluidZone}-${tableName}-${ensembleIdentStr}`,
+                    displayName: `${resultName} (${ensembleName}, ${tableName}, ${fluidZone})`,
+                    dataGenerator,
+                });
             }
         }
     }
@@ -130,4 +138,38 @@ export function usePublishToDataChannels(
         enabled: Boolean(table && resultName),
         contents,
     });
+}
+
+function createColumnValuesToColorMap(
+    table: Table,
+    ensembleSet: EnsembleSet,
+    colorBy: string,
+    colorSet: ColorSet,
+): Map<string | number, string> {
+    const colorByMap = new Map<string | number, string>();
+    const colorByColumnExists = table.getColumn(colorBy);
+    if (!colorByColumnExists) {
+        return colorByMap;
+    }
+    const collectionToColor = table.splitByColumn(colorBy);
+    let currentBaseColorFromSet = colorSet.getFirstColor();
+
+    for (const [keyOfColorByItem] of collectionToColor.getCollectionMap()) {
+        let effectiveColor = currentBaseColorFromSet;
+
+        if (colorBy === SourceIdentifier.ENSEMBLE) {
+            const currentEnsembleIdent = RegularEnsembleIdent.fromString(keyOfColorByItem.toString());
+            const ensemble = ensembleSet.findEnsemble(currentEnsembleIdent);
+            const ensembleSpecificColor = ensemble?.getColor();
+
+            if (ensembleSpecificColor !== undefined) {
+                effectiveColor = ensembleSpecificColor;
+            }
+        }
+
+        colorByMap.set(keyOfColorByItem, effectiveColor);
+        currentBaseColorFromSet = colorSet.getNextColor();
+    }
+
+    return colorByMap;
 }

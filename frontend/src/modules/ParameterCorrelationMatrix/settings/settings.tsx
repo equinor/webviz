@@ -21,6 +21,7 @@ import {
 } from "./atoms/baseAtoms";
 import ParametersSelector from "./components/parameterSelector";
 
+const MAX_LABELS = 25;
 export function Settings({ initialSettings, settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const [parameterIdentStrings, setParameterIdentStrings] = useAtom(parameterIdentStringsAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
@@ -63,15 +64,23 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
     function handleParametersChanged(value: string[]) {
         setParameterIdentStrings(value);
     }
+    function handleShowLabelsChanged(value: boolean) {
+        if (value && parameterIdentStrings.length > MAX_LABELS) {
+            setShowLabels(false);
+        } else {
+            setShowLabels(value);
+        }
+    }
 
     return (
         <div className="flex flex-col gap-2">
             <CollapsibleGroup title="Plot settings" expanded>
                 <div className="flex flex-col gap-2">
                     <Checkbox
-                        label="Show parameter labels (Max 50)"
+                        label={`Show parameter labels (Max ${MAX_LABELS})`}
                         checked={showLabels}
-                        onChange={(e) => setShowLabels(e.target.checked)}
+                        disabled={parameterIdentStrings.length > MAX_LABELS}
+                        onChange={(e) => handleShowLabelsChanged(e.target.checked)}
                     />
                     <Checkbox
                         label="Show self-correlation"
