@@ -5,7 +5,15 @@ from operator import attrgetter
 
 from primary.services.service_exceptions import Service, ServiceRequestError
 from primary.services.database_access.container_access import ContainerAccess
-from primary.services.database_access.types import NewSession, SessionMetadataSummary, SessionRecord, SessionMetadata, SessionUpdate, SortBy, SortDirection
+from primary.services.database_access.types import (
+    NewSession,
+    SessionMetadataSummary,
+    SessionRecord,
+    SessionMetadata,
+    SessionUpdate,
+    SortBy,
+    SortDirection,
+)
 
 
 class SessionAccess:
@@ -33,17 +41,23 @@ class SessionAccess:
     async def get_all_sessions_metadata_for_user(self) -> List[SessionMetadataSummary]:
         query = f"SELECT * FROM c WHERE c.user_id = '{self.user_id}'"
         items = await self.container_access.query_items(query)
-        return [SessionMetadataSummary(
-            id=item["id"],
-            title=item["metadata"]["title"],
-            description=item["metadata"].get("description"),
-            created_at=datetime.fromisoformat(item["metadata"]["created_at"]),
-            updated_at=datetime.fromisoformat(item["metadata"]["updated_at"]),
-            version=item["metadata"]["version"]
-        ) for item in items]
-    
+        return [
+            SessionMetadataSummary(
+                id=item["id"],
+                title=item["metadata"]["title"],
+                description=item["metadata"].get("description"),
+                created_at=datetime.fromisoformat(item["metadata"]["created_at"]),
+                updated_at=datetime.fromisoformat(item["metadata"]["updated_at"]),
+                version=item["metadata"]["version"],
+            )
+            for item in items
+        ]
+
     async def get_filtered_sessions_metadata(
-        self, sort_by: Optional[SortBy] = None, sort_direction: Optional[SortDirection] = None, limit: Optional[int] = None
+        self,
+        sort_by: Optional[SortBy] = None,
+        sort_direction: Optional[SortDirection] = None,
+        limit: Optional[int] = None,
     ) -> List[SessionMetadataSummary]:
         all_metadata = await self.get_all_sessions_metadata_for_user()
 
@@ -54,8 +68,8 @@ class SessionAccess:
                     all_metadata.sort(key=lambda s: s.title.lower() if s.title else "", reverse=reverse)
                 else:
                     all_metadata.sort(key=attrgetter(sort_by.value), reverse=reverse)
-            except AttributeError:
-                raise ServiceRequestError(f"Invalid sort field: {sort_by}", Service.DATABASE)
+            except AttributeError as exc:
+                raise ServiceRequestError(f"Invalid sort field: {sort_by}", Service.DATABASE) from exc
 
         if limit is not None:
             return all_metadata[:limit]
@@ -91,12 +105,13 @@ class SessionAccess:
             update={
                 "version": existing.metadata.version + 1,
                 "updated_at": datetime.now(timezone.utc),
-                "version": existing.metadata.version + 1,
             }
         )
         updated_session = existing.model_copy(update={"metadata": updated_metadata})
 
-        await self.container_access.update_item(session_id, updated_session.model_dump(by_alias=True, mode="json"), partition_key=self.user_id)
+        await self.container_access.update_item(
+            session_id, updated_session.model_dump(by_alias=True, mode="json"), partition_key=self.user_id
+        )
 
     async def _assert_ownership(self, session_id: str) -> SessionRecord:
         session = await self._get_session_raw_by_id(session_id)
@@ -109,9 +124,13 @@ class SessionAccess:
     async def _get_session_raw_by_id(self, session_id: str) -> Optional[SessionRecord]:
         query = f"SELECT * FROM c WHERE c.id = '{session_id}'"
         items = await self.container_access.query_items(query)
-        return SessionRecord(
-            id= session_id,
-            user_id=self.user_id,
-            metadata=SessionMetadata(**items[0]["metadata"]),
-            content=items[0]["content"]
-        ) if items else None
+        return (
+            SessionRecord(
+                id=session_id,
+                user_id=self.user_id,
+                metadata=SessionMetadata(**items[0]["metadata"]),
+                content=items[0]["content"],
+            )
+            if items
+            else None
+        )

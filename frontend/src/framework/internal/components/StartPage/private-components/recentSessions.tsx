@@ -1,16 +1,14 @@
+import type React from "react";
+
 import { getSessionsMetadataOptions, SortBy_api, SortDirection_api } from "@api";
 import type { Workbench } from "@framework/Workbench";
-import { CircularProgress } from "@lib/components/CircularProgress";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type React from "react";
+import { useQuery } from "@tanstack/react-query";
 
 export type RecentSessionsProps = {
     workbench: Workbench;
 };
 
 export function RecentSessions(props: RecentSessionsProps) {
-    const queryClient = useQueryClient();
-
     function handleSessionClick(e: React.MouseEvent, sessionId: string) {
         e.preventDefault();
         props.workbench.openSession(sessionId);
@@ -27,10 +25,9 @@ export function RecentSessions(props: RecentSessionsProps) {
         refetchInterval: 5000,
     });
 
-    if (sessionsQuery.isFetching || sessionsQuery.isError) {
+    if (sessionsQuery.isError) {
         return (
             <div className="flex items-center justify-center">
-                {sessionsQuery.isFetching && <CircularProgress size="medium" />}
                 {sessionsQuery.isError && <span className="text-red-800">Could not fetch recent sessions...</span>}
             </div>
         );

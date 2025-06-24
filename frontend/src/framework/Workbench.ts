@@ -1,12 +1,13 @@
 import type { QueryClient } from "@tanstack/react-query";
 
+import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+
 import { AtomStoreMaster } from "./AtomStoreMaster";
 import { GuiMessageBroker } from "./GuiMessageBroker";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSession } from "./internal/PrivateWorkbenchSession";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
 import type { WorkbenchServices } from "./WorkbenchServices";
-import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 export type StoredUserEnsembleSetting = {
     ensembleIdent: string;
@@ -105,6 +106,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             return;
         }
 
+        this._workbenchSession.removeFromLocalStorage();
         this._workbenchSession.beforeDestroy();
         this._workbenchSession = null;
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);

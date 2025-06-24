@@ -6,6 +6,7 @@ import { WorkbenchSessionPersistenceServiceTopic } from "@framework/persistence/
 import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import type { ButtonProps } from "@lib/components/Button/button";
+import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import { IconButton } from "@lib/components/IconButton";
 import { Input } from "@lib/components/Input";
@@ -17,9 +18,8 @@ import { Close, Edit, Refresh, Save } from "@mui/icons-material";
 
 import FmuLogo from "@assets/fmu.svg";
 
-import { LoginButton } from "../LoginButton";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
+import { LoginButton } from "../LoginButton";
 
 export type TopBarProps = {
     workbench: Workbench;
@@ -72,6 +72,8 @@ type SessionTitleProps = {
 };
 
 function SessionTitle(props: SessionTitleProps): React.ReactNode {
+    const [closeConfirmDialogOpen, setCloseConfirmDialogOpen] = React.useState<boolean>(false);
+
     const metadata = usePublishSubscribeTopicValue(
         props.workbench.getWorkbenchSession(),
         PrivateWorkbenchSessionTopic.METADATA,
@@ -87,27 +89,8 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
     }
 
     function handleCloseSessionClick() {
-        if (!isPersisted) {
-            props.workbench.closeCurrentSession();
-            return;
-        }
-
         if (props.workbench.getWorkbenchSession().getWorkbenchSessionPersistenceService().hasChanges()) {
-            const confirmClose = window.confirm(
-                "You have unsaved changes. Are you sure you want to close the session? Your changes might be lost.",
-            );
-
-            if (!confirmClose) {
-                return;
-            }
-
-            props.workbench
-                .getWorkbenchSession()
-                .getWorkbenchSessionPersistenceService()
-                .persistSessionState()
-                .then(() => {
-                    props.workbench.closeCurrentSession();
-                });
+            setCloseConfirmDialogOpen(true);
             return;
         }
 
@@ -137,6 +120,17 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
             );
         }
 
+        function handleCancel() {
+            setCloseConfirmDialogOpen(false);
+        }
+
+        function handleSave() {}
+
+        function handleDiscard() {
+            setCloseConfirmDialogOpen(false);
+            props.workbench.closeCurrentSession();
+        }
+
         return (
             <>
                 {content}
@@ -145,6 +139,27 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
                         <Close fontSize="inherit" />
                     </IconButton>
                 </Tooltip>
+                <Dialog
+                    open={closeConfirmDialogOpen}
+                    modal
+                    showCloseCross={false}
+                    title="You have unsaved changes"
+                    actions={
+                        <>
+                            <Button onClick={handleCancel} variant="text">
+                                Cancel
+                            </Button>
+                            <Button onClick={handleDiscard} variant="text" color="danger">
+                                Discard changes
+                            </Button>
+                            <Button onClick={handleSave} variant="text" color="success">
+                                Save changes
+                            </Button>
+                        </>
+                    }
+                >
+                    Do you want to save or discard your changes?
+                </Dialog>
             </>
         );
     }

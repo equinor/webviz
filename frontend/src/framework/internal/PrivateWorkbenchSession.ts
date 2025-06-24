@@ -4,6 +4,7 @@ import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import { Dashboard, type SerializedDashboard } from "@framework/Dashboard";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
+import { WorkbenchSessionPersistenceService } from "@framework/persistence/WorkbenchSessionPersistenceService";
 import { RealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UserCreatedItems } from "@framework/UserCreatedItems";
@@ -15,7 +16,6 @@ import {
     type UserDeltaEnsembleSetting,
     type UserEnsembleSetting,
 } from "./EnsembleSetLoader";
-import { WorkbenchSessionPersistenceService } from "@framework/persistence/WorkbenchSessionPersistenceService";
 
 type CustomEnsembleProperties = {
     name: string | null;
@@ -155,6 +155,11 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
             console.error("Failed to load workbench session from local storage:", error);
             return null;
         }
+    }
+
+    removeFromLocalStorage(): void {
+        const key = "workbench-session";
+        localStorage.removeItem(key);
     }
 
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<PrivateWorkbenchSessionTopicPayloads> {

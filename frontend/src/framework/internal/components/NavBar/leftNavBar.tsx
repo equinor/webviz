@@ -55,6 +55,12 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     );
     const isAppInitialized = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.AppInitialized);
 
+    /*
+    if (ensembleSet.getEnsembleArray().length === 0 && !loadingEnsembleSet) {
+        setEnsembleDialogOpen(true);
+    }
+        */
+
     if (isAppInitialized !== prevIsAppInitialized && !loadingEnsembleSet) {
         setEnsembleDialogOpen(ensembleSet.getEnsembleArray().length === 0);
         setPrevIsAppInitialized(isAppInitialized);

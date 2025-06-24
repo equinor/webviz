@@ -1,7 +1,8 @@
-import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
 import { Icon, Tooltip, Typography } from "@equinor/eds-core-react";
 import { category, dashboard, folder_open, github, external_link } from "@equinor/eds-icons";
+import type { Workbench } from "@framework/Workbench";
+import { Button } from "@lib/components/Button";
+
 import { RecentSessions } from "./private-components/recentSessions";
 
 Icon.add({ dashboard, category, folder_open, github, external_link });
