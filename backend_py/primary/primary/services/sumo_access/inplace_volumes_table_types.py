@@ -3,20 +3,27 @@ from dataclasses import dataclass
 
 ###########################################################################################
 #
-# This file contains definitions which is a direct copy from fmu-dataio v. 2.12.0
+# This file contains type definitions
 #
-# The inplace volume is defined as standard results, and is given in :
-# https://fmu-dataio.readthedocs.io/en/latest/standard_results/initial_inplace_volumes.html#fmu.dataio._models.standard_results.inplace_volumes.InplaceVolumesResultRow.ZONE
-#
-# - This file contains direct copies of the definitions from fmu_dataio in folder: fmu/dataio/export/_enums.py
+# - This file forward declares InplaceVolumes class from fmu-dataio.
+#       - The code is developed based on pinned version of fmu-dataio v2.13.0, which has standard results for Inplace Volumes v 0.1.0
+#       - Class InplaceVolumes from fmu/dataio/export/_enums.py
 # - The files also contains custom definitions for usage in the inplace volumetric assembler and access
+#
+#
+# The inplace volume is defined as standard results, and is documented in :
+# https://fmu-dataio.readthedocs.io/en/latest/standard_results/initial_inplace_volumes.html
 #
 #############################################################################################
 
 
-# NOTE: This is a direct copy from fmu-dataio v. 2.12.0
 class InplaceVolumes:
-    """Enumerations relevant to inplace volumes tables."""
+    """
+    Enumerations relevant to inplace volumes tables.
+
+    NOTE: This is a direct copy of class InplaceVolumes from fmu/dataio/export/_enums.py in fmu-dataio v. 2.13.0.
+    Only additional custom definition: selector_columns() which returns the identifier columns and REAL column
+    """
 
     class Fluid(str, Enum):
         """Fluid types used as values in the FLUID column."""
@@ -85,6 +92,16 @@ class InplaceVolumes:
         """Returns a list of all table columns."""
         return InplaceVolumes.index_columns() + InplaceVolumes.value_columns()
 
+    # This is methods not a part of the InplaceVolumes class in fmu-dataio
+    @staticmethod
+    def selector_columns() -> list[str]:
+        """
+        The identifier columns and REAL column represent the selector columns of the volumetric table.
+
+        Note: This is not a part of the InplaceVolumes class in fmu-dataio
+        """
+        return InplaceVolumes.index_columns() + ["REAL"]
+
 
 class CalculatedVolume(StrEnum):
     STOIIP_TOTAL = "STOIIP_TOTAL"
@@ -98,36 +115,6 @@ class Property(StrEnum):
     SW = "SW"
     BO = "BO"
     BG = "BG"
-
-
-class InplaceVolumesResultName(StrEnum):
-    """
-    Inplace volumes result names
-
-    Result names = Volumetric Columns + Properties + Calculated Volumes
-    """
-
-    # From InplaceVolumes.VolumetricColumns
-    BULK = InplaceVolumes.VolumetricColumns.BULK.value
-    NET = InplaceVolumes.VolumetricColumns.NET.value
-    PORV = InplaceVolumes.VolumetricColumns.PORV.value
-    HCPV = InplaceVolumes.VolumetricColumns.HCPV.value
-    STOIIP = InplaceVolumes.VolumetricColumns.STOIIP.value
-    GIIP = InplaceVolumes.VolumetricColumns.GIIP.value
-    ASSOCIATEDGAS = InplaceVolumes.VolumetricColumns.ASSOCIATEDGAS.value
-    ASSOCIATEDOIL = InplaceVolumes.VolumetricColumns.ASSOCIATEDOIL.value
-
-    # From Property
-    NTG = Property.NTG.value
-    PORO = Property.PORO.value
-    PORO_NET = Property.PORO_NET.value
-    SW = Property.SW.value
-    BO = Property.BO.value
-    BG = Property.BG.value
-
-    # From CalculatedVolume
-    STOIIP_TOTAL = CalculatedVolume.STOIIP_TOTAL.value
-    GIIP_TOTAL = CalculatedVolume.GIIP_TOTAL.value
 
 
 class Statistic(StrEnum):
@@ -221,7 +208,7 @@ class InplaceVolumesTableData:
     """
 
     fluid_selection: str  # Oil, Gas, Water or "Oil + Gas", etc.
-    selector_columns: list[RepeatedTableColumnData]  # Index columns (excluding FLUID) and realizations
+    selector_columns: list[RepeatedTableColumnData]  # Realizations + Index columns (excluding FLUID)
     result_columns: list[TableColumnData]  # Volumetric columns, properties, and calculated volumes
 
 
@@ -234,7 +221,7 @@ class InplaceVolumesStatisticalTableData:
     """
 
     fluid_selection: str  # Oil, Gas, Water or "Oil + Gas", etc.
-    selector_columns: list[RepeatedTableColumnData]  # Index columns (excluding FLUID) and realizations
+    selector_columns: list[RepeatedTableColumnData]  # Realizations + Index columns (excluding FLUID)
     result_column_statistics: list[TableColumnStatisticalData]  # Volumetric columns, properties, and calculated volumes
 
 

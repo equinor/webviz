@@ -3,6 +3,19 @@ from enum import StrEnum
 from pydantic import BaseModel
 
 
+class InplaceVolumesStatistic(StrEnum):
+    """
+    Definition of possible statistics for a result column in an inplace volumes table
+    """
+
+    MEAN = "mean"
+    STD_DEV = "stddev"
+    MAX = "max"
+    MIN = "min"
+    P10 = "p10"
+    P90 = "p90"
+
+
 class InplaceVolumesIndex(StrEnum):
     ZONE = "ZONE"
     REGION = "REGION"
@@ -22,19 +35,6 @@ class InplaceVolumesIndexWithValues(BaseModel):
 
     indexColumn: InplaceVolumesIndex
     values: list[str | int]
-
-
-class InplaceVolumesStatistic(StrEnum):
-    """
-    Definition of possible statistics for a result column in an inplace volumes table
-    """
-
-    MEAN = "mean"
-    STD_DEV = "stddev"
-    MAX = "max"
-    MIN = "min"
-    P10 = "p10"
-    P90 = "p90"
 
 
 class InplaceVolumesTableDefinition(BaseModel):

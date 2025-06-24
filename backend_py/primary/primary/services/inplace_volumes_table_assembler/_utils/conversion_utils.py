@@ -6,14 +6,11 @@ from primary.services.sumo_access.inplace_volumes_table_types import (
     CalculatedVolume,
     CategorizedResultNames,
     InplaceVolumes,
-    InplaceVolumesResultName,
     InplaceVolumesTableData,
     RepeatedTableColumnData,
     Property,
     TableColumnData,
 )
-
-from primary.services.sumo_access.inplace_volumes_table_access import InplaceVolumesTableAccess
 
 """
 This file contains helper functions for conversion between different data types used in the Inplace Volumes Table Assembler.
@@ -23,11 +20,15 @@ This file contains helper functions for conversion between different data types 
 def get_valid_result_names_from_list(result_names: list[str]) -> list[str]:
     """
     Get valid result names from list of result names
+
+    Result names = Volumetric Columns + Properties + Calculated Volumes
     """
     valid_result_names = []
+    result_enums = [InplaceVolumes.VolumetricColumns, Property, CalculatedVolume]
     for result_name in result_names:
-        if result_name in InplaceVolumesResultName.__members__:
+        if any(result_name in enum.__members__ for enum in result_enums):
             valid_result_names.append(result_name)
+
     return valid_result_names
 
 
@@ -241,7 +242,7 @@ def create_inplace_volumes_table_data_from_fluid_results_df(
             f"Results DataFrame for specified fluid should not contain 'FLUID' column, but found it in the input DataFrame: {fluid_results_df.columns}"
         )
 
-    possible_selector_columns = InplaceVolumesTableAccess.get_selector_column_names()
+    possible_selector_columns = InplaceVolumes.selector_columns()
     existing_selector_columns = [name for name in fluid_results_df.columns if name in possible_selector_columns]
     selector_column_data_list: list[RepeatedTableColumnData] = []
     for column_name in existing_selector_columns:

@@ -7,7 +7,6 @@ from primary.services.sumo_access.inplace_volumes_table_types import (
 )
 
 from primary.services.service_exceptions import Service, InvalidDataError
-from primary.services.sumo_access.inplace_volumes_table_access import InplaceVolumesTableAccess
 
 """
 This file contains general utility functions for handling DataFrames for inplace volumes.
@@ -25,7 +24,7 @@ def validate_inplace_volumes_df_selector_columns(
     Raises InvalidDataError if the DataFrame does not contain the required selector columns.
     """
     existing_columns = set(inplace_volumes_df.columns)
-    required_index_columns = set(InplaceVolumesTableAccess.get_required_index_column_names())
+    required_index_columns = set(InplaceVolumes.required_index_columns())
 
     missing_required_columns = required_index_columns - existing_columns
     if missing_required_columns:
@@ -89,7 +88,7 @@ def sum_inplace_volumes_grouped_by_indices_and_real_df(
         columns_to_group_by_for_sum = {"REAL"} | {e.value for e in group_by_indices}
 
     # Aggregate volume columns
-    volume_columns = [col for col in column_names if col not in InplaceVolumesTableAccess.get_selector_column_names()]
+    volume_columns = [col for col in column_names if col not in InplaceVolumes.selector_columns()]
 
     # Selector columns not in group by will be excluded, these should not be aggregated
     per_group_summed_df = inplace_volumes_df.group_by(columns_to_group_by_for_sum).agg(
@@ -140,9 +139,7 @@ def remove_invalid_optional_index_columns(inplace_volumes_df: pl.DataFrame) -> p
     """
 
     column_names = set(inplace_volumes_df.columns)
-    optional_index_column_names = set(InplaceVolumesTableAccess.get_index_column_names()) - set(
-        InplaceVolumesTableAccess.get_required_index_column_names()
-    )
+    optional_index_column_names = set(InplaceVolumes.index_columns()) - set(InplaceVolumes.required_index_columns())
     existing_optional_index_columns = optional_index_column_names & column_names
 
     valid_inplace_volumes_df = inplace_volumes_df

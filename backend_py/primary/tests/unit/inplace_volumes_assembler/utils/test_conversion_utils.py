@@ -9,7 +9,7 @@ from primary.services.inplace_volumes_table_assembler._utils.conversion_utils im
     create_inplace_volumes_table_data_from_fluid_results_df,
     create_repeated_table_column_data_from_polars_column,
     get_available_calculated_volumes_from_volume_names,
-    get_available_properties_from_volume_names,    
+    get_available_properties_from_volume_names,
     get_calculated_volumes_among_result_names,
     get_fluid_from_string,
     get_index_column_from_string,
@@ -38,10 +38,10 @@ def test_get_valid_result_names_from_list() -> None:
     ]
 
     # Valid result names from InplaceVolumetricResultName enum
-    exepected_valid_result_names = ["STOIIP", "GIIP", "NTG", "BG", "SW"]
+    expected_valid_result_names = ["STOIIP", "GIIP", "NTG", "BG", "SW"]
     valid_result_names = get_valid_result_names_from_list(requested_result_names)
 
-    assert valid_result_names == exepected_valid_result_names
+    assert valid_result_names == expected_valid_result_names
 
 
 def test_get_fluid_from_string_valid() -> None:
@@ -267,6 +267,7 @@ def test_get_required_volume_names_from_calculated_volumes() -> None:
     ]
     assert get_required_volume_names_from_calculated_volumes(empty_calculated_volumes) == []
 
+
 def test_get_available_calculated_volumes_from_volume_names() -> None:
     """
     Test that the correct calculated volumes are identified based on available volume names.
@@ -287,32 +288,33 @@ def test_get_available_calculated_volumes_from_volume_names() -> None:
     assert get_available_calculated_volumes_from_volume_names(first_volumes) == [CalculatedVolume.STOIIP_TOTAL.value]
     assert get_available_calculated_volumes_from_volume_names(second_volumes) == [CalculatedVolume.GIIP_TOTAL.value]
     assert get_available_calculated_volumes_from_volume_names(third_volumes) == []
-    
-#####################    
+
+
+#####################
 def test_get_required_volume_names_and_categorized_result_names() -> None:
     """
     Test the function that gets required volume names and categorized result names.
     """
     # Test with a mix of volume names, properties, calculated volumes and an invalid name
     result_names = [
-        "BULK", "NET", "PORV",  # Volume names
-        "NTG", "PORO",  # Properties
+        "BULK",
+        "NET",
+        "PORV",  # Volume names
+        "NTG",
+        "PORO",  # Properties
         "STOIIP_TOTAL",  # Calculated volume
         "INVALID_RESULT_NAME",  # Invalid name
     ]
-    
+
     required_volume_names, categorized_results = get_required_volume_names_and_categorized_result_names(result_names)
-    
+
     # Check that required volume names includes:
     # - The original volume names (BULK, NET, PORV)
     # - Volumes required for properties: NET, BULK for NTG; BULK, PORV for PORO
     # - Volumes required for calculated volumes: STOIIP, ASSOCIATEDOIL for STOIIP_TOTAL
-    expected_volume_names = {
-        "BULK", "NET", "PORV", 
-        "STOIIP", "ASSOCIATEDOIL"
-    }
+    expected_volume_names = {"BULK", "NET", "PORV", "STOIIP", "ASSOCIATEDOIL"}
     assert required_volume_names == expected_volume_names
-    
+
     # Check categorized results
     assert sorted(categorized_results.volume_names) == ["BULK", "NET", "PORV"]
     assert sorted(categorized_results.property_names) == ["NTG", "PORO"]
@@ -382,6 +384,7 @@ def test_create_repeated_table_column_data_from_polars_single_value_column() -> 
     assert result.unique_values == expected_unique_values
     assert result.indices == expected_indices
 
+
 def test_create_inplace_volumes_table_data_from_fluid_results_df() -> None:
     # Test case 1: Basic functionality
     result_df = pl.DataFrame(
@@ -440,14 +443,17 @@ def test_create_inplace_volumes_table_data_from_fluid_results_df_empty_df() -> N
     assert len(result.selector_columns) == 0
     assert len(result.result_columns) == 0
 
+
 def test_create_inplace_volumes_table_data_from_fluid_results_df_assert_fluid_column() -> None:
     result_df = pl.DataFrame(
-        {"REAL": [1, 2, 3], "FLUID": ["oil", "oil", "oil"], "REGION": ["X", "Y", "Z"], "FACIES": ["F1", "F2", "F3"]}        
+        {"REAL": [1, 2, 3], "FLUID": ["oil", "oil", "oil"], "REGION": ["X", "Y", "Z"], "FACIES": ["F1", "F2", "F3"]}
     )
 
     fluid_value = "oil"
-    with pytest.raises(ValueError, match=re.escape(
-        "Results DataFrame for specified fluid should not contain 'FLUID' column, but found it in the input DataFrame: ['REAL', 'FLUID', 'REGION', 'FACIES']"
-    )):
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "Results DataFrame for specified fluid should not contain 'FLUID' column, but found it in the input DataFrame: ['REAL', 'FLUID', 'REGION', 'FACIES']"
+        ),
+    ):
         create_inplace_volumes_table_data_from_fluid_results_df(result_df, fluid_value)
-    

@@ -38,32 +38,6 @@ class InplaceVolumesTableAccess:
         sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    @staticmethod
-    def get_index_column_names() -> list[str]:
-        """
-        The index columns of the volumes table.
-        """
-        return InplaceVolumes.index_columns()
-
-    @staticmethod
-    def get_index_columns() -> list[InplaceVolumes.TableIndexColumns]:
-        return list(InplaceVolumes.TableIndexColumns)
-
-    @staticmethod
-    def get_required_index_column_names() -> list[str]:
-        """
-        The required index columns of the volumes table.
-        These are the columns that must be present in the table to be valid.
-        """
-        return InplaceVolumes.required_index_columns()
-
-    @staticmethod
-    def get_selector_column_names() -> list[str]:
-        """
-        The identifier columns and REAL column represent the selector columns of the volumes table.
-        """
-        return InplaceVolumesTableAccess.get_index_column_names() + ["REAL"]
-
     async def get_inplace_volumes_table_names_async(self) -> list[str]:
         table_context = self._ensemble_context.tables.filter(standard_result=StandardResultName.inplace_volumes)
         table_names = await table_context.names_async
@@ -94,7 +68,7 @@ class InplaceVolumesTableAccess:
         perf_metrics.record_lap("get-column-names")
 
         available_response_names = [
-            col for col in available_column_names if col not in self.get_selector_column_names()
+            col for col in available_column_names if col not in InplaceVolumes.selector_columns()
         ]
         if volume_columns is not None and not volume_columns.issubset(set(available_response_names)):
             raise InvalidDataError(
@@ -166,7 +140,7 @@ class InplaceVolumesTableAccess:
         pa_table = await table_loader.get_single_realization_async(realizations[0])
         column_names = pa_table.column_names
 
-        index_columns = [col for col in InplaceVolumesTableAccess.get_index_column_names() if col in column_names]
+        index_columns = [col for col in InplaceVolumes.index_columns() if col in column_names]
         volumetric_columns = [col for col in column_names if col not in index_columns]
 
         index_column_unique_values_map = {}

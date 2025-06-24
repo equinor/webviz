@@ -18,8 +18,7 @@ from primary.services.sumo_access.inplace_volumes_table_types import (
     TableColumnStatisticalData,
 )
 
-from primary.services.service_exceptions import Service, InvalidDataError, InvalidParameterError, NoDataError
-from primary.services.sumo_access.inplace_volumes_table_access import InplaceVolumesTableAccess
+from primary.services.service_exceptions import Service, InvalidDataError
 
 """
 This file contains general utility functions for handling DataFrames for result volumes.
@@ -53,7 +52,7 @@ def create_per_fluid_results_df(
     fluid: InplaceVolumes.Fluid | None = get_fluid_from_string(fluid_value)
 
     # Find valid selector columns and volume names
-    possible_selector_columns = InplaceVolumesTableAccess.get_selector_column_names()
+    possible_selector_columns = InplaceVolumes.selector_columns()
     available_selector_columns = [
         col for col in possible_selector_columns if col in per_fluid_inplace_volumes_df.columns
     ]
@@ -119,11 +118,11 @@ def create_statistical_result_table_data_from_df(
         )
 
     # Calculate statistics across realizations, i.e. group by existing index columns
-    possible_index_columns = set(InplaceVolumesTableAccess.get_index_column_names())
+    possible_index_columns = set(InplaceVolumes.index_columns())
     existing_index_columns = columns & possible_index_columns
 
     # Find valid result names in df
-    existing_result_names = list(set(columns) - set(InplaceVolumesTableAccess.get_selector_column_names()))
+    existing_result_names = list(set(columns) - set(InplaceVolumes.selector_columns()))
 
     # Define statistical aggregation expressions
     requested_statistics = [
@@ -218,7 +217,7 @@ def _convert_statistical_results_df_to_statistical_results_table_data(
 
     Expect the statistical DataFrame to have one unique column per requested statistic per result name, i.e. "result_name_mean", "result_name_stddev", etc.
     """
-    possible_selector_columns = InplaceVolumesTableAccess.get_selector_column_names()
+    possible_selector_columns = InplaceVolumes.selector_columns()
 
     # Build selector columns from statistical table
     selector_column_data_list: list[RepeatedTableColumnData] = []
