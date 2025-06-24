@@ -4,7 +4,6 @@ import type {
     InplaceVolumesStatisticalTableDataPerFluidSelection_api,
     InplaceVolumesIndexWithValues_api,
     InplaceVolumesTableDataPerFluidSelection_api,
-    InplaceVolumesIndex_api,
 } from "@api";
 import { postGetAggregatedPerRealizationTableDataOptions, postGetAggregatedStatisticalTableDataOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -39,7 +38,7 @@ export function useGetAggregatedStatisticalTableDataQueries(
     ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[],
     tableNames: string[],
     resultNames: string[],
-    groupByIndices: InplaceVolumesIndex_api[],
+    groupByIndices: string[],
     indicesWithValues: InplaceVolumesIndexWithValues_api[],
     allowEnable: boolean,
 ) {
@@ -120,7 +119,7 @@ export function useGetAggregatedPerRealizationTableDataQueries(
     ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[],
     tableNames: string[],
     resultNames: string[],
-    groupByIndices: InplaceVolumesIndex_api[],
+    groupByIndices: string[],
     indicesWithValues: InplaceVolumesIndexWithValues_api[],
     allowEnable: boolean,
 ) {

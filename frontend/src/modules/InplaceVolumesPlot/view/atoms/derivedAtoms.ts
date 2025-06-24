@@ -1,6 +1,5 @@
 import { atom } from "jotai";
 
-import { InplaceVolumesIndex_api } from "@api";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import type { EnsembleIdentWithRealizations } from "@modules/_shared/InplaceVolumes/queryHooks";
 
@@ -25,16 +24,19 @@ export const groupByIndicesAtom = atom((get) => {
     const subplotBy = get(subplotByAtom);
     const colorBy = get(colorByAtom);
     const selectorColumn = get(selectorColumnAtom);
+    const indicesWithValues = get(indicesWithValuesAtom);
 
-    const groupByIndices: InplaceVolumesIndex_api[] = [];
-    if (Object.values(InplaceVolumesIndex_api).includes(subplotBy as any)) {
-        groupByIndices.push(subplotBy as InplaceVolumesIndex_api);
+    const validIndexColumns = indicesWithValues.map((indexWithValue) => indexWithValue.indexColumn);
+
+    const groupByIndices: string[] = [];
+    if (validIndexColumns.includes(subplotBy as any)) {
+        groupByIndices.push(subplotBy);
     }
-    if (Object.values(InplaceVolumesIndex_api).includes(colorBy as any)) {
-        groupByIndices.push(colorBy as InplaceVolumesIndex_api);
+    if (validIndexColumns.includes(colorBy as any)) {
+        groupByIndices.push(colorBy);
     }
-    if (selectorColumn !== null && Object.values(InplaceVolumesIndex_api).includes(selectorColumn as any)) {
-        groupByIndices.push(selectorColumn as InplaceVolumesIndex_api);
+    if (selectorColumn !== null && validIndexColumns.includes(selectorColumn)) {
+        groupByIndices.push(selectorColumn);
     }
     return groupByIndices;
 });

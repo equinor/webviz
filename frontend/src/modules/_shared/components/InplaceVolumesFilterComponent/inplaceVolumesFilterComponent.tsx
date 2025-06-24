@@ -2,7 +2,7 @@ import React from "react";
 
 import { cloneDeep, isEqual } from "lodash";
 
-import type { InplaceVolumesIndex_api, InplaceVolumesIndexWithValues_api } from "@api";
+import type { InplaceVolumesIndexWithValues_api } from "@api";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { SettingsContext } from "@framework/ModuleContext";
@@ -207,15 +207,11 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
         maybeDebounceOnChange(filter, doPublish, dropDebounce);
     }
 
-    function handleIndexValuesChange(
-        index: InplaceVolumesIndex_api,
-        values: (string | number)[],
-        publish = true,
-    ): void {
+    function handleIndexValuesChange(indexColumn: string, values: (string | number)[], publish = true): void {
         const newIndicesWithValues = cloneDeep(indicesWithValues);
-        const indexValues = newIndicesWithValues.find((filter) => filter.indexColumn === index);
+        const indexValues = newIndicesWithValues.find((filter) => filter.indexColumn === indexColumn);
         if (!indexValues) {
-            newIndicesWithValues.push({ indexColumn: index, values });
+            newIndicesWithValues.push({ indexColumn: indexColumn, values });
         } else {
             indexValues.values = [...values];
         }

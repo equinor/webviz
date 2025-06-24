@@ -1,11 +1,10 @@
-import { InplaceVolumesIndex_api } from "@api";
 import type { ChannelContentDefinition, ChannelContentMetaData, DataGenerator } from "@framework/DataChannelTypes";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewContext } from "@framework/ModuleContext";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
-import { TableSource } from "@modules/_shared/InplaceVolumes/types";
+import { TableDataSource } from "@modules/_shared/InplaceVolumes/types";
 import { ChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
 import type { Interfaces } from "@modules/InplaceVolumesPlot/interfaces";
 
@@ -54,7 +53,7 @@ export function usePublishToDataChannels(
     const contents: ChannelContentDefinition[] = [];
 
     if (table && resultName) {
-        const ensembleCollection = table.splitByColumn(TableSource.ENSEMBLE);
+        const ensembleCollection = table.splitByColumn(TableDataSource.ENSEMBLE);
         for (const [ensembleIdentStr, ensembleTable] of ensembleCollection.getCollectionMap()) {
             const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentStr.toString());
             const ensembleName = makeDistinguishableEnsembleDisplayName(
@@ -62,9 +61,9 @@ export function usePublishToDataChannels(
                 ensembleSet.getRegularEnsembleArray(),
             );
 
-            const tableCollection = ensembleTable.splitByColumn(TableSource.TABLE_NAME);
+            const tableCollection = ensembleTable.splitByColumn(TableDataSource.TABLE_NAME);
             for (const [tableName, table] of tableCollection.getCollectionMap()) {
-                const fluidCollection = table.splitByColumn(InplaceVolumesIndex_api.FLUID);
+                const fluidCollection = table.splitByColumn(TableDataSource.FLUID);
                 for (const [fluid, perFluidTable] of fluidCollection.getCollectionMap()) {
                     const dataGenerator = makeDataGeneratorFunc(
                         ensembleName,

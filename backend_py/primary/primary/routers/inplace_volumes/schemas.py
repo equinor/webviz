@@ -16,12 +16,12 @@ class InplaceVolumesStatistic(StrEnum):
     P90 = "p90"
 
 
-class InplaceVolumesIndex(StrEnum):
-    ZONE = "ZONE"
-    REGION = "REGION"
-    FACIES = "FACIES"
-    LICENSE = "LICENSE"
-    FLUID = "FLUID"
+# class InplaceVolumesIndex(StrEnum):
+#     ZONE = "ZONE"
+#     REGION = "REGION"
+#     FACIES = "FACIES"
+#     LICENSE = "LICENSE"
+#     FLUID = "FLUID"
 
 
 class InplaceVolumesIndexWithValues(BaseModel):
@@ -33,7 +33,8 @@ class InplaceVolumesIndexWithValues(BaseModel):
     All values should ideally be strings, but it is common to see integers, especially for REGION
     """
 
-    indexColumn: InplaceVolumesIndex
+    # indexColumn: InplaceVolumesIndex
+    indexColumn: str  # Index column name, e.g. "ZONE", "REGION", etc.
     values: list[str | int]
 
 

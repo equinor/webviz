@@ -18,37 +18,37 @@ from .. import schemas
 class ConverterOriginal:
     @staticmethod
     def convert_schema_to_identifiers_with_values(
-        identifiers_with_values: list[schemas.InplaceVolumesIndexWithValues],
+        indices_with_values: list[schemas.InplaceVolumesIndexWithValues],
     ) -> list[InplaceVolumetricsIdentifierWithValues]:
         """
-        Converts the identifiers with values from the API format to the sumo service format
+        Converts the indices with values from the API format to the sumo service format
         This function filters out the identifiers with values that have the index column as FLUID is not an identifier column in
         the original format.
         """
         converted = []
-        for identifier_with_values in identifiers_with_values:
-            if identifier_with_values.indexColumn == schemas.InplaceVolumesIndex.FLUID:
+        for index_with_values in indices_with_values:
+            if index_with_values.indexColumn.upper() == "FLUID":
                 continue
 
-            identifier = ConverterOriginal._convert_schema_to_identifier(identifier_with_values.indexColumn.value)
-            values = identifier_with_values.values
+            identifier = ConverterOriginal._convert_schema_to_identifier(index_with_values.indexColumn)
+            values = index_with_values.values
             converted.append(InplaceVolumetricsIdentifierWithValues(identifier, values))
         return converted
 
     @staticmethod
     def convert_schema_to_fluid_zones(
-        identifiers_with_values: list[schemas.InplaceVolumesIndexWithValues],
+        indices_with_values: list[schemas.InplaceVolumesIndexWithValues],
     ) -> list[FluidZone]:
         """
         Converts the fluids from the API format to the sumo service format
 
         Extract fluids from the identifiers with values, which are expected to have the index column as FLUID.
         """
-        for identifier_with_values in identifiers_with_values:
-            if identifier_with_values.indexColumn != schemas.InplaceVolumesIndex.FLUID:
+        for index_with_values in indices_with_values:
+            if index_with_values.indexColumn.upper() != "FLUID":
                 continue
 
-            fluids = [FluidZone(str(fluid)) for fluid in identifier_with_values.values]
+            fluids = [FluidZone(str(fluid)) for fluid in index_with_values.values]
 
         if not fluids:
             raise ValueError("No fluids found in the identifiers with values")
@@ -85,13 +85,13 @@ class ConverterOriginal:
                 resultNames=table_definition.result_names,
                 indicesWithValues=[
                     schemas.InplaceVolumesIndexWithValues(
-                        indexColumn=schemas.InplaceVolumesIndex.FLUID,
+                        indexColumn="FLUID",
                         values=[elm.value for elm in table_definition.fluid_zones],
                     )
                 ]
                 + [
                     schemas.InplaceVolumesIndexWithValues(
-                        indexColumn=schemas.InplaceVolumesIndex(identifier_with_values.identifier.value),
+                        indexColumn=identifier_with_values.identifier.value,
                         values=identifier_with_values.values,
                     )
                     for identifier_with_values in table_definition.identifiers_with_values

@@ -1,22 +1,21 @@
 import type { DropdownOption } from "@lib/components/Dropdown";
 import type { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
-import type { TableSourceAndIndexUnion } from "@modules/_shared/InplaceVolumes/types";
-import { TableSource } from "@modules/_shared/InplaceVolumes/types";
+import { TableDataSource } from "@modules/_shared/InplaceVolumes/types";
 
 export function makeSubplotByOptions(
     tableDefinitionsAccessor: TableDefinitionsAccessor,
     selectedTableNames: string[],
-): DropdownOption<TableSourceAndIndexUnion>[] {
+): DropdownOption<string>[] {
     const numEnsembleIdents = tableDefinitionsAccessor.getUniqueEnsembleIdents().length;
     const numTableNames = selectedTableNames.length;
 
-    const options: DropdownOption<TableSourceAndIndexUnion>[] = [
+    const options: DropdownOption<string>[] = [
         {
-            value: TableSource.ENSEMBLE,
+            value: TableDataSource.ENSEMBLE,
             label: "ENSEMBLE",
         },
         {
-            value: TableSource.TABLE_NAME,
+            value: TableDataSource.TABLE_NAME,
             label: "TABLE NAME",
         },
     ];
@@ -37,40 +36,40 @@ export function makeSubplotByOptions(
 
 export function makeColorByOptions(
     tableDefinitionsAccessor: TableDefinitionsAccessor,
-    selectedSubplotBy: TableSourceAndIndexUnion,
+    selectedSubplotBy: string,
     selectedTableNames: string[],
-): DropdownOption<TableSourceAndIndexUnion>[] {
+): DropdownOption<string>[] {
     const numEnsembleIdents = tableDefinitionsAccessor.getUniqueEnsembleIdents().length;
     const numTableNames = selectedTableNames.length;
 
-    const options: DropdownOption<TableSourceAndIndexUnion>[] = [];
+    const options: DropdownOption<string>[] = [];
 
-    if (numEnsembleIdents > 1 && selectedSubplotBy !== TableSource.ENSEMBLE) {
+    if (numEnsembleIdents > 1 && selectedSubplotBy !== TableDataSource.ENSEMBLE) {
         options.push({
-            value: TableSource.ENSEMBLE,
+            value: TableDataSource.ENSEMBLE,
             label: "ENSEMBLE",
         });
         return options;
     }
 
-    if (numTableNames > 1 && selectedSubplotBy !== TableSource.TABLE_NAME) {
+    if (numTableNames > 1 && selectedSubplotBy !== TableDataSource.TABLE_NAME) {
         options.push({
-            value: TableSource.TABLE_NAME,
+            value: TableDataSource.TABLE_NAME,
             label: "TABLE NAME",
         });
         return options;
     }
 
-    if (selectedSubplotBy !== TableSource.ENSEMBLE) {
+    if (selectedSubplotBy !== TableDataSource.ENSEMBLE) {
         options.push({
-            value: TableSource.ENSEMBLE,
+            value: TableDataSource.ENSEMBLE,
             label: "ENSEMBLE",
         });
     }
 
-    if (selectedSubplotBy !== TableSource.TABLE_NAME) {
+    if (selectedSubplotBy !== TableDataSource.TABLE_NAME) {
         options.push({
-            value: TableSource.TABLE_NAME,
+            value: TableDataSource.TABLE_NAME,
             label: "TABLE NAME",
         });
     }

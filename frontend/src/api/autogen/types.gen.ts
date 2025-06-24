@@ -296,14 +296,6 @@ export type HttpValidationError_api = {
     detail?: Array<ValidationError_api>;
 };
 
-export enum InplaceVolumesIndex_api {
-    ZONE = "ZONE",
-    REGION = "REGION",
-    FACIES = "FACIES",
-    LICENSE = "LICENSE",
-    FLUID = "FLUID",
-}
-
 /**
  * Unique values for an index column in an inplace volumes table
  *
@@ -312,7 +304,7 @@ export enum InplaceVolumesIndex_api {
  * All values should ideally be strings, but it is common to see integers, especially for REGION
  */
 export type InplaceVolumesIndexWithValues_api = {
-    indexColumn: InplaceVolumesIndex_api;
+    indexColumn: string;
     values: Array<string | number>;
 };
 

@@ -21,7 +21,7 @@ class ConverterFmuDataIo:
     ) -> list[InplaceVolumesIndexWithValues]:
         converted = []
         for identifier_with_values in identifiers_with_values:
-            index = ConverterFmuDataIo._convert_schema_to_index(identifier_with_values.indexColumn.value)
+            index = ConverterFmuDataIo._convert_schema_to_index(identifier_with_values.indexColumn)
             values = identifier_with_values.values
             converted.append(InplaceVolumesIndexWithValues(index, values))
         return converted
@@ -58,7 +58,7 @@ class ConverterFmuDataIo:
                 resultNames=table_definition.result_names,
                 indicesWithValues=[
                     schemas.InplaceVolumesIndexWithValues(
-                        indexColumn=schemas.InplaceVolumesIndex(index_with_values.index.value),
+                        indexColumn=index_with_values.index.value,
                         values=index_with_values.values,
                     )
                     for index_with_values in table_definition.indices_with_values

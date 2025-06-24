@@ -1,4 +1,4 @@
-import type { InplaceVolumesIndex_api, InplaceVolumesStatistic_api } from "@api";
+import type { InplaceVolumesStatistic_api } from "@api";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import type { TableType } from "@modules/_shared/InplaceVolumes/types";
 
@@ -17,7 +17,7 @@ import type { InplaceVolumesFilterSelections } from "./types";
 export type SettingsToViewInterface = {
     filter: InplaceVolumesFilterSelections;
     resultNames: string[];
-    groupByIndices: InplaceVolumesIndex_api[];
+    groupByIndices: string[];
     tableType: TableType;
     statisticOptions: InplaceVolumesStatistic_api[];
     areTableDefinitionSelectionsValid: boolean;

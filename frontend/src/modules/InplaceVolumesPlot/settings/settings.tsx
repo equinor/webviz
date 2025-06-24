@@ -12,7 +12,6 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
-import { RealSelector, type SelectorColumn } from "@modules/_shared/InplaceVolumes/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
 
 import type { Interfaces } from "../interfaces";
@@ -98,12 +97,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         .map((name) => ({ label: name, value: name, hoverText: createHoverTextForVolume(name) }));
 
     // Create selector options
-    const commonIndexColumns = tableDefinitionsAccessor.getCommonIndicesWithValues().map((elm) => {
-        return elm.indexColumn;
-    });
-    const selectorOptions: DropdownOption<SelectorColumn>[] = [
-        { label: RealSelector.REAL, value: RealSelector.REAL },
-        ...commonIndexColumns.map((name) => ({ label: name, value: name })),
+    const selectorOptions: DropdownOption<string>[] = [
+        ...tableDefinitionsAccessor.getCommonSelectorColumns().map((name) => ({ label: name, value: name })),
     ];
 
     const subplotOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames);

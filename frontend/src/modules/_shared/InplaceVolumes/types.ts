@@ -2,7 +2,7 @@ import type {
     InplaceVolumesStatisticalTableDataPerFluidSelection_api,
     InplaceVolumesTableDataPerFluidSelection_api,
 } from "@api";
-import { InplaceVolumesStatistic_api, InplaceVolumesIndex_api } from "@api";
+import { InplaceVolumesStatistic_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import type { Column } from "./Table";
@@ -29,19 +29,14 @@ export const TableTypeToStringMapping = {
     [TableType.STATISTICAL]: "Statistical",
 };
 
-// Enum for the sources to identify the origin of the table data.
-export enum TableSource {
+// Enum for the sources to identify the origin of the table data received from the API.
+// - Fetch table data per ensemble and table name.
+// - For each ensemble + table name: Receive table data per fluid selection
+export enum TableDataSource {
     ENSEMBLE = "ENSEMBLE",
     TABLE_NAME = "TABLE_NAME",
+    FLUID = "FLUID",
 }
-
-export type TableSourceAndIndexUnion = TableSource | InplaceVolumesIndex_api;
-
-export enum RealSelector {
-    REAL = "REAL",
-}
-export const selectorColumns = { ...RealSelector, ...InplaceVolumesIndex_api } as const;
-export type SelectorColumn = (typeof selectorColumns)[keyof typeof selectorColumns];
 
 export type StatisticalColumns = Partial<{
     [key in InplaceVolumesStatistic_api]: Column<number>;

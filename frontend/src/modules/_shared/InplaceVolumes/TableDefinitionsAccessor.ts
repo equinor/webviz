@@ -1,10 +1,6 @@
 import { isEqual } from "lodash";
 
-import type {
-    InplaceVolumesIndex_api,
-    InplaceVolumesIndexWithValues_api,
-    InplaceVolumesTableDefinition_api,
-} from "@api";
+import type { InplaceVolumesIndexWithValues_api, InplaceVolumesTableDefinition_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import { sortResultNameStrings } from "./sortResultNames";
@@ -85,7 +81,7 @@ export class TableDefinitionsAccessor {
         }
 
         const resultNames: Set<string> = new Set();
-        const commonIndicesWithValuesMap: Map<InplaceVolumesIndex_api, InplaceVolumesIndexWithValues_api> = new Map();
+        const commonIndicesWithValuesMap: Map<string, InplaceVolumesIndexWithValues_api> = new Map();
 
         let isInitialized = false;
         for (const tableDefinition of this._tableDefinitions) {
@@ -172,6 +168,10 @@ export class TableDefinitionsAccessor {
 
     getCommonIndicesWithValues(): InplaceVolumesIndexWithValues_api[] {
         return this._commonIndicesWithValues;
+    }
+
+    getCommonSelectorColumns(): string[] {
+        return ["REAL", ...this._commonIndicesWithValues.map((indexWithValues) => indexWithValues.indexColumn)];
     }
 
     getAreTablesComparable(): boolean {

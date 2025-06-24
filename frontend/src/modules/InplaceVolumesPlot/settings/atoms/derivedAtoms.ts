@@ -9,8 +9,6 @@ import {
     TableDefinitionsAccessor,
     makeUniqueTableNamesIntersection,
 } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
-import type { SelectorColumn, TableSourceAndIndexUnion } from "@modules/_shared/InplaceVolumes/types";
-import { RealSelector } from "@modules/_shared/InplaceVolumes/types";
 
 import { makeColorByOptions, makeSubplotByOptions } from "../utils/plotDimensionUtils";
 
@@ -158,16 +156,13 @@ export const selectedResultName2Atom = atom<string | null>((get) => {
     return fixedSelection[0];
 });
 
-export const selectedSelectorColumnAtom = atom<SelectorColumn | null>((get) => {
+export const selectedSelectorColumnAtom = atom<string | null>((get) => {
     const userSelectedSelectorColumn = get(userSelectedSelectorColumnAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
-    const possibleSelectorColumns = [
-        RealSelector.REAL,
-        ...tableDefinitionsAccessor.getCommonIndicesWithValues().map((elm) => elm.indexColumn),
-    ];
+    const possibleSelectorColumns = tableDefinitionsAccessor.getCommonSelectorColumns();
     if (!userSelectedSelectorColumn) {
-        return possibleSelectorColumns[0];
+        return possibleSelectorColumns[0] ?? null;
     }
 
     const fixedSelection = fixupUserSelection([userSelectedSelectorColumn], possibleSelectorColumns);
@@ -193,7 +188,7 @@ export const selectedIndicesWithValuesAtom = atom<InplaceVolumesIndexWithValues_
     return fixedUpIndicesWithValues;
 });
 
-export const selectedSubplotByAtom = atom<TableSourceAndIndexUnion>((get) => {
+export const selectedSubplotByAtom = atom<string>((get) => {
     const userSelectedSubplotBy = get(userSelectedSubplotByAtom);
     const selectedTableNames = get(selectedTableNamesAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
@@ -204,7 +199,7 @@ export const selectedSubplotByAtom = atom<TableSourceAndIndexUnion>((get) => {
     return fixedSelection[0];
 });
 
-export const selectedColorByAtom = atom<TableSourceAndIndexUnion>((get) => {
+export const selectedColorByAtom = atom<string>((get) => {
     const userSelectedColorBy = get(userSelectedColorByAtom);
     const userSelectedSubplotBy = get(userSelectedSubplotByAtom);
     const selectedTableNames = get(selectedTableNamesAtom);

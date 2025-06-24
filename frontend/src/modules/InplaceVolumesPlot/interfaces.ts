@@ -1,5 +1,4 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import type { SelectorColumn, TableSourceAndIndexUnion } from "@modules/_shared/InplaceVolumes/types";
 
 import { userSelectedPlotTypeAtom } from "./settings/atoms/baseAtoms";
 import {
@@ -20,9 +19,9 @@ export type SettingsToViewInterface = {
     filter: InplaceVolumesFilterSelections;
     resultName: string | null;
     resultName2: string | null;
-    selectorColumn: SelectorColumn | null;
-    subplotBy: TableSourceAndIndexUnion;
-    colorBy: TableSourceAndIndexUnion;
+    selectorColumn: string | null;
+    subplotBy: string;
+    colorBy: string;
     plotType: PlotType;
     areTableDefinitionSelectionsValid: boolean;
 };

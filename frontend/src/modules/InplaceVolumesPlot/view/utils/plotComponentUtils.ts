@@ -8,8 +8,7 @@ import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembl
 import type { HistogramBinRange } from "@modules/_shared/histogram";
 import { makeHistogramBinRangesFromMinAndMaxValues, makeHistogramTrace } from "@modules/_shared/histogram";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
-import type { TableSourceAndIndexUnion } from "@modules/_shared/InplaceVolumes/types";
-import { TableSource } from "@modules/_shared/InplaceVolumes/types";
+import { TableDataSource } from "@modules/_shared/InplaceVolumes/types";
 import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
 import type { RealizationAndResult } from "./convergenceCalculation";
@@ -19,7 +18,7 @@ export function makeFormatLabelFunction(
     ensembleSet: EnsembleSet,
 ): (columnName: string, value: string | number) => string {
     return function formatLabel(columnName: string, value: string | number): string {
-        if (columnName === TableSource.ENSEMBLE) {
+        if (columnName === TableDataSource.ENSEMBLE) {
             const ensembleIdent = RegularEnsembleIdent.fromString(value.toString());
             const ensemble = ensembleSet.findEnsemble(ensembleIdent);
             if (ensemble) {
@@ -34,7 +33,7 @@ export function makePlotData(
     plotType: PlotType,
     resultName: string,
     resultNameOrSelectorName: string,
-    colorBy: TableSourceAndIndexUnion,
+    colorBy: string,
     ensembleSet: EnsembleSet,
     colorSet: ColorSet,
 ): (table: Table) => Partial<PlotData>[] {
@@ -64,6 +63,10 @@ export function makePlotData(
             });
         }
 
+        if (table.getColumn(colorBy) === undefined) {
+            throw new Error(`Column to color by "${colorBy}" not found in the table.`);
+        }
+
         const collection = table.splitByColumn(colorBy);
 
         let boxPlotColorByPositionMap: Map<string | number, number> = new Map();
@@ -79,7 +82,7 @@ export function makePlotData(
         let color = colorSet.getFirstColor();
         for (const [key, table] of collection.getCollectionMap()) {
             let title = key.toString();
-            if (colorBy === TableSource.ENSEMBLE) {
+            if (colorBy === TableDataSource.ENSEMBLE) {
                 const ensembleIdent = RegularEnsembleIdent.fromString(key.toString());
                 const ensemble = ensembleSet.findEnsemble(ensembleIdent);
                 if (ensemble) {

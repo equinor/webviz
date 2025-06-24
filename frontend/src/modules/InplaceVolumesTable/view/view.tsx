@@ -2,7 +2,6 @@ import React from "react";
 
 import { useAtomValue } from "jotai";
 
-import { InplaceVolumesIndex_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -42,22 +41,22 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 props.workbenchServices.publishGlobalData("global.hoverFacies", null);
                 return;
             }
-            if (Object.keys(row).includes(InplaceVolumesIndex_api.REGION)) {
-                const regionName = row[InplaceVolumesIndex_api.REGION]?.toString();
+            if (Object.keys(row).includes("REGION")) {
+                const regionName = row["REGION"]?.toString();
                 if (regionName) {
                     props.workbenchServices.publishGlobalData("global.hoverRegion", { regionName });
                 }
             }
 
-            if (Object.keys(row).includes(InplaceVolumesIndex_api.ZONE)) {
-                const zoneName = row[InplaceVolumesIndex_api.ZONE]?.toString();
+            if (Object.keys(row).includes("ZONE")) {
+                const zoneName = row["ZONE"]?.toString();
                 if (zoneName) {
                     props.workbenchServices.publishGlobalData("global.hoverZone", { zoneName });
                 }
             }
 
-            if (Object.keys(row).includes(InplaceVolumesIndex_api.FACIES)) {
-                const faciesName = row[InplaceVolumesIndex_api.FACIES]?.toString();
+            if (Object.keys(row).includes("FACIES")) {
+                const faciesName = row["FACIES"]?.toString();
                 if (faciesName) {
                     props.workbenchServices.publishGlobalData("global.hoverFacies", { faciesName });
                 }

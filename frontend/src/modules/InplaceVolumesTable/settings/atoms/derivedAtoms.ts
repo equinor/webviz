@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 
-import type { InplaceVolumesIndex_api, InplaceVolumesIndexWithValues_api } from "@api";
+import type { InplaceVolumesIndexWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
@@ -114,11 +114,11 @@ export const selectedResultNamesAtom = atom<string[]>((get) => {
     return fixedSelection;
 });
 
-export const selectedGroupByIndicesAtom = atom<InplaceVolumesIndex_api[]>((get) => {
+export const selectedGroupByIndicesAtom = atom<string[]>((get) => {
     const userSelectedGroupByIndices = get(userSelectedGroupByIndicesAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
-    const availableUniqueGroupByIndices: InplaceVolumesIndex_api[] = [];
+    const availableUniqueGroupByIndices: string[] = [];
     for (const indicesWithValues of tableDefinitionsAccessor.getCommonIndicesWithValues()) {
         availableUniqueGroupByIndices.push(indicesWithValues.indexColumn);
     }

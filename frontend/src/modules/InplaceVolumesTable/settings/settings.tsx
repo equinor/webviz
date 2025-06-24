@@ -2,7 +2,6 @@ import type React from "react";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
-import type { InplaceVolumesIndex_api } from "@api";
 import { InplaceVolumesStatistic_api } from "@api";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
@@ -86,7 +85,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         );
     }
 
-    function handleGroupByIndicesChange(newGroupByIndices: InplaceVolumesIndex_api[]) {
+    function handleGroupByIndicesChange(newGroupByIndices: string[]) {
         setSelectedGroupByIndices(newGroupByIndices);
     }
 
@@ -102,7 +101,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         .getResultNamesIntersection()
         .map((name) => ({ label: name, value: name, hoverText: createHoverTextForVolume(name) }));
 
-    const groupByIndicesOptions: TagOption<InplaceVolumesIndex_api>[] = [];
+    const groupByIndicesOptions: TagOption<string>[] = [];
     for (const indicesWithValues of tableDefinitionsAccessor.getCommonIndicesWithValues()) {
         groupByIndicesOptions.push({ label: indicesWithValues.indexColumn, value: indicesWithValues.indexColumn });
     }
