@@ -12,6 +12,7 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import type { Interfaces } from "../interfaces";
+import type { HexColorMap } from "../typesAndEnums";
 import { GroupBy } from "../typesAndEnums";
 
 import { userSelectedActiveTimestampUtcMsAtom } from "./atoms/baseAtoms";
@@ -22,7 +23,6 @@ import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
 import { SubplotOwner } from "./utils/PlotBuilder";
 
-type HexColorMap = { [key: string]: string };
 export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);

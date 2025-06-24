@@ -3,8 +3,7 @@ import type { PlotData } from "plotly.js";
 import type { Size2D } from "@lib/utils/geometry";
 import type { Figure } from "@modules/_shared/Figure";
 import { makeSubplots } from "@modules/_shared/Figure";
-
-import type { CorrelationMatrix } from "../../_shared/rankParameter";
+import type { CorrelationMatrix } from "@modules/_shared/utils/math/correlationMatrix";
 
 export type CorrelationMatrixTraceProps = {
     data: CorrelationMatrix;

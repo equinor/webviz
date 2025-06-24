@@ -69,29 +69,8 @@ export function usePublishToDataChannels(
         return;
     }
 
-    const colorByMap = new Map<string | number, string>();
-    const colorByColumnExists = table.getColumn(colorBy);
-    if (colorByColumnExists) {
-        const collectionToColor = table.splitByColumn(colorBy);
-        let currentBaseColorFromSet = colorSet.getFirstColor();
+    const colorByMap = createColumnValuesToColorMap(table, ensembleSet, colorBy, colorSet);
 
-        for (const [keyOfColorByItem] of collectionToColor.getCollectionMap()) {
-            let effectiveColor = currentBaseColorFromSet;
-
-            if (colorBy === SourceIdentifier.ENSEMBLE) {
-                const currentEnsembleIdent = RegularEnsembleIdent.fromString(keyOfColorByItem.toString());
-                const ensemble = ensembleSet.findEnsemble(currentEnsembleIdent);
-                const ensembleSpecificColor = ensemble?.getColor();
-
-                if (ensembleSpecificColor !== undefined) {
-                    effectiveColor = ensembleSpecificColor;
-                }
-            }
-
-            colorByMap.set(keyOfColorByItem, effectiveColor);
-            currentBaseColorFromSet = colorSet.getNextColor();
-        }
-    }
     const ensembleCollection = table.splitByColumn(SourceIdentifier.ENSEMBLE);
     for (const [ensembleIdentStr, ensembleTable] of ensembleCollection.getCollectionMap()) {
         const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentStr.toString());
@@ -143,14 +122,16 @@ export function usePublishToDataChannels(
 function createColumnValuesToColorMap(
     table: Table,
     ensembleSet: EnsembleSet,
-    colorBy: string,
+    colorBy: SourceAndTableIdentifierUnion,
     colorSet: ColorSet,
 ): Map<string | number, string> {
     const colorByMap = new Map<string | number, string>();
     const colorByColumnExists = table.getColumn(colorBy);
+
     if (!colorByColumnExists) {
         return colorByMap;
     }
+
     const collectionToColor = table.splitByColumn(colorBy);
     let currentBaseColorFromSet = colorSet.getFirstColor();
 

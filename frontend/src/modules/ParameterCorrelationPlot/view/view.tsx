@@ -13,7 +13,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
-import { getContinuousParameterArray } from "@modules/_shared/parameterUtils";
+import { getVaryingContinuousParameters } from "@modules/_shared/parameterUtils";
 import type { ResponseData } from "@modules/_shared/rankParameter";
 import { createRankedParameterCorrelations } from "@modules/_shared/rankParameter";
 
@@ -146,7 +146,7 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                     if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
                         continue;
                     }
-                    const parameterArr = getContinuousParameterArray(ensemble);
+                    const parameterArr = getVaryingContinuousParameters(ensemble);
                     if (!parameterArr) {
                         continue;
                     }

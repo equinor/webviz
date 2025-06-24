@@ -14,9 +14,10 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
-import { getContinuousParameterArray } from "@modules/_shared/parameterUtils";
+import { getVaryingContinuousParameters } from "@modules/_shared/parameterUtils";
 import type { ResponseData } from "@modules/_shared/rankParameter";
-import { createCorrelationMatrix } from "@modules/_shared/rankParameter";
+import type { CorrelationDataItem } from "@modules/_shared/utils/math/correlationMatrix";
+import { createPearsonCorrelationMatrix } from "@modules/_shared/utils/math/correlationMatrix";
 
 import type { Interfaces } from "../interfaces";
 
@@ -89,6 +90,7 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
         setPrevUseFixedColorRange(useFixedColorRange);
 
         startTransition(function makeContent() {
+            // Content when no data channels are defined
             if (receiverResponses.every((response) => !response.channel)) {
                 setContent(
                     <ContentInfo>
@@ -107,36 +109,25 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                 return;
             }
 
-            //Check for empty channels
-            const emptyChannels = receiverResponses.filter(
-                (response) => !response.channel || response.channel.contents.length === 0,
+            const usedChannels = receiverResponses.filter((response) => response.channel);
+            const usedChannelsWithoutData = receiverResponses.filter(
+                (response) => response.channel && response.channel.contents.length === 0,
             );
-            if (emptyChannels.length === receiverResponses.length) {
+            // Content when no data is received on any of the channels
+            if (usedChannels.length === usedChannelsWithoutData.length) {
                 setContent(
                     <ContentInfo>
-                        <span>
-                            No data on any of the channels. Add a main module to the workbench and use the data channels{" "}
-                            <Input fontSize="small" />
-                        </span>
-                        <span>
-                            <Tag label="Response" />
-                            <Tag label="Response" />
-                            <Tag label="Response" />
-                        </span>
+                        <span>No data received on any of the channels. Check relevant modules for issues.</span>
                     </ContentInfo>,
                 );
                 return;
             }
-            if (emptyChannels.length > 0) {
-                setContent(
-                    <ContentWarning>
-                        <span>Some channels have no data. Only the channels with data will be displayed.</span>
-                        <span>
-                            {emptyChannels.map((channel, index) => (
-                                <Tag key={index} label={channel.displayName} />
-                            ))}
-                        </span>
-                    </ContentWarning>,
+            // Add a warning when some channels have no data
+            if (usedChannelsWithoutData.length > 0) {
+                statusWriter.addWarning(
+                    `Some channels have no data:) ${usedChannelsWithoutData
+                        .map((response) => response.displayName)
+                        .join(", ")}`,
                 );
             }
 
@@ -192,7 +183,7 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                     if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
                         continue;
                     }
-                    const parameterArr = getContinuousParameterArray(ensemble);
+                    const parameterArr = getVaryingContinuousParameters(ensemble);
                     if (!parameterArr) {
                         continue;
                     }
@@ -208,8 +199,16 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                             displayName: content.displayName,
                         };
                     });
-
-                    const corr = createCorrelationMatrix(selectedParameters, responseDataArr);
+                    const responseItems: CorrelationDataItem[] = responseDataArr.map((r) => ({
+                        name: r.displayName,
+                        values: r.values,
+                    }));
+                    const parameterItems: CorrelationDataItem[] = selectedParameters.map((param) => ({
+                        name: param.name,
+                        values: param.values,
+                    }));
+                    const allItems = [...responseItems, ...parameterItems];
+                    const corr = createPearsonCorrelationMatrix(allItems);
                     figure.addCorrelationMatrixTrace({
                         data: corr,
                         rowIndex: rowIndex + 1,
