@@ -1,10 +1,9 @@
+import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { v4 } from "uuid";
 
-import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
-
-import type { AtomStoreMaster } from "./AtomStoreMaster";
-import type { ModuleInstance, ModuleInstanceFullState } from "./ModuleInstance";
-import { ModuleRegistry } from "./ModuleRegistry";
+import type { AtomStoreMaster } from "../../AtomStoreMaster";
+import type { ModuleInstance, ModuleInstanceFullState } from "../../ModuleInstance";
+import { ModuleRegistry } from "../../ModuleRegistry";
 
 export type LayoutElement = {
     moduleInstanceId?: string;
@@ -17,7 +16,7 @@ export type LayoutElement = {
     maximized?: boolean;
 };
 
-export type ModuleInstanceStateAndLayoutInfo = ModuleInstanceFullState<any> & {
+export type ModuleInstanceStateAndLayoutInfo = ModuleInstanceFullState & {
     layoutInfo: Omit<LayoutElement, "moduleInstanceId" | "moduleName">;
 };
 

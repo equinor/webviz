@@ -1,8 +1,8 @@
 import React from "react";
 
 import { Tooltip, Typography } from "@equinor/eds-core-react";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
-import { WorkbenchSessionPersistenceServiceTopic } from "@framework/persistence/WorkbenchSessionPersistenceService";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+import { WorkbenchSessionPersistenceServiceTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionPersistenceService";
 import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import type { ButtonProps } from "@lib/components/Button/button";
@@ -26,29 +26,67 @@ export type TopBarProps = {
 };
 
 export function TopBar(props: TopBarProps): React.ReactNode {
+    const [saveAsDialogOpen, setSaveAsDialogOpen] = React.useState<boolean>(false);
+    const [isSaving, setIsSaving] = React.useState<boolean>(false);
+
+    function handleSaveClick(saveAs: boolean = false) {
+        const isPersisted = props.workbench.getWorkbenchSession().getIsPersisted();
+        if (!isPersisted && !saveAs) {
+            setSaveAsDialogOpen(true);
+            return;
+        }
+        setIsSaving(true);
+        props.workbench
+            .getWorkbenchSessionPersistenceService()
+            .persistSessionState()
+            .then(() => {
+                setIsSaving(false);
+                setSaveAsDialogOpen(false);
+            })
+            .catch((error) => {
+                console.error("Failed to save session:", error);
+                // Optionally, you can show an error message here.
+            });
+    }
+
     const hasActiveSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.HAS_ACTIVE_SESSION);
     return (
-        <div
-            className={resolveClassNames(
-                "p-2 border-b-2 border-slate-200 z-50 shadow-lg flex flex-row gap-12 px-4 pl-6 items-center",
-                {
-                    "bg-white": hasActiveSession,
-                    "bg-transparent": !hasActiveSession,
-                },
+        <>
+            <div
+                className={resolveClassNames(
+                    "p-2 border-b-2 border-slate-200 z-50 shadow-lg flex flex-row gap-12 px-4 pl-6 items-center",
+                    {
+                        "bg-white": hasActiveSession,
+                        "bg-transparent": !hasActiveSession,
+                    },
+                )}
+            >
+                <LogoWithText />
+                {hasActiveSession ? (
+                    <>
+                        <SessionTitle workbench={props.workbench} onSaveClick={handleSaveClick} />
+                        <RefreshSessionButton workbench={props.workbench} />
+                        <SessionSaveButton
+                            workbench={props.workbench}
+                            onSaveClick={handleSaveClick}
+                            isSaving={isSaving}
+                        />
+                    </>
+                ) : (
+                    <div className="grow" />
+                )}
+                <LoginButton showText={false} />
+            </div>
+            {hasActiveSession && (
+                <SaveSessionDialog
+                    open={saveAsDialogOpen}
+                    onClose={() => setSaveAsDialogOpen(false)}
+                    workbench={props.workbench}
+                    onSaveClick={() => handleSaveClick(true)}
+                    isSaving={isSaving}
+                />
             )}
-        >
-            <LogoWithText />
-            {hasActiveSession ? (
-                <>
-                    <SessionTitle workbench={props.workbench} />
-                    <RefreshSessionButton workbench={props.workbench} />
-                    <SessionSaveButton workbench={props.workbench} />
-                </>
-            ) : (
-                <div className="grow" />
-            )}
-            <LoginButton showText={false} />
-        </div>
+        </>
     );
 }
 
@@ -69,6 +107,7 @@ function LogoWithText(): React.ReactNode {
 
 type SessionTitleProps = {
     workbench: Workbench;
+    onSaveClick: () => void;
 };
 
 function SessionTitle(props: SessionTitleProps): React.ReactNode {
@@ -89,7 +128,7 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
     }
 
     function handleCloseSessionClick() {
-        if (props.workbench.getWorkbenchSession().getWorkbenchSessionPersistenceService().hasChanges()) {
+        if (props.workbench.getWorkbenchSessionPersistenceService().hasChanges()) {
             setCloseConfirmDialogOpen(true);
             return;
         }
@@ -124,7 +163,10 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
             setCloseConfirmDialogOpen(false);
         }
 
-        function handleSave() {}
+        function handleSave() {
+            setCloseConfirmDialogOpen(false);
+            props.onSaveClick();
+        }
 
         function handleDiscard() {
             setCloseConfirmDialogOpen(false);
@@ -169,39 +211,18 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
 
 type SessionSaveButtonProps = {
     workbench: Workbench;
+    isSaving: boolean;
+    onSaveClick: () => void;
 };
 
 function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
-    const [saveAsDialogOpen, setSaveAsDialogOpen] = React.useState<boolean>(false);
-    const [isSaving, setIsSaving] = React.useState<boolean>(false);
-
     const persistenceInfo = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession().getWorkbenchSessionPersistenceService(),
+        props.workbench.getWorkbenchSessionPersistenceService(),
         WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO,
     );
 
-    const isPersisted = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
-        PrivateWorkbenchSessionTopic.IS_PERSISTED,
-    );
-
     const handleSaveClick = () => {
-        if (!isPersisted) {
-            setSaveAsDialogOpen(true);
-            return;
-        }
-        setIsSaving(true);
-        props.workbench
-            .getWorkbenchSession()
-            .getWorkbenchSessionPersistenceService()
-            .persistSessionState()
-            .then(() => {
-                setIsSaving(false);
-            })
-            .catch((error) => {
-                console.error("Failed to save session:", error);
-                // Optionally, you can show an error message here.
-            });
+        props.onSaveClick();
     };
 
     function makeText() {
@@ -223,7 +244,7 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
             })}
         >
             {makeText()}
-            {isSaving ? (
+            {props.isSaving ? (
                 <CircularProgress size="small" className="text-amber-600" />
             ) : (
                 <TopBarButton
@@ -234,11 +255,6 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
                     <Save fontSize="small" />
                 </TopBarButton>
             )}
-            <SaveSessionDialog
-                open={saveAsDialogOpen}
-                onClose={() => setSaveAsDialogOpen(false)}
-                workbench={props.workbench}
-            />
         </div>
     );
 }
@@ -294,6 +310,8 @@ type SaveSessionDialogProps = {
     open: boolean;
     onClose: () => void;
     workbench: Workbench;
+    isSaving?: boolean;
+    onSaveClick: () => void;
 };
 
 type SaveSessionDialogInputFeedback = {
@@ -304,7 +322,6 @@ type SaveSessionDialogInputFeedback = {
 function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNode {
     const [title, setTitle] = React.useState<string>("");
     const [description, setDescription] = React.useState<string>("");
-    const [isSaving, setIsSaving] = React.useState<boolean>(false);
     const [inputFeedback, setInputFeedback] = React.useState<SaveSessionDialogInputFeedback>({});
 
     function handleSave() {
@@ -323,15 +340,18 @@ function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNode {
         }
         const sessionData = { title, description };
         props.workbench.getWorkbenchSession().setMetadata(sessionData);
-        setIsSaving(true);
-        props.workbench
-            .getWorkbenchSession()
-            .getWorkbenchSessionPersistenceService()
-            .persistSessionState()
-            .then(() => {
-                setIsSaving(false);
-                props.onClose();
-            });
+        props.onSaveClick();
+
+        setTitle("");
+        setDescription("");
+        setInputFeedback({});
+    }
+
+    function handleCancel() {
+        setTitle("");
+        setDescription("");
+        setInputFeedback({});
+        props.onClose();
     }
 
     const layout = props.workbench.getWorkbenchSession().getActiveDashboard()?.getLayout() || [];
@@ -345,8 +365,11 @@ function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNode {
             showCloseCross
             actions={
                 <>
-                    <Button variant="text" disabled={isSaving} onClick={handleSave}>
-                        {isSaving && <CircularProgress size="small" />} Save
+                    <Button variant="text" disabled={props.isSaving} onClick={handleCancel}>
+                        Cancel
+                    </Button>
+                    <Button variant="text" color="success" disabled={props.isSaving} onClick={handleSave}>
+                        {props.isSaving && <CircularProgress size="small" />} Save
                     </Button>
                 </>
             }
@@ -362,6 +385,7 @@ function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNode {
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 error={!!inputFeedback.title}
+                                autoFocus
                             />
                             {inputFeedback.title && (
                                 <div className="text-red-600 text-sm mt-1">{inputFeedback.title}</div>

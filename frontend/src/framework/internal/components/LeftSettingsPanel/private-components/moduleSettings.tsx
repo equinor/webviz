@@ -3,9 +3,9 @@ import type React from "react";
 import { Settings as SettingsIcon } from "@mui/icons-material";
 import { Provider } from "jotai";
 
-import { DashboardTopic } from "@framework/Dashboard";
+import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { ImportStatus } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import {

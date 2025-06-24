@@ -1,8 +1,8 @@
 import React from "react";
 
-import { DashboardTopic } from "@framework/Dashboard";
+import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
 import { GuiEvent, GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
 import { pointRelativeToDomRect } from "@lib/utils/geometry";

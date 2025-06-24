@@ -1,9 +1,7 @@
 import React from "react";
 
 import { GridView, Link, List, Palette, Settings, WebAsset } from "@mui/icons-material";
-import { useQueryClient } from "@tanstack/react-query";
 
-import { DashboardTopic } from "@framework/Dashboard";
 import { GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
 import type {
@@ -12,7 +10,8 @@ import type {
     RegularEnsembleItem,
 } from "@framework/internal/components/SelectEnsemblesDialog";
 import type { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
+import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { Workbench } from "@framework/Workbench";
 import { useColorSet } from "@framework/WorkbenchSettings";
@@ -66,7 +65,6 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         setPrevIsAppInitialized(isAppInitialized);
     }
 
-    const queryClient = useQueryClient();
     const colorSet = useColorSet(props.workbench.getWorkbenchSettings());
 
     React.useEffect(
@@ -144,13 +142,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
             customName: deltaEns.customName,
             color: deltaEns.color,
         }));
-        return props.workbench
-            .getWorkbenchSession()
-            .storeSettingsInLocalStorageAndLoadAndSetupEnsembleSetInSession(
-                queryClient,
-                ensembleSettings,
-                deltaEnsembleSettings,
-            );
+        return props.workbench.getWorkbenchSession().loadAndSetupEnsembleSet(ensembleSettings, deltaEnsembleSettings);
     }
 
     const selectedEnsembles: RegularEnsembleItem[] = ensembleSet.getRegularEnsembleArray().map((ens) => ({

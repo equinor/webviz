@@ -11,11 +11,11 @@ import {
     WebAsset,
 } from "@mui/icons-material";
 
-import { DashboardTopic } from "@framework/Dashboard";
+import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Module } from "@framework/Module";
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";

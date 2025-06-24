@@ -4,7 +4,7 @@ import { Close, CloseFullscreen, Error, History, Input, OpenInFull, Output, Warn
 
 import { GuiEvent, GuiState, LeftDrawerContent, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
 import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";

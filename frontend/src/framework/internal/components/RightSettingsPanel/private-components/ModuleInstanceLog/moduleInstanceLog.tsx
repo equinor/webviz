@@ -2,7 +2,7 @@ import React from "react";
 
 import { CheckCircle, ClearAll, CloudDone, CloudDownload, Error, History, Warning } from "@mui/icons-material";
 
-import { DashboardTopic } from "@framework/Dashboard";
+import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
 import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
 import type { LogEntry } from "@framework/internal/ModuleInstanceStatusControllerInternal";
@@ -10,7 +10,7 @@ import {
     LogEntryType,
     useStatusControllerStateValue,
 } from "@framework/internal/ModuleInstanceStatusControllerInternal";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";

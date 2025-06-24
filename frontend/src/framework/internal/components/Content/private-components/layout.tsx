@@ -4,7 +4,7 @@ import { v4 } from "uuid";
 
 import type { LayoutBox } from "@framework/components/LayoutBox";
 import { LayoutBoxComponents, makeLayoutBoxes } from "@framework/components/LayoutBox";
-import { DashboardTopic, type LayoutElement } from "@framework/Dashboard";
+import { DashboardTopic, type LayoutElement } from "@framework/internal/WorkbenchSession/Dashboard";
 import { GuiEvent, type GuiEventPayloads } from "@framework/GuiMessageBroker";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";

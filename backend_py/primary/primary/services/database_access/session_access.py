@@ -101,13 +101,21 @@ class SessionAccess:
     async def update_session(self, session_id: str, session_update: SessionUpdate):
         existing = await self._assert_ownership(session_id)
 
-        updated_metadata = session_update.metadata.model_copy(
+        updated_metadata = existing.metadata.model_copy(
             update={
+                "title": session_update.metadata.title,
+                "description": session_update.metadata.description,
                 "version": existing.metadata.version + 1,
                 "updated_at": datetime.now(timezone.utc),
             }
         )
-        updated_session = existing.model_copy(update={"metadata": updated_metadata})
+
+        updated_session = SessionRecord(
+            id=session_id,
+            user_id=self.user_id,
+            content=session_update.content,
+            metadata=updated_metadata,
+        )
 
         await self.container_access.update_item(
             session_id, updated_session.model_dump(by_alias=True, mode="json"), partition_key=self.user_id

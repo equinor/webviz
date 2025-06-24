@@ -2,10 +2,10 @@ import React from "react";
 
 import { Link, PinDrop, Public } from "@mui/icons-material";
 
-import { DashboardTopic } from "@framework/Dashboard";
+import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
 import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { SyncSettingKey } from "@framework/SyncSettings";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";

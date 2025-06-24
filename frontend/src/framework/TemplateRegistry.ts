@@ -1,4 +1,4 @@
-import type { LayoutElement } from "./Dashboard";
+import type { LayoutElement } from "./internal/WorkbenchSession/Dashboard";
 import type { KeyKind } from "./DataChannelTypes";
 import type { SyncSettingKey } from "./SyncSettings";
 

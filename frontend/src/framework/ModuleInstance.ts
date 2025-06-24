@@ -57,7 +57,7 @@ export interface ModuleInstanceOptions<
     channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
 }
 
-export type ModuleInstanceFullState<TSerializedStateSchema extends ModuleStateBaseSchema> = {
+export type ModuleInstanceFullState = {
     id: string;
     name: string;
     dataChannelReceiverSubscriptions: {
@@ -67,7 +67,12 @@ export type ModuleInstanceFullState<TSerializedStateSchema extends ModuleStateBa
         contentIdStrings: string[];
     }[];
     syncedSettingKeys: SyncSettingKey[];
-    serializedState: SerializedModuleState<TSerializedStateSchema> | null;
+    serializedState: StringifiedSerializedModuleState | null;
+};
+
+type StringifiedSerializedModuleState = {
+    settings?: string;
+    view?: string;
 };
 
 export class ModuleInstance<
@@ -125,12 +130,12 @@ export class ModuleInstance<
         return this._serializedState;
     }
 
-    setFullState(fullState: ModuleInstanceFullState<TSerializedStateSchema>): void {
+    setFullState(fullState: ModuleInstanceFullState): void {
         this._syncedSettingKeys = fullState.syncedSettingKeys;
-        this._serializedState = fullState.serializedState ?? null;
+        // this._serializedState = fullState.serializedState ?? null;
     }
 
-    getFullState(): ModuleInstanceFullState<TSerializedStateSchema> {
+    getFullState(): ModuleInstanceFullState {
         return {
             id: this._id,
             name: this._module.getName(),
@@ -144,7 +149,10 @@ export class ModuleInstance<
                     contentIdStrings: receiver.getContentIdStrings(),
                 })),
             syncedSettingKeys: this._syncedSettingKeys,
-            serializedState: this._serializedState,
+            serializedState: {
+                settings: JSON.stringify(this._serializedState?.settings ?? ""),
+                view: JSON.stringify(this._serializedState?.view ?? ""),
+            },
         };
     }
 

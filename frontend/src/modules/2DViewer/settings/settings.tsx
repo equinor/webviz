@@ -14,11 +14,11 @@ import {
     DataProviderManager,
     DataProviderManagerTopic,
 } from "../../_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import type { SerializedState } from "../persistedState";
 
 import { dataProviderManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
-import type { SerializedState } from "../persistedState";
 
 export function Settings(props: ModuleSettingsProps<any, SerializedState>): React.ReactNode {
     const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
@@ -51,7 +51,7 @@ export function Settings(props: ModuleSettingsProps<any, SerializedState>): Reac
                 dataProviderData: JSON.stringify(serializedState),
             });
         },
-        [dataProviderManager, fieldIdentifier, preferredViewLayout, props.settingsContext],
+        [dataProviderManager, fieldIdentifier, preferredViewLayout, props.persistence],
     );
 
     const applyPersistedState = React.useCallback(
@@ -82,7 +82,7 @@ export function Settings(props: ModuleSettingsProps<any, SerializedState>): Reac
                 layerManager.deserializeState(parsedState.layerManager);
             }
         },
-        [setFieldIdentifier, setPreferredViewLayout, props.settingsContext],
+        [setFieldIdentifier, setPreferredViewLayout, props.persistence],
     );
 
     React.useEffect(

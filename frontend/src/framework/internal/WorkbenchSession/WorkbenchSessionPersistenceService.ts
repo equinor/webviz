@@ -1,22 +1,16 @@
-import { DashboardTopic } from "@framework/Dashboard";
+import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
 import {
     PrivateWorkbenchSessionTopic,
     type PrivateWorkbenchSession,
-    type SerializedWorkbenchSession,
-} from "@framework/internal/PrivateWorkbenchSession";
+} from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { ModuleInstanceTopic } from "@framework/ModuleInstance";
+import type { Workbench } from "@framework/Workbench";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
-import type { QueryClient } from "@tanstack/query-core";
-
-import {
-    createSessionWithCacheUpdate,
-    hashJsonString,
-    objectToJsonString,
-    updateSessionWithCacheUpdate,
-} from "./utils";
 import { toast } from "react-toastify";
-import { getSessionOptions } from "@api";
+
+import { createSessionWithCacheUpdate, hashJsonString, updateSessionWithCacheUpdate } from "./utils";
+import { makeWorkbenchSessionStateString } from "./WorkbenchSessionSerializer";
 
 export type WorkbenchSessionPersistenceInfo = {
     lastModifiedMs: number;
@@ -28,13 +22,6 @@ export enum WorkbenchSessionPersistenceServiceTopic {
     PERSISTENCE_INFO = "PersistenceInfo",
 }
 
-export type SerializedWorkbenchSessionWithMetadata = Omit<SerializedWorkbenchSession, "metadata"> & {
-    metadata: {
-        title: string;
-        description?: string;
-    };
-};
-
 export type WorkbenchSessionPersistenceServiceTopicPayloads = {
     [WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO]: WorkbenchSessionPersistenceInfo;
 };
@@ -44,8 +31,8 @@ export class WorkbenchSessionPersistenceService
 {
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<WorkbenchSessionPersistenceServiceTopicPayloads>();
     private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
-    private _queryClient: QueryClient;
-    private _workbenchSession: PrivateWorkbenchSession;
+    private _workbench: Workbench;
+    private _workbenchSession: PrivateWorkbenchSession | null = null;
     private _lastPersistedHash: string | null = null;
     private _currentHash: string | null = null;
     private _currentStateString: string | null = null;
@@ -58,9 +45,45 @@ export class WorkbenchSessionPersistenceService
     private _lastPersistedMs: number | null = null;
     private _lastModifiedMs: number = 0;
 
-    constructor(workbenchSession: PrivateWorkbenchSession, queryClient: QueryClient) {
-        this._queryClient = queryClient;
-        this._workbenchSession = workbenchSession;
+    constructor(workbench: Workbench) {
+        this._workbench = workbench;
+    }
+
+    async setWorkbenchSession(session: PrivateWorkbenchSession) {
+        if (this._workbenchSession) {
+            this.unsubscribeFromSessionUpdates();
+        }
+
+        this._workbenchSession = session;
+
+        this._currentStateString = makeWorkbenchSessionStateString(this._workbenchSession);
+        this._currentHash = await hashJsonString(this._currentStateString);
+        this.updatePersistenceInfo();
+
+        this.subscribeToSessionChanges();
+        this.subscribeToDashboardUpdates();
+        this.subscribeToModuleInstanceUpdates();
+
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO);
+    }
+
+    removeWorkbenchSession() {
+        if (!this._workbenchSession) {
+            return;
+        }
+        this.unsubscribeFromSessionUpdates();
+        this.reset();
+        this._workbenchSession = null;
+    }
+
+    getWorkbenchSession(): PrivateWorkbenchSession | null {
+        return this._workbenchSession;
+    }
+
+    private subscribeToSessionChanges() {
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to subscribe to changes.");
+        }
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "workbench-session",
@@ -153,44 +176,12 @@ export class WorkbenchSessionPersistenceService
         }
     }
 
-    async loadFromBackend(sessionId: string): Promise<void> {
-        const toastId = toast.loading("Loading session state from backend...");
-        try {
-            const sessionData = await this._queryClient.fetchQuery({
-                ...getSessionOptions({
-                    path: {
-                        session_id: sessionId,
-                    },
-                }),
-            });
-
-            this._currentStateString = sessionData.content;
-            this._currentHash = await hashJsonString(this._currentStateString);
-
-            const content = JSON.parse(this._currentStateString);
-
-            const data: SerializedWorkbenchSession = content;
-            this._workbenchSession.deserializeState(data);
-
-            this._workbenchSession.setId(sessionId);
-            this._workbenchSession.setIsPersisted(true);
-            this._workbenchSession.setMetadata({
-                title: sessionData.metadata.title,
-                description: sessionData.metadata.description ?? undefined,
-            });
-
-            this.updatePersistenceInfo();
-            toast.dismiss(toastId);
-        } catch (error) {
-            console.error("Failed to load session state from backend:", error);
-            toast.dismiss(toastId);
-            toast.error("Failed to load session state. Please try again later.");
-        }
-    }
-
     private async pullFullSessionState() {
-        const workbenchSessionState = this._workbenchSession.serializeState();
-        this._currentStateString = objectToJsonString(workbenchSessionState);
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to pull state from.");
+        }
+
+        this._currentStateString = makeWorkbenchSessionStateString(this._workbenchSession);
         this._currentHash = await hashJsonString(this._currentStateString);
 
         this.saveToLocalStorage();
@@ -198,6 +189,12 @@ export class WorkbenchSessionPersistenceService
     }
 
     async persistSessionState() {
+        const queryClient = this._workbench.getQueryClient();
+
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to persist.");
+        }
+
         if (!this._currentStateString) {
             throw new Error("Current state string is not set. Cannot persist session state.");
         }
@@ -211,7 +208,7 @@ export class WorkbenchSessionPersistenceService
                 if (!id) {
                     throw new Error("Session ID is not set. Cannot update session state.");
                 }
-                await updateSessionWithCacheUpdate(this._queryClient, {
+                await updateSessionWithCacheUpdate(queryClient, {
                     id,
                     content: this._currentStateString,
                     metadata: {
@@ -222,7 +219,7 @@ export class WorkbenchSessionPersistenceService
                 toast.dismiss(toastId);
                 toast.success("Session state updated successfully.");
             } else {
-                const id = await createSessionWithCacheUpdate(this._queryClient, {
+                const id = await createSessionWithCacheUpdate(queryClient, {
                     title: metadata.title,
                     description: metadata.description ?? null,
                     content: this._currentStateString,
@@ -254,7 +251,15 @@ export class WorkbenchSessionPersistenceService
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO);
     }
 
+    private unsubscribeFromSessionUpdates() {
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
+    }
+
     private subscribeToDashboardUpdates() {
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to subscribe to dashboard updates.");
+        }
+
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("dashboards");
 
         const dashboards = this._workbenchSession.getDashboards();
@@ -285,6 +290,10 @@ export class WorkbenchSessionPersistenceService
     }
 
     private subscribeToModuleInstanceUpdates() {
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to subscribe to module instance updates.");
+        }
+
         this._unsubscribeFunctionsManagerDelegate.unsubscribe("module-instances");
 
         const dashboards = this._workbenchSession.getDashboards();

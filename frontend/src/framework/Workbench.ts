@@ -5,8 +5,13 @@ import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/Publ
 import { AtomStoreMaster } from "./AtomStoreMaster";
 import { GuiMessageBroker } from "./GuiMessageBroker";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
-import { PrivateWorkbenchSession } from "./internal/PrivateWorkbenchSession";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
+import { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
+import {
+    loadWorkbenchSessionFromBackend,
+    loadWorkbenchSessionFromLocalStorage,
+} from "./internal/WorkbenchSession/WorkbenchSessionLoader";
+import { WorkbenchSessionPersistenceService } from "./internal/WorkbenchSession/WorkbenchSessionPersistenceService";
 import type { WorkbenchServices } from "./WorkbenchServices";
 
 export type StoredUserEnsembleSetting = {
@@ -38,13 +43,14 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     private _guiMessageBroker: GuiMessageBroker;
     private _atomStoreMaster: AtomStoreMaster;
     private _queryClient: QueryClient;
+    private _workbenchSessionPersistenceService: WorkbenchSessionPersistenceService;
 
     constructor(queryClient: QueryClient) {
         this._queryClient = queryClient;
         this._atomStoreMaster = new AtomStoreMaster();
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._workbenchSettings = new PrivateWorkbenchSettings();
-
+        this._workbenchSessionPersistenceService = new WorkbenchSessionPersistenceService(this);
         this._guiMessageBroker = new GuiMessageBroker();
     }
 
@@ -62,17 +68,19 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         return snapshotGetter;
     }
 
+    getQueryClient(): QueryClient {
+        return this._queryClient;
+    }
+
+    getWorkbenchSessionPersistenceService(): WorkbenchSessionPersistenceService {
+        return this._workbenchSessionPersistenceService;
+    }
+
     async initialize() {
-        // Trying to load the last session from local storage
-        const lastSession = await PrivateWorkbenchSession.loadLastSessionFromLocalStorage(
-            this._atomStoreMaster,
-            this._queryClient,
-        );
-        if (lastSession) {
-            this._workbenchSession = lastSession;
-            this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
+        const session = await loadWorkbenchSessionFromLocalStorage(this._atomStoreMaster, this._queryClient);
+        if (session) {
+            this.setWorkbenchSession(session);
         }
-        return;
     }
 
     async openSession(sessionId: string): Promise<void> {
@@ -81,23 +89,34 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             return;
         }
 
-        this._workbenchSession = await PrivateWorkbenchSession.loadSessionFromBackend(
-            this._atomStoreMaster,
-            this._queryClient,
-            sessionId,
-        );
+        const session = await loadWorkbenchSessionFromBackend(this._atomStoreMaster, this._queryClient, sessionId);
+        await this._workbenchSessionPersistenceService.setWorkbenchSession(session);
+        this.setWorkbenchSession(session);
+    }
 
-        if (!this._workbenchSession) {
-            throw new Error(`Could not load workbench session with ID ${sessionId}`);
+    private setWorkbenchSession(session: PrivateWorkbenchSession): void {
+        if (this._workbenchSession) {
+            console.warn(
+                "A workbench session is already active. Closing the current session before setting a new one.",
+            );
+            this.closeCurrentSession();
         }
 
+        this._workbenchSession = session;
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
     }
 
-    startNewSession(): void {
-        // Clear / save the current session?
-        this._workbenchSession = PrivateWorkbenchSession.makeNew(this._atomStoreMaster, this._queryClient);
-        this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
+    async startNewSession(): Promise<void> {
+        if (this._workbenchSession) {
+            console.warn("A workbench session is already active. Please close it before starting a new one.");
+            return;
+        }
+
+        const session = new PrivateWorkbenchSession(this._atomStoreMaster, this._queryClient);
+        session.makeDefaultDashboard();
+        await this._workbenchSessionPersistenceService.setWorkbenchSession(session);
+
+        this.setWorkbenchSession(session);
     }
 
     closeCurrentSession(): void {
@@ -108,7 +127,9 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
         this._workbenchSession.removeFromLocalStorage();
         this._workbenchSession.beforeDestroy();
+        this._workbenchSessionPersistenceService.removeWorkbenchSession();
         this._workbenchSession = null;
+
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
     }
 

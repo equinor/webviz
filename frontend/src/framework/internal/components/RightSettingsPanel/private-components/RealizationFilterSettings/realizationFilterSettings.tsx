@@ -9,7 +9,7 @@ import { GuiEvent, GuiState, RightDrawerContent, useGuiState, useGuiValue } from
 import { Drawer } from "@framework/internal/components/Drawer";
 import type { EnsembleRealizationFilterSelections } from "@framework/internal/components/EnsembleRealizationFilter";
 import { EnsembleRealizationFilter } from "@framework/internal/components/EnsembleRealizationFilter";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/PrivateWorkbenchSession";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
 import { areUnsortedArraysEqual } from "@framework/utils/arrayUtils";
