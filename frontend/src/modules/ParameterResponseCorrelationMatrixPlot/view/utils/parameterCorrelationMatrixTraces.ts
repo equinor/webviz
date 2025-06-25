@@ -1,5 +1,6 @@
-import type { CorrelationMatrix } from "@modules/_shared/utils/math/correlationMatrix";
 import type { PlotData } from "plotly.js";
+
+import type { CorrelationMatrix } from "@modules/_shared/utils/math/correlationMatrix";
 
 type HeatMapPlotData = { hoverongaps: boolean } & Partial<PlotData>;
 

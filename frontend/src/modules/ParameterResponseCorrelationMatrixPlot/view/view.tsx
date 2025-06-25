@@ -1,5 +1,8 @@
 import React from "react";
 
+import { Input, Warning } from "@mui/icons-material";
+import { isEqual } from "lodash";
+
 import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
 import { KeyKind } from "@framework/DataChannelTypes";
 import { ParameterIdent } from "@framework/EnsembleParameters";
@@ -16,8 +19,6 @@ import { getVaryingContinuousParameters } from "@modules/_shared/parameterUtils"
 import type { ResponseData } from "@modules/_shared/rankParameter";
 import type { CorrelationDataItem } from "@modules/_shared/utils/math/correlationMatrix";
 import { createPearsonCorrelationMatrix } from "@modules/_shared/utils/math/correlationMatrix";
-import { Input, Warning } from "@mui/icons-material";
-import { isEqual } from "lodash";
 
 import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";

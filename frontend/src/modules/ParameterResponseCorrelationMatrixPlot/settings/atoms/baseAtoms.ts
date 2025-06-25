@@ -1,5 +1,6 @@
-import type { ParameterIdent } from "@framework/EnsembleParameters";
 import { atom } from "jotai";
+
+import type { ParameterIdent } from "@framework/EnsembleParameters";
 
 import { PlotType } from "../../typesAndEnums";
 

@@ -1,5 +1,7 @@
 import React from "react";
 
+import { useAtom } from "jotai";
+
 import { KeyKind } from "@framework/DataChannelTypes";
 import type { ParameterIdent } from "@framework/EnsembleParameters";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
@@ -8,12 +10,9 @@ import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Select } from "@lib/components/Select";
 import { getContinuousAndNonConstantParameterIdentsInEnsembles } from "@modules/_shared/parameterUnions";
-import { useAtom } from "jotai";
 
 import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
