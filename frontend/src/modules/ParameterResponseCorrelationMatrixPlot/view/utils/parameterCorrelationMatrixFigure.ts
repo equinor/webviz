@@ -35,7 +35,7 @@ export class ParameterCorrelationMatrixFigure {
         showSelfCorrelation,
         useFixedColorRange,
     }: ParameterCorrelationMatrixFigureProps) {
-        this._showLabels = showLabels;
+        this._showLabels = showLabels ;
         this._showSelfCorrelation = showSelfCorrelation;
         this._useFixedColorRange = useFixedColorRange;
         const margin = this._showLabels

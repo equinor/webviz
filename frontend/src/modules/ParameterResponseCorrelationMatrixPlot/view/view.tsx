@@ -21,7 +21,7 @@ import type { CorrelationDataItem } from "@modules/_shared/utils/math/correlatio
 import { createPearsonCorrelationMatrix } from "@modules/_shared/utils/math/correlationMatrix";
 
 import type { Interfaces } from "../interfaces";
-import { PlotType } from "../typesAndEnums";
+import { MAX_LABELS, PlotType } from "../typesAndEnums";
 
 import { ParameterCorrelationMatrixFigure } from "./utils/parameterCorrelationMatrixFigure";
 import { createParameterResponseCorrelationMatrix } from "./utils/parameterCorrelationMatrixUtils";
@@ -177,7 +177,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 wrapperDivSize,
                 numCols,
                 numRows,
-                showLabels,
+                showLabels: showLabels && parameterIdents.length <= MAX_LABELS,
                 showSelfCorrelation,
                 useFixedColorRange,
             });

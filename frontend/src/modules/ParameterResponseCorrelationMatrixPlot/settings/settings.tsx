@@ -15,7 +15,7 @@ import { RadioGroup } from "@lib/components/RadioGroup";
 import { getContinuousAndNonConstantParameterIdentsInEnsembles } from "@modules/_shared/parameterUnions";
 
 import type { Interfaces } from "../interfaces";
-import { PlotType } from "../typesAndEnums";
+import { MAX_LABELS, PlotType } from "../typesAndEnums";
 
 import {
     parameterIdentsAtom,
@@ -37,7 +37,7 @@ const plotTypes = [
     },
 ];
 
-const MAX_LABELS = 25;
+
 export function Settings({ initialSettings, settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const [parameterIdents, setParameterIdents] = useAtom(parameterIdentsAtom);
     const [plotType, setPlotType] = useAtom(plotTypeAtom);
@@ -75,6 +75,7 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
     );
 
     function handleParametersChanged(parameterIdents: ParameterIdent[]) {
+        
         setParameterIdents(parameterIdents);
     }
     function handleShowLabelsChanged(value: boolean) {
