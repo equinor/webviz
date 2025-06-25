@@ -1,6 +1,6 @@
 import type { DropdownOption } from "@lib/components/Dropdown";
 import type { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
-import { TableDataSource } from "@modules/_shared/InplaceVolumes/types";
+import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 
 export function makeSubplotByOptions(
     tableDefinitionsAccessor: TableDefinitionsAccessor,
@@ -11,11 +11,11 @@ export function makeSubplotByOptions(
 
     const options: DropdownOption<string>[] = [
         {
-            value: TableDataSource.ENSEMBLE,
+            value: TableOriginKey.ENSEMBLE,
             label: "ENSEMBLE",
         },
         {
-            value: TableDataSource.TABLE_NAME,
+            value: TableOriginKey.TABLE_NAME,
             label: "TABLE NAME",
         },
     ];
@@ -44,32 +44,32 @@ export function makeColorByOptions(
 
     const options: DropdownOption<string>[] = [];
 
-    if (numEnsembleIdents > 1 && selectedSubplotBy !== TableDataSource.ENSEMBLE) {
+    if (numEnsembleIdents > 1 && selectedSubplotBy !== TableOriginKey.ENSEMBLE) {
         options.push({
-            value: TableDataSource.ENSEMBLE,
+            value: TableOriginKey.ENSEMBLE,
             label: "ENSEMBLE",
         });
         return options;
     }
 
-    if (numTableNames > 1 && selectedSubplotBy !== TableDataSource.TABLE_NAME) {
+    if (numTableNames > 1 && selectedSubplotBy !== TableOriginKey.TABLE_NAME) {
         options.push({
-            value: TableDataSource.TABLE_NAME,
+            value: TableOriginKey.TABLE_NAME,
             label: "TABLE NAME",
         });
         return options;
     }
 
-    if (selectedSubplotBy !== TableDataSource.ENSEMBLE) {
+    if (selectedSubplotBy !== TableOriginKey.ENSEMBLE) {
         options.push({
-            value: TableDataSource.ENSEMBLE,
+            value: TableOriginKey.ENSEMBLE,
             label: "ENSEMBLE",
         });
     }
 
-    if (selectedSubplotBy !== TableDataSource.TABLE_NAME) {
+    if (selectedSubplotBy !== TableOriginKey.TABLE_NAME) {
         options.push({
-            value: TableDataSource.TABLE_NAME,
+            value: TableOriginKey.TABLE_NAME,
             label: "TABLE NAME",
         });
     }

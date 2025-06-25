@@ -8,7 +8,7 @@ import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembl
 import type { HistogramBinRange } from "@modules/_shared/histogram";
 import { makeHistogramBinRangesFromMinAndMaxValues, makeHistogramTrace } from "@modules/_shared/histogram";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
-import { TableDataSource } from "@modules/_shared/InplaceVolumes/types";
+import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
 import type { RealizationAndResult } from "./convergenceCalculation";
@@ -18,7 +18,7 @@ export function makeFormatLabelFunction(
     ensembleSet: EnsembleSet,
 ): (columnName: string, value: string | number) => string {
     return function formatLabel(columnName: string, value: string | number): string {
-        if (columnName === TableDataSource.ENSEMBLE) {
+        if (columnName === TableOriginKey.ENSEMBLE) {
             const ensembleIdent = RegularEnsembleIdent.fromString(value.toString());
             const ensemble = ensembleSet.findEnsemble(ensembleIdent);
             if (ensemble) {
@@ -82,7 +82,7 @@ export function makePlotData(
         let color = colorSet.getFirstColor();
         for (const [key, table] of collection.getCollectionMap()) {
             let title = key.toString();
-            if (colorBy === TableDataSource.ENSEMBLE) {
+            if (colorBy === TableOriginKey.ENSEMBLE) {
                 const ensembleIdent = RegularEnsembleIdent.fromString(key.toString());
                 const ensemble = ensembleSet.findEnsemble(ensembleIdent);
                 if (ensemble) {

@@ -29,10 +29,10 @@ export const TableTypeToStringMapping = {
     [TableType.STATISTICAL]: "Statistical",
 };
 
-// Enum for the sources to identify the origin of the table data received from the API.
-// - Fetch table data per ensemble and table name.
-// - For each ensemble + table name: Receive table data per fluid selection
-export enum TableDataSource {
+// Enum defining keys to identify the origin of the table data received from the API.
+// - Each query fetch table data for pair: ensemble + table name
+// - The query result: Table data per fluid
+export enum TableOriginKey {
     ENSEMBLE = "ENSEMBLE",
     TABLE_NAME = "TABLE_NAME",
     FLUID = "FLUID",

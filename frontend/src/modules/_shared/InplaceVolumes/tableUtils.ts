@@ -7,13 +7,13 @@ import type {
     StatisticalColumns,
     StatisticalTableColumnData,
 } from "./types";
-import { InplaceVolumesStatisticEnumToStringMapping, TableDataSource } from "./types";
+import { InplaceVolumesStatisticEnumToStringMapping, TableOriginKey } from "./types";
 
 export function makeTableFromApiData(data: InplaceVolumesTableData[]): Table {
     const columns: Map<string, Column<any>> = new Map();
-    columns.set("ensemble", new Column<string>(TableDataSource.ENSEMBLE, ColumnType.ENSEMBLE));
-    columns.set("table", new Column<string>(TableDataSource.TABLE_NAME, ColumnType.TABLE));
-    columns.set("fluid", new Column<string>(TableDataSource.FLUID, ColumnType.FLUID));
+    columns.set("ensemble", new Column<string>(TableOriginKey.ENSEMBLE, ColumnType.ENSEMBLE));
+    columns.set("table", new Column<string>(TableOriginKey.TABLE_NAME, ColumnType.TABLE));
+    columns.set("fluid", new Column<string>(TableOriginKey.FLUID, ColumnType.FLUID));
 
     // First, collect all columns
     for (const tableSet of data) {
@@ -108,9 +108,9 @@ export function makeStatisticalTableColumnDataFromApiData(
     const nonStatisticalColumns: Map<string, Column<any>> = new Map();
 
     // Columns to always exist (non-statistical, but no selector columns)
-    nonStatisticalColumns.set("ensemble", new Column<string>(TableDataSource.ENSEMBLE, ColumnType.ENSEMBLE));
-    nonStatisticalColumns.set("table", new Column<string>(TableDataSource.TABLE_NAME, ColumnType.TABLE));
-    nonStatisticalColumns.set("fluid", new Column<string>(TableDataSource.FLUID, ColumnType.FLUID));
+    nonStatisticalColumns.set("ensemble", new Column<string>(TableOriginKey.ENSEMBLE, ColumnType.ENSEMBLE));
+    nonStatisticalColumns.set("table", new Column<string>(TableOriginKey.TABLE_NAME, ColumnType.TABLE));
+    nonStatisticalColumns.set("fluid", new Column<string>(TableOriginKey.FLUID, ColumnType.FLUID));
 
     // Find union of selector columns and result columns
     for (const tableSet of data) {
