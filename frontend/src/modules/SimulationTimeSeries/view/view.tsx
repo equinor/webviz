@@ -45,11 +45,14 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const parameterColorScale = workbenchSettings.useContinuousColorScale({
         gradientType: ColorScaleGradientType.Diverging,
     });
-    const uniqueVectorNames = [...new Set(vectorSpecifications.map((vec) => vec.vectorName))];
-    const vectorHexColors: VectorHexColorMap = {};
-    uniqueVectorNames.forEach((vectorName, index) => {
+    const vectorToHexColorMap: VectorHexColorMap = {};
+    vectorSpecifications.forEach((vectorSpec, index) => {
+        if (vectorSpec.vectorName in vectorToHexColorMap) {
+            return;
+        }
+        // If the vector name is not already in map, assign a color
         const color = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
-        vectorHexColors[vectorName] = color;
+        vectorToHexColorMap[vectorSpec.vectorName] = color;
     });
     const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
 
@@ -72,7 +75,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     }
 
     useMakeViewStatusWriterMessages(viewContext, statusWriter, parameterDisplayName, ensemblesWithoutParameter);
-    usePublishToDataChannels(viewContext, subplotOwner, vectorHexColors);
+    usePublishToDataChannels(viewContext, subplotOwner, vectorToHexColorMap);
 
     function handleClickInChart(e: PlotMouseEvent) {
         const clickedPoint: PlotDatum = e.points[0];
@@ -91,7 +94,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const plot = usePlotBuilder(
         viewContext,
         wrapperDivSize,
-        vectorHexColors,
+        vectorToHexColorMap,
         subplotOwner,
         ensemblesParameterColoring,
         handleClickInChart,

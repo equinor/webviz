@@ -1,7 +1,5 @@
 import React from "react";
 
-import { useAtom } from "jotai";
-
 import { KeyKind } from "@framework/DataChannelTypes";
 import type { ParameterIdent } from "@framework/EnsembleParameters";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
@@ -10,21 +8,40 @@ import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { Dropdown } from "@lib/components/Dropdown";
+import { Label } from "@lib/components/Label";
+import { RadioGroup } from "@lib/components/RadioGroup";
+import { Select } from "@lib/components/Select";
 import { getContinuousAndNonConstantParameterIdentsInEnsembles } from "@modules/_shared/parameterUnions";
+import { useAtom } from "jotai";
 
 import type { Interfaces } from "../interfaces";
+import { PlotType } from "../typesAndEnums";
 
 import {
     parameterIdentsAtom,
+    plotTypeAtom,
     showLabelsAtom,
     showSelfCorrelationAtom,
     useFixedColorRangeAtom,
 } from "./atoms/baseAtoms";
 import { ParametersSelector } from "./components/parameterSelector";
 
+const plotTypes = [
+    {
+        value: PlotType.FullMatrix,
+        label: "Full matrix",
+    },
+    {
+        value: PlotType.ParameterResponseMatrix,
+        label: "Parameter vs. response matrix",
+    },
+];
+
 const MAX_LABELS = 25;
 export function Settings({ initialSettings, settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const [parameterIdents, setParameterIdents] = useAtom(parameterIdentsAtom);
+    const [plotType, setPlotType] = useAtom(plotTypeAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
     const [showSelfCorrelation, setShowSelfCorrelation] = useAtom(showSelfCorrelationAtom);
     const [useFixedColorRange, setUseFixedColorRange] = useAtom(useFixedColorRangeAtom);
@@ -68,11 +85,21 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
             setShowLabels(value);
         }
     }
-
+    function handlePlotTypeChanged(value: string) {
+        setPlotType(value as PlotType);
+    }
     return (
         <div className="flex flex-col gap-2">
             <CollapsibleGroup title="Plot settings" expanded>
                 <div className="flex flex-col gap-2">
+                    <Label text="Matrix type">
+                        <RadioGroup
+                            value={plotType as string}
+                            options={plotTypes}
+                            onChange={(e) => handlePlotTypeChanged(e.target.value)}
+                        />
+                    </Label>
+
                     <Checkbox
                         label={`Show parameter labels (Max ${MAX_LABELS})`}
                         checked={showLabels}

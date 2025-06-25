@@ -9,21 +9,22 @@ import { ChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
 import type { RegularEnsembleVectorSpec } from "@modules/SimulationTimeSeries/dataGenerators";
 import { makeVectorGroupDataGenerator } from "@modules/SimulationTimeSeries/dataGenerators";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
-import type { VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
+import type { VectorHexColorMap } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 import {
     activeTimestampUtcMsAtom,
     loadedVectorSpecificationsAndRealizationDataAtom,
     queryIsFetchingAtom,
 } from "../atoms/derivedAtoms";
-import { SubplotOwner } from "../utils/PlotBuilder";
+import { getHexColorFromOwner } from "../utils/colorUtils";
+import type { SubplotOwner } from "../utils/PlotBuilder";
 
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
 export function usePublishToDataChannels(
     viewContext: ViewContext<Interfaces>,
     subplotOwner: SubplotOwner,
-    vectorHexColors: { [key: string]: string },
+    vectorHexColors: VectorHexColorMap,
 ): void {
     const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
@@ -76,18 +77,4 @@ export function usePublishToDataChannels(
         enabled: !isQueryFetching,
         contents,
     });
-}
-
-function getHexColorFromOwner(
-    owner: SubplotOwner,
-    vectorSpec: VectorSpec,
-    vectorHexColors: { [key: string]: string },
-): string {
-    let color: string | null = null;
-    if (owner === SubplotOwner.ENSEMBLE) {
-        color = vectorHexColors[vectorSpec.vectorName];
-    } else if (owner === SubplotOwner.VECTOR) {
-        color = vectorSpec.color;
-    }
-    return color ?? "#000000";
 }

@@ -20,8 +20,10 @@ import { Input, Warning } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
 import type { Interfaces } from "../interfaces";
+import { PlotType } from "../typesAndEnums";
 
 import { ParameterCorrelationMatrixFigure } from "./utils/parameterCorrelationMatrixFigure";
+import { createParameterResponseCorrelationMatrix } from "./utils/parameterCorrelationMatrixUtils";
 
 const MAX_NUM_PLOTS = 12;
 
@@ -45,7 +47,10 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const [prevShowSelfCorrelation, setPrevShowSelfCorrelation] = React.useState<boolean>(true);
     const [prevUseFixedColorRange, setPrevUseFixedColorRange] = React.useState<boolean>(true);
     const [prevColorScaleWithGradient, setPrevColorScaleWithGradient] = React.useState<[number, string][]>([]);
+    const [prevPlotType, setPrevPlotType] = React.useState<PlotType>(PlotType.FullMatrix);
+
     const parameterIdents = viewContext.useSettingsToViewInterfaceValue("parameterIdents");
+    const plotType = viewContext.useSettingsToViewInterfaceValue("plotType");
     const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");
     const showSelfCorrelation = viewContext.useSettingsToViewInterfaceValue("showSelfCorrelation");
     const useFixedColorRange = viewContext.useSettingsToViewInterfaceValue("useFixedColorRange");
@@ -86,7 +91,8 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         wrapperDivSize !== prevSize ||
         showSelfCorrelation !== prevShowSelfCorrelation ||
         useFixedColorRange !== prevUseFixedColorRange ||
-        !isEqual(colorScaleWithGradient, prevColorScaleWithGradient)
+        !isEqual(colorScaleWithGradient, prevColorScaleWithGradient) ||
+        plotType !== prevPlotType
     ) {
         setRevNumberResponses(receiverResponseRevisionNumbers);
 
@@ -96,7 +102,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         setPrevShowSelfCorrelation(showSelfCorrelation);
         setPrevUseFixedColorRange(useFixedColorRange);
         setPrevColorScaleWithGradient(colorScaleWithGradient);
-
+        setPrevPlotType(plotType);
         startTransition(function makeContent() {
             // Content when no data channels are defined
             if (receiverResponses.every((response) => !response.channel)) {
@@ -215,16 +221,27 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                         name: param.name,
                         values: param.values,
                     }));
-                    const allItems = [...responseItems, ...parameterItems];
-                    const corr = createPearsonCorrelationMatrix(allItems);
-                    figure.addCorrelationMatrixTrace({
-                        data: corr,
-                        colorScaleWithGradient,
-                        rowIndex: rowIndex + 1,
-                        columnIndex: colIndex + 1,
-                        cellIndex,
-                        title: ensemble.getDisplayName(),
-                    });
+                    if (plotType === PlotType.FullMatrix) {
+                        const corr = createPearsonCorrelationMatrix([...responseItems, ...parameterItems]);
+                        figure.addFullCorrelationMatrixTrace({
+                            data: corr,
+                            colorScaleWithGradient,
+                            row: rowIndex + 1,
+                            column: colIndex + 1,
+                            cellIndex,
+                            title: ensemble.getDisplayName(),
+                        });
+                    } else if (plotType === PlotType.ParameterResponseMatrix) {
+                        const corr = createParameterResponseCorrelationMatrix(parameterItems, responseItems);
+                        figure.addParameterResponseMatrixTrace({
+                            data: corr,
+                            colorScaleWithGradient,
+                            row: rowIndex + 1,
+                            column: colIndex + 1,
+                            cellIndex,
+                            title: ensemble.getDisplayName(),
+                        });
+                    }
 
                     cellIndex++;
                 }

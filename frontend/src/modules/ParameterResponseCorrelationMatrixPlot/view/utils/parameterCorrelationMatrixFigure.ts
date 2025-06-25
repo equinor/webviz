@@ -2,13 +2,14 @@ import type { Size2D } from "@lib/utils/geometry";
 import type { Figure } from "@modules/_shared/Figure";
 import { makeSubplots } from "@modules/_shared/Figure";
 import type { CorrelationMatrix } from "@modules/_shared/utils/math/correlationMatrix";
-import type { PlotData } from "plotly.js";
+
+import { createCorrelationMatrixTrace } from "./parameterCorrelationMatrixTraces";
 
 export type CorrelationMatrixTraceProps = {
     data: CorrelationMatrix;
     colorScaleWithGradient: [number, string][];
-    rowIndex: number;
-    columnIndex: number;
+    row: number;
+    column: number;
     cellIndex: number;
     title: string;
 };
@@ -71,11 +72,11 @@ export class ParameterCorrelationMatrixFigure {
         });
     }
 
-    addCorrelationMatrixTrace({
+    addFullCorrelationMatrixTrace({
         data,
         colorScaleWithGradient,
-        rowIndex,
-        columnIndex,
+        row,
+        column,
         cellIndex,
         title,
     }: CorrelationMatrixTraceProps): void {
@@ -85,6 +86,26 @@ export class ParameterCorrelationMatrixFigure {
             this._showSelfCorrelation,
             this._useFixedColorRange,
         );
+
+        this._figure.updateSubplotTitle(`${title}`, row, column);
+        this._figure.addTrace(matrixTrace, row, column);
+        this.setAxisSettings(cellIndex);
+    }
+    addParameterResponseMatrixTrace({
+        data,
+        colorScaleWithGradient,
+        row,
+        column,
+        cellIndex,
+        title,
+    }: CorrelationMatrixTraceProps): void {
+        const matrixTrace = createCorrelationMatrixTrace(data, colorScaleWithGradient, false, this._useFixedColorRange);
+
+        this._figure.updateSubplotTitle(`${title}`, row, column);
+        this._figure.addTrace(matrixTrace, row, column);
+        this.setAxisSettings(cellIndex);
+    }
+    private setAxisSettings(cellIndex: number): void {
         this._figure.updateLayout({
             [`xaxis${cellIndex + 1}`]: {
                 showticklabels: this._showLabels,
@@ -112,50 +133,8 @@ export class ParameterCorrelationMatrixFigure {
                 spikecolor: "black",
             },
         });
-        this._figure.updateSubplotTitle(`${title}`, rowIndex, columnIndex);
-        this._figure.addTrace(matrixTrace, rowIndex, columnIndex);
     }
-
     build(handleOnClick?: ((event: Readonly<Plotly.PlotMouseEvent>) => void) | undefined): React.ReactNode {
         return this._figure.makePlot({ onClick: handleOnClick });
     }
-}
-type HeatMapPlotData = { hoverongaps: boolean } & Partial<PlotData>;
-
-function createCorrelationMatrixTrace(
-    matrix: CorrelationMatrix,
-    colorScaleWithGradient: [number, string][],
-    showSelfCorrelation: boolean,
-    useFixedColorRange: boolean,
-): Partial<HeatMapPlotData> {
-    const triangularMatrix = matrix.matrix.map((row, i) => {
-        if (!showSelfCorrelation) {
-            return row.map((val, j) => {
-                return j >= i ? NaN : val;
-            });
-        } else {
-            return row.map((val, j) => {
-                return j > i ? NaN : val;
-            });
-        }
-    });
-
-    const trace: Partial<HeatMapPlotData> = {
-        x: matrix.labels,
-        y: matrix.labels,
-        z: triangularMatrix,
-        type: "heatmap",
-        colorscale: colorScaleWithGradient,
-        zmin: useFixedColorRange ? -1 : undefined,
-        zmax: useFixedColorRange ? 1 : undefined,
-        showscale: true,
-        hoverongaps: false,
-        hovertemplate: "X-axis = <b>%{x}</b><br>Y-axis = <b>%{y}</b><br>Correlation = <b>%{x}</b><extra></extra>",
-        hoverlabel: {
-            bgcolor: "white",
-            font: { size: 12, color: "black" },
-        },
-    };
-
-    return trace;
 }

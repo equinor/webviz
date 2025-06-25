@@ -1,8 +1,9 @@
+import type { PlotData } from "plotly.js";
+
 import type { Size2D } from "@lib/utils/geometry";
 import type { Figure } from "@modules/_shared/Figure";
 import { makeSubplots } from "@modules/_shared/Figure";
 import type { RankedParameterCorrelation } from "@modules/_shared/rankParameter";
-import type { PlotData } from "plotly.js";
 
 export class ParameterCorrelationFigure {
     private _figure: Figure;
@@ -40,17 +41,17 @@ export class ParameterCorrelationFigure {
     addCorrelationTrace(
         data: RankedParameterCorrelation[],
         highlightedParameterString: string | null,
-        rowIndex: number,
-        columnIndex: number,
+        row: number,
+        column: number,
         cellIndex: number,
         title: string,
         color?: string,
     ) {
         const correlationTrace = createCorrelationTrace(data, highlightedParameterString, this._showLabel, color);
 
-        this._figure.addTrace(correlationTrace, rowIndex, columnIndex);
+        this._figure.addTrace(correlationTrace, row, column);
 
-        this._figure.updateSubplotTitle(`${title}`, rowIndex, columnIndex);
+        this._figure.updateSubplotTitle(`${title}`, row, column);
 
         this._figure.updateLayout({
             [`xaxis${cellIndex + 1}`]: {

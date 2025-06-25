@@ -6,7 +6,8 @@ export type CorrelationDataItem = {
 };
 
 export type CorrelationMatrix = {
-    labels: string[];
+    xLabels: string[];
+    yLabels: string[];
     matrix: (number | null)[][];
 };
 export function createPearsonCorrelationMatrix(dataItems: CorrelationDataItem[]): CorrelationMatrix {
@@ -26,5 +27,5 @@ export function createPearsonCorrelationMatrix(dataItems: CorrelationDataItem[])
         }
     }
 
-    return { labels, matrix };
+    return { xLabels: labels, yLabels: labels, matrix };
 }
