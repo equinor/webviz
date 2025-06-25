@@ -41,22 +41,24 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 props.workbenchServices.publishGlobalData("global.hoverFacies", null);
                 return;
             }
-            if (Object.keys(row).includes("REGION")) {
-                const regionName = row["REGION"]?.toString();
+
+            const regionColumnKey = Object.keys(row).find((key) => key.toUpperCase() === "REGION");
+            if (regionColumnKey) {
+                const regionName = row[regionColumnKey]?.toString();
                 if (regionName) {
                     props.workbenchServices.publishGlobalData("global.hoverRegion", { regionName });
                 }
             }
-
-            if (Object.keys(row).includes("ZONE")) {
-                const zoneName = row["ZONE"]?.toString();
+            const zoneColumnKey = Object.keys(row).find((key) => key.toUpperCase() === "ZONE");
+            if (zoneColumnKey) {
+                const zoneName = row[zoneColumnKey]?.toString();
                 if (zoneName) {
                     props.workbenchServices.publishGlobalData("global.hoverZone", { zoneName });
                 }
             }
-
-            if (Object.keys(row).includes("FACIES")) {
-                const faciesName = row["FACIES"]?.toString();
+            const faciesColumnKey = Object.keys(row).find((key) => key.toUpperCase() === "FACIES");
+            if (faciesColumnKey) {
+                const faciesName = row[faciesColumnKey]?.toString();
                 if (faciesName) {
                     props.workbenchServices.publishGlobalData("global.hoverFacies", { faciesName });
                 }

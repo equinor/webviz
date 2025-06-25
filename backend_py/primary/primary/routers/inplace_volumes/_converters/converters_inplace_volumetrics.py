@@ -15,7 +15,12 @@ from ._shared_converters import (
 from .. import schemas
 
 
-class ConverterOriginal:
+class ConverterInplaceVolumetrics:
+    """
+    This class provides methods to convert between the API format and the sumo service format for the original solution,
+    named inplace volumetrics data.
+    """
+
     @staticmethod
     def convert_schema_to_identifiers_with_values(
         indices_with_values: list[schemas.InplaceVolumesIndexWithValues],
@@ -30,7 +35,7 @@ class ConverterOriginal:
             if index_with_values.indexColumn.upper() == "FLUID":
                 continue
 
-            identifier = ConverterOriginal._convert_schema_to_identifier(index_with_values.indexColumn)
+            identifier = ConverterInplaceVolumetrics._convert_schema_to_identifier(index_with_values.indexColumn)
             values = index_with_values.values
             converted.append(InplaceVolumetricsIdentifierWithValues(identifier, values))
         return converted
@@ -62,7 +67,7 @@ class ConverterOriginal:
         if indices is None:
             return None
 
-        return [ConverterOriginal._convert_schema_to_identifier(index) for index in indices]
+        return [ConverterInplaceVolumetrics._convert_schema_to_identifier(index) for index in indices]
 
     @staticmethod
     def _convert_schema_to_identifier(index_string: str) -> InplaceVolumetricsIdentifier:

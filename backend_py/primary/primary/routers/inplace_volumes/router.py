@@ -16,8 +16,8 @@ from primary.auth.auth_helper import AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.query_string_utils import decode_uint_list_str
 
-from primary.routers.inplace_volumes._converters.converters_fmu_dataio import ConverterFmuDataIo
-from primary.routers.inplace_volumes._converters.converters_original import ConverterOriginal
+from primary.routers.inplace_volumes._converters.converters_inplace_volumes import ConverterInplaceVolumes
+from primary.routers.inplace_volumes._converters.converters_inplace_volumetrics import ConverterInplaceVolumetrics
 
 from . import schemas
 
@@ -43,7 +43,7 @@ async def get_table_definitions(
     if inplace_volume_table_names != []:
         assembler = InplaceVolumesTableAssembler(access)
         tables = await assembler.get_inplace_volumes_tables_metadata_async()
-        return ConverterFmuDataIo.to_api_volumes_table_definitions(tables)
+        return ConverterInplaceVolumes.to_api_volumes_table_definitions(tables)
 
     # If the inplace volumes table does not exist, try the InplaceVolumetricsAccess
     secondary_access = InplaceVolumetricsAccess.from_iteration_name(
@@ -51,7 +51,7 @@ async def get_table_definitions(
     )
     secondary_assembler = InplaceVolumetricsAssembler(secondary_access)
     secondary_tables = await secondary_assembler.get_volumetric_table_metadata_async()
-    return ConverterOriginal.to_api_table_definitions(secondary_tables)
+    return ConverterInplaceVolumetrics.to_api_table_definitions(secondary_tables)
 
 
 @router.post("/get_aggregated_per_realization_table_data/", tags=["inplace_volumes"])
@@ -106,15 +106,15 @@ async def post_get_aggregated_per_realization_table_data(
         data = await assembler.create_accumulated_by_selection_per_realization_volumes_table_data_async(
             table_name=table_name,
             result_names=set(result_names),
-            indices_with_values=ConverterFmuDataIo.convert_schema_to_indices_with_values(indices_with_values),
-            group_by_indices=ConverterFmuDataIo.convert_schema_to_indices(group_by_indices),
+            indices_with_values=ConverterInplaceVolumes.convert_schema_to_indices_with_values(indices_with_values),
+            group_by_indices=ConverterInplaceVolumes.convert_schema_to_indices(group_by_indices),
             realizations=realizations,
         )
 
         perf_metrics.record_lap("calculate-accumulated-data")
         LOGGER.info(f"Got aggregated inplace volumes data in: {perf_metrics.to_string()}")
 
-        return ConverterFmuDataIo.convert_table_data_per_fluid_selection_to_schema(data)
+        return ConverterInplaceVolumes.convert_table_data_per_fluid_selection_to_schema(data)
 
     # If the inplace volumes table does not exist, try the InplaceVolumetricsTableAssembler
     secondary_access = InplaceVolumetricsAccess.from_iteration_name(
@@ -133,9 +133,11 @@ async def post_get_aggregated_per_realization_table_data(
         await secondary_assembler.create_accumulated_by_selection_per_realization_volumetric_table_data_async(
             table_name=table_name,
             result_names=set(result_names),
-            fluid_zones=ConverterOriginal.convert_schema_to_fluid_zones(indices_with_values),
-            identifiers_with_values=ConverterOriginal.convert_schema_to_identifiers_with_values(indices_with_values),
-            group_by_identifiers=ConverterOriginal.convert_schema_to_identifiers(adjusted_group_by_indices),
+            fluid_zones=ConverterInplaceVolumetrics.convert_schema_to_fluid_zones(indices_with_values),
+            identifiers_with_values=ConverterInplaceVolumetrics.convert_schema_to_identifiers_with_values(
+                indices_with_values
+            ),
+            group_by_identifiers=ConverterInplaceVolumetrics.convert_schema_to_identifiers(adjusted_group_by_indices),
             realizations=realizations,
             accumulate_fluid_zones=accumulate_fluid_zones,
         )
@@ -144,7 +146,7 @@ async def post_get_aggregated_per_realization_table_data(
     perf_metrics.record_lap("calculate-accumulated-data-secondary")
     LOGGER.info(f"Got aggregated inplace volumes data in: {perf_metrics.to_string()}")
 
-    return ConverterOriginal.convert_table_data_per_fluid_selection_to_schema(secondary_data)
+    return ConverterInplaceVolumetrics.convert_table_data_per_fluid_selection_to_schema(secondary_data)
 
 
 @router.post("/get_aggregated_statistical_table_data/", tags=["inplace_volumes"])
@@ -199,15 +201,15 @@ async def post_get_aggregated_statistical_table_data(
         data = await assembler.create_accumulated_by_selection_statistical_volumes_table_data_async(
             table_name=table_name,
             result_names=set(result_names),
-            indices_with_values=ConverterFmuDataIo.convert_schema_to_indices_with_values(indices_with_values),
-            group_by_indices=ConverterFmuDataIo.convert_schema_to_indices(group_by_indices),
+            indices_with_values=ConverterInplaceVolumes.convert_schema_to_indices_with_values(indices_with_values),
+            group_by_indices=ConverterInplaceVolumes.convert_schema_to_indices(group_by_indices),
             realizations=realizations,
         )
 
         perf_metrics.record_lap("calculate-accumulated-data")
         LOGGER.info(f"Got aggregated statistical inplace volumes data in: {perf_metrics.to_string()}")
 
-        return ConverterFmuDataIo.convert_statistical_table_data_per_fluid_selection_to_schema(data)
+        return ConverterInplaceVolumes.convert_statistical_table_data_per_fluid_selection_to_schema(data)
 
     # If the inplace volumes table does not exist, try the InplaceVolumetricsTableAssembler
     secondary_access = InplaceVolumetricsAccess.from_iteration_name(
@@ -225,9 +227,11 @@ async def post_get_aggregated_statistical_table_data(
     secondary_data = await secondary_assembler.create_accumulated_by_selection_statistical_volumetric_table_data_async(
         table_name=table_name,
         result_names=set(result_names),
-        fluid_zones=ConverterOriginal.convert_schema_to_fluid_zones(indices_with_values),
-        identifiers_with_values=ConverterOriginal.convert_schema_to_identifiers_with_values(indices_with_values),
-        group_by_identifiers=ConverterOriginal.convert_schema_to_identifiers(adjusted_group_by_indices),
+        fluid_zones=ConverterInplaceVolumetrics.convert_schema_to_fluid_zones(indices_with_values),
+        identifiers_with_values=ConverterInplaceVolumetrics.convert_schema_to_identifiers_with_values(
+            indices_with_values
+        ),
+        group_by_identifiers=ConverterInplaceVolumetrics.convert_schema_to_identifiers(adjusted_group_by_indices),
         realizations=realizations,
         accumulate_fluid_zones=accumulate_fluid_zones,
     )
@@ -235,4 +239,4 @@ async def post_get_aggregated_statistical_table_data(
     perf_metrics.record_lap("calculate-accumulated-data-secondary")
     LOGGER.info(f"Got aggregated statistical inplace volumes data in: {perf_metrics.to_string()}")
 
-    return ConverterOriginal.convert_statistical_table_data_per_fluid_selection_to_schema(secondary_data)
+    return ConverterInplaceVolumetrics.convert_statistical_table_data_per_fluid_selection_to_schema(secondary_data)

@@ -14,14 +14,19 @@ from ._shared_converters import (
 from .. import schemas
 
 
-class ConverterFmuDataIo:
+class ConverterInplaceVolumes:
+    """
+    This class provides methods to convert between the API format and the sumo service format for inplace volumes data.
+
+    """
+
     @staticmethod
     def convert_schema_to_indices_with_values(
         identifiers_with_values: list[schemas.InplaceVolumesIndexWithValues],
     ) -> list[InplaceVolumesIndexWithValues]:
         converted = []
         for identifier_with_values in identifiers_with_values:
-            index = ConverterFmuDataIo._convert_schema_to_index(identifier_with_values.indexColumn)
+            index = ConverterInplaceVolumes._convert_schema_to_index(identifier_with_values.indexColumn)
             values = identifier_with_values.values
             converted.append(InplaceVolumesIndexWithValues(index, values))
         return converted
@@ -34,7 +39,7 @@ class ConverterFmuDataIo:
         if indices is None:
             return None
 
-        return [ConverterFmuDataIo._convert_schema_to_index(index) for index in indices]
+        return [ConverterInplaceVolumes._convert_schema_to_index(index) for index in indices]
 
     @staticmethod
     def _convert_schema_to_index(index_string: str) -> InplaceVolumes.TableIndexColumns:
