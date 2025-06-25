@@ -11,16 +11,14 @@ import type {
 } from "./PrivateWorkbenchSession";
 import type { SerializedWorkbenchSession } from "./WorkbenchSessionSerializer";
 
-const layoutElementSchema: JTDSchemaType<LayoutElement> = {
+const layoutElementSchema: JTDSchemaType<Omit<LayoutElement, "moduleInstanceId" | "moduleName">> = {
     properties: {
-        moduleName: { type: "string" },
         relX: { type: "float32" },
         relY: { type: "float32" },
         relHeight: { type: "float32" },
         relWidth: { type: "float32" },
     },
     optionalProperties: {
-        moduleInstanceId: { type: "string" },
         minimized: { type: "boolean" },
         maximized: { type: "boolean" },
     },
@@ -113,6 +111,8 @@ export const workbenchSessionContentSchema: JTDSchemaType<WorkbenchSessionConten
 export const workbenchSessionMetadataSchema: JTDSchemaType<WorkbenchSessionMetadata> = {
     properties: {
         title: { type: "string" },
+        createdAt: { type: "float64" },
+        updatedAt: { type: "float64" },
     },
     optionalProperties: {
         description: { type: "string" },

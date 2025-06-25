@@ -2,20 +2,21 @@ import React from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
 
+import { ActiveSessionBoundary } from "@framework/internal/components/ActiveSessionBoundary";
+import { AuthenticationBoundary } from "@framework/internal/components/AuthenticationBoundary";
+import { LoadingOverlay } from "@framework/internal/components/LoadingOverlay";
 import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
+import { SaveSessionDialog } from "@framework/internal/components/SaveSessionDialog/saveSessionDialog";
+import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
+import { StartPage } from "@framework/internal/components/StartPage/StartPage";
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { TopBar } from "@framework/internal/components/TopBar/topBar";
 import { Workbench, WorkbenchTopic } from "@framework/Workbench";
 
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
-import { AuthenticationBoundary } from "@framework/internal/components/AuthenticationBoundary";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { StartPage } from "@framework/internal/components/StartPage/StartPage";
-import { LoadingOverlay } from "@framework/internal/components/LoadingOverlay";
-import { ActiveSessionBoundary } from "@framework/internal/components/ActiveSessionBoundary";
-import { SaveSessionDialog } from "@framework/internal/components/SaveSessionDialog/saveSessionDialog";
 import { UnsavedSessionChangesDialog } from "@framework/internal/components/UnsavedSessionChangesDialog/unsavedSessionChangesDialog";
 
 function App() {
@@ -61,7 +62,7 @@ function App() {
                 <>
                     <TopBar workbench={workbench} />
                     <ActiveSessionBoundary workbench={workbench}>
-                        {/* Later, add the ensemble dialog here */}
+                        <SelectEnsemblesDialog workbench={workbench} />
                         <SaveSessionDialog workbench={workbench} />
                         <UnsavedSessionChangesDialog workbench={workbench} />
                     </ActiveSessionBoundary>

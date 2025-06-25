@@ -64,6 +64,7 @@ export class ModuleRegistry {
             drawPreviewFunc: options.preview,
             onInstanceUnloadFunc: options.onInstanceUnload,
             description: options.description,
+            serializedStateSchema: options.serializedStateSchema,
         });
         this._registeredModules[options.moduleName] = module;
         return module;

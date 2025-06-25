@@ -53,6 +53,8 @@ export async function deserializeFromBackend(
     session.setMetadata({
         title: raw.metadata.title,
         description: raw.metadata.description ?? undefined,
+        createdAt: new Date(raw.metadata.created_at).getTime(),
+        updatedAt: new Date(raw.metadata.updated_at).getTime(),
     });
     session.setId(raw.id);
     session.setIsPersisted(true);
@@ -61,7 +63,6 @@ export async function deserializeFromBackend(
 
 export function makeWorkbenchSessionStateString(session: PrivateWorkbenchSession): string {
     return objectToJsonString({
-        version: 1,
         metadata: session.getMetadata(),
         content: session.getContent(),
     });

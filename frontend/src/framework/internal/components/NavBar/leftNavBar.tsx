@@ -2,19 +2,10 @@ import React from "react";
 
 import { GridView, Link, List, Palette, Settings, WebAsset } from "@mui/icons-material";
 
-import { GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
-import type {
-    BaseEnsembleItem,
-    DeltaEnsembleItem,
-    RegularEnsembleItem,
-} from "@framework/internal/components/SelectEnsemblesDialog";
-import type { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
+import { GuiState, LeftDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
 import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { Workbench } from "@framework/Workbench";
-import { useColorSet } from "@framework/WorkbenchSettings";
 import { Badge } from "@lib/components/Badge";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
@@ -35,11 +26,11 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
     );
     const layout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.Layout);
-    const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
-    const [newSelectedEnsembles, setNewSelectedEnsembles] = React.useState<RegularEnsembleItem[]>([]);
-    const [newCreatedDeltaEnsembles, setNewCreatedDeltaEnsembles] = React.useState<DeltaEnsembleItem[]>([]);
+    const [ensembleDialogOpen, setEnsembleDialogOpen] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.EnsembleDialogOpen,
+    );
     const [layoutEmpty, setLayoutEmpty] = React.useState<boolean>(dashboard.getLayout().length === 0);
-    const [prevIsAppInitialized, setPrevIsAppInitialized] = React.useState<boolean>(false);
     const loadingEnsembleSet = usePublishSubscribeTopicValue(
         props.workbench.getWorkbenchSession(),
         PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING,
@@ -52,20 +43,6 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         props.workbench.getGuiMessageBroker(),
         GuiState.LeftSettingsPanelWidthInPercent,
     );
-    const isAppInitialized = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.AppInitialized);
-
-    /*
-    if (ensembleSet.getEnsembleArray().length === 0 && !loadingEnsembleSet) {
-        setEnsembleDialogOpen(true);
-    }
-        */
-
-    if (isAppInitialized !== prevIsAppInitialized && !loadingEnsembleSet) {
-        setEnsembleDialogOpen(ensembleSet.getEnsembleArray().length === 0);
-        setPrevIsAppInitialized(isAppInitialized);
-    }
-
-    const colorSet = useColorSet(props.workbench.getWorkbenchSettings());
 
     React.useEffect(
         function reactToModuleInstancesChanged() {
@@ -115,72 +92,6 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         setDrawerContent(LeftDrawerContent.ColorPaletteSettings);
     }
 
-    function handleEnsembleDialogClose() {
-        setEnsembleDialogOpen(false);
-    }
-
-    function loadAndSetupEnsembles(
-        ensembleItems: RegularEnsembleItem[],
-        createdDeltaEnsembles: DeltaEnsembleItem[],
-    ): Promise<void> {
-        setNewSelectedEnsembles(ensembleItems);
-        setNewCreatedDeltaEnsembles(createdDeltaEnsembles);
-        const ensembleSettings: UserEnsembleSetting[] = ensembleItems.map((ens) => ({
-            ensembleIdent: new RegularEnsembleIdent(ens.caseUuid, ens.ensembleName),
-            customName: ens.customName,
-            color: ens.color,
-        }));
-        const deltaEnsembleSettings: UserDeltaEnsembleSetting[] = createdDeltaEnsembles.map((deltaEns) => ({
-            comparisonEnsembleIdent: new RegularEnsembleIdent(
-                deltaEns.comparisonEnsemble.caseUuid,
-                deltaEns.comparisonEnsemble.ensembleName,
-            ),
-            referenceEnsembleIdent: new RegularEnsembleIdent(
-                deltaEns.referenceEnsemble.caseUuid,
-                deltaEns.referenceEnsemble.ensembleName,
-            ),
-            customName: deltaEns.customName,
-            color: deltaEns.color,
-        }));
-        return props.workbench.getWorkbenchSession().loadAndSetupEnsembleSet(ensembleSettings, deltaEnsembleSettings);
-    }
-
-    const selectedEnsembles: RegularEnsembleItem[] = ensembleSet.getRegularEnsembleArray().map((ens) => ({
-        caseUuid: ens.getCaseUuid(),
-        caseName: ens.getCaseName(),
-        ensembleName: ens.getEnsembleName(),
-        color: ens.getColor(),
-        customName: ens.getCustomName(),
-    }));
-
-    let fixedSelectedEnsembles = selectedEnsembles;
-    if (loadingEnsembleSet) {
-        fixedSelectedEnsembles = newSelectedEnsembles;
-    }
-
-    const createdDeltaEnsembles: DeltaEnsembleItem[] = ensembleSet.getDeltaEnsembleArray().map((deltaEns) => {
-        const comparisonEnsemble: BaseEnsembleItem = {
-            caseUuid: deltaEns.getComparisonEnsembleIdent().getCaseUuid(),
-            ensembleName: deltaEns.getComparisonEnsembleIdent().getEnsembleName(),
-        };
-        const referenceEnsemble: BaseEnsembleItem = {
-            caseUuid: deltaEns.getReferenceEnsembleIdent().getCaseUuid(),
-            ensembleName: deltaEns.getReferenceEnsembleIdent().getEnsembleName(),
-        };
-
-        const deltaEnsembleItem: DeltaEnsembleItem = {
-            comparisonEnsemble: comparisonEnsemble,
-            referenceEnsemble: referenceEnsemble,
-            color: deltaEns.getColor(),
-            customName: deltaEns.getCustomName(),
-        };
-        return deltaEnsembleItem;
-    });
-    let fixedCreatedDeltaEnsembles = createdDeltaEnsembles;
-    if (loadingEnsembleSet) {
-        fixedCreatedDeltaEnsembles = newCreatedDeltaEnsembles;
-    }
-
     return (
         <div
             className={resolveClassNames(
@@ -193,17 +104,13 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     title="Open ensemble selection dialog"
                     icon={
                         <Badge
-                            invisible={
-                                selectedEnsembles.length === 0 &&
-                                createdDeltaEnsembles.length === 0 &&
-                                !loadingEnsembleSet
-                            }
+                            invisible={ensembleSet.getEnsembleArray().length === 0 && !loadingEnsembleSet}
                             color="bg-blue-500"
                             badgeContent={
                                 loadingEnsembleSet ? (
                                     <CircularProgress size="extra-small" color="inherit" />
                                 ) : (
-                                    selectedEnsembles.length + createdDeltaEnsembles.length
+                                    ensembleSet.getEnsembleArray().length
                                 )
                             }
                         >
@@ -256,15 +163,6 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
 
                 <div className="grow h-5" />
             </div>
-            {ensembleDialogOpen && (
-                <SelectEnsemblesDialog
-                    loadAndSetupEnsembles={loadAndSetupEnsembles}
-                    selectedRegularEnsembles={fixedSelectedEnsembles}
-                    createdDeltaEnsembles={fixedCreatedDeltaEnsembles}
-                    onClose={handleEnsembleDialogClose}
-                    colorSet={colorSet}
-                />
-            )}
         </div>
     );
 };

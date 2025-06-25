@@ -3,7 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
-import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
+import { GuiMessageBroker, GuiState, LeftDrawerContent } from "./GuiMessageBroker";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
 import { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
@@ -90,8 +90,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         }
 
         const session = await loadWorkbenchSessionFromBackend(this._atomStoreMaster, this._queryClient, sessionId);
-        await this._workbenchSessionPersistenceService.setWorkbenchSession(session);
-        this.setWorkbenchSession(session);
+        await this.setWorkbenchSession(session);
     }
 
     async saveCurrentSession(forceSave = false): Promise<void> {
@@ -103,6 +102,8 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             this._guiMessageBroker.setState(GuiState.IsSavingSession, true);
             await this._workbenchSessionPersistenceService.persistSessionState();
             this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
+            this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
+            this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
             return;
         }
 
@@ -110,16 +111,28 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, true);
     }
 
-    private setWorkbenchSession(session: PrivateWorkbenchSession): void {
+    private async setWorkbenchSession(session: PrivateWorkbenchSession): Promise<void> {
         if (this._workbenchSession) {
-            console.warn(
-                "A workbench session is already active. Closing the current session before setting a new one.",
-            );
-            this.closeCurrentSession();
+            console.warn("A workbench session is already active.");
+            return;
+        }
+
+        if (session.getEnsembleSet().getEnsembleArray().length === 0) {
+            this._guiMessageBroker.setState(GuiState.EnsembleDialogOpen, true);
+        }
+
+        if (session.getActiveDashboard().getLayout().length === 0) {
+            this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModulesList);
+        } else {
+            this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
         }
 
         this._workbenchSession = session;
+        await this._workbenchSessionPersistenceService.setWorkbenchSession(session);
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
+
+        this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
+        this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
     }
 
     async startNewSession(): Promise<void> {
@@ -130,9 +143,8 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
         const session = new PrivateWorkbenchSession(this._atomStoreMaster, this._queryClient);
         session.makeDefaultDashboard();
-        await this._workbenchSessionPersistenceService.setWorkbenchSession(session);
 
-        this.setWorkbenchSession(session);
+        await this.setWorkbenchSession(session);
     }
 
     maybeCloseCurrentSession(): void {
@@ -141,7 +153,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             return;
         }
 
-        if (this._workbenchSessionPersistenceService.hasChanges()) {
+        if (this._workbenchSessionPersistenceService.hasChanges() || !this._workbenchSession.getIsPersisted()) {
             this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, true);
             return;
         }

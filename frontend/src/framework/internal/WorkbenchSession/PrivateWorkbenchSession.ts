@@ -41,6 +41,8 @@ export type WorkbenchSessionContent = {
 export type WorkbenchSessionMetadata = {
     title: string;
     description?: string;
+    updatedAt: number; // Timestamp of the last modification
+    createdAt: number; // Timestamp of creation
 };
 
 export enum PrivateWorkbenchSessionTopic {
@@ -54,7 +56,7 @@ export enum PrivateWorkbenchSessionTopic {
 }
 
 export type PrivateWorkbenchSessionTopicPayloads = {
-    [PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING]: { isLoading: boolean };
+    [PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING]: boolean;
     [PrivateWorkbenchSessionTopic.ENSEMBLE_SET]: EnsembleSet;
     [PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET]: RealizationFilterSet;
     [PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD]: Dashboard;
@@ -75,7 +77,11 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     private _ensembleSet: EnsembleSet = new EnsembleSet([]);
     private _realizationFilterSet = new RealizationFilterSet();
     private _userCreatedItems: UserCreatedItems;
-    private _metadata: WorkbenchSessionMetadata = { title: "Workbench Session" };
+    private _metadata: WorkbenchSessionMetadata = {
+        title: "New Workbench Session",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+    };
     private _isEnsembleSetLoading: boolean = false;
 
     constructor(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient) {
@@ -100,6 +106,11 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
 
     setMetadata(metadata: WorkbenchSessionMetadata): void {
         this._metadata = metadata;
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.METADATA);
+    }
+
+    updateMetadata(update: Partial<Omit<WorkbenchSessionMetadata, "createdAt">>): void {
+        this._metadata = { ...this._metadata, ...update };
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.METADATA);
     }
 
@@ -153,14 +164,14 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     }
 
     async loadAndSetupEnsembleSet(
-        userSettings: UserEnsembleSetting[],
-        userDeltaSettings: UserDeltaEnsembleSetting[],
+        regularEnsembleSettings: UserEnsembleSetting[],
+        deltaEnsembleSettings: UserDeltaEnsembleSetting[],
     ): Promise<void> {
         this.setEnsembleSetLoading(true);
         const newSet = await loadMetadataFromBackendAndCreateEnsembleSet(
             this._queryClient,
-            userSettings,
-            userDeltaSettings,
+            regularEnsembleSettings,
+            deltaEnsembleSettings,
         );
         this.setEnsembleSetLoading(false);
         this.setEnsembleSet(newSet);

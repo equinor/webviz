@@ -2,59 +2,72 @@ import React from "react";
 
 import { Check } from "@mui/icons-material";
 import { isEqual } from "lodash";
-import { v4 } from "uuid";
 
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import type { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+import type { Workbench } from "@framework/Workbench";
+import { useColorSet } from "@framework/WorkbenchSettings";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
-import type { ColorSet } from "@lib/utils/ColorSet";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { LoadingOverlay } from "../LoadingOverlay";
 
-import { isSameEnsembleItem } from "./_utils";
+import {
+    makeDeltaEnsembleSettingsFromEnsembleSet,
+    makeHashFromDeltaEnsemble,
+    makeHashFromSelectedEnsembles,
+    makeRegularEnsembleSettingsFromEnsembleSet,
+} from "./_utils";
 import { EnsemblePicker } from "./private-components/EnsemblePicker";
 import { EnsembleTables } from "./private-components/EnsembleTables";
-import type { DeltaEnsembleItem, InternalDeltaEnsembleItem, RegularEnsembleItem } from "./types";
+import type { InternalDeltaEnsembleSetting, InternalRegularEnsembleSetting } from "./types";
 
 export type SelectEnsemblesDialogProps = {
-    loadAndSetupEnsembles: (
-        selectedRegularEnsembles: RegularEnsembleItem[],
-        createdDeltaEnsembles: DeltaEnsembleItem[],
-    ) => Promise<void>;
-    onClose: () => void;
-    selectedRegularEnsembles: RegularEnsembleItem[];
-    createdDeltaEnsembles: DeltaEnsembleItem[];
-    colorSet: ColorSet;
+    workbench: Workbench;
 };
 
 export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (props) => {
-    const [isLoadingEnsembles, setIsLoadingEnsembles] = React.useState<boolean>(false);
+    const [prevEnsembleSet, setPrevEnsembleSet] = React.useState<EnsembleSet | null>(null);
+    const [hash, setHash] = React.useState<string>("");
+    const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.EnsembleDialogOpen);
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
 
-    const [newlySelectedRegularEnsembles, setNewlySelectedRegularEnsembles] = React.useState<RegularEnsembleItem[]>([]);
-    const [deltaEnsembles, setDeltaEnsembles] = React.useState<InternalDeltaEnsembleItem[]>([]);
+    const [selectedRegularEnsembles, setSelectedRegularEnsembles] = React.useState<InternalRegularEnsembleSetting[]>(
+        [],
+    );
+    const [selectedDeltaEnsembles, setSelectedDeltaEnsembles] = React.useState<InternalDeltaEnsembleSetting[]>([]);
 
-    React.useLayoutEffect(() => {
-        setNewlySelectedRegularEnsembles(props.selectedRegularEnsembles);
-    }, [props.selectedRegularEnsembles]);
+    const workbenchSession = props.workbench.getWorkbenchSession();
 
-    React.useLayoutEffect(() => {
-        setDeltaEnsembles(
-            props.createdDeltaEnsembles.map((elm) => ({
-                comparisonEnsemble: elm.comparisonEnsemble,
-                referenceEnsemble: elm.referenceEnsemble,
-                uuid: v4(),
-                color: elm.color,
-                customName: elm.customName,
-            })),
-        );
-    }, [props.createdDeltaEnsembles]);
+    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ENSEMBLE_SET);
+    const isEnsembleSetLoading = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING,
+    );
+
+    const colorSet = useColorSet(props.workbench.getWorkbenchSettings());
+    const currentHash = makeHashFromSelectedEnsembles(selectedRegularEnsembles, selectedDeltaEnsembles);
+
+    if (!isEqual(prevEnsembleSet, ensembleSet)) {
+        setPrevEnsembleSet(ensembleSet);
+
+        const regularEnsembles = makeRegularEnsembleSettingsFromEnsembleSet(ensembleSet);
+        const deltaEnsembles = makeDeltaEnsembleSettingsFromEnsembleSet(ensembleSet);
+
+        setSelectedRegularEnsembles(regularEnsembles);
+        setSelectedDeltaEnsembles(deltaEnsembles);
+        setHash(makeHashFromSelectedEnsembles(regularEnsembles, deltaEnsembles));
+    }
 
     const nextEnsembleColor = React.useMemo(() => {
-        const usedColors = [...newlySelectedRegularEnsembles, ...deltaEnsembles].map((ens) => ens.color);
+        const usedColors = [...selectedRegularEnsembles, ...selectedDeltaEnsembles].map((ens) => ens.color);
 
-        for (let i = 0; i < props.colorSet.getColorArray().length; i++) {
-            const candidateColor = props.colorSet.getColor(i);
+        for (let i = 0; i < colorSet.getColorArray().length; i++) {
+            const candidateColor = colorSet.getColor(i);
 
             if (!usedColors.includes(candidateColor)) {
                 return candidateColor;
@@ -62,16 +75,16 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         }
 
         // Default to an existing color (looping)
-        return props.colorSet.getColor(usedColors.length % props.colorSet.getColorArray().length);
-    }, [deltaEnsembles, newlySelectedRegularEnsembles, props.colorSet]);
+        return colorSet.getColor(usedColors.length % colorSet.getColorArray().length);
+    }, [selectedDeltaEnsembles, selectedRegularEnsembles, colorSet]);
 
     function handleClose() {
         setConfirmCancel(false);
-        props.onClose();
+        setIsOpen(false);
     }
 
     function handleCancel() {
-        if (isEqual(props.selectedRegularEnsembles, newlySelectedRegularEnsembles)) {
+        if (currentHash === hash) {
             handleClose();
             return;
         }
@@ -79,13 +92,14 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     }
 
     function handleApplyEnsembleSelection() {
-        if (deltaEnsembles.some((elm) => !elm.comparisonEnsemble || !elm.referenceEnsemble)) {
+        // Highlight invalid delta ensembles?
+        if (selectedDeltaEnsembles.some((elm) => !elm.comparisonEnsembleIdent || !elm.referenceEnsembleIdent)) {
             return;
         }
 
-        const validDeltaEnsembles: DeltaEnsembleItem[] = [];
-        for (const deltaEnsemble of deltaEnsembles) {
-            if (!deltaEnsemble.comparisonEnsemble || !deltaEnsemble.referenceEnsemble) {
+        const validDeltaEnsembles: UserDeltaEnsembleSetting[] = [];
+        for (const deltaEnsemble of selectedDeltaEnsembles) {
+            if (!deltaEnsemble.comparisonEnsembleIdent || !deltaEnsemble.referenceEnsembleIdent) {
                 continue;
             }
 
@@ -93,60 +107,37 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             if (
                 validDeltaEnsembles.some(
                     (elm) =>
-                        isEqual(elm.comparisonEnsemble, deltaEnsemble.comparisonEnsemble) &&
-                        isEqual(elm.referenceEnsemble, deltaEnsemble.referenceEnsemble),
+                        isEqual(elm.comparisonEnsembleIdent, deltaEnsemble.comparisonEnsembleIdent) &&
+                        isEqual(elm.referenceEnsembleIdent, deltaEnsemble.referenceEnsembleIdent),
                 )
             ) {
                 continue;
             }
 
             validDeltaEnsembles.push({
-                comparisonEnsemble: deltaEnsemble.comparisonEnsemble,
-                referenceEnsemble: deltaEnsemble.referenceEnsemble,
+                comparisonEnsembleIdent: deltaEnsemble.comparisonEnsembleIdent,
+                referenceEnsembleIdent: deltaEnsemble.referenceEnsembleIdent,
                 color: deltaEnsemble.color,
                 customName: deltaEnsemble.customName,
             });
         }
 
-        setIsLoadingEnsembles(true);
-        props
-            .loadAndSetupEnsembles(newlySelectedRegularEnsembles, validDeltaEnsembles)
-            .then(() => {
-                handleClose();
-            })
-            .finally(() => {
-                setIsLoadingEnsembles(false);
-            });
-    }
-
-    function hasAnyDeltaEnsemblesChanged(): boolean {
-        if (props.createdDeltaEnsembles.length !== deltaEnsembles.length) {
-            return true;
-        }
-
-        const isContentEqual = props.createdDeltaEnsembles.every((elm, idx) => {
-            const internalDeltaEnsemble = deltaEnsembles[idx];
-            return (
-                elm.color === internalDeltaEnsemble.color &&
-                elm.customName === internalDeltaEnsemble.customName &&
-                isEqual(elm.comparisonEnsemble, internalDeltaEnsemble.comparisonEnsemble) &&
-                isEqual(elm.referenceEnsemble, internalDeltaEnsemble.referenceEnsemble)
-            );
+        workbenchSession.loadAndSetupEnsembleSet(selectedRegularEnsembles, validDeltaEnsembles).then(() => {
+            setIsOpen(false);
         });
-        return !isContentEqual;
     }
 
     function areAnyDeltaEnsemblesInvalid(): boolean {
-        return deltaEnsembles.some((elm) => !elm.comparisonEnsemble || !elm.referenceEnsemble);
+        return selectedDeltaEnsembles.some((el) => !el.comparisonEnsembleIdent || !el.referenceEnsembleIdent);
     }
 
     function hasDuplicateDeltaEnsembles(): boolean {
         const uniqueDeltaEnsembles = new Set<string>();
-        for (const elm of deltaEnsembles) {
-            if (!elm.comparisonEnsemble || !elm.referenceEnsemble) {
+        for (const el of selectedDeltaEnsembles) {
+            if (!el.comparisonEnsembleIdent || !el.referenceEnsembleIdent) {
                 continue;
             }
-            const key = `${elm.comparisonEnsemble.caseUuid}~&&~${elm.comparisonEnsemble.ensembleName}~&&~${elm.referenceEnsemble.caseUuid}~&&~${elm.referenceEnsemble.ensembleName}`;
+            const key = makeHashFromDeltaEnsemble(el);
             if (uniqueDeltaEnsembles.has(key)) {
                 return true;
             }
@@ -155,36 +146,34 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         return false;
     }
 
-    function hasAnyRegularEnsembleChanged(): boolean {
-        return !isEqual(props.selectedRegularEnsembles, newlySelectedRegularEnsembles);
+    function handleAddRegularEnsemble(newItem: InternalRegularEnsembleSetting) {
+        if (selectedRegularEnsembles.some((el) => el.ensembleIdent.equals(newItem.ensembleIdent))) {
+            return;
+        }
+
+        setSelectedRegularEnsembles((prev) => [...prev, newItem]);
     }
 
-    function handleAddRegularEnsemble(newItem: RegularEnsembleItem) {
-        if (newlySelectedRegularEnsembles.some((i) => isSameEnsembleItem(i, newItem))) return;
-
-        setNewlySelectedRegularEnsembles((prev) => [...prev, newItem]);
-    }
-
-    function handleUpdateRegularEnsemble(updatedItem: RegularEnsembleItem) {
-        setNewlySelectedRegularEnsembles((prev) => {
-            return prev.map((item) => (isSameEnsembleItem(item, updatedItem) ? updatedItem : item));
+    function handleUpdateRegularEnsemble(updatedItem: InternalRegularEnsembleSetting) {
+        setSelectedRegularEnsembles((prev) => {
+            return prev.map((el) => (el.ensembleIdent.equals(updatedItem) ? updatedItem : el));
         });
     }
 
-    function handleRemoveRegularEnsemble(removedItem: RegularEnsembleItem) {
-        setNewlySelectedRegularEnsembles((prev) => prev.filter((i) => !isSameEnsembleItem(i, removedItem)));
+    function handleRemoveRegularEnsemble(removedItem: UserEnsembleSetting) {
+        setSelectedRegularEnsembles((prev) => prev.filter((el) => !el.ensembleIdent.equals(removedItem.ensembleIdent)));
 
         removeEnsembleFromDeltaEnsembles(removedItem);
     }
 
-    function removeEnsembleFromDeltaEnsembles(removedEnsemble: RegularEnsembleItem) {
-        setDeltaEnsembles((prev) => {
+    function removeEnsembleFromDeltaEnsembles(removedEnsemble: UserEnsembleSetting) {
+        setSelectedDeltaEnsembles((prev) => {
             return prev.map((deltaEnsemble) => {
-                const { comparisonEnsemble, referenceEnsemble } = deltaEnsemble;
-                if (comparisonEnsemble && isSameEnsembleItem(comparisonEnsemble, removedEnsemble)) {
+                const { comparisonEnsembleIdent, referenceEnsembleIdent } = deltaEnsemble;
+                if (comparisonEnsembleIdent && comparisonEnsembleIdent.equals(removedEnsemble.ensembleIdent)) {
                     return { ...deltaEnsemble, comparisonEnsemble: null };
                 }
-                if (referenceEnsemble && isSameEnsembleItem(referenceEnsemble, removedEnsemble)) {
+                if (referenceEnsembleIdent && referenceEnsembleIdent.equals(removedEnsemble.ensembleIdent)) {
                     return { ...deltaEnsemble, referenceEnsemble: null };
                 }
                 return deltaEnsemble;
@@ -192,31 +181,33 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         });
     }
 
-    function handleAddDeltaEnsemble(newItem: InternalDeltaEnsembleItem) {
-        setDeltaEnsembles((prev) => [...prev, newItem]);
+    function handleAddDeltaEnsemble(newItem: InternalDeltaEnsembleSetting) {
+        setSelectedDeltaEnsembles((prev) => [...prev, newItem]);
     }
 
-    function handleUpdateDeltaEnsemble(updatedItem: InternalDeltaEnsembleItem) {
-        setDeltaEnsembles((prev) => {
+    function handleUpdateDeltaEnsemble(updatedItem: InternalDeltaEnsembleSetting) {
+        setSelectedDeltaEnsembles((prev) => {
             return prev.map((ens) => (ens.uuid === updatedItem.uuid ? updatedItem : ens));
         });
     }
 
-    function handleRemoveDeltaEnsemble(removedItem: InternalDeltaEnsembleItem) {
-        setDeltaEnsembles((prev) => prev.filter((i) => i.uuid !== removedItem.uuid));
+    function handleRemoveDeltaEnsemble(removedItem: InternalDeltaEnsembleSetting) {
+        setSelectedDeltaEnsembles((prev) => prev.filter((i) => i.uuid !== removedItem.uuid));
     }
 
     function makeApplyButtonStartIcon() {
-        if (isLoadingEnsembles) {
+        if (isEnsembleSetLoading) {
             return <CircularProgress size="small" />;
         }
         return <Check fontSize="small" />;
     }
 
+    const hasAnyChanges = hash !== currentHash;
+
     return (
         <>
             <Dialog
-                open={true}
+                open={isOpen}
                 onClose={handleCancel}
                 title="Select ensembles"
                 modal
@@ -225,27 +216,21 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 height={"75"}
                 actions={
                     <div className="flex gap-4">
-                        <Button
-                            onClick={handleClose}
-                            color="danger"
-                            disabled={
-                                isLoadingEnsembles || !(hasAnyRegularEnsembleChanged() || hasAnyDeltaEnsemblesChanged())
-                            }
-                        >
+                        <Button onClick={handleClose} color="danger" disabled={isEnsembleSetLoading || !hasAnyChanges}>
                             Discard changes
                         </Button>
                         <div title={hasDuplicateDeltaEnsembles() ? "Duplicate Delta Ensembles (blue rows)" : ""}>
                             <Button
                                 onClick={handleApplyEnsembleSelection}
                                 disabled={
-                                    isLoadingEnsembles ||
+                                    isEnsembleSetLoading ||
                                     areAnyDeltaEnsemblesInvalid() ||
                                     hasDuplicateDeltaEnsembles() ||
-                                    !(hasAnyRegularEnsembleChanged() || hasAnyDeltaEnsemblesChanged())
+                                    !hasAnyChanges
                                 }
                                 startIcon={makeApplyButtonStartIcon()}
                             >
-                                {isLoadingEnsembles ? "Loading ensembles..." : "Apply"}
+                                {isEnsembleSetLoading ? "Loading ensembles..." : "Apply"}
                             </Button>
                         </div>
                     </div>
@@ -255,14 +240,14 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 <div className="flex gap-4 max-w-full">
                     <EnsemblePicker
                         nextEnsembleColor={nextEnsembleColor}
-                        selectedEnsembles={newlySelectedRegularEnsembles}
+                        selectedEnsembles={selectedRegularEnsembles}
                         onAddEnsemble={handleAddRegularEnsemble}
                     />
                     <div className="flex flex-col grow max-h-full gap-4 p-4">
                         <EnsembleTables
                             nextEnsembleColor={nextEnsembleColor}
-                            regularEnsembles={newlySelectedRegularEnsembles}
-                            deltaEnsembles={deltaEnsembles}
+                            regularEnsembles={selectedRegularEnsembles}
+                            deltaEnsembles={selectedDeltaEnsembles}
                             onAddDeltaEnsemble={handleAddDeltaEnsemble}
                             onUpdateDeltaEnsemble={handleUpdateDeltaEnsemble}
                             onRemoveDeltaEnsemble={handleRemoveDeltaEnsemble}
@@ -271,7 +256,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         />
                     </div>
                 </div>
-                {isLoadingEnsembles && <LoadingOverlay text="Loading ensembles..." />}
+                {isEnsembleSetLoading && <LoadingOverlay text="Loading ensembles..." />}
             </Dialog>
             <Dialog
                 open={confirmCancel}

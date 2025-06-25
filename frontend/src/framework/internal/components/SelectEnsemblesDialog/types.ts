@@ -1,26 +1,13 @@
-// Base item for ensemble data
-export type BaseEnsembleItem = {
-    caseUuid: string;
-    ensembleName: string;
-};
+import type { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
-export type DeltaEnsembleItem = {
-    comparisonEnsemble: BaseEnsembleItem;
-    referenceEnsemble: BaseEnsembleItem;
-    color: string;
-    customName: string | null;
-};
-export type RegularEnsembleItem = BaseEnsembleItem & {
+export type InternalRegularEnsembleSetting = UserEnsembleSetting & {
     caseName: string;
-    color: string;
-    customName: string | null;
 };
 
 // Internal type before applying created delta ensemble externally
-export type InternalDeltaEnsembleItem = {
-    comparisonEnsemble: BaseEnsembleItem | null; // Allows null
-    referenceEnsemble: BaseEnsembleItem | null; // Allows null
+export type InternalDeltaEnsembleSetting = UserDeltaEnsembleSetting & {
+    comparisonEnsembleIdent: RegularEnsembleIdent | null; // Allows null
+    referenceEnsembleIdent: RegularEnsembleIdent | null; // Allows null
     uuid: string; // To allow for equal comparison and reference ensembles during editing in the dialog
-    color: string;
-    customName: string | null;
 };

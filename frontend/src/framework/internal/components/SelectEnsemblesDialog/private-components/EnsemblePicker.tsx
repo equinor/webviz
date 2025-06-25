@@ -5,8 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 
 import type { CaseInfo_api } from "@api";
 import { getCasesOptions, getEnsemblesOptions, getFieldsOptions } from "@api";
+import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { tanstackDebugTimeOverride } from "@framework/internal/utils/debug";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -18,15 +20,14 @@ import type { TableSelectOption } from "@lib/components/TableSelect";
 import { TableSelect } from "@lib/components/TableSelect";
 import { useValidState } from "@lib/hooks/useValidState";
 
-import { isSameEnsembleItem } from "../_utils";
-import type { BaseEnsembleItem, RegularEnsembleItem } from "../types";
+import type { InternalRegularEnsembleSetting } from "../types";
 
 import { UserAvatar } from "./userAvatar";
 
 export type EnsemblePickerProps = {
     nextEnsembleColor: string;
-    selectedEnsembles: RegularEnsembleItem[];
-    onAddEnsemble: (newEnsemble: RegularEnsembleItem) => void;
+    selectedEnsembles: UserEnsembleSetting[];
+    onAddEnsemble: (newEnsemble: InternalRegularEnsembleSetting) => void;
 };
 
 const STALE_TIME = tanstackDebugTimeOverride(0);
@@ -115,7 +116,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
             ],
         })) ?? [];
 
-    const [selectedCaseId, setSelectedCaseId] = useValidState<string>({
+    const [selectedCaseUuid, setSelectedCaseId] = useValidState<string>({
         initialState: "",
         validStates: filterCases(casesQuery.data)?.map((item) => item.uuid) ?? [],
         keepStateWhenInvalid: true,
@@ -125,7 +126,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
     const ensemblesQuery = useQuery({
         ...getEnsemblesOptions({
             path: {
-                case_uuid: selectedCaseId,
+                case_uuid: selectedCaseUuid,
             },
         }),
         enabled: casesQuery.isSuccess,
@@ -144,17 +145,16 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
             value: e.name,
         })) ?? [];
 
-    const selectedEnsembleItem = React.useMemo<BaseEnsembleItem>(() => {
-        return { caseUuid: selectedCaseId, ensembleName: selectedEnsembleName };
-    }, [selectedCaseId, selectedEnsembleName]);
-
-    const ensembleAlreadySelected = React.useMemo(() => {
-        return (
-            selectedCaseId &&
-            selectedEnsembleName &&
-            props.selectedEnsembles.some((e) => isSameEnsembleItem(e, selectedEnsembleItem))
-        );
-    }, [props.selectedEnsembles, selectedCaseId, selectedEnsembleItem, selectedEnsembleName]);
+    let selectedEnsembleIdent: RegularEnsembleIdent | null = null;
+    try {
+        selectedEnsembleIdent = new RegularEnsembleIdent(selectedCaseUuid, selectedEnsembleName);
+    } catch (_e) {
+        selectedEnsembleIdent = null;
+    }
+    const ensembleAlreadySelected =
+        selectedCaseUuid &&
+        selectedEnsembleName &&
+        props.selectedEnsembles.some((el) => el.ensembleIdent.equals(selectedEnsembleIdent));
 
     function handleFieldChanged(fieldIdentifier: string) {
         storeStateInLocalStorage("selectedField", fieldIdentifier);
@@ -172,12 +172,11 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
     function handleAddRegularEnsemble() {
         if (ensembleAlreadySelected) return;
 
-        const caseName = casesQuery.data?.find((c) => c.uuid === selectedCaseId)?.name ?? "UNKNOWN";
+        const caseName = casesQuery.data?.find((c) => c.uuid === selectedCaseUuid)?.name ?? "UNKNOWN";
 
         props.onAddEnsemble({
-            caseUuid: selectedCaseId,
+            ensembleIdent: new RegularEnsembleIdent(selectedCaseUuid, selectedEnsembleName),
             caseName: caseName,
-            ensembleName: selectedEnsembleName,
             color: props.nextEnsembleColor,
             customName: null,
         });
@@ -217,7 +216,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
                     <TableSelect
                         headerLabels={["Name", "Author", "Status"]}
                         options={caseOpts}
-                        value={[selectedCaseId]}
+                        value={[selectedCaseUuid]}
                         onChange={handleCaseChanged}
                         disabled={caseOpts.length === 0}
                         size={5}

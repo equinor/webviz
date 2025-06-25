@@ -9,7 +9,12 @@ import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/Publ
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 import { toast } from "react-toastify";
 
-import { createSessionWithCacheUpdate, hashJsonString, updateSessionWithCacheUpdate } from "./utils";
+import {
+    createSessionWithCacheUpdate,
+    hashJsonString,
+    objectToJsonString,
+    updateSessionWithCacheUpdate,
+} from "./utils";
 import { makeWorkbenchSessionStateString } from "./WorkbenchSessionSerializer";
 
 export type WorkbenchSessionPersistenceInfo = {
@@ -58,6 +63,9 @@ export class WorkbenchSessionPersistenceService
 
         this._currentStateString = makeWorkbenchSessionStateString(this._workbenchSession);
         this._currentHash = await hashJsonString(this._currentStateString);
+        this._lastPersistedMs = session.getMetadata().updatedAt;
+        this._lastModifiedMs = session.getMetadata().updatedAt;
+        this._lastPersistedHash = this._currentHash;
         this.updatePersistenceInfo();
 
         this.subscribeToSessionChanges();
@@ -210,7 +218,7 @@ export class WorkbenchSessionPersistenceService
                 }
                 await updateSessionWithCacheUpdate(queryClient, {
                     id,
-                    content: this._currentStateString,
+                    content: objectToJsonString(this._workbenchSession.getContent()),
                     metadata: {
                         title: metadata.title,
                         description: metadata.description,
@@ -222,7 +230,7 @@ export class WorkbenchSessionPersistenceService
                 const id = await createSessionWithCacheUpdate(queryClient, {
                     title: metadata.title,
                     description: metadata.description ?? null,
-                    content: this._currentStateString,
+                    content: objectToJsonString(this._workbenchSession.getContent()),
                 });
                 this._workbenchSession.setId(id);
                 toast.dismiss(toastId);

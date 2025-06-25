@@ -1,6 +1,7 @@
 import React from "react";
 
 import { Tooltip, Typography } from "@equinor/eds-core-react";
+import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { WorkbenchSessionPersistenceServiceTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionPersistenceService";
 import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
@@ -16,7 +17,6 @@ import { Close, Edit, Refresh, Save } from "@mui/icons-material";
 import FmuLogo from "@assets/fmu.svg";
 
 import { LoginButton } from "../LoginButton";
-import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 
 export type TopBarProps = {
     workbench: Workbench;
@@ -137,6 +137,11 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
         WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO,
     );
 
+    const isPersisted = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.IS_PERSISTED,
+    );
+
     const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
 
     const handleSaveClick = () => {
@@ -152,13 +157,17 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
             return null;
         }
 
+        if (!isPersisted) {
+            return null;
+        }
+
         return `You have unsaved changes. Last saved: ${timeAgo(Date.now() - persistenceInfo.lastPersistedMs)}`;
     }
 
     return (
         <div
             className={resolveClassNames("p-2 flex items-center text-sm gap-4", {
-                "bg-amber-100": persistenceInfo.hasChanges && persistenceInfo.lastPersistedMs !== null,
+                "bg-amber-100": persistenceInfo.hasChanges && persistenceInfo.lastPersistedMs !== null && isPersisted,
             })}
         >
             {makeText()}

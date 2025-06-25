@@ -2,6 +2,7 @@ import React from "react";
 
 import { getSessionsMetadataOptions, SortBy_api, SortDirection_api } from "@api";
 import type { Workbench } from "@framework/Workbench";
+import { CircularProgress } from "@lib/components/CircularProgress";
 import { useQuery } from "@tanstack/react-query";
 
 export type RecentSessionsProps = {
@@ -9,7 +10,7 @@ export type RecentSessionsProps = {
 };
 
 export function RecentSessions(props: RecentSessionsProps) {
-    const [prevState, setPrevState] = React.useState<"loading" | "error" | "success">("loading");
+    const [state, setState] = React.useState<ReturnType<typeof useQuery>["status"]>("pending");
 
     function handleSessionClick(e: React.MouseEvent, sessionId: string) {
         e.preventDefault();
@@ -24,49 +25,55 @@ export function RecentSessions(props: RecentSessionsProps) {
                 limit: 5,
             },
         }),
-        refetchInterval: 5000,
+        refetchInterval: 10000,
     });
 
     if (!sessionsQuery.isFetching) {
         if (sessionsQuery.isError) {
-            if (prevState !== "error") {
-                setPrevState("error");
+            if (state !== "error") {
+                setState("error");
             }
         } else if (sessionsQuery.isSuccess) {
-            if (prevState !== "success") {
-                setPrevState("success");
+            if (state !== "success") {
+                setState("success");
             }
         }
     }
 
-    if (sessionsQuery.isError) {
-        return (
-            <div className="flex items-center justify-center w-62">
-                {sessionsQuery.isError && <span className="text-red-800">Could not fetch recent sessions...</span>}
-            </div>
-        );
-    }
+    function makeContent() {
+        if (state === "pending") {
+            return (
+                <span className="text-gray-500 flex gap-2">
+                    <CircularProgress size="extra-small" /> Loading recent sessions...
+                </span>
+            );
+        }
 
-    if (!sessionsQuery.data || sessionsQuery.data?.length === 0) {
+        if (state === "error") {
+            return <span className="text-red-800">Could not fetch recent sessions...</span>;
+        }
+
+        if (state === "success" && sessionsQuery.data && sessionsQuery.data.length > 0) {
+            return (
+                <ul className="pl-5">
+                    {sessionsQuery.data.map((session) => (
+                        <li key={session.id} className="flex items-center gap-4">
+                            <a
+                                href="#"
+                                onClick={(e) => handleSessionClick(e, session.id)}
+                                className="text-blue-600 hover:underline"
+                            >
+                                {session.title}
+                            </a>
+                            <span className="text-gray-500">~ {new Date(session.updatedAt).toLocaleString()}</span>
+                        </li>
+                    ))}
+                </ul>
+            );
+        }
+
         return <div className="text-gray-500">No recent sessions found.</div>;
     }
 
-    return (
-        <div className="flex flex-col gap-2 w-62">
-            <ul className="pl-5">
-                {sessionsQuery.data.map((session) => (
-                    <li key={session.id} className="flex items-center gap-4">
-                        <a
-                            href="#"
-                            onClick={(e) => handleSessionClick(e, session.id)}
-                            className="text-blue-600 hover:underline"
-                        >
-                            {session.title}
-                        </a>
-                        <span className="text-gray-500">~ {new Date(session.updatedAt).toLocaleString()}</span>
-                    </li>
-                ))}
-            </ul>
-        </div>
-    );
+    return <div className="flex flex-col gap-2">{makeContent()}</div>;
 }

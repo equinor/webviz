@@ -2,6 +2,7 @@ import type { ErrorInfo } from "react";
 import React from "react";
 
 import type { JTDDataType } from "ajv/dist/core";
+import { Ajv } from "ajv/dist/jtd";
 import type { Atom } from "jotai";
 import { atom } from "jotai";
 import { atomEffect } from "jotai-effect";
@@ -23,6 +24,8 @@ import { ModuleContext } from "./ModuleContext";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import { UniDirectionalModuleComponentsInterface } from "./UniDirectionalModuleComponentsInterface";
+
+const ajv = new Ajv();
 
 export enum ModuleInstanceLifeCycleState {
     INITIALIZING,
@@ -130,9 +133,53 @@ export class ModuleInstance<
         return this._serializedState;
     }
 
+    deserializeSerializedState(raw: StringifiedSerializedModuleState): void {
+        const schema = this._module.getSerializedStateSchema();
+        if (!schema) {
+            return; // No schema defined, cannot deserialize
+        }
+
+        let parsedSettings: unknown;
+        let parsedView: unknown;
+        try {
+            parsedSettings = raw.settings ? JSON.parse(raw.settings) : undefined;
+            parsedView = raw.view ? JSON.parse(raw.view) : undefined;
+        } catch (e) {
+            console.warn(`Invalid JSON in module state for ${this._module.getName()}:`, e);
+            this._serializedState = null;
+            return;
+        }
+
+        const validateSettings = ajv.compile(schema.settings);
+        const validateView = ajv.compile(schema.view);
+
+        const isSettingsValid = parsedSettings === undefined || validateSettings(parsedSettings);
+        const isViewValid = parsedView === undefined || validateView(parsedView);
+
+        if (!isSettingsValid || !isViewValid) {
+            console.warn(`Validation failed for ${this._module.getName()}`, {
+                settingsErrors: validateSettings.errors,
+                viewErrors: validateView.errors,
+            });
+            this._serializedState = null;
+            return;
+        }
+
+        this._serializedState = {
+            settings: parsedSettings as JTDDataType<TSerializedStateSchema["settings"]>,
+            view: parsedView as JTDDataType<TSerializedStateSchema["view"]>,
+        };
+    }
+
     setFullState(fullState: ModuleInstanceFullState): void {
         this._syncedSettingKeys = fullState.syncedSettingKeys;
-        // this._serializedState = fullState.serializedState ?? null;
+
+        this._id = fullState.id;
+        this._title = fullState.name;
+
+        if (fullState.serializedState) {
+            this.deserializeSerializedState(fullState.serializedState);
+        }
     }
 
     getFullState(): ModuleInstanceFullState {

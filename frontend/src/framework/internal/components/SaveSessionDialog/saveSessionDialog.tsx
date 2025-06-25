@@ -1,12 +1,14 @@
+import React from "react";
+
+import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
-import React from "react";
-import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
-import { Label } from "@lib/components/Label";
 import { Input } from "@lib/components/Input";
-import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { Label } from "@lib/components/Label";
+
+import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
 
 export type SaveSessionDialogProps = {
     workbench: Workbench;
@@ -41,8 +43,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
         } else {
             setInputFeedback((prev) => ({ ...prev, description: undefined }));
         }
-        const sessionData = { title, description };
-        props.workbench.getWorkbenchSession().setMetadata(sessionData);
+        props.workbench.getWorkbenchSession().updateMetadata({ title, description });
         props.workbench
             .saveCurrentSession(true)
             .then(() => {
