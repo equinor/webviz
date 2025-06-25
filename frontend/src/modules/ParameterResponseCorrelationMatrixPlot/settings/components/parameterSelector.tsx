@@ -30,26 +30,7 @@ export function ParametersSelector({
         return [];
     });
 
-    const selectedParameterObjects: ParameterIdent[] = selectedParameterIdents;
 
-    const allParameterGroupOptions: SelectOption[] = Array.from(
-        new Set(allParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP)),
-    ).map((groupName) => ({
-        label: groupName,
-        value: groupName,
-    }));
-
-    const parameterOptions: SelectOption[] = allParameterIdents
-        .filter((p) => {
-            if (selectedGroupFilterValues.length === 0) {
-                return false;
-            }
-            return selectedGroupFilterValues.some((groupValue) => groupValue === (p.groupName ?? GroupType.NO_GROUP));
-        })
-        .map((p) => ({
-            label: p.name,
-            value: p.toString(),
-        }));
 
     const handleGroupChange = (newlySelectedGroupFilterStrings: string[]) => {
         setSelectedGroupFilterValues(newlySelectedGroupFilterStrings);
@@ -68,7 +49,7 @@ export function ParametersSelector({
             if (autoSelectAllOnGroupChange) {
                 newSelectedParameters = parametersThatMatchNewGroups;
             } else {
-                newSelectedParameters = selectedParameterObjects.filter((p) =>
+                newSelectedParameters = selectedParameterIdents.filter((p) =>
                     parametersThatMatchNewGroups.some((pg) => pg.equals(p)),
                 );
             }
@@ -80,16 +61,35 @@ export function ParametersSelector({
     const handleParameterChange = (selectedValues: string[]) => {
         onChange(selectedValues.map((s) => ParameterIdent.fromString(s)));
     };
+    
+    const groupSelectOptions: SelectOption[] = Array.from(
+        new Set(allParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP)),
+    ).map((groupName) => ({
+        label: groupName,
+        value: groupName,
+    }));
+
+    const parameterSelectOptions: SelectOption[] = allParameterIdents
+        .filter((p) => {
+            if (selectedGroupFilterValues.length === 0) {
+                return false;
+            }
+            return selectedGroupFilterValues.some((groupValue) => groupValue === (p.groupName ?? GroupType.NO_GROUP));
+        })
+        .map((p) => ({
+            label: p.name,
+            value: p.toString(),
+        }));
 
     return (
         <div>
             <Label wrapperClassName="mb-4" text="Select Group(s)">
                 <Select
-                    options={allParameterGroupOptions}
+                    options={groupSelectOptions}
                     value={selectedGroupFilterValues}
                     onChange={handleGroupChange}
                     multiple={true}
-                    size={Math.min(10, allParameterGroupOptions.length > 0 ? allParameterGroupOptions.length : 1)}
+                    size={Math.min(10, groupSelectOptions.length > 0 ? groupSelectOptions.length : 1)}
                 />
             </Label>
             <Label text="Select Parameter(s)">
@@ -102,9 +102,9 @@ export function ParametersSelector({
                     <Select
                         value={selectedParameterIdents.map((p) => p.toString())}
                         onChange={handleParameterChange}
-                        options={parameterOptions}
+                        options={parameterSelectOptions}
                         multiple={true}
-                        size={Math.min(10, parameterOptions.length > 0 ? parameterOptions.length : 1)}
+                        size={Math.min(10, parameterSelectOptions.length > 0 ? parameterSelectOptions.length : 1)}
                         filter
                         showQuickSelectButtons
                     />
