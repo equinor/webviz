@@ -3,7 +3,7 @@ from typing import Callable
 import numpy as np
 import polars as pl
 
-from primary.services.sumo_access.inplace_volumetrics_types import (
+from primary.services.sumo_access.deprecated_inplace_volumetrics_types import (
     FluidZone,
     InplaceVolumetricTableData,
     InplaceVolumetricsIdentifier,
@@ -14,7 +14,7 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     TableColumnStatisticalData,
 )
 
-from primary.services.sumo_access.inplace_volumetrics_access import InplaceVolumetricsAccess
+from primary.services.sumo_access.deprecated_inplace_volumetrics_access import DEPRECATED_InplaceVolumetricsAccess
 
 """
 This file contains general utility functions for the Inplace Volumetrics provider
@@ -56,7 +56,7 @@ def create_per_group_summed_realization_volume_df(
         columns_to_group_by_for_sum = list({elm.value for elm in group_by_identifiers} | {"REAL"})
 
     # Selector columns should not be aggregated
-    possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
+    possible_selector_columns = DEPRECATED_InplaceVolumetricsAccess.get_possible_selector_columns()
 
     # Selector columns not in group by will be excluded, these should not be aggregated
     per_group_summed_df = volume_df.group_by(columns_to_group_by_for_sum).agg(
@@ -120,7 +120,7 @@ def _convert_statistical_df_to_statistical_result_table_data(
 
     Expect the statistical DataFrame to have one unique column per requested statistic per result name, i.e. "result_name_mean", "result_name_stddev", etc.
     """
-    possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
+    possible_selector_columns = DEPRECATED_InplaceVolumetricsAccess.get_possible_selector_columns()
 
     # Build selector columns from statistical table
     selector_column_data_list: list[RepeatedTableColumnData] = []
@@ -179,7 +179,7 @@ def create_grouped_statistical_result_table_data_polars(
     if group_by_identifiers == []:
         raise ValueError("Group by identifiers must be a non-empty list or None")
 
-    possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
+    possible_selector_columns = DEPRECATED_InplaceVolumetricsAccess.get_possible_selector_columns()
     valid_selector_columns = [elm for elm in possible_selector_columns if elm in result_df.columns]
 
     # Find valid result names in df
@@ -282,7 +282,7 @@ def create_inplace_volumetric_table_data_from_result_df(
     if result_df.is_empty():
         return InplaceVolumetricTableData(fluid_selection=selection_name, selector_columns=[], result_columns=[])
 
-    possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
+    possible_selector_columns = DEPRECATED_InplaceVolumetricsAccess.get_possible_selector_columns()
     existing_selector_columns = [name for name in result_df.columns if name in possible_selector_columns]
     selector_column_data_list: list[RepeatedTableColumnData] = []
     for column_name in existing_selector_columns:
@@ -336,7 +336,7 @@ def create_volumetric_df_per_fluid_zone(
     column_names: list[str] = volumetric_df.columns
 
     # Iterate over column_names to keep order of volumetric_df.columns
-    possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
+    possible_selector_columns = DEPRECATED_InplaceVolumetricsAccess.get_possible_selector_columns()
     selector_columns = [col for col in column_names if col in possible_selector_columns]
 
     fluid_zone_to_df_map: dict[FluidZone, pl.DataFrame] = {}
@@ -379,7 +379,7 @@ def create_volumetric_summed_fluid_zones_df(
     """
 
     # Iterate over column_names to keep order of volumetric_df.columns
-    possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
+    possible_selector_columns = DEPRECATED_InplaceVolumetricsAccess.get_possible_selector_columns()
     valid_selector_columns = [col for col in volumetric_df.columns if col in possible_selector_columns]
 
     # Get volume names among columns

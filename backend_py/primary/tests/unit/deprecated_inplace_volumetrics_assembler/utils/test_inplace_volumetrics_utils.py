@@ -3,14 +3,14 @@ import pytest
 import polars as pl
 import numpy as np
 
-from primary.services.sumo_access.inplace_volumetrics_types import (
+from primary.services.sumo_access.deprecated_inplace_volumetrics_types import (
     RepeatedTableColumnData,
     Statistic,
     TableColumnStatisticalData,
 )
 
 
-from primary.services.inplace_volumetrics_assembler._utils import (
+from primary.services.deprecated_inplace_volumetrics_assembler._utils import (
     _create_named_expression_with_nan_for_inf,
     _create_repeated_table_column_data_from_polars_column,
     _create_statistical_expression,

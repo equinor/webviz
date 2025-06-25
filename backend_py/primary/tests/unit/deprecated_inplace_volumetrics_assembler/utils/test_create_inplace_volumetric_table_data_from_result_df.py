@@ -1,6 +1,8 @@
 import polars as pl
 
-from primary.services.inplace_volumetrics_assembler._utils import create_inplace_volumetric_table_data_from_result_df
+from primary.services.deprecated_inplace_volumetrics_assembler._utils import (
+    create_inplace_volumetric_table_data_from_result_df,
+)
 
 
 def test_create_inplace_volumetric_table_data_from_result_df() -> None:

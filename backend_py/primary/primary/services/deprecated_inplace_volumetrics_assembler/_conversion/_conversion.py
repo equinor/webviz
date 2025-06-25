@@ -2,14 +2,14 @@ from typing import Iterable
 
 import re
 
-from primary.services.sumo_access.inplace_volumetrics_types import (
+from primary.services.sumo_access.deprecated_inplace_volumetrics_types import (
     CalculatedVolume,
     FluidZone,
     FluidSelection,
     Property,
     InplaceVolumetricsIdentifier,
 )
-from primary.services.sumo_access.inplace_volumetrics_access import ALLOWED_RAW_VOLUMETRIC_COLUMNS
+from primary.services.sumo_access.deprecated_inplace_volumetrics_access import ALLOWED_RAW_VOLUMETRIC_COLUMNS
 
 """
 This file contains helper functions for conversion between different data types used in the Inplace Volumetrics provider

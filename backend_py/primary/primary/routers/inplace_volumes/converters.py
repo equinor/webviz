@@ -1,27 +1,78 @@
-from primary.services.sumo_access.inplace_volumetrics_types import (
-    Statistic as InplaceVolumetricsStatistic,
-    InplaceVolumetricTableDataPerFluidSelection,
-    InplaceStatisticalVolumetricTableDataPerFluidSelection,
-)
-
 from primary.services.sumo_access.inplace_volumes_table_types import (
-    Statistic as InplaceVolumesStatistic,
+    InplaceVolumes,
+    InplaceVolumesIndexWithValues,
+    InplaceVolumesTableDefinition,
     InplaceVolumesTableDataPerFluidSelection,
     InplaceVolumesStatisticalTableDataPerFluidSelection,
+    Statistic,
 )
 
-from .. import schemas
+from . import schemas
 
 
-##############################################################################################################################
+#########################################################################################################################
 #
-# Internal reusable functions for converting table data
 #
-################################################################################################################################
+# This file provides methods to convert between the API format and the sumo service format for inplace volumes data.
+#
+#
+#########################################################################################################################
+
+
+def convert_schema_to_indices_with_values(
+    identifiers_with_values: list[schemas.InplaceVolumesIndexWithValues],
+) -> list[InplaceVolumesIndexWithValues]:
+    converted = []
+    for identifier_with_values in identifiers_with_values:
+        index = _convert_schema_to_index(identifier_with_values.indexColumn)
+        values = identifier_with_values.values
+        converted.append(InplaceVolumesIndexWithValues(index, values))
+    return converted
+
+
+def convert_schema_to_indices(
+    indices: list[str] | None,
+) -> list[InplaceVolumes.TableIndexColumns] | None:
+    """Converts the identifiers from the API format to the sumo service format"""
+    if indices is None:
+        return None
+
+    return [_convert_schema_to_index(index) for index in indices]
+
+
+def _convert_schema_to_index(index_string: str) -> InplaceVolumes.TableIndexColumns:
+    """Converts the identifier from the API format to the sumo service format"""
+    if index_string not in InplaceVolumes.TableIndexColumns.__members__:
+        raise ValueError(
+            f"Invalid index string: {index_string}. Must be one of {list(InplaceVolumes.TableIndexColumns.__members__.keys())}"
+        )
+
+    return InplaceVolumes.TableIndexColumns(index_string)
+
+
+def to_api_volumes_table_definitions(
+    table_definitions: list[InplaceVolumesTableDefinition],
+) -> list[schemas.InplaceVolumesTableDefinition]:
+    """Converts the table definitions from the sumo service to the API format"""
+
+    return [
+        schemas.InplaceVolumesTableDefinition(
+            tableName=table_definition.table_name,
+            resultNames=table_definition.result_names,
+            indicesWithValues=[
+                schemas.InplaceVolumesIndexWithValues(
+                    indexColumn=index_with_values.index.value,
+                    values=index_with_values.values,
+                )
+                for index_with_values in table_definition.indices_with_values
+            ],
+        )
+        for table_definition in table_definitions
+    ]
 
 
 def convert_table_data_per_fluid_selection_to_schema(
-    table_per_fluid_selection: InplaceVolumetricTableDataPerFluidSelection | InplaceVolumesTableDataPerFluidSelection,
+    table_per_fluid_selection: InplaceVolumesTableDataPerFluidSelection,
 ) -> schemas.InplaceVolumesTableDataPerFluidSelection:
     """Converts the table data from the sumo service to the schema format"""
 
@@ -54,9 +105,7 @@ def convert_table_data_per_fluid_selection_to_schema(
 
 
 def convert_statistical_table_data_per_fluid_selection_to_schema(
-    table_data_per_fluid_selection: (
-        InplaceStatisticalVolumetricTableDataPerFluidSelection | InplaceVolumesStatisticalTableDataPerFluidSelection
-    ),
+    table_data_per_fluid_selection: InplaceVolumesStatisticalTableDataPerFluidSelection,
 ) -> schemas.InplaceVolumesStatisticalTableDataPerFluidSelection:
     """Converts the table data from the sumo service to the schema format"""
 
@@ -92,7 +141,7 @@ def convert_statistical_table_data_per_fluid_selection_to_schema(
 
 
 def _convert_statistic_values_dict_to_schema(
-    statistic_values: dict[InplaceVolumesStatistic, list[float]] | dict[InplaceVolumetricsStatistic, list[float]],
+    statistic_values: dict[Statistic, list[float]],
 ) -> dict[schemas.InplaceVolumesStatistic, list[float]]:
     """Converts the statistic values dictionary from the service layer format to API format"""
     return {
@@ -102,20 +151,20 @@ def _convert_statistic_values_dict_to_schema(
 
 
 def _convert_statistic_enum_to_inplace_volumetric_statistic_enum(
-    statistic: InplaceVolumesStatistic | InplaceVolumetricsStatistic,
+    statistic: Statistic,
 ) -> schemas.InplaceVolumesStatistic:
     """Converts the statistic enum from the service layer format to API enum"""
-    if statistic == InplaceVolumesStatistic.MEAN or statistic == InplaceVolumetricsStatistic.MEAN:
+    if statistic == Statistic.MEAN:
         return schemas.InplaceVolumesStatistic.MEAN
-    if statistic == InplaceVolumesStatistic.STD_DEV or statistic == InplaceVolumetricsStatistic.STD_DEV:
+    if statistic == Statistic.STD_DEV:
         return schemas.InplaceVolumesStatistic.STD_DEV
-    if statistic == InplaceVolumesStatistic.MIN or statistic == InplaceVolumetricsStatistic.MIN:
+    if statistic == Statistic.MIN:
         return schemas.InplaceVolumesStatistic.MIN
-    if statistic == InplaceVolumesStatistic.MAX or statistic == InplaceVolumetricsStatistic.MAX:
+    if statistic == Statistic.MAX:
         return schemas.InplaceVolumesStatistic.MAX
-    if statistic == InplaceVolumesStatistic.P10 or statistic == InplaceVolumetricsStatistic.P10:
+    if statistic == Statistic.P10:
         return schemas.InplaceVolumesStatistic.P10
-    if statistic == InplaceVolumesStatistic.P90 or statistic == InplaceVolumetricsStatistic.P90:
+    if statistic == Statistic.P90:
         return schemas.InplaceVolumesStatistic.P90
 
     raise ValueError(f"Unhandled statistic value: {statistic.value}")

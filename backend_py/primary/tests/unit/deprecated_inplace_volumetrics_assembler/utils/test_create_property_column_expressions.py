@@ -1,9 +1,11 @@
 from typing import List
 import polars as pl
 
-from primary.services.inplace_volumetrics_assembler._utils import create_property_column_expressions
-from primary.services.inplace_volumetrics_assembler._utils import _create_named_expression_with_nan_for_inf
-from primary.services.inplace_volumetrics_assembler._utils import FluidZone
+from primary.services.deprecated_inplace_volumetrics_assembler._utils import (
+    create_property_column_expressions,
+    _create_named_expression_with_nan_for_inf,
+    FluidZone,
+)
 
 
 def test_create_property_column_expressions_bo() -> None:

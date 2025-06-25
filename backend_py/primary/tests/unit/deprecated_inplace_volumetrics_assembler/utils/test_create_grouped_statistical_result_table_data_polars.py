@@ -2,10 +2,10 @@ from typing import List
 import pytest
 import polars as pl
 
-from primary.services.inplace_volumetrics_assembler._utils import (
+from primary.services.deprecated_inplace_volumetrics_assembler._utils import (
     create_grouped_statistical_result_table_data_polars,
 )
-from primary.services.sumo_access.inplace_volumetrics_types import (
+from primary.services.sumo_access.deprecated_inplace_volumetrics_types import (
     Statistic,
     InplaceVolumetricsIdentifier,
 )

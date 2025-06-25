@@ -25,6 +25,8 @@ class InplaceVolumesTableAccess:
     Class for accessing and retrieving inplace volumes table data from Sumo.
     """
 
+    _table_names: list[str] | None = None
+
     def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
         self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
@@ -38,10 +40,44 @@ class InplaceVolumesTableAccess:
         sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    async def get_inplace_volumes_table_names_async(self) -> list[str]:
+    async def is_deprecated_format_async(self) -> bool:
+        """
+        Check if the inplace volumes table is of deprecated format.
+
+        Deprecated format means that the table does not have the 'standard_result' field set to 'inplace_volumes'.
+
+        This function will initialize _table_names for cache purposes
+        """
+        if self._table_names is not None:
+            return False
+
+        # See if the table has the standard_result field set to 'inplace_volumes'
         table_context = self._ensemble_context.tables.filter(standard_result=StandardResultName.inplace_volumes)
         table_names = await table_context.names_async
-        return table_names
+        if table_names:
+            self._table_names = table_names
+            return False
+
+        # Check if deprecated format (do not initialize _table_names)
+        table_context = self._ensemble_context.tables.filter(content="volumes")
+        table_names = await table_context.names_async
+        if table_names:
+            return True
+
+        # If no tables found for new format, set empty list of table names
+        self._table_names = []
+        return False
+
+    async def get_inplace_volumes_table_names_async(self) -> list[str]:
+        """
+        Get list of inplace volumes table names for the given case and iteration.
+        """
+        if self._table_names is not None:
+            return self._table_names
+
+        table_context = self._ensemble_context.tables.filter(standard_result=StandardResultName.inplace_volumes)
+        self._table_names = await table_context.names_async
+        return self._table_names
 
     async def get_inplace_volumes_aggregated_table_async(
         self, table_name: str, volume_columns: Optional[set[str]] = None

@@ -59,7 +59,8 @@ def _tmp_remove_license_column_if_all_values_are_total(pa_table: pa.Table) -> pa
     return pa_table
 
 
-class InplaceVolumetricsAccess:
+# pylint: disable=invalid-name
+class DEPRECATED_InplaceVolumetricsAccess:
     def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
         self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
@@ -69,7 +70,9 @@ class InplaceVolumetricsAccess:
         )
 
     @classmethod
-    def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "InplaceVolumetricsAccess":
+    def from_iteration_name(
+        cls, access_token: str, case_uuid: str, iteration_name: str
+    ) -> "DEPRECATED_InplaceVolumetricsAccess":
         sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
@@ -82,7 +85,7 @@ class InplaceVolumetricsAccess:
         """
         The identifier columns and REAL column represent the selector columns of the volumetric table.
         """
-        return InplaceVolumetricsAccess.get_possible_identifier_columns() + ["REAL"]
+        return DEPRECATED_InplaceVolumetricsAccess.get_possible_identifier_columns() + ["REAL"]
 
     async def get_inplace_volumetrics_table_names_async(self) -> List[str]:
 

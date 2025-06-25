@@ -3,11 +3,11 @@ import asyncio
 import pyarrow as pa
 import polars as pl
 
-from primary.services.sumo_access.inplace_volumetrics_access import (
-    InplaceVolumetricsAccess,
+from primary.services.sumo_access.deprecated_inplace_volumetrics_access import (
+    DEPRECATED_InplaceVolumetricsAccess,
     IGNORED_IDENTIFIER_COLUMN_VALUES,
 )
-from primary.services.sumo_access.inplace_volumetrics_types import (
+from primary.services.sumo_access.deprecated_inplace_volumetrics_types import (
     CategorizedResultNames,
     FluidZone,
     FluidSelection,
@@ -54,8 +54,11 @@ from webviz_pkg.core_utils.perf_timer import PerfTimer
 LOGGER = logging.getLogger(__name__)
 
 
-class InplaceVolumetricsAssembler:
+# pylint: disable=invalid-name
+class DEPRECATED_InplaceVolumetricsAssembler:
     """
+    This class is deprecated and will be removed in the future.
+
     This class provides an interface for interacting with definitions used in front-end for assembling and providing
     metadata and inplace volumetrics table data
 
@@ -72,7 +75,7 @@ class InplaceVolumetricsAssembler:
 
     """
 
-    def __init__(self, inplace_volumetrics_access: InplaceVolumetricsAccess):
+    def __init__(self, inplace_volumetrics_access: DEPRECATED_InplaceVolumetricsAccess):
         self._inplace_volumetrics_access = inplace_volumetrics_access
 
     async def get_volumetric_table_metadata_async(self) -> list[InplaceVolumetricsTableDefinition]:
@@ -165,8 +168,10 @@ class InplaceVolumetricsAssembler:
             )
 
             # Create result df - requested volumes and calculated properties
-            per_realization_accumulated_result_df = InplaceVolumetricsAssembler._create_result_dataframe_polars(
-                per_group_summed_realization_df, categorized_requested_result_names, fluid_selection
+            per_realization_accumulated_result_df = (
+                DEPRECATED_InplaceVolumetricsAssembler._create_result_dataframe_polars(
+                    per_group_summed_realization_df, categorized_requested_result_names, fluid_selection
+                )
             )
 
             fluid_selection_name = create_fluid_selection_name(fluid_selection, fluid_zones)
@@ -217,8 +222,10 @@ class InplaceVolumetricsAssembler:
             )
 
             # Create result df - requested volumes and calculated properties
-            per_realization_accumulated_result_df = InplaceVolumetricsAssembler._create_result_dataframe_polars(
-                per_group_summed_realization_df, categorized_requested_result_names, fluid_selection
+            per_realization_accumulated_result_df = (
+                DEPRECATED_InplaceVolumetricsAssembler._create_result_dataframe_polars(
+                    per_group_summed_realization_df, categorized_requested_result_names, fluid_selection
+                )
             )
 
             if group_by_identifiers == []:
@@ -323,7 +330,7 @@ class InplaceVolumetricsAssembler:
         fluid_zone: FluidZone | None = get_fluid_zone_from_selection(fluid_selection)
 
         # Find valid selector columns and volume names
-        possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
+        possible_selector_columns = DEPRECATED_InplaceVolumetricsAccess.get_possible_selector_columns()
         available_selector_columns = [col for col in possible_selector_columns if col in volume_df.columns]
         requested_volume_names = categorized_requested_result_names.volume_names
         available_requested_volume_names = [name for name in requested_volume_names if name in volume_df.columns]
@@ -392,7 +399,7 @@ class InplaceVolumetricsAssembler:
         raw_volumetrics_df: pl.DataFrame = await self._get_inplace_volumetrics_table_as_polars_df_async(
             table_name=table_name, volumetric_columns=set(raw_volumetric_column_names)
         )
-        row_filtered_raw_volumetrics_df = InplaceVolumetricsAssembler._create_row_filtered_volumetric_df(
+        row_filtered_raw_volumetrics_df = DEPRECATED_InplaceVolumetricsAssembler._create_row_filtered_volumetric_df(
             table_name=table_name,
             inplace_volumetrics_df=raw_volumetrics_df,
             realizations=realizations,

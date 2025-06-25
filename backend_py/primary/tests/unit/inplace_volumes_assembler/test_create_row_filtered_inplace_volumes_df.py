@@ -10,7 +10,7 @@ from primary.services.sumo_access.inplace_volumes_table_types import (
     InplaceVolumes,
     InplaceVolumesIndexWithValues,
 )
-from primary.services.sumo_access.inplace_volumetrics_access import IGNORED_IDENTIFIER_COLUMN_VALUES
+from primary.services.sumo_access.deprecated_inplace_volumetrics_access import IGNORED_IDENTIFIER_COLUMN_VALUES
 from primary.services.service_exceptions import InvalidDataError, InvalidParameterError, NoDataError
 
 
