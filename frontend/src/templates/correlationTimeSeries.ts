@@ -50,8 +50,8 @@ const template: Template = {
             },
         },
         {
-            instanceRef: "MyParameterCorrelationPlotInstance",
-            moduleName: "ParameterCorrelationPlot",
+            instanceRef: "MyParameterResponseCorrelationBarPlotInstance",
+            moduleName: "ParameterResponseCorrelationBarPlot",
             layout: {
                 relHeight: 1,
                 relWidth: 0.5,

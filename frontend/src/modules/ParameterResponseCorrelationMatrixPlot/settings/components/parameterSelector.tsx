@@ -7,50 +7,39 @@ import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 
 type ParametersSelectorProps = {
-    allParameterIdentStrings: string[];
-    selectedParameterStrings: string[];
-    onChange: (selected: string[]) => void;
+    allParameterIdents: ParameterIdent[];
+    selectedParameterIdents: ParameterIdent[];
+    onChange: (selected: ParameterIdent[]) => void;
 };
 
 enum GroupType {
     NO_GROUP = "NO GROUP",
 }
 
-function ParametersSelector({
-    allParameterIdentStrings,
-    selectedParameterStrings,
+export function ParametersSelector({
+    allParameterIdents,
+    selectedParameterIdents,
     onChange,
 }: ParametersSelectorProps): React.ReactNode {
     const [autoSelectAllOnGroupChange, setAutoSelectAllOnGroupChange] = React.useState<boolean>(false);
 
-    const allParameterObjects: ParameterIdent[] = allParameterIdentStrings
-        .map((s) => {
-            return ParameterIdent.fromString(s);
-        })
-        .filter(Boolean) as ParameterIdent[];
-
     const [selectedGroupFilterValues, setSelectedGroupFilterValues] = React.useState<string[]>(() => {
-        if (selectedParameterStrings.length > 0) {
-            const initialParameterIdents = selectedParameterStrings.map((s) => ParameterIdent.fromString(s));
-            return Array.from(new Set(initialParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP)));
+        if (selectedParameterIdents.length > 0) {
+            return Array.from(new Set(selectedParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP)));
         }
         return [];
     });
 
-    const selectedParameterObjects: ParameterIdent[] = selectedParameterStrings
-        .map((s) => {
-            return ParameterIdent.fromString(s);
-        })
-        .filter(Boolean) as ParameterIdent[];
+    const selectedParameterObjects: ParameterIdent[] = selectedParameterIdents;
 
     const allParameterGroupOptions: SelectOption[] = Array.from(
-        new Set(allParameterObjects.map((p) => p.groupName ?? GroupType.NO_GROUP)),
+        new Set(allParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP)),
     ).map((groupName) => ({
         label: groupName,
         value: groupName,
     }));
 
-    const parameterOptions: SelectOption[] = allParameterObjects
+    const parameterOptions: SelectOption[] = allParameterIdents
         .filter((p) => {
             if (selectedGroupFilterValues.length === 0) {
                 return false;
@@ -62,15 +51,13 @@ function ParametersSelector({
             value: p.toString(),
         }));
 
-    const selectedParameterValuesForSelect: string[] = selectedParameterStrings;
-
     const handleGroupChange = (newlySelectedGroupFilterStrings: string[]) => {
         setSelectedGroupFilterValues(newlySelectedGroupFilterStrings);
 
         if (newlySelectedGroupFilterStrings.length === 0) {
             onChange([]);
         } else {
-            const parametersThatMatchNewGroups = allParameterObjects.filter((p) =>
+            const parametersThatMatchNewGroups = allParameterIdents.filter((p) =>
                 newlySelectedGroupFilterStrings.some(
                     (groupValue) => groupValue === (p.groupName ?? GroupType.NO_GROUP),
                 ),
@@ -86,12 +73,12 @@ function ParametersSelector({
                 );
             }
 
-            onChange(newSelectedParameters.map((p) => p.toString()));
+            onChange(newSelectedParameters);
         }
     };
 
     const handleParameterChange = (selectedValues: string[]) => {
-        onChange(selectedValues);
+        onChange(selectedValues.map((s) => ParameterIdent.fromString(s)));
     };
 
     return (
@@ -113,7 +100,7 @@ function ParametersSelector({
                         onChange={(e) => setAutoSelectAllOnGroupChange(e.target.checked)}
                     />
                     <Select
-                        value={selectedParameterValuesForSelect}
+                        value={selectedParameterIdents.map((p) => p.toString())}
                         onChange={handleParameterChange}
                         options={parameterOptions}
                         multiple={true}
@@ -126,5 +113,3 @@ function ParametersSelector({
         </div>
     );
 }
-
-export default ParametersSelector;

@@ -1,10 +1,8 @@
-import type { PlotData } from "plotly.js";
-
 import type { Size2D } from "@lib/utils/geometry";
 import type { Figure } from "@modules/_shared/Figure";
 import { makeSubplots } from "@modules/_shared/Figure";
-
-import type { RankedParameterCorrelation } from "../../_shared/rankParameter";
+import type { RankedParameterCorrelation } from "@modules/_shared/rankParameter";
+import type { PlotData } from "plotly.js";
 
 export class ParameterCorrelationFigure {
     private _figure: Figure;

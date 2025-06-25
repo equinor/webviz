@@ -61,8 +61,8 @@ const template: Template = {
             syncedSettings: [SyncSettingKey.PARAMETER],
         },
         {
-            instanceRef: "MyParameterCorrelationPlotInstance",
-            moduleName: "ParameterCorrelationPlot",
+            instanceRef: "MyParameterResponseCorrelationBarPlotInstance",
+            moduleName: "ParameterResponseCorrelationBarPlot",
             layout: {
                 relHeight: 0.8,
                 relWidth: 0.5,

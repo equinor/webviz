@@ -12,7 +12,7 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
 import type { Interfaces } from "../interfaces";
-import type { HexColorMap } from "../typesAndEnums";
+import type { VectorHexColorMap } from "../typesAndEnums";
 import { GroupBy } from "../typesAndEnums";
 
 import { userSelectedActiveTimestampUtcMsAtom } from "./atoms/baseAtoms";
@@ -46,7 +46,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         gradientType: ColorScaleGradientType.Diverging,
     });
     const uniqueVectorNames = [...new Set(vectorSpecifications.map((vec) => vec.vectorName))];
-    const vectorHexColors: HexColorMap = {};
+    const vectorHexColors: VectorHexColorMap = {};
     uniqueVectorNames.forEach((vectorName, index) => {
         const color = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
         vectorHexColors[vectorName] = color;

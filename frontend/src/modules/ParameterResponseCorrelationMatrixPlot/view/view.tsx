@@ -1,8 +1,5 @@
 import React from "react";
 
-import { Input, Warning } from "@mui/icons-material";
-import { isEqual } from "lodash";
-
 import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
 import { KeyKind } from "@framework/DataChannelTypes";
 import { ParameterIdent } from "@framework/EnsembleParameters";
@@ -11,6 +8,7 @@ import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
@@ -18,10 +16,12 @@ import { getVaryingContinuousParameters } from "@modules/_shared/parameterUtils"
 import type { ResponseData } from "@modules/_shared/rankParameter";
 import type { CorrelationDataItem } from "@modules/_shared/utils/math/correlationMatrix";
 import { createPearsonCorrelationMatrix } from "@modules/_shared/utils/math/correlationMatrix";
+import { Input, Warning } from "@mui/icons-material";
+import { isEqual } from "lodash";
 
 import type { Interfaces } from "../interfaces";
 
-import { ParameterCorrelationMatrixFigure } from "./parameterCorrelationMatrixFigure";
+import { ParameterCorrelationMatrixFigure } from "./utils/parameterCorrelationMatrixFigure";
 
 const MAX_NUM_PLOTS = 12;
 
@@ -35,16 +35,17 @@ function MaxNumberPlotsExceededMessage() {
     );
 }
 
-export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfaces>) {
+export function View({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<Interfaces>) {
     const [isPending, startTransition] = React.useTransition();
     const [content, setContent] = React.useState<React.ReactNode>(null);
     const [revNumberResponses, setRevNumberResponses] = React.useState<number[]>([]);
     const [prevShowLabels, setPrevShowLabels] = React.useState<boolean | null>(null);
     const [prevSize, setPrevSize] = React.useState<Size2D | null>(null);
-    const [prevParameterIdentStrings, setPrevParameterIdentStrings] = React.useState<string[]>([]);
+    const [prevParameterIdents, setPrevParameterIdents] = React.useState<ParameterIdent[]>([]);
     const [prevShowSelfCorrelation, setPrevShowSelfCorrelation] = React.useState<boolean>(true);
     const [prevUseFixedColorRange, setPrevUseFixedColorRange] = React.useState<boolean>(true);
-    const parameterIdentStrings = viewContext.useSettingsToViewInterfaceValue("parameterIdentStrings");
+    const [prevColorScaleWithGradient, setPrevColorScaleWithGradient] = React.useState<[number, string][]>([]);
+    const parameterIdents = viewContext.useSettingsToViewInterfaceValue("parameterIdents");
     const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");
     const showSelfCorrelation = viewContext.useSettingsToViewInterfaceValue("showSelfCorrelation");
     const useFixedColorRange = viewContext.useSettingsToViewInterfaceValue("useFixedColorRange");
@@ -55,6 +56,11 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
+    const colorScaleWithGradient = workbenchSettings
+        .useContinuousColorScale({
+            gradientType: ColorScaleGradientType.Diverging,
+        })
+        .getPlotlyColorScale();
 
     const receiverResponses = [
         viewContext.useChannelReceiver({
@@ -75,19 +81,21 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
     const receiverResponseRevisionNumbers = receiverResponses.map((response) => response.revisionNumber);
     if (
         !isEqual(receiverResponseRevisionNumbers, revNumberResponses) ||
-        !isEqual(parameterIdentStrings, prevParameterIdentStrings) ||
+        !isEqual(parameterIdents, prevParameterIdents) ||
         showLabels !== prevShowLabels ||
         wrapperDivSize !== prevSize ||
         showSelfCorrelation !== prevShowSelfCorrelation ||
-        useFixedColorRange !== prevUseFixedColorRange
+        useFixedColorRange !== prevUseFixedColorRange ||
+        !isEqual(colorScaleWithGradient, prevColorScaleWithGradient)
     ) {
         setRevNumberResponses(receiverResponseRevisionNumbers);
 
-        setPrevParameterIdentStrings(parameterIdentStrings);
+        setPrevParameterIdents(parameterIdents);
         setPrevShowLabels(showLabels);
         setPrevSize(wrapperDivSize);
         setPrevShowSelfCorrelation(showSelfCorrelation);
         setPrevUseFixedColorRange(useFixedColorRange);
+        setPrevColorScaleWithGradient(colorScaleWithGradient);
 
         startTransition(function makeContent() {
             // Content when no data channels are defined
@@ -183,13 +191,13 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                     if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
                         continue;
                     }
-                    const parameterArr = getVaryingContinuousParameters(ensemble);
-                    if (!parameterArr) {
+                    const fullParameterArr = getVaryingContinuousParameters(ensemble);
+                    if (!fullParameterArr) {
                         continue;
                     }
-                    const selectedParameters = parameterArr.filter((param) => {
-                        const parameterIdent = ParameterIdent.fromNameAndGroup(param.name, param.groupName);
-                        return parameterIdentStrings.includes(parameterIdent.toString());
+                    const selectedParameterArr = fullParameterArr.filter((param) => {
+                        const currentParamIdent = ParameterIdent.fromNameAndGroup(param.name, param.groupName);
+                        return parameterIdents.some((ident) => ident.equals(currentParamIdent));
                     });
 
                     const responseDataArr: ResponseData[] = ensembleReceiverChannelContents.map((content) => {
@@ -203,7 +211,7 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                         name: r.displayName,
                         values: r.values,
                     }));
-                    const parameterItems: CorrelationDataItem[] = selectedParameters.map((param) => ({
+                    const parameterItems: CorrelationDataItem[] = selectedParameterArr.map((param) => ({
                         name: param.name,
                         values: param.values,
                     }));
@@ -211,6 +219,7 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                     const corr = createPearsonCorrelationMatrix(allItems);
                     figure.addCorrelationMatrixTrace({
                         data: corr,
+                        colorScaleWithGradient,
                         rowIndex: rowIndex + 1,
                         columnIndex: colIndex + 1,
                         cellIndex,

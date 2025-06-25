@@ -109,4 +109,4 @@ export const SubplotLimitDirectionEnumToStringMapping = {
     [SubplotLimitDirection.ROWS]: "Rows",
 };
 
-export type HexColorMap = { [key: string]: string };
+export type VectorHexColorMap = { [key: string]: string };

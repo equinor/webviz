@@ -1,12 +1,12 @@
-import type { PlotData } from "plotly.js";
-
 import type { Size2D } from "@lib/utils/geometry";
 import type { Figure } from "@modules/_shared/Figure";
 import { makeSubplots } from "@modules/_shared/Figure";
 import type { CorrelationMatrix } from "@modules/_shared/utils/math/correlationMatrix";
+import type { PlotData } from "plotly.js";
 
 export type CorrelationMatrixTraceProps = {
     data: CorrelationMatrix;
+    colorScaleWithGradient: [number, string][];
     rowIndex: number;
     columnIndex: number;
     cellIndex: number;
@@ -71,8 +71,20 @@ export class ParameterCorrelationMatrixFigure {
         });
     }
 
-    addCorrelationMatrixTrace({ data, rowIndex, columnIndex, cellIndex, title }: CorrelationMatrixTraceProps): void {
-        const matrixTrace = createCorrelationMatrixTrace(data, this._showSelfCorrelation, this._useFixedColorRange);
+    addCorrelationMatrixTrace({
+        data,
+        colorScaleWithGradient,
+        rowIndex,
+        columnIndex,
+        cellIndex,
+        title,
+    }: CorrelationMatrixTraceProps): void {
+        const matrixTrace = createCorrelationMatrixTrace(
+            data,
+            colorScaleWithGradient,
+            this._showSelfCorrelation,
+            this._useFixedColorRange,
+        );
         this._figure.updateLayout({
             [`xaxis${cellIndex + 1}`]: {
                 showticklabels: this._showLabels,
@@ -112,6 +124,7 @@ type HeatMapPlotData = { hoverongaps: boolean } & Partial<PlotData>;
 
 function createCorrelationMatrixTrace(
     matrix: CorrelationMatrix,
+    colorScaleWithGradient: [number, string][],
     showSelfCorrelation: boolean,
     useFixedColorRange: boolean,
 ): Partial<HeatMapPlotData> {
@@ -132,11 +145,7 @@ function createCorrelationMatrixTrace(
         y: matrix.labels,
         z: triangularMatrix,
         type: "heatmap",
-        colorscale: [
-            [0.0, "rgb(0,0,255)"], // -1.0
-            [0.5, "rgb(255,255,255)"], // 0.0
-            [1.0, "rgb(255,0,0)"], // +1.0
-        ],
+        colorscale: colorScaleWithGradient,
         zmin: useFixedColorRange ? -1 : undefined,
         zmax: useFixedColorRange ? 1 : undefined,
         showscale: true,

@@ -3,6 +3,7 @@ import React from "react";
 import { useAtom } from "jotai";
 
 import { KeyKind } from "@framework/DataChannelTypes";
+import type { ParameterIdent } from "@framework/EnsembleParameters";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
@@ -14,21 +15,21 @@ import { getContinuousAndNonConstantParameterIdentsInEnsembles } from "@modules/
 import type { Interfaces } from "../interfaces";
 
 import {
-    parameterIdentStringsAtom,
+    parameterIdentsAtom,
     showLabelsAtom,
     showSelfCorrelationAtom,
     useFixedColorRangeAtom,
 } from "./atoms/baseAtoms";
-import ParametersSelector from "./components/parameterSelector";
+import { ParametersSelector } from "./components/parameterSelector";
 
 const MAX_LABELS = 25;
 export function Settings({ initialSettings, settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
-    const [parameterIdentStrings, setParameterIdentStrings] = useAtom(parameterIdentStringsAtom);
+    const [parameterIdents, setParameterIdents] = useAtom(parameterIdentsAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
     const [showSelfCorrelation, setShowSelfCorrelation] = useAtom(showSelfCorrelationAtom);
     const [useFixedColorRange, setUseFixedColorRange] = useAtom(useFixedColorRangeAtom);
 
-    useApplyInitialSettingsToState(initialSettings, "parameterIdentStrings", "array", setParameterIdentStrings);
+    useApplyInitialSettingsToState(initialSettings, "parameterIdentStrings", "array", setParameterIdents);
     useApplyInitialSettingsToState(initialSettings, "showLabels", "boolean", setShowLabels);
 
     const receiverResponse = settingsContext.useChannelReceiver({
@@ -52,20 +53,16 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
         });
     }, [ensembleIdentStringsFromChannels, ensembleSet]);
 
-    const allAvailableParameterObjects = getContinuousAndNonConstantParameterIdentsInEnsembles(
+    const allParameterIdents = getContinuousAndNonConstantParameterIdentsInEnsembles(
         ensembleSet,
         regularEnsembleIdentsFromChannels,
     );
 
-    const allParameterIdentStringsForSelector: string[] = React.useMemo(() => {
-        return allAvailableParameterObjects.map((p) => p.toString());
-    }, [allAvailableParameterObjects]);
-
-    function handleParametersChanged(value: string[]) {
-        setParameterIdentStrings(value);
+    function handleParametersChanged(parameterIdents: ParameterIdent[]) {
+        setParameterIdents(parameterIdents);
     }
     function handleShowLabelsChanged(value: boolean) {
-        if (value && parameterIdentStrings.length > MAX_LABELS) {
+        if (value && parameterIdents.length > MAX_LABELS) {
             setShowLabels(false);
         } else {
             setShowLabels(value);
@@ -79,7 +76,7 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
                     <Checkbox
                         label={`Show parameter labels (Max ${MAX_LABELS})`}
                         checked={showLabels}
-                        disabled={parameterIdentStrings.length > MAX_LABELS}
+                        disabled={parameterIdents.length > MAX_LABELS}
                         onChange={(e) => handleShowLabelsChanged(e.target.checked)}
                     />
                     <Checkbox
@@ -96,8 +93,8 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
             </CollapsibleGroup>
             <CollapsibleGroup title="Parameter selection" expanded>
                 <ParametersSelector
-                    allParameterIdentStrings={allParameterIdentStringsForSelector}
-                    selectedParameterStrings={parameterIdentStrings}
+                    allParameterIdents={allParameterIdents}
+                    selectedParameterIdents={parameterIdents}
                     onChange={handleParametersChanged}
                 />
             </CollapsibleGroup>

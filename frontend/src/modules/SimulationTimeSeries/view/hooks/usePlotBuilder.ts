@@ -7,7 +7,7 @@ import type { ViewContext } from "@framework/ModuleContext";
 import type { Size2D } from "@lib/utils/geometry";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
-import type { VectorSpec } from "../../typesAndEnums";
+import type { VectorSpec, VectorHexColorMap } from "../../typesAndEnums";
 import { VisualizationMode } from "../../typesAndEnums";
 import { resampleFrequencyAtom } from "../atoms/baseAtoms";
 import {
@@ -30,7 +30,7 @@ import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc
 export function usePlotBuilder(
     viewContext: ViewContext<Interfaces>,
     wrapperDivSize: Size2D,
-    vectorHexColorMap: { [key: string]: string },
+    vectorHexColorMap: VectorHexColorMap,
     subplotOwner: SubplotOwner,
     ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null,
     handlePlotOnClick?: ((event: Readonly<Plotly.PlotMouseEvent>) => void) | undefined,

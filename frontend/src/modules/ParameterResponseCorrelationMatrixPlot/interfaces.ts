@@ -1,14 +1,15 @@
+import type { ParameterIdent } from "@framework/EnsembleParameters";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
-    parameterIdentStringsAtom,
+    parameterIdentsAtom,
     showLabelsAtom,
     showSelfCorrelationAtom,
     useFixedColorRangeAtom,
 } from "./settings/atoms/baseAtoms";
 
 type SettingsToViewInterface = {
-    parameterIdentStrings: string[];
+    parameterIdents: ParameterIdent[];
     showLabels: boolean;
     showSelfCorrelation: boolean;
     useFixedColorRange: boolean;
@@ -19,7 +20,7 @@ export type Interfaces = {
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    parameterIdentStrings: (get) => get(parameterIdentStringsAtom),
+    parameterIdents: (get) => get(parameterIdentsAtom),
     showLabels: (get) => get(showLabelsAtom),
     showSelfCorrelation: (get) => get(showSelfCorrelationAtom),
     useFixedColorRange: (get) => get(useFixedColorRangeAtom),

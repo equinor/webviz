@@ -17,8 +17,8 @@ import { ContentWarning } from "@modules/_shared/components/ContentMessage/conte
 import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
 
-import type { scatterPlotParameterResponseData } from "./scatterPlotParameterResponseFigure";
-import { ScatterPlotParameterResponseFigure } from "./scatterPlotParameterResponseFigure";
+import type { scatterPlotParameterResponseData } from "./utils/scatterPlotParameterResponseFigure";
+import { ScatterPlotParameterResponseFigure } from "./utils/scatterPlotParameterResponseFigure";
 
 const MAX_NUM_PLOTS = 12;
 

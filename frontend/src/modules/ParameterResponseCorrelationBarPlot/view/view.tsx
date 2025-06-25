@@ -19,7 +19,7 @@ import { createRankedParameterCorrelations } from "@modules/_shared/rankParamete
 
 import type { Interfaces } from "../interfaces";
 
-import { ParameterCorrelationFigure } from "./parameterCorrelationFigure";
+import { ParameterCorrelationFigure } from "./utils/parameterCorrelationFigure";
 
 const MAX_NUM_PLOTS = 12;
 
