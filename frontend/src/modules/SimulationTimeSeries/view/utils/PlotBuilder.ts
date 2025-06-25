@@ -21,8 +21,9 @@ import type { VectorHexColorMap, VectorSpec } from "@modules/SimulationTimeSerie
 import { FrequencyEnumToStringMapping, SubplotLimitDirection } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
 
-import { getHexColorFromOwner, scaleHexColorLightness } from "./colorUtils";
+import { scaleHexColorLightness } from "./colorUtils";
 import type { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
+import { getHexColorFromOwner } from "./plotColoring";
 import {
     createHistoricalVectorTrace,
     createVectorFanchartTraces,

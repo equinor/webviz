@@ -1,9 +1,5 @@
 import { formatHex, formatHsl, modeHsl, useMode } from "culori";
 
-import type { VectorHexColorMap, VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
-
-import { SubplotOwner } from "./PlotBuilder";
-
 /**
     Converts the given hex color to hsl and adjusts the l-channel with the given scale.
 
@@ -29,18 +25,4 @@ export function scaleHexColorLightness(
     }
 
     return undefined;
-}
-export function getHexColorFromOwner(
-    owner: SubplotOwner,
-    vectorSpec: VectorSpec,
-    vectorHexColors: VectorHexColorMap,
-    traceFallbackColor = "#000000",
-): string {
-    let color: string | null = null;
-    if (owner === SubplotOwner.ENSEMBLE) {
-        color = vectorHexColors[vectorSpec.vectorName];
-    } else if (owner === SubplotOwner.VECTOR) {
-        color = vectorSpec.color;
-    }
-    return color ?? traceFallbackColor;
 }

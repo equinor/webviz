@@ -16,8 +16,8 @@ import {
     loadedVectorSpecificationsAndRealizationDataAtom,
     queryIsFetchingAtom,
 } from "../atoms/derivedAtoms";
-import { getHexColorFromOwner } from "../utils/colorUtils";
 import type { SubplotOwner } from "../utils/PlotBuilder";
+import { getHexColorFromOwner } from "../utils/plotColoring";
 
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
