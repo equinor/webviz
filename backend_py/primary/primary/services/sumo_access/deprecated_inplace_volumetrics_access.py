@@ -61,6 +61,10 @@ def _tmp_remove_license_column_if_all_values_are_total(pa_table: pa.Table) -> pa
 
 # pylint: disable=invalid-name
 class DEPRECATED_InplaceVolumetricsAccess:
+    """
+    This class is deprecated and will be removed in the future.
+    """
+
     def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
         self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid

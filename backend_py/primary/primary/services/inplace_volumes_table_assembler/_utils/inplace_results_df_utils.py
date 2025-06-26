@@ -112,17 +112,22 @@ def create_statistical_result_table_data_from_df(
     - Tuple with selector column data list and results statistical data list for the provided result DataFrame.
     """
     columns = set(per_fluid_results_realization_df.columns)
+    if "FLUID" in columns:
+        raise InvalidDataError(
+            "The DataFrame should not contain FLUID column when calculating statistics across realizations",
+            Service.GENERAL,
+        )
     if "REAL" not in columns:
-        raise ValueError(
-            "Input DataFrame must contain 'REAL' column for realizations to calculate statistics across realizations"
+        raise InvalidDataError(
+            "Input DataFrame must contain 'REAL' column for realizations to calculate statistics across realizations",
+            Service.GENERAL,
         )
 
     # Calculate statistics across realizations, i.e. group by existing index columns
-    possible_index_columns = set(InplaceVolumes.index_columns())
-    existing_index_columns = columns & possible_index_columns
+    existing_index_columns = [col for col in columns if col in InplaceVolumes.index_columns()]
 
     # Find valid result names in df
-    existing_result_names = list(set(columns) - set(InplaceVolumes.selector_columns()))
+    existing_result_names = [col for col in columns if col not in InplaceVolumes.selector_columns()]
 
     # Define statistical aggregation expressions
     requested_statistics = [
@@ -141,7 +146,7 @@ def create_statistical_result_table_data_from_df(
     # - Expect the result df to have one unique column per statistic per result name, i.e. "result_name_mean", "result_name_stddev", etc.
     statistical_results_df: pl.DataFrame | None = None
     if existing_index_columns:
-        columns_to_select = list(existing_index_columns) + existing_result_names
+        columns_to_select = existing_index_columns + existing_result_names
         statistical_results_df = (
             per_fluid_results_realization_df.select(columns_to_select)
             .group_by(existing_index_columns)

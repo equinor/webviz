@@ -16,8 +16,12 @@ def is_invalid_column(col: pl.Series) -> bool:
     Returns:
     - bool: True if the column is invalid, False otherwise
     """
+    if col.is_empty():
+        return False
+
     if col.is_null().all():
         return True
     if col.dtype in (pl.Float32, pl.Float64) and col.is_nan().all():
         return True
+
     return False

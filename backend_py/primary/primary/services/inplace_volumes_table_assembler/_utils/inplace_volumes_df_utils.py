@@ -11,6 +11,9 @@ from primary.services.service_exceptions import Service, InvalidDataError
 """
 This file contains general utility functions for handling DataFrames for inplace volumes.
 
+It is intended to work on DataFrames with only inplace volume columns, i.e. not DataFrames with result columns -
+which would include calculated volumes and properties as well.
+
 The methods can be used to calculate, aggregate and create inplace volumes data for the Inplace Volumes Table Assembler
 """
 
