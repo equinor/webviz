@@ -201,6 +201,9 @@ import type {
     GetSessionError_api,
     UpdateSessionData_api,
     UpdateSessionError_api,
+    GetSessionMetadataData_api,
+    GetSessionMetadataResponse_api,
+    GetSessionMetadataError_api,
     LoginRouteData_api,
     LoginRouteError_api,
     AuthorizedCallbackRouteData_api,
@@ -1251,6 +1254,18 @@ export const updateSession = <ThrowOnError extends boolean = false>(
             ...options?.headers,
         },
         url: "/persistence/sessions/{session_id}",
+    });
+};
+
+/**
+ * Get Session Metadata
+ */
+export const getSessionMetadata = <ThrowOnError extends boolean = false>(
+    options: Options<GetSessionMetadataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetSessionMetadataResponse_api, GetSessionMetadataError_api, ThrowOnError>({
+        ...options,
+        url: "/persistence/sessions/metadata/{session_id}",
     });
 };
 

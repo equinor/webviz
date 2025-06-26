@@ -116,6 +116,7 @@ export const workbenchSessionMetadataSchema: JTDSchemaType<WorkbenchSessionMetad
     },
     optionalProperties: {
         description: { type: "string" },
+        hash: { type: "string" },
     },
 } as const;
 

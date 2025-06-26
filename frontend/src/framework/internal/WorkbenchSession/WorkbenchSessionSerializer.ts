@@ -55,6 +55,7 @@ export async function deserializeFromBackend(
         description: raw.metadata.description ?? undefined,
         createdAt: new Date(raw.metadata.created_at).getTime(),
         updatedAt: new Date(raw.metadata.updated_at).getTime(),
+        hash: raw.metadata.hash,
     });
     session.setId(raw.id);
     session.setIsPersisted(true);

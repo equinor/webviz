@@ -16,11 +16,13 @@ import {
     updateSessionWithCacheUpdate,
 } from "./utils";
 import { makeWorkbenchSessionStateString } from "./WorkbenchSessionSerializer";
+import { loadWorkbenchSessionFromBackend } from "./WorkbenchSessionLoader";
 
 export type WorkbenchSessionPersistenceInfo = {
     lastModifiedMs: number;
     hasChanges: boolean;
     lastPersistedMs: number | null;
+    backendLastUpdatedMs: number | null;
 };
 
 export enum WorkbenchSessionPersistenceServiceTopic {
@@ -45,10 +47,13 @@ export class WorkbenchSessionPersistenceService
         lastModifiedMs: 0,
         hasChanges: false,
         lastPersistedMs: null,
+        backendLastUpdatedMs: null,
     };
+    private _fetchingInterval: ReturnType<typeof setInterval> | null = null;
 
     private _lastPersistedMs: number | null = null;
     private _lastModifiedMs: number = 0;
+    private _backendLastUpdatedMs: number | null = null;
 
     constructor(workbench: Workbench) {
         this._workbench = workbench;
@@ -73,6 +78,30 @@ export class WorkbenchSessionPersistenceService
         this.subscribeToModuleInstanceUpdates();
 
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO);
+
+        this._fetchingInterval = setInterval(() => {
+            this.repeatedlyFetchSessionFromBackend();
+        }, 10000); // Fetch every 10 seconds
+    }
+
+    async repeatedlyFetchSessionFromBackend() {
+        if (!this._workbenchSession) {
+            return;
+        }
+
+        const sessionId = this._workbenchSession.getId();
+        if (!sessionId || !this._workbenchSession.getIsPersisted()) {
+            return;
+        }
+
+        const sessionBackend = await loadWorkbenchSessionFromBackend(
+            this._workbench.getAtomStoreMaster(),
+            this._workbench.getQueryClient(),
+            sessionId,
+        );
+
+        this._backendLastUpdatedMs = sessionBackend.getMetadata().updatedAt;
+        this.updatePersistenceInfo();
     }
 
     removeWorkbenchSession() {
@@ -82,6 +111,10 @@ export class WorkbenchSessionPersistenceService
         this.unsubscribeFromSessionUpdates();
         this.reset();
         this._workbenchSession = null;
+
+        if (this._fetchingInterval) {
+            clearInterval(this._fetchingInterval);
+        }
     }
 
     getWorkbenchSession(): PrivateWorkbenchSession | null {
@@ -148,6 +181,7 @@ export class WorkbenchSessionPersistenceService
             lastModifiedMs: 0,
             hasChanges: false,
             lastPersistedMs: null,
+            backendLastUpdatedMs: null,
         };
         this._lastPersistedMs = null;
         this._lastModifiedMs = 0;
@@ -191,6 +225,8 @@ export class WorkbenchSessionPersistenceService
 
         this._currentStateString = makeWorkbenchSessionStateString(this._workbenchSession);
         this._currentHash = await hashJsonString(this._currentStateString);
+
+        this._lastModifiedMs = Date.now();
 
         this.saveToLocalStorage();
         this.updatePersistenceInfo();
@@ -249,12 +285,11 @@ export class WorkbenchSessionPersistenceService
     }
 
     private updatePersistenceInfo() {
-        this._lastModifiedMs = Date.now();
-
         this._persistenceInfo = {
             lastModifiedMs: this._lastModifiedMs,
             hasChanges: this._currentHash !== this._lastPersistedHash,
             lastPersistedMs: this._lastPersistedMs,
+            backendLastUpdatedMs: this._backendLastUpdatedMs,
         };
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO);
     }

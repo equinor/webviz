@@ -18,6 +18,7 @@ import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsavedSessionChangesDialog } from "@framework/internal/components/UnsavedSessionChangesDialog/unsavedSessionChangesDialog";
+import { RecoveryDialog } from "@framework/internal/components/RecoveryDialog/recoveryDialog";
 
 function App() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
@@ -66,6 +67,7 @@ function App() {
                         <SaveSessionDialog workbench={workbench} />
                         <UnsavedSessionChangesDialog workbench={workbench} />
                     </ActiveSessionBoundary>
+                    <RecoveryDialog workbench={workbench} />
                     {content}
                 </>
             </AuthenticationBoundary>

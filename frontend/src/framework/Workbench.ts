@@ -13,6 +13,7 @@ import {
 } from "./internal/WorkbenchSession/WorkbenchSessionLoader";
 import { WorkbenchSessionPersistenceService } from "./internal/WorkbenchSession/WorkbenchSessionPersistenceService";
 import type { WorkbenchServices } from "./WorkbenchServices";
+import { getSessionMetadataOptions } from "@api";
 
 export type StoredUserEnsembleSetting = {
     ensembleIdent: string;
@@ -79,8 +80,58 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     async initialize() {
         const session = await loadWorkbenchSessionFromLocalStorage(this._atomStoreMaster, this._queryClient);
         if (session) {
+            const sessionId = session.getId();
+            if (sessionId && session.getIsPersisted()) {
+                // If the session is persisted, load it from the backend
+                const backendSession = await this._queryClient.fetchQuery({
+                    ...getSessionMetadataOptions({
+                        path: { session_id: sessionId },
+                    }),
+                });
+
+                if (!backendSession) {
+                    return;
+                }
+
+                if (
+                    new Date(backendSession.updated_at).getTime() < session.getMetadata().updatedAt &&
+                    backendSession.hash !== session.getMetadata().hash
+                ) {
+                    this._guiMessageBroker.setState(GuiState.RecoveryDialogOpen, true);
+                    return;
+                }
+            } else {
+                this._guiMessageBroker.setState(GuiState.RecoveryDialogOpen, true);
+                return;
+            }
             this.setWorkbenchSession(session);
         }
+    }
+
+    discardLocalStorageSession(): void {
+        localStorage.removeItem("workbench-session");
+        this._guiMessageBroker.setState(GuiState.RecoveryDialogOpen, false);
+        this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
+        this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
+        this._workbenchSessionPersistenceService.removeWorkbenchSession();
+        this._workbenchSession = null;
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
+    }
+
+    async openSessionFromLocalStorage(): Promise<void> {
+        if (this._workbenchSession) {
+            console.warn("A workbench session is already active. Please close it before opening a new one.");
+            return;
+        }
+
+        const session = await loadWorkbenchSessionFromLocalStorage(this._atomStoreMaster, this._queryClient);
+        if (!session) {
+            console.warn("No workbench session found in local storage.");
+            return;
+        }
+
+        await this.setWorkbenchSession(session);
+        this._guiMessageBroker.setState(GuiState.RecoveryDialogOpen, false);
     }
 
     async openSession(sessionId: string): Promise<void> {

@@ -710,6 +710,7 @@ export type SessionMetadata_api = {
     created_at: string;
     updated_at: string;
     version: number;
+    hash: string;
     title: string;
     description?: string | null;
 };
@@ -3929,6 +3930,33 @@ export type UpdateSessionResponses_api = {
      */
     200: unknown;
 };
+
+export type GetSessionMetadataData_api = {
+    body?: never;
+    path: {
+        session_id: string;
+    };
+    query?: never;
+    url: "/persistence/sessions/metadata/{session_id}";
+};
+
+export type GetSessionMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSessionMetadataError_api = GetSessionMetadataErrors_api[keyof GetSessionMetadataErrors_api];
+
+export type GetSessionMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SessionMetadata_api;
+};
+
+export type GetSessionMetadataResponse_api = GetSessionMetadataResponses_api[keyof GetSessionMetadataResponses_api];
 
 export type LoginRouteData_api = {
     body?: never;

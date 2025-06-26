@@ -43,6 +43,7 @@ export type WorkbenchSessionMetadata = {
     description?: string;
     updatedAt: number; // Timestamp of the last modification
     createdAt: number; // Timestamp of creation
+    hash?: string; // Optional hash for content integrity
 };
 
 export enum PrivateWorkbenchSessionTopic {

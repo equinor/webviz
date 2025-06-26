@@ -35,6 +35,15 @@ async def get_session(session_id: str, user: AuthenticatedUser = Depends(AuthHel
         if not session:
             raise HTTPException(status_code=404, detail="Session not found")
         return session
+    
+@router.get("/sessions/metadata/{session_id}", response_model=SessionMetadata)
+async def get_session_metadata(session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
+    access = await SessionAccess.create(user.get_user_id())
+    async with access:
+        metadata = await access.get_session_metadata(session_id)
+        if not metadata:
+            raise HTTPException(status_code=404, detail="Session metadata not found")
+        return metadata
 
 
 @router.post("/sessions", response_model=str)

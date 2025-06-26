@@ -72,6 +72,7 @@ import {
     deleteSession,
     getSession,
     updateSession,
+    getSessionMetadata,
     loginRoute,
     authorizedCallbackRoute,
     getAlive,
@@ -165,6 +166,7 @@ import type {
     GetSessionData_api,
     UpdateSessionData_api,
     UpdateSessionError_api,
+    GetSessionMetadataData_api,
     LoginRouteData_api,
     AuthorizedCallbackRouteData_api,
     GetAliveData_api,
@@ -1596,6 +1598,25 @@ export const updateSessionMutation = (options?: Partial<Options<UpdateSessionDat
         },
     };
     return mutationOptions;
+};
+
+export const getSessionMetadataQueryKey = (options: Options<GetSessionMetadataData_api>) => [
+    createQueryKey("getSessionMetadata", options),
+];
+
+export const getSessionMetadataOptions = (options: Options<GetSessionMetadataData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getSessionMetadata({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getSessionMetadataQueryKey(options),
+    });
 };
 
 export const loginRouteQueryKey = (options?: Options<LoginRouteData_api>) => [createQueryKey("loginRoute", options)];

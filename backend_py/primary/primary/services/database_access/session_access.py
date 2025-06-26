@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 from operator import attrgetter
 
+from primary.services.database_access._utils import hash_json_string
 from primary.services.service_exceptions import Service, ServiceRequestError
 from primary.services.database_access.container_access import ContainerAccess
 from primary.services.database_access.types import (
@@ -49,6 +50,7 @@ class SessionAccess:
                 created_at=datetime.fromisoformat(item["metadata"]["created_at"]),
                 updated_at=datetime.fromisoformat(item["metadata"]["updated_at"]),
                 version=item["metadata"]["version"],
+                hash=item["metadata"]["hash"],
             )
             for item in items
         ]
@@ -75,6 +77,19 @@ class SessionAccess:
             return all_metadata[:limit]
 
         return all_metadata
+    
+    async def get_session_metadata(self, session_id: str) -> SessionMetadata:
+        existing = await self._assert_ownership(session_id)
+
+        return SessionMetadata(
+            id=existing.id,
+            title=existing.metadata.title,
+            description=existing.metadata.description,
+            created_at=existing.metadata.created_at,
+            updated_at=existing.metadata.updated_at,
+            version=existing.metadata.version,
+            hash=existing.metadata.hash,
+        )
 
     async def insert_session(self, new_session: NewSession) -> str:
         now = datetime.now(timezone.utc)
@@ -88,6 +103,7 @@ class SessionAccess:
                 created_at=now,
                 updated_at=now,
                 version=1,
+                hash=hash_json_string(new_session.content)
             ),
             content=new_session.content,
         )
@@ -107,6 +123,7 @@ class SessionAccess:
                 "description": session_update.metadata.description,
                 "version": existing.metadata.version + 1,
                 "updated_at": datetime.now(timezone.utc),
+                "hash": hash_json_string(session_update.content),
             }
         )
 
