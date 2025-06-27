@@ -23,8 +23,8 @@ class DeprecatedInplaceVolumetricsConverters:
     ) -> list[InplaceVolumetricsIdentifierWithValues]:
         """
         Converts the indices with values from the API format to the sumo service format
-        This function filters out the identifiers with values that have the index column as FLUID is not an identifier column in
-        the original format.
+        This function filters out the indices with values that have the index column FLUID. As FLUID is not an identifier column in
+        the deprecated format.
         """
         converted = []
         for index_with_values in indices_with_values:
@@ -45,7 +45,7 @@ class DeprecatedInplaceVolumetricsConverters:
         """
         Converts the fluids from the API format to the sumo service format
 
-        Extract fluids from the identifiers with values, which are expected to have the index column as FLUID.
+        Extract fluids from the indices with values, which are expected to have FLUID as an index column.
         """
         for index_with_values in indices_with_values:
             if index_with_values.indexColumn.upper() != "FLUID":
@@ -54,7 +54,7 @@ class DeprecatedInplaceVolumetricsConverters:
             fluids = [FluidZone(str(fluid)) for fluid in index_with_values.values]
 
         if not fluids:
-            raise ValueError("No fluids found in the identifiers with values")
+            raise ValueError("No fluids found in the indices with values")
         return fluids
 
     @staticmethod
