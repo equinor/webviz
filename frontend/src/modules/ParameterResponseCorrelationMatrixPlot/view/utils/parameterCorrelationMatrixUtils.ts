@@ -5,8 +5,8 @@ import { pearsonCorrelation } from "@modules/_shared/utils/math/pearsonCorrelati
  * Creates a correlation matrix for parameters along x-axis and responses along y-axis.
  */
 export function createParameterResponseCorrelationMatrix(
-    parameters: CorrelationDataItem[],
     responses: CorrelationDataItem[],
+    parameters: CorrelationDataItem[],
 ): CorrelationMatrix {
     const xLabels = responses.map((item) => item.name);
     const yLabels = parameters.map((item) => item.name);

@@ -146,8 +146,8 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                     if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
                         continue;
                     }
-                    const continuousParametersData = getVaryingContinuousParameters(ensemble);
-                    if (!continuousParametersData) {
+                    const continuousParameters = getVaryingContinuousParameters(ensemble);
+                    if (!continuousParameters) {
                         continue;
                     }
                     const responseData: ResponseData = {
@@ -157,7 +157,7 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                     };
 
                     const rankedParameters = createRankedParameterCorrelations(
-                        continuousParametersData,
+                        continuousParameters,
                         responseData,
                         numParams,
                         corrCutOff,

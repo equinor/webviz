@@ -26,7 +26,7 @@ import {
 } from "./atoms/baseAtoms";
 import { ParametersSelector } from "./components/parameterSelector";
 
-const plotTypes = [
+const plotTypesOptions  = [
     {
         value: PlotType.FullMatrix,
         label: "Full matrix",
@@ -95,7 +95,7 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
                     <Label text="Matrix type">
                         <RadioGroup
                             value={plotType as string}
-                            options={plotTypes}
+                            options={plotTypesOptions }
                             onChange={(e) => handlePlotTypeChanged(e.target.value)}
                         />
                     </Label>

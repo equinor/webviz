@@ -24,7 +24,7 @@ import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc
 export function usePublishToDataChannels(
     viewContext: ViewContext<Interfaces>,
     subplotOwner: SubplotOwner,
-    vectorHexColors: VectorHexColorMap,
+    vectorHexColorMap: VectorHexColorMap,
 ): void {
     const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
@@ -55,7 +55,7 @@ export function usePublishToDataChannels(
 
     const contents: ChannelContentDefinition[] = [];
     for (const elm of regularEnsembleVectorSpecificationsAndRealizationData) {
-        const hexColor = getHexColorFromOwner(subplotOwner, elm.vectorSpecification, vectorHexColors);
+        const hexColor = getHexColorFromOwner(subplotOwner, elm.vectorSpecification, vectorHexColorMap);
         contents.push({
             contentIdString: `${elm.vectorSpecification.vectorName}-::-${elm.vectorSpecification.ensembleIdent}`,
             displayName: `${elm.vectorSpecification.vectorName} (${makeEnsembleDisplayName(

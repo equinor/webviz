@@ -59,7 +59,7 @@ export function usePublishToDataChannels(
 ) {
     const contents: ChannelContentDefinition[] = [];
 
-    if (!table || !resultName || table.getColumn("REAL") === undefined || table.getColumn(resultName) === undefined) {
+    if (!table || !resultName || !table.getColumn("REAL") || !table.getColumn(resultName)) {
         viewContext.usePublishChannelContents({
             channelIdString: ChannelIds.RESPONSE_PER_REAL,
             dependencies: [table, ensembleSet, resultName, colorBy, colorSet],
@@ -126,9 +126,9 @@ function createColumnValuesToColorMap(
     colorSet: ColorSet,
 ): Map<string | number, string> {
     const colorByMap = new Map<string | number, string>();
-    const colorByColumnExists = table.getColumn(colorBy);
+    const colorByColumn = table.getColumn(colorBy);
 
-    if (!colorByColumnExists) {
+    if (!colorByColumn) {
         return colorByMap;
     }
 

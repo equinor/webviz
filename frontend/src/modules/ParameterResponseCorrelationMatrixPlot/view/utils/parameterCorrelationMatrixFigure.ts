@@ -35,7 +35,7 @@ export class ParameterCorrelationMatrixFigure {
         showSelfCorrelation,
         useFixedColorRange,
     }: ParameterCorrelationMatrixFigureProps) {
-        this._showLabels = showLabels ;
+        this._showLabels = showLabels;
         this._showSelfCorrelation = showSelfCorrelation;
         this._useFixedColorRange = useFixedColorRange;
         const margin = this._showLabels
@@ -71,7 +71,14 @@ export class ParameterCorrelationMatrixFigure {
             },
         });
     }
+    numRows(): number {
+        return this._figure.getNumRows();
+    }
 
+    numColumns(): number {
+        return this._figure.getNumColumns();
+    }
+    
     addFullCorrelationMatrixTrace({
         data,
         colorScaleWithGradient,

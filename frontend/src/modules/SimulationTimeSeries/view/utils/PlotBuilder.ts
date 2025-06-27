@@ -60,7 +60,7 @@ export class PlotBuilder {
     private _uniqueEnsembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[] = [];
     private _uniqueVectorNames: string[] = [];
 
-    private _vectorToHexColorMap: VectorHexColorMap = {};
+    private _vectorHexColorMap: VectorHexColorMap = {};
 
     private _makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) => string;
 
@@ -118,7 +118,7 @@ export class PlotBuilder {
             if (this._uniqueEnsembleIdents.some((elm) => elm.equals(vectorSpecification.ensembleIdent))) continue;
             this._uniqueEnsembleIdents.push(vectorSpecification.ensembleIdent);
         }
-        this._vectorToHexColorMap = vectorHexColorMap;
+        this._vectorHexColorMap = vectorHexColorMap;
 
         this._ensemblesParameterColoring = ensemblesParameterColoring ?? null;
         this._scatterType = scatterType;
@@ -367,7 +367,7 @@ export class PlotBuilder {
             let color = getHexColorFromOwner(
                 this._subplotOwner,
                 elm.vectorSpecification,
-                this._vectorToHexColorMap,
+                this._vectorHexColorMap,
                 this._traceFallbackColor,
             );
             if (useIncreasedBrightness) {
@@ -420,7 +420,7 @@ export class PlotBuilder {
             const color = getHexColorFromOwner(
                 this._subplotOwner,
                 elm.vectorSpecification,
-                this._vectorToHexColorMap,
+                this._vectorHexColorMap,
                 this._traceFallbackColor,
             );
 
@@ -469,7 +469,7 @@ export class PlotBuilder {
             const color = getHexColorFromOwner(
                 this._subplotOwner,
                 elm.vectorSpecification,
-                this._vectorToHexColorMap,
+                this._vectorHexColorMap,
                 this._traceFallbackColor,
             );
 
@@ -660,7 +660,7 @@ export class PlotBuilder {
             // Add legend for each vector/ensemble on top
             if (this._subplotOwner === SubplotOwner.ENSEMBLE) {
                 this._addedVectorsLegendTracker.forEach((vectorName) => {
-                    const hexColor = this._vectorToHexColorMap[vectorName] ?? this._traceFallbackColor;
+                    const hexColor = this._vectorHexColorMap[vectorName] ?? this._traceFallbackColor;
                     this._figure.addTrace(
                         this.createLegendTrace(
                             vectorName,

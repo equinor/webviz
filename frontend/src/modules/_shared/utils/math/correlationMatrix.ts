@@ -10,6 +10,7 @@ export type CorrelationMatrix = {
     yLabels: string[];
     matrix: (number | null)[][];
 };
+
 export function createPearsonCorrelationMatrix(dataItems: CorrelationDataItem[]): CorrelationMatrix {
     const labels = dataItems.map((item) => item.name);
     const matrix: (number | null)[][] = Array(dataItems.length)

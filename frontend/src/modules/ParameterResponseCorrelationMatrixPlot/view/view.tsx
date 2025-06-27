@@ -6,6 +6,7 @@ import { isEqual } from "lodash";
 import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
 import { KeyKind } from "@framework/DataChannelTypes";
 import { ParameterIdent } from "@framework/EnsembleParameters";
+import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -85,9 +86,12 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
 
     statusWriter.setLoading(isPending || receiverResponses.some((r) => r.isPending));
     const receiverResponseRevisionNumbers = receiverResponses.map((response) => response.revisionNumber);
+    const hasParameterIdentsChanged =
+        parameterIdents.length !== prevParameterIdents.length ||
+        !parameterIdents.every((ident, index) => ident.equals(prevParameterIdents[index]));
     if (
         !isEqual(receiverResponseRevisionNumbers, revNumberResponses) ||
-        !isEqual(parameterIdents, prevParameterIdents) ||
+        hasParameterIdentsChanged ||
         showLabels !== prevShowLabels ||
         wrapperDivSize !== prevSize ||
         showSelfCorrelation !== prevShowSelfCorrelation ||
@@ -181,72 +185,15 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 showSelfCorrelation,
                 useFixedColorRange,
             });
-
-            //  each ensemble and plot all the correlations
-            let cellIndex = 0;
-            for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
-                for (let colIndex = 0; colIndex < numCols; colIndex++) {
-                    if (cellIndex >= numContents) {
-                        break;
-                    }
-                    const ensembleReceiverChannelContents = Array.from(receiveResponsesPerEnsembleIdent.values())[
-                        cellIndex
-                    ];
-                    const ensembleIdentString = Array.from(receiveResponsesPerEnsembleIdent.keys())[cellIndex];
-
-                    const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
-                    if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
-                        continue;
-                    }
-                    const fullParameterArr = getVaryingContinuousParameters(ensemble);
-                    if (!fullParameterArr) {
-                        continue;
-                    }
-                    const selectedParameterArr = fullParameterArr.filter((param) => {
-                        const currentParamIdent = ParameterIdent.fromNameAndGroup(param.name, param.groupName);
-                        return parameterIdents.some((ident) => ident.equals(currentParamIdent));
-                    });
-
-                    const responseDataArr: ResponseData[] = ensembleReceiverChannelContents.map((content) => {
-                        return {
-                            realizations: content.dataArray.map((dataPoint) => dataPoint.key as number),
-                            values: content.dataArray.map((dataPoint) => dataPoint.value as number),
-                            displayName: content.displayName,
-                        };
-                    });
-                    const responseItems: CorrelationDataItem[] = responseDataArr.map((r) => ({
-                        name: r.displayName,
-                        values: r.values,
-                    }));
-                    const parameterItems: CorrelationDataItem[] = selectedParameterArr.map((param) => ({
-                        name: param.name,
-                        values: param.values,
-                    }));
-                    if (plotType === PlotType.FullMatrix) {
-                        const corr = createPearsonCorrelationMatrix([...responseItems, ...parameterItems]);
-                        figure.addFullCorrelationMatrixTrace({
-                            data: corr,
-                            colorScaleWithGradient,
-                            row: rowIndex + 1,
-                            column: colIndex + 1,
-                            cellIndex,
-                            title: ensemble.getDisplayName(),
-                        });
-                    } else if (plotType === PlotType.ParameterResponseMatrix) {
-                        const corr = createParameterResponseCorrelationMatrix(parameterItems, responseItems);
-                        figure.addParameterResponseMatrixTrace({
-                            data: corr,
-                            colorScaleWithGradient,
-                            row: rowIndex + 1,
-                            column: colIndex + 1,
-                            cellIndex,
-                            title: ensemble.getDisplayName(),
-                        });
-                    }
-
-                    cellIndex++;
-                }
-            }
+            fillParameterCorrelationMatrixFigure(
+                figure,
+                parameterIdents,
+                colorScaleWithGradient,
+                numContents,
+                ensembleSet,
+                receiveResponsesPerEnsembleIdent,
+                plotType
+            );
             setContent(figure.build());
             return;
         });
@@ -257,4 +204,81 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             {content}
         </div>
     );
+}
+
+function fillParameterCorrelationMatrixFigure(
+    figure: ParameterCorrelationMatrixFigure,
+    parameterIdents: ParameterIdent[],
+    colorScaleWithGradient: [number, string][],
+    numContents: number,
+    ensembleSet: EnsembleSet,
+    receiveResponsesPerEnsembleIdent: Map<string, ChannelReceiverChannelContent<KeyKind.REALIZATION[]>[]>,
+    plotType: PlotType,
+): void {
+    const numRows = figure.numRows();
+    const numCols = figure.numColumns();
+
+    // Each ensemble and plot all the correlations
+    let cellIndex = 0;
+    for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
+        for (let colIndex = 0; colIndex < numCols; colIndex++) {
+            if (cellIndex >= numContents) {
+                break;
+            }
+            const ensembleReceiverChannelContents = Array.from(receiveResponsesPerEnsembleIdent.values())[cellIndex];
+            const ensembleIdentString = Array.from(receiveResponsesPerEnsembleIdent.keys())[cellIndex];
+
+            const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
+            if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
+                continue;
+            }
+            const fullParameterArr = getVaryingContinuousParameters(ensemble);
+            if (!fullParameterArr) {
+                continue;
+            }
+            const selectedParameterArr = fullParameterArr.filter((param) => {
+                const currentParamIdent = ParameterIdent.fromNameAndGroup(param.name, param.groupName);
+                return parameterIdents.some((ident) => ident.equals(currentParamIdent));
+            });
+
+            const responseDataArr: ResponseData[] = ensembleReceiverChannelContents.map((content) => {
+                return {
+                    realizations: content.dataArray.map((dataPoint) => dataPoint.key as number),
+                    values: content.dataArray.map((dataPoint) => dataPoint.value as number),
+                    displayName: content.displayName,
+                };
+            });
+            const responseItems: CorrelationDataItem[] = responseDataArr.map((r) => ({
+                name: r.displayName,
+                values: r.values,
+            }));
+            const parameterItems: CorrelationDataItem[] = selectedParameterArr.map((param) => ({
+                name: param.name,
+                values: param.values,
+            }));
+            if (plotType === PlotType.FullMatrix) {
+                const corr = createPearsonCorrelationMatrix([...responseItems, ...parameterItems]);
+                figure.addFullCorrelationMatrixTrace({
+                    data: corr,
+                    colorScaleWithGradient,
+                    row: rowIndex + 1,
+                    column: colIndex + 1,
+                    cellIndex,
+                    title: ensemble.getDisplayName(),
+                });
+            } else if (plotType === PlotType.ParameterResponseMatrix) {
+                const corr = createParameterResponseCorrelationMatrix(responseItems, parameterItems);
+                figure.addParameterResponseMatrixTrace({
+                    data: corr,
+                    colorScaleWithGradient,
+                    row: rowIndex + 1,
+                    column: colIndex + 1,
+                    cellIndex,
+                    title: ensemble.getDisplayName(),
+                });
+            }
+
+            cellIndex++;
+        }
+    }
 }
