@@ -4,6 +4,11 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import type { PrivateWorkbenchSession } from "./PrivateWorkbenchSession";
 import { deserializeFromBackend, deserializeFromLocalStorage } from "./WorkbenchSessionSerializer";
+import {
+    localStorageKeyForSessionId,
+    WORKBENCH_SESSION_LOCAL_STORAGE_KEY_PREFIX,
+    WORKBENCH_SESSION_LOCAL_STORAGE_KEY_TEMP,
+} from "./utils";
 
 export async function loadWorkbenchSessionFromBackend(
     atomStoreMaster: AtomStoreMaster,
@@ -18,8 +23,25 @@ export async function loadWorkbenchSessionFromBackend(
 }
 
 export async function loadWorkbenchSessionFromLocalStorage(
+    sessionId: string | null,
     atomStoreMaster: AtomStoreMaster,
     queryClient: QueryClient,
 ): Promise<PrivateWorkbenchSession | null> {
-    return deserializeFromLocalStorage(atomStoreMaster, queryClient);
+    const key = localStorageKeyForSessionId(sessionId);
+    return deserializeFromLocalStorage(key, atomStoreMaster, queryClient);
+}
+
+export async function loadAllWorkbenchSessionsFromLocalStorage(
+    atomStoreMaster: AtomStoreMaster,
+    queryClient: QueryClient,
+): Promise<PrivateWorkbenchSession[]> {
+    const keys = Object.keys(localStorage).filter(
+        (key) =>
+            key.startsWith(WORKBENCH_SESSION_LOCAL_STORAGE_KEY_PREFIX) ||
+            key === WORKBENCH_SESSION_LOCAL_STORAGE_KEY_TEMP,
+    );
+    const sessions = await Promise.all(
+        keys.map((key) => deserializeFromLocalStorage(key, atomStoreMaster, queryClient)),
+    );
+    return sessions.filter((session): session is PrivateWorkbenchSession => session !== null);
 }

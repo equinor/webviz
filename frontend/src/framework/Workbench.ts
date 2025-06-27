@@ -8,12 +8,13 @@ import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
 import { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
 import {
+    loadAllWorkbenchSessionsFromLocalStorage,
     loadWorkbenchSessionFromBackend,
     loadWorkbenchSessionFromLocalStorage,
 } from "./internal/WorkbenchSession/WorkbenchSessionLoader";
 import { WorkbenchSessionPersistenceService } from "./internal/WorkbenchSession/WorkbenchSessionPersistenceService";
 import type { WorkbenchServices } from "./WorkbenchServices";
-import { getSessionMetadataOptions } from "@api";
+import { localStorageKeyForSessionId } from "./internal/WorkbenchSession/utils";
 
 export type StoredUserEnsembleSetting = {
     ensembleIdent: string;
@@ -78,38 +79,17 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     }
 
     async initialize() {
-        const session = await loadWorkbenchSessionFromLocalStorage(this._atomStoreMaster, this._queryClient);
-        if (session) {
-            const sessionId = session.getId();
-            if (sessionId && session.getIsPersisted()) {
-                // If the session is persisted, load it from the backend
-                const backendSession = await this._queryClient.fetchQuery({
-                    ...getSessionMetadataOptions({
-                        path: { session_id: sessionId },
-                    }),
-                });
-
-                if (!backendSession) {
-                    return;
-                }
-
-                if (
-                    new Date(backendSession.updated_at).getTime() < session.getMetadata().updatedAt &&
-                    backendSession.hash !== session.getMetadata().hash
-                ) {
-                    this._guiMessageBroker.setState(GuiState.RecoveryDialogOpen, true);
-                    return;
-                }
-            } else {
-                this._guiMessageBroker.setState(GuiState.RecoveryDialogOpen, true);
-                return;
-            }
-            this.setWorkbenchSession(session);
+        const storedSessions = await loadAllWorkbenchSessionsFromLocalStorage(this._atomStoreMaster, this._queryClient);
+        if (storedSessions.length === 0) {
+            return;
         }
+
+        this._guiMessageBroker.setState(GuiState.RecoveryDialogOpen, true);
     }
 
-    discardLocalStorageSession(): void {
-        localStorage.removeItem("workbench-session");
+    discardLocalStorageSession(sessionId: string | null): void {
+        const key = localStorageKeyForSessionId(sessionId);
+        localStorage.removeItem(key);
         this._guiMessageBroker.setState(GuiState.RecoveryDialogOpen, false);
         this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
         this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
@@ -118,13 +98,13 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
     }
 
-    async openSessionFromLocalStorage(): Promise<void> {
+    async openSessionFromLocalStorage(sessionId: string | null): Promise<void> {
         if (this._workbenchSession) {
             console.warn("A workbench session is already active. Please close it before opening a new one.");
             return;
         }
 
-        const session = await loadWorkbenchSessionFromLocalStorage(this._atomStoreMaster, this._queryClient);
+        const session = await loadWorkbenchSessionFromLocalStorage(sessionId, this._atomStoreMaster, this._queryClient);
         if (!session) {
             console.warn("No workbench session found in local storage.");
             return;
@@ -198,18 +178,19 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         await this.setWorkbenchSession(session);
     }
 
-    maybeCloseCurrentSession(): void {
+    maybeCloseCurrentSession(): boolean {
         if (!this._workbenchSession) {
             console.warn("No active workbench session to close.");
-            return;
+            return true;
         }
 
         if (this._workbenchSessionPersistenceService.hasChanges() || !this._workbenchSession.getIsPersisted()) {
             this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, true);
-            return;
+            return false;
         }
 
         this.closeCurrentSession();
+        return true;
     }
 
     closeCurrentSession(): void {
@@ -218,7 +199,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             return;
         }
 
-        this._workbenchSession.removeFromLocalStorage();
         this._workbenchSession.beforeDestroy();
         this._workbenchSessionPersistenceService.removeWorkbenchSession();
         this._workbenchSession = null;

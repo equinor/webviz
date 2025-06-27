@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Tooltip, Typography } from "@equinor/eds-core-react";
-import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { WorkbenchSessionPersistenceServiceTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionPersistenceService";
 import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
@@ -12,7 +12,7 @@ import { IconButton } from "@lib/components/IconButton";
 import { timeAgo } from "@lib/utils/dates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Close, Edit, Refresh, Save } from "@mui/icons-material";
+import { AddLink, Close, Edit, Refresh, Save } from "@mui/icons-material";
 
 import FmuLogo from "@assets/fmu.svg";
 
@@ -36,16 +36,19 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                 )}
             >
                 <LogoWithText />
-                {hasActiveSession ? (
-                    <>
-                        <SessionTitle workbench={props.workbench} />
-                        <RefreshSessionButton workbench={props.workbench} />
-                        <SessionSaveButton workbench={props.workbench} />
-                    </>
-                ) : (
-                    <div className="grow" />
-                )}
-                <LoginButton showText={false} />
+                <div className="flex gap-2 items-center grow">
+                    {hasActiveSession ? (
+                        <>
+                            <SessionTitle workbench={props.workbench} />
+                            <RefreshSessionButton workbench={props.workbench} />
+                            <SessionSaveButton workbench={props.workbench} />
+                            <SnapshotButton workbench={props.workbench} />
+                        </>
+                    ) : (
+                        <div className="grow" />
+                    )}
+                    <LoginButton showText={false} />
+                </div>
             </div>
         </>
     );
@@ -125,6 +128,26 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
     }
 
     return <div className="grow flex gap-2 overflow-hidden items-center">{makeContent()}</div>;
+}
+
+type SnapshotButtonProps = {
+    workbench: Workbench;
+};
+
+function SnapshotButton(props: SessionSaveButtonProps): React.ReactNode {
+    const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.MakeSnapshotDialogOpen);
+
+    const handleSaveClick = () => {
+        setIsOpen(true);
+    };
+
+    return (
+        <div className="p-2 flex items-center text-sm gap-4">
+            <TopBarButton onClick={handleSaveClick} title="Make a snapshot of the current session">
+                <AddLink fontSize="small" />
+            </TopBarButton>
+        </div>
+    );
 }
 
 type SessionSaveButtonProps = {

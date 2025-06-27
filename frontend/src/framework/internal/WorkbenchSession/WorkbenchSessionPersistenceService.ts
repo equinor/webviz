@@ -12,6 +12,7 @@ import { toast } from "react-toastify";
 import {
     createSessionWithCacheUpdate,
     hashJsonString,
+    localStorageKeyForSessionId,
     objectToJsonString,
     updateSessionWithCacheUpdate,
 } from "./utils";
@@ -69,8 +70,14 @@ export class WorkbenchSessionPersistenceService
         this._currentStateString = makeWorkbenchSessionStateString(this._workbenchSession);
         this._currentHash = await hashJsonString(this._currentStateString);
         this._lastPersistedMs = session.getMetadata().updatedAt;
-        this._lastModifiedMs = session.getMetadata().updatedAt;
-        this._lastPersistedHash = this._currentHash;
+        this._lastModifiedMs = session.getMetadata().lastModifiedMs;
+
+        if (!session.getLoadedFromLocalStorage()) {
+            this._lastPersistedHash = this._currentHash;
+        } else {
+            this._lastPersistedHash = null;
+        }
+
         this.updatePersistenceInfo();
 
         this.subscribeToSessionChanges();
@@ -108,6 +115,8 @@ export class WorkbenchSessionPersistenceService
         if (!this._workbenchSession) {
             return;
         }
+
+        this.removeFromLocalStorage();
         this.unsubscribeFromSessionUpdates();
         this.reset();
         this._workbenchSession = null;
@@ -115,6 +124,11 @@ export class WorkbenchSessionPersistenceService
         if (this._fetchingInterval) {
             clearInterval(this._fetchingInterval);
         }
+    }
+
+    removeFromLocalStorage(): void {
+        const key = this.makeLocalStorageKey();
+        localStorage.removeItem(key);
     }
 
     getWorkbenchSession(): PrivateWorkbenchSession | null {
@@ -206,12 +220,17 @@ export class WorkbenchSessionPersistenceService
         return snapshotGetter;
     }
 
-    private getLocalStorageKey(): string {
-        return "workbench-session";
+    private makeLocalStorageKey(): string {
+        if (!this._workbenchSession) {
+            throw new Error("Workbench is not set. Cannot create local storage key.");
+        }
+
+        const sessionId = this._workbenchSession.getId();
+        return localStorageKeyForSessionId(sessionId);
     }
 
     private saveToLocalStorage() {
-        const key = this.getLocalStorageKey();
+        const key = this.makeLocalStorageKey();
 
         if (this._currentStateString) {
             localStorage.setItem(key, this._currentStateString);
@@ -223,10 +242,17 @@ export class WorkbenchSessionPersistenceService
             throw new Error("No active workbench session to pull state from.");
         }
 
+        this._lastModifiedMs = Date.now();
+
+        this._workbenchSession.updateMetadata(
+            {
+                lastModifiedMs: this._lastModifiedMs,
+            },
+            false,
+        );
+
         this._currentStateString = makeWorkbenchSessionStateString(this._workbenchSession);
         this._currentHash = await hashJsonString(this._currentStateString);
-
-        this._lastModifiedMs = Date.now();
 
         this.saveToLocalStorage();
         this.updatePersistenceInfo();
@@ -260,6 +286,9 @@ export class WorkbenchSessionPersistenceService
                         description: metadata.description,
                     },
                 });
+                // On successful update, we can safely remove the local storage recovery entry
+                this.removeFromLocalStorage();
+
                 toast.dismiss(toastId);
                 toast.success("Session state updated successfully.");
             } else {

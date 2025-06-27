@@ -44,6 +44,7 @@ export type WorkbenchSessionMetadata = {
     updatedAt: number; // Timestamp of the last modification
     createdAt: number; // Timestamp of creation
     hash?: string; // Optional hash for content integrity
+    lastModifiedMs: number; // Last modified timestamp for internal use
 };
 
 export enum PrivateWorkbenchSessionTopic {
@@ -82,14 +83,24 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         title: "New Workbench Session",
         createdAt: Date.now(),
         updatedAt: Date.now(),
+        lastModifiedMs: Date.now(),
     };
     private _isEnsembleSetLoading: boolean = false;
+    private _loadedFromLocalStorage: boolean = false;
 
     constructor(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient) {
         this._atomStoreMaster = atomStoreMaster;
         this._queryClient = queryClient;
         this._userCreatedItems = new UserCreatedItems(atomStoreMaster);
         this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, this._realizationFilterSet);
+    }
+
+    getLoadedFromLocalStorage(): boolean {
+        return this._loadedFromLocalStorage;
+    }
+
+    setLoadedFromLocalStorage(loaded: boolean): void {
+        this._loadedFromLocalStorage = loaded;
     }
 
     getId(): string | null {
@@ -110,8 +121,13 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.METADATA);
     }
 
-    updateMetadata(update: Partial<Omit<WorkbenchSessionMetadata, "createdAt">>): void {
+    updateMetadata(update: Partial<Omit<WorkbenchSessionMetadata, "createdAt">>, notify = true): void {
         this._metadata = { ...this._metadata, ...update };
+
+        if (!notify) {
+            return;
+        }
+
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.METADATA);
     }
 
@@ -257,10 +273,6 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
 
     notifyAboutEnsembleRealizationFilterChange(): void {
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET);
-    }
-
-    removeFromLocalStorage(): void {
-        localStorage.removeItem("workbench-session");
     }
 
     makeDefaultDashboard(): void {

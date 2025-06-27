@@ -113,6 +113,7 @@ export const workbenchSessionMetadataSchema: JTDSchemaType<WorkbenchSessionMetad
         title: { type: "string" },
         createdAt: { type: "float64" },
         updatedAt: { type: "float64" },
+        lastModifiedMs: { type: "float64" },
     },
     optionalProperties: {
         description: { type: "string" },

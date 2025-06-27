@@ -19,6 +19,8 @@ import "./templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsavedSessionChangesDialog } from "@framework/internal/components/UnsavedSessionChangesDialog/unsavedSessionChangesDialog";
 import { RecoveryDialog } from "@framework/internal/components/RecoveryDialog/recoveryDialog";
+import { UnloadPageHandler } from "@framework/internal/components/UnloadPageHandler";
+import { MakeSnapshotDialog } from "@framework/internal/components/MakeSnapshotDialog/makeSnapshotDialog";
 
 function App() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
@@ -66,8 +68,10 @@ function App() {
                         <SelectEnsemblesDialog workbench={workbench} />
                         <SaveSessionDialog workbench={workbench} />
                         <UnsavedSessionChangesDialog workbench={workbench} />
+                        <MakeSnapshotDialog workbench={workbench} />
                     </ActiveSessionBoundary>
                     <RecoveryDialog workbench={workbench} />
+                    <UnloadPageHandler workbench={workbench} />
                     {content}
                 </>
             </AuthenticationBoundary>

@@ -8,7 +8,7 @@ import {
     type WorkbenchSessionContent,
     type WorkbenchSessionMetadata,
 } from "./PrivateWorkbenchSession";
-import { objectToJsonString } from "./utils";
+import { objectToJsonString, sessionIdFromLocalStorageKey } from "./utils";
 import { workbenchSessionContentSchema, workbenchSessionSchema } from "./workbenchSession.jtd";
 
 export type SerializedWorkbenchSession = {
@@ -20,10 +20,11 @@ const validateContent = ajv.compile(workbenchSessionContentSchema);
 const validateFull = ajv.compile(workbenchSessionSchema);
 
 export async function deserializeFromLocalStorage(
+    key: string,
     atomStore: AtomStoreMaster,
     queryClient: QueryClient,
 ): Promise<PrivateWorkbenchSession | null> {
-    const json = localStorage.getItem("workbench-session");
+    const json = localStorage.getItem(key);
     if (!json) return null;
 
     const parsed = JSON.parse(json);
@@ -35,6 +36,12 @@ export async function deserializeFromLocalStorage(
     const session = new PrivateWorkbenchSession(atomStore, queryClient);
     await session.loadContent(parsed.content);
     session.setMetadata(parsed.metadata);
+    session.setLoadedFromLocalStorage(true);
+    const sessionId = sessionIdFromLocalStorageKey(key);
+    if (sessionId) {
+        session.setId(sessionId);
+        session.setIsPersisted(true);
+    }
     return session;
 }
 
@@ -56,6 +63,7 @@ export async function deserializeFromBackend(
         createdAt: new Date(raw.metadata.created_at).getTime(),
         updatedAt: new Date(raw.metadata.updated_at).getTime(),
         hash: raw.metadata.hash,
+        lastModifiedMs: new Date(raw.metadata.updated_at).getTime(), // Fallback to now if not provided
     });
     session.setId(raw.id);
     session.setIsPersisted(true);
