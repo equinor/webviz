@@ -1,5 +1,6 @@
 export enum PlotType {
-    FullMatrix = "fullMatrix",
+    FullTriangularMatrix = "fullTriangularMatrix",
+    FullMirroredMatrix = "fullMirroredMatrix",
     ParameterResponseMatrix = "parameterResponseMatrix",
 }
 

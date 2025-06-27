@@ -88,7 +88,25 @@ export class ParameterCorrelationMatrixFigure {
             margin: margin,
         });
     }
-    addFullCorrelationMatrixTrace({
+    addFullTriangularCorrelationMatrixTrace({
+        data,
+        colorScaleWithGradient,
+        row,
+        column,
+        cellIndex,
+        title,
+    }: CorrelationMatrixTraceProps): void {
+        const matrixTrace = createTriangularCorrelationMatrixTrace(
+            data,
+            colorScaleWithGradient,
+            this._useFixedColorRange,
+        );
+
+        this._figure.updateSubplotTitle(`${title}`, row, column);
+        this._figure.addTrace(matrixTrace, row, column);
+        this.setAxisSettings(cellIndex);
+    }
+    addFullMirroredCorrelationMatrixTrace({
         data,
         colorScaleWithGradient,
         row,

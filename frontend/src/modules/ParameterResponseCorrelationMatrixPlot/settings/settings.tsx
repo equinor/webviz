@@ -10,6 +10,7 @@ import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { getContinuousAndNonConstantParameterIdentsInEnsembles } from "@modules/_shared/parameterUnions";
@@ -32,8 +33,12 @@ const plotTypesOptions = [
         label: "Responses vs. parameters matrix",
     },
     {
-        value: PlotType.FullMatrix,
+        value: PlotType.FullTriangularMatrix,
         label: "Full (Triangular) matrix",
+    },
+    {
+        value: PlotType.FullMirroredMatrix,
+        label: "Full (Mirrored) matrix",
     },
 ];
 
@@ -86,7 +91,8 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
         setPlotType(e.target.value as PlotType);
     }
     function handleThresholdChanged(e: React.ChangeEvent<HTMLInputElement>) {
-        const threshold = e.target.value ? parseFloat(e.target.value) : null;
+        let threshold = e.target.value ? parseFloat(e.target.value) : null;
+        threshold = Math.max(0.0, Math.min(1.0, Math.abs(threshold ?? 0.0))); // Ensure threshold is between 0 and 1
         setCorrelationSettings((prev) => ({
             ...prev,
             threshold,
@@ -133,28 +139,29 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
             </CollapsibleGroup>
             <CollapsibleGroup title="Correlation settings" expanded>
                 <div className="flex flex-col gap-2">
-                    <Label text="Correlation threshold">
+                    <Label text="Correlation cutoff (absolute)">
                         <input
                             type="number"
-                            step="0.01"
+                            step={0.01}
+                            min={0}
+                            max={1}
                             value={correlationSettings.threshold ?? ""}
                             onChange={handleThresholdChanged}
-                            placeholder="Enter threshold (e.g., 0.2)"
                             className="w-full p-1 border border-gray-300 rounded"
                         />
                     </Label>
                     <Checkbox
-                        label="Blank individual cells below threshold"
+                        label="Blank individual cells below cutoff"
                         checked={correlationSettings.hideIndividualCells}
                         onChange={handleHideIndividualCellsChanged}
                     />
                     <Checkbox
-                        label="Filter columns below threshold"
+                        label="Filter columns below cutoff"
                         checked={correlationSettings.filterColumns}
                         onChange={handleFilterColumnsChanged}
                     />
                     <Checkbox
-                        label="Filter rows below threshold"
+                        label="Filter rows below cutoff"
                         checked={correlationSettings.filterRows}
                         onChange={handleFilterRowsChanged}
                     />

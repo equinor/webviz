@@ -2,6 +2,7 @@ import React from "react";
 
 import { Input, Warning } from "@mui/icons-material";
 import { isEqual } from "lodash";
+import Plot from "react-plotly.js";
 
 import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
 import { KeyKind } from "@framework/DataChannelTypes";
@@ -271,10 +272,11 @@ function fillParameterCorrelationMatrixFigure(
                 values: param.values,
                 realizations: param.realizations,
             }));
-            if (plotType === PlotType.FullMatrix) {
+            if (plotType === PlotType.FullMirroredMatrix) {
                 const corr = createPearsonCorrelationMatrix([...responseItems, ...parameterItems], filterCutoff);
                 const filteredCorr = filterCorrelationMatrixByRowAndColumnThresholds(corr, rowCutoff, columnCutoff);
-                figure.addFullCorrelationMatrixTrace({
+
+                figure.addFullMirroredCorrelationMatrixTrace({
                     data: filteredCorr,
                     colorScaleWithGradient,
                     row: rowIndex + 1,
@@ -282,7 +284,21 @@ function fillParameterCorrelationMatrixFigure(
                     cellIndex,
                     title: ensemble.getDisplayName(),
                 });
-            } else if (plotType === PlotType.ParameterResponseMatrix) {
+            }
+            if (plotType === PlotType.FullTriangularMatrix) {
+                const corr = createPearsonCorrelationMatrix([...responseItems, ...parameterItems], filterCutoff);
+                const filteredCorr = filterCorrelationMatrixByRowAndColumnThresholds(corr, rowCutoff, columnCutoff);
+
+                figure.addFullTriangularCorrelationMatrixTrace({
+                    data: filteredCorr,
+                    colorScaleWithGradient,
+                    row: rowIndex + 1,
+                    column: colIndex + 1,
+                    cellIndex,
+                    title: ensemble.getDisplayName(),
+                });
+            }
+            if (plotType === PlotType.ParameterResponseMatrix) {
                 const corr = createResponseParameterCorrelationMatrix(responseItems, parameterItems, filterCutoff);
                 const filteredCorr = filterCorrelationMatrixByRowAndColumnThresholds(corr, rowCutoff, columnCutoff);
                 figure.addParameterResponseMatrixTrace({
