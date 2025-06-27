@@ -5,12 +5,11 @@ import _ from "lodash";
 
 import type { InfoItem, ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
-import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
-
-import { DEFAULT_MAX_VISIBLE_TRACKS } from "../../utils/logViewerTemplate";
+import { DEFAULT_MAX_VISIBLE_TRACKS } from "@modules/WellLogViewer/constants";
+import type { TemplateTrack } from "@modules/WellLogViewer/types";
 
 export type ReadoutWrapperProps = {
-    templateTracks: TemplateTrackConfig[];
+    templateTracks: TemplateTrack[];
     wellLogReadout: Info[];
     hide?: boolean;
 };
@@ -25,7 +24,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     return <ReadoutBox maxNumItems={DEFAULT_MAX_VISIBLE_TRACKS + 1} readoutItems={readoutItems} noLabelColor />;
 }
 
-function parseWellLogReadout(wellLogInfo: Info[], templateTracks: TemplateTrackConfig[]): ReadoutItem[] {
+function parseWellLogReadout(wellLogInfo: Info[], templateTracks: TemplateTrack[]): ReadoutItem[] {
     return _.chain(wellLogInfo)
         .filter(({ type }) => type !== "separator")
         .groupBy("iTrack")
@@ -35,7 +34,7 @@ function parseWellLogReadout(wellLogInfo: Info[], templateTracks: TemplateTrackC
         .value();
 }
 
-function infoToReadoutItem(infos: Info[], iTrack: number, templateTracks: TemplateTrackConfig[]): ReadoutItem {
+function infoToReadoutItem(infos: Info[], iTrack: number, templateTracks: TemplateTrack[]): ReadoutItem {
     // The axis curves are printes with index -1
     if (iTrack === -1) {
         return {
