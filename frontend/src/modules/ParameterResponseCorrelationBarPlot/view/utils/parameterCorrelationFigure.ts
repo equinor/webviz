@@ -3,8 +3,7 @@ import type { PlotData } from "plotly.js";
 import type { Size2D } from "@lib/utils/geometry";
 import type { Figure } from "@modules/_shared/Figure";
 import { makeSubplots } from "@modules/_shared/Figure";
-
-import type { RankedParameterCorrelation } from "../../_shared/rankParameter";
+import type { RankedParameterCorrelation } from "@modules/_shared/rankParameter";
 
 export class ParameterCorrelationFigure {
     private _figure: Figure;
@@ -42,16 +41,17 @@ export class ParameterCorrelationFigure {
     addCorrelationTrace(
         data: RankedParameterCorrelation[],
         highlightedParameterString: string | null,
-        rowIndex: number,
-        columnIndex: number,
+        row: number,
+        column: number,
         cellIndex: number,
         title: string,
+        color?: string,
     ) {
-        const correlationTrace = createCorrelationTrace(data, highlightedParameterString, this._showLabel);
+        const correlationTrace = createCorrelationTrace(data, highlightedParameterString, this._showLabel, color);
 
-        this._figure.addTrace(correlationTrace, rowIndex, columnIndex);
+        this._figure.addTrace(correlationTrace, row, column);
 
-        this._figure.updateSubplotTitle(`${title}`, rowIndex, columnIndex);
+        this._figure.updateSubplotTitle(`${title}`, row, column);
 
         this._figure.updateLayout({
             [`xaxis${cellIndex + 1}`]: {
@@ -72,22 +72,24 @@ export class ParameterCorrelationFigure {
 function createCorrelationTrace(
     rankedParameters: RankedParameterCorrelation[],
     highlightedParameterString: string | null,
+
     showLabel: boolean,
+    color?: string,
 ): Partial<PlotData> {
     const identStrings = rankedParameters.map((p) => p.ident.toString());
     const names = rankedParameters.map((p) => p.ident.name);
     const correlations = rankedParameters.map((p) => p.correlation!);
     const colors = identStrings.map((identString) => {
         if (highlightedParameterString && identString === highlightedParameterString) {
-            return "rgba(255, 18, 67, .5)";
+            return `${color}FF`;
         }
-        return "rgba(0.0, 112.0, 121.0, .5)";
+        return highlightedParameterString ? `${color}80` : `${color}FF`;
     });
     const lineColors = identStrings.map((identString) => {
         if (highlightedParameterString && identString === highlightedParameterString) {
-            return "rgba(255, 18, 67, 1)";
+            return "#000000FF";
         }
-        return "rgba(0.0, 112.0, 121.0, 1)";
+        return `${color}80`;
     });
     let trace: Partial<PlotData> = {
         x: correlations,

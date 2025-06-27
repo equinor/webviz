@@ -18,6 +18,7 @@ export function makeVectorGroupDataGenerator(
     }[],
     activeTimestampUtcMs: number,
     makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent) => string,
+    preferredColor: string,
 ): DataGenerator {
     return () => {
         const data: { key: number; value: number }[] = [];
@@ -49,6 +50,7 @@ export function makeVectorGroupDataGenerator(
                 displayString: `${simulationVectorDescription(
                     vector.vectorSpecification.vectorName,
                 )} (${makeEnsembleDisplayName(vector.vectorSpecification.ensembleIdent)})`,
+                preferredColor,
             };
         }
         return {

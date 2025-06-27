@@ -18,7 +18,7 @@ import { createRankedParameterCorrelations, getRankedParameterData } from "@modu
 
 import type { Interfaces } from "../interfaces";
 
-import { ParallelCoordinatesFigure } from "./parallelCoordinatesFigure";
+import { ParallelCoordinatesFigure } from "./utils/parallelCoordinatesFigure";
 
 export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfaces>) {
     const [isPending, startTransition] = React.useTransition();

@@ -1,8 +1,7 @@
 import type { Size2D } from "@lib/utils/geometry";
 import type { Figure } from "@modules/_shared/Figure";
 import { makeSubplots } from "@modules/_shared/Figure";
-
-import type { RankedParameterData, ResponseData } from "../../_shared/rankParameter";
+import type { RankedParameterData, ResponseData } from "@modules/_shared/rankParameter";
 
 export class ParallelCoordinatesFigure {
     private _figure: Figure;

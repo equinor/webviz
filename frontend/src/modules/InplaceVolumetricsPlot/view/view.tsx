@@ -9,16 +9,14 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
-
 import type { Interfaces } from "../interfaces";
 
-import { resultNameAtom } from "./atoms/baseAtoms";
+import { colorByAtom, resultNameAtom } from "./atoms/baseAtoms";
 import { areSelectedTablesComparableAtom } from "./atoms/derivedAtoms";
 import { aggregatedTableDataQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useBuildPlotAndTable } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
-
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -38,7 +36,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     statusWriter.setLoading(aggregatedTableDataQueries.isFetching);
     useMakeViewStatusWriterMessages(statusWriter);
-
+    const colorBy = useAtomValue(colorByAtom);
     const plotAndTableData = useBuildPlotAndTable(
         props.viewContext,
         ensembleSet,
@@ -53,7 +51,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const table = plotAndTableData?.table;
     const plots = plotAndTableData?.plots;
 
-    usePublishToDataChannels(props.viewContext, ensembleSet, table, resultName ?? undefined);
+    usePublishToDataChannels(props.viewContext, ensembleSet, colorSet, colorBy, table, resultName ?? undefined);
 
     function createErrorMessage(): string | null {
         if (aggregatedTableDataQueries.allQueriesFailed) {
