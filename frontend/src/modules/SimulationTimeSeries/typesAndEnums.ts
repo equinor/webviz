@@ -8,7 +8,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
  *
  * An object with vector specification and its historical data.
  *
- * Not all vectors have historical data, thereby the vector specification has to be included.
+ * As not all vectors have historical data, thereby the vector specification and historical data must be paired.
  */
 export type VectorWithHistoricalData = { vectorSpecification: VectorSpec; data: VectorHistoricalData_api };
 
