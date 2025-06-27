@@ -25,6 +25,7 @@ class ArrowTableLoader:
         self._req_table_name: str | None = None
         self._req_content_types: list[str] | None = None
         self._req_tagname: str | None = None
+        self._req_standard_result: str | None = None
 
     def require_table_name(self, table_name: str) -> None:
         self._req_table_name = table_name
@@ -34,6 +35,9 @@ class ArrowTableLoader:
 
     def require_tagname(self, tagname: str) -> None:
         self._req_tagname = tagname
+
+    def require_standard_result(self, standard_result: str) -> None:
+        self._req_standard_result = standard_result
 
     async def get_aggregated_single_column_async(
         self,
@@ -51,6 +55,7 @@ class ArrowTableLoader:
             name=self._req_table_name,
             content=self._req_content_types,
             tagname=self._req_tagname,
+            standard_result=self._req_standard_result,
         )
 
         sc_existing_agg_tables = sc_tables_basis.filter(aggregation="collection", realization=False)
