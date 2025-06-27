@@ -2,4 +2,10 @@ export enum PlotType {
     FullMatrix = "fullMatrix",
     ParameterResponseMatrix = "parameterResponseMatrix",
 }
-export const MAX_LABELS = 25;
+
+export type CorrelationSettings = {
+    threshold: number | null;
+    hideIndividualCells: boolean;
+    filterColumns: boolean;
+    filterRows: boolean;
+};

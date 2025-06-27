@@ -15,39 +15,38 @@ import { RadioGroup } from "@lib/components/RadioGroup";
 import { getContinuousAndNonConstantParameterIdentsInEnsembles } from "@modules/_shared/parameterUnions";
 
 import type { Interfaces } from "../interfaces";
-import { MAX_LABELS, PlotType } from "../typesAndEnums";
+import { PlotType } from "../typesAndEnums";
 
 import {
+    correlationSettingsAtom,
     parameterIdentsAtom,
     plotTypeAtom,
     showLabelsAtom,
-    showSelfCorrelationAtom,
     useFixedColorRangeAtom,
 } from "./atoms/baseAtoms";
 import { ParametersSelector } from "./components/parameterSelector";
 
-const plotTypesOptions  = [
-    {
-        value: PlotType.FullMatrix,
-        label: "Full matrix",
-    },
+const plotTypesOptions = [
     {
         value: PlotType.ParameterResponseMatrix,
-        label: "Parameter vs. response matrix",
+        label: "Responses vs. parameters matrix",
+    },
+    {
+        value: PlotType.FullMatrix,
+        label: "Full (Triangular) matrix",
     },
 ];
-
 
 export function Settings({ initialSettings, settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const [parameterIdents, setParameterIdents] = useAtom(parameterIdentsAtom);
     const [plotType, setPlotType] = useAtom(plotTypeAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
-    const [showSelfCorrelation, setShowSelfCorrelation] = useAtom(showSelfCorrelationAtom);
     const [useFixedColorRange, setUseFixedColorRange] = useAtom(useFixedColorRangeAtom);
+    const [correlationSettings, setCorrelationSettings] = useAtom(correlationSettingsAtom);
 
-    useApplyInitialSettingsToState(initialSettings, "parameterIdentStrings", "array", setParameterIdents);
+    useApplyInitialSettingsToState(initialSettings, "parameterIdents", "array", setParameterIdents);
     useApplyInitialSettingsToState(initialSettings, "showLabels", "boolean", setShowLabels);
-
+    useApplyInitialSettingsToState(initialSettings, "correlationSettings", "object", setCorrelationSettings);
     const receiverResponse = settingsContext.useChannelReceiver({
         receiverIdString: "channelResponse",
         expectedKindsOfKeys: [KeyKind.REALIZATION],
@@ -75,18 +74,41 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
     );
 
     function handleParametersChanged(parameterIdents: ParameterIdent[]) {
-        
         setParameterIdents(parameterIdents);
     }
-    function handleShowLabelsChanged(value: boolean) {
-        if (value && parameterIdents.length > MAX_LABELS) {
-            setShowLabels(false);
-        } else {
-            setShowLabels(value);
-        }
+    function handleShowLabelsChanged(e: React.ChangeEvent<HTMLInputElement>) {
+        setShowLabels(e.target.checked);
     }
-    function handlePlotTypeChanged(value: string) {
-        setPlotType(value as PlotType);
+    function handleUseFixedColorRangeChanged(e: React.ChangeEvent<HTMLInputElement>) {
+        setUseFixedColorRange(e.target.checked);
+    }
+    function handlePlotTypeChanged(e: React.ChangeEvent<HTMLInputElement>) {
+        setPlotType(e.target.value as PlotType);
+    }
+    function handleThresholdChanged(e: React.ChangeEvent<HTMLInputElement>) {
+        const threshold = e.target.value ? parseFloat(e.target.value) : null;
+        setCorrelationSettings((prev) => ({
+            ...prev,
+            threshold,
+        }));
+    }
+    function handleHideIndividualCellsChanged(e: React.ChangeEvent<HTMLInputElement>) {
+        setCorrelationSettings((prev) => ({
+            ...prev,
+            hideIndividualCells: e.target.checked,
+        }));
+    }
+    function handleFilterColumnsChanged(e: React.ChangeEvent<HTMLInputElement>) {
+        setCorrelationSettings((prev) => ({
+            ...prev,
+            filterColumns: e.target.checked,
+        }));
+    }
+    function handleFilterRowsChanged(e: React.ChangeEvent<HTMLInputElement>) {
+        setCorrelationSettings((prev) => ({
+            ...prev,
+            filterRows: e.target.checked,
+        }));
     }
     return (
         <div className="flex flex-col gap-2">
@@ -95,26 +117,46 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
                     <Label text="Matrix type">
                         <RadioGroup
                             value={plotType as string}
-                            options={plotTypesOptions }
-                            onChange={(e) => handlePlotTypeChanged(e.target.value)}
+                            options={plotTypesOptions}
+                            onChange={handlePlotTypeChanged}
                         />
                     </Label>
 
-                    <Checkbox
-                        label={`Show parameter labels (Max ${MAX_LABELS})`}
-                        checked={showLabels}
-                        disabled={parameterIdents.length > MAX_LABELS}
-                        onChange={(e) => handleShowLabelsChanged(e.target.checked)}
-                    />
-                    <Checkbox
-                        label="Show self-correlation"
-                        checked={showSelfCorrelation}
-                        onChange={(e) => setShowSelfCorrelation(e.target.checked)}
-                    />
+                    <Checkbox label={"Show parameter labels"} checked={showLabels} onChange={handleShowLabelsChanged} />
+
                     <Checkbox
                         label="Use fixed color range (-1 / 1)"
                         checked={useFixedColorRange}
-                        onChange={(e) => setUseFixedColorRange(e.target.checked)}
+                        onChange={handleUseFixedColorRangeChanged}
+                    />
+                </div>
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Correlation settings" expanded>
+                <div className="flex flex-col gap-2">
+                    <Label text="Correlation threshold">
+                        <input
+                            type="number"
+                            step="0.01"
+                            value={correlationSettings.threshold ?? ""}
+                            onChange={handleThresholdChanged}
+                            placeholder="Enter threshold (e.g., 0.2)"
+                            className="w-full p-1 border border-gray-300 rounded"
+                        />
+                    </Label>
+                    <Checkbox
+                        label="Blank individual cells below threshold"
+                        checked={correlationSettings.hideIndividualCells}
+                        onChange={handleHideIndividualCellsChanged}
+                    />
+                    <Checkbox
+                        label="Filter columns below threshold"
+                        checked={correlationSettings.filterColumns}
+                        onChange={handleFilterColumnsChanged}
+                    />
+                    <Checkbox
+                        label="Filter rows below threshold"
+                        checked={correlationSettings.filterRows}
+                        onChange={handleFilterRowsChanged}
                     />
                 </div>
             </CollapsibleGroup>

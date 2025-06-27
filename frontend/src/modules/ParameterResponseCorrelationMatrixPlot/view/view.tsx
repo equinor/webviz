@@ -19,13 +19,16 @@ import { ContentWarning } from "@modules/_shared/components/ContentMessage/conte
 import { getVaryingContinuousParameters } from "@modules/_shared/parameterUtils";
 import type { ResponseData } from "@modules/_shared/rankParameter";
 import type { CorrelationDataItem } from "@modules/_shared/utils/math/correlationMatrix";
-import { createPearsonCorrelationMatrix } from "@modules/_shared/utils/math/correlationMatrix";
+import {
+    createPearsonCorrelationMatrix,
+    filterCorrelationMatrixByRowAndColumnThresholds,
+} from "@modules/_shared/utils/math/correlationMatrix";
 
 import type { Interfaces } from "../interfaces";
-import { MAX_LABELS, PlotType } from "../typesAndEnums";
+import { PlotType, type CorrelationSettings } from "../typesAndEnums";
 
 import { ParameterCorrelationMatrixFigure } from "./utils/parameterCorrelationMatrixFigure";
-import { createParameterResponseCorrelationMatrix } from "./utils/parameterCorrelationMatrixUtils";
+import { createResponseParameterCorrelationMatrix } from "./utils/parameterCorrelationMatrixUtils";
 
 const MAX_NUM_PLOTS = 12;
 
@@ -46,17 +49,21 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const [prevShowLabels, setPrevShowLabels] = React.useState<boolean | null>(null);
     const [prevSize, setPrevSize] = React.useState<Size2D | null>(null);
     const [prevParameterIdents, setPrevParameterIdents] = React.useState<ParameterIdent[]>([]);
-    const [prevShowSelfCorrelation, setPrevShowSelfCorrelation] = React.useState<boolean>(true);
     const [prevUseFixedColorRange, setPrevUseFixedColorRange] = React.useState<boolean>(true);
     const [prevColorScaleWithGradient, setPrevColorScaleWithGradient] = React.useState<[number, string][]>([]);
-    const [prevPlotType, setPrevPlotType] = React.useState<PlotType>(PlotType.FullMatrix);
+    const [prevPlotType, setPrevPlotType] = React.useState<PlotType>(PlotType.ParameterResponseMatrix);
+    const [prevCorrelationSettings, setPrevCorrelationSettings] = React.useState<CorrelationSettings>({
+        threshold: null as number | null,
+        hideIndividualCells: true,
+        filterColumns: true,
+        filterRows: true,
+    });
 
     const parameterIdents = viewContext.useSettingsToViewInterfaceValue("parameterIdents");
     const plotType = viewContext.useSettingsToViewInterfaceValue("plotType");
     const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");
-    const showSelfCorrelation = viewContext.useSettingsToViewInterfaceValue("showSelfCorrelation");
     const useFixedColorRange = viewContext.useSettingsToViewInterfaceValue("useFixedColorRange");
-
+    const correlationSettings = viewContext.useSettingsToViewInterfaceValue("correlationSettings");
     const ensembleSet = workbenchSession.getEnsembleSet();
 
     const statusWriter = useViewStatusWriter(viewContext);
@@ -94,20 +101,21 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         hasParameterIdentsChanged ||
         showLabels !== prevShowLabels ||
         wrapperDivSize !== prevSize ||
-        showSelfCorrelation !== prevShowSelfCorrelation ||
         useFixedColorRange !== prevUseFixedColorRange ||
         !isEqual(colorScaleWithGradient, prevColorScaleWithGradient) ||
-        plotType !== prevPlotType
+        plotType !== prevPlotType ||
+        !isEqual(correlationSettings, prevCorrelationSettings)
     ) {
         setRevNumberResponses(receiverResponseRevisionNumbers);
 
         setPrevParameterIdents(parameterIdents);
         setPrevShowLabels(showLabels);
         setPrevSize(wrapperDivSize);
-        setPrevShowSelfCorrelation(showSelfCorrelation);
         setPrevUseFixedColorRange(useFixedColorRange);
         setPrevColorScaleWithGradient(colorScaleWithGradient);
         setPrevPlotType(plotType);
+        setPrevCorrelationSettings(correlationSettings);
+
         startTransition(function makeContent() {
             // Content when no data channels are defined
             if (receiverResponses.every((response) => !response.channel)) {
@@ -179,10 +187,10 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             const numRows = Math.ceil(numContents / numCols);
             const figure = new ParameterCorrelationMatrixFigure({
                 wrapperDivSize,
+                plotType,
                 numCols,
                 numRows,
-                showLabels: showLabels && parameterIdents.length <= MAX_LABELS,
-                showSelfCorrelation,
+                showLabels,
                 useFixedColorRange,
             });
             fillParameterCorrelationMatrixFigure(
@@ -192,7 +200,8 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 numContents,
                 ensembleSet,
                 receiveResponsesPerEnsembleIdent,
-                plotType
+                plotType,
+                correlationSettings,
             );
             setContent(figure.build());
             return;
@@ -214,10 +223,14 @@ function fillParameterCorrelationMatrixFigure(
     ensembleSet: EnsembleSet,
     receiveResponsesPerEnsembleIdent: Map<string, ChannelReceiverChannelContent<KeyKind.REALIZATION[]>[]>,
     plotType: PlotType,
+    correlationSettings: CorrelationSettings,
 ): void {
     const numRows = figure.numRows();
     const numCols = figure.numColumns();
-
+    const { threshold, hideIndividualCells, filterColumns, filterRows } = correlationSettings;
+    const filterCutoff = hideIndividualCells && threshold ? threshold : null;
+    const columnCutoff = filterColumns ? threshold : null;
+    const rowCutoff = filterRows ? threshold : null;
     // Each ensemble and plot all the correlations
     let cellIndex = 0;
     for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
@@ -251,15 +264,18 @@ function fillParameterCorrelationMatrixFigure(
             const responseItems: CorrelationDataItem[] = responseDataArr.map((r) => ({
                 name: r.displayName,
                 values: r.values,
+                realizations: r.realizations,
             }));
             const parameterItems: CorrelationDataItem[] = selectedParameterArr.map((param) => ({
                 name: param.name,
                 values: param.values,
+                realizations: param.realizations,
             }));
             if (plotType === PlotType.FullMatrix) {
-                const corr = createPearsonCorrelationMatrix([...responseItems, ...parameterItems]);
+                const corr = createPearsonCorrelationMatrix([...responseItems, ...parameterItems], filterCutoff);
+                const filteredCorr = filterCorrelationMatrixByRowAndColumnThresholds(corr, rowCutoff, columnCutoff);
                 figure.addFullCorrelationMatrixTrace({
-                    data: corr,
+                    data: filteredCorr,
                     colorScaleWithGradient,
                     row: rowIndex + 1,
                     column: colIndex + 1,
@@ -267,9 +283,10 @@ function fillParameterCorrelationMatrixFigure(
                     title: ensemble.getDisplayName(),
                 });
             } else if (plotType === PlotType.ParameterResponseMatrix) {
-                const corr = createParameterResponseCorrelationMatrix(responseItems, parameterItems);
+                const corr = createResponseParameterCorrelationMatrix(responseItems, parameterItems, filterCutoff);
+                const filteredCorr = filterCorrelationMatrixByRowAndColumnThresholds(corr, rowCutoff, columnCutoff);
                 figure.addParameterResponseMatrixTrace({
-                    data: corr,
+                    data: filteredCorr,
                     colorScaleWithGradient,
                     row: rowIndex + 1,
                     column: colIndex + 1,

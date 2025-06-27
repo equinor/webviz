@@ -4,3 +4,4 @@ import "./correlationInplaceVolumes";
 import "./correlationTimeSeries";
 import "./oatTimeSeries";
 import "./oatInplace";
+import "./correlationMatrixTimeSeries";
