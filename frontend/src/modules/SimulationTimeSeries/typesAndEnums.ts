@@ -1,13 +1,33 @@
-import type { SummaryVectorObservations_api } from "@api";
+import type { SummaryVectorObservations_api, VectorHistoricalData_api } from "@api";
 import { Frequency_api, StatisticFunction_api } from "@api";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 /**
+ * Definition of vector with historical data
+ *
+ * An object with vector specification and its historical data.
+ *
+ * As not all vectors have historical data, thereby the vector specification and historical data must be paired.
+ */
+export type VectorWithHistoricalData = { vectorSpecification: VectorSpec; data: VectorHistoricalData_api };
+
+/**
+ * Definition of historical vector queries result for combined queries
+ *
+ * List of requested vector specification with its historical data.
+ */
+export type VectorHistoricalQueriesResult = {
+    isFetching: boolean;
+    isError: boolean;
+    vectorsWithHistoricalData: VectorWithHistoricalData[];
+};
+
+/**
  * Definition of ensemble vector observation data
  *
  * hasSummaryObservations: true if the ensemble has observations, i.e the summary observations array is not empty
- * vectorsObservationData: array of vector observation data for requested vector specifications
+ * vectorsObservationData: array of vector observation data for requested vector specifications in the ensemble
  */
 export type EnsembleVectorObservationData = {
     hasSummaryObservations: boolean;
@@ -21,6 +41,8 @@ export type EnsembleVectorObservationDataMap = Map<RegularEnsembleIdent, Ensembl
 
 /**
  * Definition of vector observations queries result for combined queries
+ *
+ * Combined queries status' and a map of ensemble ident and its observation data per vector
  */
 export type VectorObservationsQueriesResult = {
     isFetching: boolean;
