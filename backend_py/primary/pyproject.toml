@@ -33,6 +33,7 @@ server_schemas = {path = "../libs/server_schemas", develop = true}
 polars = "^1.6.0"
 azure-cosmos = "^4.9.0"
 aiohttp = "^3.11.18"
+nanoid = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"

@@ -25,9 +25,10 @@ export function MakeSnapshotDialog(props: MakeSnapshotDialogProps): React.ReactN
 
     const [title, setTitle] = React.useState<string>("");
     const [description, setDescription] = React.useState<string>("");
+    const [tinyUrl, setTinyUrl] = React.useState<string | null>(null);
     const [inputFeedback, setInputFeedback] = React.useState<MakeSnapshotDialogInputFeedback>({});
 
-    function handleSave() {
+    function handleMakeSnapshot() {
         if (title.trim() === "") {
             setInputFeedback((prev) => ({ ...prev, title: "Title is required." }));
             return;
@@ -43,11 +44,20 @@ export function MakeSnapshotDialog(props: MakeSnapshotDialogProps): React.ReactN
         }
         props.workbench.getWorkbenchSession().updateMetadata({ title, description });
         props.workbench
-            .saveCurrentSession(true)
-            .then(() => {
+            .makeSnapshot(title, description)
+            .then((tinyUrl) => {
+                const url = new URL(window.location.href);
+                if (!tinyUrl) {
+                    return;
+                }
+                url.pathname = tinyUrl;
                 setTitle("");
                 setDescription("");
                 setInputFeedback({});
+                if (!tinyUrl) {
+                    return;
+                }
+                setTinyUrl(url.toString());
             })
             .catch((error) => {
                 console.error("Failed to save session:", error);
@@ -59,29 +69,16 @@ export function MakeSnapshotDialog(props: MakeSnapshotDialogProps): React.ReactN
         setTitle("");
         setDescription("");
         setInputFeedback({});
+        setTinyUrl(null);
     }
 
     const layout = props.workbench.getWorkbenchSession().getActiveDashboard()?.getLayout() || [];
 
-    return (
-        <Dialog
-            open={isOpen}
-            onClose={handleCancel}
-            title="Create Snapshot"
-            modal
-            showCloseCross
-            actions={
-                <>
-                    <Button variant="text" disabled={isSaving} onClick={handleCancel}>
-                        Cancel
-                    </Button>
-                    <Button variant="text" disabled={isSaving} onClick={handleSave}>
-                        {isSaving && <CircularProgress size="small" />}
-                        <AddLink fontSize="inherit" /> Make link
-                    </Button>
-                </>
-            }
-        >
+    let content: React.ReactNode = null;
+    let actions: React.ReactNode = null;
+
+    if (!tinyUrl) {
+        content = (
             <div className="flex gap-4 items-center">
                 <DashboardPreview height={100} width={100} layout={layout} />
                 <div className="flex flex-col gap-2 grow min-w-0">
@@ -116,6 +113,50 @@ export function MakeSnapshotDialog(props: MakeSnapshotDialogProps): React.ReactN
                     </Label>
                 </div>
             </div>
+        );
+
+        actions = (
+            <>
+                <Button variant="text" disabled={isSaving} onClick={handleCancel}>
+                    Cancel
+                </Button>
+                <Button variant="text" disabled={isSaving} onClick={handleMakeSnapshot}>
+                    {isSaving && <CircularProgress size="small" />}
+                    <AddLink fontSize="inherit" /> Make link
+                </Button>
+            </>
+        );
+    } else {
+        content = (
+            <div className="flex flex-col gap-2">
+                <div className="text-green-600 text-lg font-bold">Snapshot created successfully!</div>
+                <div className="text-sm">You can share this link:</div>
+                <Input
+                    type="text"
+                    value={tinyUrl}
+                    readOnly
+                    className="w-full"
+                    endAdornment={
+                        <Button variant="text" onClick={() => navigator.clipboard.writeText(tinyUrl || "")}>
+                            Copy
+                        </Button>
+                    }
+                />
+            </div>
+        );
+
+        actions = (
+            <>
+                <Button variant="text" disabled={isSaving} onClick={handleCancel}>
+                    Close
+                </Button>
+            </>
+        );
+    }
+
+    return (
+        <Dialog open={isOpen} onClose={handleCancel} title="Create Snapshot" modal showCloseCross actions={actions}>
+            {content}
         </Dialog>
     );
 }

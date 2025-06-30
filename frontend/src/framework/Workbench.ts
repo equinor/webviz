@@ -121,6 +121,19 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         await this.setWorkbenchSession(session);
     }
 
+    async makeSnapshot(title: string, description: string): Promise<string | null> {
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to make a snapshot.");
+        }
+
+        this._guiMessageBroker.setState(GuiState.IsMakingSnapshot, true);
+
+        const tinyUrl = await this._workbenchSessionPersistenceService.makeSnapshot(title, description);
+        this._guiMessageBroker.setState(GuiState.IsMakingSnapshot, false);
+
+        return tinyUrl;
+    }
+
     async saveCurrentSession(forceSave = false): Promise<void> {
         if (!this._workbenchSession) {
             throw new Error("No active workbench session to save.");

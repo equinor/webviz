@@ -23,7 +23,7 @@ async def get_snapshots_metadata(
 ):
     access = await SnapshotAccess.create(user.get_user_id())
     async with access:
-        items = await access.get_filtered_sessions_metadata(sort_by=sort_by, sort_direction=sort_direction, limit=limit)
+        items = await access.get_filtered_snapshots_metadata(sort_by=sort_by, sort_direction=sort_direction, limit=limit)
         return [to_api_snapshot_metadata_summary(item) for item in items]
 
 
@@ -31,7 +31,7 @@ async def get_snapshots_metadata(
 async def get_snapshot(snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
     access = await SnapshotAccess.create(user.get_user_id())
     async with access:
-        session = await access.get_session_by_id(snapshot_id)
+        session = await access.get_snapshot_by_id(snapshot_id)
         if not session:
             raise HTTPException(status_code=404, detail="Session not found")
         return session
@@ -40,7 +40,7 @@ async def get_snapshot(snapshot_id: str, user: AuthenticatedUser = Depends(AuthH
 async def get_snapshot_metadata(snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
     access = await SnapshotAccess.create(user.get_user_id())
     async with access:
-        metadata = await access.get_session_metadata(snapshot_id)
+        metadata = await access.get_snapshot_metadata(snapshot_id)
         if not metadata:
             raise HTTPException(status_code=404, detail="Session metadata not found")
         return metadata
@@ -50,7 +50,7 @@ async def get_snapshot_metadata(snapshot_id: str, user: AuthenticatedUser = Depe
 async def create_snapshot(session: NewSession, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
     access = await SnapshotAccess.create(user.get_user_id())
     async with access:
-        id = await access.insert_session(session)
+        id = await access.make_snapshot(session)
         return id
 
 
@@ -62,11 +62,11 @@ async def update_snapshot(
 ):
     access = await SnapshotAccess.create(user.get_user_id())
     async with access:
-        await access.update_session(snapshot_id, session_update)
+        await access.update_snapshot_metadata(snapshot_id, session_update)
 
 
 @router.delete("/snapshots/{snapshot_id}")
 async def delete_snapshot(snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
     access = await SnapshotAccess.create(user.get_user_id())
     async with access:
-        await access.delete_session(snapshot_id)
+        await access.delete_snapshot(snapshot_id)

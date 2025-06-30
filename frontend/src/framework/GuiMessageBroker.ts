@@ -32,6 +32,7 @@ export enum GuiState {
     SaveSessionDialogOpen = "saveSessionDialogOpen",
     SessionHasUnsavedChanges = "sessionHasUnsavedChanges",
     IsSavingSession = "isSavingSession",
+    IsMakingSnapshot = "isMakingSnapshot",
     IsLoadingSession = "isLoadingSession",
     EnsembleDialogOpen = "ensembleDialogOpen",
     RecoveryDialogOpen = "recoveryDialogOpen",
@@ -107,6 +108,7 @@ type GuiStateValueTypes = {
     [GuiState.EnsembleDialogOpen]: boolean;
     [GuiState.RecoveryDialogOpen]: boolean;
     [GuiState.MakeSnapshotDialogOpen]: boolean;
+    [GuiState.IsMakingSnapshot]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -126,6 +128,7 @@ defaultStates.set(GuiState.EditDataChannelConnections, false);
 defaultStates.set(GuiState.EnsembleDialogOpen, false);
 defaultStates.set(GuiState.RecoveryDialogOpen, false);
 defaultStates.set(GuiState.MakeSnapshotDialogOpen, false);
+defaultStates.set(GuiState.IsMakingSnapshot, false);
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelWidthInPercent,
