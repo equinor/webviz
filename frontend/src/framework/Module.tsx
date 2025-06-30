@@ -17,6 +17,8 @@ import type { WorkbenchSettings } from "./WorkbenchSettings";
 
 export type OnInstanceUnloadFunc = (instanceId: string) => void;
 
+const moduleImporters = import.meta.glob("/src/modules/*/loadModule.tsx");
+
 export enum ModuleCategory {
     MAIN = "main",
     SUB = "sub",
@@ -289,7 +291,16 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
 
         this.setImportState(ImportState.Importing);
 
-        import(`@modules/${this._name}/loadModule.tsx`)
+        const path = `/src/modules/${this._name}/loadModule.tsx`;
+        const importer = moduleImporters[path];
+
+        if (!importer) {
+            console.error(`Module importer not found for ${path}`);
+            this.setImportState(ImportStatus.Failed);
+            return;
+        }
+
+        importer()
             .then(() => {
                 this.setImportState(ImportState.Imported);
                 this._moduleInstances.forEach((instance) => {
