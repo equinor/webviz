@@ -18,6 +18,9 @@ import {
 } from "./utils";
 import { makeWorkbenchSessionStateString } from "./WorkbenchSessionSerializer";
 import { loadWorkbenchSessionFromBackend } from "./WorkbenchSessionLoader";
+import { getSessionsMetadataQueryKey } from "@api";
+import { WorkbenchSettingsTopic } from "@framework/WorkbenchSettings";
+import { UserCreatedItemsEvent } from "@framework/UserCreatedItems";
 
 export type WorkbenchSessionPersistenceInfo = {
     lastModifiedMs: number;
@@ -177,6 +180,25 @@ export class WorkbenchSessionPersistenceService
                 this.pullFullSessionState();
             }),
         );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "workbench-session",
+            this._workbenchSession
+                .getWorkbenchSettings()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(WorkbenchSettingsTopic.SelectedColorPalettes)(() => {
+                this.pullFullSessionState();
+            }),
+        );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "workbench-session",
+            this._workbenchSession
+                .getUserCreatedItems()
+                .subscribe(UserCreatedItemsEvent.INTERSECTION_POLYLINES_CHANGE, () => {
+                    this.pullFullSessionState();
+                }),
+        );
     }
 
     hasChanges(): boolean {
@@ -301,6 +323,9 @@ export class WorkbenchSessionPersistenceService
                 toast.dismiss(toastId);
                 toast.success("Session successfully created and persisted.");
             }
+
+            // Reset queries to ensure the new session is fetched
+            queryClient.resetQueries({ queryKey: getSessionsMetadataQueryKey() });
 
             this._lastPersistedMs = Date.now();
             this._lastPersistedHash = this._currentHash;

@@ -4,6 +4,8 @@ import { v4 } from "uuid";
 import type { AtomStoreMaster } from "../../AtomStoreMaster";
 import type { ModuleInstance, ModuleInstanceFullState } from "../../ModuleInstance";
 import { ModuleRegistry } from "../../ModuleRegistry";
+import type { JTDSchemaType } from "ajv/dist/core";
+import { SyncSettingKey } from "@framework/SyncSettings";
 
 export type LayoutElement = {
     moduleInstanceId?: string;
@@ -27,6 +29,65 @@ export type SerializedDashboard = {
     activeModuleInstanceId: string | null;
     moduleInstances: ModuleInstanceStateAndLayoutInfo[];
 };
+
+const layoutElementSchema: JTDSchemaType<Omit<LayoutElement, "moduleInstanceId" | "moduleName">> = {
+    properties: {
+        relX: { type: "float32" },
+        relY: { type: "float32" },
+        relHeight: { type: "float32" },
+        relWidth: { type: "float32" },
+    },
+    optionalProperties: {
+        minimized: { type: "boolean" },
+        maximized: { type: "boolean" },
+    },
+} as const;
+
+const moduleInstanceSchema: JTDSchemaType<ModuleInstanceStateAndLayoutInfo> = {
+    properties: {
+        id: { type: "string" },
+        name: { type: "string" },
+        serializedState: {
+            optionalProperties: {
+                view: { type: "string" },
+                settings: { type: "string" },
+            },
+            nullable: true,
+        },
+        syncedSettingKeys: {
+            elements: {
+                enum: [SyncSettingKey.CAMERA_POSITION_INTERSECTION],
+            },
+        },
+        dataChannelReceiverSubscriptions: {
+            elements: {
+                properties: {
+                    idString: { type: "string" },
+                    listensToModuleInstanceId: { type: "string" },
+                    channelIdString: { type: "string" },
+                    contentIdStrings: {
+                        elements: { type: "string" },
+                    },
+                },
+            },
+        },
+        layoutInfo: layoutElementSchema,
+    },
+} as const;
+
+export const DASHBOARD_JTD_SCHEMA: JTDSchemaType<SerializedDashboard> = {
+    properties: {
+        id: { type: "string" },
+        name: { type: "string" },
+        activeModuleInstanceId: { type: "string", nullable: true },
+        moduleInstances: {
+            elements: moduleInstanceSchema,
+        },
+    },
+    optionalProperties: {
+        description: { type: "string" },
+    },
+} as const;
 
 export enum DashboardTopic {
     Layout = "Layout",

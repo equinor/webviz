@@ -1,7 +1,6 @@
-import { SyncSettingKey } from "@framework/SyncSettings";
 import type { JTDSchemaType } from "ajv/dist/jtd";
 
-import type { LayoutElement, ModuleInstanceStateAndLayoutInfo, SerializedDashboard } from "./Dashboard";
+import { DASHBOARD_JTD_SCHEMA } from "./Dashboard";
 import type {
     SerializedDeltaEnsemble,
     SerializedEnsembleSet,
@@ -10,65 +9,8 @@ import type {
     WorkbenchSessionMetadata,
 } from "./PrivateWorkbenchSession";
 import type { SerializedWorkbenchSession } from "./WorkbenchSessionSerializer";
-
-const layoutElementSchema: JTDSchemaType<Omit<LayoutElement, "moduleInstanceId" | "moduleName">> = {
-    properties: {
-        relX: { type: "float32" },
-        relY: { type: "float32" },
-        relHeight: { type: "float32" },
-        relWidth: { type: "float32" },
-    },
-    optionalProperties: {
-        minimized: { type: "boolean" },
-        maximized: { type: "boolean" },
-    },
-} as const;
-
-const moduleInstanceSchema: JTDSchemaType<ModuleInstanceStateAndLayoutInfo> = {
-    properties: {
-        id: { type: "string" },
-        name: { type: "string" },
-        serializedState: {
-            optionalProperties: {
-                view: { type: "string" },
-                settings: { type: "string" },
-            },
-            nullable: true,
-        },
-        syncedSettingKeys: {
-            elements: {
-                enum: [SyncSettingKey.CAMERA_POSITION_INTERSECTION],
-            },
-        },
-        dataChannelReceiverSubscriptions: {
-            elements: {
-                properties: {
-                    idString: { type: "string" },
-                    listensToModuleInstanceId: { type: "string" },
-                    channelIdString: { type: "string" },
-                    contentIdStrings: {
-                        elements: { type: "string" },
-                    },
-                },
-            },
-        },
-        layoutInfo: layoutElementSchema,
-    },
-} as const;
-
-const dashboardSchema: JTDSchemaType<SerializedDashboard> = {
-    properties: {
-        id: { type: "string" },
-        name: { type: "string" },
-        activeModuleInstanceId: { type: "string", nullable: true },
-        moduleInstances: {
-            elements: moduleInstanceSchema,
-        },
-    },
-    optionalProperties: {
-        description: { type: "string" },
-    },
-} as const;
+import { WORKBENCH_SETTINGS_JTD_SCHEMA } from "../PrivateWorkbenchSettings";
+import { USER_CREATED_ITEMS_JTD_SCHEMA } from "@framework/UserCreatedItems";
 
 export const regularEnsembleSchema: JTDSchemaType<SerializedRegularEnsemble> = {
     properties: {
@@ -102,9 +44,11 @@ export const workbenchSessionContentSchema: JTDSchemaType<WorkbenchSessionConten
     properties: {
         activeDashboardId: { type: "string", nullable: true },
         dashboards: {
-            elements: dashboardSchema,
+            elements: DASHBOARD_JTD_SCHEMA,
         },
+        settings: WORKBENCH_SETTINGS_JTD_SCHEMA,
         ensembleSet: ensembleSetSchema,
+        userCreatedItems: USER_CREATED_ITEMS_JTD_SCHEMA,
     },
 } as const;
 

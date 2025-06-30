@@ -5,7 +5,6 @@ import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/Publ
 import { AtomStoreMaster } from "./AtomStoreMaster";
 import { GuiMessageBroker, GuiState, LeftDrawerContent } from "./GuiMessageBroker";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
-import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
 import { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
 import {
     loadAllWorkbenchSessionsFromLocalStorage,
@@ -41,7 +40,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
     private _workbenchSession: PrivateWorkbenchSession | null = null;
     private _workbenchServices: PrivateWorkbenchServices;
-    private _workbenchSettings: PrivateWorkbenchSettings;
     private _guiMessageBroker: GuiMessageBroker;
     private _atomStoreMaster: AtomStoreMaster;
     private _queryClient: QueryClient;
@@ -51,7 +49,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._queryClient = queryClient;
         this._atomStoreMaster = new AtomStoreMaster();
         this._workbenchServices = new PrivateWorkbenchServices(this);
-        this._workbenchSettings = new PrivateWorkbenchSettings();
         this._workbenchSessionPersistenceService = new WorkbenchSessionPersistenceService(this);
         this._guiMessageBroker = new GuiMessageBroker();
     }
@@ -219,10 +216,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
     getWorkbenchServices(): WorkbenchServices {
         return this._workbenchServices;
-    }
-
-    getWorkbenchSettings(): PrivateWorkbenchSettings {
-        return this._workbenchSettings;
     }
 
     getGuiMessageBroker(): GuiMessageBroker {

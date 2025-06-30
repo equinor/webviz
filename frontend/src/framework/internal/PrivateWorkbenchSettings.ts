@@ -13,6 +13,7 @@ import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType, type ColorScaleOptions } from "@lib/utils/ColorScale";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import type { JTDSchemaType } from "ajv/dist/core";
 
 export type UseDiscreteColorScaleOptions = {
     gradientType: ColorScaleGradientType;
@@ -21,6 +22,32 @@ export type UseDiscreteColorScaleOptions = {
 export type UseContinuousColorScaleOptions = {
     gradientType: ColorScaleGradientType;
 };
+
+export type SerializedWorkbenchSettings = {
+    selectedColorPalettes: Record<ColorPaletteType, string>;
+    discreteColorScaleSteps: {
+        [ColorScaleDiscreteSteps.Sequential]: number;
+        [ColorScaleDiscreteSteps.Diverging]: number;
+    };
+};
+
+export const WORKBENCH_SETTINGS_JTD_SCHEMA: JTDSchemaType<SerializedWorkbenchSettings> = {
+    properties: {
+        selectedColorPalettes: {
+            properties: {
+                [ColorPaletteType.Categorical]: { type: "string" },
+                [ColorPaletteType.ContinuousDiverging]: { type: "string" },
+                [ColorPaletteType.ContinuousSequential]: { type: "string" },
+            },
+        },
+        discreteColorScaleSteps: {
+            properties: {
+                [ColorScaleDiscreteSteps.Sequential]: { type: "int32" },
+                [ColorScaleDiscreteSteps.Diverging]: { type: "int32" },
+            },
+        },
+    },
+} as const;
 
 export class PrivateWorkbenchSettings implements PublishSubscribe<WorkbenchSettingsTopicPayloads> {
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<WorkbenchSettingsTopicPayloads>();
@@ -51,6 +78,18 @@ export class PrivateWorkbenchSettings implements PublishSubscribe<WorkbenchSetti
 
         this.loadSelectedColorPaletteIdsFromLocalStorage();
         this.loadStepsFromLocalStorage();
+    }
+
+    serializeState(): SerializedWorkbenchSettings {
+        return {
+            selectedColorPalettes: this._selectedColorPalettes,
+            discreteColorScaleSteps: this._steps,
+        };
+    }
+
+    deserializeState(serializedState: SerializedWorkbenchSettings): void {
+        this._selectedColorPalettes = serializedState.selectedColorPalettes;
+        this._steps = serializedState.discreteColorScaleSteps;
     }
 
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<WorkbenchSettingsTopicPayloads> {

@@ -4,7 +4,7 @@ import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtom
 import { Dashboard, type SerializedDashboard } from "@framework/internal/WorkbenchSession/Dashboard";
 import { RealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { UserCreatedItems } from "@framework/UserCreatedItems";
+import { UserCreatedItems, type SerializedUserCreatedItems } from "@framework/UserCreatedItems";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import type { QueryClient } from "@tanstack/query-core";
 
@@ -13,6 +13,7 @@ import {
     type UserEnsembleSetting,
     type UserDeltaEnsembleSetting,
 } from "../EnsembleSetLoader";
+import { PrivateWorkbenchSettings, type SerializedWorkbenchSettings } from "../PrivateWorkbenchSettings";
 
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
@@ -36,6 +37,8 @@ export type WorkbenchSessionContent = {
     activeDashboardId: string | null;
     dashboards: SerializedDashboard[];
     ensembleSet: SerializedEnsembleSet;
+    settings: SerializedWorkbenchSettings;
+    userCreatedItems: SerializedUserCreatedItems;
 };
 
 export type WorkbenchSessionMetadata = {
@@ -87,6 +90,7 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     };
     private _isEnsembleSetLoading: boolean = false;
     private _loadedFromLocalStorage: boolean = false;
+    private _settings: PrivateWorkbenchSettings = new PrivateWorkbenchSettings();
 
     constructor(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient) {
         this._atomStoreMaster = atomStoreMaster;
@@ -101,6 +105,10 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
 
     setLoadedFromLocalStorage(loaded: boolean): void {
         this._loadedFromLocalStorage = loaded;
+    }
+
+    getWorkbenchSettings(): PrivateWorkbenchSettings {
+        return this._settings;
     }
 
     getId(): string | null {
@@ -134,6 +142,8 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     getContent(): WorkbenchSessionContent {
         return {
             activeDashboardId: this._activeDashboardId,
+            settings: this._settings.serializeState(),
+            userCreatedItems: this._userCreatedItems.serializeState(),
             dashboards: this._dashboards.map((d) => d.serializeState()),
             ensembleSet: {
                 regularEnsembles: this._ensembleSet.getRegularEnsembleArray().map(
@@ -164,20 +174,23 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
             return d;
         });
 
-        const userSettings: UserEnsembleSetting[] = content.ensembleSet.regularEnsembles.map((e) => ({
+        this._settings.deserializeState(content.settings);
+        this._userCreatedItems.deserializeState(content.userCreatedItems);
+
+        const userEnsembleSettings: UserEnsembleSetting[] = content.ensembleSet.regularEnsembles.map((e) => ({
             ensembleIdent: RegularEnsembleIdent.fromString(e.ensembleIdent),
             customName: e.name,
             color: e.color,
         }));
 
-        const userDeltaSettings: UserDeltaEnsembleSetting[] = content.ensembleSet.deltaEnsembles.map((e) => ({
+        const userDeltaEnsembleSettings: UserDeltaEnsembleSetting[] = content.ensembleSet.deltaEnsembles.map((e) => ({
             comparisonEnsembleIdent: RegularEnsembleIdent.fromString(e.comparisonEnsembleIdent),
             referenceEnsembleIdent: RegularEnsembleIdent.fromString(e.referenceEnsembleIdent),
             customName: e.name,
             color: e.color,
         }));
 
-        await this.loadAndSetupEnsembleSet(userSettings, userDeltaSettings);
+        await this.loadAndSetupEnsembleSet(userEnsembleSettings, userDeltaEnsembleSettings);
     }
 
     async loadAndSetupEnsembleSet(

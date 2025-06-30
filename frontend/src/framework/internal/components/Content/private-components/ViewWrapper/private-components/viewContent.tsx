@@ -125,7 +125,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                                         props.workbench.getWorkbenchSession() as unknown as WorkbenchSession
                                     }
                                     workbenchServices={props.workbench.getWorkbenchServices()}
-                                    workbenchSettings={props.workbench.getWorkbenchSettings()}
+                                    workbenchSettings={props.workbench.getWorkbenchSession().getWorkbenchSettings()}
                                     initialSettings={props.moduleInstance.getInitialSettings() || undefined}
                                     persistence={{
                                         serializedState:

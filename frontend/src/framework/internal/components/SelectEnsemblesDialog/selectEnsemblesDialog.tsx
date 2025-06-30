@@ -49,7 +49,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING,
     );
 
-    const colorSet = useColorSet(props.workbench.getWorkbenchSettings());
+    const colorSet = useColorSet(props.workbench.getWorkbenchSession().getWorkbenchSettings());
     const currentHash = makeHashFromSelectedEnsembles(selectedRegularEnsembles, selectedDeltaEnsembles);
 
     if (!isEqual(prevEnsembleSet, ensembleSet)) {

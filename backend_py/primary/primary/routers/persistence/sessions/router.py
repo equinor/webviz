@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from primary.services.database_access.session_access import SessionAccess
 from primary.auth.auth_helper import AuthHelper, AuthenticatedUser
 from primary.services.database_access.types import NewSession, SessionMetadata, SessionMetadataSummary, SessionRecord, SessionUpdate, SortBy, SortDirection
-from primary.routers.persistence.converters import to_api_session_metadata_summary
+from primary.routers.persistence.sessions.converters import to_api_session_metadata_summary
 
 from . import schemas
 

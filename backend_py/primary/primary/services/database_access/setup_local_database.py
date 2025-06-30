@@ -16,6 +16,7 @@ COSMOS_SCHEMA = [
         "database": "persistence",
         "containers": [
             {"id": "sessions", "partition_key": "/user_id", "throughput": 400},
+            {"id": "snapshots", "partition_key": "/user_id", "throughput": 400},
         ],
     },
 ]
