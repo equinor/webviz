@@ -48,7 +48,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const [prevViewport, setPrevViewport] = React.useState<Viewport | null>(null);
     const [prevSyncedViewport, setPrevSyncedViewport] = React.useState<Viewport | null>(null);
 
-    const [verticalScale, setVerticalScale] = React.useState<number>(1);
+    const [verticalScale, setVerticalScale] = React.useState<number>(10.0);
     const [prevSyncedVerticalScale, setPrevSyncedVerticalScale] = React.useState<number | null>(null);
 
     const [fitInViewStatus, setFitInViewStatus] = React.useState<FitInViewStatus>(FitInViewStatus.ON);
