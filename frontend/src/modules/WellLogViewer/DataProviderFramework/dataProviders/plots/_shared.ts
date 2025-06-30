@@ -12,10 +12,14 @@ import type {
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
-import type { Settings } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type {
+    MakeSettingTypesMap,
+    Settings,
+} from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 export const baseSettings = [Setting.LOG_CURVE] as const;
+export type BaseSettingsTypeMap = MakeSettingTypesMap<typeof baseSettings>;
 
 export const baseContinuousSettings = [...baseSettings, Setting.SCALE, Setting.COLOR] as const;
 export const baseDiscreteSettings = [
@@ -85,10 +89,9 @@ export function fetchLogCurveData<T extends Settings>(
     });
 }
 
-export function doSettingsChangesRequireDataRefetch(
-    // ? How can I type these in a way that makes it clear that the settings at least have "logCurve"
-    prevSettings: any,
-    newSettings: any,
+export function doSettingsChangesRequireDataRefetch<T extends BaseSettingsTypeMap>(
+    prevSettings: T | null,
+    newSettings: T | null,
 ): boolean {
     return !_.isEqual(prevSettings?.logCurve, newSettings?.logCurve);
 }

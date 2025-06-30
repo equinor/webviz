@@ -33,7 +33,6 @@ import "../../DataProviderFramework/registerFrameworkExtensions";
 enum RootActionIdents {
     CONTINUOUS_TRACK = "cont_track",
     DISCRETE_TRACK = "disc_track",
-    SETTINGS = "settings",
     WELL_PICKS = "well_picks",
 }
 
@@ -41,7 +40,7 @@ enum PlotActionIdents {
     LINE = "line",
     AREA = "area",
     STACKED = "stacked",
-    DIFF = "diff",
+    DIFF_GROUP = "diffGroup",
     DIFF_CURVE = "diffCurve",
 }
 
@@ -90,7 +89,7 @@ function usePersistedProviderManager(
     React.useEffect(
         function setupManagerListenersEffect() {
             if (!providerManager) return;
-            //
+
             persistManagerState();
 
             const unsubscribeDataRev = providerManager
@@ -134,7 +133,7 @@ function makeOptionsForGroup(group: ItemGroup): ActionGroup[] {
                         {
                             icon: <MultilineChart fontSize="inherit" />,
                             label: "Differential plot",
-                            identifier: PlotActionIdents.DIFF,
+                            identifier: PlotActionIdents.DIFF_GROUP,
                         },
                     ],
                 },
@@ -263,7 +262,7 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
                         GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK_DISC, providerManager),
                     );
 
-                case PlotActionIdents.DIFF: {
+                case PlotActionIdents.DIFF_GROUP: {
                     const diffGroup = GroupRegistry.makeGroup(GroupType.WELL_LOG_DIFF_GROUP, providerManager);
 
                     diffGroup

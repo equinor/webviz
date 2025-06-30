@@ -4,7 +4,6 @@ import { CircularProgress } from "@mui/material";
 import type { WellLogSet } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
 import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
-import _ from "lodash";
 
 import type { WellboreTrajectory_api } from "@api";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
@@ -66,8 +65,8 @@ function getProvidedPlots(
 
                     // Over/under colors
                     // TODO: Make this based on a setting
-                    fill: "#c50f0f",
-                    fill2: "#0d8d1e",
+                    fill: primaryPlot.color,
+                    fill2: secondaryPlot.color,
                 });
             }
         }
@@ -80,12 +79,12 @@ function createWellLogTemplateFromProduct(factoryProduct: WellLogFactoryProduct 
     const tracks: TemplateTrack[] = [];
     const accData = factoryProduct?.accumulatedData;
 
-    const duplicatedCurveNames = _.get(accData, DUPLICATE_NAMES_ACC_KEY);
+    const duplicatedCurveNames = accData?.[DUPLICATE_NAMES_ACC_KEY] || new Set();
 
     for (const child of factoryProduct?.children ?? []) {
         if (!isTrackGroup(child)) continue;
 
-        const templatePlots = getProvidedPlots(child, duplicatedCurveNames!);
+        const templatePlots = getProvidedPlots(child, duplicatedCurveNames);
         const templateProps = child.customProps;
 
         tracks.push({
@@ -95,7 +94,7 @@ function createWellLogTemplateFromProduct(factoryProduct: WellLogFactoryProduct 
     }
 
     return {
-        // AFAIK, this name is not show anywhere
+        // AFAIK, this name is not shown anywhere
         name: "Well log viewer",
         scale: { primary: MAIN_AXIS_CURVE.name, allowSecondary: true },
         tracks,
@@ -110,8 +109,8 @@ function createWellLogJsonFromProduct(
     if (!factoryProduct) return [];
 
     const accData = factoryProduct.accumulatedData;
-    const curveData = _.get(accData, DATA_ACC_KEY, []);
-    const duplicatedCurveNames = _.get(accData, DUPLICATE_NAMES_ACC_KEY);
+    const curveData = accData[DATA_ACC_KEY];
+    const duplicatedCurveNames = accData[DUPLICATE_NAMES_ACC_KEY];
 
     const referenceSystem = trajectoryToIntersectionReference(wellboreTrajectory);
 
@@ -138,7 +137,7 @@ function createColorMapDefsFromProduct(factoryProduct: WellLogFactoryProduct | n
     if (!factoryProduct) return [];
 
     const accData = factoryProduct.accumulatedData;
-    const colorMapFuncDefs = _.get(accData, COLOR_MAP_ACC_KEY) ?? [];
+    const colorMapFuncDefs = accData[COLOR_MAP_ACC_KEY] ?? [];
 
     return colorMapFuncDefs;
 }
@@ -170,11 +169,6 @@ export function ProviderVisualizationWrapper(props: ProviderVisualizationWrapper
             </div>
         );
     }
-
-    // TODO: Why are the logs not showing
-    console.log(wellLogSets);
-
-    console.log(template);
 
     return (
         <SubsurfaceLogViewerWrapper

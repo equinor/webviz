@@ -1,12 +1,13 @@
 import type React from "react";
 
 import type { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
-import _ from "lodash";
+import { chain, maxBy } from "lodash";
 
 import type { InfoItem, ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
-import { DEFAULT_MAX_VISIBLE_TRACKS } from "@modules/WellLogViewer/constants";
 import type { TemplateTrack } from "@modules/WellLogViewer/types";
+
+const DEFAULT_MAX_READOUT_ITEMS = 6;
 
 export type ReadoutWrapperProps = {
     templateTracks: TemplateTrack[];
@@ -17,15 +18,15 @@ export type ReadoutWrapperProps = {
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     if (props.hide) return null;
     // This means that the log-viewer has no visible tracks
-    if (_.maxBy(props.wellLogReadout, "iTrack")?.iTrack === -1) return null;
+    if (maxBy(props.wellLogReadout, "iTrack")?.iTrack === -1) return null;
 
     const readoutItems = parseWellLogReadout(props.wellLogReadout, props.templateTracks);
 
-    return <ReadoutBox maxNumItems={DEFAULT_MAX_VISIBLE_TRACKS + 1} readoutItems={readoutItems} noLabelColor />;
+    return <ReadoutBox maxNumItems={DEFAULT_MAX_READOUT_ITEMS} readoutItems={readoutItems} noLabelColor />;
 }
 
 function parseWellLogReadout(wellLogInfo: Info[], templateTracks: TemplateTrack[]): ReadoutItem[] {
-    return _.chain(wellLogInfo)
+    return chain(wellLogInfo)
         .filter(({ type }) => type !== "separator")
         .groupBy("iTrack")
         .entries()

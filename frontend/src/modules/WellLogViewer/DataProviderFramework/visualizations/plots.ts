@@ -1,5 +1,5 @@
 import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
-import _ from "lodash";
+import { maxBy, minBy } from "lodash";
 
 import type { WellboreLogCurveData_api } from "@api";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
@@ -16,12 +16,11 @@ import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/vi
 import type { TemplatePlot } from "@modules/WellLogViewer/types";
 import { isNumericalDataPoints } from "@modules/WellLogViewer/utils/queryDataTransform";
 
-import { AreaPlotProvider, type AreaPlotSettingTypes } from "../dataProviders/plots/AreaPlotProvider";
+import type { AreaPlotSettingTypes } from "../dataProviders/plots/AreaPlotProvider";
 import type { DiffPlotSettingTypes } from "../dataProviders/plots/DiffPlotProvider";
-import { DiffPlotProvider } from "../dataProviders/plots/DiffPlotProvider";
-import { LinearPlotProvider, type LinearPlotSettingTypes } from "../dataProviders/plots/LinearPlotProvider";
+import type { LinearPlotSettingTypes } from "../dataProviders/plots/LinearPlotProvider";
 import type { StackedPlotSettingTypes } from "../dataProviders/plots/StackedPlotProvider";
-import { StackedPlotProvider } from "../dataProviders/plots/StackedPlotProvider";
+import { CustomDataProviderType } from "../dataProviderTypes";
 
 export const DATA_ACC_KEY = "LOG_CURVE_DATA";
 export const DUPLICATE_NAMES_ACC_KEY = "DUPLICATE_CURVE_NAMES";
@@ -131,11 +130,11 @@ export function plotDataAccumulator(
     const newData = args.getData();
     if (!newData) return acc;
 
-    const duplicatedNames = _.get(acc, DUPLICATE_NAMES_ACC_KEY) ?? new Set();
-    const curveData = _.get(acc, DATA_ACC_KEY) ?? [];
-    const colorMapFuncDefs = _.get(acc, COLOR_MAP_ACC_KEY) ?? [];
+    const duplicatedNames = acc[DUPLICATE_NAMES_ACC_KEY] ?? new Set();
+    const curveData = acc[DATA_ACC_KEY] ?? [];
+    const colorMapFuncDefs = acc[COLOR_MAP_ACC_KEY] ?? [];
+    const existingCurve = curveData.find((c) => c.name === newData.name);
 
-    const existingCurve = _.find(curveData, ["name", newData.name]);
     const sameName = existingCurve?.name === newData.name;
     const sameLog = existingCurve?.logName === newData.logName;
 
@@ -148,8 +147,8 @@ export function plotDataAccumulator(
         }
 
         if (colorScale && isNumericalDataPoints(dataPoints)) {
-            const minValue = newData.minCurveValue ?? _.minBy(dataPoints, "1")![1];
-            const maxValue = newData.maxCurveValue ?? _.maxBy(dataPoints, "1")![1];
+            const minValue = newData.minCurveValue ?? minBy(dataPoints, "1")![1];
+            const maxValue = newData.maxCurveValue ?? maxBy(dataPoints, "1")![1];
 
             colorMapFuncDefs.push({
                 name: colorFuncName(args),
@@ -180,9 +179,7 @@ export type DiffVisualizationGroup = VisualizationGroup<
 export function isDiffPlotGroup(
     item: VisualizationGroup<any, any, any, any> | DataProviderVisualization<any, any>,
 ): item is DiffVisualizationGroup {
-    if (item.itemType !== VisualizationItemType.GROUP) return false;
-
-    return item.groupType === GroupType.WELL_LOG_DIFF_GROUP;
+    return item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.WELL_LOG_DIFF_GROUP;
 }
 
 export function isPlotVisualization(
@@ -190,7 +187,10 @@ export function isPlotVisualization(
 ): item is PlotVisualization {
     if (item.itemType !== VisualizationItemType.DATA_PROVIDER_VISUALIZATION) return false;
 
-    return [AreaPlotProvider.name, LinearPlotProvider.name, DiffPlotProvider.name, StackedPlotProvider.name].includes(
-        item.type,
-    );
+    return [
+        CustomDataProviderType.AREA_PLOT,
+        CustomDataProviderType.LINEAR_PLOT,
+        CustomDataProviderType.DIFF_PLOT,
+        CustomDataProviderType.STACKED_PLOT,
+    ].includes(item.type as CustomDataProviderType);
 }

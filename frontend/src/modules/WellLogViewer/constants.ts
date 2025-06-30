@@ -5,8 +5,6 @@ import type { DropdownOption } from "@lib/components/Dropdown";
 
 type PlotDropdownOption = DropdownOption<TemplatePlotType>;
 
-export const DEFAULT_MAX_VISIBLE_TRACKS = 5;
-
 export const PLOT_TYPE_OPTIONS: PlotDropdownOption[] = [
     { value: "line", label: "Line" },
     { value: "linestep", label: "Linestep" },

@@ -3,9 +3,13 @@ import React from "react";
 import { WellLogViewer } from "@webviz/well-log-viewer";
 import type { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
 import type { WellLogSet } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
-import type { WellLogController, WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
+import type {
+    WellLogController,
+    WellLogViewOptions,
+    WellPickProps,
+} from "@webviz/well-log-viewer/dist/components/WellLogView";
 import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
-import _ from "lodash";
+import { isEqual } from "lodash";
 
 import type { WellboreHeader_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
@@ -16,6 +20,17 @@ import type { Template } from "@modules/WellLogViewer/types";
 import type { InterfaceTypes } from "../../interfaces";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
+
+const VIEWER_OPTIONS: WellLogViewOptions = {
+    // Disable selection (pinning a range) for now. Might reintroduce later.
+    hideSelectionInterval: true,
+    // We think it's unlikely a user will have more than 12, and the viewers scrolling feature is somewhat cumbersome.
+    // Could consider having this be computed based on track sizes, and available module space
+    maxVisibleTrackNum: 12,
+};
+
+// Removes the default right-side readout panel
+const VIEWER_LAYOUT = { right: undefined };
 
 const AXIS_MNEMOS = {
     md: ["RKB", "DEPTH", "DEPT", "MD", "TDEP", "MD_RKB"],
@@ -57,7 +72,7 @@ function useSubscribeToGlobalHoverMdChange(
     React.useEffect(
         function registerMdHoverSubscriber() {
             function handleGlobalValueChange(newValue: GlobalHoverMd) {
-                if (!_.isEqual(lastReceivedChange, newValue)) {
+                if (!isEqual(lastReceivedChange, newValue)) {
                     lastReceivedChange.current = newValue;
 
                     if (newValue?.wellboreUuid === wellboreUuid) {
@@ -232,13 +247,12 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
                 wellLogSets={props.wellLogSets}
                 wellpick={props.wellPicks}
                 horizontal={props.horizontal}
-                // Removes the default right-side readout panel
-                layout={{ right: undefined }}
+                layout={VIEWER_LAYOUT}
                 axisMnemos={AXIS_MNEMOS}
                 axisTitles={AXIS_TITLES}
                 colorMapFunctions={props.colorMapFunctions ?? []}
                 // Disable the pin and selection logic, since we dont use that for anything yet
-                options={{ hideSelectionInterval: true, maxVisibleTrackNum: 12 }}
+                options={VIEWER_OPTIONS}
                 onTrackMouseEvent={handleTrackMouseEvent}
                 onCreateController={handleCreateController}
                 onContentSelection={handleSelection}

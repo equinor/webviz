@@ -22,17 +22,6 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, S
         return "Curve";
     }
 
-    // TODO: Set up serialization
-    // serializeValue(value: ValueType): string {
-    //     if (!value) return "";
-    //     return [value.source, value.logName, value.curveName].join("::");
-    // }
-
-    // deserializeValue(serializedValue: string): ValueType {
-    //     if(!serializedValue) return null
-    //     else return null
-    // }
-
     fixupValue(currentValue: ValueType, availableValues: WellboreLogCurveHeader_api[]): ValueType {
         if (!currentValue) {
             // Match sorting used in dropdown

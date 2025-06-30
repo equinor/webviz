@@ -27,6 +27,7 @@ export type WellPickVisualization = DataProviderVisualization<VisualizationTarge
 export function isWellPickVisualization(
     item: VisualizationGroup<any, any, any, any> | DataProviderVisualization<any, any>,
 ): item is WellPickVisualization {
-    if (item.itemType !== VisualizationItemType.DATA_PROVIDER_VISUALIZATION) return false;
-    return item.type === WellborePicksProvider.name;
+    return (
+        item.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION && item.type === WellborePicksProvider.name
+    );
 }
