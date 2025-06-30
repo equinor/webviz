@@ -10,8 +10,8 @@ export const filterAtom = atom<InplaceVolumesFilterSelections>({
     indicesWithValues: [],
     areSelectedTablesComparable: false,
 });
-export const resultNameAtom = atom<string | null>(null);
-export const resultName2Atom = atom<string | null>(null);
+export const firstResultNameAtom = atom<string | null>(null);
+export const secondResultNameAtom = atom<string | null>(null);
 export const selectorColumnAtom = atom<string | null>(null);
 export const subplotByAtom = atom<string>(TableOriginKey.ENSEMBLE);
 export const plotTypeAtom = atom<PlotType>(PlotType.HISTOGRAM);

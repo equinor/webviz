@@ -23,8 +23,8 @@ import {
     userSelectedEnsembleIdentsAtom,
     userSelectedIndicesWithValuesAtom,
     userSelectedPlotTypeAtom,
-    userSelectedResultName2Atom,
-    userSelectedResultNameAtom,
+    userSelectedSecondResultNameAtom,
+    userSelectedFirstResultNameAtom,
     userSelectedSelectorColumnAtom,
     userSelectedSubplotByAtom,
     userSelectedTableNamesAtom,
@@ -33,8 +33,8 @@ import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
     selectedIndicesWithValuesAtom,
-    selectedResultName2Atom,
-    selectedResultNameAtom,
+    selectedSecondResultNameAtom,
+    selectedFirstResultNameAtom,
     selectedSelectorColumnAtom,
     selectedSubplotByAtom,
     selectedTableNamesAtom,
@@ -60,11 +60,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const selectedIndicesWithValues = useAtomValue(selectedIndicesWithValuesAtom);
     const setSelectedIndicesWithValues = useSetAtom(userSelectedIndicesWithValuesAtom);
 
-    const selectedResultName = useAtomValue(selectedResultNameAtom);
-    const setSelectedResultName = useSetAtom(userSelectedResultNameAtom);
+    const selectedFirstResultName = useAtomValue(selectedFirstResultNameAtom);
+    const setSelectedFirstResultName = useSetAtom(userSelectedFirstResultNameAtom);
 
-    const selectedResultName2 = useAtomValue(selectedResultName2Atom);
-    const setSelectedResultName2 = useSetAtom(userSelectedResultName2Atom);
+    const selectedSecondResultName = useAtomValue(selectedSecondResultNameAtom);
+    const setSelectedSecondResultName = useSetAtom(userSelectedSecondResultNameAtom);
 
     const selectedSubplotBy = useAtomValue(selectedSubplotByAtom);
     const setSelectedSubplotBy = useSetAtom(userSelectedSubplotByAtom);
@@ -114,19 +114,19 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 <Label text="Plot type">
                     <Dropdown value={selectedPlotType} options={plotTypeOptions} onChange={setSelectedPlotType} />
                 </Label>
-                <Label text="Result 1">
+                <Label text="First Result">
                     <Dropdown
-                        value={selectedResultName ?? undefined}
+                        value={selectedFirstResultName ?? undefined}
                         options={resultNameOptions}
-                        onChange={setSelectedResultName}
+                        onChange={setSelectedFirstResultName}
                     />
                 </Label>
                 {selectedPlotType !== PlotType.BAR ? (
-                    <Label text="Result 2">
+                    <Label text="Second Result">
                         <Dropdown
-                            value={selectedResultName2 ?? undefined}
+                            value={selectedSecondResultName ?? undefined}
                             options={resultNameOptions}
-                            onChange={setSelectedResultName2}
+                            onChange={setSelectedSecondResultName}
                             disabled={selectedPlotType !== PlotType.SCATTER}
                         />
                     </Label>

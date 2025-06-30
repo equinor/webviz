@@ -7,8 +7,8 @@ import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
     selectedIndicesWithValuesAtom,
-    selectedResultName2Atom,
-    selectedResultNameAtom,
+    selectedSecondResultNameAtom,
+    selectedFirstResultNameAtom,
     selectedSelectorColumnAtom,
     selectedSubplotByAtom,
     selectedTableNamesAtom,
@@ -17,8 +17,8 @@ import type { InplaceVolumesFilterSelections, PlotType } from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
     filter: InplaceVolumesFilterSelections;
-    resultName: string | null;
-    resultName2: string | null;
+    firstResultName: string | null;
+    secondResultName: string | null;
     selectorColumn: string | null;
     subplotBy: string;
     colorBy: string;
@@ -39,8 +39,8 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
             areSelectedTablesComparable: get(areSelectedTablesComparableAtom),
         };
     },
-    resultName: (get) => get(selectedResultNameAtom),
-    resultName2: (get) => get(selectedResultName2Atom),
+    firstResultName: (get) => get(selectedFirstResultNameAtom),
+    secondResultName: (get) => get(selectedSecondResultNameAtom),
     selectorColumn: (get) => get(selectedSelectorColumnAtom),
     subplotBy: (get) => get(selectedSubplotByAtom),
     colorBy: (get) => get(selectedColorByAtom),

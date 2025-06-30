@@ -17,8 +17,8 @@ import {
     userSelectedColorByAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedIndicesWithValuesAtom,
-    userSelectedResultName2Atom,
-    userSelectedResultNameAtom,
+    userSelectedSecondResultNameAtom,
+    userSelectedFirstResultNameAtom,
     userSelectedSelectorColumnAtom,
     userSelectedSubplotByAtom,
     userSelectedTableNamesAtom,
@@ -61,8 +61,8 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
     const selectedTableNames = get(selectedTableNamesAtom);
-    const selectedResultName = get(selectedResultNameAtom);
-    const selectedResultName2 = get(selectedResultName2Atom);
+    const selectedFirstResultName = get(selectedFirstResultNameAtom);
+    const selectedSecondResultName = get(selectedSecondResultNameAtom);
     const selectedIndicesWithValues = get(selectedIndicesWithValuesAtom);
 
     const tableDefinitionsQuery = get(tableDefinitionsQueryAtom);
@@ -79,11 +79,11 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
         return false;
     }
 
-    if (!selectedResultName || !tableDefinitionsAccessor.hasResultName(selectedResultName)) {
+    if (!selectedFirstResultName || !tableDefinitionsAccessor.hasResultName(selectedFirstResultName)) {
         return false;
     }
 
-    if (selectedResultName2 && !tableDefinitionsAccessor.hasResultName(selectedResultName2)) {
+    if (selectedSecondResultName && !tableDefinitionsAccessor.hasResultName(selectedSecondResultName)) {
         return false;
     }
 
@@ -112,8 +112,8 @@ export const selectedTableNamesAtom = atom<string[]>((get) => {
     return fixupUserSelection(userSelectedTableNames, uniqueTableNames);
 });
 
-export const selectedResultNameAtom = atom<string | null>((get) => {
-    const userSelectedResultName = get(userSelectedResultNameAtom);
+export const selectedFirstResultNameAtom = atom<string | null>((get) => {
+    const userSelectedResultName = get(userSelectedFirstResultNameAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
     if (!userSelectedResultName) {
@@ -134,8 +134,8 @@ export const selectedResultNameAtom = atom<string | null>((get) => {
     return fixedSelection[0];
 });
 
-export const selectedResultName2Atom = atom<string | null>((get) => {
-    const userSelectedResultName = get(userSelectedResultName2Atom);
+export const selectedSecondResultNameAtom = atom<string | null>((get) => {
+    const userSelectedResultName = get(userSelectedSecondResultNameAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
     if (!userSelectedResultName) {

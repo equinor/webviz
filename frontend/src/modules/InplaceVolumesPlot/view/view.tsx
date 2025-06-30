@@ -11,7 +11,7 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 import type { Interfaces } from "../interfaces";
 
-import { resultNameAtom } from "./atoms/baseAtoms";
+import { firstResultNameAtom } from "./atoms/baseAtoms";
 import { areSelectedTablesComparableAtom } from "./atoms/derivedAtoms";
 import { aggregatedTableDataQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
@@ -30,7 +30,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const divRef = React.useRef<HTMLDivElement>(null);
     const divBoundingRect = useElementBoundingRect(divRef);
 
-    const resultName = useAtomValue(resultNameAtom);
+    const resultName = useAtomValue(firstResultNameAtom);
     const aggregatedTableDataQueries = useAtomValue(aggregatedTableDataQueriesAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
 

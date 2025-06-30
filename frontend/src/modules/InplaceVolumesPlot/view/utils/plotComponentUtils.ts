@@ -31,8 +31,8 @@ export function makeFormatLabelFunction(
 
 export function makePlotData(
     plotType: PlotType,
-    resultName: string,
-    resultNameOrSelectorName: string,
+    firstResultName: string,
+    secondResultNameOrSelectorName: string,
     colorBy: string,
     ensembleSet: EnsembleSet,
     colorSet: ColorSet,
@@ -40,7 +40,7 @@ export function makePlotData(
     return (table: Table): Partial<PlotData>[] => {
         let binRanges: HistogramBinRange[] = [];
         if (plotType === PlotType.HISTOGRAM) {
-            const column = table.getColumn(resultName);
+            const column = table.getColumn(firstResultName);
             if (!column) {
                 return [];
             }
@@ -95,18 +95,18 @@ export function makePlotData(
             }
 
             if (plotType === PlotType.HISTOGRAM) {
-                data.push(...makeHistogram(title, table, resultName, color, binRanges));
+                data.push(...makeHistogram(title, table, firstResultName, color, binRanges));
             } else if (plotType === PlotType.CONVERGENCE) {
-                data.push(...makeConvergencePlot(title, table, resultName, color));
+                data.push(...makeConvergencePlot(title, table, firstResultName, color));
             } else if (plotType === PlotType.DISTRIBUTION) {
-                data.push(...makeDensityPlot(title, table, resultName, color));
+                data.push(...makeDensityPlot(title, table, firstResultName, color));
             } else if (plotType === PlotType.BOX) {
                 const yAxisPosition = boxPlotColorByPositionMap.get(key.toString());
-                data.push(...makeBoxPlot(title, table, resultName, color, yAxisPosition));
+                data.push(...makeBoxPlot(title, table, firstResultName, color, yAxisPosition));
             } else if (plotType === PlotType.SCATTER) {
-                data.push(...makeScatterPlot(title, table, resultName, resultNameOrSelectorName, color));
+                data.push(...makeScatterPlot(title, table, firstResultName, secondResultNameOrSelectorName, color));
             } else if (plotType === PlotType.BAR) {
-                data.push(...makeBarPlot(title, table, resultName, resultNameOrSelectorName, color));
+                data.push(...makeBarPlot(title, table, firstResultName, secondResultNameOrSelectorName, color));
             }
 
             color = colorSet.getNextColor();
@@ -321,18 +321,18 @@ function makeBoxPlot(
 function makeScatterPlot(
     title: string,
     table: Table,
-    resultName: string,
-    resultName2: string,
+    firstResultName: string,
+    secondResultName: string,
     color: string,
 ): Partial<PlotData>[] {
     const data: Partial<PlotData>[] = [];
 
-    const resultColumn = table.getColumn(resultName);
+    const resultColumn = table.getColumn(firstResultName);
     if (!resultColumn) {
         return [];
     }
 
-    const resultColumn2 = table.getColumn(resultName2);
+    const resultColumn2 = table.getColumn(secondResultName);
     if (!resultColumn2) {
         return [];
     }

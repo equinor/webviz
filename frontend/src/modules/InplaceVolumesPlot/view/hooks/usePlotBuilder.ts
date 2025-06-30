@@ -14,8 +14,8 @@ import { PlotType, plotTypeToStringMapping } from "@modules/InplaceVolumesPlot/t
 import {
     colorByAtom,
     plotTypeAtom,
-    resultName2Atom,
-    resultNameAtom,
+    secondResultNameAtom,
+    firstResultNameAtom,
     selectorColumnAtom,
     subplotByAtom,
 } from "../atoms/baseAtoms";
@@ -34,8 +34,8 @@ export function useBuildPlotAndTable(
 ): { plots: React.ReactNode; table: Table } | null {
     const aggregatedTableDataQueries = useAtomValue(aggregatedTableDataQueriesAtom);
     const plotType = useAtomValue(plotTypeAtom);
-    const resultName = useAtomValue(resultNameAtom);
-    const resultName2 = useAtomValue(resultName2Atom);
+    const firstResultName = useAtomValue(firstResultNameAtom);
+    const secondResultName = useAtomValue(secondResultNameAtom);
     const selectorColumn = useAtomValue(selectorColumnAtom);
     const subplotBy = useAtomValue(subplotByAtom);
     const colorBy = useAtomValue(colorByAtom);
@@ -48,8 +48,8 @@ export function useBuildPlotAndTable(
     const table = makeTableFromApiData(aggregatedTableDataQueries.tablesData);
 
     let title = `${plotTypeToStringMapping[plotType]} plot of mean/p10/p90`;
-    if (resultName) {
-        title += ` for ${resultName}`;
+    if (firstResultName) {
+        title += ` for ${firstResultName}`;
     }
     viewContext.setInstanceTitle(title);
 
@@ -57,12 +57,12 @@ export function useBuildPlotAndTable(
     if (plotType === PlotType.BAR && selectorColumn) {
         resultNameOrSelectorName = selectorColumn.toString();
     }
-    if (plotType !== PlotType.BAR && resultName2) {
-        resultNameOrSelectorName = resultName2.toString();
+    if (plotType !== PlotType.BAR && secondResultName) {
+        resultNameOrSelectorName = secondResultName.toString();
     }
     const plotbuilder = new PlotBuilder(
         table,
-        makePlotData(plotType, resultName ?? "", resultNameOrSelectorName ?? "", colorBy, ensembleSet, colorSet),
+        makePlotData(plotType, firstResultName ?? "", resultNameOrSelectorName ?? "", colorBy, ensembleSet, colorSet),
     );
 
     plotbuilder.setSubplotByColumn(subplotBy);
@@ -79,11 +79,11 @@ export function useBuildPlotAndTable(
     }
 
     if (plotType === PlotType.SCATTER) {
-        plotbuilder.setXAxisOptions({ title: { text: resultName ?? "", standoff: 20 } });
-        plotbuilder.setYAxisOptions({ title: { text: resultName ?? "", standoff: 20 } });
+        plotbuilder.setXAxisOptions({ title: { text: secondResultName ?? "", standoff: 20 } });
+        plotbuilder.setYAxisOptions({ title: { text: firstResultName ?? "", standoff: 20 } });
     } else if (plotType === PlotType.CONVERGENCE) {
         plotbuilder.setXAxisOptions({ title: { text: "Realizations", standoff: 5 } });
-        plotbuilder.setYAxisOptions({ title: { text: resultName ?? "", standoff: 5 } });
+        plotbuilder.setYAxisOptions({ title: { text: firstResultName ?? "", standoff: 5 } });
     }
 
     const horizontalSpacing = 80 / width;

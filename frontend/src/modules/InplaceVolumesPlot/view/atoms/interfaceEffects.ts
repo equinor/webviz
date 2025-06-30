@@ -6,8 +6,8 @@ import {
     colorByAtom,
     filterAtom,
     plotTypeAtom,
-    resultName2Atom,
-    resultNameAtom,
+    secondResultNameAtom,
+    firstResultNameAtom,
     selectorColumnAtom,
     subplotByAtom,
 } from "./baseAtoms";
@@ -18,12 +18,12 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
         setAtomValue(filterAtom, filter);
     },
     (getInterfaceValue, setAtomValue) => {
-        const resultName = getInterfaceValue("resultName");
-        setAtomValue(resultNameAtom, resultName);
+        const firstResultName = getInterfaceValue("firstResultName");
+        setAtomValue(firstResultNameAtom, firstResultName);
     },
     (getInterfaceValue, setAtomValue) => {
-        const resultName2 = getInterfaceValue("resultName2");
-        setAtomValue(resultName2Atom, resultName2);
+        const secondResultName = getInterfaceValue("secondResultName");
+        setAtomValue(secondResultNameAtom, secondResultName);
     },
     (getInterfaceValue, setAtomValue) => {
         const selectorColumn = getInterfaceValue("selectorColumn");
