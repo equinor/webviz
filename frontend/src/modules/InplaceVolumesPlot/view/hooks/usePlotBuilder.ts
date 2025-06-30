@@ -79,8 +79,8 @@ export function useBuildPlotAndTable(
     }
 
     if (plotType === PlotType.SCATTER) {
-        plotbuilder.setXAxisOptions({ title: { text: secondResultName ?? "", standoff: 20 } });
-        plotbuilder.setYAxisOptions({ title: { text: firstResultName ?? "", standoff: 20 } });
+        plotbuilder.setXAxisOptions({ title: { text: firstResultName ?? "", standoff: 20 } });
+        plotbuilder.setYAxisOptions({ title: { text: secondResultName ?? "", standoff: 20 } });
     } else if (plotType === PlotType.CONVERGENCE) {
         plotbuilder.setXAxisOptions({ title: { text: "Realizations", standoff: 5 } });
         plotbuilder.setYAxisOptions({ title: { text: firstResultName ?? "", standoff: 5 } });

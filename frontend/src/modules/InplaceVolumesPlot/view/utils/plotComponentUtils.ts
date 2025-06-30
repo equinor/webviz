@@ -327,19 +327,19 @@ function makeScatterPlot(
 ): Partial<PlotData>[] {
     const data: Partial<PlotData>[] = [];
 
-    const resultColumn = table.getColumn(firstResultName);
-    if (!resultColumn) {
+    const firstResultColumn = table.getColumn(firstResultName);
+    if (!firstResultColumn) {
         return [];
     }
 
-    const resultColumn2 = table.getColumn(secondResultName);
-    if (!resultColumn2) {
+    const secondResultColumn = table.getColumn(secondResultName);
+    if (!secondResultColumn) {
         return [];
     }
 
     data.push({
-        x: resultColumn.getAllRowValues(),
-        y: resultColumn2.getAllRowValues(),
+        x: firstResultColumn.getAllRowValues(),
+        y: secondResultColumn.getAllRowValues(),
         name: title,
         mode: "markers",
         marker: {
