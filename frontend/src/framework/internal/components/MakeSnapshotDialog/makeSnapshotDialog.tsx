@@ -75,7 +75,7 @@ export function MakeSnapshotDialog(props: MakeSnapshotDialogProps): React.ReactN
                     <Button variant="text" disabled={isSaving} onClick={handleCancel}>
                         Cancel
                     </Button>
-                    <Button variant="text" color="success" disabled={isSaving} onClick={handleSave}>
+                    <Button variant="text" disabled={isSaving} onClick={handleSave}>
                         {isSaving && <CircularProgress size="small" />}
                         <AddLink fontSize="inherit" /> Make link
                     </Button>
@@ -88,7 +88,7 @@ export function MakeSnapshotDialog(props: MakeSnapshotDialogProps): React.ReactN
                     <Label text="Title">
                         <>
                             <Input
-                                placeholder="Enter session title"
+                                placeholder="Enter snapshot title"
                                 type="text"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
@@ -103,7 +103,7 @@ export function MakeSnapshotDialog(props: MakeSnapshotDialogProps): React.ReactN
                     <Label text="Description">
                         <>
                             <Input
-                                placeholder="Enter session description"
+                                placeholder="Enter snapshot description"
                                 value={description}
                                 multiline
                                 onChange={(e) => setDescription(e.target.value)}

@@ -11,7 +11,6 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ColorPaletteSettings } from "./private-components/colorPaletteSettings";
 import { ModuleSettings } from "./private-components/moduleSettings";
-import { ModulesList } from "./private-components/modulesList";
 import { SyncSettings } from "./private-components/syncSettings";
 import { TemplatesList } from "./private-components/templatesList";
 
@@ -35,7 +34,6 @@ export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
             className={resolveClassNames("bg-white", "h-full")}
             style={{ boxShadow: "4px 0px 4px 1px rgba(0, 0, 0, 0.05)" }}
         >
-            <ModulesList relContainer={mainRef.current} workbench={props.workbench} />
             <TemplatesList workbench={props.workbench} />
             <SyncSettings workbench={props.workbench} />
             <ColorPaletteSettings workbench={props.workbench} />

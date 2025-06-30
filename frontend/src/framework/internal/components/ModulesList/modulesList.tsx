@@ -11,11 +11,9 @@ import {
     WebAsset,
 } from "@mui/icons-material";
 
-import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
-import { GuiEvent, GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Module } from "@framework/Module";
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";
@@ -28,7 +26,6 @@ import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
 import type { Size2D } from "@lib/utils/geometry";
 import { MANHATTAN_LENGTH, pointRelativeToDomRect } from "@lib/utils/geometry";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { Vec2 } from "@lib/utils/vec2";
@@ -58,7 +55,6 @@ type ModulesListItemProps = {
     displayName: string;
     description: string | null;
     drawPreviewFunc: DrawPreviewFunc | null;
-    relContainer: HTMLDivElement | null;
     guiMessageBroker: GuiMessageBroker;
     onShowDetails: (moduleName: string, yPos: number) => void;
     onHover: (moduleName: string, yPos: number) => void;
@@ -131,10 +127,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             }
 
             if (dragging) {
-                const rect = props.relContainer?.getBoundingClientRect();
-                if (rect) {
-                    setDragPosition(subtractVec2(subtractVec2(vec2FromPointerEvent(e), rect), pointerToElementDiff));
-                }
+                setDragPosition(subtractVec2(vec2FromPointerEvent(e), pointerToElementDiff));
             }
         };
 
@@ -162,7 +155,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             }
             removeDraggingEventListeners();
         };
-    }, [props.relContainer, props.guiMessageBroker, props.name, onDraggingStart]);
+    }, [props.guiMessageBroker, props.name, onDraggingStart]);
 
     function handleShowDetails(e: React.MouseEvent<HTMLDivElement>) {
         e.stopPropagation();
@@ -194,9 +187,8 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
         return <div className="border bg-slate-200 border-slate-300 flex items-center justify-center w-full h-full" />;
     }
 
-    return (
-        <>
-            {isDragged && <div ref={ref} className="bg-blue-300 w-full h-12" />}
+    function makeItem() {
+        return (
             <div
                 ref={isDragged ? undefined : ref}
                 className={resolveClassNames(
@@ -209,7 +201,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 style={makeStyle(isDragged, dragSize, dragPosition)}
                 onMouseOver={handleHover}
             >
-                <div ref={ref} className="px-2 flex items-center h-full text-sm gap-2" title={props.displayName}>
+                <div className="px-2 flex items-center h-full text-sm gap-2" title={props.displayName}>
                     <div className="h-12 w-12 min-w-12 overflow-hidden p-1 shrink-0">{makePreviewImage()}</div>
                     <span className="grow text-ellipsis whitespace-nowrap overflow-hidden">{props.displayName}</span>
                     <span
@@ -226,8 +218,18 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                     </span>
                 </div>
             </div>
-        </>
-    );
+        );
+    }
+
+    if (isDragged) {
+        return (
+            <>
+                <div ref={ref} className="bg-blue-300 w-full h-12" />
+                {createPortal(makeItem())}
+            </>
+        );
+    }
+    return makeItem();
 };
 
 type DevStatesFilterProps = {
@@ -236,7 +238,7 @@ type DevStatesFilterProps = {
 };
 
 function DevStatesFilter(props: DevStatesFilterProps): React.ReactNode {
-    const [expanded, setExpanded] = React.useState(false);
+    const [expanded, setExpanded] = React.useState(true);
     const [devStates, setDevStates] = React.useState<ModuleDevState[]>(props.initialDevStates);
 
     function toggleExpanded() {
@@ -439,9 +441,9 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
     );
 }
 
-type ModulesListProps = {
+export type ModulesListProps = {
     workbench: Workbench;
-    relContainer: HTMLDivElement | null;
+    onClose: () => void;
 };
 
 const MODULE_CATEGORIES: { category: ModuleCategory; label: string }[] = [
@@ -460,12 +462,7 @@ if (isDevMode()) {
 }
 
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
-    const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
-    );
-    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.LeftDrawerContent);
-    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances);
+    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
 
     const ref = React.useRef<HTMLDivElement>(null);
     const boundingClientRect = useElementBoundingRect(ref);
@@ -506,13 +503,13 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         setDetailsPosY(yPos);
     }
 
-    function handleNotificationClick() {
-        props.workbench.getGuiMessageBroker().setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
-    }
-
     const handleDraggingStart = React.useCallback(function handleDraggingStart() {
         setShowDetailsForModule(null);
     }, []);
+
+    function handleClose() {
+        props.onClose();
+    }
 
     const filteredModules = Object.values(ModuleRegistry.getRegisteredModules())
         .filter((mod) => devStates.includes(mod.getDevState()))
@@ -523,12 +520,13 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         left = boundingClientRect.left + boundingClientRect.width + 10;
     }
 
-    const visible = drawerContent === LeftDrawerContent.ModulesList;
+    const visible = drawerContent === RightDrawerContent.ModulesList;
 
     return (
-        <div ref={ref} className={resolveClassNames("w-full h-full", { hidden: !visible })}>
+        <div ref={ref} className={resolveClassNames("w-full h-full relative", { hidden: !visible })}>
             <Drawer
                 visible
+                onClose={handleClose}
                 title="Add modules"
                 icon={<WebAsset />}
                 showFilter
@@ -536,7 +534,6 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                 onFilterChange={handleSearchQueryChange}
                 headerChildren={
                     <>
-                        <Notification onClick={handleNotificationClick} visible={moduleInstances.length > 0} />
                         <DevStatesFilter onFilterChange={handleDevStatesChange} initialDevStates={devStates} />
                     </>
                 }
@@ -548,7 +545,6 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                                 .filter((mod) => mod.getCategory() === el.category)
                                 .map((mod) => (
                                     <ModulesListItem
-                                        relContainer={props.relContainer}
                                         key={mod.getName()}
                                         name={mod.getName()}
                                         devState={mod.getDevState()}

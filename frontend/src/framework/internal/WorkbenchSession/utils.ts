@@ -1,7 +1,9 @@
 import {
     createSession,
+    createSnapshot,
     getSessionQueryKey,
     getSessionsMetadataQueryKey,
+    getSnapshotsMetadataQueryKey,
     updateSession,
     type NewSession_api,
     type SessionUpdate_api,
@@ -88,4 +90,21 @@ export function getIdFromLocalStorageKey(key: string): string | null {
         return key.slice(prefix.length);
     }
     return null;
+}
+
+export async function createSnapshotWithCacheUpdate(
+    queryClient: QueryClient,
+    snapshotData: NewSession_api,
+): Promise<string> {
+    const response = await createSnapshot<true>({
+        throwOnError: true,
+        body: snapshotData,
+    });
+
+    // Invalidate the cache for the session to ensure the new session is fetched
+    queryClient.invalidateQueries({
+        queryKey: getSnapshotsMetadataQueryKey(),
+    });
+
+    return response.data;
 }

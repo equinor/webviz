@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { FilterAlt, Fullscreen, FullscreenExit, History } from "@mui/icons-material";
+import { FilterAlt, Fullscreen, FullscreenExit, History, WebAsset } from "@mui/icons-material";
 
 import { GuiState, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
 import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
@@ -46,6 +46,11 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
         }
     }
 
+    function handleModulesListClick() {
+        ensureSettingsPanelIsVisible();
+        setDrawerContent(RightDrawerContent.ModulesList);
+    }
+
     function handleRealizationFilterClick() {
         togglePanelContent(RightDrawerContent.RealizationFilterSettings);
     }
@@ -61,6 +66,13 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
             )}
         >
             <div className="flex flex-col gap-2 grow">
+                <NavBarButton
+                    active={drawerContent === RightDrawerContent.ModulesList}
+                    title="Show modules list"
+                    icon={<WebAsset fontSize="small" className="size-5" />}
+                    onClick={handleModulesListClick}
+                />
+                <NavBarDivider />
                 <NavBarButton
                     active={drawerContent === RightDrawerContent.RealizationFilterSettings}
                     title={`Open realization filter panel${
@@ -84,9 +96,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                     title="Open module history"
                     onClick={handleModuleInstanceLogClick}
                 />
-
                 <NavBarDivider />
-
                 <NavBarButton
                     active={isFullscreen}
                     icon={<Fullscreen fontSize="small" className="size-5 mr-2" />}

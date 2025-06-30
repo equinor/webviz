@@ -3,7 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
-import { GuiMessageBroker, GuiState, LeftDrawerContent } from "./GuiMessageBroker";
+import { GuiMessageBroker, GuiState, LeftDrawerContent, RightDrawerContent } from "./GuiMessageBroker";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
 import {
@@ -149,10 +149,10 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             this._guiMessageBroker.setState(GuiState.EnsembleDialogOpen, true);
         }
 
+        this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
+
         if (session.getActiveDashboard().getLayout().length === 0) {
-            this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModulesList);
-        } else {
-            this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
+            this._guiMessageBroker.setState(GuiState.RightDrawerContent, RightDrawerContent.ModulesList);
         }
 
         this._workbenchSession = session;

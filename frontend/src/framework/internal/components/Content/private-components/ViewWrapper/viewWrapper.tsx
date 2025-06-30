@@ -122,12 +122,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             return;
         }
         pointerDown.current = false;
-        if (drawerContent === LeftDrawerContent.ModulesList) {
-            if (!timeRef.current || Date.now() - timeRef.current < 800) {
-                handleModuleClick();
-            }
-            return;
-        }
         handleModuleClick();
     }
 

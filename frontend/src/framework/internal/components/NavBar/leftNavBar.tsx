@@ -1,6 +1,6 @@
 import React from "react";
 
-import { GridView, Link, List, Palette, Settings, WebAsset } from "@mui/icons-material";
+import { GridView, Link, List, Palette, Settings } from "@mui/icons-material";
 
 import { GuiState, LeftDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
 import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
@@ -30,7 +30,6 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         props.workbench.getGuiMessageBroker(),
         GuiState.EnsembleDialogOpen,
     );
-    const [layoutEmpty, setLayoutEmpty] = React.useState<boolean>(dashboard.getLayout().length === 0);
     const loadingEnsembleSet = usePublishSubscribeTopicValue(
         props.workbench.getWorkbenchSession(),
         PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING,
@@ -42,19 +41,6 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     const [leftSettingsPanelWidth, setLeftSettingsPanelWidth] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.LeftSettingsPanelWidthInPercent,
-    );
-
-    React.useEffect(
-        function reactToModuleInstancesChanged() {
-            if (
-                layout.length === 0 &&
-                [LeftDrawerContent.ModuleSettings, LeftDrawerContent.SyncSettings].includes(drawerContent)
-            ) {
-                setDrawerContent(LeftDrawerContent.ModulesList);
-            }
-            setLayoutEmpty(layout.length === 0);
-        },
-        [layout, drawerContent, setDrawerContent],
     );
 
     function ensureSettingsPanelIsVisible() {
@@ -72,11 +58,6 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         setDrawerContent(LeftDrawerContent.ModuleSettings);
     }
 
-    function handleModulesListClick() {
-        ensureSettingsPanelIsVisible();
-        setDrawerContent(LeftDrawerContent.ModulesList);
-    }
-
     function handleTemplatesListClick() {
         ensureSettingsPanelIsVisible();
         setDrawerContent(LeftDrawerContent.TemplatesList);
@@ -91,6 +72,8 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         ensureSettingsPanelIsVisible();
         setDrawerContent(LeftDrawerContent.ColorPaletteSettings);
     }
+
+    const layoutEmpty = layout.length === 0;
 
     return (
         <div
@@ -138,13 +121,6 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 />
 
                 <NavBarDivider />
-
-                <NavBarButton
-                    active={drawerContent === LeftDrawerContent.ModulesList}
-                    title="Show modules list"
-                    icon={<WebAsset fontSize="small" className="size-5" />}
-                    onClick={handleModulesListClick}
-                />
                 <NavBarButton
                     active={drawerContent === LeftDrawerContent.TemplatesList}
                     title="Show templates list"

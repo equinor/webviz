@@ -742,6 +742,15 @@ export type SessionUpdate_api = {
     content: string;
 };
 
+export type SnapshotMetadataSummary_api = {
+    id: string;
+    title: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
+    version: number;
+};
+
 export enum SortBy_api {
     CREATED_AT = "created_at",
     UPDATED_AT = "updated_at",
@@ -3957,6 +3966,173 @@ export type GetSessionMetadataResponses_api = {
 };
 
 export type GetSessionMetadataResponse_api = GetSessionMetadataResponses_api[keyof GetSessionMetadataResponses_api];
+
+export type GetSnapshotsMetadataData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Sort the result by
+         */
+        sort_by?: SortBy_api | null;
+        /**
+         * Sort direction: 'asc' or 'desc'
+         */
+        sort_direction?: SortDirection_api | null;
+        /**
+         * Limit the number of results
+         */
+        limit?: number | null;
+    };
+    url: "/snapshots/snapshots";
+};
+
+export type GetSnapshotsMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSnapshotsMetadataError_api = GetSnapshotsMetadataErrors_api[keyof GetSnapshotsMetadataErrors_api];
+
+export type GetSnapshotsMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<SnapshotMetadataSummary_api>;
+};
+
+export type GetSnapshotsMetadataResponse_api = GetSnapshotsMetadataResponses_api[keyof GetSnapshotsMetadataResponses_api];
+
+export type CreateSnapshotData_api = {
+    body: NewSession_api;
+    path?: never;
+    query?: never;
+    url: "/snapshots/snapshots";
+};
+
+export type CreateSnapshotErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type CreateSnapshotError_api = CreateSnapshotErrors_api[keyof CreateSnapshotErrors_api];
+
+export type CreateSnapshotResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type CreateSnapshotResponse_api = CreateSnapshotResponses_api[keyof CreateSnapshotResponses_api];
+
+export type DeleteSnapshotData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: never;
+    url: "/snapshots/snapshots/{snapshot_id}";
+};
+
+export type DeleteSnapshotErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type DeleteSnapshotError_api = DeleteSnapshotErrors_api[keyof DeleteSnapshotErrors_api];
+
+export type DeleteSnapshotResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetSnapshotData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: never;
+    url: "/snapshots/snapshots/{snapshot_id}";
+};
+
+export type GetSnapshotErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSnapshotError_api = GetSnapshotErrors_api[keyof GetSnapshotErrors_api];
+
+export type GetSnapshotResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SnapshotMetadataSummary_api;
+};
+
+export type GetSnapshotResponse_api = GetSnapshotResponses_api[keyof GetSnapshotResponses_api];
+
+export type UpdateSnapshotData_api = {
+    body: SessionUpdate_api;
+    path: {
+        snapshot_id: string;
+    };
+    query?: never;
+    url: "/snapshots/snapshots/{snapshot_id}";
+};
+
+export type UpdateSnapshotErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type UpdateSnapshotError_api = UpdateSnapshotErrors_api[keyof UpdateSnapshotErrors_api];
+
+export type UpdateSnapshotResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetSnapshotMetadataData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: never;
+    url: "/snapshots/snapshots/metadata/{snapshot_id}";
+};
+
+export type GetSnapshotMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSnapshotMetadataError_api = GetSnapshotMetadataErrors_api[keyof GetSnapshotMetadataErrors_api];
+
+export type GetSnapshotMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SessionMetadata_api;
+};
+
+export type GetSnapshotMetadataResponse_api = GetSnapshotMetadataResponses_api[keyof GetSnapshotMetadataResponses_api];
 
 export type LoginRouteData_api = {
     body?: never;

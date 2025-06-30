@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 
 import {
     createSessionWithCacheUpdate,
+    createSnapshotWithCacheUpdate,
     hashJsonString,
     localStorageKeyForSessionId,
     objectToJsonString,
@@ -256,6 +257,37 @@ export class WorkbenchSessionPersistenceService
 
         if (this._currentStateString) {
             localStorage.setItem(key, this._currentStateString);
+        }
+    }
+
+    async makeSnapshot(title: string, description: string): Promise<string | null> {
+        const queryClient = this._workbench.getQueryClient();
+
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to make a snapshot of.");
+        }
+
+        await this.pullFullSessionState();
+        if (!this._currentStateString) {
+            throw new Error("Current state string is not set. Cannot make a snapshot.");
+        }
+        const toastId = toast.loading("Creating snapshot...");
+
+        try {
+            const tinyUrl = await createSnapshotWithCacheUpdate(queryClient, {
+                title,
+                description,
+                content: objectToJsonString(this._workbenchSession.getContent()),
+            });
+            toast.dismiss(toastId);
+            toast.success("Snapshot successfully created.");
+            return tinyUrl;
+        } catch (error) {
+            console.error("Failed to create snapshot:", error);
+            toast.dismiss(toastId);
+            toast.error("Failed to create snapshot. Please try again later.");
+
+            return null;
         }
     }
 

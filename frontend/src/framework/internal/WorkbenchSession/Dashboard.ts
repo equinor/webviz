@@ -238,7 +238,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     }
 
     registerModuleInstance(moduleInstance: ModuleInstance<any, any>): void {
-        this._moduleInstances.push(moduleInstance);
+        this._moduleInstances = [...this._moduleInstances, moduleInstance];
         this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
     }
@@ -251,9 +251,9 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
         const moduleInstance = module.makeInstance(v4());
         this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
-        this._moduleInstances.push(moduleInstance);
+        this._moduleInstances = [...this._moduleInstances, moduleInstance];
 
-        this._layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
+        this._layout = [...this._layout, { ...layout, moduleInstanceId: moduleInstance.getId() }];
         this._activeModuleInstanceId = moduleInstance.getId();
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.Layout);

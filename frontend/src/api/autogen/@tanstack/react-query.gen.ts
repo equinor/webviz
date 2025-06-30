@@ -73,6 +73,12 @@ import {
     getSession,
     updateSession,
     getSessionMetadata,
+    getSnapshotsMetadata,
+    createSnapshot,
+    deleteSnapshot,
+    getSnapshot,
+    updateSnapshot,
+    getSnapshotMetadata,
     loginRoute,
     authorizedCallbackRoute,
     getAlive,
@@ -167,6 +173,16 @@ import type {
     UpdateSessionData_api,
     UpdateSessionError_api,
     GetSessionMetadataData_api,
+    GetSnapshotsMetadataData_api,
+    CreateSnapshotData_api,
+    CreateSnapshotError_api,
+    CreateSnapshotResponse_api,
+    DeleteSnapshotData_api,
+    DeleteSnapshotError_api,
+    GetSnapshotData_api,
+    UpdateSnapshotData_api,
+    UpdateSnapshotError_api,
+    GetSnapshotMetadataData_api,
     LoginRouteData_api,
     AuthorizedCallbackRouteData_api,
     GetAliveData_api,
@@ -1616,6 +1632,126 @@ export const getSessionMetadataOptions = (options: Options<GetSessionMetadataDat
             return data;
         },
         queryKey: getSessionMetadataQueryKey(options),
+    });
+};
+
+export const getSnapshotsMetadataQueryKey = (options?: Options<GetSnapshotsMetadataData_api>) => [
+    createQueryKey("getSnapshotsMetadata", options),
+];
+
+export const getSnapshotsMetadataOptions = (options?: Options<GetSnapshotsMetadataData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getSnapshotsMetadata({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getSnapshotsMetadataQueryKey(options),
+    });
+};
+
+export const createSnapshotQueryKey = (options: Options<CreateSnapshotData_api>) => [
+    createQueryKey("createSnapshot", options),
+];
+
+export const createSnapshotOptions = (options: Options<CreateSnapshotData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await createSnapshot({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: createSnapshotQueryKey(options),
+    });
+};
+
+export const createSnapshotMutation = (options?: Partial<Options<CreateSnapshotData_api>>) => {
+    const mutationOptions: UseMutationOptions<
+        CreateSnapshotResponse_api,
+        AxiosError<CreateSnapshotError_api>,
+        Options<CreateSnapshotData_api>
+    > = {
+        mutationFn: async (localOptions) => {
+            const { data } = await createSnapshot({
+                ...options,
+                ...localOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
+};
+
+export const deleteSnapshotMutation = (options?: Partial<Options<DeleteSnapshotData_api>>) => {
+    const mutationOptions: UseMutationOptions<unknown, AxiosError<DeleteSnapshotError_api>, Options<DeleteSnapshotData_api>> = {
+        mutationFn: async (localOptions) => {
+            const { data } = await deleteSnapshot({
+                ...options,
+                ...localOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
+};
+
+export const getSnapshotQueryKey = (options: Options<GetSnapshotData_api>) => [createQueryKey("getSnapshot", options)];
+
+export const getSnapshotOptions = (options: Options<GetSnapshotData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getSnapshot({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getSnapshotQueryKey(options),
+    });
+};
+
+export const updateSnapshotMutation = (options?: Partial<Options<UpdateSnapshotData_api>>) => {
+    const mutationOptions: UseMutationOptions<unknown, AxiosError<UpdateSnapshotError_api>, Options<UpdateSnapshotData_api>> = {
+        mutationFn: async (localOptions) => {
+            const { data } = await updateSnapshot({
+                ...options,
+                ...localOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
+};
+
+export const getSnapshotMetadataQueryKey = (options: Options<GetSnapshotMetadataData_api>) => [
+    createQueryKey("getSnapshotMetadata", options),
+];
+
+export const getSnapshotMetadataOptions = (options: Options<GetSnapshotMetadataData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getSnapshotMetadata({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getSnapshotMetadataQueryKey(options),
     });
 };
 

@@ -28,7 +28,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
         <>
             <div
                 className={resolveClassNames(
-                    "p-2 border-b-2 border-slate-200 z-50 shadow-lg flex flex-row gap-12 px-4 pl-6 items-center",
+                    "p-0.5 border-b-2 border-slate-200 z-50 shadow-lg flex flex-row gap-12 px-4 pl-6 items-center",
                     {
                         "bg-white": hasActiveSession,
                         "bg-transparent": !hasActiveSession,
@@ -96,14 +96,14 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
         let content: React.ReactNode = null;
         if (!isPersisted) {
             content = (
-                <Typography variant="h4" className="italic overflow-ellipsis min-w-0 whitespace-nowrap">
+                <Typography variant="h5" className="italic overflow-ellipsis min-w-0 whitespace-nowrap">
                     {metadata.title}
                 </Typography>
             );
         } else {
             content = (
                 <>
-                    <Typography variant="h4" className="overflow-ellipsis min-w-0 whitespace-nowrap">
+                    <Typography variant="h5" className="overflow-ellipsis min-w-0 whitespace-nowrap">
                         {metadata.title}
                     </Typography>
                     <Tooltip title="Edit session" placement="bottom">
