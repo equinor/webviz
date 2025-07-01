@@ -76,7 +76,7 @@ export const settingCategories = {
     [Setting.SHOW_LABELS]: SettingCategory.BOOLEAN,
     [Setting.LABEL_ROTATION]: SettingCategory.NUMBER_WITH_STEP,
     [Setting.SHOW_LINES]: SettingCategory.BOOLEAN,
-    [Setting.TRACK_WIDTH]: SettingCategory.NUMBER_WITH_STEP,
+    [Setting.TRACK_WIDTH]: SettingCategory.NUMBER,
     [Setting.SCALE]: SettingCategory.SINGLE_SELECT,
     [Setting.LOG_CURVE]: SettingCategory.SINGLE_SELECT,
     [Setting.PLOT_VARIANT]: SettingCategory.SINGLE_SELECT,

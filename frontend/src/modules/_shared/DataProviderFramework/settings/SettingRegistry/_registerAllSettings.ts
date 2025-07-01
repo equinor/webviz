@@ -11,7 +11,6 @@ import { Direction as GridLayerDirection, GridLayerSetting } from "../implementa
 import { InputNumberSetting } from "../implementations/InputNumberSetting";
 import { IntersectionSetting } from "../implementations/IntersectionSetting";
 import { LogCurveSetting } from "../implementations/LogCurveSetting";
-import { NumberSetting } from "../implementations/NumberSetting";
 import { SeismicSliceDirection, SeismicSliceSetting } from "../implementations/SeismicSliceSetting";
 import { SelectNumberSetting } from "../implementations/SelectNumberSetting";
 import { SelectStringSetting } from "../implementations/SelectStringSetting";
@@ -29,8 +28,8 @@ import { SettingRegistry } from "./_SettingRegistry";
 SettingRegistry.registerSetting(Setting.STRAT_COLUMN, "Stratigraphic Column", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.SMDA_INTERPRETER, "Interpreter", DropdownStringSetting);
 
-SettingRegistry.registerSetting(Setting.TRACK_WIDTH, "Track width", NumberSetting, {
-    customConstructorParameters: [{ minMax: [1, 6] }],
+SettingRegistry.registerSetting(Setting.TRACK_WIDTH, "Track width", InputNumberSetting, {
+    customConstructorParameters: [{ min: 1, max: 6 }],
 });
 SettingRegistry.registerSetting(Setting.SCALE, "Scale", StaticDropdownStringSetting, {
     customConstructorParameters: [
