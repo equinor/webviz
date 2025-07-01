@@ -2,39 +2,39 @@ import { KeyKind } from "@framework/DataChannelTypes";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
-import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
-import { ChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
+import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
+import { ChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
 import { PlotType as CrossPlotType } from "@modules/ParameterResponseCrossPlot/typesAndEnums";
 
 const template: Template = {
     description: "Inplace volumes overview correlated against input parameters",
     moduleInstances: [
         {
-            instanceRef: "MainInplaceVolumetricsPlotInstance",
-            moduleName: "InplaceVolumetricsPlot",
+            instanceRef: "MainInplaceVolumesPlotInstance",
+            moduleName: "InplaceVolumesPlot",
             layout: {
                 relHeight: 0.4,
                 relWidth: 0.5,
                 relX: 0,
                 relY: 0,
             },
-            syncedSettings: [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER],
+            syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER],
             initialSettings: {
-                selectedIdentifierValueCriteria: IdentifierValueCriteria.ALLOW_INTERSECTION,
+                selectedIndexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
             },
         },
         {
-            instanceRef: "MainInplaceVolumetricsTableInstance2",
-            moduleName: "InplaceVolumetricsTable",
+            instanceRef: "MainInplaceVolumesTableInstance2",
+            moduleName: "InplaceVolumesTable",
             layout: {
                 relHeight: 0.2,
                 relWidth: 1,
                 relX: 0,
                 relY: 0.8,
             },
-            syncedSettings: [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER],
+            syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER],
             initialSettings: {
-                selectedIdentifierValueCriteria: IdentifierValueCriteria.ALLOW_INTERSECTION,
+                selectedIndexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
             },
         },
         {
@@ -49,7 +49,7 @@ const template: Template = {
 
             dataChannelsToInitialSettingsMapping: {
                 channelResponse: {
-                    listensToInstanceRef: "MainInplaceVolumetricsPlotInstance",
+                    listensToInstanceRef: "MainInplaceVolumesPlotInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,
                 },
@@ -72,7 +72,7 @@ const template: Template = {
 
             dataChannelsToInitialSettingsMapping: {
                 channelResponse: {
-                    listensToInstanceRef: "MainInplaceVolumetricsPlotInstance",
+                    listensToInstanceRef: "MainInplaceVolumesPlotInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,
                 },
