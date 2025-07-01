@@ -17,7 +17,6 @@ import { SelectStringSetting } from "../implementations/SelectStringSetting";
 import { SensitivitySetting } from "../implementations/SensitivitySetting";
 import { SingleColorSetting } from "../implementations/SingleColorSetting";
 import { SliderNumberSetting } from "../implementations/SliderNumberSettig";
-import { StaticDropdownStringSetting } from "../implementations/StaticDropdownStringSetting";
 import { StaticRotationSetting } from "../implementations/StaticRotationSetting";
 import { StatisticFunctionSetting } from "../implementations/StatisticFunctionSetting";
 import { TimeOrIntervalSetting } from "../implementations/TimeOrIntervalSetting";
@@ -31,7 +30,9 @@ SettingRegistry.registerSetting(Setting.SMDA_INTERPRETER, "Interpreter", Dropdow
 SettingRegistry.registerSetting(Setting.TRACK_WIDTH, "Track width", InputNumberSetting, {
     customConstructorParameters: [{ min: 1, max: 6 }],
 });
-SettingRegistry.registerSetting(Setting.SCALE, "Scale", StaticDropdownStringSetting, {
+
+// @ts-expect-error -- Setting type is a string literal, but Dropdown setting doesn't accept that as a valid type
+SettingRegistry.registerSetting(Setting.SCALE, "Scale", DropdownStringSetting, {
     customConstructorParameters: [
         {
             options: [
