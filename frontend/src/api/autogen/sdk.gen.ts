@@ -433,23 +433,23 @@ export const getRealizationVectorAtTimestamp = <ThrowOnError extends boolean = f
 
 /**
  * Get Table Definitions
- * Get the volumetric tables definitions for a given ensemble.
+ * Get the inplace volumes tables definitions for a given ensemble.
  */
 export const getTableDefinitions = <ThrowOnError extends boolean = false>(
     options: Options<GetTableDefinitionsData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetTableDefinitionsResponse_api, GetTableDefinitionsError_api, ThrowOnError>({
         ...options,
-        url: "/inplace_volumetrics/table_definitions/",
+        url: "/inplace_volumes/table_definitions/",
     });
 };
 
 /**
  * Post Get Aggregated Per Realization Table Data
- * Get aggregated volumetric data for a given table with data per realization based on requested results and categories/index filter.
+ * Get aggregated inplace volume data for a given table with data per realization based on requested results and categories/index filter.
  *
- * Note: This endpoint is a post endpoint because the list of identifiers with values can be quite large and may exceed the query string limit.
- * As the endpoint is post, the identifiers with values object is kept for convenience.
+ * Note: This endpoint is a post endpoint because the list of indices with values can be quite large and may exceed the query string limit.
+ * As the endpoint is post, the indices with values object is kept for convenience.
  */
 export const postGetAggregatedPerRealizationTableData = <ThrowOnError extends boolean = false>(
     options: Options<PostGetAggregatedPerRealizationTableDataData_api, ThrowOnError>,
@@ -464,16 +464,16 @@ export const postGetAggregatedPerRealizationTableData = <ThrowOnError extends bo
             "Content-Type": "application/json",
             ...options?.headers,
         },
-        url: "/inplace_volumetrics/get_aggregated_per_realization_table_data/",
+        url: "/inplace_volumes/get_aggregated_per_realization_table_data/",
     });
 };
 
 /**
  * Post Get Aggregated Statistical Table Data
- * Get statistical volumetric data across selected realizations for a given table based on requested results and categories/index filter.
+ * Get statistical inplace volumes data across selected realizations for a given table based on requested results and categories/index filter.
  *
- * Note: This endpoint is a post endpoint because the list of identifiers with values can be quite large and may exceed the query string limit.
- * As the endpoint is post, the identifiers with values object is kept for convenience.
+ * Note: This endpoint is a post endpoint because the list of indices with values can be quite large and may exceed the query string limit.
+ * As the endpoint is post, the indices with values object is kept for convenience.
  */
 export const postGetAggregatedStatisticalTableData = <ThrowOnError extends boolean = false>(
     options: Options<PostGetAggregatedStatisticalTableDataData_api, ThrowOnError>,
@@ -488,7 +488,7 @@ export const postGetAggregatedStatisticalTableData = <ThrowOnError extends boole
             "Content-Type": "application/json",
             ...options?.headers,
         },
-        url: "/inplace_volumetrics/get_aggregated_statistical_table_data/",
+        url: "/inplace_volumes/get_aggregated_statistical_table_data/",
     });
 };
 

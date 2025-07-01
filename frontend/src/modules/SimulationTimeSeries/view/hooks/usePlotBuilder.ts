@@ -1,21 +1,19 @@
 import { useAtomValue } from "jotai";
 
-import type { SummaryVectorObservations_api } from "@api";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import type { Size2D } from "@lib/utils/geometry";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
-import type { VectorSpec } from "../../typesAndEnums";
 import { GroupBy, VisualizationMode } from "../../typesAndEnums";
 import { resampleFrequencyAtom, showObservationsAtom, visualizationModeAtom } from "../atoms/baseAtoms";
 import {
     activeTimestampUtcMsAtom,
     loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
+    loadedVectorSpecificationsAndObservationDataAtom,
     loadedVectorSpecificationsAndRealizationDataAtom,
     loadedVectorSpecificationsAndStatisticsDataAtom,
 } from "../atoms/derivedAtoms";
-import { vectorObservationsQueriesAtom } from "../atoms/queryAtoms";
 import type { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
 import { PlotBuilder, SubplotOwner } from "../utils/PlotBuilder";
 import {
@@ -41,11 +39,10 @@ export function usePlotBuilder(
     const subplotLimitation = viewContext.useSettingsToViewInterfaceValue("subplotLimitation");
 
     const resampleFrequency = useAtomValue(resampleFrequencyAtom);
-    const vectorObservationsQueries = useAtomValue(vectorObservationsQueriesAtom);
-
     const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
     const loadedVectorSpecificationsAndStatisticsData = useAtomValue(loadedVectorSpecificationsAndStatisticsDataAtom);
-    const loadedRegularEnsembleVectorSpecificationsAndHistoricalData = useAtomValue(
+    const loadedVectorSpecificationsAndObservationData = useAtomValue(loadedVectorSpecificationsAndObservationDataAtom);
+    const loadedVectorSpecificationsAndHistoricalData = useAtomValue(
         loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     );
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
@@ -60,18 +57,6 @@ export function usePlotBuilder(
         visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
             ? "scattergl"
             : "scatter";
-
-    const loadedVectorSpecificationsAndObservationData: {
-        vectorSpecification: VectorSpec;
-        data: SummaryVectorObservations_api;
-    }[] = [];
-    vectorObservationsQueries.ensembleVectorObservationDataMap.forEach((ensembleObservationData) => {
-        if (showObservations && !ensembleObservationData.hasSummaryObservations) {
-            return;
-        }
-
-        loadedVectorSpecificationsAndObservationData.push(...ensembleObservationData.vectorsObservationData);
-    });
 
     const plotBuilder = new PlotBuilder(
         subplotOwner,
@@ -124,13 +109,16 @@ export function usePlotBuilder(
         plotBuilder.addRealizationsTraces(loadedVectorSpecificationsAndRealizationData, useIncreasedBrightness);
         plotBuilder.addStatisticsTraces(selectedVectorsIndividualStatisticData, highlightStatistics);
     }
+
+    // Observations and historical data
     if (showHistorical) {
-        plotBuilder.addHistoryTraces(loadedRegularEnsembleVectorSpecificationsAndHistoricalData);
+        plotBuilder.addHistoryTraces(loadedVectorSpecificationsAndHistoricalData);
     }
     if (showObservations) {
         plotBuilder.addObservationsTraces(loadedVectorSpecificationsAndObservationData);
     }
 
+    // Add time annotation if active timestamp is set
     if (activeTimestampUtcMs) {
         plotBuilder.addTimeAnnotation(activeTimestampUtcMs);
     }

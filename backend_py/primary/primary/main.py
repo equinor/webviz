@@ -20,7 +20,7 @@ from primary.routers.general import router as general_router
 from primary.routers.graph.router import router as graph_router
 from primary.routers.grid3d.router import router as grid3d_router
 from primary.routers.flow_network.router import router as flow_network_router
-from primary.routers.inplace_volumetrics.router import router as inplace_volumetrics_router
+from primary.routers.inplace_volumes.router import router as inplace_volumes_router
 from primary.routers.observations.router import router as observations_router
 from primary.routers.parameters.router import router as parameters_router
 from primary.routers.polygons.router import router as polygons_router
@@ -91,7 +91,7 @@ async def shutdown_event_async() -> None:
 # providing some grouping when viewing the openapi documentation.
 app.include_router(explore_router, tags=["explore"])
 app.include_router(timeseries_router, prefix="/timeseries", tags=["timeseries"])
-app.include_router(inplace_volumetrics_router, prefix="/inplace_volumetrics", tags=["inplace_volumetrics"])
+app.include_router(inplace_volumes_router, prefix="/inplace_volumes", tags=["inplace_volumes"])
 app.include_router(surface_router, prefix="/surface", tags=["surface"])
 app.include_router(parameters_router, prefix="/parameters", tags=["parameters"])
 app.include_router(grid3d_router, prefix="/grid3d", tags=["grid3d"])

@@ -8,13 +8,8 @@ import type { ViewStatusWriter } from "@framework/StatusWriter";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
 import { showObservationsAtom } from "../atoms/baseAtoms";
-import {
-    historicalDataQueryHasErrorAtom,
-    queryIsFetchingAtom,
-    realizationsQueryHasErrorAtom,
-    statisticsQueryHasErrorAtom,
-} from "../atoms/derivedAtoms";
-import { vectorObservationsQueriesAtom } from "../atoms/queryAtoms";
+import { queryIsFetchingAtom, realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "../atoms/derivedAtoms";
+import { vectorObservationsQueriesAtom, regularEnsembleHistoricalVectorDataQueriesAtom } from "../atoms/queryAtoms";
 
 export function useMakeViewStatusWriterMessages(
     viewContext: ViewContext<Interfaces>,
@@ -27,7 +22,7 @@ export function useMakeViewStatusWriterMessages(
 
     const vectorObservationsQueries = useAtomValue(vectorObservationsQueriesAtom);
     const isQueryFetching = useAtomValue(queryIsFetchingAtom);
-    const hasHistoricalVectorQueryError = useAtomValue(historicalDataQueryHasErrorAtom);
+    const hasHistoricalVectorQueryError = useAtomValue(regularEnsembleHistoricalVectorDataQueriesAtom).isError;
     const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
     const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
 

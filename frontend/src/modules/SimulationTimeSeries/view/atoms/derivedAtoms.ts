@@ -1,8 +1,5 @@
 import { atom } from "jotai";
 
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
-
 import { createLoadedVectorSpecificationAndDataArray } from "../utils/vectorSpecificationsAndQueriesUtils";
 
 import { userSelectedActiveTimestampUtcMsAtom, vectorSpecificationsAtom } from "./baseAtoms";
@@ -21,7 +18,7 @@ export const queryIsFetchingAtom = atom((get) => {
 
     const vectorDataIsFetching = vectorDataQueries.some((query) => query.isFetching);
     const vectorStatisticsIsFetching = vectorStatisticsQueries.some((query) => query.isFetching);
-    const historicalVectorDataIsFetching = historicalVectorDataQueries.some((query) => query.isFetching);
+    const historicalVectorDataIsFetching = historicalVectorDataQueries.isFetching;
     const vectorObservationsIsFetching = vectorObservationsQueries.isFetching;
 
     const isFetching =
@@ -31,12 +28,6 @@ export const queryIsFetchingAtom = atom((get) => {
         vectorObservationsIsFetching;
 
     return isFetching;
-});
-
-export const regularEnsembleVectorSpecificationsAtom = atom((get) => {
-    const vectorSpecifications = get(vectorSpecificationsAtom);
-
-    return vectorSpecifications.filter((elm) => isEnsembleIdentOfType(elm.ensembleIdent, RegularEnsembleIdent));
 });
 
 export const realizationsQueryHasErrorAtom = atom((get) => {
@@ -49,12 +40,6 @@ export const statisticsQueryHasErrorAtom = atom((get) => {
     const vectorStatisticsQueries = get(vectorStatisticsQueriesAtom);
 
     return vectorStatisticsQueries.some((query) => query.isError);
-});
-
-export const historicalDataQueryHasErrorAtom = atom((get) => {
-    const historicalVectorDataQueries = get(regularEnsembleHistoricalVectorDataQueriesAtom);
-
-    return historicalVectorDataQueries.some((elm) => elm.isError);
 });
 
 export const loadedVectorSpecificationsAndRealizationDataAtom = atom((get) => {
@@ -71,14 +56,22 @@ export const loadedVectorSpecificationsAndStatisticsDataAtom = atom((get) => {
     return createLoadedVectorSpecificationAndDataArray(vectorSpecifications, vectorStatisticsQueries);
 });
 
+export const loadedVectorSpecificationsAndObservationDataAtom = atom((get) => {
+    const vectorObservationsQueries = get(vectorObservationsQueriesAtom);
+
+    // The observations data queries is combined result, where data array only contains fetched data
+    const loadedVectorSpecificationsAndObservationData = Array.from(
+        vectorObservationsQueries.ensembleVectorObservationDataMap.values(),
+    ).flatMap((ensemble) => ensemble.vectorsObservationData);
+
+    return loadedVectorSpecificationsAndObservationData;
+});
+
 export const loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom = atom((get) => {
-    const regularEnsembleVectorSpecifications = get(regularEnsembleVectorSpecificationsAtom);
     const regularEnsembleHistoricalVectorDataQueries = get(regularEnsembleHistoricalVectorDataQueriesAtom);
 
-    return createLoadedVectorSpecificationAndDataArray(
-        regularEnsembleVectorSpecifications,
-        regularEnsembleHistoricalVectorDataQueries,
-    );
+    // Historical data queries is combined result, where data array only contains fetched data
+    return regularEnsembleHistoricalVectorDataQueries.vectorsWithHistoricalData;
 });
 
 export const activeTimestampUtcMsAtom = atom<number | null>((get) => {
