@@ -12,19 +12,19 @@ type ValueType = number | null;
 type StaticProps = { min?: number; max?: number };
 
 export class InputNumberSetting implements CustomSettingImplementation<ValueType, SettingCategory.NUMBER> {
-    private staticProps: StaticProps | null;
+    private _staticProps: StaticProps | null;
 
     constructor(props: StaticProps) {
         if (props && !!props.min && !!props.max && props.min > props.max) {
             throw new Error("Min value cannot be greater than max value ");
         }
 
-        this.staticProps = props ?? null;
+        this._staticProps = props ?? null;
     }
 
     getIsStatic(): boolean {
         // If minMax is provided in constructor, the setting is defined as static
-        return this.staticProps !== null;
+        return this._staticProps !== null;
     }
 
     isValueValid(
@@ -33,7 +33,7 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
     ): boolean {
         // If static limits are provided, Input component limits the value
         // i.e. no need to run fixupValue()
-        if (this.staticProps) {
+        if (this._staticProps) {
             return true;
         }
 
@@ -55,7 +55,7 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
         >,
     ): ValueType {
         // If static limits are provided, return value as Input component controls the value
-        if (this.staticProps) {
+        if (this._staticProps) {
             return currentValue;
         }
 
@@ -76,7 +76,7 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
         props: SettingComponentProps<ValueType, SettingCategory.NUMBER | SettingCategory.NUMBER_WITH_STEP>,
     ) => React.ReactNode {
         const isStatic = this.getIsStatic();
-        const staticProps = this.staticProps;
+        const staticProps = this._staticProps;
 
         return function InputNumberSetting(
             props: SettingComponentProps<ValueType, SettingCategory.NUMBER | SettingCategory.NUMBER_WITH_STEP>,

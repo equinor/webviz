@@ -1,6 +1,6 @@
 import type React from "react";
 
-import _ from "lodash";
+import { chain, sortBy } from "lodash";
 
 import type { WellboreLogCurveHeader_api } from "@api";
 import type { DropdownOption, DropdownOptionGroup } from "@lib/components/Dropdown";
@@ -25,7 +25,7 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, S
     fixupValue(currentValue: ValueType, availableValues: WellboreLogCurveHeader_api[]): ValueType {
         if (!currentValue) {
             // Match sorting used in dropdown
-            return _.sortBy(availableValues, [sortStatLogsToTop, "logName", "curveName"])[0] ?? null;
+            return sortBy(availableValues, [sortStatLogsToTop, "logName", "curveName"])[0] ?? null;
         }
         // We look for any curve that at the least matches on curve name. Optimally, there's an entry that matches both
         // on curve *and* log name, but we'll accept it if at least the name matches
@@ -47,7 +47,7 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, S
             const selectedValue = makeSelectValueForCurveHeader(props.value);
             const availableValues = props.availableValues ?? [];
 
-            const curveOptions = _.chain(availableValues)
+            const curveOptions = chain(availableValues)
                 .groupBy("logName")
                 .entries()
                 .map(makeLogOptionGroup)
@@ -83,7 +83,7 @@ function makeCurveOption(curve: WellboreLogCurveHeader_api): DropdownOption {
 function makeLogOptionGroup([logName, logCurves]: [string, WellboreLogCurveHeader_api[]]): DropdownOptionGroup {
     return {
         label: logName,
-        options: _.chain(logCurves).map(makeCurveOption).sortBy("label").value(),
+        options: chain(logCurves).map(makeCurveOption).sortBy("label").value(),
     };
 }
 

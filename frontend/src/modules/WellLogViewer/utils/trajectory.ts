@@ -1,10 +1,10 @@
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import _ from "lodash";
+import { zipWith } from "lodash";
 
 import type { WellboreTrajectory_api } from "@api";
 
 function trajectoryToReferenceSystemPath(trajectory: WellboreTrajectory_api): number[][] {
-    return _.zipWith(trajectory.eastingArr, trajectory.northingArr, trajectory.tvdMslArr, (easting, northing, tvd) => {
+    return zipWith(trajectory.eastingArr, trajectory.northingArr, trajectory.tvdMslArr, (easting, northing, tvd) => {
         return [easting, northing, tvd];
     });
 }

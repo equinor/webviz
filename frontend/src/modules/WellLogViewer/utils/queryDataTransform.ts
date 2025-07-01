@@ -9,7 +9,7 @@ import type {
     WellLogSet,
 } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
-import _ from "lodash";
+import { chain, clone, round, set } from "lodash";
 
 import { WellLogCurveSourceEnum_api } from "@api";
 import type { WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
@@ -43,10 +43,10 @@ export function createWellLogSets(
     // Adding a dedicated set for only the axes, so we always have a full set to show from.
     const axisOnlyLog = makeAxisOnlyLog(wellboreTrajectory, referenceSystem);
 
-    const wellLogsSets = _.chain(curveData)
+    const wellLogsSets = chain(curveData)
         // Initial map to handle some cornercases
         .map((curveData) => {
-            curveData = _.clone(curveData);
+            curveData = clone(curveData);
 
             // Occasionally names are duplicated between logs. The log-viewer looks up
             // curves by name only, and picks the first one when building it's graphs,
@@ -124,9 +124,9 @@ function createLogCurvesAndData(
         // Re-structure the metadata into the well-log-viewer map-format
         if (curve.discreteValueMetadata) {
             // ! Using an array for set-path, since names might contain periods
-            _.set(metadataDiscrete, [curve.name, "attributes"], ["code", "color"]);
+            set(metadataDiscrete, [curve.name, "attributes"], ["code", "color"]);
             curve.discreteValueMetadata.forEach((meta) => {
-                _.set(metadataDiscrete, [curve.name, "objects", meta.identifier], [meta.code, meta.rgbColor]);
+                set(metadataDiscrete, [curve.name, "objects", meta.identifier], [meta.code, meta.rgbColor]);
             });
         }
 
@@ -144,7 +144,7 @@ function createLogCurvesAndData(
             if (typeof scaleIdx === "string") throw new Error("Scale index value cannot be a string");
             if (restData.length) console.warn("Multi-dimensional data not supported, using first value only");
 
-            scaleIdx = _.round(scaleIdx, DATA_ROW_PRESICION);
+            scaleIdx = round(scaleIdx, DATA_ROW_PRESICION);
 
             maybeInjectDataRow(rowAcc, scaleIdx, rowLength, referenceSystem);
 
@@ -163,7 +163,7 @@ function createLogCurvesAndData(
     }
 
     return {
-        data: _.chain(rowAcc).values().sortBy("0").value(),
+        data: chain(rowAcc).values().sortBy("0").value(),
         metadata_discrete: metadataDiscrete,
         curves,
     };

@@ -1,7 +1,7 @@
 import React from "react";
 
 import { useAtomValue, useSetAtom } from "jotai";
-import _ from "lodash";
+import { isEqual } from "lodash";
 
 import type { WellboreHeader_api } from "@api";
 import type { ModuleSettingsProps } from "@framework/Module";
@@ -35,7 +35,7 @@ function useSyncedWellboreSetting(
     const globalIntersection = syncHelper.useValue(SyncSettingKey.INTERSECTION, "global.syncValue.intersection");
     const [prevGlobalIntersection, setPrevGlobalIntersection] = React.useState<Intersection | null>(null);
 
-    if (!_.isEqual(prevGlobalIntersection, globalIntersection)) {
+    if (!isEqual(prevGlobalIntersection, globalIntersection)) {
         setPrevGlobalIntersection(globalIntersection);
 
         if (globalIntersection?.type === IntersectionType.WELLBORE) {

@@ -1,4 +1,4 @@
-import _ from "lodash";
+import { isEqual } from "lodash";
 
 import type { WellboreLogCurveData_api } from "@api";
 import {
@@ -64,7 +64,7 @@ export function verifyBasePlotSettings<T extends readonly Setting[]>(
     const availableCurves = accessor.getAvailableSettingValues(Setting.LOG_CURVE) ?? [];
     const selectedCurve = accessor.getSetting(Setting.LOG_CURVE);
 
-    return !!selectedCurve && !!_.find(availableCurves, (curve) => curve.curveName === selectedCurve.curveName);
+    return !!selectedCurve && !!availableCurves.find((curve) => curve.curveName === selectedCurve.curveName);
 }
 
 export function fetchLogCurveData<T extends Settings>(
@@ -93,5 +93,5 @@ export function doSettingsChangesRequireDataRefetch<T extends BaseSettingsTypeMa
     prevSettings: T | null,
     newSettings: T | null,
 ): boolean {
-    return !_.isEqual(prevSettings?.logCurve, newSettings?.logCurve);
+    return !isEqual(prevSettings?.logCurve, newSettings?.logCurve);
 }

@@ -3,7 +3,7 @@ import React from "react";
 import { HorizontalRule, MultilineChart, ShowChart, ViewDay } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAtom } from "jotai";
-import _ from "lodash";
+import { get } from "lodash";
 
 import { WellLogCurveTypeEnum_api } from "@api";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
@@ -230,7 +230,7 @@ function checkManagerMove(movedItem: Item, destinationGroup: ItemGroup): boolean
     const movedCategory = isGroup(movedItem) ? "groups" : "providers";
     const movedIdent = getMovedItemIdent(movedItem);
 
-    const targetAllowedItems: string[] = _.get(ALLOWED_CHILDREN, [targetType, movedCategory], []);
+    const targetAllowedItems: string[] = get(ALLOWED_CHILDREN, [targetType, movedCategory], []);
     return targetAllowedItems.includes(movedIdent);
 }
 
