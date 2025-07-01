@@ -12,10 +12,8 @@ import type { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { createContinuousColorScaleForMap } from "@modules/3DViewer/view/utils/colorTables";
+import { createContinuousColorScaleForMap } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
-
-
 
 import type { InterfaceTypes } from "../../interfaces";
 import { createLogTemplate } from "../../utils/logViewerTemplate";
