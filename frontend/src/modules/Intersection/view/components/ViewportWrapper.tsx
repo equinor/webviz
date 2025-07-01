@@ -207,7 +207,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     );
 
     const handleVerticalScaleDecrease = React.useCallback(
-        function handleVerticalScaleIncrease(): void {
+        function handleVerticalScaleDecrease(): void {
             setVerticalScale((prev) => {
                 const newVerticalScale = Math.max(1.0, Math.ceil(prev - 1.0));
                 setVerticalScale(newVerticalScale);
