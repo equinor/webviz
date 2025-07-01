@@ -706,15 +706,6 @@ export enum SensitivityType_api {
     SCENARIO = "scenario",
 }
 
-export type SessionMetadata_api = {
-    created_at: string;
-    updated_at: string;
-    version: number;
-    hash: string;
-    title: string;
-    description?: string | null;
-};
-
 export type SessionMetadataExternal_api = {
     title: string;
     description?: string | null;
@@ -731,8 +722,8 @@ export type SessionMetadataSummary_api = {
 
 export type SessionRecord_api = {
     id: string;
-    user_id: string;
-    metadata: SessionMetadata_api;
+    userId: string;
+    metadata: PrimaryRoutersPersistenceSessionsSchemasSessionMetadata_api;
     content: string;
 };
 
@@ -1244,6 +1235,24 @@ export type WellboreTrajectory_api = {
     mdArr: Array<number>;
     eastingArr: Array<number>;
     northingArr: Array<number>;
+};
+
+export type PrimaryRoutersPersistenceSessionsSchemasSessionMetadata_api = {
+    title: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
+    version: number;
+    hash: string;
+};
+
+export type PrimaryServicesDatabaseAccessTypesSessionMetadata_api = {
+    created_at: string;
+    updated_at: string;
+    version: number;
+    hash: string;
+    title: string;
+    description?: string | null;
 };
 
 export type GetFieldsData_api = {
@@ -3817,7 +3826,7 @@ export type GetSessionsMetadataData_api = {
          */
         limit?: number | null;
     };
-    url: "/persistence/sessions";
+    url: "/sessions/sessions";
 };
 
 export type GetSessionsMetadataErrors_api = {
@@ -3842,7 +3851,7 @@ export type CreateSessionData_api = {
     body: NewSession_api;
     path?: never;
     query?: never;
-    url: "/persistence/sessions";
+    url: "/sessions/sessions";
 };
 
 export type CreateSessionErrors_api = {
@@ -3869,7 +3878,7 @@ export type DeleteSessionData_api = {
         session_id: string;
     };
     query?: never;
-    url: "/persistence/sessions/{session_id}";
+    url: "/sessions/sessions/{session_id}";
 };
 
 export type DeleteSessionErrors_api = {
@@ -3894,7 +3903,7 @@ export type GetSessionData_api = {
         session_id: string;
     };
     query?: never;
-    url: "/persistence/sessions/{session_id}";
+    url: "/sessions/sessions/{session_id}";
 };
 
 export type GetSessionErrors_api = {
@@ -3921,7 +3930,7 @@ export type UpdateSessionData_api = {
         session_id: string;
     };
     query?: never;
-    url: "/persistence/sessions/{session_id}";
+    url: "/sessions/sessions/{session_id}";
 };
 
 export type UpdateSessionErrors_api = {
@@ -3946,7 +3955,7 @@ export type GetSessionMetadataData_api = {
         session_id: string;
     };
     query?: never;
-    url: "/persistence/sessions/metadata/{session_id}";
+    url: "/sessions/sessions/metadata/{session_id}";
 };
 
 export type GetSessionMetadataErrors_api = {
@@ -3962,7 +3971,7 @@ export type GetSessionMetadataResponses_api = {
     /**
      * Successful Response
      */
-    200: SessionMetadata_api;
+    200: PrimaryServicesDatabaseAccessTypesSessionMetadata_api;
 };
 
 export type GetSessionMetadataResponse_api = GetSessionMetadataResponses_api[keyof GetSessionMetadataResponses_api];
@@ -4077,7 +4086,7 @@ export type GetSnapshotResponses_api = {
     /**
      * Successful Response
      */
-    200: SnapshotMetadataSummary_api;
+    200: SessionRecord_api;
 };
 
 export type GetSnapshotResponse_api = GetSnapshotResponses_api[keyof GetSnapshotResponses_api];
@@ -4129,7 +4138,7 @@ export type GetSnapshotMetadataResponses_api = {
     /**
      * Successful Response
      */
-    200: SessionMetadata_api;
+    200: PrimaryServicesDatabaseAccessTypesSessionMetadata_api;
 };
 
 export type GetSnapshotMetadataResponse_api = GetSnapshotMetadataResponses_api[keyof GetSnapshotMetadataResponses_api];

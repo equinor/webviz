@@ -1,7 +1,6 @@
-from datetime import datetime
-from enum import Enum
-from typing import List, Optional
+from typing import Optional
 from pydantic import BaseModel
+
 
 class SessionMetadataSummary(BaseModel):
     id: str
@@ -11,12 +10,15 @@ class SessionMetadataSummary(BaseModel):
     updatedAt: str
     version: int
 
+
 class SessionMetadata(BaseModel):
     title: str
     description: Optional[str]
     createdAt: str
     updatedAt: str
     version: int
+    hash: str
+
 
 class SessionRecord(BaseModel):
     id: str

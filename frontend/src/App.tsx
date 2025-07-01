@@ -4,8 +4,10 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { ActiveSessionBoundary } from "@framework/internal/components/ActiveSessionBoundary";
 import { AuthenticationBoundary } from "@framework/internal/components/AuthenticationBoundary";
+import { CreateSnapshotDialog } from "@framework/internal/components/CreateSnapshotDialog/createSnapshotDialog";
 import { LoadingOverlay } from "@framework/internal/components/LoadingOverlay";
 import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
+import { RecoveryDialog } from "@framework/internal/components/RecoveryDialog/recoveryDialog";
 import { SaveSessionDialog } from "@framework/internal/components/SaveSessionDialog/saveSessionDialog";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
@@ -18,9 +20,7 @@ import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsavedSessionChangesDialog } from "@framework/internal/components/UnsavedSessionChangesDialog/unsavedSessionChangesDialog";
-import { RecoveryDialog } from "@framework/internal/components/RecoveryDialog/recoveryDialog";
 import { UnloadPageHandler } from "@framework/internal/components/UnloadPageHandler";
-import { MakeSnapshotDialog } from "@framework/internal/components/MakeSnapshotDialog/makeSnapshotDialog";
 
 function App() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
@@ -68,7 +68,7 @@ function App() {
                         <SelectEnsemblesDialog workbench={workbench} />
                         <SaveSessionDialog workbench={workbench} />
                         <UnsavedSessionChangesDialog workbench={workbench} />
-                        <MakeSnapshotDialog workbench={workbench} />
+                        <CreateSnapshotDialog workbench={workbench} />
                     </ActiveSessionBoundary>
                     <RecoveryDialog workbench={workbench} />
                     <UnloadPageHandler workbench={workbench} />

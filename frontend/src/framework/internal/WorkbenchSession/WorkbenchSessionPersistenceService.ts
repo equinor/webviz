@@ -1,10 +1,13 @@
+import { getSessionsMetadataQueryKey } from "@api";
 import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
 import {
     PrivateWorkbenchSessionTopic,
     type PrivateWorkbenchSession,
 } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { ModuleInstanceTopic } from "@framework/ModuleInstance";
+import { UserCreatedItemsEvent } from "@framework/UserCreatedItems";
 import type { Workbench } from "@framework/Workbench";
+import { WorkbenchSettingsTopic } from "@framework/WorkbenchSettings";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 import { toast } from "react-toastify";
@@ -17,11 +20,8 @@ import {
     objectToJsonString,
     updateSessionWithCacheUpdate,
 } from "./utils";
-import { makeWorkbenchSessionStateString } from "./WorkbenchSessionSerializer";
 import { loadWorkbenchSessionFromBackend } from "./WorkbenchSessionLoader";
-import { getSessionsMetadataQueryKey } from "@api";
-import { WorkbenchSettingsTopic } from "@framework/WorkbenchSettings";
-import { UserCreatedItemsEvent } from "@framework/UserCreatedItems";
+import { makeWorkbenchSessionStateString } from "./WorkbenchSessionSerializer";
 
 export type WorkbenchSessionPersistenceInfo = {
     lastModifiedMs: number;
@@ -274,14 +274,14 @@ export class WorkbenchSessionPersistenceService
         const toastId = toast.loading("Creating snapshot...");
 
         try {
-            const tinyUrl = await createSnapshotWithCacheUpdate(queryClient, {
+            const snapshotId = await createSnapshotWithCacheUpdate(queryClient, {
                 title,
                 description,
                 content: objectToJsonString(this._workbenchSession.getContent()),
             });
             toast.dismiss(toastId);
             toast.success("Snapshot successfully created.");
-            return tinyUrl;
+            return snapshotId;
         } catch (error) {
             console.error("Failed to create snapshot:", error);
             toast.dismiss(toastId);
@@ -296,6 +296,14 @@ export class WorkbenchSessionPersistenceService
             throw new Error("No active workbench session to pull state from.");
         }
 
+        const oldHash = this._currentHash;
+        this._currentStateString = makeWorkbenchSessionStateString(this._workbenchSession);
+        this._currentHash = await hashJsonString(this._currentStateString);
+
+        if (this._currentHash === oldHash) {
+            return; // No changes detected
+        }
+
         this._lastModifiedMs = Date.now();
 
         this._workbenchSession.updateMetadata(
@@ -304,9 +312,6 @@ export class WorkbenchSessionPersistenceService
             },
             false,
         );
-
-        this._currentStateString = makeWorkbenchSessionStateString(this._workbenchSession);
-        this._currentHash = await hashJsonString(this._currentStateString);
 
         this.saveToLocalStorage();
         this.updatePersistenceInfo();

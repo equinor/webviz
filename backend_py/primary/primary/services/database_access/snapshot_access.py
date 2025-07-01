@@ -56,7 +56,7 @@ class SnapshotAccess:
 
     async def get_all_snapshots_metadata_for_user(self) -> List[SessionMetadataSummary]:
         query = f"SELECT * FROM c WHERE c.user_id = '{self.user_id}'"
-        items = await self.container_access.query_items(query)
+        items = await self.metadata_container.query_items(query)
         return [
             SessionMetadataSummary(
                 id=item["id"],
@@ -90,7 +90,7 @@ class SnapshotAccess:
             return all_metadata[:limit]
 
         return all_metadata
-    
+
     async def get_snapshot_metadata(self, session_id: str) -> SessionMetadata:
         existing = await self._assert_ownership(session_id)
 
@@ -112,28 +112,33 @@ class SnapshotAccess:
             created_at=now,
             updated_at=now,
             version=1,
-            hash=hash_json_string(new_session.content)
+            hash=hash_json_string(new_session.content),
         )
 
         # Store metadata
-        await self.metadata_container.insert_item({
-            "id": snapshot_id,
-            "user_id": self.user_id,
-            "metadata": metadata.model_dump(mode="json", by_alias=True),
-        })
+        await self.metadata_container.insert_item(
+            {
+                "id": snapshot_id,
+                "user_id": self.user_id,
+                "metadata": metadata.model_dump(mode="json", by_alias=True),
+            }
+        )
 
         # Store content
-        await self.content_container.insert_item({
-            "id": snapshot_id,
-            "user_id": self.user_id,
-            "content": new_session.content,
-        })
+        await self.content_container.insert_item(
+            {
+                "id": snapshot_id,
+                "user_id": self.user_id,
+                "content": new_session.content,
+            }
+        )
 
         return snapshot_id
 
     async def delete_snapshot(self, session_id: str):
         await self._assert_ownership(session_id)
-        await self.container_access.delete_item(session_id, partition_key=self.user_id)
+        await self.metadata_container.delete_item(session_id, partition_key=self.user_id)
+        await self.content_container.delete_item(session_id, partition_key=self.user_id)
 
     async def update_snapshot_metadata(self, session_id: str, session_update: SessionUpdate):
         existing = await self._assert_ownership(session_id)
@@ -153,7 +158,7 @@ class SnapshotAccess:
             metadata=updated_metadata,
         )
 
-        await self.container_access.update_item(
+        await self.metadata_container.update_item(
             session_id, updated_session.model_dump(by_alias=True, mode="json"), partition_key=self.user_id
         )
 

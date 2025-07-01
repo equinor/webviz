@@ -5,8 +5,18 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from primary.services.database_access.session_access import SessionAccess
 from primary.auth.auth_helper import AuthHelper, AuthenticatedUser
-from primary.services.database_access.types import NewSession, SessionMetadata, SessionMetadataSummary, SessionRecord, SessionUpdate, SortBy, SortDirection
-from primary.routers.persistence.sessions.converters import to_api_session_metadata_summary
+from primary.services.database_access.types import (
+    NewSession,
+    SessionMetadata,
+    SessionUpdate,
+    SortBy,
+    SortDirection,
+)
+from primary.routers.persistence.sessions.converters import (
+    to_api_session_metadata_summary,
+    to_api_session_metadata,
+    to_api_session_record,
+)
 
 from . import schemas
 
@@ -16,10 +26,10 @@ router = APIRouter()
 
 @router.get("/sessions", response_model=List[schemas.SessionMetadataSummary])
 async def get_sessions_metadata(
-    user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user), 
-    sort_by: Optional[SortBy] = Query(None, description="Sort the result by"), 
+    user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    sort_by: Optional[SortBy] = Query(None, description="Sort the result by"),
     sort_direction: Optional[SortDirection] = Query(SortDirection.ASC, description="Sort direction: 'asc' or 'desc'"),
-    limit: Optional[int] = Query(10, ge=1, le=100, description="Limit the number of results")
+    limit: Optional[int] = Query(10, ge=1, le=100, description="Limit the number of results"),
 ):
     access = await SessionAccess.create(user.get_user_id())
     async with access:
@@ -27,15 +37,16 @@ async def get_sessions_metadata(
         return [to_api_session_metadata_summary(item) for item in items]
 
 
-@router.get("/sessions/{session_id}", response_model=SessionRecord)
+@router.get("/sessions/{session_id}", response_model=schemas.SessionRecord)
 async def get_session(session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
     access = await SessionAccess.create(user.get_user_id())
     async with access:
         session = await access.get_session_by_id(session_id)
         if not session:
             raise HTTPException(status_code=404, detail="Session not found")
-        return session
-    
+        return to_api_session_record(session)
+
+
 @router.get("/sessions/metadata/{session_id}", response_model=SessionMetadata)
 async def get_session_metadata(session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
     access = await SessionAccess.create(user.get_user_id())
@@ -43,15 +54,15 @@ async def get_session_metadata(session_id: str, user: AuthenticatedUser = Depend
         metadata = await access.get_session_metadata(session_id)
         if not metadata:
             raise HTTPException(status_code=404, detail="Session metadata not found")
-        return metadata
+        return to_api_session_metadata(metadata)
 
 
 @router.post("/sessions", response_model=str)
 async def create_session(session: NewSession, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
     access = await SessionAccess.create(user.get_user_id())
     async with access:
-        id = await access.insert_session(session)
-        return id
+        session_id = await access.insert_session(session)
+        return session_id
 
 
 @router.put("/sessions/{session_id}")

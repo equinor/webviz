@@ -1215,7 +1215,7 @@ export const getSessionsMetadata = <ThrowOnError extends boolean = false>(
 ) => {
     return (options?.client ?? client).get<GetSessionsMetadataResponse_api, GetSessionsMetadataError_api, ThrowOnError>({
         ...options,
-        url: "/persistence/sessions",
+        url: "/sessions/sessions",
     });
 };
 
@@ -1231,7 +1231,7 @@ export const createSession = <ThrowOnError extends boolean = false>(
             "Content-Type": "application/json",
             ...options?.headers,
         },
-        url: "/persistence/sessions",
+        url: "/sessions/sessions",
     });
 };
 
@@ -1243,7 +1243,7 @@ export const deleteSession = <ThrowOnError extends boolean = false>(
 ) => {
     return (options?.client ?? client).delete<unknown, DeleteSessionError_api, ThrowOnError>({
         ...options,
-        url: "/persistence/sessions/{session_id}",
+        url: "/sessions/sessions/{session_id}",
     });
 };
 
@@ -1253,7 +1253,7 @@ export const deleteSession = <ThrowOnError extends boolean = false>(
 export const getSession = <ThrowOnError extends boolean = false>(options: Options<GetSessionData_api, ThrowOnError>) => {
     return (options?.client ?? client).get<GetSessionResponse_api, GetSessionError_api, ThrowOnError>({
         ...options,
-        url: "/persistence/sessions/{session_id}",
+        url: "/sessions/sessions/{session_id}",
     });
 };
 
@@ -1269,7 +1269,7 @@ export const updateSession = <ThrowOnError extends boolean = false>(
             "Content-Type": "application/json",
             ...options?.headers,
         },
-        url: "/persistence/sessions/{session_id}",
+        url: "/sessions/sessions/{session_id}",
     });
 };
 
@@ -1281,7 +1281,7 @@ export const getSessionMetadata = <ThrowOnError extends boolean = false>(
 ) => {
     return (options?.client ?? client).get<GetSessionMetadataResponse_api, GetSessionMetadataError_api, ThrowOnError>({
         ...options,
-        url: "/persistence/sessions/metadata/{session_id}",
+        url: "/sessions/sessions/metadata/{session_id}",
     });
 };
 

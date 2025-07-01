@@ -33,7 +33,7 @@ from primary.routers.timeseries.router import router as timeseries_router
 from primary.routers.vfp.router import router as vfp_router
 from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
-from primary.routers.persistence.sessions.router import router as persistence_router
+from primary.routers.persistence.sessions.router import router as sessions_router
 from primary.routers.persistence.snapshots.router import router as snapshots_router
 from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry
@@ -112,7 +112,7 @@ app.include_router(observations_router, prefix="/observations", tags=["observati
 app.include_router(rft_router, prefix="/rft", tags=["rft"])
 app.include_router(vfp_router, prefix="/vfp", tags=["vfp"])
 app.include_router(dev_router, prefix="/dev", tags=["dev"], include_in_schema=False)
-app.include_router(persistence_router, prefix="/persistence", tags=["persistence"])
+app.include_router(sessions_router, prefix="/sessions", tags=["sessions"])
 app.include_router(snapshots_router, prefix="/snapshots", tags=["snapshots"])
 
 auth_helper = AuthHelper()

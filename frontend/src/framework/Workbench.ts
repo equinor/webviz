@@ -6,6 +6,9 @@ import { AtomStoreMaster } from "./AtomStoreMaster";
 import { GuiMessageBroker, GuiState, LeftDrawerContent, RightDrawerContent } from "./GuiMessageBroker";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
+import { loadSnapshotFromBackend } from "./internal/WorkbenchSession/SnapshotLoader";
+import { readSnapshotIdFromUrl } from "./internal/WorkbenchSession/SnapshotUrlBuilder";
+import { localStorageKeyForSessionId } from "./internal/WorkbenchSession/utils";
 import {
     loadAllWorkbenchSessionsFromLocalStorage,
     loadWorkbenchSessionFromBackend,
@@ -13,7 +16,6 @@ import {
 } from "./internal/WorkbenchSession/WorkbenchSessionLoader";
 import { WorkbenchSessionPersistenceService } from "./internal/WorkbenchSession/WorkbenchSessionPersistenceService";
 import type { WorkbenchServices } from "./WorkbenchServices";
-import { localStorageKeyForSessionId } from "./internal/WorkbenchSession/utils";
 
 export type StoredUserEnsembleSetting = {
     ensembleIdent: string;
@@ -76,6 +78,18 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     }
 
     async initialize() {
+        // First, check if a snapshot id is provided in the URL
+        const snapshotId = readSnapshotIdFromUrl();
+        if (snapshotId) {
+            try {
+                const session = await loadSnapshotFromBackend(this._atomStoreMaster, this._queryClient, snapshotId);
+                await this.setWorkbenchSession(session);
+                return;
+            } catch (error) {
+                console.error("Failed to load session from backend:", error);
+            }
+        }
+
         const storedSessions = await loadAllWorkbenchSessionsFromLocalStorage(this._atomStoreMaster, this._queryClient);
         if (storedSessions.length === 0) {
             return;
@@ -84,8 +98,8 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._guiMessageBroker.setState(GuiState.RecoveryDialogOpen, true);
     }
 
-    discardLocalStorageSession(sessionId: string | null): void {
-        const key = localStorageKeyForSessionId(sessionId);
+    discardLocalStorageSession(snapshotId: string | null): void {
+        const key = localStorageKeyForSessionId(snapshotId);
         localStorage.removeItem(key);
         this._guiMessageBroker.setState(GuiState.RecoveryDialogOpen, false);
         this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
@@ -95,13 +109,17 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
     }
 
-    async openSessionFromLocalStorage(sessionId: string | null): Promise<void> {
+    async openSessionFromLocalStorage(snapshotId: string | null): Promise<void> {
         if (this._workbenchSession) {
             console.warn("A workbench session is already active. Please close it before opening a new one.");
             return;
         }
 
-        const session = await loadWorkbenchSessionFromLocalStorage(sessionId, this._atomStoreMaster, this._queryClient);
+        const session = await loadWorkbenchSessionFromLocalStorage(
+            snapshotId,
+            this._atomStoreMaster,
+            this._queryClient,
+        );
         if (!session) {
             console.warn("No workbench session found in local storage.");
             return;
@@ -128,10 +146,10 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
         this._guiMessageBroker.setState(GuiState.IsMakingSnapshot, true);
 
-        const tinyUrl = await this._workbenchSessionPersistenceService.makeSnapshot(title, description);
+        const snapshotId = await this._workbenchSessionPersistenceService.makeSnapshot(title, description);
         this._guiMessageBroker.setState(GuiState.IsMakingSnapshot, false);
 
-        return tinyUrl;
+        return snapshotId;
     }
 
     async saveCurrentSession(forceSave = false): Promise<void> {

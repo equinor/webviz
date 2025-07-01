@@ -60,10 +60,10 @@ export async function deserializeFromBackend(
     session.setMetadata({
         title: raw.metadata.title,
         description: raw.metadata.description ?? undefined,
-        createdAt: new Date(raw.metadata.created_at).getTime(),
-        updatedAt: new Date(raw.metadata.updated_at).getTime(),
+        createdAt: new Date(raw.metadata.createdAt).getTime(),
+        updatedAt: new Date(raw.metadata.updatedAt).getTime(),
         hash: raw.metadata.hash,
-        lastModifiedMs: new Date(raw.metadata.updated_at).getTime(), // Fallback to now if not provided
+        lastModifiedMs: new Date(raw.metadata.updatedAt).getTime(), // Fallback to now if not provided
     });
     session.setId(raw.id);
     session.setIsPersisted(true);

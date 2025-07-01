@@ -20,6 +20,7 @@ def to_api_session_metadata(metadata: SessionMetadata) -> schemas.SessionMetadat
         createdAt=metadata.created_at.isoformat(),
         updatedAt=metadata.updated_at.isoformat(),
         version=metadata.version,
+        hash=metadata.hash,
     )
 
 

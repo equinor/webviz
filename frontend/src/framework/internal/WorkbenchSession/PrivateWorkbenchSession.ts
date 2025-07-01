@@ -75,6 +75,7 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
 
     private _id: string | null = null;
     private _isPersisted: boolean = false;
+    private _isSnapshot: boolean;
     private _atomStoreMaster: AtomStoreMaster;
     private _queryClient: QueryClient;
     private _dashboards: Dashboard[] = [];
@@ -92,11 +93,12 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     private _loadedFromLocalStorage: boolean = false;
     private _settings: PrivateWorkbenchSettings = new PrivateWorkbenchSettings();
 
-    constructor(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient) {
+    constructor(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient, isSnapshot = false) {
         this._atomStoreMaster = atomStoreMaster;
         this._queryClient = queryClient;
         this._userCreatedItems = new UserCreatedItems(atomStoreMaster);
         this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, this._realizationFilterSet);
+        this._isSnapshot = isSnapshot;
     }
 
     getLoadedFromLocalStorage(): boolean {
@@ -118,6 +120,10 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     setId(id: string): void {
         if (this._id) throw new Error("Session ID already set");
         this._id = id;
+    }
+
+    isSnapshot(): boolean {
+        return this._isSnapshot;
     }
 
     getMetadata(): WorkbenchSessionMetadata {

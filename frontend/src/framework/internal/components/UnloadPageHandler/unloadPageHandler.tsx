@@ -1,5 +1,6 @@
-import type { Workbench } from "@framework/Workbench";
 import React from "react";
+
+import type { Workbench } from "@framework/Workbench";
 
 export type UnloadPageHandlerProps = {
     workbench: Workbench;
