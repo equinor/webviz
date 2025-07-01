@@ -71,6 +71,10 @@ export class WorkbenchSessionPersistenceService
 
         this._workbenchSession = session;
 
+        if (session.isSnapshot()) {
+            return; // No need to persist snapshots
+        }
+
         this._currentStateString = makeWorkbenchSessionStateString(this._workbenchSession);
         this._currentHash = await hashJsonString(this._currentStateString);
         this._lastPersistedMs = session.getMetadata().updatedAt;

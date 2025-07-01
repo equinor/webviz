@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
@@ -6,7 +8,6 @@ import { RealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UserCreatedItems, type SerializedUserCreatedItems } from "@framework/UserCreatedItems";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
-import type { QueryClient } from "@tanstack/query-core";
 
 import {
     loadMetadataFromBackendAndCreateEnsembleSet,
@@ -58,6 +59,7 @@ export enum PrivateWorkbenchSessionTopic {
     METADATA = "Metadata",
     DASHBOARDS = "Dashboards",
     IS_PERSISTED = "IsPersisted",
+    IS_SNAPSHOT = "IsSnapshot",
 }
 
 export type PrivateWorkbenchSessionTopicPayloads = {
@@ -68,6 +70,7 @@ export type PrivateWorkbenchSessionTopicPayloads = {
     [PrivateWorkbenchSessionTopic.METADATA]: WorkbenchSessionMetadata;
     [PrivateWorkbenchSessionTopic.DASHBOARDS]: Dashboard[];
     [PrivateWorkbenchSessionTopic.IS_PERSISTED]: boolean;
+    [PrivateWorkbenchSessionTopic.IS_SNAPSHOT]: boolean;
 };
 
 export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenchSessionTopicPayloads> {
@@ -124,6 +127,11 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
 
     isSnapshot(): boolean {
         return this._isSnapshot;
+    }
+
+    setIsSnapshot(isSnapshot: boolean): void {
+        this._isSnapshot = isSnapshot;
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
     }
 
     getMetadata(): WorkbenchSessionMetadata {
@@ -249,6 +257,8 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
                     return this._dashboards;
                 case PrivateWorkbenchSessionTopic.IS_PERSISTED:
                     return this._isPersisted;
+                case PrivateWorkbenchSessionTopic.IS_SNAPSHOT:
+                    return this._isSnapshot;
                 default:
                     throw new Error(`No snapshot getter implemented for topic ${topic}`);
             }

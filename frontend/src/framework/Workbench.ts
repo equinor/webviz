@@ -7,7 +7,7 @@ import { GuiMessageBroker, GuiState, LeftDrawerContent, RightDrawerContent } fro
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
 import { loadSnapshotFromBackend } from "./internal/WorkbenchSession/SnapshotLoader";
-import { readSnapshotIdFromUrl } from "./internal/WorkbenchSession/SnapshotUrlBuilder";
+import { readSnapshotIdFromUrl, removeSnapshotIdFromUrl } from "./internal/WorkbenchSession/SnapshotUrlBuilder";
 import { localStorageKeyForSessionId } from "./internal/WorkbenchSession/utils";
 import {
     loadAllWorkbenchSessionsFromLocalStorage,
@@ -96,6 +96,24 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         }
 
         this._guiMessageBroker.setState(GuiState.RecoveryDialogOpen, true);
+    }
+
+    makeSessionFromSnapshot(): void {
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session.");
+        }
+
+        this._workbenchSessionPersistenceService.removeWorkbenchSession();
+        this._workbenchSession.setMetadata({
+            title: "New Session from Snapshot",
+            description: undefined,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            lastModifiedMs: Date.now(),
+        });
+        this._workbenchSession.setIsSnapshot(false);
+        this._workbenchSessionPersistenceService.setWorkbenchSession(this._workbenchSession);
+        removeSnapshotIdFromUrl();
     }
 
     discardLocalStorageSession(snapshotId: string | null): void {
@@ -212,7 +230,10 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             return true;
         }
 
-        if (this._workbenchSessionPersistenceService.hasChanges() || !this._workbenchSession.getIsPersisted()) {
+        if (
+            (this._workbenchSessionPersistenceService.hasChanges() || !this._workbenchSession.getIsPersisted()) &&
+            !this._workbenchSession.isSnapshot()
+        ) {
             this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, true);
             return false;
         }
@@ -227,6 +248,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             return;
         }
 
+        removeSnapshotIdFromUrl();
         this._workbenchSession.beforeDestroy();
         this._workbenchSessionPersistenceService.removeWorkbenchSession();
         this._workbenchSession = null;
