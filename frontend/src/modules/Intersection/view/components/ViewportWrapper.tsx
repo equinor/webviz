@@ -193,7 +193,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const handleVerticalScaleIncrease = React.useCallback(
         function handleVerticalScaleIncrease(): void {
             setVerticalScale((prev) => {
-                const newVerticalScale = prev + 0.1;
+                const newVerticalScale = Math.floor(prev + 1.0);
                 setVerticalScale(newVerticalScale);
                 props.workbenchServices.publishGlobalData(
                     "global.syncValue.verticalScale",
@@ -209,7 +209,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const handleVerticalScaleDecrease = React.useCallback(
         function handleVerticalScaleIncrease(): void {
             setVerticalScale((prev) => {
-                const newVerticalScale = Math.max(0.1, prev - 0.1);
+                const newVerticalScale = Math.max(1.0, Math.ceil(prev - 1.0));
                 setVerticalScale(newVerticalScale);
                 props.workbenchServices.publishGlobalData(
                     "global.syncValue.verticalScale",
