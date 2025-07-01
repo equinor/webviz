@@ -242,10 +242,25 @@ function createLogHeader(
 export function createLogViewerWellPicks(pickCollections: WellPickDataCollection[]): WellPickProps | null {
     if (pickCollections.length < 1) return null;
 
+    const seenPicks = new Set<string>();
+
     // The log viewer has no way to separate the picks from different columns/interpreters.
     // Currently, we just put them all together in the same "curve".
+    const wellborePicks = pickCollections.reduce((acc, collection) => {
+        const newPicks: WellborePick_api[] = [];
+        collection.picks.forEach((pick) => {
+            const pickHash = collection.interpreter + collection.stratColumn + pick.pickIdentifier;
 
-    const wellborePicks = pickCollections.map((c) => c.picks).flat();
+            // Avoid putting already added picks.
+            if (seenPicks.has(pickHash)) return acc;
+
+            seenPicks.add(pickHash);
+            newPicks.push(pick);
+        });
+
+        return acc.concat(newPicks);
+    }, [] as WellborePick_api[]);
+
     const wellPickData = createWellPickDataRow(wellborePicks);
     const mergerdWellPickData = mergeStackedPicks(wellPickData);
 
