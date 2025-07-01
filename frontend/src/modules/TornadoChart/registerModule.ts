@@ -18,7 +18,7 @@ ModuleRegistry.registerModule<Interfaces>({
     category: ModuleCategory.SUB,
     devState: ModuleDevState.PROD,
     syncableSettingKeys: [SyncSettingKey.ENSEMBLE, SyncSettingKey.TIME_SERIES],
-    dataTagIds: [ModuleDataTagId.PARAMETERS, ModuleDataTagId.SUMMARY, ModuleDataTagId.INPLACE_VOLUMETRICS],
+    dataTagIds: [ModuleDataTagId.PARAMETERS, ModuleDataTagId.SUMMARY, ModuleDataTagId.INPLACE_VOLUMES],
     preview,
     channelReceiverDefinitions: receiverDefs,
     description,

@@ -1,0 +1,1 @@
+export { InplaceVolumesFilterComponent } from "./inplaceVolumesFilterComponent";
