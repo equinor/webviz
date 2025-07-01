@@ -17,6 +17,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     return (
         <LayersWrapper
+            hoverService={props.hoverService}
             layerManager={layerManager}
             preferredViewLayout={preferredViewLayout}
             viewContext={props.viewContext}

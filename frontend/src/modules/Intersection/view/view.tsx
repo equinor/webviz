@@ -6,7 +6,6 @@ import type { Interfaces } from "../interfaces";
 
 import { DataProvidersWrapper } from "./components/DataProvidersWrapper";
 
-
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const preferredViewLayout = props.viewContext.useSettingsToViewInterfaceValue("preferredViewLayout");
     const dataProviderManager = props.viewContext.useSettingsToViewInterfaceValue("dataProviderManager");
@@ -23,6 +22,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             workbenchSession={props.workbenchSession}
             workbenchSettings={props.workbenchSettings}
             workbenchServices={props.workbenchServices}
+            hoverService={props.hoverService}
         />
     );
 }
