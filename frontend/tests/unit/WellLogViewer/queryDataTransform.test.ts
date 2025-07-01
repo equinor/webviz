@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 import { WellLogCurveSourceEnum_api } from "@api";
 import { MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE } from "@modules/WellLogViewer/constants";
+import type { WellPickDataCollection } from "@modules/WellLogViewer/DataProviderFramework/visualizations/wellpicks";
 import { createLogViewerWellPicks, createWellLogSets } from "@modules/WellLogViewer/utils/queryDataTransform";
 
 describe("QueryDataTransform", () => {
@@ -379,25 +380,50 @@ describe("QueryDataTransform", () => {
     });
 
     describe("Well-picks", () => {
-        const mockWellPicks: WellborePick_api[] = [
-            {
-                pickIdentifier: "Some pick",
-                md: 1000,
-            } as WellborePick_api,
-            {
-                pickIdentifier: "A units entry-pick",
-                md: 1500,
-            } as WellborePick_api,
-            {
-                pickIdentifier: "A units exit-pick",
-                md: 2000,
-            } as WellborePick_api,
-        ];
+        const mockWellPickCollection1: WellPickDataCollection = {
+            stratColumn: "Test column",
+            interpreter: "Test interpreter",
+            picks: [
+                {
+                    pickIdentifier: "Some pick",
+                    md: 1000,
+                } as WellborePick_api,
+                {
+                    pickIdentifier: "A units entry-pick",
+                    md: 1500,
+                } as WellborePick_api,
+                {
+                    pickIdentifier: "A units exit-pick",
+                    md: 2000,
+                } as WellborePick_api,
+            ],
+        };
+
+        const mockWellPickCollection2: WellPickDataCollection = {
+            stratColumn: "Test column 2",
+            interpreter: "Test interpreter",
+            picks: [
+                {
+                    pickIdentifier: "Some other pick",
+                    md: 800,
+                } as WellborePick_api,
+                {
+                    pickIdentifier: "Some other stacked pick",
+                    md: 1500,
+                } as WellborePick_api,
+            ],
+        };
+
+        it("should give null on empty collection list", () => {
+            const wellpickProps = createLogViewerWellPicks([]);
+
+            expect(wellpickProps).toBe(null);
+        });
 
         it("should generate wellpick props from wellpick data", () => {
-            const wellpickProps = createLogViewerWellPicks(mockWellPicks);
+            const wellpickProps = createLogViewerWellPicks([mockWellPickCollection1]);
 
-            expect(wellpickProps.wellpick.curves).toEqual([
+            expect(wellpickProps?.wellpick.curves).toEqual([
                 MAIN_AXIS_CURVE,
                 {
                     name: "PICK",
@@ -406,7 +432,7 @@ describe("QueryDataTransform", () => {
                 },
             ]);
 
-            expect(wellpickProps.wellpick.data).toEqual([
+            expect(wellpickProps?.wellpick.data).toEqual([
                 [1000, "Some pick"],
                 [1500, "A units entry-pick"],
                 [2000, "A units exit-pick"],
@@ -414,16 +440,33 @@ describe("QueryDataTransform", () => {
         });
 
         it("should merge stacked well-picks", () => {
-            const picksWithStacked: WellborePick_api[] = [
-                ...mockWellPicks,
-                { pickIdentifier: "A stacked pick", md: 1500 } as WellborePick_api,
-            ];
+            const collectionWithStacked = {
+                ...mockWellPickCollection1,
+                picks: [
+                    ...mockWellPickCollection1.picks,
+                    {
+                        pickIdentifier: "A stacked pick",
+                        md: 1500,
+                    } as WellborePick_api,
+                ],
+            };
 
-            const wellpickProps = createLogViewerWellPicks(picksWithStacked);
+            const wellpickProps = createLogViewerWellPicks([collectionWithStacked]);
 
-            expect(wellpickProps.wellpick.data).toEqual([
+            expect(wellpickProps?.wellpick.data).toEqual([
                 [1000, "Some pick"],
                 [1500, "A units entry-pick + A stacked pick"],
+                [2000, "A units exit-pick"],
+            ]);
+        });
+
+        it("Should merge picks from multiple collections", () => {
+            const wellpickProps = createLogViewerWellPicks([mockWellPickCollection1, mockWellPickCollection2]);
+
+            expect(wellpickProps?.wellpick.data).toEqual([
+                [800, "Some other pick"],
+                [1000, "Some pick"],
+                [1500, "A units entry-pick + Some other stacked pick"],
                 [2000, "A units exit-pick"],
             ]);
         });

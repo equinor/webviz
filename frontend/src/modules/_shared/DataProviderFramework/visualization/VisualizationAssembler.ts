@@ -1,12 +1,12 @@
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
 import * as bbox from "@lib/utils/bbox";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
+import type { WellPickDataCollection } from "@modules/WellLogViewer/DataProviderFramework/visualizations/wellpicks";
 import type { TemplatePlot } from "@modules/WellLogViewer/types";
 
 import type { GroupDelegate } from "../delegates/GroupDelegate";
@@ -48,7 +48,7 @@ export interface EsvLayerItemsMaker {
 export type DataProviderVisualizationTargetTypes = {
     [VisualizationTarget.DECK_GL]: DeckGlLayer<any>;
     [VisualizationTarget.ESV]: EsvLayerItemsMaker;
-    [VisualizationTarget.WSC_WELL_LOG]: TemplatePlot | WellPickProps;
+    [VisualizationTarget.WSC_WELL_LOG]: TemplatePlot | WellPickDataCollection;
 };
 
 export type DataProviderVisualization<

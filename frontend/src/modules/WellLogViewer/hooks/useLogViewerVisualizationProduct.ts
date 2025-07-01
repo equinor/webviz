@@ -29,7 +29,7 @@ import {
     collectContinuousTrackConfig,
     collectDiscreteTrackConfig,
 } from "../DataProviderFramework/visualizations/tracks";
-import { makeLogViewerWellPicks } from "../DataProviderFramework/visualizations/wellpicks";
+import { makeWellPickCollections } from "../DataProviderFramework/visualizations/wellpicks";
 
 type FactoryAccResult = PlotFactoryAccResult;
 
@@ -71,7 +71,7 @@ VISUALIZATION_FACTORY.registerGroupCustomPropsCollector(
 );
 
 VISUALIZATION_FACTORY.registerDataProviderTransformers(CustomDataProviderType.WELLBORE_PICKS, WellborePicksProvider, {
-    transformToVisualization: makeLogViewerWellPicks,
+    transformToVisualization: makeWellPickCollections,
 });
 
 export type WellLogFactoryProduct = ReturnType<(typeof VISUALIZATION_FACTORY)["make"]>;
@@ -88,8 +88,6 @@ export function useLogViewerVisualizationProduct(
             .makeSubscriberFunction(DataProviderManagerTopic.DATA_REVISION),
         dataProviderManager.makeSnapshotGetter(DataProviderManagerTopic.DATA_REVISION),
     );
-
-    console.log(latestRevision);
 
     if (previousRevision !== latestRevision) {
         setPreviousRevision(latestRevision);

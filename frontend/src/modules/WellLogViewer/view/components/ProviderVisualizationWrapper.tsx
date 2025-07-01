@@ -24,7 +24,7 @@ import { isWellPickVisualization } from "@modules/WellLogViewer/DataProviderFram
 import type { WellLogFactoryProduct } from "@modules/WellLogViewer/hooks/useLogViewerVisualizationProduct";
 import { useLogViewerVisualizationProduct } from "@modules/WellLogViewer/hooks/useLogViewerVisualizationProduct";
 import type { Template, TemplatePlot, TemplateTrack } from "@modules/WellLogViewer/types";
-import { createWellLogSets } from "@modules/WellLogViewer/utils/queryDataTransform";
+import { createLogViewerWellPicks, createWellLogSets } from "@modules/WellLogViewer/utils/queryDataTransform";
 import { getUniqueCurveNameForPlotConfig } from "@modules/WellLogViewer/utils/strings";
 import { trajectoryToIntersectionReference } from "@modules/WellLogViewer/utils/trajectory";
 
@@ -63,8 +63,8 @@ function getProvidedPlots(
                     logName2: secondaryPlot.logName,
                     color2: secondaryPlot.color,
 
-                    // Over/under colors
-                    // TODO: Make this based on a setting
+                    // Over/under colors. For now, we just use the curve's own color.
+                    // TODO: Make this based on a dedicated setting
                     fill: primaryPlot.color,
                     fill2: secondaryPlot.color,
                 });
@@ -126,11 +126,10 @@ function createWellLogJsonFromProduct(
 function createWellPickPropFromProduct(factoryProduct: WellLogFactoryProduct | null): WellPickProps | undefined {
     if (!factoryProduct) return undefined;
 
-    // ! We only take the
-    const wellpickVisualization = factoryProduct.children.find((child) => isWellPickVisualization(child));
+    const wellPickProviders = factoryProduct.children.filter(isWellPickVisualization);
+    const wellPickCollections = wellPickProviders.map((wpp) => wpp.visualization);
 
-    // Can be used as is, no need for further transformations
-    return wellpickVisualization?.visualization;
+    return createLogViewerWellPicks(wellPickCollections) ?? undefined;
 }
 
 function createColorMapDefsFromProduct(factoryProduct: WellLogFactoryProduct | null): ColorMapFunction[] {

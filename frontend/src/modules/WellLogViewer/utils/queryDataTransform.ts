@@ -15,6 +15,7 @@ import { WellLogCurveSourceEnum_api } from "@api";
 import type { WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 
 import { MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE } from "../constants";
+import type { WellPickDataCollection } from "../DataProviderFramework/visualizations/wellpicks";
 
 import { COLOR_TABLES } from "./logViewerColors";
 import { getUniqueCurveNameForCurveData } from "./strings";
@@ -238,8 +239,14 @@ function createLogHeader(
     };
 }
 
-export function createLogViewerWellPicks(wellborePicks: WellborePick_api[]): WellPickProps {
-    const wellPickData = generateWellPickData(wellborePicks);
+export function createLogViewerWellPicks(pickCollections: WellPickDataCollection[]): WellPickProps | null {
+    if (pickCollections.length < 1) return null;
+
+    // The log viewer has no way to separate the picks from different columns/interpreters.
+    // Currently, we just put them all together in the same "curve".
+
+    const wellborePicks = pickCollections.map((c) => c.picks).flat();
+    const wellPickData = createWellPickDataRow(wellborePicks);
     const mergerdWellPickData = mergeStackedPicks(wellPickData);
 
     return {
@@ -263,7 +270,7 @@ export function createLogViewerWellPicks(wellborePicks: WellborePick_api[]): Wel
     };
 }
 
-function generateWellPickData(wellborePicks: WellborePick_api[]): WellLogDataRow[] {
+function createWellPickDataRow(wellborePicks: WellborePick_api[]): WellLogDataRow[] {
     return wellborePicks.map(({ md, pickIdentifier }) => [md, pickIdentifier]);
 }
 
