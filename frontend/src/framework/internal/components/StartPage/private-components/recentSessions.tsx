@@ -1,9 +1,10 @@
 import React from "react";
 
+import { useQuery } from "@tanstack/react-query";
+
 import { getSessionsMetadataOptions, SortBy_api, SortDirection_api } from "@api";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { useQuery } from "@tanstack/react-query";
 
 export type RecentSessionsProps = {
     workbench: Workbench;

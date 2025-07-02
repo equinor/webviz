@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ActiveSessionBoundary } from "@framework/internal/components/ActiveSessionBoundary";
 import { AuthenticationBoundary } from "@framework/internal/components/AuthenticationBoundary";
 import { CreateSnapshotDialog } from "@framework/internal/components/CreateSnapshotDialog/createSnapshotDialog";
+import { GlobalConfirmationDialog } from "@framework/internal/components/GlobalConfirmationDialog/globalConfirmationDialog";
 import { LoadingOverlay } from "@framework/internal/components/LoadingOverlay";
 import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
 import { RecoveryDialog } from "@framework/internal/components/RecoveryDialog/recoveryDialog";
@@ -19,8 +20,8 @@ import { Workbench, WorkbenchTopic } from "@framework/Workbench";
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { UnsavedSessionChangesDialog } from "@framework/internal/components/UnsavedSessionChangesDialog/unsavedSessionChangesDialog";
 import { UnloadPageHandler } from "@framework/internal/components/UnloadPageHandler";
+import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 
 function App() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
@@ -29,6 +30,7 @@ function App() {
     const queryClient = useQueryClient();
     const [workbench] = React.useState(new Workbench(queryClient));
     const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
+    const isSessionLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSession);
     const hasActiveSession = usePublishSubscribeTopicValue(workbench, WorkbenchTopic.HAS_ACTIVE_SESSION);
 
     React.useEffect(
@@ -43,6 +45,8 @@ function App() {
     let content: React.ReactNode;
     if (!isInitialized) {
         content = <LoadingOverlay text="Initializing application..." />;
+    } else if (isSessionLoading) {
+        content = <LoadingOverlay text="Loading session..." />;
     } else if (hasActiveSession) {
         content = (
             <>
@@ -67,7 +71,7 @@ function App() {
                     <ActiveSessionBoundary workbench={workbench}>
                         <SelectEnsemblesDialog workbench={workbench} />
                         <SaveSessionDialog workbench={workbench} />
-                        <UnsavedSessionChangesDialog workbench={workbench} />
+                        <GlobalConfirmationDialog />
                         <CreateSnapshotDialog workbench={workbench} />
                     </ActiveSessionBoundary>
                     <RecoveryDialog workbench={workbench} />

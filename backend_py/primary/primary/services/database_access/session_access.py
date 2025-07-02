@@ -1,6 +1,6 @@
 from typing import Optional, List
 from datetime import datetime, timezone
-from uuid import uuid4
+from nanoid import generate
 from operator import attrgetter
 
 from primary.services.database_access._utils import hash_json_string
@@ -77,7 +77,7 @@ class SessionAccess:
             return all_metadata[:limit]
 
         return all_metadata
-    
+
     async def get_session_metadata(self, session_id: str) -> SessionMetadata:
         existing = await self._assert_ownership(session_id)
 
@@ -93,7 +93,7 @@ class SessionAccess:
 
     async def insert_session(self, new_session: NewSession) -> str:
         now = datetime.now(timezone.utc)
-        session_id = str(uuid4())
+        session_id = str(generate(size=8))  # Generate a unique session ID
         session = SessionRecord(
             id=session_id,
             user_id=self.user_id,
@@ -103,7 +103,7 @@ class SessionAccess:
                 created_at=now,
                 updated_at=now,
                 version=1,
-                hash=hash_json_string(new_session.content)
+                hash=hash_json_string(new_session.content),
             ),
             content=new_session.content,
         )

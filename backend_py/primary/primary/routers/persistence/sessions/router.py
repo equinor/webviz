@@ -47,7 +47,7 @@ async def get_session(session_id: str, user: AuthenticatedUser = Depends(AuthHel
         return to_api_session_record(session)
 
 
-@router.get("/sessions/metadata/{session_id}", response_model=SessionMetadata)
+@router.get("/sessions/metadata/{session_id}", response_model=schemas.SessionMetadata)
 async def get_session_metadata(session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
     access = await SessionAccess.create(user.get_user_id())
     async with access:

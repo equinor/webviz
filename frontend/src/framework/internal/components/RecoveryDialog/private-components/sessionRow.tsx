@@ -1,11 +1,13 @@
+import type React from "react";
+
+import { Delete, FileOpen } from "@mui/icons-material";
+import { useQuery } from "@tanstack/react-query";
+
 import { getSessionMetadataOptions } from "@api";
 import type { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Delete, FileOpen } from "@mui/icons-material";
-import { useQuery } from "@tanstack/react-query";
-import type React from "react";
 
 export type SessionRowProps = {
     session: PrivateWorkbenchSession;
@@ -26,7 +28,7 @@ export function SessionRow(props: SessionRowProps): React.ReactNode {
     let lastPersisted: React.ReactNode = "Never";
     if (props.session.getId()) {
         if (backendSession.isSuccess) {
-            const updatedAt = backendSession.data.updated_at;
+            const updatedAt = backendSession.data.updatedAt;
             if (updatedAt) {
                 lastPersisted = new Date(updatedAt).toLocaleString();
             }

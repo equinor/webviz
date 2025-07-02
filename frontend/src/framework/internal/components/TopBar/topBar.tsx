@@ -70,9 +70,9 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
 
     return (
         <>
+            <RefreshSessionButton workbench={props.workbench} />
             <SessionSaveButton workbench={props.workbench} />
             <SnapshotButton workbench={props.workbench} />
-            <RefreshSessionButton workbench={props.workbench} />
         </>
     );
 }
@@ -320,13 +320,28 @@ type RefreshSessionButtonProps = {
 };
 
 function RefreshSessionButton(props: RefreshSessionButtonProps): React.ReactNode {
-    const handleRefreshClick = () => {
-        alert("Refresh session functionality is not implemented yet.");
-    };
+    const persistenceInfo = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSessionPersistenceService(),
+        WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO,
+    );
+
+    function handleRefreshClick() {
+        props.workbench.maybeRefreshSession();
+    }
+
+    if (
+        persistenceInfo.backendLastUpdatedMs === null ||
+        persistenceInfo.backendLastUpdatedMs <= (persistenceInfo.lastPersistedMs ?? 0)
+    ) {
+        return null;
+    }
 
     return (
-        <TopBarButton onClick={handleRefreshClick} title="Refresh session">
-            <Refresh fontSize="small" />
-        </TopBarButton>
+        <div className={"p-1 px-3 flex items-center text-sm gap-4 bg-amber-100"}>
+            Out of sync with server.
+            <TopBarButton onClick={handleRefreshClick} title="Reload session from server">
+                <Refresh fontSize="small" />
+            </TopBarButton>
+        </div>
     );
 }

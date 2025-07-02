@@ -24,6 +24,10 @@ export type NavBarButtonProps = {
      * Tooltip text
      */
     title?: string;
+    /**
+     * Tooltip text when disabled
+     */
+    disabledTitle?: string;
 };
 
 function NavBarButtonComponent(
@@ -38,17 +42,20 @@ function NavBarButtonComponent(
     else buttonIcon = icon;
 
     return (
-        <Tooltip title={props.title} placement="right">
-            <Button
-                {...baseProps}
-                ref={ref}
-                className={resolveClassNames(
-                    "w-full h-10 text-center px-3!",
-                    active ? "text-cyan-600" : "text-slate-800!",
-                )}
-            >
-                {buttonIcon}
-            </Button>
+        <Tooltip title={props.disabled ? props.disabledTitle : props.title} placement="right">
+            {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
+            <span>
+                <Button
+                    {...baseProps}
+                    ref={ref}
+                    className={resolveClassNames(
+                        "w-full h-10 text-center px-3!",
+                        active ? "text-cyan-600" : "text-slate-800!",
+                    )}
+                >
+                    {buttonIcon}
+                </Button>
+            </span>
         </Tooltip>
     );
 }

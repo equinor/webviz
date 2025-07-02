@@ -1,7 +1,7 @@
 import React from "react";
 
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/SnapshotUrlBuilder";
+import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/SnapshotUrlService";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";

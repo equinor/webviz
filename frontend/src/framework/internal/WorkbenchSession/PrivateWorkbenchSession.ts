@@ -104,7 +104,7 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         this._isSnapshot = isSnapshot;
     }
 
-    getLoadedFromLocalStorage(): boolean {
+    getIsLoadedFromLocalStorage(): boolean {
         return this._loadedFromLocalStorage;
     }
 

@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import { GridView, Link, List, Palette, Settings } from "@mui/icons-material";
 
@@ -17,21 +17,16 @@ type LeftNavBarProps = {
 };
 
 export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
-    const ensembleSet = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
-        PrivateWorkbenchSessionTopic.ENSEMBLE_SET,
-    );
-    const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
-    );
+    const workbenchSession = props.workbench.getWorkbenchSession();
+    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ENSEMBLE_SET);
+    const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
     const layout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.Layout);
     const [ensembleDialogOpen, setEnsembleDialogOpen] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.EnsembleDialogOpen,
     );
     const loadingEnsembleSet = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
+        workbenchSession,
         PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING,
     );
     const [drawerContent, setDrawerContent] = useGuiState(
@@ -42,6 +37,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         props.workbench.getGuiMessageBroker(),
         GuiState.LeftSettingsPanelWidthInPercent,
     );
+    const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     function ensureSettingsPanelIsVisible() {
         if (leftSettingsPanelWidth <= 5) {
@@ -84,7 +80,9 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
             <div className="flex flex-col gap-2 grow">
                 <NavBarButton
                     active={ensembleDialogOpen}
-                    title="Open ensemble selection dialog"
+                    title={"Open ensemble selection dialog"}
+                    disabledTitle="Ensembles cannot be changed in snapshot mode"
+                    disabled={isSnapshot}
                     icon={
                         <Badge
                             invisible={ensembleSet.getEnsembleArray().length === 0 && !loadingEnsembleSet}
@@ -114,8 +112,9 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 />
                 <NavBarButton
                     active={drawerContent === LeftDrawerContent.SyncSettings}
-                    disabled={layoutEmpty}
+                    disabled={layoutEmpty || isSnapshot}
                     title="Show sync settings"
+                    disabledTitle="Synced settings cannot be changed in snapshot mode"
                     icon={<Link fontSize="small" className="size-5" />}
                     onClick={handleSyncSettingsClick}
                 />
@@ -124,8 +123,10 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 <NavBarButton
                     active={drawerContent === LeftDrawerContent.TemplatesList}
                     title="Show templates list"
+                    disabledTitle="Templates cannot be applied in snapshot mode"
                     icon={<GridView fontSize="small" className="size-5" />}
                     onClick={handleTemplatesListClick}
+                    disabled={isSnapshot}
                 />
 
                 <NavBarDivider />

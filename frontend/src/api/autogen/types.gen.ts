@@ -3971,7 +3971,7 @@ export type GetSessionMetadataResponses_api = {
     /**
      * Successful Response
      */
-    200: PrimaryServicesDatabaseAccessTypesSessionMetadata_api;
+    200: PrimaryRoutersPersistenceSessionsSchemasSessionMetadata_api;
 };
 
 export type GetSessionMetadataResponse_api = GetSessionMetadataResponses_api[keyof GetSessionMetadataResponses_api];

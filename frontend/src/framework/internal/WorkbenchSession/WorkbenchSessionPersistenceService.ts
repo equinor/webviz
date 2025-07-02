@@ -1,4 +1,6 @@
-import { getSessionsMetadataQueryKey } from "@api";
+import { toast } from "react-toastify";
+
+import { getSessionMetadataOptions, getSessionsMetadataQueryKey } from "@api";
 import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
 import {
     PrivateWorkbenchSessionTopic,
@@ -10,7 +12,6 @@ import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSettingsTopic } from "@framework/WorkbenchSettings";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
-import { toast } from "react-toastify";
 
 import {
     createSessionWithCacheUpdate,
@@ -20,7 +21,6 @@ import {
     objectToJsonString,
     updateSessionWithCacheUpdate,
 } from "./utils";
-import { loadWorkbenchSessionFromBackend } from "./WorkbenchSessionLoader";
 import { makeWorkbenchSessionStateString } from "./WorkbenchSessionSerializer";
 
 export type WorkbenchSessionPersistenceInfo = {
@@ -55,6 +55,9 @@ export class WorkbenchSessionPersistenceService
         backendLastUpdatedMs: null,
     };
     private _fetchingInterval: ReturnType<typeof setInterval> | null = null;
+    private _pullDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
+    private _pullInProgress = false;
+    private _pullCounter = 0;
 
     private _lastPersistedMs: number | null = null;
     private _lastModifiedMs: number = 0;
@@ -65,9 +68,7 @@ export class WorkbenchSessionPersistenceService
     }
 
     async setWorkbenchSession(session: PrivateWorkbenchSession) {
-        if (this._workbenchSession) {
-            this.unsubscribeFromSessionUpdates();
-        }
+        this.unsubscribeFromSessionUpdates();
 
         this._workbenchSession = session;
 
@@ -80,7 +81,7 @@ export class WorkbenchSessionPersistenceService
         this._lastPersistedMs = session.getMetadata().updatedAt;
         this._lastModifiedMs = session.getMetadata().lastModifiedMs;
 
-        if (!session.getLoadedFromLocalStorage()) {
+        if (!session.getIsLoadedFromLocalStorage()) {
             this._lastPersistedHash = this._currentHash;
         } else {
             this._lastPersistedHash = null;
@@ -92,14 +93,16 @@ export class WorkbenchSessionPersistenceService
         this.subscribeToDashboardUpdates();
         this.subscribeToModuleInstanceUpdates();
 
-        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO);
-
+        if (this._fetchingInterval) {
+            clearInterval(this._fetchingInterval);
+        }
         this._fetchingInterval = setInterval(() => {
             this.repeatedlyFetchSessionFromBackend();
         }, 10000); // Fetch every 10 seconds
     }
 
     async repeatedlyFetchSessionFromBackend() {
+        const queryClient = this._workbench.getQueryClient();
         if (!this._workbenchSession) {
             return;
         }
@@ -109,14 +112,18 @@ export class WorkbenchSessionPersistenceService
             return;
         }
 
-        const sessionBackend = await loadWorkbenchSessionFromBackend(
-            this._workbench.getAtomStoreMaster(),
-            this._workbench.getQueryClient(),
-            sessionId,
-        );
+        try {
+            const sessionBackendMetadata = await queryClient.fetchQuery({
+                ...getSessionMetadataOptions({
+                    path: { session_id: sessionId },
+                }),
+            });
 
-        this._backendLastUpdatedMs = sessionBackend.getMetadata().updatedAt;
-        this.updatePersistenceInfo();
+            this._backendLastUpdatedMs = new Date(sessionBackendMetadata.updatedAt).getTime();
+            this.updatePersistenceInfo();
+        } catch (error) {
+            console.error("Failed to fetch session from backend:", error);
+        }
     }
 
     removeWorkbenchSession() {
@@ -126,7 +133,7 @@ export class WorkbenchSessionPersistenceService
 
         this.removeFromLocalStorage();
         this.unsubscribeFromSessionUpdates();
-        this.reset();
+        this.resetInternalState();
         this._workbenchSession = null;
 
         if (this._fetchingInterval) {
@@ -153,7 +160,7 @@ export class WorkbenchSessionPersistenceService
             this._workbenchSession
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(PrivateWorkbenchSessionTopic.DASHBOARDS)(() => {
-                this.pullFullSessionState();
+                this.schedulePullFullSessionState();
                 this.subscribeToDashboardUpdates();
             }),
         );
@@ -163,7 +170,7 @@ export class WorkbenchSessionPersistenceService
             this._workbenchSession
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(PrivateWorkbenchSessionTopic.ENSEMBLE_SET)(() => {
-                this.pullFullSessionState();
+                this.schedulePullFullSessionState();
                 this.subscribeToModuleInstanceUpdates();
             }),
         );
@@ -173,7 +180,7 @@ export class WorkbenchSessionPersistenceService
             this._workbenchSession
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET)(() => {
-                this.pullFullSessionState();
+                this.schedulePullFullSessionState();
             }),
         );
 
@@ -182,7 +189,7 @@ export class WorkbenchSessionPersistenceService
             this._workbenchSession
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(PrivateWorkbenchSessionTopic.METADATA)(() => {
-                this.pullFullSessionState();
+                this.schedulePullFullSessionState();
             }),
         );
 
@@ -192,7 +199,7 @@ export class WorkbenchSessionPersistenceService
                 .getWorkbenchSettings()
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(WorkbenchSettingsTopic.SelectedColorPalettes)(() => {
-                this.pullFullSessionState();
+                this.schedulePullFullSessionState();
             }),
         );
 
@@ -201,7 +208,7 @@ export class WorkbenchSessionPersistenceService
             this._workbenchSession
                 .getUserCreatedItems()
                 .subscribe(UserCreatedItemsEvent.INTERSECTION_POLYLINES_CHANGE, () => {
-                    this.pullFullSessionState();
+                    this.schedulePullFullSessionState();
                 }),
         );
     }
@@ -214,7 +221,7 @@ export class WorkbenchSessionPersistenceService
         this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
     }
 
-    reset(): void {
+    resetInternalState(): void {
         this._lastPersistedHash = null;
         this._currentHash = null;
         this._currentStateString = null;
@@ -226,6 +233,18 @@ export class WorkbenchSessionPersistenceService
         };
         this._lastPersistedMs = null;
         this._lastModifiedMs = 0;
+
+        if (this._pullDebounceTimeout) {
+            clearTimeout(this._pullDebounceTimeout);
+            this._pullDebounceTimeout = null;
+        }
+        this._pullCounter++;
+        this._pullInProgress = false;
+
+        if (this._fetchingInterval) {
+            clearInterval(this._fetchingInterval);
+            this._fetchingInterval = null;
+        }
 
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO);
     }
@@ -256,7 +275,7 @@ export class WorkbenchSessionPersistenceService
         return localStorageKeyForSessionId(sessionId);
     }
 
-    private saveToLocalStorage() {
+    private persistToLocalStorage() {
         const key = this.makeLocalStorageKey();
 
         if (this._currentStateString) {
@@ -271,7 +290,7 @@ export class WorkbenchSessionPersistenceService
             throw new Error("No active workbench session to make a snapshot of.");
         }
 
-        await this.pullFullSessionState();
+        await this.pullFullSessionState({ immediate: true });
         if (!this._currentStateString) {
             throw new Error("Current state string is not set. Cannot make a snapshot.");
         }
@@ -295,30 +314,59 @@ export class WorkbenchSessionPersistenceService
         }
     }
 
-    private async pullFullSessionState() {
+    private schedulePullFullSessionState(delay: number = 200) {
+        if (this._pullDebounceTimeout) {
+            clearTimeout(this._pullDebounceTimeout);
+        }
+
+        this._pullDebounceTimeout = setTimeout(() => {
+            this._pullDebounceTimeout = null;
+            this.pullFullSessionState();
+        }, delay);
+    }
+
+    private async pullFullSessionState({ immediate = false } = {}): Promise<boolean> {
         if (!this._workbenchSession) {
-            throw new Error("No active workbench session to pull state from.");
+            console.warn("No active workbench session to pull state from.");
+            return false;
         }
 
-        const oldHash = this._currentHash;
-        this._currentStateString = makeWorkbenchSessionStateString(this._workbenchSession);
-        this._currentHash = await hashJsonString(this._currentStateString);
-
-        if (this._currentHash === oldHash) {
-            return; // No changes detected
+        if (this._pullInProgress && !immediate) {
+            // Do not allow concurrent pulls – let debounce handle retries
+            return false;
         }
 
-        this._lastModifiedMs = Date.now();
+        this._pullInProgress = true;
+        const localPullId = ++this._pullCounter;
 
-        this._workbenchSession.updateMetadata(
-            {
-                lastModifiedMs: this._lastModifiedMs,
-            },
-            false,
-        );
+        try {
+            const oldHash = this._currentHash;
+            const newStateString = makeWorkbenchSessionStateString(this._workbenchSession);
+            const newHash = await hashJsonString(newStateString);
 
-        this.saveToLocalStorage();
-        this.updatePersistenceInfo();
+            // Only apply if it's still the latest pull
+            if (localPullId !== this._pullCounter) {
+                return false;
+            }
+
+            if (newHash !== oldHash) {
+                this._currentStateString = newStateString;
+                this._currentHash = newHash;
+                this._lastModifiedMs = Date.now();
+
+                this._workbenchSession.updateMetadata({ lastModifiedMs: this._lastModifiedMs }, false);
+                this.persistToLocalStorage();
+                this.updatePersistenceInfo();
+
+                return true;
+            }
+            return false; // No changes detected
+        } catch (error) {
+            console.error("Failed to pull full session state:", error);
+            return false;
+        } finally {
+            this._pullInProgress = false;
+        }
     }
 
     async persistSessionState() {
@@ -335,6 +383,12 @@ export class WorkbenchSessionPersistenceService
         const metadata = this._workbenchSession.getMetadata();
         const id = this._workbenchSession.getId();
         const toastId = toast.loading("Persisting session state...");
+
+        if (this._currentHash === this._lastPersistedHash) {
+            toast.dismiss(toastId);
+            toast.info("No changes to persist.");
+            return;
+        }
 
         try {
             if (this._workbenchSession.getIsPersisted()) {
@@ -406,13 +460,13 @@ export class WorkbenchSessionPersistenceService
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dashboards",
                 dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.Layout)(() => {
-                    this.pullFullSessionState();
+                    this.schedulePullFullSessionState();
                 }),
             );
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dashboards",
                 dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.ModuleInstances)(() => {
-                    this.pullFullSessionState();
+                    this.schedulePullFullSessionState();
                     this.subscribeToModuleInstanceUpdates();
                 }),
             );
@@ -420,7 +474,7 @@ export class WorkbenchSessionPersistenceService
                 "dashboards",
                 dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.ActiveModuleInstanceId)(
                     () => {
-                        this.pullFullSessionState();
+                        this.schedulePullFullSessionState();
                     },
                 ),
             );
@@ -441,7 +495,7 @@ export class WorkbenchSessionPersistenceService
                 this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                     "module-instances",
                     moduleInstance.makeSubscriberFunction(ModuleInstanceTopic.SERIALIZED_STATE)(() => {
-                        this.pullFullSessionState();
+                        this.schedulePullFullSessionState();
                     }),
                 );
             }
