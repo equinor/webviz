@@ -60,16 +60,14 @@ export enum Setting {
     SEISMIC_INLINE = "seismicInline",
     SENSITIVITY = "sensitivity",
     SHOW_GRID_LINES = "showGridLines",
-    SMDA_WELLBORE_HEADER = "smdaWellboreHeader",
-    SMDA_WELLBORE_HEADERS = "smdaWellboreHeaders",
     SMDA_INTERPRETER = "smdaInterpreter",
+    SMDA_WELLBORE_HEADERS = "smdaWellboreHeaders",
     STATISTIC_FUNCTION = "statisticFunction",
     SURFACE_NAME = "surfaceName",
     SURFACE_NAMES = "surfaceNames",
     TIME_OR_INTERVAL = "timeOrInterval",
     WELLBORE_EXTENSION_LENGTH = "wellboreExtensionLength",
     WELLBORE_PICKS = "wellborePicks",
-    WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
 }
 
 export const settingCategories = {
@@ -103,7 +101,6 @@ export const settingCategories = {
     [Setting.SENSITIVITY]: SettingCategory.SINGLE_SELECT,
     [Setting.SHOW_GRID_LINES]: SettingCategory.BOOLEAN,
     [Setting.SMDA_INTERPRETER]: SettingCategory.SINGLE_SELECT,
-    [Setting.SMDA_WELLBORE_HEADER]: SettingCategory.SINGLE_SELECT,
     [Setting.SMDA_WELLBORE_HEADERS]: SettingCategory.MULTI_SELECT,
     [Setting.STATISTIC_FUNCTION]: SettingCategory.SINGLE_SELECT,
     [Setting.STRAT_COLUMN]: SettingCategory.SINGLE_SELECT,
@@ -112,7 +109,6 @@ export const settingCategories = {
     [Setting.TIME_OR_INTERVAL]: SettingCategory.SINGLE_SELECT,
     [Setting.WELLBORE_EXTENSION_LENGTH]: SettingCategory.NUMBER,
     [Setting.WELLBORE_PICKS]: SettingCategory.MULTI_SELECT,
-    [Setting.WELLBORE_PICK_IDENTIFIER]: SettingCategory.SINGLE_SELECT,
 } as const;
 
 export type SettingCategories = typeof settingCategories;
@@ -147,9 +143,8 @@ export type SettingTypes = {
     [Setting.SEISMIC_INLINE]: number | null;
     [Setting.SENSITIVITY]: SensitivityNameCasePair | null;
     [Setting.SHOW_GRID_LINES]: boolean;
-    [Setting.SMDA_WELLBORE_HEADER]: string | null;
-    [Setting.SMDA_WELLBORE_HEADERS]: WellboreHeader_api[] | null;
     [Setting.SMDA_INTERPRETER]: string | null;
+    [Setting.SMDA_WELLBORE_HEADERS]: WellboreHeader_api[] | null;
     [Setting.STATISTIC_FUNCTION]: SurfaceStatisticFunction_api;
     [Setting.STRAT_COLUMN]: string | null;
     [Setting.SURFACE_NAME]: string | null;
@@ -157,7 +152,6 @@ export type SettingTypes = {
     [Setting.TIME_OR_INTERVAL]: string | null;
     [Setting.WELLBORE_EXTENSION_LENGTH]: number | null;
     [Setting.WELLBORE_PICKS]: WellborePick_api[] | null;
-    [Setting.WELLBORE_PICK_IDENTIFIER]: string | null;
 };
 
 export type PossibleSettingsForCategory<TCategory extends SettingCategory> = {

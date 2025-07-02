@@ -96,6 +96,7 @@ SettingRegistry.registerSetting(Setting.SEISMIC_INLINE, "Seismic Inline", Seismi
 });
 SettingRegistry.registerSetting(Setting.SENSITIVITY, "Sensitivity", SensitivitySetting);
 SettingRegistry.registerSetting(Setting.SHOW_GRID_LINES, "Show Grid Lines", BooleanSetting);
+SettingRegistry.registerSetting(Setting.SMDA_INTERPRETER, "SMDA Interpreter", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.SMDA_WELLBORE_HEADERS, "SMDA Wellbore Headers", DrilledWellboresSetting);
 SettingRegistry.registerSetting(Setting.STATISTIC_FUNCTION, "Statistic Function", StatisticFunctionSetting);
 SettingRegistry.registerSetting(Setting.SURFACE_NAME, "Surface Name", DropdownStringSetting);
@@ -104,5 +105,4 @@ SettingRegistry.registerSetting(Setting.TIME_OR_INTERVAL, "Time or Interval", Ti
 SettingRegistry.registerSetting(Setting.WELLBORE_EXTENSION_LENGTH, "Wellbore Extension Length", InputNumberSetting, {
     customConstructorParameters: [{ min: 0.0, max: 5000.0 }],
 });
-SettingRegistry.registerSetting(Setting.WELLBORE_PICK_IDENTIFIER, "Wellbore Pick Identifier", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.WELLBORE_PICKS, "Wellbore Picks", DrilledWellborePicksSetting);
