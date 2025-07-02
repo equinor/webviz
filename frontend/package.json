@@ -20,7 +20,8 @@
         "test:ct:ui": "playwright test -c playwright.ct.config.ts --ui"
     },
     "-- Comments --": [
-        "vite-plugin-node-polyfills is only installed as a workaround for an import issue in the map module. See webviz-subsurface-components issue #2540 for details"
+        "vite-plugin-node-polyfills is only installed as a workaround for an import issue in the map module. See webviz-subsurface-components issue #2540 for details",
+        "ts-key-enum v2 and v3 are the same, expect that v3 exports it as const enum. We cannot use v3 since we compile typescript with isolatedModules=true"
     ],
     "dependencies": {
         "@equinor/eds-core-react": "^0.45.1",
@@ -50,6 +51,7 @@
         "react-dom": "^18.2.0",
         "react-plotly.js": "^2.6.0",
         "simplify-js": "^1.2.4",
+        "ts-key-enum": "^2.0.13",
         "uuid": "^9.0.0",
         "vite-plugin-node-polyfills": "^0.23.0",
         "wonka": "^6.3.4"
