@@ -69,8 +69,8 @@ async def get_ensembles(
             name=it.name,
             realization_count=it.realization_count,
             timestamps=schemas.EnsembleTimestamps(
-                case_updated_at=it.timestamps.case_updated_at,
-                data_updated_at=it.timestamps.data_updated_at,
+                case_updated_at_utc_ms=it.timestamps.case_updated_at_utc_ms,
+                data_updated_at_utc_ms=it.timestamps.data_updated_at_utc_ms,
             ),
         )
         for it in iteration_info_arr
