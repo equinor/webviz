@@ -10,20 +10,50 @@ import { Direction as GridLayerRangeDirection, GridLayerRangeSetting } from "../
 import { Direction as GridLayerDirection, GridLayerSetting } from "../implementations/GridLayerSetting";
 import { InputNumberSetting } from "../implementations/InputNumberSetting";
 import { IntersectionSetting } from "../implementations/IntersectionSetting";
+import { LogCurveSetting } from "../implementations/LogCurveSetting";
 import { SeismicSliceDirection, SeismicSliceSetting } from "../implementations/SeismicSliceSetting";
 import { SelectNumberSetting } from "../implementations/SelectNumberSetting";
 import { SelectStringSetting } from "../implementations/SelectStringSetting";
 import { SensitivitySetting } from "../implementations/SensitivitySetting";
+import { SingleColorSetting } from "../implementations/SingleColorSetting";
 import { SliderNumberSetting } from "../implementations/SliderNumberSettig";
+import { StaticRotationSetting } from "../implementations/StaticRotationSetting";
 import { StatisticFunctionSetting } from "../implementations/StatisticFunctionSetting";
 import { TimeOrIntervalSetting } from "../implementations/TimeOrIntervalSetting";
 import { Setting } from "../settingsDefinitions";
 
 import { SettingRegistry } from "./_SettingRegistry";
 
+SettingRegistry.registerSetting(Setting.STRAT_COLUMN, "Stratigraphic Column", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.SMDA_INTERPRETER, "Interpreter", DropdownStringSetting);
+
+SettingRegistry.registerSetting(Setting.TRACK_WIDTH, "Track width", InputNumberSetting, {
+    customConstructorParameters: [{ min: 1, max: 6 }],
+});
+
+// @ts-expect-error -- Setting type is a string literal, but Dropdown setting doesn't accept that as a valid type
+SettingRegistry.registerSetting(Setting.SCALE, "Scale", DropdownStringSetting, {
+    customConstructorParameters: [
+        {
+            options: [
+                { value: "log", label: "Logarithmic" },
+                { value: "linear", label: "Linear" },
+            ],
+        },
+    ],
+});
+
+// @ts-expect-error -- Setting type is a string literal, but Dropdown setting doesn't accept that as a valid type
+SettingRegistry.registerSetting(Setting.PLOT_VARIANT, "Plot variant", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.LOG_CURVE, "Log curve", LogCurveSetting);
+SettingRegistry.registerSetting(Setting.SHOW_LABELS, "Show labels", BooleanSetting);
+SettingRegistry.registerSetting(Setting.LABEL_ROTATION, "Label rotation", StaticRotationSetting);
+SettingRegistry.registerSetting(Setting.SHOW_LINES, "Show lines", BooleanSetting);
+
 SettingRegistry.registerSetting(Setting.ATTRIBUTE, "Attribute", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.ENSEMBLE, "Ensemble", EnsembleSetting);
 SettingRegistry.registerSetting(Setting.COLOR_SCALE, "Color Scale", ColorScaleSetting);
+SettingRegistry.registerSetting(Setting.COLOR, "Color", SingleColorSetting);
 SettingRegistry.registerSetting(Setting.COLOR_SET, "Color Set", ColorSetSetting);
 
 SettingRegistry.registerSetting(Setting.GRID_LAYER_K, "Grid Layer K", GridLayerSetting, {

@@ -2203,6 +2203,38 @@ export type DeprecatedGetStratigraphicUnitsResponses_api = {
 export type DeprecatedGetStratigraphicUnitsResponse_api =
     DeprecatedGetStratigraphicUnitsResponses_api[keyof DeprecatedGetStratigraphicUnitsResponses_api];
 
+export type GetStratigraphicUnitsForStratColumnData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * SMDA stratigraphic column identifier
+         */
+        strat_column: string;
+    };
+    url: "/surface/stratigraphic_units_for_strat_column";
+};
+
+export type GetStratigraphicUnitsForStratColumnErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetStratigraphicUnitsForStratColumnError_api =
+    GetStratigraphicUnitsForStratColumnErrors_api[keyof GetStratigraphicUnitsForStratColumnErrors_api];
+
+export type GetStratigraphicUnitsForStratColumnResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<StratigraphicUnit_api>;
+};
+
+export type GetStratigraphicUnitsForStratColumnResponse_api =
+    GetStratigraphicUnitsForStratColumnResponses_api[keyof GetStratigraphicUnitsForStratColumnResponses_api];
+
 export type GetParameterNamesAndDescriptionData_api = {
     body?: never;
     path?: never;

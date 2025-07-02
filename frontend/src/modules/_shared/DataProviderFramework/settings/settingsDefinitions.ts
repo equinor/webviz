@@ -1,6 +1,12 @@
+import type { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 import { isEqual } from "lodash";
 
-import type { SurfaceStatisticFunction_api, WellboreHeader_api, WellborePick_api } from "@api";
+import type {
+    SurfaceStatisticFunction_api,
+    WellboreHeader_api,
+    WellboreLogCurveHeader_api,
+    WellborePick_api,
+} from "@api";
 import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ColorSet } from "@lib/utils/ColorSet";
@@ -21,10 +27,21 @@ export enum SettingCategory {
 }
 
 export enum Setting {
+    // Assorted styling visual settings
+    SHOW_LABELS = "showLabels",
+    LABEL_ROTATION = "labelRotation",
+    SHOW_LINES = "showLines",
+    TRACK_WIDTH = "trackWidth",
+    SCALE = "scale",
+
+    LOG_CURVE = "logCurve",
+    PLOT_VARIANT = "plotType",
+
     ATTRIBUTE = "attribute",
     ENSEMBLE = "ensemble",
     COLOR_SCALE = "colorScale",
     COLOR_SET = "colorSet",
+    COLOR = "color",
     GRID_LAYER_I_RANGE = "gridLayerIRange",
     GRID_LAYER_J_RANGE = "gridLayerJRange",
     GRID_LAYER_K = "gridLayerK",
@@ -35,6 +52,7 @@ export enum Setting {
     POLYGONS_ATTRIBUTE = "polygonsAttribute",
     POLYGONS_NAME = "polygonsName",
     REALIZATION = "realization",
+    STRAT_COLUMN = "stratColumn",
     REALIZATIONS = "realizations",
     SAMPLE_RESOLUTION_IN_METERS = "sampleResolutionInMeters",
     SEISMIC_CROSSLINE = "seismicCrossline",
@@ -53,10 +71,18 @@ export enum Setting {
 }
 
 export const settingCategories = {
+    [Setting.SHOW_LABELS]: SettingCategory.BOOLEAN,
+    [Setting.LABEL_ROTATION]: SettingCategory.NUMBER_WITH_STEP,
+    [Setting.SHOW_LINES]: SettingCategory.BOOLEAN,
+    [Setting.TRACK_WIDTH]: SettingCategory.NUMBER,
+    [Setting.SCALE]: SettingCategory.SINGLE_SELECT,
+    [Setting.LOG_CURVE]: SettingCategory.SINGLE_SELECT,
+    [Setting.PLOT_VARIANT]: SettingCategory.SINGLE_SELECT,
     [Setting.ATTRIBUTE]: SettingCategory.SINGLE_SELECT,
     [Setting.ENSEMBLE]: SettingCategory.SINGLE_SELECT,
     [Setting.COLOR_SCALE]: SettingCategory.STATIC,
     [Setting.COLOR_SET]: SettingCategory.STATIC,
+    [Setting.COLOR]: SettingCategory.STATIC,
     [Setting.GRID_LAYER_I_RANGE]: SettingCategory.RANGE,
     [Setting.GRID_LAYER_J_RANGE]: SettingCategory.RANGE,
     [Setting.GRID_LAYER_K]: SettingCategory.NUMBER,
@@ -77,6 +103,7 @@ export const settingCategories = {
     [Setting.SMDA_INTERPRETER]: SettingCategory.SINGLE_SELECT,
     [Setting.SMDA_WELLBORE_HEADERS]: SettingCategory.MULTI_SELECT,
     [Setting.STATISTIC_FUNCTION]: SettingCategory.SINGLE_SELECT,
+    [Setting.STRAT_COLUMN]: SettingCategory.SINGLE_SELECT,
     [Setting.SURFACE_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.SURFACE_NAMES]: SettingCategory.MULTI_SELECT,
     [Setting.TIME_OR_INTERVAL]: SettingCategory.SINGLE_SELECT,
@@ -87,10 +114,18 @@ export const settingCategories = {
 export type SettingCategories = typeof settingCategories;
 
 export type SettingTypes = {
+    [Setting.SHOW_LABELS]: boolean;
+    [Setting.SCALE]: "linear" | "log" | null;
+    [Setting.LABEL_ROTATION]: number | null;
+    [Setting.SHOW_LINES]: boolean;
+    [Setting.TRACK_WIDTH]: number | null;
+    [Setting.LOG_CURVE]: WellboreLogCurveHeader_api | null;
+    [Setting.PLOT_VARIANT]: TemplatePlotType | null;
     [Setting.ATTRIBUTE]: string | null;
     [Setting.ENSEMBLE]: RegularEnsembleIdent | null;
     [Setting.COLOR_SCALE]: ColorScaleSpecification | null;
     [Setting.COLOR_SET]: ColorSet | null;
+    [Setting.COLOR]: string | null;
     [Setting.GRID_LAYER_I_RANGE]: [number, number] | null;
     [Setting.GRID_LAYER_J_RANGE]: [number, number] | null;
     [Setting.GRID_LAYER_K]: number | null;
@@ -111,6 +146,7 @@ export type SettingTypes = {
     [Setting.SMDA_INTERPRETER]: string | null;
     [Setting.SMDA_WELLBORE_HEADERS]: WellboreHeader_api[] | null;
     [Setting.STATISTIC_FUNCTION]: SurfaceStatisticFunction_api;
+    [Setting.STRAT_COLUMN]: string | null;
     [Setting.SURFACE_NAME]: string | null;
     [Setting.SURFACE_NAMES]: string[] | null;
     [Setting.TIME_OR_INTERVAL]: string | null;
