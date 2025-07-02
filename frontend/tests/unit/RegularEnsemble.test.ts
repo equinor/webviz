@@ -118,8 +118,6 @@ describe("RegularEnsemble", () => {
             parameterArray,
             sensitivityArray,
             color,
-            "",
-            makeEnsembleTimeStamp(),
         );
         expect(ensemble.getDisplayName()).toBe(`${ensembleName} (${caseName})`);
         expect(ensemble.getCustomName()).toBeNull();
