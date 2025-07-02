@@ -14,10 +14,12 @@ LOGGER = logging.getLogger(__name__)
 COSMOS_SCHEMA = [
     {
         "database": "persistence",
+        "offer_throughput": 4000,
         "containers": [
-            {"id": "sessions", "partition_key": "/user_id", "throughput": 400},
-            {"id": "snapshots_metadata", "partition_key": "/user_id", "throughput": 400},
-            {"id": "snapshots_contents", "partition_key": "/user_id", "throughput": 400},
+            {"id": "sessions", "partition_key": "/user_id"},
+            {"id": "snapshots_metadata", "partition_key": "/user_id"},
+            {"id": "snapshots_contents", "partition_key": "/user_id"},
+            {"id": "snapshot_access_log", "partition_key": "/user_id"},
         ],
     },
 ]
@@ -51,19 +53,27 @@ def maybe_setup_local_database():
     for db_def in COSMOS_SCHEMA:
         db_name = db_def["database"]
         LOGGER.info("Creating or getting database: %s", db_name)
-        db = client.create_database_if_not_exists(db_name)
+        db = client.create_database_if_not_exists(db_name, offer_throughput=db_def.get("offer_throughput"))
 
         for container_def in db_def["containers"]:
-            container_id = container_def["id"]
-            partition_key_path = container_def["partition_key"]
-
-            LOGGER.info("  Creating container: %s (Partition Key: %s)", container_id, partition_key_path)
-            db.create_container_if_not_exists(
-                id=container_id,
-                partition_key=PartitionKey(path=partition_key_path),
-                offer_throughput=container_def.get("throughput", 400),
-                indexing_policy=container_def.get("indexing_policy"),
-            )
+            max_attempts = 5
+            for attempt in range(1, max_attempts + 1):
+                try:
+                    db.create_container_if_not_exists(
+                        id=container_def["id"],
+                        partition_key=PartitionKey(path=container_def["partition_key"]),
+                        offer_throughput=container_def.get("throughput"),
+                        indexing_policy=container_def.get("indexing_policy"),
+                    )
+                    LOGGER.info("    ✅ Created container '%s' (attempt %d)", container_def["id"], attempt)
+                    break
+                except Exception as e:
+                    LOGGER.warning(
+                        "    ⚠️ Failed to create container '%s' (attempt %d): %s", container_def["id"], attempt, e
+                    )
+                    if attempt == max_attempts:
+                        raise
+                    time.sleep(2 * attempt)
             total_containers += 1
 
     LOGGER.info(
