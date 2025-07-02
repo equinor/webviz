@@ -27,7 +27,7 @@ COSMOS_SCHEMA = [
 
 def wait_for_emulator(uri, key, retries=30, delay=2):
     for attempt in range(retries):
-        try:
+        try: 
             client = CosmosClient(uri, key, connection_verify=False)
             client.list_databases()
             LOGGER.info("✅ Cosmos Emulator is responsive.")
