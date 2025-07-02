@@ -1,7 +1,7 @@
 import React from "react";
 
 import { useAtomValue, useSetAtom } from "jotai";
-import _ from "lodash";
+import { isEqual } from "lodash";
 
 import type { WellboreHeader_api } from "@api";
 import type { ModuleSettingsProps } from "@framework/Module";
@@ -18,15 +18,14 @@ import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
-
 import type { InterfaceTypes } from "../interfaces";
 
-import { userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./atoms/baseAtoms";
+import { providerManagerAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom, selectedWellboreHeaderAtom } from "./atoms/derivedAtoms";
+import { userSelectedFieldIdentAtom, userSelectedWellboreUuidAtom } from "./atoms/persistedAtoms";
 import { availableFieldsQueryAtom, drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
-import { TemplateTrackSettings } from "./components/TemplateTrackSettings";
+import { ProviderManagerComponentWrapper } from "./components/ProviderManagerComponentWrapper";
 import { ViewerSettings } from "./components/ViewerSettings";
-
 
 function useSyncedWellboreSetting(
     syncHelper: SyncSettingsHelper,
@@ -36,7 +35,7 @@ function useSyncedWellboreSetting(
     const globalIntersection = syncHelper.useValue(SyncSettingKey.INTERSECTION, "global.syncValue.intersection");
     const [prevGlobalIntersection, setPrevGlobalIntersection] = React.useState<Intersection | null>(null);
 
-    if (!_.isEqual(prevGlobalIntersection, globalIntersection)) {
+    if (!isEqual(prevGlobalIntersection, globalIntersection)) {
         setPrevGlobalIntersection(globalIntersection);
 
         if (globalIntersection?.type === IntersectionType.WELLBORE) {
@@ -62,11 +61,12 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     // Utilities
     const syncedSettingKeys = props.settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
+    const providerManager = useAtomValue(providerManagerAtom);
 
     // Field selection
     const availableFields = useAtomValue(availableFieldsQueryAtom)?.data ?? [];
     const selectedField = useAtomValue(selectedFieldIdentifierAtom);
-    const setSelectedField = useSetAtom(userSelectedFieldIdentifierAtom);
+    const setSelectedField = useSetAtom(userSelectedFieldIdentAtom);
 
     const fieldOptions = availableFields.map<DropdownOption>((f) => ({
         value: f.field_identifier,
@@ -87,6 +87,14 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     // Error messages
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
     const wellboreHeadersErrorStatus = usePropagateApiErrorToStatusWriter(wellboreHeaders, statusWriter) ?? "";
+
+    React.useEffect(() => {
+        providerManager?.updateGlobalSetting("fieldId", selectedField);
+    }, [providerManager, selectedField]);
+
+    React.useEffect(() => {
+        providerManager?.updateGlobalSetting("wellboreUuid", selectedWellboreHeader?.wellboreUuid ?? null);
+    }, [providerManager, selectedWellboreHeader]);
 
     return (
         <div className="flex flex-col h-full gap-1">
@@ -115,10 +123,13 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
             </CollapsibleGroup>
 
             <CollapsibleGroup title="Log viewer settings" expanded>
-                <ViewerSettings statusWriter={statusWriter} />
+                <ViewerSettings />
             </CollapsibleGroup>
 
-            <TemplateTrackSettings statusWriter={statusWriter} />
+            <ProviderManagerComponentWrapper
+                workbenchSession={props.workbenchSession}
+                workbenchSettings={props.workbenchSettings}
+            />
         </div>
     );
 }
