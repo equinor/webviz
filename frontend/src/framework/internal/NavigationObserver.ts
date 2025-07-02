@@ -1,5 +1,5 @@
 export type NavigationObserverOptions = {
-    onBeforeUnload?: () => Promise<boolean>;
+    onBeforeUnload?: () => boolean;
     onNavigate?: () => Promise<boolean>;
 };
 
@@ -18,7 +18,7 @@ export class NavigationObserver {
         if (!onBeforeUnload) {
             return;
         }
-        const result = await onBeforeUnload();
+        const result = onBeforeUnload();
 
         if (!result) {
             event.preventDefault();

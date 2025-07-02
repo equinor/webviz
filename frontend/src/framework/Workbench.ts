@@ -62,7 +62,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._workbenchSessionPersistenceService = new WorkbenchSessionPersistenceService(this);
         this._guiMessageBroker = new GuiMessageBroker();
         this._navigationObserver = new NavigationObserver({
-            onBeforeUnload: async () => this.maybeCloseCurrentSession(),
+            onBeforeUnload: () => this.isWorkbenchDirty(),
             onNavigate: async () => this.handleNavigation(),
         });
     }
@@ -87,6 +87,17 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
     getWorkbenchSessionPersistenceService(): WorkbenchSessionPersistenceService {
         return this._workbenchSessionPersistenceService;
+    }
+
+    private isWorkbenchDirty(): boolean {
+        if (!this._workbenchSession) {
+            return false; // No active session, so nothing to save.
+        }
+
+        return (
+            (this._workbenchSessionPersistenceService.hasChanges() || !this._workbenchSession.getIsPersisted()) &&
+            !this._workbenchSession.isSnapshot()
+        );
     }
 
     async handleNavigation(): Promise<boolean> {
@@ -268,9 +279,32 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         const url = buildSessionUrl(sessionId);
         window.history.pushState({}, "", url);
 
-        const session = await loadWorkbenchSessionFromBackend(this._atomStoreMaster, this._queryClient, sessionId);
-        await this.setWorkbenchSession(session);
-        this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
+        try {
+            const session = await loadWorkbenchSessionFromBackend(this._atomStoreMaster, this._queryClient, sessionId);
+            await this.setWorkbenchSession(session);
+        } catch (e) {
+            this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
+            const result = await confirmationService.confirm({
+                title: "Could not load session",
+                message: `Could not load session with ID ${sessionId}. The session might not exist or you might not have access to it.`,
+                actions: [
+                    {
+                        id: "cancel",
+                        label: "Cancel",
+                    },
+                    {
+                        id: "retry",
+                        label: "Retry",
+                    },
+                ],
+            });
+            if (result === "retry") {
+                // Retry loading the session
+                await this.openSession(sessionId);
+            }
+        } finally {
+            this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
+        }
     }
 
     async makeSnapshot(title: string, description: string): Promise<string | null> {

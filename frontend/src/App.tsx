@@ -2,6 +2,7 @@ import React from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
 
+import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { ActiveSessionBoundary } from "@framework/internal/components/ActiveSessionBoundary";
 import { AuthenticationBoundary } from "@framework/internal/components/AuthenticationBoundary";
 import { CreateSnapshotDialog } from "@framework/internal/components/CreateSnapshotDialog/createSnapshotDialog";
@@ -16,12 +17,9 @@ import { StartPage } from "@framework/internal/components/StartPage/StartPage";
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { TopBar } from "@framework/internal/components/TopBar/topBar";
 import { Workbench, WorkbenchTopic } from "@framework/Workbench";
-
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { UnloadPageHandler } from "@framework/internal/components/UnloadPageHandler";
-import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 
 function App() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
@@ -65,17 +63,16 @@ function App() {
 
     return (
         <div className="bg-gray-100">
+            <GlobalConfirmationDialog />
             <AuthenticationBoundary>
                 <>
                     <TopBar workbench={workbench} />
                     <ActiveSessionBoundary workbench={workbench}>
                         <SelectEnsemblesDialog workbench={workbench} />
                         <SaveSessionDialog workbench={workbench} />
-                        <GlobalConfirmationDialog />
                         <CreateSnapshotDialog workbench={workbench} />
                     </ActiveSessionBoundary>
                     <RecoveryDialog workbench={workbench} />
-                    <UnloadPageHandler workbench={workbench} />
                     {content}
                 </>
             </AuthenticationBoundary>
