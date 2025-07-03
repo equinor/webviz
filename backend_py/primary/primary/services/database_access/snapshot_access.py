@@ -38,10 +38,10 @@ class SnapshotAccess:
 
     async def get_snapshot_by_id(self, snapshot_id: str) -> Optional[SessionRecord]:
         metadata_items = await self.metadata_container.query_items(
-            f"SELECT * FROM c WHERE c.id = '{snapshot_id}' AND c.user_id = '{self.user_id}'"
+            f"SELECT * FROM c WHERE c.id = '{snapshot_id}'"
         )
         content_items = await self.content_container.query_items(
-            f"SELECT * FROM c WHERE c.id = '{snapshot_id}' AND c.user_id = '{self.user_id}'"
+            f"SELECT * FROM c WHERE c.id = '{snapshot_id}'"
         )
 
         if not metadata_items or not content_items:

@@ -46,7 +46,7 @@ async def get_snapshot(snapshot_id: str, user: AuthenticatedUser = Depends(AuthH
     async with access:
         snapshot = await access.get_snapshot_by_id(snapshot_id)
         if not snapshot:
-            raise HTTPException(status_code=404, detail="Session not found")
+            raise HTTPException(status_code=404, detail="Snapshot not found")
         return to_api_session_record(snapshot)
 
 
