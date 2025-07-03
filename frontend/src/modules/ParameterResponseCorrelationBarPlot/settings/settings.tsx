@@ -27,15 +27,14 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
         }
         setNumParams(value);
     }
-    function handleCorrCutOffChange(_: Event, value: number | number[]) {
-        if (Array.isArray(value)) {
-            return;
-        }
-        setCorrCutOff(value);
+    function handleCorrCutOffChange(e: React.ChangeEvent<HTMLInputElement>) {
+        let threshold = e.target.value ? parseFloat(e.target.value) : 0.0;
+        threshold = Math.max(0.0, Math.min(1.0, Math.abs(threshold))); // Ensure threshold is between 0 and 1
+        setCorrCutOff(threshold);
     }
     return (
-        <div className="flex flex-col gap-2">
-            <CollapsibleGroup title="Plot settings" expanded>
+        <CollapsibleGroup title="Plot settings" expanded>
+            <div className="flex flex-col gap-2">
                 <Label text="Max number of parameters" key="number-of-params">
                     <Slider
                         value={numParams}
@@ -46,20 +45,21 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
                         valueLabelDisplay="auto"
                     />
                 </Label>
-                <Label text="Correlation cut-off (abs)" key="correlation-cut-off">
-                    <Slider
+                <Label text="Correlation cutoff (absolute)">
+                    <input
+                        type="number"
+                        step={0.01}
+                        min={0}
+                        max={1}
                         value={corrCutOff}
                         onChange={handleCorrCutOffChange}
-                        min={0}
-                        step={0.01}
-                        max={1}
-                        valueLabelDisplay="auto"
+                        className="w-full p-1 border border-gray-300 rounded"
                     />
                 </Label>
                 <Label text="Show parameter labels" position="left" key="show-labels">
                     <Checkbox checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} />
                 </Label>
-            </CollapsibleGroup>
-        </div>
+            </div>
+        </CollapsibleGroup>
     );
 }

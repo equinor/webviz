@@ -11,8 +11,9 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
-
 import type { Interfaces } from "../interfaces";
+import type { VectorHexColorMap } from "../typesAndEnums";
+import { GroupBy } from "../typesAndEnums";
 
 import { userSelectedActiveTimestampUtcMsAtom } from "./atoms/baseAtoms";
 import { realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
@@ -20,7 +21,7 @@ import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriter
 import { usePlotBuilder } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
-
+import { SubplotOwner } from "./utils/PlotBuilder";
 
 export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -32,6 +33,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const parameterIdent = viewContext.useSettingsToViewInterfaceValue("parameterIdent");
     const selectedEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedRegularEnsembles");
     const selectedDeltaEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedDeltaEnsembles");
+    const vectorSpecifications = viewContext.useSettingsToViewInterfaceValue("vectorSpecifications");
+    const groupBy = viewContext.useSettingsToViewInterfaceValue("groupBy");
     const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
     const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
 
@@ -42,6 +45,16 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const parameterColorScale = workbenchSettings.useContinuousColorScale({
         gradientType: ColorScaleGradientType.Diverging,
     });
+    const vectorHexColorMap : VectorHexColorMap = {};
+    vectorSpecifications.forEach((vectorSpec, index) => {
+        if (vectorSpec.vectorName in vectorHexColorMap ) {
+            return;
+        }
+        // If the vector name is not already in map, assign a color
+        const color = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
+        vectorHexColorMap [vectorSpec.vectorName] = color;
+    });
+    const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
 
     // Create parameter color scale helper
     const ensemblesParameterColoring =
@@ -62,7 +75,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     }
 
     useMakeViewStatusWriterMessages(viewContext, statusWriter, parameterDisplayName, ensemblesWithoutParameter);
-    usePublishToDataChannels(viewContext);
+    usePublishToDataChannels(viewContext, subplotOwner, vectorHexColorMap );
 
     function handleClickInChart(e: PlotMouseEvent) {
         const clickedPoint: PlotDatum = e.points[0];
@@ -78,7 +91,14 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         }
     }
 
-    const plot = usePlotBuilder(viewContext, wrapperDivSize, colorSet, ensemblesParameterColoring, handleClickInChart);
+    const plot = usePlotBuilder(
+        viewContext,
+        wrapperDivSize,
+        vectorHexColorMap ,
+        subplotOwner,
+        ensemblesParameterColoring,
+        handleClickInChart,
+    );
     const hasNoQueryErrors = !hasRealizationsQueryError && !hasStatisticsQueryError;
 
     return (

@@ -61,8 +61,8 @@ const template: Template = {
             syncedSettings: [SyncSettingKey.PARAMETER],
         },
         {
-            instanceRef: "MyParameterCorrelationPlotInstance",
-            moduleName: "ParameterCorrelationPlot",
+            instanceRef: "MyParameterResponseCorrelationBarPlotInstance",
+            moduleName: "ParameterResponseCorrelationBarPlot",
             layout: {
                 relHeight: 0.8,
                 relWidth: 0.5,
@@ -87,4 +87,4 @@ const template: Template = {
     ],
 };
 
-TemplateRegistry.registerTemplate("Parameter Analysis of Inplace Volumes", template);
+TemplateRegistry.registerTemplate("Correlations between input parameters and inplace volumes", template);
