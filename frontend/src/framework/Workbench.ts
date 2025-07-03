@@ -240,7 +240,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     discardLocalStorageSession(snapshotId: string | null): void {
         const key = localStorageKeyForSessionId(snapshotId);
         localStorage.removeItem(key);
-        this._guiMessageBroker.setState(GuiState.RecoveryDialogOpen, false);
         this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
         this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
         this._workbenchSessionPersistenceService.removeWorkbenchSession();
@@ -327,7 +326,13 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
         if (this._workbenchSession.getIsPersisted() || forceSave) {
             this._guiMessageBroker.setState(GuiState.IsSavingSession, true);
+            const wasPersisted = this._workbenchSession.getIsPersisted();
             await this._workbenchSessionPersistenceService.persistSessionState();
+            const id = this._workbenchSession.getId();
+            if (!wasPersisted && id) {
+                const url = buildSessionUrl(id);
+                window.history.pushState({}, "", url);
+            }
             this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
             this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
             this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);

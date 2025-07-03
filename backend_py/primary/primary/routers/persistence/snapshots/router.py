@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from primary.middleware.add_browser_cache import no_cache
 from primary.services.database_access.snapshot_access import SnapshotAccess
 from primary.auth.auth_helper import AuthHelper, AuthenticatedUser
 from primary.services.database_access.types import (
@@ -23,6 +24,7 @@ router = APIRouter()
 
 
 @router.get("/snapshots", response_model=List[schemas.SnapshotMetadataSummary])
+@no_cache
 async def get_snapshots_metadata(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     sort_by: Optional[SortBy] = Query(None, description="Sort the result by"),
@@ -38,6 +40,7 @@ async def get_snapshots_metadata(
 
 
 @router.get("/snapshots/{snapshot_id}", response_model=SessionRecord)
+@no_cache
 async def get_snapshot(snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
     access = await SnapshotAccess.create(user.get_user_id())
     async with access:
@@ -48,6 +51,7 @@ async def get_snapshot(snapshot_id: str, user: AuthenticatedUser = Depends(AuthH
 
 
 @router.get("/snapshots/metadata/{snapshot_id}", response_model=SessionMetadata)
+@no_cache
 async def get_snapshot_metadata(snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
     access = await SnapshotAccess.create(user.get_user_id())
     async with access:

@@ -3,11 +3,11 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from primary.middleware.add_browser_cache import no_cache
 from primary.services.database_access.session_access import SessionAccess
 from primary.auth.auth_helper import AuthHelper, AuthenticatedUser
 from primary.services.database_access.types import (
     NewSession,
-    SessionMetadata,
     SessionUpdate,
     SortBy,
     SortDirection,
@@ -25,6 +25,7 @@ router = APIRouter()
 
 
 @router.get("/sessions", response_model=List[schemas.SessionMetadataSummary])
+@no_cache
 async def get_sessions_metadata(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     sort_by: Optional[SortBy] = Query(None, description="Sort the result by"),
@@ -38,6 +39,7 @@ async def get_sessions_metadata(
 
 
 @router.get("/sessions/{session_id}", response_model=schemas.SessionRecord)
+@no_cache
 async def get_session(session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
     access = await SessionAccess.create(user.get_user_id())
     async with access:
@@ -48,6 +50,7 @@ async def get_session(session_id: str, user: AuthenticatedUser = Depends(AuthHel
 
 
 @router.get("/sessions/metadata/{session_id}", response_model=schemas.SessionMetadata)
+@no_cache
 async def get_session_metadata(session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
     access = await SessionAccess.create(user.get_user_id())
     async with access:
