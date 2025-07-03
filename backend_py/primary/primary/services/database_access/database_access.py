@@ -12,7 +12,7 @@ class DatabaseAccess:
         self.database = self.client.get_database_client(database_name)
 
     @classmethod
-    async def create(cls, database_name):
+    def create(cls, database_name: str) -> "DatabaseAccess":
         if COSMOS_DB_PROD_CONNECTION_STRING:
             client = CosmosClient.from_connection_string(COSMOS_DB_PROD_CONNECTION_STRING)
         elif COSMOS_DB_EMULATOR_URI and COSMOS_DB_EMULATOR_KEY:
@@ -33,7 +33,7 @@ class DatabaseAccess:
     def _raise_exception(self, message: str):
         raise ServiceRequestError(f"DatabaseAccess ({self.database_name}): {message}", Service.DATABASE)
 
-    async def get_container(self, container_name: str) -> ContainerProxy:
+    def get_container(self, container_name: str) -> ContainerProxy:
         try:
             container = self.database.get_container_client(container_name)
             return container

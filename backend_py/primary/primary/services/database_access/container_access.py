@@ -1,11 +1,12 @@
-from typing import Optional
-
+import logging
 from azure.cosmos.aio import ContainerProxy
 from azure.cosmos import exceptions
 
 from primary.services.service_exceptions import Service, ServiceRequestError
 from .database_access import DatabaseAccess
 
+
+logger = logging.getLogger(__name__)
 
 class ContainerAccess:
     def __init__(
@@ -26,7 +27,7 @@ class ContainerAccess:
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
-        await self.database_access.__aexit__(exc_type, exc, tb)
+        await self.database_access.client.close()
 
     def _raise_exception(self, message: str):
         raise ServiceRequestError(
@@ -46,7 +47,7 @@ class ContainerAccess:
     async def insert_item(self, item: dict) -> dict:
         try:
             result = await self.container.upsert_item(item)
-            print("Item inserted.")
+            logger.info("Item inserted.")
             return result
         except exceptions.CosmosHttpResponseError as e:
             self._raise_exception(e.message)
@@ -54,7 +55,7 @@ class ContainerAccess:
     async def delete_item(self, item_id: str, partition_key: str):
         try:
             await self.container.delete_item(item=item_id, partition_key=partition_key)
-            print(f"Item with id '{item_id}' deleted.")
+            logger.info(f"Item with id '{item_id}' deleted.")
         except exceptions.CosmosHttpResponseError as e:
             self._raise_exception(e.message)
 
@@ -63,6 +64,6 @@ class ContainerAccess:
             item = await self.container.read_item(item=item_id, partition_key=partition_key)
             item.update(updated_item)
             await self.container.upsert_item(item)
-            print(f"Item with id '{item_id}' updated.")
+            logger.info(f"Item with id '{item_id}' updated.")
         except exceptions.CosmosHttpResponseError as e:
             self._raise_exception(e.message)
