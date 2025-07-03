@@ -1,5 +1,6 @@
 from typing import List
 
+
 from fastapi import APIRouter, Depends, Path, Query
 
 from primary.auth.auth_helper import AuthHelper
@@ -29,7 +30,6 @@ async def get_fields(
 
 
 @router.get("/cases")
-@no_cache
 async def get_cases(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     field_identifier: str = Query(description="Field identifier"),
@@ -40,26 +40,44 @@ async def get_cases(
 
     ret_arr: List[schemas.CaseInfo] = []
 
-    ret_arr = [schemas.CaseInfo(uuid=ci.uuid, name=ci.name, status=ci.status, user=ci.user) for ci in case_info_arr]
+    ret_arr = [
+        schemas.CaseInfo(
+            uuid=ci.uuid,
+            name=ci.name,
+            status=ci.status,
+            user=ci.user,
+            updated_at_utc_ms=ci.updated_at_utc_ms,
+        )
+        for ci in case_info_arr
+    ]
 
     return ret_arr
 
 
 @router.get("/cases/{case_uuid}/ensembles")
-@no_cache
 async def get_ensembles(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
 ) -> List[schemas.EnsembleInfo]:
     """Get list of ensembles for a case"""
+
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     iteration_info_arr = await case_inspector.get_iterations_async()
 
-    return [schemas.EnsembleInfo(name=it.name, realization_count=it.realization_count) for it in iteration_info_arr]
+    return [
+        schemas.EnsembleInfo(
+            name=it.name,
+            realization_count=it.realization_count,
+            timestamps=schemas.EnsembleTimestamps(
+                case_updated_at_utc_ms=it.timestamps.case_updated_at_utc_ms,
+                data_updated_at_utc_ms=it.timestamps.data_updated_at_utc_ms,
+            ),
+        )
+        for it in iteration_info_arr
+    ]
 
 
 @router.get("/cases/{case_uuid}/ensembles/{ensemble_name}")
-@no_cache
 async def get_ensemble_details(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
@@ -72,6 +90,7 @@ async def get_ensemble_details(
     realizations = await case_inspector.get_realizations_in_iteration_async(ensemble_name)
     field_identifiers = await case_inspector.get_field_identifiers_async()
     stratigraphic_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
+    timestamps = await case_inspector.get_iteration_timestamps_async(ensemble_name)
 
     if len(field_identifiers) != 1:
         raise NotImplementedError("Multiple field identifiers not supported")
@@ -83,4 +102,29 @@ async def get_ensemble_details(
         realizations=realizations,
         field_identifier=field_identifiers[0],
         stratigraphic_column_identifier=stratigraphic_column_identifier,
+        timestamps=schemas.EnsembleTimestamps(
+            case_updated_at_utc_ms=timestamps.case_updated_at_utc_ms,
+            data_updated_at_utc_ms=timestamps.data_updated_at_utc_ms,
+        ),
+    )
+
+
+@router.get("/cases/{case_uuid}/ensembles/{ensemble_name}/timestamps")
+@no_cache
+async def get_ensemble_timestamps(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Path(description="Sumo case uuid"),
+    ensemble_name: str = Path(description="Ensemble name"),
+) -> schemas.EnsembleTimestamps:
+    """
+    Gets timestamps for an ensemble. Note, an ensemble doesnt have it's own timestamps, so the values recieved are based on the parent case, and the most recent update timestamp from it's data
+    """
+
+    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+
+    timestamps = await case_inspector.get_iteration_timestamps_async(ensemble_name)
+
+    return schemas.EnsembleTimestamps(
+        case_updated_at_utc_ms=timestamps.case_updated_at_utc_ms,
+        data_updated_at_utc_ms=timestamps.data_updated_at_utc_ms,
     )
