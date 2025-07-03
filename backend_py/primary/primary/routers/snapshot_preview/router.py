@@ -14,11 +14,7 @@ async def snapshot_preview(snapshot_id: str, request: Request):
         if not metadata:
             raise HTTPException(status_code=404, detail="Snapshot metadata not found")
         
-        root_path = request.scope.get("root_path", "")  # "/api"
-        base_url = str(request.base_url)
-        if root_path and base_url.endswith(root_path + "/"):
-            base_url = base_url[: -len(root_path + "/")]
-            
+        base_url = get_external_base_url(request)
         snapshot_url = f"{base_url}/snapshot/{snapshot_id}"
 
         title = html.escape(metadata.title)
@@ -39,3 +35,8 @@ async def snapshot_preview(snapshot_id: str, request: Request):
         </body>
         </html>
         """
+
+def get_external_base_url(request: Request) -> str:
+    forwarded_proto = request.headers.get("x-forwarded-proto", "http")
+    forwarded_host = request.headers.get("x-forwarded-host", request.headers.get("host", "localhost"))
+    return f"{forwarded_proto}://{forwarded_host}"
