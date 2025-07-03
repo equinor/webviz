@@ -12,6 +12,8 @@ from primary.services.database_access.types import (
     SessionRecord,
     SessionMetadata,
     SessionUpdate,
+    SnapshotMetadata,
+    SnapshotMetadataSummary,
     SortBy,
     SortDirection,
 )
@@ -91,11 +93,10 @@ class SnapshotAccess:
 
         return all_metadata
 
-    async def get_snapshot_metadata(self, session_id: str) -> SessionMetadata:
-        existing = await self._assert_ownership(session_id)
+    async def get_snapshot_metadata(self, snapshot_id: str) -> SnapshotMetadata:
+        existing = await self.get_snapshot_by_id(snapshot_id)
 
-        return SessionMetadata(
-            id=existing.id,
+        return SnapshotMetadata(
             title=existing.metadata.title,
             description=existing.metadata.description,
             created_at=existing.metadata.created_at,
