@@ -28,8 +28,8 @@ export type ParameterCorrelationMatrixFigureProps = {
 export class ParameterCorrelationMatrixFigure {
     private _figure: Figure;
     private _showLabels: boolean;
+    private _forceShowYAxisLabels: boolean = false;
     private _useFixedColorRange: boolean;
-    private _plotType: PlotType;
 
     constructor({
         wrapperDivSize,
@@ -40,8 +40,8 @@ export class ParameterCorrelationMatrixFigure {
         useFixedColorRange,
     }: ParameterCorrelationMatrixFigureProps) {
         this._showLabels = showLabels;
+        this._forceShowYAxisLabels = plotType === PlotType.ParameterResponseMatrix;
         this._useFixedColorRange = useFixedColorRange;
-        this._plotType = plotType;
         this._figure = makeSubplots({
             numRows: numRows,
             numCols: numCols,
@@ -77,7 +77,7 @@ export class ParameterCorrelationMatrixFigure {
             l: 20,
         };
         // Always show response labels
-        if (this._plotType === PlotType.ParameterResponseMatrix) {
+        if (this._forceShowYAxisLabels) {
             margin.l = 200;
         }
         if (this._showLabels) {
@@ -151,7 +151,7 @@ export class ParameterCorrelationMatrixFigure {
                 zeroline: false,
             },
             [`yaxis${cellIndex + 1}`]: {
-                showticklabels: this._showLabels || this._plotType === PlotType.ParameterResponseMatrix,
+                showticklabels: this._showLabels || this._forceShowYAxisLabels,
                 tickangle: -45,
                 autosize: false,
                 ticks: "",

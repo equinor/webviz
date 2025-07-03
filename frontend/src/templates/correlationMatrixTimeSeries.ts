@@ -3,8 +3,8 @@ import { ParameterIdent } from "@framework/EnsembleParameters";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
-import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
-import { ChannelIds as InplaceChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
+import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
+import { ChannelIds as InplaceChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
 import { ChannelIds as TimeSeriesChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
 import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
@@ -29,17 +29,17 @@ const template: Template = {
             },
         },
         {
-            instanceRef: "MainInplaceVolumetricsPlotInstance",
-            moduleName: "InplaceVolumetricsPlot",
+            instanceRef: "MainInplaceVolumesPlotInstance",
+            moduleName: "InplaceVolumesPlot",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
                 relX: 0.5,
                 relY: 0,
             },
-            syncedSettings: [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER],
+            syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER],
             initialSettings: {
-                selectedIdentifierValueCriteria: IdentifierValueCriteria.ALLOW_INTERSECTION,
+                selectedIndexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
             },
         },
         {
@@ -59,7 +59,7 @@ const template: Template = {
                     channelIdString: TimeSeriesChannelIds.TIME_SERIES,
                 },
                 channelResponse2: {
-                    listensToInstanceRef: "MainInplaceVolumetricsPlotInstance",
+                    listensToInstanceRef: "MainInplaceVolumesPlotInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: InplaceChannelIds.RESPONSE_PER_REAL,
                 },

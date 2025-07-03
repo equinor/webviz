@@ -2,7 +2,6 @@ import React from "react";
 
 import { Input, Warning } from "@mui/icons-material";
 import { isEqual } from "lodash";
-import Plot from "react-plotly.js";
 
 import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
 import { KeyKind } from "@framework/DataChannelTypes";

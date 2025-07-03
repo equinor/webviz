@@ -10,7 +10,6 @@ import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { getContinuousAndNonConstantParameterIdentsInEnsembles } from "@modules/_shared/parameterUnions";
@@ -91,8 +90,8 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
         setPlotType(e.target.value as PlotType);
     }
     function handleThresholdChanged(e: React.ChangeEvent<HTMLInputElement>) {
-        let threshold = e.target.value ? parseFloat(e.target.value) : null;
-        threshold = Math.max(0.0, Math.min(1.0, Math.abs(threshold ?? 0.0))); // Ensure threshold is between 0 and 1
+        let threshold = e.target.value ? parseFloat(e.target.value) : 0.0;
+        threshold = Math.max(0.0, Math.min(1.0, Math.abs(threshold))); // Ensure threshold is between 0 and 1
         setCorrelationSettings((prev) => ({
             ...prev,
             threshold,

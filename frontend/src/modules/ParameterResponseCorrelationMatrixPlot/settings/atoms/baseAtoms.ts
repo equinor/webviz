@@ -10,7 +10,7 @@ export const useFixedColorRangeAtom = atom<boolean>(true);
 export const plotTypeAtom = atom<PlotType>(PlotType.ParameterResponseMatrix);
 
 export const correlationSettingsAtom = atom<CorrelationSettings>({
-    threshold: null as number | null,
+    threshold: null,
     hideIndividualCells: true,
     filterColumns: true,
     filterRows: true,

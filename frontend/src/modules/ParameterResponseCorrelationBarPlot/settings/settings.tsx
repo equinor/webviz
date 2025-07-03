@@ -28,8 +28,8 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
         setNumParams(value);
     }
     function handleCorrCutOffChange(e: React.ChangeEvent<HTMLInputElement>) {
-        let threshold = e.target.value ? parseFloat(e.target.value) : null;
-        threshold = Math.max(0.0, Math.min(1.0, Math.abs(threshold ?? 0.0))); // Ensure threshold is between 0 and 1
+        let threshold = e.target.value ? parseFloat(e.target.value) : 0.0;
+        threshold = Math.max(0.0, Math.min(1.0, Math.abs(threshold))); // Ensure threshold is between 0 and 1
         setCorrCutOff(threshold);
     }
     return (
@@ -58,7 +58,7 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
                 </Label>
                 <Label text="Show parameter labels" position="left" key="show-labels">
                     <Checkbox checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} />
-                </Label>{" "}
+                </Label>
             </div>
         </CollapsibleGroup>
     );
