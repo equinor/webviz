@@ -52,8 +52,10 @@ class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
 
         path_is_protected = True
 
-        if path_to_check in ["/login", "/auth-callback"] + self._unprotected_paths:
-            path_is_protected = False
+        for unprotected in ["/login", "/auth-callback"] + self._unprotected_paths:
+            if path_to_check.startswith(unprotected):
+                path_is_protected = False
+                break
 
         if path_is_protected:
 

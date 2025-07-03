@@ -35,6 +35,7 @@ from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
 from primary.routers.persistence.sessions.router import router as sessions_router
 from primary.routers.persistence.snapshots.router import router as snapshots_router
+from primary.routers.snapshot_preview.router import router as snapshot_preview_router
 from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
@@ -114,6 +115,7 @@ app.include_router(vfp_router, prefix="/vfp", tags=["vfp"])
 app.include_router(dev_router, prefix="/dev", tags=["dev"], include_in_schema=False)
 app.include_router(sessions_router, prefix="/sessions", tags=["sessions"])
 app.include_router(snapshots_router, prefix="/snapshots", tags=["snapshots"])
+app.include_router(snapshot_preview_router, prefix="/snapshot-preview", tags=["snapshot_preview"])
 
 auth_helper = AuthHelper()
 app.include_router(auth_helper.router)
@@ -128,7 +130,7 @@ app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total-ex
 
 # Add out custom middleware to enforce that user is logged in
 # Also redirects to /login endpoint for some select paths
-unprotected_paths = ["/logout", "/logged_in_user", "/alive", "/openapi.json"]
+unprotected_paths = ["/logout", "/logged_in_user", "/alive", "/openapi.json", "/snapshot-preview"]
 paths_redirected_to_login = ["/", "/alive_protected"]
 
 app.add_middleware(

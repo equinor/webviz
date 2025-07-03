@@ -1,4 +1,5 @@
 from typing import Optional
+from unittest.mock import Base
 from pydantic import BaseModel
 from datetime import datetime
 from enum import Enum
@@ -18,7 +19,17 @@ class SessionMetadataInternal(BaseModel):
 class SessionMetadata(SessionMetadataExternal, SessionMetadataInternal):
     pass
 
+class SnapshotMetadataInternal(BaseModel):
+    created_at: datetime
+    updated_at: datetime
+
+class SnapshotMetadata(SessionMetadataExternal, SnapshotMetadataInternal):
+    pass
+    
 class SessionMetadataSummary(SessionMetadata):
+    id: str
+
+class SnapshotMetadataSummary(SnapshotMetadata):
     id: str
 
 class SessionUpdate(BaseModel):
