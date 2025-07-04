@@ -129,6 +129,11 @@ def create_ensemble_sensitivity_cases(
 def parameter_table_to_ensemble_parameters(parameter_table: pa.Table) -> List[EnsembleParameter]:
     """Convert a parameter table to EnsembleParameters"""
     ensemble_parameters: List[EnsembleParameter] = []
+    if "REAL" not in parameter_table.column_names:
+        raise InvalidDataError(
+            "Parameter table does not contain a 'REAL' column, which is required to identify realizations.",
+            Service.SUMO,
+        )
     parameter_str_arr = [param_str for param_str in parameter_table.column_names if param_str != "REAL"]
     parameter_group_dict = _parameter_str_arr_to_parameter_group_dict(parameter_str_arr)
     ensemble_parameters = []
