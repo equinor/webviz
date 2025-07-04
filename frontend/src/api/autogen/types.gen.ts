@@ -421,6 +421,12 @@ export type NewSession_api = {
     content: string;
 };
 
+export type NewSnapshot_api = {
+    title: string;
+    description: string | null;
+    content: string;
+};
+
 export enum NodeType_api {
     PROD = "prod",
     INJ = "inj",
@@ -706,46 +712,72 @@ export enum SensitivityType_api {
     SCENARIO = "scenario",
 }
 
-export type SessionMetadataExternal_api = {
-    title: string;
-    description?: string | null;
+export type SessionDocument_api = {
+    id: string;
+    ownerId: string;
+    metadata: SessionMetadata_api;
+    content: string;
 };
 
-export type SessionMetadataSummary_api = {
+export type SessionMetadata_api = {
+    title: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
+    version: number;
+    hash: string;
+};
+
+export type SessionMetadataWithId_api = {
     id: string;
     title: string;
     description: string | null;
     createdAt: string;
     updatedAt: string;
     version: number;
-};
-
-export type SessionRecord_api = {
-    id: string;
-    userId: string;
-    metadata: PrimaryRoutersPersistenceSessionsSchemasSessionMetadata_api;
-    content: string;
 };
 
 export type SessionUpdate_api = {
     id: string;
-    metadata: SessionMetadataExternal_api;
+    metadata: SessionUserEditableMetadata_api;
     content: string;
 };
 
-export type SnapshotMetadataSummary_api = {
+export type SessionUserEditableMetadata_api = {
+    title: string;
+    description?: string | null;
+};
+
+export type Snapshot_api = {
     id: string;
+    metadata: SnapshotMetadata_api;
+    content: string;
+};
+
+export type SnapshotMetadata_api = {
+    id: string;
+    ownerId: string;
     title: string;
     description: string | null;
     createdAt: string;
     updatedAt: string;
-    version: number;
+    hash: string;
+};
+
+export type SnapshotUpdate_api = {
+    metadata: SnapshotUserEditableMetadata_api;
+};
+
+export type SnapshotUserEditableMetadata_api = {
+    title: string;
+    description?: string | null;
 };
 
 export enum SortBy_api {
     CREATED_AT = "created_at",
     UPDATED_AT = "updated_at",
     TITLE = "title",
+    TITLE_LOWER = "title_lower",
 }
 
 export enum SortDirection_api {
@@ -1235,24 +1267,6 @@ export type WellboreTrajectory_api = {
     mdArr: Array<number>;
     eastingArr: Array<number>;
     northingArr: Array<number>;
-};
-
-export type PrimaryRoutersPersistenceSessionsSchemasSessionMetadata_api = {
-    title: string;
-    description: string | null;
-    createdAt: string;
-    updatedAt: string;
-    version: number;
-    hash: string;
-};
-
-export type PrimaryServicesDatabaseAccessTypesSessionMetadata_api = {
-    created_at: string;
-    updated_at: string;
-    version: number;
-    hash: string;
-    title: string;
-    description?: string | null;
 };
 
 export type GetFieldsData_api = {
@@ -3842,7 +3856,7 @@ export type GetSessionsMetadataResponses_api = {
     /**
      * Successful Response
      */
-    200: Array<SessionMetadataSummary_api>;
+    200: Array<SessionMetadataWithId_api>;
 };
 
 export type GetSessionsMetadataResponse_api = GetSessionsMetadataResponses_api[keyof GetSessionsMetadataResponses_api];
@@ -3919,7 +3933,7 @@ export type GetSessionResponses_api = {
     /**
      * Successful Response
      */
-    200: SessionRecord_api;
+    200: SessionDocument_api;
 };
 
 export type GetSessionResponse_api = GetSessionResponses_api[keyof GetSessionResponses_api];
@@ -3971,7 +3985,7 @@ export type GetSessionMetadataResponses_api = {
     /**
      * Successful Response
      */
-    200: PrimaryRoutersPersistenceSessionsSchemasSessionMetadata_api;
+    200: SessionMetadata_api;
 };
 
 export type GetSessionMetadataResponse_api = GetSessionMetadataResponses_api[keyof GetSessionMetadataResponses_api];
@@ -4009,13 +4023,13 @@ export type GetSnapshotsMetadataResponses_api = {
     /**
      * Successful Response
      */
-    200: Array<SnapshotMetadataSummary_api>;
+    200: Array<SnapshotMetadata_api>;
 };
 
 export type GetSnapshotsMetadataResponse_api = GetSnapshotsMetadataResponses_api[keyof GetSnapshotsMetadataResponses_api];
 
 export type CreateSnapshotData_api = {
-    body: NewSession_api;
+    body: NewSnapshot_api;
     path?: never;
     query?: never;
     url: "/snapshots/snapshots";
@@ -4086,13 +4100,13 @@ export type GetSnapshotResponses_api = {
     /**
      * Successful Response
      */
-    200: SessionRecord_api;
+    200: Snapshot_api;
 };
 
 export type GetSnapshotResponse_api = GetSnapshotResponses_api[keyof GetSnapshotResponses_api];
 
 export type UpdateSnapshotData_api = {
-    body: SessionUpdate_api;
+    body: SnapshotUpdate_api;
     path: {
         snapshot_id: string;
     };
@@ -4138,10 +4152,37 @@ export type GetSnapshotMetadataResponses_api = {
     /**
      * Successful Response
      */
-    200: PrimaryServicesDatabaseAccessTypesSessionMetadata_api;
+    200: SnapshotMetadata_api;
 };
 
 export type GetSnapshotMetadataResponse_api = GetSnapshotMetadataResponses_api[keyof GetSnapshotMetadataResponses_api];
+
+export type SnapshotPreviewData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: never;
+    url: "/snapshot-preview/{snapshot_id}";
+};
+
+export type SnapshotPreviewErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type SnapshotPreviewError_api = SnapshotPreviewErrors_api[keyof SnapshotPreviewErrors_api];
+
+export type SnapshotPreviewResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type SnapshotPreviewResponse_api = SnapshotPreviewResponses_api[keyof SnapshotPreviewResponses_api];
 
 export type LoginRouteData_api = {
     body?: never;

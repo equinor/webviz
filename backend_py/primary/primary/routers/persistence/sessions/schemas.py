@@ -2,7 +2,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class SessionMetadataSummary(BaseModel):
+class SessionMetadataWithId(BaseModel):
     id: str
     title: str
     description: Optional[str]
@@ -20,8 +20,8 @@ class SessionMetadata(BaseModel):
     hash: str
 
 
-class SessionRecord(BaseModel):
+class SessionDocument(BaseModel):
     id: str
-    userId: str
+    ownerId: str
     metadata: SessionMetadata
     content: str

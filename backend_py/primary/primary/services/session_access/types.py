@@ -1,10 +1,9 @@
 from typing import Optional
-from unittest.mock import Base
 from pydantic import BaseModel
 from datetime import datetime
 from enum import Enum
 
-class SessionMetadataExternal(BaseModel):
+class SessionUserEditableMetadata(BaseModel):
     title: str
     description: Optional[str] = None
 
@@ -12,36 +11,19 @@ class SessionMetadataExternal(BaseModel):
 class SessionMetadataInternal(BaseModel):
     created_at: datetime
     updated_at: datetime
-    version: int
     hash: str
+    version: int
 
 
-class SessionMetadata(SessionMetadataExternal, SessionMetadataInternal):
-    pass
-
-class SnapshotMetadataInternal(BaseModel):
-    created_at: datetime
-    updated_at: datetime
-
-class SnapshotMetadata(SessionMetadataExternal, SnapshotMetadataInternal):
+class SessionMetadata(SessionUserEditableMetadata, SessionMetadataInternal):
     pass
     
-class SessionMetadataSummary(SessionMetadata):
-    id: str
-
-class SnapshotMetadataSummary(SnapshotMetadata):
+class SessionMetadataWithId(SessionMetadata):
     id: str
 
 class SessionUpdate(BaseModel):
     id: str
-    metadata: SessionMetadataExternal
-    content: str
-
-
-class SessionRecord(BaseModel):
-    id: str  # session_id
-    user_id: str
-    metadata: SessionMetadata
+    metadata: SessionUserEditableMetadata
     content: str
 
 class NewSession(BaseModel):
@@ -53,6 +35,7 @@ class SortBy(str, Enum):
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"
     TITLE = "title"
+    TITLE_LOWER = "title_lower"
 
 class SortDirection(str, Enum):
     ASC = "asc"

@@ -18,7 +18,7 @@ COSMOS_SCHEMA = [
         "containers": [
             {"id": "sessions", "partition_key": "/user_id"},
             {"id": "snapshots_metadata", "partition_key": "/user_id"},
-            {"id": "snapshots_contents", "partition_key": "/user_id"},
+            {"id": "snapshots_content", "partition_key": "/snapshot_id"},
             {"id": "snapshot_access_log", "partition_key": "/user_id"},
         ],
     },

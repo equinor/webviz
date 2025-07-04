@@ -1,4 +1,3 @@
-import type { SessionRecord_api } from "@api";
 import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import type { QueryClient } from "@tanstack/query-core";
 import { Ajv } from "ajv/dist/jtd";
@@ -10,6 +9,7 @@ import {
 } from "./PrivateWorkbenchSession";
 import { objectToJsonString, sessionIdFromLocalStorageKey } from "./utils";
 import { workbenchSessionContentSchema, workbenchSessionSchema } from "./workbenchSession.jtd";
+import type { SessionDocument_api } from "@api";
 
 export type SerializedWorkbenchSession = {
     metadata: WorkbenchSessionMetadata;
@@ -48,7 +48,7 @@ export async function deserializeFromLocalStorage(
 export async function deserializeFromBackend(
     atomStore: AtomStoreMaster,
     queryClient: QueryClient,
-    raw: SessionRecord_api,
+    raw: SessionDocument_api,
 ): Promise<PrivateWorkbenchSession> {
     const parsed = JSON.parse(raw.content);
     if (!validateContent(parsed)) {

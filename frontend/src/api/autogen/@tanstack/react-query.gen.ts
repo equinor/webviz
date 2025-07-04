@@ -79,6 +79,7 @@ import {
     getSnapshot,
     updateSnapshot,
     getSnapshotMetadata,
+    snapshotPreview,
     loginRoute,
     authorizedCallbackRoute,
     getAlive,
@@ -183,6 +184,7 @@ import type {
     UpdateSnapshotData_api,
     UpdateSnapshotError_api,
     GetSnapshotMetadataData_api,
+    SnapshotPreviewData_api,
     LoginRouteData_api,
     AuthorizedCallbackRouteData_api,
     GetAliveData_api,
@@ -1752,6 +1754,25 @@ export const getSnapshotMetadataOptions = (options: Options<GetSnapshotMetadataD
             return data;
         },
         queryKey: getSnapshotMetadataQueryKey(options),
+    });
+};
+
+export const snapshotPreviewQueryKey = (options: Options<SnapshotPreviewData_api>) => [
+    createQueryKey("snapshotPreview", options),
+];
+
+export const snapshotPreviewOptions = (options: Options<SnapshotPreviewData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await snapshotPreview({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: snapshotPreviewQueryKey(options),
     });
 };
 

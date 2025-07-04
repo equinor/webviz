@@ -1,4 +1,4 @@
-import { getSnapshotOptions, type SessionRecord_api } from "@api";
+import { getSnapshotOptions, type Snapshot_api } from "@api";
 import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import type { QueryClient } from "@tanstack/react-query";
 import { Ajv } from "ajv/dist/jtd";
@@ -24,16 +24,16 @@ export async function loadSnapshotFromBackend(
 export async function deserializeFromBackend(
     atomStore: AtomStoreMaster,
     queryClient: QueryClient,
-    raw: SessionRecord_api,
+    raw: Snapshot_api,
 ): Promise<PrivateWorkbenchSession> {
     const parsed = JSON.parse(raw.content);
     if (!validateContent(parsed)) {
         throw new Error(`Backend session validation failed ${validateContent.errors}`);
     }
 
-    const session = new PrivateWorkbenchSession(atomStore, queryClient, true);
-    await session.loadContent(parsed);
-    session.setMetadata({
+    const snapshot = new PrivateWorkbenchSession(atomStore, queryClient, true);
+    await snapshot.loadContent(parsed);
+    snapshot.setMetadata({
         title: raw.metadata.title,
         description: raw.metadata.description ?? undefined,
         createdAt: new Date(raw.metadata.createdAt).getTime(),
@@ -41,5 +41,5 @@ export async function deserializeFromBackend(
         hash: raw.metadata.hash,
         lastModifiedMs: new Date().getTime(), // Fallback to now if not provided
     });
-    return session;
+    return snapshot;
 }

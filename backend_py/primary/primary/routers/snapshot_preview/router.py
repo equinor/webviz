@@ -2,7 +2,7 @@ import html
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
 
-from primary.services.database_access.snapshot_access import SnapshotAccess
+from primary.services.snapshot_access.snapshot_access import SnapshotAccess
 
 router = APIRouter()
 
