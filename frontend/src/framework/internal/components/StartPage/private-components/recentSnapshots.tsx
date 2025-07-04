@@ -1,0 +1,63 @@
+import type React from "react";
+
+import { useQuery } from "@tanstack/react-query";
+
+import { getRecentSnapshotsOptions } from "@api";
+import type { Workbench } from "@framework/Workbench";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { timeAgo } from "@lib/utils/dates";
+
+export type RecentSnapshotsProps = {
+    workbench: Workbench;
+};
+
+export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
+    const recentSnapshotsQuery = useQuery({
+        ...getRecentSnapshotsOptions(),
+        refetchInterval: 10000,
+    });
+
+    // TODO: Handle smooth navigation
+    // function handleSnapshotClick(e: React.MouseEvent<HTMLAnchorElement>) {
+    //     e.preventDefault();
+
+    //     history.pushState(null, "", e.currentTarget.href);
+    //     // props.workbench.makeSessionFromSnapshot(sessionId);
+    // }
+
+    if (recentSnapshotsQuery.isPending) {
+        return (
+            <span className="text-gray-500 flex gap-2">
+                <CircularProgress size="extra-small" /> Loading recent snapshots...
+            </span>
+        );
+    }
+
+    if (recentSnapshotsQuery.isError) {
+        return <span className="text-red-800">Could not fetch recent snapshots...</span>;
+    }
+
+    if (!recentSnapshotsQuery.data.length) {
+        return <span className="text-gray-500">No recently visited snapshots.</span>;
+    }
+
+    return (
+        <ul className="pl-5">
+            {recentSnapshotsQuery.data.map((snapshot) => (
+                <li key={snapshot.snapshot_id} className="flex justify-between gap-4">
+                    <a
+                        className="text-blue-600 hover:underline"
+                        href={`/snapshot/${snapshot.snapshot_id}`}
+                        // onClick={handleSnapshotClick}
+                    >
+                        {snapshot.snapshot_metadata.title}
+                    </a>
+
+                    <span className="text-gray-500">
+                        ~ {timeAgo(Date.now() - new Date(snapshot.last_visited_at ?? "").getTime())}
+                    </span>
+                </li>
+            ))}
+        </ul>
+    );
+}
