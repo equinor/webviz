@@ -110,7 +110,7 @@ class ArrowTableLoader:
 
             # Does the aggregation and gets the blob (also writes the resulting aggregation back into Sumo)
             sumo_table_obj = await sc_agg_input_tables.aggregate_async(columns=[column_name], operation="collection")
-            print("************", sumo_table_obj.metadata)
+
             perf_metrics.record_lap("aggregate")
 
         arrow_table: pa.Table = await sumo_table_obj.to_arrow_async()
