@@ -6,7 +6,7 @@ import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
-from primary.services.service_exceptions import InvalidDataError, NoDataError, Service
+from primary.services.service_exceptions import InvalidDataError, ServiceRequestError, Service
 
 from .sumo_client_factory import create_sumo_client
 from .parameter_types import (
@@ -42,7 +42,7 @@ class ParameterAccess:
         try:
             parameter_agg = await parameter_table_context.aggregation_async(operation="collection")
         except Exception as exp:
-            raise NoDataError(
+            raise ServiceRequestError(
                 f"No parameters found for case {self._case_uuid} and iteration {self._iteration_name}",
                 Service.SUMO,
             ) from exp
