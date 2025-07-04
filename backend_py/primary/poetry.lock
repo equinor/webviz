@@ -865,13 +865,13 @@ docs = ["Sphinx", "autoapi", "autodoc-pydantic (>=2.0.0)", "furo", "myst-parser"
 
 [[package]]
 name = "fmu-sumo"
-version = "2.4.8"
+version = "2.4.9"
 description = "Python package for interacting with Sumo in an FMU setting"
 optional = false
 python-versions = ">=3.11"
 files = [
-    {file = "fmu_sumo-2.4.8-py3-none-any.whl", hash = "sha256:1619d47236ee41aebd915c7538a6f21da5c3a030d3fee476a32d65f813b9d008"},
-    {file = "fmu_sumo-2.4.8.tar.gz", hash = "sha256:e8fb3f493417c49b588a210ed4383f1765e25aa446ca3c4fc1463da60d72e7b1"},
+    {file = "fmu_sumo-2.4.9-py3-none-any.whl", hash = "sha256:c3f8ad5b4e1a56ff14000b4b0d9a331f59c0815130984bfe05baefb4762b1f47"},
+    {file = "fmu_sumo-2.4.9.tar.gz", hash = "sha256:ee98ef8357b166f7b5e65f0f759742afc0c74b835a779ef49e456fc12a4bec0e"},
 ]
 
 [package.dependencies]
@@ -4057,4 +4057,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "622318ad625563364deca144fcd5580ad02654897b53fff70c1bf8abcd0fdd02"
+content-hash = "229b716c6013cf479c9d28a587013f17b4cd7ffceaaf26d7e4fa5e611c1b2c05"
