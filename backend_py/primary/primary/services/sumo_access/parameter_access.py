@@ -41,7 +41,13 @@ class ParameterAccess:
         perf_metrics = PerfMetrics()
 
         parameter_table_context = self._ensemble_context.parameters
-        parameter_agg = await parameter_table_context.aggregation_async(operation="collection")
+        try:
+            parameter_agg = await parameter_table_context.aggregation_async(operation="collection")
+        except Exception as exp:
+            raise NoDataError(
+                f"No parameters found for case {self._case_uuid} and iteration {self._iteration_name}",
+                Service.SUMO,
+            ) from exp
         perf_metrics.record_lap("aggregate")
 
         parameter_table = await parameter_agg.to_arrow_async()
