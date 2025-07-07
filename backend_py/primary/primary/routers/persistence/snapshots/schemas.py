@@ -14,6 +14,7 @@ class SnapshotMetadata(BaseModel):
     updatedAt: str
     hash: str
 
+
 class Snapshot(BaseModel):
     id: str
     metadata: SnapshotMetadata

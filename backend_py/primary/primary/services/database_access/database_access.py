@@ -6,7 +6,7 @@ from primary.services.service_exceptions import Service, ServiceRequestError
 
 
 class DatabaseAccess:
-    def __init__(self, database_name, client: CosmosClient):
+    def __init__(self, database_name: str, client: CosmosClient):
         self._database_name = database_name
         self._client = client
         self._database = self._client.get_database_client(database_name)
@@ -24,11 +24,11 @@ class DatabaseAccess:
         self = cls(database_name, client)
         return self
 
-    async def __aenter__(self):
+    async def __aenter__(self):  # pylint: disable=C9001
         return self
 
-    async def __aexit__(self, exc_type, exc, tb):
-        await self.close()
+    async def __aexit__(self, exc_type, exc_val, exc_tb):  # pylint: disable=C9001
+        await self.close_async()
 
     def _raise_exception(self, message: str):
         raise ServiceRequestError(f"DatabaseAccess ({self._database_name}): {message}", Service.DATABASE)
@@ -38,13 +38,17 @@ class DatabaseAccess:
             self._raise_exception("Database client is not initialized or already closed.")
         if not container_name or not isinstance(container_name, str):
             self._raise_exception("Invalid container name.")
-        
+
         try:
             container = self._database.get_container_client(container_name)
             return container
-        except exceptions.CosmosHttpResponseError as e:
-            self._raise_exception(f"Unable to access container '{container_name}': {e.message}")
+        except exceptions.CosmosHttpResponseError as error:
+            self._raise_exception(f"Unable to access container '{container_name}': {error.message}")
 
-    async def close(self):
-        await self._client.close()
+        return None  # unreachable; satisfies pylint R1710
+
+    async def close_async(self):
+        if self._client:
+            await self._client.close()
+            self._client = None
         self._database = None

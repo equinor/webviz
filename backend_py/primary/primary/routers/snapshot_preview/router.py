@@ -6,6 +6,7 @@ from primary.services.snapshot_access.snapshot_access import SnapshotAccess
 
 router = APIRouter()
 
+
 @router.get("/{snapshot_id}", response_class=HTMLResponse)
 async def snapshot_preview(snapshot_id: str, request: Request):
     access = await SnapshotAccess.create("")
@@ -13,7 +14,7 @@ async def snapshot_preview(snapshot_id: str, request: Request):
         metadata = await access.get_snapshot_metadata(snapshot_id)
         if not metadata:
             raise HTTPException(status_code=404, detail="Snapshot metadata not found")
-        
+
         base_url = get_external_base_url(request)
         snapshot_url = f"{base_url}/snapshot/{snapshot_id}"
 
@@ -35,6 +36,7 @@ async def snapshot_preview(snapshot_id: str, request: Request):
         </body>
         </html>
         """
+
 
 def get_external_base_url(request: Request) -> str:
     forwarded_proto = request.headers.get("x-forwarded-proto", "http")

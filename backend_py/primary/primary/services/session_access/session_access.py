@@ -25,10 +25,10 @@ class SessionAccess:
         self.user_id = user_id
         self.session_container_access = session_container_access
 
-    async def __aenter__(self):
+    async def __aenter__(self):  # pylint: disable=C9001
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb):  # pylint: disable=C9001
         await self.session_container_access.close_async()
 
     @classmethod
@@ -44,10 +44,7 @@ class SessionAccess:
         query = "SELECT * FROM c WHERE c.owner_id = @owner_id"
         params = [{"name": "@owner_id", "value": self.user_id}]
         items = await self.session_container_access.query_items_async(query=query, parameters=params)
-        return [
-            self._to_metadata_summary(item)
-            for item in items
-        ]
+        return [self._to_metadata_summary(item) for item in items]
 
     async def get_filtered_sessions_metadata_for_user_async(
         self,
@@ -65,14 +62,13 @@ class SessionAccess:
             reverse = sort_direction == SortDirection.DESC
             metadata_array.sort(key=lambda s: s.title.lower() if s.title else "", reverse=reverse)
 
-            return metadata_array[offset:] if limit is None else metadata_array[offset:offset + limit]
-            
+            return metadata_array[offset:] if limit is None else metadata_array[offset : offset + limit]
+
         offset_clause = f"OFFSET {offset} LIMIT {limit}" if limit is not None else ""
         query = (
             f"SELECT * FROM c "
             f"WHERE c.owner_id = @owner_id "
-            f"ORDER BY c.metadata.{sort_by.value} {sort_direction.value} "
-            + offset_clause
+            f"ORDER BY c.metadata.{sort_by.value} {sort_direction.value} " + offset_clause
         )
 
         params = [
@@ -130,15 +126,11 @@ class SessionAccess:
             metadata=updated_metadata,
         )
 
-        await self.session_container_access.update_item_async(
-            session_id, updated_session, partition_key=self.user_id
-        )
+        await self.session_container_access.update_item_async(session_id, updated_session, partition_key=self.user_id)
 
     async def _assert_ownership_async(self, session_id: str) -> SessionDocument:
         try:
-            session = await self.session_container_access.get_item_async(
-                item_id=session_id, partition_key=self.user_id
-            )
+            session = await self.session_container_access.get_item_async(item_id=session_id, partition_key=self.user_id)
         except CosmosResourceNotFoundError:
             raise ServiceRequestError(f"Session with id '{session_id}' not found.", Service.DATABASE)
 
@@ -146,7 +138,7 @@ class SessionAccess:
             raise ServiceRequestError(f"You do not have permission to access session '{session_id}'.", Service.DATABASE)
 
         return session
-    
+
     @staticmethod
     def _to_metadata_summary(doc: SessionDocument) -> SessionMetadataWithId:
         return SessionMetadataWithId(**doc.metadata.model_dump(), id=doc.id)

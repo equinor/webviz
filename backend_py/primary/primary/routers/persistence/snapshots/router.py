@@ -3,11 +3,22 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from primary.services.snapshot_access.types import NewSnapshot, Snapshot, SnapshotMetadata, SnapshotUpdate, SortBy, SortDirection
+from primary.services.snapshot_access.types import (
+    NewSnapshot,
+    Snapshot,
+    SnapshotMetadata,
+    SnapshotUpdate,
+    SortBy,
+    SortDirection,
+)
 from primary.middleware.add_browser_cache import no_cache
 from primary.services.snapshot_access.snapshot_access import SnapshotAccess
 from primary.auth.auth_helper import AuthHelper, AuthenticatedUser
-from primary.routers.persistence.snapshots.converters import to_api_snapshot, to_api_snapshot_metadata, to_api_snapshot_metadata_summary
+from primary.routers.persistence.snapshots.converters import (
+    to_api_snapshot,
+    to_api_snapshot_metadata,
+    to_api_snapshot_metadata_summary,
+)
 from primary.routers.persistence.sessions.converters import to_api_session_metadata, to_api_session_record
 
 from . import schemas

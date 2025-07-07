@@ -13,6 +13,7 @@ def to_api_snapshot_metadata_summary(metadata: SnapshotMetadataWithId) -> schema
         hash=metadata.hash,
     )
 
+
 def to_api_snapshot_metadata(metadata: SnapshotMetadata) -> schemas.SnapshotMetadata:
     return schemas.SnapshotMetadata(
         ownerId=metadata.owner_id,
@@ -22,6 +23,7 @@ def to_api_snapshot_metadata(metadata: SnapshotMetadata) -> schemas.SnapshotMeta
         updatedAt=metadata.updated_at.isoformat(),
         hash=metadata.hash,
     )
+
 
 def to_api_snapshot(snapshot: Snapshot) -> schemas.Snapshot:
     return schemas.Snapshot(

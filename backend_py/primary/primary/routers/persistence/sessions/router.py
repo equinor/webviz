@@ -34,7 +34,9 @@ async def get_sessions_metadata(
 ):
     access = await SessionAccess.create(user.get_user_id())
     async with access:
-        items = await access.get_filtered_sessions_metadata_for_user_async(sort_by=sort_by, sort_direction=sort_direction, limit=limit)
+        items = await access.get_filtered_sessions_metadata_for_user_async(
+            sort_by=sort_by, sort_direction=sort_direction, limit=limit
+        )
         return [to_api_session_metadata_summary(item) for item in items]
 
 

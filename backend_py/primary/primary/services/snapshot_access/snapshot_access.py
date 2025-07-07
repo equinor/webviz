@@ -25,30 +25,43 @@ class SnapshotAccess:
     }
     DATABASE_NAME = "persistence"
 
-    def __init__(self, user_id: str, metadata_container_access: ContainerAccess[SnapshotMetadataDocument], content_container_access: ContainerAccess[SnapshotContentDocument]):
+    def __init__(
+        self,
+        user_id: str,
+        metadata_container_access: ContainerAccess[SnapshotMetadataDocument],
+        content_container_access: ContainerAccess[SnapshotContentDocument],
+    ):
         self.user_id = user_id
         self.metadata_container_access = metadata_container_access
         self.content_container_access = content_container_access
 
-    async def __aenter__(self):
+    async def __aenter__(self):  # pylint: disable=C9001
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb):  # pylint: disable=C9001
         await self.metadata_container_access.close_async()
         await self.content_container_access.close_async()
 
     @classmethod
     async def create(cls, user_id: str) -> "SnapshotAccess":
-        metadata_container_access = await ContainerAccess.create(cls.DATABASE_NAME, cls.CONTAINER_NAMES["metadata"], SnapshotMetadataDocument)
-        content_container_access = await ContainerAccess.create(cls.DATABASE_NAME, cls.CONTAINER_NAMES["content"], SnapshotContentDocument)
+        metadata_container_access = await ContainerAccess.create(
+            cls.DATABASE_NAME, cls.CONTAINER_NAMES["metadata"], SnapshotMetadataDocument
+        )
+        content_container_access = await ContainerAccess.create(
+            cls.DATABASE_NAME, cls.CONTAINER_NAMES["content"], SnapshotContentDocument
+        )
         return cls(user_id, metadata_container_access, content_container_access)
 
     async def get_snapshot_by_id_async(self, snapshot_id: str) -> Snapshot:
         # We are accessing the content first as we only have the snapshot_id and not the user_id yet.
         # The content container is partioned by snapshot_id, so we can query it directly.
         # The metadata container is partitioned by user_id, so we need to query it after fetching the content.
-        content_document = await self.content_container_access.get_item_async(item_id=snapshot_id, partition_key=snapshot_id)        
-        metadata_document = await self.metadata_container_access.get_item_async(item_id=snapshot_id, partition_key=content_document.owner_id)
+        content_document = await self.content_container_access.get_item_async(
+            item_id=snapshot_id, partition_key=snapshot_id
+        )
+        metadata_document = await self.metadata_container_access.get_item_async(
+            item_id=snapshot_id, partition_key=content_document.owner_id
+        )
 
         return Snapshot(
             id=snapshot_id,
@@ -79,14 +92,13 @@ class SnapshotAccess:
             reverse = sort_direction == SortDirection.DESC
             metadata_array.sort(key=lambda s: s.title.lower() if s.title else "", reverse=reverse)
 
-            return metadata_array[offset:] if limit is None else metadata_array[offset:offset + limit]
-            
+            return metadata_array[offset:] if limit is None else metadata_array[offset : offset + limit]
+
         offset_clause = f"OFFSET {offset} LIMIT {limit}" if limit is not None else ""
         query = (
             f"SELECT * FROM c "
             f"WHERE c.owner_id = @owner_id "
-            f"ORDER BY c.metadata.{sort_by.value} {sort_direction.value} "
-            + offset_clause
+            f"ORDER BY c.metadata.{sort_by.value} {sort_direction.value} " + offset_clause
         )
 
         params = [
@@ -96,7 +108,7 @@ class SnapshotAccess:
         items = await self.metadata_container_access.query_items_async(query=query, parameters=params)
 
         return [self._to_metadata_summary(item) for item in items]
-    
+
     async def get_snapshot_metadata_async(self, snapshot_id: str, owner_id: Optional[str] = None) -> SnapshotMetadata:
         owner = owner_id or self.user_id
         try:
@@ -146,9 +158,7 @@ class SnapshotAccess:
         await self.content_container_access.delete_item_async(snapshot_id, partition_key=snapshot_id)
 
     async def update_snapshot_metadata_async(self, snapshot_id: str, snapshot_update: SnapshotUpdate):
-        existing = await self.metadata_container_access.get_item_async(
-            snapshot_id, partition_key=self.user_id
-        )
+        existing = await self.metadata_container_access.get_item_async(snapshot_id, partition_key=self.user_id)
 
         updated_metadata = existing.metadata.model_copy(
             update={
@@ -159,14 +169,14 @@ class SnapshotAccess:
         )
 
         await self.metadata_container_access.update_item_async(
-            snapshot_id, 
+            snapshot_id,
             {
                 "id": snapshot_id,
                 "snapshot_id": snapshot_id,
                 "owner_id": self.user_id,
                 "metadata": updated_metadata.model_dump(by_alias=True, mode="json"),
-            }, 
-            partition_key=self.user_id
+            },
+            partition_key=self.user_id,
         )
 
     async def _assert_ownership_async(self, snapshot_id: str) -> SnapshotMetadataDocument:
@@ -176,16 +186,19 @@ class SnapshotAccess:
                 item_id=snapshot_id, partition_key=self.user_id
             )
         except CosmosResourceNotFoundError:
-            raise ServiceRequestError(f"Snapshot with id '{snapshot_id}' not found for user '{self.user_id}'.", Service.DATABASE)
+            raise ServiceRequestError(
+                f"Snapshot with id '{snapshot_id}' not found for user '{self.user_id}'.", Service.DATABASE
+            )
 
         # Check if the snapshot belongs to the user - this should not be necessary if the partition key is set correctly,
         # but it's a good practice to ensure the user has access.
         if metadata.owner_id != self.user_id:
-            raise ServiceRequestError(f"You do not have permission to access snapshot '{snapshot_id}'.", Service.DATABASE)
-        
+            raise ServiceRequestError(
+                f"You do not have permission to access snapshot '{snapshot_id}'.", Service.DATABASE
+            )
+
         return metadata
 
-    
     @staticmethod
     def _to_metadata_summary(doc: SnapshotMetadataDocument) -> SnapshotMetadataWithId:
         return SnapshotMetadataWithId(**doc.metadata.model_dump(), id=doc.id)

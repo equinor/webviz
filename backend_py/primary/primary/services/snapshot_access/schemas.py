@@ -17,6 +17,7 @@ class SnapshotMetadataDocument(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
+
 class SnapshotContentDocument(BaseModel):
     id: str
     snapshot_id: str

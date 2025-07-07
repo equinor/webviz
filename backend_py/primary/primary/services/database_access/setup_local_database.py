@@ -27,13 +27,13 @@ COSMOS_SCHEMA = [
 
 def wait_for_emulator(uri, key, retries=30, delay=2):
     for attempt in range(retries):
-        try: 
+        try:
             client = CosmosClient(uri, key, connection_verify=False)
             client.list_databases()
             LOGGER.info("✅ Cosmos Emulator is responsive.")
             return client
-        except Exception as e:  # pylint:disable=broad-except
-            LOGGER.warning("⏳ Emulator not ready yet (attempt %d): %s", attempt + 1, e)
+        except Exception as error:  # pylint:disable=broad-except
+            LOGGER.warning("⏳ Emulator not ready yet (attempt %d): %s", attempt + 1, error)
             time.sleep(delay)
 
     raise RuntimeError("❌ Cosmos Emulator did not become ready in time.")
@@ -43,7 +43,8 @@ def maybe_setup_local_database():
     if COSMOS_DB_PROD_CONNECTION_STRING:
         LOGGER.info("Using production Cosmos DB - skipping local setup.")
         return
-    elif COSMOS_DB_EMULATOR_URI is None or COSMOS_DB_EMULATOR_KEY is None:
+
+    if COSMOS_DB_EMULATOR_URI is None or COSMOS_DB_EMULATOR_KEY is None:
         raise ValueError("No Cosmos DB production connection string or emulator URI/key provided.")
 
     client = wait_for_emulator(COSMOS_DB_EMULATOR_URI, COSMOS_DB_EMULATOR_KEY)
@@ -53,13 +54,13 @@ def maybe_setup_local_database():
     for db_def in COSMOS_SCHEMA:
         db_name = db_def["database"]
         LOGGER.info("Creating or getting database: %s", db_name)
-        db = client.create_database_if_not_exists(db_name, offer_throughput=db_def.get("offer_throughput"))
+        database = client.create_database_if_not_exists(db_name, offer_throughput=db_def.get("offer_throughput"))
 
         for container_def in db_def["containers"]:
             max_attempts = 5
             for attempt in range(1, max_attempts + 1):
                 try:
-                    db.create_container_if_not_exists(
+                    database.create_container_if_not_exists(
                         id=container_def["id"],
                         partition_key=PartitionKey(path=container_def["partition_key"]),
                         offer_throughput=container_def.get("throughput"),
@@ -67,9 +68,10 @@ def maybe_setup_local_database():
                     )
                     LOGGER.info("    ✅ Created container '%s' (attempt %d)", container_def["id"], attempt)
                     break
-                except Exception as e:
+                # pylint:disable=broad-except
+                except Exception as error:
                     LOGGER.warning(
-                        "    ⚠️ Failed to create container '%s' (attempt %d): %s", container_def["id"], attempt, e
+                        "    ⚠️ Failed to create container '%s' (attempt %d): %s", container_def["id"], attempt, error
                     )
                     if attempt == max_attempts:
                         raise
