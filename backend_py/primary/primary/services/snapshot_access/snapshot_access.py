@@ -43,11 +43,11 @@ class SnapshotAccess:
         await self.content_container_access.close_async()
 
     @classmethod
-    async def create(cls, user_id: str) -> "SnapshotAccess":
-        metadata_container_access = await ContainerAccess.create(
+    def create(cls, user_id: str) -> "SnapshotAccess":
+        metadata_container_access = ContainerAccess.create(
             cls.DATABASE_NAME, cls.CONTAINER_NAMES["metadata"], SnapshotMetadataDocument
         )
-        content_container_access = await ContainerAccess.create(
+        content_container_access = ContainerAccess.create(
             cls.DATABASE_NAME, cls.CONTAINER_NAMES["content"], SnapshotContentDocument
         )
         return cls(user_id, metadata_container_access, content_container_access)

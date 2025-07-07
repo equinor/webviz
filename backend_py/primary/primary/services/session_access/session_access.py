@@ -32,8 +32,8 @@ class SessionAccess:
         await self.session_container_access.close_async()
 
     @classmethod
-    async def create(cls, user_id: str):
-        session_container_access = await ContainerAccess.create(cls.DATABASE_NAME, cls.CONTAINER_NAME, SessionDocument)
+    def create(cls, user_id: str):
+        session_container_access = ContainerAccess.create(cls.DATABASE_NAME, cls.CONTAINER_NAME, SessionDocument)
         return cls(user_id=user_id, session_container_access=session_container_access)
 
     async def get_session_by_id_async(self, session_id: str) -> SessionDocument:
