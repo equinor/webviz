@@ -98,10 +98,10 @@ class ContainerAccess(Generic[T]):
         except exceptions.CosmosHttpResponseError as error:
             self._raise_exception(error.message)
 
-    async def update_item_async(self, item_id: str, updated_item: T, partition_key: str):
+    async def update_item_async(self, item_id: str, updated_item: T):
         try:
             validated = self._validation_model.model_validate(updated_item).model_dump(by_alias=True, mode="json")
-            await self._container.upsert_item(validated, partition_key=partition_key)
+            await self._container.upsert_item(validated)
             logger.debug("[ContainerAccess] Updated item '%s' in '%s'", item_id, self._container_name)
         except ValidationError as validation_error:
             logger.error("[ContainerAccess] Validation error in '%s': %s", self._container_name, validation_error)

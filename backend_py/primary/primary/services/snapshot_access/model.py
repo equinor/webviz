@@ -15,7 +15,7 @@ class SnapshotMetadataDocument(BaseModel):
             raise ValueError("snapshot_id must equal id")
         return v
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
 
 class SnapshotContentDocument(BaseModel):
@@ -31,4 +31,4 @@ class SnapshotContentDocument(BaseModel):
             raise ValueError("snapshot_id must equal id")
         return v
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")

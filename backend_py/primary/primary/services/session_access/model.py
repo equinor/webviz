@@ -8,4 +8,4 @@ class SessionDocument(BaseModel):
     metadata: SessionMetadata
     content: str
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")

@@ -2,7 +2,7 @@ from primary.services.snapshot_access.types import Snapshot, SnapshotMetadata, S
 from . import schemas
 
 
-def to_api_snapshot_metadata_summary(metadata: SnapshotMetadataWithId) -> schemas.SnapshotMetadata:
+def to_api_snapshot_metadata_summary(metadata: SnapshotMetadataWithId) -> schemas.SnapshotMetadataWithId:
     return schemas.SnapshotMetadata(
         id=metadata.id,
         ownerId=metadata.owner_id,
@@ -28,6 +28,6 @@ def to_api_snapshot_metadata(metadata: SnapshotMetadata) -> schemas.SnapshotMeta
 def to_api_snapshot(snapshot: Snapshot) -> schemas.Snapshot:
     return schemas.Snapshot(
         id=snapshot.id,
-        metadata=to_api_snapshot_metadata_summary(snapshot.metadata),
+        metadata=to_api_snapshot_metadata(snapshot.metadata),
         content=snapshot.content,
     )

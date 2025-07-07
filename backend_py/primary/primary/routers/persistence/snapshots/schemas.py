@@ -6,13 +6,16 @@ from pydantic import BaseModel
 
 
 class SnapshotMetadata(BaseModel):
-    id: str
     ownerId: str
     title: str
     description: Optional[str]
     createdAt: str
     updatedAt: str
     hash: str
+
+
+class SnapshotMetadataWithId(SnapshotMetadata):
+    id: str
 
 
 class Snapshot(BaseModel):

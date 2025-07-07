@@ -1,4 +1,4 @@
-from primary.services.session_access.schemas import SessionDocument
+from primary.services.session_access.model import SessionDocument
 from primary.services.session_access.types import SessionMetadata, SessionMetadataWithId
 from . import schemas
 

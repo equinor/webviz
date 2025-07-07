@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from nanoid import generate
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
-from primary.services.session_access.schemas import SessionDocument
+from primary.services.session_access.model import SessionDocument
 from primary.services.database_access._utils import hash_json_string
 from primary.services.service_exceptions import Service, ServiceRequestError
 from primary.services.database_access.container_access import ContainerAccess
@@ -126,7 +126,7 @@ class SessionAccess:
             metadata=updated_metadata,
         )
 
-        await self.session_container_access.update_item_async(session_id, updated_session, partition_key=self.user_id)
+        await self.session_container_access.update_item_async(session_id, updated_session)
 
     async def _assert_ownership_async(self, session_id: str) -> SessionDocument:
         try:

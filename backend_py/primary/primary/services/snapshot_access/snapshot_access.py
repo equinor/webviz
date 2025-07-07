@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from nanoid import generate
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
-from primary.services.snapshot_access.schemas import SnapshotContentDocument, SnapshotMetadataDocument
+from primary.services.snapshot_access.model import SnapshotContentDocument, SnapshotMetadataDocument
 from primary.services.database_access._utils import hash_json_string
 from primary.services.service_exceptions import Service, ServiceRequestError
 from primary.services.database_access.container_access import ContainerAccess
@@ -176,7 +176,6 @@ class SnapshotAccess:
                 "owner_id": self.user_id,
                 "metadata": updated_metadata.model_dump(by_alias=True, mode="json"),
             },
-            partition_key=self.user_id,
         )
 
     async def _assert_ownership_async(self, snapshot_id: str) -> SnapshotMetadataDocument:
