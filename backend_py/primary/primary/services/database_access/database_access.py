@@ -7,10 +7,9 @@ from primary.services.service_exceptions import Service, ServiceRequestError
 
 class DatabaseAccess:
     def __init__(self, database_name, client: CosmosClient):
-        self.database_name = database_name
-        self.client = client
-        self.database = self.client.get_database_client(database_name)
-        self._container_cache: dict[str, ContainerProxy] = {}
+        self._database_name = database_name
+        self._client = client
+        self._database = self._client.get_database_client(database_name)
 
     @classmethod
     def create(cls, database_name: str) -> "DatabaseAccess":
@@ -32,26 +31,20 @@ class DatabaseAccess:
         await self.close()
 
     def _raise_exception(self, message: str):
-        raise ServiceRequestError(f"DatabaseAccess ({self.database_name}): {message}", Service.DATABASE)
+        raise ServiceRequestError(f"DatabaseAccess ({self._database_name}): {message}", Service.DATABASE)
 
-    async def get_container(self, container_name: str) -> ContainerProxy:
-        if not self.client or not self.database:
+    def get_container(self, container_name: str) -> ContainerProxy:
+        if not self._client or not self._database:
             self._raise_exception("Database client is not initialized or already closed.")
         if not container_name or not isinstance(container_name, str):
             self._raise_exception("Invalid container name.")
-
-        if container_name in self._container_cache:
-            return self._container_cache[container_name]
         
         try:
-            container = self.database.get_container_client(container_name)
-            await container.read()
-            self._container_cache[container_name] = container
+            container = self._database.get_container_client(container_name)
             return container
         except exceptions.CosmosHttpResponseError as e:
             self._raise_exception(f"Unable to access container '{container_name}': {e.message}")
 
     async def close(self):
-        await self.client.close()
-        self.database = None
-        self._container_cache.clear()
+        await self._client.close()
+        self._database = None
