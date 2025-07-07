@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, field_validator
-from primary.services.snapshot_access.types import SnapshotMetadata
+from primary.services.database_access.snapshot_access.types import SnapshotMetadata
 
 
 class SnapshotMetadataDocument(BaseModel):
