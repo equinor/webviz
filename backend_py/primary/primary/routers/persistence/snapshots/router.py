@@ -35,7 +35,7 @@ async def get_snapshots_metadata(
     sort_direction: Optional[SortDirection] = Query(SortDirection.ASC, description="Sort direction: 'asc' or 'desc'"),
     limit: Optional[int] = Query(10, ge=1, le=100, description="Limit the number of results"),
 ):
-    access = await SnapshotAccess.create(user.get_user_id())
+    access = SnapshotAccess.create(user.get_user_id())
     async with access:
         items = await access.get_filtered_snapshots_metadata_for_user_async(
             sort_by=sort_by, sort_direction=sort_direction, limit=limit
@@ -46,7 +46,7 @@ async def get_snapshots_metadata(
 @router.get("/snapshots/{snapshot_id}", response_model=schemas.Snapshot)
 @no_cache
 async def get_snapshot(snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
-    access = await SnapshotAccess.create(user.get_user_id())
+    access = SnapshotAccess.create(user.get_user_id())
     async with access:
         snapshot = await access.get_snapshot_by_id_async(snapshot_id)
         if not snapshot:
@@ -57,7 +57,7 @@ async def get_snapshot(snapshot_id: str, user: AuthenticatedUser = Depends(AuthH
 @router.get("/snapshots/metadata/{snapshot_id}", response_model=schemas.SnapshotMetadata)
 @no_cache
 async def get_snapshot_metadata(snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
-    access = await SnapshotAccess.create(user.get_user_id())
+    access = SnapshotAccess.create(user.get_user_id())
     async with access:
         metadata = await access.get_snapshot_metadata_async(snapshot_id)
         if not metadata:
@@ -67,7 +67,7 @@ async def get_snapshot_metadata(snapshot_id: str, user: AuthenticatedUser = Depe
 
 @router.post("/snapshots", response_model=str)
 async def create_snapshot(session: NewSnapshot, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
-    access = await SnapshotAccess.create(user.get_user_id())
+    access = SnapshotAccess.create(user.get_user_id())
     async with access:
         snapshot_id = await access.insert_snapshot_async(session)
         return snapshot_id
@@ -79,13 +79,13 @@ async def update_snapshot(
     snapshot_update: SnapshotUpdate,
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ):
-    access = await SnapshotAccess.create(user.get_user_id())
+    access = SnapshotAccess.create(user.get_user_id())
     async with access:
         await access.update_snapshot_metadata_async(snapshot_id, snapshot_update)
 
 
 @router.delete("/snapshots/{snapshot_id}")
 async def delete_snapshot(snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
-    access = await SnapshotAccess.create(user.get_user_id())
+    access = SnapshotAccess.create(user.get_user_id())
     async with access:
         await access.delete_snapshot_async(snapshot_id)
