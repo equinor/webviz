@@ -2,7 +2,8 @@ import type React from "react";
 
 import { useQuery } from "@tanstack/react-query";
 
-import { getRecentSnapshotsOptions } from "@api";
+import { getRecentSnapshotsOptions, getRecentSnapshotsQueryKey } from "@api";
+import { GuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { timeAgo } from "@lib/utils/dates";
@@ -17,13 +18,20 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
         refetchInterval: 10000,
     });
 
-    // TODO: Handle smooth navigation
-    // function handleSnapshotClick(e: React.MouseEvent<HTMLAnchorElement>) {
-    //     e.preventDefault();
+    async function handleSnapshotClick(e: React.MouseEvent<HTMLAnchorElement>) {
+        e.preventDefault();
 
-    //     history.pushState(null, "", e.currentTarget.href);
-    //     // props.workbench.makeSessionFromSnapshot(sessionId);
-    // }
+        // Load the selected snapshot
+        // TODO: Make this to a workbench method
+        props.workbench.getGuiMessageBroker().setState(GuiState.IsLoadingSession, true);
+
+        history.pushState(null, "", e.currentTarget.href);
+        await props.workbench.handleNavigation();
+
+        props.workbench.getGuiMessageBroker().setState(GuiState.IsLoadingSession, false);
+        // Reset query so that fresh snapshots are fetched when we return to the start page
+        props.workbench.getQueryClient().resetQueries({ queryKey: getRecentSnapshotsQueryKey() });
+    }
 
     if (recentSnapshotsQuery.isPending) {
         return (
@@ -48,7 +56,7 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
                     <a
                         className="text-blue-600 hover:underline"
                         href={`/snapshot/${snapshot.snapshot_id}`}
-                        // onClick={handleSnapshotClick}
+                        onClick={handleSnapshotClick}
                     >
                         {snapshot.snapshot_metadata.title}
                     </a>
