@@ -1,4 +1,5 @@
-from primary.services.snapshot_access.types import Snapshot, SnapshotMetadata, SnapshotMetadataWithId, SnapshotAccessLog
+from primary.services.snapshot_access.models import SnapshotAccessLog
+from primary.services.snapshot_access.types import Snapshot, SnapshotMetadata, SnapshotMetadataWithId
 
 from . import schemas
 
@@ -36,10 +37,10 @@ def to_api_snapshot(snapshot: Snapshot) -> schemas.Snapshot:
 
 def to_api_snapshot_access_log(access_log: SnapshotAccessLog, metadata: SnapshotMetadata) -> schemas.SnapshotAccessLog:
     return schemas.SnapshotAccessLog(
-        user_id=access_log.user_id,
-        snapshot_id=access_log.snapshot_id,
+        userId=access_log.user_id,
+        snapshotId=access_log.snapshot_id,
         visits=access_log.visits,
-        first_visited_at=access_log.first_visited_at.isoformat() if access_log.first_visited_at else None,
-        last_visited_at=access_log.last_visited_at.isoformat() if access_log.last_visited_at else None,
-        snapshot_metadata=to_api_snapshot_metadata(metadata),
+        firstVisitedAt=access_log.first_visited_at.isoformat() if access_log.first_visited_at else None,
+        lastVisitedAt=access_log.last_visited_at.isoformat() if access_log.last_visited_at else None,
+        snapshotMetadata=to_api_snapshot_metadata(metadata),
     )

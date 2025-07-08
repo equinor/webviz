@@ -1,6 +1,8 @@
 from typing import Optional
 from pydantic import BaseModel
 
+from primary.services.snapshot_access.util import make_access_log_item_id
+
 
 class SnapshotMetadata(BaseModel):
     ownerId: str
@@ -22,17 +24,17 @@ class Snapshot(BaseModel):
 
 
 class SnapshotAccessLog(BaseModel):
-    user_id: str
-    snapshot_id: str
+    userId: str
+    snapshotId: str
     visits: int
-    first_visited_at: str | None
-    last_visited_at: str | None
+    firstVisitedAt: str | None
+    lastVisitedAt: str | None
 
-    snapshot_metadata: SnapshotMetadata
+    snapshotMetadata: SnapshotMetadata
 
     # Internal item id
     @property
     # pylint: disable=invalid-name
     # ↳ pylint v2 will complain about names that are shorter than 3 characters
     def id(self) -> str:
-        return f"{self.snapshot_id}__{self.user_id}"
+        return make_access_log_item_id(self.snapshotId, self.userId)

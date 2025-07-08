@@ -755,12 +755,12 @@ export type Snapshot_api = {
 };
 
 export type SnapshotAccessLog_api = {
-    user_id: string;
-    snapshot_id: string;
+    userId: string;
+    snapshotId: string;
     visits: number;
-    first_visited_at: string | null;
-    last_visited_at: string | null;
-    snapshot_metadata: SnapshotMetadata_api;
+    firstVisitedAt: string | null;
+    lastVisitedAt: string | null;
+    snapshotMetadata: SnapshotMetadata_api;
 };
 
 export type SnapshotMetadata_api = {

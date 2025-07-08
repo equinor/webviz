@@ -3,8 +3,11 @@ from datetime import datetime, timezone
 
 
 from primary.services.database_access.container_access import ContainerAccess
+from primary.services.service_exceptions import ServiceRequestError
+
 from .query_collation_options import QueryCollationOptions
-from .types import SnapshotAccessLog
+from .models import SnapshotAccessLog
+from .util import make_access_log_item_id
 
 
 LOGGER = logging.getLogger(__name__)
@@ -31,16 +34,18 @@ class SnapshotLogsAccess:
         self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object | None
     ) -> None:
         # Clean up if needed (e.g., closing DB connections)
-        pass
+        await self._container_access.close_async()
 
     async def get_access_logs_for_user_async(self, collation_options: QueryCollationOptions) -> list[SnapshotAccessLog]:
-        query = f"SELECT * FROM c WHERE c.user_id = '{self._user_id}'"
+        query = "SELECT * FROM c WHERE c.user_id = @user_id"
+        params = [{"name": "@user_id", "value": self._user_id}]
+
         search_options = collation_options.to_sql_query_string("c")
 
         if search_options:
             query = f"{query} {search_options}"
 
-        return await self._container_access.query_items_async(query)
+        return await self._container_access.query_items_async(query, params)  # type: ignore[arg-type]
 
     async def create_access_log_async(
         self,
@@ -52,25 +57,24 @@ class SnapshotLogsAccess:
 
         return new_log
 
-    async def get_access_log_async(self, snapshot_id: str) -> SnapshotAccessLog | None:
-        query = f"SELECT * FROM c WHERE c.user_id = '{self._user_id}' AND c.snapshot_id = '{snapshot_id}'"
-        items = await self._container_access.query_items_async(query)
+    async def get_access_log_async(self, snapshot_id: str) -> SnapshotAccessLog:
+        item_id = make_access_log_item_id(snapshot_id, self._user_id)
 
-        if not items:
-            return None
+        return await self._container_access.get_item_async(item_id, partition_key=self._user_id)
 
-        # ? Is there a "pick one" query?
-        if len(items) > 2:
-            LOGGER.warning("Multiple entries")
+    async def get_existing_or_new_log_item_async(self, snapshot_id: str) -> SnapshotAccessLog:
+        """
+        Returns an already stored log item if it exists, otherwise, creates a new instance.
 
-        return items[0]
-
-    async def get_or_create_access_log_async(self, snapshot_id: str) -> SnapshotAccessLog:
-        existing_log = await self.get_access_log_async(snapshot_id)
-        if existing_log:
-            return existing_log
-
-        return await self.create_access_log_async(snapshot_id)
+        **Note: This does create a new entry in the database!**
+        """
+        try:
+            return await self.get_access_log_async(snapshot_id)
+        except ServiceRequestError:
+            return SnapshotAccessLog(
+                user_id=self._user_id,
+                snapshot_id=snapshot_id,
+            )
 
     async def log_snapshot_visit_async(self, snapshot_id: str) -> SnapshotAccessLog:
         timestamp = datetime.now(timezone.utc)
@@ -80,7 +84,7 @@ class SnapshotLogsAccess:
         #   <body>
         # except Exception as e:
         #   raise ServiceRequestError(f"Failed to log snapshot visit: {str(e)}", Service.DATABASE) from e
-        log = await self.get_or_create_access_log_async(snapshot_id)
+        log = await self.get_existing_or_new_log_item_async(snapshot_id)
         log.visits += 1
         log.last_visited_at = timestamp
 

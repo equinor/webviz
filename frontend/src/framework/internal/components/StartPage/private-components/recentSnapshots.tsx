@@ -35,7 +35,7 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
 
     if (recentSnapshotsQuery.isPending) {
         return (
-            <span className="text-gray-500 flex gap-2">
+            <span className="text-gray-500 flex items-center gap-2">
                 <CircularProgress size="extra-small" /> Loading recent snapshots...
             </span>
         );
@@ -52,17 +52,17 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
     return (
         <ul className="pl-5">
             {recentSnapshotsQuery.data.map((snapshot) => (
-                <li key={snapshot.snapshot_id} className="flex justify-between gap-4">
+                <li key={snapshot.snapshotId} className="flex justify-between gap-4">
                     <a
                         className="text-blue-600 hover:underline"
-                        href={`/snapshot/${snapshot.snapshot_id}`}
+                        href={`/snapshot/${snapshot.snapshotId}`}
                         onClick={handleSnapshotClick}
                     >
-                        {snapshot.snapshot_metadata.title}
+                        {snapshot.snapshotMetadata.title}
                     </a>
 
                     <span className="text-gray-500">
-                        ~ {timeAgo(Date.now() - new Date(snapshot.last_visited_at ?? "").getTime())}
+                        ~ {timeAgo(Date.now() - new Date(snapshot.lastVisitedAt ?? "").getTime())}
                     </span>
                 </li>
             ))}

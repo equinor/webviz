@@ -38,3 +38,21 @@ class SnapshotContentDocument(BaseModel):
         return val
 
     model_config = ConfigDict(extra="ignore")
+
+
+class SnapshotAccessLog(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    user_id: str  # Partition key
+    snapshot_id: str
+    visits: int = 0
+    first_visited_at: datetime | None = None
+    last_visited_at: datetime | None = None
+
+    # Internal item id
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    # pylint: disable=invalid-name
+    # ↳ pylint v2 will complain about names that are shorter than 3 characters
+    def id(self) -> str:
+        return make_access_log_item_id(self.snapshot_id, self.user_id)

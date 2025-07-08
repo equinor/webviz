@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from .types import SortBy, SortDirection
 
 
+# TODO: Generalize utility to work with any model
 @dataclass
 class QueryCollationOptions:
     """Helper class for defining NoSQL collation options"""
