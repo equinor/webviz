@@ -49,8 +49,9 @@ async def get_recent_snapshots(
         payload: list[schemas.SnapshotAccessLog] = []
 
         for log in recent_logs:
-            snapshot = await snapshot_access.get_snapshot_by_id_async(log.snapshot_id)
-            payload.append(to_api_snapshot_access_log(log, snapshot.metadata))
+            metadata = await snapshot_access.get_snapshot_metadata_async(log.snapshot_id, log.snapshot_owner_id)
+
+            payload.append(to_api_snapshot_access_log(log, metadata))
 
         return payload
 
@@ -84,7 +85,7 @@ async def get_snapshot(
         if not snapshot:
             raise HTTPException(status_code=404, detail="Snapshot not found")
 
-        await logs_access.log_snapshot_visit_async(snapshot_id)
+        await logs_access.log_snapshot_visit_async(snapshot_id, snapshot.owner_id)
 
         return to_api_snapshot(snapshot)
 
@@ -101,7 +102,9 @@ async def get_snapshot_metadata(snapshot_id: str, user: AuthenticatedUser = Depe
 
 
 @router.post("/snapshots", response_model=str)
-async def create_snapshot(session: NewSnapshot, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
+async def create_snapshot(
+    session: NewSnapshot, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+) -> str:
     access = SnapshotAccess.create(user.get_user_id())
     logs_access = SnapshotLogsAccess.create(user.get_user_id())
 
@@ -109,7 +112,7 @@ async def create_snapshot(session: NewSnapshot, user: AuthenticatedUser = Depend
         snapshot_id = await access.insert_snapshot_async(session)
 
         # We count snapshot creation as implicit visit. This also makes it so
-        await logs_access.log_snapshot_visit_async(snapshot_id=snapshot_id)
+        await logs_access.log_snapshot_visit_async(snapshot_id=snapshot_id, snapshot_owner_id=user.get_user_id())
         return snapshot_id
 
 

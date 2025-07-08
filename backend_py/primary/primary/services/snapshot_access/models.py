@@ -43,8 +43,9 @@ class SnapshotContentDocument(BaseModel):
 class SnapshotAccessLog(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    user_id: str  # Partition key
+    visitor_id: str  # Partition key
     snapshot_id: str
+    snapshot_owner_id: str
     visits: int = 0
     first_visited_at: datetime | None = None
     last_visited_at: datetime | None = None
@@ -55,4 +56,4 @@ class SnapshotAccessLog(BaseModel):
     # pylint: disable=invalid-name
     # ↳ pylint v2 will complain about names that are shorter than 3 characters
     def id(self) -> str:
-        return make_access_log_item_id(self.snapshot_id, self.user_id)
+        return make_access_log_item_id(self.snapshot_id, self.visitor_id)

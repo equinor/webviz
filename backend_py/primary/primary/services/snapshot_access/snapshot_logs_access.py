@@ -37,8 +37,8 @@ class SnapshotLogsAccess:
         await self._container_access.close_async()
 
     async def get_access_logs_for_user_async(self, collation_options: QueryCollationOptions) -> list[SnapshotAccessLog]:
-        query = "SELECT * FROM c WHERE c.user_id = @user_id"
-        params = [{"name": "@user_id", "value": self._user_id}]
+        query = "SELECT * FROM c WHERE c.visitor_id = @visitor_id"
+        params = [{"name": "@visitor_id", "value": self._user_id}]
 
         search_options = collation_options.to_sql_query_string("c")
 
@@ -47,11 +47,12 @@ class SnapshotLogsAccess:
 
         return await self._container_access.query_items_async(query, params)  # type: ignore[arg-type]
 
-    async def create_access_log_async(
-        self,
-        snapshot_id: str,
-    ) -> SnapshotAccessLog:
-        new_log = SnapshotAccessLog(user_id=self._user_id, snapshot_id=snapshot_id)
+    async def create_access_log_async(self, snapshot_id: str, snapshot_owner_id: str) -> SnapshotAccessLog:
+        new_log = SnapshotAccessLog(
+            visitor_id=self._user_id,
+            snapshot_id=snapshot_id,
+            snapshot_owner_id=snapshot_owner_id,
+        )
 
         _inserted_id = await self._container_access.insert_item_async(new_log)
 
@@ -62,7 +63,7 @@ class SnapshotLogsAccess:
 
         return await self._container_access.get_item_async(item_id, partition_key=self._user_id)
 
-    async def get_existing_or_new_log_item_async(self, snapshot_id: str) -> SnapshotAccessLog:
+    async def get_existing_or_new_log_item_async(self, snapshot_id: str, snapshot_owner_id: str) -> SnapshotAccessLog:
         """
         Returns an already stored log item if it exists, otherwise, creates a new instance.
 
@@ -72,11 +73,12 @@ class SnapshotLogsAccess:
             return await self.get_access_log_async(snapshot_id)
         except ServiceRequestError:
             return SnapshotAccessLog(
-                user_id=self._user_id,
+                visitor_id=self._user_id,
                 snapshot_id=snapshot_id,
+                snapshot_owner_id=snapshot_owner_id,
             )
 
-    async def log_snapshot_visit_async(self, snapshot_id: str) -> SnapshotAccessLog:
+    async def log_snapshot_visit_async(self, snapshot_id: str, snapshot_owner_id: str) -> SnapshotAccessLog:
         timestamp = datetime.now(timezone.utc)
 
         # Should we wrap this?
@@ -84,7 +86,7 @@ class SnapshotLogsAccess:
         #   <body>
         # except Exception as e:
         #   raise ServiceRequestError(f"Failed to log snapshot visit: {str(e)}", Service.DATABASE) from e
-        log = await self.get_existing_or_new_log_item_async(snapshot_id)
+        log = await self.get_existing_or_new_log_item_async(snapshot_id, snapshot_owner_id)
         log.visits += 1
         log.last_visited_at = timestamp
 
