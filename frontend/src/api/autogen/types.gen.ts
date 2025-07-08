@@ -754,8 +754,16 @@ export type Snapshot_api = {
     content: string;
 };
 
+export type SnapshotAccessLog_api = {
+    userId: string;
+    snapshotId: string;
+    visits: number;
+    firstVisitedAt: string | null;
+    lastVisitedAt: string | null;
+    snapshotMetadata: SnapshotMetadata_api;
+};
+
 export type SnapshotMetadata_api = {
-    id: string;
     ownerId: string;
     title: string;
     description: string | null;
@@ -772,13 +780,6 @@ export type SnapshotUserEditableMetadata_api = {
     title: string;
     description?: string | null;
 };
-
-export enum SortBy_api {
-    CREATED_AT = "created_at",
-    UPDATED_AT = "updated_at",
-    TITLE = "title",
-    TITLE_LOWER = "title_lower",
-}
 
 export enum SortDirection_api {
     ASC = "asc",
@@ -1268,6 +1269,21 @@ export type WellboreTrajectory_api = {
     eastingArr: Array<number>;
     northingArr: Array<number>;
 };
+
+export enum PrimaryServicesSessionAccessTypesSortBy_api {
+    CREATED_AT = "created_at",
+    UPDATED_AT = "updated_at",
+    TITLE = "title",
+    TITLE_LOWER = "title_lower",
+}
+
+export enum PrimaryServicesSnapshotAccessTypesSortBy_api {
+    CREATED_AT = "created_at",
+    UPDATED_AT = "updated_at",
+    TITLE = "title",
+    TITLE_LOWER = "title_lower",
+    LAST_VISITED_AT = "last_visited_at",
+}
 
 export type GetFieldsData_api = {
     body?: never;
@@ -3830,7 +3846,7 @@ export type GetSessionsMetadataData_api = {
         /**
          * Sort the result by
          */
-        sort_by?: SortBy_api | null;
+        sort_by?: PrimaryServicesSessionAccessTypesSortBy_api | null;
         /**
          * Sort direction: 'asc' or 'desc'
          */
@@ -3990,6 +4006,48 @@ export type GetSessionMetadataResponses_api = {
 
 export type GetSessionMetadataResponse_api = GetSessionMetadataResponses_api[keyof GetSessionMetadataResponses_api];
 
+export type GetRecentSnapshotsData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Sort the result by
+         */
+        sort_by?: PrimaryServicesSnapshotAccessTypesSortBy_api | null;
+        /**
+         * Sort direction: 'asc' or 'desc'
+         */
+        sort_direction?: SortDirection_api | null;
+        /**
+         * Limit the number of results
+         */
+        limit?: number | null;
+        /**
+         * The offset of the results
+         */
+        offset?: number | null;
+    };
+    url: "/snapshots/recent_snapshots";
+};
+
+export type GetRecentSnapshotsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetRecentSnapshotsError_api = GetRecentSnapshotsErrors_api[keyof GetRecentSnapshotsErrors_api];
+
+export type GetRecentSnapshotsResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<SnapshotAccessLog_api>;
+};
+
+export type GetRecentSnapshotsResponse_api = GetRecentSnapshotsResponses_api[keyof GetRecentSnapshotsResponses_api];
+
 export type GetSnapshotsMetadataData_api = {
     body?: never;
     path?: never;
@@ -3997,7 +4055,7 @@ export type GetSnapshotsMetadataData_api = {
         /**
          * Sort the result by
          */
-        sort_by?: SortBy_api | null;
+        sort_by?: PrimaryServicesSnapshotAccessTypesSortBy_api | null;
         /**
          * Sort direction: 'asc' or 'desc'
          */

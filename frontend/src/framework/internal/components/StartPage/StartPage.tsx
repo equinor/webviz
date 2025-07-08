@@ -1,9 +1,11 @@
 import { Icon, Tooltip, Typography } from "@equinor/eds-core-react";
 import { category, dashboard, folder_open, github, external_link } from "@equinor/eds-icons";
+
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 
 import { RecentSessions } from "./private-components/recentSessions";
+import { RecentSnapshots } from "./private-components/recentSnapshots";
 
 Icon.add({ dashboard, category, folder_open, github, external_link });
 
@@ -66,7 +68,7 @@ export function StartPage(props: StartPageProps) {
                     </section>
                     <section>
                         <Typography variant="h6">Snapshots</Typography>
-                        <div className="text-gray-500">Snapshots not available yet.</div>
+                        <RecentSnapshots workbench={props.workbench} />
                     </section>
                 </section>
             </div>

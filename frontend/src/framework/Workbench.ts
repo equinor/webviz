@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 
+import { getRecentSnapshotsQueryKey } from "@api";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
@@ -315,6 +316,9 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
         const snapshotId = await this._workbenchSessionPersistenceService.makeSnapshot(title, description);
         this._guiMessageBroker.setState(GuiState.IsMakingSnapshot, false);
+
+        // Reset this, so it'll fetch fresh copies
+        this._queryClient.resetQueries({ queryKey: getRecentSnapshotsQueryKey() });
 
         return snapshotId;
     }

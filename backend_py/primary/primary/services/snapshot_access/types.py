@@ -1,7 +1,7 @@
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, field_validator
 from datetime import datetime
 from enum import Enum
+from pydantic import BaseModel
 
 
 class SnapshotUserEditableMetadata(BaseModel):
@@ -46,6 +46,7 @@ class SortBy(str, Enum):
     UPDATED_AT = "updated_at"
     TITLE = "title"
     TITLE_LOWER = "title_lower"
+    LAST_VISIT = "last_visited_at"
 
 
 class SortDirection(str, Enum):
