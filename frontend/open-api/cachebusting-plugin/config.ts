@@ -6,7 +6,6 @@ import type { Config } from "./types";
 export const defaultConfig: Plugin.Config<Config> = {
     name: "cache-busting",
     output: "types",
-    targets: [],
     cacheKey: "t",
     // No need to define this
     _handlerLegacy: () => {},

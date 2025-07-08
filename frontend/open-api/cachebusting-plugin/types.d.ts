@@ -9,14 +9,10 @@ export interface Config {
      * Name of the generated file.
      */
     output: "types";
-    /**
-     * Endpoints that should have a cache busting field
-     */
-    targets: string[];
 
     /**
      * The query parameter to use for caching
-     * @default "cacheKey"
+     * @default "t"
      */
     cacheKey?: string | IR.ParameterObject;
 }

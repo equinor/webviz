@@ -23,16 +23,14 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
     }
 
     context.subscribe("operation", (ctx) => {
-        if (plugin.targets.includes(ctx.operation.id)) {
-            const existingParams = ctx.operation.parameters;
+        const existingParams = ctx.operation.parameters;
 
-            ctx.operation.parameters = {
-                ...existingParams,
-                query: {
-                    ...existingParams?.query,
-                    [cacheKey]: cacheParmObj,
-                },
-            };
-        }
+        ctx.operation.parameters = {
+            ...existingParams,
+            query: {
+                ...existingParams?.query,
+                [cacheKey]: cacheParmObj,
+            },
+        };
     });
 };
