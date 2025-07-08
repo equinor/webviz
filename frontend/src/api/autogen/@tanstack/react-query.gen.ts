@@ -31,6 +31,7 @@ import {
     getDeltaSurfaceData,
     getMisfitSurfaceData,
     deprecatedGetStratigraphicUnits,
+    getStratigraphicUnitsForStratColumn,
     getParameterNamesAndDescription,
     getParameter,
     getParameters,
@@ -112,6 +113,7 @@ import type {
     GetDeltaSurfaceDataData_api,
     GetMisfitSurfaceDataData_api,
     DeprecatedGetStratigraphicUnitsData_api,
+    GetStratigraphicUnitsForStratColumnData_api,
     GetParameterNamesAndDescriptionData_api,
     GetParameterData_api,
     GetParametersData_api,
@@ -768,6 +770,27 @@ export const deprecatedGetStratigraphicUnitsOptions = (options: Options<Deprecat
             return data;
         },
         queryKey: deprecatedGetStratigraphicUnitsQueryKey(options),
+    });
+};
+
+export const getStratigraphicUnitsForStratColumnQueryKey = (
+    options: Options<GetStratigraphicUnitsForStratColumnData_api>,
+) => [createQueryKey("getStratigraphicUnitsForStratColumn", options)];
+
+export const getStratigraphicUnitsForStratColumnOptions = (
+    options: Options<GetStratigraphicUnitsForStratColumnData_api>,
+) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getStratigraphicUnitsForStratColumn({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getStratigraphicUnitsForStratColumnQueryKey(options),
     });
 };
 

@@ -80,6 +80,9 @@ import type {
     DeprecatedGetStratigraphicUnitsData_api,
     DeprecatedGetStratigraphicUnitsResponse_api,
     DeprecatedGetStratigraphicUnitsError_api,
+    GetStratigraphicUnitsForStratColumnData_api,
+    GetStratigraphicUnitsForStratColumnResponse_api,
+    GetStratigraphicUnitsForStratColumnError_api,
     GetParameterNamesAndDescriptionData_api,
     GetParameterNamesAndDescriptionResponse_api,
     GetParameterNamesAndDescriptionError_api,
@@ -657,6 +660,22 @@ export const deprecatedGetStratigraphicUnits = <ThrowOnError extends boolean = f
     >({
         ...options,
         url: "/surface/deprecated_stratigraphic_units",
+    });
+};
+
+/**
+ * Get Stratigraphic Units For Strat Column
+ */
+export const getStratigraphicUnitsForStratColumn = <ThrowOnError extends boolean = false>(
+    options: Options<GetStratigraphicUnitsForStratColumnData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<
+        GetStratigraphicUnitsForStratColumnResponse_api,
+        GetStratigraphicUnitsForStratColumnError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/surface/stratigraphic_units_for_strat_column",
     });
 };
 

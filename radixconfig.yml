@@ -48,6 +48,8 @@ spec:
                 envVar: WEBVIZ_SSDL_RESOURCE_SCOPE
               - name: WEBVIZ-ENTERPRISE-SUBSCRIPTION-KEY
                 envVar: WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
+              - name: WEBVIZ-DB-CONN-STRING
+                envVar: WEBVIZ_DB_CONNECTION_STRING
       variables:
         UVICORN_PORT: 5000
       environmentConfig:
