@@ -1,7 +1,9 @@
 from typing import List
+import asyncio
 
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Depends, Path, Query, Body
+
 
 from primary.auth.auth_helper import AuthHelper
 from primary.services.sumo_access.case_inspector import CaseInspector
@@ -110,16 +112,27 @@ async def get_ensemble_details(
     )
 
 
-@router.get("/cases/{case_uuid}/ensembles/{ensemble_name}/timestamps")
+@router.post("/ensembles/timestamps")
 @no_cache
-async def get_ensemble_timestamps(
+async def get_timestamps_for_ensembles(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Path(description="Sumo case uuid"),
-    ensemble_name: str = Path(description="Ensemble name"),
+    ensemble_idents: list[schemas.EnsembleIdent] = Body(
+        description="A list of ensemble idents (aka; case uuid and ensemble name)"
+    ),
+) -> list[schemas.EnsembleTimestamps]:
+    """
+    Fetches ensemble timestamps for a list of ensembles
+    """
+    return await asyncio.gather(
+        *[_get_ensemble_timestamps_for_ident_async(authenticated_user, ident) for ident in ensemble_idents]
+    )
+
+
+async def _get_ensemble_timestamps_for_ident_async(
+    authenticated_user: AuthenticatedUser, ensemble_ident: schemas.EnsembleIdent
 ) -> schemas.EnsembleTimestamps:
-    """
-    Gets timestamps for an ensemble. Note, an ensemble doesnt have it's own timestamps, so the values recieved are based on the parent case, and the most recent update timestamp from it's data
-    """
+    case_uuid = ensemble_ident.case_uuid
+    ensemble_name = ensemble_ident.ensemble_name
 
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
 

@@ -14,9 +14,9 @@ import type {
     GetEnsembleDetailsData_api,
     GetEnsembleDetailsResponse_api,
     GetEnsembleDetailsError_api,
-    GetEnsembleTimestampsData_api,
-    GetEnsembleTimestampsResponse_api,
-    GetEnsembleTimestampsError_api,
+    GetTimestampsForEnsemblesData_api,
+    GetTimestampsForEnsemblesResponse_api,
+    GetTimestampsForEnsemblesError_api,
     GetVectorListData_api,
     GetVectorListResponse_api,
     GetVectorListError_api,
@@ -261,15 +261,23 @@ export const getEnsembleDetails = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get Ensemble Timestamps
- * Gets timestamps for an ensemble. Note, an ensemble doesnt have it's own timestamps, so the values recieved are based on the parent case, and the most recent update timestamp from it's data
+ * Get Timestamps For Ensembles
+ * Fetches ensemble timestamps for a list of ensembles
  */
-export const getEnsembleTimestamps = <ThrowOnError extends boolean = false>(
-    options: Options<GetEnsembleTimestampsData_api, ThrowOnError>,
+export const getTimestampsForEnsembles = <ThrowOnError extends boolean = false>(
+    options: Options<GetTimestampsForEnsemblesData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).get<GetEnsembleTimestampsResponse_api, GetEnsembleTimestampsError_api, ThrowOnError>({
+    return (options?.client ?? client).post<
+        GetTimestampsForEnsemblesResponse_api,
+        GetTimestampsForEnsemblesError_api,
+        ThrowOnError
+    >({
         ...options,
-        url: "/cases/{case_uuid}/ensembles/{ensemble_name}/timestamps",
+        headers: {
+            "Content-Type": "application/json",
+            ...options?.headers,
+        },
+        url: "/ensembles/timestamps",
     });
 };
 

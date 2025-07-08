@@ -122,6 +122,11 @@ export type EnsembleDetails_api = {
     timestamps: EnsembleTimestamps_api;
 };
 
+export type EnsembleIdent_api = {
+    case_uuid: string;
+    ensemble_name: string;
+};
+
 export type EnsembleInfo_api = {
     name: string;
     realization_count: number;
@@ -1162,7 +1167,9 @@ export type WellboreTrajectory_api = {
 export type GetFieldsData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/fields";
 };
 
@@ -1274,39 +1281,36 @@ export type GetEnsembleDetailsResponses_api = {
 
 export type GetEnsembleDetailsResponse_api = GetEnsembleDetailsResponses_api[keyof GetEnsembleDetailsResponses_api];
 
-export type GetEnsembleTimestampsData_api = {
-    body?: never;
-    path: {
-        /**
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        /**
-         * Ensemble name
-         */
-        ensemble_name: string;
+export type GetTimestampsForEnsemblesData_api = {
+    /**
+     * A list of ensemble idents (aka; case uuid and ensemble name)
+     */
+    body: Array<EnsembleIdent_api>;
+    path?: never;
+    query?: {
+        t?: number;
     };
-    query?: never;
-    url: "/cases/{case_uuid}/ensembles/{ensemble_name}/timestamps";
+    url: "/ensembles/timestamps";
 };
 
-export type GetEnsembleTimestampsErrors_api = {
+export type GetTimestampsForEnsemblesErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type GetEnsembleTimestampsError_api = GetEnsembleTimestampsErrors_api[keyof GetEnsembleTimestampsErrors_api];
+export type GetTimestampsForEnsemblesError_api = GetTimestampsForEnsemblesErrors_api[keyof GetTimestampsForEnsemblesErrors_api];
 
-export type GetEnsembleTimestampsResponses_api = {
+export type GetTimestampsForEnsemblesResponses_api = {
     /**
      * Successful Response
      */
-    200: EnsembleTimestamps_api;
+    200: Array<EnsembleTimestamps_api>;
 };
 
-export type GetEnsembleTimestampsResponse_api = GetEnsembleTimestampsResponses_api[keyof GetEnsembleTimestampsResponses_api];
+export type GetTimestampsForEnsemblesResponse_api =
+    GetTimestampsForEnsemblesResponses_api[keyof GetTimestampsForEnsemblesResponses_api];
 
 export type GetVectorListData_api = {
     body?: never;
@@ -1324,6 +1328,7 @@ export type GetVectorListData_api = {
          * Include derived vectors
          */
         include_derived_vectors?: boolean | null;
+        t?: number;
     };
     url: "/timeseries/vector_list/";
 };
@@ -1370,6 +1375,7 @@ export type GetDeltaEnsembleVectorListData_api = {
          * Include derived vectors
          */
         include_derived_vectors?: boolean | null;
+        t?: number;
     };
     url: "/timeseries/delta_ensemble_vector_list/";
 };
@@ -1417,6 +1423,7 @@ export type GetRealizationsVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        t?: number;
     };
     url: "/timeseries/realizations_vector_data/";
 };
@@ -1472,6 +1479,7 @@ export type GetDeltaEnsembleRealizationsVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        t?: number;
     };
     url: "/timeseries/delta_ensemble_realizations_vector_data/";
 };
@@ -1512,6 +1520,7 @@ export type GetTimestampsListData_api = {
          * Resampling frequency
          */
         resampling_frequency?: Frequency_api | null;
+        t?: number;
     };
     url: "/timeseries/timestamps_list/";
 };
@@ -1554,6 +1563,7 @@ export type GetHistoricalVectorDataData_api = {
          * Resampling frequency
          */
         resampling_frequency?: Frequency_api | null;
+        t?: number;
     };
     url: "/timeseries/historical_vector_data/";
 };
@@ -1604,6 +1614,7 @@ export type GetStatisticalVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        t?: number;
     };
     url: "/timeseries/statistical_vector_data/";
 };
@@ -1663,6 +1674,7 @@ export type GetDeltaEnsembleStatisticalVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        t?: number;
     };
     url: "/timeseries/delta_ensemble_statistical_vector_data/";
 };
@@ -1715,6 +1727,7 @@ export type GetStatisticalVectorDataPerSensitivityData_api = {
          * Optional list of realizations to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        t?: number;
     };
     url: "/timeseries/statistical_vector_data_per_sensitivity/";
 };
@@ -1759,6 +1772,7 @@ export type GetRealizationVectorAtTimestampData_api = {
          * Timestamp in ms UTC to query vectors at
          */
         timestamp_utc_ms: number;
+        t?: number;
     };
     url: "/timeseries/realization_vector_at_timestamp/";
 };
@@ -1795,6 +1809,7 @@ export type GetTableDefinitionsData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        t?: number;
     };
     url: "/inplace_volumes/table_definitions/";
 };
@@ -1845,6 +1860,7 @@ export type PostGetAggregatedPerRealizationTableDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        t?: number;
     };
     url: "/inplace_volumes/get_aggregated_per_realization_table_data/";
 };
@@ -1897,6 +1913,7 @@ export type PostGetAggregatedStatisticalTableDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        t?: number;
     };
     url: "/inplace_volumes/get_aggregated_statistical_table_data/";
 };
@@ -1933,6 +1950,7 @@ export type GetRealizationSurfacesMetadataData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        t?: number;
     };
     url: "/surface/realization_surfaces_metadata/";
 };
@@ -1965,6 +1983,7 @@ export type GetObservedSurfacesMetadataData_api = {
          * Sumo case uuid
          */
         case_uuid: string;
+        t?: number;
     };
     url: "/surface/observed_surfaces_metadata/";
 };
@@ -2005,6 +2024,7 @@ export type GetSurfaceDataData_api = {
          * Definition of the surface onto which the data should be resampled. *SurfaceDef_api* object properties encoded as a `KeyValStr` string.
          */
         resample_to_def_str?: string | null;
+        t?: number;
     };
     url: "/surface/surface_data";
 };
@@ -2055,6 +2075,7 @@ export type PostGetSurfaceIntersectionData_api = {
          * Time point or time interval string
          */
         time_or_interval_str?: string | null;
+        t?: number;
     };
     url: "/surface/get_surface_intersection";
 };
@@ -2102,6 +2123,7 @@ export type PostGetSampleSurfaceInPointsData_api = {
          * Realization numbers
          */
         realization_nums: Array<number>;
+        t?: number;
     };
     url: "/surface/get_sample_surface_in_points";
 };
@@ -2146,6 +2168,7 @@ export type GetDeltaSurfaceDataData_api = {
          * Definition of the surface onto which the data should be resampled. *SurfaceDef_api* object properties encoded as a `KeyValStr` string.
          */
         resample_to_def_str?: string | null;
+        t?: number;
     };
     url: "/surface/delta_surface_data";
 };
@@ -2196,6 +2219,7 @@ export type GetMisfitSurfaceDataData_api = {
          * Definition of the surface onto which the data should be resampled. *SurfaceDef_api* object properties encoded as a `KeyValStr` string.
          */
         resample_to_def_str?: string | null;
+        t?: number;
     };
     url: "/surface/misfit_surface_data";
 };
@@ -2226,6 +2250,7 @@ export type DeprecatedGetStratigraphicUnitsData_api = {
          * Sumo case uuid
          */
         case_uuid: string;
+        t?: number;
     };
     url: "/surface/deprecated_stratigraphic_units";
 };
@@ -2258,6 +2283,7 @@ export type GetStratigraphicUnitsForStratColumnData_api = {
          * SMDA stratigraphic column identifier
          */
         strat_column: string;
+        t?: number;
     };
     url: "/surface/stratigraphic_units_for_strat_column";
 };
@@ -2302,6 +2328,7 @@ export type GetParameterNamesAndDescriptionData_api = {
          * Sort order
          */
         sort_order?: "alphabetically" | "standard_deviation";
+        t?: number;
     };
     url: "/parameters/parameter_names_and_description/";
 };
@@ -2342,6 +2369,7 @@ export type GetParameterData_api = {
          * Parameter name
          */
         parameter_name: string;
+        t?: number;
     };
     url: "/parameters/parameter/";
 };
@@ -2411,6 +2439,7 @@ export type GetIsSensitivityRunData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        t?: number;
     };
     url: "/parameters/is_sensitivity_run/";
 };
@@ -2484,6 +2513,7 @@ export type GetGridModelsInfoData_api = {
          * Realization
          */
         realization_num: number;
+        t?: number;
     };
     url: "/grid3d/grid_models_info/";
 };
@@ -2550,6 +2580,7 @@ export type GetGridSurfaceData_api = {
          * Max k index
          */
         k_max?: number;
+        t?: number;
     };
     url: "/grid3d/grid_surface";
 };
@@ -2624,6 +2655,7 @@ export type GetGridParameterData_api = {
          * Max k index
          */
         k_max?: number;
+        t?: number;
     };
     url: "/grid3d/grid_parameter";
 };
@@ -2674,6 +2706,7 @@ export type PostGetPolylineIntersectionData_api = {
          * Time point or time interval string
          */
         parameter_time_or_interval_str?: string | null;
+        t?: number;
     };
     url: "/grid3d/get_polyline_intersection";
 };
@@ -2722,6 +2755,7 @@ export type GetRealizationFlowNetworkData_api = {
          * Node types
          */
         node_type_set: Array<NodeType_api>;
+        t?: number;
     };
     url: "/flow_network/realization_flow_network/";
 };
@@ -2761,6 +2795,7 @@ export type GetTableDataData_api = {
          * Realization number
          */
         realization: number;
+        t?: number;
     };
     url: "/pvt/table_data/";
 };
@@ -2799,6 +2834,7 @@ export type GetWellCompletionsDataData_api = {
          * Optional realizations to include. Provide single realization or list of realizations. If not specified, all realizations will be returned.
          */
         realization?: number | Array<number> | null;
+        t?: number;
     };
     url: "/well_completions/well_completions_data/";
 };
@@ -2829,6 +2865,7 @@ export type GetDrilledWellboreHeadersData_api = {
          * Official field identifier
          */
         field_identifier: string;
+        t?: number;
     };
     url: "/well/drilled_wellbore_headers/";
 };
@@ -2864,6 +2901,7 @@ export type GetWellTrajectoriesData_api = {
          * Optional subset of wellbore uuids
          */
         wellbore_uuids?: Array<string> | null;
+        t?: number;
     };
     url: "/well/well_trajectories/";
 };
@@ -2894,6 +2932,7 @@ export type GetWellborePickIdentifiersData_api = {
          * Stratigraphic column identifier
          */
         strat_column_identifier: string;
+        t?: number;
     };
     url: "/well/wellbore_pick_identifiers/";
 };
@@ -2929,6 +2968,7 @@ export type GetWellborePicksForPickIdentifierData_api = {
          * Pick identifier
          */
         pick_identifier: string;
+        t?: number;
     };
     url: "/well/wellbore_picks_for_pick_identifier/";
 };
@@ -2961,6 +3001,7 @@ export type DeprecatedGetWellborePicksForWellboreData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        t?: number;
     };
     url: "/well/deprecated_wellbore_picks_for_wellbore/";
 };
@@ -2997,6 +3038,7 @@ export type GetWellborePicksInStratColumnData_api = {
          * Filter by stratigraphic column
          */
         strat_column_identifier: string;
+        t?: number;
     };
     url: "/well/wellbore_picks_in_strat_column";
 };
@@ -3029,6 +3071,7 @@ export type GetWellboreStratigraphicColumnsData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        t?: number;
     };
     url: "/well/wellbore_stratigraphic_columns/";
 };
@@ -3061,6 +3104,7 @@ export type GetWellboreCompletionsData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        t?: number;
     };
     url: "/well/wellbore_completions/";
 };
@@ -3091,6 +3135,7 @@ export type GetWellboreCasingsData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        t?: number;
     };
     url: "/well/wellbore_casings/";
 };
@@ -3121,6 +3166,7 @@ export type GetWellborePerforationsData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        t?: number;
     };
     url: "/well/wellbore_perforations/";
 };
@@ -3155,6 +3201,7 @@ export type GetWellboreLogCurveHeadersData_api = {
          * Sources to fetch well-logs from.
          */
         sources?: Array<WellLogCurveSourceEnum_api>;
+        t?: number;
     };
     url: "/well/wellbore_log_curve_headers/";
 };
@@ -3198,6 +3245,7 @@ export type GetLogCurveDataData_api = {
          * Source to fetch well-logs from.
          */
         source?: WellLogCurveSourceEnum_api;
+        t?: number;
     };
     url: "/well/log_curve_data/";
 };
@@ -3232,6 +3280,7 @@ export type GetSeismicCubeMetaListData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        t?: number;
     };
     url: "/seismic/seismic_cube_meta_list/";
 };
@@ -3286,6 +3335,7 @@ export type GetInlineSliceData_api = {
          * Inline number
          */
         inline_no: number;
+        t?: number;
     };
     url: "/seismic/get_inline_slice/";
 };
@@ -3340,6 +3390,7 @@ export type GetCrosslineSliceData_api = {
          * Crossline number
          */
         crossline_no: number;
+        t?: number;
     };
     url: "/seismic/get_crossline_slice/";
 };
@@ -3394,6 +3445,7 @@ export type GetDepthSliceData_api = {
          * Depth slice no
          */
         depth_slice_no: number;
+        t?: number;
     };
     url: "/seismic/get_depth_slice/";
 };
@@ -3444,6 +3496,7 @@ export type PostGetSeismicFenceData_api = {
          * Observed or simulated
          */
         observed: boolean;
+        t?: number;
     };
     url: "/seismic/get_seismic_fence/";
 };
@@ -3478,6 +3531,7 @@ export type GetPolygonsDirectoryData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        t?: number;
     };
     url: "/polygons/polygons_directory/";
 };
@@ -3524,6 +3578,7 @@ export type GetPolygonsDataData_api = {
          * Surface attribute
          */
         attribute: string;
+        t?: number;
     };
     url: "/polygons/polygons_data/";
 };
@@ -3554,6 +3609,7 @@ export type GetUserPhotoData_api = {
          * User id
          */
         user_id: string;
+        t?: number;
     };
     url: "/graph/user_photo/";
 };
@@ -3584,6 +3640,7 @@ export type GetObservationsData_api = {
          * Sumo case uuid
          */
         case_uuid: string;
+        t?: number;
     };
     url: "/observations/observations/";
 };
@@ -3618,6 +3675,7 @@ export type GetTableDefinitionData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        t?: number;
     };
     url: "/rft/table_definition";
 };
@@ -3668,6 +3726,7 @@ export type GetRealizationDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        t?: number;
     };
     url: "/rft/realization_data";
 };
@@ -3706,6 +3765,7 @@ export type GetVfpTableNamesData_api = {
          * Realization
          */
         realization: number;
+        t?: number;
     };
     url: "/vfp/vfp_table_names/";
 };
@@ -3748,6 +3808,7 @@ export type GetVfpTableData_api = {
          * VFP table name
          */
         vfp_table_name: string;
+        t?: number;
     };
     url: "/vfp/vfp_table/";
 };
@@ -3775,6 +3836,7 @@ export type LoginRouteData_api = {
     path?: never;
     query?: {
         redirect_url_after_login?: string | null;
+        t?: number;
     };
     url: "/login";
 };
@@ -3798,7 +3860,9 @@ export type LoginRouteResponses_api = {
 export type AuthorizedCallbackRouteData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/auth-callback";
 };
 
@@ -3812,7 +3876,9 @@ export type AuthorizedCallbackRouteResponses_api = {
 export type GetAliveData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/alive";
 };
 
@@ -3828,7 +3894,9 @@ export type GetAliveResponse_api = GetAliveResponses_api[keyof GetAliveResponses
 export type GetAliveProtectedData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/alive_protected";
 };
 
@@ -3844,7 +3912,9 @@ export type GetAliveProtectedResponse_api = GetAliveProtectedResponses_api[keyof
 export type PostLogoutData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/logout";
 };
 
@@ -3865,6 +3935,7 @@ export type GetLoggedInUserData_api = {
          * Set to true to include user avatar and display name from Microsoft Graph API
          */
         includeGraphApiInfo?: boolean;
+        t?: number;
     };
     url: "/logged_in_user";
 };
@@ -3890,7 +3961,9 @@ export type GetLoggedInUserResponse_api = GetLoggedInUserResponses_api[keyof Get
 export type RootData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/";
 };
 

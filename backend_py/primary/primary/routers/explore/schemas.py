@@ -7,6 +7,11 @@ class FieldInfo(BaseModel):
     field_identifier: str
 
 
+class EnsembleIdent(BaseModel):
+    case_uuid: str
+    ensemble_name: str
+
+
 class CaseInfo(BaseModel):
     uuid: str
     name: str
