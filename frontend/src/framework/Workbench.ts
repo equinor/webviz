@@ -2,7 +2,6 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
-import { AtomStoreMaster } from "./AtomStoreMaster";
 import { confirmationService } from "./ConfirmationService";
 import { GuiMessageBroker, GuiState, LeftDrawerContent, RightDrawerContent } from "./GuiMessageBroker";
 import { NavigationObserver } from "./internal/NavigationObserver";
@@ -50,14 +49,12 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     private _workbenchSession: PrivateWorkbenchSession | null = null;
     private _workbenchServices: PrivateWorkbenchServices;
     private _guiMessageBroker: GuiMessageBroker;
-    private _atomStoreMaster: AtomStoreMaster;
     private _queryClient: QueryClient;
     private _workbenchSessionPersistenceService: WorkbenchSessionPersistenceService;
     private _navigationObserver: NavigationObserver;
 
     constructor(queryClient: QueryClient) {
         this._queryClient = queryClient;
-        this._atomStoreMaster = new AtomStoreMaster();
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._workbenchSessionPersistenceService = new WorkbenchSessionPersistenceService(this);
         this._guiMessageBroker = new GuiMessageBroker();
@@ -191,7 +188,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             this.openSession(sessionId);
         }
 
-        const storedSessions = await loadAllWorkbenchSessionsFromLocalStorage(this._atomStoreMaster, this._queryClient);
+        const storedSessions = await loadAllWorkbenchSessionsFromLocalStorage(this._queryClient);
         if (storedSessions.length === 0) {
             return;
         }
@@ -201,7 +198,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
     private async loadSnapshot(snapshotId: string): Promise<void> {
         try {
-            const snapshot = await loadSnapshotFromBackend(this._atomStoreMaster, this._queryClient, snapshotId);
+            const snapshot = await loadSnapshotFromBackend(this._queryClient, snapshotId);
             await this.setWorkbenchSession(snapshot);
             if (this.getGuiMessageBroker().getState(GuiState.LeftDrawerContent) !== LeftDrawerContent.ModuleSettings) {
                 this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
@@ -253,11 +250,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             return;
         }
 
-        const session = await loadWorkbenchSessionFromLocalStorage(
-            snapshotId,
-            this._atomStoreMaster,
-            this._queryClient,
-        );
+        const session = await loadWorkbenchSessionFromLocalStorage(snapshotId, this._queryClient);
         if (!session) {
             console.warn("No workbench session found in local storage.");
             return;
@@ -279,9 +272,10 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         window.history.pushState({}, "", url);
 
         try {
-            const session = await loadWorkbenchSessionFromBackend(this._atomStoreMaster, this._queryClient, sessionId);
+            const session = await loadWorkbenchSessionFromBackend(this._queryClient, sessionId);
             await this.setWorkbenchSession(session);
-        } catch (e) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_) {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
             const result = await confirmationService.confirm({
                 title: "Could not load session",
@@ -373,7 +367,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             return;
         }
 
-        const session = new PrivateWorkbenchSession(this._atomStoreMaster, this._queryClient);
+        const session = new PrivateWorkbenchSession(this._queryClient);
         session.makeDefaultDashboard();
 
         await this.setWorkbenchSession(session);
@@ -496,10 +490,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this.unloadCurrentSession();
 
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
-    }
-
-    getAtomStoreMaster(): AtomStoreMaster {
-        return this._atomStoreMaster;
     }
 
     getWorkbenchSession(): PrivateWorkbenchSession {

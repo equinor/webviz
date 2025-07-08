@@ -3,13 +3,14 @@ import { ModuleNotFoundPlaceholder } from "./internal/ModuleNotFoundPlaceholder"
 import type {
     InterfaceEffects,
     JTDBaseType,
-    MakeReadonly,
-    ModuleStateBaseSchema,
+    ModuleComponentsStateBase,
     ModuleCategory,
     ModuleDevState,
     ModuleInterfaceTypes,
     NoModuleStateSchema,
     OnInstanceUnloadFunc,
+    ModuleStateSchema,
+    ModuleComponentSerializationFunctions,
 } from "./Module";
 import { Module } from "./Module";
 import type { ModuleDataTagId } from "./ModuleDataTags";
@@ -29,8 +30,23 @@ export type RegisterModuleOptions<TSerializedStateDef extends JTDBaseType = NoMo
     preview?: DrawPreviewFunc;
     description?: string;
     onInstanceUnload?: OnInstanceUnloadFunc;
-    serializedStateSchema?: MakeReadonly<TSerializedStateDef>;
+    serializedStateSchema?: ModuleStateSchema<TSerializedStateDef>;
 };
+
+export type InitModuleOptions<
+    TInterfaceTypes extends ModuleInterfaceTypes,
+    TSerializedStateDef extends ModuleComponentsStateBase = NoModuleStateSchema,
+> = {
+    moduleName: string;
+    settingsToViewInterfaceInitialization?: TInterfaceTypes["settingsToView"] extends undefined
+        ? undefined
+        : InterfaceInitialization<Exclude<TInterfaceTypes["settingsToView"], undefined>>;
+    viewToSettingsInterfaceInitialization?: TInterfaceTypes["viewToSettings"] extends undefined
+        ? undefined
+        : InterfaceInitialization<Exclude<TInterfaceTypes["viewToSettings"], undefined>>;
+    viewToSettingsInterfaceEffects?: InterfaceEffects<Exclude<TInterfaceTypes["viewToSettings"], undefined>>;
+    settingsToViewInterfaceEffects?: InterfaceEffects<Exclude<TInterfaceTypes["settingsToView"], undefined>>;
+} & ModuleComponentSerializationFunctions<TSerializedStateDef>;
 
 export class ModuleNotFoundError extends Error {
     readonly moduleName: string;
@@ -50,7 +66,7 @@ export class ModuleRegistry {
 
     static registerModule<
         TInterfaceTypes extends ModuleInterfaceTypes,
-        TSerializedStateDef extends ModuleStateBaseSchema = NoModuleStateSchema,
+        TSerializedStateDef extends ModuleComponentsStateBase = NoModuleStateSchema,
     >(options: RegisterModuleOptions<TSerializedStateDef>): Module<TInterfaceTypes, TSerializedStateDef> {
         const module = new Module<TInterfaceTypes, TSerializedStateDef>({
             name: options.moduleName,
@@ -72,21 +88,9 @@ export class ModuleRegistry {
 
     static initModule<
         TInterfaceTypes extends ModuleInterfaceTypes,
-        TSerializedStateDef extends ModuleStateBaseSchema = NoModuleStateSchema,
-    >(
-        moduleName: string,
-        options: {
-            settingsToViewInterfaceInitialization?: TInterfaceTypes["settingsToView"] extends undefined
-                ? undefined
-                : InterfaceInitialization<Exclude<TInterfaceTypes["settingsToView"], undefined>>;
-            viewToSettingsInterfaceInitialization?: TInterfaceTypes["viewToSettings"] extends undefined
-                ? undefined
-                : InterfaceInitialization<Exclude<TInterfaceTypes["viewToSettings"], undefined>>;
-            viewToSettingsInterfaceEffects?: InterfaceEffects<Exclude<TInterfaceTypes["viewToSettings"], undefined>>;
-            settingsToViewInterfaceEffects?: InterfaceEffects<Exclude<TInterfaceTypes["settingsToView"], undefined>>;
-        },
-    ): Module<TInterfaceTypes, TSerializedStateDef> {
-        const module = this._registeredModules[moduleName];
+        TSerializedStateDef extends ModuleComponentsStateBase = NoModuleStateSchema,
+    >(options: InitModuleOptions<TInterfaceTypes, TSerializedStateDef>): Module<TInterfaceTypes, TSerializedStateDef> {
+        const module = this._registeredModules[options.moduleName];
         if (module) {
             if (options.settingsToViewInterfaceInitialization) {
                 module.setSettingsToViewInterfaceInitialization(options.settingsToViewInterfaceInitialization);
@@ -100,9 +104,15 @@ export class ModuleRegistry {
             if (options.settingsToViewInterfaceEffects) {
                 module.setSettingsToViewInterfaceEffects(options.settingsToViewInterfaceEffects);
             }
+            if (options.serializeStateFunctions && options.deserializeStateFunctions) {
+                module.setSerializationFunctions({
+                    serializeStateFunctions: options.serializeStateFunctions,
+                    deserializeStateFunctions: options.deserializeStateFunctions,
+                });
+            }
             return module as Module<TInterfaceTypes, TSerializedStateDef>;
         }
-        throw new ModuleNotFoundError(moduleName);
+        throw new ModuleNotFoundError(options.moduleName);
     }
 
     static getModule(moduleName: string): Module<any, any> {

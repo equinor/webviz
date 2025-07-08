@@ -1,6 +1,7 @@
-import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import type { QueryClient } from "@tanstack/query-core";
 import { Ajv } from "ajv/dist/jtd";
+
+import type { SessionDocument_api } from "@api";
 
 import {
     PrivateWorkbenchSession,
@@ -9,7 +10,6 @@ import {
 } from "./PrivateWorkbenchSession";
 import { objectToJsonString, sessionIdFromLocalStorageKey } from "./utils";
 import { workbenchSessionContentSchema, workbenchSessionSchema } from "./workbenchSession.jtd";
-import type { SessionDocument_api } from "@api";
 
 export type SerializedWorkbenchSession = {
     metadata: WorkbenchSessionMetadata;
@@ -21,7 +21,6 @@ const validateFull = ajv.compile(workbenchSessionSchema);
 
 export async function deserializeFromLocalStorage(
     key: string,
-    atomStore: AtomStoreMaster,
     queryClient: QueryClient,
 ): Promise<PrivateWorkbenchSession | null> {
     const json = localStorage.getItem(key);
@@ -33,7 +32,7 @@ export async function deserializeFromLocalStorage(
         return null;
     }
 
-    const session = new PrivateWorkbenchSession(atomStore, queryClient);
+    const session = new PrivateWorkbenchSession(queryClient);
     await session.loadContent(parsed.content);
     session.setMetadata(parsed.metadata);
     session.setLoadedFromLocalStorage(true);
@@ -46,7 +45,6 @@ export async function deserializeFromLocalStorage(
 }
 
 export async function deserializeFromBackend(
-    atomStore: AtomStoreMaster,
     queryClient: QueryClient,
     raw: SessionDocument_api,
 ): Promise<PrivateWorkbenchSession> {
@@ -55,7 +53,7 @@ export async function deserializeFromBackend(
         throw new Error(`Backend session validation failed ${validateContent.errors}`);
     }
 
-    const session = new PrivateWorkbenchSession(atomStore, queryClient);
+    const session = new PrivateWorkbenchSession(queryClient);
     await session.loadContent(parsed);
     session.setMetadata({
         title: raw.metadata.title,

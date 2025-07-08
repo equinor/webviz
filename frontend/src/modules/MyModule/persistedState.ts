@@ -1,12 +1,19 @@
-export const SERIALIZED_STATE = {
+import type { JTDSchemaType } from "ajv/dist/core";
+
+export type SerializedState = {
     settings: {
-        properties: {
-            myData: {
-                type: "string",
+        myData: string;
+    };
+};
+
+export const SERIALIZED_STATE: JTDSchemaType<SerializedState> = {
+    properties: {
+        settings: {
+            properties: {
+                myData: {
+                    type: "string",
+                },
             },
         },
     },
-    view: {},
 } as const;
-
-export type SerializedState = typeof SERIALIZED_STATE;

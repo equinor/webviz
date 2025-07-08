@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/query-core";
 
-import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
+import { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
 import { Dashboard, type SerializedDashboard } from "@framework/internal/WorkbenchSession/Dashboard";
@@ -96,10 +96,10 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     private _loadedFromLocalStorage: boolean = false;
     private _settings: PrivateWorkbenchSettings = new PrivateWorkbenchSettings();
 
-    constructor(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient, isSnapshot = false) {
-        this._atomStoreMaster = atomStoreMaster;
+    constructor(queryClient: QueryClient, isSnapshot = false) {
+        this._atomStoreMaster = new AtomStoreMaster();
         this._queryClient = queryClient;
-        this._userCreatedItems = new UserCreatedItems(atomStoreMaster);
+        this._userCreatedItems = new UserCreatedItems(this._atomStoreMaster);
         this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, this._realizationFilterSet);
         this._isSnapshot = isSnapshot;
     }
@@ -114,6 +114,10 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
 
     getWorkbenchSettings(): PrivateWorkbenchSettings {
         return this._settings;
+    }
+
+    getAtomStoreMaster(): AtomStoreMaster {
+        return this._atomStoreMaster;
     }
 
     getId(): string | null {

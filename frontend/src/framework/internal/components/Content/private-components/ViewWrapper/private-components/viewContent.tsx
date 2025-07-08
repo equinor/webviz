@@ -26,13 +26,14 @@ type ViewContentProps = {
 };
 
 export const ViewContent = React.memo((props: ViewContentProps) => {
+    const workbenchSession = props.workbench.getWorkbenchSession();
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
     const moduleInstanceLifeCycleState = useModuleInstanceTopicValue(
         props.moduleInstance,
         ModuleInstanceTopic.LIFECYCLE_STATE,
     );
 
-    const atomStore = props.workbench.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
+    const atomStore = workbenchSession.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
 
     const handleModuleInstanceReload = React.useCallback(
         function handleModuleInstanceReload() {
@@ -127,13 +128,6 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                                     workbenchServices={props.workbench.getWorkbenchServices()}
                                     workbenchSettings={props.workbench.getWorkbenchSession().getWorkbenchSettings()}
                                     initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                                    persistence={{
-                                        serializedState:
-                                            props.moduleInstance.getSerializedState()?.["view"] ?? undefined,
-                                        serializeState: props.moduleInstance.serializeViewState.bind(
-                                            props.moduleInstance,
-                                        ),
-                                    }}
                                 />
                             </ApplyInterfaceEffectsToView>
                         </HydrateQueryClientAtom>

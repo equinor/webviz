@@ -1,11 +1,12 @@
-import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import type { JTDSchemaType } from "ajv/dist/core";
 import { v4 } from "uuid";
 
-import type { AtomStoreMaster } from "../../AtomStoreMaster";
-import type { ModuleInstance, ModuleInstanceFullState } from "../../ModuleInstance";
-import { ModuleRegistry } from "../../ModuleRegistry";
-import type { JTDSchemaType } from "ajv/dist/core";
 import { SyncSettingKey } from "@framework/SyncSettings";
+import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+
+import type { AtomStoreMaster } from "../../AtomStoreMaster";
+import type { ModuleInstance, ModuleInstanceSerializedState } from "../../ModuleInstance";
+import { ModuleRegistry } from "../../ModuleRegistry";
 
 export type LayoutElement = {
     moduleInstanceId?: string;
@@ -18,7 +19,7 @@ export type LayoutElement = {
     maximized?: boolean;
 };
 
-export type ModuleInstanceStateAndLayoutInfo = ModuleInstanceFullState & {
+export type ModuleInstanceStateAndLayoutInfo = ModuleInstanceSerializedState & {
     layoutInfo: Omit<LayoutElement, "moduleInstanceId" | "moduleName">;
 };
 
@@ -163,7 +164,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
     serializeState(): SerializedDashboard {
         const moduleInstances = this._moduleInstances.map((moduleInstance) => {
-            const fullState = moduleInstance.getFullState();
+            const moduleState = moduleInstance.serialize();
 
             const layoutInfo = this._layout.find((el) => el.moduleInstanceId === moduleInstance.getId());
 
@@ -172,7 +173,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             }
 
             return {
-                ...fullState,
+                ...moduleState,
                 layoutInfo: {
                     relX: layoutInfo.relX,
                     relY: layoutInfo.relY,
@@ -207,8 +208,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             if (!module) {
                 throw new Error(`Module ${name} not found`);
             }
-            const moduleInstance = module.makeInstance(id);
-            moduleInstance.setFullState(serializedInstance);
+            const moduleInstance = module.makeInstance(id, this._atomStoreMaster);
+            moduleInstance.deserialize(serializedInstance);
             this.registerModuleInstance(moduleInstance);
 
             this._layout.push({
@@ -249,7 +250,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             throw new Error(`Module ${moduleName} not found`);
         }
 
-        const moduleInstance = module.makeInstance(v4());
+        const moduleInstance = module.makeInstance(v4(), this._atomStoreMaster);
         this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
         this._moduleInstances = [...this._moduleInstances, moduleInstance];
 
@@ -314,8 +315,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             if (!module) {
                 throw new Error(`Module ${name} not found`);
             }
-            const moduleInstance = module.makeInstance(id);
-            moduleInstance.setFullState(serializedInstance);
+            const moduleInstance = module.makeInstance(id, atomStoreMaster);
+            moduleInstance.deserialize(serializedInstance);
             dashboard.registerModuleInstance(moduleInstance);
 
             layout.push({

@@ -1,7 +1,6 @@
 import type { DefaultError, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
 import type { DefinedInitialDataOptions, UndefinedInitialDataOptions } from "@tanstack/react-query";
-import type { Atom, Getter } from "jotai";
-import { atom } from "jotai";
+import { type Atom, type Getter, atom } from "jotai";
 import { atomWithReducer } from "jotai/utils";
 import type { AtomWithQueryOptions } from "jotai-tanstack-query";
 import { atomWithQuery } from "jotai-tanstack-query";
@@ -61,4 +60,75 @@ export function atomWithQueries<
 
         return results as TCombinedResult;
     });
+}
+
+export enum Source {
+    USER = "user",
+    PERSISTED = "persisted",
+}
+
+export type PersistableAtomState<T> = {
+    value: T;
+    _source: Source;
+};
+
+function isInternalState<T>(value: T | PersistableAtomState<T>): value is PersistableAtomState<T> {
+    return (value as PersistableAtomState<T>)._source !== undefined;
+}
+
+export type PersistableFixableAtomOptions<T> = {
+    initialValue: T;
+    isValidFunction: (value: T, get: Getter) => boolean;
+    fixupFunction: (value: T, get: Getter) => T;
+};
+
+const PERSISTABLE_ATOM = Symbol("persistableAtom");
+
+export function persistableFixableAtom<T>(options: PersistableFixableAtomOptions<T>) {
+    const internalStateAtom = atom<PersistableAtomState<T>>({
+        value: options.initialValue,
+        _source: Source.USER,
+    });
+
+    const fixableAtom = atom(
+        (get) => {
+            const internalState = get(internalStateAtom);
+            if (internalState._source === Source.PERSISTED) {
+                const isValid = options.isValidFunction(internalState.value, get);
+                return {
+                    value: internalState.value,
+                    isValidPersistedValue: isValid,
+                };
+            }
+
+            const fixedValue = options.fixupFunction(internalState.value, get);
+            return {
+                value: fixedValue,
+                isValidPersistedValue: true,
+            };
+        },
+        (_, set, update: T | PersistableAtomState<T>) => {
+            if (isInternalState(update)) {
+                set(internalStateAtom, {
+                    ...update,
+                });
+                return;
+            }
+
+            const newInternalState: PersistableAtomState<T> = {
+                value: update,
+                _source: Source.USER,
+            };
+
+            set(internalStateAtom, newInternalState);
+        },
+    );
+
+    (fixableAtom as any)[PERSISTABLE_ATOM] = true;
+
+    return fixableAtom;
+}
+
+export function isPersistableAtom(atom: unknown): atom is Atom<PersistableAtomState<unknown>> {
+    return !!(atom && typeof atom === "object" && (atom as any)[PERSISTABLE_ATOM]);
 }
