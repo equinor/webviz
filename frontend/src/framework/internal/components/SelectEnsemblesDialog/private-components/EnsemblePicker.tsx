@@ -121,14 +121,20 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
         keepStateWhenInvalid: true,
     });
 
+    const selectedCase = React.useMemo(() => {
+        const cases = casesQuery.data ?? [];
+        return cases.find((c) => c.uuid === selectedCaseId);
+    }, [casesQuery.data, selectedCaseId]);
+
     // Ensemble select
     const ensemblesQuery = useQuery({
         ...getEnsemblesOptions({
+            query: { t: selectedCase?.updated_at_utc_ms },
             path: {
                 case_uuid: selectedCaseId,
             },
         }),
-        enabled: casesQuery.isSuccess,
+        enabled: casesQuery.isSuccess && !!selectedCase,
         gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
     });
