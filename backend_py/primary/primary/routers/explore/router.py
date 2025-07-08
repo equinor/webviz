@@ -30,6 +30,7 @@ async def get_fields(
 
 
 @router.get("/cases")
+@no_cache
 async def get_cases(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     field_identifier: str = Query(description="Field identifier"),
