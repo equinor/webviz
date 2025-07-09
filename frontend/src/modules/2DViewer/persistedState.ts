@@ -1,12 +1,33 @@
-export const SERIALIZED_STATE = {
+import type { ViewStateType } from "@webviz/subsurface-viewer";
+import type { JTDSchemaType } from "ajv/dist/core";
+
+import type { ModuleStateSchema } from "@framework/Module";
+import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
+
+export type SerializedState = {
     settings: {
-        properties: {
-            dataProviderData: {
-                type: "string",
-            },
+        dataProviderData: string;
+    };
+    view: {
+        cameraPosition: ViewStateType;
+    };
+};
+
+const settingsBuilder = new SchemaBuilder<SerializedState["settings"]>(() => ({
+    properties: {
+        dataProviderData: {
+            type: "string",
         },
     },
-    view: {},
-} as const;
+}));
 
-export type SerializedState = typeof SERIALIZED_STATE;
+const viewBuilder = new SchemaBuilder<SerializedState["view"]>(({ inject }) => ({
+    properties: {
+        cameraPosition: inject("ViewState") as JTDSchemaType<ViewStateType>,
+    },
+}));
+
+export const SERIALIZED_STATE: ModuleStateSchema<SerializedState> = {
+    settings: settingsBuilder.build(),
+    view: viewBuilder.build(),
+} as const;

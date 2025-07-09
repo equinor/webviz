@@ -101,18 +101,29 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
         }
 
         // Validate against schema
-        const validateSettings = ajv.compile(this._serializedStateSchema.settings);
-        const validateView = ajv.compile(this._serializedStateSchema.view);
-        const isSettingsValid = serializedSettings === undefined || validateSettings(serializedSettings);
-        const isViewValid = serializedView === undefined || validateView(serializedView);
+        if (this._serializedStateSchema.settings) {
+            const validateSettings = ajv.compile(this._serializedStateSchema.settings);
+            const isSettingsValid = serializedSettings === undefined || validateSettings(serializedSettings);
+            if (!isSettingsValid) {
+                console.warn(`Validation failed for ${this._moduleInstance.getName()}`, {
+                    settingsErrors: validateSettings.errors,
+                });
+                this._serializedState = null;
+                return; // Invalid state, do not serialize
+            }
+        }
 
-        if (!isSettingsValid || !isViewValid) {
-            console.warn(`Validation failed for ${this._moduleInstance.getName()}`, {
-                settingsErrors: validateSettings.errors,
-                viewErrors: validateView.errors,
-            });
-            this._serializedState = null;
-            return; // Invalid state, do not serialize
+        if (this._serializedStateSchema.view) {
+            const validateView = ajv.compile(this._serializedStateSchema.view);
+            const isViewValid = serializedView === undefined || validateView(serializedView);
+
+            if (!isViewValid) {
+                console.warn(`Validation failed for ${this._moduleInstance.getName()}`, {
+                    viewErrors: validateView.errors,
+                });
+                this._serializedState = null;
+                return; // Invalid state, do not serialize
+            }
         }
 
         const newSerializedState = {
@@ -157,19 +168,29 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
             return;
         }
 
-        const validateSettings = ajv.compile(this._serializedStateSchema.settings);
-        const validateView = ajv.compile(this._serializedStateSchema.view);
+        if (this._serializedStateSchema.settings) {
+            const validateSettings = ajv.compile(this._serializedStateSchema.settings);
+            const isSettingsValid = parsedSettings === undefined || validateSettings(parsedSettings);
+            if (!isSettingsValid) {
+                console.warn(`Validation failed for settings in ${this._moduleInstance.getName()}`, {
+                    settingsErrors: validateSettings.errors,
+                });
+                this._serializedState = null;
+                return; // Invalid settings, do not apply state
+            }
+        }
 
-        const isSettingsValid = parsedSettings === undefined || validateSettings(parsedSettings);
-        const isViewValid = parsedView === undefined || validateView(parsedView);
+        if (this._serializedStateSchema.view) {
+            const validateView = ajv.compile(this._serializedStateSchema.view);
+            const isViewValid = parsedView === undefined || validateView(parsedView);
 
-        if (!isSettingsValid || !isViewValid) {
-            console.warn(`Validation failed for ${this._moduleInstance.getName()}`, {
-                settingsErrors: validateSettings.errors,
-                viewErrors: validateView.errors,
-            });
-            this._serializedState = null;
-            return;
+            if (!isViewValid) {
+                console.warn(`Validation failed for view in ${this._moduleInstance.getName()}`, {
+                    viewErrors: validateView.errors,
+                });
+                this._serializedState = null;
+                return;
+            }
         }
 
         this._serializedState = {

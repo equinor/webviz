@@ -98,8 +98,8 @@ export type NoModuleStateSchema = {
 };
 
 export type ModuleStateSchema<TSerializedStateDef extends ModuleComponentsStateBase> = {
-    settings: JTDSchemaType<TSerializedStateDef["settings"]>;
-    view: JTDSchemaType<TSerializedStateDef["view"]>;
+    settings?: JTDSchemaType<TSerializedStateDef["settings"]>;
+    view?: JTDSchemaType<TSerializedStateDef["view"]>;
 };
 
 export type ModuleComponentSerializationFunctions<TSerializedStateDef extends ModuleComponentsStateBase> =

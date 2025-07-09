@@ -313,7 +313,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         return snapshotId;
     }
 
-    async saveCurrentSession(forceSave = false): Promise<void> {
+    async saveCurrentSession(forceSave = false): Promise<boolean> {
         if (!this._workbenchSession) {
             throw new Error("No active workbench session to save.");
         }
@@ -321,7 +321,12 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         if (this._workbenchSession.getIsPersisted() || forceSave) {
             this._guiMessageBroker.setState(GuiState.IsSavingSession, true);
             const wasPersisted = this._workbenchSession.getIsPersisted();
-            await this._workbenchSessionPersistenceService.persistSessionState();
+            const result = await this._workbenchSessionPersistenceService.persistSessionState();
+            if (!result) {
+                this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
+                this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, true);
+                return false;
+            }
             const id = this._workbenchSession.getId();
             if (!wasPersisted && id) {
                 const url = buildSessionUrl(id);
@@ -330,11 +335,12 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
             this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
             this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
-            return;
+            return true;
         }
 
         this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
         this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, true);
+        return false;
     }
 
     private async setWorkbenchSession(session: PrivateWorkbenchSession): Promise<void> {

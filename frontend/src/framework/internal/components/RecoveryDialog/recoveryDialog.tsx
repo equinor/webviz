@@ -1,10 +1,12 @@
+import React from "react";
+
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+import type { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { loadAllWorkbenchSessionsFromLocalStorage } from "@framework/internal/WorkbenchSession/WorkbenchSessionLoader";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
-import React from "react";
+
 import { SessionRow } from "./private-components/sessionRow";
 
 export type RecoveryDialogProps = {
@@ -23,14 +25,14 @@ export function RecoveryDialog(props: RecoveryDialogProps): React.ReactNode {
     const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.RecoveryDialogOpen);
     const [sessions, setSessions] = React.useState<PrivateWorkbenchSession[]>([]);
 
-    async function loadSessions() {
-        const loadedSessions = await loadAllWorkbenchSessionsFromLocalStorage(
-            props.workbench.getAtomStoreMaster(),
-            props.workbench.getQueryClient(),
-        );
+    const loadSessions = React.useCallback(
+        async function loadSessions() {
+            const loadedSessions = await loadAllWorkbenchSessionsFromLocalStorage(props.workbench.getQueryClient());
 
-        setSessions(loadedSessions);
-    }
+            setSessions(loadedSessions);
+        },
+        [props.workbench],
+    );
 
     React.useEffect(
         function loadSessionOnOpen() {
@@ -38,7 +40,7 @@ export function RecoveryDialog(props: RecoveryDialogProps): React.ReactNode {
                 loadSessions();
             }
         },
-        [isOpen],
+        [isOpen, loadSessions],
     );
 
     if (!isOpen) {

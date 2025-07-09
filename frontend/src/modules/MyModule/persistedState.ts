@@ -1,4 +1,4 @@
-import type { JTDSchemaType } from "ajv/dist/core";
+import type { ModuleStateSchema } from "@framework/Module";
 
 export type SerializedState = {
     settings: {
@@ -6,13 +6,11 @@ export type SerializedState = {
     };
 };
 
-export const SERIALIZED_STATE: JTDSchemaType<SerializedState> = {
-    properties: {
-        settings: {
-            properties: {
-                myData: {
-                    type: "string",
-                },
+export const SERIALIZED_STATE: ModuleStateSchema<SerializedState> = {
+    settings: {
+        properties: {
+            myData: {
+                type: "string",
             },
         },
     },

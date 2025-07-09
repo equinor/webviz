@@ -3,12 +3,11 @@ import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import type { Interfaces } from "./interfaces";
-import { SERIALIZED_STATE, type SerializedState } from "./persistedState";
 import { preview } from "./preview";
 
 export const MODULE_NAME: string = "2DViewer";
 
-ModuleRegistry.registerModule<Interfaces, SerializedState>({
+ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,
     category: ModuleCategory.MAIN,
     devState: ModuleDevState.DEV,
@@ -25,5 +24,4 @@ ModuleRegistry.registerModule<Interfaces, SerializedState>({
     onInstanceUnload: (instanceId) => {
         window.localStorage.removeItem(`${instanceId}-settings`);
     },
-    serializedStateSchema: SERIALIZED_STATE,
 });

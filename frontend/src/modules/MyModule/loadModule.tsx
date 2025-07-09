@@ -19,8 +19,7 @@ function deserializeSettingsStateFunction(raw: SerializedState["settings"], set:
     set(myPersistableAtom, raw.myData);
 }
 
-const module = ModuleRegistry.initModule<Interfaces, SerializedState>({
-    moduleName: "MyModule",
+const module = ModuleRegistry.initModule<Interfaces, SerializedState>("MyModule", {
     settingsToViewInterfaceInitialization,
     serializeStateFunctions: {
         settings: serializeSettingsStateFunction,

@@ -369,7 +369,7 @@ export class WorkbenchSessionPersistenceService
         }
     }
 
-    async persistSessionState() {
+    async persistSessionState(): Promise<boolean> {
         const queryClient = this._workbench.getQueryClient();
 
         if (!this._workbenchSession) {
@@ -387,7 +387,7 @@ export class WorkbenchSessionPersistenceService
         if (this._currentHash === this._lastPersistedHash) {
             toast.dismiss(toastId);
             toast.info("No changes to persist.");
-            return;
+            return false;
         }
 
         try {
@@ -426,10 +426,12 @@ export class WorkbenchSessionPersistenceService
             this._lastPersistedHash = this._currentHash;
             this._workbenchSession.setIsPersisted(true);
             this.updatePersistenceInfo();
+            return true;
         } catch (error) {
             console.error("Failed to persist session state:", error);
             toast.dismiss(toastId);
             toast.error("Failed to persist session state. Please try again later.");
+            return false;
         }
     }
 
