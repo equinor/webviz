@@ -1,5 +1,5 @@
-from primary.services.snapshot_access.models import SnapshotAccessLog
-from primary.services.snapshot_access.types import Snapshot, SnapshotMetadata, SnapshotMetadataWithId
+from primary.services.database_access.snapshot_access.models import SnapshotAccessLog
+from primary.services.database_access.snapshot_access.types import Snapshot, SnapshotMetadata, SnapshotMetadataWithId
 
 from . import schemas
 

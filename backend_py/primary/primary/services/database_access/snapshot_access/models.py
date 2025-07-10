@@ -3,7 +3,7 @@ from pydantic import BaseModel, ConfigDict, ValidationInfo
 from pydantic import computed_field, field_validator
 
 
-from primary.services.snapshot_access.types import SnapshotMetadata
+from primary.services.database_access.snapshot_access.types import SnapshotMetadata
 
 from .util import make_access_log_item_id
 

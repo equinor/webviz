@@ -10,9 +10,9 @@ from primary.services.database_access.snapshot_access.types import (
     SortDirection,
 )
 from primary.middleware.add_browser_cache import no_cache
-from primary.services.snapshot_access.snapshot_access import SnapshotAccess
-from primary.services.snapshot_access.snapshot_logs_access import SnapshotLogsAccess
-from primary.services.snapshot_access.query_collation_options import QueryCollationOptions
+from primary.services.database_access.snapshot_access.snapshot_access import SnapshotAccess
+from primary.services.database_access.snapshot_access.snapshot_logs_access import SnapshotLogsAccess
+from primary.services.database_access.snapshot_access.query_collation_options import QueryCollationOptions
 
 
 from primary.auth.auth_helper import AuthHelper, AuthenticatedUser

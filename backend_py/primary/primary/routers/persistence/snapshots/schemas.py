@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel
 
-from primary.services.snapshot_access.util import make_access_log_item_id
+from primary.services.database_access.snapshot_access.util import make_access_log_item_id
 
 
 class SnapshotMetadata(BaseModel):

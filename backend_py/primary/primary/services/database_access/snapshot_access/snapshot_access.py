@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from nanoid import generate
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
-from primary.services.snapshot_access.models import SnapshotContentDocument, SnapshotMetadataDocument
+from primary.services.database_access.snapshot_access.models import SnapshotContentDocument, SnapshotMetadataDocument
 from primary.services.database_access._utils import hash_json_string
 from primary.services.service_exceptions import Service, ServiceRequestError
 from primary.services.database_access.container_access import ContainerAccess
