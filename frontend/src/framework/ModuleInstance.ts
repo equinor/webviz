@@ -104,6 +104,7 @@ export class ModuleInstance<
     private _atomStoreMaster: AtomStoreMaster;
 
     private _serializer: ModuleInstanceSerializer<TSerializedStateSchema> | null = null;
+    private _storedSerializedState: ModuleInstanceSerializedState | null = null;
 
     constructor(options: ModuleInstanceOptions<TInterfaceTypes, TSerializedStateSchema>) {
         this._id = options.id;
@@ -150,13 +151,21 @@ export class ModuleInstance<
         };
     }
 
-    deserialize(raw: ModuleInstanceSerializedState): void {
-        this._syncedSettingKeys = raw.syncedSettingKeys;
+    initiateDeserialization(raw: ModuleInstanceSerializedState): void {
+        this._storedSerializedState = raw;
+        this.deserialize();
+    }
 
-        this._id = raw.id;
+    private deserialize(): void {
+        if (this._initialized && this._storedSerializedState) {
+            this._syncedSettingKeys = this._storedSerializedState.syncedSettingKeys;
 
-        if (raw.serializedState && this._serializer) {
-            this._serializer.deserializeState(raw.serializedState);
+            this._id = this._storedSerializedState.id;
+
+            if (this._storedSerializedState.serializedState && this._serializer) {
+                this._serializer.deserializeState(this._storedSerializedState.serializedState);
+            }
+            this._storedSerializedState = null;
         }
 
         // Channel manager deserialization
@@ -188,6 +197,7 @@ export class ModuleInstance<
         this._context = new ModuleContext<TInterfaceTypes, TSerializedStateSchema>(this);
         this._initialized = true;
         this.setModuleInstanceState(ModuleInstanceLifeCycleState.OK);
+        this.deserialize();
     }
 
     makeSettingsToViewInterface(

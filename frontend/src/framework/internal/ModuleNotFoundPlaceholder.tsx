@@ -17,7 +17,7 @@ export class ModuleNotFoundPlaceholder extends Module<any, any> {
         this._importState = ImportStatus.Imported;
     }
 
-    makeInstance(id: string, atomStoreMaster: AtomStoreMaster): ModuleInstance<any, any> {
+    async makeInstance(id: string, atomStoreMaster: AtomStoreMaster): Promise<ModuleInstance<any, any>> {
         const instance = super.makeInstance(id, atomStoreMaster);
         return instance;
     }

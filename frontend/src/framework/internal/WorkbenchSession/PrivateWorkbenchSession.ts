@@ -186,11 +186,11 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     async loadContent(content: WorkbenchSessionContent): Promise<void> {
         this._isPersisted = this._id !== null;
         this._activeDashboardId = content.activeDashboardId;
-        this._dashboards = content.dashboards.map((s) => {
-            const d = new Dashboard(this._atomStoreMaster);
-            d.deserializeState(s);
-            return d;
-        });
+        this._dashboards = [];
+        for (const serializedDashboard of content.dashboards) {
+            const dashboard = await Dashboard.fromPersistedState(serializedDashboard, this._atomStoreMaster);
+            this._dashboards.push(dashboard);
+        }
 
         this._settings.deserializeState(content.settings);
         this._userCreatedItems.deserializeState(content.userCreatedItems);

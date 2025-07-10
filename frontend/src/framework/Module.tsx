@@ -203,6 +203,7 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
     private _dataTagIds: ModuleDataTagId[];
     private _serializedStateSchema: ModuleStateSchema<TSerializedState> | null;
     private _serializationFunctions: ModuleComponentSerializationFunctions<TSerializedState> | undefined;
+    private _atomStoreMaster: AtomStoreMaster | null = null;
 
     constructor(options: ModuleOptions<TSerializedState>) {
         this._name = options.name;
@@ -305,7 +306,10 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
         return this._syncableSettingKeys.includes(key);
     }
 
-    makeInstance(id: string, atomStoreMaster: AtomStoreMaster): ModuleInstance<TInterfaceTypes, TSerializedState> {
+    async makeInstance(
+        id: string,
+        atomStoreMaster: AtomStoreMaster,
+    ): Promise<ModuleInstance<TInterfaceTypes, TSerializedState>> {
         const instance = new ModuleInstance<TInterfaceTypes, TSerializedState>({
             module: this,
             atomStoreMaster,
@@ -314,7 +318,8 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
             channelReceiverDefinitions: this._channelReceiverDefinitions,
         });
         this._moduleInstances.push(instance);
-        this.maybeImportSelf();
+        atomStoreMaster.makeAtomStoreForModuleInstance(id);
+        await this.maybeImportSelf();
         return instance;
     }
 
@@ -330,7 +335,6 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
     }
 
     private initializeModuleInstance(instance: ModuleInstance<TInterfaceTypes, TSerializedState>): void {
-        instance.initialize();
         if (this._settingsToViewInterfaceInitialization) {
             instance.makeSettingsToViewInterface(this._settingsToViewInterfaceInitialization);
         }
@@ -342,9 +346,10 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
         if (this._serializationFunctions) {
             instance.makeSerializer(this._serializationFunctions);
         }
+        instance.initialize();
     }
 
-    private maybeImportSelf(): void {
+    private async maybeImportSelf(): Promise<void> {
         if (this._importState !== ImportStatus.NotImported) {
             if (this._importState === ImportStatus.Imported) {
                 this._moduleInstances.forEach((instance) => {
@@ -368,16 +373,15 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
             return;
         }
 
-        importer()
-            .then(() => {
-                this.setImportState(ImportStatus.Imported);
-                this._moduleInstances.forEach((instance) => {
-                    this.initializeModuleInstance(instance);
-                });
-            })
-            .catch((e) => {
-                console.error(`Failed to import module ${this._name}`, e);
-                this.setImportState(ImportStatus.Failed);
+        try {
+            await importer();
+            this.setImportState(ImportStatus.Imported);
+            this._moduleInstances.forEach((instance) => {
+                this.initializeModuleInstance(instance);
             });
+        } catch (e) {
+            console.error(`Failed to initialize module ${this._name}`, e);
+            this.setImportState(ImportStatus.Failed);
+        }
     }
 }

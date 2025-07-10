@@ -194,7 +194,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         };
     }
 
-    deserializeState(serializedDashboard: SerializedDashboard): void {
+    async deserializeState(serializedDashboard: SerializedDashboard): Promise<void> {
         this._id = serializedDashboard.id;
         this._name = serializedDashboard.name;
         this._description = serializedDashboard.description;
@@ -208,9 +208,9 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             if (!module) {
                 throw new Error(`Module ${name} not found`);
             }
-            const moduleInstance = module.makeInstance(id, this._atomStoreMaster);
-            moduleInstance.deserialize(serializedInstance);
+            const moduleInstance = await module.makeInstance(id, this._atomStoreMaster);
             this.registerModuleInstance(moduleInstance);
+            moduleInstance.initiateDeserialization(serializedInstance);
 
             this._layout.push({
                 moduleInstanceId: id,
@@ -240,18 +240,18 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
     registerModuleInstance(moduleInstance: ModuleInstance<any, any>): void {
         this._moduleInstances = [...this._moduleInstances, moduleInstance];
-        this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
     }
 
-    makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any, any> {
+    async makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): Promise<ModuleInstance<any, any>> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
         }
 
-        const moduleInstance = module.makeInstance(v4(), this._atomStoreMaster);
-        this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
+        const id = v4();
+        this._atomStoreMaster.makeAtomStoreForModuleInstance(id);
+        const moduleInstance = await module.makeInstance(id, this._atomStoreMaster);
         this._moduleInstances = [...this._moduleInstances, moduleInstance];
 
         this._layout = [...this._layout, { ...layout, moduleInstanceId: moduleInstance.getId() }];
@@ -300,7 +300,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         return this._activeModuleInstanceId;
     }
 
-    static fromPersistedState(serializedDashboard: SerializedDashboard, atomStoreMaster: AtomStoreMaster): Dashboard {
+    static async fromPersistedState(
+        serializedDashboard: SerializedDashboard,
+        atomStoreMaster: AtomStoreMaster,
+    ): Promise<Dashboard> {
         const dashboard = new Dashboard(atomStoreMaster);
         dashboard._id = serializedDashboard.id;
         dashboard._name = serializedDashboard.name;
@@ -315,9 +318,9 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             if (!module) {
                 throw new Error(`Module ${name} not found`);
             }
-            const moduleInstance = module.makeInstance(id, atomStoreMaster);
-            moduleInstance.deserialize(serializedInstance);
+            const moduleInstance = await module.makeInstance(id, atomStoreMaster);
             dashboard.registerModuleInstance(moduleInstance);
+            moduleInstance.initiateDeserialization(serializedInstance);
 
             layout.push({
                 moduleInstanceId: id,
