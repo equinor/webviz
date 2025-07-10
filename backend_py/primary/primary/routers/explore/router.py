@@ -58,6 +58,7 @@ async def get_cases(
 
 
 @router.get("/cases/{case_uuid}/ensembles")
+@no_cache
 async def get_ensembles(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
@@ -81,6 +82,7 @@ async def get_ensembles(
 
 
 @router.get("/cases/{case_uuid}/ensembles/{ensemble_name}")
+@no_cache
 async def get_ensemble_details(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
