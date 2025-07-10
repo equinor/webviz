@@ -102,6 +102,14 @@ export type ModuleStateSchema<TSerializedStateDef extends ModuleComponentsStateB
     view?: JTDSchemaType<TSerializedStateDef["view"]>;
 };
 
+export interface SerializeStateFunction<T> {
+    (get: Getter): T;
+}
+
+export interface DeserializeStateFunction<T> {
+    (raw: T, set: Setter): void;
+}
+
 export type ModuleComponentSerializationFunctions<TSerializedStateDef extends ModuleComponentsStateBase> =
     TSerializedStateDef extends NoModuleStateSchema
         ? {
@@ -110,12 +118,12 @@ export type ModuleComponentSerializationFunctions<TSerializedStateDef extends Mo
           }
         : {
               serializeStateFunctions: {
-                  settings?: (get: Getter) => TSerializedStateDef["settings"];
-                  view?: (get: Getter) => TSerializedStateDef["view"];
+                  settings?: SerializeStateFunction<TSerializedStateDef["settings"]>;
+                  view?: SerializeStateFunction<TSerializedStateDef["view"]>;
               };
               deserializeStateFunctions: {
-                  settings?: (raw: TSerializedStateDef["settings"], set: Setter) => void;
-                  view?: (raw: TSerializedStateDef["view"], set: Setter) => void;
+                  settings?: DeserializeStateFunction<TSerializedStateDef["settings"]>;
+                  view?: DeserializeStateFunction<TSerializedStateDef["view"]>;
               };
           };
 

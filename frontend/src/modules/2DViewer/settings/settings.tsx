@@ -16,7 +16,12 @@ import {
 } from "../../_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import type { SerializedState } from "../persistedState";
 
-import { dataProviderManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
+import {
+    dataProviderManagerAtom,
+    dataProviderStateAtom,
+    preferredViewLayoutAtom,
+    userSelectedFieldIdentifierAtom,
+} from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
 
@@ -25,6 +30,7 @@ export function Settings(props: ModuleSettingsProps<any, SerializedState>): Reac
     const queryClient = useQueryClient();
 
     const [dataProviderManager, setDataProviderManager] = useAtom(dataProviderManagerAtom);
+    const [dataProviderState, setDataProviderState] = useAtom(dataProviderStateAtom);
 
     const fieldIdentifier = useAtomValue(selectedFieldIdentifierAtom);
     const setFieldIdentifier = useSetAtom(userSelectedFieldIdentifierAtom);
@@ -37,30 +43,17 @@ export function Settings(props: ModuleSettingsProps<any, SerializedState>): Reac
             }
 
             const serializedState = {
-                layerManager: dataProviderManager.serializeState(),
-                fieldIdentifier,
-                preferredViewLayout,
+                dataProviderManager: dataProviderManager.serializeState(),
             };
-            /*
-            window.localStorage.setItem(
-                `${props.settingsContext.getInstanceIdString()}-settings`,
-                JSON.stringify(serializedState),
-            );
-            */
-            props.persistence.serializeState({
-                dataProviderData: JSON.stringify(serializedState),
-            });
+
+            setDataProviderState(JSON.stringify(serializedState));
         },
-        [dataProviderManager, fieldIdentifier, preferredViewLayout, props.persistence],
+        [dataProviderManager, fieldIdentifier, preferredViewLayout],
     );
 
     const applyPersistedState = React.useCallback(
-        function applyPersistedState(layerManager: DataProviderManager) {
-            /*const serializedState = window.localStorage.getItem(
-                `${props.settingsContext.getInstanceIdString()}-settings`,
-            );*/
-
-            const serializedState = props.persistence.serializedState?.dataProviderData;
+        function applyPersistedState(dataProviderManager: DataProviderManager) {
+            const serializedState = dataProviderState;
 
             if (!serializedState) {
                 return;
@@ -74,15 +67,14 @@ export function Settings(props: ModuleSettingsProps<any, SerializedState>): Reac
                 setPreferredViewLayout(parsedState.preferredViewLayout);
             }
 
-            if (parsedState.layerManager) {
-                if (!layerManager) {
+            if (parsedState.dataProviderManager) {
+                if (!dataProviderManager) {
                     return;
                 }
-                layerManager.updateGlobalSetting("fieldId", parsedState.fieldIdentifier);
-                layerManager.deserializeState(parsedState.layerManager);
+                dataProviderManager.deserializeState(parsedState.dataProviderManager);
             }
         },
-        [setFieldIdentifier, setPreferredViewLayout, props.persistence],
+        [setFieldIdentifier, setPreferredViewLayout, dataProviderState],
     );
 
     React.useEffect(

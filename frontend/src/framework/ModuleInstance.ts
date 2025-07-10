@@ -134,7 +134,7 @@ export class ModuleInstance<
     serialize(): ModuleInstanceSerializedState {
         return {
             id: this._id,
-            name: this._title,
+            name: this._module.getName(),
             // Replace with channel manager's own serialization logic
             dataChannelReceiverSubscriptions: this._channelManager
                 .getReceivers()
@@ -154,7 +154,6 @@ export class ModuleInstance<
         this._syncedSettingKeys = raw.syncedSettingKeys;
 
         this._id = raw.id;
-        this._title = raw.name;
 
         if (raw.serializedState && this._serializer) {
             this._serializer.deserializeState(raw.serializedState);

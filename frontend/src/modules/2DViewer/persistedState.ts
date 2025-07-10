@@ -1,33 +1,29 @@
-import type { ViewStateType } from "@webviz/subsurface-viewer";
-import type { JTDSchemaType } from "ajv/dist/core";
-
-import type { ModuleStateSchema } from "@framework/Module";
-import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
+import type { ModuleComponentSerializationFunctions, ModuleStateSchema } from "@framework/Module";
+import {
+    deserializeSettings,
+    SERIALIZED_SETTINGS,
+    serializeSettings,
+    type SerializedSettings,
+} from "@modules/2DViewer/settings/persistence";
+import { deserializeView, SERIALIZED_VIEW, serializeView, type SerializedView } from "./view/persistence";
 
 export type SerializedState = {
-    settings: {
-        dataProviderData: string;
-    };
-    view: {
-        cameraPosition: ViewStateType;
-    };
+    settings: SerializedSettings;
+    view: SerializedView;
 };
 
-const settingsBuilder = new SchemaBuilder<SerializedState["settings"]>(() => ({
-    properties: {
-        dataProviderData: {
-            type: "string",
-        },
-    },
-}));
-
-const viewBuilder = new SchemaBuilder<SerializedState["view"]>(({ inject }) => ({
-    properties: {
-        cameraPosition: inject("ViewState") as JTDSchemaType<ViewStateType>,
-    },
-}));
-
 export const SERIALIZED_STATE: ModuleStateSchema<SerializedState> = {
-    settings: settingsBuilder.build(),
-    view: viewBuilder.build(),
+    settings: SERIALIZED_SETTINGS,
+    view: SERIALIZED_VIEW,
 } as const;
+
+export const serializeStateFunctions: ModuleComponentSerializationFunctions<SerializedState> = {
+    serializeStateFunctions: {
+        settings: serializeSettings,
+        view: serializeView,
+    },
+    deserializeStateFunctions: {
+        settings: deserializeSettings,
+        view: deserializeView,
+    },
+};
