@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from primary.services.snapshot_access.types import (
+from primary.services.database_access.snapshot_access.types import (
     NewSnapshot,
     SnapshotUpdate,
     SortBy,

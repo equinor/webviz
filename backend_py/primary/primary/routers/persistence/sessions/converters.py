@@ -1,5 +1,5 @@
-from primary.services.session_access.model import SessionDocument
-from primary.services.session_access.types import SessionMetadata, SessionMetadataWithId
+from primary.services.database_access.session_access.model import SessionDocument
+from primary.services.database_access.session_access.types import SessionMetadata, SessionMetadataWithId
 from . import schemas
 
 

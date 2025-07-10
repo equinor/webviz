@@ -7,7 +7,7 @@ from primary.services.snapshot_access.models import SnapshotContentDocument, Sna
 from primary.services.database_access._utils import hash_json_string
 from primary.services.service_exceptions import Service, ServiceRequestError
 from primary.services.database_access.container_access import ContainerAccess
-from primary.services.snapshot_access.types import (
+from primary.services.database_access.snapshot_access.types import (
     NewSnapshot,
     SnapshotMetadata,
     SnapshotMetadataWithId,

@@ -35,7 +35,7 @@ from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
 from primary.routers.persistence.sessions.router import router as sessions_router
 from primary.routers.persistence.snapshots.router import router as snapshots_router
-from primary.routers.snapshot_preview.router import router as snapshot_preview_router
+from primary.routers.persistence.snapshot_preview.router import router as snapshot_preview_router
 from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
