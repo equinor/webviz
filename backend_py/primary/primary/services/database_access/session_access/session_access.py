@@ -3,11 +3,11 @@ from datetime import datetime, timezone
 from nanoid import generate
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
-from primary.services.session_access.model import SessionDocument
+from primary.services.database_access.session_access.model import SessionDocument
 from primary.services.database_access._utils import hash_json_string
 from primary.services.service_exceptions import Service, ServiceRequestError
 from primary.services.database_access.container_access import ContainerAccess
-from primary.services.session_access.types import (
+from primary.services.database_access.session_access.types import (
     NewSession,
     SessionMetadataWithId,
     SessionMetadata,

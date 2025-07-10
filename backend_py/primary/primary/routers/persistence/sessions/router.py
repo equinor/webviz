@@ -4,9 +4,9 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from primary.middleware.add_browser_cache import no_cache
-from primary.services.session_access.session_access import SessionAccess
+from primary.services.database_access.session_access.session_access import SessionAccess
 from primary.auth.auth_helper import AuthHelper, AuthenticatedUser
-from primary.services.session_access.types import (
+from primary.services.database_access.session_access.types import (
     NewSession,
     SessionUpdate,
     SortBy,

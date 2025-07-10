@@ -19,7 +19,7 @@ COSMOS_SCHEMA = [
             {"id": "sessions", "partition_key": "/owner_id"},
             {"id": "snapshots_metadata", "partition_key": "/owner_id"},
             {"id": "snapshots_content", "partition_key": "/snapshot_id"},
-            {"id": "snapshot_access_log", "partition_key": "/owner_id"},
+            {"id": "snapshot_access_log", "partition_key": "/visitor_id"},
         ],
     },
 ]

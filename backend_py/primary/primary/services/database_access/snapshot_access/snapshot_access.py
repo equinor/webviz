@@ -3,11 +3,11 @@ from datetime import datetime, timezone
 from nanoid import generate
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
-from primary.services.snapshot_access.model import SnapshotContentDocument, SnapshotMetadataDocument
+from primary.services.database_access.snapshot_access.models import SnapshotContentDocument, SnapshotMetadataDocument
 from primary.services.database_access._utils import hash_json_string
 from primary.services.service_exceptions import Service, ServiceRequestError
 from primary.services.database_access.container_access import ContainerAccess
-from primary.services.snapshot_access.types import (
+from primary.services.database_access.snapshot_access.types import (
     NewSnapshot,
     SnapshotMetadata,
     SnapshotMetadataWithId,
@@ -35,10 +35,12 @@ class SnapshotAccess:
         self.metadata_container_access = metadata_container_access
         self.content_container_access = content_container_access
 
-    async def __aenter__(self):  # pylint: disable=C9001
+    async def __aenter__(self) -> "SnapshotAccess":
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):  # pylint: disable=C9001
+    async def __aexit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object | None
+    ) -> None:
         await self.metadata_container_access.close_async()
         await self.content_container_access.close_async()
 

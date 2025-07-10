@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, field_validator
-from primary.services.session_access.types import SessionMetadata
+from primary.services.database_access.session_access.types import SessionMetadata
 
 
 class SessionDocument(BaseModel):

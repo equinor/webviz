@@ -2,9 +2,10 @@ import React from "react";
 
 import { useQuery } from "@tanstack/react-query";
 
-import { getSessionsMetadataOptions, SortBy_api, SortDirection_api } from "@api";
+import { getSessionsMetadataOptions, PrimaryServicesSessionAccessTypesSortBy_api, SortDirection_api } from "@api";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { timeAgo } from "@lib/utils/dates";
 
 export type RecentSessionsProps = {
     workbench: Workbench;
@@ -21,7 +22,7 @@ export function RecentSessions(props: RecentSessionsProps) {
     const sessionsQuery = useQuery({
         ...getSessionsMetadataOptions({
             query: {
-                sort_by: SortBy_api.UPDATED_AT,
+                sort_by: PrimaryServicesSessionAccessTypesSortBy_api.UPDATED_AT,
                 sort_direction: SortDirection_api.DESC,
                 limit: 5,
             },
@@ -58,7 +59,7 @@ export function RecentSessions(props: RecentSessionsProps) {
             return (
                 <ul className="pl-5">
                     {sessionsQuery.data.map((session) => (
-                        <li key={session.id} className="flex items-center gap-4">
+                        <li key={session.id} className="flex items-center justify-between gap-4">
                             <a
                                 href="#"
                                 onClick={(e) => handleSessionClick(e, session.id)}
@@ -66,7 +67,9 @@ export function RecentSessions(props: RecentSessionsProps) {
                             >
                                 {session.title}
                             </a>
-                            <span className="text-gray-500">~ {new Date(session.updatedAt).toLocaleString()}</span>
+                            <span className="text-gray-500">
+                                ~ {timeAgo(Date.now() - new Date(session.updatedAt).getTime())}
+                            </span>
                         </li>
                     ))}
                 </ul>

@@ -1,8 +1,7 @@
-from datetime import datetime
-from enum import Enum
-from typing import List, Optional
-from unittest.mock import Base
+from typing import Optional
 from pydantic import BaseModel
+
+from primary.services.database_access.snapshot_access.util import make_access_log_item_id
 
 
 class SnapshotMetadata(BaseModel):
@@ -22,3 +21,20 @@ class Snapshot(BaseModel):
     id: str
     metadata: SnapshotMetadata
     content: str
+
+
+class SnapshotAccessLog(BaseModel):
+    visitorId: str
+    snapshotId: str
+    visits: int
+    firstVisitedAt: str | None
+    lastVisitedAt: str | None
+
+    snapshotMetadata: SnapshotMetadata
+
+    # Internal item id
+    @property
+    # pylint: disable=invalid-name
+    # ↳ pylint v2 will complain about names that are shorter than 3 characters
+    def id(self) -> str:
+        return make_access_log_item_id(self.snapshotId, self.visitorId)
