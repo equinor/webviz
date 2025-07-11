@@ -8,16 +8,16 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = "^0.115.12"
-uvicorn = "^0.20.0"
+fastapi = "^0.116.0"
+uvicorn = "^0.35.0"
 httpx = "^0.28.1"
 psutil = "^5.9.5"
 pydantic = "^2.3.0"
 numpy = "^1.24.1"
 xtgeo = "^3.8.0"
-diskcache = "^5.6.3" 
+diskcache = "^5.6.3"
 aiofiles = "^23.2.1"
-azure-storage-blob = {version = "12.19.1", extras = ["aio"]}
+azure-storage-blob = { version = "12.19.1", extras = ["aio"] }
 python-dotenv = "^1.1.0"
 azure-monitor-opentelemetry = "^1.6.8"
 opentelemetry-instrumentation-httpx = "*"
@@ -28,8 +28,8 @@ protobuf = "^4.25.3"
 grpcio = "^1.62.1"
 grpcio-tools = "^1.62.1"
 
-core_utils = {path = "../libs/core_utils", develop = true}
-server_schemas = {path = "../libs/server_schemas", develop = true}
+core_utils = { path = "../libs/core_utils", develop = true }
+server_schemas = { path = "../libs/server_schemas", develop = true }
 
 [tool.poetry.group.dev.dependencies]
 types-aiofiles = "^23.2.0"
@@ -40,7 +40,12 @@ types-psutil = "^5.9.5"
 line-length = 120
 
 [tool.pylint]
-disable = ["missing-docstring", "line-too-long", "logging-fstring-interpolation", "duplicate-code"]
+disable = [
+    "missing-docstring",
+    "line-too-long",
+    "logging-fstring-interpolation",
+    "duplicate-code",
+]
 
 [tool.mypy]
 ignore_missing_imports = true
