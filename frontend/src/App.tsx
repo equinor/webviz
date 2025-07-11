@@ -111,6 +111,7 @@ function App() {
             return function handleUnmount() {
                 workbench.clearLayout();
                 workbench.resetModuleInstanceNumbers();
+                workbench.stopEnsembleUpdatePolling();
             };
         },
         [authState, isMounted, queryClient, workbench],
