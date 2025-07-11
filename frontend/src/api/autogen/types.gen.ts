@@ -1281,7 +1281,7 @@ export type GetEnsembleDetailsResponses_api = {
 
 export type GetEnsembleDetailsResponse_api = GetEnsembleDetailsResponses_api[keyof GetEnsembleDetailsResponses_api];
 
-export type GetTimestampsForEnsemblesData_api = {
+export type PostGetTimestampsForEnsemblesData_api = {
     /**
      * A list of ensemble idents (aka; case uuid and ensemble name)
      */
@@ -1290,27 +1290,28 @@ export type GetTimestampsForEnsemblesData_api = {
     query?: {
         t?: number;
     };
-    url: "/ensembles/timestamps";
+    url: "/ensembles/get_timestamps";
 };
 
-export type GetTimestampsForEnsemblesErrors_api = {
+export type PostGetTimestampsForEnsemblesErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type GetTimestampsForEnsemblesError_api = GetTimestampsForEnsemblesErrors_api[keyof GetTimestampsForEnsemblesErrors_api];
+export type PostGetTimestampsForEnsemblesError_api =
+    PostGetTimestampsForEnsemblesErrors_api[keyof PostGetTimestampsForEnsemblesErrors_api];
 
-export type GetTimestampsForEnsemblesResponses_api = {
+export type PostGetTimestampsForEnsemblesResponses_api = {
     /**
      * Successful Response
      */
     200: Array<EnsembleTimestamps_api>;
 };
 
-export type GetTimestampsForEnsemblesResponse_api =
-    GetTimestampsForEnsemblesResponses_api[keyof GetTimestampsForEnsemblesResponses_api];
+export type PostGetTimestampsForEnsemblesResponse_api =
+    PostGetTimestampsForEnsemblesResponses_api[keyof PostGetTimestampsForEnsemblesResponses_api];
 
 export type GetVectorListData_api = {
     body?: never;

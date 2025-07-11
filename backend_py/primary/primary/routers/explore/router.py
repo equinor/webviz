@@ -114,9 +114,9 @@ async def get_ensemble_details(
     )
 
 
-@router.post("/ensembles/timestamps")
+@router.post("/ensembles/get_timestamps")
 @no_cache
-async def get_timestamps_for_ensembles(
+async def post_get_timestamps_for_ensembles(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     ensemble_idents: list[schemas.EnsembleIdent] = Body(
         description="A list of ensemble idents (aka; case uuid and ensemble name)"

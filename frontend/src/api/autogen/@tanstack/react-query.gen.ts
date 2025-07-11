@@ -9,7 +9,7 @@ import {
     getCases,
     getEnsembles,
     getEnsembleDetails,
-    getTimestampsForEnsembles,
+    postGetTimestampsForEnsembles,
     getVectorList,
     getDeltaEnsembleVectorList,
     getRealizationsVectorData,
@@ -83,9 +83,9 @@ import type {
     GetCasesData_api,
     GetEnsemblesData_api,
     GetEnsembleDetailsData_api,
-    GetTimestampsForEnsemblesData_api,
-    GetTimestampsForEnsemblesError_api,
-    GetTimestampsForEnsemblesResponse_api,
+    PostGetTimestampsForEnsemblesData_api,
+    PostGetTimestampsForEnsemblesError_api,
+    PostGetTimestampsForEnsemblesResponse_api,
     GetVectorListData_api,
     GetDeltaEnsembleVectorListData_api,
     GetRealizationsVectorDataData_api,
@@ -271,14 +271,14 @@ export const getEnsembleDetailsOptions = (options: Options<GetEnsembleDetailsDat
     });
 };
 
-export const getTimestampsForEnsemblesQueryKey = (options: Options<GetTimestampsForEnsemblesData_api>) => [
-    createQueryKey("getTimestampsForEnsembles", options),
+export const postGetTimestampsForEnsemblesQueryKey = (options: Options<PostGetTimestampsForEnsemblesData_api>) => [
+    createQueryKey("postGetTimestampsForEnsembles", options),
 ];
 
-export const getTimestampsForEnsemblesOptions = (options: Options<GetTimestampsForEnsemblesData_api>) => {
+export const postGetTimestampsForEnsemblesOptions = (options: Options<PostGetTimestampsForEnsemblesData_api>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getTimestampsForEnsembles({
+            const { data } = await postGetTimestampsForEnsembles({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -286,18 +286,20 @@ export const getTimestampsForEnsemblesOptions = (options: Options<GetTimestampsF
             });
             return data;
         },
-        queryKey: getTimestampsForEnsemblesQueryKey(options),
+        queryKey: postGetTimestampsForEnsemblesQueryKey(options),
     });
 };
 
-export const getTimestampsForEnsemblesMutation = (options?: Partial<Options<GetTimestampsForEnsemblesData_api>>) => {
+export const postGetTimestampsForEnsemblesMutation = (
+    options?: Partial<Options<PostGetTimestampsForEnsemblesData_api>>,
+) => {
     const mutationOptions: UseMutationOptions<
-        GetTimestampsForEnsemblesResponse_api,
-        AxiosError<GetTimestampsForEnsemblesError_api>,
-        Options<GetTimestampsForEnsemblesData_api>
+        PostGetTimestampsForEnsemblesResponse_api,
+        AxiosError<PostGetTimestampsForEnsemblesError_api>,
+        Options<PostGetTimestampsForEnsemblesData_api>
     > = {
         mutationFn: async (localOptions) => {
-            const { data } = await getTimestampsForEnsembles({
+            const { data } = await postGetTimestampsForEnsembles({
                 ...options,
                 ...localOptions,
                 throwOnError: true,

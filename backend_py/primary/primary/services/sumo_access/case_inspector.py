@@ -63,8 +63,6 @@ class CaseInspector:
 
         data_timestamp_int = await search_context.metrics.max_async("_sumo.timestamp")
 
-        print(data_timestamp_int)
-
         timer.record_lap("aggregate_data_timestamps")
         LOGGER.debug(f"get_last_data_change_timestamp_async {timer.to_string()}")
 

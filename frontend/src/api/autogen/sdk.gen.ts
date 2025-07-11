@@ -14,9 +14,9 @@ import type {
     GetEnsembleDetailsData_api,
     GetEnsembleDetailsResponse_api,
     GetEnsembleDetailsError_api,
-    GetTimestampsForEnsemblesData_api,
-    GetTimestampsForEnsemblesResponse_api,
-    GetTimestampsForEnsemblesError_api,
+    PostGetTimestampsForEnsemblesData_api,
+    PostGetTimestampsForEnsemblesResponse_api,
+    PostGetTimestampsForEnsemblesError_api,
     GetVectorListData_api,
     GetVectorListResponse_api,
     GetVectorListError_api,
@@ -261,15 +261,15 @@ export const getEnsembleDetails = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get Timestamps For Ensembles
+ * Post Get Timestamps For Ensembles
  * Fetches ensemble timestamps for a list of ensembles
  */
-export const getTimestampsForEnsembles = <ThrowOnError extends boolean = false>(
-    options: Options<GetTimestampsForEnsemblesData_api, ThrowOnError>,
+export const postGetTimestampsForEnsembles = <ThrowOnError extends boolean = false>(
+    options: Options<PostGetTimestampsForEnsemblesData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).post<
-        GetTimestampsForEnsemblesResponse_api,
-        GetTimestampsForEnsemblesError_api,
+        PostGetTimestampsForEnsemblesResponse_api,
+        PostGetTimestampsForEnsemblesError_api,
         ThrowOnError
     >({
         ...options,
@@ -277,7 +277,7 @@ export const getTimestampsForEnsembles = <ThrowOnError extends boolean = false>(
             "Content-Type": "application/json",
             ...options?.headers,
         },
-        url: "/ensembles/timestamps",
+        url: "/ensembles/get_timestamps",
     });
 };
 

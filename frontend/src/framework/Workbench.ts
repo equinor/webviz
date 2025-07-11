@@ -1,7 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import type { EnsembleIdent_api, EnsembleTimestamps_api } from "@api";
-import { getTimestampsForEnsemblesOptions } from "@api";
+import { postGetTimestampsForEnsemblesOptions, type EnsembleIdent_api, type EnsembleTimestamps_api } from "@api";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
 import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
@@ -312,44 +311,53 @@ export class Workbench {
     }
 
     private _pollingEnabled = false;
-    private _pollingInProgress = false;
     private _waitingPollingRun?: NodeJS.Timeout;
 
+    /**
+     * Starts a background polling routine, that repeats at a set interval.
+     * @param queryClient The QueryClient to use for fetching ensemble timestamps.
+     */
     beginEnsembleUpdatePolling(queryClient: QueryClient) {
-        // A polling is actively in progress, don't start a new one
-        if (this._pollingInProgress) return;
-        // If the next polling attempt is already waiting, cancel the timeout, and run this new one immediately instead
-        clearTimeout(this._waitingPollingRun);
+        if (this._pollingEnabled) return;
+
+        // This shouldn't happen, but we check just in case
+        if (this._waitingPollingRun) {
+            console.warn("Found a waiting polling call, even though polling was disabled");
+            clearTimeout(this._waitingPollingRun);
+        }
 
         // Start polling
         console.debug("checkForEnsembleUpdate - initializing...");
         this._pollingEnabled = true;
-        this._recursivelyQueueEnsemblePolling(queryClient);
+        this.recursivelyQueueEnsemblePolling(queryClient);
     }
 
     stopEnsembleUpdatePolling() {
         clearTimeout(this._waitingPollingRun);
+        this._waitingPollingRun = undefined;
         this._pollingEnabled = false;
     }
 
-    private async _recursivelyQueueEnsemblePolling(queryClient: QueryClient) {
+    private async recursivelyQueueEnsemblePolling(queryClient: QueryClient) {
         if (!this._pollingEnabled) return;
 
-        await this._pollForEnsembleChange(queryClient);
+        await this.pollForEnsembleChange(queryClient);
+
+        // Checking the variable again in case polling was disabled *during* the async call
+        if (!this._pollingEnabled) return;
 
         console.debug("checkForEnsembleUpdate - queuing next...");
         this._waitingPollingRun = setTimeout(async () => {
-            this._recursivelyQueueEnsemblePolling(queryClient);
+            this.recursivelyQueueEnsemblePolling(queryClient);
         }, ENSEMBLE_POLLING_INTERVAL);
     }
 
-    private async _pollForEnsembleChange(queryClient: QueryClient) {
+    private async pollForEnsembleChange(queryClient: QueryClient) {
         console.debug("checkForEnsembleUpdate - fetching...");
-        this._pollingInProgress = true;
 
         const regularEnsembleSet = this._workbenchSession.getEnsembleSet().getRegularEnsembleArray();
 
-        const latestTimestamps = await this._getLatestEnsembleTimestamps(queryClient, regularEnsembleSet);
+        const latestTimestamps = await this.getLatestEnsembleTimestamps(queryClient, regularEnsembleSet);
 
         const newSettings = latestTimestamps.reduce((acc, [ens, ts]) => {
             if (!isEnsembleOutdated(ens, ts)) return acc;
@@ -362,15 +370,13 @@ export class Workbench {
         }, [] as UserEnsembleSetting[]);
 
         if (newSettings.length) {
-            this._updateExistingUserEnsembleSettings(queryClient, newSettings);
+            this.updateExistingUserEnsembleSettings(queryClient, newSettings);
         }
 
         console.debug("checkForEnsembleUpdate - done...");
-
-        this._pollingInProgress = false;
     }
 
-    private async _getLatestEnsembleTimestamps(
+    private async getLatestEnsembleTimestamps(
         queryClient: QueryClient,
         ensembles: readonly RegularEnsemble[],
     ): Promise<[RegularEnsemble, EnsembleTimestamps_api][]> {
@@ -380,7 +386,7 @@ export class Workbench {
         }));
 
         const timestamps = await queryClient.fetchQuery({
-            ...getTimestampsForEnsemblesOptions({ body: idents }),
+            ...postGetTimestampsForEnsemblesOptions({ body: idents }),
             staleTime: 0,
             gcTime: 0,
         });
@@ -388,7 +394,7 @@ export class Workbench {
         return ensembles.map((ens, i) => [ens, timestamps[i]]);
     }
 
-    private async _updateExistingUserEnsembleSettings(queryClient: QueryClient, newSettings: UserEnsembleSetting[]) {
+    private async updateExistingUserEnsembleSettings(queryClient: QueryClient, newSettings: UserEnsembleSetting[]) {
         if (newSettings.length === 0) return;
 
         const existingEnsembleSettings = this.maybeLoadEnsembleSettingsFromLocalStorage() ?? [];
