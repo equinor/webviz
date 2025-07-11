@@ -70,11 +70,11 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const sensitivityArray = buildSensitivityArrFromApiResponse(ensembleApiData.sensitivities);
         outEnsembleArray.push(
             new RegularEnsemble(
-                ensembleApiData.ensembleDetails.field_identifier,
-                ensembleApiData.ensembleDetails.case_uuid,
-                ensembleApiData.ensembleDetails.case_name,
+                ensembleApiData.ensembleDetails.fieldIdentifier,
+                ensembleApiData.ensembleDetails.caseUuid,
+                ensembleApiData.ensembleDetails.caseName,
                 ensembleApiData.ensembleDetails.name,
-                ensembleApiData.ensembleDetails.stratigraphic_column_identifier,
+                ensembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
                 ensembleApiData.ensembleDetails.realizations,
                 parameterArray,
                 sensitivityArray,
@@ -124,11 +124,11 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const comparisonEnsemble = existingComparisonEnsemble
             ? existingComparisonEnsemble
             : new RegularEnsemble(
-                  comparisonEnsembleApiData.ensembleDetails.field_identifier,
-                  comparisonEnsembleApiData.ensembleDetails.case_uuid,
-                  comparisonEnsembleApiData.ensembleDetails.case_name,
+                  comparisonEnsembleApiData.ensembleDetails.fieldIdentifier,
+                  comparisonEnsembleApiData.ensembleDetails.caseUuid,
+                  comparisonEnsembleApiData.ensembleDetails.caseName,
                   comparisonEnsembleApiData.ensembleDetails.name,
-                  comparisonEnsembleApiData.ensembleDetails.stratigraphic_column_identifier,
+                  comparisonEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
                   comparisonEnsembleApiData.ensembleDetails.realizations,
                   emptyParameterArray,
                   nullSensitivityArray,
@@ -140,11 +140,11 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const referenceEnsemble = existingReferenceEnsemble
             ? existingReferenceEnsemble
             : new RegularEnsemble(
-                  referenceEnsembleApiData.ensembleDetails.field_identifier,
-                  referenceEnsembleApiData.ensembleDetails.case_uuid,
-                  referenceEnsembleApiData.ensembleDetails.case_name,
+                  referenceEnsembleApiData.ensembleDetails.fieldIdentifier,
+                  referenceEnsembleApiData.ensembleDetails.caseUuid,
+                  referenceEnsembleApiData.ensembleDetails.caseName,
                   referenceEnsembleApiData.ensembleDetails.name,
-                  comparisonEnsembleApiData.ensembleDetails.stratigraphic_column_identifier,
+                  comparisonEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
                   referenceEnsembleApiData.ensembleDetails.realizations,
                   emptyParameterArray,
                   nullSensitivityArray,
@@ -187,7 +187,7 @@ async function loadEnsembleApiDataMapFromBackend(
         const ensembleDetailsPromise = queryClient.fetchQuery({
             ...getEnsembleDetailsOptions({
                 // ? These data should only be affected by the case timestamp, right?
-                query: { t: timestamps?.case_updated_at_utc_ms ?? Date.now() },
+                query: { t: timestamps?.caseUpdatedAtUtcMs ?? Date.now() },
                 path: {
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
@@ -202,7 +202,7 @@ async function loadEnsembleApiDataMapFromBackend(
             ...getParametersOptions({
                 query: {
                     // ? These are only affected by the "data" timestamp, right?
-                    t: timestamps?.data_updated_at_utc_ms ?? Date.now(),
+                    t: timestamps?.dataUpdatedAtUtcMs ?? Date.now(),
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
                 },
@@ -216,7 +216,7 @@ async function loadEnsembleApiDataMapFromBackend(
             ...getSensitivitiesOptions({
                 query: {
                     // ? These are only affected by the "data" timestamp, right?
-                    t: timestamps?.data_updated_at_utc_ms ?? Date.now(),
+                    t: timestamps?.dataUpdatedAtUtcMs ?? Date.now(),
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
                 },
@@ -243,7 +243,7 @@ async function loadEnsembleApiDataMapFromBackend(
 
         const ensembleDetails: EnsembleDetails_api = ensembleDetailsOutcome.value;
         if (
-            ensembleDetails.case_uuid !== ensembleIdents[i].getCaseUuid() ||
+            ensembleDetails.caseUuid !== ensembleIdents[i].getCaseUuid() ||
             ensembleDetails.name !== ensembleIdents[i].getEnsembleName()
         ) {
             console.error("Got mismatched data from backend, dropping ensemble:", ensembleIdents[i].toString());

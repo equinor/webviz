@@ -14,9 +14,6 @@ export function isEnsembleOutdated(ensemble: RegularEnsemble, timestamp: Ensembl
         return true;
     }
 
-    const { case_updated_at_utc_ms, data_updated_at_utc_ms } = currentTimestamp;
-    return (
-        timestamp.case_updated_at_utc_ms > case_updated_at_utc_ms ||
-        timestamp.data_updated_at_utc_ms > data_updated_at_utc_ms
-    );
+    const { caseUpdatedAtUtcMs, dataUpdatedAtUtcMs } = currentTimestamp;
+    return timestamp.caseUpdatedAtUtcMs > caseUpdatedAtUtcMs || timestamp.dataUpdatedAtUtcMs > dataUpdatedAtUtcMs;
 }

@@ -76,7 +76,7 @@ export type CaseInfo_api = {
     name: string;
     status: string;
     user: string;
-    updated_at_utc_ms: number;
+    updatedAtUtcMs: number;
 };
 
 export type Completions_api = {
@@ -114,22 +114,22 @@ export type DiscreteValueMetadata_api = {
 
 export type EnsembleDetails_api = {
     name: string;
-    field_identifier: string;
-    case_name: string;
-    case_uuid: string;
+    fieldIdentifier: string;
+    caseName: string;
+    caseUuid: string;
     realizations: Array<number>;
-    stratigraphic_column_identifier: string;
+    stratigraphicColumnIdentifier: string;
     timestamps: EnsembleTimestamps_api;
 };
 
 export type EnsembleIdent_api = {
-    case_uuid: string;
-    ensemble_name: string;
+    caseUuid: string;
+    ensembleName: string;
 };
 
 export type EnsembleInfo_api = {
     name: string;
-    realization_count: number;
+    realizationCount: number;
     timestamps: EnsembleTimestamps_api;
 };
 
@@ -182,8 +182,8 @@ export type EnsembleSensitivityCase_api = {
 };
 
 export type EnsembleTimestamps_api = {
-    case_updated_at_utc_ms: number;
-    data_updated_at_utc_ms: number;
+    caseUpdatedAtUtcMs: number;
+    dataUpdatedAtUtcMs: number;
 };
 
 export type FenceMeshSection_api = {
@@ -199,7 +199,7 @@ export type FenceMeshSection_api = {
 };
 
 export type FieldInfo_api = {
-    field_identifier: string;
+    fieldIdentifier: string;
 };
 
 export type FlowNetworkData_api = {

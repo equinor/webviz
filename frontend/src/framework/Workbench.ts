@@ -381,8 +381,8 @@ export class Workbench {
         ensembles: readonly RegularEnsemble[],
     ): Promise<[RegularEnsemble, EnsembleTimestamps_api][]> {
         const idents = ensembles.map<EnsembleIdent_api>((ens) => ({
-            case_uuid: ens.getCaseUuid(),
-            ensemble_name: ens.getEnsembleName(),
+            caseUuid: ens.getCaseUuid(),
+            ensembleName: ens.getEnsembleName(),
         }));
 
         const timestamps = await queryClient.fetchQuery({

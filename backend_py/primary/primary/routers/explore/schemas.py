@@ -4,12 +4,12 @@ from pydantic import BaseModel
 
 
 class FieldInfo(BaseModel):
-    field_identifier: str
+    fieldIdentifier: str
 
 
 class EnsembleIdent(BaseModel):
-    case_uuid: str
-    ensemble_name: str
+    caseUuid: str
+    ensembleName: str
 
 
 class CaseInfo(BaseModel):
@@ -17,25 +17,25 @@ class CaseInfo(BaseModel):
     name: str
     status: str
     user: str
-    updated_at_utc_ms: int
+    updatedAtUtcMs: int
 
 
 class EnsembleTimestamps(BaseModel):
-    case_updated_at_utc_ms: int
-    data_updated_at_utc_ms: int
+    caseUpdatedAtUtcMs: int
+    dataUpdatedAtUtcMs: int
 
 
 class EnsembleInfo(BaseModel):
     name: str
-    realization_count: int
+    realizationCount: int
     timestamps: EnsembleTimestamps
 
 
 class EnsembleDetails(BaseModel):
     name: str
-    field_identifier: str
-    case_name: str
-    case_uuid: str
+    fieldIdentifier: str
+    caseName: str
+    caseUuid: str
     realizations: Sequence[int]
-    stratigraphic_column_identifier: str
+    stratigraphicColumnIdentifier: str
     timestamps: EnsembleTimestamps

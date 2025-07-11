@@ -56,10 +56,10 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
     // Field select
     const fieldsQuery = useQuery({ ...getFieldsOptions() });
 
-    const fieldOpts = fieldsQuery.data?.map((f) => ({ value: f.field_identifier, label: f.field_identifier })) ?? [];
+    const fieldOpts = fieldsQuery.data?.map((f) => ({ value: f.fieldIdentifier, label: f.fieldIdentifier })) ?? [];
     const [selectedField, setSelectedField] = useValidState<string>({
         initialState: readInitialStateFromLocalStorage("selectedField"),
-        validStates: fieldsQuery.data?.map((item) => item.field_identifier) ?? [],
+        validStates: fieldsQuery.data?.map((item) => item.fieldIdentifier) ?? [],
         keepStateWhenInvalid: true,
     });
 
@@ -129,7 +129,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
     // Ensemble select
     const ensemblesQuery = useQuery({
         ...getEnsemblesOptions({
-            query: { t: selectedCase?.updated_at_utc_ms },
+            query: { t: selectedCase?.updatedAtUtcMs },
             path: {
                 case_uuid: selectedCaseId,
             },
@@ -152,7 +152,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
 
     const ensembleOpts =
         ensemblesQuery.data?.map((e) => ({
-            label: `${e.name}  (${e.realization_count} reals)`,
+            label: `${e.name}  (${e.realizationCount} reals)`,
             value: e.name,
         })) ?? [];
 

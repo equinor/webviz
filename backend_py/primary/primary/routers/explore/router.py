@@ -26,7 +26,7 @@ async def get_fields(
     """
     sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
     field_ident_arr = await sumo_inspector.get_fields_async()
-    ret_arr = [schemas.FieldInfo(field_identifier=field_ident.identifier) for field_ident in field_ident_arr]
+    ret_arr = [schemas.FieldInfo(fieldIdentifier=field_ident.identifier) for field_ident in field_ident_arr]
 
     return ret_arr
 
@@ -49,7 +49,7 @@ async def get_cases(
             name=ci.name,
             status=ci.status,
             user=ci.user,
-            updated_at_utc_ms=ci.updated_at_utc_ms,
+            updatedAtUtcMs=ci.updated_at_utc_ms,
         )
         for ci in case_info_arr
     ]
@@ -71,10 +71,10 @@ async def get_ensembles(
     return [
         schemas.EnsembleInfo(
             name=it.name,
-            realization_count=it.realization_count,
+            realizationCount=it.realization_count,
             timestamps=schemas.EnsembleTimestamps(
-                case_updated_at_utc_ms=it.timestamps.case_updated_at_utc_ms,
-                data_updated_at_utc_ms=it.timestamps.data_updated_at_utc_ms,
+                caseUpdatedAtUtcMs=it.timestamps.case_updated_at_utc_ms,
+                dataUpdatedAtUtcMs=it.timestamps.data_updated_at_utc_ms,
             ),
         )
         for it in iteration_info_arr
@@ -102,14 +102,14 @@ async def get_ensemble_details(
 
     return schemas.EnsembleDetails(
         name=ensemble_name,
-        case_name=case_name,
-        case_uuid=case_uuid,
+        caseName=case_name,
+        caseUuid=case_uuid,
         realizations=realizations,
-        field_identifier=field_identifiers[0],
-        stratigraphic_column_identifier=stratigraphic_column_identifier,
+        fieldIdentifier=field_identifiers[0],
+        stratigraphicColumnIdentifier=stratigraphic_column_identifier,
         timestamps=schemas.EnsembleTimestamps(
-            case_updated_at_utc_ms=timestamps.case_updated_at_utc_ms,
-            data_updated_at_utc_ms=timestamps.data_updated_at_utc_ms,
+            caseUpdatedAtUtcMs=timestamps.case_updated_at_utc_ms,
+            dataUpdatedAtUtcMs=timestamps.data_updated_at_utc_ms,
         ),
     )
 
@@ -133,14 +133,14 @@ async def post_get_timestamps_for_ensembles(
 async def _get_ensemble_timestamps_for_ident_async(
     authenticated_user: AuthenticatedUser, ensemble_ident: schemas.EnsembleIdent
 ) -> schemas.EnsembleTimestamps:
-    case_uuid = ensemble_ident.case_uuid
-    ensemble_name = ensemble_ident.ensemble_name
+    case_uuid = ensemble_ident.caseUuid
+    ensemble_name = ensemble_ident.ensembleName
 
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
 
     timestamps = await case_inspector.get_iteration_timestamps_async(ensemble_name)
 
     return schemas.EnsembleTimestamps(
-        case_updated_at_utc_ms=timestamps.case_updated_at_utc_ms,
-        data_updated_at_utc_ms=timestamps.data_updated_at_utc_ms,
+        caseUpdatedAtUtcMs=timestamps.case_updated_at_utc_ms,
+        dataUpdatedAtUtcMs=timestamps.data_updated_at_utc_ms,
     )
