@@ -1,8 +1,12 @@
+import React from "react";
+
 import { Icon, Tooltip, Typography } from "@equinor/eds-core-react";
 import { category, dashboard, folder_open, github, external_link } from "@equinor/eds-icons";
 
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
+
+import { SessionOverviewDialog } from "../SessionOverviewDialog";
 
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";
@@ -16,6 +20,16 @@ export type StartPageProps = {
 export function StartPage(props: StartPageProps) {
     function handleNewSession() {
         props.workbench.startNewSession();
+    }
+
+    const [showOverviewDialog, setShowOverviewDialog] = React.useState(true);
+
+    function closeOverviewDialog() {
+        setShowOverviewDialog(false);
+    }
+
+    function openOverviewDialog() {
+        setShowOverviewDialog(true);
     }
 
     return (
@@ -72,6 +86,8 @@ export function StartPage(props: StartPageProps) {
                     </section>
                 </section>
             </div>
+
+            <SessionOverviewDialog open={showOverviewDialog} onClose={closeOverviewDialog} />
         </div>
     );
 }
