@@ -72,7 +72,7 @@
         "eslint": "^9.15.0",
         "eslint-config-prettier": "^10.0.2",
         "eslint-import-resolver-typescript": "^3.8.3",
-        "eslint-plugin-import": "2.31",
+        "eslint-plugin-import": "^2.32.0",
         "eslint-plugin-prettier": "^4.2.1",
         "eslint-plugin-react": "7.35",
         "eslint-plugin-react-hooks": "^5.1.0",
