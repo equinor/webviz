@@ -16,3 +16,23 @@ export function timeAgo(msDiff: number): string {
     if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
     return `${years} year${years === 1 ? "" : "s"} ago`;
 }
+
+/**
+ * Format a timestamp with day, month, and year.
+ * @param timestamp - Date object or timestamp in milliseconds
+ * @returns Formatted date string like "24 Dec 2023"
+ */
+export function formatDate(timestamp: Date | number): string {
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+
+    const options: Intl.DateTimeFormatOptions = {
+        // weekday: "long",
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    };
+
+    return date.toLocaleDateString(undefined, options);
+}

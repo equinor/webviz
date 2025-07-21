@@ -22,7 +22,7 @@ export function StartPage(props: StartPageProps) {
         props.workbench.startNewSession();
     }
 
-    const [showOverviewDialog, setShowOverviewDialog] = React.useState(true);
+    const [showOverviewDialog, setShowOverviewDialog] = React.useState(false);
 
     function closeOverviewDialog() {
         setShowOverviewDialog(false);
@@ -45,7 +45,7 @@ export function StartPage(props: StartPageProps) {
                             </Button>
                         </Tooltip>
                         <Tooltip placement="right" title="Open an existing session.">
-                            <Button variant="text">
+                            <Button variant="text" onClick={openOverviewDialog}>
                                 <Icon name="folder_open" />
                                 Open session...
                             </Button>
@@ -78,7 +78,7 @@ export function StartPage(props: StartPageProps) {
                     <Typography variant="h2">Recent</Typography>
                     <section>
                         <Typography variant="h6">Sessions</Typography>
-                        <RecentSessions workbench={props.workbench} />
+                        <RecentSessions workbench={props.workbench} onOpenSessionDialog={openOverviewDialog} />
                     </section>
                     <section>
                         <Typography variant="h6">Snapshots</Typography>
@@ -87,7 +87,12 @@ export function StartPage(props: StartPageProps) {
                 </section>
             </div>
 
-            <SessionOverviewDialog open={showOverviewDialog} onClose={closeOverviewDialog} />
+            <SessionOverviewDialog
+                workbench={props.workbench}
+                open={showOverviewDialog}
+                onNewSession={handleNewSession}
+                onClose={closeOverviewDialog}
+            />
         </div>
     );
 }
