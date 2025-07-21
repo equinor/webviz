@@ -37,7 +37,7 @@ export enum Setting {
     SCALE = "scale",
 
     LOG_CURVE = "logCurve",
-    PLOT_VARIANT = "plotType",
+    PLOT_VARIANT = "plotVariant",
 
     ATTRIBUTE = "attribute",
     ENSEMBLE = "ensemble",
@@ -154,6 +154,7 @@ export type SettingTypes = {
     [Setting.WELLBORE_EXTENSION_LENGTH]: number | null;
     [Setting.WELLBORE_PICKS]: WellborePick_api[] | null;
     [Setting.OMIT_COLOR]: string | null;
+    [Setting.WELLBORE_PICK_IDENTIFIER]: string | null;
 };
 
 export type PossibleSettingsForCategory<TCategory extends SettingCategory> = {
