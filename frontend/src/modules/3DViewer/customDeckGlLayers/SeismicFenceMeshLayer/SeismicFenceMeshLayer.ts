@@ -20,6 +20,7 @@ import { ExtendedSimpleMeshLayer } from "./_private/ExtendedSimpleMeshLayer";
 // eslint-disable-next-line import/default
 import MeshWorker from "./_private/webworker/makeMesh.worker?worker";
 import { type WebWorkerParameters, type WebworkerResult } from "./_private/webworker/types";
+import { assertNonNull } from "@lib/utils/assertNonNull";
 
 export type SeismicFenceMeshLayerPickingInfo = {
     properties?: { name: string; value: number }[];
@@ -42,12 +43,6 @@ export interface SeismicFenceMeshLayerProps extends ExtendedLayerProps {
 
     // Non public properties:
     reportBoundingBox?: React.Dispatch<ReportBoundingBoxAction>;
-}
-
-function assert(condition: any, msg?: string): asserts condition {
-    if (!condition) {
-        throw new Error(msg);
-    }
 }
 
 function encodePropertyToColor(property: number, min: number, max: number): [number, number, number] {
@@ -219,15 +214,15 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
 
         this.initArrayBuffers();
 
-        assert(this._verticesArray !== null, "Vertices array is null");
-        assert(this._indicesArray !== null, "Indices array is null");
+        const verticesArray = assertNonNull(this._verticesArray, "Vertices array is null");
+        const indicesArray = assertNonNull(this._indicesArray, "Indices array is null");
 
         const params: WebWorkerParameters = {
             numSamples: data.numSamples,
             traceXYZPointsArray: data.traceXYZPointsArray,
             vVector: data.vVector,
-            verticesArray: this._verticesArray,
-            indicesArray: this._indicesArray,
+            verticesArray,
+            indicesArray,
             zIncreasingDownwards: zIncreaseDownwards ?? false,
         };
 
@@ -238,10 +233,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
                 makeMesh(params: WebWorkerParameters): Promise<WebworkerResult>;
             }>(workerInstance);
 
-            const result = await transfer(meshWorker.makeMesh(params), [
-                this._verticesArray.buffer,
-                this._indicesArray.buffer,
-            ]);
+            const result = await transfer(meshWorker.makeMesh(params), [verticesArray.buffer, indicesArray.buffer]);
             this._verticesArray = result.verticesArray;
             this._indicesArray = result.indicesArray;
 
@@ -263,8 +255,8 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
 
         this.setState({ ...this.state, colorsArrayCreated: false });
         this.initColorsArray();
-        assert(this._colorsArray !== null, "Colors array is null");
-        assert(this._pickingColorsArray !== null, "Picking colors array is null");
+        const colorsArray = assertNonNull(this._colorsArray, "Colors array is null");
+        const pickingColorsArray = assertNonNull(this._pickingColorsArray, "Picking colors array is null");
 
         this.makeColorsArray().then(() => {
             this.setState({
@@ -273,11 +265,11 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
                     attributes: {
                         ...geometry.attributes,
                         colors: {
-                            value: this._colorsArray!,
+                            value: colorsArray,
                             size: 4,
                         },
                         pickingColors: {
-                            value: this._pickingColorsArray!,
+                            value: pickingColorsArray,
                             type: "uint8",
                             size: 3,
                             normalized: true,
@@ -294,8 +286,8 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     private async makeColorsArray() {
         const { data, colorMapFunction } = this.props;
 
-        assert(this._colorsArray !== null, "Colors array is null");
-        assert(this._pickingColorsArray !== null, "Picking colors array is null");
+        const colorsArray = assertNonNull(this._colorsArray, "Colors array is null");
+        const pickingColorsArray = assertNonNull(this._pickingColorsArray, "Picking colors array is null");
 
         let minProperty = Number.MAX_VALUE;
         let maxProperty = -Number.MAX_VALUE;
@@ -314,15 +306,15 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         for (let i = 0; i < data.properties.length; i++) {
             const property = data.properties[i];
             const [r, g, b, a] = colorMapFunction(property);
-            this._colorsArray[colorIndex * 4 + 0] = r / 255;
-            this._colorsArray[colorIndex * 4 + 1] = g / 255;
-            this._colorsArray[colorIndex * 4 + 2] = b / 255;
-            this._colorsArray[colorIndex * 4 + 3] = a / 255;
+            colorsArray[colorIndex * 4 + 0] = r / 255;
+            colorsArray[colorIndex * 4 + 1] = g / 255;
+            colorsArray[colorIndex * 4 + 2] = b / 255;
+            colorsArray[colorIndex * 4 + 3] = a / 255;
 
             const [r2, g2, b2] = encodePropertyToColor(property, minProperty, maxProperty);
-            this._pickingColorsArray[i * 3 + 0] = r2;
-            this._pickingColorsArray[i * 3 + 1] = g2;
-            this._pickingColorsArray[i * 3 + 2] = b2;
+            pickingColorsArray[i * 3 + 0] = r2;
+            pickingColorsArray[i * 3 + 1] = g2;
+            pickingColorsArray[i * 3 + 2] = b2;
             colorIndex++;
         }
     }
@@ -354,7 +346,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     }
 
     renderLayers() {
-        const { id, isLoading, zIncreaseDownwards, loadingGeometry, opacity } = this.props;
+        const { isLoading, zIncreaseDownwards, loadingGeometry, opacity } = this.props;
         const { geometry, meshCreated, colorsArrayCreated } = this.state;
 
         const layers: Layer<any>[] = [];
@@ -363,7 +355,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
             layers.push(
                 new PreviewLayer(
                     super.getSubLayerProps({
-                        id: `${id}-loading`,
+                        id: "loading",
                         data: {
                             geometry: loadingGeometry,
                         },
@@ -375,7 +367,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
             layers.push(
                 new ExtendedSimpleMeshLayer(
                     super.getSubLayerProps({
-                        id: `${id}-mesh`,
+                        id: "mesh",
                         data: [0],
                         mesh: geometry,
                         getPosition: [0, 0, 0],

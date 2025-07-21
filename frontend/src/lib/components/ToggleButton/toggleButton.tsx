@@ -85,29 +85,19 @@ export type ToggleButtonProps = ButtonUnstyledProps & {
 
 function ToggleButtonComponent(props: ToggleButtonProps, ref: React.ForwardedRef<HTMLDivElement>) {
     const { active, onToggle, color, variant, ...other } = props;
-    const [isActive, setIsActive] = React.useState<boolean>(active);
-    const [prevIsActive, setPrevIsActive] = React.useState<boolean>(active);
-
-    if (active !== prevIsActive) {
-        setIsActive(active);
-        setPrevIsActive(active);
-    }
 
     const buttonRef = React.useRef<HTMLButtonElement>(null);
-    React.useImperativeHandle<HTMLButtonElement | null, HTMLButtonElement | null>(
-        props.buttonRef,
-        () => buttonRef.current,
-    );
 
-    if (active !== prevIsActive) {
-        setIsActive(active);
-        setPrevIsActive(isActive);
+    if (props.buttonRef) {
+        React.useImperativeHandle<HTMLButtonElement | null, HTMLButtonElement | null>(
+            props.buttonRef,
+            () => buttonRef.current,
+        );
     }
 
     const handleClick = React.useCallback(() => {
-        setIsActive(!isActive);
         onToggle(!active);
-    }, [active, onToggle, isActive]);
+    }, [active, onToggle]);
 
     const classNames = [
         "inline-flex",

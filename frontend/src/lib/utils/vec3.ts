@@ -108,7 +108,7 @@ export function subtract(minuend: Vec3, subtrahend: Vec3): Vec3 {
 }
 
 /**
- * Adds two vectors.
+ * Adds two or more vectors.
  *
  * @param vector1 The first vector.
  * @param vectors The other vectors.

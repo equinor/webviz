@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) vis.gl contributors
 
-export default `#version 300 es
+#version 300 es
 #define SHADER_NAME simple-mesh-layer-vs
 
 // Primitive attributes
@@ -42,7 +42,7 @@ void main(void) {
   mat3 instanceModelMatrix = mat3(instanceModelMatrixCol0, instanceModelMatrixCol1, instanceModelMatrixCol2);
   vec3 pos = (instanceModelMatrix * positions) * simpleMesh.sizeScale + instanceTranslation;
 
-  if (simpleMesh.composeModelMatrix) {
+  if(simpleMesh.composeModelMatrix) {
     DECKGL_FILTER_SIZE(pos, geometry);
     // using instancePositions as world coordinates
     // when using globe mode, this branch does not re-orient the model to align with the surface of the earth
@@ -51,8 +51,7 @@ void main(void) {
     geometry.worldPosition += pos;
     gl_Position = project_position_to_clipspace(pos + instancePositions, instancePositions64Low, vec3(0.0), position_commonspace);
     geometry.position = position_commonspace;
-  }
-  else {
+  } else {
     pos = project_size(pos);
     DECKGL_FILTER_SIZE(pos, geometry);
     gl_Position = project_position_to_clipspace(instancePositions, instancePositions64Low, pos, position_commonspace);
@@ -65,4 +64,3 @@ void main(void) {
 
   DECKGL_FILTER_COLOR(vColor, geometry);
 }
-`;

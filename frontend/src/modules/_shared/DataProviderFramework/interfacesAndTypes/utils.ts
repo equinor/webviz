@@ -23,13 +23,13 @@ export type MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory extends Set
       ? [Exclude<TValue, null>, Exclude<TValue, null>]
       : TCategory extends SettingCategory.RANGE
         ? [number, number, number]
-        : /*: TCategory extends SettingCategory.XYZ_NUMBER
-          ? [[number, number, number], [number, number, number], [number, number, number]]*/
-          TCategory extends SettingCategory.XYZ_RANGE
+        : TCategory extends SettingCategory.XYZ_RANGE
           ? [[number, number, number], [number, number, number], [number, number, number]]
           : TCategory extends SettingCategory.NUMBER_WITH_STEP
             ? [number, number, number]
-            : never;
+            : TCategory extends SettingCategory.XYZ_VALUES_WITH_VISIBILITY
+              ? [[number, number, number], [number, number, number], [number, number, number]]
+              : never;
 
 export type TupleIndices<T extends readonly any[]> = Extract<keyof T, `${number}`>;
 export type SettingsKeysFromTuple<TSettings extends Settings> = TSettings[TupleIndices<TSettings>];

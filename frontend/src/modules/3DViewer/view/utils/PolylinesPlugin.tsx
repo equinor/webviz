@@ -7,7 +7,7 @@ import addPathIcon from "@assets/add_path.svg?url";
 import continuePathIcon from "@assets/continue_path.svg?url";
 import removePathIcon from "@assets/remove_path.svg?url";
 
-import { type PublishSubscribe, PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
+import { type PublishSubscribe, PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
 import {
     AllowHoveringOf,
@@ -315,6 +315,17 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         this.requireRedraw();
     }
 
+    private makeNewPolylineName(): string {
+        const existingNames = this._polylines.map((polyline) => polyline.name);
+        let name = "New polyline";
+        let index = 1;
+        while (existingNames.includes(name)) {
+            name = `New polyline (${index})`;
+            index++;
+        }
+        return name;
+    }
+
     handleGlobalMouseClick(pickingInfo: PickingInfo): boolean {
         if (this._editingMode === PolylineEditingMode.NONE) {
             return false;
@@ -329,7 +340,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
             const id = v4();
             this._polylines.push({
                 id,
-                name: "New polyline",
+                name: this.makeNewPolylineName(),
                 color: this._colorGenerator.next().value,
                 path: [[...pickingInfo.coordinate]],
                 version: 0,

@@ -38,56 +38,67 @@ function convertPolylines(polylines: Polyline[], fieldId: string): IntersectionP
 
 export function InteractionWrapper(props: InteractionWrapperProps): React.ReactNode {
     const deckGlRef = React.useRef<DeckGLRef>(null);
-    const [deckGlManager, setDeckGlManager] = React.useState<DeckGlInstanceManager>(
-        new DeckGlInstanceManager(deckGlRef.current),
-    );
-    const [polylinesPlugin, setPolylinesPlugin] = React.useState<PolylinesPlugin>(new PolylinesPlugin(deckGlManager));
-
     const intersectionPolylines = useIntersectionPolylines(props.workbenchSession);
+
+    const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
+    const [gridVisible, setGridVisible] = React.useState<boolean>(false);
+    const [verticalScale, setVerticalScale] = React.useState<number>(10);
+    const [activePolylineName, setActivePolylineName] = React.useState<string | undefined>(undefined);
+
+    const deckGlManagerRef = React.useRef<DeckGlInstanceManager | null>(null);
+    const polylinesPluginRef = React.useRef<PolylinesPlugin | null>(null);
+
     const colorSet = props.workbenchSettings.useColorSet();
 
-    const colorGenerator = React.useCallback(
-        function* colorGenerator() {
-            const colors: [number, number, number][] = colorSet.getColorArray().map((c) => {
-                const rgb = converter("rgb")(c);
-                if (!rgb) {
-                    return [0, 0, 0];
+    const colorArray = React.useMemo((): [number, number, number][] => {
+        return colorSet.getColorArray().map((c) => {
+            const rgb = converter("rgb")(c);
+            return rgb ? [rgb.r * 255, rgb.g * 255, rgb.b * 255] : [0, 0, 0];
+        });
+    }, [colorSet]);
+
+    const colorGenerator = React.useMemo(
+        () =>
+            function* () {
+                let i = 0;
+                while (true) {
+                    yield colorArray[i % colorArray.length];
+                    i++;
                 }
-                return [rgb.r * 255, rgb.g * 255, rgb.b * 255];
-            });
-            let i = 0;
-            while (true) {
-                yield colors[i % colors.length];
-                i++;
-            }
-        },
-        [colorSet],
+            },
+        [colorArray],
     );
 
     React.useEffect(
         function updateVisiblePolylines() {
-            if (polylinesPlugin) {
-                polylinesPlugin.setVisiblePolylineIds(props.usedPolylineIds);
+            if (polylinesPluginRef.current) {
+                polylinesPluginRef.current.setVisiblePolylineIds(props.usedPolylineIds);
             }
         },
-        [props.usedPolylineIds, polylinesPlugin],
+        [props.usedPolylineIds],
     );
 
     React.useLayoutEffect(
         function setupDeckGlManager() {
+            // Imperative Deck.gl plugin setup — must happen before paint and before useEffect runs
+            // to avoid visual artifacts or plugin timing issues.
             const manager = new DeckGlInstanceManager(deckGlRef.current);
-            setDeckGlManager(manager);
+            deckGlManagerRef.current = manager;
 
             const polylinesPlugin = new PolylinesPlugin(manager, colorGenerator());
             polylinesPlugin.setPolylines([...intersectionPolylines.getPolylines()]);
             manager.addPlugin(polylinesPlugin);
-            setPolylinesPlugin(polylinesPlugin);
+            polylinesPluginRef.current = polylinesPlugin;
 
             const unsubscribeFromPolylinesPlugin = polylinesPlugin
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(PolylinesPluginTopic.EDITING_POLYLINE_ID)(() => {
-                if (polylinesPlugin.getCurrentEditingPolylineId() === null) {
+                const editingId = polylinesPlugin.getCurrentEditingPolylineId();
+                if (editingId == null) {
                     intersectionPolylines.setPolylines(convertPolylines(polylinesPlugin.getPolylines(), props.fieldId));
+                } else {
+                    const current = polylinesPlugin.getPolylines().find((p) => p.id === editingId);
+                    setActivePolylineName(current?.name);
                 }
             });
 
@@ -107,11 +118,6 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
         [intersectionPolylines, colorGenerator, props.fieldId],
     );
 
-    const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
-    const [gridVisible, setGridVisible] = React.useState<boolean>(false);
-    const [verticalScale, setVerticalScale] = React.useState<number>(10);
-    const [polylines, setPolylines] = React.useState<Polyline[]>([]);
-
     function handleFitInViewClick() {
         setTriggerHomeCounter((prev) => prev + 1);
     }
@@ -124,29 +130,17 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
         setVerticalScale(value);
     }
 
-    const activePolylineId = polylinesPlugin.getCurrentEditingPolylineId();
+    const handlePolylineNameChange = React.useCallback((name: string) => {
+        const plugin = polylinesPluginRef.current;
+        const editingId = plugin?.getCurrentEditingPolylineId();
+        if (!plugin || !editingId) return;
 
-    const handlePolylineNameChange = React.useCallback(
-        function handlePolylineNameChange(name: string): void {
-            if (!activePolylineId) {
-                return;
-            }
-
-            setPolylines((prev) =>
-                prev.map((polyline) => {
-                    if (polyline.id === activePolylineId) {
-                        return {
-                            ...polyline,
-                            name,
-                        };
-                    }
-
-                    return polyline;
-                }),
-            );
-        },
-        [activePolylineId],
-    );
+        const updated = plugin
+            .getPolylines()
+            .map((polyline) => (polyline.id === editingId ? { ...polyline, name } : polyline));
+        plugin.setPolylines(updated);
+        setActivePolylineName(name);
+    }, []);
 
     let adjustedLayers: DeckGlLayer[] = [...props.layers];
     let adjustedViewports = [...props.views.viewports];
@@ -158,27 +152,31 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
         }));
     }
 
+    if (!polylinesPluginRef.current || !deckGlManagerRef.current) {
+        return null;
+    }
+
     return (
         <HoverVisualizationWrapper
             {...props}
             deckGlRef={deckGlRef}
             layers={adjustedLayers}
             views={{ ...props.views, viewports: adjustedViewports }}
-            deckGlManager={deckGlManager}
+            deckGlManager={deckGlManagerRef.current}
             verticalScale={verticalScale}
             triggerHome={triggerHomeCounter}
         >
             <Toolbar
                 onFitInView={handleFitInViewClick}
                 onGridVisibilityChange={handleGridVisibilityChange}
-                polylinesPlugin={polylinesPlugin}
+                polylinesPlugin={polylinesPluginRef.current}
                 onVerticalScaleChange={handleVerticalScaleChange}
                 verticalScale={verticalScale}
-                hasActivePolyline={Boolean(activePolylineId)}
+                hasActivePolyline={Boolean(polylinesPluginRef.current.getCurrentEditingPolylineId())}
                 onPolylineNameChange={handlePolylineNameChange}
-                activePolylineName={polylines.find((p) => p.id === activePolylineId)?.name}
+                activePolylineName={activePolylineName}
             />
-            <ContextMenu deckGlManager={deckGlManager} />
+            <ContextMenu deckGlManager={deckGlManagerRef.current} />
             <ControlsInfoBox />
         </HoverVisualizationWrapper>
     );

@@ -7,6 +7,7 @@ import jotaiReactRefresh from "jotai/babel/plugin-react-refresh";
 import { defineConfig } from "vite";
 import vitePluginChecker from "vite-plugin-checker";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
+import glsl from "vite-plugin-glsl";
 
 import aliases from "./aliases.json";
 
@@ -44,6 +45,10 @@ export default defineConfig(({ mode, command }) => {
                 // ! we' have *is* using it, but I'm excluding it to make it more explicit.
                 exclude: ["crypto"],
                 globals: { Buffer: true },
+            }),
+            glsl({
+                include: "**/*.glsl",
+                defaultExtension: "glsl",
             }),
         ],
         build: {

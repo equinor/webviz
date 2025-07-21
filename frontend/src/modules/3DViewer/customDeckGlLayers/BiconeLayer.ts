@@ -166,21 +166,23 @@ export class BiconeLayer extends CompositeLayer<DiscLayerProps> {
         );
 
         return [
-            new SimpleMeshLayer({
-                id: `${id}-mesh`,
-                data: [0],
-                mesh: this.state.geometry,
-                getPosition: () => centerPoint,
-                getColor: () => color ?? [255, 255, 255],
-                getOrientation: () => normalToOrientation(normalVector),
-                opacity: opacity ?? 1,
-                material: true,
-                pickable: false,
-                sizeScale,
-                parameters: {
-                    depthTest,
-                },
-            }),
+            new SimpleMeshLayer(
+                super.getSubLayerProps({
+                    id: `mesh`,
+                    data: [0],
+                    mesh: this.state.geometry,
+                    getPosition: () => centerPoint,
+                    getColor: () => color ?? [255, 255, 255],
+                    getOrientation: () => normalToOrientation(normalVector),
+                    opacity: opacity ?? 1,
+                    material: true,
+                    pickable: false,
+                    sizeScale,
+                    parameters: {
+                        depthTest,
+                    },
+                }),
+            ),
         ];
     }
 }
@@ -202,7 +204,6 @@ function normalToOrientation(normal: [number, number, number]): [number, number,
 }
 
 function rotationMatrixToEulerXYZ(m: number[]): [number, number, number] {
-    // @eslint
     const [m00, m01, , m10, m11, , m20, m21, m22] = m;
 
     let pitch, yaw, roll;

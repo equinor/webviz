@@ -19,7 +19,7 @@ import { ToggleButton } from "@lib/components/ToggleButton";
 import { AddPathPointIcon, DrawPathIcon, RemovePathPointIcon } from "@lib/icons/";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Toolbar as GenericToolbar, ToolBarDivider } from "@modules/_shared/components/Toolbar";
-import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { PolylineEditingMode } from "../typesAndEnums";
 import { type PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";
@@ -91,17 +91,20 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
         if (!polylineName) {
             return;
         }
+        props.polylinesPlugin.setEditingMode(PolylineEditingMode.IDLE);
         props.polylinesPlugin.handleClickAway();
     }
 
     return (
         <GenericToolbar>
-            <div className="flex flex-col items-center gap-1 text-sm">
-                <div className="flex items-center gap-1">
+            <div className="flex flex-col items-left gap-1 text-md justify-start">
+                <div className="flex items-center gap-1 justify-start">
                     <Button onClick={handleFitInViewClick} title="Reset view to fit all objects">
                         <FilterCenterFocus fontSize="inherit" />
                     </Button>
-                    <div className={resolveClassNames("flex gap-1 items-center", expanded ? "flex" : "hidden")}>
+                    <div
+                        className={resolveClassNames("gap-1 items-center justify-start", expanded ? "flex" : "hidden")}
+                    >
                         <ToggleButton onToggle={handleGridToggle} title="Toggle grid" active={gridVisible}>
                             {gridVisible ? <GridOn fontSize="inherit" /> : <GridOff fontSize="inherit" />}
                         </ToggleButton>
@@ -144,7 +147,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                 </div>
                 {polylineEditingMode !== PolylineEditingMode.NONE && expanded && (
                     <>
-                        <div className="flex w-full items-center gap-1 text-lg p-2 bg-slate-100">
+                        <div className="flex w-full items-center gap-1 text-md py-1 bg-slate-100">
                             <ToggleButton
                                 active={polylineEditingMode === PolylineEditingMode.DRAW}
                                 title="Draw polyline"

@@ -26,6 +26,7 @@ export enum SettingCategory {
     XYZ_RANGE = "xyzRange",
     BOOLEAN = "boolean",
     STATIC = "static",
+    XYZ_VALUES_WITH_VISIBILITY = "rangesWithVisibility",
 }
 
 export enum Setting {
@@ -95,7 +96,7 @@ export const settingCategories = {
     [Setting.REALIZATION]: SettingCategory.SINGLE_SELECT,
     [Setting.REALIZATIONS]: SettingCategory.MULTI_SELECT,
     [Setting.SAMPLE_RESOLUTION_IN_METERS]: SettingCategory.NUMBER,
-    [Setting.SEISMIC_SLICES]: SettingCategory.STATIC,
+    [Setting.SEISMIC_SLICES]: SettingCategory.XYZ_VALUES_WITH_VISIBILITY,
     [Setting.SENSITIVITY]: SettingCategory.SINGLE_SELECT,
     [Setting.SHOW_GRID_LINES]: SettingCategory.BOOLEAN,
     [Setting.SMDA_INTERPRETER]: SettingCategory.SINGLE_SELECT,
@@ -288,25 +289,6 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
         const newValue: SettingTypes[TSetting] = [Math.max(min, value[0]), Math.min(max, value[1])];
         return newValue;
     },
-    /*
-    [SettingCategory.XYZ_NUMBER]: <TSetting extends PossibleSettingsForCategory<SettingCategory.XYZ_NUMBER>>(
-        value: SettingTypes[TSetting],
-        availableValues: AvailableValuesType<TSetting>,
-    ) => {
-        if (value === null) {
-            return [availableValues[0][0], availableValues[1][0], availableValues[2][0]];
-        }
-
-        const [xRange, yRange, zRange] = availableValues;
-
-        const newValue: SettingTypes[TSetting] = [
-            Math.max(xRange[0], Math.min(xRange[1], value[0])),
-            Math.max(yRange[0], Math.min(yRange[1], value[1])),
-            Math.max(zRange[0], Math.min(zRange[1], value[2])),
-        ];
-        return newValue;
-    },
-    */
     [SettingCategory.XYZ_RANGE]: <TSetting extends PossibleSettingsForCategory<SettingCategory.XYZ_RANGE>>(
         value: SettingTypes[TSetting],
         availableValues: AvailableValuesType<TSetting>,
@@ -326,6 +308,32 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
             [Math.max(yRange[0], value[1][0]), Math.min(yRange[1], value[1][1])],
             [Math.max(zRange[0], value[2][0]), Math.min(zRange[1], value[2][1])],
         ];
+        return newValue;
+    },
+    [SettingCategory.XYZ_VALUES_WITH_VISIBILITY]: <
+        TSetting extends PossibleSettingsForCategory<SettingCategory.XYZ_VALUES_WITH_VISIBILITY>,
+    >(
+        value: SettingTypes[TSetting],
+        availableValues: AvailableValuesType<TSetting>,
+    ) => {
+        if (value === null) {
+            return {
+                value: [availableValues[0][0], availableValues[1][0], availableValues[2][0]],
+                visible: [true, true, true],
+                applied: false,
+            };
+        }
+
+        const [xRange, yRange, zRange] = availableValues;
+
+        const newValue: SettingTypes[TSetting] = {
+            ...value,
+            value: [
+                Math.max(xRange[0], Math.min(xRange[1], value.value[0])),
+                Math.max(yRange[0], Math.min(yRange[1], value.value[1])),
+                Math.max(zRange[0], Math.min(zRange[1], value.value[2])),
+            ],
+        };
         return newValue;
     },
     [SettingCategory.STATIC]: (value) => value,
@@ -366,22 +374,20 @@ export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
         const [min, max] = availableValues;
         return value[0] >= min && value[0] <= max && value[1] >= min && value[1] <= max;
     },
-    /*
-    [SettingCategory.XYZ_NUMBER]: (value, availableValues) => {
+    [SettingCategory.XYZ_VALUES_WITH_VISIBILITY]: (value, availableValues) => {
         if (value === null) {
             return false;
         }
         const [xRange, yRange, zRange] = availableValues;
         return (
-            value[0] >= xRange[0] &&
-            value[0] <= xRange[1] &&
-            value[1] >= yRange[0] &&
-            value[1] <= yRange[1] &&
-            value[2] >= zRange[0] &&
-            value[2] <= zRange[1]
+            value.value[0] >= xRange[0] &&
+            value.value[0] <= xRange[1] &&
+            value.value[1] >= yRange[0] &&
+            value.value[1] <= yRange[1] &&
+            value.value[2] >= zRange[0] &&
+            value.value[2] <= zRange[1]
         );
     },
-    */
     [SettingCategory.XYZ_RANGE]: (value, availableValues) => {
         if (value === null) {
             return false;

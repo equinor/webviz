@@ -285,7 +285,7 @@ export class RealizationSeismicSlicesProvider
                     [0, 0, 1],
                     [0, 0, 1],
                     [0, 0, 1],
-                ] as any as never;
+                ];
             }
             const seismicInfo = data.filter(
                 (seismicInfos) =>
@@ -311,7 +311,7 @@ export class RealizationSeismicSlicesProvider
                 [xMin, xMax, xInc],
                 [yMin, yMax, yInc],
                 [zMin, zMax, zInc],
-            ] as any as never;
+            ];
         });
 
         storedDataUpdater("seismicSlices", ({ getLocalSetting }) => {

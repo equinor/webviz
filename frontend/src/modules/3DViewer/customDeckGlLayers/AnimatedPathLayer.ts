@@ -43,32 +43,34 @@ export class AnimatedPathLayer extends CompositeLayer<AnimatedPathLayerProps> {
         const { data, getPath, getColor = () => [255, 0, 0] as Color, getWidth = () => 5 } = this.props;
         const { dashOffset } = this.state;
 
-        return new PathLayer({
-            id: `${this.id}-path`,
-            data,
-            getPath,
-            getColor,
-            getWidth,
-            getDashArray: () => {
-                const base = 10;
-                const gap = 5;
+        return new PathLayer(
+            super.getSubLayerProps({
+                id: `path`,
+                data,
+                getPath,
+                getColor,
+                getWidth,
+                getDashArray: () => {
+                    const base = 10;
+                    const gap = 5;
 
-                const phase = (Math.sin(dashOffset / 100) + 1) / 2; // 0 to 1
-                const scale = 0.5 + 0.5 * phase; // avoid 0
+                    const phase = (Math.sin(dashOffset / 100) + 1) / 2; // 0 to 1
+                    const scale = 0.5 + 0.5 * phase; // avoid 0
 
-                return [base * scale, gap * scale];
-            },
-            billboard: true,
-            widthUnits: "meters",
-            widthMinPixels: 3,
-            widthMaxPixels: 10,
-            extensions: [new PathStyleExtension({ highPrecisionDash: true, dash: true, offset: true })],
-            updateTriggers: {
-                getDashArray: { dashOffset },
-            },
-            parameters: {
-                depthTest: false,
-            },
-        });
+                    return [base * scale, gap * scale];
+                },
+                billboard: true,
+                widthUnits: "meters",
+                widthMinPixels: 3,
+                widthMaxPixels: 10,
+                extensions: [new PathStyleExtension({ highPrecisionDash: true, dash: true, offset: true })],
+                updateTriggers: {
+                    getDashArray: { dashOffset },
+                },
+                parameters: {
+                    depthTest: false,
+                },
+            }),
+        );
     }
 }

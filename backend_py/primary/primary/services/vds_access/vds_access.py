@@ -266,7 +266,6 @@ class VdsAccess:
 
         # Convert every value of `hard_coded_fill_value` to np.nan
         flattened_fence_traces_float32_array[flattened_fence_traces_float32_array == hard_coded_fill_value] = np.nan
-        print("flattened fence data", flattened_fence_traces_float32_array, len(flattened_fence_traces_float32_array))
         return (flattened_fence_traces_float32_array, num_traces, num_samples_per_trace)
 
     def _extract_and_validate_body_parts_from_response(self, response: httpx.Response) -> Tuple[BodyPart, BodyPart]:

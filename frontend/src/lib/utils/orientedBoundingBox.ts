@@ -42,6 +42,11 @@ export function toAxisAlignedBoundingBox(box: OBBox): bbox.BBox {
     return bbox.create(vec3.subtract(box.centerPoint, halfSize), vec3.add(box.centerPoint, halfSize));
 }
 
+/*
+ * Creates an oriented bounding box from an axis-aligned bounding box.
+ *
+ * The principal axes are set to the standard basis vectors (x, y, z).
+ */
 export function fromAxisAlignedBoundingBox(box: bbox.BBox): OBBox {
     const centerPoint = vec3.scale(vec3.add(box.min, box.max), 0.5);
     const principalAxes = [vec3.create(1, 0, 0), vec3.create(0, 1, 0), vec3.create(0, 0, 1)];

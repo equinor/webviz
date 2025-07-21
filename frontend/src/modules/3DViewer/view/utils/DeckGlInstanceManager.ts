@@ -6,7 +6,7 @@ import type { DeckGLProps, DeckGLRef } from "@deck.gl/react";
 import type { MapMouseEvent } from "@webviz/subsurface-viewer";
 
 import type { SubsurfaceViewerWithCameraStateProps } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
-import { type PublishSubscribe, PublishSubscribeDelegate } from "@modules_shared/utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 export type ContextMenuItem = {
     icon?: React.ReactElement;
@@ -131,7 +131,6 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     redraw() {
         this._redrawCycle++;
         this._publishSubscribeDelegate.notifySubscribers(DeckGlInstanceManagerTopic.REDRAW);
-        this._ref?.deck?.redraw("deckgl-instance-manager");
     }
 
     disablePanning() {

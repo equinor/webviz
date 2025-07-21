@@ -17,7 +17,7 @@ import type {
 import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = { value: [number, number, number]; visible: [boolean, boolean, boolean]; applied: boolean } | null;
-type Category = SettingCategory.STATIC;
+type Category = SettingCategory.XYZ_VALUES_WITH_VISIBILITY;
 export class SeismicSliceSetting implements CustomSettingImplementation<ValueType, Category> {
     fixupValue(
         currentValue: ValueType,

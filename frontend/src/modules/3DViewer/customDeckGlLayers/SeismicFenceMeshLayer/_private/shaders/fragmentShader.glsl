@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) vis.gl contributors
 
-export default `#version 300 es
+#version 300 es
 #define SHADER_NAME simple-mesh-layer-fs
 
 precision highp float;
@@ -21,15 +21,14 @@ out vec4 fragColor;
 void main(void) {
   geometry.uv = vTexCoord;
 
-  if (picking.isActive > 0.5 && !(picking.isAttribute > 0.5)) {
-  fragColor = vec4(vPickingColor, 1.0);
-  return;
-}
+  if(picking.isActive > 0.5 && !(picking.isAttribute > 0.5)) {
+    fragColor = vec4(vPickingColor, 1.0);
+    return;
+  }
 
   vec3 normal;
-  if (simpleMesh.flatShading) {
-
-  normal = normalize(cross(dFdx(position_commonspace.xyz), dFdy(position_commonspace.xyz)));
+  if(simpleMesh.flatShading) {
+    normal = normalize(cross(dFdx(position_commonspace.xyz), dFdy(position_commonspace.xyz)));
   } else {
     normal = normals_commonspace;
   }
@@ -40,4 +39,3 @@ void main(void) {
   vec3 lightColor = lighting_getLightColor(color.rgb, cameraPosition, position_commonspace.xyz, normal);
   fragColor = vec4(lightColor, color.a * layer.opacity);
 }
-`;

@@ -41,7 +41,7 @@ async def get_inline_slice(
     seismic_attribute: str = Query(description="Seismic cube attribute"),
     time_or_interval_str: str = Query(description="Timestamp or timestep"),
     observed: bool = Query(description="Observed or simulated"),
-    inline_no: int = Query(description="Inline number"),
+    inline_number: int = Query(description="Inline number"),
 ) -> schemas.SeismicSliceData:
     """Get a seismic inline from a seismic cube."""
     seismic_access = SeismicAccess.from_iteration_name(
@@ -64,7 +64,7 @@ async def get_inline_slice(
 
     vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
 
-    flattened_slice_traces_array, metadata = await vds_access.get_inline_slice_async(line_no=inline_no)
+    flattened_slice_traces_array, metadata = await vds_access.get_inline_slice_async(line_no=inline_number)
 
     return converters.to_api_vds_slice_data(
         flattened_slice_traces_array=flattened_slice_traces_array, metadata=metadata
@@ -80,7 +80,7 @@ async def get_crossline_slice(
     seismic_attribute: str = Query(description="Seismic cube attribute"),
     time_or_interval_str: str = Query(description="Timestamp or timestep"),
     observed: bool = Query(description="Observed or simulated"),
-    crossline_no: int = Query(description="Crossline number"),
+    crossline_num: int = Query(description="Crossline number"),
 ) -> schemas.SeismicSliceData:
     """Get a seismic crossline from a seismic cube."""
     seismic_access = SeismicAccess.from_iteration_name(
@@ -103,7 +103,7 @@ async def get_crossline_slice(
 
     vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
 
-    flattened_slice_traces_array, metadata = await vds_access.get_crossline_slice_async(line_no=crossline_no)
+    flattened_slice_traces_array, metadata = await vds_access.get_crossline_slice_async(line_no=crossline_num)
 
     return converters.to_api_vds_slice_data(
         flattened_slice_traces_array=flattened_slice_traces_array, metadata=metadata
@@ -119,7 +119,7 @@ async def get_depth_slice(
     seismic_attribute: str = Query(description="Seismic cube attribute"),
     time_or_interval_str: str = Query(description="Timestamp or timestep"),
     observed: bool = Query(description="Observed or simulated"),
-    depth_slice_no: int = Query(description="Depth slice no"),
+    depth_slice_num: int = Query(description="Depth slice number"),
 ) -> schemas.SeismicSliceData:
     """Get a seismic depth slice from a seismic cube."""
     seismic_access = SeismicAccess.from_iteration_name(
@@ -142,7 +142,7 @@ async def get_depth_slice(
 
     vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
 
-    flattened_slice_traces_array, metadata = await vds_access.get_depth_slice_async(depth_slice_no=depth_slice_no)
+    flattened_slice_traces_array, metadata = await vds_access.get_depth_slice_async(depth_slice_no=depth_slice_num)
 
     return converters.to_api_vds_slice_data(
         flattened_slice_traces_array=flattened_slice_traces_array, metadata=metadata
@@ -159,9 +159,9 @@ async def get_seismic_slices(
     seismic_attribute: str = Query(description="Seismic cube attribute"),
     time_or_interval_str: str = Query(description="Timestamp or timestep"),
     observed: bool = Query(description="Observed or simulated"),
-    inline_no: int = Query(description="Inline number"),
-    crossline_no: int = Query(description="Crossline number"),
-    depth_slice_no: int = Query(description="Depth slice no"),
+    inline_number: int = Query(description="Inline number"),
+    crossline_number: int = Query(description="Crossline number"),
+    depth_slice_number: int = Query(description="Depth slice number"),
 ) -> Tuple[schemas.SeismicSliceData, schemas.SeismicSliceData, schemas.SeismicSliceData]:
     """Get a seismic depth slice from a seismic cube."""
     seismic_access = SeismicAccess.from_iteration_name(
@@ -184,9 +184,9 @@ async def get_seismic_slices(
 
     vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
 
-    inline_tuple = await vds_access.get_inline_slice_async(line_no=inline_no)
-    crossline_tuple = await vds_access.get_crossline_slice_async(line_no=crossline_no)
-    depth_slice_tuple = await vds_access.get_depth_slice_async(depth_slice_no=depth_slice_no)
+    inline_tuple = await vds_access.get_inline_slice_async(line_no=inline_number)
+    crossline_tuple = await vds_access.get_crossline_slice_async(line_no=crossline_number)
+    depth_slice_tuple = await vds_access.get_depth_slice_async(depth_slice_no=depth_slice_number)
 
     return (
         converters.to_api_vds_slice_data(flattened_slice_traces_array=inline_tuple[0], metadata=inline_tuple[1]),
