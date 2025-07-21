@@ -81,8 +81,13 @@ export type EsvView = {
 };
 
 export type TargetViewReturnTypes = {
-    [GroupType.VIEW]: Record<string, never>; // No data needed for the view?
     [GroupType.INTERSECTION_VIEW]: EsvView;
+
+    // Need to specify typing for all existing group-types, otherwise we get a typing error
+    [GroupType.VIEW]: Record<string, never>; // No data needed for the view?
+    [GroupType.WELL_LOG_TRACK_CONT]: Record<string, never>;
+    [GroupType.WELL_LOG_TRACK_DISC]: Record<string, never>;
+    [GroupType.WELL_LOG_DIFF_GROUP]: Record<string, never>;
 };
 
 const VISUALIZATION_ASSEMBLER = new VisualizationAssembler<

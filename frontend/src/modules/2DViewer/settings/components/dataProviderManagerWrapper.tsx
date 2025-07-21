@@ -19,6 +19,7 @@ import { Menu } from "@lib/components/Menu";
 import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { ObservedSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurfaceProvider";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
@@ -41,7 +42,6 @@ import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTy
 import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { instanceofItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 

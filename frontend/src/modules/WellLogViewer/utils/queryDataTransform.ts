@@ -9,27 +9,16 @@ import type {
     WellLogSet,
 } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
-import _ from "lodash";
+import { chain, clone, round, set } from "lodash";
 
 import { WellLogCurveSourceEnum_api } from "@api";
 import type { WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 
+import { MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE } from "../constants";
+import type { WellPickDataCollection } from "../DataProviderFramework/visualizations/wellpicks";
+
 import { COLOR_TABLES } from "./logViewerColors";
 import { getUniqueCurveNameForCurveData } from "./strings";
-
-export const MAIN_AXIS_CURVE: WellLogCurve = {
-    name: "RKB",
-    unit: "M",
-    dimensions: 1,
-    valueType: "float",
-};
-
-export const SECONDARY_AXIS_CURVE: WellLogCurve = {
-    name: "MSL",
-    unit: "M",
-    dimensions: 1,
-    valueType: "float",
-};
 
 type DataRowAccumulatorMap = Record<number, SafeWellLogDataRow>;
 
@@ -54,10 +43,10 @@ export function createWellLogSets(
     // Adding a dedicated set for only the axes, so we always have a full set to show from.
     const axisOnlyLog = makeAxisOnlyLog(wellboreTrajectory, referenceSystem);
 
-    const wellLogsSets = _.chain(curveData)
+    const wellLogsSets = chain(curveData)
         // Initial map to handle some cornercases
         .map((curveData) => {
-            curveData = _.clone(curveData);
+            curveData = clone(curveData);
 
             // Occasionally names are duplicated between logs. The log-viewer looks up
             // curves by name only, and picks the first one when building it's graphs,
@@ -135,9 +124,9 @@ function createLogCurvesAndData(
         // Re-structure the metadata into the well-log-viewer map-format
         if (curve.discreteValueMetadata) {
             // ! Using an array for set-path, since names might contain periods
-            _.set(metadataDiscrete, [curve.name, "attributes"], ["code", "color"]);
+            set(metadataDiscrete, [curve.name, "attributes"], ["code", "color"]);
             curve.discreteValueMetadata.forEach((meta) => {
-                _.set(metadataDiscrete, [curve.name, "objects", meta.identifier], [meta.code, meta.rgbColor]);
+                set(metadataDiscrete, [curve.name, "objects", meta.identifier], [meta.code, meta.rgbColor]);
             });
         }
 
@@ -155,7 +144,7 @@ function createLogCurvesAndData(
             if (typeof scaleIdx === "string") throw new Error("Scale index value cannot be a string");
             if (restData.length) console.warn("Multi-dimensional data not supported, using first value only");
 
-            scaleIdx = _.round(scaleIdx, DATA_ROW_PRESICION);
+            scaleIdx = round(scaleIdx, DATA_ROW_PRESICION);
 
             maybeInjectDataRow(rowAcc, scaleIdx, rowLength, referenceSystem);
 
@@ -174,7 +163,7 @@ function createLogCurvesAndData(
     }
 
     return {
-        data: _.chain(rowAcc).values().sortBy("0").value(),
+        data: chain(rowAcc).values().sortBy("0").value(),
         metadata_discrete: metadataDiscrete,
         curves,
     };
@@ -250,8 +239,29 @@ function createLogHeader(
     };
 }
 
-export function createLogViewerWellPicks(wellborePicks: WellborePick_api[]): WellPickProps {
-    const wellPickData = generateWellPickData(wellborePicks);
+export function createLogViewerWellPicks(pickCollections: WellPickDataCollection[]): WellPickProps | null {
+    if (pickCollections.length < 1) return null;
+
+    const seenPicks = new Set<string>();
+
+    // The log viewer has no way to separate the picks from different columns/interpreters.
+    // Currently, we just put them all together in the same "curve".
+    const wellborePicks = pickCollections.reduce((acc, collection) => {
+        const newPicks: WellborePick_api[] = [];
+        collection.picks.forEach((pick) => {
+            const pickHash = collection.interpreter + collection.stratColumn + pick.pickIdentifier;
+
+            // Avoid putting already added picks.
+            if (seenPicks.has(pickHash)) return acc;
+
+            seenPicks.add(pickHash);
+            newPicks.push(pick);
+        });
+
+        return acc.concat(newPicks);
+    }, [] as WellborePick_api[]);
+
+    const wellPickData = createWellPickDataRow(wellborePicks);
     const mergerdWellPickData = mergeStackedPicks(wellPickData);
 
     return {
@@ -275,7 +285,7 @@ export function createLogViewerWellPicks(wellborePicks: WellborePick_api[]): Wel
     };
 }
 
-function generateWellPickData(wellborePicks: WellborePick_api[]): WellLogDataRow[] {
+function createWellPickDataRow(wellborePicks: WellborePick_api[]): WellLogDataRow[] {
     return wellborePicks.map(({ md, pickIdentifier }) => [md, pickIdentifier]);
 }
 
@@ -297,4 +307,13 @@ function mergeStackedPicks(wellborePicks: WellLogDataRow[]): WellLogDataRow[] {
 function mergePicks(pick1: WellLogDataRow, pick2: WellLogDataRow): WellLogDataRow {
     // ! I have no clue how the well-log viewer computes the colors, but if I DONT use a plus here they all end up having the same color???
     return [pick1[0], `${pick1[1]} + ${pick2[1]}`];
+}
+
+export function isNumericalDataPoints(
+    dataPoints: WellboreLogCurveData_api["dataPoints"],
+): dataPoints is [number, number][] {
+    const firstDefinedRow = dataPoints.find(([, value]) => value != null);
+
+    if (!firstDefinedRow) return false;
+    return typeof firstDefinedRow[1] === "number";
 }

@@ -6,7 +6,13 @@ from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects import Table
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
-from primary.services.service_exceptions import MultipleDataMatchesError, NoDataError, Service
+from primary.services.service_exceptions import (
+    InvalidDataError,
+    InvalidParameterError,
+    MultipleDataMatchesError,
+    NoDataError,
+    Service,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -19,6 +25,7 @@ class ArrowTableLoader:
         self._req_table_name: str | None = None
         self._req_content_types: list[str] | None = None
         self._req_tagname: str | None = None
+        self._req_standard_result: str | None = None
 
     def require_table_name(self, table_name: str) -> None:
         self._req_table_name = table_name
@@ -28,6 +35,9 @@ class ArrowTableLoader:
 
     def require_tagname(self, tagname: str) -> None:
         self._req_tagname = tagname
+
+    def require_standard_result(self, standard_result: str) -> None:
+        self._req_standard_result = standard_result
 
     async def get_aggregated_single_column_async(
         self,
@@ -45,6 +55,7 @@ class ArrowTableLoader:
             name=self._req_table_name,
             content=self._req_content_types,
             tagname=self._req_tagname,
+            standard_result=self._req_standard_result,
         )
 
         sc_existing_agg_tables = sc_tables_basis.filter(aggregation="collection", realization=False)
@@ -114,23 +125,51 @@ class ArrowTableLoader:
         self,
         column_names: list[str],
     ) -> pa.Table:
-        """Fetches multiple columns async and aggregates them into a single Arrow table"""
+        """
+        Fetches aggregated table for multiple columns async and assembles them into a single Arrow table
+        """
+        if not column_names:
+            raise InvalidParameterError(
+                f"Cannot fetch aggregated tables for empty column list: {self._make_req_info_str()}", Service.SUMO
+            )
 
+        # Fetch the aggregated table for each column
         async with asyncio.TaskGroup() as tg:
-            tasks = [
-                tg.create_task(self.get_aggregated_single_column_async(column_name)) for column_name in column_names
+            column_name_and_task_pairs = [
+                (column_name, tg.create_task(self.get_aggregated_single_column_async(column_name)))
+                for column_name in column_names
             ]
+        column_name_and_aggregated_table_pairs = [(name, task.result()) for name, task in column_name_and_task_pairs]
 
-        table_arr: list[pa.Table] = [task.result() for task in tasks]
+        # If we only have one table, we can just return it directly
+        if len(column_name_and_aggregated_table_pairs) == 1:
+            return column_name_and_aggregated_table_pairs[0][1]
 
-        ret_table: pa.Table | None = None
-        for column_table, column_name in zip(table_arr, column_names):
-            if ret_table is None:
-                ret_table = column_table
-            else:
-                ret_table = ret_table.append_column(column_name, column_table[column_name])
+        # Since we're going to just append the "value" columns below, we need to ensure that the shared columns
+        # (the columns that are not in column_names) are equal across all tables.
+        first_column_name, first_aggregated_table = column_name_and_aggregated_table_pairs[0]
+        shared_columns_first_table = first_aggregated_table.drop(first_column_name)
+        for i in range(1, len(column_name_and_aggregated_table_pairs)):
+            this_column_name, this_aggregated_table = column_name_and_aggregated_table_pairs[i]
+            shared_columns_this_table = this_aggregated_table.drop(this_column_name)
+            if not shared_columns_first_table.equals(shared_columns_this_table):
+                if shared_columns_first_table.column_names != shared_columns_this_table.column_names:
+                    raise InvalidDataError(
+                        f"The shared columns are not equal: Aggregated table for {first_column_name} has shared columns {shared_columns_first_table.column_names}, and aggregated table for {this_column_name} has shared columns {shared_columns_this_table.column_names}",
+                        Service.SUMO,
+                    )
+                raise InvalidDataError(
+                    f"The shared columns are not equal: Aggregated table for {first_column_name} and aggregated table for {this_column_name} has same shared columns {shared_columns_this_table.column_names}. Although the column names match, their contents (values or order) differ.",
+                    Service.SUMO,
+                )
 
-        return ret_table
+        # Now we can merge the tables by appending the "value" columns
+        merged_aggregated_table = first_aggregated_table
+        for i in range(1, len(column_name_and_aggregated_table_pairs)):
+            column_name, aggregated_table = column_name_and_aggregated_table_pairs[i]
+            merged_aggregated_table = merged_aggregated_table.append_column(column_name, aggregated_table[column_name])
+
+        return merged_aggregated_table
 
     async def get_single_realization_async(self, realization: int) -> pa.Table:
         """Get a pyarrow table for a given realization"""

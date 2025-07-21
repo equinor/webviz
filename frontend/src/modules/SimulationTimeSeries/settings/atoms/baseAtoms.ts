@@ -8,7 +8,6 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 
-
 import type { StatisticsSelection } from "../../typesAndEnums";
 import { FanchartStatisticOption, GroupBy, SubplotLimitDirection, VisualizationMode } from "../../typesAndEnums";
 
@@ -24,7 +23,7 @@ export const colorRealizationsByParameterAtom = atom<boolean>(false);
 
 export const visualizationModeAtom = atom<VisualizationMode>(VisualizationMode.STATISTICAL_FANCHART);
 
-export const showHistoricalAtom = atom<boolean>(true);
+export const showHistoricalAtom = atom<boolean>(false);
 
 export const showObservationsAtom = atom<boolean>(true);
 
