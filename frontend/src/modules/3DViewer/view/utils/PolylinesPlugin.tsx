@@ -257,7 +257,10 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
             this.updateActivePolylinePath(newPath);
 
             let newReferencePathPointIndex: number | null = null;
-            if (this._currentEditingPolylinePathReferencePointIndex !== null) {
+            if (
+                this._currentEditingPolylinePathReferencePointIndex !== null &&
+                this._appendToPathLocation !== AppendToPathLocation.START
+            ) {
                 newReferencePathPointIndex = this._currentEditingPolylinePathReferencePointIndex + 1;
                 if (index > this._currentEditingPolylinePathReferencePointIndex) {
                     newReferencePathPointIndex = this._currentEditingPolylinePathReferencePointIndex;

@@ -90,6 +90,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
             return;
         }
         props.polylinesPlugin.setEditingMode(PolylineEditingMode.IDLE);
+        props.onPolylineNameChange(polylineName);
         props.polylinesPlugin.handleClickAway();
     }
 
