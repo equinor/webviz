@@ -1,5 +1,3 @@
-import { MapLayer } from "@webviz/subsurface-viewer/dist/layers";
-
 import {
     type RealizationSurfaceData,
     type RealizationSurfaceSettings,
@@ -8,6 +6,7 @@ import {
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { MapLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 export function makeRealizationSurfaceLayer({
     id,
@@ -38,7 +37,7 @@ export function makeRealizationSurfaceLayer({
             colorMapFunction: makeColorMapFunctionFromColorScale(colorScaleSpec, {
                 valueMin: data.surfaceData.value_min,
                 valueMax: data.surfaceData.value_max,
-                unnormalize: true,
+                denormalize: true,
             }),
             gridLines: false,
         });
@@ -59,7 +58,7 @@ export function makeRealizationSurfaceLayer({
         colorMapFunction: makeColorMapFunctionFromColorScale(colorScaleSpec, {
             valueMin: data.surfaceData.value_min,
             valueMax: data.surfaceData.value_max,
-            unnormalize: true,
+            denormalize: true,
         }),
         gridLines: false,
     });

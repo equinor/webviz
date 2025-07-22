@@ -28,7 +28,7 @@ describe("makeColorMapFunctionFromColorScale", () => {
         const colorMapFunc = makeColorMapFunctionFromColorScale(COLOR_SCALE_SPEC, {
             valueMin: 0,
             valueMax: 100,
-            unnormalize: false, // use raw values as-is
+            denormalize: false, // use raw values as-is
         });
 
         expect(colorMapFunc).toBeInstanceOf(Function);
@@ -53,7 +53,7 @@ describe("makeColorMapFunctionFromColorScale", () => {
         const colorMapFunc = makeColorMapFunctionFromColorScale(COLOR_SCALE_SPEC, {
             valueMin: 0,
             valueMax: 100,
-            unnormalize: true, // normalized inputs
+            denormalize: true, // normalized inputs
         });
 
         expect(colorMapFunc).toBeInstanceOf(Function);

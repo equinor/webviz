@@ -1,15 +1,12 @@
 import React from "react";
 
 import { type Layer } from "@deck.gl/core";
-import type { BoundingBox3D } from "@webviz/subsurface-viewer";
-import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
-
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import * as bbox from "@lib/utils/bbox";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import {
     accumulatePolylineIds,
     type AccumulatedData,
@@ -54,7 +51,8 @@ import {
     VisualizationItemType,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/types/deckgl";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import type { BoundingBox3D } from "@webviz/subsurface-viewer";
+import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 import { PreferredViewLayout } from "../typesAndEnums";
@@ -171,7 +169,6 @@ export type LayersWrapperProps = {
 export function DataProvidersWrapper(props: LayersWrapperProps): React.ReactNode {
     const [changingFields, setChangingFields] = React.useState<boolean>(false);
     const [prevFieldId, setPrevFieldId] = React.useState<string | null>(null);
-    const [prevBoundingBox, setPrevBoundingBox] = React.useState<bbox.BBox | null>(null);
     const statusWriter = useViewStatusWriter(props.viewContext);
 
     usePublishSubscribeTopicValue(props.layerManager, DataProviderManagerTopic.DATA_REVISION);
@@ -244,25 +241,15 @@ export function DataProvidersWrapper(props: LayersWrapperProps): React.ReactNode
         statusWriter.addError(message);
     }
 
-    if (assemblerProduct.combinedBoundingBox !== null) {
-        if (prevBoundingBox !== null) {
-            if (!bbox.outerBoxcontainsInnerBox(prevBoundingBox, assemblerProduct.combinedBoundingBox)) {
-                setPrevBoundingBox(assemblerProduct.combinedBoundingBox);
-            }
-        } else {
-            setPrevBoundingBox(assemblerProduct.combinedBoundingBox);
-        }
-    }
-
     let bounds: BoundingBox3D | undefined = undefined;
-    if (prevBoundingBox) {
+    if (assemblerProduct.combinedBoundingBox) {
         bounds = [
-            prevBoundingBox.min.x,
-            prevBoundingBox.min.y,
-            -prevBoundingBox.min.z,
-            prevBoundingBox.max.x,
-            prevBoundingBox.max.y,
-            -prevBoundingBox.max.z,
+            assemblerProduct.combinedBoundingBox.min.x,
+            assemblerProduct.combinedBoundingBox.min.y,
+            assemblerProduct.combinedBoundingBox.min.z,
+            assemblerProduct.combinedBoundingBox.max.x,
+            assemblerProduct.combinedBoundingBox.max.y,
+            assemblerProduct.combinedBoundingBox.max.z,
         ];
     }
 

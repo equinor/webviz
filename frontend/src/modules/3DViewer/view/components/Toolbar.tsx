@@ -1,25 +1,23 @@
 import React from "react";
 
+import { Button } from "@lib/components/Button";
+import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";
+import { Input } from "@lib/components/Input";
+import { ToggleButton } from "@lib/components/ToggleButton";
+import { AddPathPointIcon, DrawPathIcon, RemovePathPointIcon } from "@lib/icons/";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Toolbar as GenericToolbar, ToolBarDivider } from "@modules/_shared/components/Toolbar";
 import {
     Add,
     Check,
     FilterCenterFocus,
-    GridOff,
     GridOn,
     KeyboardDoubleArrowLeft,
     KeyboardDoubleArrowRight,
     Polyline,
     Remove,
 } from "@mui/icons-material";
-
-import { Button } from "@lib/components/Button";
-import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";
-import { Input } from "@lib/components/Input";
-import { ToggleButton } from "@lib/components/ToggleButton";
-import { AddPathPointIcon, DrawPathIcon, RemovePathPointIcon } from "@lib/icons/";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Toolbar as GenericToolbar, ToolBarDivider } from "@modules/_shared/components/Toolbar";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { PolylineEditingMode } from "../typesAndEnums";
 import { type PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";
@@ -106,7 +104,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                         className={resolveClassNames("gap-1 items-center justify-start", expanded ? "flex" : "hidden")}
                     >
                         <ToggleButton onToggle={handleGridToggle} title="Toggle grid" active={gridVisible}>
-                            {gridVisible ? <GridOn fontSize="inherit" /> : <GridOff fontSize="inherit" />}
+                            <GridOn fontSize="inherit" />
                         </ToggleButton>
                         <ToolBarDivider />
                         <ToggleButton

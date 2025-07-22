@@ -10,7 +10,7 @@ export function makeColorMapFunctionFromColorScale(
         valueMin: number;
         valueMax: number;
         midPoint?: number;
-        unnormalize?: boolean;
+        denormalize?: boolean;
         specialColor?: {
             color: string;
             range: [number, number];
@@ -34,7 +34,7 @@ export function makeColorMapFunctionFromColorScale(
     const specialColor = options?.specialColor;
 
     return (value: number) => {
-        const nonNormalizedValue = options?.unnormalize ? value * (valueMax - valueMin) + valueMin : value;
+        const nonNormalizedValue = options?.denormalize ? value * (valueMax - valueMin) + valueMin : value;
         let interpolatedColor = localColorScale.getColorForValue(nonNormalizedValue);
 
         if (

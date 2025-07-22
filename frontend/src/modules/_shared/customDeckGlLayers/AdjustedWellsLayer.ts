@@ -17,13 +17,13 @@ export class AdjustedWellsLayer extends WellsLayer {
     }
 
     updateState(params: UpdateParameters<WellsLayer>): void {
-        super.updateState(params);
         const { props, changeFlags } = params;
         if (props.reportBoundingBox && changeFlags.dataChanged) {
             props.reportBoundingBox({
                 layerBoundingBox: this.calcBoundingBox(),
             });
         }
+        super.updateState(params);
     }
 
     private calcBoundingBox(): BoundingBox3D {
@@ -31,7 +31,8 @@ export class AdjustedWellsLayer extends WellsLayer {
             return [0, 0, 0, 0, 0, 0];
         }
 
-        return GetBoundingBox(this.state.data);
+        const bbox = GetBoundingBox(this.state.data);
+        return bbox;
     }
 
     renderLayers(): LayersList {
@@ -53,23 +54,25 @@ export class AdjustedWellsLayer extends WellsLayer {
             return layers;
         }
 
-        const newColorsLayer = new GeoJsonLayer({
-            ...colorsLayer.props,
-            data: colorsLayer.props.data,
-            pickable: true,
-            stroked: false,
-            pointRadiusUnits: "meters",
-            lineWidthUnits: "meters",
-            pointRadiusScale: this.props.pointRadiusScale,
-            lineWidthScale: this.props.lineWidthScale,
-            lineBillboard: true,
-            pointBillboard: true,
-            id: "colors",
-            lineWidthMinPixels: 1,
-            lineWidthMaxPixels: 5,
-            autoHighlight: true,
-            onHover: () => {},
-        });
+        const newColorsLayer = new GeoJsonLayer(
+            super.getSubLayerProps({
+                ...colorsLayer.props,
+                data: colorsLayer.props.data,
+                pickable: true,
+                stroked: false,
+                pointRadiusUnits: "meters",
+                lineWidthUnits: "meters",
+                pointRadiusScale: this.props.pointRadiusScale,
+                lineWidthScale: this.props.lineWidthScale,
+                lineBillboard: true,
+                pointBillboard: true,
+                id: "colors",
+                lineWidthMinPixels: 1,
+                lineWidthMaxPixels: 5,
+                autoHighlight: true,
+                onHover: () => {},
+            }),
+        );
 
         return [newColorsLayer, ...layers.filter((layer) => layer !== colorsLayer)];
     }

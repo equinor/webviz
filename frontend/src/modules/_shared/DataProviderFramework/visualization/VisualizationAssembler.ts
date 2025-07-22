@@ -38,7 +38,6 @@ export enum VisualizationTarget {
     DECK_GL = "deck_gl",
     ESV = "esv",
     WSC_WELL_LOG = "wsc_well_log",
-    // VIDEX = "videx",
 }
 
 export interface EsvLayerItemsMaker {

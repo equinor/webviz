@@ -1,6 +1,5 @@
-import type { Layer } from "@deck.gl/core";
-
 import type { SeismicCubeMeta_api } from "@api";
+import type { Layer } from "@deck.gl/core";
 import * as bbox from "@lib/utils/bbox";
 import { degreesToRadians, ShapeType, type Geometry } from "@lib/utils/geometry";
 import { rotatePoint2Around } from "@lib/utils/vec2";
@@ -307,7 +306,7 @@ export function makeSeismicSlicesLayer(
                         ),
                     ),
                     numSamples: data.depthSlice.u_num_samples,
-                    properties: data.depthSlice.dataFloat32Arr,
+                    properties: data.depthSlice.dataFloat32Arr.toReversed(),
                 },
                 loadingGeometry: depthPreviewGeometry ?? undefined,
             });

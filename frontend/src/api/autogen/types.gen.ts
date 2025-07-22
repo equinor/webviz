@@ -3236,7 +3236,7 @@ export type GetInlineSliceData_api = {
         /**
          * Inline number
          */
-        inline_no: number;
+        inline_number: number;
     };
     url: "/seismic/get_inline_slice/";
 };
@@ -3290,7 +3290,7 @@ export type GetCrosslineSliceData_api = {
         /**
          * Crossline number
          */
-        crossline_no: number;
+        crossline_num: number;
     };
     url: "/seismic/get_crossline_slice/";
 };
@@ -3342,9 +3342,9 @@ export type GetDepthSliceData_api = {
          */
         observed: boolean;
         /**
-         * Depth slice no
+         * Depth slice number
          */
-        depth_slice_no: number;
+        depth_slice_num: number;
     };
     url: "/seismic/get_depth_slice/";
 };
@@ -3398,15 +3398,15 @@ export type GetSeismicSlicesData_api = {
         /**
          * Inline number
          */
-        inline_no: number;
+        inline_number: number;
         /**
          * Crossline number
          */
-        crossline_no: number;
+        crossline_number: number;
         /**
-         * Depth slice no
+         * Depth slice number
          */
-        depth_slice_no: number;
+        depth_slice_number: number;
     };
     url: "/seismic/get_seismic_slices/";
 };

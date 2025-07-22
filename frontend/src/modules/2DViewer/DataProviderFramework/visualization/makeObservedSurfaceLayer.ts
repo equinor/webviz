@@ -55,7 +55,7 @@ export function makeObservedSurfaceLayer({
             colorMapFunction: makeColorMapFunctionFromColorScale(colorScaleSpec, {
                 valueMin: data.surfaceData.value_min,
                 valueMax: data.surfaceData.value_max,
-                unnormalize: true,
+                denormalize: true,
             }),
         });
     }
@@ -75,7 +75,7 @@ export function makeObservedSurfaceLayer({
         colorMapFunction: makeColorMapFunctionFromColorScale(colorScaleSpec, {
             valueMin: data.surfaceData.value_min,
             valueMax: data.surfaceData.value_max,
-            unnormalize: true,
+            denormalize: true,
         }),
     });
 }

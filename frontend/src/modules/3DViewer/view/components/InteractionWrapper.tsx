@@ -2,12 +2,11 @@ import React from "react";
 
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
-import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
-import { converter } from "culori";
-
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
+import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { converter } from "culori";
 
 import { DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
 import { type Polyline, PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";
@@ -45,8 +44,8 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
     const [verticalScale, setVerticalScale] = React.useState<number>(10);
     const [activePolylineName, setActivePolylineName] = React.useState<string | undefined>(undefined);
 
-    const deckGlManagerRef = React.useRef<DeckGlInstanceManager | null>(null);
-    const polylinesPluginRef = React.useRef<PolylinesPlugin | null>(null);
+    const deckGlManagerRef = React.useRef<DeckGlInstanceManager>(new DeckGlInstanceManager(deckGlRef.current));
+    const polylinesPluginRef = React.useRef<PolylinesPlugin>(new PolylinesPlugin(deckGlManagerRef.current));
 
     const colorSet = props.workbenchSettings.useColorSet();
 
@@ -150,10 +149,6 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             ...viewport,
             layerIds: viewport.layerIds?.filter((layerId) => layerId !== "axes"),
         }));
-    }
-
-    if (!polylinesPluginRef.current || !deckGlManagerRef.current) {
-        return null;
     }
 
     return (

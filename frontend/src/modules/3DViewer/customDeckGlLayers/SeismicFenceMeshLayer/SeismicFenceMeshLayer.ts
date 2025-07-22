@@ -6,13 +6,13 @@ import {
     type PickingInfo,
     type UpdateParameters,
 } from "@deck.gl/core";
+import { assertNonNull } from "@lib/utils/assertNonNull";
+import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
 import { Geometry } from "@luma.gl/engine";
 import type { ExtendedLayerProps } from "@webviz/subsurface-viewer";
 import type { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
 import { transfer, wrap } from "comlink";
 import { isEqual } from "lodash";
-
-import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
 
 import { PreviewLayer } from "../PreviewLayer/PreviewLayer";
 
@@ -20,7 +20,6 @@ import { ExtendedSimpleMeshLayer } from "./_private/ExtendedSimpleMeshLayer";
 // eslint-disable-next-line import/default
 import MeshWorker from "./_private/webworker/makeMesh.worker?worker";
 import { type WebWorkerParameters, type WebworkerResult } from "./_private/webworker/types";
-import { assertNonNull } from "@lib/utils/assertNonNull";
 
 export type SeismicFenceMeshLayerPickingInfo = {
     properties?: { name: string; value: number }[];

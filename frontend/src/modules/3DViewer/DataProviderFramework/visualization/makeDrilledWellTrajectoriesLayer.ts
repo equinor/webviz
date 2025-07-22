@@ -1,11 +1,9 @@
-import type { Color } from "@deck.gl/core";
-import type { Feature, LineString, Point } from "geojson";
-
 import type { WellboreTrajectory_api } from "@api";
 import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
-import type { GeoWellFeature } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
+import type { Feature } from "geojson";
 
 export function makeDrilledWellTrajectoriesLayer(
     args: TransformerArgs<any, WellboreTrajectory_api[], any>,
@@ -22,7 +20,7 @@ export function makeDrilledWellTrajectoriesLayer(
         (el) => el.uniqueWellboreIdentifier !== "NO 34/4-K-3 AH",
     );
 
-    const wellLayerDataFeatures = tempWorkingWellsData.map((well) => wellTrajectoryToGeojson(well, null));
+    const wellLayerDataFeatures = tempWorkingWellsData.map((well) => wellTrajectoryToGeojson(well));
 
     function getLineStyleWidth(object: Feature): number {
         if (object.properties && "lineWidth" in object.properties) {
@@ -63,59 +61,8 @@ export function makeDrilledWellTrajectoriesLayer(
         wellHeadStyle: { size: getWellHeadStyleWidth, color: getColor },
         pickable: true,
         wellNameVisible: true,
-        ZIncreasingDownwards: false,
+        ZIncreasingDownwards: true,
     });
 
     return wellsLayer;
-}
-
-function wellTrajectoryToGeojson(
-    wellTrajectory: WellboreTrajectory_api,
-    selectedWellboreUuid: string | null,
-): GeoWellFeature {
-    const wellHeadPoint: Point = {
-        type: "Point",
-        coordinates: [wellTrajectory.eastingArr[0], wellTrajectory.northingArr[0], -wellTrajectory.tvdMslArr[0]],
-    };
-    const trajectoryLineString: LineString = {
-        type: "LineString",
-        coordinates: zipCoords(wellTrajectory.eastingArr, wellTrajectory.northingArr, wellTrajectory.tvdMslArr),
-    };
-
-    let color = [150, 150, 150] as Color;
-    let lineWidth = 2;
-    let wellHeadSize = 1;
-    if (wellTrajectory.wellboreUuid === selectedWellboreUuid) {
-        color = [255, 0, 0];
-        lineWidth = 5;
-        wellHeadSize = 10;
-    }
-
-    const geometryCollection: GeoWellFeature = {
-        type: "Feature",
-        geometry: {
-            type: "GeometryCollection",
-            geometries: [wellHeadPoint, trajectoryLineString],
-        },
-        properties: {
-            uuid: wellTrajectory.wellboreUuid,
-            uwi: wellTrajectory.uniqueWellboreIdentifier,
-            lineWidth,
-            wellHeadSize,
-            name: wellTrajectory.uniqueWellboreIdentifier,
-            color,
-            md: [wellTrajectory.mdArr],
-        },
-    };
-
-    return geometryCollection;
-}
-
-function zipCoords(x_arr: number[], y_arr: number[], z_arr: number[]): number[][] {
-    const coords: number[][] = [];
-    for (let i = 0; i < x_arr.length; i++) {
-        coords.push([x_arr[i], y_arr[i], -z_arr[i]]);
-    }
-
-    return coords;
 }

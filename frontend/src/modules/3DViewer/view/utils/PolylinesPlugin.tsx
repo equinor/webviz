@@ -1,4 +1,5 @@
 import type { Layer, PickingInfo } from "@deck.gl/core";
+import { type PublishSubscribe, PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import { Edit, Remove } from "@mui/icons-material";
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
@@ -6,8 +7,6 @@ import { v4 } from "uuid";
 import addPathIcon from "@assets/add_path.svg?url";
 import continuePathIcon from "@assets/continue_path.svg?url";
 import removePathIcon from "@assets/remove_path.svg?url";
-
-import { type PublishSubscribe, PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
 import {
     AllowHoveringOf,
@@ -502,7 +501,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     getLayers(): Layer<any>[] {
         const layers: Layer<any>[] = [
             new PolylinesLayer({
-                id: "polylines-layer",
+                id: super.makeLayerId("polylines-layer"),
                 polylines: this._polylines.filter(
                     (polyline) =>
                         polyline.id !== this._currentEditingPolylineId &&
@@ -529,7 +528,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         const activePolyline = this.getActivePolyline();
         layers.push(
             new EditablePolylineLayer({
-                id: `editable-polyline-layer`,
+                id: super.makeLayerId("editable-polyline-layer"),
                 polyline: activePolyline,
                 polylineVersion: activePolyline?.version ?? 0,
                 mouseHoverPoint: this._hoverPoint ?? undefined,

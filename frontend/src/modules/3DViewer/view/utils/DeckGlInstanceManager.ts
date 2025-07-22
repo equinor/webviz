@@ -3,10 +3,10 @@ This manager is responsible for managing plugins for DeckGL, forwarding events t
 */
 import type { Layer, PickingInfo } from "@deck.gl/core";
 import type { DeckGLProps, DeckGLRef } from "@deck.gl/react";
-import type { MapMouseEvent } from "@webviz/subsurface-viewer";
-
-import type { SubsurfaceViewerWithCameraStateProps } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import type { SubsurfaceViewerWithCameraStateProps } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
+import type { MapMouseEvent } from "@webviz/subsurface-viewer";
+import { v4 } from "uuid";
 
 export type ContextMenuItem = {
     icon?: React.ReactElement;
@@ -21,9 +21,11 @@ export type ContextMenu = {
 
 export class DeckGlPlugin {
     private _manager: DeckGlInstanceManager;
+    private _id: string;
 
     constructor(manager: DeckGlInstanceManager) {
         this._manager = manager;
+        this._id = v4();
     }
 
     protected requireRedraw() {
@@ -48,6 +50,10 @@ export class DeckGlPlugin {
 
     protected setDragEnd() {
         this._manager.setDragEnd();
+    }
+
+    protected makeLayerId(layerId: string): string {
+        return `${this._id}-${layerId}`;
     }
 
     handleDrag?(pickingInfo: PickingInfo): void;
@@ -297,6 +303,11 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
             const pluginLayers = plugin.getLayers?.() ?? [];
             layers.push(...pluginLayers);
             for (const layer of pluginLayers) {
+                if (pluginLayerIds.includes(layer.id)) {
+                    throw new Error(
+                        `Layer with id ${layer.id} is already registered by another plugin. This may lead to unexpected behavior. Make sure to use the makeLayerId method to create unique layer ids in your plugins.`,
+                    );
+                }
                 this._layersIdPluginMap.set(layer.id, plugin);
                 pluginLayerIds.push(layer.id);
             }

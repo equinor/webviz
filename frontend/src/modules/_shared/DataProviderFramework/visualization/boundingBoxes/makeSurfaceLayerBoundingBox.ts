@@ -13,12 +13,12 @@ export function makeSurfaceLayerBoundingBox({ getData }: TransformerArgs<any, Re
         min: {
             x: data.surfaceData.transformed_bbox_utm.min_x,
             y: data.surfaceData.transformed_bbox_utm.min_y,
-            z: 0,
+            z: data.surfaceData.value_min,
         },
         max: {
             x: data.surfaceData.transformed_bbox_utm.max_x,
             y: data.surfaceData.transformed_bbox_utm.max_y,
-            z: 0,
+            z: data.surfaceData.value_max,
         },
     };
 }

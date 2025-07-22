@@ -4,10 +4,11 @@ import type {
     WellFeature as BaseWellFeature,
     GeoJsonWellProperties as BaseWellProperties,
 } from "@webviz/subsurface-viewer/dist/layers/wells/types";
-import type { Feature, LineString, Point } from "geojson";
+import type { Feature } from "geojson";
 
 import type { WellboreTrajectory_api } from "@api";
 import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
+import { wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
 
 import type { TransformerArgs } from "../VisualizationAssembler";
 
@@ -18,49 +19,6 @@ export type GeoWellProperties = BaseWellProperties & {
     wellHeadSize: number;
 };
 export type GeoWellFeature = BaseWellFeature & { properties: GeoWellProperties };
-
-function wellTrajectoryToGeojson(wellTrajectory: WellboreTrajectory_api): GeoWellFeature {
-    const point: Point = {
-        type: "Point",
-        coordinates: [wellTrajectory.eastingArr[0], wellTrajectory.northingArr[0], -wellTrajectory.tvdMslArr[0]],
-    };
-
-    const coordinates: LineString = {
-        type: "LineString",
-        coordinates: zipCoords(wellTrajectory.eastingArr, wellTrajectory.northingArr, wellTrajectory.tvdMslArr),
-    };
-
-    const lineWidth = 2;
-    const wellHeadSize = 1;
-
-    const geometryCollection: GeoWellFeature = {
-        type: "Feature",
-        geometry: {
-            type: "GeometryCollection",
-            geometries: [point, coordinates],
-        },
-        properties: {
-            uuid: wellTrajectory.wellboreUuid,
-            name: wellTrajectory.uniqueWellboreIdentifier,
-            uwi: wellTrajectory.uniqueWellboreIdentifier,
-            color: [100, 100, 100],
-            md: [wellTrajectory.mdArr],
-            lineWidth,
-            wellHeadSize,
-        },
-    };
-
-    return geometryCollection;
-}
-
-function zipCoords(xArr: readonly number[], yArr: readonly number[], zArr: readonly number[]): number[][] {
-    const coords: number[][] = [];
-    for (let i = 0; i < xArr.length; i++) {
-        coords.push([xArr[i], yArr[i], -zArr[i]]);
-    }
-
-    return coords;
-}
 
 export function makeDrilledWellTrajectoriesLayer({
     id,
@@ -116,7 +74,7 @@ export function makeDrilledWellTrajectoriesLayer({
             orientation: LabelOrientation.HORIZONTAL,
         },
         pickable: true,
-        ZIncreasingDownwards: false,
+        ZIncreasingDownwards: true,
         outline: false,
         lineWidthScale: 2,
     });

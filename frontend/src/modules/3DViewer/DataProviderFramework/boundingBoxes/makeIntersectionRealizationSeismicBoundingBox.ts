@@ -1,12 +1,17 @@
 import type { BBox } from "@lib/utils/bbox";
-import type { IntersectionRealizationSeismicData } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
+import type {
+    IntersectionRealizationSeismicData,
+    IntersectionRealizationSeismicStoredData,
+} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationSeismicProvider";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 export function makeIntersectionRealizationSeismicBoundingBox({
     getData,
-}: TransformerArgs<any, IntersectionRealizationSeismicData>): BBox | null {
+    getStoredData,
+}: TransformerArgs<any, IntersectionRealizationSeismicData, IntersectionRealizationSeismicStoredData>): BBox | null {
     const data = getData();
-    if (!data) {
+    const polyline = getStoredData("seismicFencePolylineWithSectionLengths");
+    if (!polyline || !data) {
         return null;
     }
 
@@ -17,9 +22,9 @@ export function makeIntersectionRealizationSeismicBoundingBox({
     let maxY = Number.NEGATIVE_INFINITY;
     const maxZ = data.max_fence_depth;
 
-    for (let i = 0; i < data.fenceTracesFloat32Arr.length; i += 2) {
-        const x = data.fenceTracesFloat32Arr[i];
-        const y = data.fenceTracesFloat32Arr[i + 1];
+    for (let i = 0; i < polyline.polylineUtmXy.length; i += 2) {
+        const x = polyline.polylineUtmXy[i];
+        const y = polyline.polylineUtmXy[i + 1];
 
         minX = Math.min(minX, x);
         minY = Math.min(minY, y);

@@ -13,12 +13,12 @@ export function makeRealizationGridBoundingBox({ getData }: TransformerArgs<any,
         min: {
             x: data.gridSurfaceData.origin_utm_x + data.gridSurfaceData.xmin,
             y: data.gridSurfaceData.origin_utm_y + data.gridSurfaceData.ymin,
-            z: data.gridSurfaceData.zmin,
+            z: -data.gridSurfaceData.zmax,
         },
         max: {
             x: data.gridSurfaceData.origin_utm_x + data.gridSurfaceData.xmax,
             y: data.gridSurfaceData.origin_utm_y + data.gridSurfaceData.ymax,
-            z: data.gridSurfaceData.zmax,
+            z: -data.gridSurfaceData.zmin,
         },
     };
 }

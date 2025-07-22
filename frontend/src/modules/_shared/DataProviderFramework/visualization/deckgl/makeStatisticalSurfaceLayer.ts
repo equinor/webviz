@@ -1,5 +1,3 @@
-import { ColormapLayer, Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
-
 import type { SurfaceDef_api } from "@api";
 import { degreesToRadians } from "@lib/utils/geometry";
 import type { Vec2 } from "@lib/utils/vec2";
@@ -7,6 +5,7 @@ import { rotatePoint2Around } from "@lib/utils/vec2";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import { ColormapLayer, Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import {
     type StatisticalSurfaceData,
@@ -55,7 +54,7 @@ export function makeStatisticalSurfaceLayer({
             colorMapFunction: makeColorMapFunctionFromColorScale(colorScaleSpec, {
                 valueMin: data.surfaceData.value_min,
                 valueMax: data.surfaceData.value_max,
-                unnormalize: true,
+                denormalize: true,
             }),
         });
     }
@@ -75,7 +74,7 @@ export function makeStatisticalSurfaceLayer({
         colorMapFunction: makeColorMapFunctionFromColorScale(colorScaleSpec, {
             valueMin: data.surfaceData.value_min,
             valueMax: data.surfaceData.value_max,
-            unnormalize: true,
+            denormalize: true,
         }),
     });
 }

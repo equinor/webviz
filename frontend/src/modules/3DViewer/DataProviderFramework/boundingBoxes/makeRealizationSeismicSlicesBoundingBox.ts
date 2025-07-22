@@ -18,12 +18,12 @@ export function makeRealizationSeismicSlicesBoundingBox({
         min: {
             x: seismicCubeMeta.bbox.xmin,
             y: seismicCubeMeta.bbox.ymin,
-            z: -seismicCubeMeta.bbox.zmin,
+            z: seismicCubeMeta.bbox.zmin,
         },
         max: {
             x: seismicCubeMeta.bbox.xmax,
             y: seismicCubeMeta.bbox.ymax,
-            z: -seismicCubeMeta.bbox.zmax,
+            z: seismicCubeMeta.bbox.zmax,
         },
     };
 }

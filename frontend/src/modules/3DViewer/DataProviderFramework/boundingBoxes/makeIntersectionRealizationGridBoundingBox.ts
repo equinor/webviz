@@ -34,12 +34,12 @@ export function makeIntersectionRealizationGridBoundingBox({
         min: {
             x: minX,
             y: minY,
-            z: minZ,
+            z: -maxZ,
         },
         max: {
             x: maxX,
             y: maxY,
-            z: maxZ,
+            z: -minZ,
         },
     };
 }
