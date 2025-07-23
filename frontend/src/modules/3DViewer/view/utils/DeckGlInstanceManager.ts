@@ -92,6 +92,7 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     private _redrawCycle: number = 0;
     private _eventListeners: KeyboardEventListener[] = [];
     private _contextMenu: ContextMenu | null = null;
+    private _verticalScale: number = 1;
 
     constructor(ref: DeckGLRef | null) {
         this._ref = ref;
@@ -275,7 +276,23 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
 
         const layer =
             this._ref.deck.pickMultipleObjects({ x, y, radius: 10, depth: 1, unproject3D: true }) ?? undefined;
-        return layer[0];
+
+        if (!layer || !layer.length) {
+            return undefined;
+        }
+
+        const firstLayerInfo = layer[0];
+        if (!firstLayerInfo.coordinate) {
+            return undefined;
+        }
+
+        firstLayerInfo.coordinate = [
+            firstLayerInfo.coordinate[0],
+            firstLayerInfo.coordinate[1],
+            firstLayerInfo.coordinate[2] / this._verticalScale,
+        ];
+
+        return firstLayerInfo;
     }
 
     private getFirstLayerUnderCursorInfo(event: MapMouseEvent): PickingInfo | undefined {
@@ -311,6 +328,10 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
                 this._layersIdPluginMap.set(layer.id, plugin);
                 pluginLayerIds.push(layer.id);
             }
+        }
+
+        if ("verticalScale" in props) {
+            this._verticalScale = props.verticalScale ?? 1;
         }
 
         return {

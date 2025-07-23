@@ -1,18 +1,3 @@
-function countDecimalPlaces(value: number): number {
-    if (!isFinite(value)) return 0;
-    const valueStr = value.toString().toLowerCase();
-
-    if (valueStr.includes("e")) {
-        const [base, exponent] = valueStr.split("e").map(Number);
-        const baseStr = base.toString();
-        const decimalPlacesInBase = baseStr.split(".")[1]?.length ?? 0;
-        return Math.max(0, decimalPlacesInBase - exponent);
-    }
-
-    const parts = valueStr.split(".");
-    return parts[1]?.length ?? 0;
-}
-
 /**
  * Formats a number to a string with a maximum number of decimal places.
  * Uses suffixes (K, M, B, T) for large numbers, and exponential notation for very small ones.

@@ -88,12 +88,10 @@ function ToggleButtonComponent(props: ToggleButtonProps, ref: React.ForwardedRef
 
     const buttonRef = React.useRef<HTMLButtonElement>(null);
 
-    if (props.buttonRef) {
-        React.useImperativeHandle<HTMLButtonElement | null, HTMLButtonElement | null>(
-            props.buttonRef,
-            () => buttonRef.current,
-        );
-    }
+    React.useImperativeHandle<HTMLButtonElement | null, HTMLButtonElement | null>(
+        props.buttonRef,
+        () => buttonRef.current,
+    );
 
     const handleClick = React.useCallback(() => {
         onToggle(!active);

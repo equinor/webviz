@@ -153,7 +153,7 @@ export class BiconeLayer extends CompositeLayer<DiscLayerProps> {
     }
 
     renderLayers() {
-        const { id, color, opacity, centerPoint, normalVector, sizeUnits, radius, depthTest } = this.props;
+        const { color, opacity, centerPoint, normalVector, sizeUnits, radius, depthTest } = this.props;
         const { viewport } = this.context;
 
         let sizeScale = this.props.radius;
