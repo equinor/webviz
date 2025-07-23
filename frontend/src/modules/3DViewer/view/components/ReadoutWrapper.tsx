@@ -169,6 +169,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                             compact={props.views.viewports.length > 1}
                             viewportPickInfo={pickingInfoPerView[viewport.id]}
                             visible={!hideReadout && !!pickingInfoPerView[viewport.id]}
+                            verticalScale={props.verticalScale}
                         />
                     </DeckGlView>
                 ))}

@@ -8,7 +8,7 @@ import { ReadoutBox, type ReadoutItem } from "@modules/_shared/components/Readou
 // Needs extra distance for the left side; this avoids overlapping with legend elements
 const READOUT_EDGE_DISTANCE_REM = { left: 6 };
 
-function makePositionReadout(coordinates: number[]): ReadoutItem | null {
+function makePositionReadout(coordinates: number[], verticalScale: number = 1): ReadoutItem | null {
     if (coordinates === undefined || coordinates.length < 2) {
         return null;
     }
@@ -31,7 +31,7 @@ function makePositionReadout(coordinates: number[]): ReadoutItem | null {
     if (coordinates.length > 2) {
         readout.info.push({
             name: "z",
-            value: coordinates[2],
+            value: coordinates[2] / verticalScale,
             unit: "m",
         });
     }
@@ -43,6 +43,7 @@ export type ViewportPickingInfo = PickingInfoPerView extends Record<any, infer V
 
 export type ReadoutBoxWrapperProps = {
     viewportPickInfo: ViewportPickingInfo;
+    verticalScale?: number;
     maxNumItems?: number;
     visible?: boolean;
     compact?: boolean;
@@ -68,7 +69,7 @@ export function ReadoutBoxWrapper(props: ReadoutBoxWrapperProps): React.ReactNod
             return;
         }
 
-        const positionReadout = makePositionReadout(coordinates);
+        const positionReadout = makePositionReadout(coordinates, props.verticalScale);
         if (!positionReadout) {
             return;
         }
