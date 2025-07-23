@@ -4,9 +4,9 @@ import { Edit, Remove } from "@mui/icons-material";
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import addPathIcon from "@assets/add_path.svg?url";
-import continuePathIcon from "@assets/continue_path.svg?url";
-import removePathIcon from "@assets/remove_path.svg?url";
+import addPathIcon from "@assets/add_path.cur?url";
+import continuePathIcon from "@assets/continue_path.cur?url";
+import removePathIcon from "@assets/remove_path.cur?url";
 
 import {
     AllowHoveringOf,
@@ -81,9 +81,12 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
 
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<PolylinesPluginTopicPayloads>();
 
-    private setCurrentEditingPolylineId(id: string | null): void {
+    private setCurrentEditingPolylineId(id: string | null, shouldRedraw = false): void {
         this._currentEditingPolylineId = id;
         this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.EDITING_POLYLINE_ID);
+        if (shouldRedraw) {
+            this.requireRedraw();
+        }
     }
 
     constructor(manager: DeckGlInstanceManager, colorGenerator?: Generator<[number, number, number]>) {
@@ -173,7 +176,6 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
 
             this._hoverPoint = null;
             this.setEditingMode(PolylineEditingMode.IDLE);
-            this.requireRedraw();
             return;
         }
         if (key === "Delete") {
@@ -236,6 +238,14 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 }
             }
 
+            if (newPath.length === 0) {
+                this._polylines = this._polylines.filter((polyline) => polyline.id !== activePolyline.id);
+                this.setCurrentEditingPolylineId(null);
+                this._currentEditingPolylinePathReferencePointIndex = null;
+                this.setEditingMode(PolylineEditingMode.IDLE);
+                this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);
+                return;
+            }
             this.updateActivePolylinePath(newPath);
             this._currentEditingPolylinePathReferencePointIndex = newReferencePathPointIndex;
             this.requireRedraw();
@@ -278,6 +288,10 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
             return;
         }
 
+        if (isEqual(activePolyline.path, newPath)) {
+            return;
+        }
+
         this._polylines = this._polylines.map((polyline) => {
             if (polyline.id === activePolyline.id) {
                 return {
@@ -300,8 +314,9 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         if (this._editingMode !== PolylineEditingMode.DRAW) {
             this.setCurrentEditingPolylineId(null);
             this.setEditingMode(PolylineEditingMode.IDLE);
+        } else {
+            this.requireRedraw();
         }
-        this.requireRedraw();
     }
 
     handleGlobalMouseHover(pickingInfo: PickingInfo): void {
@@ -318,14 +333,21 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     }
 
     private makeNewPolylineName(): string {
-        const existingNames = this._polylines.map((polyline) => polyline.name);
-        let name = "New polyline";
-        let index = 1;
-        while (existingNames.includes(name)) {
-            name = `New polyline (${index})`;
-            index++;
+        const base = "New polyline";
+        const existingNames = new Set(this._polylines.map((p) => p.name));
+
+        if (!existingNames.has(base)) {
+            return base;
         }
-        return name;
+
+        for (let i = 1; i < 10000; i++) {
+            const name = `${base} (${i})`;
+            if (!existingNames.has(name)) {
+                return name;
+            }
+        }
+
+        throw new Error("Unable to generate unique polyline name");
     }
 
     handleGlobalMouseClick(pickingInfo: PickingInfo): boolean {
@@ -349,14 +371,12 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
             });
             this._polylines = [...this._polylines];
             this._currentEditingPolylinePathReferencePointIndex = 0;
-            this.setCurrentEditingPolylineId(id);
+            this.setCurrentEditingPolylineId(id, true);
             this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);
-            this.requireRedraw();
         } else if (activePolyline) {
             if (this._currentEditingPolylinePathReferencePointIndex === null) {
                 this.setCurrentEditingPolylineId(null);
                 this.setEditingMode(PolylineEditingMode.IDLE);
-                this.requireRedraw();
                 return true;
             }
 
@@ -394,7 +414,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         }
 
         if (pickingInfo.editableEntity?.type === "point") {
-            this._draggedPathPointIndex = pickingInfo.index;
+            this._draggedPathPointIndex = pickingInfo.editableEntity.index;
             this.requestDisablePanning();
             this.setDragStart();
         }
@@ -442,7 +462,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 [PolylineEditingMode.DRAW, PolylineEditingMode.ADD_POINT].includes(this._editingMode) &&
                 pickingInfo.editableEntity.type === "line"
             ) {
-                return `url("${addPathIcon}") 4 2, auto`;
+                return `url("${addPathIcon}"), crosshair`;
             }
 
             if (
@@ -456,10 +476,10 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                     index !== this._currentEditingPolylinePathReferencePointIndex &&
                     this._editingMode === PolylineEditingMode.DRAW
                 ) {
-                    return `url("${continuePathIcon}") 4 2, crosshair`;
+                    return `url("${continuePathIcon}"), crosshair`;
                 }
 
-                return `url("${removePathIcon}") 4 2, crosshair`;
+                return `url("${removePathIcon}"), crosshair`;
             }
 
             if (this._editingMode === PolylineEditingMode.IDLE && pickingInfo.editableEntity.type === "point") {
@@ -484,8 +504,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 icon: <Edit />,
                 label: "Edit",
                 onClick: () => {
-                    this.setCurrentEditingPolylineId(pickingInfo.polylineId ?? null);
-                    this.requireRedraw();
+                    this.setCurrentEditingPolylineId(pickingInfo.polylineId ?? null, true);
                 },
             },
             {
@@ -493,9 +512,8 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 label: "Delete",
                 onClick: () => {
                     this._polylines = this._polylines.filter((polyline) => polyline.id !== pickingInfo.polylineId);
-                    this.setCurrentEditingPolylineId(null);
+                    this.setCurrentEditingPolylineId(null, true);
                     this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);
-                    this.requireRedraw();
                 },
             },
         ];
@@ -544,7 +562,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 allowHoveringOf,
                 visible: activePolyline !== undefined,
                 updateTriggers: {
-                    renderLayers: [this._hoverPoint],
+                    renderLayers: [this._hoverPoint?.join(",") ?? ""],
                 },
             }),
         );

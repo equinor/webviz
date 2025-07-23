@@ -11,7 +11,6 @@ import { Direction as GridLayerDirection, GridLayerSetting } from "../implementa
 import { InputNumberSetting } from "../implementations/InputNumberSetting";
 import { IntersectionSetting } from "../implementations/IntersectionSetting";
 import { LogCurveSetting } from "../implementations/LogCurveSetting";
-import { RangeSetting } from "../implementations/RangeSetting";
 import { SeismicSliceSetting } from "../implementations/SeismicSliceSetting";
 import { SelectNumberSetting } from "../implementations/SelectNumberSetting";
 import { SelectStringSetting } from "../implementations/SelectStringSetting";
@@ -89,7 +88,3 @@ SettingRegistry.registerSetting(Setting.WELLBORE_EXTENSION_LENGTH, "Wellbore Ext
     customConstructorParameters: [{ min: 0.0, max: 5000.0 }],
 });
 SettingRegistry.registerSetting(Setting.WELLBORE_PICKS, "Wellbore Picks", DrilledWellborePicksSetting);
-SettingRegistry.registerSetting(Setting.OMIT_RANGE, "Omit Value Range", RangeSetting);
-SettingRegistry.registerSetting(Setting.OMIT_COLOR, "Color for omitted Values", SingleColorSetting, {
-    customConstructorParameters: [true],
-});

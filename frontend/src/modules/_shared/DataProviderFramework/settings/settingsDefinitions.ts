@@ -20,7 +20,6 @@ export enum SettingCategory {
     SINGLE_SELECT = "singleSelect",
     MULTI_SELECT = "multiSelect",
     NUMBER = "number",
-    RANGE = "range",
     NUMBER_WITH_STEP = "numberWithStep",
     // XYZ_NUMBER = "xyzNumber",
     XYZ_RANGE = "xyzRange",
@@ -68,8 +67,6 @@ export enum Setting {
     WELLBORE_EXTENSION_LENGTH = "wellboreExtensionLength",
     WELLBORE_PICKS = "wellborePicks",
     WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
-    OMIT_RANGE = "omitRange",
-    OMIT_COLOR = "omitColor",
 }
 
 export const settingCategories = {
@@ -89,7 +86,6 @@ export const settingCategories = {
     [Setting.GRID_LAYER_K]: SettingCategory.NUMBER,
     [Setting.GRID_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.INTERSECTION]: SettingCategory.SINGLE_SELECT,
-    [Setting.OMIT_RANGE]: SettingCategory.RANGE,
     [Setting.OPACITY_PERCENT]: SettingCategory.NUMBER_WITH_STEP,
     [Setting.POLYGONS_ATTRIBUTE]: SettingCategory.SINGLE_SELECT,
     [Setting.POLYGONS_NAME]: SettingCategory.SINGLE_SELECT,
@@ -109,7 +105,6 @@ export const settingCategories = {
     [Setting.WELLBORE_EXTENSION_LENGTH]: SettingCategory.NUMBER,
     [Setting.WELLBORE_PICKS]: SettingCategory.MULTI_SELECT,
     [Setting.WELLBORE_PICK_IDENTIFIER]: SettingCategory.SINGLE_SELECT,
-    [Setting.OMIT_COLOR]: SettingCategory.STATIC,
 } as const;
 
 export type SettingCategories = typeof settingCategories;
@@ -131,7 +126,6 @@ export type SettingTypes = {
     [Setting.GRID_LAYER_K]: number | null;
     [Setting.GRID_NAME]: string | null;
     [Setting.INTERSECTION]: IntersectionSettingValue | null;
-    [Setting.OMIT_RANGE]: [number, number] | null;
     [Setting.OPACITY_PERCENT]: number | null;
     [Setting.POLYGONS_ATTRIBUTE]: string | null;
     [Setting.POLYGONS_NAME]: string | null;
@@ -154,7 +148,6 @@ export type SettingTypes = {
     [Setting.TIME_OR_INTERVAL]: string | null;
     [Setting.WELLBORE_EXTENSION_LENGTH]: number | null;
     [Setting.WELLBORE_PICKS]: WellborePick_api[] | null;
-    [Setting.OMIT_COLOR]: string | null;
     [Setting.WELLBORE_PICK_IDENTIFIER]: string | null;
 };
 
@@ -276,19 +269,6 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
         const steps = Math.round((value - min) / step);
         return min + steps * step;
     },
-    [SettingCategory.RANGE]: <TSetting extends PossibleSettingsForCategory<SettingCategory.RANGE>>(
-        value: SettingTypes[TSetting],
-        availableValues: AvailableValuesType<TSetting>,
-    ) => {
-        if (value === null) {
-            return [availableValues[0], availableValues[1]];
-        }
-
-        const [min, max] = availableValues;
-
-        const newValue: SettingTypes[TSetting] = [Math.max(min, value[0]), Math.min(max, value[1])];
-        return newValue;
-    },
     [SettingCategory.XYZ_RANGE]: <TSetting extends PossibleSettingsForCategory<SettingCategory.XYZ_RANGE>>(
         value: SettingTypes[TSetting],
         availableValues: AvailableValuesType<TSetting>,
@@ -366,13 +346,6 @@ export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
         }
         const [min, max, step] = availableValues;
         return value >= min && value <= max && (value - min) % step === 0;
-    },
-    [SettingCategory.RANGE]: (value, availableValues) => {
-        if (value === null) {
-            return false;
-        }
-        const [min, max] = availableValues;
-        return value[0] >= min && value[0] <= max && value[1] >= min && value[1] <= max;
     },
     [SettingCategory.XYZ_VALUES_WITH_VISIBILITY]: (value, availableValues) => {
         if (value === null) {

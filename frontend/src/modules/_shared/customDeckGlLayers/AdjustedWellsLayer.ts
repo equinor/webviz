@@ -32,6 +32,7 @@ export class AdjustedWellsLayer extends WellsLayer {
         }
 
         const bbox = GetBoundingBox(this.state.data);
+        console.debug("AdjustedWellsLayer bounding box", bbox);
         return bbox;
     }
 
