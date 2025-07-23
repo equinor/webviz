@@ -17,13 +17,13 @@ export class AdjustedWellsLayer extends WellsLayer {
     }
 
     updateState(params: UpdateParameters<WellsLayer>): void {
+        super.updateState(params);
         const { props, changeFlags } = params;
         if (props.reportBoundingBox && changeFlags.dataChanged) {
             props.reportBoundingBox({
                 layerBoundingBox: this.calcBoundingBox(),
             });
         }
-        super.updateState(params);
     }
 
     private calcBoundingBox(): BoundingBox3D {
