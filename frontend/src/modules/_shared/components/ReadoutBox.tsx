@@ -5,6 +5,7 @@ import _ from "lodash";
 import { useStableProp } from "@lib/hooks/useStableProp";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
+import { formatNumber } from "../utils/numberFormatting";
 
 export type ReadoutItem = {
     label: string;
@@ -185,17 +186,4 @@ function formatValue(value: number | string | boolean): string {
         return formatNumber(value);
     }
     return value.toString();
-}
-
-function formatNumber(value: number): string {
-    const abs = Math.abs(value);
-
-    if (abs === 0) return "0";
-    if (abs < 1e-2 || abs >= 1e6) {
-        // Use scientific notation for very small or large values
-        return value.toExponential(2); // e.g., "1.23e-6"
-    }
-
-    // Use fixed-point notation for regular values
-    return value.toFixed(2).replace(/\.00$/, ""); // remove ".00" if integer
 }

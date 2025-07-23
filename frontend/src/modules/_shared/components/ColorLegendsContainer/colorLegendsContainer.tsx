@@ -6,6 +6,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { ColorScaleWithName } from "@modules_shared/utils/ColorScaleWithName";
 
 import type { ColorScaleWithId } from "./colorScaleWithId";
+import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 const STYLE_CONSTANTS = {
     lineWidth: 6,
@@ -74,7 +75,7 @@ function makeMarkers(
                 fontSize="10"
                 style={TEXT_STYLE}
             >
-                {formatLegendValue(value)}
+                {formatNumber(value)}
             </text>,
         );
 
@@ -125,7 +126,7 @@ function makeDiscreteMarkers(colorScale: ColorScale, left: number, top: number, 
                 fontSize="10"
                 style={TEXT_STYLE}
             >
-                {formatLegendValue(value)}
+                {formatNumber(value)}
             </text>,
         );
 
@@ -173,7 +174,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
             fontSize="10"
             style={TEXT_STYLE}
         >
-            {formatLegendValue(props.colorScale.getMax())}
+            {formatNumber(props.colorScale.getMax())}
         </text>,
     );
 
@@ -230,7 +231,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
                     fontSize="10"
                     style={TEXT_STYLE}
                 >
-                    {formatLegendValue(props.colorScale.getDivMidPoint())}
+                    {formatNumber(props.colorScale.getDivMidPoint())}
                 </text>,
             );
 
@@ -277,7 +278,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
             fontSize="10"
             style={TEXT_STYLE}
         >
-            {formatLegendValue(props.colorScale.getMin())}
+            {formatNumber(props.colorScale.getMin())}
         </text>,
     );
 
@@ -434,17 +435,4 @@ function GradientDef(props: GradientDefProps): React.ReactNode {
 
 function makeGradientId(id: string): string {
     return `color-legend-gradient-${id}`;
-}
-
-function countDecimalPlaces(value: number): number {
-    const decimalIndex = value.toString().indexOf(".");
-    return decimalIndex >= 0 ? value.toString().length - decimalIndex - 1 : 0;
-}
-
-function formatLegendValue(value: number, maxNumDecimalPlaces: number = 3): string {
-    const numDecimalPlaces = countDecimalPlaces(value);
-    if (Math.log10(Math.abs(value)) > maxNumDecimalPlaces) {
-        return value.toExponential(numDecimalPlaces > maxNumDecimalPlaces ? maxNumDecimalPlaces : numDecimalPlaces);
-    }
-    return value.toFixed(numDecimalPlaces > maxNumDecimalPlaces ? maxNumDecimalPlaces : numDecimalPlaces);
 }
