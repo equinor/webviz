@@ -1,3 +1,5 @@
+import type { EnsembleTimestamps_api } from "@api";
+
 // Base item for ensemble data
 export type BaseEnsembleItem = {
     caseUuid: string;
@@ -14,6 +16,7 @@ export type RegularEnsembleItem = BaseEnsembleItem & {
     caseName: string;
     color: string;
     customName: string | null;
+    timestamps: EnsembleTimestamps_api | null;
 };
 
 // Internal type before applying created delta ensemble externally
