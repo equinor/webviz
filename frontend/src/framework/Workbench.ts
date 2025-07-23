@@ -364,7 +364,6 @@ export class Workbench {
 
             return acc.concat({
                 ...ensembleToUserSettings(ens),
-                // ? Should we store both, or just the latest one?
                 timestamps: ts,
             });
         }, [] as UserEnsembleSetting[]);

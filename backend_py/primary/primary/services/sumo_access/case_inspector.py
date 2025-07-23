@@ -70,7 +70,7 @@ class CaseInspector:
 
     async def get_iteration_timestamps_async(self, iteration_name: str) -> IterationTimestamps:
         case_updated_at = await self.get_case_updated_timestamp_async()
-        # Data is occasionally none. This is likely due to data errors, so we just default to 0 (since a iteration with bad data probably wont be used)
+        # Data is occasionally None. This is likely due to data errors, so we just default to 0 (since an iteration with bad data probably won't be used)
         data_updated_at = await self.get_iteration_data_update_timestamp_async(iteration_name) or 0
 
         return IterationTimestamps(case_updated_at_utc_ms=case_updated_at, data_updated_at_utc_ms=data_updated_at)

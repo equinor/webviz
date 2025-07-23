@@ -186,7 +186,7 @@ async function loadEnsembleApiDataMapFromBackend(
 
         const ensembleDetailsPromise = queryClient.fetchQuery({
             ...getEnsembleDetailsOptions({
-                // ? These data should only be affected by the case timestamp, right?
+                // ! We've assumed that these data are only affected by the case timestamp
                 query: { t: timestamps?.caseUpdatedAtUtcMs ?? Date.now() },
                 path: {
                     case_uuid: caseUuid,
@@ -215,7 +215,7 @@ async function loadEnsembleApiDataMapFromBackend(
         const sensitivitiesPromise = queryClient.fetchQuery({
             ...getSensitivitiesOptions({
                 query: {
-                    // ? These are only affected by the "data" timestamp, right?
+                    // ! We've assumed that these data are only affected by the case timestamp
                     t: timestamps?.dataUpdatedAtUtcMs ?? Date.now(),
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
