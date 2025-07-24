@@ -22,6 +22,7 @@ import {
     updateSessionWithCacheUpdate,
 } from "./utils";
 import { makeWorkbenchSessionStateString } from "./WorkbenchSessionSerializer";
+import { blobToBase64, exportDashboardAsPng } from "@framework/utils/renderPreviewImage";
 
 export type WorkbenchSessionPersistenceInfo = {
     lastModifiedMs: number;
@@ -296,11 +297,19 @@ export class WorkbenchSessionPersistenceService
         }
         const toastId = toast.loading("Creating snapshot...");
 
+        const previewImageBlob = await exportDashboardAsPng(
+            this._workbenchSession.getActiveDashboard()?.getLayout() || [],
+            400,
+            400,
+        );
+        const previewImageStr = await blobToBase64(previewImageBlob);
+
         try {
             const snapshotId = await createSnapshotWithCacheUpdate(queryClient, {
                 title,
                 description,
                 content: objectToJsonString(this._workbenchSession.getContent()),
+                layout_preview: previewImageStr,
             });
             toast.dismiss(toastId);
             toast.success("Snapshot successfully created.");
@@ -390,6 +399,13 @@ export class WorkbenchSessionPersistenceService
             return;
         }
 
+        const previewImageBlob = await exportDashboardAsPng(
+            this._workbenchSession.getActiveDashboard()?.getLayout() || [],
+            400,
+            400,
+        );
+        const previewImageStr = await blobToBase64(previewImageBlob);
+
         try {
             if (this._workbenchSession.getIsPersisted()) {
                 if (!id) {
@@ -401,6 +417,7 @@ export class WorkbenchSessionPersistenceService
                     metadata: {
                         title: metadata.title,
                         description: metadata.description,
+                        layout_preview: previewImageStr,
                     },
                 });
                 // On successful update, we can safely remove the local storage recovery entry
@@ -413,6 +430,7 @@ export class WorkbenchSessionPersistenceService
                     title: metadata.title,
                     description: metadata.description ?? null,
                     content: objectToJsonString(this._workbenchSession.getContent()),
+                    layout_preview: previewImageStr,
                 });
                 this._workbenchSession.setId(id);
                 toast.dismiss(toastId);

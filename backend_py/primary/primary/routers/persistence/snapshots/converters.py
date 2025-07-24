@@ -13,6 +13,7 @@ def to_api_snapshot_metadata_summary(metadata: SnapshotMetadataWithId) -> schema
         createdAt=metadata.created_at.isoformat(),
         updatedAt=metadata.updated_at.isoformat(),
         hash=metadata.hash,
+        layoutPreview=metadata.layout_preview,
     )
 
 
@@ -24,6 +25,7 @@ def to_api_snapshot_metadata(metadata: SnapshotMetadata) -> schemas.SnapshotMeta
         createdAt=metadata.created_at.isoformat(),
         updatedAt=metadata.updated_at.isoformat(),
         hash=metadata.hash,
+        layoutPreview=metadata.layout_preview,
     )
 
 

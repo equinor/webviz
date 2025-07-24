@@ -7,6 +7,7 @@ from pydantic import BaseModel
 class SnapshotUserEditableMetadata(BaseModel):
     title: str
     description: Optional[str] = None
+    layout_preview: str
 
 
 class SnapshotMetadataInternal(BaseModel):
@@ -14,6 +15,7 @@ class SnapshotMetadataInternal(BaseModel):
     created_at: datetime
     updated_at: datetime
     hash: str
+    layout_preview: str
 
 
 class SnapshotMetadata(SnapshotUserEditableMetadata, SnapshotMetadataInternal):
@@ -39,6 +41,7 @@ class NewSnapshot(BaseModel):
     title: str
     description: Optional[str]
     content: str
+    layout_preview: str
 
 
 class SortBy(str, Enum):

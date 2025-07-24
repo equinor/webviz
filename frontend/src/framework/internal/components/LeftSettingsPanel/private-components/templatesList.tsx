@@ -4,53 +4,9 @@ import { GridView } from "@mui/icons-material";
 
 import { GuiState, LeftDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { ModuleRegistry } from "@framework/ModuleRegistry";
-import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
 import type { Workbench } from "@framework/Workbench";
-
-function drawTemplatePreview(template: Template, width: number, height: number): React.ReactNode {
-    return (
-        <svg width={width} height={height} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" version="1.1">
-            {template.moduleInstances.map((element, idx) => {
-                const w = element.layout.relWidth * width;
-                const h = element.layout.relHeight * height;
-                const x = element.layout.relX * width;
-                const y = element.layout.relY * height;
-                const strokeWidth = 2;
-                const headerHeight = 10;
-                const module = ModuleRegistry.getModule(element.moduleName);
-                const drawFunc = module.getDrawPreviewFunc();
-                return (
-                    <g key={`${element.moduleName}-${idx}`}>
-                        <rect x={x} y={y} width={w} height={h} fill="white" stroke="#aaa" strokeWidth={strokeWidth} />
-                        <rect
-                            x={x + strokeWidth / 2}
-                            y={y + strokeWidth / 2}
-                            width={w - strokeWidth}
-                            height={headerHeight}
-                            fill="#eee"
-                            strokeWidth="0"
-                        />
-                        <text
-                            x={x + strokeWidth}
-                            y={y + headerHeight / 2 + strokeWidth / 2}
-                            dominantBaseline="middle"
-                            textAnchor="left"
-                            fontSize="3"
-                            fill="#000"
-                        >
-                            {element.moduleName}
-                        </text>
-                        <g transform={`translate(${x + 2 * strokeWidth}, ${y + headerHeight + 2 * strokeWidth})`}>
-                            {drawFunc && drawFunc(w - 4 * strokeWidth, h - headerHeight - 4 * strokeWidth)}
-                        </g>
-                    </g>
-                );
-            })}
-        </svg>
-    );
-}
+import { DashboardPreview } from "../../DashboardPreview/dashboardPreview";
 
 type TemplatesListItemProps = {
     templateName: string;
@@ -62,6 +18,7 @@ const TemplatesListItem: React.FC<TemplatesListItemProps> = (props) => {
     const mainRef = React.useRef<HTMLDivElement>(null);
 
     const template = TemplateRegistry.getTemplate(props.templateName);
+    const layout = template?.moduleInstances.map((mi) => ({ ...mi.layout, moduleName: mi.moduleName })) || [];
 
     return (
         <>
@@ -72,7 +29,7 @@ const TemplatesListItem: React.FC<TemplatesListItemProps> = (props) => {
                 onClick={props.onClick}
             >
                 <div ref={ref} style={{ width: 100, height: 100 }}>
-                    {template && drawTemplatePreview(template, 100, 100)}
+                    {template && <DashboardPreview layout={layout} width={100} height={100} />}
                 </div>
                 <div className="ml-4">
                     <div className="font-bold">{props.templateName}</div>

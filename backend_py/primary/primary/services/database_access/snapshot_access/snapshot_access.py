@@ -1,3 +1,4 @@
+from hmac import new
 from typing import Optional, List
 from datetime import datetime, timezone
 from nanoid import generate
@@ -130,6 +131,7 @@ class SnapshotAccess:
             created_at=now,
             updated_at=now,
             hash=hash_json_string(new_snapshot.content),
+            layout_preview=new_snapshot.layout_preview,
         )
 
         # Store metadata

@@ -11,6 +11,7 @@ class SnapshotMetadata(BaseModel):
     createdAt: str
     updatedAt: str
     hash: str
+    layoutPreview: str
 
 
 class SnapshotMetadataWithId(SnapshotMetadata):

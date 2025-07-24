@@ -178,12 +178,27 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     function makePreviewImage() {
         if (props.drawPreviewFunc) {
             const pixels = convertRemToPixels(2.5);
+            const result = props.drawPreviewFunc(pixels, pixels);
+
+            if (typeof result === "string") {
+                return (
+                    <img
+                        src={result}
+                        width={pixels}
+                        height={pixels}
+                        className="object-contain w-full h-full"
+                        alt="Preview"
+                    />
+                );
+            }
+
             return (
                 <svg width={pixels} height={pixels} viewBox={`0 0 ${pixels} ${pixels}`}>
-                    {props.drawPreviewFunc(pixels, pixels)}
+                    {result}
                 </svg>
             );
         }
+
         return <div className="border bg-slate-200 border-slate-300 flex items-center justify-center w-full h-full" />;
     }
 
@@ -419,13 +434,36 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
     }
 
     const previewFunc = props.module.getDrawPreviewFunc();
+    let previewImage: React.ReactNode | null = null;
+    if (previewFunc) {
+        const pixels = convertRemToPixels(2.5);
+        const result = previewFunc(pixels, pixels);
+
+        if (typeof result === "string") {
+            previewImage = (
+                <img
+                    src={result}
+                    width={pixels}
+                    height={pixels}
+                    className="object-contain w-full h-full"
+                    alt="Preview"
+                />
+            );
+        }
+
+        previewImage = (
+            <svg width={pixels} height={pixels} viewBox={`0 0 ${pixels} ${pixels}`}>
+                {result}
+            </svg>
+        );
+    }
 
     return (
         <div
             className="absolute bg-white border border-gray-300 shadow-lg p-4 z-50 w-96 text-sm flex gap-4"
             style={style}
         >
-            <div>{previewFunc && previewFunc(64, 64)}</div>
+            <div>{previewImage}</div>
             <div className="grow">
                 <div className="flex items-center">
                     <span className="font-bold grow">{props.module.getDefaultTitle()}</span>

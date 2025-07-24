@@ -97,6 +97,7 @@ class SessionAccess:
                 updated_at=now,
                 version=1,
                 hash=hash_json_string(new_session.content),
+                layout_preview=new_session.layout_preview,
             ),
             content=new_session.content,
         )
@@ -116,6 +117,7 @@ class SessionAccess:
                 "version": existing.metadata.version + 1,
                 "updated_at": datetime.now(timezone.utc),
                 "hash": hash_json_string(session_update.content),
+                "layout_preview": session_update.metadata.layout_preview,
             }
         )
 

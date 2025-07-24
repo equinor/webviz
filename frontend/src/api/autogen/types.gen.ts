@@ -418,6 +418,7 @@ export type NetworkNode_api = {
 export type NewSession_api = {
     title: string;
     description: string | null;
+    layout_preview: string;
     content: string;
 };
 
@@ -425,6 +426,7 @@ export type NewSnapshot_api = {
     title: string;
     description: string | null;
     content: string;
+    layout_preview: string;
 };
 
 export enum NodeType_api {
@@ -725,16 +727,18 @@ export type SessionMetadata_api = {
     createdAt: string;
     updatedAt: string;
     version: number;
+    layoutPreview: string;
     hash: string;
 };
 
 export type SessionMetadataWithId_api = {
-    id: string;
     title: string;
     description: string | null;
     createdAt: string;
     updatedAt: string;
     version: number;
+    layoutPreview: string;
+    id: string;
 };
 
 export type SessionUpdate_api = {
@@ -746,6 +750,7 @@ export type SessionUpdate_api = {
 export type SessionUserEditableMetadata_api = {
     title: string;
     description?: string | null;
+    layout_preview: string;
 };
 
 export type Snapshot_api = {
@@ -755,7 +760,7 @@ export type Snapshot_api = {
 };
 
 export type SnapshotAccessLog_api = {
-    userId: string;
+    visitorId: string;
     snapshotId: string;
     visits: number;
     firstVisitedAt: string | null;
@@ -770,6 +775,7 @@ export type SnapshotMetadata_api = {
     createdAt: string;
     updatedAt: string;
     hash: string;
+    layoutPreview: string;
 };
 
 export type SnapshotUpdate_api = {
@@ -779,6 +785,7 @@ export type SnapshotUpdate_api = {
 export type SnapshotUserEditableMetadata_api = {
     title: string;
     description?: string | null;
+    layout_preview: string;
 };
 
 export enum SortDirection_api {
@@ -1270,14 +1277,14 @@ export type WellboreTrajectory_api = {
     northingArr: Array<number>;
 };
 
-export enum PrimaryServicesSessionAccessTypesSortBy_api {
+export enum PrimaryServicesDatabaseAccessSessionAccessTypesSortBy_api {
     CREATED_AT = "created_at",
     UPDATED_AT = "updated_at",
     TITLE = "title",
     TITLE_LOWER = "title_lower",
 }
 
-export enum PrimaryServicesSnapshotAccessTypesSortBy_api {
+export enum PrimaryServicesDatabaseAccessSnapshotAccessTypesSortBy_api {
     CREATED_AT = "created_at",
     UPDATED_AT = "updated_at",
     TITLE = "title",
@@ -3846,7 +3853,7 @@ export type GetSessionsMetadataData_api = {
         /**
          * Sort the result by
          */
-        sort_by?: PrimaryServicesSessionAccessTypesSortBy_api | null;
+        sort_by?: PrimaryServicesDatabaseAccessSessionAccessTypesSortBy_api | null;
         /**
          * Sort direction: 'asc' or 'desc'
          */
@@ -4013,7 +4020,7 @@ export type GetRecentSnapshotsData_api = {
         /**
          * Sort the result by
          */
-        sort_by?: PrimaryServicesSnapshotAccessTypesSortBy_api | null;
+        sort_by?: PrimaryServicesDatabaseAccessSnapshotAccessTypesSortBy_api | null;
         /**
          * Sort direction: 'asc' or 'desc'
          */
@@ -4055,7 +4062,7 @@ export type GetSnapshotsMetadataData_api = {
         /**
          * Sort the result by
          */
-        sort_by?: PrimaryServicesSnapshotAccessTypesSortBy_api | null;
+        sort_by?: PrimaryServicesDatabaseAccessSnapshotAccessTypesSortBy_api | null;
         /**
          * Sort direction: 'asc' or 'desc'
          */
