@@ -30,6 +30,10 @@ export type HeaderProps = {
 };
 
 export const Header: React.FC<HeaderProps> = (props) => {
+    const isSnapshot = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
+    );
     const dashboard = usePublishSubscribeTopicValue(
         props.workbench.getWorkbenchSession(),
         PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
@@ -348,15 +352,16 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     <OpenInFull fontSize="inherit" />
                 </div>
             )}
-
-            <div
-                className="hover:text-slate-500 cursor-pointer px-1"
-                onPointerDown={handleRemoveClick}
-                onPointerUp={handlePointerUp}
-                title="Remove this module"
-            >
-                <Close fontSize="inherit" />
-            </div>
+            {!isSnapshot && (
+                <div
+                    className="hover:text-slate-500 cursor-pointer px-1"
+                    onPointerDown={handleRemoveClick}
+                    onPointerUp={handlePointerUp}
+                    title="Remove this module"
+                >
+                    <Close fontSize="inherit" />
+                </div>
+            )}
             {statusMessagesVisible &&
                 createPortal(
                     <div
