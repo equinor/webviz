@@ -2,21 +2,22 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class SessionMetadataBase(BaseModel):
+class SessionMetadataWithId(BaseModel):
+    id: str
     title: str
     description: Optional[str]
     createdAt: str
     updatedAt: str
     version: int
-    layoutPreview: str
 
 
-class SessionMetadata(SessionMetadataBase):
+class SessionMetadata(BaseModel):
+    title: str
+    description: Optional[str]
+    createdAt: str
+    updatedAt: str
+    version: int
     hash: str
-
-
-class SessionMetadataWithId(SessionMetadataBase):
-    id: str
 
 
 class SessionDocument(BaseModel):
