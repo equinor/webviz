@@ -330,10 +330,9 @@ def filter_search_context_on_attribute(
     search_context: SearchContext,
     attribute: str,
 ) -> SearchContext:
-    """Filters an existing search context for a specific surface attribute, dependent on if it is tagname or standard result."""
+    """Adds "attribute" filter to an existing search context. Attribute can be either a tagname or a standard result."""
 
     if attribute.endswith(" (standard result)"):
-        print(f"Filtering search context on standard result: {attribute}")
         standard_result = attribute.removesuffix(" (standard result)")
         return search_context.filter(
             standard_result=standard_result,
