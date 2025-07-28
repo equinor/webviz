@@ -10,9 +10,17 @@ from fmu.sumo.explorer.explorer import SumoClient, SearchContext
 from fmu.sumo.explorer.objects import Surface
 
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
-from primary.services.utils.otel_span_tracing import otel_span_decorator, start_otel_span, start_otel_span_async
+from primary.services.utils.otel_span_tracing import (
+    otel_span_decorator,
+    start_otel_span,
+    start_otel_span_async,
+)
 from primary.services.utils.statistic_function import StatisticFunction
-from primary.services.service_exceptions import Service, MultipleDataMatchesError, InvalidParameterError
+from primary.services.service_exceptions import (
+    Service,
+    MultipleDataMatchesError,
+    InvalidParameterError,
+)
 
 from .surface_types import SurfaceMeta, SurfaceMetaSet
 from .generic_types import SumoContent
@@ -44,7 +52,8 @@ class SurfaceAccess:
     async def get_realization_surfaces_metadata_async(self) -> SurfaceMetaSet:
         if not self._iteration_name:
             raise InvalidParameterError(
-                "Iteration name must be set to get metadata for realization surfaces", Service.SUMO
+                "Iteration name must be set to get metadata for realization surfaces",
+                Service.SUMO,
             )
 
         perf_metrics = PerfMetrics()
@@ -121,7 +130,11 @@ class SurfaceAccess:
 
     @otel_span_decorator()
     async def get_realization_surface_data_async(
-        self, real_num: int, name: str, attribute: str, time_or_interval_str: str | None = None
+        self,
+        real_num: int,
+        name: str,
+        attribute: str,
+        time_or_interval_str: str | None = None,
     ) -> xtgeo.RegularSurface | None:
         """
         Get surface data for a realization surface
@@ -142,14 +155,15 @@ class SurfaceAccess:
             iteration=self._iteration_name,
             realization=real_num,
             name=name,
-            tagname=attribute,
             time=time_filter,
         )
+        search_context = filter_search_context_on_attribute(search_context, attribute)
 
         surf_count = await search_context.length_async()
         if surf_count > 1:
             raise MultipleDataMatchesError(
-                f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO
+                f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}",
+                Service.SUMO,
             )
         if surf_count == 0:
             LOGGER.warning(f"No realization surface found in Sumo for: {surf_str}")
@@ -192,14 +206,15 @@ class SurfaceAccess:
             stage="case",
             is_observation=True,
             name=name,
-            tagname=attribute,
             time=time_filter,
         )
+        search_context = filter_search_context_on_attribute(search_context, attribute)
 
         surf_count = await search_context.length_async()
         if surf_count > 1:
             raise MultipleDataMatchesError(
-                f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO
+                f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}",
+                Service.SUMO,
             )
         if surf_count == 0:
             LOGGER.warning(f"No observed surface found in Sumo for: {surf_str}")
@@ -256,10 +271,10 @@ class SurfaceAccess:
             aggregation=False,
             iteration=self._iteration_name,
             name=name,
-            tagname=attribute,
             realization=realizations if realizations is not None else True,
             time=time_filter,
         )
+        search_context = filter_search_context_on_attribute(search_context, attribute)
 
         surf_count = await search_context.length_async()
         perf_metrics.record_lap("locate")
@@ -311,6 +326,23 @@ class SurfaceAccess:
         return addr_str
 
 
+def filter_search_context_on_attribute(
+    search_context: SearchContext,
+    attribute: str,
+) -> SearchContext:
+    """Filters an existing search context for a specific surface attribute, dependent on if it is tagname or standard result."""
+
+    if attribute.endswith(" (standard result)"):
+        print(f"Filtering search context on standard result: {attribute}")
+        standard_result = attribute.removesuffix(" (standard result)")
+        return search_context.filter(
+            standard_result=standard_result,
+        )
+    return search_context.filter(
+        tagname=attribute,
+    )
+
+
 def _build_surface_meta_arr(
     src_surf_info_arr: list[SurfInfo], time_type: SurfTimeType, are_observations: bool
 ) -> list[SurfaceMeta]:
@@ -318,10 +350,23 @@ def _build_surface_meta_arr(
 
     for info in src_surf_info_arr:
         content_str = info.content
-
-        if not info.tagname:
-            LOGGER.warning(f"Surface {info.name} (content={content_str}) has empty tagname, ignoring the surface")
+        attribute_str: str | None = None
+        if not info.tagname and not info.standard_result:
+            LOGGER.warning(
+                f"Surface {info.name} (content={content_str})  has empty tagname and standard_result, ignoring the surface"
+            )
             continue
+        if info.tagname and info.standard_result:
+            LOGGER.warning(
+                f"Surface {info.name} (tagname={info.tagname}, content={content_str}) has both tagname and standard_result, ignoring the surface"
+            )
+            continue
+
+        if info.standard_result:
+            attribute_str = f"{info.standard_result} (standard result)"
+
+        else:
+            attribute_str = info.tagname
 
         content_enum = SumoContent.UNKNOWN
         if not content_str:
@@ -342,7 +387,7 @@ def _build_surface_meta_arr(
         ret_arr.append(
             SurfaceMeta(
                 name=info.name,
-                attribute_name=info.tagname,
+                attribute_name=attribute_str,
                 content=content_enum,
                 time_type=time_type,
                 is_observation=are_observations,
@@ -355,7 +400,9 @@ def _build_surface_meta_arr(
     return ret_arr
 
 
-def _time_or_interval_str_to_time_filter(time_or_interval_str: str | None) -> TimeFilter:
+def _time_or_interval_str_to_time_filter(
+    time_or_interval_str: str | None,
+) -> TimeFilter:
     if time_or_interval_str is None:
         return TimeFilter(TimeType.NONE)
 
