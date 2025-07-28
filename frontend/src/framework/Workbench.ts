@@ -258,9 +258,10 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
     }
 
-    async openSessionFromLocalStorage(snapshotId: string | null): Promise<void> {
-        if (this._workbenchSession) {
-            this.unloadCurrentSession(); // Close the current session if one is active.
+    async openSessionFromLocalStorage(snapshotId: string | null, forceOpen = false): Promise<void> {
+        if (this._workbenchSession && !forceOpen) {
+            console.warn("A workbench session is already active. Please close it before opening a new one.");
+            return;
         }
 
         const session = await loadWorkbenchSessionFromLocalStorage(
@@ -275,6 +276,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
         await this.setWorkbenchSession(session);
         this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, false);
+        this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, false);
     }
 
     async openSession(sessionId: string): Promise<void> {

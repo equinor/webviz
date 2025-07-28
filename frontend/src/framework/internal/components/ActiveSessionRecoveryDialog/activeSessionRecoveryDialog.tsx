@@ -13,7 +13,10 @@ export type ActiveSessionRecoveryDialogProps = {
 };
 
 export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogProps): React.ReactNode {
-    const [isOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.ActiveSessionRecoveryDialogOpen);
+    const [isOpen, setIsOpen] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.ActiveSessionRecoveryDialogOpen,
+    );
 
     const activeSession = props.workbench.getWorkbenchSession();
 
@@ -44,10 +47,11 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
 
     function handleDiscard() {
         props.workbench.discardLocalStorageSession(activeSession.getId(), false);
+        setIsOpen(false);
     }
 
     function handleOpen() {
-        props.workbench.openSessionFromLocalStorage(activeSession.getId());
+        props.workbench.openSessionFromLocalStorage(activeSession.getId(), true);
     }
 
     return (
