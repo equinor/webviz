@@ -20,7 +20,7 @@ export function formatNumber(value: number, maxNumDecimalPlaces: number = 3): st
     ];
 
     for (const [threshold, suffix] of suffixes) {
-        if (absValue >= threshold) {
+        if (absValue >= threshold && absValue >= 10000) {
             const scaled = value / threshold;
             return Number.isInteger(scaled) ? `${scaled}${suffix}` : `${scaled.toFixed(maxNumDecimalPlaces)}${suffix}`;
         }
