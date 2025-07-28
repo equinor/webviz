@@ -12,10 +12,7 @@ export const divMidPointAtom = atom<number>(9);
 export const myPersistableAtom = persistableFixableAtom<string>({
     initialValue: "value1",
     isValidFunction: (value) => ["value1", "value2"].includes(value),
-    fixupFunction: (value) => {
-        if (value === "value1" || value === "value2") {
-            return value;
-        }
+    fixupFunction: () => {
         return "value2"; // Default value if the current value is invalid
     },
 });

@@ -77,8 +77,32 @@ function isInternalState<T>(value: T | PersistableAtomState<T>): value is Persis
 }
 
 export type PersistableFixableAtomOptions<T> = {
+    /**
+     * The initial value for the atom before any user or persisted value is applied.
+     * This is typically a safe default value used when no persisted state is present.
+     */
     initialValue: T;
+
+    /**
+     * A function to validate whether the given value is valid in the current application context.
+     * Called whenever the atom is read to determine if a persisted value is still valid.
+     * This function is also used to decide whether the fixup function should be triggered
+     * for user-provided values.
+     *
+     * @param value - The current atom value to validate.
+     * @param get - The Jotai getter to read from other atoms if needed.
+     */
     isValidFunction: (value: T, get: Getter) => boolean;
+
+    /**
+     * A function that provides a fallback value when a user-provided value is invalid.
+     * This function is only called if the value originates from a user interaction and is invalid.
+     * Persisted values are never passed to this function.
+     *
+     * @param value - The current invalid value that needs fixing.
+     * @param get - The Jotai getter to access other atoms, if necessary.
+     * @returns A valid fallback value to use instead.
+     */
     fixupFunction: (value: T, get: Getter) => T;
 };
 
@@ -93,17 +117,17 @@ export function persistableFixableAtom<T>(options: PersistableFixableAtomOptions
     const fixableAtom = atom(
         (get) => {
             const internalState = get(internalStateAtom);
+            const isValid = options.isValidFunction(internalState.value, get);
+
             if (internalState._source === Source.PERSISTED) {
-                const isValid = options.isValidFunction(internalState.value, get);
                 return {
                     value: internalState.value,
                     isValidPersistedValue: isValid,
                 };
             }
 
-            const fixedValue = options.fixupFunction(internalState.value, get);
             return {
-                value: fixedValue,
+                value: isValid ? internalState.value : options.fixupFunction(internalState.value, get),
                 isValidPersistedValue: true,
             };
         },
@@ -124,7 +148,10 @@ export function persistableFixableAtom<T>(options: PersistableFixableAtomOptions
         },
     );
 
-    (fixableAtom as any)[PERSISTABLE_ATOM] = true;
+    Object.defineProperty(fixableAtom, PERSISTABLE_ATOM, {
+        value: true,
+        enumerable: false,
+    });
 
     return fixableAtom;
 }
