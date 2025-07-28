@@ -35,7 +35,8 @@ export enum GuiState {
     IsMakingSnapshot = "isMakingSnapshot",
     IsLoadingSession = "isLoadingSession",
     EnsembleDialogOpen = "ensembleDialogOpen",
-    RecoveryDialogOpen = "recoveryDialogOpen",
+    MultiSessionsRecoveryDialogOpen = "multiSessionsRecoveryDialogOpen",
+    ActiveSessionRecoveryDialogOpen = "activeSessionRecoveryDialogOpen",
     MakeSnapshotDialogOpen = "makeSnapshotDialogOpen",
 }
 
@@ -106,7 +107,8 @@ type GuiStateValueTypes = {
     [GuiState.IsLoadingSession]: boolean;
     [GuiState.SessionHasUnsavedChanges]: boolean;
     [GuiState.EnsembleDialogOpen]: boolean;
-    [GuiState.RecoveryDialogOpen]: boolean;
+    [GuiState.MultiSessionsRecoveryDialogOpen]: boolean;
+    [GuiState.ActiveSessionRecoveryDialogOpen]: boolean;
     [GuiState.MakeSnapshotDialogOpen]: boolean;
     [GuiState.IsMakingSnapshot]: boolean;
 };
@@ -126,7 +128,8 @@ defaultStates.set(GuiState.IsLoadingSession, false);
 defaultStates.set(GuiState.SessionHasUnsavedChanges, false);
 defaultStates.set(GuiState.EditDataChannelConnections, false);
 defaultStates.set(GuiState.EnsembleDialogOpen, false);
-defaultStates.set(GuiState.RecoveryDialogOpen, false);
+defaultStates.set(GuiState.MultiSessionsRecoveryDialogOpen, false);
+defaultStates.set(GuiState.ActiveSessionRecoveryDialogOpen, false);
 defaultStates.set(GuiState.MakeSnapshotDialogOpen, false);
 defaultStates.set(GuiState.IsMakingSnapshot, false);
 

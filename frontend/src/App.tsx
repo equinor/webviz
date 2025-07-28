@@ -9,7 +9,7 @@ import { CreateSnapshotDialog } from "@framework/internal/components/CreateSnaps
 import { GlobalConfirmationDialog } from "@framework/internal/components/GlobalConfirmationDialog/globalConfirmationDialog";
 import { LoadingOverlay } from "@framework/internal/components/LoadingOverlay";
 import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
-import { RecoveryDialog } from "@framework/internal/components/RecoveryDialog/recoveryDialog";
+import { MultiSessionsRecoveryDialog } from "@framework/internal/components/MultiSessionsRecoveryDialog";
 import { SaveSessionDialog } from "@framework/internal/components/SaveSessionDialog/saveSessionDialog";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
@@ -20,6 +20,7 @@ import { Workbench, WorkbenchTopic } from "@framework/Workbench";
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { ActiveSessionRecoveryDialog } from "@framework/internal/components/ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
 
 function App() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
@@ -71,8 +72,9 @@ function App() {
                         <SelectEnsemblesDialog workbench={workbench} />
                         <SaveSessionDialog workbench={workbench} />
                         <CreateSnapshotDialog workbench={workbench} />
+                        <ActiveSessionRecoveryDialog workbench={workbench} />
                     </ActiveSessionBoundary>
-                    <RecoveryDialog workbench={workbench} />
+                    <MultiSessionsRecoveryDialog workbench={workbench} />
                     {content}
                 </>
             </AuthenticationBoundary>

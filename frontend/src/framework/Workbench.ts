@@ -186,18 +186,23 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         // First, check if a snapshot id is provided in the URL
         const snapshotId = readSnapshotIdFromUrl();
         const sessionId = readSessionIdFromUrl();
-        if (snapshotId) {
-            this.loadSnapshot(snapshotId);
-        } else if (sessionId) {
-            this.openSession(sessionId);
-        }
 
         const storedSessions = await loadAllWorkbenchSessionsFromLocalStorage(this._atomStoreMaster, this._queryClient);
-        if (storedSessions.length === 0) {
+
+        if (snapshotId) {
+            this.loadSnapshot(snapshotId);
+            return;
+        } else if (sessionId) {
+            this.openSession(sessionId);
+            if (storedSessions.find((el) => el.getId() === sessionId)) {
+                this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, true);
+            }
             return;
         }
 
-        this._guiMessageBroker.setState(GuiState.RecoveryDialogOpen, true);
+        if (storedSessions.length > 0) {
+            this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, true);
+        }
     }
 
     private async loadSnapshot(snapshotId: string): Promise<void> {
@@ -238,9 +243,14 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         removeSnapshotIdFromUrl();
     }
 
-    discardLocalStorageSession(snapshotId: string | null): void {
+    discardLocalStorageSession(snapshotId: string | null, unloadSession = true): void {
         const key = localStorageKeyForSessionId(snapshotId);
         localStorage.removeItem(key);
+
+        if (!unloadSession) {
+            return;
+        }
+
         this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
         this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
         this._workbenchSessionPersistenceService.removeWorkbenchSession();
@@ -250,8 +260,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
     async openSessionFromLocalStorage(snapshotId: string | null): Promise<void> {
         if (this._workbenchSession) {
-            console.warn("A workbench session is already active. Please close it before opening a new one.");
-            return;
+            this.unloadCurrentSession(); // Close the current session if one is active.
         }
 
         const session = await loadWorkbenchSessionFromLocalStorage(
@@ -265,7 +274,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         }
 
         await this.setWorkbenchSession(session);
-        this._guiMessageBroker.setState(GuiState.RecoveryDialogOpen, false);
+        this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, false);
     }
 
     async openSession(sessionId: string): Promise<void> {

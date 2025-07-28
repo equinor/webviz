@@ -7,20 +7,15 @@ import { Dialog } from "@lib/components/Dialog";
 import React from "react";
 import { SessionRow } from "./private-components/sessionRow";
 
-export type RecoveryDialogProps = {
+export type MultiSessionsRecoveryDialogProps = {
     workbench: Workbench;
 };
 
-export type SessionInfo = {
-    id: string;
-    name: string;
-    createdAt: Date;
-    updatedAt: Date;
-    lastPersisted: Date | null;
-};
-
-export function RecoveryDialog(props: RecoveryDialogProps): React.ReactNode {
-    const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.RecoveryDialogOpen);
+export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogProps): React.ReactNode {
+    const [isOpen, setIsOpen] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.MultiSessionsRecoveryDialogOpen,
+    );
     const [sessions, setSessions] = React.useState<PrivateWorkbenchSession[]>([]);
 
     async function loadSessions() {
