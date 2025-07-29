@@ -283,6 +283,16 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         return this._dashboards;
     }
 
+    setDashboards(dashboards: Dashboard[]): void {
+        this._dashboards = dashboards;
+        if (dashboards.length > 0) {
+            this._activeDashboardId = dashboards[0].getId();
+        } else {
+            this._activeDashboardId = null;
+        }
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+    }
+
     getIsPersisted(): boolean {
         return this._isPersisted;
     }

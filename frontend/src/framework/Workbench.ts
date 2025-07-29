@@ -23,6 +23,8 @@ import {
 } from "./internal/WorkbenchSession/WorkbenchSessionLoader";
 import { WorkbenchSessionPersistenceService } from "./internal/WorkbenchSession/WorkbenchSessionPersistenceService";
 import type { WorkbenchServices } from "./WorkbenchServices";
+import type { Template } from "./TemplateRegistry";
+import { Dashboard } from "./internal/WorkbenchSession/Dashboard";
 
 export type StoredUserEnsembleSetting = {
     ensembleIdent: string;
@@ -523,6 +525,19 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
     clear(): void {
         // this._workbenchSession.clear();
+    }
+
+    async makeSessionFromTemplate(template: Template): Promise<void> {
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to apply the template to.");
+        }
+
+        this._workbenchSession.clear();
+
+        const dashboard = await Dashboard.fromTemplate(template, this._workbenchSession.getAtomStoreMaster());
+        this._workbenchSession.setDashboards([dashboard]);
+
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
     }
 
     /*

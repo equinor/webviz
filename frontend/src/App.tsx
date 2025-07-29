@@ -20,6 +20,7 @@ import { Workbench, WorkbenchTopic } from "@framework/Workbench";
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { TemplatesDialog } from "@framework/internal/components/TemplatesDialog/templatesDialog";
 
 function App() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
@@ -73,6 +74,7 @@ function App() {
                         <CreateSnapshotDialog workbench={workbench} />
                     </ActiveSessionBoundary>
                     <RecoveryDialog workbench={workbench} />
+                    <TemplatesDialog workbench={workbench} />
                     {content}
                 </>
             </AuthenticationBoundary>

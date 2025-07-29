@@ -7,6 +7,7 @@ import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/Publ
 import type { AtomStoreMaster } from "../../AtomStoreMaster";
 import type { ModuleInstance, ModuleInstanceSerializedState } from "../../ModuleInstance";
 import { ModuleRegistry } from "../../ModuleRegistry";
+import type { Template } from "@framework/TemplateRegistry";
 
 export type LayoutElement = {
     moduleInstanceId?: string;
@@ -331,6 +332,42 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
                 relWidth: layoutInfo.relWidth,
                 minimized: layoutInfo.minimized,
                 maximized: layoutInfo.maximized,
+            });
+        }
+
+        dashboard.setLayout(layout);
+
+        return dashboard;
+    }
+
+    static async fromTemplate(template: Template, atomStoreMaster: AtomStoreMaster): Promise<Dashboard> {
+        const dashboard = new Dashboard(atomStoreMaster);
+        dashboard._id = v4();
+        dashboard._description = template.description;
+
+        const layout: LayoutElement[] = [];
+
+        for (const module of template.moduleInstances) {
+            const localLayout: LayoutElement = {
+                moduleName: module.moduleName,
+                relX: module.layout.relX,
+                relY: module.layout.relY,
+                relHeight: module.layout.relHeight,
+                relWidth: module.layout.relWidth,
+                minimized: module.layout.minimized,
+                maximized: module.layout.maximized,
+            };
+
+            const moduleInstance = await dashboard.makeAndAddModuleInstance(module.moduleName, localLayout);
+            layout.push({
+                moduleInstanceId: moduleInstance.getId(),
+                moduleName: module.moduleName,
+                relX: module.layout.relX,
+                relY: module.layout.relY,
+                relHeight: module.layout.relHeight,
+                relWidth: module.layout.relWidth,
+                minimized: module.layout.minimized,
+                maximized: module.layout.maximized,
             });
         }
 

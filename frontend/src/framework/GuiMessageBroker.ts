@@ -37,6 +37,7 @@ export enum GuiState {
     EnsembleDialogOpen = "ensembleDialogOpen",
     RecoveryDialogOpen = "recoveryDialogOpen",
     MakeSnapshotDialogOpen = "makeSnapshotDialogOpen",
+    TemplatesDialogOpen = "templatesDialogOpen",
 }
 
 export enum GuiEvent {
@@ -109,6 +110,7 @@ type GuiStateValueTypes = {
     [GuiState.RecoveryDialogOpen]: boolean;
     [GuiState.MakeSnapshotDialogOpen]: boolean;
     [GuiState.IsMakingSnapshot]: boolean;
+    [GuiState.TemplatesDialogOpen]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -129,6 +131,7 @@ defaultStates.set(GuiState.EnsembleDialogOpen, false);
 defaultStates.set(GuiState.RecoveryDialogOpen, false);
 defaultStates.set(GuiState.MakeSnapshotDialogOpen, false);
 defaultStates.set(GuiState.IsMakingSnapshot, false);
+defaultStates.set(GuiState.TemplatesDialogOpen, false);
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelWidthInPercent,
