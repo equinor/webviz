@@ -4,14 +4,19 @@ This file is only used for setting up the local database for development and tes
 
 import logging
 import time
-from azure.cosmos import CosmosClient, PartitionKey
+from typing import Optional, List, Dict, Any
+import ssl
+import urllib.request
+from urllib.error import URLError
+
+from azure.cosmos import CosmosClient, PartitionKey, DatabaseProxy
 
 from primary.config import COSMOS_DB_PROD_CONNECTION_STRING, COSMOS_DB_EMULATOR_URI, COSMOS_DB_EMULATOR_KEY
 
 LOGGER = logging.getLogger(__name__)
 
 # Declarative schema definition
-COSMOS_SCHEMA = [
+COSMOS_SCHEMA: List[Dict[str, Any]] = [
     {
         "database": "persistence",
         "offer_throughput": 4000,
@@ -25,21 +30,41 @@ COSMOS_SCHEMA = [
 ]
 
 
-def wait_for_emulator(uri, key, retries=30, delay=2):
+def wait_for_emulator(uri: str, key: str, retries: int = 30, delay: int = 2) -> CosmosClient:
+    probe_url = f"{uri.rstrip('/')}/_explorer/emulator.pem"
+    context = ssl._create_unverified_context()
+
     for attempt in range(retries):
         try:
-            client = CosmosClient(uri, key, connection_verify=False)
-            client.list_databases()
-            LOGGER.info("✅ Cosmos Emulator is responsive.")
-            return client
-        except Exception as error:  # pylint:disable=broad-except
-            LOGGER.warning("⏳ Emulator not ready yet (attempt %d): %s", attempt + 1, error)
-            time.sleep(delay)
+            with urllib.request.urlopen(probe_url, context=context) as response:
+                if response.status == 200:
+                    LOGGER.info("✅ Emulator HTTPS endpoint is up. Proceeding to create CosmosClient.")
+                    break
+        except URLError as e:
+            LOGGER.warning("⏳ Emulator cert endpoint not ready (attempt %d): %s", attempt + 1, e.reason)
+        time.sleep(delay)
+    else:
+        raise RuntimeError("❌ Cosmos Emulator certificate endpoint not ready after timeout")
 
-    raise RuntimeError("❌ Cosmos Emulator did not become ready in time.")
+    # Now that we know HTTPS works, create the CosmosClient
+    return CosmosClient(uri, key, connection_verify=False)
 
 
-def maybe_setup_local_database():
+def create_database_with_retry(client: CosmosClient, db_def: Dict[str, Any], max_attempts: int = 5) -> DatabaseProxy:
+    db_name: str = db_def["database"]
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return client.create_database_if_not_exists(db_name, offer_throughput=db_def.get("offer_throughput"))
+        except Exception as error:
+            LOGGER.warning("⚠️ Failed to create database '%s' (attempt %d): %s", db_name, attempt, error)
+            if attempt == max_attempts:
+                raise
+            time.sleep(2 * attempt)
+
+    raise RuntimeError(f"Failed to create database '{db_name}' after {max_attempts} attempts.")
+
+
+def maybe_setup_local_database() -> None:
     if COSMOS_DB_PROD_CONNECTION_STRING:
         LOGGER.info("Using production Cosmos DB - skipping local setup.")
         return
@@ -47,14 +72,12 @@ def maybe_setup_local_database():
     if COSMOS_DB_EMULATOR_URI is None or COSMOS_DB_EMULATOR_KEY is None:
         raise ValueError("No Cosmos DB production connection string or emulator URI/key provided.")
 
-    client = wait_for_emulator(COSMOS_DB_EMULATOR_URI, COSMOS_DB_EMULATOR_KEY)
+    client: CosmosClient = wait_for_emulator(COSMOS_DB_EMULATOR_URI, COSMOS_DB_EMULATOR_KEY)
 
     total_containers = 0
 
     for db_def in COSMOS_SCHEMA:
-        db_name = db_def["database"]
-        LOGGER.info("Creating or getting database: %s", db_name)
-        database = client.create_database_if_not_exists(db_name, offer_throughput=db_def.get("offer_throughput"))
+        database: DatabaseProxy = create_database_with_retry(client, db_def)
 
         for container_def in db_def["containers"]:
             max_attempts = 5
@@ -68,7 +91,6 @@ def maybe_setup_local_database():
                     )
                     LOGGER.info("    ✅ Created container '%s' (attempt %d)", container_def["id"], attempt)
                     break
-                # pylint:disable=broad-except
                 except Exception as error:
                     LOGGER.warning(
                         "    ⚠️ Failed to create container '%s' (attempt %d): %s", container_def["id"], attempt, error
@@ -76,6 +98,7 @@ def maybe_setup_local_database():
                     if attempt == max_attempts:
                         raise
                     time.sleep(2 * attempt)
+
             total_containers += 1
 
     LOGGER.info(
