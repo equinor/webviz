@@ -3,6 +3,7 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { TemplateRegistry, type Template } from "@framework/TemplateRegistry";
 import type { Workbench } from "@framework/Workbench";
 import { Dialog } from "@lib/components/Dialog";
+import { Input } from "@lib/components/Input";
 import React from "react";
 
 export type TemplatesDialogProps = {
@@ -43,25 +44,36 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
     }
 
     return (
-        <Dialog open={isOpen} modal showCloseCross={true} onClose={handleClose} title="Templates">
-            <div className="flex gap-2">
-                <div className="h-full w-2/3 overflow-y-auto">
-                    {Object.keys(TemplateRegistry.getRegisteredTemplates())
-                        .filter((templName) => templName.toLowerCase().includes(searchQuery.toLowerCase()))
-                        .map((templName) => (
-                            <TemplatesListItem
-                                onClick={() => handleTemplateClick(templName)}
-                                key={templName}
-                                templateName={templName}
+        <Dialog open={isOpen} modal showCloseCross={true} onClose={handleClose} title="Templates" height="80%">
+            <div className="h-full flex flex-col">
+                <div className="flex gap-2 grow min-h-0">
+                    <div className="w-2/3 overflow-y-auto grow min-h-0 max-h-full flex flex-col gap-4">
+                        <div>
+                            <Input
+                                value={searchQuery}
+                                onChange={handleSearchQueryChange}
+                                placeholder="Filter templates..."
                             />
-                        ))}
-                </div>
-                <div className="w-1/3">
-                    {!template ? (
-                        <div className="text-gray-500">Select a template to see its details and apply it.</div>
-                    ) : (
-                        <TemplateDetails name={templateName} template={template} onApply={handleTemplateApply} />
-                    )}
+                        </div>
+                        <div className="overflow-y-auto grow min-h-0">
+                            {Object.keys(TemplateRegistry.getRegisteredTemplates())
+                                .filter((templName) => templName.toLowerCase().includes(searchQuery.toLowerCase()))
+                                .map((templName) => (
+                                    <TemplatesListItem
+                                        onClick={() => handleTemplateClick(templName)}
+                                        key={templName}
+                                        templateName={templName}
+                                    />
+                                ))}
+                        </div>
+                    </div>
+                    <div className="w-1/3 flex flex-col max-h-full overflow-y-auto">
+                        {!template ? (
+                            <div className="text-gray-500">Select a template to see its details and apply it.</div>
+                        ) : (
+                            <TemplateDetails name={templateName} template={template} onApply={handleTemplateApply} />
+                        )}
+                    </div>
                 </div>
             </div>
         </Dialog>
@@ -76,8 +88,8 @@ type TemplateDetailsProps = {
 
 function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
     return (
-        <div className="flex flex-col gap-2">
-            <div className="mt-4">{drawTemplatePreview(props.template, 100, 100)}</div>
+        <div className="flex flex-col gap-2 bg-gray-50 p-4 h-full">
+            <div className="mt-4">{drawTemplatePreview(props.template, 250, 150)}</div>
             <div className="font-bold text-lg">{props.name}</div>
             <div className="text-sm text-gray-600">{props.template.description}</div>
             <div className="grow" />
@@ -88,7 +100,7 @@ function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
                         props.onApply(props.template);
                     }}
                 >
-                    Apply Template
+                    Create session based on template
                 </button>
             </div>
         </div>
@@ -97,7 +109,13 @@ function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
 
 function drawTemplatePreview(template: Template, width: number, height: number): React.ReactNode {
     return (
-        <svg width={width} height={height} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" version="1.1">
+        <svg
+            width={width}
+            height={height}
+            viewBox={`0 0 ${width} ${height}`}
+            xmlns="http://www.w3.org/2000/svg"
+            version="1.1"
+        >
             {template.moduleInstances.map((element, idx) => {
                 const w = element.layout.relWidth * width;
                 const h = element.layout.relHeight * height;

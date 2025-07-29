@@ -528,11 +528,15 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     }
 
     async makeSessionFromTemplate(template: Template): Promise<void> {
+        if (this._workbenchSession) {
+            this._workbenchSession.clear();
+        }
+
+        await this.startNewSession();
+
         if (!this._workbenchSession) {
             throw new Error("No active workbench session to apply the template to.");
         }
-
-        this._workbenchSession.clear();
 
         const dashboard = await Dashboard.fromTemplate(template, this._workbenchSession.getAtomStoreMaster());
         this._workbenchSession.setDashboards([dashboard]);
