@@ -1,5 +1,5 @@
-import type { LayoutElement } from "./internal/WorkbenchSession/Dashboard";
 import type { KeyKind } from "./DataChannelTypes";
+import type { LayoutElement } from "./internal/WorkbenchSession/Dashboard";
 import type { SyncSettingKey } from "./SyncSettings";
 
 export type DataChannelTemplate = {
@@ -11,6 +11,7 @@ export type DataChannelTemplate = {
 export type TemplateLayoutElement = Omit<LayoutElement, "moduleInstanceId" | "moduleName">;
 
 export type Template = {
+    name: string;
     description: string;
     moduleInstances: {
         instanceRef?: string;
@@ -23,23 +24,26 @@ export type Template = {
 };
 
 export class TemplateRegistry {
-    private static _registeredTemplates: Record<string, Template> = {};
+    private static _registeredTemplates: Template[] = [];
 
     private constructor() {}
 
-    static registerTemplate(name: string, template: Template): void {
-        this._registeredTemplates[name] = template;
+    static registerTemplate(template: Template): void {
+        if (this._registeredTemplates.find((t) => t.name === template.name)) {
+            throw new Error(`Template with name ${name} already registered.`);
+        }
+        this._registeredTemplates.push(template);
     }
 
-    static getRegisteredTemplates(): Record<string, Template> {
+    static getRegisteredTemplates(): Template[] {
         return this._registeredTemplates;
     }
 
-    static getTemplate(name: string): Template | undefined {
-        const template = this._registeredTemplates[name];
-        if (template) {
-            return template;
+    static getTemplate(name: string): Template {
+        const template = this._registeredTemplates.find((t) => t.name === name);
+        if (!template) {
+            throw new Error(`Template with name ${name} not registered.`);
         }
-        throw new Error(`Template with name ${name} not registered.`);
+        return template;
     }
 }

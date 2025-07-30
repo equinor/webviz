@@ -60,8 +60,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         let dragging = false;
         let moduleInstanceId: string | null = null;
         let moduleName: string | null = null;
-        let originalLayout: LayoutElement[] = dashboard.getLayout();
-        let currentLayout: LayoutElement[] = dashboard.getLayout();
+        let originalLayout: LayoutElement[] = trueLayout;
+        let currentLayout: LayoutElement[] = trueLayout;
         let originalLayoutBox = makeLayoutBoxes(originalLayout);
         let currentLayoutBox = originalLayoutBox;
         layoutBoxRef.current = currentLayoutBox;
@@ -323,7 +323,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 clearTimeout(delayTimer);
             }
         };
-    }, [layoutDivSize, moduleInstances, guiMessageBroker, dashboard]);
+    }, [layoutDivSize, moduleInstances, guiMessageBroker, trueLayout, dashboard]);
 
     function makeTempViewWrapperPlaceholder() {
         if (!tempLayoutBoxId) {

@@ -3,6 +3,7 @@ import { TemplateRegistry } from "@framework/TemplateRegistry";
 import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 const template: Template = {
+    name: "Single Well Production",
     description: "Water cut, gas oil ratio, water bottom hole pressure and oil production rate for a well",
     moduleInstances: [
         {
@@ -23,4 +24,4 @@ const template: Template = {
     ],
 };
 
-TemplateRegistry.registerTemplate("Single Well Production", template);
+TemplateRegistry.registerTemplate(template);

@@ -3,6 +3,7 @@ import { TemplateRegistry } from "@framework/TemplateRegistry";
 import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 const template: Template = {
+    name: "Field production",
     description: "Total oil/gas production",
     moduleInstances: [
         {
@@ -23,4 +24,4 @@ const template: Template = {
     ],
 };
 
-TemplateRegistry.registerTemplate("Field production", template);
+TemplateRegistry.registerTemplate(template);

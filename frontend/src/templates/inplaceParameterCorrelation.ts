@@ -7,6 +7,7 @@ import { ChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
 import { PlotType as CrossPlotType } from "@modules/ParameterResponseCrossPlot/typesAndEnums";
 
 const template: Template = {
+    name: "Parameter Analysis of Inplace Volumes",
     description: "Inplace volumes overview correlated against input parameters",
     moduleInstances: [
         {
@@ -87,4 +88,4 @@ const template: Template = {
     ],
 };
 
-TemplateRegistry.registerTemplate("Parameter Analysis of Inplace Volumes", template);
+TemplateRegistry.registerTemplate(template);

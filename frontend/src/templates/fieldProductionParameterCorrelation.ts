@@ -6,6 +6,7 @@ import { ChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
 import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 const template: Template = {
+    name: "Parameter Analysis of Field Oil Production",
     description: "Field oil production correlated against input parameters",
     moduleInstances: [
         {
@@ -76,4 +77,4 @@ const template: Template = {
     ],
 };
 
-TemplateRegistry.registerTemplate("Parameter Analysis of Field Oil Production", template);
+TemplateRegistry.registerTemplate(template);

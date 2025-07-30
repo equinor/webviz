@@ -265,6 +265,9 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._atomStoreMaster.makeAtomStoreForModuleInstance(id);
         const moduleInstance = await module.makeInstance(id, this._atomStoreMaster);
         this._moduleInstances = [...this._moduleInstances, moduleInstance];
+        if (this._moduleInstances.length === 1) {
+            this._activeModuleInstanceId = moduleInstance.getId();
+        }
 
         this._layout = [...this._layout, { ...layout, moduleInstanceId: moduleInstance.getId() }];
         this._activeModuleInstanceId = moduleInstance.getId();
@@ -369,6 +372,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         dashboard._description = template.description;
 
         const layout: LayoutElement[] = [];
+        const moduleInstances: ModuleInstance<any, any>[] = [];
+        const moduleInstanceRefMap: Record<string, ModuleInstance<any, any>> = {};
 
         for (const module of template.moduleInstances) {
             const localLayout: LayoutElement = {
@@ -392,6 +397,55 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
                 minimized: module.layout.minimized,
                 maximized: module.layout.maximized,
             });
+
+            if (module.syncedSettings) {
+                for (const syncedSetting of module.syncedSettings) {
+                    moduleInstance.addSyncedSetting(syncedSetting);
+                }
+            }
+
+            if (module.instanceRef) {
+                moduleInstanceRefMap[module.instanceRef] = moduleInstance;
+            }
+
+            moduleInstances.push(moduleInstance);
+        }
+
+        for (const [idx, module] of template.moduleInstances.entries()) {
+            const moduleInstance = moduleInstances[idx];
+            if (!moduleInstance) {
+                throw new Error(`Module instance with reference ${module.instanceRef} not found`);
+            }
+
+            if (module.dataChannelsToInitialSettingsMapping) {
+                for (const [key, dataChannelConfig] of Object.entries(module.dataChannelsToInitialSettingsMapping)) {
+                    const listensToModuleInstance = moduleInstanceRefMap[dataChannelConfig.listensToInstanceRef];
+                    if (!listensToModuleInstance) {
+                        throw new Error(
+                            `Module instance with reference ${dataChannelConfig.listensToInstanceRef} not found`,
+                        );
+                    }
+
+                    const channel = listensToModuleInstance
+                        .getChannelManager()
+                        .getChannel(dataChannelConfig.channelIdString);
+
+                    if (!channel) {
+                        throw new Error(
+                            `Channel with ID ${dataChannelConfig.channelIdString} not found in module instance ${moduleInstance.getId()}`,
+                        );
+                    }
+
+                    const receiver = moduleInstance.getChannelManager().getReceiver(key);
+                    if (!receiver) {
+                        throw new Error(
+                            `Receiver with ID ${key} not found in module instance ${moduleInstance.getId()}`,
+                        );
+                    }
+
+                    receiver.subscribeToChannel(channel, "All");
+                }
+            }
         }
 
         dashboard.setLayout(layout);

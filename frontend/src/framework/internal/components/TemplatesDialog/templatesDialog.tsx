@@ -1,10 +1,13 @@
+import React from "react";
+
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { ModuleDataTags, type ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { TemplateRegistry, type Template } from "@framework/TemplateRegistry";
 import type { Workbench } from "@framework/Workbench";
 import { Dialog } from "@lib/components/Dialog";
 import { Input } from "@lib/components/Input";
-import React from "react";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type TemplatesDialogProps = {
     workbench: Workbench;
@@ -15,14 +18,12 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
 
     const [searchQuery, setSearchQuery] = React.useState("");
     const [template, setTemplate] = React.useState<Template | null>(null);
-    const [templateName, setTemplateName] = React.useState("");
 
     const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(e.target.value);
     };
 
     const handleTemplateClick = (templateName: string) => {
-        setTemplateName(templateName);
         const selectedTemplate = TemplateRegistry.getTemplate(templateName);
         if (!selectedTemplate) {
             return;
@@ -44,10 +45,19 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
     }
 
     return (
-        <Dialog open={isOpen} modal showCloseCross={true} onClose={handleClose} title="Templates" height="80%">
+        <Dialog
+            open={isOpen}
+            modal
+            showCloseCross={true}
+            onClose={handleClose}
+            title="Templates"
+            height="80%"
+            width="60%"
+            minWidth={800}
+        >
             <div className="h-full flex flex-col">
                 <div className="flex gap-2 grow min-h-0">
-                    <div className="w-2/3 overflow-y-auto grow min-h-0 max-h-full flex flex-col gap-4">
+                    <div className="overflow-y-auto grow min-h-0 max-h-full flex flex-col gap-4">
                         <div>
                             <Input
                                 value={searchQuery}
@@ -56,23 +66,20 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
                             />
                         </div>
                         <div className="overflow-y-auto grow min-h-0">
-                            {Object.keys(TemplateRegistry.getRegisteredTemplates())
-                                .filter((templName) => templName.toLowerCase().includes(searchQuery.toLowerCase()))
-                                .map((templName) => (
+                            {TemplateRegistry.getRegisteredTemplates()
+                                .filter((templ) => templ.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                                .map((templ) => (
                                     <TemplatesListItem
-                                        onClick={() => handleTemplateClick(templName)}
-                                        key={templName}
-                                        templateName={templName}
+                                        template={templ}
+                                        onClick={() => handleTemplateClick(templ.name)}
+                                        key={templ.name}
+                                        selected={template?.name === templ.name}
                                     />
                                 ))}
                         </div>
                     </div>
-                    <div className="w-1/3 flex flex-col max-h-full overflow-y-auto">
-                        {!template ? (
-                            <div className="text-gray-500">Select a template to see its details and apply it.</div>
-                        ) : (
-                            <TemplateDetails name={templateName} template={template} onApply={handleTemplateApply} />
-                        )}
+                    <div className="min-w-[280px] w-[280px] flex flex-col max-h-full overflow-y-auto">
+                        <TemplateDetails template={template} onApply={handleTemplateApply} />
                     </div>
                 </div>
             </div>
@@ -81,28 +88,51 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
 }
 
 type TemplateDetailsProps = {
-    name: string;
-    template: Template;
+    template: Template | null;
     onApply: (template: Template) => void;
 };
 
 function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
     return (
-        <div className="flex flex-col gap-2 bg-gray-50 p-4 h-full">
-            <div className="mt-4">{drawTemplatePreview(props.template, 250, 150)}</div>
-            <div className="font-bold text-lg">{props.name}</div>
-            <div className="text-sm text-gray-600">{props.template.description}</div>
-            <div className="grow" />
-            <div className="mt-4">
-                <button
-                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    onClick={() => {
-                        props.onApply(props.template);
-                    }}
-                >
-                    Create session based on template
-                </button>
-            </div>
+        <div className="flex flex-col gap-4 bg-gray-50 p-4 h-full border-l border-gray-200">
+            {!props.template ? (
+                <div className="flex h-full text-gray-500 text-sm justify-center items-center">
+                    Select a template to see its details
+                </div>
+            ) : (
+                <>
+                    <div className="mt-4">{drawTemplatePreview(props.template, 250, 200)}</div>
+                    <div className="font-bold text-lg">{props.template.name}</div>
+                    <div className="text-sm text-gray-600">{props.template.description}</div>
+                    <div>
+                        <strong>Modules:</strong>
+                        <ul className="list-disc pl-4 text-sm">
+                            {props.template.moduleInstances.map((instance, idx) => {
+                                const module = ModuleRegistry.getModule(instance.moduleName);
+                                if (!module) {
+                                    return null;
+                                }
+                                return <li key={`${instance.moduleName}-${idx}`}>{module.getDefaultTitle()}</li>;
+                            })}
+                        </ul>
+                    </div>
+                    <div>
+                        <strong>Data tags:</strong>
+                        <div className="text-sm">{makeDataTags(extractModuleDataTagIds(props.template))}</div>
+                    </div>
+                    <div className="grow" />
+                    <div className="mt-4 text-center">
+                        <button
+                            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                            onClick={() => {
+                                props.onApply(props.template!);
+                            }}
+                        >
+                            New session from this template
+                        </button>
+                    </div>
+                </>
+            )}
         </div>
     );
 }
@@ -157,34 +187,65 @@ function drawTemplatePreview(template: Template, width: number, height: number):
 }
 
 type TemplatesListItemProps = {
-    templateName: string;
+    selected?: boolean;
+    template: Template;
     onClick: () => void;
 };
 
 const TemplatesListItem: React.FC<TemplatesListItemProps> = (props) => {
-    const ref = React.useRef<HTMLDivElement>(null);
-    const mainRef = React.useRef<HTMLDivElement>(null);
-
-    const template = TemplateRegistry.getTemplate(props.templateName);
-
+    const dataTagIds = extractModuleDataTagIds(props.template);
     return (
         <>
             <div
-                ref={mainRef}
-                className="mb-4 box-border text-sm text-gray-700 w-full select-none flex cursor-pointer hover:bg-blue-100 p-2"
+                className={resolveClassNames(
+                    "box-border text-sm text-gray-700 w-full select-none flex cursor-pointer hover:bg-blue-100 p-2",
+                    {
+                        "bg-blue-200": props.selected,
+                    },
+                )}
                 title="Click to apply this template"
                 onClick={props.onClick}
             >
-                <div ref={ref} style={{ width: 100, height: 100 }}>
-                    {template && drawTemplatePreview(template, 100, 100)}
+                <div style={{ width: 64, height: 64 }}>
+                    {props.template && drawTemplatePreview(props.template, 64, 64)}
                 </div>
                 <div className="ml-4">
-                    <div className="font-bold">{props.templateName}</div>
-                    <div className="line-clamp-3" title={template?.description}>
-                        {template?.description}
+                    <div className="font-bold">{props.template.name}</div>
+                    <div className="line-clamp-1" title={props.template?.description}>
+                        {props.template?.description}
                     </div>
+                    <div className="text-xs mt-2 flex gap-2 text-bold flex-wrap">{makeDataTags(dataTagIds)}</div>
                 </div>
             </div>
         </>
     );
 };
+
+function makeDataTags(tagIds: ModuleDataTagId[]): React.ReactNode[] {
+    const tags: React.ReactNode[] = [];
+    for (const tag of tagIds) {
+        const tagObj = ModuleDataTags.find((el) => el.id === tag);
+        if (tagObj) {
+            tags.push(
+                <div key={tag} className="text-indigo-600">
+                    #{tagObj.name}
+                </div>,
+            );
+        }
+    }
+
+    return tags;
+}
+
+function extractModuleDataTagIds(template: Template): ModuleDataTagId[] {
+    const tagIds: ModuleDataTagId[] = [];
+    template.moduleInstances.forEach((instance) => {
+        const module = ModuleRegistry.getModule(instance.moduleName);
+        if (!module) {
+            return;
+        }
+        const instanceTagIds = module.getDataTagIds();
+        tagIds.push(...instanceTagIds);
+    });
+    return Array.from(new Set(tagIds));
+}

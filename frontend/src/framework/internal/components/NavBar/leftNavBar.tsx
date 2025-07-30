@@ -37,6 +37,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         props.workbench.getGuiMessageBroker(),
         GuiState.LeftSettingsPanelWidthInPercent,
     );
+    const [, setTemplatesDialogOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.TemplatesDialogOpen);
     const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     function ensureSettingsPanelIsVisible() {
@@ -54,9 +55,8 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         setDrawerContent(LeftDrawerContent.ModuleSettings);
     }
 
-    function handleTemplatesListClick() {
-        ensureSettingsPanelIsVisible();
-        setDrawerContent(LeftDrawerContent.TemplatesList);
+    function handleTemplatesDialogClick() {
+        setTemplatesDialogOpen(true);
     }
 
     function handleSyncSettingsClick() {
@@ -121,11 +121,10 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
 
                 <NavBarDivider />
                 <NavBarButton
-                    active={drawerContent === LeftDrawerContent.TemplatesList}
-                    title="Show templates list"
+                    title="Show templates dialog"
                     disabledTitle="Templates cannot be applied in snapshot mode"
                     icon={<GridView fontSize="small" className="size-5" />}
-                    onClick={handleTemplatesListClick}
+                    onClick={handleTemplatesDialogClick}
                     disabled={isSnapshot}
                 />
 
