@@ -139,24 +139,22 @@ async def get_grid_properties_info_async(cpgrid: CPGrid) -> List[Grid3dPropertyI
     Get grid properties metadata for a given CPGrid object.
     This is a helper function to extract property metadata from a CPGrid instance.
     """
-    grid_properties_context = cpgrid.grid_properties
-
-    no_time_context = grid_properties_context.filter(time=TimeFilter(time_type=TimeType.NONE))
-    timestamp_context = grid_properties_context.filter(time=TimeFilter(time_type=TimeType.TIMESTAMP))
-    interval_context = grid_properties_context.filter(time=TimeFilter(time_type=TimeType.INTERVAL))
+    no_time_context = cpgrid.grid_properties.filter(time=TimeFilter(time_type=TimeType.NONE))
+    timestamp_context = cpgrid.grid_properties.filter(time=TimeFilter(time_type=TimeType.TIMESTAMP))
+    interval_context = cpgrid.grid_properties.filter(time=TimeFilter(time_type=TimeType.INTERVAL))
 
     async with asyncio.TaskGroup() as tg:
-        no_time_property_names_task = tg.create_task(no_time_context.names_async)
-        timestamp_property_names_task = tg.create_task(timestamp_context.names_async)
-        timestamp_property_timestamps_task = tg.create_task(timestamp_context.timestamps_async)
-        interval_property_names_task = tg.create_task(interval_context.names_async)
-        interval_property_intervals_task = tg.create_task(interval_context.intervals_async)
+        no_time_names_coro = no_time_context.names_async
+        timestamp_names_coro = timestamp_context.names_async
+        timestamp_timestamps_coro = timestamp_context.timestamps_async
+        interval_names_coro = interval_context.names_async
+        interval_intervals_coro = interval_context.intervals_async
 
-    no_time_property_names = no_time_property_names_task.result()
-    timestamp_property_names = timestamp_property_names_task.result()
-    timestamp_property_timestamps = timestamp_property_timestamps_task.result()
-    interval_property_names = interval_property_names_task.result()
-    interval_property_intervals = interval_property_intervals_task.result()
+        no_time_property_names = tg.create_task(no_time_names_coro).result()
+        timestamp_property_names = tg.create_task(timestamp_names_coro).result()
+        timestamp_property_timestamps = tg.create_task(timestamp_timestamps_coro).result()
+        interval_property_names = tg.create_task(interval_names_coro).result()
+        interval_property_intervals = tg.create_task(interval_intervals_coro).result()
 
     property_info_arr: List[Grid3dPropertyInfo] = []
 
