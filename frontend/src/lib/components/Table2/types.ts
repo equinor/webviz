@@ -1,0 +1,88 @@
+import type React from "react";
+
+export type ColumnGroup = {
+    label: string;
+    hoverText: string;
+    subColumns: ColumnDefMap;
+    sizeInPercent: number;
+};
+
+// export interface
+
+export type ColumnDef = {
+    label: string;
+    hoverText?: string;
+    sortable?: boolean;
+    filter?: boolean | React.Component;
+    sizeInPercent: number;
+
+    formatValue?: (value: string | number | null) => string;
+    formatStyle?: (value: string | number | null) => React.CSSProperties;
+    // TODO: Allow defining custom render for special case data (f-eks tag list, or actions)
+    // renderData?: (data: any, entry, columnDef: ColumnDef) => React.ReactNode;
+};
+
+export type ColumnDefMap = { [columnKey: string]: ColumnDef | ColumnGroup };
+
+export type BaseHeadingCellInfo = {
+    id: string;
+    colSpan: number;
+    rowSpan: number;
+    topLevelColumnIndex: number;
+    depth: number;
+};
+
+export type TableRowData<T extends ColumnDefMap> = {
+    [key in keyof T]: string | number | null;
+};
+export type TableRowWithKey<T extends ColumnDefMap> = { _key: string } & TableRowData<T>;
+
+export enum SortDirection {
+    ASC = "asc",
+    DESC = "desc",
+}
+
+export type ColumnSortSetting = {
+    columnId: string;
+    direction: SortDirection;
+};
+
+export type DataCellDef = {
+    columnId: string;
+    colGroupIndex: number;
+    format?: (value: any | null, entry: any) => string;
+    render?: (value: any | null, entry: any) => React.ReactNode;
+};
+
+export type HeaderCellDef = {
+    columnId: string;
+    colSpan: number;
+    rowSpan: number;
+    colGroupIndex: number;
+    sortable: boolean;
+    isGroup: boolean;
+    label: string;
+    hoverText?: string;
+};
+
+export type FilterCellDef = {
+    columnId: string;
+    enabled: boolean;
+    colGroupIndex: number;
+};
+
+export type TableCellDefinitions = {
+    headerCells: HeaderCellDef[][];
+    dataCells: DataCellDef[];
+    filterCells: FilterCellDef[];
+};
+
+export type ColDef = {
+    columnId: string;
+    width: number;
+};
+
+export type ColGroupDef = {
+    columnId: string;
+    cols: ColDef[];
+};
