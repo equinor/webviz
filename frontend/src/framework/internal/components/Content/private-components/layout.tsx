@@ -4,8 +4,8 @@ import { v4 } from "uuid";
 
 import type { LayoutBox } from "@framework/components/LayoutBox";
 import { LayoutBoxComponents, makeLayoutBoxes } from "@framework/components/LayoutBox";
-import { DashboardTopic, type LayoutElement } from "@framework/internal/WorkbenchSession/Dashboard";
 import { GuiEvent, type GuiEventPayloads } from "@framework/GuiMessageBroker";
+import { DashboardTopic, type LayoutElement } from "@framework/internal/WorkbenchSession/Dashboard";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -127,7 +127,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 originalLayoutBox = currentLayoutBox;
                 layoutBoxRef.current = currentLayoutBox;
                 setTempLayout(null);
-                dashboard.setLayout(currentLayout);
                 setPosition({ x: 0, y: 0 });
                 setPointer({ x: -1, y: -1 });
 

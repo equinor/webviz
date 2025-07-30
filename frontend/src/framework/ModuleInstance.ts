@@ -8,8 +8,9 @@ import { atomEffect } from "jotai-effect";
 import type { AtomStoreMaster } from "./AtomStoreMaster";
 import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import type { InitialSettings } from "./InitialSettings";
-import { ChannelManager } from "./internal/DataChannels/ChannelManager";
+import { ChannelManager, type DataChannelReceiverSubscription } from "./internal/DataChannels/ChannelManager";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
+import type { Dashboard } from "./internal/WorkbenchSession/Dashboard";
 import type {
     ImportStatus,
     Module,
@@ -62,12 +63,7 @@ export interface ModuleInstanceOptions<
 export type ModuleInstanceSerializedState = {
     id: string;
     name: string;
-    dataChannelReceiverSubscriptions: {
-        idString: string;
-        listensToModuleInstanceId: string;
-        channelIdString: string;
-        contentIdStrings: string[];
-    }[];
+    dataChannelReceiverSubscriptions: DataChannelReceiverSubscription[];
     syncedSettingKeys: SyncSettingKey[];
     serializedState: StringifiedSerializedModuleState | null;
 };
@@ -105,6 +101,7 @@ export class ModuleInstance<
 
     private _serializer: ModuleInstanceSerializer<TSerializedStateSchema> | null = null;
     private _storedSerializedState: ModuleInstanceSerializedState | null = null;
+    private _dashboard: Dashboard | null = null;
 
     constructor(options: ModuleInstanceOptions<TInterfaceTypes, TSerializedStateSchema>) {
         this._id = options.id;
@@ -151,13 +148,14 @@ export class ModuleInstance<
         };
     }
 
-    initiateDeserialization(raw: ModuleInstanceSerializedState): void {
+    initiateDeserialization(raw: ModuleInstanceSerializedState, dashboard: Dashboard): void {
         this._storedSerializedState = raw;
+        this._dashboard = dashboard;
         this.deserialize();
     }
 
     private deserialize(): void {
-        if (this._initialized && this._storedSerializedState) {
+        if (this._initialized && this._storedSerializedState && this._dashboard) {
             this._syncedSettingKeys = this._storedSerializedState.syncedSettingKeys;
 
             this._id = this._storedSerializedState.id;
@@ -165,10 +163,14 @@ export class ModuleInstance<
             if (this._storedSerializedState.serializedState && this._serializer) {
                 this._serializer.deserializeState(this._storedSerializedState.serializedState);
             }
+
+            this._channelManager.deserialize(
+                this._storedSerializedState.dataChannelReceiverSubscriptions,
+                this._dashboard,
+            );
+
             this._storedSerializedState = null;
         }
-
-        // Channel manager deserialization
     }
 
     getUniDirectionalSettingsToViewInterface(): UniDirectionalModuleComponentsInterface<

@@ -2,12 +2,12 @@ import type { JTDSchemaType } from "ajv/dist/core";
 import { v4 } from "uuid";
 
 import { SyncSettingKey } from "@framework/SyncSettings";
+import type { Template } from "@framework/TemplateRegistry";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { AtomStoreMaster } from "../../AtomStoreMaster";
 import type { ModuleInstance, ModuleInstanceSerializedState } from "../../ModuleInstance";
 import { ModuleRegistry } from "../../ModuleRegistry";
-import type { Template } from "@framework/TemplateRegistry";
 
 export type LayoutElement = {
     moduleInstanceId?: string;
@@ -203,7 +203,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this.clearLayout();
 
         for (const serializedInstance of serializedDashboard.moduleInstances) {
-            const { id, name, layoutInfo } = serializedInstance;
+            const { id, name } = serializedInstance;
 
             const module = ModuleRegistry.getModule(name);
             if (!module) {
@@ -211,7 +211,18 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             }
             const moduleInstance = await module.makeInstance(id, this._atomStoreMaster);
             this.registerModuleInstance(moduleInstance);
-            moduleInstance.initiateDeserialization(serializedInstance);
+        }
+
+        // Doing this after all module instances have been registered
+        // ensures that the module instances are available for data channel initialization.
+        for (const serializedInstance of serializedDashboard.moduleInstances) {
+            const { id, name, layoutInfo } = serializedInstance;
+            const moduleInstance = this.getModuleInstance(id);
+            if (!moduleInstance) {
+                throw new Error(`Module instance with ID ${id} not found`);
+            }
+
+            moduleInstance.initiateDeserialization(serializedInstance, this);
 
             this._layout.push({
                 moduleInstanceId: id,
@@ -283,6 +294,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             this._activeModuleInstanceId = null;
         }
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.Layout);
     }
 
     getModuleInstance(id: string): ModuleInstance<any, any> | undefined {
@@ -313,7 +325,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         const layout: LayoutElement[] = [];
 
         for (const serializedInstance of serializedDashboard.moduleInstances) {
-            const { id, name, layoutInfo } = serializedInstance;
+            const { id, name } = serializedInstance;
 
             const module = ModuleRegistry.getModule(name);
             if (!module) {
@@ -321,7 +333,18 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             }
             const moduleInstance = await module.makeInstance(id, atomStoreMaster);
             dashboard.registerModuleInstance(moduleInstance);
-            moduleInstance.initiateDeserialization(serializedInstance);
+        }
+
+        // Doing this after all module instances have been registered
+        // ensures that the module instances are available for data channel initialization.
+        for (const serializedInstance of serializedDashboard.moduleInstances) {
+            const { id, name, layoutInfo } = serializedInstance;
+            const moduleInstance = dashboard.getModuleInstance(id);
+            if (!moduleInstance) {
+                throw new Error(`Module instance with ID ${id} not found`);
+            }
+
+            moduleInstance.initiateDeserialization(serializedInstance, dashboard);
 
             layout.push({
                 moduleInstanceId: id,
