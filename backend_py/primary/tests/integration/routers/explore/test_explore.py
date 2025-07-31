@@ -5,7 +5,7 @@ from primary.routers.explore import schemas
 async def test_get_fields(test_user, sumo_test_ensemble_ahm) -> None:
     fields = await router.get_fields(test_user)
     assert all(isinstance(f, schemas.FieldInfo) for f in fields)
-    assert any(f.field_identifier == sumo_test_ensemble_ahm.field_identifier for f in fields)
+    assert any(f.fieldIdentifier == sumo_test_ensemble_ahm.field_identifier for f in fields)
 
 
 async def test_get_cases(test_user, sumo_test_ensemble_ahm) -> None:
@@ -26,7 +26,7 @@ async def test_get_ensemble_details(test_user, sumo_test_ensemble_ahm) -> None:
     )
     assert isinstance(ensemble_details, schemas.EnsembleDetails)
     assert ensemble_details.name == sumo_test_ensemble_ahm.ensemble_name
-    assert ensemble_details.field_identifier == sumo_test_ensemble_ahm.field_identifier
-    assert ensemble_details.case_uuid == sumo_test_ensemble_ahm.case_uuid
-    assert ensemble_details.case_name == sumo_test_ensemble_ahm.case_name
+    assert ensemble_details.fieldIdentifier == sumo_test_ensemble_ahm.field_identifier
+    assert ensemble_details.caseUuid == sumo_test_ensemble_ahm.case_uuid
+    assert ensemble_details.caseName == sumo_test_ensemble_ahm.case_name
     assert len(ensemble_details.realizations) == 100

@@ -69,8 +69,8 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     const setSelectedField = useSetAtom(userSelectedFieldIdentAtom);
 
     const fieldOptions = availableFields.map<DropdownOption>((f) => ({
-        value: f.field_identifier,
-        label: f.field_identifier,
+        value: f.fieldIdentifier,
+        label: f.fieldIdentifier,
     }));
 
     // Wellbore selection

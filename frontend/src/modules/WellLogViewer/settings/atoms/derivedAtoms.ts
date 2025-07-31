@@ -11,8 +11,8 @@ export const selectedFieldIdentifierAtom = atom((get) => {
 
     // Fixup selected field id
     if (!availableFields.length) return null;
-    const selectionIsValid = availableFields.some((field) => field.field_identifier === selectedFieldId);
-    return selectionIsValid ? selectedFieldId : availableFields[0].field_identifier;
+    const selectionIsValid = availableFields.some((field) => field.fieldIdentifier === selectedFieldId);
+    return selectionIsValid ? selectedFieldId : availableFields[0].fieldIdentifier;
 });
 
 export const selectedWellboreHeaderAtom = atom<WellboreHeader_api | null>((get) => {
