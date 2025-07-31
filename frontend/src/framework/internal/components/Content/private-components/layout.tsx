@@ -6,6 +6,7 @@ import type { LayoutBox } from "@framework/components/LayoutBox";
 import { LayoutBoxComponents, makeLayoutBoxes } from "@framework/components/LayoutBox";
 import { GuiEvent, type GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { DashboardTopic, type LayoutElement } from "@framework/internal/WorkbenchSession/Dashboard";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -33,7 +34,10 @@ function convertLayoutRectToRealRect(element: LayoutElement, size: Size2D): Rect
 }
 
 export const Layout: React.FC<LayoutProps> = (props) => {
-    const dashboard = props.workbench.getWorkbenchSession().getActiveDashboard();
+    const dashboard = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
+    );
     const [draggedModuleInstanceId, setDraggedModuleInstanceId] = React.useState<string | null>(null);
     const [position, setPosition] = React.useState<Vec2>({ x: 0, y: 0 });
     const [pointer, setPointer] = React.useState<Vec2>({ x: -1, y: -1 });

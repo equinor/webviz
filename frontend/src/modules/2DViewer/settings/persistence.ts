@@ -1,7 +1,11 @@
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
+import { setIfDefined } from "@framework/utils/atomUtils";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
-import { dataProviderStateAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
+
 import { PreferredViewLayout } from "../types";
+
+import { dataProviderStateAtom, preferredViewLayoutAtom } from "./atoms/baseAtoms";
+import { fieldIdentifierAtom } from "./atoms/derivedAtoms";
 
 export type SerializedSettings = {
     dataProviderData: string;
@@ -9,7 +13,7 @@ export type SerializedSettings = {
     preferredViewLayout: PreferredViewLayout;
 };
 
-const settingsBuilder = new SchemaBuilder<SerializedSettings>(() => ({
+const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
     properties: {
         dataProviderData: {
             type: "string",
@@ -24,21 +28,22 @@ const settingsBuilder = new SchemaBuilder<SerializedSettings>(() => ({
     },
 }));
 
-export const SERIALIZED_SETTINGS = settingsBuilder.build();
+export const SERIALIZED_SETTINGS = schemaBuilder.build();
 
 export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => {
     const dataProviderData = get(dataProviderStateAtom);
-    const fieldIdentifier = get(userSelectedFieldIdentifierAtom);
+    const fieldIdentifier = get(fieldIdentifierAtom);
     const preferredViewLayout = get(preferredViewLayoutAtom);
     return {
         dataProviderData,
-        fieldIdentifier,
+        fieldIdentifier: fieldIdentifier.value,
         preferredViewLayout,
     };
 };
 
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
-    set(dataProviderStateAtom, raw.dataProviderData);
-    set(userSelectedFieldIdentifierAtom, raw.fieldIdentifier);
-    set(preferredViewLayoutAtom, raw.preferredViewLayout);
+    setIfDefined(set, dataProviderStateAtom, raw.dataProviderData);
+    setIfDefined(set, dataProviderStateAtom, raw.dataProviderData);
+    setIfDefined(set, fieldIdentifierAtom, raw.fieldIdentifier);
+    setIfDefined(set, preferredViewLayoutAtom, raw.preferredViewLayout);
 };

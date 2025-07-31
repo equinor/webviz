@@ -1,14 +1,16 @@
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
+import { setIfDefined } from "@framework/utils/atomUtils";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 import type { ViewStateType } from "@webviz/subsurface-viewer";
 import type { JTDSchemaType } from "ajv/dist/core";
+
 import { viewStateAtom } from "./atoms/persistableAtoms";
 
 export type SerializedView = {
     cameraPosition: ViewStateType | null;
 };
 
-const viewBuilder = new SchemaBuilder<SerializedView>(({ inject }) => ({
+const schemaBuilder = new SchemaBuilder<SerializedView>(({ inject }) => ({
     properties: {
         cameraPosition: {
             ...(inject("ViewState") as JTDSchemaType<ViewStateType>),
@@ -17,7 +19,7 @@ const viewBuilder = new SchemaBuilder<SerializedView>(({ inject }) => ({
     },
 }));
 
-export const SERIALIZED_VIEW = viewBuilder.build();
+export const SERIALIZED_VIEW = schemaBuilder.build();
 
 export const serializeView: SerializeStateFunction<SerializedView> = (get) => {
     const cameraPosition = get(viewStateAtom);
@@ -27,5 +29,5 @@ export const serializeView: SerializeStateFunction<SerializedView> = (get) => {
 };
 
 export const deserializeView: DeserializeStateFunction<SerializedView> = (raw, set) => {
-    set(viewStateAtom, raw.cameraPosition);
+    setIfDefined(set, viewStateAtom, raw.cameraPosition);
 };

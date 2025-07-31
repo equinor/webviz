@@ -5,6 +5,7 @@ import {
     serializeSettings,
     type SerializedSettings,
 } from "@modules/2DViewer/settings/persistence";
+
 import { deserializeView, SERIALIZED_VIEW, serializeView, type SerializedView } from "./view/persistence";
 
 export type SerializedState = {

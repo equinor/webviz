@@ -1,18 +1,15 @@
 import { KeyKind } from "@framework/DataChannelTypes";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
-import { TemplateRegistry } from "@framework/TemplateRegistry";
-import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
+import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
 import { ChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
-import { PlotType as CrossPlotType } from "@modules/ParameterResponseCrossPlot/typesAndEnums";
 
 const template: Template = {
     name: "Parameter Analysis of Inplace Volumes",
     description: "Inplace volumes overview correlated against input parameters",
     moduleInstances: [
-        {
+        createTemplateModuleInstance("InplaceVolumetricsPlot", {
             instanceRef: "MainInplaceVolumetricsPlotInstance",
-            moduleName: "InplaceVolumetricsPlot",
             layout: {
                 relHeight: 0.4,
                 relWidth: 0.5,
@@ -20,13 +17,14 @@ const template: Template = {
                 relY: 0,
             },
             syncedSettings: [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER],
-            initialSettings: {
+            /*
+            initialState: {
                 selectedIdentifierValueCriteria: IdentifierValueCriteria.ALLOW_INTERSECTION,
             },
-        },
-        {
+            */
+        }),
+        createTemplateModuleInstance("InplaceVolumetricsTable", {
             instanceRef: "MainInplaceVolumetricsTableInstance2",
-            moduleName: "InplaceVolumetricsTable",
             layout: {
                 relHeight: 0.2,
                 relWidth: 1,
@@ -34,13 +32,14 @@ const template: Template = {
                 relY: 0.8,
             },
             syncedSettings: [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER],
-            initialSettings: {
+            /*
+            initialState: {
                 selectedIdentifierValueCriteria: IdentifierValueCriteria.ALLOW_INTERSECTION,
             },
-        },
-        {
+            */
+        }),
+        createTemplateModuleInstance("TornadoChart", {
             instanceRef: "MyParameterResponseCrossPlotInstance",
-            moduleName: "ParameterResponseCrossPlot",
             layout: {
                 relHeight: 0.4,
                 relWidth: 0.5,
@@ -55,15 +54,16 @@ const template: Template = {
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,
                 },
             },
-            initialSettings: {
+            /*
+            initialState: {
                 plotType: CrossPlotType.ParameterResponseCrossPlot,
                 crossPlottingType: KeyKind.REALIZATION,
             },
+            */
             syncedSettings: [SyncSettingKey.PARAMETER],
-        },
-        {
+        }),
+        createTemplateModuleInstance("ParameterCorrelationPlot", {
             instanceRef: "MyParameterCorrelationPlotInstance",
-            moduleName: "ParameterCorrelationPlot",
             layout: {
                 relHeight: 0.8,
                 relWidth: 0.5,
@@ -78,13 +78,15 @@ const template: Template = {
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,
                 },
             },
-            initialSettings: {
+            /*
+            initialState: {
                 crossPlottingType: KeyKind.REALIZATION,
                 showLabels: true,
                 numParams: 10,
             },
+            */
             syncedSettings: [SyncSettingKey.PARAMETER],
-        },
+        }),
     ],
 };
 

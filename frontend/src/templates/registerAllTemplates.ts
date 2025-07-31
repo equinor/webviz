@@ -4,3 +4,4 @@ import "./inplaceParameterCorrelation";
 import "./fieldProductionParameterCorrelation";
 import "./oatTimeSeries";
 import "./oatInplace";
+import "./test";

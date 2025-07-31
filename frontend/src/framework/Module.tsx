@@ -107,7 +107,7 @@ export interface SerializeStateFunction<T> {
 }
 
 export interface DeserializeStateFunction<T> {
-    (raw: T, set: Setter): void;
+    (raw: Partial<T>, set: Setter): void;
 }
 
 export type ModuleComponentSerializationFunctions<TSerializedStateDef extends ModuleComponentsStateBase> =

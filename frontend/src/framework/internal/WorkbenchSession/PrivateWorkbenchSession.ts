@@ -186,11 +186,12 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     async loadContent(content: WorkbenchSessionContent): Promise<void> {
         this._isPersisted = this._id !== null;
         this._activeDashboardId = content.activeDashboardId;
-        this._dashboards = [];
+        const dashboards: Dashboard[] = [];
         for (const serializedDashboard of content.dashboards) {
             const dashboard = await Dashboard.fromPersistedState(serializedDashboard, this._atomStoreMaster);
-            this._dashboards.push(dashboard);
+            dashboards.push(dashboard);
         }
+        this.setDashboards(dashboards);
 
         this._settings.deserializeState(content.settings);
         this._userCreatedItems.deserializeState(content.userCreatedItems);
@@ -291,6 +292,7 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
             this._activeDashboardId = null;
         }
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
     }
 
     getIsPersisted(): boolean {

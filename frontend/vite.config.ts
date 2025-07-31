@@ -9,6 +9,7 @@ import vitePluginChecker from "vite-plugin-checker";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 import aliases from "./aliases.json";
+import { moduleStatesMapPlugin } from "./vite-plugins/moduleStatesMapPlugin.ts";
 
 const paths = {
     public: "./public",
@@ -45,6 +46,7 @@ export default defineConfig(({ mode }) => {
                 exclude: ["crypto"],
                 globals: { Buffer: true },
             }),
+            moduleStatesMapPlugin(),
         ],
         build: {
             rollupOptions: {

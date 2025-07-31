@@ -1,8 +1,7 @@
 import { KeyKind } from "@framework/DataChannelTypes";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
-import { TemplateRegistry } from "@framework/TemplateRegistry";
-import { PlotType } from "@modules/DistributionPlot/typesAndEnums";
+import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
 import { ChannelIds } from "@modules/SimulationTimeSeriesSensitivity/channelDefs";
 
 const template: Template = {
@@ -10,9 +9,8 @@ const template: Template = {
     description:
         "Dashboard for one-at-a-Time (OAT) sensitivity analysis of time series. Includes a time series chart, a tornado chart for the time series response per sensitivity for a given date, and a distribution chart.",
     moduleInstances: [
-        {
+        createTemplateModuleInstance("SimulationTimeSeriesSensitivity", {
             instanceRef: "MainTimeSeriesSensitivityInstance",
-            moduleName: "SimulationTimeSeriesSensitivity",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -20,10 +18,9 @@ const template: Template = {
                 relY: 0,
             },
             syncedSettings: [SyncSettingKey.ENSEMBLE],
-        },
-        {
+        }),
+        createTemplateModuleInstance("TornadoChart", {
             instanceRef: "TornadoChartInstance",
-            moduleName: "TornadoChart",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -38,10 +35,9 @@ const template: Template = {
                     channelIdString: ChannelIds.REALIZATION_VALUE,
                 },
             },
-        },
-        {
+        }),
+        createTemplateModuleInstance("DistributionPlot", {
             instanceRef: "MyDistributionPlotInstance",
-            moduleName: "DistributionPlot",
             layout: {
                 relHeight: 0.5,
                 relWidth: 1,
@@ -56,11 +52,15 @@ const template: Template = {
                     channelIdString: ChannelIds.REALIZATION_VALUE,
                 },
             },
-            initialSettings: {
-                plotType: PlotType.Histogram,
-                crossPlottingType: KeyKind.REALIZATION,
+            /*
+            initialState: {
+                settings: {
+                    plotType: PlotType.Histogram,
+                    crossPlottingType: KeyKind.REALIZATION,
+                }
             },
-        },
+            */
+        }),
     ],
 };
 

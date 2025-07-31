@@ -324,6 +324,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         dashboard._id = serializedDashboard.id;
         dashboard._name = serializedDashboard.name;
         dashboard._description = serializedDashboard.description;
+        dashboard._activeModuleInstanceId = serializedDashboard.activeModuleInstanceId;
 
         const layout: LayoutElement[] = [];
 
@@ -406,6 +407,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
             if (module.instanceRef) {
                 moduleInstanceRefMap[module.instanceRef] = moduleInstance;
+            }
+
+            if (module.initialState) {
+                moduleInstance.initiateTemplateStateApplication(module.initialState);
             }
 
             moduleInstances.push(moduleInstance);

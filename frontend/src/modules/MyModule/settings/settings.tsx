@@ -57,11 +57,17 @@ export function Settings(props: ModuleSettingsProps<Interfaces, SerializedState>
                             value={[persistableState.value]}
                         />
                     </PersistableAtomWarningWrapper>
-                    <Button onClick={() => setPersistableState({ value: "value1", _source: Source.PERSISTED })}>
+                    <Button onClick={() => setPersistableState({ value: "value1", _source: Source.PERSISTENCE })}>
                         Valid Persisted Value
                     </Button>
-                    <Button onClick={() => setPersistableState({ value: "invalid", _source: Source.PERSISTED })}>
+                    <Button onClick={() => setPersistableState({ value: "value1", _source: Source.TEMPLATE })}>
+                        Valid Template Value
+                    </Button>
+                    <Button onClick={() => setPersistableState({ value: "invalid", _source: Source.PERSISTENCE })}>
                         Invalid Persisted Value
+                    </Button>
+                    <Button onClick={() => setPersistableState({ value: "invalid", _source: Source.TEMPLATE })}>
+                        Invalid Template Value
                     </Button>
                     <Button onClick={() => setPersistableState("value3")}>Invalid Value with fixup</Button>
                 </>

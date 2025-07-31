@@ -3,8 +3,8 @@ import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import type { Interfaces } from "./interfaces";
-import { preview } from "./preview";
 import { SERIALIZED_STATE, type SerializedState } from "./persistedState";
+import { preview } from "./preview";
 
 export const MODULE_NAME: string = "2DViewer";
 

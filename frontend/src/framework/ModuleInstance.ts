@@ -73,6 +73,11 @@ type StringifiedSerializedModuleState = {
     view?: string;
 };
 
+export type PartialSerializedModuleState<T extends ModuleComponentsStateBase> = {
+    settings?: Partial<T["settings"]>;
+    view?: Partial<T["view"]>;
+};
+
 export class ModuleInstance<
     TInterfaceTypes extends ModuleInterfaceTypes,
     TSerializedStateSchema extends ModuleComponentsStateBase,
@@ -101,6 +106,7 @@ export class ModuleInstance<
 
     private _serializer: ModuleInstanceSerializer<TSerializedStateSchema> | null = null;
     private _storedSerializedState: ModuleInstanceSerializedState | null = null;
+    private _storedTemplateState: PartialSerializedModuleState<TSerializedStateSchema> | null = null;
     private _dashboard: Dashboard | null = null;
 
     constructor(options: ModuleInstanceOptions<TInterfaceTypes, TSerializedStateSchema>) {
@@ -154,6 +160,18 @@ export class ModuleInstance<
         this.deserialize();
     }
 
+    initiateTemplateStateApplication(initialState: PartialSerializedModuleState<TSerializedStateSchema>): void {
+        this._storedTemplateState = initialState;
+        this.applyTemplateState();
+    }
+
+    private applyTemplateState(): void {
+        if (this._initialized && this._storedTemplateState && this._serializer) {
+            this._serializer.applyTemplateState(this._storedTemplateState);
+            this._storedTemplateState = null;
+        }
+    }
+
     private deserialize(): void {
         if (this._initialized && this._storedSerializedState && this._dashboard) {
             this._syncedSettingKeys = this._storedSerializedState.syncedSettingKeys;
@@ -200,6 +218,7 @@ export class ModuleInstance<
         this._initialized = true;
         this.setModuleInstanceState(ModuleInstanceLifeCycleState.OK);
         this.deserialize();
+        this.applyTemplateState();
     }
 
     makeSettingsToViewInterface(
@@ -284,19 +303,27 @@ export class ModuleInstance<
 
     getSettingsToViewInterfaceEffectsAtom(): Atom<void> {
         if (!this._settingsToViewInterfaceEffectsAtom) {
-            throw `Module instance '${this._title}' does not have settings to view interface effects yet. Did you forget to init the module?`;
+            throw new Error(
+                `Module instance '${this._title}' does not have settings to view interface effects yet. Did you forget to init the module?`,
+            );
         }
         return this._settingsToViewInterfaceEffectsAtom;
     }
 
     getViewToSettingsInterfaceEffectsAtom(): Atom<void> {
         if (!this._viewToSettingsInterfaceEffectsAtom) {
-            throw `Module instance '${this._title}' does not have view to settings interface effects yet. Did you forget to init the module?`;
+            throw new Error(
+                `Module instance '${this._title}' does not have view to settings interface effects yet. Did you forget to init the module?`,
+            );
         }
         return this._viewToSettingsInterfaceEffectsAtom;
     }
 
     addSyncedSetting(settingKey: SyncSettingKey): void {
+        if (this._syncedSettingKeys.includes(settingKey)) {
+            console.warn(`Setting key '${settingKey}' is already synced for module instance '${this._title}'.`);
+            return;
+        }
         this._syncedSettingKeys.push(settingKey);
         this.notifySubscribers(ModuleInstanceTopic.SYNCED_SETTINGS);
     }
@@ -332,7 +359,9 @@ export class ModuleInstance<
 
     getContext(): ModuleContext<TInterfaceTypes, TSerializedStateSchema> {
         if (!this._context) {
-            throw `Module context is not available yet. Did you forget to init the module '${this._title}.'?`;
+            throw new Error(
+                `Module context is not available yet. Did you forget to init the module '${this._title}.'?`,
+            );
         }
         return this._context;
     }

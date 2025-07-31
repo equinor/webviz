@@ -1,6 +1,6 @@
 import type { DefaultError, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
 import type { DefinedInitialDataOptions, UndefinedInitialDataOptions } from "@tanstack/react-query";
-import { type Atom, type Getter, atom } from "jotai";
+import { type Atom, type Getter, type Setter, type WritableAtom, atom } from "jotai";
 import { atomWithReducer } from "jotai/utils";
 import type { AtomWithQueryOptions } from "jotai-tanstack-query";
 import { atomWithQuery } from "jotai-tanstack-query";
@@ -64,7 +64,8 @@ export function atomWithQueries<
 
 export enum Source {
     USER = "user",
-    PERSISTED = "persisted",
+    PERSISTENCE = "persistence",
+    TEMPLATE = "template",
 }
 
 export type PersistableAtomState<T> = {
@@ -73,7 +74,13 @@ export type PersistableAtomState<T> = {
 };
 
 function isInternalState<T>(value: T | PersistableAtomState<T>): value is PersistableAtomState<T> {
-    return (value as PersistableAtomState<T>)._source !== undefined;
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        "_source" in value &&
+        typeof (value as any)._source === "string" &&
+        Object.values(Source).includes((value as any)._source)
+    );
 }
 
 export type PersistableFixableAtomOptions<T> = {
@@ -92,7 +99,7 @@ export type PersistableFixableAtomOptions<T> = {
      * @param value - The current atom value to validate.
      * @param get - The Jotai getter to read from other atoms if needed.
      */
-    isValidFunction: (value: T, get: Getter) => boolean;
+    isValidFunction: (options: { value: T; get: Getter }) => boolean;
 
     /**
      * A function that provides a fallback value when a user-provided value is invalid.
@@ -103,7 +110,7 @@ export type PersistableFixableAtomOptions<T> = {
      * @param get - The Jotai getter to access other atoms, if necessary.
      * @returns A valid fallback value to use instead.
      */
-    fixupFunction: (value: T, get: Getter) => T;
+    fixupFunction: (options: { value: T; get: Getter }) => T;
 };
 
 const PERSISTABLE_ATOM = Symbol("persistableAtom");
@@ -117,18 +124,20 @@ export function persistableFixableAtom<T>(options: PersistableFixableAtomOptions
     const fixableAtom = atom(
         (get) => {
             const internalState = get(internalStateAtom);
-            const isValid = options.isValidFunction(internalState.value, get);
+            const isValid = options.isValidFunction({ value: internalState.value, get });
 
-            if (internalState._source === Source.PERSISTED) {
+            if (internalState._source === Source.PERSISTENCE || internalState._source === Source.TEMPLATE) {
                 return {
                     value: internalState.value,
                     isValidPersistedValue: isValid,
+                    _source: internalState._source,
                 };
             }
 
             return {
-                value: isValid ? internalState.value : options.fixupFunction(internalState.value, get),
+                value: isValid ? internalState.value : options.fixupFunction({ value: internalState.value, get }),
                 isValidPersistedValue: true,
+                _source: internalState._source,
             };
         },
         (_, set, update: T | PersistableAtomState<T>) => {
@@ -158,4 +167,15 @@ export function persistableFixableAtom<T>(options: PersistableFixableAtomOptions
 
 export function isPersistableAtom(atom: unknown): atom is Atom<PersistableAtomState<unknown>> {
     return !!(atom && typeof atom === "object" && (atom as any)[PERSISTABLE_ATOM]);
+}
+
+export function setIfDefined<Value, Result>(
+    set: Setter,
+    atom: WritableAtom<any, [Value], Result>,
+    value: Value | undefined,
+): Result | undefined {
+    if (value !== undefined) {
+        return set(atom, value);
+    }
+    return undefined;
 }

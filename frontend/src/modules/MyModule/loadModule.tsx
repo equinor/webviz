@@ -1,6 +1,8 @@
-import type { Getter, Setter } from "jotai";
+import type { Getter } from "jotai";
 
+import type { DeserializeStateFunction } from "@framework/Module";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
+import { setIfDefined } from "@framework/utils/atomUtils";
 
 import type { Interfaces } from "./interfaces";
 import { settingsToViewInterfaceInitialization } from "./interfaces";
@@ -15,15 +17,14 @@ function serializeSettingsStateFunction(get: Getter): SerializedState["settings"
     };
 }
 
-function deserializeSettingsStateFunction(raw: SerializedState["settings"], set: Setter): void {
-    set(myPersistableAtom, raw.myData);
-}
+export const deserializeSettingsStateFunction: DeserializeStateFunction<SerializedState["settings"]> = (raw, set) => {
+    setIfDefined(set, myPersistableAtom, raw.myData);
+};
 
 const module = ModuleRegistry.initModule<Interfaces, SerializedState>("MyModule", {
     settingsToViewInterfaceInitialization,
     serializeStateFunctions: {
         settings: serializeSettingsStateFunction,
-        view: undefined,
     },
     deserializeStateFunctions: {
         settings: deserializeSettingsStateFunction,

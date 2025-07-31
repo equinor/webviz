@@ -9,7 +9,7 @@ import {
     type ModuleStateSchema,
     type ModuleComponentSerializationFunctions,
 } from "./Module";
-import type { ModuleInstance } from "./ModuleInstance";
+import type { ModuleInstance, PartialSerializedModuleState } from "./ModuleInstance";
 import { isPersistableAtom, Source } from "./utils/atomUtils";
 
 type StringifiedSerializedModuleComponentsState = {
@@ -201,7 +201,20 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
         this.applyStateToAtoms(this._serializedState);
     }
 
-    private applyStateToAtoms(state: TSerializedState): void {
+    applyTemplateState(templateState: PartialSerializedModuleState<TSerializedState>): void {
+        this.applyStateToAtoms(
+            {
+                settings: templateState.settings,
+                view: templateState.view,
+            },
+            true,
+        );
+    }
+
+    private applyStateToAtoms(
+        state: PartialSerializedModuleState<TSerializedState>,
+        fromTemplate: boolean = false,
+    ): void {
         if (!hasSerialization(this._serializationFunctions)) {
             console.warn(`No serialization functions defined for module instance ${this._moduleInstance.getName()}`);
             return; // No serialization functions, cannot apply state
@@ -213,14 +226,25 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
             const [value] = args;
             const isPersistable = isPersistableAtom(atom);
 
-            const finalValue = isPersistable ? { value, _source: Source.PERSISTED } : value;
+            let finalValue = value;
+            if (isPersistable) {
+                if (fromTemplate) {
+                    finalValue = { value, _source: Source.TEMPLATE };
+                } else {
+                    finalValue = { value, _source: Source.PERSISTENCE };
+                }
+            }
 
             return atomStore.set(atom as any, finalValue);
         };
 
-        this._serializationFunctions.deserializeStateFunctions.settings?.(state.settings, persistedSetter);
+        if (state.settings) {
+            this._serializationFunctions.deserializeStateFunctions.settings?.(state.settings, persistedSetter);
+        }
 
-        this._serializationFunctions.deserializeStateFunctions.view?.(state.view, persistedSetter);
+        if (state.view) {
+            this._serializationFunctions.deserializeStateFunctions.view?.(state.view, persistedSetter);
+        }
     }
 }
 
