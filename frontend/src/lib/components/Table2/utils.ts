@@ -9,6 +9,7 @@ import type {
     FilterCellDef,
     HeaderCellDef,
     TableCellDefinitions,
+    TableRowData,
 } from "./types";
 
 export function isColumnGroupDef(headerOrGroup: ColumnDef | ColumnGroup): headerOrGroup is ColumnGroup {
@@ -26,6 +27,20 @@ function recursivelyCalcDepth(columnDefinitions: ColumnDefMap, depth: number = 1
         }
     }
     return maxDepth;
+}
+
+export function defaultDataFilterPredicate(
+    columnData: string | number | null,
+    filterValue: string,
+    dataDefinition: DataCellDef,
+    entry: TableRowData<any>,
+) {
+    const formattedData = dataDefinition.format?.(columnData, entry) ?? columnData ?? "";
+
+    const lowerValue = formattedData.toString().toLowerCase();
+    const filterString = filterValue.toLowerCase();
+
+    return !lowerValue.includes(filterString);
 }
 
 export function recursivelyBuildTableCellDefinitions(
@@ -67,6 +82,14 @@ export function recursivelyBuildTableCellDefinitions(
                 hoverText: columnDefOrGroup.hoverText,
             });
         } else {
+            const filterDef = columnDefOrGroup.filter;
+
+            const filterEnabled = filterDef === undefined || !!columnDefOrGroup.filter;
+
+            const customImpl = typeof filterDef === "object";
+            const filterRender = customImpl ? filterDef.render : undefined;
+            const filterPredicate = customImpl ? filterDef.predicate : undefined;
+
             headerCells[depth].push({
                 columnId: columnId,
                 colSpan: 1,
@@ -82,16 +105,16 @@ export function recursivelyBuildTableCellDefinitions(
                 columnId: columnId,
                 colGroupIndex: headerCells[0].length,
                 format: columnDefOrGroup.formatValue,
+                filter: filterPredicate,
                 // TODO: Allow render func
                 // render: columnDefOrGroup.render,
             });
 
             filterCells.push({
                 columnId: columnId,
-                enabled: !!columnDefOrGroup.filter,
                 colGroupIndex: headerCells[0].length,
-                // TODO: Filter types and such
-                // s: columnDefOrGroup.a
+                enabled: filterEnabled,
+                render: filterRender,
             });
         }
     }
@@ -139,10 +162,10 @@ export function useOptInControlledValue<TValue>(
     initialValue: TValue,
     controlledProp: TValue | undefined,
     onValueChange?: (newValue: TValue) => void,
-) {
+): [TValue, (newValue: TValue) => void] {
     const useLocalValue = controlledProp === undefined;
 
-    const [localValue, setLocalValue] = React.useState<TValue | undefined>();
+    const [localValue, setLocalValue] = React.useState<TValue>(initialValue);
 
     const value = useLocalValue ? localValue : controlledProp;
     const setValue = React.useCallback(

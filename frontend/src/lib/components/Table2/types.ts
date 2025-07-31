@@ -7,14 +7,28 @@ export type ColumnGroup = {
     sizeInPercent: number;
 };
 
-// export interface
+export interface ColumnFilterImplementationProps<TFilterValue> {
+    value: TFilterValue | null | undefined;
+    onFilterChange: (newValue: TFilterValue | null | undefined) => void;
+}
+
+type CustomColumnFilter<TFilterValue> = {
+    render?: (props: ColumnFilterImplementationProps<TFilterValue>) => React.ReactNode;
+    predicate?: (
+        dataValue: string | number | null,
+        filterValue: TFilterValue,
+        dataDef: DataCellDef,
+        entry: TableRowData<any>,
+    ) => boolean;
+};
 
 export type ColumnDef = {
     label: string;
     hoverText?: string;
     sortable?: boolean;
-    filter?: boolean | React.Component;
     sizeInPercent: number;
+
+    filter?: boolean | CustomColumnFilter<any>;
 
     formatValue?: (value: string | number | null) => string;
     formatStyle?: (value: string | number | null) => React.CSSProperties;
@@ -42,16 +56,12 @@ export enum SortDirection {
     DESC = "desc",
 }
 
-export type ColumnSortSetting = {
-    columnId: string;
-    direction: SortDirection;
-};
-
 export type DataCellDef = {
     columnId: string;
     colGroupIndex: number;
     format?: (value: any | null, entry: any) => string;
     render?: (value: any | null, entry: any) => React.ReactNode;
+    filter?: CustomColumnFilter<any>["predicate"];
 };
 
 export type HeaderCellDef = {
@@ -69,6 +79,18 @@ export type FilterCellDef = {
     columnId: string;
     enabled: boolean;
     colGroupIndex: number;
+    render?: CustomColumnFilter<any>["render"];
+};
+
+// Table collation types
+export type ColumnSorting = {
+    columnId: string;
+    direction: SortDirection;
+};
+
+export type TableSorting = ColumnSorting[];
+export type TableFilters = {
+    [columnId: string]: any;
 };
 
 export type TableCellDefinitions = {

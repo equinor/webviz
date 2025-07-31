@@ -1,6 +1,6 @@
 import React from "react";
 
-import { orderBy } from "lodash";
+import { isEmpty, orderBy } from "lodash";
 import { v4 } from "uuid";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -15,25 +15,52 @@ import type {
     TableRowData,
     ColGroupDef,
     TableCellDefinitions,
-    ColumnSortSetting,
-    SortDirection,
+    TableFilters,
+    TableSorting,
 } from "./types";
-import { recursivelyBuildTableCellDefinitions, recursivelyBuildTableColumnGroups } from "./utils";
+import {
+    defaultDataFilterPredicate,
+    recursivelyBuildTableCellDefinitions,
+    recursivelyBuildTableColumnGroups,
+    useOptInControlledValue,
+} from "./utils";
 
 export type TableProps<T extends ColumnDefMap> = {
+    /** Main configuration for each table column */
     columnDefMap: T;
+
+    /** Each row of tabular data */
     rows: TableRowData<T>[];
+    /** Specifies that data collation will be applied outside of the component */
+    controlledRows?: boolean;
 
+    /** Height of the entire table */
     height?: number | string;
-    // numVisibleRows?: number;
 
-    sortedColumn?: keyof T;
-    sortingDirection?: SortDirection;
-
+    /** Colors every other column group with darker cells */
     alternatingColumnColors?: boolean;
 
+    /** Sorting order for one or more table columns */
+    sorting?: TableSorting;
+    /** Filter values for one ore more table columns */
+    filters?: TableFilters;
+
+    /** Callback for when the sorting order changes */
+    onSortingChange?: (newValue: TableSorting) => void;
+    /** Callback for when filter values changes */
+    onFiltersChange?: (newValue: TableFilters) => void;
+
+    // TODO: Other QoL things to add?
+    // * Specify height with row count instead?
+    // numVisibleRows?: number;
     /* Assumes "id" */
-    rowIdentifier?: string | false;
+    // rowIdentifier?: string | false;
+
+    // selectable?: boolean | "multiple";
+
+    /** @deprecated use `onRowHover()` instead */
+    // onHover?: (row: TableRowData<T> | null) => void;
+    // onRowHover?: (row: TableRowData<T> | null) => void;
 };
 
 export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.ReactNode {
@@ -43,53 +70,56 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
         return recursivelyBuildTableCellDefinitions(props.columnDefMap);
     }, [props.columnDefMap]);
 
+    const colDataDefLookup = React.useMemo(() => {
+        return Object.fromEntries(tableCellDefinitions.dataCells.map((cell) => [cell.columnId, cell]));
+    }, [tableCellDefinitions.dataCells]);
+
     const colgroupDefinitions = React.useMemo(() => {
         return recursivelyBuildTableColumnGroups(props.columnDefMap);
     }, [props.columnDefMap]);
 
-    const [colSortSettings, setColSortSettings] = React.useState<ColumnSortSetting[]>([]);
-    // const [colFilterSettings, setColFilterSettings] = React.useState<
+    const [tableSortState, setTableSortState] = useOptInControlledValue([], props.sorting, props.onSortingChange);
+    const [tableFilterState, setTableFilterState] = useOptInControlledValue({}, props.filters, props.onFiltersChange);
 
-    // TODO: Allow external collation control
-    // TODO: Cannot deselect a clicked header
-    const collationIsControlled = false;
+    const filteredRows = React.useMemo(() => {
+        if (props.controlledRows) return props.rows;
+        if (isEmpty(tableFilterState)) return props.rows;
+
+        return props.rows.filter((row) => {
+            for (const columnId in tableFilterState) {
+                const filterValue = tableFilterState[columnId];
+                const dataValue = row[columnId];
+                const dataDefinition = colDataDefLookup[columnId];
+
+                if (dataValue === null) continue;
+
+                const filterFunc = dataDefinition.filter ? dataDefinition.filter : defaultDataFilterPredicate;
+
+                if (filterFunc(dataValue, filterValue, dataDefinition, row)) return false;
+            }
+
+            return true;
+        });
+    }, [props.controlledRows, props.rows, tableFilterState, colDataDefLookup]);
 
     const sortedRows = React.useMemo(() => {
-        if (collationIsControlled) return props.rows;
+        if (props.controlledRows) return filteredRows;
 
         // Apply filtering
         const fieldIterateeSetting = [];
         const dirIterateeSetting = [];
 
-        for (const setting of colSortSettings) {
+        for (const setting of tableSortState) {
             fieldIterateeSetting.push(setting.columnId);
             dirIterateeSetting.push(setting.direction);
         }
 
-        return orderBy(props.rows, fieldIterateeSetting, dirIterateeSetting);
-    }, [colSortSettings, collationIsControlled, props.rows]);
-
-    // Uncontrolled unless specified externally
-    // const [sortedColumn, setSortedColumn] = useOptInControlledValue<string | null>(null, props.sortedColumn);
-    // TODO: Replace with opt-in controlled value
-    // const [sortedColumn, setSortedColumn] = React.useState<string | null>(null);
-    // const [sortDirection, setSortDirectionLocal] = React.useState<SortDirection | null>(null);
-
-    // const sortedColumn = collationIsUncontrolled ?
-
-    // function handleHeaderSortClick(columnId: string, direction: SortDirection): void {
-    //     if (sortedColumn === columnId && sortDirection === direction) {
-    //         setSortedColumn(null);
-    //         setSortDirectionLocal(null);
-    //     } else {
-    //         setSortedColumn(columnId);
-    //         setSortDirectionLocal(direction);
-    //     }
-    // }
+        return orderBy(filteredRows, fieldIterateeSetting, dirIterateeSetting);
+    }, [tableSortState, props.controlledRows, filteredRows]);
 
     return (
         <div ref={divWrapperRef} className="relative overflow-auto" style={{ height: props.height }}>
-            <table className="w-full border-x border-slate-500 text-sm">
+            <table className="w-full border-x border-slate-500 text-sm table-fixed">
                 {/* Create col-groups based on the top-level columns */}
                 <TableColGroups
                     colgroupDefinitions={colgroupDefinitions}
@@ -101,8 +131,10 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
                     headerCellDefinitions={tableCellDefinitions.headerCells}
                     filterCellDefinitions={tableCellDefinitions.filterCells}
                     alternatingColumnColors={!!props.alternatingColumnColors}
-                    columnSortSettings={colSortSettings}
-                    onColumnSortingChange={setColSortSettings}
+                    tableSortState={tableSortState}
+                    tableFilterState={tableFilterState}
+                    onTableSortStateChange={setTableSortState}
+                    onTableFilterStateChange={setTableFilterState}
                 />
 
                 <TableBody
@@ -110,7 +142,6 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
                     dataCellDefinitions={tableCellDefinitions.dataCells}
                     rows={sortedRows}
                     height={props.height}
-                    // numVisibleRows={props.numVisibleRows}
                 />
             </table>
         </div>

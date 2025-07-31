@@ -7,12 +7,20 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Input } from "../Input";
 
 import { ALTERNATING_COLUMN_HEADING_COLORS, HEADER_HEIGHT_PX } from "./constants";
-import type { HeaderCellDef, ColumnSortSetting, TableCellDefinitions } from "./types";
+import type {
+    HeaderCellDef,
+    ColumnSorting,
+    TableCellDefinitions,
+    FilterCellDef,
+    ColumnFilterImplementationProps,
+    TableSorting,
+    TableFilters,
+} from "./types";
 import { SortDirection } from "./types";
 
 function getSortingForColumn(
     columnId: string,
-    columnSortSettings: ColumnSortSetting[],
+    columnSortSettings: ColumnSorting[],
 ): undefined | { index: number; direction: SortDirection } {
     const settingIndex = columnSortSettings.findIndex((s) => s.columnId === columnId);
 
@@ -24,7 +32,7 @@ function getSortingForColumn(
     };
 }
 
-function makeColumnSortingIcons(columnId: string, columnSortSettings: ColumnSortSetting[]): React.ReactNode {
+function makeColumnSortingIcons(columnId: string, columnSortSettings: ColumnSorting[]): React.ReactNode {
     const columnSort = getSortingForColumn(columnId, columnSortSettings);
     const columnSortIndex = columnSort?.index ?? -1;
 
@@ -55,17 +63,17 @@ function makeColumnSortingIcons(columnId: string, columnSortSettings: ColumnSort
     );
 }
 
-function toggleSortDirection(currentDirection: SortDirection | undefined): SortDirection {
+function toggleSortDirection(currentDirection: SortDirection | undefined): SortDirection | undefined {
     if (currentDirection === SortDirection.ASC) return SortDirection.DESC;
-    if (currentDirection === SortDirection.DESC) return SortDirection.ASC;
+    if (currentDirection === SortDirection.DESC) return undefined;
 
     return SortDirection.ASC;
 }
 
 type HeaderCellProps = {
     alternatingColumnColors: boolean | undefined;
-    columnSortSettings: ColumnSortSetting[];
-    onSortHeader: (columnId: string, direction: SortDirection, additive: boolean) => void;
+    columnSortSettings: ColumnSorting[];
+    onSortHeader: (columnId: string, direction: SortDirection | undefined, additive: boolean) => void;
 } & HeaderCellDef;
 
 function HeaderCell(props: HeaderCellProps) {
@@ -101,7 +109,7 @@ function HeaderCell(props: HeaderCellProps) {
                 })}
             >
                 <span title={props.hoverText}> {props.label} </span>
-                {makeColumnSortingIcons(props.columnId, props.columnSortSettings)}
+                {props.sortable && makeColumnSortingIcons(props.columnId, props.columnSortSettings)}
             </div>
         </th>
     );
@@ -113,34 +121,49 @@ export type TableHeadProps = {
     filterCellDefinitions: TableCellDefinitions["filterCells"];
 
     alternatingColumnColors: boolean | undefined;
+    tableSortState: TableSorting;
+    tableFilterState: TableFilters;
 
-    columnSortSettings: ColumnSortSetting[];
-
-    onColumnSortingChange: (newSettings: ColumnSortSetting[]) => void;
+    onTableSortStateChange: (newState: TableSorting) => void;
+    onTableFilterStateChange: (newState: TableFilters) => void;
 };
 
 export function TableHead(props: TableHeadProps): React.ReactNode {
-    const { onColumnSortingChange } = props;
+    const { onTableSortStateChange, onTableFilterStateChange } = props;
 
     const hasFilters = props.filterCellDefinitions.some((def) => def.enabled);
 
-    const handleHeaderSort = React.useCallback(
-        function handleHeaderSort(columnId: string, direction: SortDirection, additive: boolean) {
-            const newSetting: ColumnSortSetting = { columnId, direction };
-
-            let newSettings;
+    const handleColumnSortChange = React.useCallback(
+        function handleColumnSortChange(columnId: string, direction: SortDirection | undefined, additive: boolean) {
+            let newSettings: TableSorting;
 
             if (!additive) {
-                newSettings = [newSetting];
+                if (!direction) newSettings = [];
+                else newSettings = [{ columnId, direction }];
             } else {
-                const filteredSettings = props.columnSortSettings.filter((s) => s.columnId != columnId);
+                const filteredSettings = props.tableSortState.filter((s) => s.columnId != columnId);
 
-                newSettings = [...filteredSettings, newSetting];
+                if (!direction) newSettings = filteredSettings;
+                else newSettings = [...filteredSettings, { columnId, direction }];
             }
 
-            onColumnSortingChange(newSettings);
+            onTableSortStateChange(newSettings);
         },
-        [props.columnSortSettings, onColumnSortingChange],
+        [props.tableSortState, onTableSortStateChange],
+    );
+
+    const handleTableFilterChange = React.useCallback(
+        function handleTableFilterChange(columnId: string, newValue: unknown) {
+            const newState = { ...props.tableFilterState };
+            if (newValue == null) {
+                delete newState[columnId];
+            } else {
+                newState[columnId] = newValue;
+            }
+
+            return onTableFilterStateChange(newState);
+        },
+        [onTableFilterStateChange, props.tableFilterState],
     );
 
     return (
@@ -154,8 +177,8 @@ export function TableHead(props: TableHeadProps): React.ReactNode {
                             <HeaderCell
                                 key={cellDef.columnId}
                                 alternatingColumnColors={props.alternatingColumnColors}
-                                columnSortSettings={props.columnSortSettings}
-                                onSortHeader={handleHeaderSort}
+                                columnSortSettings={props.tableSortState}
+                                onSortHeader={handleColumnSortChange}
                                 {...cellDef}
                             />
                         );
@@ -168,31 +191,70 @@ export function TableHead(props: TableHeadProps): React.ReactNode {
                 <tr className="bg-slate-200" style={{ height: HEADER_HEIGHT_PX }}>
                     {props.filterCellDefinitions.map((filterDef) => {
                         return (
-                            <th key={filterDef.columnId} className="text-xs!">
-                                <Input
-                                    disabled={!filterDef.enabled}
-                                    type="text"
-                                    // value={filterValues[key] || ""}
-                                    placeholder="Filter ..."
-                                    // onChange={(e) => handleFilterChange(key, e.target.value)}
-                                    endAdornment={
-                                        <div
-                                            className="cursor-pointer text-gray-600 hover:text-gray-500 text-sm"
-                                            // onClick={() => handleFilterChange(key, "")}
-                                        >
-                                            <Close fontSize="inherit" />
-                                        </div>
-                                    }
-                                    wrapperStyle={{
-                                        fontWeight: "normal",
-                                        fontSize: "0.25rem",
-                                    }}
-                                />
-                            </th>
+                            <FilterCell
+                                key={filterDef.columnId}
+                                tableFilterState={props.tableFilterState}
+                                onTableFilterChange={handleTableFilterChange}
+                                {...filterDef}
+                            />
                         );
                     })}
                 </tr>
             )}
         </thead>
+    );
+}
+
+type FilterCellProps = {
+    tableFilterState: TableFilters;
+    onTableFilterChange: (columnId: string, newFilterValue: unknown) => void;
+} & FilterCellDef;
+
+function FilterCell(props: FilterCellProps): React.ReactNode {
+    const { onTableFilterChange } = props;
+
+    const handleFilterChange = React.useCallback(
+        function handleFilterChange(newValue: unknown) {
+            onTableFilterChange(props.columnId, newValue);
+        },
+        [onTableFilterChange, props.columnId],
+    );
+
+    const renderFunc = props.render ?? defaultFilterRender;
+
+    return (
+        <th className="text-xs">
+            {renderFunc({
+                value: props.tableFilterState[props.columnId],
+                onFilterChange: handleFilterChange,
+            })}
+        </th>
+    );
+}
+
+function defaultFilterRender(props: ColumnFilterImplementationProps<string>) {
+    const value = props.value ?? "";
+
+    if (value && typeof value !== "string") throw Error("Default filter expects string value");
+
+    return (
+        <Input
+            type="text"
+            value={value}
+            placeholder="Filter ..."
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => props.onFilterChange(e.target.value)}
+            endAdornment={
+                <div
+                    className="cursor-pointer text-gray-600 hover:text-gray-500 text-sm"
+                    onClick={() => props.onFilterChange(null)}
+                >
+                    <Close fontSize="inherit" />
+                </div>
+            }
+            wrapperStyle={{
+                fontWeight: "normal",
+                fontSize: "0.25rem",
+            }}
+        />
     );
 }
