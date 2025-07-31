@@ -5,13 +5,13 @@ from dataclasses import dataclass
 #
 # This file contains type definitions
 #
-# - This file forward declares InplaceVolumes class from fmu-dataio.
-#       - The code is developed based on pinned version of fmu-dataio v2.13.0, which has standard results for Inplace Volumes v 0.1.0
-#       - Class InplaceVolumes from fmu/dataio/export/_enums.py
+# - This file forward declares InplaceVolumes class from fmu-datamodels.
+#       - The code is developed based on pinned version of fmu-datamodels v 0.0.1, which has standard results for Inplace Volumes v 0.1.0
+#       - Class InplaceVolumes from fmu-datamodels/src/fmu/datamodels/standard_results/enums.py
 # - The files also contains custom definitions for usage in the inplace volumetric assembler and access
 #
 #
-# The inplace volume is defined as standard results, and is documented in :
+# The latest definition of inplace volume as standard result is documented in:
 # https://fmu-dataio.readthedocs.io/en/latest/standard_results/initial_inplace_volumes.html
 #
 #############################################################################################
@@ -21,8 +21,9 @@ class InplaceVolumes:
     """
     Enumerations relevant to inplace volumes tables.
 
-    NOTE: This is a direct copy of class InplaceVolumes from fmu/dataio/export/_enums.py in fmu-dataio v. 2.13.0.
-    Only additional custom definition: selector_columns() which returns the identifier columns and REAL column
+    NOTE: This is a direct copy of class InplaceVolumes from fmu-datamodels/src/fmu/datamodels/standard_results/enums.py
+    in fmu-datamodels v 0.0.1. Only additional custom definition: selector_columns() which returns the identifier columns
+    and REAL column
     """
 
     class Fluid(str, Enum):
