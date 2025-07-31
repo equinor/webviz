@@ -1,16 +1,27 @@
 import type React from "react";
 
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
 import { ROW_HEIGHT_PX } from "./constants";
-import type { ColumnDefMap, DataCellDef, TableRowData } from "./types";
+import type { ColumnDefMap, DataCellDef, TableRowWithKey } from "./types";
 
 export type TableRowProps<T extends ColumnDefMap> = {
-    rowData: TableRowData<T>;
+    rowData: TableRowWithKey<T>;
+    selected: boolean;
     dataCellDefinitions: DataCellDef[];
+    onRowClick: (row: TableRowWithKey<T>, evt: React.MouseEvent<HTMLTableRowElement>) => void;
 };
 
 export function TableRow<T extends ColumnDefMap>(props: TableRowProps<T>): React.ReactNode {
     return (
-        <tr className="group/tr  hover:bg-blue-100" style={{ height: ROW_HEIGHT_PX }}>
+        <tr
+            className={resolveClassNames("group/tr", {
+                "hover:bg-blue-100": !props.selected,
+                "bg-blue-300 text-white hover:bg-blue-200": props.selected,
+            })}
+            style={{ height: ROW_HEIGHT_PX }}
+            onClick={(evt) => props.onRowClick(props.rowData, evt)}
+        >
             {props.dataCellDefinitions.map((cellDef) => {
                 const dataValue = props.rowData[cellDef.columnId];
 

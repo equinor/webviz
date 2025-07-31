@@ -17,6 +17,7 @@ import type {
     TableCellDefinitions,
     TableFilters,
     TableSorting,
+    TableRowWithKey,
 } from "./types";
 import {
     defaultDataFilterPredicate,
@@ -40,6 +41,10 @@ export type TableProps<T extends ColumnDefMap> = {
     /** Colors every other column group with darker cells */
     alternatingColumnColors?: boolean;
 
+    /** Selected/highlighted row */
+    selectedRows?: string[];
+    multiSelect?: boolean;
+
     /** Sorting order for one or more table columns */
     sorting?: TableSorting;
     /** Filter values for one ore more table columns */
@@ -49,12 +54,13 @@ export type TableProps<T extends ColumnDefMap> = {
     onSortingChange?: (newValue: TableSorting) => void;
     /** Callback for when filter values changes */
     onFiltersChange?: (newValue: TableFilters) => void;
+    /** Callback for when row selection changes */
+    onSelectedRowsChange?: (newSelection: string[]) => void;
 
     // TODO: Other QoL things to add?
     // * Specify height with row count instead?
     // numVisibleRows?: number;
-    /* Assumes "id" */
-    // rowIdentifier?: string | false;
+    rowIdentifier?: string;
 
     // selectable?: boolean | "multiple";
 
@@ -78,14 +84,24 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
         return recursivelyBuildTableColumnGroups(props.columnDefMap);
     }, [props.columnDefMap]);
 
+    const [selectedRows, setSelectedRows] = useOptInControlledValue([], props.selectedRows, props.onSelectedRowsChange);
+
     const [tableSortState, setTableSortState] = useOptInControlledValue([], props.sorting, props.onSortingChange);
     const [tableFilterState, setTableFilterState] = useOptInControlledValue({}, props.filters, props.onFiltersChange);
 
-    const filteredRows = React.useMemo(() => {
-        if (props.controlledRows) return props.rows;
-        if (isEmpty(tableFilterState)) return props.rows;
+    const rowsWithKey = React.useMemo(() => {
+        return props.rows.map((r) => {
+            const key = !props.rowIdentifier ? v4() : r[props.rowIdentifier];
+            if (!key) throw new Error(`Empty value for row identifier "${props.rowIdentifier}`);
+            return { ...r, _key: key.toString() };
+        });
+    }, [props.rows, props.rowIdentifier]);
 
-        return props.rows.filter((row) => {
+    const filteredRows = React.useMemo(() => {
+        if (props.controlledRows) return rowsWithKey;
+        if (isEmpty(tableFilterState)) return rowsWithKey;
+
+        return rowsWithKey.filter((row) => {
             for (const columnId in tableFilterState) {
                 const filterValue = tableFilterState[columnId];
                 const dataValue = row[columnId];
@@ -100,7 +116,7 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
 
             return true;
         });
-    }, [props.controlledRows, props.rows, tableFilterState, colDataDefLookup]);
+    }, [props.controlledRows, rowsWithKey, tableFilterState, colDataDefLookup]);
 
     const sortedRows = React.useMemo(() => {
         if (props.controlledRows) return filteredRows;
@@ -118,33 +134,41 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
     }, [tableSortState, props.controlledRows, filteredRows]);
 
     return (
-        <div ref={divWrapperRef} className="relative overflow-auto" style={{ height: props.height }}>
-            <table className="w-full border-x border-slate-500 text-sm table-fixed">
-                {/* Create col-groups based on the top-level columns */}
-                <TableColGroups
-                    colgroupDefinitions={colgroupDefinitions}
-                    alternatingColumnColors={props.alternatingColumnColors}
-                />
+        <>
+            <div ref={divWrapperRef} className="relative overflow-auto" style={{ height: props.height }}>
+                <table className="w-full border-x border-slate-500 text-sm table-fixed">
+                    {/* Create col-groups based on the top-level columns */}
+                    <TableColGroups
+                        colgroupDefinitions={colgroupDefinitions}
+                        alternatingColumnColors={props.alternatingColumnColors}
+                    />
 
-                <TableHead
-                    wrapperElement={divWrapperRef}
-                    headerCellDefinitions={tableCellDefinitions.headerCells}
-                    filterCellDefinitions={tableCellDefinitions.filterCells}
-                    alternatingColumnColors={!!props.alternatingColumnColors}
-                    tableSortState={tableSortState}
-                    tableFilterState={tableFilterState}
-                    onTableSortStateChange={setTableSortState}
-                    onTableFilterStateChange={setTableFilterState}
-                />
+                    <TableHead
+                        wrapperElement={divWrapperRef}
+                        headerCellDefinitions={tableCellDefinitions.headerCells}
+                        filterCellDefinitions={tableCellDefinitions.filterCells}
+                        alternatingColumnColors={!!props.alternatingColumnColors}
+                        tableSortState={tableSortState}
+                        tableFilterState={tableFilterState}
+                        onTableSortStateChange={setTableSortState}
+                        onTableFilterStateChange={setTableFilterState}
+                    />
 
-                <TableBody
-                    wrapperElement={divWrapperRef}
-                    dataCellDefinitions={tableCellDefinitions.dataCells}
-                    rows={sortedRows}
-                    height={props.height}
-                />
-            </table>
-        </div>
+                    <TableBody
+                        wrapperElement={divWrapperRef}
+                        dataCellDefinitions={tableCellDefinitions.dataCells}
+                        rows={sortedRows}
+                        height={props.height}
+                        selectedRows={selectedRows}
+                        multiSelect={props.multiSelect}
+                        onSelectedRowsChange={setSelectedRows}
+                    />
+                </table>
+            </div>
+            <span className="text-xs italic text-right text-gray-600 mt-1">
+                {selectedRows?.length ?? 0} rows selected
+            </span>
+        </>
     );
 }
 
@@ -183,13 +207,31 @@ function TableColGroups(props: TableColGroupsProps): React.ReactNode {
 type TableBodyProps<T extends ColumnDefMap> = {
     wrapperElement: React.RefObject<HTMLElement>;
     height?: number | string;
-    // numVisibleRows?: number;
     dataCellDefinitions: TableCellDefinitions["dataCells"];
-    rows: TableRowData<T>[];
+    rows: TableRowWithKey<T>[];
+    selectedRows?: string[];
+    multiSelect?: boolean;
+    onSelectedRowsChange?: (newSelection: string[]) => void;
 };
 
 function TableBody<T extends ColumnDefMap>(props: TableBodyProps<T>): React.ReactNode {
-    const rowsWithKey = React.useMemo(() => props.rows.map((r) => ({ ...r, _key: v4() })), [props.rows]);
+    const { onSelectedRowsChange } = props;
+    const handleRowClick = React.useCallback(
+        function handleRowClick(row: TableRowWithKey<T>, evt: React.MouseEvent) {
+            const selectedRows = props.selectedRows ?? [];
+            const alreadySelected = row._selected;
+
+            // TODO: Should we make ctr and shift work as in windows? Add one and add range?
+            const additive = props.multiSelect && (evt.ctrlKey || evt.shiftKey);
+
+            const newSelection = additive ? selectedRows.filter((key) => key !== row._key) : [];
+
+            if (!alreadySelected) newSelection.push(row._key);
+
+            onSelectedRowsChange?.(newSelection);
+        },
+        [onSelectedRowsChange, props.multiSelect, props.selectedRows],
+    );
 
     return (
         <tbody>
@@ -197,14 +239,20 @@ function TableBody<T extends ColumnDefMap>(props: TableBodyProps<T>): React.Reac
                 containerRef={props.wrapperElement}
                 direction="vertical"
                 placeholderComponent="tr"
-                items={rowsWithKey}
+                items={props.rows}
                 itemSize={ROW_HEIGHT_PX}
                 renderItem={(row) => (
-                    <TableRow key={row._key} rowData={row} dataCellDefinitions={props.dataCellDefinitions} />
+                    <TableRow
+                        key={row._key}
+                        rowData={row}
+                        dataCellDefinitions={props.dataCellDefinitions}
+                        selected={!!props.selectedRows?.includes(row._key)}
+                        onRowClick={handleRowClick}
+                    />
                 )}
             />
 
-            {rowsWithKey.length === 0 && (
+            {props.rows.length === 0 && (
                 <tr style={{ height: ROW_HEIGHT_PX * 2.5 }}>
                     <td
                         className="text-lg italic text-slate-600 text-center align-middle border-x-0 border-b-2 border-slate-200"

@@ -49,6 +49,7 @@ export type BaseHeadingCellInfo = {
 export type TableRowData<T extends ColumnDefMap> = {
     [key in keyof T]: string | number | null;
 };
+
 export type TableRowWithKey<T extends ColumnDefMap> = { _key: string } & TableRowData<T>;
 
 export enum SortDirection {

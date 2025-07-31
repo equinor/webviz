@@ -113,6 +113,8 @@ function RangeFilter(props: ColumnFilterImplementationProps<[number?, number?]>)
 
 export const View = () => {
     const [alternateCols, setAlternateCols] = React.useState(false);
+    const [allowMultiSelect, setAllowMultiSelect] = React.useState(false);
+
     const [data, setData] = React.useState<TableRow<typeof TABLE_DEFINITION>[]>(
         range(1, 1000).map((i) => ({
             "col1.1": `Row ${i}, Column 1.1`,
@@ -152,6 +154,9 @@ export const View = () => {
                 <Label text="Alternating columns" position="left">
                     <Switch checked={alternateCols} onChange={(e) => setAlternateCols(e.target.checked)} />
                 </Label>
+                <Label text="Multi-select" position="left">
+                    <Switch checked={allowMultiSelect} onChange={(e) => setAllowMultiSelect(e.target.checked)} />
+                </Label>
             </div>
 
             <h3 className="mt-6 font-extrabold text-lg">Legacy</h3>
@@ -163,7 +168,13 @@ export const View = () => {
             />
 
             <h3 className="mt-6 font-extrabold text-lg">New (un-controlled)</h3>
-            <Table2 height={300} columnDefMap={TABLE_DEFINITION} rows={data} alternatingColumnColors={alternateCols} />
+            <Table2
+                height={300}
+                columnDefMap={TABLE_DEFINITION}
+                rows={data}
+                alternatingColumnColors={alternateCols}
+                multiSelect={allowMultiSelect}
+            />
 
             <h3 className="mt-6 font-extrabold text-lg">New (controlled)</h3>
 
@@ -206,6 +217,7 @@ export const View = () => {
                 alternatingColumnColors={alternateCols}
                 sorting={tableSortingState}
                 filters={tableFilterState}
+                multiSelect={allowMultiSelect}
                 onSortingChange={setTableSortingState}
                 onFiltersChange={handleFilterUpdate}
             />
