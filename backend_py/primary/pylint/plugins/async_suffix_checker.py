@@ -22,14 +22,19 @@ class AsyncSuffixChecker(BaseChecker):
     }
 
     def visit_asyncfunctiondef(self, node: nodes.AsyncFunctionDef) -> None:
+        if node.name.endswith("_async"):
+            return
+
         # Skip core Python magic/dunder methods
-        is_special_method = node.name.startswith("__") and node.name.endswith("__")
+        if node.name.startswith("__") and node.name.endswith("__"):
+            return
 
         # Skip fast-api endpoints
-        has_router_decorator = FAST_API_ROUTER_DECORATOR in node.decoratornames()
+        if FAST_API_ROUTER_DECORATOR in node.decoratornames():
+            return
 
-        if not node.name.endswith("_async") and not has_router_decorator and not is_special_method:
-            self.add_message("C9001", node=node, args=(node.name,))
+        # Add warning to function
+        self.add_message("C9001", node=node, args=(node.name,))
 
 
 def register(linter: PyLinter) -> None:

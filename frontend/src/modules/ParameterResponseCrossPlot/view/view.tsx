@@ -17,8 +17,8 @@ import { ContentWarning } from "@modules/_shared/components/ContentMessage/conte
 import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
 
-import type { scatterPlotParameterResponseData } from "./scatterPlotParameterResponseFigure";
-import { ScatterPlotParameterResponseFigure } from "./scatterPlotParameterResponseFigure";
+import type { scatterPlotParameterResponseData } from "./utils/scatterPlotParameterResponseFigure";
+import { ScatterPlotParameterResponseFigure } from "./utils/scatterPlotParameterResponseFigure";
 
 const MAX_NUM_PLOTS = 12;
 
@@ -167,13 +167,14 @@ export function View({ viewContext, workbenchSession: workbenchSession }: Module
 
                     const responseName = responseChannelData.displayName;
                     const parameterName = parameterData.name;
-
+                    const color = responseChannelData.metaData.preferredColor ?? "#000000";
                     const scatterPlotData: scatterPlotParameterResponseData = {
                         responseValues,
                         parameterValues,
                         realizationValues,
                         parameterName,
                         responseName,
+                        color,
                     };
 
                     const channelTitle = `${parameterIdent.name} / <b>${responseChannelData.metaData.displayString}`;

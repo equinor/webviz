@@ -17,7 +17,7 @@ import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProvider
 const ensembleWellborePicksSettings = [
     Setting.INTERSECTION,
     Setting.ENSEMBLE,
-    Setting.WELLBORE_PICK_IDENTIFIER,
+    Setting.SMDA_INTERPRETER,
     Setting.WELLBORE_PICKS,
 ] as const;
 export type EnsembleWellborePicksSettings = typeof ensembleWellborePicksSettings;
@@ -89,19 +89,20 @@ export class EnsembleWellborePicksProvider
             });
         });
 
-        availableSettingsUpdater(Setting.WELLBORE_PICK_IDENTIFIER, ({ getHelperDependency }) => {
+        availableSettingsUpdater(Setting.SMDA_INTERPRETER, ({ getHelperDependency }) => {
             const wellborePicks = getHelperDependency(wellborePicksDep);
 
             if (!wellborePicks) return [];
 
             const picksByInterpreter = groupBy(wellborePicks, "interpreter");
+            const interpreters = Array.from(keys(picksByInterpreter)).sort();
 
-            return Array.from(keys(picksByInterpreter)).sort();
+            return interpreters;
         });
 
         availableSettingsUpdater(Setting.WELLBORE_PICKS, ({ getLocalSetting, getHelperDependency }) => {
             const wellborePicks = getHelperDependency(wellborePicksDep);
-            const selectedInterpreter = getLocalSetting(Setting.WELLBORE_PICK_IDENTIFIER);
+            const selectedInterpreter = getLocalSetting(Setting.SMDA_INTERPRETER);
 
             if (!wellborePicks || !selectedInterpreter) {
                 return [];

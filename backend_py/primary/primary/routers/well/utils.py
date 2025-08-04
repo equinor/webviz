@@ -19,7 +19,7 @@ def curve_type_from_header(
         return schemas.WellLogCurveTypeEnum.DISCRETE
     if curve_header.curve_name.endswith("FLAG"):
         return schemas.WellLogCurveTypeEnum.FLAG
-    if curve_header.curve_unit == "UNITLESS":
+    if (curve_header.curve_unit or "").upper() == "UNITLESS":
         return schemas.WellLogCurveTypeEnum.DISCRETE
 
     return schemas.WellLogCurveTypeEnum.CONTINUOUS

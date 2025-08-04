@@ -11,16 +11,22 @@ from primary.services.service_exceptions import (
     MultipleDataMatchesError,
 )
 
-from ._helpers import create_sumo_case_async
+from ._helpers import create_sumo_case_async, datetime_string_to_utc_ms
 from .sumo_client_factory import create_sumo_client
 
 
 LOGGER = logging.getLogger(__name__)
 
 
+class IterationTimestamps(BaseModel):
+    case_updated_at_utc_ms: int
+    data_updated_at_utc_ms: int
+
+
 class IterationInfo(BaseModel):
     name: str
     realization_count: int
+    timestamps: IterationTimestamps
 
 
 class CaseInspector:
@@ -42,6 +48,33 @@ class CaseInspector:
 
         return self._cached_case_context
 
+    async def get_case_updated_timestamp_async(self) -> int:
+        case = await self._get_or_create_case_context_async()
+        timestamp_str = case.metadata["_sumo"]["timestamp"]  # Returns a datetime string.
+        return datetime_string_to_utc_ms(timestamp_str)
+
+    async def get_iteration_data_update_timestamp_async(self, iteration_name: str | None = None) -> int:
+        timer = PerfMetrics()
+        case_context = await self._get_or_create_case_context_async()
+
+        search_context = SearchContext(self._sumo_client).filter(
+            uuid=case_context.uuid, iteration=iteration_name, realization=True
+        )
+
+        data_timestamp_int = await search_context.metrics.max_async("_sumo.timestamp")
+
+        timer.record_lap("aggregate_data_timestamps")
+        LOGGER.debug(f"get_last_data_change_timestamp_async {timer.to_string()}")
+
+        return data_timestamp_int or -1
+
+    async def get_iteration_timestamps_async(self, iteration_name: str) -> IterationTimestamps:
+        case_updated_at = await self.get_case_updated_timestamp_async()
+        # Data is occasionally None. This is likely due to data errors, so we just default to 0 (since an iteration with bad data probably won't be used)
+        data_updated_at = await self.get_iteration_data_update_timestamp_async(iteration_name) or 0
+
+        return IterationTimestamps(case_updated_at_utc_ms=case_updated_at, data_updated_at_utc_ms=data_updated_at)
+
     async def get_case_name_async(self) -> str:
         """Get name of the case"""
         case = await self._get_or_create_case_context_async()
@@ -51,7 +84,10 @@ class CaseInspector:
         search_context = SearchContext(self._sumo_client)
         iteration = await search_context.get_iteration_by_uuid_async(iteration_uuid)
         realization_count = len(await iteration.realizations_async)
-        return IterationInfo(name=iteration.name, realization_count=realization_count)
+
+        iteration_timestamps = await self.get_iteration_timestamps_async(iteration.name)
+
+        return IterationInfo(name=iteration.name, realization_count=realization_count, timestamps=iteration_timestamps)
 
     async def get_iterations_async(self) -> list[IterationInfo]:
         """Get list of iterations for a case"""
