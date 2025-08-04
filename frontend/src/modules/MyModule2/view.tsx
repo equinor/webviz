@@ -1,20 +1,22 @@
 import React from "react";
 
-import { inRange, random, range } from "lodash";
+import { inRange } from "lodash";
 
+import type { ModuleViewProps } from "@framework/Module";
 import { Button } from "@lib/components/Button";
-import { Label } from "@lib/components/Label";
-import { Switch } from "@lib/components/Switch";
-import { Table, type TableHeading, type TableRow } from "@lib/components/Table/table";
+import type { TableHeading } from "@lib/components/Table/table";
 import { Table as Table2 } from "@lib/components/Table2";
 import type {
     TableFilters,
     ColumnDefMap,
     ColumnFilterImplementationProps,
     TableSorting,
+    TableRowData,
 } from "@lib/components/Table2/types";
 import { SortDirection } from "@lib/components/Table2/types";
 import { ToggleButton } from "@lib/components/ToggleButton";
+
+import type { Interfaces } from "./interfaces";
 
 // TODO: Typing class so you can narrow down the values passed to format/filter functions
 // type TableColumnData = {
@@ -69,6 +71,7 @@ const TABLE_DEFINITION: ColumnDefMap = {
 };
 
 // ! I changed the key from "subHeading to "subColumns"; this is a super hacky replacement of the keys back to the legacy
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const TABLE_DEFINITION_LEGACY: TableHeading = JSON.parse(
     JSON.stringify(TABLE_DEFINITION).replaceAll('"subColumns":', '"subHeading":'),
 );
@@ -111,35 +114,17 @@ function RangeFilter(props: ColumnFilterImplementationProps<[number?, number?]>)
     );
 }
 
-export const View = () => {
-    const [alternateCols, setAlternateCols] = React.useState(false);
-    const [allowMultiSelect, setAllowMultiSelect] = React.useState(false);
-
-    const [data, setData] = React.useState<TableRow<typeof TABLE_DEFINITION>[]>(
-        range(1, 1000).map((i) => ({
-            "col1.1": `Row ${i}, Column 1.1`,
-            "col1.2": `Row ${i}, Column 1.2`,
-            "col1.3": `Row ${i}, Column 1.3`,
-            col3: random(0, 1000),
-        })),
-    );
-
-    function addMoreRows() {
-        setData((prev) => {
-            return [
-                ...prev,
-                ...range(1, 10).map((i) => ({
-                    "col1.1": `Row ${i + prev.length}, Column 1.1`,
-                    "col1.2": `Row ${i + prev.length}, Column 1.2`,
-                    "col1.3": `Row ${i + prev.length}, Column 1.3`,
-                    col3: random(0, 1000),
-                })),
-            ];
-        });
-    }
+export const View = (props: ModuleViewProps<Interfaces>) => {
+    const alternateColColors = props.viewContext.useSettingsToViewInterfaceValue("alternateColColors");
+    const allowMultiSelect = props.viewContext.useSettingsToViewInterfaceValue("allowMultiSelect");
+    const tableData = props.viewContext.useSettingsToViewInterfaceValue("tableData");
 
     const [tableSortingState, setTableSortingState] = React.useState<TableSorting>([]);
     const [tableFilterState, setTableFilterState] = React.useState<TableFilters>({});
+
+    const [selectedRows, setSelectedRows] = React.useState<string[]>([]);
+    const [hoveredItem, setHoveredItem] = React.useState<string | null>(null);
+
     const [usingTheCoolFilters, setUsingTheCoolFilters] = React.useState(false);
 
     function handleFilterUpdate(newFilter: TableFilters) {
@@ -149,31 +134,29 @@ export const View = () => {
 
     return (
         <div className="h-full w-full flex flex-col">
-            <div className="flex gap-2 items-center">
-                <Button onClick={addMoreRows}> AddData </Button>
-                <Label text="Alternating columns" position="left">
-                    <Switch checked={alternateCols} onChange={(e) => setAlternateCols(e.target.checked)} />
-                </Label>
-                <Label text="Multi-select" position="left">
-                    <Switch checked={allowMultiSelect} onChange={(e) => setAllowMultiSelect(e.target.checked)} />
-                </Label>
-            </div>
-
-            <h3 className="mt-6 font-extrabold text-lg">Legacy</h3>
+            {/* <h3 className="mt-6 font-extrabold text-lg">Legacy</h3>
             <Table
                 height={300}
                 headings={TABLE_DEFINITION_LEGACY}
                 data={data}
                 alternatingColumnColors={alternateCols}
             />
+            */}
 
             <h3 className="mt-6 font-extrabold text-lg">New (un-controlled)</h3>
             <Table2
+                rowIdentifier="id"
                 height={300}
                 columnDefMap={TABLE_DEFINITION}
-                rows={data}
-                alternatingColumnColors={alternateCols}
+                rows={tableData as TableRowData<ColumnDefMap>[]}
+                alternatingColumnColors={alternateColColors}
+                selectable
                 multiSelect={allowMultiSelect}
+                // Listening to the internal changes, and make them update the controlled component
+                onSortingChange={setTableSortingState}
+                onFiltersChange={handleFilterUpdate}
+                onSelectedRowsChange={setSelectedRows}
+                onRowHover={setHoveredItem}
             />
 
             <h3 className="mt-6 font-extrabold text-lg">New (controlled)</h3>
@@ -211,16 +194,26 @@ export const View = () => {
             </div>
 
             <Table2
+                rowIdentifier="id"
                 height={300}
                 columnDefMap={TABLE_DEFINITION}
-                rows={data}
-                alternatingColumnColors={alternateCols}
+                rows={tableData as TableRowData<ColumnDefMap>[]}
+                alternatingColumnColors={alternateColColors}
                 sorting={tableSortingState}
                 filters={tableFilterState}
+                selectable
                 multiSelect={allowMultiSelect}
                 onSortingChange={setTableSortingState}
                 onFiltersChange={handleFilterUpdate}
+                onSelectedRowsChange={setSelectedRows}
+                onRowHover={setHoveredItem}
             />
+
+            <div className="mt-4 text-xs italic text-right text-gray-600 flex justify-between">
+                <span>Hovered: {hoveredItem ?? "None"}</span>
+
+                <span>{selectedRows?.length ?? 0} row(s) selected</span>
+            </div>
         </div>
     );
 };

@@ -1,10 +1,11 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
-import { textAtom } from "./atoms";
+import { allowMultiSelectAtom, alternateColColorsAtom, tableDataAtom } from "./atoms";
 
 type SettingsToViewInterface = {
-    text: string;
-    derivedText: string;
+    alternateColColors: boolean;
+    allowMultiSelect: boolean;
+    tableData: object[];
 };
 
 export type Interfaces = {
@@ -12,6 +13,7 @@ export type Interfaces = {
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    text: (get) => get(textAtom),
-    derivedText: (get) => get(textAtom).toUpperCase(),
+    alternateColColors: (get) => get(alternateColColorsAtom),
+    allowMultiSelect: (get) => get(allowMultiSelectAtom),
+    tableData: (get) => get(tableDataAtom),
 };
