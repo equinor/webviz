@@ -1,4 +1,5 @@
 import type { EnsembleTimestamps_api } from "@api";
+import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 
 /**
@@ -16,4 +17,13 @@ export function isEnsembleOutdated(ensemble: RegularEnsemble, timestamp: Ensembl
 
     const { caseUpdatedAtUtcMs, dataUpdatedAtUtcMs } = currentTimestamp;
     return timestamp.caseUpdatedAtUtcMs > caseUpdatedAtUtcMs || timestamp.dataUpdatedAtUtcMs > dataUpdatedAtUtcMs;
+}
+
+export function convertEnsembleToUserSettings(ensemble: RegularEnsemble): UserEnsembleSetting {
+    return {
+        color: ensemble.getColor(),
+        customName: ensemble.getCustomName(),
+        ensembleIdent: ensemble.getIdent(),
+        timestamps: ensemble.getTimestamps() ?? undefined,
+    };
 }
