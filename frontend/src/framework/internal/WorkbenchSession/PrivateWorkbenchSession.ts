@@ -73,6 +73,8 @@ export type PrivateWorkbenchSessionTopicPayloads = {
     [PrivateWorkbenchSessionTopic.IS_SNAPSHOT]: boolean;
 };
 
+const ENSEMBLE_POLLING_INTERVAL = 60000; // 1 minute
+
 export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenchSessionTopicPayloads> {
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<PrivateWorkbenchSessionTopicPayloads>();
 
@@ -95,6 +97,8 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     private _isEnsembleSetLoading: boolean = false;
     private _loadedFromLocalStorage: boolean = false;
     private _settings: PrivateWorkbenchSettings = new PrivateWorkbenchSettings();
+    private _pollingEnabled: boolean = false;
+    private _waitingPollingRun: ReturnType<typeof setTimeout> | null = null;
 
     constructor(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient, isSnapshot = false) {
         this._atomStoreMaster = atomStoreMaster;
@@ -319,4 +323,89 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     beforeDestroy(): void {
         // Hook for cleanup, e.g. unsubscribing or releasing memory
     }
+
+    /**
+     * Starts a background polling routine, that repeats at a set interval.
+     * @param queryClient The QueryClient to use for fetching ensemble timestamps.
+     */
+    /*
+    beginEnsembleUpdatePolling(queryClient: QueryClient) {
+        if (this._pollingEnabled) return;
+
+        // This shouldn't happen, but we check just in case
+        if (this._waitingPollingRun) {
+            console.warn("Found a waiting polling call, even though polling was disabled");
+            clearTimeout(this._waitingPollingRun);
+        }
+
+        // Start polling
+        console.debug("checkForEnsembleUpdate - initializing...");
+        this._pollingEnabled = true;
+        this.recursivelyQueueEnsemblePolling(queryClient);
+    }
+
+    stopEnsembleUpdatePolling() {
+        clearTimeout(this._waitingPollingRun ?? undefined);
+        this._waitingPollingRun = null;
+        this._pollingEnabled = false;
+    }
+
+    private async recursivelyQueueEnsemblePolling(queryClient: QueryClient) {
+        if (!this._pollingEnabled) return;
+
+        await this.pollForEnsembleChange(queryClient);
+
+        // Checking the variable again in case polling was disabled *during* the async call
+        if (!this._pollingEnabled) return;
+
+        console.debug("checkForEnsembleUpdate - queuing next...");
+        this._waitingPollingRun = setTimeout(async () => {
+            this.recursivelyQueueEnsemblePolling(queryClient);
+        }, ENSEMBLE_POLLING_INTERVAL);
+    }
+
+    private async pollForEnsembleChange(queryClient: QueryClient) {
+        console.debug("checkForEnsembleUpdate - fetching...");
+
+        const regularEnsembleSet = this.getEnsembleSet().getRegularEnsembleArray();
+
+        const latestTimestamps = await this.fetchLatestEnsembleTimestamps(queryClient, regularEnsembleSet);
+
+        // We only want to update the ensembles that are outdated
+
+
+        const newSettings = latestTimestamps.reduce((acc, [ens, ts]) => {
+            if (!isEnsembleOutdated(ens, ts)) return acc;
+
+            return acc.concat({
+                ...ensembleToUserSettings(ens),
+                timestamps: ts,
+            });
+        }, [] as UserEnsembleSetting[]);
+
+        if (newSettings.length) {
+            this.updateExistingUserEnsembleSettings(queryClient, newSettings);
+        }
+
+        console.debug("checkForEnsembleUpdate - done...");
+    }
+
+    private async fetchLatestEnsembleTimestamps(
+        queryClient: QueryClient,
+        ensembles: readonly RegularEnsemble[],
+    ): Promise<[RegularEnsemble, EnsembleTimestamps_api][]> {
+        const idents = ensembles.map<EnsembleIdent_api>((ens) => ({
+            caseUuid: ens.getCaseUuid(),
+            ensembleName: ens.getEnsembleName(),
+        }));
+
+        const timestamps = await queryClient.fetchQuery({
+            ...postGetTimestampsForEnsemblesOptions({ body: idents }),
+            staleTime: 0,
+            gcTime: 0,
+        });
+
+        return ensembles.map((ens, i) => [ens, timestamps[i]]);
+    }
+    */
 }

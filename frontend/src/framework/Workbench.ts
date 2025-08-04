@@ -25,20 +25,6 @@ import {
 import { WorkbenchSessionPersistenceService } from "./internal/WorkbenchSession/WorkbenchSessionPersistenceService";
 import type { WorkbenchServices } from "./WorkbenchServices";
 
-export type StoredUserEnsembleSetting = {
-    ensembleIdent: string;
-    customName: string | null;
-    color: string;
-    timestamps: EnsembleTimestamps_api | null;
-};
-
-export type StoredUserDeltaEnsembleSetting = {
-    comparisonEnsembleIdent: string;
-    referenceEnsembleIdent: string;
-    customName: string | null;
-    color: string;
-};
-
 export enum WorkbenchTopic {
     HAS_ACTIVE_SESSION = "hasActiveSession",
 }

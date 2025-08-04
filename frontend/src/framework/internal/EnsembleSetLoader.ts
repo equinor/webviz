@@ -27,6 +27,7 @@ export type UserEnsembleSetting = {
     ensembleIdent: RegularEnsembleIdent;
     customName: string | null;
     color: string;
+    timestamps?: EnsembleTimestamps_api;
 };
 
 export type UserDeltaEnsembleSetting = {

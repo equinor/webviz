@@ -5,7 +5,6 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -42,6 +41,8 @@ import {
 } from "./atoms/derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 import { makeColorByOptions, makeSubplotByOptions } from "./utils/plotDimensionUtils";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);

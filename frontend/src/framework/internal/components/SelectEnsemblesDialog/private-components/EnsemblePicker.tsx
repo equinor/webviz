@@ -124,8 +124,8 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
 
     const selectedCase = React.useMemo(() => {
         const cases = casesQuery.data ?? [];
-        return cases.find((c) => c.uuid === selectedCaseId);
-    }, [casesQuery.data, selectedCaseId]);
+        return cases.find((c) => c.uuid === selectedCaseUuid);
+    }, [casesQuery.data, selectedCaseUuid]);
 
     // Ensemble select
     const ensemblesQuery = useQuery({

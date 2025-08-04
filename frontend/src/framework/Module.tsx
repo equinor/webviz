@@ -324,7 +324,7 @@ export class Module<
 
         if (!importer) {
             console.error(`Module importer not found for ${path}`);
-            this.setImportState(ImportState.Failed);
+            this.setImportState(ImportStatus.Failed);
             return;
         }
 

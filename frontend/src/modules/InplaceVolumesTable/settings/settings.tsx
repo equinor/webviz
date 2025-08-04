@@ -6,7 +6,7 @@ import { InplaceVolumesStatistic_api } from "@api";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
@@ -44,6 +44,7 @@ import {
     tableDefinitionsAccessorAtom,
 } from "./atoms/derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
