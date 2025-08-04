@@ -32,6 +32,13 @@ export type TableProps<T extends ColumnDefMap> = {
 
     /** Each row of tabular data */
     rows: TableRowData<T>[];
+
+    /**
+     * Specifies a unique field for each data entry. This value is the one returned in selects, clicks, hovers, etc.
+     * If none is specified, a random id will be generated,
+     */
+    rowIdentifier?: string;
+
     /** Specifies that data collation will be applied outside of the component */
     controlledRows?: boolean;
 
@@ -43,6 +50,10 @@ export type TableProps<T extends ColumnDefMap> = {
 
     /** Selected/highlighted row */
     selectedRows?: string[];
+    /** Enable row selection. */
+    selectable?: boolean;
+
+    /** Allow multiple elements to be selected */
     multiSelect?: boolean;
 
     /** Sorting order for one or more table columns */
@@ -57,19 +68,29 @@ export type TableProps<T extends ColumnDefMap> = {
     /** Callback for when row selection changes */
     onSelectedRowsChange?: (newSelection: string[]) => void;
 
+    /** @deprecated Use `onRowClick` instead */
+    onClick?: (row: TableRowData<T>) => void;
+    onRowClick?: (id: string, row: TableRowData<T>) => void;
+    /** @deprecated use `onRowHover()` instead */
+    onHover?: (row: TableRowData<T> | null) => void;
+    onRowHover?: (id: string | null, row: TableRowData<T> | null) => void;
+
     // TODO: Other QoL things to add?
     // * Specify height with row count instead?
     // numVisibleRows?: number;
-    rowIdentifier?: string;
-
-    // selectable?: boolean | "multiple";
-
-    /** @deprecated use `onRowHover()` instead */
-    // onHover?: (row: TableRowData<T> | null) => void;
-    // onRowHover?: (row: TableRowData<T> | null) => void;
 };
 
+function validateProps<T extends ColumnDefMap>(props: TableProps<T>) {
+    if (props.selectable && !props.rowIdentifier) {
+        console.warn("Table is selectable, but no row identifier has been specified");
+    }
+}
+
 export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.ReactNode {
+    validateProps(props);
+
+    const { onHover, onRowHover } = props;
+
     const divWrapperRef = React.useRef<HTMLDivElement>(null);
 
     const tableCellDefinitions = React.useMemo(() => {
@@ -96,6 +117,17 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
             return { ...r, _key: key.toString() };
         });
     }, [props.rows, props.rowIdentifier]);
+
+    const [prevRowsWithKeys, setPrevRowsWithKeys] = React.useState(rowsWithKey);
+
+    // If data keys were regenerated, the rows selected are invalid
+    if (prevRowsWithKeys !== rowsWithKey) {
+        setPrevRowsWithKeys(rowsWithKey);
+        if (!props.rowIdentifier) {
+            console.warn("Data keys are being regenerated, discarding selection");
+            setSelectedRows([]);
+        }
+    }
 
     const filteredRows = React.useMemo(() => {
         if (props.controlledRows) return rowsWithKey;
@@ -133,6 +165,14 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
         return orderBy(filteredRows, fieldIterateeSetting, dirIterateeSetting);
     }, [tableSortState, props.controlledRows, filteredRows]);
 
+    const handleRowHover = React.useCallback(
+        function handleRowHover(id: string | null, row: TableRowWithKey<T> | null) {
+            onHover?.(row);
+            onRowHover?.(id, row);
+        },
+        [onHover, onRowHover],
+    );
+
     return (
         <>
             <div ref={divWrapperRef} className="relative overflow-auto" style={{ height: props.height }}>
@@ -160,14 +200,13 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
                         rows={sortedRows}
                         height={props.height}
                         selectedRows={selectedRows}
+                        selectable={props.selectable ?? props.multiSelect}
                         multiSelect={props.multiSelect}
                         onSelectedRowsChange={setSelectedRows}
+                        onRowHover={handleRowHover}
                     />
                 </table>
             </div>
-            <span className="text-xs italic text-right text-gray-600 mt-1">
-                {selectedRows?.length ?? 0} rows selected
-            </span>
         </>
     );
 }
@@ -210,18 +249,25 @@ type TableBodyProps<T extends ColumnDefMap> = {
     dataCellDefinitions: TableCellDefinitions["dataCells"];
     rows: TableRowWithKey<T>[];
     selectedRows?: string[];
+    selectable?: boolean;
     multiSelect?: boolean;
     onSelectedRowsChange?: (newSelection: string[]) => void;
+    onRowClick?: (id: string, row: TableRowWithKey<T>) => void;
+    onRowHover?: (id: string | null, row: TableRowWithKey<T> | null) => void;
 };
 
 function TableBody<T extends ColumnDefMap>(props: TableBodyProps<T>): React.ReactNode {
-    const { onSelectedRowsChange } = props;
+    const { onSelectedRowsChange, onRowClick, onRowHover } = props;
     const handleRowClick = React.useCallback(
         function handleRowClick(row: TableRowWithKey<T>, evt: React.MouseEvent) {
-            const selectedRows = props.selectedRows ?? [];
-            const alreadySelected = row._selected;
+            onRowClick?.(row._key, row);
 
-            // TODO: Should we make ctr and shift work as in windows? Add one and add range?
+            if (!props.selectable) return;
+
+            const selectedRows = props.selectedRows ?? [];
+            const alreadySelected = selectedRows.includes(row._key);
+
+            // TODO: Should we make ctr and shift work as in windows? Adding one, vs adding a range?
             const additive = props.multiSelect && (evt.ctrlKey || evt.shiftKey);
 
             const newSelection = additive ? selectedRows.filter((key) => key !== row._key) : [];
@@ -230,24 +276,31 @@ function TableBody<T extends ColumnDefMap>(props: TableBodyProps<T>): React.Reac
 
             onSelectedRowsChange?.(newSelection);
         },
-        [onSelectedRowsChange, props.multiSelect, props.selectedRows],
+        [onRowClick, onSelectedRowsChange, props.multiSelect, props.selectable, props.selectedRows],
+    );
+
+    const handleBodyMouseLeave = React.useCallback(() => onRowHover?.(null, null), [onRowHover]);
+    const handleRowMouseOver = React.useCallback(
+        (row: TableRowWithKey<T>) => onRowHover?.(row._key, row),
+        [onRowHover],
     );
 
     return (
-        <tbody>
+        <tbody onMouseLeave={handleBodyMouseLeave}>
             <Virtualization
                 containerRef={props.wrapperElement}
                 direction="vertical"
                 placeholderComponent="tr"
                 items={props.rows}
                 itemSize={ROW_HEIGHT_PX}
-                renderItem={(row) => (
+                renderItem={(row: TableRowWithKey<T>) => (
                     <TableRow
                         key={row._key}
                         rowData={row}
                         dataCellDefinitions={props.dataCellDefinitions}
                         selected={!!props.selectedRows?.includes(row._key)}
-                        onRowClick={handleRowClick}
+                        onClick={handleRowClick}
+                        onMouseOver={handleRowMouseOver}
                     />
                 )}
             />
