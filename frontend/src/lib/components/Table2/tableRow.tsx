@@ -16,7 +16,7 @@ export type TableRowProps<T extends ColumnDefMap> = {
 export function TableRow<T extends ColumnDefMap>(props: TableRowProps<T>): React.ReactNode {
     return (
         <tr
-            className={resolveClassNames("group/tr", {
+            className={resolveClassNames("group/tr border-b-2", {
                 "hover:bg-blue-100": !props.selected,
                 "bg-blue-300 text-white hover:bg-blue-200": props.selected,
             })}
@@ -26,10 +26,21 @@ export function TableRow<T extends ColumnDefMap>(props: TableRowProps<T>): React
         >
             {props.dataCellDefinitions.map((cellDef) => {
                 const dataValue = props.rowData[cellDef.columnId];
+                const style = cellDef.style?.(dataValue, props.rowData);
+                const formattedData = cellDef?.format?.(dataValue, props.rowData);
+
+                if (cellDef.render) {
+                    return cellDef.render(dataValue, props.rowData);
+                }
 
                 return (
-                    <td key={cellDef.columnId} className="border-b-2 border-slate-200 p-1 whitespace-nowrap">
-                        {cellDef?.format?.(dataValue, props.rowData) ?? dataValue}
+                    <td
+                        key={cellDef.columnId}
+                        className=" border-slate-200 p-1 whitespace-nowrap truncate"
+                        style={style}
+                        title={formattedData}
+                    >
+                        {formattedData ?? dataValue}
                     </td>
                 );
             })}

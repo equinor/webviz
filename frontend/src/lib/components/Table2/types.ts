@@ -30,8 +30,9 @@ export type ColumnDef = {
 
     filter?: boolean | CustomColumnFilter<any>;
 
-    formatValue?: (value: string | number | null) => string;
-    formatStyle?: (value: string | number | null) => React.CSSProperties;
+    formatValue?: (value: any | null) => string;
+    formatStyle?: (value: any | null) => React.CSSProperties;
+    renderData?: (value: any | null, entry: any) => React.ReactNode;
     // TODO: Allow defining custom render for special case data (f-eks tag list, or actions)
     // renderData?: (data: any, entry, columnDef: ColumnDef) => React.ReactNode;
 };
@@ -61,6 +62,7 @@ export type DataCellDef = {
     columnId: string;
     colGroupIndex: number;
     format?: (value: any | null, entry: any) => string;
+    style?: (value: any | null, entry: any) => React.CSSProperties;
     render?: (value: any | null, entry: any) => React.ReactNode;
     filter?: CustomColumnFilter<any>["predicate"];
 };

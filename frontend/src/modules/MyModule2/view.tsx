@@ -28,19 +28,23 @@ import type { Interfaces } from "./interfaces";
 
 const TABLE_DEFINITION: ColumnDefMap = {
     col1: {
-        label: "Column 1",
-        sizeInPercent: 30,
+        label: "Sub-columns",
+        sizeInPercent: 70,
         subColumns: {
             "col1.1": {
                 label: "Column 1.1",
-                sizeInPercent: 100,
+                sizeInPercent: 50,
                 formatValue: (s) => (s as string).toUpperCase(),
+            },
+            "col1.2": {
+                label: "Column 1.2",
+                sizeInPercent: 50,
             },
         },
     },
-    col3: {
-        label: "Col-3",
-        sizeInPercent: 10,
+    theNumbers: {
+        label: "Numbers",
+        sizeInPercent: 15,
         filter: {
             render: (props) => <RangeFilter {...props} />,
             predicate(dataValue: string | number | null, filterValue: number[]) {
@@ -53,20 +57,20 @@ const TABLE_DEFINITION: ColumnDefMap = {
                 return !inRange(dataValue, min, max + 1);
             },
         },
-    },
-    col2: {
-        label: "Column 2",
-        sizeInPercent: 40,
-        subColumns: {
-            "col1.X": {
-                label: "Column 1.X",
-                sizeInPercent: 90,
-                subColumns: {
-                    "col1.2": { label: "Column 1.2", sizeInPercent: 50 },
-                    "col1.3": { label: "Column 1.3", sizeInPercent: 50 },
-                },
-            },
+
+        formatStyle(value: number) {
+            const percentage = value / 12;
+
+            return {
+                backgroundColor: `hsl(0, 70%, ${percentage}%)`,
+                color: percentage < 60 ? "white" : "black",
+            };
         },
+    },
+    theTags: {
+        label: "Tags",
+        sizeInPercent: 40,
+        renderData: (value) => <Tags tags={value} />,
     },
 };
 
@@ -110,6 +114,30 @@ function RangeFilter(props: ColumnFilterImplementationProps<[number?, number?]>)
                     }
                 }}
             />
+        </div>
+    );
+}
+
+function Tags(props: { tags: string[] }): React.ReactNode {
+    const tagColors = {
+        Tag1: "bg-red-600",
+        Tag2: "bg-blue-600",
+        Tag3: "bg-green-600",
+        Tag4: "bg-yellow-600",
+        Tag5: "bg-purple-600",
+        Tag6: "bg-pink-600",
+    };
+
+    return (
+        <div className="flex flex-wrap gap-1 items-center">
+            {props.tags.map((t) => (
+                <div
+                    key={t}
+                    className={tagColors[t as keyof typeof tagColors] + " rounded-xl px-2 py-1 text-xs text-white"}
+                >
+                    {t}
+                </div>
+            ))}
         </div>
     );
 }

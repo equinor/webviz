@@ -106,6 +106,8 @@ export function recursivelyBuildTableCellDefinitions(
                 colGroupIndex: headerCells[0].length,
                 format: columnDefOrGroup.formatValue,
                 filter: filterPredicate,
+                style: columnDefOrGroup.formatStyle,
+                render: columnDefOrGroup.renderData,
                 // TODO: Allow render func
                 // render: columnDefOrGroup.render,
             });
