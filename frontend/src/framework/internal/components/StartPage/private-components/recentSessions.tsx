@@ -2,7 +2,11 @@ import React from "react";
 
 import { useQuery } from "@tanstack/react-query";
 
-import { getSessionsMetadataOptions, PrimaryServicesSessionAccessTypesSortBy_api, SortDirection_api } from "@api";
+import {
+    getSessionsMetadataOptions,
+    PrimaryServicesDatabaseAccessSessionAccessTypesSortBy_api,
+    SortDirection_api,
+} from "@api";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { timeAgo } from "@lib/utils/dates";
@@ -22,7 +26,7 @@ export function RecentSessions(props: RecentSessionsProps) {
     const sessionsQuery = useQuery({
         ...getSessionsMetadataOptions({
             query: {
-                sort_by: PrimaryServicesSessionAccessTypesSortBy_api.UPDATED_AT,
+                sort_by: PrimaryServicesDatabaseAccessSessionAccessTypesSortBy_api.UPDATED_AT,
                 sort_direction: SortDirection_api.DESC,
                 limit: 5,
             },

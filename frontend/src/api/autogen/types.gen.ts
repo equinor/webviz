@@ -735,7 +735,7 @@ export type Snapshot_api = {
 };
 
 export type SnapshotAccessLog_api = {
-    userId: string;
+    visitorId: string;
     snapshotId: string;
     visits: number;
     firstVisitedAt: string | null;
@@ -1250,14 +1250,14 @@ export type WellboreTrajectory_api = {
     northingArr: Array<number>;
 };
 
-export enum PrimaryServicesSessionAccessTypesSortBy_api {
+export enum PrimaryServicesDatabaseAccessSessionAccessTypesSortBy_api {
     CREATED_AT = "created_at",
     UPDATED_AT = "updated_at",
     TITLE = "title",
     TITLE_LOWER = "title_lower",
 }
 
-export enum PrimaryServicesSnapshotAccessTypesSortBy_api {
+export enum PrimaryServicesDatabaseAccessSnapshotAccessTypesSortBy_api {
     CREATED_AT = "created_at",
     UPDATED_AT = "updated_at",
     TITLE = "title",
@@ -3940,7 +3940,7 @@ export type GetSessionsMetadataData_api = {
         /**
          * Sort the result by
          */
-        sort_by?: PrimaryServicesSessionAccessTypesSortBy_api | null;
+        sort_by?: PrimaryServicesDatabaseAccessSessionAccessTypesSortBy_api | null;
         /**
          * Sort direction: 'asc' or 'desc'
          */
@@ -3949,6 +3949,7 @@ export type GetSessionsMetadataData_api = {
          * Limit the number of results
          */
         limit?: number | null;
+        t?: number;
     };
     url: "/sessions/sessions";
 };
@@ -3974,7 +3975,9 @@ export type GetSessionsMetadataResponse_api = GetSessionsMetadataResponses_api[k
 export type CreateSessionData_api = {
     body: NewSession_api;
     path?: never;
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/sessions/sessions";
 };
 
@@ -4001,7 +4004,9 @@ export type DeleteSessionData_api = {
     path: {
         session_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/sessions/sessions/{session_id}";
 };
 
@@ -4026,7 +4031,9 @@ export type GetSessionData_api = {
     path: {
         session_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/sessions/sessions/{session_id}";
 };
 
@@ -4053,7 +4060,9 @@ export type UpdateSessionData_api = {
     path: {
         session_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/sessions/sessions/{session_id}";
 };
 
@@ -4078,7 +4087,9 @@ export type GetSessionMetadataData_api = {
     path: {
         session_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/sessions/sessions/metadata/{session_id}";
 };
 
@@ -4107,7 +4118,7 @@ export type GetRecentSnapshotsData_api = {
         /**
          * Sort the result by
          */
-        sort_by?: PrimaryServicesSnapshotAccessTypesSortBy_api | null;
+        sort_by?: PrimaryServicesDatabaseAccessSnapshotAccessTypesSortBy_api | null;
         /**
          * Sort direction: 'asc' or 'desc'
          */
@@ -4120,6 +4131,7 @@ export type GetRecentSnapshotsData_api = {
          * The offset of the results
          */
         offset?: number | null;
+        t?: number;
     };
     url: "/snapshots/recent_snapshots";
 };
@@ -4149,7 +4161,7 @@ export type GetSnapshotsMetadataData_api = {
         /**
          * Sort the result by
          */
-        sort_by?: PrimaryServicesSnapshotAccessTypesSortBy_api | null;
+        sort_by?: PrimaryServicesDatabaseAccessSnapshotAccessTypesSortBy_api | null;
         /**
          * Sort direction: 'asc' or 'desc'
          */
@@ -4158,6 +4170,7 @@ export type GetSnapshotsMetadataData_api = {
          * Limit the number of results
          */
         limit?: number | null;
+        t?: number;
     };
     url: "/snapshots/snapshots";
 };
@@ -4183,7 +4196,9 @@ export type GetSnapshotsMetadataResponse_api = GetSnapshotsMetadataResponses_api
 export type CreateSnapshotData_api = {
     body: NewSnapshot_api;
     path?: never;
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/snapshots/snapshots";
 };
 
@@ -4210,7 +4225,9 @@ export type DeleteSnapshotData_api = {
     path: {
         snapshot_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/snapshots/snapshots/{snapshot_id}";
 };
 
@@ -4235,7 +4252,9 @@ export type GetSnapshotData_api = {
     path: {
         snapshot_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/snapshots/snapshots/{snapshot_id}";
 };
 
@@ -4262,7 +4281,9 @@ export type UpdateSnapshotData_api = {
     path: {
         snapshot_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/snapshots/snapshots/{snapshot_id}";
 };
 
@@ -4287,7 +4308,9 @@ export type GetSnapshotMetadataData_api = {
     path: {
         snapshot_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/snapshots/snapshots/metadata/{snapshot_id}";
 };
 
@@ -4314,7 +4337,9 @@ export type SnapshotPreviewData_api = {
     path: {
         snapshot_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/snapshot-preview/{snapshot_id}";
 };
 

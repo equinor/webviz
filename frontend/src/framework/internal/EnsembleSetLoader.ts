@@ -93,7 +93,6 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                 sensitivityArray,
                 ensembleSetting.color,
                 ensembleSetting.customName,
-                ensembleApiData.ensembleDetails.timestamps,
             ),
         );
     }
@@ -147,7 +146,6 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                   nullSensitivityArray,
                   emptyColor,
                   comparisonEnsembleCustomName,
-                  comparisonEnsembleApiData.ensembleDetails.timestamps,
               );
 
         const referenceEnsemble = existingReferenceEnsemble
@@ -163,7 +161,6 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                   nullSensitivityArray,
                   emptyColor,
                   referenceEnsembleCustomName,
-                  referenceEnsembleApiData.ensembleDetails.timestamps,
               );
 
         outDeltaEnsembleArray.push(
