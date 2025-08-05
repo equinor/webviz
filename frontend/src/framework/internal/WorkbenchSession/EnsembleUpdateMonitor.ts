@@ -146,8 +146,5 @@ export class EnsembleUpdateMonitor {
 
     dispose() {
         this.stopPolling();
-        this._pollingTimeout = null;
-        this._isRunning = false;
-        this._pollingEnabled = false;
     }
 }
