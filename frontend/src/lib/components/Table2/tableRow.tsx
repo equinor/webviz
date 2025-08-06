@@ -36,10 +36,10 @@ export function TableRow<T extends ColumnDefMap>(props: TableRowProps<T>): React
                     <td
                         key={cellDef.columnId}
                         className=" border-slate-200 p-1 whitespace-nowrap truncate"
-                        style={style}
                         title={formattedData}
+                        style={{ height: ROW_HEIGHT_PX, ...style }}
                     >
-                        {formattedData ?? dataValue}
+                        {cellDef.render?.(dataValue, props.rowData) ?? formattedData ?? dataValue}
                     </td>
                 );
             })}

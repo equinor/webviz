@@ -242,7 +242,7 @@ function defaultFilterRender(props: ColumnFilterImplementationProps<string>) {
             type="text"
             value={value}
             placeholder="Filter ..."
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => props.onFilterChange(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => props.onFilterChange(e.target.value || null)}
             endAdornment={
                 <div
                     className="cursor-pointer text-gray-600 hover:text-gray-500 text-sm"
