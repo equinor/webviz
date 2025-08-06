@@ -86,10 +86,6 @@ export class EnsembleUpdateMonitor {
     }
 
     private async pollForUpdatedEnsembles() {
-        if (!this._pollingEnabled) {
-            return; // Stop if polling is disabled
-        }
-
         if (this._isRunning) {
             console.warn("Ensemble polling is already running, skipping this cycle.");
             return; // Prevent concurrent polling
