@@ -108,7 +108,6 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         this._isSnapshot = isSnapshot;
 
         this._ensembleUpdateMonitor = new EnsembleUpdateMonitor(this, queryClient);
-        this._ensembleUpdateMonitor.startPolling();
     }
 
     getIsLoadedFromLocalStorage(): boolean {
@@ -218,14 +217,15 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         regularEnsembleSettings: UserEnsembleSetting[],
         deltaEnsembleSettings: UserDeltaEnsembleSetting[],
     ): Promise<void> {
+        this._ensembleUpdateMonitor.stopPolling();
         this.setEnsembleSetLoading(true);
         const newSet = await loadMetadataFromBackendAndCreateEnsembleSet(
             this._queryClient,
             regularEnsembleSettings,
             deltaEnsembleSettings,
         );
+        await this.setEnsembleSet(newSet);
         this.setEnsembleSetLoading(false);
-        this.setEnsembleSet(newSet);
     }
 
     private setEnsembleSetLoading(isLoading: boolean) {
@@ -233,9 +233,11 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING);
     }
 
-    private setEnsembleSet(set: EnsembleSet) {
+    private async setEnsembleSet(set: EnsembleSet) {
         this._realizationFilterSet.synchronizeWithEnsembleSet(set);
         this._ensembleSet = set;
+        await this._ensembleUpdateMonitor.pollImmediately();
+        this._ensembleUpdateMonitor.startPolling();
         this._atomStoreMaster.setAtomValue(EnsembleSetAtom, set);
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ENSEMBLE_SET);
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET);

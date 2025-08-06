@@ -12,6 +12,12 @@ class EnsembleTimestampsStoreImpl {
         this._timestamps = timestamps;
     }
 
+    update(timestamps: Map<string, EnsembleTimestamps>) {
+        for (const [key, value] of timestamps) {
+            this._timestamps.set(key, value);
+        }
+    }
+
     getLatestTimestamps(...idents: RegularEnsembleIdent[]): EnsembleTimestamps {
         let dataUpdatedAt = 0;
         let caseUpdatedAt = 0;

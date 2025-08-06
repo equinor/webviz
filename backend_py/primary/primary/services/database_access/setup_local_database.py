@@ -30,7 +30,7 @@ COSMOS_SCHEMA: List[Dict[str, Any]] = [
 ]
 
 
-def wait_for_emulator(uri: str, key: str, retries: int = 30, delay: int = 2) -> CosmosClient:
+def wait_for_emulator(uri: str, key: str, retries: int = 50, delay: int = 10) -> CosmosClient:
     probe_url = f"{uri.rstrip('/')}/_explorer/emulator.pem"
     context = ssl._create_unverified_context()
 

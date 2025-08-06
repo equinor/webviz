@@ -1,7 +1,8 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import { postGetTimestampsForEnsemblesOptions, type EnsembleIdent_api } from "@api";
 import { EnsembleTimestampsStore, type EnsembleTimestamps } from "@framework/EnsembleTimestampsStore";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { QueryClient } from "@tanstack/query-core";
 
 import type { PrivateWorkbenchSession } from "./PrivateWorkbenchSession";
 
@@ -13,6 +14,7 @@ export class EnsembleUpdateMonitor {
     private _pollingEnabled: boolean = false;
     private _isRunning: boolean = false;
     private _pollingTimeout: ReturnType<typeof setTimeout> | null = null;
+    private _lastPollTimestamp: number | null = null;
 
     constructor(workbenchSession: PrivateWorkbenchSession, queryClient: QueryClient) {
         this._workbenchSession = workbenchSession;
@@ -49,9 +51,25 @@ export class EnsembleUpdateMonitor {
         }
     }
 
+    async pollImmediately() {
+        await this.pollForUpdatedEnsembles();
+    }
+
     private async recursivelyQueueEnsemblePolling() {
         if (!this._pollingEnabled) {
             return; // Stop if polling is disabled
+        }
+
+        const now = Date.now();
+        const elapsed = this._lastPollTimestamp ? now - this._lastPollTimestamp : Infinity;
+
+        if (elapsed < ENSEMBLE_POLLING_INTERVAL) {
+            const wait = ENSEMBLE_POLLING_INTERVAL - elapsed;
+            console.debug(`Polling skipped: only ${elapsed}ms elapsed since last poll. Waiting ${wait}ms...`);
+            this._pollingTimeout = setTimeout(() => {
+                this.recursivelyQueueEnsemblePolling();
+            }, wait);
+            return;
         }
 
         await this.pollForUpdatedEnsembles();
@@ -61,7 +79,8 @@ export class EnsembleUpdateMonitor {
         }
 
         console.debug("checkForEnsembleUpdate - queuing next...");
-        this._pollingTimeout = setTimeout(async () => {
+
+        this._pollingTimeout = setTimeout(() => {
             this.recursivelyQueueEnsemblePolling();
         }, ENSEMBLE_POLLING_INTERVAL);
     }
@@ -123,6 +142,7 @@ export class EnsembleUpdateMonitor {
         } catch (error) {
             console.error("Error during ensemble polling:", error);
         } finally {
+            this._lastPollTimestamp = Date.now();
             this._isRunning = false;
         }
     }
