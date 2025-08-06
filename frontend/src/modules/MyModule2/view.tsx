@@ -27,9 +27,14 @@ import type { Interfaces } from "./interfaces";
 // };
 
 const TABLE_DEFINITION: ColumnDefMap = {
+    id: {
+        label: "id",
+        sizeInPercent: 10,
+        sortable: false,
+    },
     col1: {
         label: "Sub-columns",
-        sizeInPercent: 70,
+        sizeInPercent: 40,
         subColumns: {
             "col1.1": {
                 label: "Column 1.1",
@@ -69,7 +74,7 @@ const TABLE_DEFINITION: ColumnDefMap = {
     },
     theTags: {
         label: "Tags",
-        sizeInPercent: 40,
+        sizeInPercent: 35,
         renderData: (value) => <Tags tags={value} />,
     },
 };

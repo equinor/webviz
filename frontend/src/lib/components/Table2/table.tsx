@@ -22,6 +22,7 @@ import type {
 import {
     computeTableMinWidth,
     defaultDataFilterPredicate,
+    isLoadedDataRow,
     recursivelyBuildTableCellDefinitions,
     recursivelyBuildTableColumnGroups,
     useOptInControlledValue,
@@ -41,7 +42,7 @@ export type TableProps<T extends ColumnDefMap> = {
     rowIdentifier?: string;
 
     /** Specifies that data collation will be applied outside of the component */
-    controlledRows?: boolean;
+    controlledCollation?: boolean;
 
     height?: number | string;
     width?: number | string;
@@ -121,8 +122,10 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
     const [tableSortState, setTableSortState] = useOptInControlledValue([], props.sorting, props.onSortingChange);
     const [tableFilterState, setTableFilterState] = useOptInControlledValue({}, props.filters, props.onFiltersChange);
 
-    const rowsWithKey = React.useMemo(() => {
-        return props.rows.map((r) => {
+    const rowsWithKey = React.useMemo<TableRowWithKey<T>[]>(() => {
+        return props.rows.map((r, i) => {
+            if (!isLoadedDataRow(r)) return { _key: `__pending-${i}`, _pending: true };
+
             const key = !props.rowIdentifier ? v4() : r[props.rowIdentifier];
             if (!key) throw new Error(`Empty value for row identifier "${props.rowIdentifier}`);
             return { ...r, _key: key.toString() };
@@ -141,10 +144,12 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
     }
 
     const filteredRows = React.useMemo(() => {
-        if (props.controlledRows) return rowsWithKey;
+        if (props.controlledCollation) return rowsWithKey;
         if (isEmpty(tableFilterState)) return rowsWithKey;
 
         return rowsWithKey.filter((row) => {
+            if (!isLoadedDataRow(row)) return true;
+
             for (const columnId in tableFilterState) {
                 const filterValue = tableFilterState[columnId];
                 const dataValue = row[columnId];
@@ -159,10 +164,10 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
 
             return true;
         });
-    }, [props.controlledRows, rowsWithKey, tableFilterState, colDataDefLookup]);
+    }, [props.controlledCollation, rowsWithKey, tableFilterState, colDataDefLookup]);
 
     const sortedRows = React.useMemo(() => {
-        if (props.controlledRows) return filteredRows;
+        if (props.controlledCollation) return filteredRows;
 
         // Apply filtering
         const fieldIterateeSetting = [];
@@ -174,7 +179,7 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
         }
 
         return orderBy(filteredRows, fieldIterateeSetting, dirIterateeSetting);
-    }, [tableSortState, props.controlledRows, filteredRows]);
+    }, [tableSortState, props.controlledCollation, filteredRows]);
 
     const handleRowHover = React.useCallback(
         function handleRowHover(id: string | null, row: TableRowWithKey<T> | null) {

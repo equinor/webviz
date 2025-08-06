@@ -13,10 +13,16 @@ import type {
     HeaderCellDef,
     TableCellDefinitions,
     TableRowData,
+    LoadedData,
 } from "./types";
 
 export function isColumnGroupDef(headerOrGroup: ColumnDef | ColumnGroup): headerOrGroup is ColumnGroup {
     return "subColumns" in headerOrGroup;
+}
+
+export function isLoadedDataRow<T extends ColumnDefMap>(data: TableRowData<T>): data is LoadedData<T> {
+    if (data._pending) return false;
+    return true;
 }
 
 function recursivelyCalcDepth(columnDefinitions: ColumnDefMap, depth: number = 1): number {

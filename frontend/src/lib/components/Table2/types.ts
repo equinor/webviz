@@ -47,10 +47,12 @@ export type BaseHeadingCellInfo = {
     depth: number;
 };
 
-export type TableRowData<T extends ColumnDefMap> = {
+export type PendingData = { _pending: true };
+export type LoadedData<T extends object> = { _pending: undefined | false } & {
     [key in keyof T]: string | number | null;
 };
 
+export type TableRowData<T extends ColumnDefMap> = PendingData | LoadedData<T>;
 export type TableRowWithKey<T extends ColumnDefMap> = { _key: string } & TableRowData<T>;
 
 export enum SortDirection {
