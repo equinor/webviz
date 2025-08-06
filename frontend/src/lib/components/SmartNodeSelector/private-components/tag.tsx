@@ -5,8 +5,6 @@ import { Close, Error, ExpandLess, ExpandMore, Help, Warning } from "@mui/icons-
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 
-import "animate.css";
-
 import type { TreeNodeSelection } from "../private-utils/treeNodeSelection";
 
 type TagProps = {
