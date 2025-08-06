@@ -2,7 +2,11 @@ import { v4 } from "uuid";
 
 import type { EnsembleSet } from "@framework/EnsembleSet";
 
-import type { InternalDeltaEnsembleSetting, InternalRegularEnsembleSetting } from "./types";
+import type {
+    ExploredRegularEnsembleInfo,
+    InternalDeltaEnsembleSetting,
+    InternalRegularEnsembleSetting,
+} from "./types";
 
 export function makeRegularEnsembleSettingsFromEnsembleSet(ensembleSet: EnsembleSet): InternalRegularEnsembleSetting[] {
     const items: InternalRegularEnsembleSetting[] = [];
@@ -35,17 +39,41 @@ export function makeDeltaEnsembleSettingsFromEnsembleSet(ensembleSet: EnsembleSe
     return items;
 }
 
+export function makePreviouslyExploredRegularEnsembleInfosFromEnsembleSet(
+    ensembleSet: EnsembleSet,
+): ExploredRegularEnsembleInfo[] {
+    const items: ExploredRegularEnsembleInfo[] = [];
+
+    const selectedRegularEnsembleIdents = ensembleSet.getRegularEnsembleArray().map((ens) => ens.getIdent());
+    for (const deltaEnsemble of ensembleSet.getDeltaEnsembleArray()) {
+        if (!selectedRegularEnsembleIdents.includes(deltaEnsemble.getComparisonEnsembleIdent())) {
+            items.push({
+                ensembleIdent: deltaEnsemble.getComparisonEnsembleIdent(),
+                caseName: deltaEnsemble.getComparisonEnsembleCaseName(),
+            });
+        }
+        if (!selectedRegularEnsembleIdents.includes(deltaEnsemble.getReferenceEnsembleIdent())) {
+            items.push({
+                ensembleIdent: deltaEnsemble.getReferenceEnsembleIdent(),
+                caseName: deltaEnsemble.getReferenceEnsembleCaseName(),
+            });
+        }
+    }
+
+    return items;
+}
+
 export function makeHashFromSelectedEnsembles(
     selectedRegularEnsembles: InternalRegularEnsembleSetting[],
     selectedDeltaEnsembles: InternalDeltaEnsembleSetting[],
 ): string {
     const regularHash = selectedRegularEnsembles
-        .map((item) => item.ensembleIdent.toString())
+        .map((item) => `${item.customName}~@@~${item.ensembleIdent.toString()}`)
         .sort()
         .join(",");
 
     const deltaHash = selectedDeltaEnsembles
-        .map((item) => makeHashFromDeltaEnsemble(item))
+        .map((item) => `${item.customName}~@@~${makeHashFromDeltaEnsemble(item)}`)
         .sort()
         .join(",");
 
@@ -53,5 +81,7 @@ export function makeHashFromSelectedEnsembles(
 }
 
 export function makeHashFromDeltaEnsemble(deltaEnsemble: InternalDeltaEnsembleSetting): string {
-    return `${deltaEnsemble.comparisonEnsembleIdent.toString()}~&&~${deltaEnsemble.referenceEnsembleIdent.toString()}`;
+    const comparisonEnsembleIdentString = deltaEnsemble.comparisonEnsembleIdent?.toString() || "null";
+    const referenceEnsembleIdentString = deltaEnsemble.referenceEnsembleIdent?.toString() || "null";
+    return `${comparisonEnsembleIdentString}~&&~${referenceEnsembleIdentString}`;
 }

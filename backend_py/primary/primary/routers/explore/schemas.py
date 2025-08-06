@@ -19,6 +19,9 @@ class CaseInfo(BaseModel):
     user: str
     updatedAtUtcMs: int
 
+    # date: str # NOTE: Which date should be provide for a case? "Create", "Last updated/modified", "newest date for a document for one of the ensembles"
+    # description: str
+    # standard_results: Sequence[str]
 
 class EnsembleTimestamps(BaseModel):
     caseUpdatedAtUtcMs: int
@@ -30,6 +33,8 @@ class EnsembleInfo(BaseModel):
     realizationCount: int
     timestamps: EnsembleTimestamps
 
+    # standard_results: Sequence[str]
+
 
 class EnsembleDetails(BaseModel):
     name: str
@@ -39,3 +44,5 @@ class EnsembleDetails(BaseModel):
     realizations: Sequence[int]
     stratigraphicColumnIdentifier: str
     timestamps: EnsembleTimestamps
+
+    # standard_results: Sequence[str]

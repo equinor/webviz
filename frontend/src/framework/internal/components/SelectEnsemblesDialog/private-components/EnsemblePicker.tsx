@@ -27,7 +27,8 @@ import { UserAvatar } from "./userAvatar";
 export type EnsemblePickerProps = {
     nextEnsembleColor: string;
     selectedEnsembles: UserEnsembleSetting[];
-    onAddEnsemble: (newEnsemble: InternalRegularEnsembleSetting) => void;
+    pickButtonLabel?: string;
+    onPickEnsemble: (newEnsemble: InternalRegularEnsembleSetting) => void;
 };
 
 const STALE_TIME = tanstackDebugTimeOverride(0);
@@ -181,13 +182,13 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
         setSelectedEnsembleName(ensembleNames[0]);
     }
 
-    function handleAddRegularEnsemble() {
+    function handleSelectRegularEnsemble() {
         if (ensembleAlreadySelected) return;
         if (!selectedEnsemble) return;
 
         const caseName = casesQuery.data?.find((c) => c.uuid === selectedCaseUuid)?.name ?? "UNKNOWN";
 
-        props.onAddEnsemble({
+        props.onPickEnsemble({
             ensembleIdent: new RegularEnsembleIdent(selectedCaseUuid, selectedEnsembleName),
             caseName: caseName,
             color: props.nextEnsembleColor,
@@ -197,7 +198,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
     }
 
     return (
-        <div className="flex flex-col gap-4 p-4 border-r bg-slate-100 h-full">
+        <div className="flex flex-col gap-4 p-4 border-r bg-slate-100 h-full rounded-md">
             <Label text="Field">
                 <QueryStateWrapper
                     queryResult={fieldsQuery}
@@ -233,8 +234,8 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
                         value={[selectedCaseUuid]}
                         onChange={handleCaseChanged}
                         disabled={caseOpts.length === 0}
-                        size={5}
-                        width={400}
+                        size={25}
+                        width={"100%"}
                         filter
                         columnSizesInPercent={[60, 20, 20]}
                     />
@@ -259,12 +260,14 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
             <div className="flex justify-end">
                 <Button
                     variant="contained"
-                    onClick={handleAddRegularEnsemble}
+                    onClick={handleSelectRegularEnsemble}
                     color={ensembleAlreadySelected ? "success" : "primary"}
                     disabled={ensembleAlreadySelected || ensembleOpts.length === 0}
                     startIcon={ensembleAlreadySelected ? <Check fontSize="small" /> : <Add fontSize="small" />}
                 >
-                    {ensembleAlreadySelected ? "Ensemble already selected" : "Add Ensemble"}
+                    {ensembleAlreadySelected
+                        ? "Ensemble already selected"
+                        : (props.pickButtonLabel ?? "Select Ensemble")}
                 </Button>
             </div>
         </div>
