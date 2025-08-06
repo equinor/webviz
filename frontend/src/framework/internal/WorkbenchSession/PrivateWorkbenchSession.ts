@@ -236,6 +236,7 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     private async setEnsembleSet(set: EnsembleSet) {
         this._realizationFilterSet.synchronizeWithEnsembleSet(set);
         this._ensembleSet = set;
+        // Await the update of the EnsembleTimestampsStore with the latest timestamps before notifying any subscribers
         await this._ensembleUpdateMonitor.pollImmediately();
         this._ensembleUpdateMonitor.startPolling();
         this._atomStoreMaster.setAtomValue(EnsembleSetAtom, set);
