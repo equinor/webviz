@@ -105,6 +105,7 @@ export type TableCellDefinitions = {
 export type ColDef = {
     columnId: string;
     width: number;
+    minWidth: number;
 };
 
 export type ColGroupDef = {

@@ -20,6 +20,7 @@ import type {
     TableRowWithKey,
 } from "./types";
 import {
+    computeTableMinWidth,
     defaultDataFilterPredicate,
     recursivelyBuildTableCellDefinitions,
     recursivelyBuildTableColumnGroups,
@@ -42,8 +43,8 @@ export type TableProps<T extends ColumnDefMap> = {
     /** Specifies that data collation will be applied outside of the component */
     controlledRows?: boolean;
 
-    /** Height of the entire table */
     height?: number | string;
+    width?: number | string;
 
     /** Colors every other column group with darker cells */
     alternatingColumnColors?: boolean;
@@ -84,6 +85,12 @@ function validateProps<T extends ColumnDefMap>(props: TableProps<T>) {
     if (props.selectable && !props.rowIdentifier) {
         console.warn("Table is selectable, but no row identifier has been specified");
     }
+
+    const totalColSize = Object.values(props.columnDefMap).reduce((acc, def) => acc + def.sizeInPercent, 0);
+
+    if (totalColSize !== 100) {
+        console.warn(`Total column width sums to ${totalColSize}%, not 100%`);
+    }
 }
 
 export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.ReactNode {
@@ -104,6 +111,10 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
     const colgroupDefinitions = React.useMemo(() => {
         return recursivelyBuildTableColumnGroups(props.columnDefMap);
     }, [props.columnDefMap]);
+
+    const tableMinWidth = React.useMemo(() => {
+        return computeTableMinWidth(colgroupDefinitions);
+    }, [colgroupDefinitions]);
 
     const [selectedRows, setSelectedRows] = useOptInControlledValue([], props.selectedRows, props.onSelectedRowsChange);
 
@@ -175,8 +186,12 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
 
     return (
         <>
-            <div ref={divWrapperRef} className="relative overflow-auto" style={{ height: props.height }}>
-                <table className="w-full border-x border-slate-500 text-sm table-fixed">
+            <div
+                ref={divWrapperRef}
+                className="relative overflow-auto border-y-2 border-slate-200"
+                style={{ maxHeight: props.height, width: props.width }}
+            >
+                <table className="w-full text-sm table-fixed" style={{ minWidth: tableMinWidth }}>
                     {/* Create col-groups based on the top-level columns */}
                     <TableColGroups
                         colgroupDefinitions={colgroupDefinitions}
@@ -222,12 +237,11 @@ function TableColGroups(props: TableColGroupsProps): React.ReactNode {
             {props.colgroupDefinitions.map((colGroupDef, index) => {
                 const colorIndex = props.alternatingColumnColors ? index % 2 : 1;
                 const headerColorClass = ALTERNATING_COLUMN_CELL_COLORS[colorIndex];
-                const borderColor = props.alternatingColumnColors ? "border-slate-400" : "border-gray-200";
 
                 return (
                     <colgroup
                         key={colGroupDef.columnId}
-                        className={resolveClassNames(headerColorClass, "border-x-2", borderColor)}
+                        className={resolveClassNames(headerColorClass, "border-x-2 border-gray-200")}
                     >
                         {colGroupDef.cols.map((colDef) => (
                             <col
@@ -308,7 +322,7 @@ function TableBody<T extends ColumnDefMap>(props: TableBodyProps<T>): React.Reac
             {props.rows.length === 0 && (
                 <tr style={{ height: ROW_HEIGHT_PX * 2.5 }}>
                     <td
-                        className="text-lg italic text-slate-600 text-center align-middle border-x-0 border-b-2 border-slate-200"
+                        className="text-lg italic text-slate-600 text-center align-middle"
                         colSpan={props.dataCellDefinitions.length}
                     >
                         No data found

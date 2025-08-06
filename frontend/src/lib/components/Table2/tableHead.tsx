@@ -95,7 +95,7 @@ function HeaderCell(props: HeaderCellProps) {
 
     return (
         <th
-            className={resolveClassNames(headerColorClass, "border-y-2 border-slate-200 px-2", {
+            className={resolveClassNames(headerColorClass, "border-b-2 border-slate-200 px-2", {
                 "hover:brightness-95 cursor-pointer": props.sortable,
             })}
             rowSpan={props.rowSpan}
@@ -169,7 +169,7 @@ export function TableHead(props: TableHeadProps): React.ReactNode {
     return (
         // TODO: Fix styling for sticky header. Border collapse doesn't play nice with it
         // Applying outline as a hack for the missing borders
-        <thead className="select-none border-y-2 border-slate-400 shadow sticky top-0 [&_th]:outline [&_th]:outline-slate-300">
+        <thead className="select-none border-b-2 border-slate-400 shadow sticky top-0 z-10 [&_th]:outline [&_th]:outline-slate-300">
             {props.headerCellDefinitions.map((headerRow, index) => (
                 <tr key={`header-row-depth${index}`} style={{ height: HEADER_HEIGHT_PX }}>
                     {headerRow.map((cellDef) => {

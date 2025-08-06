@@ -130,9 +130,9 @@ function Tags(props: { tags: string[] }): React.ReactNode {
 
     return (
         <div className="flex flex-wrap gap-1 items-center">
-            {props.tags.map((t) => (
+            {props.tags.map((t, i) => (
                 <div
-                    key={t}
+                    key={t + i}
                     className={tagColors[t as keyof typeof tagColors] + " rounded-xl px-2 py-1 text-xs text-white"}
                 >
                     {t}
@@ -162,15 +162,7 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
 
     return (
         <div className="h-full w-full flex flex-col">
-            {/* <h3 className="mt-6 font-extrabold text-lg">Legacy</h3>
-            <Table
-                height={300}
-                headings={TABLE_DEFINITION_LEGACY}
-                data={data}
-                alternatingColumnColors={alternateCols}
-            />
-            */}
-
+            {/* 
             <h3 className="mt-6 font-extrabold text-lg">New (un-controlled)</h3>
             <Table2
                 rowIdentifier="id"
@@ -186,6 +178,7 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
                 onSelectedRowsChange={setSelectedRows}
                 onRowHover={setHoveredItem}
             />
+             */}
 
             <h3 className="mt-6 font-extrabold text-lg">New (controlled)</h3>
 

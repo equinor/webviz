@@ -1,5 +1,8 @@
 import React from "react";
 
+import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
+import { getTextWidthWithFont } from "@lib/utils/textSize";
+
 import type {
     ColumnGroup,
     ColumnDefMap,
@@ -124,6 +127,19 @@ export function recursivelyBuildTableCellDefinitions(
     return { dataCells, filterCells, headerCells };
 }
 
+// The table need to at least be wide enough that each column can fit it's headers
+export function computeTableMinWidth(colGroups: ColGroupDef[]) {
+    let minWidth = 0;
+
+    for (const colGroup of colGroups) {
+        for (const col of colGroup.cols) {
+            minWidth += col.minWidth;
+        }
+    }
+
+    return minWidth;
+}
+
 export function recursivelyBuildTableColumnGroups(
     columnDefinitions: ColumnDefMap,
     parentSize: number = 100,
@@ -150,8 +166,20 @@ export function recursivelyBuildTableColumnGroups(
                 columnId,
             });
         } else {
+            // The the table can support dynamic data, so we cannot pre-compute column widths based on data content.
+            // To ensure the table looks somewhat nice, we compute a minimum width that should at least fit the header title and adornments
+
+            let minWidth = getTextWidthWithFont(columnDefOrGroup.label, "Equinor", 1);
+            // Padding
+            minWidth += convertRemToPixels(2);
+
+            if (columnDefOrGroup.sortable == null || columnDefOrGroup.sortable) {
+                // Adornment and gap
+                minWidth += convertRemToPixels(4);
+            }
+
             colGroups.push({
-                cols: [{ columnId, width: columnSize }],
+                cols: [{ columnId, minWidth, width: columnSize }],
                 columnId,
             });
         }

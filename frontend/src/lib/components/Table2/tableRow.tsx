@@ -16,11 +16,10 @@ export type TableRowProps<T extends ColumnDefMap> = {
 export function TableRow<T extends ColumnDefMap>(props: TableRowProps<T>): React.ReactNode {
     return (
         <tr
-            className={resolveClassNames("group/tr border-b-2", {
+            className={resolveClassNames("group/tr border-b-2 last:border-b-0", {
                 "hover:bg-blue-100": !props.selected,
                 "bg-blue-300 text-white hover:bg-blue-200": props.selected,
             })}
-            style={{ height: ROW_HEIGHT_PX }}
             onClick={(evt) => props.onClick(props.rowData, evt)}
             onMouseOver={(evt) => props.onMouseOver?.(props.rowData, evt)}
         >
