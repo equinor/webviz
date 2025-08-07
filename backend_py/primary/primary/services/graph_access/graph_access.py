@@ -16,15 +16,18 @@ class GraphApiAccess:
         return {"Authorization": f"Bearer {self._access_token}"}
 
     async def _request(self, url: str) -> httpx.Response:
-
         response = await HTTPX_ASYNC_CLIENT_WRAPPER.client.get(
             url,
             headers=self._make_headers(),
         )
+
         return response
 
-    async def get_user_profile_photo(self, user_id: str) -> str | None:
-        request_url = urljoin(self.base_url, "me/photo/$value" if user_id == "me" else f"users/{user_id}/photo/$value")
+    async def get_user_profile_photo(self, user_email: str) -> str | None:
+        request_url = urljoin(
+            self.base_url,
+            "me/photo/$value" if user_email == "me" else f"users/{user_email}/photo/$value",
+        )
 
         response = await self._request(request_url)
 
@@ -33,8 +36,8 @@ class GraphApiAccess:
         else:
             return None
 
-    async def get_user_info(self, user_id: str) -> Mapping[str, str] | None:
-        request_url = urljoin(self.base_url, "me" if user_id == "me" else f"users/{user_id}")
+    async def get_user_info(self, user_email: str) -> Mapping[str, str] | None:
+        request_url = urljoin(self.base_url, "me" if user_email == "me" else f"users/{user_email}")
 
         response = await self._request(request_url)
 
