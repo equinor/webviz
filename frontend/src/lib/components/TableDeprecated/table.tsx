@@ -1,11 +1,11 @@
 import React from "react";
 
+import { getTextWidthWithFont } from "@lib/utils/textzSize";
 import { Close, ExpandLess, ExpandMore } from "@mui/icons-material";
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { getTextWidthWithFont } from "@lib/utils/textSize";
 
 import type { BaseComponentProps } from "../BaseComponent";
 import { BaseComponent } from "../BaseComponent";
@@ -481,7 +481,10 @@ export function TableComponent(
             headingCells.push(
                 <th
                     key={`${key}-filter`}
-                    className={resolveClassNames("bg-slate-100 p-0 pb-1 text-left drop-shadow-sm", additionalClassNames)}
+                    className={resolveClassNames(
+                        "bg-slate-100 p-0 pb-1 text-left drop-shadow-sm",
+                        additionalClassNames,
+                    )}
                     style={{
                         width: `${flattenedHeadings[key].sizeInPercent}%`,
                         minWidth: columnWidths[key],
