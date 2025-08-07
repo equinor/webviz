@@ -71,7 +71,7 @@ const TABLE_COLUMNS: TableColumns<ExampleTabularData> = [
                 const min = filterValue[0] ?? Number.NEGATIVE_INFINITY;
                 const max = filterValue[1] ?? Number.POSITIVE_INFINITY;
 
-                return !inRange(dataValue, min, max + 1);
+                return inRange(dataValue, min, max + 1);
             },
         },
 

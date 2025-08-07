@@ -222,6 +222,7 @@ function FilterCell<T extends Record<string, any>>(props: FilterCellProps<T>): R
 
     const renderFunc = props.render ?? defaultFilterRender;
 
+    if (!props.enabled) return <th />;
     return (
         <th className="text-xs">
             {renderFunc({

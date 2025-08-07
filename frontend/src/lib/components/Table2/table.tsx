@@ -154,16 +154,21 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
             if (!isLoadedDataRow<T>(row)) return true;
 
             for (const columnId in tableFilterState) {
+                if (!(columnId in row)) {
+                    console.warn(`Attempting to filter data on column ${columnId}, which doesnt exist`);
+                    continue;
+                }
+
                 const filterValue = tableFilterState[columnId];
 
                 const dataValue = row[columnId];
                 const dataDefinition = colDataDefLookup[columnId];
 
-                if (dataValue === null) continue;
+                if (dataValue == null) continue;
 
                 const filterFunc = dataDefinition.filter ? dataDefinition.filter : defaultDataFilterPredicate;
 
-                if (filterFunc(dataValue, filterValue, dataDefinition, row)) return false;
+                if (!filterFunc(filterValue, dataValue, dataDefinition, row)) return false;
             }
 
             return true;
