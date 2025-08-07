@@ -57,7 +57,7 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
                         key={String(cellDef.columnId)}
                         className=" border-slate-200 p-1 whitespace-nowrap truncate"
                         title={formattedData}
-                        style={{ height: ROW_HEIGHT_PX, ...style }}
+                        style={{ maxHeight: ROW_HEIGHT_PX, ...style }}
                     >
                         {cellDef.render?.(dataValue, row) ?? formattedData ?? dataValue}
                     </td>
