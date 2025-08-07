@@ -18,20 +18,20 @@ pyjwt = "^2.6.0"
 pydantic = "^2.3.0"
 numpy = "^1.24.1"
 orjson = "^3.8.10"
-pandas = {version = "^2.0.1", extras = ["performance"]}
+pandas = { version = "^2.0.1", extras = ["performance"] }
 httpx = "^0.28.1"
-fmu-sumo = "^2.4.2"
-sumo-wrapper-python = "^1.0.28"
+fmu-sumo = "^2.4.10"
+sumo-wrapper-python = "^1.1.2"
 azure-monitor-opentelemetry = "^1.6.8"
 opentelemetry-instrumentation-httpx = "*"
 opentelemetry-instrumentation-redis = "*"
 requests-toolbelt = "^1.0.0"
 pottery = "^3.0.0"
 xtgeo = "^3.8.0"
-core_utils = {path = "../libs/core_utils", develop = true}
-server_schemas = {path = "../libs/server_schemas", develop = true}
+core_utils = { path = "../libs/core_utils", develop = true }
+server_schemas = { path = "../libs/server_schemas", develop = true }
 polars = "^1.6.0"
-fmu-dataio = "2.13.0"
+fmu-datamodels = "0.0.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"
@@ -56,10 +56,15 @@ build-backend = "poetry.core.masonry.api"
 line-length = 120
 
 [tool.pylint]
-disable = ["missing-docstring", "line-too-long", "logging-fstring-interpolation", "duplicate-code"]
+disable = [
+    "missing-docstring",
+    "line-too-long",
+    "logging-fstring-interpolation",
+    "duplicate-code",
+]
 extension-pkg-whitelist = "pydantic"
-init-hook='import sys; sys.path.append("./pylint/plugins")'
-load-plugins="async_suffix_checker"
+init-hook = 'import sys; sys.path.append("./pylint/plugins")'
+load-plugins = "async_suffix_checker"
 ignored-modules = ["pyarrow.compute"]
 good-names = ["i", "x", "df", "xy", "tg"]
 min-public-methods = 0
@@ -74,5 +79,5 @@ disallow_untyped_defs = true
 [tool.pytest.ini_options]
 pythonpath = ["."]
 filterwarnings = "ignore::DeprecationWarning:pkg_resources"
-asyncio_mode="auto"
-asyncio_default_fixture_loop_scope="session"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"

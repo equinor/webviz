@@ -14,6 +14,9 @@ import type {
     GetEnsembleDetailsData_api,
     GetEnsembleDetailsResponse_api,
     GetEnsembleDetailsError_api,
+    PostGetTimestampsForEnsemblesData_api,
+    PostGetTimestampsForEnsemblesResponse_api,
+    PostGetTimestampsForEnsemblesError_api,
     GetVectorListData_api,
     GetVectorListResponse_api,
     GetVectorListError_api,
@@ -77,6 +80,9 @@ import type {
     DeprecatedGetStratigraphicUnitsData_api,
     DeprecatedGetStratigraphicUnitsResponse_api,
     DeprecatedGetStratigraphicUnitsError_api,
+    GetStratigraphicUnitsForStratColumnData_api,
+    GetStratigraphicUnitsForStratColumnResponse_api,
+    GetStratigraphicUnitsForStratColumnError_api,
     GetParameterNamesAndDescriptionData_api,
     GetParameterNamesAndDescriptionResponse_api,
     GetParameterNamesAndDescriptionError_api,
@@ -251,6 +257,27 @@ export const getEnsembleDetails = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetEnsembleDetailsResponse_api, GetEnsembleDetailsError_api, ThrowOnError>({
         ...options,
         url: "/cases/{case_uuid}/ensembles/{ensemble_name}",
+    });
+};
+
+/**
+ * Post Get Timestamps For Ensembles
+ * Fetches ensemble timestamps for a list of ensembles
+ */
+export const postGetTimestampsForEnsembles = <ThrowOnError extends boolean = false>(
+    options: Options<PostGetTimestampsForEnsemblesData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).post<
+        PostGetTimestampsForEnsemblesResponse_api,
+        PostGetTimestampsForEnsemblesError_api,
+        ThrowOnError
+    >({
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options?.headers,
+        },
+        url: "/ensembles/get_timestamps",
     });
 };
 
@@ -641,6 +668,22 @@ export const deprecatedGetStratigraphicUnits = <ThrowOnError extends boolean = f
     >({
         ...options,
         url: "/surface/deprecated_stratigraphic_units",
+    });
+};
+
+/**
+ * Get Stratigraphic Units For Strat Column
+ */
+export const getStratigraphicUnitsForStratColumn = <ThrowOnError extends boolean = false>(
+    options: Options<GetStratigraphicUnitsForStratColumnData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<
+        GetStratigraphicUnitsForStratColumnResponse_api,
+        GetStratigraphicUnitsForStratColumnError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/surface/stratigraphic_units_for_strat_column",
     });
 };
 
@@ -1105,7 +1148,7 @@ export const getPolygonsData = <ThrowOnError extends boolean = false>(
 
 /**
  * Get User Photo
- * Get username, display name and avatar from Microsoft Graph API for a given user id
+ * Get username, display name and avatar from Microsoft Graph API for a given user email
  */
 export const getUserPhoto = <ThrowOnError extends boolean = false>(
     options: Options<GetUserPhotoData_api, ThrowOnError>,

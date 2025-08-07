@@ -12,16 +12,16 @@ import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
-import type { ColorSet } from "@lib/utils/ColorSet";
 import type { Figure } from "@modules/_shared/Figure";
 import { CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
-import type { VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
+import type { VectorHexColorMap, VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { FrequencyEnumToStringMapping, SubplotLimitDirection } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
 
 import { scaleHexColorLightness } from "./colorUtils";
 import type { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
+import { getHexColorFromOwner } from "./plotColoring";
 import {
     createHistoricalVectorTrace,
     createVectorFanchartTraces,
@@ -34,7 +34,7 @@ import {
 import type { TimeSeriesPlotData } from "./timeSeriesPlotData";
 
 type VectorNameSubplotTitleMap = { [vectorName: string]: string };
-type HexColorMap = { [key: string]: string };
+
 export enum SubplotOwner {
     VECTOR = "Vector",
     ENSEMBLE = "Ensemble",
@@ -58,7 +58,7 @@ export class PlotBuilder {
     private _uniqueEnsembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[] = [];
     private _uniqueVectorNames: string[] = [];
 
-    private _vectorHexColors: HexColorMap = {};
+    private _vectorHexColorMap: VectorHexColorMap = {};
 
     private _makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) => string;
 
@@ -96,7 +96,7 @@ export class PlotBuilder {
         selectedVectorSpecifications: VectorSpec[],
         resampleFrequency: Frequency_api | null,
         makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) => string,
-        colorSet: ColorSet,
+        vectorHexColorMap: VectorHexColorMap,
         width: number,
         height: number,
         ensemblesParameterColoring?: EnsemblesContinuousParameterColoring,
@@ -116,12 +116,7 @@ export class PlotBuilder {
             if (this._uniqueEnsembleIdents.some((elm) => elm.equals(vectorSpecification.ensembleIdent))) continue;
             this._uniqueEnsembleIdents.push(vectorSpecification.ensembleIdent);
         }
-
-        // Create map with color for each vector and ensemble
-        this._uniqueVectorNames.forEach((vectorName, index) => {
-            const color = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
-            this._vectorHexColors[vectorName] = color;
-        });
+        this._vectorHexColorMap = vectorHexColorMap;
 
         this._ensemblesParameterColoring = ensemblesParameterColoring ?? null;
         this._scatterType = scatterType;
@@ -375,7 +370,12 @@ export class PlotBuilder {
 
             // Get legend group and color
             const legendGroup = this.getLegendGroupAndUpdateTracker(elm.vectorSpecification);
-            let color = this.getHexColor(elm.vectorSpecification);
+            let color = getHexColorFromOwner(
+                this._subplotOwner,
+                elm.vectorSpecification,
+                this._vectorHexColorMap,
+                this._traceFallbackColor,
+            );
             if (useIncreasedBrightness) {
                 color = scaleHexColorLightness(color, 1.3) ?? color;
             }
@@ -423,7 +423,12 @@ export class PlotBuilder {
 
             // Get legend group and color
             const legendGroup = this.getLegendGroupAndUpdateTracker(elm.vectorSpecification);
-            const color = this.getHexColor(elm.vectorSpecification);
+            const color = getHexColorFromOwner(
+                this._subplotOwner,
+                elm.vectorSpecification,
+                this._vectorHexColorMap,
+                this._traceFallbackColor,
+            );
 
             const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
             const lineShape = getTraceLineShape(elm.data);
@@ -467,7 +472,12 @@ export class PlotBuilder {
 
             // Get legend group and color
             const legendGroup = this.getLegendGroupAndUpdateTracker(elm.vectorSpecification);
-            const color = this.getHexColor(elm.vectorSpecification);
+            const color = getHexColorFromOwner(
+                this._subplotOwner,
+                elm.vectorSpecification,
+                this._vectorHexColorMap,
+                this._traceFallbackColor,
+            );
 
             const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
             const lineShape = getTraceLineShape(elm.data);
@@ -656,7 +666,7 @@ export class PlotBuilder {
             // Add legend for each vector/ensemble on top
             if (this._subplotOwner === SubplotOwner.ENSEMBLE) {
                 this._addedVectorsLegendTracker.forEach((vectorName) => {
-                    const hexColor = this._vectorHexColors[vectorName] ?? this._traceFallbackColor;
+                    const hexColor = this._vectorHexColorMap[vectorName] ?? this._traceFallbackColor;
                     this._figure.addTrace(
                         this.createLegendTrace(
                             vectorName,
@@ -760,16 +770,6 @@ export class PlotBuilder {
             return vectorName;
         }
         return "";
-    }
-
-    private getHexColor(vectorSpecification: VectorSpec): string {
-        if (this._subplotOwner === SubplotOwner.VECTOR) {
-            const hexColor = vectorSpecification.color;
-            return hexColor ?? this._traceFallbackColor;
-        } else if (this._subplotOwner === SubplotOwner.ENSEMBLE) {
-            return this._vectorHexColors[vectorSpecification.vectorName];
-        }
-        return this._traceFallbackColor;
     }
 
     private createVectorSubplotTitleAndInsertIntoMap(

@@ -1,12 +1,12 @@
 import { useAtomValue } from "jotai";
 
 import type { ViewContext } from "@framework/ModuleContext";
-import type { ColorSet } from "@lib/utils/ColorSet";
 import type { Size2D } from "@lib/utils/geometry";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
-import { GroupBy, VisualizationMode } from "../../typesAndEnums";
-import { resampleFrequencyAtom, showObservationsAtom, visualizationModeAtom } from "../atoms/baseAtoms";
+import type { VectorHexColorMap } from "../../typesAndEnums";
+import { VisualizationMode } from "../../typesAndEnums";
+import { resampleFrequencyAtom } from "../atoms/baseAtoms";
 import {
     activeTimestampUtcMsAtom,
     loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
@@ -15,7 +15,8 @@ import {
     loadedVectorSpecificationsAndStatisticsDataAtom,
 } from "../atoms/derivedAtoms";
 import type { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
-import { PlotBuilder, SubplotOwner } from "../utils/PlotBuilder";
+import { PlotBuilder } from "../utils/PlotBuilder";
+import type { SubplotOwner } from "../utils/PlotBuilder";
 import {
     filterVectorSpecificationAndFanchartStatisticsDataArray,
     filterVectorSpecificationAndIndividualStatisticsDataArray,
@@ -26,13 +27,12 @@ import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc
 export function usePlotBuilder(
     viewContext: ViewContext<Interfaces>,
     wrapperDivSize: Size2D,
-    colorSet: ColorSet,
+    vectorHexColorMap: VectorHexColorMap,
+    subplotOwner: SubplotOwner,
     ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null,
 ): PlotBuilder {
-    const groupBy = viewContext.useSettingsToViewInterfaceValue("groupBy");
-    const showObservations = useAtomValue(showObservationsAtom);
-    const visualizationMode = useAtomValue(visualizationModeAtom);
-
+    const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
+    const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
     const vectorSpecifications = viewContext.useSettingsToViewInterfaceValue("vectorSpecifications");
     const showHistorical = viewContext.useSettingsToViewInterfaceValue("showHistorical");
     const statisticsSelection = viewContext.useSettingsToViewInterfaceValue("statisticsSelection");
@@ -50,8 +50,6 @@ export function usePlotBuilder(
 
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
 
-    const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
-
     const scatterType =
         visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
         visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
@@ -63,7 +61,7 @@ export function usePlotBuilder(
         vectorSpecifications ?? [],
         resampleFrequency,
         makeEnsembleDisplayName,
-        colorSet,
+        vectorHexColorMap,
         wrapperDivSize.width,
         wrapperDivSize.height,
         ensemblesParameterColoring ?? undefined,

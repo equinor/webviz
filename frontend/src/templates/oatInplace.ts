@@ -7,7 +7,7 @@ import { ChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
 import { DisplayComponentType } from "@modules/TornadoChart/typesAndEnums";
 
 const template: Template = {
-    description: "Inplace volumes overview for design matrix ensembles.",
+    description: "Inplace volumes analysis for design matrix ensembles.",
     moduleInstances: [
         {
             instanceRef: "MainInplaceVolumesPlotInstance",
@@ -82,4 +82,4 @@ const template: Template = {
     ],
 };
 
-TemplateRegistry.registerTemplate("Sensitivity Analysis of Inplace volumes", template);
+TemplateRegistry.registerTemplate("Sensitivity analysis of inplace volumes", template);

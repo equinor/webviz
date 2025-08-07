@@ -1,14 +1,12 @@
 import logging
-from io import BytesIO
 from typing import List, Optional
 
 import pandas as pd
 import pyarrow as pa
-import pyarrow.parquet as pq
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
-from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
-from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
+from primary.services.service_exceptions import InvalidDataError, ServiceRequestError, Service
 
 from .sumo_client_factory import create_sumo_client
 from .parameter_types import (
@@ -38,33 +36,28 @@ class ParameterAccess:
 
     async def get_parameters_and_sensitivities_async(self) -> EnsembleParameters:
         """Retrieve parameters for an ensemble"""
-        timer = PerfTimer()
+        perf_metrics = PerfMetrics()
 
-        table_context = self._ensemble_context.filter(aggregation="collection", content="parameters")
-        if await table_context.length_async() == 0:
-            raise NoDataError(f"No parameter tables found {self._case_uuid, self._iteration_name}", Service.SUMO)
-        if await table_context.length_async() > 1:
-            # There should never be more than one parameter table, but we currently have cases that
-            # have tables both from new and old Sumo aggregation methods.
-            # As we need these cases to work, we need this temporary extra check.
-            # ISSUE #969
-            table_context = self._ensemble_context.filter(aggregation="collection", content="parameters", tagname="all")
-            if await table_context.length_async() == 0:
-                raise NoDataError(f"No parameter tables found {self._case_uuid, self._iteration_name}", Service.SUMO)
-            if await table_context.length_async() > 1:
-                raise MultipleDataMatchesError(
-                    f"Multiple parameter tables found {self._case_uuid,self._iteration_name}", Service.SUMO
-                )
+        parameter_table_context = self._ensemble_context.parameters
+        try:
+            parameter_agg = await parameter_table_context.aggregation_async(operation="collection")
+        except Exception as exp:
+            raise ServiceRequestError(
+                f"No parameters found for case {self._case_uuid} and iteration {self._iteration_name}",
+                Service.SUMO,
+            ) from exp
+        perf_metrics.record_lap("aggregate")
 
-        table = await table_context.getitem_async(0)
-        byte_stream: BytesIO = await table.blob_async
-        table = pq.read_table(byte_stream)
+        parameter_table = await parameter_agg.to_arrow_async()
+        perf_metrics.record_lap("to_arrow")
 
-        et_download_arrow_table_ms = timer.lap_ms()
-        LOGGER.debug(f"Downloaded arrow table in {et_download_arrow_table_ms}ms")
-
-        ensemble_parameters = parameter_table_to_ensemble_parameters(table)
+        ensemble_parameters = parameter_table_to_ensemble_parameters(parameter_table)
         sensitivities = create_ensemble_sensitivities(ensemble_parameters)
+        perf_metrics.record_lap("transform")
+
+        LOGGER.debug(
+            f"ParameterAccess.get_parameters_and_sensitivities_async() took: {perf_metrics.to_string()}, {self._case_uuid=}, {self._iteration_name=}"
+        )
 
         return EnsembleParameters(
             parameters=ensemble_parameters,
@@ -136,6 +129,11 @@ def create_ensemble_sensitivity_cases(
 def parameter_table_to_ensemble_parameters(parameter_table: pa.Table) -> List[EnsembleParameter]:
     """Convert a parameter table to EnsembleParameters"""
     ensemble_parameters: List[EnsembleParameter] = []
+    if "REAL" not in parameter_table.column_names:
+        raise InvalidDataError(
+            "Parameter table does not contain a 'REAL' column, which is required to identify realizations.",
+            Service.SUMO,
+        )
     parameter_str_arr = [param_str for param_str in parameter_table.column_names if param_str != "REAL"]
     parameter_group_dict = _parameter_str_arr_to_parameter_group_dict(parameter_str_arr)
     ensemble_parameters = []
