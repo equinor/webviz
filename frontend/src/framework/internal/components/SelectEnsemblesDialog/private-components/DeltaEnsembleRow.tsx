@@ -1,26 +1,27 @@
 import type React from "react";
 
-import { FolderOpen, History, Remove } from "@mui/icons-material";
+import { FolderOpen, Remove } from "@mui/icons-material";
 
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { ColorSelect } from "@lib/components/ColorSelect";
-import { ColorTile } from "@lib/components/ColorTile";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
 import { Input } from "@lib/components/Input";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type {
-    ExploredRegularEnsembleInfo,
-    InternalDeltaEnsembleSetting,
-    InternalRegularEnsembleSetting,
-} from "../types";
+import type { InternalDeltaEnsembleSetting } from "../types";
+
+export type RegularEnsembleOption = {
+    ensembleIdent: RegularEnsembleIdent;
+    caseName: string;
+    customName?: string | null;
+    adornment?: React.ReactNode;
+};
 
 export type DeltaEnsembleRowProps = {
     deltaEnsembleSetting: InternalDeltaEnsembleSetting;
-    selectedRegularEnsembles: InternalRegularEnsembleSetting[];
-    exploredRegularEnsembleInfos: ExploredRegularEnsembleInfo[];
+    regularEnsembleOptions: RegularEnsembleOption[];
     isDuplicate: boolean;
     isValid: boolean;
     onUpdate: (newItem: InternalDeltaEnsembleSetting) => void;
@@ -39,35 +40,19 @@ function getEnsembleIdentFromDropdownValue(value: string): RegularEnsembleIdent 
     return RegularEnsembleIdent.fromString(value);
 }
 
-function makeExploredEnsembleDropdownOptions(ensembleItems: ExploredRegularEnsembleInfo[]): DropdownOption[] {
-    return ensembleItems.map((ens) => ({
-        value: createEnsembleOptionValue(ens.ensembleIdent),
-        label: `${ens.ensembleIdent.getEnsembleName()} (${ens.caseName})`,
-        adornment: <History fontSize="small" />,
-    }));
-}
-
-function makeSelectedEnsembleDropdownOptions(ensembleItems: InternalRegularEnsembleSetting[]): DropdownOption[] {
-    return ensembleItems.map((ens) => ({
-        value: createEnsembleOptionValue(ens.ensembleIdent),
-        label: ens.customName ?? `${ens.ensembleIdent.getEnsembleName()} (${ens.caseName})`,
-        adornment: <ColorTile color={ens.color} />,
+function makeDropdownOptions(regularEnsembleOptions: RegularEnsembleOption[]): DropdownOption[] {
+    return regularEnsembleOptions.map((option) => ({
+        value: createEnsembleOptionValue(option.ensembleIdent),
+        label: option.customName ?? `${option.ensembleIdent.getEnsembleName()} (${option.caseName})`,
+        adornment: option.adornment,
     }));
 }
 
 export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode {
     const { comparisonEnsembleIdent, referenceEnsembleIdent } = props.deltaEnsembleSetting;
 
-    // Only show explored ensemble infos not among selected ensembles
-    const nonSelectedRegularEnsembleInfos = props.exploredRegularEnsembleInfos.filter(
-        (elm) => !props.selectedRegularEnsembles.some((ens) => ens.ensembleIdent.equals(elm.ensembleIdent)),
-    );
-
-    const selectedEnsembleDropdownOptions = makeSelectedEnsembleDropdownOptions(props.selectedRegularEnsembles);
-    const exploredEnsembleDropdownOptions = makeExploredEnsembleDropdownOptions(nonSelectedRegularEnsembleInfos);
-    const ensembleDropdownOptionsGroups = [
-        ...selectedEnsembleDropdownOptions,
-        ...exploredEnsembleDropdownOptions,
+    const ensembleDropdownOptions = [
+        ...makeDropdownOptions(props.regularEnsembleOptions),
         {
             value: SELECT_OTHER_VALUE,
             label: "Select other ensemble...",
@@ -150,14 +135,14 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
             <td className="p-2">
                 <Dropdown
                     value={comparisonEnsValue}
-                    options={ensembleDropdownOptionsGroups}
+                    options={ensembleDropdownOptions}
                     onChange={onComparisonEnsembleChange}
                 />
             </td>
             <td className="p-2">
                 <Dropdown
                     value={referenceEnsValue}
-                    options={ensembleDropdownOptionsGroups}
+                    options={ensembleDropdownOptions}
                     onChange={onReferenceEnsembleChange}
                 />
             </td>

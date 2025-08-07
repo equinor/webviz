@@ -1,24 +1,21 @@
-import type React from "react";
+import React from "react";
 
-import { Add, InfoOutlined } from "@mui/icons-material";
+import { Add, History, InfoOutlined } from "@mui/icons-material";
 import { v4 } from "uuid";
 
 import { Button } from "@lib/components/Button";
+import { ColorTile } from "@lib/components/ColorTile";
 
-import type {
-    ExploredRegularEnsembleInfo as InternalExploredRegularEnsembleInfo,
-    InternalDeltaEnsembleSetting,
-    InternalRegularEnsembleSetting,
-} from "../types";
+import type { EnsembleIdentWithCaseName, InternalDeltaEnsembleSetting, InternalRegularEnsembleSetting } from "../types";
 
-import { DeltaEnsembleRow } from "./DeltaEnsembleRow";
+import { DeltaEnsembleRow, type RegularEnsembleOption } from "./DeltaEnsembleRow";
 import { RegularEnsembleRow } from "./RegularEnsembleRow";
 
 export type EnsembleTablesProps = {
     nextEnsembleColor: string;
     selectedRegularEnsembles: InternalRegularEnsembleSetting[];
     selectedDeltaEnsembles: InternalDeltaEnsembleSetting[];
-    exploredRegularEnsembleInfos: InternalExploredRegularEnsembleInfo[];
+    selectableEnsemblesForDelta: EnsembleIdentWithCaseName[];
 
     onAddRegularEnsemble: () => void;
     onUpdateRegularEnsemble: (updatedEnsemble: InternalRegularEnsembleSetting) => void;
@@ -31,7 +28,40 @@ export type EnsembleTablesProps = {
     onRemoveDeltaEnsemble: (removedEnsemble: InternalDeltaEnsembleSetting) => void;
 };
 
+function makeRegularEnsembleOptionsForDeltaEnsemble(
+    selectedRegularEnsembles: InternalRegularEnsembleSetting[],
+    selectableEnsemblesForDelta: EnsembleIdentWithCaseName[],
+): RegularEnsembleOption[] {
+    // Only show additional selectable ensembles not among selected ensembles
+    const selectableEnsemblesNotAmongSelected = selectableEnsemblesForDelta.filter(
+        (elm) => !selectedRegularEnsembles.some((ens) => ens.ensembleIdent.equals(elm.ensembleIdent)),
+    );
+
+    return [
+        ...selectedRegularEnsembles.map((ens) => ({
+            ensembleIdent: ens.ensembleIdent,
+            caseName: ens.caseName,
+            customName: ens.customName,
+            adornment: <ColorTile color={ens.color} />,
+        })),
+        ...selectableEnsemblesNotAmongSelected.map((ens) => ({
+            ensembleIdent: ens.ensembleIdent,
+            caseName: ens.caseName,
+            adornment: <History fontSize="small" />,
+        })),
+    ];
+}
+
 export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
+    const regularEnsembleOptionsForDelta = React.useMemo(
+        () =>
+            makeRegularEnsembleOptionsForDeltaEnsemble(
+                props.selectedRegularEnsembles,
+                props.selectableEnsemblesForDelta,
+            ),
+        [props.selectedRegularEnsembles, props.selectableEnsemblesForDelta],
+    );
+
     function isDuplicateDelta(deltaEnsemble: InternalDeltaEnsembleSetting) {
         const { uuid, referenceEnsembleIdent, comparisonEnsembleIdent } = deltaEnsemble;
 
@@ -160,8 +190,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                                     <DeltaEnsembleRow
                                         key={deltaItem.uuid}
                                         deltaEnsembleSetting={deltaItem}
-                                        selectedRegularEnsembles={props.selectedRegularEnsembles}
-                                        exploredRegularEnsembleInfos={props.exploredRegularEnsembleInfos}
+                                        regularEnsembleOptions={regularEnsembleOptionsForDelta}
                                         isDuplicate={isDuplicateDelta(deltaItem)}
                                         isValid={isValidDelta(deltaItem)}
                                         onUpdate={props.onUpdateDeltaEnsemble}

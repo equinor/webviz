@@ -5,8 +5,8 @@ export type InternalRegularEnsembleSetting = UserEnsembleSetting & {
     caseName: string;
 };
 
-// Internal type for tracking previously explored regular ensembles not among selected
-export type ExploredRegularEnsembleInfo = Omit<InternalRegularEnsembleSetting, "customName" | "color">;
+// Internal type for selectable ensembles for delta, additional to already selected regular ensembles
+export type EnsembleIdentWithCaseName = { ensembleIdent: RegularEnsembleIdent; caseName: string };
 
 // Internal type before applying created delta ensemble externally
 export type InternalDeltaEnsembleSetting = Omit<

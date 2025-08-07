@@ -20,16 +20,12 @@ import {
     makeDeltaEnsembleSettingsFromEnsembleSet,
     makeHashFromDeltaEnsemble,
     makeHashFromSelectedEnsembles,
-    makePreviouslyExploredRegularEnsembleInfosFromEnsembleSet,
+    makeSelectableEnsemblesForDeltaFromEnsembleSet,
     makeRegularEnsembleSettingsFromEnsembleSet,
 } from "./_utils";
 import { EnsemblePicker } from "./private-components/EnsemblePicker";
 import { EnsembleTables } from "./private-components/EnsembleTables";
-import type {
-    ExploredRegularEnsembleInfo,
-    InternalDeltaEnsembleSetting,
-    InternalRegularEnsembleSetting,
-} from "./types";
+import type { EnsembleIdentWithCaseName, InternalDeltaEnsembleSetting, InternalRegularEnsembleSetting } from "./types";
 
 enum EnsemblePickerMode {
     ADD_REGULAR_ENSEMBLE = "addRegularEnsemble",
@@ -56,8 +52,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     );
     const [selectedDeltaEnsembles, setSelectedDeltaEnsembles] = React.useState<InternalDeltaEnsembleSetting[]>([]);
 
-    // List of info for ensembles available for comparison or reference in delta ensembles, but not among the selected regular ensembles.
-    const [previouslyExploredEnsembles, setPreviouslyExploredEnsembles] = React.useState<ExploredRegularEnsembleInfo[]>(
+    // List of selectable ensembles available for comparison or reference in delta ensembles
+    const [selectableEnsemblesForDelta, setSelectableEnsemblesForDelta] = React.useState<EnsembleIdentWithCaseName[]>(
         [],
     );
 
@@ -77,11 +73,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
         const regularEnsembles = makeRegularEnsembleSettingsFromEnsembleSet(ensembleSet);
         const deltaEnsembles = makeDeltaEnsembleSettingsFromEnsembleSet(ensembleSet);
-        const prevExploredRegularEnsembles = makePreviouslyExploredRegularEnsembleInfosFromEnsembleSet(ensembleSet);
+        const selectableEnsembles = makeSelectableEnsemblesForDeltaFromEnsembleSet(ensembleSet);
 
         setSelectedRegularEnsembles(regularEnsembles);
         setSelectedDeltaEnsembles(deltaEnsembles);
-        setPreviouslyExploredEnsembles(prevExploredRegularEnsembles);
+        setSelectableEnsemblesForDelta(selectableEnsembles);
         setHash(makeHashFromSelectedEnsembles(regularEnsembles, deltaEnsembles));
     }
 
@@ -184,13 +180,18 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             throw new Error("Could not find delta ensemble to edit from current uuid to edit.");
         }
 
-        // Add to previously explored ensembles if not already among selected ensemble settings
-        if (!selectedRegularEnsembles.some((el) => el.ensembleIdent.equals(newItem.ensembleIdent))) {
-            const newExploredEnsembleInfo: ExploredRegularEnsembleInfo = {
-                ensembleIdent: newItem.ensembleIdent,
-                caseName: newItem.caseName,
-            };
-            setPreviouslyExploredEnsembles((prev) => [...prev, newExploredEnsembleInfo]);
+        // Add to selectable ensembles if not already among selected or selectable ensembles
+        if (
+            !selectedRegularEnsembles.some((el) => el.ensembleIdent.equals(newItem.ensembleIdent)) &&
+            !selectableEnsemblesForDelta.some((el) => el.ensembleIdent.equals(newItem.ensembleIdent))
+        ) {
+            setSelectableEnsemblesForDelta((prev) => [
+                ...prev,
+                {
+                    ensembleIdent: newItem.ensembleIdent,
+                    caseName: newItem.caseName,
+                },
+            ]);
         }
 
         const pickComparison = ensemblePickerMode === EnsemblePickerMode.SELECT_OTHER_COMPARISON_ENSEMBLE;
@@ -219,9 +220,19 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             return;
         }
 
-        // Add to selected regular ensembles, remove from explored ensemble infos if it exists there
+        // Add to selected regular ensembles
         setSelectedRegularEnsembles((prev) => [...prev, newItem]);
-        setPreviouslyExploredEnsembles((prev) => prev.filter((el) => !el.ensembleIdent.equals(newItem.ensembleIdent)));
+
+        // Add to list of selectable ensembles if not already present
+        if (!selectableEnsemblesForDelta.some((el) => el.ensembleIdent.equals(newItem.ensembleIdent))) {
+            setSelectableEnsemblesForDelta((prev) => [
+                ...prev,
+                {
+                    ensembleIdent: newItem.ensembleIdent,
+                    caseName: newItem.caseName,
+                },
+            ]);
+        }
     }
 
     function handleAddRegularEnsemble() {
@@ -246,23 +257,6 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     function handleRemoveRegularEnsemble(removedItem: UserEnsembleSetting) {
         setSelectedRegularEnsembles((prev) => prev.filter((el) => !el.ensembleIdent.equals(removedItem.ensembleIdent)));
-
-        removeEnsembleFromDeltaEnsembles(removedItem);
-    }
-
-    function removeEnsembleFromDeltaEnsembles(removedEnsemble: UserEnsembleSetting) {
-        setSelectedDeltaEnsembles((prev) => {
-            return prev.map((deltaEnsemble) => {
-                const { comparisonEnsembleIdent, referenceEnsembleIdent } = deltaEnsemble;
-                if (comparisonEnsembleIdent && comparisonEnsembleIdent.equals(removedEnsemble.ensembleIdent)) {
-                    return { ...deltaEnsemble, comparisonEnsembleIdent: null };
-                }
-                if (referenceEnsembleIdent && referenceEnsembleIdent.equals(removedEnsemble.ensembleIdent)) {
-                    return { ...deltaEnsemble, referenceEnsembleIdent: null };
-                }
-                return deltaEnsemble;
-            });
-        });
     }
 
     function handleAddDeltaEnsemble(newItem: InternalDeltaEnsembleSetting) {
@@ -354,7 +348,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     <EnsembleTables
                         nextEnsembleColor={nextEnsembleColor}
                         selectedRegularEnsembles={selectedRegularEnsembles}
-                        exploredRegularEnsembleInfos={previouslyExploredEnsembles}
+                        selectableEnsemblesForDelta={selectableEnsemblesForDelta}
                         selectedDeltaEnsembles={selectedDeltaEnsembles}
                         onCreateDeltaEnsemble={handleAddDeltaEnsemble}
                         onUpdateDeltaEnsemble={handleUpdateDeltaEnsemble}

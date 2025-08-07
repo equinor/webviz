@@ -2,11 +2,7 @@ import { v4 } from "uuid";
 
 import type { EnsembleSet } from "@framework/EnsembleSet";
 
-import type {
-    ExploredRegularEnsembleInfo,
-    InternalDeltaEnsembleSetting,
-    InternalRegularEnsembleSetting,
-} from "./types";
+import type { EnsembleIdentWithCaseName, InternalDeltaEnsembleSetting, InternalRegularEnsembleSetting } from "./types";
 
 export function makeRegularEnsembleSettingsFromEnsembleSet(ensembleSet: EnsembleSet): InternalRegularEnsembleSetting[] {
     const items: InternalRegularEnsembleSetting[] = [];
@@ -39,24 +35,35 @@ export function makeDeltaEnsembleSettingsFromEnsembleSet(ensembleSet: EnsembleSe
     return items;
 }
 
-export function makePreviouslyExploredRegularEnsembleInfosFromEnsembleSet(
-    ensembleSet: EnsembleSet,
-): ExploredRegularEnsembleInfo[] {
-    const items: ExploredRegularEnsembleInfo[] = [];
+export function makeSelectableEnsemblesForDeltaFromEnsembleSet(ensembleSet: EnsembleSet): EnsembleIdentWithCaseName[] {
+    const items: EnsembleIdentWithCaseName[] = [];
 
-    const selectedRegularEnsembleIdents = ensembleSet.getRegularEnsembleArray().map((ens) => ens.getIdent());
+    // Collect all regular ensembles
+    const ensembleIdentsToSkip = new Set();
+    for (const ensemble of ensembleSet.getRegularEnsembleArray()) {
+        items.push({ ensembleIdent: ensemble.getIdent(), caseName: ensemble.getCaseName() });
+        ensembleIdentsToSkip.add(ensemble.getIdent().toString());
+    }
+
+    // Collect comparison and reference ensembles from delta ensembles, skipping those already included
     for (const deltaEnsemble of ensembleSet.getDeltaEnsembleArray()) {
-        if (!selectedRegularEnsembleIdents.includes(deltaEnsemble.getComparisonEnsembleIdent())) {
-            items.push({
+        const compAndRefEnsInfo: EnsembleIdentWithCaseName[] = [
+            {
                 ensembleIdent: deltaEnsemble.getComparisonEnsembleIdent(),
                 caseName: deltaEnsemble.getComparisonEnsembleCaseName(),
-            });
-        }
-        if (!selectedRegularEnsembleIdents.includes(deltaEnsemble.getReferenceEnsembleIdent())) {
-            items.push({
+            },
+            {
                 ensembleIdent: deltaEnsemble.getReferenceEnsembleIdent(),
                 caseName: deltaEnsemble.getReferenceEnsembleCaseName(),
-            });
+            },
+        ];
+
+        for (const { ensembleIdent, caseName } of compAndRefEnsInfo) {
+            const identStr = ensembleIdent.toString();
+            if (!ensembleIdentsToSkip.has(identStr)) {
+                ensembleIdentsToSkip.add(identStr);
+                items.push({ ensembleIdent, caseName });
+            }
         }
     }
 
