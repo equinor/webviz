@@ -168,6 +168,8 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
 
     const [usingTheCoolFilters, setUsingTheCoolFilters] = React.useState(false);
 
+    const [scrollRange, setScrollRange] = React.useState<[number, number] | null>(null);
+
     function handleFilterUpdate(newFilter: TableFilters) {
         setUsingTheCoolFilters(false);
         setTableFilterState(newFilter);
@@ -241,12 +243,14 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
                 onFiltersChange={handleFilterUpdate}
                 onSelectedRowsChange={setSelectedRows}
                 onRowHover={setHoveredItem}
+                onVisibleRowRangeChange={(start, end) => setScrollRange([start, end])}
             />
 
-            <div className="mt-4 text-xs italic text-right text-gray-600 flex justify-between">
+            <div className="mt-4 text-xs italic text-gray-600 grid grid-cols-3 w-full">
                 <span>Hovered: {hoveredItem ?? "None"}</span>
+                <span className="text-center">[{scrollRange?.join(", ")}]</span>
 
-                <span>{selectedRows?.length ?? 0} row(s) selected</span>
+                <span className="text-right">{selectedRows?.length ?? 0} row(s) selected</span>
             </div>
         </div>
     );

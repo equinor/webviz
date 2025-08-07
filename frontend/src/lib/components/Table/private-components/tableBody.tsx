@@ -18,6 +18,7 @@ type TableBodyProps<T extends Record<string, any>> = {
     onSelectedRowsChange?: (newSelection: string[]) => void;
     onRowClick?: (id: string, entry: LoadedDataWithKey<T>) => void;
     onRowHover?: (id: string | null, entry: LoadedDataWithKey<T> | null) => void;
+    onVisibleRowRangeChange?: (startIndex: number, endIndex: number) => void;
 };
 export function TableBody<T extends Record<string, any>>(props: TableBodyProps<T>): React.ReactNode {
     const { onSelectedRowsChange, onRowClick, onRowHover } = props;
@@ -56,6 +57,7 @@ export function TableBody<T extends Record<string, any>>(props: TableBodyProps<T
                 placeholderComponent="tr"
                 items={props.rows}
                 itemSize={ROW_HEIGHT_PX}
+                onScroll={props.onVisibleRowRangeChange}
                 renderItem={(row: TableDataWithKey<T>) => (
                     <TableRow
                         key={row._key}

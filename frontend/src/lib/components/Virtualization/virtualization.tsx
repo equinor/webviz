@@ -12,7 +12,7 @@ export type VirtualizationProps<T = any> = {
     itemSize: number;
     direction: "vertical" | "horizontal";
     startIndex?: number;
-    onScroll?: (newStartIndex: number) => void;
+    onScroll?: (newStartIndex: number, newEndIndex: number) => void;
 };
 
 const defaultProps = {
@@ -143,7 +143,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
                     });
 
                     if (onScroll) {
-                        onScroll(startIndex);
+                        onScroll(startIndex, endIndex);
                     }
                 }
             }

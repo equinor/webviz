@@ -60,11 +60,15 @@ export type TableProps<T extends Record<string, any>> = {
 
     /** @deprecated Use `onRowClick` instead */
     onClick?: (entry: T) => void;
+    /** Callback for when a row is clicked */
     onRowClick?: (id: string, entry: T) => void;
     /** @deprecated use `onRowHover()` instead */
     onHover?: (entry: T | null) => void;
+    /** Callback for when a row is hovered */
     onRowHover?: (id: string | null, entry: T | null) => void;
 
+    /** Callback for when the virtualized row range changes */
+    onVisibleRowRangeChange?: (startIndex: number, endIndex: number) => void;
     // TODO: Other QoL things to add?
     // * Specify height with row count instead?
     // numVisibleRows?: number;
@@ -220,6 +224,7 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
                         multiSelect={props.multiSelect}
                         onSelectedRowsChange={setSelectedRows}
                         onRowHover={handleRowHover}
+                        onVisibleRowRangeChange={props.onVisibleRowRangeChange}
                     />
                 </table>
             </div>
