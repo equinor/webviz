@@ -1,4 +1,5 @@
 import type { PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
+import { wellTrajectoryToGeojson, zipCoords } from "@modules/_shared/utils/wellbore";
 
 export type SurfaceMeshLayerSettings = {
     contours?: boolean | number[];
@@ -96,7 +97,7 @@ function surfacePolygonsToGeojson(surfacePolygon: PolygonData_api): Record<strin
     return data;
 }
 export function createWellboreTrajectoryLayer(wellTrajectories: WellboreTrajectory_api[]): Record<string, unknown> {
-    const features: Record<string, unknown>[] = wellTrajectories.map((wellTrajectory) => {
+    const features = wellTrajectories.map((wellTrajectory) => {
         return wellTrajectoryToGeojson(wellTrajectory);
     });
     const data: Record<string, unknown> = {
@@ -114,33 +115,7 @@ export function createWellboreTrajectoryLayer(wellTrajectories: WellboreTrajecto
         pickable: true,
     };
 }
-export function wellTrajectoryToGeojson(wellTrajectory: WellboreTrajectory_api): Record<string, unknown> {
-    const point: Record<string, unknown> = {
-        type: "Point",
-        coordinates: [wellTrajectory.eastingArr[0], wellTrajectory.northingArr[0], -wellTrajectory.tvdMslArr[0]],
-    };
-    const coordinates: Record<string, unknown> = {
-        type: "LineString",
-        coordinates: zipCoords(wellTrajectory.eastingArr, wellTrajectory.northingArr, wellTrajectory.tvdMslArr),
-    };
-    const geometryCollection: Record<string, unknown> = {
-        type: "Feature",
-        geometry: {
-            type: "GeometryCollection",
-            geometries: [point, coordinates],
-        },
-        properties: {
-            uuid: wellTrajectory.wellboreUuid,
-            name: wellTrajectory.uniqueWellboreIdentifier,
-            uwi: wellTrajectory.uniqueWellboreIdentifier,
 
-            color: [0, 0, 0, 100],
-            md: [wellTrajectory.mdArr],
-        },
-    };
-
-    return geometryCollection;
-}
 export function createWellBoreHeaderLayer(wellTrajectories: WellboreTrajectory_api[]): Record<string, unknown> {
     const data: Record<string, unknown>[] = wellTrajectories.map((wellTrajectory) => {
         return wellHeaderMarkerToGeojson(
@@ -173,27 +148,10 @@ function wellHeaderMarkerToGeojson(
     uwi: string,
     uuid: string,
 ): Record<string, unknown> {
-    // let data: Record<string, unknown> = {
-    //     type: "Feature",
-    //     geometry: {
-    //         type: "Point",
-    //         coordinates: [x, y, z],
-    //     },
-    //     properties: { name: label },
-    // };
     const data: Record<string, unknown> = {
         coordinates: [x, y, z],
         uuid: uuid,
         uwi: uwi,
     };
     return data;
-}
-
-function zipCoords(x_arr: number[], y_arr: number[], z_arr: number[]): number[][] {
-    const coords: number[][] = [];
-    for (let i = 0; i < x_arr.length; i++) {
-        coords.push([x_arr[i], y_arr[i], -z_arr[i]]);
-    }
-
-    return coords;
 }
