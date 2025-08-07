@@ -1,10 +1,12 @@
+import React from "react";
+
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+import type { WorkbenchSessionDataContainer } from "@framework/internal/WorkbenchSession/WorkbenchSessionDataContainer";
 import { loadAllWorkbenchSessionsFromLocalStorage } from "@framework/internal/WorkbenchSession/WorkbenchSessionLoader";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
-import React from "react";
+
 import { SessionRow } from "./private-components/sessionRow";
 
 export type MultiSessionsRecoveryDialogProps = {
@@ -16,13 +18,10 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
         props.workbench.getGuiMessageBroker(),
         GuiState.MultiSessionsRecoveryDialogOpen,
     );
-    const [sessions, setSessions] = React.useState<PrivateWorkbenchSession[]>([]);
+    const [sessions, setSessions] = React.useState<WorkbenchSessionDataContainer[]>([]);
 
     async function loadSessions() {
-        const loadedSessions = await loadAllWorkbenchSessionsFromLocalStorage(
-            props.workbench.getAtomStoreMaster(),
-            props.workbench.getQueryClient(),
-        );
+        const loadedSessions = await loadAllWorkbenchSessionsFromLocalStorage();
 
         setSessions(loadedSessions);
     }
@@ -82,12 +81,7 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
                 </thead>
                 <tbody>
                     {sessions.map((session) => (
-                        <SessionRow
-                            session={session}
-                            key={session.getId()}
-                            onOpen={handleOpen}
-                            onDiscard={handleDiscard}
-                        />
+                        <SessionRow session={session} key={session.id} onOpen={handleOpen} onDiscard={handleDiscard} />
                     ))}
                 </tbody>
             </table>

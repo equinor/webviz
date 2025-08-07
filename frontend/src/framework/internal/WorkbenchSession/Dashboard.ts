@@ -1,11 +1,12 @@
-import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import type { JTDSchemaType } from "ajv/dist/core";
 import { v4 } from "uuid";
+
+import { SyncSettingKey } from "@framework/SyncSettings";
+import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { AtomStoreMaster } from "../../AtomStoreMaster";
 import type { ModuleInstance, ModuleInstanceFullState } from "../../ModuleInstance";
 import { ModuleRegistry } from "../../ModuleRegistry";
-import type { JTDSchemaType } from "ajv/dist/core";
-import { SyncSettingKey } from "@framework/SyncSettings";
 
 export type LayoutElement = {
     moduleInstanceId?: string;
@@ -56,7 +57,7 @@ const moduleInstanceSchema: JTDSchemaType<ModuleInstanceStateAndLayoutInfo> = {
         },
         syncedSettingKeys: {
             elements: {
-                enum: [SyncSettingKey.CAMERA_POSITION_INTERSECTION],
+                enum: Object.values(SyncSettingKey),
             },
         },
         dataChannelReceiverSubscriptions: {

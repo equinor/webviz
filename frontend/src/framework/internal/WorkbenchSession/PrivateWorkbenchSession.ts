@@ -17,7 +17,7 @@ import {
 } from "../EnsembleSetLoader";
 import { PrivateWorkbenchSettings, type SerializedWorkbenchSettings } from "../PrivateWorkbenchSettings";
 
-import { EnsembleUpdateMonitor } from "./EnsembleUpdateMonitor";
+import { isPersisted, isSnapshot, type WorkbenchSessionDataContainer } from "./WorkbenchSessionDataContainer";
 
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
@@ -98,7 +98,6 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     private _isEnsembleSetLoading: boolean = false;
     private _loadedFromLocalStorage: boolean = false;
     private _settings: PrivateWorkbenchSettings = new PrivateWorkbenchSettings();
-    private _ensembleUpdateMonitor: EnsembleUpdateMonitor;
 
     constructor(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient, isSnapshot = false) {
         this._atomStoreMaster = atomStoreMaster;
@@ -106,8 +105,6 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         this._userCreatedItems = new UserCreatedItems(atomStoreMaster);
         this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, this._realizationFilterSet);
         this._isSnapshot = isSnapshot;
-
-        this._ensembleUpdateMonitor = new EnsembleUpdateMonitor(this, queryClient);
     }
 
     getIsLoadedFromLocalStorage(): boolean {
@@ -217,7 +214,6 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         regularEnsembleSettings: UserEnsembleSetting[],
         deltaEnsembleSettings: UserDeltaEnsembleSetting[],
     ): Promise<void> {
-        this._ensembleUpdateMonitor.stopPolling();
         this.setEnsembleSetLoading(true);
         const newSet = await loadMetadataFromBackendAndCreateEnsembleSet(
             this._queryClient,
@@ -237,8 +233,6 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         this._realizationFilterSet.synchronizeWithEnsembleSet(set);
         this._ensembleSet = set;
         // Await the update of the EnsembleTimestampsStore with the latest timestamps before notifying any subscribers
-        await this._ensembleUpdateMonitor.pollImmediately();
-        this._ensembleUpdateMonitor.startPolling();
         this._atomStoreMaster.setAtomValue(EnsembleSetAtom, set);
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ENSEMBLE_SET);
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET);
@@ -330,6 +324,23 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
 
     beforeDestroy(): void {
         this.clear();
-        this._ensembleUpdateMonitor.dispose();
+    }
+
+    static async fromDataContainer(
+        atomStoreMaster: AtomStoreMaster,
+        queryClient: QueryClient,
+        dataContainer: WorkbenchSessionDataContainer,
+    ): Promise<PrivateWorkbenchSession> {
+        const session = new PrivateWorkbenchSession(atomStoreMaster, queryClient, isSnapshot(dataContainer));
+
+        if (isPersisted(dataContainer)) {
+            session.setId(dataContainer.id);
+            session.setIsPersisted(true);
+        }
+
+        session.setMetadata(dataContainer.metadata);
+        await session.loadContent(dataContainer.content);
+
+        return session;
     }
 }

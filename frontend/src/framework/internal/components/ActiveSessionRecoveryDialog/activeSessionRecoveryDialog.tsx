@@ -1,12 +1,17 @@
+import React from "react";
+
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import type { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+import {
+    extractLayout,
+    type WorkbenchSessionDataContainer,
+} from "@framework/internal/WorkbenchSession/WorkbenchSessionDataContainer";
 import { loadAllWorkbenchSessionsFromLocalStorage } from "@framework/internal/WorkbenchSession/WorkbenchSessionLoader";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
-import React from "react";
-import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
 import { timeAgo } from "@lib/utils/dates";
+
+import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
 
 export type ActiveSessionRecoveryDialogProps = {
     workbench: Workbench;
@@ -20,17 +25,17 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
 
     const activeSession = props.workbench.getWorkbenchSession();
 
-    const [session, setSession] = React.useState<PrivateWorkbenchSession | null>(null);
+    const [session, setSession] = React.useState<WorkbenchSessionDataContainer | null>(null);
 
-    async function loadSession() {
-        const loadedSessions = await loadAllWorkbenchSessionsFromLocalStorage(
-            props.workbench.getAtomStoreMaster(),
-            props.workbench.getQueryClient(),
-        );
+    const loadSession = React.useCallback(
+        async function loadSession() {
+            const loadedSessions = await loadAllWorkbenchSessionsFromLocalStorage();
 
-        const storedSession = loadedSessions.find((s) => s.getId() === activeSession.getId());
-        setSession(storedSession || null);
-    }
+            const storedSession = loadedSessions.find((s) => s.id === activeSession.getId());
+            setSession(storedSession || null);
+        },
+        [activeSession],
+    );
 
     React.useEffect(
         function loadSessionOnOpen() {
@@ -38,7 +43,7 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
                 loadSession();
             }
         },
-        [isOpen],
+        [isOpen, loadSession],
     );
 
     if (!isOpen || !session) {
@@ -75,15 +80,15 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
             We found an unsaved version of your current session in your local storage. You can either discard it or open
             it to recover your work.
             <div className="flex gap-4 mt-4">
-                <DashboardPreview height={150} width={150} layout={session?.getActiveDashboard()?.getLayout() ?? []} />
+                <DashboardPreview height={150} width={150} layout={session ? extractLayout(session) : []} />
                 <div className="flex flex-col gap-2">
                     <div className="flex flex-col gap-1">
                         <strong className="text-xs text-gray-500">Title</strong>
-                        {session?.getMetadata().title}
+                        {session?.metadata.title}
                     </div>
                     <div className="flex flex-col gap-1">
                         <strong className="text-xs text-gray-500">Last modified</strong>
-                        {timeAgo(Date.now() - session.getMetadata().lastModifiedMs)}
+                        {timeAgo(Date.now() - session.metadata.lastModifiedMs)}
                     </div>
                     <div className="flex flex-col gap-1">
                         <strong className="text-xs text-gray-500">Last persisted</strong>

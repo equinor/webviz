@@ -1,9 +1,9 @@
 import React from "react";
 
-import { Settings as SettingsIcon } from "@mui/icons-material";
+import { Tune } from "@mui/icons-material";
 
-import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
 import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
+import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -49,7 +49,7 @@ export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
                 ))}
                 {moduleInstances.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full">
-                        <SettingsIcon fontSize="large" className="text-slate-200" />
+                        <Tune fontSize="large" className="text-slate-200" />
                     </div>
                 )}
             </div>

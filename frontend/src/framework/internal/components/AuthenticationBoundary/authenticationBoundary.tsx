@@ -1,11 +1,12 @@
-import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
-import { DataSharingLabel } from "./private-components/DataSharingLabel";
-import { DevLabel } from "./private-components/DevLabel";
-
 import FmuLogo from "@assets/fmu.svg";
 import FmuLogoAnimated from "@assets/fmuAnimated.svg";
+
+import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { Button } from "@lib/components/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+import { DataSharingLabel } from "./private-components/DataSharingLabel";
+import { DevLabel } from "./private-components/DevLabel";
 
 export type AuthenticationBoundaryProps = {
     children?: React.ReactNode;
@@ -15,7 +16,7 @@ export function AuthenticationBoundary(props: AuthenticationBoundaryProps) {
     const { authState } = useAuthProvider();
 
     function signIn() {
-        window.location.href = `/api/login?redirect_url_after_login=${btoa("/")}`;
+        window.location.href = `/api/login?redirect_url_after_login=${btoa(window.location.pathname + window.location.search + window.location.hash)}`;
     }
 
     let content: React.ReactNode = null;

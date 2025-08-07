@@ -1,5 +1,9 @@
 import type { JTDSchemaType } from "ajv/dist/jtd";
 
+import { USER_CREATED_ITEMS_JTD_SCHEMA } from "@framework/UserCreatedItems";
+
+import { WORKBENCH_SETTINGS_JTD_SCHEMA } from "../PrivateWorkbenchSettings";
+
 import { DASHBOARD_JTD_SCHEMA } from "./Dashboard";
 import type {
     SerializedDeltaEnsemble,
@@ -9,8 +13,6 @@ import type {
     WorkbenchSessionMetadata,
 } from "./PrivateWorkbenchSession";
 import type { SerializedWorkbenchSession } from "./WorkbenchSessionSerializer";
-import { WORKBENCH_SETTINGS_JTD_SCHEMA } from "../PrivateWorkbenchSettings";
-import { USER_CREATED_ITEMS_JTD_SCHEMA } from "@framework/UserCreatedItems";
 
 export const regularEnsembleSchema: JTDSchemaType<SerializedRegularEnsemble> = {
     properties: {

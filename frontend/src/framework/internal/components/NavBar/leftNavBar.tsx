@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { GridView, Link, List, Palette, Settings } from "@mui/icons-material";
+import { GridView, Link, List, Palette, Tune } from "@mui/icons-material";
 
 import { GuiState, LeftDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
 import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
@@ -106,7 +106,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 <NavBarButton
                     active={drawerContent === LeftDrawerContent.ModuleSettings}
                     title="Show module settings"
-                    icon={<Settings fontSize="small" className="size-5" />}
+                    icon={<Tune fontSize="small" className="size-5" />}
                     onClick={handleModuleSettingsClick}
                     disabled={layoutEmpty}
                 />

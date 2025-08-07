@@ -8,6 +8,7 @@ import { confirmationService } from "./ConfirmationService";
 import { GuiMessageBroker, GuiState, LeftDrawerContent, RightDrawerContent } from "./GuiMessageBroker";
 import { NavigationObserver } from "./internal/NavigationObserver";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
+import { EnsembleUpdateMonitor } from "./internal/WorkbenchSession/EnsembleUpdateMonitor";
 import { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
 import {
     buildSessionUrl,
@@ -42,6 +43,8 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     private _queryClient: QueryClient;
     private _workbenchSessionPersistenceService: WorkbenchSessionPersistenceService;
     private _navigationObserver: NavigationObserver;
+    private _ensembleUpdateMonitor: EnsembleUpdateMonitor;
+    private _isInitialized: boolean = false;
 
     constructor(queryClient: QueryClient) {
         this._queryClient = queryClient;
@@ -53,6 +56,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             onBeforeUnload: () => this.isWorkbenchDirty(),
             onNavigate: async () => this.handleNavigation(),
         });
+        this._ensembleUpdateMonitor = new EnsembleUpdateMonitor(queryClient, this);
     }
 
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<WorkbenchTopicPayloads> {
@@ -170,18 +174,27 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     }
 
     async initialize() {
+        if (this._isInitialized) {
+            console.info(
+                "Workbench is already initialized. This might happen in strict mode due to useEffects being called multiple times.",
+            );
+            return;
+        }
+
+        this._isInitialized = true;
+
         // First, check if a snapshot id is provided in the URL
         const snapshotId = readSnapshotIdFromUrl();
         const sessionId = readSessionIdFromUrl();
 
-        const storedSessions = await loadAllWorkbenchSessionsFromLocalStorage(this._atomStoreMaster, this._queryClient);
+        const storedSessions = await loadAllWorkbenchSessionsFromLocalStorage();
 
         if (snapshotId) {
             this.loadSnapshot(snapshotId);
             return;
         } else if (sessionId) {
             this.openSession(sessionId);
-            if (storedSessions.find((el) => el.getId() === sessionId)) {
+            if (storedSessions.find((el) => el.id === sessionId)) {
                 this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, true);
             }
             return;
@@ -194,7 +207,12 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
     private async loadSnapshot(snapshotId: string): Promise<void> {
         try {
-            const snapshot = await loadSnapshotFromBackend(this._atomStoreMaster, this._queryClient, snapshotId);
+            const snapshotData = await loadSnapshotFromBackend(this._queryClient, snapshotId);
+            const snapshot = await PrivateWorkbenchSession.fromDataContainer(
+                this._atomStoreMaster,
+                this._queryClient,
+                snapshotData,
+            );
             await this.setWorkbenchSession(snapshot);
             if (this.getGuiMessageBroker().getState(GuiState.LeftDrawerContent) !== LeftDrawerContent.ModuleSettings) {
                 this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
@@ -208,7 +226,27 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             }
             return;
         } catch (error) {
+            this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
             console.error("Failed to load session from backend:", error);
+            const result = await confirmationService.confirm({
+                title: "Could not load snapshot",
+                message: `Could not load snapshot with ID ${snapshotId}. The snapshot might not exist or you might not have access to it.`,
+                actions: [
+                    {
+                        id: "cancel",
+                        label: "Cancel",
+                    },
+                    {
+                        id: "retry",
+                        label: "Retry",
+                    },
+                ],
+            });
+            if (result === "retry") {
+                this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
+                // Retry loading the snapshot
+                await this.loadSnapshot(snapshotId);
+            }
         }
     }
 
@@ -251,15 +289,17 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             return;
         }
 
-        const session = await loadWorkbenchSessionFromLocalStorage(
-            snapshotId,
-            this._atomStoreMaster,
-            this._queryClient,
-        );
-        if (!session) {
+        const sessionData = await loadWorkbenchSessionFromLocalStorage(snapshotId);
+        if (!sessionData) {
             console.warn("No workbench session found in local storage.");
             return;
         }
+
+        const session = await PrivateWorkbenchSession.fromDataContainer(
+            this._atomStoreMaster,
+            this._queryClient,
+            sessionData,
+        );
 
         await this.setWorkbenchSession(session);
         this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, false);
@@ -278,9 +318,15 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         window.history.pushState({}, "", url);
 
         try {
-            const session = await loadWorkbenchSessionFromBackend(this._atomStoreMaster, this._queryClient, sessionId);
+            const sessionData = await loadWorkbenchSessionFromBackend(this._queryClient, sessionId);
+            const session = await PrivateWorkbenchSession.fromDataContainer(
+                this._atomStoreMaster,
+                this._queryClient,
+                sessionData,
+            );
             await this.setWorkbenchSession(session);
-        } catch (e) {
+        } catch (error) {
+            console.error("Failed to load session from backend:", error);
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
             const result = await confirmationService.confirm({
                 title: "Could not load session",
@@ -351,22 +397,32 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             return;
         }
 
-        if (session.getEnsembleSet().getEnsembleArray().length === 0) {
-            this._guiMessageBroker.setState(GuiState.EnsembleDialogOpen, true);
+        try {
+            if (session.getEnsembleSet().getEnsembleArray().length === 0) {
+                this._guiMessageBroker.setState(GuiState.EnsembleDialogOpen, true);
+            }
+
+            this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
+
+            if (session.getActiveDashboard().getLayout().length === 0) {
+                this._guiMessageBroker.setState(GuiState.RightDrawerContent, RightDrawerContent.ModulesList);
+                if (this._guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) === 0) {
+                    this._guiMessageBroker.setState(GuiState.RightSettingsPanelWidthInPercent, 20);
+                }
+            }
+
+            this._workbenchSession = session;
+            await this._ensembleUpdateMonitor.pollImmediately();
+            this._ensembleUpdateMonitor.startPolling();
+            await this._workbenchSessionPersistenceService.setWorkbenchSession(session);
+            this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
+        } catch (error) {
+            console.error("Failed to hydrate workbench session:", error);
+            throw new Error("Could not load workbench session from data container.");
+        } finally {
+            this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
+            this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
         }
-
-        this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
-
-        if (session.getActiveDashboard().getLayout().length === 0) {
-            this._guiMessageBroker.setState(GuiState.RightDrawerContent, RightDrawerContent.ModulesList);
-        }
-
-        this._workbenchSession = session;
-        await this._workbenchSessionPersistenceService.setWorkbenchSession(session);
-        this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
-
-        this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
-        this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
     }
 
     async startNewSession(): Promise<void> {
@@ -481,6 +537,8 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             console.warn("No active workbench session to unload.");
             return;
         }
+
+        this._ensembleUpdateMonitor.stopPolling();
 
         this._workbenchSession.beforeDestroy();
         this._workbenchSessionPersistenceService.removeWorkbenchSession();

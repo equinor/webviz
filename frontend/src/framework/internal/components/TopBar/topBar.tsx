@@ -1,7 +1,8 @@
 import React from "react";
 
-import { Tooltip, Typography } from "@equinor/eds-core-react";
-import { AddLink, Close, Edit, Lock, Refresh, Save } from "@mui/icons-material";
+import { Icon, Tooltip, Typography } from "@equinor/eds-core-react";
+import { category } from "@equinor/eds-icons";
+import { AddLink, Category, Close, Edit, Link, Lock, Refresh, Save } from "@mui/icons-material";
 
 import FmuLogo from "@assets/fmu.svg";
 
@@ -12,8 +13,6 @@ import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import type { ButtonProps } from "@lib/components/Button/button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { IconButton } from "@lib/components/IconButton";
-import { timeAgo } from "@lib/utils/dates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -22,6 +21,8 @@ import { LoginButton } from "../LoginButton";
 export type TopBarProps = {
     workbench: Workbench;
 };
+
+Icon.add({ category });
 
 export function TopBar(props: TopBarProps): React.ReactNode {
     const hasActiveSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.HAS_ACTIVE_SESSION);
@@ -47,6 +48,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                     ) : (
                         <div className="grow" />
                     )}
+                    <TopBarDivider />
                     <LoginButton showText={false} />
                 </div>
             </div>
@@ -64,15 +66,31 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
     );
 
-    if (isSnapshot) {
-        return <SessionFromSnapshotButton workbench={props.workbench} />;
+    function handleCloseSessionClick() {
+        props.workbench.maybeCloseCurrentSession();
     }
+
+    const closeButtonTitle = isSnapshot ? "Close snapshot" : "Close session";
 
     return (
         <>
-            <RefreshSessionButton workbench={props.workbench} />
-            <SessionSaveButton workbench={props.workbench} />
-            <SnapshotButton workbench={props.workbench} />
+            {isSnapshot ? (
+                <SessionFromSnapshotButton workbench={props.workbench} />
+            ) : (
+                <>
+                    <EditSessionButton workbench={props.workbench} />
+                    <TopBarDivider />
+                    <RefreshSessionButton workbench={props.workbench} />
+                    <SessionSaveButton workbench={props.workbench} />
+                    <SnapshotButton workbench={props.workbench} />
+                    <TopBarDivider />
+                </>
+            )}
+            <Tooltip title={closeButtonTitle} placement="bottom">
+                <TopBarButton onClick={handleCloseSessionClick} title={closeButtonTitle}>
+                    <Close fontSize="inherit" />
+                </TopBarButton>
+            </Tooltip>
         </>
     );
 }
@@ -89,6 +107,36 @@ function LogoWithText(): React.ReactNode {
                 BETA
             </div>
         </div>
+    );
+}
+
+type EditSessionButtonProps = {
+    workbench: Workbench;
+};
+
+function EditSessionButton(props: EditSessionButtonProps): React.ReactNode {
+    const isPersisted = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.IS_PERSISTED,
+    );
+
+    const isSnapshot = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
+    );
+
+    function handleEditTitleClick() {
+        alert("Edit title functionality is not implemented yet.");
+    }
+
+    if (isSnapshot || !isPersisted) {
+        return null;
+    }
+
+    return (
+        <TopBarButton onClick={handleEditTitleClick} title="Edit session">
+            <Edit fontSize="inherit" />
+        </TopBarButton>
     );
 }
 
@@ -112,20 +160,12 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
     );
 
-    function handleEditTitleClick() {
-        alert("Edit title functionality is not implemented yet.");
-    }
-
-    function handleCloseSessionClick() {
-        props.workbench.maybeCloseCurrentSession();
-    }
-
     function makeContent() {
         let content: React.ReactNode = null;
         if (isSnapshot) {
             content = (
                 <>
-                    <Lock fontSize="inherit" />
+                    <Link fontSize="inherit" className="mr-1" />
                     <Tooltip
                         title={
                             <>
@@ -147,39 +187,28 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
                     <Typography variant="body_short" className="overflow-ellipsis min-w-0 whitespace-nowrap font-light">
                         (snapshot)
                     </Typography>
+                    <Tooltip title="This session is a snapshot and cannot be edited.">
+                        <Lock fontSize="inherit" />
+                    </Tooltip>
                 </>
-            );
-        } else if (!isPersisted) {
-            content = (
-                <Typography variant="h5" className="italic overflow-ellipsis min-w-0 whitespace-nowrap">
-                    {metadata.title}
-                </Typography>
             );
         } else {
             content = (
                 <>
-                    <Typography variant="h5" className="overflow-ellipsis min-w-0 whitespace-nowrap">
+                    <Category fontSize="inherit" className="mr-1" />
+                    <Typography
+                        variant="h5"
+                        className={resolveClassNames("overflow-ellipsis min-w-0 whitespace-nowrap", {
+                            italic: !isPersisted,
+                        })}
+                    >
                         {metadata.title}
                     </Typography>
-                    <Tooltip title="Edit session" placement="bottom">
-                        <IconButton onClick={handleEditTitleClick} title="Edit session">
-                            <Edit fontSize="inherit" />
-                        </IconButton>
-                    </Tooltip>
                 </>
             );
         }
 
-        return (
-            <>
-                {content}
-                <Tooltip title="Close session" placement="bottom">
-                    <IconButton onClick={handleCloseSessionClick} title="Close session">
-                        <Close fontSize="inherit" />
-                    </IconButton>
-                </Tooltip>
-            </>
-        );
+        return <>{content}</>;
     }
 
     return <div className="grow flex gap-2 overflow-hidden items-center">{makeContent()}</div>;
@@ -244,33 +273,16 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
         props.workbench.saveCurrentSession();
     };
 
-    function makeText() {
-        if (persistenceInfo.lastPersistedMs === null) {
-            return null;
-        }
-
-        if (!persistenceInfo.hasChanges) {
-            return null;
-        }
-
-        if (!isPersisted) {
-            return null;
-        }
-
-        return `You have unsaved changes. Last saved: ${timeAgo(Date.now() - persistenceInfo.lastPersistedMs)}`;
-    }
-
     const enabled = persistenceInfo.hasChanges || !isPersisted;
 
     return (
         <div
-            className={resolveClassNames("p-2 flex items-center text-sm gap-4", {
+            className={resolveClassNames("p-2 flex items-center justify-center text-sm gap-4 w-14", {
                 "bg-amber-100": persistenceInfo.hasChanges && persistenceInfo.lastPersistedMs !== null && isPersisted,
             })}
         >
-            {makeText()}
             {isSaving ? (
-                <CircularProgress size="small" className="text-amber-600" />
+                <CircularProgress size="medium-small" className="text-amber-600" />
             ) : (
                 <TopBarButton
                     onClick={handleSaveClick}
@@ -344,4 +356,8 @@ function RefreshSessionButton(props: RefreshSessionButtonProps): React.ReactNode
             </TopBarButton>
         </div>
     );
+}
+
+function TopBarDivider(): React.ReactNode {
+    return <div className="bg-slate-200 w-px h-10 mx-2" />;
 }

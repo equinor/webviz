@@ -1,5 +1,7 @@
 import React from "react";
 
+import { AddLink } from "@mui/icons-material";
+
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/SnapshotUrlService";
 import type { Workbench } from "@framework/Workbench";
@@ -8,7 +10,6 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
-import { AddLink } from "@mui/icons-material";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
 
@@ -125,17 +126,20 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
                 <Button variant="text" disabled={isSaving} onClick={handleCancel}>
                     Cancel
                 </Button>
-                <Button variant="text" disabled={isSaving} onClick={handleCreateSnapshot}>
+                <Button variant="text" color="success" disabled={isSaving} onClick={handleCreateSnapshot}>
                     {isSaving && <CircularProgress size="small" />}
-                    <AddLink fontSize="inherit" /> Make link
+                    <AddLink fontSize="inherit" /> Create snapshot
                 </Button>
             </>
         );
     } else {
         content = (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-4">
                 <div className="text-green-600 text-lg font-bold">Snapshot created successfully!</div>
-                <div className="text-sm">You can share this link:</div>
+                <div className="text-sm">
+                    By sharing the following link you can give others access to your snapshot. <br />
+                    You can find all your created and visited snapshots in the snapshots dialog.
+                </div>
                 <Input
                     type="text"
                     value={snapshotUrl}

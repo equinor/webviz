@@ -1,24 +1,26 @@
+import { globalLog } from "@src/Log";
 import type { QueryClient } from "@tanstack/query-core";
 
 import { postGetTimestampsForEnsemblesOptions, type EnsembleIdent_api } from "@api";
 import { EnsembleTimestampsStore, type EnsembleTimestamps } from "@framework/EnsembleTimestampsStore";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { Workbench } from "@framework/Workbench";
 
-import type { PrivateWorkbenchSession } from "./PrivateWorkbenchSession";
+const logger = globalLog.registerLogger("EnsembleUpdateMonitor");
 
-const ENSEMBLE_POLLING_INTERVAL = 60000; // 60 seconds
+const ENSEMBLE_POLLING_INTERVAL = 10000; // 60 seconds
 
 export class EnsembleUpdateMonitor {
-    private _workbenchSession: PrivateWorkbenchSession;
     private _queryClient: QueryClient;
     private _pollingEnabled: boolean = false;
     private _isRunning: boolean = false;
     private _pollingTimeout: ReturnType<typeof setTimeout> | null = null;
     private _lastPollTimestamp: number | null = null;
+    private _workbench: Workbench;
 
-    constructor(workbenchSession: PrivateWorkbenchSession, queryClient: QueryClient) {
-        this._workbenchSession = workbenchSession;
+    constructor(queryClient: QueryClient, workbench: Workbench) {
         this._queryClient = queryClient;
+        this._workbench = workbench;
     }
 
     startPolling() {
@@ -32,7 +34,7 @@ export class EnsembleUpdateMonitor {
             clearTimeout(this._pollingTimeout);
         }
 
-        console.debug("checkForEnsembleUpdate - initializing...");
+        logger.console?.log("checkForEnsembleUpdate - initializing...");
         this._pollingEnabled = true;
         this.recursivelyQueueEnsemblePolling();
     }
@@ -42,7 +44,7 @@ export class EnsembleUpdateMonitor {
             return; // Not currently polling
         }
 
-        console.debug("checkForEnsembleUpdate - stopping...");
+        logger.console?.log("checkForEnsembleUpdate - stopping...");
         this._pollingEnabled = false;
 
         if (this._pollingTimeout) {
@@ -65,7 +67,7 @@ export class EnsembleUpdateMonitor {
 
         if (elapsed < ENSEMBLE_POLLING_INTERVAL) {
             const wait = ENSEMBLE_POLLING_INTERVAL - elapsed;
-            console.debug(`Polling skipped: only ${elapsed}ms elapsed since last poll. Waiting ${wait}ms...`);
+            logger.console?.log(`Polling skipped: only ${elapsed}ms elapsed since last poll. Waiting ${wait}ms...`);
             this._pollingTimeout = setTimeout(() => {
                 this.recursivelyQueueEnsemblePolling();
             }, wait);
@@ -78,7 +80,7 @@ export class EnsembleUpdateMonitor {
             return; // Stop if polling is disabled
         }
 
-        console.debug("checkForEnsembleUpdate - queuing next...");
+        logger.console?.log("checkForEnsembleUpdate - queuing next...");
 
         this._pollingTimeout = setTimeout(() => {
             this.recursivelyQueueEnsemblePolling();
@@ -92,18 +94,24 @@ export class EnsembleUpdateMonitor {
         }
         this._isRunning = true;
 
-        console.debug("checkForEnsembleUpdate - fetching...");
+        logger.console?.log(`checkForEnsembleUpdate - fetching...`);
 
         try {
+            const workbenchSession = this._workbench.getWorkbenchSession();
+            if (!workbenchSession) {
+                console.warn(`No workbench session found, exiting...`);
+                return;
+            }
+
             const allRegularEnsembleIdents: Set<RegularEnsembleIdent> = new Set(
-                this._workbenchSession
+                workbenchSession
                     .getEnsembleSet()
                     .getRegularEnsembleArray()
                     .map((ens) => ens.getIdent()),
             );
 
             // Collect all delta ensembles' reference and comparison ensembles
-            const deltaEnsembles = this._workbenchSession.getEnsembleSet().getDeltaEnsembleArray();
+            const deltaEnsembles = workbenchSession.getEnsembleSet().getDeltaEnsembleArray();
             for (const deltaEnsemble of deltaEnsembles) {
                 allRegularEnsembleIdents.add(deltaEnsemble.getComparisonEnsembleIdent());
                 allRegularEnsembleIdents.add(deltaEnsemble.getReferenceEnsembleIdent());
@@ -111,7 +119,7 @@ export class EnsembleUpdateMonitor {
 
             // If there are no ensembles to check, we can exit early
             if (allRegularEnsembleIdents.size === 0) {
-                console.debug("checkForEnsembleUpdate - no ensembles to check, exiting...");
+                logger.console?.log(`checkForEnsembleUpdate - no ensembles to check, exiting...`);
                 return;
             }
 
@@ -134,9 +142,9 @@ export class EnsembleUpdateMonitor {
             // Update the EnsembleTimestampsStore with the latest timestamps
             EnsembleTimestampsStore.setAll(latestTimestampsMap);
 
-            console.debug("checkForEnsembleUpdate - fetched and updated timestamps for ensembles.");
+            logger.console?.log(`checkForEnsembleUpdate - fetched and updated timestamps for ensembles.`);
         } catch (error) {
-            console.error("Error during ensemble polling:", error);
+            console.error(`Error during ensemble polling:`, error);
         } finally {
             this._lastPollTimestamp = Date.now();
             this._isRunning = false;

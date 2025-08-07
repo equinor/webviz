@@ -1,15 +1,15 @@
-import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
-import type { QueryClient } from "@tanstack/query-core";
 import { Ajv } from "ajv/dist/jtd";
 
-import {
+import type { SessionDocument_api } from "@api";
+
+import type {
     PrivateWorkbenchSession,
-    type WorkbenchSessionContent,
-    type WorkbenchSessionMetadata,
+    WorkbenchSessionContent,
+    WorkbenchSessionMetadata,
 } from "./PrivateWorkbenchSession";
 import { objectToJsonString, sessionIdFromLocalStorageKey } from "./utils";
 import { workbenchSessionContentSchema, workbenchSessionSchema } from "./workbenchSession.jtd";
-import type { SessionDocument_api } from "@api";
+import { WorkbenchSessionSource, type WorkbenchSessionDataContainer } from "./WorkbenchSessionDataContainer";
 
 export type SerializedWorkbenchSession = {
     metadata: WorkbenchSessionMetadata;
@@ -19,11 +19,7 @@ const ajv = new Ajv();
 const validateContent = ajv.compile(workbenchSessionContentSchema);
 const validateFull = ajv.compile(workbenchSessionSchema);
 
-export async function deserializeFromLocalStorage(
-    key: string,
-    atomStore: AtomStoreMaster,
-    queryClient: QueryClient,
-): Promise<PrivateWorkbenchSession | null> {
+export function deserializeFromLocalStorage(key: string): WorkbenchSessionDataContainer | null {
     const json = localStorage.getItem(key);
     if (!json) return null;
 
@@ -33,40 +29,37 @@ export async function deserializeFromLocalStorage(
         return null;
     }
 
-    const session = new PrivateWorkbenchSession(atomStore, queryClient);
-    await session.loadContent(parsed.content);
-    session.setMetadata(parsed.metadata);
-    session.setLoadedFromLocalStorage(true);
-    const sessionId = sessionIdFromLocalStorageKey(key);
-    if (sessionId) {
-        session.setId(sessionId);
-        session.setIsPersisted(true);
-    }
+    const session: WorkbenchSessionDataContainer = {
+        metadata: parsed.metadata,
+        content: parsed.content,
+        id: sessionIdFromLocalStorageKey(key) ?? undefined,
+        source: WorkbenchSessionSource.LOCAL_STORAGE,
+    };
+
     return session;
 }
 
-export async function deserializeFromBackend(
-    atomStore: AtomStoreMaster,
-    queryClient: QueryClient,
-    raw: SessionDocument_api,
-): Promise<PrivateWorkbenchSession> {
+export function deserializeFromBackend(raw: SessionDocument_api): WorkbenchSessionDataContainer {
     const parsed = JSON.parse(raw.content);
     if (!validateContent(parsed)) {
         throw new Error(`Backend session validation failed ${validateContent.errors}`);
     }
 
-    const session = new PrivateWorkbenchSession(atomStore, queryClient);
-    await session.loadContent(parsed);
-    session.setMetadata({
-        title: raw.metadata.title,
-        description: raw.metadata.description ?? undefined,
-        createdAt: new Date(raw.metadata.createdAt).getTime(),
-        updatedAt: new Date(raw.metadata.updatedAt).getTime(),
-        hash: raw.metadata.hash,
-        lastModifiedMs: new Date(raw.metadata.updatedAt).getTime(), // Fallback to now if not provided
-    });
-    session.setId(raw.id);
-    session.setIsPersisted(true);
+    const session: WorkbenchSessionDataContainer = {
+        metadata: {
+            title: raw.metadata.title,
+            description: raw.metadata.description ?? undefined,
+            createdAt: new Date(raw.metadata.createdAt).getTime(),
+            updatedAt: new Date(raw.metadata.updatedAt).getTime(),
+            hash: raw.metadata.hash,
+            lastModifiedMs: new Date(raw.metadata.updatedAt).getTime(), // Fallback to now if not provided
+        },
+        content: parsed,
+        id: raw.id,
+        source: WorkbenchSessionSource.BACKEND,
+        isSnapshot: false,
+    };
+
     return session;
 }
 

@@ -42,7 +42,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
         console.debug("Logging out...");
         await postLogout();
         console.debug("Redirecting to login screen...");
-        window.location.href = "/";
+        window.location.reload();
     }
 
     function makeIcon() {
