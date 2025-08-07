@@ -4,14 +4,14 @@ import { inRange } from "lodash";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { Button } from "@lib/components/Button";
-import { Table } from "@lib/components/Table2";
+import { Table } from "@lib/components/Table";
 import type {
     TableFilters,
     ColumnFilterImplementationProps,
     TableSorting,
     TableColumns,
-} from "@lib/components/Table2/types";
-import { SortDirection } from "@lib/components/Table2/types";
+} from "@lib/components/Table/types";
+import { SortDirection } from "@lib/components/Table/types";
 import { ToggleButton } from "@lib/components/ToggleButton";
 
 import type { ExampleTabularData } from "./atoms";

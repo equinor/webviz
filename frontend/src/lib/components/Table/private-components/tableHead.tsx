@@ -4,9 +4,8 @@ import { Close, ExpandLess, ExpandMore, Square } from "@mui/icons-material";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { Input } from "../Input";
-
-import { ALTERNATING_COLUMN_HEADING_COLORS, HEADER_HEIGHT_PX } from "./constants";
+import { Input } from "../../Input";
+import { ALTERNATING_COLUMN_HEADING_COLORS, HEADER_HEIGHT_PX } from "../constants";
 import type {
     HeaderCellDef,
     ColumnSorting,
@@ -15,8 +14,8 @@ import type {
     ColumnFilterImplementationProps,
     TableSorting,
     TableFilters,
-} from "./types";
-import { SortDirection } from "./types";
+} from "../types";
+import { SortDirection } from "../types";
 
 function getSortingForColumn(
     columnId: string,

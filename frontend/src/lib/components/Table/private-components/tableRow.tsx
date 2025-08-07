@@ -4,9 +4,9 @@ import { random } from "lodash";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { ROW_HEIGHT_PX } from "./constants";
-import type { LoadedDataWithKey, TableCellDefinitions, TableDataWithKey } from "./types";
-import { isLoadedDataRow } from "./utils";
+import { ROW_HEIGHT_PX } from "../constants";
+import type { LoadedDataWithKey, TableCellDefinitions, TableDataWithKey } from "../types";
+import { isLoadedDataRow } from "../utils";
 
 export type TableRowProps<T extends Record<string, any>> = {
     row: TableDataWithKey<T>;

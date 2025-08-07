@@ -3,23 +3,10 @@ import React from "react";
 import { isEmpty, orderBy } from "lodash";
 import { v4 } from "uuid";
 
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
-import { Virtualization } from "../Virtualization";
-
-import { ALTERNATING_COLUMN_CELL_COLORS, ROW_HEIGHT_PX } from "./constants";
-import { TableHead } from "./tableHead";
-import { TableRow } from "./tableRow";
-import type {
-    ColGroupDef,
-    TableCellDefinitions,
-    TableFilters,
-    TableSorting,
-    TableData,
-    TableColumns,
-    TableDataWithKey,
-    LoadedDataWithKey,
-} from "./types";
+import { TableBody } from "./private-components/tableBody";
+import { TableColGroups } from "./private-components/tableColGroups";
+import { TableHead } from "./private-components/tableHead";
+import type { TableFilters, TableSorting, TableData, TableColumns, TableDataWithKey } from "./types";
 import {
     computeTableMinWidth,
     defaultDataFilterPredicate,
@@ -237,112 +224,5 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
                 </table>
             </div>
         </>
-    );
-}
-
-type TableColGroupsProps = {
-    colgroupDefinitions: ColGroupDef[];
-    alternatingColumnColors: boolean | undefined;
-};
-
-function TableColGroups(props: TableColGroupsProps): React.ReactNode {
-    return (
-        <>
-            {props.colgroupDefinitions.map((colGroupDef, index) => {
-                const colorIndex = props.alternatingColumnColors ? index % 2 : 1;
-                const headerColorClass = ALTERNATING_COLUMN_CELL_COLORS[colorIndex];
-
-                return (
-                    <colgroup
-                        key={colGroupDef.columnId}
-                        className={resolveClassNames(headerColorClass, "border-x-2 border-gray-200")}
-                    >
-                        {colGroupDef.cols.map((colDef) => (
-                            <col
-                                key={colDef.columnId}
-                                className="border-x-2 first:border-l-0 last:border-r-0"
-                                style={{ width: `${colDef.width}%` }}
-                            />
-                        ))}
-                    </colgroup>
-                );
-            })}
-        </>
-    );
-}
-
-type TableBodyProps<T extends Record<string, any>> = {
-    rows: TableDataWithKey<T>[];
-    wrapperElement: React.RefObject<HTMLElement>;
-    height?: number | string;
-    dataCellDefinitions: TableCellDefinitions<T>["dataCells"];
-    selectedRows?: string[];
-    selectable?: boolean;
-    multiSelect?: boolean;
-    onSelectedRowsChange?: (newSelection: string[]) => void;
-    onRowClick?: (id: string, entry: LoadedDataWithKey<T>) => void;
-    onRowHover?: (id: string | null, entry: LoadedDataWithKey<T> | null) => void;
-};
-
-function TableBody<T extends Record<string, any>>(props: TableBodyProps<T>): React.ReactNode {
-    const { onSelectedRowsChange, onRowClick, onRowHover } = props;
-    const handleRowClick = React.useCallback(
-        function handleRowClick(entry: LoadedDataWithKey<T>, evt: React.MouseEvent) {
-            onRowClick?.(entry._key, entry);
-
-            if (!props.selectable) return;
-
-            const selectedRows = props.selectedRows ?? [];
-            const alreadySelected = selectedRows.includes(entry._key);
-
-            // TODO: Should we make ctr and shift work as in windows? Adding one, vs adding a range?
-            const additive = props.multiSelect && (evt.ctrlKey || evt.shiftKey);
-
-            const newSelection = additive ? selectedRows.filter((key) => key !== entry._key) : [];
-
-            if (!alreadySelected) newSelection.push(entry._key);
-
-            onSelectedRowsChange?.(newSelection);
-        },
-        [onRowClick, onSelectedRowsChange, props.multiSelect, props.selectable, props.selectedRows],
-    );
-
-    const handleBodyMouseLeave = React.useCallback(() => onRowHover?.(null, null), [onRowHover]);
-    const handleRowMouseOver = React.useCallback(
-        (entry: LoadedDataWithKey<T>) => onRowHover?.(entry._key, entry),
-        [onRowHover],
-    );
-
-    return (
-        <tbody onMouseLeave={handleBodyMouseLeave}>
-            <Virtualization
-                containerRef={props.wrapperElement}
-                direction="vertical"
-                placeholderComponent="tr"
-                items={props.rows}
-                itemSize={ROW_HEIGHT_PX}
-                renderItem={(row: TableDataWithKey<T>) => (
-                    <TableRow
-                        key={row._key}
-                        row={row}
-                        dataCellDefinitions={props.dataCellDefinitions}
-                        selected={!!props.selectedRows?.includes(row._key)}
-                        onClick={handleRowClick}
-                        onMouseOver={handleRowMouseOver}
-                    />
-                )}
-            />
-
-            {props.rows.length === 0 && (
-                <tr style={{ height: ROW_HEIGHT_PX * 2.5 }}>
-                    <td
-                        className="text-lg italic text-slate-600 text-center align-middle"
-                        colSpan={props.dataCellDefinitions.length}
-                    >
-                        No data found
-                    </td>
-                </tr>
-            )}
-        </tbody>
     );
 }
