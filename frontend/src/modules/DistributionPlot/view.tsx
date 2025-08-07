@@ -13,9 +13,9 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { Plot } from "@modules/_shared/components/Plot";
 import { makeSubplots } from "@modules/_shared/Figure";
 import { makeHistogramTrace } from "@modules/_shared/histogram";
-
 
 import type { Interfaces } from "./interfaces";
 import { PlotType } from "./typesAndEnums";
@@ -207,7 +207,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                         cellIndex++;
                     }
                 }
-                setContent(figure.makePlot());
+                setContent(<Plot data={figure.makeData()} layout={figure.makeLayout()} />);
                 return;
             }
 
@@ -279,7 +279,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     }
                 }
 
-                setContent(figure.makePlot());
+                setContent(<Plot data={figure.makeData()} layout={figure.makeLayout()} />);
                 return;
             }
 
@@ -435,7 +435,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     autosize: true,
                 };
                 figure.updateLayout(patch);
-                setContent(figure.makePlot());
+                setContent(<Plot data={figure.makeData()} layout={figure.makeLayout()} />);
                 return;
             }
         });

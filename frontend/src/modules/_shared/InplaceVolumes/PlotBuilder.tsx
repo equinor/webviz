@@ -2,7 +2,7 @@ import type React from "react";
 
 import type { Axis, PlotData } from "plotly.js";
 
-
+import { Plot } from "../components/Plot";
 import type { Figure, MakeSubplotOptions } from "../Figure";
 import { CoordinateDomain, makeSubplots } from "../Figure";
 
@@ -96,7 +96,7 @@ export class PlotBuilder {
         if (!this._groupByColumn) {
             const figure = this.buildSubplots(this._table, height, width, options ?? {});
             this.updateLayout(figure);
-            return figure.makePlot();
+            return <Plot layout={figure.makeLayout()} data={figure.makeData()} />;
         }
 
         const components: React.ReactNode[] = [];
@@ -109,7 +109,7 @@ export class PlotBuilder {
             this.updateLayout(figure);
             const label = this._formatLabelFunction(tableCollection.getCollectedBy(), key);
             components.push(<h3 key={key}>{label}</h3>);
-            components.push(figure.makePlot());
+            components.push(<Plot layout={figure.makeLayout()} data={figure.makeData()} />);
         }
 
         return <>{components}</>;

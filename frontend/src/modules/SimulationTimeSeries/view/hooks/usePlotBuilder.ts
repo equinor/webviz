@@ -1,5 +1,3 @@
-import type React from "react";
-
 import { useAtomValue } from "jotai";
 
 import type { ViewContext } from "@framework/ModuleContext";
@@ -32,8 +30,7 @@ export function usePlotBuilder(
     vectorHexColorMap: VectorHexColorMap,
     subplotOwner: SubplotOwner,
     ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null,
-    handlePlotOnClick?: ((event: Readonly<Plotly.PlotMouseEvent>) => void) | undefined,
-): React.ReactNode {
+): PlotBuilder {
     const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
     const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
     const vectorSpecifications = viewContext.useSettingsToViewInterfaceValue("vectorSpecifications");
@@ -124,7 +121,8 @@ export function usePlotBuilder(
         plotBuilder.addTimeAnnotation(activeTimestampUtcMs);
     }
 
-    const plot = plotBuilder.build(handlePlotOnClick);
+    plotBuilder.prepareLegendsAndTitles();
+    plotBuilder.prepareAnnotations();
 
-    return plot;
+    return plotBuilder;
 }
