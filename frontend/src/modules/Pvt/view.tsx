@@ -5,9 +5,11 @@ import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
+import { useColorSet } from "@framework/WorkbenchSettings";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
@@ -16,9 +18,9 @@ import { PvtDataAccessor } from "./utils/PvtDataAccessor";
 import { PvtPlotBuilder } from "./utils/PvtPlotBuilder";
 
 export function View({ viewContext, workbenchSettings, workbenchSession }: ModuleViewProps<Interfaces>) {
-    const colorSet = workbenchSettings.useColorSet();
+    const colorSet = useColorSet(workbenchSettings);
     const statusWriter = useViewStatusWriter(viewContext);
-    const ensembleSet = useEnsembleSet(workbenchSession);
+    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.EnsembleSet);
 
     const selectedEnsembleIdents = viewContext.useSettingsToViewInterfaceValue("selectedEnsembleIdents");
     const selectedPvtNums = viewContext.useSettingsToViewInterfaceValue("selectedPvtNums");

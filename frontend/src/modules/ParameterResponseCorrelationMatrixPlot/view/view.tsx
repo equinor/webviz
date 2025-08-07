@@ -29,6 +29,7 @@ import { PlotType, type CorrelationSettings } from "../typesAndEnums";
 
 import { ParameterCorrelationMatrixFigure } from "./utils/parameterCorrelationMatrixFigure";
 import { createResponseParameterCorrelationMatrix } from "./utils/parameterCorrelationMatrixUtils";
+import { useContinuousColorScale } from "@framework/WorkbenchSettings";
 
 const MAX_NUM_PLOTS = 12;
 
@@ -70,11 +71,9 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const colorScaleWithGradient = workbenchSettings
-        .useContinuousColorScale({
-            gradientType: ColorScaleGradientType.Diverging,
-        })
-        .getPlotlyColorScale();
+    const colorScaleWithGradient = useContinuousColorScale(workbenchSettings, {
+        gradientType: ColorScaleGradientType.Diverging,
+    }).getPlotlyColorScale();
 
     const receiverResponses = [
         viewContext.useChannelReceiver({

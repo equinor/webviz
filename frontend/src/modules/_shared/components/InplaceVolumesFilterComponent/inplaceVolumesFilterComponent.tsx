@@ -18,7 +18,7 @@ import { Select } from "@lib/components/Select";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
-    settingsContext: SettingsContext<any>;
+    settingsContext: SettingsContext<any, any>;
     workbenchServices: WorkbenchServices;
     availableTableNames: string[];
     availableIndicesWithValues: InplaceVolumesIndexWithValues_api[];
