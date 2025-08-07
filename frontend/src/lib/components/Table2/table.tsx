@@ -11,13 +11,14 @@ import { ALTERNATING_COLUMN_CELL_COLORS, ROW_HEIGHT_PX } from "./constants";
 import { TableHead } from "./tableHead";
 import { TableRow } from "./tableRow";
 import type {
-    ColumnDefMap,
-    TableRowData,
     ColGroupDef,
     TableCellDefinitions,
     TableFilters,
     TableSorting,
-    TableRowWithKey,
+    TableData,
+    TableColumns,
+    TableDataWithKey,
+    LoadedDataWithKey,
 } from "./types";
 import {
     computeTableMinWidth,
@@ -28,18 +29,18 @@ import {
     useOptInControlledValue,
 } from "./utils";
 
-export type TableProps<T extends ColumnDefMap> = {
+export type TableProps<T extends Record<string, any>> = {
     /** Main configuration for each table column */
-    columnDefMap: T;
+    columns: TableColumns<T>;
 
     /** Each row of tabular data */
-    rows: TableRowData<T>[];
+    rows: TableData<T>[];
 
     /**
      * Specifies a unique field for each data entry. This value is the one returned in selects, clicks, hovers, etc.
      * If none is specified, a random id will be generated,
      */
-    rowIdentifier?: string;
+    rowIdentifier?: keyof T;
 
     /** Specifies that data collation will be applied outside of the component */
     controlledCollation?: boolean;
@@ -71,30 +72,30 @@ export type TableProps<T extends ColumnDefMap> = {
     onSelectedRowsChange?: (newSelection: string[]) => void;
 
     /** @deprecated Use `onRowClick` instead */
-    onClick?: (row: TableRowData<T>) => void;
-    onRowClick?: (id: string, row: TableRowData<T>) => void;
+    onClick?: (entry: T) => void;
+    onRowClick?: (id: string, entry: T) => void;
     /** @deprecated use `onRowHover()` instead */
-    onHover?: (row: TableRowData<T> | null) => void;
-    onRowHover?: (id: string | null, row: TableRowData<T> | null) => void;
+    onHover?: (entry: T | null) => void;
+    onRowHover?: (id: string | null, entry: T | null) => void;
 
     // TODO: Other QoL things to add?
     // * Specify height with row count instead?
     // numVisibleRows?: number;
 };
 
-function validateProps<T extends ColumnDefMap>(props: TableProps<T>) {
+function validateProps<T extends Record<string, any>>(props: TableProps<T>) {
     if (props.selectable && !props.rowIdentifier) {
         console.warn("Table is selectable, but no row identifier has been specified");
     }
 
-    const totalColSize = Object.values(props.columnDefMap).reduce((acc, def) => acc + def.sizeInPercent, 0);
+    const totalColSize = props.columns.reduce((acc, def) => acc + def.sizeInPercent, 0);
 
     if (totalColSize !== 100) {
         console.warn(`Total column width sums to ${totalColSize}%, not 100%`);
     }
 }
 
-export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.ReactNode {
+export function Table<T extends Record<string, any>>(props: TableProps<T>): React.ReactNode {
     validateProps(props);
 
     const { onHover, onRowHover } = props;
@@ -102,16 +103,16 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
     const divWrapperRef = React.useRef<HTMLDivElement>(null);
 
     const tableCellDefinitions = React.useMemo(() => {
-        return recursivelyBuildTableCellDefinitions(props.columnDefMap);
-    }, [props.columnDefMap]);
+        return recursivelyBuildTableCellDefinitions(props.columns);
+    }, [props.columns]);
 
     const colDataDefLookup = React.useMemo(() => {
         return Object.fromEntries(tableCellDefinitions.dataCells.map((cell) => [cell.columnId, cell]));
     }, [tableCellDefinitions.dataCells]);
 
     const colgroupDefinitions = React.useMemo(() => {
-        return recursivelyBuildTableColumnGroups(props.columnDefMap);
-    }, [props.columnDefMap]);
+        return recursivelyBuildTableColumnGroups(props.columns);
+    }, [props.columns]);
 
     const tableMinWidth = React.useMemo(() => {
         return computeTableMinWidth(colgroupDefinitions);
@@ -122,13 +123,14 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
     const [tableSortState, setTableSortState] = useOptInControlledValue([], props.sorting, props.onSortingChange);
     const [tableFilterState, setTableFilterState] = useOptInControlledValue({}, props.filters, props.onFiltersChange);
 
-    const rowsWithKey = React.useMemo<TableRowWithKey<T>[]>(() => {
+    const rowsWithKey = React.useMemo<TableDataWithKey<T>[]>(() => {
         return props.rows.map((r, i) => {
             if (!isLoadedDataRow(r)) return { _key: `__pending-${i}`, _pending: true };
 
             const key = !props.rowIdentifier ? v4() : r[props.rowIdentifier];
-            if (!key) throw new Error(`Empty value for row identifier "${props.rowIdentifier}`);
-            return { ...r, _key: key.toString() };
+            if (!key) throw Error(`Empty value for row identifier "${String(props.rowIdentifier)}`);
+
+            return { ...r, _key: String(key) };
         });
     }, [props.rows, props.rowIdentifier]);
 
@@ -148,10 +150,12 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
         if (isEmpty(tableFilterState)) return rowsWithKey;
 
         return rowsWithKey.filter((row) => {
-            if (!isLoadedDataRow(row)) return true;
+            // ? Unsure why it couldn't infer correctly here
+            if (!isLoadedDataRow<T>(row)) return true;
 
             for (const columnId in tableFilterState) {
                 const filterValue = tableFilterState[columnId];
+
                 const dataValue = row[columnId];
                 const dataDefinition = colDataDefLookup[columnId];
 
@@ -182,9 +186,9 @@ export function Table<T extends ColumnDefMap>(props: TableProps<T>): React.React
     }, [tableSortState, props.controlledCollation, filteredRows]);
 
     const handleRowHover = React.useCallback(
-        function handleRowHover(id: string | null, row: TableRowWithKey<T> | null) {
-            onHover?.(row);
-            onRowHover?.(id, row);
+        function handleRowHover(id: string | null, entry: T | null) {
+            onHover?.(entry);
+            onRowHover?.(id, entry);
         },
         [onHover, onRowHover],
     );
@@ -262,36 +266,36 @@ function TableColGroups(props: TableColGroupsProps): React.ReactNode {
     );
 }
 
-type TableBodyProps<T extends ColumnDefMap> = {
+type TableBodyProps<T extends Record<string, any>> = {
+    rows: TableDataWithKey<T>[];
     wrapperElement: React.RefObject<HTMLElement>;
     height?: number | string;
-    dataCellDefinitions: TableCellDefinitions["dataCells"];
-    rows: TableRowWithKey<T>[];
+    dataCellDefinitions: TableCellDefinitions<T>["dataCells"];
     selectedRows?: string[];
     selectable?: boolean;
     multiSelect?: boolean;
     onSelectedRowsChange?: (newSelection: string[]) => void;
-    onRowClick?: (id: string, row: TableRowWithKey<T>) => void;
-    onRowHover?: (id: string | null, row: TableRowWithKey<T> | null) => void;
+    onRowClick?: (id: string, entry: LoadedDataWithKey<T>) => void;
+    onRowHover?: (id: string | null, entry: LoadedDataWithKey<T> | null) => void;
 };
 
-function TableBody<T extends ColumnDefMap>(props: TableBodyProps<T>): React.ReactNode {
+function TableBody<T extends Record<string, any>>(props: TableBodyProps<T>): React.ReactNode {
     const { onSelectedRowsChange, onRowClick, onRowHover } = props;
     const handleRowClick = React.useCallback(
-        function handleRowClick(row: TableRowWithKey<T>, evt: React.MouseEvent) {
-            onRowClick?.(row._key, row);
+        function handleRowClick(entry: LoadedDataWithKey<T>, evt: React.MouseEvent) {
+            onRowClick?.(entry._key, entry);
 
             if (!props.selectable) return;
 
             const selectedRows = props.selectedRows ?? [];
-            const alreadySelected = selectedRows.includes(row._key);
+            const alreadySelected = selectedRows.includes(entry._key);
 
             // TODO: Should we make ctr and shift work as in windows? Adding one, vs adding a range?
             const additive = props.multiSelect && (evt.ctrlKey || evt.shiftKey);
 
-            const newSelection = additive ? selectedRows.filter((key) => key !== row._key) : [];
+            const newSelection = additive ? selectedRows.filter((key) => key !== entry._key) : [];
 
-            if (!alreadySelected) newSelection.push(row._key);
+            if (!alreadySelected) newSelection.push(entry._key);
 
             onSelectedRowsChange?.(newSelection);
         },
@@ -300,7 +304,7 @@ function TableBody<T extends ColumnDefMap>(props: TableBodyProps<T>): React.Reac
 
     const handleBodyMouseLeave = React.useCallback(() => onRowHover?.(null, null), [onRowHover]);
     const handleRowMouseOver = React.useCallback(
-        (row: TableRowWithKey<T>) => onRowHover?.(row._key, row),
+        (entry: LoadedDataWithKey<T>) => onRowHover?.(entry._key, entry),
         [onRowHover],
     );
 
@@ -312,10 +316,10 @@ function TableBody<T extends ColumnDefMap>(props: TableBodyProps<T>): React.Reac
                 placeholderComponent="tr"
                 items={props.rows}
                 itemSize={ROW_HEIGHT_PX}
-                renderItem={(row: TableRowWithKey<T>) => (
+                renderItem={(row: TableDataWithKey<T>) => (
                     <TableRow
                         key={row._key}
-                        rowData={row}
+                        row={row}
                         dataCellDefinitions={props.dataCellDefinitions}
                         selected={!!props.selectedRows?.includes(row._key)}
                         onClick={handleRowClick}

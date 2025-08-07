@@ -115,10 +115,10 @@ function HeaderCell(props: HeaderCellProps) {
     );
 }
 
-export type TableHeadProps = {
+export type TableHeadProps<T extends Record<string, any>> = {
     wrapperElement: React.RefObject<HTMLElement>;
-    headerCellDefinitions: TableCellDefinitions["headerCells"];
-    filterCellDefinitions: TableCellDefinitions["filterCells"];
+    headerCellDefinitions: TableCellDefinitions<T>["headerCells"];
+    filterCellDefinitions: TableCellDefinitions<T>["filterCells"];
 
     alternatingColumnColors: boolean | undefined;
     tableSortState: TableSorting;
@@ -128,7 +128,7 @@ export type TableHeadProps = {
     onTableFilterStateChange: (newState: TableFilters) => void;
 };
 
-export function TableHead(props: TableHeadProps): React.ReactNode {
+export function TableHead<T extends Record<string, any>>(props: TableHeadProps<T>): React.ReactNode {
     const { onTableSortStateChange, onTableFilterStateChange } = props;
 
     const hasFilters = props.filterCellDefinitions.some((def) => def.enabled);
@@ -205,12 +205,12 @@ export function TableHead(props: TableHeadProps): React.ReactNode {
     );
 }
 
-type FilterCellProps = {
+type FilterCellProps<T extends Record<string, any>> = {
     tableFilterState: TableFilters;
     onTableFilterChange: (columnId: string, newFilterValue: unknown) => void;
-} & FilterCellDef;
+} & FilterCellDef<T>;
 
-function FilterCell(props: FilterCellProps): React.ReactNode {
+function FilterCell<T extends Record<string, any>>(props: FilterCellProps<T>): React.ReactNode {
     const { onTableFilterChange } = props;
 
     const handleFilterChange = React.useCallback(

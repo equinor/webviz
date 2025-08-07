@@ -4,57 +4,69 @@ import { inRange } from "lodash";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { Button } from "@lib/components/Button";
-import type { TableHeading } from "@lib/components/Table/table";
-import { Table as Table2 } from "@lib/components/Table2";
+import { Table } from "@lib/components/Table2";
 import type {
     TableFilters,
-    ColumnDefMap,
     ColumnFilterImplementationProps,
     TableSorting,
-    TableRowData,
+    TableColumns,
 } from "@lib/components/Table2/types";
 import { SortDirection } from "@lib/components/Table2/types";
 import { ToggleButton } from "@lib/components/ToggleButton";
 
+import type { ExampleTabularData } from "./atoms";
 import type { Interfaces } from "./interfaces";
 
-// TODO: Typing class so you can narrow down the values passed to format/filter functions
-// type TableColumnData = {
-//     "col1.1": string;
-//     col3: number;
-//     "col1.2": string;
-//     "col1.3": string;
-// };
-
-const TABLE_DEFINITION: ColumnDefMap = {
-    id: {
-        label: "id",
+const TABLE_COLUMNS: TableColumns<ExampleTabularData> = [
+    {
+        _type: "data",
+        columnId: "id",
+        label: "ID",
         sizeInPercent: 10,
         sortable: false,
+        filter: {
+            // As an example; you can keep the default rendering (string input), but specify your own predicate
+            predicate(filterValue: string, dataValue) {
+                filterValue = filterValue.toLowerCase();
+
+                if (!/^row-\d+$/.test(filterValue)) return true;
+                return filterValue === dataValue;
+            },
+        },
     },
-    col1: {
+    {
+        _type: "group",
+        columnId: "col1",
         label: "Sub-columns",
         sizeInPercent: 40,
-        subColumns: {
-            "col1.1": {
+        subColumns: [
+            {
+                _type: "data",
+                columnId: "col1.1",
                 label: "Column 1.1",
                 sizeInPercent: 50,
                 formatValue: (s) => (s as string).toUpperCase(),
             },
-            "col1.2": {
+            {
+                _type: "data",
+                columnId: "col1.2",
                 label: "Column 1.2",
                 sizeInPercent: 50,
+                filter: false,
             },
-        },
+        ],
     },
-    theNumbers: {
+    {
+        _type: "data",
+        columnId: "theNumbers",
         label: "Numbers",
         sizeInPercent: 15,
         filter: {
             render: (props) => <RangeFilter {...props} />,
-            predicate(dataValue: string | number | null, filterValue: number[]) {
-                if (typeof dataValue !== "number") return false;
-                if (!Array.isArray(filterValue)) return false;
+            // We cannot infer the filter value's type (since it wholly dependent on the render)
+            predicate(filterValue: number[], dataValue) {
+                if (typeof dataValue !== "number") return true;
+                if (!Array.isArray(filterValue)) return true;
 
                 const min = filterValue[0] ?? Number.NEGATIVE_INFINITY;
                 const max = filterValue[1] ?? Number.POSITIVE_INFINITY;
@@ -63,7 +75,7 @@ const TABLE_DEFINITION: ColumnDefMap = {
             },
         },
 
-        formatStyle(value: number) {
+        formatStyle(value) {
             const percentage = value / 12;
 
             return {
@@ -72,18 +84,14 @@ const TABLE_DEFINITION: ColumnDefMap = {
             };
         },
     },
-    theTags: {
+    {
+        _type: "data",
+        columnId: "theTags",
         label: "Tags",
         sizeInPercent: 35,
         renderData: (value) => <Tags tags={value} />,
     },
-};
-
-// ! I changed the key from "subHeading to "subColumns"; this is a super hacky replacement of the keys back to the legacy
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const TABLE_DEFINITION_LEGACY: TableHeading = JSON.parse(
-    JSON.stringify(TABLE_DEFINITION).replaceAll('"subColumns":', '"subHeading":'),
-);
+];
 
 function RangeFilter(props: ColumnFilterImplementationProps<[number?, number?]>) {
     const value = (props.value ?? []) as [min: number, max: number];
@@ -169,7 +177,7 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
         <div className="h-full w-full flex flex-col">
             {/* 
             <h3 className="mt-6 font-extrabold text-lg">New (un-controlled)</h3>
-            <Table2
+            <Table
                 rowIdentifier="id"
                 height={300}
                 columnDefMap={TABLE_DEFINITION}
@@ -210,7 +218,7 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
                             setUsingTheCoolFilters(true);
                             setTableFilterState({
                                 "col1.1": "69",
-                                col3: [420, 666],
+                                theNumbers: [420, 666],
                             });
                         }
                     }}
@@ -219,11 +227,11 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
                 </ToggleButton>
             </div>
 
-            <Table2
+            <Table
                 rowIdentifier="id"
                 height={300}
-                columnDefMap={TABLE_DEFINITION}
-                rows={tableData as TableRowData<ColumnDefMap>[]}
+                columns={TABLE_COLUMNS}
+                rows={tableData}
                 alternatingColumnColors={alternateColColors}
                 sorting={tableSortingState}
                 filters={tableFilterState}

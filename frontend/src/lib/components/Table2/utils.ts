@@ -5,31 +5,34 @@ import { getTextWidthWithFont } from "@lib/utils/textSize";
 
 import type {
     ColumnGroup,
-    ColumnDefMap,
-    ColumnDef,
     ColGroupDef,
     DataCellDef,
     FilterCellDef,
     HeaderCellDef,
     TableCellDefinitions,
-    TableRowData,
     LoadedData,
+    TableColumn,
+    TableData,
+    TableColumns,
 } from "./types";
 
-export function isColumnGroupDef(headerOrGroup: ColumnDef | ColumnGroup): headerOrGroup is ColumnGroup {
+export function isColumnGroupDef<TData extends Record<string, any>>(
+    headerOrGroup: TableColumn<TData>,
+): headerOrGroup is ColumnGroup<TData> {
     return "subColumns" in headerOrGroup;
 }
 
-export function isLoadedDataRow<T extends ColumnDefMap>(data: TableRowData<T>): data is LoadedData<T> {
+export function isLoadedDataRow<TData extends Record<string, any>>(data: TableData<TData>): data is LoadedData<TData> {
     if (data._pending) return false;
     return true;
 }
 
-function recursivelyCalcDepth(columnDefinitions: ColumnDefMap, depth: number = 1): number {
+function recursivelyCalcDepth<TData extends Record<string, any>>(
+    tableColumns: TableColumns<TData>,
+    depth: number = 1,
+): number {
     let maxDepth = depth;
-    for (const col in columnDefinitions) {
-        const columnDef = columnDefinitions[col];
-
+    for (const columnDef of tableColumns) {
         if (isColumnGroupDef(columnDef) && columnDef.subColumns) {
             const localDepth = recursivelyCalcDepth(columnDef.subColumns, depth + 1);
             maxDepth = Math.max(maxDepth, localDepth);
@@ -38,40 +41,38 @@ function recursivelyCalcDepth(columnDefinitions: ColumnDefMap, depth: number = 1
     return maxDepth;
 }
 
-export function defaultDataFilterPredicate(
-    columnData: string | number | null,
+export function defaultDataFilterPredicate<TData extends Record<string, any | null>, TKey extends keyof TData>(
     filterValue: string,
-    dataDefinition: DataCellDef,
-    entry: TableRowData<any>,
+    columnData: TData[TKey],
+    dataDefinition: DataCellDef<TData, TKey>,
+    entry: TData,
 ) {
     const formattedData = dataDefinition.format?.(columnData, entry) ?? columnData ?? "";
 
-    const lowerValue = formattedData.toString().toLowerCase();
+    const lowerValue = String(formattedData).toLowerCase();
     const filterString = filterValue.toLowerCase();
 
-    return !lowerValue.includes(filterString);
+    return lowerValue.includes(filterString);
 }
 
-export function recursivelyBuildTableCellDefinitions(
-    columnDefinitions: ColumnDefMap,
+export function recursivelyBuildTableCellDefinitions<TData extends Record<string, any>>(
+    tableColumns: TableColumns<TData>,
     depth: number = 0,
-    maxDepth = recursivelyCalcDepth(columnDefinitions),
+    maxDepth = recursivelyCalcDepth(tableColumns),
     // ! Object is mutated as the method runs
     headerCells: HeaderCellDef[][] = [],
-): TableCellDefinitions {
-    const dataCells: DataCellDef[] = [];
-    const filterCells: FilterCellDef[] = [];
+): TableCellDefinitions<TData> {
+    const dataCells: DataCellDef<TData, any>[] = [];
+    const filterCells: FilterCellDef<TData>[] = [];
 
     if (!headerCells[depth]) {
         headerCells[depth] = [];
     }
 
-    for (const columnId in columnDefinitions) {
-        const columnDefOrGroup = columnDefinitions[columnId];
-
-        if (isColumnGroupDef(columnDefOrGroup)) {
+    for (const tableColumn of tableColumns) {
+        if (isColumnGroupDef(tableColumn)) {
             const nestedDef = recursivelyBuildTableCellDefinitions(
-                columnDefOrGroup.subColumns,
+                tableColumn.subColumns,
                 depth + 1,
                 maxDepth,
                 headerCells,
@@ -81,48 +82,46 @@ export function recursivelyBuildTableCellDefinitions(
             filterCells.push(...nestedDef.filterCells);
 
             headerCells[depth].push({
-                columnId: columnId,
+                columnId: tableColumn.columnId,
                 isGroup: true,
                 sortable: false,
                 rowSpan: 1,
                 colSpan: nestedDef.dataCells.length,
                 colGroupIndex: headerCells[0].length,
-                label: columnDefOrGroup.label,
-                hoverText: columnDefOrGroup.hoverText,
+                label: tableColumn.label,
+                hoverText: tableColumn.hoverText,
             });
         } else {
-            const filterDef = columnDefOrGroup.filter;
+            const filterDef = tableColumn.filter;
 
-            const filterEnabled = filterDef === undefined || !!columnDefOrGroup.filter;
+            const filterEnabled = filterDef === undefined || !!tableColumn.filter;
 
             const customImpl = typeof filterDef === "object";
             const filterRender = customImpl ? filterDef.render : undefined;
             const filterPredicate = customImpl ? filterDef.predicate : undefined;
 
             headerCells[depth].push({
-                columnId: columnId,
+                columnId: tableColumn.columnId,
                 colSpan: 1,
                 rowSpan: maxDepth - depth,
                 colGroupIndex: headerCells[0].length,
-                sortable: columnDefOrGroup.sortable == null || columnDefOrGroup.sortable,
+                sortable: tableColumn.sortable == null || tableColumn.sortable,
                 isGroup: false,
-                label: columnDefOrGroup.label,
-                hoverText: columnDefOrGroup.hoverText,
+                label: tableColumn.label,
+                hoverText: tableColumn.hoverText,
             });
 
             dataCells.push({
-                columnId: columnId,
+                columnId: tableColumn.columnId,
                 colGroupIndex: headerCells[0].length,
-                format: columnDefOrGroup.formatValue,
+                format: tableColumn.formatValue,
                 filter: filterPredicate,
-                style: columnDefOrGroup.formatStyle,
-                render: columnDefOrGroup.renderData,
-                // TODO: Allow render func
-                // render: columnDefOrGroup.render,
+                style: tableColumn.formatStyle,
+                render: tableColumn.renderData,
             });
 
             filterCells.push({
-                columnId: columnId,
+                columnId: tableColumn.columnId,
                 colGroupIndex: headerCells[0].length,
                 enabled: filterEnabled,
                 render: filterRender,
@@ -133,31 +132,18 @@ export function recursivelyBuildTableCellDefinitions(
     return { dataCells, filterCells, headerCells };
 }
 
-// The table need to at least be wide enough that each column can fit it's headers
-export function computeTableMinWidth(colGroups: ColGroupDef[]) {
-    let minWidth = 0;
-
-    for (const colGroup of colGroups) {
-        for (const col of colGroup.cols) {
-            minWidth += col.minWidth;
-        }
-    }
-
-    return minWidth;
-}
-
-export function recursivelyBuildTableColumnGroups(
-    columnDefinitions: ColumnDefMap,
+export function recursivelyBuildTableColumnGroups<TData extends Record<string, any>>(
+    tableColumns: TableColumns<TData>,
     parentSize: number = 100,
 ): ColGroupDef[] {
     const colGroups = [];
 
-    for (const columnId in columnDefinitions) {
-        const columnDefOrGroup = columnDefinitions[columnId];
-        const columnSize = (columnDefOrGroup.sizeInPercent * parentSize) / 100;
+    for (const tableColumn of tableColumns) {
+        const columnId = tableColumn.columnId;
+        const columnSize = (tableColumn.sizeInPercent * parentSize) / 100;
 
-        if (isColumnGroupDef(columnDefOrGroup)) {
-            const childColGroups = recursivelyBuildTableColumnGroups(columnDefOrGroup.subColumns, columnSize);
+        if (isColumnGroupDef(tableColumn)) {
+            const childColGroups = recursivelyBuildTableColumnGroups(tableColumn.subColumns, columnSize);
 
             // ! The HTML spec doesn't allow nested column-groups, so further col-groups are flattened
             const flattenedCols = childColGroups.flatMap((colGroup) =>
@@ -175,11 +161,11 @@ export function recursivelyBuildTableColumnGroups(
             // The the table can support dynamic data, so we cannot pre-compute column widths based on data content.
             // To ensure the table looks somewhat nice, we compute a minimum width that should at least fit the header title and adornments
 
-            let minWidth = getTextWidthWithFont(columnDefOrGroup.label, "Equinor", 1);
+            let minWidth = getTextWidthWithFont(tableColumn.label, "Equinor", 1);
             // Padding
             minWidth += convertRemToPixels(2);
 
-            if (columnDefOrGroup.sortable == null || columnDefOrGroup.sortable) {
+            if (tableColumn.sortable == null || tableColumn.sortable) {
                 // Adornment and gap
                 minWidth += convertRemToPixels(4);
             }
@@ -192,6 +178,19 @@ export function recursivelyBuildTableColumnGroups(
     }
 
     return colGroups;
+}
+
+// The table need to at least be wide enough that each column can fit it's headers
+export function computeTableMinWidth(colGroups: ColGroupDef[]) {
+    let minWidth = 0;
+
+    for (const colGroup of colGroups) {
+        for (const col of colGroup.cols) {
+            minWidth += col.minWidth;
+        }
+    }
+
+    return minWidth;
 }
 
 export function useOptInControlledValue<TValue>(

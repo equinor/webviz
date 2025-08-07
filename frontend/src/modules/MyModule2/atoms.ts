@@ -3,12 +3,20 @@ import { random, range, sampleSize } from "lodash";
 
 export const alternateColColorsAtom = atom<boolean>(false);
 export const allowMultiSelectAtom = atom<boolean>(false);
-export const amtOfDataAtom = atom<number>(0);
-export const amtOfPendingDataAtom = atom<number>(20);
+export const amtOfDataAtom = atom<number>(20);
+export const amtOfPendingDataAtom = atom<number>(0);
 
 export const DATA_TAGS = ["Tag1", "Tag2", "Tag3", "Tag4", "Tag5", "Tag6"] as const;
 
-const stableTableDataAtom = atom((get) => {
+export type ExampleTabularData = {
+    id: string;
+    "col1.1": string;
+    "col1.2": string;
+    theNumbers: number;
+    theTags: string[];
+};
+
+const stableTableDataAtom = atom<ExampleTabularData[]>((get) => {
     const amtOfData = get(amtOfDataAtom);
 
     return range(0, amtOfData).map((i) => ({
@@ -24,5 +32,5 @@ export const tableDataAtom = atom((get) => {
     const stableData = get(stableTableDataAtom);
     const amtOfPendingData = get(amtOfPendingDataAtom);
 
-    return [...stableData, ...range(0, amtOfPendingData).map(() => ({ _pending: true }))];
+    return [...stableData, ...range(0, amtOfPendingData).map(() => ({ _pending: true }) as const)];
 });

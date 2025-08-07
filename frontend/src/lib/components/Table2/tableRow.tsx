@@ -5,19 +5,20 @@ import { random } from "lodash";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ROW_HEIGHT_PX } from "./constants";
-import type { ColumnDefMap, DataCellDef, TableRowWithKey } from "./types";
+import type { LoadedDataWithKey, TableCellDefinitions, TableDataWithKey } from "./types";
 import { isLoadedDataRow } from "./utils";
 
-export type TableRowProps<T extends ColumnDefMap> = {
-    rowData: TableRowWithKey<T>;
+export type TableRowProps<T extends Record<string, any>> = {
+    row: TableDataWithKey<T>;
     selected: boolean;
-    dataCellDefinitions: DataCellDef[];
-    onClick: (row: TableRowWithKey<T>, evt: React.MouseEvent) => void;
-    onMouseOver: (row: TableRowWithKey<T>, evt: React.MouseEvent<HTMLTableRowElement>) => void;
+    dataCellDefinitions: TableCellDefinitions<T>["dataCells"];
+    onClick: (entry: LoadedDataWithKey<T>, evt: React.MouseEvent) => void;
+    onMouseOver: (entry: LoadedDataWithKey<T>, evt: React.MouseEvent<HTMLTableRowElement>) => void;
 };
 
-export function TableRow<T extends ColumnDefMap>(props: TableRowProps<T>): React.ReactNode {
-    const isLoaded = isLoadedDataRow(props.rowData);
+export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>): React.ReactNode {
+    const { row } = props; // Extracted so narrowing below works correctly
+    const isLoaded = isLoadedDataRow<T>(row);
 
     // Randomizing where in the pulsing animation we start. Wrapped in memo so it stays between rerenders
     const animationDelay = React.useMemo(() => `${random(-1, 0, true)}s`, []);
@@ -28,14 +29,14 @@ export function TableRow<T extends ColumnDefMap>(props: TableRowProps<T>): React
                 "hover:bg-blue-100": !props.selected && isLoaded,
                 "bg-blue-300 text-white hover:bg-blue-200": props.selected && isLoaded,
             })}
-            onClick={(evt) => isLoaded && props.onClick(props.rowData, evt)}
-            onMouseOver={(evt) => isLoaded && props.onMouseOver?.(props.rowData, evt)}
+            onClick={(evt) => isLoaded && props.onClick(row, evt)}
+            onMouseOver={(evt) => isLoaded && props.onMouseOver?.(row, evt)}
         >
             {props.dataCellDefinitions.map((cellDef) => {
-                if (props.rowData._pending)
+                if (!isLoaded)
                     return (
                         <td
-                            key={cellDef.columnId}
+                            key={String(cellDef.columnId)}
                             className=" border-slate-200 p-2 whitespace-nowrap truncate"
                             title="Data is pending..."
                             style={{ height: ROW_HEIGHT_PX }}
@@ -47,18 +48,18 @@ export function TableRow<T extends ColumnDefMap>(props: TableRowProps<T>): React
                         </td>
                     );
 
-                const dataValue = props.rowData[cellDef.columnId];
-                const style = cellDef.style?.(dataValue, props.rowData);
-                const formattedData = cellDef?.format?.(dataValue, props.rowData);
+                const dataValue = row[cellDef.columnId];
+                const style = cellDef.style?.(dataValue, row);
+                const formattedData = cellDef?.format?.(dataValue, row);
 
                 return (
                     <td
-                        key={cellDef.columnId}
+                        key={String(cellDef.columnId)}
                         className=" border-slate-200 p-1 whitespace-nowrap truncate"
                         title={formattedData}
                         style={{ height: ROW_HEIGHT_PX, ...style }}
                     >
-                        {cellDef.render?.(dataValue, props.rowData) ?? formattedData ?? dataValue}
+                        {cellDef.render?.(dataValue, row) ?? formattedData ?? dataValue}
                     </td>
                 );
             })}

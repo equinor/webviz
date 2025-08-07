@@ -1,74 +1,78 @@
 import type React from "react";
 
-export type ColumnGroup = {
+// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+// - Table column configuration
+export type DataColumn<TData extends Record<string, any>, TK extends keyof TData> = {
+    _type: "data";
+    columnId: TK;
     label: string;
-    hoverText: string;
-    subColumns: ColumnDefMap;
     sizeInPercent: number;
+
+    hoverText?: string;
+    /** @default true */
+    sortable?: boolean;
+
+    filter?: boolean | CustomColumnFilter<TData, TK>;
+
+    formatValue?: (value: TData[TK], entry: TData) => string;
+    formatStyle?: (value: TData[TK], entry: TData) => React.CSSProperties;
+    renderData?: (value: TData[TK], entry: TData) => React.ReactNode;
 };
 
-export interface ColumnFilterImplementationProps<TFilterValue> {
-    value: TFilterValue | null | undefined;
-    onFilterChange: (newValue: TFilterValue | null | undefined) => void;
+type DataColumnAllKeys<TData extends Record<string, any>> = {
+    [TK in keyof TData]: DataColumn<TData, TK>;
+}[Extract<keyof TData, string>];
+
+// TODO -- Future work: Allow virtual columns, not directly tied to a data-value
+// export type VirtualColumn<TData extends Record<string, any>> = {
+//     _virtual: true;
+//     columnId: string;
+//     label: string;
+//     sizeInPercent: number;
+
+//     // Requires a render function
+//     render: (datum: TData) => React.ReactNode;
+// };
+
+export type ColumnGroup<TData extends Record<string, any>> = {
+    _type: "group";
+    label: string;
+    columnId: string;
+    hoverText?: string;
+    sizeInPercent: number;
+    subColumns: TableColumn<TData>[];
+};
+
+export type TableColumn<TData extends Record<string, any>> = DataColumnAllKeys<TData> | ColumnGroup<TData>;
+//  | VirtualColumn<TData>
+
+export type TableColumns<TData extends Record<string, any>> = TableColumn<TData>[];
+
+export interface ColumnFilterImplementationProps<TFilterVal = any> {
+    value: TFilterVal | null | undefined;
+    onFilterChange: (newValue: TFilterVal | null | undefined) => void;
 }
 
-type CustomColumnFilter<TFilterValue> = {
-    render?: (props: ColumnFilterImplementationProps<TFilterValue>) => React.ReactNode;
+export type CustomColumnFilter<TData extends Record<string, any>, TDataKey extends keyof TData> = {
+    render?: (props: ColumnFilterImplementationProps<any>) => React.ReactNode;
     predicate?: (
-        dataValue: string | number | null,
-        filterValue: TFilterValue,
-        dataDef: DataCellDef,
-        entry: TableRowData<any>,
+        filterValue: any,
+        dataValue: TData[TDataKey],
+        dataDef: DataCellDef<TData, TDataKey>,
+        entry: TData,
     ) => boolean;
 };
 
-export type ColumnDef = {
-    label: string;
-    hoverText?: string;
-    sortable?: boolean;
-    sizeInPercent: number;
-
-    filter?: boolean | CustomColumnFilter<any>;
-
-    formatValue?: (value: any | null) => string;
-    formatStyle?: (value: any | null) => React.CSSProperties;
-    renderData?: (value: any | null, entry: any) => React.ReactNode;
-    // TODO: Allow defining custom render for special case data (f-eks tag list, or actions)
-    // renderData?: (data: any, entry, columnDef: ColumnDef) => React.ReactNode;
-};
-
-export type ColumnDefMap = { [columnKey: string]: ColumnDef | ColumnGroup };
-
-export type BaseHeadingCellInfo = {
-    id: string;
-    colSpan: number;
-    rowSpan: number;
-    topLevelColumnIndex: number;
-    depth: number;
-};
-
 export type PendingData = { _pending: true };
-export type LoadedData<T extends object> = { _pending: undefined | false } & {
-    [key in keyof T]: string | number | null;
-};
+export type LoadedData<TData extends Record<string, any>> = TData;
+export type TableData<TData extends Record<string, any>> = PendingData | LoadedData<TData>;
 
-export type TableRowData<T extends ColumnDefMap> = PendingData | LoadedData<T>;
-export type TableRowWithKey<T extends ColumnDefMap> = { _key: string } & TableRowData<T>;
+export type PendingDataWithKey = { _key: string; _pending: true };
+export type LoadedDataWithKey<TData extends Record<string, any>> = { _key: string } & TData;
+export type TableDataWithKey<TData extends Record<string, any>> = PendingDataWithKey | LoadedDataWithKey<TData>;
 
-export enum SortDirection {
-    ASC = "asc",
-    DESC = "desc",
-}
-
-export type DataCellDef = {
-    columnId: string;
-    colGroupIndex: number;
-    format?: (value: any | null, entry: any) => string;
-    style?: (value: any | null, entry: any) => React.CSSProperties;
-    render?: (value: any | null, entry: any) => React.ReactNode;
-    filter?: CustomColumnFilter<any>["predicate"];
-};
-
+// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+// - Table cell definitions -- --- --- --- --- --- --- --- --- --- --- --- ---
 export type HeaderCellDef = {
     columnId: string;
     colSpan: number;
@@ -80,28 +84,45 @@ export type HeaderCellDef = {
     hoverText?: string;
 };
 
-export type FilterCellDef = {
+export type FilterCellDef<TData extends Record<string, any>> = {
     columnId: string;
     enabled: boolean;
     colGroupIndex: number;
-    render?: CustomColumnFilter<any>["render"];
+    render?: CustomColumnFilter<TData, any>["render"];
 };
 
-// Table collation types
+export type DataCellDef<TData extends Record<string, any>, TK extends keyof TData> = {
+    columnId: keyof TData;
+    colGroupIndex: number;
+    format?: (value: TData[TK], entry: TData) => string;
+    style?: (value: TData[TK], entry: TData) => React.CSSProperties;
+    render?: (value: TData[TK], entry: TData) => React.ReactNode;
+    filter?: CustomColumnFilter<TData, TK>["predicate"];
+};
+
+export type TableCellDefinitions<TData extends Record<string, any>> = {
+    headerCells: HeaderCellDef[][];
+    filterCells: FilterCellDef<TData>[];
+    dataCells: { [TK in keyof TData]: DataCellDef<TData, TK> }[keyof TData][];
+};
+
+// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+// - Table collation definitions - --- --- --- --- --- --- --- --- --- --- ---
+export enum SortDirection {
+    ASC = "asc",
+    DESC = "desc",
+}
+
 export type ColumnSorting = {
     columnId: string;
     direction: SortDirection;
 };
 
 export type TableSorting = ColumnSorting[];
-export type TableFilters = {
-    [columnId: string]: any;
-};
 
-export type TableCellDefinitions = {
-    headerCells: HeaderCellDef[][];
-    dataCells: DataCellDef[];
-    filterCells: FilterCellDef[];
+export type TableFilters = {
+    // The filter object is intentionally kept simple and wont bother with ensuring keys match data column ids (since we might have filters for virtual columns at some later point)
+    [columnId: string]: any;
 };
 
 export type ColDef = {

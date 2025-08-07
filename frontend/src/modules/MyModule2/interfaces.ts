@@ -1,11 +1,12 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
+import type { ExampleTabularData } from "./atoms";
 import { allowMultiSelectAtom, alternateColColorsAtom, tableDataAtom } from "./atoms";
 
 type SettingsToViewInterface = {
     alternateColColors: boolean;
     allowMultiSelect: boolean;
-    tableData: object[];
+    tableData: (ExampleTabularData | { _pending: true })[];
 };
 
 export type Interfaces = {
