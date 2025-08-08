@@ -2,7 +2,7 @@ import { KeyKind } from "@framework/DataChannelTypes";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
-import { ChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
+import { ChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
 
 const template: Template = {
     name: "Parameter Analysis of Inplace Volumes",
@@ -16,7 +16,7 @@ const template: Template = {
                 relX: 0,
                 relY: 0,
             },
-            syncedSettings: [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER],
+            syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER],
             /*
             initialState: {
                 selectedIdentifierValueCriteria: IdentifierValueCriteria.ALLOW_INTERSECTION,
@@ -31,7 +31,7 @@ const template: Template = {
                 relX: 0,
                 relY: 0.8,
             },
-            syncedSettings: [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER],
+            syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER],
             /*
             initialState: {
                 selectedIdentifierValueCriteria: IdentifierValueCriteria.ALLOW_INTERSECTION,

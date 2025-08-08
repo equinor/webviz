@@ -20,8 +20,9 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
     );
     const [sessions, setSessions] = React.useState<WorkbenchSessionDataContainer[]>([]);
 
-    async function loadSessions() {
-        const loadedSessions = await loadAllWorkbenchSessionsFromLocalStorage();
+    const loadSessions = React.useCallback(
+        async function loadSessions() {
+            const loadedSessions = await loadAllWorkbenchSessionsFromLocalStorage();
 
             setSessions(loadedSessions);
         },

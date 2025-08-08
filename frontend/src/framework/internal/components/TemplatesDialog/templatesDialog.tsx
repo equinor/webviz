@@ -8,6 +8,7 @@ import type { Workbench } from "@framework/Workbench";
 import { Dialog } from "@lib/components/Dialog";
 import { Input } from "@lib/components/Input";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Button } from "@lib/components/Button";
 
 export type TemplatesDialogProps = {
     workbench: Workbench;
@@ -93,6 +94,12 @@ type TemplateDetailsProps = {
 };
 
 function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
+    function handleUseButtonClick() {
+        if (props.template) {
+            props.onApply(props.template);
+        }
+    }
+
     return (
         <div className="flex flex-col gap-4 bg-gray-50 p-4 h-full border-l border-gray-200">
             {!props.template ? (
@@ -101,8 +108,11 @@ function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
                 </div>
             ) : (
                 <>
-                    <div className="mt-4">{drawTemplatePreview(props.template, 250, 200)}</div>
                     <div className="font-bold text-lg">{props.template.name}</div>
+                    <Button onClick={handleUseButtonClick} disabled={!props.template} variant="contained" size="small">
+                        Use this template
+                    </Button>
+                    <div className="mt-4">{drawTemplatePreview(props.template, 180, 150)}</div>
                     <div className="text-sm text-gray-600">{props.template.description}</div>
                     <div>
                         <strong>Modules:</strong>
@@ -119,17 +129,6 @@ function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
                     <div>
                         <strong>Data tags:</strong>
                         <div className="text-sm">{makeDataTags(extractModuleDataTagIds(props.template))}</div>
-                    </div>
-                    <div className="grow" />
-                    <div className="mt-4 text-center">
-                        <button
-                            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                            onClick={() => {
-                                props.onApply(props.template!);
-                            }}
-                        >
-                            New session from this template
-                        </button>
                     </div>
                 </>
             )}

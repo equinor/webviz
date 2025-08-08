@@ -5,7 +5,7 @@ import { createTemplateModuleInstance, TemplateRegistry } from "@framework/Templ
 import { ChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
 
 const template: Template = {
-    name: "Parameter Analysis of Field Oil Production",
+    name: "Correlations between input parameters and simulation timeseries",
     description: "Correlate one or more simulation vectors (e.g. Field oil production) against input parameters.",
     moduleInstances: [
         createTemplateModuleInstance("SimulationTimeSeries", {
@@ -103,4 +103,4 @@ const template: Template = {
     ],
 };
 
-TemplateRegistry.registerTemplate("Correlations between input parameters and simulation timeseries", template);
+TemplateRegistry.registerTemplate(template);

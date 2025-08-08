@@ -41,5 +41,3 @@ export class AtomStoreMaster {
         this._atomStores.delete(moduleInstanceId);
     }
 }
-
-export const atomStoreMaster = new AtomStoreMaster();

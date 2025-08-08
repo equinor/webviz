@@ -5,7 +5,7 @@ import { createTemplateModuleInstance, TemplateRegistry } from "@framework/Templ
 import { ChannelIds } from "@modules/SimulationTimeSeriesSensitivity/channelDefs";
 
 const template: Template = {
-    name: "Sensitivity Analysis of Time Series",
+    name: "Sensitivity analysis of timeseries",
     description: "Simulation timeseries analysis for design matrix ensembles.",
     moduleInstances: [
         createTemplateModuleInstance("SimulationTimeSeriesSensitivity", {
@@ -64,4 +64,3 @@ const template: Template = {
 };
 
 TemplateRegistry.registerTemplate(template);
-TemplateRegistry.registerTemplate("Sensitivity analysis of timeseries", template);

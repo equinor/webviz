@@ -343,11 +343,10 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     }
 
     static async fromDataContainer(
-        atomStoreMaster: AtomStoreMaster,
         queryClient: QueryClient,
         dataContainer: WorkbenchSessionDataContainer,
     ): Promise<PrivateWorkbenchSession> {
-        const session = new PrivateWorkbenchSession(atomStoreMaster, queryClient, isSnapshot(dataContainer));
+        const session = new PrivateWorkbenchSession(queryClient, isSnapshot(dataContainer));
 
         if (isPersisted(dataContainer)) {
             session.setId(dataContainer.id);

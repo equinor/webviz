@@ -917,9 +917,7 @@ export const LayoutBoxComponents: React.FC<{
                     height: rect.height,
                     zIndex: props.zIndex,
                 }}
-            >
-                Drag a module here
-            </div>
+            ></div>
         );
     }
     return <>{flatBoxes.map((box) => makeBoxEdges(box))}</>;

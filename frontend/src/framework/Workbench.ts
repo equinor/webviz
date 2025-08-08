@@ -207,11 +207,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     private async loadSnapshot(snapshotId: string): Promise<void> {
         try {
             const snapshotData = await loadSnapshotFromBackend(this._queryClient, snapshotId);
-            const snapshot = await PrivateWorkbenchSession.fromDataContainer(
-                this._atomStoreMaster,
-                this._queryClient,
-                snapshotData,
-            );
+            const snapshot = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, snapshotData);
             await this.setWorkbenchSession(snapshot);
             if (this.getGuiMessageBroker().getState(GuiState.LeftDrawerContent) !== LeftDrawerContent.ModuleSettings) {
                 this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
@@ -294,11 +290,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             return;
         }
 
-        const session = await PrivateWorkbenchSession.fromDataContainer(
-            this._atomStoreMaster,
-            this._queryClient,
-            sessionData,
-        );
+        const session = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, sessionData);
 
         await this.setWorkbenchSession(session);
         this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, false);
@@ -318,11 +310,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
         try {
             const sessionData = await loadWorkbenchSessionFromBackend(this._queryClient, sessionId);
-            const session = await PrivateWorkbenchSession.fromDataContainer(
-                this._atomStoreMaster,
-                this._queryClient,
-                sessionData,
-            );
+            const session = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, sessionData);
             await this.setWorkbenchSession(session);
         } catch (error) {
             console.error("Failed to load session from backend:", error);
@@ -602,63 +590,4 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
     }
-
-    /*
-    applyTemplate(template: Template): void {
-        this.clearLayout();
-
-        const newLayout = template.moduleInstances.map((el) => {
-            return { ...el.layout, moduleName: el.moduleName };
-        });
-
-        this.makeLayout(newLayout);
-
-        for (let i = 0; i < this._moduleInstances.length; i++) {
-            const moduleInstance = this._moduleInstances[i];
-            const templateModule = template.moduleInstances[i];
-            if (templateModule.syncedSettings) {
-                for (const syncSettingKey of templateModule.syncedSettings) {
-                    moduleInstance.addSyncedSetting(syncSettingKey);
-                }
-            }
-
-            const initialSettings: Record<string, unknown> = templateModule.initialSettings || {};
-
-            if (templateModule.dataChannelsToInitialSettingsMapping) {
-                for (const propName of Object.keys(templateModule.dataChannelsToInitialSettingsMapping)) {
-                    const dataChannel = templateModule.dataChannelsToInitialSettingsMapping[propName];
-
-                    const moduleInstanceIndex = template.moduleInstances.findIndex(
-                        (el) => el.instanceRef === dataChannel.listensToInstanceRef,
-                    );
-                    if (moduleInstanceIndex === -1) {
-                        throw new Error("Could not find module instance for data channel");
-                    }
-
-                    const listensToModuleInstance = this._moduleInstances[moduleInstanceIndex];
-                    const channel = listensToModuleInstance.getChannelManager().getChannel(dataChannel.channelIdString);
-                    if (!channel) {
-                        throw new Error("Could not find channel");
-                    }
-
-                    const receiver = moduleInstance.getChannelManager().getReceiver(propName);
-
-                    if (!receiver) {
-                        throw new Error("Could not find receiver");
-                    }
-
-                    receiver.subscribeToChannel(channel, "All");
-                }
-            }
-
-            moduleInstance.setInitialSettings(new InitialSettings(initialSettings));
-
-            if (i === 0) {
-                this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, moduleInstance.getId());
-            }
-        }
-
-        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
-    }
-        */
 }

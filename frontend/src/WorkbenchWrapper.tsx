@@ -18,6 +18,7 @@ import { Workbench, WorkbenchTopic } from "@framework/Workbench";
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { TemplatesDialog } from "@framework/internal/components/TemplatesDialog/templatesDialog";
 
 export function WorkbenchWrapper() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
@@ -68,6 +69,7 @@ export function WorkbenchWrapper() {
                 <CreateSnapshotDialog workbench={workbench} />
                 <ActiveSessionRecoveryDialog workbench={workbench} />
             </ActiveSessionBoundary>
+            <TemplatesDialog workbench={workbench} />
             <MultiSessionsRecoveryDialog workbench={workbench} />
             {content}
             <ToggleDevToolsButton guiMessageBroker={workbench.getGuiMessageBroker()} />
