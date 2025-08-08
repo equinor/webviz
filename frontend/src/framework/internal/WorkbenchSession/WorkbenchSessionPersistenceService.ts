@@ -500,6 +500,12 @@ export class WorkbenchSessionPersistenceService
                         this.schedulePullFullSessionState();
                     }),
                 );
+                this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                    "module-instances",
+                    moduleInstance.makeSubscriberFunction(ModuleInstanceTopic.SYNCED_SETTINGS)(() => {
+                        this.schedulePullFullSessionState();
+                    }),
+                );
             }
         }
     }

@@ -6,7 +6,6 @@ import type { Sensitivity } from "@framework/EnsembleSensitivities";
 import { EnsembleSensitivities, SensitivityType } from "@framework/EnsembleSensitivities";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 
-
 describe("RegularEnsemble", () => {
     const fieldIdentifier = "field1";
     const caseUuid = "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa";

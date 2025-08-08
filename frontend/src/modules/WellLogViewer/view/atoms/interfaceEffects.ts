@@ -1,7 +1,7 @@
 import type { InterfaceEffects } from "@framework/Module";
 import type { SettingsToViewInterface } from "@modules/WellLogViewer/interfaces";
 
-import { lockQueriesAtom, requiredCurvesAtom, selectedFieldIdentAtom, wellboreHeaderAtom } from "./baseAtoms";
+import { lockQueriesAtom, selectedFieldIdentAtom, wellboreHeaderAtom } from "./baseAtoms";
 
 export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInterface> = [
     (getInterfaceValue, setAtomValue) => {
@@ -12,11 +12,9 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
 
         const wellboreUuid = getInterfaceValue("wellboreHeader");
         const selectedField = getInterfaceValue("selectedField");
-        const requiredCurves = getInterfaceValue("requiredCurves");
 
         setAtomValue(selectedFieldIdentAtom, selectedField);
         setAtomValue(wellboreHeaderAtom, wellboreUuid);
-        setAtomValue(requiredCurvesAtom, requiredCurves);
 
         setAtomValue(lockQueriesAtom, false);
     },

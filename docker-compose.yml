@@ -2,120 +2,123 @@
 # for doing development of the frontend + backend in combination.
 
 services:
-  frontend:
-    build:
-      context: .
-      dockerfile: frontend-dev.Dockerfile
-    ports:
-      - 8080:8080
-    volumes:
-      - ./frontend/public:/usr/src/app/frontend/public
-      - ./frontend/src:/usr/src/app/frontend/src
-      - ./frontend/theme:/usr/src/app/frontend/theme
-      - ./frontend/index.html:/usr/src/app/frontend/index.html
+    frontend:
+        build:
+            context: .
+            dockerfile: frontend-dev.Dockerfile
+        ports:
+            - 8080:8080
+        volumes:
+            - ./frontend/public:/usr/src/app/frontend/public
+            - ./frontend/src:/usr/src/app/frontend/src
+            - ./frontend/theme:/usr/src/app/frontend/theme
+            - ./frontend/index.html:/usr/src/app/frontend/index.html
 
-  backend-primary:
-    build:
-      context: .
-      dockerfile: ./backend_py/primary/Dockerfile
-    ports:
-      - 5000:5000
-      - 5678:5678
-    environment:
-      - UVICORN_PORT=5000
-      - UVICORN_RELOAD=true
-      - WEBVIZ_CLIENT_SECRET
-      - WEBVIZ_SMDA_RESOURCE_SCOPE
-      - WEBVIZ_SMDA_SUBSCRIPTION_KEY
-      - WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
-      - WEBVIZ_SSDL_RESOURCE_SCOPE
-      - WEBVIZ_SUMO_ENV
-      - WEBVIZ_VDS_HOST_ADDRESS
-      - APPLICATIONINSIGHTS_CONNECTION_STRING
-      - OTEL_RESOURCE_ATTRIBUTES=service.name=primary-backend, service.namespace=local
-      - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
-      - WEBVIZ_DB_CONNECTION_STRING
-    volumes:
-      - ./backend_py/primary/primary:/home/appuser/backend_py/primary/primary
-      - ./backend_py/libs:/home/appuser/backend_py/libs
-    command:
-      [
-        "sh",
-        "-c",
-        "pip install debugpy && python -m debugpy --listen 0.0.0.0:5678 -m uvicorn --proxy-headers --host=0.0.0.0 primary.main:app",
-      ]
+    backend-primary:
+        depends_on:
+            cosmos-db:
+                condition: service_healthy
+        build:
+            context: .
+            dockerfile: ./backend_py/primary/Dockerfile
+        ports:
+            - 5000:5000
+            - 5678:5678
+        environment:
+            - UVICORN_PORT=5000
+            - UVICORN_RELOAD=true
+            - WEBVIZ_CLIENT_SECRET
+            - WEBVIZ_SMDA_RESOURCE_SCOPE
+            - WEBVIZ_SMDA_SUBSCRIPTION_KEY
+            - WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
+            - WEBVIZ_SSDL_RESOURCE_SCOPE
+            - WEBVIZ_SUMO_ENV
+            - WEBVIZ_VDS_HOST_ADDRESS
+            - APPLICATIONINSIGHTS_CONNECTION_STRING
+            - OTEL_RESOURCE_ATTRIBUTES=service.name=primary-backend, service.namespace=local
+            - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
+            - WEBVIZ_DB_CONNECTION_STRING
+        volumes:
+            - ./backend_py/primary/primary:/home/appuser/backend_py/primary/primary
+            - ./backend_py/libs:/home/appuser/backend_py/libs
+        command:
+            [
+                "sh",
+                "-c",
+                "pip install debugpy && python -m debugpy --listen 0.0.0.0:5678 -m uvicorn --proxy-headers --host=0.0.0.0 primary.main:app",
+            ]
 
-  surface-query:
-    build:
-      context: .
-      dockerfile: ./backend_go/surface-query-dev.Dockerfile
-    ports:
-      - 5001:5001
-    volumes:
-      - ./backend_go/surface_query:/home/appuser/backend_go/surface_query
+    surface-query:
+        build:
+            context: .
+            dockerfile: ./backend_go/surface-query-dev.Dockerfile
+        ports:
+            - 5001:5001
+        volumes:
+            - ./backend_go/surface_query:/home/appuser/backend_go/surface_query
 
-  user-mock:
-    build:
-      context: .
-      dockerfile: ./backend_py/user_mock/Dockerfile
-    ports:
-      - 8001:8001
-    environment:
-      - UVICORN_PORT=8001
-      - UVICORN_RELOAD=true
-    volumes:
-      - ./backend_py/user_mock/user_mock:/home/appuser/backend_py/user_mock/user_mock
+    user-mock:
+        build:
+            context: .
+            dockerfile: ./backend_py/user_mock/Dockerfile
+        ports:
+            - 8001:8001
+        environment:
+            - UVICORN_PORT=8001
+            - UVICORN_RELOAD=true
+        volumes:
+            - ./backend_py/user_mock/user_mock:/home/appuser/backend_py/user_mock/user_mock
 
-  user-grid3d-ri:
-    build:
-      context: .
-      dockerfile: ./backend_py/user_grid3d_ri/Dockerfile
-    ports:
-      - 8002:8002
-    environment:
-      - UVICORN_PORT=8002
-      - UVICORN_RELOAD=true
-      - APPLICATIONINSIGHTS_CONNECTION_STRING
-      - OTEL_RESOURCE_ATTRIBUTES=service.name=user-grid3d-ri, service.namespace=local
-    volumes:
-      - ./backend_py/user_grid3d_ri/user_grid3d_ri:/home/appuser/backend_py/user_grid3d_ri/user_grid3d_ri
-      - ./backend_py/libs:/home/appuser/backend_py/libs
+    user-grid3d-ri:
+        build:
+            context: .
+            dockerfile: ./backend_py/user_grid3d_ri/Dockerfile
+        ports:
+            - 8002:8002
+        environment:
+            - UVICORN_PORT=8002
+            - UVICORN_RELOAD=true
+            - APPLICATIONINSIGHTS_CONNECTION_STRING
+            - OTEL_RESOURCE_ATTRIBUTES=service.name=user-grid3d-ri, service.namespace=local
+        volumes:
+            - ./backend_py/user_grid3d_ri/user_grid3d_ri:/home/appuser/backend_py/user_grid3d_ri/user_grid3d_ri
+            - ./backend_py/libs:/home/appuser/backend_py/libs
 
-  redis-user-session:
-    image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
-    expose:
-      - 6379
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
+    redis-user-session:
+        image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
+        expose:
+            - 6379
+        environment:
+            - ALLOW_EMPTY_PASSWORD=yes
 
-  redis-cache:
-    image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
-    expose:
-      - 6379
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
-      # https://redis.io/docs/management/config/#configuring-redis-as-a-cache
-      - REDIS_EXTRA_FLAGS=--maxmemory 1gb  --maxmemory-policy allkeys-lru  --save ''  --appendonly no  --loglevel notice
+    redis-cache:
+        image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
+        expose:
+            - 6379
+        environment:
+            - ALLOW_EMPTY_PASSWORD=yes
+            # https://redis.io/docs/management/config/#configuring-redis-as-a-cache
+            - REDIS_EXTRA_FLAGS=--maxmemory 1gb  --maxmemory-policy allkeys-lru  --save ''  --appendonly no  --loglevel notice
 
-  cosmos-db:
-    image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest
-    platform: linux/amd64
-    tty: true
-    mem_limit: 4GB
-    ports:
-      - "8081:8081" # HTTPS endpoint
-      - "10250-10255:10250-10255" # Internal emulator ports (needed)
-    environment:
-      - AZURE_COSMOS_EMULATOR_PARTITION_COUNT=4
-      - AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE=true
-    healthcheck:
-      test: curl -k https://localhost:8081/_explorer/emulator.pem || exit 1
-      interval: 10s
-      retries: 5
-      start_period: 30s
-      timeout: 5s
-    volumes:
-      - cosmosdrive:/var/lib/cosmosdb/emulator
+    cosmos-db:
+        image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest
+        platform: linux/amd64
+        tty: true
+        mem_limit: 4GB
+        ports:
+            - "8081:8081" # HTTPS endpoint
+            - "10250-10255:10250-10255" # Internal emulator ports (needed)
+        environment:
+            - AZURE_COSMOS_EMULATOR_PARTITION_COUNT=1
+            - AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE=true
+        healthcheck:
+            test: curl -k https://127.0.0.1:8081/_explorer/emulator.pem || exit 1
+            interval: 10s
+            retries: 12 # 2 minutes
+            start_period: 30s
+            timeout: 5s
+        volumes:
+            - cosmosdrive:/var/lib/cosmosdb/emulator
 
 volumes:
-  cosmosdrive:
+    cosmosdrive:

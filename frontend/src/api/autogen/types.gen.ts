@@ -24,16 +24,16 @@ export type B64UintArray_api = {
 
 export type BodyPostGetAggregatedPerRealizationTableData_api = {
     /**
-     * Selected identifiers and wanted values
+     * Selected indices and wanted values
      */
-    identifiers_with_values: Array<InplaceVolumetricsIdentifierWithValues_api>;
+    indices_with_values: Array<InplaceVolumesIndexWithValues_api>;
 };
 
 export type BodyPostGetAggregatedStatisticalTableData_api = {
     /**
-     * Selected identifiers and wanted values
+     * Selected indices and wanted values
      */
-    identifiers_with_values: Array<InplaceVolumetricsIdentifierWithValues_api>;
+    indices_with_values: Array<InplaceVolumesIndexWithValues_api>;
 };
 
 export type BodyPostGetPolylineIntersection_api = {
@@ -76,6 +76,7 @@ export type CaseInfo_api = {
     name: string;
     status: string;
     user: string;
+    updatedAtUtcMs: number;
 };
 
 export type Completions_api = {
@@ -113,16 +114,23 @@ export type DiscreteValueMetadata_api = {
 
 export type EnsembleDetails_api = {
     name: string;
-    field_identifier: string;
-    case_name: string;
-    case_uuid: string;
+    fieldIdentifier: string;
+    caseName: string;
+    caseUuid: string;
     realizations: Array<number>;
-    stratigraphic_column_identifier: string;
+    stratigraphicColumnIdentifier: string;
+    timestamps: EnsembleTimestamps_api;
+};
+
+export type EnsembleIdent_api = {
+    caseUuid: string;
+    ensembleName: string;
 };
 
 export type EnsembleInfo_api = {
     name: string;
-    realization_count: number;
+    realizationCount: number;
+    timestamps: EnsembleTimestamps_api;
 };
 
 /**
@@ -173,6 +181,11 @@ export type EnsembleSensitivityCase_api = {
     realizations: Array<number>;
 };
 
+export type EnsembleTimestamps_api = {
+    caseUpdatedAtUtcMs: number;
+    dataUpdatedAtUtcMs: number;
+};
+
 export type FenceMeshSection_api = {
     vertices_uz_b64arr: B64FloatArray_api;
     poly_indices_b64arr: B64UintArray_api;
@@ -186,7 +199,7 @@ export type FenceMeshSection_api = {
 };
 
 export type FieldInfo_api = {
-    field_identifier: string;
+    fieldIdentifier: string;
 };
 
 export type FlowNetworkData_api = {
@@ -208,12 +221,6 @@ export enum FlowRateType_api {
     WG = "WG",
     TM = "TM",
     WAT = "WAT",
-}
-
-export enum FluidZone_api {
-    OIL = "Oil",
-    GAS = "Gas",
-    WATER = "Water",
 }
 
 export enum Frequency_api {
@@ -303,51 +310,21 @@ export type HttpValidationError_api = {
 };
 
 /**
- * Statistical volumetric data for single volume table
+ * Unique values for an index column in an inplace volumes table
  *
- * Contains data for a single fluid zone, e.g. Oil, Gas, Water, or sum of fluid zones
+ * If a column contain
+ *
+ * All values should ideally be strings, but it is common to see integers, especially for REGION
  */
-export type InplaceStatisticalVolumetricTableData_api = {
-    fluidSelectionName: string;
-    selectorColumns: Array<RepeatedTableColumnData_api>;
-    resultColumnStatistics: Array<TableColumnStatisticalData_api>;
+export type InplaceVolumesIndexWithValues_api = {
+    indexColumn: string;
+    values: Array<string | number>;
 };
 
 /**
- * Statistical volumetric data for a single table per fluid selection
- *
- * Fluid selection can be single fluid zones, e.g. Oil, Gas, Water, or sum of fluid zones - Oil + Gas + Water
+ * Definition of possible statistics for a result column in an inplace volumes table
  */
-export type InplaceStatisticalVolumetricTableDataPerFluidSelection_api = {
-    tableDataPerFluidSelection: Array<InplaceStatisticalVolumetricTableData_api>;
-};
-
-/**
- * Allowed volumetric response names
- */
-export enum InplaceVolumetricResultName_api {
-    BULK = "BULK",
-    NET = "NET",
-    PORO = "PORO",
-    PORO_NET = "PORO_NET",
-    PORV = "PORV",
-    HCPV = "HCPV",
-    STOIIP = "STOIIP",
-    GIIP = "GIIP",
-    NTG = "NTG",
-    ASSOCIATEDGAS = "ASSOCIATEDGAS",
-    ASSOCIATEDOIL = "ASSOCIATEDOIL",
-    BO = "BO",
-    BG = "BG",
-    SW = "SW",
-    STOIIP_TOTAL = "STOIIP_TOTAL",
-    GIIP_TOTAL = "GIIP_TOTAL",
-}
-
-/**
- * Definition of possible statistics for a result column in an inplace volumetrics table
- */
-export enum InplaceVolumetricStatistic_api {
+export enum InplaceVolumesStatistic_api {
     MEAN = "mean",
     STDDEV = "stddev",
     MAX = "max",
@@ -357,49 +334,52 @@ export enum InplaceVolumetricStatistic_api {
 }
 
 /**
- * Volumetric data for a single table
+ * Statistical inplace volumes data for single volume table
  *
- * Contains data for a single fluid zone, e.g. Oil, Gas, Water, or sum of fluid zones
+ * Contains data for a single fluid selection, e.g. Oil, Gas, Water, or sum of fluids
  */
-export type InplaceVolumetricTableData_api = {
-    fluidSelectionName: string;
+export type InplaceVolumesStatisticalTableData_api = {
+    fluidSelection: string;
+    selectorColumns: Array<RepeatedTableColumnData_api>;
+    resultColumnStatistics: Array<TableColumnStatisticalData_api>;
+};
+
+/**
+ * Statistical inplace volumes data for a single table per fluid selection
+ *
+ * Fluid selection can be single fluid (Oil, Gas, Water) or sum of fluids (Oil + Gas + Water)
+ */
+export type InplaceVolumesStatisticalTableDataPerFluidSelection_api = {
+    tableDataPerFluidSelection: Array<InplaceVolumesStatisticalTableData_api>;
+};
+
+/**
+ * Inplace volumes data for a single table
+ *
+ * Contains data for a single fluid selection, e.g. Oil, Gas, Water, or sum of fluids
+ */
+export type InplaceVolumesTableData_api = {
+    fluidSelection: string;
     selectorColumns: Array<RepeatedTableColumnData_api>;
     resultColumns: Array<TableColumnData_api>;
 };
 
 /**
- * Volumetric data for a single table per fluid selection
+ * Inplace volumes data for a single table per fluid selection
  *
- * Fluid selection can be single fluid zones, e.g. Oil, Gas, Water, or sum of fluid zones - Oil + Gas + Water
+ * Fluid selection can be single fluid (Oil, Gas, Water) or sum of fluids (Oil + Gas + Water)
  */
-export type InplaceVolumetricTableDataPerFluidSelection_api = {
-    tableDataPerFluidSelection: Array<InplaceVolumetricTableData_api>;
-};
-
-export enum InplaceVolumetricsIdentifier_api {
-    ZONE = "ZONE",
-    REGION = "REGION",
-    FACIES = "FACIES",
-    LICENSE = "LICENSE",
-}
-
-/**
- * Unique values for an index column in a volumetric table
- * All values should ideally be strings, but it is common to see integers, especially for REGION
- */
-export type InplaceVolumetricsIdentifierWithValues_api = {
-    identifier: InplaceVolumetricsIdentifier_api;
-    values: Array<string | number>;
+export type InplaceVolumesTableDataPerFluidSelection_api = {
+    tableDataPerFluidSelection: Array<InplaceVolumesTableData_api>;
 };
 
 /**
- * Definition of a volumetric table
+ * Definition of a inplace volumes table
  */
-export type InplaceVolumetricsTableDefinition_api = {
+export type InplaceVolumesTableDefinition_api = {
     tableName: string;
-    fluidZones: Array<FluidZone_api>;
-    resultNames: Array<InplaceVolumetricResultName_api>;
-    identifiersWithValues: Array<InplaceVolumetricsIdentifierWithValues_api>;
+    resultNames: Array<string>;
+    indicesWithValues: Array<InplaceVolumesIndexWithValues_api>;
 };
 
 export type NetworkNode_api = {
@@ -755,7 +735,7 @@ export type Snapshot_api = {
 };
 
 export type SnapshotAccessLog_api = {
-    userId: string;
+    visitorId: string;
     snapshotId: string;
     visits: number;
     firstVisitedAt: string | null;
@@ -1270,14 +1250,14 @@ export type WellboreTrajectory_api = {
     northingArr: Array<number>;
 };
 
-export enum PrimaryServicesSessionAccessTypesSortBy_api {
+export enum PrimaryServicesDatabaseAccessSessionAccessTypesSortBy_api {
     CREATED_AT = "created_at",
     UPDATED_AT = "updated_at",
     TITLE = "title",
     TITLE_LOWER = "title_lower",
 }
 
-export enum PrimaryServicesSnapshotAccessTypesSortBy_api {
+export enum PrimaryServicesDatabaseAccessSnapshotAccessTypesSortBy_api {
     CREATED_AT = "created_at",
     UPDATED_AT = "updated_at",
     TITLE = "title",
@@ -1288,7 +1268,9 @@ export enum PrimaryServicesSnapshotAccessTypesSortBy_api {
 export type GetFieldsData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/fields";
 };
 
@@ -1309,6 +1291,7 @@ export type GetCasesData_api = {
          * Field identifier
          */
         field_identifier: string;
+        t?: number;
     };
     url: "/cases";
 };
@@ -1339,7 +1322,9 @@ export type GetEnsemblesData_api = {
          */
         case_uuid: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/cases/{case_uuid}/ensembles";
 };
 
@@ -1373,7 +1358,9 @@ export type GetEnsembleDetailsData_api = {
          */
         ensemble_name: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/cases/{case_uuid}/ensembles/{ensemble_name}";
 };
 
@@ -1395,6 +1382,38 @@ export type GetEnsembleDetailsResponses_api = {
 
 export type GetEnsembleDetailsResponse_api = GetEnsembleDetailsResponses_api[keyof GetEnsembleDetailsResponses_api];
 
+export type PostGetTimestampsForEnsemblesData_api = {
+    /**
+     * A list of ensemble idents (aka; case uuid and ensemble name)
+     */
+    body: Array<EnsembleIdent_api>;
+    path?: never;
+    query?: {
+        t?: number;
+    };
+    url: "/ensembles/get_timestamps";
+};
+
+export type PostGetTimestampsForEnsemblesErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type PostGetTimestampsForEnsemblesError_api =
+    PostGetTimestampsForEnsemblesErrors_api[keyof PostGetTimestampsForEnsemblesErrors_api];
+
+export type PostGetTimestampsForEnsemblesResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<EnsembleTimestamps_api>;
+};
+
+export type PostGetTimestampsForEnsemblesResponse_api =
+    PostGetTimestampsForEnsemblesResponses_api[keyof PostGetTimestampsForEnsemblesResponses_api];
+
 export type GetVectorListData_api = {
     body?: never;
     path?: never;
@@ -1411,6 +1430,7 @@ export type GetVectorListData_api = {
          * Include derived vectors
          */
         include_derived_vectors?: boolean | null;
+        t?: number;
     };
     url: "/timeseries/vector_list/";
 };
@@ -1457,6 +1477,7 @@ export type GetDeltaEnsembleVectorListData_api = {
          * Include derived vectors
          */
         include_derived_vectors?: boolean | null;
+        t?: number;
     };
     url: "/timeseries/delta_ensemble_vector_list/";
 };
@@ -1504,6 +1525,7 @@ export type GetRealizationsVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        t?: number;
     };
     url: "/timeseries/realizations_vector_data/";
 };
@@ -1559,6 +1581,7 @@ export type GetDeltaEnsembleRealizationsVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        t?: number;
     };
     url: "/timeseries/delta_ensemble_realizations_vector_data/";
 };
@@ -1599,6 +1622,7 @@ export type GetTimestampsListData_api = {
          * Resampling frequency
          */
         resampling_frequency?: Frequency_api | null;
+        t?: number;
     };
     url: "/timeseries/timestamps_list/";
 };
@@ -1641,6 +1665,7 @@ export type GetHistoricalVectorDataData_api = {
          * Resampling frequency
          */
         resampling_frequency?: Frequency_api | null;
+        t?: number;
     };
     url: "/timeseries/historical_vector_data/";
 };
@@ -1691,6 +1716,7 @@ export type GetStatisticalVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        t?: number;
     };
     url: "/timeseries/statistical_vector_data/";
 };
@@ -1750,6 +1776,7 @@ export type GetDeltaEnsembleStatisticalVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        t?: number;
     };
     url: "/timeseries/delta_ensemble_statistical_vector_data/";
 };
@@ -1802,6 +1829,7 @@ export type GetStatisticalVectorDataPerSensitivityData_api = {
          * Optional list of realizations to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        t?: number;
     };
     url: "/timeseries/statistical_vector_data_per_sensitivity/";
 };
@@ -1846,6 +1874,7 @@ export type GetRealizationVectorAtTimestampData_api = {
          * Timestamp in ms UTC to query vectors at
          */
         timestamp_utc_ms: number;
+        t?: number;
     };
     url: "/timeseries/realization_vector_at_timestamp/";
 };
@@ -1882,8 +1911,9 @@ export type GetTableDefinitionsData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        t?: number;
     };
-    url: "/inplace_volumetrics/table_definitions/";
+    url: "/inplace_volumes/table_definitions/";
 };
 
 export type GetTableDefinitionsErrors_api = {
@@ -1899,7 +1929,7 @@ export type GetTableDefinitionsResponses_api = {
     /**
      * Successful Response
      */
-    200: Array<InplaceVolumetricsTableDefinition_api>;
+    200: Array<InplaceVolumesTableDefinition_api>;
 };
 
 export type GetTableDefinitionsResponse_api = GetTableDefinitionsResponses_api[keyof GetTableDefinitionsResponses_api];
@@ -1921,27 +1951,20 @@ export type PostGetAggregatedPerRealizationTableDataData_api = {
          */
         table_name: string;
         /**
-         * The name of the volumetric results
+         * The name of the inplace volumes results
          */
         result_names: Array<string>;
         /**
-         * The fluid zones to aggregate by
+         * The indices to group table data by
          */
-        fluid_zones: Array<FluidZone_api>;
-        /**
-         * Whether to accumulate fluid zones
-         */
-        accumulate_fluid_zones: boolean;
-        /**
-         * The identifiers to group table data by
-         */
-        group_by_identifiers?: Array<InplaceVolumetricsIdentifier_api> | null;
+        group_by_indices?: Array<string> | null;
         /**
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        t?: number;
     };
-    url: "/inplace_volumetrics/get_aggregated_per_realization_table_data/";
+    url: "/inplace_volumes/get_aggregated_per_realization_table_data/";
 };
 
 export type PostGetAggregatedPerRealizationTableDataErrors_api = {
@@ -1958,7 +1981,7 @@ export type PostGetAggregatedPerRealizationTableDataResponses_api = {
     /**
      * Successful Response
      */
-    200: InplaceVolumetricTableDataPerFluidSelection_api;
+    200: InplaceVolumesTableDataPerFluidSelection_api;
 };
 
 export type PostGetAggregatedPerRealizationTableDataResponse_api =
@@ -1981,27 +2004,20 @@ export type PostGetAggregatedStatisticalTableDataData_api = {
          */
         table_name: string;
         /**
-         * The name of the volumetric results
+         * The name of the inplace volumes results
          */
         result_names: Array<string>;
         /**
-         * The fluid zones to aggregate by
+         * The indices to group table data by
          */
-        fluid_zones: Array<FluidZone_api>;
-        /**
-         * Whether to accumulate fluid zones
-         */
-        accumulate_fluid_zones: boolean;
-        /**
-         * The identifiers to group table data by
-         */
-        group_by_identifiers?: Array<InplaceVolumetricsIdentifier_api> | null;
+        group_by_indices?: Array<string> | null;
         /**
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        t?: number;
     };
-    url: "/inplace_volumetrics/get_aggregated_statistical_table_data/";
+    url: "/inplace_volumes/get_aggregated_statistical_table_data/";
 };
 
 export type PostGetAggregatedStatisticalTableDataErrors_api = {
@@ -2018,7 +2034,7 @@ export type PostGetAggregatedStatisticalTableDataResponses_api = {
     /**
      * Successful Response
      */
-    200: InplaceStatisticalVolumetricTableDataPerFluidSelection_api;
+    200: InplaceVolumesStatisticalTableDataPerFluidSelection_api;
 };
 
 export type PostGetAggregatedStatisticalTableDataResponse_api =
@@ -2036,6 +2052,7 @@ export type GetRealizationSurfacesMetadataData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        t?: number;
     };
     url: "/surface/realization_surfaces_metadata/";
 };
@@ -2068,6 +2085,7 @@ export type GetObservedSurfacesMetadataData_api = {
          * Sumo case uuid
          */
         case_uuid: string;
+        t?: number;
     };
     url: "/surface/observed_surfaces_metadata/";
 };
@@ -2108,6 +2126,7 @@ export type GetSurfaceDataData_api = {
          * Definition of the surface onto which the data should be resampled. *SurfaceDef_api* object properties encoded as a `KeyValStr` string.
          */
         resample_to_def_str?: string | null;
+        t?: number;
     };
     url: "/surface/surface_data";
 };
@@ -2158,6 +2177,7 @@ export type PostGetSurfaceIntersectionData_api = {
          * Time point or time interval string
          */
         time_or_interval_str?: string | null;
+        t?: number;
     };
     url: "/surface/get_surface_intersection";
 };
@@ -2205,6 +2225,7 @@ export type PostGetSampleSurfaceInPointsData_api = {
          * Realization numbers
          */
         realization_nums: Array<number>;
+        t?: number;
     };
     url: "/surface/get_sample_surface_in_points";
 };
@@ -2249,6 +2270,7 @@ export type GetDeltaSurfaceDataData_api = {
          * Definition of the surface onto which the data should be resampled. *SurfaceDef_api* object properties encoded as a `KeyValStr` string.
          */
         resample_to_def_str?: string | null;
+        t?: number;
     };
     url: "/surface/delta_surface_data";
 };
@@ -2299,6 +2321,7 @@ export type GetMisfitSurfaceDataData_api = {
          * Definition of the surface onto which the data should be resampled. *SurfaceDef_api* object properties encoded as a `KeyValStr` string.
          */
         resample_to_def_str?: string | null;
+        t?: number;
     };
     url: "/surface/misfit_surface_data";
 };
@@ -2329,6 +2352,7 @@ export type DeprecatedGetStratigraphicUnitsData_api = {
          * Sumo case uuid
          */
         case_uuid: string;
+        t?: number;
     };
     url: "/surface/deprecated_stratigraphic_units";
 };
@@ -2353,6 +2377,39 @@ export type DeprecatedGetStratigraphicUnitsResponses_api = {
 export type DeprecatedGetStratigraphicUnitsResponse_api =
     DeprecatedGetStratigraphicUnitsResponses_api[keyof DeprecatedGetStratigraphicUnitsResponses_api];
 
+export type GetStratigraphicUnitsForStratColumnData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * SMDA stratigraphic column identifier
+         */
+        strat_column: string;
+        t?: number;
+    };
+    url: "/surface/stratigraphic_units_for_strat_column";
+};
+
+export type GetStratigraphicUnitsForStratColumnErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetStratigraphicUnitsForStratColumnError_api =
+    GetStratigraphicUnitsForStratColumnErrors_api[keyof GetStratigraphicUnitsForStratColumnErrors_api];
+
+export type GetStratigraphicUnitsForStratColumnResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<StratigraphicUnit_api>;
+};
+
+export type GetStratigraphicUnitsForStratColumnResponse_api =
+    GetStratigraphicUnitsForStratColumnResponses_api[keyof GetStratigraphicUnitsForStratColumnResponses_api];
+
 export type GetParameterNamesAndDescriptionData_api = {
     body?: never;
     path?: never;
@@ -2373,6 +2430,7 @@ export type GetParameterNamesAndDescriptionData_api = {
          * Sort order
          */
         sort_order?: "alphabetically" | "standard_deviation";
+        t?: number;
     };
     url: "/parameters/parameter_names_and_description/";
 };
@@ -2413,6 +2471,7 @@ export type GetParameterData_api = {
          * Parameter name
          */
         parameter_name: string;
+        t?: number;
     };
     url: "/parameters/parameter/";
 };
@@ -2447,6 +2506,7 @@ export type GetParametersData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        t?: number;
     };
     url: "/parameters/parameters/";
 };
@@ -2481,6 +2541,7 @@ export type GetIsSensitivityRunData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        t?: number;
     };
     url: "/parameters/is_sensitivity_run/";
 };
@@ -2515,6 +2576,7 @@ export type GetSensitivitiesData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        t?: number;
     };
     url: "/parameters/sensitivities/";
 };
@@ -2553,6 +2615,7 @@ export type GetGridModelsInfoData_api = {
          * Realization
          */
         realization_num: number;
+        t?: number;
     };
     url: "/grid3d/grid_models_info/";
 };
@@ -2619,6 +2682,7 @@ export type GetGridSurfaceData_api = {
          * Max k index
          */
         k_max?: number;
+        t?: number;
     };
     url: "/grid3d/grid_surface";
 };
@@ -2693,6 +2757,7 @@ export type GetGridParameterData_api = {
          * Max k index
          */
         k_max?: number;
+        t?: number;
     };
     url: "/grid3d/grid_parameter";
 };
@@ -2743,6 +2808,7 @@ export type PostGetPolylineIntersectionData_api = {
          * Time point or time interval string
          */
         parameter_time_or_interval_str?: string | null;
+        t?: number;
     };
     url: "/grid3d/get_polyline_intersection";
 };
@@ -2791,6 +2857,7 @@ export type GetRealizationFlowNetworkData_api = {
          * Node types
          */
         node_type_set: Array<NodeType_api>;
+        t?: number;
     };
     url: "/flow_network/realization_flow_network/";
 };
@@ -2830,6 +2897,7 @@ export type GetTableDataData_api = {
          * Realization number
          */
         realization: number;
+        t?: number;
     };
     url: "/pvt/table_data/";
 };
@@ -2868,6 +2936,7 @@ export type GetWellCompletionsDataData_api = {
          * Optional realizations to include. Provide single realization or list of realizations. If not specified, all realizations will be returned.
          */
         realization?: number | Array<number> | null;
+        t?: number;
     };
     url: "/well_completions/well_completions_data/";
 };
@@ -2898,6 +2967,7 @@ export type GetDrilledWellboreHeadersData_api = {
          * Official field identifier
          */
         field_identifier: string;
+        t?: number;
     };
     url: "/well/drilled_wellbore_headers/";
 };
@@ -2933,6 +3003,7 @@ export type GetWellTrajectoriesData_api = {
          * Optional subset of wellbore uuids
          */
         wellbore_uuids?: Array<string> | null;
+        t?: number;
     };
     url: "/well/well_trajectories/";
 };
@@ -2963,6 +3034,7 @@ export type GetWellborePickIdentifiersData_api = {
          * Stratigraphic column identifier
          */
         strat_column_identifier: string;
+        t?: number;
     };
     url: "/well/wellbore_pick_identifiers/";
 };
@@ -2998,6 +3070,7 @@ export type GetWellborePicksForPickIdentifierData_api = {
          * Pick identifier
          */
         pick_identifier: string;
+        t?: number;
     };
     url: "/well/wellbore_picks_for_pick_identifier/";
 };
@@ -3030,6 +3103,7 @@ export type DeprecatedGetWellborePicksForWellboreData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        t?: number;
     };
     url: "/well/deprecated_wellbore_picks_for_wellbore/";
 };
@@ -3066,6 +3140,7 @@ export type GetWellborePicksInStratColumnData_api = {
          * Filter by stratigraphic column
          */
         strat_column_identifier: string;
+        t?: number;
     };
     url: "/well/wellbore_picks_in_strat_column";
 };
@@ -3098,6 +3173,7 @@ export type GetWellboreStratigraphicColumnsData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        t?: number;
     };
     url: "/well/wellbore_stratigraphic_columns/";
 };
@@ -3130,6 +3206,7 @@ export type GetWellboreCompletionsData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        t?: number;
     };
     url: "/well/wellbore_completions/";
 };
@@ -3160,6 +3237,7 @@ export type GetWellboreCasingsData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        t?: number;
     };
     url: "/well/wellbore_casings/";
 };
@@ -3190,6 +3268,7 @@ export type GetWellborePerforationsData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        t?: number;
     };
     url: "/well/wellbore_perforations/";
 };
@@ -3224,6 +3303,7 @@ export type GetWellboreLogCurveHeadersData_api = {
          * Sources to fetch well-logs from.
          */
         sources?: Array<WellLogCurveSourceEnum_api>;
+        t?: number;
     };
     url: "/well/wellbore_log_curve_headers/";
 };
@@ -3267,6 +3347,7 @@ export type GetLogCurveDataData_api = {
          * Source to fetch well-logs from.
          */
         source?: WellLogCurveSourceEnum_api;
+        t?: number;
     };
     url: "/well/log_curve_data/";
 };
@@ -3301,6 +3382,7 @@ export type GetSeismicCubeMetaListData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        t?: number;
     };
     url: "/seismic/seismic_cube_meta_list/";
 };
@@ -3355,6 +3437,7 @@ export type GetInlineSliceData_api = {
          * Inline number
          */
         inline_no: number;
+        t?: number;
     };
     url: "/seismic/get_inline_slice/";
 };
@@ -3409,6 +3492,7 @@ export type GetCrosslineSliceData_api = {
          * Crossline number
          */
         crossline_no: number;
+        t?: number;
     };
     url: "/seismic/get_crossline_slice/";
 };
@@ -3463,6 +3547,7 @@ export type GetDepthSliceData_api = {
          * Depth slice no
          */
         depth_slice_no: number;
+        t?: number;
     };
     url: "/seismic/get_depth_slice/";
 };
@@ -3513,6 +3598,7 @@ export type PostGetSeismicFenceData_api = {
          * Observed or simulated
          */
         observed: boolean;
+        t?: number;
     };
     url: "/seismic/get_seismic_fence/";
 };
@@ -3547,6 +3633,7 @@ export type GetPolygonsDirectoryData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        t?: number;
     };
     url: "/polygons/polygons_directory/";
 };
@@ -3593,6 +3680,7 @@ export type GetPolygonsDataData_api = {
          * Surface attribute
          */
         attribute: string;
+        t?: number;
     };
     url: "/polygons/polygons_data/";
 };
@@ -3620,9 +3708,10 @@ export type GetUserPhotoData_api = {
     path?: never;
     query: {
         /**
-         * User id
+         * User email or 'me' for the authenticated user
          */
-        user_id: string;
+        user_email: string;
+        t?: number;
     };
     url: "/graph/user_photo/";
 };
@@ -3653,6 +3742,7 @@ export type GetObservationsData_api = {
          * Sumo case uuid
          */
         case_uuid: string;
+        t?: number;
     };
     url: "/observations/observations/";
 };
@@ -3687,6 +3777,7 @@ export type GetTableDefinitionData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        t?: number;
     };
     url: "/rft/table_definition";
 };
@@ -3737,6 +3828,7 @@ export type GetRealizationDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        t?: number;
     };
     url: "/rft/realization_data";
 };
@@ -3775,6 +3867,7 @@ export type GetVfpTableNamesData_api = {
          * Realization
          */
         realization: number;
+        t?: number;
     };
     url: "/vfp/vfp_table_names/";
 };
@@ -3817,6 +3910,7 @@ export type GetVfpTableData_api = {
          * VFP table name
          */
         vfp_table_name: string;
+        t?: number;
     };
     url: "/vfp/vfp_table/";
 };
@@ -3846,7 +3940,7 @@ export type GetSessionsMetadataData_api = {
         /**
          * Sort the result by
          */
-        sort_by?: PrimaryServicesSessionAccessTypesSortBy_api | null;
+        sort_by?: PrimaryServicesDatabaseAccessSessionAccessTypesSortBy_api | null;
         /**
          * Sort direction: 'asc' or 'desc'
          */
@@ -3855,6 +3949,7 @@ export type GetSessionsMetadataData_api = {
          * Limit the number of results
          */
         limit?: number | null;
+        t?: number;
     };
     url: "/sessions/sessions";
 };
@@ -3880,7 +3975,9 @@ export type GetSessionsMetadataResponse_api = GetSessionsMetadataResponses_api[k
 export type CreateSessionData_api = {
     body: NewSession_api;
     path?: never;
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/sessions/sessions";
 };
 
@@ -3907,7 +4004,9 @@ export type DeleteSessionData_api = {
     path: {
         session_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/sessions/sessions/{session_id}";
 };
 
@@ -3932,7 +4031,9 @@ export type GetSessionData_api = {
     path: {
         session_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/sessions/sessions/{session_id}";
 };
 
@@ -3959,7 +4060,9 @@ export type UpdateSessionData_api = {
     path: {
         session_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/sessions/sessions/{session_id}";
 };
 
@@ -3984,7 +4087,9 @@ export type GetSessionMetadataData_api = {
     path: {
         session_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/sessions/sessions/metadata/{session_id}";
 };
 
@@ -4013,7 +4118,7 @@ export type GetRecentSnapshotsData_api = {
         /**
          * Sort the result by
          */
-        sort_by?: PrimaryServicesSnapshotAccessTypesSortBy_api | null;
+        sort_by?: PrimaryServicesDatabaseAccessSnapshotAccessTypesSortBy_api | null;
         /**
          * Sort direction: 'asc' or 'desc'
          */
@@ -4026,6 +4131,7 @@ export type GetRecentSnapshotsData_api = {
          * The offset of the results
          */
         offset?: number | null;
+        t?: number;
     };
     url: "/snapshots/recent_snapshots";
 };
@@ -4055,7 +4161,7 @@ export type GetSnapshotsMetadataData_api = {
         /**
          * Sort the result by
          */
-        sort_by?: PrimaryServicesSnapshotAccessTypesSortBy_api | null;
+        sort_by?: PrimaryServicesDatabaseAccessSnapshotAccessTypesSortBy_api | null;
         /**
          * Sort direction: 'asc' or 'desc'
          */
@@ -4064,6 +4170,7 @@ export type GetSnapshotsMetadataData_api = {
          * Limit the number of results
          */
         limit?: number | null;
+        t?: number;
     };
     url: "/snapshots/snapshots";
 };
@@ -4089,7 +4196,9 @@ export type GetSnapshotsMetadataResponse_api = GetSnapshotsMetadataResponses_api
 export type CreateSnapshotData_api = {
     body: NewSnapshot_api;
     path?: never;
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/snapshots/snapshots";
 };
 
@@ -4116,7 +4225,9 @@ export type DeleteSnapshotData_api = {
     path: {
         snapshot_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/snapshots/snapshots/{snapshot_id}";
 };
 
@@ -4141,7 +4252,9 @@ export type GetSnapshotData_api = {
     path: {
         snapshot_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/snapshots/snapshots/{snapshot_id}";
 };
 
@@ -4168,7 +4281,9 @@ export type UpdateSnapshotData_api = {
     path: {
         snapshot_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/snapshots/snapshots/{snapshot_id}";
 };
 
@@ -4193,7 +4308,9 @@ export type GetSnapshotMetadataData_api = {
     path: {
         snapshot_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/snapshots/snapshots/metadata/{snapshot_id}";
 };
 
@@ -4220,7 +4337,9 @@ export type SnapshotPreviewData_api = {
     path: {
         snapshot_id: string;
     };
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/snapshot-preview/{snapshot_id}";
 };
 
@@ -4247,6 +4366,7 @@ export type LoginRouteData_api = {
     path?: never;
     query?: {
         redirect_url_after_login?: string | null;
+        t?: number;
     };
     url: "/login";
 };
@@ -4270,7 +4390,9 @@ export type LoginRouteResponses_api = {
 export type AuthorizedCallbackRouteData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/auth-callback";
 };
 
@@ -4284,7 +4406,9 @@ export type AuthorizedCallbackRouteResponses_api = {
 export type GetAliveData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/alive";
 };
 
@@ -4300,7 +4424,9 @@ export type GetAliveResponse_api = GetAliveResponses_api[keyof GetAliveResponses
 export type GetAliveProtectedData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/alive_protected";
 };
 
@@ -4316,7 +4442,9 @@ export type GetAliveProtectedResponse_api = GetAliveProtectedResponses_api[keyof
 export type PostLogoutData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/logout";
 };
 
@@ -4337,6 +4465,7 @@ export type GetLoggedInUserData_api = {
          * Set to true to include user avatar and display name from Microsoft Graph API
          */
         includeGraphApiInfo?: boolean;
+        t?: number;
     };
     url: "/logged_in_user";
 };
@@ -4362,7 +4491,9 @@ export type GetLoggedInUserResponse_api = GetLoggedInUserResponses_api[keyof Get
 export type RootData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        t?: number;
+    };
     url: "/";
 };
 

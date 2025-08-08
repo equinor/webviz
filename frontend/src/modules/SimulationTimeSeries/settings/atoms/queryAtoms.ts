@@ -4,8 +4,11 @@ import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
+import { makeTimestampQueryParam } from "@framework/utils/queryUtils";
 
 import { selectedEnsembleIdentsAtom } from "./derivedAtoms";
+
+type T = <K extends object>(query: K) => K;
 
 export const vectorListQueriesAtom = atomWithQueries((get) => {
     const ensembleSet = get(EnsembleSetAtom);
@@ -19,6 +22,7 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
                 queryFn: async () => {
                     const { data } = await getVectorList({
                         query: {
+                            ...makeTimestampQueryParam(ensembleIdent),
                             case_uuid: ensembleIdent.getCaseUuid(),
                             ensemble_name: ensembleIdent.getEnsembleName(),
                             include_derived_vectors: true,

@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/query-core";
 
 import { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import { EnsembleSet } from "@framework/EnsembleSet";
+import { EnsembleTimestampsStore } from "@framework/EnsembleTimestampsStore";
 import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
 import { Dashboard, type SerializedDashboard } from "@framework/internal/WorkbenchSession/Dashboard";
 import { RealizationFilterSet } from "@framework/RealizationFilterSet";
@@ -15,6 +16,8 @@ import {
     type UserDeltaEnsembleSetting,
 } from "../EnsembleSetLoader";
 import { PrivateWorkbenchSettings, type SerializedWorkbenchSettings } from "../PrivateWorkbenchSettings";
+
+import { isPersisted, isSnapshot, type WorkbenchSessionDataContainer } from "./WorkbenchSessionDataContainer";
 
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
@@ -222,8 +225,8 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
             regularEnsembleSettings,
             deltaEnsembleSettings,
         );
+        await this.setEnsembleSet(newSet);
         this.setEnsembleSetLoading(false);
-        this.setEnsembleSet(newSet);
     }
 
     private setEnsembleSetLoading(isLoading: boolean) {
@@ -231,9 +234,10 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING);
     }
 
-    private setEnsembleSet(set: EnsembleSet) {
+    private async setEnsembleSet(set: EnsembleSet) {
         this._realizationFilterSet.synchronizeWithEnsembleSet(set);
         this._ensembleSet = set;
+        // Await the update of the EnsembleTimestampsStore with the latest timestamps before notifying any subscribers
         this._atomStoreMaster.setAtomValue(EnsembleSetAtom, set);
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ENSEMBLE_SET);
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET);
@@ -330,9 +334,29 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     clear(): void {
         this._dashboards = [];
         this._activeDashboardId = null;
+        this._ensembleSet = new EnsembleSet([]);
+        EnsembleTimestampsStore.clear();
     }
 
     beforeDestroy(): void {
-        // Hook for cleanup, e.g. unsubscribing or releasing memory
+        this.clear();
+    }
+
+    static async fromDataContainer(
+        atomStoreMaster: AtomStoreMaster,
+        queryClient: QueryClient,
+        dataContainer: WorkbenchSessionDataContainer,
+    ): Promise<PrivateWorkbenchSession> {
+        const session = new PrivateWorkbenchSession(atomStoreMaster, queryClient, isSnapshot(dataContainer));
+
+        if (isPersisted(dataContainer)) {
+            session.setId(dataContainer.id);
+            session.setIsPersisted(true);
+        }
+
+        session.setMetadata(dataContainer.metadata);
+        await session.loadContent(dataContainer.content);
+
+        return session;
     }
 }

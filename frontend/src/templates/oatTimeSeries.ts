@@ -6,8 +6,7 @@ import { ChannelIds } from "@modules/SimulationTimeSeriesSensitivity/channelDefs
 
 const template: Template = {
     name: "Sensitivity Analysis of Time Series",
-    description:
-        "Dashboard for one-at-a-Time (OAT) sensitivity analysis of time series. Includes a time series chart, a tornado chart for the time series response per sensitivity for a given date, and a distribution chart.",
+    description: "Simulation timeseries analysis for design matrix ensembles.",
     moduleInstances: [
         createTemplateModuleInstance("SimulationTimeSeriesSensitivity", {
             instanceRef: "MainTimeSeriesSensitivityInstance",
@@ -65,3 +64,4 @@ const template: Template = {
 };
 
 TemplateRegistry.registerTemplate(template);
+TemplateRegistry.registerTemplate("Sensitivity analysis of timeseries", template);

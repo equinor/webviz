@@ -1,0 +1,7 @@
+export enum CustomDataProviderType {
+    LINEAR_PLOT = "LINEAR_PLOT",
+    AREA_PLOT = "AREA_PLOT",
+    DIFF_PLOT = "DIFF_PLOT",
+    WELLBORE_PICKS = "WELLBORE_PICKS",
+    STACKED_PLOT = "STACKED_PLOT",
+}

@@ -2,11 +2,13 @@ import { KeyKind } from "@framework/DataChannelTypes";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
+import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { ChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
+import { DisplayComponentType } from "@modules/TornadoChart/typesAndEnums";
 
 const template: Template = {
     name: "Sensitivity Analysis of Inplace volumes",
-    description: "Inplace volumes overview for design matrix ensembles.",
+    description: "Inplace volumes analysis for design matrix ensembles.",
     moduleInstances: [
         createTemplateModuleInstance("InplaceVolumetricsPlot", {
             instanceRef: "MainInplaceVolumetricsPlotInstance",
@@ -49,7 +51,7 @@ const template: Template = {
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToInitialSettingsMapping: {
                 response: {
-                    listensToInstanceRef: "MainInplaceVolumetricsPlotInstance",
+                    listensToInstanceRef: "MainInplaceVolumesPlotInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,
                 },
@@ -71,7 +73,7 @@ const template: Template = {
             syncedSettings: [SyncSettingKey.ENSEMBLE],
             dataChannelsToInitialSettingsMapping: {
                 response: {
-                    listensToInstanceRef: "MainInplaceVolumetricsPlotInstance",
+                    listensToInstanceRef: "MainInplaceVolumesPlotInstance",
                     kindOfKey: KeyKind.REALIZATION,
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,
                 },
@@ -86,3 +88,4 @@ const template: Template = {
 };
 
 TemplateRegistry.registerTemplate(template);
+TemplateRegistry.registerTemplate("Sensitivity analysis of inplace volumes", template);

@@ -65,9 +65,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
 
     return (
         <div
-            className={resolveClassNames(
-                "bg-white p-2 border-r-2 border-slate-200 z-50 shadow-lg flex flex-col w-[4.5rem]",
-            )}
+            className={resolveClassNames("bg-white p-2 border-r-2 border-slate-200 z-50 shadow-lg flex flex-col w-16")}
         >
             <div className="flex flex-col gap-2 grow">
                 <NavBarButton

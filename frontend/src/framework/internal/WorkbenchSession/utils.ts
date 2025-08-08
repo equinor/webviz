@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import {
     createSession,
     createSnapshot,
@@ -8,7 +10,6 @@ import {
     type NewSession_api,
     type SessionUpdate_api,
 } from "@api";
-import type { QueryClient } from "@tanstack/query-core";
 
 export const WORKBENCH_SESSION_LOCAL_STORAGE_KEY_PREFIX = "workbench-session-";
 export const WORKBENCH_SESSION_LOCAL_STORAGE_KEY_TEMP = "temp-workbench-session";

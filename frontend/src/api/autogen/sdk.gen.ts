@@ -14,6 +14,9 @@ import type {
     GetEnsembleDetailsData_api,
     GetEnsembleDetailsResponse_api,
     GetEnsembleDetailsError_api,
+    PostGetTimestampsForEnsemblesData_api,
+    PostGetTimestampsForEnsemblesResponse_api,
+    PostGetTimestampsForEnsemblesError_api,
     GetVectorListData_api,
     GetVectorListResponse_api,
     GetVectorListError_api,
@@ -77,6 +80,9 @@ import type {
     DeprecatedGetStratigraphicUnitsData_api,
     DeprecatedGetStratigraphicUnitsResponse_api,
     DeprecatedGetStratigraphicUnitsError_api,
+    GetStratigraphicUnitsForStratColumnData_api,
+    GetStratigraphicUnitsForStratColumnResponse_api,
+    GetStratigraphicUnitsForStratColumnError_api,
     GetParameterNamesAndDescriptionData_api,
     GetParameterNamesAndDescriptionResponse_api,
     GetParameterNamesAndDescriptionError_api,
@@ -293,6 +299,27 @@ export const getEnsembleDetails = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Post Get Timestamps For Ensembles
+ * Fetches ensemble timestamps for a list of ensembles
+ */
+export const postGetTimestampsForEnsembles = <ThrowOnError extends boolean = false>(
+    options: Options<PostGetTimestampsForEnsemblesData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).post<
+        PostGetTimestampsForEnsemblesResponse_api,
+        PostGetTimestampsForEnsemblesError_api,
+        ThrowOnError
+    >({
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options?.headers,
+        },
+        url: "/ensembles/get_timestamps",
+    });
+};
+
+/**
  * Get Vector List
  * Get list of all vectors in a given Sumo ensemble, excluding any historical vectors
  *
@@ -471,23 +498,23 @@ export const getRealizationVectorAtTimestamp = <ThrowOnError extends boolean = f
 
 /**
  * Get Table Definitions
- * Get the volumetric tables definitions for a given ensemble.
+ * Get the inplace volumes tables definitions for a given ensemble.
  */
 export const getTableDefinitions = <ThrowOnError extends boolean = false>(
     options: Options<GetTableDefinitionsData_api, ThrowOnError>,
 ) => {
     return (options?.client ?? client).get<GetTableDefinitionsResponse_api, GetTableDefinitionsError_api, ThrowOnError>({
         ...options,
-        url: "/inplace_volumetrics/table_definitions/",
+        url: "/inplace_volumes/table_definitions/",
     });
 };
 
 /**
  * Post Get Aggregated Per Realization Table Data
- * Get aggregated volumetric data for a given table with data per realization based on requested results and categories/index filter.
+ * Get aggregated inplace volume data for a given table with data per realization based on requested results and categories/index filter.
  *
- * Note: This endpoint is a post endpoint because the list of identifiers with values can be quite large and may exceed the query string limit.
- * As the endpoint is post, the identifiers with values object is kept for convenience.
+ * Note: This endpoint is a post endpoint because the list of indices with values can be quite large and may exceed the query string limit.
+ * As the endpoint is post, the indices with values object is kept for convenience.
  */
 export const postGetAggregatedPerRealizationTableData = <ThrowOnError extends boolean = false>(
     options: Options<PostGetAggregatedPerRealizationTableDataData_api, ThrowOnError>,
@@ -502,16 +529,16 @@ export const postGetAggregatedPerRealizationTableData = <ThrowOnError extends bo
             "Content-Type": "application/json",
             ...options?.headers,
         },
-        url: "/inplace_volumetrics/get_aggregated_per_realization_table_data/",
+        url: "/inplace_volumes/get_aggregated_per_realization_table_data/",
     });
 };
 
 /**
  * Post Get Aggregated Statistical Table Data
- * Get statistical volumetric data across selected realizations for a given table based on requested results and categories/index filter.
+ * Get statistical inplace volumes data across selected realizations for a given table based on requested results and categories/index filter.
  *
- * Note: This endpoint is a post endpoint because the list of identifiers with values can be quite large and may exceed the query string limit.
- * As the endpoint is post, the identifiers with values object is kept for convenience.
+ * Note: This endpoint is a post endpoint because the list of indices with values can be quite large and may exceed the query string limit.
+ * As the endpoint is post, the indices with values object is kept for convenience.
  */
 export const postGetAggregatedStatisticalTableData = <ThrowOnError extends boolean = false>(
     options: Options<PostGetAggregatedStatisticalTableDataData_api, ThrowOnError>,
@@ -526,7 +553,7 @@ export const postGetAggregatedStatisticalTableData = <ThrowOnError extends boole
             "Content-Type": "application/json",
             ...options?.headers,
         },
-        url: "/inplace_volumetrics/get_aggregated_statistical_table_data/",
+        url: "/inplace_volumes/get_aggregated_statistical_table_data/",
     });
 };
 
@@ -679,6 +706,22 @@ export const deprecatedGetStratigraphicUnits = <ThrowOnError extends boolean = f
     >({
         ...options,
         url: "/surface/deprecated_stratigraphic_units",
+    });
+};
+
+/**
+ * Get Stratigraphic Units For Strat Column
+ */
+export const getStratigraphicUnitsForStratColumn = <ThrowOnError extends boolean = false>(
+    options: Options<GetStratigraphicUnitsForStratColumnData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<
+        GetStratigraphicUnitsForStratColumnResponse_api,
+        GetStratigraphicUnitsForStratColumnError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/surface/stratigraphic_units_for_strat_column",
     });
 };
 
@@ -1143,7 +1186,7 @@ export const getPolygonsData = <ThrowOnError extends boolean = false>(
 
 /**
  * Get User Photo
- * Get username, display name and avatar from Microsoft Graph API for a given user id
+ * Get username, display name and avatar from Microsoft Graph API for a given user email
  */
 export const getUserPhoto = <ThrowOnError extends boolean = false>(
     options: Options<GetUserPhotoData_api, ThrowOnError>,

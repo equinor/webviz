@@ -58,7 +58,7 @@ const moduleInstanceSchema: JTDSchemaType<ModuleInstanceStateAndLayoutInfo> = {
         },
         syncedSettingKeys: {
             elements: {
-                enum: [SyncSettingKey.CAMERA_POSITION_INTERSECTION],
+                enum: Object.values(SyncSettingKey),
             },
         },
         dataChannelReceiverSubscriptions: {

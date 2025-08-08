@@ -6,7 +6,6 @@ import { EnsembleParameters, ParameterType } from "@framework/EnsembleParameters
 import { SensitivityType } from "@framework/EnsembleSensitivities";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 
-
 describe("DeltaEnsemble", () => {
     const COMPARISON_ENSEMBLE = new RegularEnsemble(
         "field1",
