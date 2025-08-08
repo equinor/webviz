@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from typing import Annotated, List, Optional, Literal
+from urllib import response
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
@@ -16,8 +17,11 @@ from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
 from primary.services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
 from primary.services.surface_query_service.surface_query_service import RealizationSampleResult
+from primary.services.utils.task_meta_tracker import get_task_meta_tracker_for_user
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.drogon import is_drogon_identifier
+
+from .._shared.long_running_operations import LroInProgressResp, LroErrorResp, LroSuccessResp, LroErrorInfo, LroProgressInfo
 
 from . import converters
 from . import schemas
@@ -203,6 +207,99 @@ async def get_surface_data(
     LOGGER.info(f"Got {addr.address_type} surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
+
+################################################################
+################################################################
+################################################################
+
+import datetime
+from hashlib import sha256
+from primary.middleware.add_browser_cache import no_cache
+from primary.services.utils.otel_span_tracing import otel_span_decorator, start_otel_span_async
+
+@router.get("/statistical_surface_data/hybrid")
+async def get_statistical_surface_data_hybrid(
+    # fmt:off
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    surf_addr_str: Annotated[str, Query(description="Surface address string, supported address type is *STAT*")],
+    data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
+    # fmt:on
+) -> LroSuccessResp[schemas.SurfaceDataFloat | schemas.SurfaceDataPng] | LroInProgressResp | LroErrorResp:
+
+    perf_metrics = ResponsePerfMetrics(response)
+    LOGGER.info(f"Getting HYBRID statistical surface data for address: {surf_addr_str}")
+
+    addr = decode_surf_addr_str(surf_addr_str)
+    if not isinstance(addr, StatisticalSurfaceAddress):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Endpoint only supports address type STAT")
+
+    # !!!!!!!!!!!!!
+    # We should include the most recent case/ensemble/object timestamp here as well
+    param_hash = sha256(surf_addr_str.encode()).hexdigest()
+
+    task_tracker = get_task_meta_tracker_for_user(authenticated_user)
+    sumo_task_id = await task_tracker.get_task_id_by_fingerprint_async(param_hash)
+    LOGGER.debug(f"Got existing sumo_task_id: {sumo_task_id=} for param_hash: {param_hash=}")
+
+    access_token = authenticated_user.get_sumo_access_token()
+    access = SurfaceAccess.from_iteration_name(access_token, addr.case_uuid, addr.ensemble_name)
+
+    new_sumo_job_was_submitted = False
+    if sumo_task_id is None:
+        LOGGER.info("SUBITTING new SUMO TASK!!!!!!!!!!!!!!!!")
+        service_stat_func_to_compute = StatisticFunction.from_string_value(addr.stat_function)
+        sumo_task_id = await access.SUBMIT_get_statistical_surface_data_async(
+            statistic_function=service_stat_func_to_compute,
+            name=addr.name,
+            attribute=addr.attribute,
+            realizations=addr.stat_realizations,
+            time_or_interval_str=addr.iso_time_or_interval,
+        )
+
+        if not sumo_task_id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Could not get or compute statistical surface")
+
+        new_sumo_job_was_submitted = True
+        await task_tracker.register_task_with_fingerprint_async(task_system="sumo_task", task_id=sumo_task_id, fingerprint=param_hash, expected_store_key=None)
+
+    try:
+        trigger_dummy_exception = False
+        if not new_sumo_job_was_submitted:
+            if addr.stat_function == "MIN":
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Details of dummy exception")
+            if addr.stat_function == "STD":
+                trigger_dummy_exception = True
+
+        xtgeo_surf = await access.POLL_get_statistical_surface_data_async(sumo_task_id=sumo_task_id, timeout_s=0, trigger_dummy_exception=trigger_dummy_exception)
+        if xtgeo_surf:
+            surf_data_response: schemas.SurfaceDataFloat | schemas.SurfaceDataPng
+            if data_format == "float":
+                surf_data_response = converters.to_api_surface_data_float(xtgeo_surf)
+            elif data_format == "png":
+                surf_data_response = converters.to_api_surface_data_png(xtgeo_surf)
+            return LroSuccessResp(status="success", data=surf_data_response)
+        
+        progress_msg = "New task submitted" if new_sumo_job_was_submitted else "Waiting for task..."
+        progress_msg += f" [{datetime.datetime.now()}]"
+
+        response.status_code = status.HTTP_202_ACCEPTED
+        response.headers["Cache-Control"] = "no-store"
+        return LroInProgressResp(
+            status="in_progress",
+            operation_id=sumo_task_id,
+            progress=LroProgressInfo(progress_message=progress_msg)
+        )
+    except Exception as e:
+        LOGGER.error(f"Error occurred while polling for surface data: {e}")
+        await task_tracker.delete_fingerprint_to_task_mapping_async(param_hash)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal Server Error")
+
+
+
+################################################################
+################################################################
+################################################################
 
 
 @router.post("/get_surface_intersection")

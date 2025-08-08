@@ -35,6 +35,6 @@ def create_sumo_client(access_token: str) -> SumoClient:
             timeout=120,
         )
 
-    LOGGER.debug(f"create_sumo_client() took: {timer.elapsed_ms()}ms")
+    #LOGGER.debug(f"create_sumo_client() took: {timer.elapsed_ms()}ms")
 
     return sumo_client

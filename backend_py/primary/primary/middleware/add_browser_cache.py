@@ -82,11 +82,12 @@ class AddBrowserCacheMiddleware:
         async def send_with_cache_header(message: Message) -> None:
             if message["type"] == "http.response.start":
                 headers = MutableHeaders(scope=message)
-                context = cache_context.get()
-                cache_control_str = (
-                    f"max-age={context['max_age']}, stale-while-revalidate={context['stale_while_revalidate']}, private"
-                )
-                headers.append("cache-control", cache_control_str)
+                if headers.get("cache-control") is None:
+                    context = cache_context.get()
+                    cache_control_str = (
+                        f"max-age={context['max_age']}, stale-while-revalidate={context['stale_while_revalidate']}, private"
+                    )
+                    headers.append("cache-control", cache_control_str)
 
             await send(message)
 

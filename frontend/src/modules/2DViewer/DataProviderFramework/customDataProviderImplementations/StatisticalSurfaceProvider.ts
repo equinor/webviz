@@ -22,7 +22,14 @@ import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataT
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
-const statisicalSurfaceSettings = [
+import { getStatisticalSurfaceDataHybrid, GetStatisticalSurfaceDataHybridData_api } from "@api";
+import { getStatisticalSurfaceDataHybridQueryKey } from "@api";
+import { LroProgressInfo_api } from "@api";
+import { wrapLongRunningQuery } from "@framework/utils/longRunningApiCalls";
+import { Options } from "@hey-api/client-axios";
+
+
+const statisticalSurfaceSettings = [
     Setting.ENSEMBLE,
     Setting.STATISTIC_FUNCTION,
     Setting.SENSITIVITY,
@@ -31,7 +38,7 @@ const statisicalSurfaceSettings = [
     Setting.TIME_OR_INTERVAL,
     Setting.COLOR_SCALE,
 ] as const;
-export type StatisticalSurfaceSettings = typeof statisicalSurfaceSettings;
+export type StatisticalSurfaceSettings = typeof statisticalSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<StatisticalSurfaceSettings>;
 
 export enum SurfaceDataFormat {
@@ -46,7 +53,7 @@ export type StatisticalSurfaceData =
 export class StatisticalSurfaceProvider
     implements CustomDataProviderImplementation<StatisticalSurfaceSettings, StatisticalSurfaceData>
 {
-    settings = statisicalSurfaceSettings;
+    settings = statisticalSurfaceSettings;
 
     private _dataFormat: SurfaceDataFormat;
 
@@ -211,9 +218,6 @@ export class StatisticalSurfaceProvider
         registerQueryKey,
         queryClient,
     }: FetchDataParams<StatisticalSurfaceSettings, StatisticalSurfaceData>): Promise<StatisticalSurfaceData> {
-        let surfaceAddress: FullSurfaceAddress | null = null;
-        const addrBuilder = new SurfaceAddressBuilder();
-
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         const surfaceName = getSetting(Setting.SURFACE_NAME);
         const attribute = getSetting(Setting.ATTRIBUTE);
@@ -223,10 +227,13 @@ export class StatisticalSurfaceProvider
 
         const workbenchSession = getWorkbenchSession();
 
-        if (ensembleIdent && surfaceName && attribute) {
+        let surfaceAddress: FullSurfaceAddress | null = null;
+        if (ensembleIdent && surfaceName && attribute && statisticFunction) {
+            const addrBuilder = new SurfaceAddressBuilder();
             addrBuilder.withEnsembleIdent(ensembleIdent);
             addrBuilder.withName(surfaceName);
             addrBuilder.withAttribute(attribute);
+            addrBuilder.withStatisticFunction(statisticFunction);
 
             // Get filtered realizations from workbench
             let filteredRealizations = workbenchSession
@@ -258,21 +265,44 @@ export class StatisticalSurfaceProvider
                 addrBuilder.withTimeOrInterval(timeOrInterval);
             }
 
-            if (statisticFunction) {
-                addrBuilder.withStatisticFunction(statisticFunction);
-            }
             surfaceAddress = addrBuilder.buildStatisticalAddress();
         }
 
         const surfAddrStr = surfaceAddress ? encodeSurfAddrStr(surfaceAddress) : null;
 
-        const queryOptions = getSurfaceDataOptions({
+
+        // const queryOptions = getSurfaceDataOptions({
+        //     query: {
+        //         surf_addr_str: surfAddrStr ?? "",
+        //         data_format: this._dataFormat,
+        //         resample_to_def_str: null,
+        //     },
+        // });
+
+
+        function handleTaskProgress(progress: LroProgressInfo_api | undefined) {
+            if (progress) {
+                console.log(`PROGRESS: ${progress.progress_message}`);
+            }
+        }
+
+        const apiFunctionArgs: Options<GetStatisticalSurfaceDataHybridData_api, false> = {
             query: {
-                surf_addr_str: surfAddrStr ?? "",
+                surf_addr_str: surfAddrStr ?? "NO_SURF_ADDR",
                 data_format: this._dataFormat,
-                resample_to_def_str: null,
             },
+        };
+        const queryKey = getStatisticalSurfaceDataHybridQueryKey(apiFunctionArgs);
+        
+        const queryOptions = wrapLongRunningQuery({
+            queryFn: getStatisticalSurfaceDataHybrid,
+            queryFnArgs: apiFunctionArgs,
+            queryKey: queryKey,
+            pollIntervalMs: 500,
+            maxRetries: 240,
+            onProgress: handleTaskProgress,
         });
+
 
         registerQueryKey(queryOptions.queryKey);
 

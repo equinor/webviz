@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+from typing import AsyncIterator
 import datetime
 import logging
 import os
@@ -33,6 +35,7 @@ from primary.routers.vfp.router import router as vfp_router
 from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
 from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
+from primary.services.utils.task_meta_tracker import TaskMetaTrackerFactory
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
@@ -52,7 +55,8 @@ logging.getLogger("primary.services.user_grid3d_service").setLevel(logging.DEBUG
 logging.getLogger("primary.services.surface_query_service").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
-logging.getLogger("primary.auth").setLevel(logging.DEBUG)
+logging.getLogger("primary.routers.surface").setLevel(logging.DEBUG)
+# logging.getLogger("primary.auth").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.access").setLevel(logging.DEBUG)
 
@@ -63,10 +67,27 @@ def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.name}"
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    # The first part of this function, before the yield, will be executed before the FastPI application starts.
+    HTTPX_ASYNC_CLIENT_WRAPPER.start()
+
+    # !!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!
+    TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL, ttl_s=24*60*60)
+
+    yield
+
+    # This part, after the yield, will be executed after the application has finished.
+    await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()
+
+
 app = FastAPI(
     generate_unique_id_function=custom_generate_unique_id,
     root_path="/api",
     default_response_class=ORJSONResponse,
+    lifespan=lifespan,
 )
 
 if os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
@@ -74,17 +95,6 @@ if os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
     setup_azure_monitor_telemetry(app)
 else:
     LOGGER.warning("Skipping telemetry configuration, APPLICATIONINSIGHTS_CONNECTION_STRING env variable not set.")
-
-
-# Start the httpx client on startup and stop it on shutdown of the app
-@app.on_event("startup")
-async def startup_event_async() -> None:
-    HTTPX_ASYNC_CLIENT_WRAPPER.start()
-
-
-@app.on_event("shutdown")
-async def shutdown_event_async() -> None:
-    await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()
 
 
 # The tags we add here will determine the name of the frontend api service for our endpoints as well as

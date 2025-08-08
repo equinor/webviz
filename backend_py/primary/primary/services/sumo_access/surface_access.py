@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import time
+import json
 from io import BytesIO
 from typing import Sequence
 
@@ -284,7 +286,9 @@ class SurfaceAccess:
                     Service.SUMO,
                 )
 
-        xtgeo_surf = await _compute_statistical_surface_async(statistic_function, search_context)
+        sumo_stat_operation_str = _map_to_sumo_aggregation_operation(statistic_function)
+        sumo_surf_obj = await search_context.aggregate_async(operation=sumo_stat_operation_str)
+        xtgeo_surf = await sumo_surf_obj.to_regular_surface_async() if sumo_surf_obj else None
         perf_metrics.record_lap("calc-stat")
 
         if not xtgeo_surf:
@@ -309,6 +313,152 @@ class SurfaceAccess:
     def _make_stat_surf_log_str(self, name: str, attribute: str, date_str: str | None) -> str:
         addr_str = f"N={name}, A={attribute}, D={date_str}, C={self._case_uuid}, I={self._iteration_name}"
         return addr_str
+
+
+    @otel_span_decorator()
+    async def SUBMIT_get_statistical_surface_data_async(
+        self,
+        statistic_function: StatisticFunction,
+        name: str,
+        attribute: str,
+        realizations: Sequence[int] | None = None,
+        time_or_interval_str: str | None = None,
+    ) -> str | None:
+        if not self._iteration_name:
+            raise InvalidParameterError("Iteration name must be set to get realization surfaces", Service.SUMO)
+
+        if realizations is not None:
+            if len(realizations) == 0:
+                raise InvalidParameterError("List of realizations cannot be empty", Service.SUMO)
+
+        perf_metrics = PerfMetrics()
+
+        surf_str = self._make_stat_surf_log_str(name, attribute, time_or_interval_str)
+
+        time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
+
+        search_context = SearchContext(self._sumo_client).surfaces.filter(
+            uuid=self._case_uuid,
+            is_observation=False,
+            aggregation=False,
+            iteration=self._iteration_name,
+            name=name,
+            tagname=attribute,
+            realization=realizations if realizations is not None else True,
+            time=time_filter,
+        )
+
+        surf_count = await search_context.length_async()
+        perf_metrics.record_lap("locate")
+
+        if surf_count == 0:
+            LOGGER.warning(f"No statistical source surfaces found in Sumo for: {surf_str}")
+            return None
+        if surf_count == 1:
+            # As of now, the Sumo aggregation service does not support single realization aggregation.
+            # For now return None. Alternatively we could fetch the single realization surface
+            LOGGER.warning(f"Could not calculate statistical surface, only one source surface found for: {surf_str}")
+            return None
+
+        # Ensure that we got data for all the requested realizations
+        realizations_found = await search_context.get_field_values_async("fmu.realization.id")
+        perf_metrics.record_lap("collect-reals")
+        if realizations is not None:
+            missing_reals = list(set(realizations) - set(realizations_found))
+            if len(missing_reals) > 0:
+                raise InvalidParameterError(
+                    f"Could not find source surfaces for realizations: {missing_reals} in Sumo for {surf_str}",
+                    Service.SUMO,
+                )
+
+
+        sumo_stat_operation_str = _map_to_sumo_aggregation_operation(statistic_function)
+
+        sc = search_context.filter(realization=True)
+        #sc = surface_context.filter(realization=[1,2,3])
+        #sc = surface_context.filter(realization=[1, 135])
+
+        caseuuid, classname, entityuuid, ensemblename = await sc._verify_aggregation_operation_async(None, sumo_stat_operation_str)
+
+        spec = sc._SearchContext__prepare_aggregation_spec(caseuuid, classname, entityuuid, ensemblename, sumo_stat_operation_str, None)
+        spec["object_ids"] = await sc.uuids_async
+
+        LOGGER.debug(f"DOING POST")
+        LOGGER.debug(f"----------------------")
+        LOGGER.debug(json.dumps(spec, indent=2))
+        LOGGER.debug(f"----------------------")
+        post_res = await self._sumo_client.post_async("/aggregations", json=spec)
+        LOGGER.debug(f"AFTER POST {post_res=}  {post_res.headers=}")
+
+        # We're not getting a task ID back from the POST, but a location header with a URL to poll for the result
+        # Do a bit of string manipulation to extract the actual task UUID from the location header
+        # The full pull location typically looks something like this:
+        #   https://main-sumo-prod.radix.equinor.com/api/v1/tasks('3de7a932-14de-4873-8389-fe3a83213638')/result
+        full_poll_location = post_res.headers.get("location")
+        start = full_poll_location.find("/tasks('") + 8
+        end = full_poll_location.find("')/result", start)
+        sumo_task_uuid = full_poll_location[start:end]
+
+        return sumo_task_uuid
+
+
+    @otel_span_decorator()
+    async def POLL_get_statistical_surface_data_async(
+        self,
+        sumo_task_id: str,
+        timeout_s: float,
+        trigger_dummy_exception: bool = True
+    ) -> xtgeo.RegularSurface | None:
+
+        perf_metrics = PerfMetrics()
+
+        LOGGER.debug(f"STARTING POLL")
+
+        # For now, we're using the path as task id
+        # The poll path (which sumo client adds to its base_url) is: /tasks('{taskUuid}')/result
+        poll_path = f"/tasks('{sumo_task_id}')/result"
+
+        if trigger_dummy_exception:
+            # This is just to trigger an exception in the test
+            raise ValueError("Dummy exception triggered for testing purposes")
+
+        retry_after_s = 1
+        deadline = time.time() + timeout_s
+        while True:
+            poll_response = await self._sumo_client.get_async(poll_path)
+            tmp_location = poll_response.headers.get("location")
+            tmp_retry_after = poll_response.headers.get("retry-after")
+            LOGGER.debug(f"Poll response: {poll_response.status_code}  {tmp_location=} {tmp_retry_after=}")
+            if poll_response.status_code != 202:
+                break
+
+            if time.time() + retry_after_s > deadline:
+                return None
+
+            await asyncio.sleep(retry_after_s)
+
+        final_poll_result = poll_response.json()
+        LOGGER.debug(f"POLL DONE:")
+        LOGGER.debug(json.dumps(final_poll_result, indent=2))
+
+        if poll_response.status_code != 200:
+            LOGGER.error(f"Polling for statistical surface failed with status code: {poll_response.status_code}")
+            return None
+
+        sumo_obj_dict = final_poll_result
+        sumo_surface_obj = Surface(self._sumo_client, sumo_obj_dict)
+
+        xtgeo_surf = await sumo_surface_obj.to_regular_surface_async()
+        if not xtgeo_surf:
+            LOGGER.warning(f"Could not calculate statistical surface using Sumo")
+            return None
+
+        LOGGER.debug(
+            f"Calculated statistical surface using Sumo in: {perf_metrics.to_string()} "
+            f"[{xtgeo_surf.ncol}x{xtgeo_surf.nrow}]"
+        )
+
+        return xtgeo_surf
 
 
 def _build_surface_meta_arr(
@@ -378,25 +528,18 @@ def _time_or_interval_str_to_time_filter(time_or_interval_str: str | None) -> Ti
     )
 
 
-async def _compute_statistical_surface_async(
-    statistic: StatisticFunction, surface_context: SearchContext
-) -> xtgeo.RegularSurface:
-    xtgeo_surf: xtgeo.RegularSurface = None
-    if statistic == StatisticFunction.MIN:
-        xtgeo_surf = await surface_context.aggregate_async(operation="min")
-    elif statistic == StatisticFunction.MAX:
-        xtgeo_surf = await surface_context.aggregate_async(operation="max")
-    elif statistic == StatisticFunction.MEAN:
-        xtgeo_surf = await surface_context.aggregate_async(operation="mean")
-    elif statistic == StatisticFunction.P10:
-        xtgeo_surf = await surface_context.aggregate_async(operation="p10")
-    elif statistic == StatisticFunction.P90:
-        xtgeo_surf = await surface_context.aggregate_async(operation="p90")
-    elif statistic == StatisticFunction.P50:
-        xtgeo_surf = await surface_context.aggregate_async(operation="p50")
-    elif statistic == StatisticFunction.STD:
-        xtgeo_surf = await surface_context.aggregate_async(operation="std")
-    else:
-        raise ValueError("Unhandled statistic function")
+def _map_to_sumo_aggregation_operation(statistic_function: StatisticFunction) -> str:
+    sumo_agg_op = {
+        StatisticFunction.MIN: "min",
+        StatisticFunction.MAX: "max",
+        StatisticFunction.MEAN: "mean",
+        StatisticFunction.P10: "p10",
+        StatisticFunction.P90: "p90",
+        StatisticFunction.P50: "p50",
+        StatisticFunction.STD: "std",
+    }.get(statistic_function)
 
-    return await xtgeo_surf.to_regular_surface_async()
+    if sumo_agg_op is None:
+        raise ValueError(f"Unhandled statistic function: {statistic_function}")
+
+    return sumo_agg_op

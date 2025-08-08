@@ -11,6 +11,16 @@ import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMe
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
 
+import { Options } from "@hey-api/client-axios";
+import { useQuery } from "@tanstack/react-query";
+import { wrapLongRunningQuery } from "@framework/utils/longRunningApiCalls";
+import { LroProgressInfo_api } from "@api";
+import { getStatisticalSurfaceDataHybrid, GetStatisticalSurfaceDataHybridData_api } from "@api";
+import { getStatisticalSurfaceDataHybridQueryKey } from "@api";
+import { SurfaceDataFloat_trans, transformSurfaceData } from "@modules_shared/Surface/queryDataTransforms";
+import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
+
+
 import type { Interfaces } from "./interfaces";
 
 export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
@@ -19,15 +29,53 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
 
     //const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "png", null, true);
-    const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, true);
+    //const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, true);
 
-    const isLoading = surfDataQuery.isFetching;
+
+    const surfDataQuery_general = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, surfaceAddress?.addressType !== "STAT");
+
+
+    const queryFnOptions: Options<GetStatisticalSurfaceDataHybridData_api, false> = {
+        query: {
+            surf_addr_str: surfaceAddress ? encodeSurfAddrStr(surfaceAddress) : "DUMMY",
+        },
+    };
+    const queryKey = getStatisticalSurfaceDataHybridQueryKey(queryFnOptions);
+
+    function handleProgress(progress: LroProgressInfo_api | undefined) {
+        if (progress) {
+            console.log(`PROGRESS: ${progress.progress_message}`);
+            statusWriter.setDebugMessage(`PROGRESS: ${progress.progress_message}`);
+        }
+    }
+
+    const wrappedQuery = wrapLongRunningQuery({
+        queryFn: getStatisticalSurfaceDataHybrid,
+        queryFnArgs: queryFnOptions,
+        queryKey: queryKey,
+        pollIntervalMs: 500,
+        maxRetries: 240,
+        onProgress: handleProgress
+    });
+
+    const surfDataQuery_stat = useQuery({ ...wrappedQuery, enabled: surfaceAddress?.addressType === "STAT" });
+
+
+
+    const isLoading = surfDataQuery_general.isFetching;
     statusWriter.setLoading(isLoading);
 
-    const hasError = surfDataQuery.isError;
-    usePropagateApiErrorToStatusWriter(surfDataQuery, statusWriter);
+    const hasError = surfDataQuery_general.isError;
+    usePropagateApiErrorToStatusWriter(surfDataQuery_general, statusWriter);
 
-    const surfData = surfDataQuery.data;
+
+    let surfData: SurfaceDataFloat_trans | undefined = undefined;
+    if (surfDataQuery_general?.data) {
+        surfData = surfDataQuery_general.data;
+    }
+    else if (surfDataQuery_stat?.data) {
+        surfData = transformSurfaceData(surfDataQuery_stat.data) as SurfaceDataFloat_trans;
+    }
 
     return (
         <div className="relative w-full h-full flex flex-col">

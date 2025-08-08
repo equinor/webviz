@@ -19,6 +19,9 @@ class AuthenticatedUser:
         username: str,
         access_tokens: AccessTokens,
     ) -> None:
+        if not user_id:
+            raise ValueError("user_id cannot be empty")
+
         self._user_id = user_id
         self._username = username
         self._graph_access_token = access_tokens.get("graph_access_token")

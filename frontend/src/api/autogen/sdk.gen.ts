@@ -65,6 +65,9 @@ import type {
     GetSurfaceDataData_api,
     GetSurfaceDataResponse_api,
     GetSurfaceDataError_api,
+    GetStatisticalSurfaceDataHybridData_api,
+    GetStatisticalSurfaceDataHybridResponse_api,
+    GetStatisticalSurfaceDataHybridError_api,
     PostGetSurfaceIntersectionData_api,
     PostGetSurfaceIntersectionResponse_api,
     PostGetSurfaceIntersectionError_api,
@@ -583,6 +586,22 @@ export const getSurfaceData = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetSurfaceDataResponse_api, GetSurfaceDataError_api, ThrowOnError>({
         ...options,
         url: "/surface/surface_data",
+    });
+};
+
+/**
+ * Get Statistical Surface Data Hybrid
+ */
+export const getStatisticalSurfaceDataHybrid = <ThrowOnError extends boolean = false>(
+    options: Options<GetStatisticalSurfaceDataHybridData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<
+        GetStatisticalSurfaceDataHybridResponse_api,
+        GetStatisticalSurfaceDataHybridError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/surface/statistical_surface_data/hybrid",
     });
 };
 
