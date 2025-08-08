@@ -260,12 +260,15 @@ def _acquire_refreshed_identity_and_tokens(
 
         id_token_claims_dict = _decode_jwt(id_token)
         try:
-            # Could use either 'oid' or 'sub' here, but 'sub' is probably good enough, and it doesn't require the
-            # profile scope (in case it matters). See this page for more info:
+
+            # We use the 'oid' value here so that we tie persisted user items (such as sessions) to the profile.
+            # This does mean we need the 'profile' scope, but that should be injected by msal by default anyways
+
+            # See this page for info about available tokens:
             # https://learn.microsoft.com/en-us/azure/active-directory/develop/id-tokens
-            #
-            # May want to switch to 'oid' instead since it is the unique identifier for the user across the tenant!
-            user_id = id_token_claims_dict["sub"]
+            # https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference
+
+            user_id = id_token_claims_dict["oid"]
             user_name = id_token_claims_dict["preferred_username"]
             id_token_expiry_time = int(id_token_claims_dict["exp"])
         except ValueError:
