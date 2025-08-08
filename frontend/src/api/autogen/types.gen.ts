@@ -88,6 +88,11 @@ export type Completions_api = {
     khMax: Array<number>;
 };
 
+export type CurveData_api = {
+    curve_name: string;
+    curve_values: Array<number>;
+};
+
 export type DatedFlowNetwork_api = {
     dates: Array<string>;
     network: NetworkNode_api;
@@ -472,6 +477,33 @@ export type PvtData_api = {
     ratio_unit: string;
 };
 
+export type RelPermRealizationData_api = {
+    curve_data_arr: Array<CurveData_api>;
+    realization_id: number;
+    saturation_name: string;
+    saturation_values: Array<number>;
+    saturation_number: number;
+};
+
+export type RelPermSaturationAxis_api = {
+    saturation_name: string;
+    relperm_curve_names: Array<string>;
+    capillary_pressure_curve_names: Array<string>;
+};
+
+export type RelPermStatisticalData_api = {
+    saturation_number: number;
+    saturation_name: string;
+    saturation_values: Array<number>;
+    curve_statistics: Array<StatisticalCurveData_api>;
+};
+
+export type RelPermTableInfo_api = {
+    table_name: string;
+    saturation_axes: Array<RelPermSaturationAxis_api>;
+    satnums: Array<number>;
+};
+
 /**
  * Data for a single column in a volumetric table
  *
@@ -692,6 +724,15 @@ export enum StatisticFunction_api {
 export type StatisticValueObject_api = {
     statisticFunction: StatisticFunction_api;
     values: Array<number>;
+};
+
+export type StatisticalCurveData_api = {
+    curve_name: string;
+    mean_values: Array<number>;
+    min_values: Array<number>;
+    max_values: Array<number>;
+    p10_values: Array<number>;
+    p90_values: Array<number>;
 };
 
 /**
@@ -2818,6 +2859,190 @@ export type GetTableDataResponses_api = {
 };
 
 export type GetTableDataResponse_api = GetTableDataResponses_api[keyof GetTableDataResponses_api];
+
+export type GetRelpermTableNamesData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble name
+         */
+        ensemble_name: string;
+    };
+    url: "/relperm/relperm_table_names";
+};
+
+export type GetRelpermTableNamesErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetRelpermTableNamesError_api = GetRelpermTableNamesErrors_api[keyof GetRelpermTableNamesErrors_api];
+
+export type GetRelpermTableNamesResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<string>;
+};
+
+export type GetRelpermTableNamesResponse_api = GetRelpermTableNamesResponses_api[keyof GetRelpermTableNamesResponses_api];
+
+export type GetRelpermTableInfoData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Table name
+         */
+        table_name: string;
+    };
+    url: "/relperm/relperm_table_info";
+};
+
+export type GetRelpermTableInfoErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetRelpermTableInfoError_api = GetRelpermTableInfoErrors_api[keyof GetRelpermTableInfoErrors_api];
+
+export type GetRelpermTableInfoResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: RelPermTableInfo_api;
+};
+
+export type GetRelpermTableInfoResponse_api = GetRelpermTableInfoResponses_api[keyof GetRelpermTableInfoResponses_api];
+
+export type GetRelpermRealizationsCurveDataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Table name
+         */
+        table_name: string;
+        /**
+         * Saturation axis name
+         */
+        saturation_axis_name: string;
+        /**
+         * Curve names
+         */
+        curve_names: Array<string>;
+        /**
+         * Satnum
+         */
+        satnum: number;
+        /**
+         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
+         */
+        realizations_encoded_as_uint_list_str?: string | null;
+    };
+    url: "/relperm/relperm_realizations_curve_data";
+};
+
+export type GetRelpermRealizationsCurveDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetRelpermRealizationsCurveDataError_api =
+    GetRelpermRealizationsCurveDataErrors_api[keyof GetRelpermRealizationsCurveDataErrors_api];
+
+export type GetRelpermRealizationsCurveDataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<RelPermRealizationData_api>;
+};
+
+export type GetRelpermRealizationsCurveDataResponse_api =
+    GetRelpermRealizationsCurveDataResponses_api[keyof GetRelpermRealizationsCurveDataResponses_api];
+
+export type GetRelpermStatisticalCurveDataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Table name
+         */
+        table_name: string;
+        /**
+         * Saturation axis name
+         */
+        saturation_axis_name: string;
+        /**
+         * Curve names
+         */
+        curve_names: Array<string>;
+        /**
+         * Satnum
+         */
+        satnum: number;
+        /**
+         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
+         */
+        realizations_encoded_as_uint_list_str?: string | null;
+    };
+    url: "/relperm/relperm_statistical_curve_data";
+};
+
+export type GetRelpermStatisticalCurveDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetRelpermStatisticalCurveDataError_api =
+    GetRelpermStatisticalCurveDataErrors_api[keyof GetRelpermStatisticalCurveDataErrors_api];
+
+export type GetRelpermStatisticalCurveDataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: RelPermStatisticalData_api | null;
+};
+
+export type GetRelpermStatisticalCurveDataResponse_api =
+    GetRelpermStatisticalCurveDataResponses_api[keyof GetRelpermStatisticalCurveDataResponses_api];
 
 export type GetWellCompletionsDataData_api = {
     body?: never;

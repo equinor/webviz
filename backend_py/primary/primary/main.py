@@ -25,6 +25,7 @@ from primary.routers.observations.router import router as observations_router
 from primary.routers.parameters.router import router as parameters_router
 from primary.routers.polygons.router import router as polygons_router
 from primary.routers.pvt.router import router as pvt_router
+from primary.routers.relperm.router import router as relperm_router
 from primary.routers.rft.router import router as rft_router
 from primary.routers.seismic.router import router as seismic_router
 from primary.routers.surface.router import router as surface_router
@@ -97,6 +98,7 @@ app.include_router(parameters_router, prefix="/parameters", tags=["parameters"])
 app.include_router(grid3d_router, prefix="/grid3d", tags=["grid3d"])
 app.include_router(flow_network_router, prefix="/flow_network", tags=["flow_network"])
 app.include_router(pvt_router, prefix="/pvt", tags=["pvt"])
+app.include_router(relperm_router, prefix="/relperm", tags=["relperm"])
 app.include_router(well_completions_router, prefix="/well_completions", tags=["well_completions"])
 app.include_router(well_router, prefix="/well", tags=["well"])
 app.include_router(seismic_router, prefix="/seismic", tags=["seismic"])

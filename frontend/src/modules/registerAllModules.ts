@@ -14,6 +14,7 @@ import "./ParameterResponseCorrelationBarPlot/registerModule";
 import "./ParameterResponseCorrelationMatrixPlot/registerModule";
 import "./ParameterResponseCrossPlot/registerModule";
 import "./Pvt/registerModule";
+import "./RelPerm/registerModule";
 import "./Rft/registerModule";
 import "./SimulationTimeSeries/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";

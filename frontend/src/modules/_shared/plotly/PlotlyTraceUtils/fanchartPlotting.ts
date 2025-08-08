@@ -1,7 +1,5 @@
 import { formatRgb, modeRgb, useMode } from "culori";
-import type { ScatterLine } from "plotly.js";
-
-import type { TimeSeriesPlotData } from "../timeSeriesPlotData";
+import type { PlotData , ScatterLine } from "plotly.js";
 
 /**
     Definition of statistics data for free line trace in fanchart
@@ -175,7 +173,7 @@ export function createFanchartTraces({
     hoverText = "",
     name = undefined,
     type = "scatter",
-}: CreateFanchartTracesOptions): Partial<TimeSeriesPlotData>[] {
+}: CreateFanchartTracesOptions): Partial<PlotData>[] {
     // NOTE:
     // - hovermode? not exposed?
 
@@ -194,8 +192,8 @@ export function createFanchartTraces({
     const fillColorDark = formatRgb({ ...rgb, alpha: 0.6 });
     const lineColor = formatRgb({ ...rgb, alpha: 1.0 });
 
-    function getDefaultTrace(statisticsName: string, values: number[]): Partial<TimeSeriesPlotData> {
-        const trace: Partial<TimeSeriesPlotData> = {
+    function getDefaultTrace(statisticsName: string, values: number[]): Partial<PlotData> {
+        const trace: Partial<PlotData> = {
             name: name ?? legendGroup,
             x: direction === TraceDirection.HORIZONTAL ? data.samples : values,
             y: direction === TraceDirection.HORIZONTAL ? values : data.samples,
@@ -205,7 +203,10 @@ export function createFanchartTraces({
             type: type,
             line: { width: 0, color: lineColor, shape: lineShape },
             legendgroup: legendGroup,
-            showlegend: false,
+            showlegend: false,        hoverlabel: {
+            bgcolor: "white",
+            font: { size: 12, color: "black" },
+        },
         };
 
         if (legendRank !== undefined) {
@@ -216,14 +217,14 @@ export function createFanchartTraces({
             return trace;
         }
         if (hoverTemplate !== undefined) {
-            trace.hovertemplate = hoverTemplate + statisticsName;
+            trace.hovertemplate = `Statistics: <b>${statisticsName}</b><br>` + hoverTemplate;
         } else {
             trace.hovertext = statisticsName + " " + hoverText;
         }
         return trace;
     }
 
-    const traces: Partial<TimeSeriesPlotData>[] = [];
+    const traces: Partial<PlotData>[] = [];
 
     // Minimum
     if (data.minimumMaximum !== undefined) {
