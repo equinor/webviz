@@ -120,8 +120,11 @@ async def get_grid_geometry_and_property_blob_ids_async(
 
     grid_property_must_clause = query["bool"]["should"][1]["bool"]["must"]
 
-    if time_filter.time_type == TimeType.TIMESTAMP:
-        # For a single timestamp, we need t0 to match AND t1 must NOT exist.
+    if time_filter.time_type == TimeType.NONE:
+        grid_property_must_clause.append({"bool": {"must_not": {"exists": {"field": "data.time"}}}})
+
+    elif time_filter.time_type == TimeType.TIMESTAMP:
+        # For a single timestamp, t0 must match AND t1 must NOT exist.
         grid_property_must_clause.append({"term": {"data.time.t0.value": time_filter.start}})
         grid_property_must_clause.append({"bool": {"must_not": {"exists": {"field": "data.time.t1"}}}})
 
@@ -151,7 +154,7 @@ async def get_grid_geometry_and_property_blob_ids_async(
 
     if not grid_geometry_id or not grid_property_id:
         raise InvalidDataError(
-            f"Did not find expected document types: {query} ***** {parameter_name} {parameter_time_or_interval_str} {grid_name} {grid_geometry_id}, {grid_property_id}",
+            f"Did not find expected document types: {parameter_name=} {parameter_time_or_interval_str=} {grid_name=} {grid_geometry_id=} {grid_property_id=}",
             service=Service.SUMO,
         )
 
