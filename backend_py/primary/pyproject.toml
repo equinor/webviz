@@ -22,7 +22,7 @@ pandas = { version = "^2.0.1", extras = ["performance"] }
 httpx = "^0.28.1"
 fmu-sumo = "^2.4.10"
 sumo-wrapper-python = "^1.1.2"
-azure-monitor-opentelemetry = "^1.6.8"
+azure-monitor-opentelemetry = "^1.6.13"
 opentelemetry-instrumentation-httpx = "*"
 opentelemetry-instrumentation-redis = "*"
 requests-toolbelt = "^1.0.0"
