@@ -1,5 +1,7 @@
 import React from "react";
 
+import { Typography } from "@equinor/eds-core-react";
+import { Refresh } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
 import {
@@ -10,6 +12,7 @@ import {
 import { buildSessionUrl } from "@framework/internal/WorkbenchSession/SessionUrlService";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { IconButton } from "@lib/components/IconButton";
 import { timeAgo } from "@lib/utils/dates";
 
 import { SessionCard } from "./sessionCard";
@@ -87,5 +90,15 @@ export function RecentSessions(props: RecentSessionsProps) {
         return <div className="text-gray-500">No recent sessions found.</div>;
     }
 
-    return <div className="flex flex-col gap-2">{makeContent()}</div>;
+    return (
+        <section>
+            <Typography className="flex gap-1 items-center" variant="h6">
+                Sessions
+                <IconButton disabled={sessionsQuery.isRefetching} onClick={() => sessionsQuery.refetch()}>
+                    <Refresh fontSize="inherit" />
+                </IconButton>
+            </Typography>
+            <div className="flex flex-col gap-2">{makeContent()}</div>
+        </section>
+    );
 }
