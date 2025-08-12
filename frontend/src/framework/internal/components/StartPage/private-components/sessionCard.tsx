@@ -1,5 +1,8 @@
 import type React from "react";
 
+import { useQuery } from "@tanstack/react-query";
+
+import { getUserInfoOptions } from "@api";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { timeAgo } from "@lib/utils/dates";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -20,7 +23,7 @@ export function SessionCard(props: BaseListCardProps): React.ReactNode {
     const showOwnerRow = props.ownerId;
 
     const titleSizeClass = showOwnerRow ? "text-lg" : "text-xl";
-    const paddingClass = showOwnerRow ? "py-0.5" : "py-3";
+    const paddingClass = showOwnerRow ? "py-0.5" : "py-3.5";
 
     return (
         <li>
@@ -46,11 +49,15 @@ function OwnerLine(props: { ownerId: string }): React.ReactNode {
 
     const isSelf = userInfo && props.ownerId === userInfo.user_id;
 
+    const userInfoQuery = useQuery({ ...getUserInfoOptions({ path: { user_id_or_email: props.ownerId } }) });
+
+    const userIdent = isSelf ? "me" : props.ownerId;
+    const name = userInfoQuery.data?.principal_name?.split("@")?.[0].toLocaleLowerCase();
+
     return (
-        <div className="flex gap-1 text-sm italic text-gray-500">
-            <UserAvatar userEmail="ANHUN@equinor.com" className="shrink-0" />
-            {/* TODO: Get username */}
-            <span className="truncate">{userInfo?.user_id}</span>
+        <div className="flex gap-1 items-center text-base italic text-gray-500">
+            <UserAvatar userEmail={userIdent} className="shrink-0 inline" />
+            <span className="truncate">{name}</span>
             {isSelf && <span>(You)</span>}
         </div>
     );
