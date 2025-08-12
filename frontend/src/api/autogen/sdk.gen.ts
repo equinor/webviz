@@ -182,6 +182,9 @@ import type {
     GetPolygonsDataData_api,
     GetPolygonsDataResponse_api,
     GetPolygonsDataError_api,
+    GetUserInfoData_api,
+    GetUserInfoResponse_api,
+    GetUserInfoError_api,
     GetUserPhotoData_api,
     GetUserPhotoResponse_api,
     GetUserPhotoError_api,
@@ -1178,6 +1181,16 @@ export const getPolygonsData = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetPolygonsDataResponse_api, GetPolygonsDataError_api, ThrowOnError>({
         ...options,
         url: "/polygons/polygons_data/",
+    });
+};
+
+/**
+ * Get User Info
+ */
+export const getUserInfo = <ThrowOnError extends boolean = false>(options: Options<GetUserInfoData_api, ThrowOnError>) => {
+    return (options?.client ?? client).get<GetUserInfoResponse_api, GetUserInfoError_api, ThrowOnError>({
+        ...options,
+        url: "/graph/user_info/{user_id_or_email}",
     });
 };
 

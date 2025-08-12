@@ -23,10 +23,10 @@ class GraphApiAccess:
 
         return response
 
-    async def get_user_profile_photo(self, user_email: str) -> str | None:
+    async def get_user_profile_photo(self, user_id_email: str) -> str | None:
         request_url = urljoin(
             self.base_url,
-            "me/photo/$value" if user_email == "me" else f"users/{user_email}/photo/$value",
+            "me/photo/$value" if user_id_email == "me" else f"users/{user_id_email}/photo/$value",
         )
 
         response = await self._request(request_url)
