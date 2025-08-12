@@ -1,5 +1,5 @@
 import { client, type HttpValidationError_api } from "@api";
-import type { LroErrorResp_api, LroInProgressResp_api, LroProgressInfo_api } from "@api";
+import type { LroErrorResp_api, LroInProgressResp_api } from "@api";
 import type { RequestResult } from "@hey-api/client-axios";
 import type { QueryFunctionContext } from "@tanstack/query-core";
 import type { UseQueryOptions } from "@tanstack/react-query";
@@ -20,17 +20,17 @@ type QueryFn<TArgs, TData> = (
     options: TArgs,
 ) => RequestResult<LongRunningApiResponse<TData>, LroErrorResp_api | HttpValidationError_api, false>;
 
+interface OnProgressCallback {
+    (progressMessage: string | null): void;
+}
+
 interface WrapLongRunningQueryArgs<TArgs, TData> {
     queryFn: QueryFn<TArgs, TData>;
     queryFnArgs: TArgs;
     queryKey: unknown[];
     pollIntervalMs?: number;
     maxRetries?: number;
-    onProgress?: (progress: LroProgressInfo_api | undefined) => void;
-}
-
-interface OnProgressCallback {
-    (progress: LroProgressInfo_api | undefined): void;
+    onProgress?: OnProgressCallback;
 }
 
 type PollResource<TArgs, TData> =
@@ -111,7 +111,7 @@ async function pollUntilDone<T>(options: {
                 }
                 currentPollUrl = data.poll_url;
             }
-            onProgress?.(data.progress ?? undefined);
+            onProgress?.(data.progress_message ?? null);
         }
 
         await new Promise<void>((resolve, reject) => {
@@ -167,7 +167,7 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
                 return result.data;
             } else if (result.status === "in_progress" && result.operation_id) {
                 // ToDo: Verify with Ruben that it is OK to call onProgress here
-                onProgress?.(result.progress ?? undefined);
+                onProgress?.(result.progress_message ?? null);
                 return pollUntilDone<TData>({
                     pollResource: result.poll_url
                         ? {

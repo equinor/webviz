@@ -14,7 +14,6 @@ import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
 import { Options } from "@hey-api/client-axios";
 import { useQuery } from "@tanstack/react-query";
 import { wrapLongRunningQuery } from "@framework/utils/longRunningApiCalls";
-import { LroProgressInfo_api } from "@api";
 import { getStatisticalSurfaceDataHybrid, GetStatisticalSurfaceDataHybridData_api } from "@api";
 import { getStatisticalSurfaceDataHybridQueryKey } from "@api";
 import { SurfaceDataFloat_trans, transformSurfaceData } from "@modules_shared/Surface/queryDataTransforms";
@@ -42,10 +41,10 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
     };
     const queryKey = getStatisticalSurfaceDataHybridQueryKey(queryFnOptions);
 
-    function handleProgress(progress: LroProgressInfo_api | undefined) {
-        if (progress) {
-            console.log(`PROGRESS: ${progress.progress_message}`);
-            statusWriter.setDebugMessage(`PROGRESS: ${progress.progress_message}`);
+    function handleProgress(progressMessage: string | null) {
+        if (progressMessage) {
+            console.log(`PROGRESS: ${progressMessage}`);
+            statusWriter.setDebugMessage(`PROGRESS: ${progressMessage}`);
         }
     }
 

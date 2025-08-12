@@ -395,11 +395,7 @@ export type LroInProgressResp_api = {
     status: "in_progress";
     operation_id: string;
     poll_url?: string | null;
-    progress?: LroProgressInfo_api | null;
-};
-
-export type LroProgressInfo_api = {
-    progress_message: string;
+    progress_message?: string | null;
 };
 
 export type LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api = {

@@ -21,7 +21,7 @@ from primary.services.utils.task_meta_tracker import get_task_meta_tracker_for_u
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.drogon import is_drogon_identifier
 
-from .._shared.long_running_operations import LroInProgressResp, LroErrorResp, LroSuccessResp, LroErrorInfo, LroProgressInfo
+from .._shared.long_running_operations import LroInProgressResp, LroErrorResp, LroSuccessResp, LroErrorInfo
 
 from . import converters
 from . import schemas
@@ -289,7 +289,7 @@ async def get_statistical_surface_data_hybrid(
         return LroInProgressResp(
             status="in_progress",
             operation_id=sumo_task_id,
-            progress=LroProgressInfo(progress_message=progress_msg)
+            progress_message=progress_msg
         )
     except Exception as e:
         LOGGER.error(f"Error occurred while polling for surface data: {e}")

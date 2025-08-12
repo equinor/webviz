@@ -24,7 +24,6 @@ import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
 import { getStatisticalSurfaceDataHybrid, GetStatisticalSurfaceDataHybridData_api } from "@api";
 import { getStatisticalSurfaceDataHybridQueryKey } from "@api";
-import { LroProgressInfo_api } from "@api";
 import { wrapLongRunningQuery } from "@framework/utils/longRunningApiCalls";
 import { Options } from "@hey-api/client-axios";
 
@@ -280,9 +279,9 @@ export class StatisticalSurfaceProvider
         // });
 
 
-        function handleTaskProgress(progress: LroProgressInfo_api | undefined) {
-            if (progress) {
-                console.log(`PROGRESS: ${progress.progress_message}`);
+        function handleTaskProgress(progressMessage: string | null) {
+            if (progressMessage) {
+                console.log(`PROGRESS: ${progressMessage}`);
             }
         }
 
