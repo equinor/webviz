@@ -238,6 +238,13 @@ export enum Gfr_api {
     MMW = "MMW",
 }
 
+export type GraphUser_api = {
+    id: string;
+    principal_name: string;
+    display_name: string;
+    email: string;
+};
+
 export type GraphUserPhoto_api = {
     avatar_b64str?: string | null;
 };
@@ -997,6 +1004,7 @@ export enum UnitType_api {
 }
 
 export type UserInfo_api = {
+    user_id: string;
     username: string;
     display_name?: string | null;
     avatar_b64str?: string | null;
@@ -3703,6 +3711,38 @@ export type GetPolygonsDataResponses_api = {
 
 export type GetPolygonsDataResponse_api = GetPolygonsDataResponses_api[keyof GetPolygonsDataResponses_api];
 
+export type GetUserInfoData_api = {
+    body?: never;
+    path: {
+        /**
+         * User email, id or 'me' for the authenticated user
+         */
+        user_id_or_email: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/graph/user_info/{user_id_or_email}";
+};
+
+export type GetUserInfoErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetUserInfoError_api = GetUserInfoErrors_api[keyof GetUserInfoErrors_api];
+
+export type GetUserInfoResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: GraphUser_api | null;
+};
+
+export type GetUserInfoResponse_api = GetUserInfoResponses_api[keyof GetUserInfoResponses_api];
+
 export type GetUserPhotoData_api = {
     body?: never;
     path?: never;
@@ -3710,7 +3750,7 @@ export type GetUserPhotoData_api = {
         /**
          * User email or 'me' for the authenticated user
          */
-        user_email: string;
+        user_id_or_email: string;
         t?: number;
     };
     url: "/graph/user_photo/";

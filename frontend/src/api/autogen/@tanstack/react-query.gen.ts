@@ -69,6 +69,7 @@ import {
     postGetSeismicFence,
     getPolygonsDirectory,
     getPolygonsData,
+    getUserInfo,
     getUserPhoto,
     getObservations,
     getTableDefinition,
@@ -171,6 +172,7 @@ import type {
     PostGetSeismicFenceResponse_api,
     GetPolygonsDirectoryData_api,
     GetPolygonsDataData_api,
+    GetUserInfoData_api,
     GetUserPhotoData_api,
     GetObservationsData_api,
     GetTableDefinitionData_api,
@@ -1480,6 +1482,23 @@ export const getPolygonsDataOptions = (options: Options<GetPolygonsDataData_api>
             return data;
         },
         queryKey: getPolygonsDataQueryKey(options),
+    });
+};
+
+export const getUserInfoQueryKey = (options: Options<GetUserInfoData_api>) => [createQueryKey("getUserInfo", options)];
+
+export const getUserInfoOptions = (options: Options<GetUserInfoData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getUserInfo({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getUserInfoQueryKey(options),
     });
 };
 
