@@ -20,9 +20,8 @@ import type { TableSelectOption } from "@lib/components/TableSelect";
 import { TableSelect } from "@lib/components/TableSelect";
 import { useValidState } from "@lib/hooks/useValidState";
 
+import { UserAvatar } from "../../UserAvatar";
 import type { InternalRegularEnsembleSetting } from "../types";
-
-import { UserAvatar } from "./userAvatar";
 
 export type EnsemblePickerProps = {
     nextEnsembleColor: string;
