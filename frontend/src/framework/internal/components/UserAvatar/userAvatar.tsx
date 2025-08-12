@@ -21,7 +21,7 @@ function useUserInfoQuery(userEmail: string): UseQueryResult<GraphUserPhoto_api>
     return useQuery({
         ...getUserPhotoOptions({
             query: {
-                user_email: userEmail,
+                user_id_or_email: userEmail,
             },
         }),
         enabled: userEmail !== "",
