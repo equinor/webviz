@@ -1,8 +1,9 @@
-import { client, type HttpValidationError_api } from "@api";
-import type { LroErrorResp_api, LroInProgressResp_api } from "@api";
+import type { LroErrorResp_api, LroInProgressResp_api, HttpValidationError_api } from "@api";
+import { client } from "@api";
 import type { RequestResult } from "@hey-api/client-axios";
 import type { QueryFunctionContext } from "@tanstack/query-core";
 import type { UseQueryOptions } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 
 type LongRunningApiResponse<TData> =
     | LroInProgressResp_api
@@ -11,10 +12,6 @@ type LongRunningApiResponse<TData> =
           status: "success";
           data: TData;
       };
-
-function isLongRunningApiErrorResponse(response: unknown): response is LroErrorResp_api {
-    return response !== null && typeof response === "object" && "status" in response && response.status === "failure";
-}
 
 type QueryFn<TArgs, TData> = (
     options: TArgs,
@@ -88,14 +85,7 @@ async function pollUntilDone<T>(options: {
         const { data, error } = response;
 
         if (error) {
-            const errorResponse = response.response;
-            if (errorResponse && errorResponse.data) {
-                const errorData = errorResponse.data as HttpValidationError_api | LroErrorResp_api;
-                if (isLongRunningApiErrorResponse(errorData)) {
-                    throw new Error(errorData.error?.message || "Unknown error");
-                }
-            }
-            throw error;
+            throw new AxiosError(response.message, response.code, response.config, response.request, response.response);
         }
 
         if (data.status === "success") {
@@ -150,14 +140,13 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
             const { data: result, error } = response;
 
             if (error) {
-                const errorResponse = response.response;
-                if (errorResponse && errorResponse.data) {
-                    const errorData = errorResponse.data as HttpValidationError_api | LroErrorResp_api;
-                    if (isLongRunningApiErrorResponse(errorData)) {
-                        throw new Error(errorData.error?.message || "Unknown error");
-                    }
-                }
-                throw error;
+                throw new AxiosError(
+                    response.message,
+                    response.code,
+                    response.config,
+                    response.request,
+                    response.response,
+                );
             }
 
             if (result.status === "success") {

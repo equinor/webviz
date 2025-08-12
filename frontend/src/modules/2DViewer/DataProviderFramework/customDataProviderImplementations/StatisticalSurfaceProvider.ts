@@ -1,12 +1,15 @@
+import type { Options } from "@hey-api/client-axios";
 import { isEqual } from "lodash";
 
-import type { SurfaceDataPng_api } from "@api";
+import type { SurfaceDataPng_api, GetStatisticalSurfaceDataHybridData_api } from "@api";
 import {
     SurfaceStatisticFunction_api,
     SurfaceTimeType_api,
     getRealizationSurfacesMetadataOptions,
-    getSurfaceDataOptions,
+    getStatisticalSurfaceDataHybrid,
+    getStatisticalSurfaceDataHybridQueryKey,
 } from "@api";
+import { wrapLongRunningQuery } from "@framework/utils/longRunningApiCalls";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
@@ -21,12 +24,6 @@ import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
-
-import { getStatisticalSurfaceDataHybrid, GetStatisticalSurfaceDataHybridData_api } from "@api";
-import { getStatisticalSurfaceDataHybridQueryKey } from "@api";
-import { wrapLongRunningQuery } from "@framework/utils/longRunningApiCalls";
-import { Options } from "@hey-api/client-axios";
-
 
 const statisticalSurfaceSettings = [
     Setting.ENSEMBLE,
@@ -216,6 +213,7 @@ export class StatisticalSurfaceProvider
         getWorkbenchSession,
         registerQueryKey,
         queryClient,
+        setProgressMessage,
     }: FetchDataParams<StatisticalSurfaceSettings, StatisticalSurfaceData>): Promise<StatisticalSurfaceData> {
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         const surfaceName = getSetting(Setting.SURFACE_NAME);
@@ -269,7 +267,6 @@ export class StatisticalSurfaceProvider
 
         const surfAddrStr = surfaceAddress ? encodeSurfAddrStr(surfaceAddress) : null;
 
-
         // const queryOptions = getSurfaceDataOptions({
         //     query: {
         //         surf_addr_str: surfAddrStr ?? "",
@@ -278,11 +275,8 @@ export class StatisticalSurfaceProvider
         //     },
         // });
 
-
         function handleTaskProgress(progressMessage: string | null) {
-            if (progressMessage) {
-                console.log(`PROGRESS: ${progressMessage}`);
-            }
+            setProgressMessage(progressMessage);
         }
 
         const apiFunctionArgs: Options<GetStatisticalSurfaceDataHybridData_api, false> = {
@@ -292,7 +286,7 @@ export class StatisticalSurfaceProvider
             },
         };
         const queryKey = getStatisticalSurfaceDataHybridQueryKey(apiFunctionArgs);
-        
+
         const queryOptions = wrapLongRunningQuery({
             queryFn: getStatisticalSurfaceDataHybrid,
             queryFnArgs: apiFunctionArgs,
@@ -301,7 +295,6 @@ export class StatisticalSurfaceProvider
             maxRetries: 240,
             onProgress: handleTaskProgress,
         });
-
 
         registerQueryKey(queryOptions.queryKey);
 

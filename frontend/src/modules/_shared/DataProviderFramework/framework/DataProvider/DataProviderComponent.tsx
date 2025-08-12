@@ -89,6 +89,7 @@ type EndActionProps = {
 
 function EndActions(props: EndActionProps): React.ReactNode {
     const status = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.STATUS);
+    const progressMessage = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.PROGRESS_MESSAGE);
     const isSubordinated = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.SUBORDINATED);
 
     function makeStatus(): React.ReactNode {
@@ -101,13 +102,22 @@ function EndActions(props: EndActionProps): React.ReactNode {
         }
         if (status === DataProviderStatus.LOADING) {
             return (
-                <div title="Loading">
+                <div className="overflow-hidden whitespace-nowrap flex gap-2" title={progressMessage ?? "Loading"}>
+                    {progressMessage}
                     <CircularProgress size="extra-small" />
                 </div>
             );
         }
         if (status === DataProviderStatus.ERROR) {
             const error = props.dataProvider.getError();
+            if (!error) {
+                return (
+                    <div title="Error">
+                        <Error className="text-red-700 p-0.5" fontSize="small" />
+                    </div>
+                );
+            }
+
             if (typeof error === "string") {
                 return (
                     <div title={error} className="text-red-700 p-0.5">
