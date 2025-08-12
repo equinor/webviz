@@ -10,6 +10,7 @@ import {
 import { buildSessionUrl } from "@framework/internal/WorkbenchSession/SessionUrlService";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { timeAgo } from "@lib/utils/dates";
 
 import { SessionCard } from "./sessionCard";
 
@@ -73,6 +74,10 @@ export function RecentSessions(props: RecentSessionsProps) {
                             timestamp={session.updatedAt}
                             description={session.description}
                             onClick={handleSessionClick}
+                            tooltipInfo={{
+                                Created: timeAgo(Date.now() - new Date(session.createdAt ?? "").getTime()),
+                                Updated: timeAgo(Date.now() - new Date(session.updatedAt ?? "").getTime()),
+                            }}
                         />
                     ))}
                 </ul>

@@ -6,6 +6,7 @@ import { getRecentSnapshotsOptions, getRecentSnapshotsQueryKey } from "@api";
 import { GuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { timeAgo } from "@lib/utils/dates";
 
 import { SessionCard } from "./sessionCard";
 
@@ -62,6 +63,11 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
                     description={snapshot.snapshotMetadata.description}
                     ownerId={snapshot.snapshotMetadata.ownerId}
                     onClick={handleSnapshotClick}
+                    tooltipInfo={{
+                        Visited: `${snapshot.visits} time${snapshot.visits === 1 ? "" : "s"}`,
+                        Created: timeAgo(Date.now() - new Date(snapshot.snapshotMetadata.createdAt ?? "").getTime()),
+                        "Last opened": timeAgo(Date.now() - new Date(snapshot.lastVisitedAt ?? "").getTime()),
+                    }}
                 />
             ))}
         </ul>
