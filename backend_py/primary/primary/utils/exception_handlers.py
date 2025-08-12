@@ -13,7 +13,6 @@ from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY, HTTP_500_INTERNAL_SE
 from primary.services.service_exceptions import ServiceLayerException
 
 
-
 def my_http_exception_handler(_request: Request, exc: StarletteHTTPException) -> Response | JSONResponse:
     # Our customized exception handler for FastAPI/Starlette's HTTPException
     # Based on FastAPI's doc, but with logging added

@@ -29,7 +29,6 @@ from . import dependencies
 
 from .surface_address import RealizationSurfaceAddress, ObservedSurfaceAddress, StatisticalSurfaceAddress
 from .surface_address import decode_surf_addr_str
-from primary.services.service_exceptions import Service, NoDataError
 
 
 LOGGER = logging.getLogger(__name__)
@@ -157,20 +156,6 @@ async def get_surface_data(
 
     if addr.address_type == "REAL":
         access = SurfaceAccess.from_iteration_name(access_token, addr.case_uuid, addr.ensemble_name)
-
-        # !!!!!!!!!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!!!!!!
-        if addr.realization == 2:
-            raise HTTPException(status_code=500, detail="Sigurd's error message, for a HTTP exception")
-        if addr.realization == 3:
-            raise NoDataError("Dummy NoData message", Service.GENERAL)
-        if addr.realization == 4:
-            raise ValueError("Sigurd's error message for a ValueError exception")
-        # !!!!!!!!!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!!!!!!
-
         xtgeo_surf = await access.get_realization_surface_data_async(
             real_num=addr.realization,
             name=addr.name,
@@ -250,6 +235,7 @@ async def get_statistical_surface_data_hybrid(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Endpoint only supports address type STAT")
 
     # !!!!!!!!!!!!!
+    # Todo!
     # We should include the most recent case/ensemble/object timestamp here as well
     param_hash = sha256(surf_addr_str.encode()).hexdigest()
 
@@ -273,7 +259,7 @@ async def get_statistical_surface_data_hybrid(
         )
 
         if not sumo_task_id:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Could not get or compute statistical surface")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to submit new task for computing statistical surface")
 
         new_sumo_job_was_submitted = True
         await task_tracker.register_task_with_fingerprint_async(task_system="sumo_task", task_id=sumo_task_id, fingerprint=param_hash, expected_store_key=None)
@@ -308,7 +294,7 @@ async def get_statistical_surface_data_hybrid(
     except Exception as e:
         LOGGER.error(f"Error occurred while polling for surface data: {e}")
         await task_tracker.delete_fingerprint_to_task_mapping_async(param_hash)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal Server Error")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed while polling for statistical surface data")
 
 
 
