@@ -1,25 +1,24 @@
 import React from "react";
-import { v4 } from "uuid";
 
+import { GuiEvent } from "@framework/GuiMessageBroker";
 import type { LayoutElement } from "@framework/internal/WorkbenchSession/Dashboard";
 import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
-
-import type { Workbench } from "@framework/Workbench";
 import type { ModuleInstance } from "@framework/ModuleInstance";
-
+import type { Workbench } from "@framework/Workbench";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import type { Vec2 } from "@lib/utils/vec2";
+import { WebAsset } from "@mui/icons-material";
+import { v4 } from "uuid";
 
 import { ViewWrapper } from "../Content/private-components/ViewWrapper";
 import { ViewWrapperPlaceholder } from "../Content/private-components/viewWrapperPlaceholder";
-import { WebAsset } from "@mui/icons-material";
 
 // NEW: Layout model + controller
-import { LayoutNode, makeLayoutNodes } from "./LayoutNode";
 import { LayoutController, DragSourceKind, type DragSource, type ResizeSource } from "./LayoutController";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { GuiEvent } from "@framework/GuiMessageBroker";
+import type { LayoutNode } from "./LayoutNode";
+import { makeLayoutNodes } from "./LayoutNode";
 import { LayoutOverlay } from "./LayoutOverlay";
 
 export type LayoutProps = { workbench: Workbench };
@@ -76,13 +75,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
             },
             createModuleAndCommit: async (moduleName: string, next: LayoutElement[], tempId: string) => {
                 // Atomic create + tempId swap + single setLayout
-                const instance = await dashboard.makeAndAddModuleInstance(moduleName, {
-                    moduleName,
-                    relX: 0,
-                    relY: 0,
-                    relWidth: 1,
-                    relHeight: 1,
-                });
+                const instance = await dashboard.makeAndAddModuleInstance(moduleName);
                 const realId = instance.getId();
 
                 // replace tempId → realId in `next`
@@ -187,7 +180,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
             unsubNew();
             unsubRemove();
         };
-    }, [guiMessageBroker, controller, dashboard]);
+    }, [guiMessageBroker, controller, dashboard, tempLayout, trueLayout]);
 
     const onContainerPointerMove = React.useCallback(
         (e: React.PointerEvent) => {
@@ -279,7 +272,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
                             workbench={props.workbench}
                             isDragged={isDragged}
                             dragPosition={dragPosition ?? { x: 0, y: 0 }}
-                            changingLayout={!!draggingModuleId}
+                            changingLayout={!!draggingModuleId || !!tempLayout}
                             {...lp}
                         />
                     );

@@ -1,7 +1,8 @@
-import type { Size2D } from "@lib/utils/geometry";
-import { LayoutNode } from "./LayoutNode";
 import type { LayoutElement } from "@framework/internal/WorkbenchSession/Dashboard";
+import type { Size2D } from "@lib/utils/geometry";
 import type { Vec2 } from "@lib/utils/vec2";
+
+import { LayoutNode } from "./LayoutNode";
 
 export type LayoutControllerBindings = {
     // State getters
@@ -60,8 +61,8 @@ type Mode =
       }
     | { kind: "resize"; src: ResizeSource; lastClientPos: Vec2; rafId?: number | null };
 
-const HOVER_DWELL_MS = 200; // wait this long on same edge before previewing
-const SLOW_SPEED_PX_MS = 0.001; // if slower than this, preview immediately
+const HOVER_DWELL_MS = 500; // wait this long on same edge before previewing
+const EXIT_DWELL_MS = 200; // wait this long after leaving edge before clearing preview
 
 export class LayoutController {
     private _bindings: LayoutControllerBindings;
@@ -72,10 +73,12 @@ export class LayoutController {
         containerPath: number[];
         edge: "left" | "right" | "top" | "bottom" | "vertical" | "horizontal";
     } | null = null;
-    private _hoverSince = 0;
     private _lastPreviewLayout: LayoutElement[] | null = null;
     private _lastMoveT = 0;
     private _lastMoveLocal: Vec2 | null = null;
+    private _hoverLocalPos: Vec2 | null = null;
+    private _hoverTimerId: ReturnType<typeof setTimeout> | null = null;
+    private _cancelTimerId: ReturnType<typeof setTimeout> | null = null;
 
     // Bound handler refs (single stable references for add/remove)
     private _boundOnPointerMove: (e: PointerEvent) => void;
@@ -171,8 +174,12 @@ export class LayoutController {
 
     cancelInteraction() {
         this.cancelAnyScheduledFrame();
+        this.clearHoverTimer();
+        this.clearCancelTimer();
         this._mode = { kind: "idle" };
         this._lastPreviewLayout = null;
+        this._hoverTarget = null;
+        this._hoverLocalPos = null;
         this._bindings.setTempLayout(null);
         this._bindings.setDraggingOverlay(null, null);
         this._bindings.setDraggingModuleId(null);
@@ -197,9 +204,13 @@ export class LayoutController {
 
         if (this._mode.kind === "drag") {
             if (this._isOutOfViewport(local)) {
-                // leave preview mode when pointer leaves (optional: also hide ghost)
                 this._lastPreviewLayout = null;
                 this._bindings.setTempLayout(null);
+                this._bindings.setDraggingOverlay(null, null);
+                this._hoverTarget = null;
+                this._hoverLocalPos = null;
+                this.clearHoverTimer();
+                this.clearCancelTimer();
                 return;
             }
             const dragPos = {
@@ -218,6 +229,9 @@ export class LayoutController {
 
         if (this._mode.kind === "drag") {
             const temp = this._bindings.getCurrentTempLayout();
+
+            this.clearHoverTimer();
+            this.clearCancelTimer();
 
             // clear UI state first
             this._bindings.setDraggingOverlay(null, null);
@@ -285,73 +299,67 @@ export class LayoutController {
 
     private updateDragPreview() {
         if (this._mode.kind !== "drag") return;
+
         const root = this._bindings.getRootNode();
         if (!root) return;
 
         const local = this._lastLocalPos ?? this._bindings.toLocalPx(this._mode.lastClientPos);
         const vp = this._bindings.getViewportSize();
-        const isNew = this._mode.src.kind === DragSourceKind.NEW;
 
-        if (isNew && root.getChildren().length === 0) {
+        // empty layout: promote immediately
+        if (this._mode.src.kind === DragSourceKind.NEW && root.getChildren().length === 0) {
             const pre = root.previewLayout(local, vp, this._mode.src.id, true);
             if (pre) {
-                const layout = pre.toLayout();
-                this._lastPreviewLayout = layout;
-                this._bindings.setTempLayout(layout);
+                const lay = pre.toLayout();
+                this._lastPreviewLayout = lay;
+                this._bindings.setTempLayout(lay);
             }
             return;
         }
 
-        // 1) Find candidate container + edge under pointer using the *current* root
-        //    (based on true layout, not last tempLayout, to avoid feedback).
+        // edge hover detection (arrows phase)
         const container = root.findBoxContainingPoint(local, vp);
-        if (!container) return;
-
-        const edge = container.findEdgeContainingPoint(local, vp, this._mode.src.id);
-        if (!edge) {
-            // No valid edge → keep last preview (don’t clear) so no flicker, but reset hover
+        if (!container) {
             this._hoverTarget = null;
-            this._hoverSince = 0;
-            if (this._lastPreviewLayout) this._bindings.setTempLayout(this._lastPreviewLayout);
+            this._hoverLocalPos = null;
+            this.clearHoverTimer();
+            if (this._lastPreviewLayout) this.armCancelTimer();
+            else this.clearCancelTimer();
             return;
         }
 
-        // 2) Track hover stability (same container & edge?)
-        const key = {
-            containerPath: container.pathFromRoot(),
-            edge: edge.edge, // "left"|"right"|"top"|"bottom"|"vertical"|"horizontal"
-        };
+        const edge = container.findEdgeContainingPoint(local, vp, this._mode.src.id);
+        if (!edge) {
+            // keep last preview if any; just stop hover dwell
+            this._hoverTarget = null;
+            this._hoverLocalPos = null;
+            this.clearHoverTimer();
+            if (this._lastPreviewLayout) {
+                this._bindings.setTempLayout(this._lastPreviewLayout);
+                this.armCancelTimer();
+            } else {
+                this.clearCancelTimer();
+            }
+            return;
+        }
+
+        this.clearCancelTimer();
+
+        // same hover target?
+        const key = { containerPath: container.pathFromRoot(), edge: edge.edge };
         const same =
             this._hoverTarget &&
             key.edge === this._hoverTarget.edge &&
             key.containerPath.length === this._hoverTarget.containerPath.length &&
             key.containerPath.every((v, i) => v === this._hoverTarget!.containerPath[i]);
 
-        const now = performance.now();
         if (!same) {
+            // new edge under pointer → start dwell timer
             this._hoverTarget = key;
-            this._hoverSince = now;
-            // show arrows only (no temp layout change yet)
-            return;
+            this._hoverLocalPos = local;
+            this.armHoverTimer();
+            return; // show arrows only until timer fires
         }
-
-        // 3) Decide when to promote to preview
-        const dwellOK = now - this._hoverSince >= HOVER_DWELL_MS;
-        const speedPxMs = this.computePointerSpeed(); // see helper below
-        const slowOK = speedPxMs <= SLOW_SPEED_PX_MS;
-
-        if (!dwellOK && !slowOK) {
-            // keep showing arrows only
-            return;
-        }
-
-        // 4) Build a preview only now
-        const previewRoot = root.previewLayout(local, vp, this._mode.src.id, isNew);
-        if (!previewRoot) return;
-
-        const layout = previewRoot.toLayout();
-        this._lastPreviewLayout = layout;
-        this._bindings.setTempLayout(layout);
     }
 
     private updateResizePreview() {
@@ -393,19 +401,56 @@ export class LayoutController {
         this._bindings.setTempLayout(clone.toLayout());
     }
 
-    private computePointerSpeed(): number {
-        const t = performance.now();
-        const local = this._lastLocalPos;
-        if (!local) return 0;
-        let speed = 0;
-        if (this._lastMoveLocal && this._lastMoveT) {
-            const dx = local.x - this._lastMoveLocal.x;
-            const dy = local.y - this._lastMoveLocal.y;
-            const dt = t - this._lastMoveT;
-            if (dt > 0) speed = Math.hypot(dx, dy) / dt; // px/ms
+    private clearHoverTimer() {
+        if (this._hoverTimerId) {
+            clearTimeout(this._hoverTimerId);
+            this._hoverTimerId = null;
         }
-        this._lastMoveLocal = local;
-        this._lastMoveT = t;
-        return speed;
+    }
+
+    private clearCancelTimer() {
+        if (this._cancelTimerId) {
+            clearTimeout(this._cancelTimerId);
+            this._cancelTimerId = null;
+        }
+    }
+
+    private armCancelTimer() {
+        this.clearCancelTimer();
+        this._cancelTimerId = setTimeout(() => {
+            this._bindings.setTempLayout(null);
+            this._lastPreviewLayout = null;
+            this._cancelTimerId = null;
+        }, EXIT_DWELL_MS);
+    }
+
+    private armHoverTimer() {
+        this.clearHoverTimer();
+        this._hoverTimerId = setTimeout(() => {
+            this.promoteHoverToPreview();
+        }, HOVER_DWELL_MS);
+    }
+
+    private promoteHoverToPreview() {
+        if (this._mode.kind !== "drag" || !this._hoverTarget || !this._hoverLocalPos) return;
+
+        const root = this._bindings.getRootNode();
+        if (!root) return;
+
+        const isNew = this._mode.src.kind === DragSourceKind.NEW;
+        const pre = root.previewLayout(this._hoverLocalPos, this._bindings.getViewportSize(), this._mode.src.id, isNew);
+        if (!pre) return;
+
+        const layout = pre.toLayout();
+        this._lastPreviewLayout = layout;
+        this._bindings.setTempLayout(layout);
+    }
+
+    private cancelPreviewForHoverExit() {
+        // user has left the indicated drop edge for a while → clear preview
+        this._lastPreviewLayout = null;
+        this._bindings.setTempLayout(null);
+        this._hoverTarget = null;
+        this._hoverLocalPos = null;
     }
 }

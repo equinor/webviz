@@ -1,5 +1,6 @@
 import React from "react";
 
+import { WebAsset } from "@mui/icons-material";
 import { v4 } from "uuid";
 
 import type { LayoutBox } from "@framework/components/LayoutBox";
@@ -19,7 +20,6 @@ import { multiplyVec2, point2Distance, scaleVec2NonUniform, subtractVec2, vec2Fr
 
 import { ViewWrapper } from "./ViewWrapper";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
-import { WebAsset } from "@mui/icons-material";
 
 type LayoutProps = {
     workbench: Workbench;
@@ -119,7 +119,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     const layoutElement = currentLayout.find((el) => el.moduleInstanceId === pointerDownElementId);
                     if (layoutElement) {
                         // This is not working yet as the older layout is not adjusted
-                        dashboard.makeAndAddModuleInstance(moduleName, layoutElement).then((instance) => {
+                        dashboard.makeAndAddModuleInstance(moduleName).then((instance) => {
                             layoutElement.moduleInstanceId = instance.getId();
                             layoutElement.moduleName = instance.getName();
                         });

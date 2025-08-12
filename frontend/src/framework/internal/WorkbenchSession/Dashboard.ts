@@ -255,7 +255,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
     }
 
-    async makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): Promise<ModuleInstance<any, any>> {
+    async makeAndAddModuleInstance(moduleName: string): Promise<ModuleInstance<any, any>> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
@@ -269,7 +269,6 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             this._activeModuleInstanceId = moduleInstance.getId();
         }
 
-        this._layout = [...this._layout, { ...layout, moduleInstanceId: moduleInstance.getId() }];
         this._activeModuleInstanceId = moduleInstance.getId();
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.Layout);
@@ -377,17 +376,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         const moduleInstanceRefMap: Record<string, ModuleInstance<any, any>> = {};
 
         for (const module of template.moduleInstances) {
-            const localLayout: LayoutElement = {
-                moduleName: module.moduleName,
-                relX: module.layout.relX,
-                relY: module.layout.relY,
-                relHeight: module.layout.relHeight,
-                relWidth: module.layout.relWidth,
-                minimized: module.layout.minimized,
-                maximized: module.layout.maximized,
-            };
-
-            const moduleInstance = await dashboard.makeAndAddModuleInstance(module.moduleName, localLayout);
+            const moduleInstance = await dashboard.makeAndAddModuleInstance(module.moduleName);
             layout.push({
                 moduleInstanceId: moduleInstance.getId(),
                 moduleName: module.moduleName,
