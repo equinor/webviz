@@ -6,7 +6,8 @@ import { getRecentSnapshotsOptions, getRecentSnapshotsQueryKey } from "@api";
 import { GuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { timeAgo } from "@lib/utils/dates";
+
+import { SessionCard } from "./sessionCard";
 
 export type RecentSnapshotsProps = {
     workbench: Workbench;
@@ -18,7 +19,7 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
         refetchInterval: 10000,
     });
 
-    async function handleSnapshotClick(e: React.MouseEvent<HTMLAnchorElement>) {
+    async function handleSnapshotClick(id: string, e: React.MouseEvent<HTMLAnchorElement>) {
         e.preventDefault();
 
         // Load the selected snapshot
@@ -50,21 +51,18 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
     }
 
     return (
-        <ul className="pl-5">
+        <ul>
             {recentSnapshotsQuery.data.map((snapshot) => (
-                <li key={snapshot.snapshotId} className="flex justify-between gap-4">
-                    <a
-                        className="text-blue-600 hover:underline"
-                        href={`/snapshot/${snapshot.snapshotId}`}
-                        onClick={handleSnapshotClick}
-                    >
-                        {snapshot.snapshotMetadata.title}
-                    </a>
-
-                    <span className="text-gray-500">
-                        ~ {timeAgo(Date.now() - new Date(snapshot.lastVisitedAt ?? "").getTime())}
-                    </span>
-                </li>
+                <SessionCard
+                    href={`/snapshot/${snapshot.snapshotId}`}
+                    key={snapshot.snapshotId}
+                    id={snapshot.snapshotId}
+                    title={snapshot.snapshotMetadata.title}
+                    timestamp={snapshot.lastVisitedAt ?? ""}
+                    description={snapshot.snapshotMetadata.description}
+                    ownerId={snapshot.snapshotMetadata.ownerId}
+                    onClick={handleSnapshotClick}
+                />
             ))}
         </ul>
     );

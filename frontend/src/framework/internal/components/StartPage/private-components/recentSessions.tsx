@@ -7,9 +7,11 @@ import {
     PrimaryServicesDatabaseAccessSessionAccessTypesSortBy_api,
     SortDirection_api,
 } from "@api";
+import { buildSessionUrl } from "@framework/internal/WorkbenchSession/SessionUrlService";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { timeAgo } from "@lib/utils/dates";
+
+import { SessionCard } from "./sessionCard";
 
 export type RecentSessionsProps = {
     workbench: Workbench;
@@ -18,8 +20,8 @@ export type RecentSessionsProps = {
 export function RecentSessions(props: RecentSessionsProps) {
     const [state, setState] = React.useState<ReturnType<typeof useQuery>["status"]>("pending");
 
-    function handleSessionClick(e: React.MouseEvent, sessionId: string) {
-        e.preventDefault();
+    function handleSessionClick(sessionId: string, evt: React.MouseEvent) {
+        evt.preventDefault();
         props.workbench.openSession(sessionId);
     }
 
@@ -61,20 +63,17 @@ export function RecentSessions(props: RecentSessionsProps) {
 
         if (state === "success" && sessionsQuery.data && sessionsQuery.data.length > 0) {
             return (
-                <ul className="pl-5">
+                <ul>
                     {sessionsQuery.data.map((session) => (
-                        <li key={session.id} className="flex items-center justify-between gap-4">
-                            <a
-                                href="#"
-                                onClick={(e) => handleSessionClick(e, session.id)}
-                                className="text-blue-600 hover:underline"
-                            >
-                                {session.title}
-                            </a>
-                            <span className="text-gray-500">
-                                ~ {timeAgo(Date.now() - new Date(session.updatedAt).getTime())}
-                            </span>
-                        </li>
+                        <SessionCard
+                            href={buildSessionUrl(session.id)}
+                            key={session.id}
+                            id={session.id}
+                            title={session.title}
+                            timestamp={session.updatedAt}
+                            description={session.description}
+                            onClick={handleSessionClick}
+                        />
                     ))}
                 </ul>
             );

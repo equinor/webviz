@@ -60,7 +60,7 @@ export function StartPage(props: StartPageProps) {
                         </a>
                     </section>
                 </div>
-                <section className="flex flex-col gap-4">
+                <section className="flex flex-col gap-4 w-sm">
                     <Typography variant="h2">Recent</Typography>
                     <section>
                         <Typography variant="h6">Sessions</Typography>
