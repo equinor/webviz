@@ -12,13 +12,26 @@ from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY, HTTP_500_INTERNAL_SE
 
 from primary.services.service_exceptions import ServiceLayerException
 
+from opentelemetry import trace
+import traceback
 
-def my_http_exception_handler(_request: Request, exc: StarletteHTTPException) -> Response | JSONResponse:
+
+
+def my_http_exception_handler(request: Request, exc: StarletteHTTPException) -> Response | JSONResponse:
     # Our customized exception handler for FastAPI/Starlette's HTTPException
     # Based on FastAPI's doc, but with logging added
     # See, https://fastapi.tiangolo.com/tutorial/handling-errors/?h=err#override-the-httpexception-error-handler
 
-    logging.getLogger().error(f"FastAPI exception {exc.__class__.__name__}: {str(exc)}", exc_info=exc)
+    # Usually we would pass exc_info to the logger so that the telemetry will see this as an exception.
+    # This generates quite a bit of noise in the log, so try an alternative approach where we explicitly
+    # record the exception on the telemetry span below instead
+    #logging.getLogger().error(f"[EXC] FastAPI HTTP exception in {request.method} {request.url.path} ->  {exc.__class__.__name__}: {str(exc)}", exc_info=exc)
+    logging.getLogger().error(f"[EXC] FastAPI HTTP exception in {request.method} {request.url.path} ->  {exc.__class__.__name__}: {str(exc)}")
+
+    # Try and record the exception on the span
+    curr_span = trace.get_current_span()
+    curr_span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
+    curr_span.record_exception(exc)
 
     headers = getattr(exc, "headers", None)
 
@@ -39,7 +52,7 @@ def my_http_exception_handler(_request: Request, exc: StarletteHTTPException) ->
     )
 
 
-def my_request_validation_error_handler(_request: Request, exc: RequestValidationError) -> Response:
+def my_request_validation_error_handler(request: Request, exc: RequestValidationError) -> Response:
     # Our customized exception handler for FastAPI's RequestValidationError that is raised when Pydantic
     # validation detects that a request contains invalid data.
 
@@ -67,8 +80,13 @@ def my_request_validation_error_handler(_request: Request, exc: RequestValidatio
     message = f"{len(simplified_err_arr)} validation error(s): {json.dumps(simplified_err_arr)}"
 
     # We don't pass along the exception object to the logger here since as of december 2023, the array format of
-    # the contained errors seems to cause problems with hte telemetry instrumentation.
-    logging.getLogger().error(f"FastAPI exception {exc.__class__.__name__}: {message}")
+    # the contained errors seems to cause problems with the telemetry instrumentation.
+    logging.getLogger().error(f"[EXC] FastAPI validation exception in {request.method} {request.url.path} -> {exc.__class__.__name__}: {message}")
+
+    # Still, try and record the exception on the span
+    curr_span = trace.get_current_span()
+    curr_span.set_status(trace.Status(trace.StatusCode.ERROR, str(exc)))
+    curr_span.record_exception(exc)
 
     return JSONResponse(
         status_code=HTTP_422_UNPROCESSABLE_ENTITY,
@@ -81,10 +99,37 @@ def my_request_validation_error_handler(_request: Request, exc: RequestValidatio
     )
 
 
-def service_layer_exception_handler(_request: Request, exc: ServiceLayerException) -> JSONResponse:
+
+
+def catch_all_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logging.getLogger().error(f"[EXC] Unhandled exception in {request.method} {request.url.path} -> {exc.__class__.__name__}: {str(exc)}", exc_info=exc)
+
+    logging.getLogger().error("---")
+
+    # Get the last frame where the exception occurred
+    tb = exc.__traceback__
+    frame = traceback.extract_tb(tb)[-1]
+    filename, lineno, func, text = frame
+    logging.getLogger().error(f"Exception at {filename=}:{lineno=} in {func=}")
+
+    logging.getLogger().error("---")
+
+    # Don't leak any information to frontend
+    return JSONResponse(
+        status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "error": {
+                "type": "InternalError",
+                "message": "Internal server error",
+            }
+        },
+    )
+
+
+def service_layer_exception_handler(request: Request, exc: ServiceLayerException) -> JSONResponse:
     # Log error with the exception message, both for the benefit of the console log itself and to propagate
     # the exception to telemetry. For telemetry, to see this as an exception, exc_info must be passed
-    logging.getLogger().error(f"Service exception {exc.get_error_type_str()}: {str(exc)}", exc_info=exc)
+    logging.getLogger().error(f"[EXC] Service exception in {request.method} {request.url.path} -> {exc.get_error_type_str()}: {str(exc)}", exc_info=exc)
 
     return JSONResponse(
         status_code=HTTP_500_INTERNAL_SERVER_ERROR,
@@ -102,6 +147,8 @@ def override_default_fastapi_exception_handlers(app: FastAPI) -> None:
     """
     Override the default exception handlers provided by FastAPI
     """
+
+    app.add_exception_handler(Exception, catch_all_exception_handler)
 
     # ! Type check is being ignored here because the function type doesn't recognize the extended exceptions.
     # ! Explicitly handling the *Starlette* exception to catch internal errors, as suggested by the FastAPI docs.

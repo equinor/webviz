@@ -13,7 +13,76 @@ from .auth_helper import AuthHelper
 LOGGER = logging.getLogger(__name__)
 
 
-class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
+from starlette.requests import HTTPConnection
+from starlette.requests import Request
+
+
+class EnforceLoggedInMiddleware:
+    """
+    Pure ASGI middleware to enforce that the user is logged in
+
+    By default, all paths except `/login` and `/auth-callback` are protected.
+
+    Additional paths can be left unprotected by specifying them in `unprotected_paths`
+
+    By default all protected paths will return status code 401 if user is not logged in,
+    but the `paths_redirected_to_login` can be used to specify a list of paths that
+    should cause redirect to the `/login` endpoint instead.
+    """
+    def __init__(
+        self, 
+        app: ASGIApp, 
+        unprotected_paths: Optional[List[str]] = None,
+        paths_redirected_to_login: Optional[List[str]] = None,
+    ):
+        self._app = app
+        self._unprotected_paths = unprotected_paths or []
+        self._paths_redirected_to_login = paths_redirected_to_login or []
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            return await self._app(scope, receive, send)
+
+        perf_metrics = PerfMetrics()
+
+        path_to_check = scope.get("path", "")
+
+        root_path = scope.get("root_path", "")
+        if root_path:
+            path_to_check = path_to_check.replace(root_path, "")
+
+        path_is_protected = True
+        if path_to_check in ["/login", "/auth-callback"] + self._unprotected_paths:
+            path_is_protected = False
+
+        if path_is_protected:
+            request = Request(scope, receive)
+
+            await starsessions.load_session(request)
+            perf_metrics.record_lap("load-session")
+
+            authenticated_user = AuthHelper.get_authenticated_user(request)
+            perf_metrics.record_lap("get-auth-user")
+
+            is_logged_in = authenticated_user is not None
+
+            if not is_logged_in:
+                if path_to_check in self._paths_redirected_to_login:
+                    target_url_b64 = base64.urlsafe_b64encode(str(request.url).encode()).decode()
+                    response = RedirectResponse(f"{root_path}/login?redirect_url_after_login={target_url_b64}")
+                    await response(scope, receive, send)
+                    return
+
+                response = PlainTextResponse("Not authorized yet, must log in", 401)
+                await response(scope, receive, send)
+                return
+
+        await self._app(scope, receive, send)
+
+
+# To be removed once we have proper traction on the new ASGI-based middleware above
+class DeprecatedEnforceLoggedInMiddleware(BaseHTTPMiddleware):
     """Middleware to enforce that the user is logged in
 
     By default, all paths except `/login` and `/auth-callback` are protected.
