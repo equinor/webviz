@@ -7,6 +7,7 @@ import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes"
 import { KeyKind } from "@framework/DataChannelTypes";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { useColorSet, useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
@@ -15,7 +16,6 @@ import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { makeSubplots } from "@modules/_shared/Figure";
 import { makeHistogramTrace } from "@modules/_shared/histogram";
-
 
 import type { Interfaces } from "./interfaces";
 import { PlotType } from "./typesAndEnums";
@@ -53,8 +53,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     const statusWriter = useViewStatusWriter(viewContext);
 
-    const colorSet = workbenchSettings.useColorSet();
-    const seqColorScale = workbenchSettings.useContinuousColorScale({
+    const colorSet = useColorSet(workbenchSettings);
+    const seqColorScale = useContinuousColorScale(workbenchSettings, {
         gradientType: ColorScaleGradientType.Sequential,
     });
 

@@ -7,6 +7,7 @@ import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import {
@@ -14,7 +15,6 @@ import {
     SettingsContextDelegateTopic,
     SettingsContextStatus,
 } from "../../delegates/SettingsContextDelegate";
-import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
@@ -111,7 +111,8 @@ export class DataProvider<
     private _settingsContextDelegate: SettingsContextDelegate<TSettings, TSettingTypes, TStoredData, TSettingKey>;
     private _itemDelegate: ItemDelegate;
     private _dataProviderManager: DataProviderManager;
-    private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
+    private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
+        new UnsubscribeFunctionsManagerDelegate();
     private _cancellationPending: boolean = false;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<DataProviderPayloads<TData>>();
     private _queryKeys: unknown[][] = [];
@@ -150,7 +151,7 @@ export class DataProvider<
             dataProviderManager,
         );
 
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "settings-context",
             this._settingsContextDelegate
                 .getPublishSubscribeDelegate()
@@ -159,7 +160,7 @@ export class DataProvider<
             }),
         );
 
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "settings-context",
             this._settingsContextDelegate
                 .getPublishSubscribeDelegate()
@@ -436,7 +437,7 @@ export class DataProvider<
 
     beforeDestroy(): void {
         this._settingsContextDelegate.beforeDestroy();
-        this._unsubscribeHandler.unsubscribeAll();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
     }
 
     private incrementRevisionNumber(): void {

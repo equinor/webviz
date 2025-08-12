@@ -37,7 +37,7 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
     const id = React.useId();
 
     const [colorScaleSpecification, setColorScaleSpecification] = React.useState<ColorScaleSpecification>({
-        colorScale: props.workbenchSettings.useContinuousColorScale({
+        colorScale: props.workbenchSettings.makeContinuousColorScale({
             gradientType: ColorScaleGradientType.Sequential,
         }),
         areBoundariesUserDefined: false,
@@ -126,7 +126,7 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
     const id = React.useId();
 
     const [colorScaleSpecification, setColorScaleSpecification] = React.useState<ColorScaleSpecification>({
-        colorScale: props.workbenchSettings.useContinuousColorScale({
+        colorScale: props.workbenchSettings.makeContinuousColorScale({
             gradientType: ColorScaleGradientType.Sequential,
         }),
         areBoundariesUserDefined: false,
