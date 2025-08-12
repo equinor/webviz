@@ -1,4 +1,4 @@
-import React from "react";
+import React, { type CSSProperties } from "react";
 
 import { GuiEvent } from "@framework/GuiMessageBroker";
 import type { LayoutElement } from "@framework/internal/WorkbenchSession/Dashboard";
@@ -54,152 +54,173 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
     rootNodeRef.current = rootNode;
 
     const bindings = React.useMemo(
-        () => ({
-            // Getters
-            getRootNode: () => rootNodeRef.current,
-            getViewportSize: () => viewportSize as Size2D,
-            getCurrentTempLayout: () => tempLayout,
+        function makeBinding() {
+            return {
+                // Getters
+                getRootNode: () => rootNodeRef.current,
+                getViewportSize: () => viewportSize as Size2D,
+                getCurrentTempLayout: () => tempLayout,
 
-            // Effects
-            setTempLayout: (next: LayoutElement[] | null) => setTempLayout(next),
-            setDraggingOverlay: (dragPos: Vec2 | null, pointer: Vec2 | null) => {
-                setDragPosition(dragPos);
-                setPointerPos(pointer);
-            },
-            setDraggingModuleId: (id: string | null) => setDraggingModuleId(id),
-            setTempPlaceholderId: (id: string | null) => setTempPlaceholderId(id),
+                // Effects
+                setTempLayout: (next: LayoutElement[] | null) => setTempLayout(next),
+                setDraggingOverlay: (dragPos: Vec2 | null, pointer: Vec2 | null) => {
+                    setDragPosition(dragPos);
+                    setPointerPos(pointer);
+                },
+                setDraggingModuleId: (id: string | null) => setDraggingModuleId(id),
+                setTempPlaceholderId: (id: string | null) => setTempPlaceholderId(id),
+                setCursor: (c: CSSProperties["cursor"]) => setCursor(c),
 
-            // Commits
-            commitLayout: (next: LayoutElement[]) => {
-                dashboard.setLayout(next);
-            },
-            createModuleAndCommit: async (moduleName: string, next: LayoutElement[], tempId: string) => {
-                // Atomic create + tempId swap + single setLayout
-                const instance = await dashboard.makeAndAddModuleInstance(moduleName);
-                const realId = instance.getId();
+                // Commits
+                commitLayout: (next: LayoutElement[]) => {
+                    dashboard.setLayout(next);
+                },
+                createModuleAndCommit: async (moduleName: string, next: LayoutElement[], tempId: string) => {
+                    // Show the preview layout immediately so the user sees a tile
+                    setTempLayout(next);
 
-                // replace tempId → realId in `next`
-                const patched = next.map((el) =>
-                    el.moduleInstanceId === tempId
-                        ? { ...el, moduleInstanceId: realId, moduleName: instance.getName() }
-                        : el,
-                );
+                    // Atomic create + tempId swap + single setLayout
+                    const instance = await dashboard.makeAndAddModuleInstance(moduleName);
+                    const realId = instance.getId();
 
-                dashboard.setLayout(patched);
-            },
+                    // replace tempId → realId in `next`
+                    const patched = next.map((el) =>
+                        el.moduleInstanceId === tempId
+                            ? { ...el, moduleInstanceId: realId, moduleName: instance.getName() }
+                            : el,
+                    );
 
-            // Utilities
-            toLocalPx: (clientPos: Vec2) => {
-                const rect = containerRef.current?.getBoundingClientRect();
-                return rect ? { x: clientPos.x - rect.left, y: clientPos.y - rect.top } : clientPos;
-            },
-            scheduleFrame: (cb: FrameRequestCallback) => window.requestAnimationFrame(cb),
-            cancelFrame: (id: number) => window.cancelAnimationFrame(id),
-        }),
+                    dashboard.setLayout(patched);
+
+                    // Clear temp layout after commit
+                    setTempLayout(null);
+                },
+
+                // Utilities
+                toLocalPx: (clientPos: Vec2) => {
+                    const rect = containerRef.current?.getBoundingClientRect();
+                    return rect ? { x: clientPos.x - rect.left, y: clientPos.y - rect.top } : clientPos;
+                },
+                scheduleFrame: (cb: FrameRequestCallback) => window.requestAnimationFrame(cb),
+                cancelFrame: (id: number) => window.cancelAnimationFrame(id),
+            };
+        },
         [viewportSize, tempLayout, dashboard],
     );
 
     const controllerRef = React.useRef<LayoutController | null>(null);
-    if (!controllerRef.current) controllerRef.current = new LayoutController(bindings);
+    if (!controllerRef.current) {
+        controllerRef.current = new LayoutController(bindings);
+    }
     const controller = controllerRef.current;
 
     // keep the single instance's bindings fresh
-    React.useEffect(() => {
-        controller.updateBindings(bindings);
-    }, [controller, bindings]);
+    React.useEffect(
+        function updateBindings() {
+            controller.updateBindings(bindings);
+        },
+        [controller, bindings],
+    );
 
     React.useEffect(() => {
         controller.attach();
         return () => controller.detach();
     }, [controller]);
 
-    React.useEffect(() => {
-        const unsubHeader = guiMessageBroker.subscribeToEvent(
-            GuiEvent.ModuleHeaderPointerDown,
-            (payload: {
-                moduleInstanceId: string;
-                elementPosition: Vec2; // client coords
-                elementSize: Size2D;
-                pointerPosition: Vec2; // client coords
-            }) => {
-                controller.startDrag({
-                    kind: DragSourceKind.EXISTING,
-                    id: payload.moduleInstanceId,
-                    elementPos: payload.elementPosition,
-                    elementSize: payload.elementSize,
-                    pointerDownClientPos: payload.pointerPosition,
-                } as DragSource);
-            },
-        );
+    React.useEffect(
+        function makeGuiSubscriptions() {
+            const unsubHeader = guiMessageBroker.subscribeToEvent(
+                GuiEvent.ModuleHeaderPointerDown,
+                (payload: {
+                    moduleInstanceId: string;
+                    elementPosition: Vec2; // client coords
+                    elementSize: Size2D;
+                    pointerPosition: Vec2; // client coords
+                }) => {
+                    controller.startDrag({
+                        kind: DragSourceKind.EXISTING,
+                        id: payload.moduleInstanceId,
+                        elementPos: payload.elementPosition,
+                        elementSize: payload.elementSize,
+                        pointerDownClientPos: payload.pointerPosition,
+                    } as DragSource);
+                },
+            );
 
-        const unsubNew = guiMessageBroker.subscribeToEvent(
-            GuiEvent.NewModulePointerDown,
-            (payload: {
-                moduleName: string;
-                elementPosition: Vec2; // client coords (tray item)
-                elementSize: Size2D;
-                pointerPosition: Vec2; // client coords
-            }) => {
-                const tempId = v4();
-                controller.startDrag({
-                    kind: DragSourceKind.NEW,
-                    id: tempId,
-                    moduleName: payload.moduleName,
-                    elementPos: payload.elementPosition,
-                    elementSize: payload.elementSize,
-                    pointerDownClientPos: payload.pointerPosition,
-                } as DragSource);
-            },
-        );
+            const unsubNew = guiMessageBroker.subscribeToEvent(
+                GuiEvent.NewModulePointerDown,
+                (payload: {
+                    moduleName: string;
+                    elementPosition: Vec2; // client coords (tray item)
+                    elementSize: Size2D;
+                    pointerPosition: Vec2; // client coords
+                }) => {
+                    const tempId = v4();
+                    controller.startDrag({
+                        kind: DragSourceKind.NEW,
+                        id: tempId,
+                        moduleName: payload.moduleName,
+                        elementPos: payload.elementPosition,
+                        elementSize: payload.elementSize,
+                        pointerDownClientPos: payload.pointerPosition,
+                    } as DragSource);
+                },
+            );
 
-        const unsubRemove = guiMessageBroker.subscribeToEvent(
-            GuiEvent.RemoveModuleInstanceRequest,
-            (payload: { moduleInstanceId: string }) => {
-                const current = (tempLayout ?? trueLayout) as LayoutElement[];
+            const unsubRemove = guiMessageBroker.subscribeToEvent(
+                GuiEvent.RemoveModuleInstanceRequest,
+                (payload: { moduleInstanceId: string }) => {
+                    const current = (tempLayout ?? trueLayout) as LayoutElement[];
 
-                // 2) Remove the element and repack to fill 100%
-                const remaining = current.filter((el) => el.moduleInstanceId !== payload.moduleInstanceId);
-                const adjusted = makeLayoutNodes(remaining).toLayout();
+                    // 2) Remove the element and repack to fill 100%
+                    const remaining = current.filter((el) => el.moduleInstanceId !== payload.moduleInstanceId);
+                    const adjusted = makeLayoutNodes(remaining).toLayout();
 
-                // 3) Optimistic preview to avoid flicker (optional but nice)
-                setTempLayout(adjusted);
+                    // 3) Optimistic preview to avoid flicker (optional but nice)
+                    setTempLayout(adjusted);
 
-                // 4) Do the actual cleanup (channels, stores, etc.)
-                dashboard.removeModuleInstance(payload.moduleInstanceId);
+                    // 4) Do the actual cleanup (channels, stores, etc.)
+                    dashboard.removeModuleInstance(payload.moduleInstanceId);
 
-                // 5) Override Dashboard's naive filtered layout with our adjusted one
-                dashboard.setLayout(adjusted);
+                    // 5) Override Dashboard's naive filtered layout with our adjusted one
+                    dashboard.setLayout(adjusted);
 
-                // 6) Clear temp — trueLayout now equals `adjusted`
-                setTempLayout(null);
-            },
-        );
+                    // 6) Clear temp — trueLayout now equals `adjusted`
+                    setTempLayout(null);
+                },
+            );
 
-        return () => {
-            unsubHeader();
-            unsubNew();
-            unsubRemove();
-        };
-    }, [guiMessageBroker, controller, dashboard, tempLayout, trueLayout]);
+            return () => {
+                unsubHeader();
+                unsubNew();
+                unsubRemove();
+            };
+        },
+        [guiMessageBroker, controller, dashboard, tempLayout, trueLayout],
+    );
 
     const onContainerPointerMove = React.useCallback(
-        (e: React.PointerEvent) => {
+        function onContainerPointerMove(e: React.PointerEvent) {
             if (!rootNodeRef.current || draggingModuleId) return;
             const local = bindings.toLocalPx({ x: e.clientX, y: e.clientY });
             const hit = rootNodeRef.current.hitTestDivider(local, viewportSize);
             const next = !hit ? "default" : hit.axis === "vertical" ? "ew-resize" : "ns-resize";
-            if (cursor !== next) setCursor(next);
+            if (cursor !== next) {
+                setCursor(next);
+            }
         },
         [bindings, viewportSize, draggingModuleId, cursor],
     );
 
     const onContainerPointerDown = React.useCallback(
-        (e: React.PointerEvent) => {
+        function onContainerPointerDown(e: React.PointerEvent) {
             if (!rootNodeRef.current) return;
             const clientPos = { x: e.clientX, y: e.clientY };
             const localPos = bindings.toLocalPx(clientPos);
             const hit = rootNodeRef.current.hitTestDivider(localPos, viewportSize);
-            if (!hit) return;
+            if (!hit) {
+                return;
+            }
 
             controller.startResize({
                 axis: hit.axis,
@@ -215,15 +236,17 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
         [controller, bindings, viewportSize],
     );
 
-    const convertLayoutRectToRealRect = React.useCallback(
-        (el: LayoutElement, size: Size2D) => ({
+    const convertLayoutRectToRealRect = React.useCallback(function convertLayoutRectToRealRect(
+        el: LayoutElement,
+        size: Size2D,
+    ) {
+        return {
             x: el.relX * size.width,
             y: el.relY * size.height,
             width: el.relWidth * size.width,
             height: el.relHeight * size.height,
-        }),
-        [],
-    );
+        };
+    }, []);
 
     // Compute per-module props (keep your maximize/minimize code if needed)
     const computeModuleLayoutProps = React.useCallback(
@@ -236,7 +259,9 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
         [layoutElements, viewportSize, convertLayoutRectToRealRect],
     );
 
-    const onContainerPointerLeave = React.useCallback(() => setCursor("default"), []);
+    const onContainerPointerLeave = React.useCallback(function onContainerPointerLeave() {
+        setCursor("default");
+    }, []);
 
     return (
         <div ref={rootRef} className="flex flex-col h-full w-full max-w-full">

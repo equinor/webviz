@@ -1,8 +1,16 @@
-import { rectContainsPoint, rectsAreEqual, type Rect2D, type Size2D } from "@lib/utils/geometry";
-import { LayoutNodeEdgeType, type LayoutNode, type LayoutNodeEdge } from "./LayoutNode";
-import type { Vec2 } from "@lib/utils/vec2";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import React from "react";
+
+import { rectContainsPoint, rectsAreEqual, type Rect2D, type Size2D } from "@lib/utils/geometry";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import type { Vec2 } from "@lib/utils/vec2";
+
+import {
+    EDGE_DROP_WEIGHT,
+    LAYOUT_BOX_DROP_MARGIN,
+    LayoutNodeEdgeType,
+    type LayoutNode,
+    type LayoutNodeEdge,
+} from "./LayoutNode";
 
 function flatten(node: LayoutNode): LayoutNode[] {
     return [node, ...node.getChildren().flatMap(flatten)];
@@ -21,7 +29,7 @@ export function LayoutOverlay(props: LayoutOverlayProps) {
     const activeBox = props.pointer ? props.root.findBoxContainingPoint(props.pointer, props.realSize) : null;
 
     const makeBoxEdges = (box: LayoutNode) => {
-        const edges: LayoutNodeEdge[] = box.getEdgeRects(props.realSize);
+        const edges: LayoutNodeEdge[] = box.getEdgeRects(props.realSize, EDGE_DROP_WEIGHT, LAYOUT_BOX_DROP_MARGIN);
         let hoveredEdge: Rect2D | null = null;
         if (props.active && props.active !== box.getModuleInstanceId() && activeBox === box) {
             hoveredEdge = box.findEdgeContainingPoint(props.pointer, props.realSize, props.active)?.rect || null;

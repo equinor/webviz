@@ -1,7 +1,7 @@
+import type { LayoutElement } from "@framework/internal/WorkbenchSession/Dashboard";
 import type { Rect2D, Size2D } from "@lib/utils/geometry";
 import { outerRectContainsInnerRect, rectContainsPoint } from "@lib/utils/geometry";
 import type { Vec2 } from "@lib/utils/vec2";
-import type { LayoutElement } from "@framework/internal/WorkbenchSession/Dashboard";
 
 function layoutElementToRect(layoutElement: LayoutElement): Rect2D {
     return {
@@ -12,8 +12,10 @@ function layoutElementToRect(layoutElement: LayoutElement): Rect2D {
     };
 }
 
-const layoutBoxMargin = 25;
-const edgeWeight = 50;
+export const LAYOUT_BOX_DROP_MARGIN = 25;
+export const LAYOUT_BOX_RESIZE_MARGIN = 5;
+export const EDGE_DROP_WEIGHT = 50;
+export const EDGE_RESIZE_WEIGHT = 5;
 
 export enum LayoutNodeEdgeType {
     TOP = "top",
@@ -82,25 +84,25 @@ export class LayoutNode {
         const absoluteRect = this.getAbsoluteRect();
         if (this._parent === null) {
             return {
-                x: absoluteRect.x * realSizeFactor.width + layoutBoxMargin * this._level,
-                y: absoluteRect.y * realSizeFactor.height + layoutBoxMargin * this._level,
-                width: absoluteRect.width * realSizeFactor.width - layoutBoxMargin * 2 * this._level,
-                height: absoluteRect.height * realSizeFactor.height - layoutBoxMargin * 2 * this._level,
+                x: absoluteRect.x * realSizeFactor.width + LAYOUT_BOX_DROP_MARGIN * this._level,
+                y: absoluteRect.y * realSizeFactor.height + LAYOUT_BOX_DROP_MARGIN * this._level,
+                width: absoluteRect.width * realSizeFactor.width - LAYOUT_BOX_DROP_MARGIN * 2 * this._level,
+                height: absoluteRect.height * realSizeFactor.height - LAYOUT_BOX_DROP_MARGIN * 2 * this._level,
             };
         }
         if (this._parent._layoutDirection === LayoutDirection.HORIZONTAL) {
             return {
-                x: absoluteRect.x * realSizeFactor.width + layoutBoxMargin * this._level,
-                y: absoluteRect.y * realSizeFactor.height + layoutBoxMargin * this._parent._level,
-                width: absoluteRect.width * realSizeFactor.width - layoutBoxMargin * 2 * this._level,
-                height: absoluteRect.height * realSizeFactor.height - layoutBoxMargin * 2 * this._parent._level,
+                x: absoluteRect.x * realSizeFactor.width + LAYOUT_BOX_DROP_MARGIN * this._level,
+                y: absoluteRect.y * realSizeFactor.height + LAYOUT_BOX_DROP_MARGIN * this._parent._level,
+                width: absoluteRect.width * realSizeFactor.width - LAYOUT_BOX_DROP_MARGIN * 2 * this._level,
+                height: absoluteRect.height * realSizeFactor.height - LAYOUT_BOX_DROP_MARGIN * 2 * this._parent._level,
             };
         }
         return {
-            x: absoluteRect.x * realSizeFactor.width + layoutBoxMargin * this._parent._level,
-            y: absoluteRect.y * realSizeFactor.height + layoutBoxMargin * this._level,
-            width: absoluteRect.width * realSizeFactor.width - layoutBoxMargin * 2 * this._parent._level,
-            height: absoluteRect.height * realSizeFactor.height - layoutBoxMargin * 2 * this._level,
+            x: absoluteRect.x * realSizeFactor.width + LAYOUT_BOX_DROP_MARGIN * this._parent._level,
+            y: absoluteRect.y * realSizeFactor.height + LAYOUT_BOX_DROP_MARGIN * this._level,
+            width: absoluteRect.width * realSizeFactor.width - LAYOUT_BOX_DROP_MARGIN * 2 * this._parent._level,
+            height: absoluteRect.height * realSizeFactor.height - LAYOUT_BOX_DROP_MARGIN * 2 * this._level,
         };
     }
 
@@ -403,7 +405,7 @@ export class LayoutNode {
         return found;
     }
 
-    getEdgeRects(realSize: Size2D): LayoutNodeEdge[] {
+    getEdgeRects(realSize: Size2D, edgeWeight: number, edgeMargin: number): LayoutNodeEdge[] {
         const rect = this.getRectWithMargin(realSize);
         const edges: LayoutNodeEdge[] = [];
 
@@ -489,9 +491,9 @@ export class LayoutNode {
                 edges.push({
                     rect: {
                         x: absoluteRect.x * realSize.width - edgeWeight / 2,
-                        y: absoluteRect.y * realSize.height + layoutBoxMargin * this._level,
+                        y: absoluteRect.y * realSize.height + edgeMargin * this._level,
                         width: edgeWeight,
-                        height: absoluteRect.height * realSize.height - layoutBoxMargin * this._level * 2,
+                        height: absoluteRect.height * realSize.height - edgeMargin * this._level * 2,
                     },
                     edge: LayoutNodeEdgeType.VERTICAL,
                     position: absoluteRect.x,
@@ -505,9 +507,9 @@ export class LayoutNode {
                 const absoluteRect = child.getAbsoluteRect();
                 edges.push({
                     rect: {
-                        x: absoluteRect.x * realSize.width + layoutBoxMargin * this._level,
+                        x: absoluteRect.x * realSize.width + edgeMargin * this._level,
                         y: absoluteRect.y * realSize.height - edgeWeight / 2,
-                        width: absoluteRect.width * realSize.width - layoutBoxMargin * this._level * 2,
+                        width: absoluteRect.width * realSize.width - edgeMargin * this._level * 2,
                         height: edgeWeight,
                     },
                     edge: LayoutNodeEdgeType.HORIZONTAL,
@@ -520,7 +522,7 @@ export class LayoutNode {
     }
 
     findEdgeContainingPoint(point: Vec2, realSize: Size2D, draggedModuleInstanceId: string): LayoutNodeEdge | null {
-        const edgeRects = this.getEdgeRects(realSize);
+        const edgeRects = this.getEdgeRects(realSize, EDGE_DROP_WEIGHT, LAYOUT_BOX_DROP_MARGIN);
         const edge = edgeRects.find((edgeRect) => rectContainsPoint(edgeRect.rect, point));
         if (!edge) {
             return null;
@@ -815,6 +817,7 @@ export class LayoutNode {
 
     pathFromRoot(): number[] {
         const path: number[] = [];
+        /* eslint-disable @typescript-eslint/no-this-alias */
         let node: LayoutNode | null = this;
         while (node && node._parent) {
             const idx = node._parent._children.indexOf(node);
@@ -932,7 +935,7 @@ export class LayoutNode {
             }
 
             // then test our own dividers
-            const edges = this.getEdgeRects(viewport);
+            const edges = this.getEdgeRects(viewport, EDGE_RESIZE_WEIGHT, LAYOUT_BOX_RESIZE_MARGIN);
 
             // vertical dividers exist when we're HORIZONTAL (columns)
             if (this._layoutDirection === LayoutDirection.HORIZONTAL) {
