@@ -14,10 +14,9 @@ class LroErrorInfo(BaseModel):
 #   If so, what do we use as discriminator in LroInProgressResp?
 #   Discriminator could be "in_progress" and true status could be: "queued" and "running"
 # * Should there be any information regarding when a task was submitted?
-# * Rename operation_id to task_id?
 class LroInProgressResp(BaseModel):
     status: Literal["in_progress"]
-    operation_id: str
+    task_id: str
     poll_url: str | None = None
     progress_message: str | None = None
 

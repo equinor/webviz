@@ -393,7 +393,7 @@ export type LroFailureResp_api = {
 
 export type LroInProgressResp_api = {
     status: "in_progress";
-    operation_id: string;
+    task_id: string;
     poll_url?: string | null;
     progress_message?: string | null;
 };

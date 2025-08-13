@@ -247,7 +247,7 @@ async def get_statistical_surface_data_hybrid(
 
     new_sumo_job_was_submitted = False
     if sumo_task_id is None:
-        LOGGER.info("SUBITTING new SUMO TASK!!!!!!!!!!!!!!!!")
+        LOGGER.info("SUBMITTING new SUMO TASK!!!!!!!!!!!!!!!!")
         service_stat_func_to_compute = StatisticFunction.from_string_value(addr.stat_function)
         sumo_task_id = await access.SUBMIT_get_statistical_surface_data_async(
             statistic_function=service_stat_func_to_compute,
@@ -289,7 +289,7 @@ async def get_statistical_surface_data_hybrid(
         response.headers["Cache-Control"] = "no-store"
         return LroInProgressResp(
             status="in_progress",
-            operation_id=sumo_task_id,
+            task_id=sumo_task_id,
             progress_message=progress_msg
         )
     except Exception as e:

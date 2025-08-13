@@ -34,7 +34,7 @@ type PollResource<TArgs, TData> =
     | {
           resourceType: "url";
           url: string;
-          operationId: string;
+          taskId: string;
       }
     | {
           resourceType: "queryFn";
@@ -45,7 +45,7 @@ type PollResource<TArgs, TData> =
 async function pollUntilDone<T>(options: {
     // The URL to poll for the long-running operation status or the original query function if polled from same endpoint
     pollResource: PollResource<any, T>;
-    operationId: string;
+    taskId: string;
     intervalMs: number;
     maxRetries: number;
     signal?: AbortSignal;
@@ -154,14 +154,14 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
                     throw new Error("Missing result in successful response");
                 }
                 return data.result;
-            } else if (data.status === "in_progress" && data.operation_id) {
+            } else if (data.status === "in_progress" && data.task_id) {
                 onProgress?.(data.progress_message ?? null);
                 return pollUntilDone<TData>({
                     pollResource: data.poll_url
                         ? {
                               resourceType: "url",
                               url: data.poll_url,
-                              operationId: data.operation_id,
+                              taskId: data.task_id,
                           }
                         : {
                               resourceType: "queryFn",
@@ -172,7 +172,7 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
                     maxRetries,
                     signal,
                     onProgress,
-                    operationId: data.operation_id,
+                    taskId: data.task_id,
                 });
             }
             if (data.status === "failure") {
