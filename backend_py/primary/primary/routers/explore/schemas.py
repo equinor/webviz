@@ -18,6 +18,8 @@ class CaseInfo(BaseModel):
     status: str
     user: str
     updatedAtUtcMs: int
+    # description: str
+    # standardResults: Sequence[str]
 
     # date: str # NOTE: Which date should be provide for a case? "Create", "Last updated/modified", "newest date for a document for one of the ensembles"
     # description: str

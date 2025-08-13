@@ -23,7 +23,7 @@ import {
     makeSelectableEnsemblesForDeltaFromEnsembleSet,
     makeRegularEnsembleSettingsFromEnsembleSet,
 } from "./_utils";
-import { EnsemblePicker } from "./private-components/EnsemblePicker";
+import { EnsemblePicker } from "./private-components/EnsemblePicker/EnsemblePicker";
 import { EnsembleTables } from "./private-components/EnsembleTables";
 import type { EnsembleIdentWithCaseName, InternalDeltaEnsembleSetting, InternalRegularEnsembleSetting } from "./types";
 
