@@ -59,31 +59,33 @@ class TaskMetaTracker:
 
     async def register_task_async(self, task_system: str, task_id: str, expected_store_key: str | None) -> None:
         redis_hash_name = self._make_full_redis_key_for_task(task_id)
-        
+
         # Use hsetnx to provoke an error if an entry for this task id already exists
         res = await self._redis_client.hsetnx(name=redis_hash_name, key="taskSystem", value=task_system)
         if res == 0:
             raise ValueError(f"Task with id {task_id} already exists in the tracker")
-        
+
         # Set TTL for the hash
         await self._redis_client.expire(redis_hash_name, self._ttl_s)
 
         # Now set the remaining keys/fields in the hash
         await self._redis_client.hset(
-            name=redis_hash_name, 
+            name=redis_hash_name,
             mapping={
                 "expectedStoreKey": expected_store_key if expected_store_key else "",
-            }
+            },
         )
 
-    async def register_task_with_fingerprint_async(self, task_system: str, task_id: str, fingerprint: str, expected_store_key: str | None) -> None:
+    async def register_task_with_fingerprint_async(
+        self, task_system: str, task_id: str, fingerprint: str, expected_store_key: str | None
+    ) -> None:
         # Register the task itself in the usual way
         await self.register_task_async(task_system, task_id, expected_store_key)
 
         # Register the mapping from task fingerprint to task id
         # May want to set a shorter TTL for this entry
         fingerprint_redis_key = self._make_full_redis_key_for_fingerprint(fingerprint)
-        res = await self._redis_client.setex(fingerprint_redis_key, self._ttl_s, task_id)
+        _res = await self._redis_client.setex(fingerprint_redis_key, self._ttl_s, task_id)
 
     async def get_task_meta_async(self, task_id: str) -> TaskMeta | None:
         redis_hash_name = self._make_full_redis_key_for_task(task_id)
@@ -92,7 +94,7 @@ class TaskMetaTracker:
             return None
 
         task_system: str = value_dict.get("taskSystem", "UNKNOWN")
-        
+
         expected_store_key: str | None = value_dict.get("expectedStoreKey", None)
         if expected_store_key == "":
             expected_store_key = None
@@ -109,7 +111,7 @@ class TaskMetaTracker:
             final_outcome=final_outcome,
             expected_store_key=expected_store_key,
         )
-    
+
     async def delete_fingerprint_to_task_mapping_async(self, fingerprint: str) -> None:
         fingerprint_redis_key = self._make_full_redis_key_for_fingerprint(fingerprint)
         await self._redis_client.delete(fingerprint_redis_key)
@@ -129,6 +131,7 @@ class TaskMetaTracker:
 def get_task_meta_tracker_for_user(authenticated_user: AuthenticatedUser) -> TaskMetaTracker:
     factory = TaskMetaTrackerFactory.get_instance()
     return factory.get_tracker_for_user_id(user_id=authenticated_user.get_user_id())
+
 
 def get_task_meta_tracker_for_user_id(user_id: str) -> TaskMetaTracker:
     factory = TaskMetaTrackerFactory.get_instance()

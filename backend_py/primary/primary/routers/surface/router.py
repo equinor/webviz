@@ -1,5 +1,7 @@
 import asyncio
+import datetime
 import logging
+from hashlib import sha256
 from typing import Annotated, List, Optional, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
@@ -211,10 +213,6 @@ async def get_surface_data(
 ################################################################
 ################################################################
 
-import datetime
-from hashlib import sha256
-from primary.middleware.add_browser_cache import no_cache
-from primary.services.utils.otel_span_tracing import otel_span_decorator, start_otel_span_async
 
 @router.get("/statistical_surface_data/hybrid")
 async def get_statistical_surface_data_hybrid(
@@ -281,7 +279,7 @@ async def get_statistical_surface_data_hybrid(
             elif data_format == "png":
                 api_surf_data = converters.to_api_surface_data_png(xtgeo_surf)
             return LroSuccessResp(status="success", result=api_surf_data)
-        
+
         progress_msg = "New task submitted" if new_sumo_job_was_submitted else "Waiting for task..."
         progress_msg += f" [{datetime.datetime.now()}]"
 
@@ -292,8 +290,8 @@ async def get_statistical_surface_data_hybrid(
             task_id=sumo_task_id,
             progress_message=progress_msg
         )
-    except Exception as e:
-        LOGGER.error(f"Error occurred while polling for surface data: {e}")
+    except Exception as exc:
+        LOGGER.error(f"Error occurred while polling for surface data: {exc}")
         await task_tracker.delete_fingerprint_to_task_mapping_async(param_hash)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed while polling for statistical surface data")
 

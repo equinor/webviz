@@ -383,10 +383,10 @@ class SurfaceAccess:
         spec = sc._SearchContext__prepare_aggregation_spec(caseuuid, classname, entityuuid, ensemblename, sumo_stat_operation_str, None)
         spec["object_ids"] = await sc.uuids_async
 
-        LOGGER.debug(f"DOING POST")
-        LOGGER.debug(f"----------------------")
+        LOGGER.debug("DOING POST")
+        LOGGER.debug("----------------------")
         LOGGER.debug(json.dumps(spec, indent=2))
-        LOGGER.debug(f"----------------------")
+        LOGGER.debug("----------------------")
         post_res = await self._sumo_client.post_async("/aggregations", json=spec)
         LOGGER.debug(f"AFTER POST {post_res=}  {post_res.headers=}")
 
@@ -412,7 +412,7 @@ class SurfaceAccess:
 
         perf_metrics = PerfMetrics()
 
-        LOGGER.debug(f"STARTING POLL")
+        LOGGER.debug("STARTING POLL")
 
         # For now, we're using the path as task id
         # The poll path (which sumo client adds to its base_url) is: /tasks('{taskUuid}')/result
@@ -438,7 +438,7 @@ class SurfaceAccess:
             await asyncio.sleep(retry_after_s)
 
         final_poll_result = poll_response.json()
-        LOGGER.debug(f"POLL DONE:")
+        LOGGER.debug("POLL DONE:")
         LOGGER.debug(json.dumps(final_poll_result, indent=2))
 
         if poll_response.status_code != 200:
@@ -450,7 +450,7 @@ class SurfaceAccess:
 
         xtgeo_surf = await sumo_surface_obj.to_regular_surface_async()
         if not xtgeo_surf:
-            LOGGER.warning(f"Could not calculate statistical surface using Sumo")
+            LOGGER.warning("Could not calculate statistical surface using Sumo")
             return None
 
         LOGGER.debug(
