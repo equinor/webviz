@@ -20,7 +20,7 @@ from primary.services.utils.task_meta_tracker import get_task_meta_tracker_for_u
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.drogon import is_drogon_identifier
 
-from .._shared.long_running_operations import LroInProgressResp, LroErrorResp, LroSuccessResp, LroErrorInfo
+from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp, LroErrorInfo
 
 from . import converters
 from . import schemas
@@ -224,7 +224,7 @@ async def get_statistical_surface_data_hybrid(
     surf_addr_str: Annotated[str, Query(description="Surface address string, supported address type is *STAT*")],
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
     # fmt:on
-) -> LroSuccessResp[schemas.SurfaceDataFloat | schemas.SurfaceDataPng] | LroInProgressResp | LroErrorResp:
+) -> LroSuccessResp[schemas.SurfaceDataFloat | schemas.SurfaceDataPng] | LroInProgressResp | LroFailureResp:
 
     perf_metrics = ResponsePerfMetrics(response)
     LOGGER.info(f"Getting HYBRID statistical surface data for address: {surf_addr_str}")
@@ -267,7 +267,7 @@ async def get_statistical_surface_data_hybrid(
         trigger_dummy_exception = False
         if not new_sumo_job_was_submitted:
             if addr.stat_function == "STD":
-                return LroErrorResp(status="failure", error=LroErrorInfo(message="Dummy error message"))
+                return LroFailureResp(status="failure", error=LroErrorInfo(message="Dummy error message"))
             if addr.stat_function == "MIN":
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Details of dummy exception")
             if addr.stat_function == "MAX":

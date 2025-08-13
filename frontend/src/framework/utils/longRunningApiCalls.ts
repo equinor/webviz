@@ -1,4 +1,4 @@
-import type { LroErrorResp_api, LroInProgressResp_api, HttpValidationError_api } from "@api";
+import type { LroFailureResp_api, LroInProgressResp_api, HttpValidationError_api } from "@api";
 import { client } from "@api";
 import type { RequestResult } from "@hey-api/client-axios";
 import type { QueryFunctionContext } from "@tanstack/query-core";
@@ -7,7 +7,7 @@ import { AxiosError } from "axios";
 
 type LongRunningApiResponse<TData> =
     | LroInProgressResp_api
-    | LroErrorResp_api
+    | LroFailureResp_api
     | {
           status: "success";
           result: TData;
@@ -15,7 +15,7 @@ type LongRunningApiResponse<TData> =
 
 type QueryFn<TArgs, TData> = (
     options: TArgs,
-) => RequestResult<LongRunningApiResponse<TData>, LroErrorResp_api | HttpValidationError_api, false>;
+) => RequestResult<LongRunningApiResponse<TData>, LroFailureResp_api | HttpValidationError_api, false>;
 
 interface OnProgressCallback {
     (progressMessage: string | null): void;
@@ -60,12 +60,12 @@ async function pollUntilDone<T>(options: {
         }
 
         let response: Awaited<
-            RequestResult<LongRunningApiResponse<T>, LroErrorResp_api | HttpValidationError_api, false>
+            RequestResult<LongRunningApiResponse<T>, LroFailureResp_api | HttpValidationError_api, false>
         > | null = null;
 
         if (pollResource.resourceType === "url" && currentPollUrl) {
             // If pollResource is a URL, use it directly
-            response = await client.get<LongRunningApiResponse<T>, LroErrorResp_api | HttpValidationError_api, false>({
+            response = await client.get<LongRunningApiResponse<T>, LroFailureResp_api | HttpValidationError_api, false>({
                 url: currentPollUrl,
                 signal,
             });

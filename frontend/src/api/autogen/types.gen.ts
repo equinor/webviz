@@ -386,7 +386,7 @@ export type LroErrorInfo_api = {
     message: string;
 };
 
-export type LroErrorResp_api = {
+export type LroFailureResp_api = {
     status: "failure";
     error: LroErrorInfo_api;
 };
@@ -2100,7 +2100,7 @@ export type GetStatisticalSurfaceDataHybridResponses_api = {
     /**
      * Successful Response
      */
-    200: LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api | LroInProgressResp_api | LroErrorResp_api;
+    200: LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api | LroInProgressResp_api | LroFailureResp_api;
 };
 
 export type GetStatisticalSurfaceDataHybridResponse_api =
