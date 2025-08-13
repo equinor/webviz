@@ -231,7 +231,7 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
 
             <Table
                 rowIdentifier="id"
-                height={300}
+                height={600}
                 columns={TABLE_COLUMNS}
                 rows={tableData}
                 alternatingColumnColors={alternateColColors}

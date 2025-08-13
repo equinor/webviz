@@ -22,25 +22,56 @@ type TableBodyProps<T extends Record<string, any>> = {
 };
 export function TableBody<T extends Record<string, any>>(props: TableBodyProps<T>): React.ReactNode {
     const { onSelectedRowsChange, onRowClick, onRowHover } = props;
+
+    const selectAnchorIndexRef = React.useRef(-1);
+
     const handleRowClick = React.useCallback(
-        function handleRowClick(entry: LoadedDataWithKey<T>, evt: React.MouseEvent) {
+        function handleRowClick(entry: LoadedDataWithKey<T>, rowIndex: number, evt: React.MouseEvent) {
             onRowClick?.(entry._key, entry);
 
             if (!props.selectable) return;
 
-            const selectedRows = props.selectedRows ?? [];
-            const alreadySelected = selectedRows.includes(entry._key);
+            // Shift-click is a special case where we want to select each row between the previous and the newly clicked one
+            if (props.multiSelect && evt.shiftKey && selectAnchorIndexRef.current !== -1) {
+                const rangeStart = Math.min(selectAnchorIndexRef.current, rowIndex);
+                const rangeEnd = Math.max(selectAnchorIndexRef.current, rowIndex);
 
-            // TODO: Should we make ctr and shift work as in windows? Adding one, vs adding a range?
-            const additive = props.multiSelect && (evt.ctrlKey || evt.shiftKey);
+                const selectionsInRange = props.rows.slice(rangeStart, rangeEnd + 1).map((r) => r._key);
 
-            const newSelection = additive ? selectedRows.filter((key) => key !== entry._key) : [];
+                onSelectedRowsChange?.(selectionsInRange);
+            } else {
+                selectAnchorIndexRef.current = rowIndex;
 
-            if (!alreadySelected) newSelection.push(entry._key);
+                const isMultiSelect = props.multiSelect && evt.ctrlKey;
+                const previousSelection = props.selectedRows ?? [];
+                const alreadySelected = previousSelection.includes(entry._key);
 
-            onSelectedRowsChange?.(newSelection);
+                let newSelection = [] as string[];
+
+                // Select/deselect logic
+                if (isMultiSelect && alreadySelected) {
+                    // Multi-select: Remove the row
+                    newSelection = previousSelection.filter((k) => k !== entry._key);
+                } else if (isMultiSelect) {
+                    // Multi-select: Add the row
+                    newSelection = [...previousSelection, entry._key];
+                } else if (previousSelection.length > 1) {
+                    // Single-select: Going from multi-select to single, we always select the clickedd row
+                    newSelection = [entry._key];
+                } else {
+                    // Single-select: Toggle select/unselect for a one item
+                    newSelection = alreadySelected ? [] : [entry._key];
+                }
+
+                // Everything got deselected, so we no longer have an "anchored" item, for range
+                if (!newSelection.length) {
+                    selectAnchorIndexRef.current = -1;
+                }
+
+                onSelectedRowsChange?.(newSelection);
+            }
         },
-        [onRowClick, onSelectedRowsChange, props.multiSelect, props.selectable, props.selectedRows],
+        [onRowClick, onSelectedRowsChange, props.multiSelect, props.rows, props.selectable, props.selectedRows],
     );
 
     const handleBodyMouseLeave = React.useCallback(() => onRowHover?.(null, null), [onRowHover]);
@@ -58,14 +89,14 @@ export function TableBody<T extends Record<string, any>>(props: TableBodyProps<T
                 items={props.rows}
                 itemSize={ROW_HEIGHT_PX}
                 onScroll={props.onVisibleRowRangeChange}
-                renderItem={(row: TableDataWithKey<T>) => (
+                renderItem={(row, rowIndex) => (
                     <TableRow
                         key={row._key}
                         row={row}
                         dataCellDefinitions={props.dataCellDefinitions}
                         selected={!!props.selectedRows?.includes(row._key)}
-                        onClick={handleRowClick}
                         onMouseOver={handleRowMouseOver}
+                        onClick={(entry, evt) => handleRowClick(entry, rowIndex, evt)}
                     />
                 )}
             />

@@ -25,7 +25,7 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
 
     return (
         <tr
-            className={resolveClassNames("group/tr border-b-2 last:border-b-0", {
+            className={resolveClassNames("group/tr border-b-2 last:border-b-0 select-none", {
                 "hover:bg-blue-100": !props.selected && isLoaded,
                 "bg-blue-300 text-white hover:bg-blue-200": props.selected && isLoaded,
             })}
