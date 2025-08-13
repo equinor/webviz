@@ -16,15 +16,7 @@ def setup_azure_monitor_telemetry(fastapi_app: FastAPI) -> None:
 
     # Note that this call will throw an exception if the APPLICATIONINSIGHTS_CONNECTION_STRING
     # environment variable is not set or if it is invalid
-    configure_azure_monitor(
-        enable_live_metrics=True, 
-        logging_formatter=logging.Formatter("[%(name)s]: %(message)s"),
-        instrumentation_options={
-            "django": {"enabled": False},
-            "flask": {"enabled": False},
-            "psycopg2": {"enabled": False}
-        }
-    )
+    configure_azure_monitor(enable_live_metrics=True, logging_formatter=logging.Formatter("[%(name)s]: %(message)s"))
 
     FastAPIInstrumentor.instrument_app(fastapi_app)
 
