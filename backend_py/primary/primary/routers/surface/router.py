@@ -1,7 +1,6 @@
 import asyncio
 import logging
 from typing import Annotated, List, Optional, Literal
-from urllib import response
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
@@ -267,19 +266,21 @@ async def get_statistical_surface_data_hybrid(
     try:
         trigger_dummy_exception = False
         if not new_sumo_job_was_submitted:
+            if addr.stat_function == "STD":
+                return LroErrorResp(status="failure", error=LroErrorInfo(message="Dummy error message"))
             if addr.stat_function == "MIN":
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Details of dummy exception")
-            if addr.stat_function == "STD":
+            if addr.stat_function == "MAX":
                 trigger_dummy_exception = True
 
         xtgeo_surf = await access.POLL_get_statistical_surface_data_async(sumo_task_id=sumo_task_id, timeout_s=0, trigger_dummy_exception=trigger_dummy_exception)
         if xtgeo_surf:
-            surf_data_response: schemas.SurfaceDataFloat | schemas.SurfaceDataPng
+            api_surf_data: schemas.SurfaceDataFloat | schemas.SurfaceDataPng
             if data_format == "float":
-                surf_data_response = converters.to_api_surface_data_float(xtgeo_surf)
+                api_surf_data = converters.to_api_surface_data_float(xtgeo_surf)
             elif data_format == "png":
-                surf_data_response = converters.to_api_surface_data_png(xtgeo_surf)
-            return LroSuccessResp(status="success", data=surf_data_response)
+                api_surf_data = converters.to_api_surface_data_png(xtgeo_surf)
+            return LroSuccessResp(status="success", result=api_surf_data)
         
         progress_msg = "New task submitted" if new_sumo_job_was_submitted else "Waiting for task..."
         progress_msg += f" [{datetime.datetime.now()}]"

@@ -400,7 +400,7 @@ export type LroInProgressResp_api = {
 
 export type LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api = {
     status: "success";
-    data: SurfaceDataFloat_api | SurfaceDataPng_api;
+    result: SurfaceDataFloat_api | SurfaceDataPng_api;
 };
 
 export type NetworkNode_api = {

@@ -30,10 +30,7 @@ class LroErrorResp(BaseModel):
     error: LroErrorInfo
 
 
-# Should the data property be renamed to avoid confusion?
-# Maybe result?
-#
 class LroSuccessResp(BaseModel, Generic[T]):
     status: Literal["success"]
-    data: T
+    result: T
 

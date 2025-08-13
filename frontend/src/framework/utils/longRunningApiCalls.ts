@@ -10,7 +10,7 @@ type LongRunningApiResponse<TData> =
     | LroErrorResp_api
     | {
           status: "success";
-          data: TData;
+          result: TData;
       };
 
 type QueryFn<TArgs, TData> = (
@@ -89,7 +89,7 @@ async function pollUntilDone<T>(options: {
         }
 
         if (data.status === "success") {
-            return data.data as T;
+            return data.result as T;
         } else if (data.status === "failure") {
             throw new Error(data.error?.message || "Unknown error");
         }
@@ -137,7 +137,7 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
             const signal = ctx.signal;
 
             const response = await queryFn({ ...queryFnArgs, signal, throwOnError: false });
-            const { data: result, error } = response;
+            const { data, error } = response;
 
             if (error) {
                 throw new AxiosError(
@@ -149,20 +149,19 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
                 );
             }
 
-            if (result.status === "success") {
-                if (result.data === undefined) {
-                    throw new Error("Missing data in successful response");
+            if (data.status === "success") {
+                if (data.result === undefined) {
+                    throw new Error("Missing result in successful response");
                 }
-                return result.data;
-            } else if (result.status === "in_progress" && result.operation_id) {
-                // ToDo: Verify with Ruben that it is OK to call onProgress here
-                onProgress?.(result.progress_message ?? null);
+                return data.result;
+            } else if (data.status === "in_progress" && data.operation_id) {
+                onProgress?.(data.progress_message ?? null);
                 return pollUntilDone<TData>({
-                    pollResource: result.poll_url
+                    pollResource: data.poll_url
                         ? {
                               resourceType: "url",
-                              url: result.poll_url,
-                              operationId: result.operation_id,
+                              url: data.poll_url,
+                              operationId: data.operation_id,
                           }
                         : {
                               resourceType: "queryFn",
@@ -173,11 +172,11 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
                     maxRetries,
                     signal,
                     onProgress,
-                    operationId: result.operation_id,
+                    operationId: data.operation_id,
                 });
             }
-            if (result.status === "failure") {
-                throw new Error(result.error?.message || "Unknown error");
+            if (data.status === "failure") {
+                throw new Error(data.error?.message || "Unknown error");
             }
 
             throw new Error("Invalid response status or missing poll_url");

@@ -276,6 +276,9 @@ export class StatisticalSurfaceProvider
         // });
 
         function handleTaskProgress(progressMessage: string | null) {
+            if (progressMessage) {
+                console.debug("Statistical surface progress:", progressMessage);
+            }
             setProgressMessage(progressMessage);
         }
 
