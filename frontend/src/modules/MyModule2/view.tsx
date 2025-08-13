@@ -146,7 +146,7 @@ function Tags(props: { tags: string[] }): React.ReactNode {
             {props.tags.map((t, i) => (
                 <div
                     key={t + i}
-                    className={tagColors[t as keyof typeof tagColors] + " rounded-xl px-2 py-1 text-xs text-white"}
+                    className={tagColors[t as keyof typeof tagColors] + " rounded-xl px-2 py-0.5 text-xs text-white"}
                 >
                     {t}
                 </div>
