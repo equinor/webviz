@@ -26,8 +26,6 @@ from . import dependencies
 from .surface_address import RealizationSurfaceAddress, ObservedSurfaceAddress, StatisticalSurfaceAddress
 from .surface_address import decode_surf_addr_str
 
-from primary.services.service_exceptions import Service, NoDataError
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -154,20 +152,6 @@ async def get_surface_data(
 
     if addr.address_type == "REAL":
         access = SurfaceAccess.from_iteration_name(access_token, addr.case_uuid, addr.ensemble_name)
-
-        # !!!!!!!!!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!!!!!!
-        if addr.realization == 2:
-            raise HTTPException(status_code=500, detail="Sigurd's error message, for a HTTP exception")
-        if addr.realization == 3:
-            raise NoDataError("Dummy NoData message", Service.GENERAL)
-        if addr.realization == 4:
-            raise ValueError("Sigurd's error message for a ValueError exception")
-        # !!!!!!!!!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!!!!!!
-
         xtgeo_surf = await access.get_realization_surface_data_async(
             real_num=addr.realization,
             name=addr.name,
