@@ -4,8 +4,8 @@
     "version": "0.0.0",
     "type": "module",
     "scripts": {
-        "dev": "vite --host",
-        "build": "tsc && NODE_OPTIONS='--max-old-space-size=8192' vite build",
+        "dev": "npm run generate:module-states-map && vite --host",
+        "build": "npm run generate:module-states-map && tsc && NODE_OPTIONS='--max-old-space-size=8192' vite build",
         "preview": "vite preview",
         "generate:api": "openapi-ts && node scripts/add-api-suffix.cjs --suffix '_api' --dir src/api/autogen --exportTanstackQueryFromIndex",
         "generate:module-states-map": "node scripts/generate-module-states-map.js",

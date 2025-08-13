@@ -1,10 +1,10 @@
 import type { CSSProperties } from "react";
 
 import type { LayoutElement } from "@framework/internal/WorkbenchSession/Dashboard";
-import type { Size2D } from "@lib/utils/geometry";
-import type { Vec2 } from "@lib/utils/vec2";
+import { MANHATTAN_LENGTH, type Size2D } from "@lib/utils/geometry";
+import { point2Distance, type Vec2 } from "@lib/utils/vec2";
 
-import { LayoutNode } from "./LayoutNode";
+import { LayoutNode, type LayoutNodeEdgeType } from "./LayoutNode";
 
 export type LayoutControllerBindings = {
     // State getters
@@ -14,7 +14,7 @@ export type LayoutControllerBindings = {
 
     // React-side effects
     setTempLayout: (next: LayoutElement[] | null) => void;
-    setDraggingOverlay: (dragPosition: Vec2 | null, clientPos: Vec2 | null) => void;
+    setDragAndClientPosition: (dragPosition: Vec2 | null, clientPos: Vec2 | null) => void;
     setDraggingModuleId: (id: string | null) => void;
     setTempPlaceholderId: (id: string | null) => void;
     setCursor: (cursor: CSSProperties["cursor"]) => void;
@@ -32,6 +32,13 @@ export type LayoutControllerBindings = {
 export enum DragSourceKind {
     EXISTING = "EXISTING",
     NEW = "NEW",
+}
+
+enum ModeKind {
+    IDLE = "idle",
+    DRAG_POINTER_DOWN = "drag-pointer-down",
+    DRAG = "drag",
+    RESIZE = "resize",
 }
 
 export type DragSource = {
@@ -64,30 +71,56 @@ export type ResizeSource = {
 };
 
 type Mode =
-    | { kind: "idle" }
+    | { kind: ModeKind.IDLE }
     | {
-          kind: "drag";
-          src: DragSource;
+          kind: ModeKind.DRAG_POINTER_DOWN;
+          source: DragSource;
+          pointerOffset: { x: number; y: number };
+          lastClientPos: Vec2;
+      }
+    | {
+          kind: ModeKind.DRAG;
+          source: DragSource;
           lastClientPos: Vec2;
           rafId?: number | null;
           pointerOffset: { x: number; y: number };
       }
-    | { kind: "resize"; src: ResizeSource; lastClientPos: Vec2; rafId?: number | null };
+    | { kind: ModeKind.RESIZE; src: ResizeSource; lastClientPos: Vec2; rafId?: number | null };
+
+type HoverTarget = {
+    containerPath: number[];
+    edge: LayoutNodeEdgeType;
+};
 
 const HOVER_DWELL_MS = 500; // wait this long on same edge before previewing
 const EXIT_DWELL_MS = 500; // wait this long after leaving edge before clearing preview
 const PREVIEW_STICKY_PAD_PX = 10; // px padding around the preview to keep it visible when moving away from the edge
+const RESIZE_SNAP_STEP = 0.01; // 1% steps (tune to taste)
+const RESIZE_MIN_TILE_SIZE: Size2D = { width: 200, height: 200 }; // minimum tile size in px
 
 export class LayoutController {
+    // Bindings to the React side
     private _bindings: LayoutControllerBindings;
-    private _mode: Mode = { kind: "idle" };
+
+    // The current interaction mode, either idle, dragging, or resizing
+    private _mode: Mode = { kind: ModeKind.IDLE };
+
+    // the current requestAnimationFrame ID, or null if not scheduled
     private _rafId: number | null = null;
+
+    // Last local position of the pointer in px, used for scheduling updates
     private _lastLocalPos: Vec2 | null = null;
-    private _hoverTarget: {
-        containerPath: number[];
-        edge: "left" | "right" | "top" | "bottom" | "vertical" | "horizontal";
-    } | null = null;
+
+    // The current hover target, if any
+    // This is the edge and container path where the pointer is hovering
+    // Used to determine when to show the hover arrows and when to promote to preview
+    // null if not hovering over any edge
+    private _hoverTarget: HoverTarget | null = null;
+
+    // The last preview layout, used to avoid flickering
+    // This is the layout that was last previewed, or null if no preview is active
     private _lastPreviewLayout: LayoutElement[] | null = null;
+
     private _hoverLocalPos: Vec2 | null = null;
     private _hoverTimerId: ReturnType<typeof setTimeout> | null = null;
     private _cancelTimerId: ReturnType<typeof setTimeout> | null = null;
@@ -124,7 +157,7 @@ export class LayoutController {
     }
 
     startDrag(dragSource: DragSource) {
-        // Compute offset in LOCAL px so the card doesn't jump
+        // Compute offset so the card doesn't jump
         const localPointerDown = this._bindings.toLocalPx(dragSource.pointerDownClientPos);
         const localElementTopLeft = this._bindings.toLocalPx(dragSource.elementPos);
         const pointerOffset = {
@@ -133,47 +166,16 @@ export class LayoutController {
         };
 
         this._mode = {
-            kind: "drag",
-            src: dragSource,
-            lastClientPos: dragSource.pointerDownClientPos,
+            kind: ModeKind.DRAG_POINTER_DOWN,
+            source: dragSource,
             pointerOffset,
-            rafId: null,
+            lastClientPos: dragSource.pointerDownClientPos,
         };
-
-        this._bindings.setDraggingModuleId(dragSource.id);
-        if (dragSource.kind === DragSourceKind.NEW) this._bindings.setTempPlaceholderId(dragSource.id);
-
-        // initial overlay position
-        const dragPos = {
-            x: localPointerDown.x - pointerOffset.x,
-            y: localPointerDown.y - pointerOffset.y,
-        };
-        this._bindings.setDraggingOverlay(dragPos, localPointerDown);
-
-        const root = this._bindings.getRootNode();
-        if (root) {
-            const pre = root.previewLayout(
-                localPointerDown,
-                this._bindings.getViewportSize(),
-                dragSource.id,
-                dragSource.kind === DragSourceKind.NEW,
-            );
-            if (pre) {
-                const layout = pre.toLayout();
-                this._lastPreviewLayout = layout;
-                this._bindings.setTempLayout(pre.toLayout());
-            }
-        }
-
-        // first preview
-        this.queueDragPreview(localPointerDown);
-
-        this.setPhase(Phase.HOVER);
     }
 
     startResize(src: ResizeSource) {
         this._mode = {
-            kind: "resize",
+            kind: ModeKind.RESIZE,
             src,
             lastClientPos: src.pointerDownClientPos,
             rafId: null,
@@ -196,12 +198,12 @@ export class LayoutController {
         this.clearHoverTimer();
         this.clearCancelTimer();
         this.setPhase(Phase.IDLE);
-        this._mode = { kind: "idle" };
+        this._mode = { kind: ModeKind.IDLE };
         this._lastPreviewLayout = null;
         this._hoverTarget = null;
         this._hoverLocalPos = null;
         this._bindings.setTempLayout(null);
-        this._bindings.setDraggingOverlay(null, null);
+        this._bindings.setDragAndClientPosition(null, null);
         this._bindings.setDraggingModuleId(null);
         this._bindings.setTempPlaceholderId(null);
         this._bindings.setCursor("default");
@@ -214,14 +216,14 @@ export class LayoutController {
         this._phase = phase;
     }
 
-    private _isOutOfViewport(local: Vec2): boolean {
+    private isOutOfViewport(local: Vec2): boolean {
         const vp = this._bindings.getViewportSize();
         const M = 25; // px margin
         return local.x < -M || local.y < -M || local.x > vp.width + M || local.y > vp.height + M;
     }
 
     private onPointerMove(e: PointerEvent) {
-        if (this._mode.kind === "idle") return;
+        if (this._mode.kind === ModeKind.IDLE) return;
 
         // suppress scroll/selection during interactions
         e.preventDefault();
@@ -230,60 +232,144 @@ export class LayoutController {
         this._mode.lastClientPos = { x: e.clientX, y: e.clientY };
         const local = this._bindings.toLocalPx(this._mode.lastClientPos);
 
-        if (this._mode.kind === "drag") {
-            if (this._isOutOfViewport(local)) {
+        if (this._mode.kind === ModeKind.DRAG_POINTER_DOWN) {
+            const distance = point2Distance(this._mode.source.pointerDownClientPos, this._mode.lastClientPos);
+
+            if (distance < MANHATTAN_LENGTH) {
+                return; // not far enough to start dragging
+            }
+
+            // Transition to drag mode
+            this._mode = {
+                kind: ModeKind.DRAG,
+                source: this._mode.source,
+                lastClientPos: this._mode.lastClientPos,
+                rafId: null,
+                pointerOffset: this._mode.pointerOffset,
+            };
+            this._bindings.setDraggingModuleId(this._mode.source.id);
+            if (isDragSourceKindNew(this._mode.source)) {
+                this._bindings.setTempPlaceholderId(this._mode.source.id);
+            }
+            this._bindings.setCursor("grabbing");
+            const dragPos = {
+                x: local.x - this._mode.pointerOffset.x,
+                y: local.y - this._mode.pointerOffset.y,
+            };
+            this._bindings.setDragAndClientPosition(dragPos, local);
+            this.queueDragPreview(local);
+            this.setPhase(Phase.HOVER);
+            return;
+        }
+
+        if (this._mode.kind === ModeKind.DRAG) {
+            if (this.isOutOfViewport(local)) {
                 this._lastPreviewLayout = null;
                 this._bindings.setTempLayout(null);
-                this._bindings.setDraggingOverlay(null, null);
+                this._bindings.setDragAndClientPosition(null, null);
                 this._hoverTarget = null;
                 this._hoverLocalPos = null;
                 this.clearHoverTimer();
                 this.clearCancelTimer();
                 return;
             }
-            const dragPos = {
-                x: local.x - this._mode.pointerOffset.x,
-                y: local.y - this._mode.pointerOffset.y,
-            };
-            this._bindings.setDraggingOverlay(dragPos, local);
+
+            this.updateDragPosition();
             this.queueDragPreview(local);
-        } else if (this._mode.kind === "resize") {
+        } else if (this._mode.kind === ModeKind.RESIZE) {
             this.queueResizePreview(local);
         }
     }
 
-    private synthesizeHoverPreviewLayout(): LayoutElement[] | null {
-        if (this._mode.kind !== "drag" || !this._hoverTarget || !this._hoverLocalPos) return null;
-        const root = this._bindings.getRootNode();
-        if (!root) return null;
+    private updateDragPosition(): void {
+        if (this._mode.kind !== ModeKind.DRAG) return;
 
-        const isNew = this._mode.src.kind === DragSourceKind.NEW;
-        const pre = root.previewLayout(this._hoverLocalPos, this._bindings.getViewportSize(), this._mode.src.id, isNew);
+        const localClientPos = this._bindings.toLocalPx(this._mode.lastClientPos);
+
+        const draggedId = this._mode.source.id;
+        const draggedSize = this.calcModuleInstanceSize(draggedId);
+        if (!draggedSize) {
+            return;
+        }
+
+        const relativePointerOffset: Vec2 = {
+            x: this._mode.pointerOffset.x / this._mode.source.elementSize.width,
+            y: this._mode.pointerOffset.y / this._mode.source.elementSize.height,
+        };
+
+        const newAbsolutePointerOffset: Vec2 = {
+            x: localClientPos.x - relativePointerOffset.x * draggedSize.width,
+            y: localClientPos.y - this._mode.pointerOffset.y,
+        };
+
+        this._bindings.setDragAndClientPosition(newAbsolutePointerOffset, localClientPos);
+    }
+
+    private calcModuleInstanceSize(moduleInstanceId: string): Size2D | null {
+        if (this._mode.kind !== ModeKind.DRAG) {
+            return null; // not in drag mode
+        }
+        const layoutElements = this._lastPreviewLayout;
+        if (!layoutElements) {
+            return this._mode.source.elementSize; // if no temp layout, use the original size
+        }
+
+        const element = layoutElements.find((el) => el.moduleInstanceId === moduleInstanceId);
+        if (!element) return null;
+
+        const viewportSize = this._bindings.getViewportSize();
+        return {
+            width: element.relWidth * viewportSize.width,
+            height: element.relHeight * viewportSize.height,
+        };
+    }
+
+    private synthesizeHoverPreviewLayout(): LayoutElement[] | null {
+        if (this._mode.kind !== ModeKind.DRAG || !this._hoverTarget || !this._hoverLocalPos) {
+            return null;
+        }
+
+        const root = this._bindings.getRootNode();
+        if (!root) {
+            return null;
+        }
+
+        const isNew = this._mode.source.kind === DragSourceKind.NEW;
+        const pre = root.previewLayout(
+            this._hoverLocalPos,
+            this._bindings.getViewportSize(),
+            this._mode.source.id,
+            isNew,
+        );
+
         return pre ? pre.toLayout() : null;
     }
 
     private onPointerUp() {
-        if (this._mode.kind === "idle") {
+        if (this._mode.kind === ModeKind.IDLE) {
             return;
         }
 
         this._bindings.setCursor("default");
 
-        if (this._mode.kind === "drag") {
-            let candidate =
-                this._bindings.getCurrentTempLayout() ?? this._lastPreviewLayout ?? this.synthesizeHoverPreviewLayout();
+        if (this._mode.kind === ModeKind.DRAG) {
+            let candidate = this._bindings.getCurrentTempLayout() ?? this._lastPreviewLayout;
+
+            if (this._phase === Phase.HOVER) {
+                candidate = this.synthesizeHoverPreviewLayout();
+            }
 
             this.clearHoverTimer();
             this.clearCancelTimer();
 
             // clear UI state first
-            this._bindings.setDraggingOverlay(null, null);
+            this._bindings.setDragAndClientPosition(null, null);
             this._bindings.setDraggingModuleId(null);
             this._bindings.setTempPlaceholderId(null);
 
-            const src = this._mode.src;
+            const source = this._mode.source;
 
-            if (isDragSourceKindNew(src)) {
+            if (isDragSourceKindNew(source)) {
                 // If literally nothing (no preview and no hover), allow empty-dashboard fallback; otherwise cancel.
                 if (!candidate || candidate.length === 0) {
                     const root = this._bindings.getRootNode();
@@ -295,8 +381,8 @@ export class LayoutController {
                                 relY: 0,
                                 relWidth: 1,
                                 relHeight: 1,
-                                moduleInstanceId: src.id,
-                                moduleName: src.moduleName,
+                                moduleInstanceId: source.id,
+                                moduleName: source.moduleName,
                             },
                         ];
                     }
@@ -305,7 +391,7 @@ export class LayoutController {
                 if (candidate && candidate.length) {
                     // keep temp visible (loading tile) until creation finishes
                     this._bindings
-                        .createModuleAndCommit((src as any).moduleName, candidate, src.id)
+                        .createModuleAndCommit((source as any).moduleName, candidate, source.id)
                         .finally(() => this._bindings.setTempLayout(null));
                 } else {
                     // No valid placement → cancel add
@@ -313,19 +399,21 @@ export class LayoutController {
                 }
             } else {
                 // EXISTING module move
-                if (candidate && candidate.length) this._bindings.commitLayout(candidate);
+                if (candidate && candidate.length) {
+                    this._bindings.commitLayout(candidate);
+                }
                 this._bindings.setTempLayout(null);
             }
         }
 
-        if (this._mode.kind === "resize") {
+        if (this._mode.kind === ModeKind.RESIZE) {
             const temp = this._bindings.getCurrentTempLayout();
             if (temp && temp.length) this._bindings.commitLayout(temp);
             this._bindings.setTempLayout(null);
         }
 
         this.cancelAnyScheduledFrame();
-        this._mode = { kind: "idle" };
+        this._mode = { kind: ModeKind.IDLE };
         this.setPhase(Phase.IDLE);
     }
 
@@ -367,7 +455,7 @@ export class LayoutController {
     }
 
     private updateDragPreview() {
-        if (this._mode.kind !== "drag") {
+        if (this._mode.kind !== ModeKind.DRAG) {
             return;
         }
 
@@ -380,8 +468,8 @@ export class LayoutController {
         const viewportSize = this._bindings.getViewportSize();
 
         // empty layout: promote immediately
-        if (this._mode.src.kind === DragSourceKind.NEW && root.getChildren().length === 0) {
-            const pre = root.previewLayout(local, viewportSize, this._mode.src.id, true);
+        if (this._mode.source.kind === DragSourceKind.NEW && root.getChildren().length === 0) {
+            const pre = root.previewLayout(local, viewportSize, this._mode.source.id, true);
             if (pre) {
                 this.applyPreview(pre.toLayout());
             }
@@ -402,7 +490,7 @@ export class LayoutController {
             return;
         }
 
-        const edge = container.findEdgeContainingPoint(local, viewportSize, this._mode.src.id);
+        const edge = container.findEdgeContainingPoint(local, viewportSize, this._mode.source.id);
         if (!edge) {
             this.clearHoverTimer();
             if (this._phase === Phase.PREVIEW) {
@@ -438,7 +526,7 @@ export class LayoutController {
     }
 
     private updateResizePreview() {
-        if (this._mode.kind !== "resize") return;
+        if (this._mode.kind !== ModeKind.RESIZE) return;
         const root = this._bindings.getRootNode();
         if (!root) return;
 
@@ -460,17 +548,20 @@ export class LayoutController {
                 ? (local.x / viewport.width - abs.x) / abs.width
                 : (local.y / viewport.height - abs.y) / abs.height;
 
-        // clamp & snap
+        // clamp and snap
         const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
-        const SNAP_STEP = 0.01; // 1% steps (tune to taste)
         const snap = (v: number, step: number) => Math.round(v / step) * step;
-        const MIN_FRACTION = 0.05; // 5% per child minimum size
+
+        const resizeMinTileFractions: Size2D = {
+            width: RESIZE_MIN_TILE_SIZE.width / viewport.width,
+            height: RESIZE_MIN_TILE_SIZE.height / viewport.height,
+        };
 
         container.resizeAtDivider(
             this._mode.src.index,
             this._mode.src.axis,
-            snap(clamp01(pos01), SNAP_STEP),
-            MIN_FRACTION,
+            snap(clamp01(pos01), RESIZE_SNAP_STEP),
+            resizeMinTileFractions,
         );
 
         this._bindings.setTempLayout(clone.toLayout());
@@ -505,15 +596,22 @@ export class LayoutController {
     }
 
     private promoteHoverToPreview() {
-        if (this._mode.kind !== "drag" || !this._hoverTarget || !this._hoverLocalPos) return;
+        if (this._mode.kind !== ModeKind.DRAG || !this._hoverTarget || !this._hoverLocalPos) {
+            return;
+        }
 
         const root = this._bindings.getRootNode();
         if (!root) {
             return;
         }
 
-        const isNew = this._mode.src.kind === DragSourceKind.NEW;
-        const pre = root.previewLayout(this._hoverLocalPos, this._bindings.getViewportSize(), this._mode.src.id, isNew);
+        const isNew = this._mode.source.kind === DragSourceKind.NEW;
+        const pre = root.previewLayout(
+            this._hoverLocalPos,
+            this._bindings.getViewportSize(),
+            this._mode.source.id,
+            isNew,
+        );
         if (!pre) {
             return;
         }
@@ -541,6 +639,7 @@ export class LayoutController {
             this._lastPreviewLayout = next;
             this._bindings.setTempLayout(next);
         }
+        this.updateDragPosition();
         this.setPhase(Phase.PREVIEW);
     }
 
@@ -555,11 +654,11 @@ export class LayoutController {
     }
 
     private isOverPreviewPlaceholder(local: Vec2): boolean {
-        if (this._mode.kind !== "drag" || !this._lastPreviewLayout) {
+        if (this._mode.kind !== ModeKind.DRAG || !this._lastPreviewLayout) {
             return false;
         }
 
-        const draggedId = this._mode.src.id;
+        const draggedId = this._mode.source.id;
         const element = this._lastPreviewLayout.find((el) => el.moduleInstanceId === draggedId);
         if (!element) {
             return false; // not over a placeholder

@@ -1,5 +1,8 @@
 import React, { type CSSProperties } from "react";
 
+import { WebAsset } from "@mui/icons-material";
+import { v4 } from "uuid";
+
 import { GuiEvent } from "@framework/GuiMessageBroker";
 import type { LayoutElement } from "@framework/internal/WorkbenchSession/Dashboard";
 import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
@@ -9,13 +12,10 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import type { Vec2 } from "@lib/utils/vec2";
-import { WebAsset } from "@mui/icons-material";
-import { v4 } from "uuid";
 
 import { ViewWrapper } from "../Content/private-components/ViewWrapper";
 import { ViewWrapperPlaceholder } from "../Content/private-components/viewWrapperPlaceholder";
 
-// NEW: Layout model + controller
 import { LayoutController, DragSourceKind, type DragSource, type ResizeSource } from "./LayoutController";
 import type { LayoutNode } from "./LayoutNode";
 import { makeLayoutNodes } from "./LayoutNode";
@@ -30,7 +30,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
     // DOM refs / size
     const containerRef = React.useRef<HTMLDivElement>(null);
     const rootRef = React.useRef<HTMLDivElement>(null);
-    const viewportSize = useElementSize(containerRef); // { width, height }
+    const viewportSize = useElementSize(containerRef);
 
     // Dashboard topics
     const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances);
@@ -63,7 +63,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
 
                 // Effects
                 setTempLayout: (next: LayoutElement[] | null) => setTempLayout(next),
-                setDraggingOverlay: (dragPos: Vec2 | null, pointer: Vec2 | null) => {
+                setDragAndClientPosition: (dragPos: Vec2 | null, pointer: Vec2 | null) => {
                     setDragPosition(dragPos);
                     setPointerPos(pointer);
                 },
@@ -286,8 +286,8 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
 
                 {/* Modules */}
                 {moduleInstances.map((instance) => {
-                    const lp = computeModuleLayoutProps(instance);
-                    if (!lp) return null;
+                    const layoutProps = computeModuleLayoutProps(instance);
+                    if (!layoutProps) return null;
 
                     const isDragged = draggingModuleId === instance.getId();
                     return (
@@ -298,7 +298,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
                             isDragged={isDragged}
                             dragPosition={dragPosition ?? { x: 0, y: 0 }}
                             changingLayout={!!draggingModuleId || !!tempLayout}
-                            {...lp}
+                            {...layoutProps}
                         />
                     );
                 })}

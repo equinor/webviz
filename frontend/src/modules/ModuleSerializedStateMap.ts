@@ -30,11 +30,11 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
-  "InplaceVolumetricsPlot": {
+  "InplaceVolumesPlot": {
     settings?: never,
     view?: never,
   },
-  "InplaceVolumetricsTable": {
+  "InplaceVolumesTable": {
     settings?: never,
     view?: never,
   },
@@ -54,19 +54,23 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
-  "ParameterCorrelationPlot": {
-    settings?: never,
-    view?: never,
-  },
   "ParameterDistributionMatrix": {
     settings?: never,
     view?: never,
   },
-  "ParameterResponseCrossPlot": {
+  "ParameterResponseCorrelationBarPlot": {
     settings?: never,
     view?: never,
   },
-  "ParameterResponseParallelCoordsPlot": {
+  "ParameterResponseCorrelationMatrixPlot": {
+    settings?: never,
+    view?: never,
+  },
+  "ParameterResponseCorrelationParallelCoordsPlot": {
+    settings?: never,
+    view?: never,
+  },
+  "ParameterResponseCrossPlot": {
     settings?: never,
     view?: never,
   },

@@ -16,6 +16,7 @@ export const LAYOUT_BOX_DROP_MARGIN = 25;
 export const LAYOUT_BOX_RESIZE_MARGIN = 5;
 export const EDGE_DROP_WEIGHT = 50;
 export const EDGE_RESIZE_WEIGHT = 5;
+const EPSILON = 0.0001; // used to compare floating point numbers
 
 export enum LayoutNodeEdgeType {
     TOP = "top",
@@ -53,6 +54,7 @@ export class LayoutNode {
     private _isWrapper: boolean;
     private _parent: LayoutNode | null;
     private _layoutDirection: LayoutDirection;
+    private _isNewInParent: boolean = false;
 
     constructor(
         rect: Rect2D,
@@ -82,38 +84,40 @@ export class LayoutNode {
 
     getRectWithMargin(realSizeFactor: Size2D): Rect2D {
         const absoluteRect = this.getAbsoluteRect();
-        if (this._parent === null) {
-            return {
-                x: absoluteRect.x * realSizeFactor.width + LAYOUT_BOX_DROP_MARGIN * this._level,
-                y: absoluteRect.y * realSizeFactor.height + LAYOUT_BOX_DROP_MARGIN * this._level,
-                width: absoluteRect.width * realSizeFactor.width - LAYOUT_BOX_DROP_MARGIN * 2 * this._level,
-                height: absoluteRect.height * realSizeFactor.height - LAYOUT_BOX_DROP_MARGIN * 2 * this._level,
-            };
+
+        const lvl = this._level;
+        const parentLvl = this._parent?._level ?? lvl;
+
+        let mx = parentLvl;
+        if (this._parent === null || this._parent._layoutDirection === LayoutDirection.HORIZONTAL) {
+            mx = lvl;
         }
-        if (this._parent._layoutDirection === LayoutDirection.HORIZONTAL) {
-            return {
-                x: absoluteRect.x * realSizeFactor.width + LAYOUT_BOX_DROP_MARGIN * this._level,
-                y: absoluteRect.y * realSizeFactor.height + LAYOUT_BOX_DROP_MARGIN * this._parent._level,
-                width: absoluteRect.width * realSizeFactor.width - LAYOUT_BOX_DROP_MARGIN * 2 * this._level,
-                height: absoluteRect.height * realSizeFactor.height - LAYOUT_BOX_DROP_MARGIN * 2 * this._parent._level,
-            };
+
+        let my = parentLvl;
+        if (this._parent === null || this._parent._layoutDirection !== LayoutDirection.HORIZONTAL) {
+            my = lvl;
         }
+
         return {
-            x: absoluteRect.x * realSizeFactor.width + LAYOUT_BOX_DROP_MARGIN * this._parent._level,
-            y: absoluteRect.y * realSizeFactor.height + LAYOUT_BOX_DROP_MARGIN * this._level,
-            width: absoluteRect.width * realSizeFactor.width - LAYOUT_BOX_DROP_MARGIN * 2 * this._parent._level,
-            height: absoluteRect.height * realSizeFactor.height - LAYOUT_BOX_DROP_MARGIN * 2 * this._level,
+            x: absoluteRect.x * realSizeFactor.width + LAYOUT_BOX_DROP_MARGIN * mx,
+            y: absoluteRect.y * realSizeFactor.height + LAYOUT_BOX_DROP_MARGIN * my,
+            width: absoluteRect.width * realSizeFactor.width - LAYOUT_BOX_DROP_MARGIN * 2 * mx,
+            height: absoluteRect.height * realSizeFactor.height - LAYOUT_BOX_DROP_MARGIN * 2 * my,
         };
     }
 
     toString(): string {
-        let text = `LayoutNode(${this._rectRelativeToParent.x}, ${this._rectRelativeToParent.y}, ${this._rectRelativeToParent.width}, ${this._rectRelativeToParent.height})`;
-        let currentParent = this._parent;
-        while (currentParent) {
-            text += currentParent.toString();
-            currentParent = currentParent._parent;
+        const parts: string[] = [];
+
+        /* eslint-disable-next-line @typescript-eslint/no-this-alias */
+        let current: LayoutNode | null = this;
+
+        while (current) {
+            const r = current._rectRelativeToParent;
+            parts.push(`LayoutNode(${r.x}, ${r.y}, ${r.width}, ${r.height})`);
+            current = current._parent;
         }
-        return text;
+        return parts.join(" > ");
     }
 
     log(): string {
@@ -199,7 +203,7 @@ export class LayoutNode {
         const absoluteRect = this.getAbsoluteRect();
         let y = absoluteRect.y;
         while (y < absoluteRect.y + absoluteRect.height) {
-            const elementsAtY = containedElements.filter((layoutElement) => layoutElement.relY === y);
+            const elementsAtY = containedElements.filter((layoutElement) => Math.abs(layoutElement.relY - y) < EPSILON);
             if (elementsAtY.length === 0) {
                 break;
             }
@@ -251,7 +255,7 @@ export class LayoutNode {
         const rasterX: number[] = [];
         let x = absoluteRect.x;
         while (x < absoluteRect.x + absoluteRect.width) {
-            const elementsAtX = containedElements.filter((layoutElement) => layoutElement.relX === x);
+            const elementsAtX = containedElements.filter((layoutElement) => Math.abs(layoutElement.relX - x) < EPSILON);
             if (elementsAtX.length === 0) {
                 break;
             }
@@ -303,12 +307,43 @@ export class LayoutNode {
     }
 
     private reorderChildren() {
+        if (this._children.length === 0) return;
+
+        const isHorizontalLayout = this._layoutDirection === LayoutDirection.HORIZONTAL;
+
+        const existingChildren = this._children.filter((child) => !child._isNewInParent);
+        const newChildren = this._children.filter((child) => child._isNewInParent);
+
+        const sizeOfExistingChildren = existingChildren.reduce(
+            (sum, child) =>
+                sum + (isHorizontalLayout ? child._rectRelativeToParent.width : child._rectRelativeToParent.height),
+            0,
+        );
+
+        const remainingSpace = Math.max(1 - sizeOfExistingChildren, 0);
+
+        const numNewChildren = newChildren.length;
+        const sizePerNewChild = numNewChildren > 0 ? remainingSpace / numNewChildren : 0;
+
+        const totalNewShare = sizePerNewChild * numNewChildren;
+
+        const numExistingChildren = existingChildren.length;
+        const scaleExistingChildren =
+            numExistingChildren > 0 && sizeOfExistingChildren > 0 ? (1 - totalNewShare) / sizeOfExistingChildren : 0;
+
+        let cumulativelyAssignedSize = 0;
+
         if (this._layoutDirection === LayoutDirection.HORIZONTAL) {
             let currentX = 0;
-            // const totalWidth = this.getTotalWidth();
-            const newWidth = 1 / this._children.length;
-            this._children.forEach((child) => {
-                // const newWidth = child._rectRelativeToParent.width / totalWidth;
+            this._children.forEach((child, index) => {
+                let newWidth = child._rectRelativeToParent.width * scaleExistingChildren;
+                if (child._isNewInParent) {
+                    newWidth = sizePerNewChild;
+                }
+                if (index === this._children.length - 1) {
+                    newWidth = 1 - cumulativelyAssignedSize; // Ensure the last child takes up the remaining space
+                }
+                cumulativelyAssignedSize += newWidth;
                 child._rectRelativeToParent = {
                     x: currentX,
                     y: 0,
@@ -320,10 +355,15 @@ export class LayoutNode {
             });
         } else {
             let currentY = 0;
-            // const totalHeight = this.getTotalHeight();
-            const newHeight = 1 / this._children.length;
-            this._children.forEach((child) => {
-                // const newHeight = child._rectRelativeToParent.height / totalHeight;
+            this._children.forEach((child, index) => {
+                let newHeight = child._rectRelativeToParent.height * scaleExistingChildren;
+                if (child._isNewInParent) {
+                    newHeight = sizePerNewChild;
+                }
+                if (index === this._children.length - 1) {
+                    newHeight = 1 - cumulativelyAssignedSize; // Ensure the last child takes up the remaining space
+                }
+                cumulativelyAssignedSize += newHeight;
                 child._rectRelativeToParent = {
                     x: 0,
                     y: currentY,
@@ -333,6 +373,10 @@ export class LayoutNode {
                 child._level = this._level + 1;
                 currentY += newHeight;
             });
+        }
+
+        for (const child of this._children) {
+            child._isNewInParent = false;
         }
     }
 
@@ -578,7 +622,13 @@ export class LayoutNode {
     }
 
     clone(parent: LayoutNode | null = null): LayoutNode {
-        const clone = new LayoutNode(this._rectRelativeToParent, this._layoutDirection, parent, this._level);
+        const rect = this._rectRelativeToParent;
+        const clone = new LayoutNode(
+            { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+            this._layoutDirection,
+            parent,
+            this._level,
+        );
         clone._moduleInstanceId = this._moduleInstanceId;
         clone._moduleName = this._moduleName;
         clone._children = this._children.map((child) => child.clone(clone));
@@ -708,6 +758,7 @@ export class LayoutNode {
                 destination.convertSingleLayoutToWrapper(layoutType);
             }
             if (source._parent !== destination) {
+                source._isNewInParent = true;
                 destination.prependChild(source);
                 source._parent?.removeChild(source);
                 source._parent = destination;
@@ -725,6 +776,7 @@ export class LayoutNode {
                 destination.convertSingleLayoutToWrapper(layoutType);
             }
             if (source._parent !== destination) {
+                source._isNewInParent = true;
                 destination.appendChild(source);
                 source._parent?.removeChild(source);
                 source._parent = destination;
@@ -738,6 +790,7 @@ export class LayoutNode {
         if (edge.edge === LayoutNodeEdgeType.VERTICAL || edge.edge === LayoutNodeEdgeType.HORIZONTAL) {
             const index = destination.positionToIndex(edge.position, [source]);
             if (source._parent !== destination) {
+                source._isNewInParent = true;
                 destination.insertChildAt(source, index);
                 source._parent?.removeChild(source);
                 source._parent = destination;
@@ -759,6 +812,7 @@ export class LayoutNode {
                     edge.edge === LayoutNodeEdgeType.LEFT ? LayoutDirection.HORIZONTAL : LayoutDirection.VERTICAL;
                 destination.convertSingleLayoutToWrapper(layoutType);
             }
+            newBox._isNewInParent = true;
             destination.prependChild(newBox);
             newBox._parent = destination;
             return;
@@ -770,6 +824,7 @@ export class LayoutNode {
                     edge.edge === LayoutNodeEdgeType.RIGHT ? LayoutDirection.HORIZONTAL : LayoutDirection.VERTICAL;
                 destination.convertSingleLayoutToWrapper(layoutType);
             }
+            newBox._isNewInParent = true;
             destination.appendChild(newBox);
             newBox._parent = destination;
             return;
@@ -777,6 +832,7 @@ export class LayoutNode {
 
         if (edge.edge === LayoutNodeEdgeType.VERTICAL || edge.edge === LayoutNodeEdgeType.HORIZONTAL) {
             const index = destination.positionToIndex(edge.position, []);
+            newBox._isNewInParent = true;
             destination.insertChildAt(newBox, index);
             newBox._parent = destination;
             return;
@@ -836,7 +892,7 @@ export class LayoutNode {
         return cur;
     }
 
-    resizeAtDivider(index: number, axis: "vertical" | "horizontal", pos01: number, minFraction: number): void {
+    resizeAtDivider(index: number, axis: "vertical" | "horizontal", pos01: number, minFractions: Size2D): void {
         // Only valid on split containers of the right axis
         const isVerticalSplit = this._layoutDirection === LayoutDirection.HORIZONTAL; // vertical sash between columns
         const isHorizontalSplit = this._layoutDirection === LayoutDirection.VERTICAL; // horizontal sash between rows
@@ -887,7 +943,7 @@ export class LayoutNode {
             const rightEnd = right._rectRelativeToParent.x + right._rectRelativeToParent.width;
 
             // Clamp pos01 within [leftStart + min, rightEnd - min]
-            const min = minFraction;
+            const min = minFractions.width;
             const newPos = Math.max(leftStart + min, Math.min(rightEnd - min, pos01));
 
             const newLeftWidth = newPos - leftStart;
@@ -904,7 +960,7 @@ export class LayoutNode {
             const topStart = top._rectRelativeToParent.y;
             const bottomEnd = bottom._rectRelativeToParent.y + bottom._rectRelativeToParent.height;
 
-            const min = minFraction;
+            const min = minFractions.height;
             const newPos = Math.max(topStart + min, Math.min(bottomEnd - min, pos01));
 
             const newTopHeight = newPos - topStart;
