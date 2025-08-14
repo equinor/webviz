@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 
@@ -26,54 +26,65 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const surfaceAddress = props.viewContext.useSettingsToViewInterfaceValue("surfaceAddress");
 
     const statusWriter = useViewStatusWriter(props.viewContext);
+    const [hybridProgressText, setHybridProgressText] = React.useState<string | null>(null);
 
     //const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "png", null, true);
     //const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, true);
 
 
-    const surfDataQuery_general = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, surfaceAddress?.addressType !== "STAT");
+    let activeQueryType : "normal" | "hybrid" | null = null;
+    if (surfaceAddress) {
+        activeQueryType = surfaceAddress.addressType === "STAT" ? "hybrid" : "normal";
+    }
+
+    const surfDataQuery_normal = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, activeQueryType === "normal");
 
 
-    const queryFnOptions: Options<GetStatisticalSurfaceDataHybridData_api, false> = {
+    const hybrid_apiFunctionArgs: Options<GetStatisticalSurfaceDataHybridData_api, false> = {
         query: {
             surf_addr_str: surfaceAddress ? encodeSurfAddrStr(surfaceAddress) : "DUMMY",
         },
     };
-    const queryKey = getStatisticalSurfaceDataHybridQueryKey(queryFnOptions);
+    const hybrid_queryKey = getStatisticalSurfaceDataHybridQueryKey(hybrid_apiFunctionArgs);
 
     function handleProgress(progressMessage: string | null) {
+        console.debug("handleProgress()");
         if (progressMessage) {
             console.debug(`PROGRESS: ${progressMessage}`);
-            statusWriter.setDebugMessage(`PROGRESS: ${progressMessage}`);
+            setHybridProgressText(progressMessage);
         }
     }
 
-    const wrappedQuery = wrapLongRunningQuery({
+    const hybrid_queryOptions = wrapLongRunningQuery({
         queryFn: getStatisticalSurfaceDataHybrid,
-        queryFnArgs: queryFnOptions,
-        queryKey: queryKey,
+        queryFnArgs: hybrid_apiFunctionArgs,
+        queryKey: hybrid_queryKey,
         pollIntervalMs: 500,
         maxRetries: 240,
         onProgress: handleProgress
     });
 
-    const surfDataQuery_stat = useQuery({ ...wrappedQuery, enabled: surfaceAddress?.addressType === "STAT" });
+    const surfDataQuery_hybrid = useQuery({ ...hybrid_queryOptions, enabled: activeQueryType === "hybrid" });
 
 
+    const activeSurfDataQuery = (activeQueryType === "hybrid") ? surfDataQuery_hybrid : surfDataQuery_normal;
 
-    const isLoading = surfDataQuery_general.isFetching;
+    const isLoading = activeSurfDataQuery.isFetching;
     statusWriter.setLoading(isLoading);
+    if (!isLoading && hybridProgressText) {
+        setHybridProgressText(null);
+    }
 
-    const hasError = surfDataQuery_general.isError;
-    usePropagateApiErrorToStatusWriter(surfDataQuery_general, statusWriter);
+    const hasError = activeSurfDataQuery.isError;
+    usePropagateApiErrorToStatusWriter(activeSurfDataQuery, statusWriter);
 
 
     let surfData: SurfaceDataFloat_trans | undefined = undefined;
-    if (surfDataQuery_general?.data) {
-        surfData = surfDataQuery_general.data;
+    if (surfDataQuery_normal?.data) {
+        surfData = surfDataQuery_normal.data;
     }
-    else if (surfDataQuery_stat?.data) {
-        surfData = transformSurfaceData(surfDataQuery_stat.data) as SurfaceDataFloat_trans;
+    else if (surfDataQuery_hybrid?.data) {
+        surfData = transformSurfaceData(surfDataQuery_hybrid.data) as SurfaceDataFloat_trans;
     }
 
     return (
@@ -81,7 +92,7 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
             {hasError ? (
                 <ContentError>Error loading surface data</ContentError>
             ) : isLoading ? (
-                <ContentInfo>Loading surface data</ContentInfo>
+                <ContentInfo>Loading surface data... {hybridProgressText ?? ""}</ContentInfo>
             ) : !surfData ? (
                 <ContentInfo>Could not find surface data for the current selection</ContentInfo>
             ) : (
