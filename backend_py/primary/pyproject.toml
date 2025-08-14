@@ -10,10 +10,10 @@ requires-poetry = ">=2.1"
 package-mode = false
 
 [tool.poetry.dependencies]
-fastapi = "^0.115.12"
+fastapi = "^0.116.1"
 uvicorn = "^0.34.3"
 msal = "^1.32.0"
-starsessions = "^2.1.2"
+starsessions = "^2.2.1"
 redis = "^4.6.0"
 pyarrow = "^19.0.0"
 python-dotenv = "^1.1.0"
