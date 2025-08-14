@@ -158,6 +158,9 @@ function Tags(props: { tags: string[] }): React.ReactNode {
 export const View = (props: ModuleViewProps<Interfaces>) => {
     const alternateColColors = props.viewContext.useSettingsToViewInterfaceValue("alternateColColors");
     const allowMultiSelect = props.viewContext.useSettingsToViewInterfaceValue("allowMultiSelect");
+    const numPending = props.viewContext.useSettingsToViewInterfaceValue("numPendingRows");
+    const fillPendingData = props.viewContext.useSettingsToViewInterfaceValue("fillPendingData");
+
     const tableData = props.viewContext.useSettingsToViewInterfaceValue("tableData");
 
     const [tableSortingState, setTableSortingState] = React.useState<TableSorting>([]);
@@ -231,7 +234,8 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
 
             <Table
                 rowIdentifier="id"
-                height={600}
+                maxHeight={"50%"}
+                numPendingRows={fillPendingData ? "fill" : numPending}
                 columns={TABLE_COLUMNS}
                 rows={tableData}
                 alternatingColumnColors={alternateColColors}

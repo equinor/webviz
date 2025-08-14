@@ -1,12 +1,15 @@
 import React from "react";
 
-import { isEmpty, orderBy } from "lodash";
+import { isEmpty, orderBy, range } from "lodash";
 import { v4 } from "uuid";
 
+import { useElementSize } from "@lib/hooks/useElementSize";
+
+import { ROW_HEIGHT_PX } from "./constants";
 import { TableBody } from "./private-components/tableBody";
 import { TableColGroups } from "./private-components/tableColGroups";
 import { TableHead } from "./private-components/tableHead";
-import type { TableFilters, TableSorting, TableData, TableColumns, TableDataWithKey } from "./types";
+import type { TableFilters, TableSorting, TableColumns, TableDataWithKey } from "./types";
 import {
     computeTableMinWidth,
     defaultDataFilterPredicate,
@@ -21,7 +24,13 @@ export type TableProps<T extends Record<string, any>> = {
     columns: TableColumns<T>;
 
     /** Each row of tabular data */
-    rows: TableData<T>[];
+    rows: T[];
+
+    /**
+     * The amount of pending rows to display at the bottom of the table.
+     * If the string "fill" is provided, the table will add enough rows to fill the entire table
+     */
+    numPendingRows?: number | "fill";
 
     /**
      * Specifies a unique field for each data entry. This value is the one returned in selects, clicks, hovers, etc.
@@ -33,6 +42,7 @@ export type TableProps<T extends Record<string, any>> = {
     controlledCollation?: boolean;
 
     height?: number | string;
+    maxHeight?: number | string;
     width?: number | string;
 
     /** Colors every other column group with darker cells */
@@ -92,6 +102,7 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
     const { onHover, onRowHover } = props;
 
     const divWrapperRef = React.useRef<HTMLDivElement>(null);
+    const wrapperSize = useElementSize(divWrapperRef);
 
     const tableCellDefinitions = React.useMemo(() => {
         return recursivelyBuildTableCellDefinitions(props.columns);
@@ -114,16 +125,53 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
     const [tableSortState, setTableSortState] = useOptInControlledValue([], props.sorting, props.onSortingChange);
     const [tableFilterState, setTableFilterState] = useOptInControlledValue({}, props.filters, props.onFiltersChange);
 
-    const rowsWithKey = React.useMemo<TableDataWithKey<T>[]>(() => {
-        return props.rows.map((r, i) => {
-            if (!isLoadedDataRow(r)) return { _key: `__pending-${i}`, _pending: true };
+    // Table height can be defined using css strings (for instance 50%). If the table should
+    // be filled with pending rows, we need it to be grow to it's full height on the first
+    // render so we can compute how many rows it can fit.
+    const preferredHeight = React.useMemo(() => {
+        if (props.numPendingRows === "fill") {
+            return props.height ?? props.maxHeight ?? "100%";
+        }
 
+        return props.height;
+    }, [props.height, props.maxHeight, props.numPendingRows]);
+
+    const numberOfPendingRows = React.useMemo(() => {
+        if (!props.numPendingRows) {
+            return 0;
+        }
+        if (props.numPendingRows === "fill") {
+            const numHeaderRows = tableCellDefinitions.headerCells.length;
+            const numFilterRows = tableCellDefinitions.filterCells.length ? 1 : 0;
+
+            const maxRowsInTable = Math.floor(wrapperSize.height / ROW_HEIGHT_PX);
+
+            return Math.max(0, maxRowsInTable - numHeaderRows - numFilterRows - props.rows.length);
+        }
+
+        return props.numPendingRows;
+    }, [
+        props.numPendingRows,
+        props.rows.length,
+        tableCellDefinitions.filterCells.length,
+        tableCellDefinitions.headerCells.length,
+        wrapperSize.height,
+    ]);
+
+    const rowsWithKey = React.useMemo<TableDataWithKey<T>[]>(() => {
+        const dataRowsWithKeys = props.rows.map<TableDataWithKey<T>>((r) => {
             const key = !props.rowIdentifier ? v4() : r[props.rowIdentifier];
             if (!key) throw Error(`Empty value for row identifier "${String(props.rowIdentifier)}`);
 
             return { ...r, _key: String(key) };
         });
-    }, [props.rows, props.rowIdentifier]);
+
+        const pendingDataRows = range(0, numberOfPendingRows).map<TableDataWithKey<T>>((n) => {
+            return { _key: `__pending-${n}`, _pending: true };
+        });
+
+        return dataRowsWithKeys.concat(pendingDataRows);
+    }, [props.rows, props.rowIdentifier, numberOfPendingRows]);
 
     const [prevRowsWithKeys, setPrevRowsWithKeys] = React.useState(rowsWithKey);
 
@@ -193,8 +241,12 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
         <>
             <div
                 ref={divWrapperRef}
-                className="relative overflow-auto border-y-2 border-slate-200"
-                style={{ maxHeight: props.height, width: props.width }}
+                className="relative overflow-auto border-t-2 border-slate-200"
+                style={{
+                    height: preferredHeight,
+                    maxHeight: props.maxHeight,
+                    width: props.width,
+                }}
             >
                 <table className="w-full text-sm table-fixed" style={{ minWidth: tableMinWidth }}>
                     {/* Create col-groups based on the top-level columns */}

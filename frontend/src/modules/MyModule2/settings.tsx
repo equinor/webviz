@@ -6,11 +6,18 @@ import { useAtom } from "jotai";
 import { Label } from "@lib/components/Label";
 import { Switch } from "@lib/components/Switch";
 
-import { allowMultiSelectAtom, alternateColColorsAtom, amtOfDataAtom, amtOfPendingDataAtom } from "./atoms";
+import {
+    allowMultiSelectAtom,
+    alternateColColorsAtom,
+    amtOfDataAtom,
+    amtOfPendingDataAtom,
+    fillPendingDataAtom,
+} from "./atoms";
 
 export function Settings(): React.ReactNode {
     const [alternateCols, setAlternateCols] = useAtom(alternateColColorsAtom);
     const [allowMultiSelect, setAllowMultiSelect] = useAtom(allowMultiSelectAtom);
+    const [fillPendingData, setFillPendingData] = useAtom(fillPendingDataAtom);
 
     const [amtOfData, setAmtOfData] = useAtom(amtOfDataAtom);
     const [amtOfPendingData, setAmtOfPendingData] = useAtom(amtOfPendingDataAtom);
@@ -32,6 +39,7 @@ export function Settings(): React.ReactNode {
             </Label>
             <Label text="Rows of pending data" position="left">
                 <NumberInput
+                    disabled={fillPendingData}
                     slotProps={{
                         input: {
                             className: "input-comp border rounded px-2 py-1 w-full",
@@ -43,7 +51,9 @@ export function Settings(): React.ReactNode {
                     onChange={(evt, v) => setAmtOfPendingData(v ?? 0)}
                 />
             </Label>
-
+            <Label text="Fill with pending data rows" position="left">
+                <Switch checked={fillPendingData} onChange={(e) => setFillPendingData(e.target.checked)} />
+            </Label>
             <Label text="Alternating columns" position="left">
                 <Switch checked={alternateCols} onChange={(e) => setAlternateCols(e.target.checked)} />
             </Label>

@@ -10,10 +10,10 @@ import type {
     FilterCellDef,
     HeaderCellDef,
     TableCellDefinitions,
-    LoadedData,
     TableColumn,
-    TableData,
     TableColumns,
+    TableDataWithKey,
+    LoadedDataWithKey,
 } from "./types";
 
 export function isColumnGroupDef<TData extends Record<string, any>>(
@@ -22,7 +22,9 @@ export function isColumnGroupDef<TData extends Record<string, any>>(
     return "subColumns" in headerOrGroup;
 }
 
-export function isLoadedDataRow<TData extends Record<string, any>>(data: TableData<TData>): data is LoadedData<TData> {
+export function isLoadedDataRow<TData extends Record<string, any>>(
+    data: TableDataWithKey<TData>,
+): data is LoadedDataWithKey<TData> {
     if (data._pending) return false;
     return true;
 }

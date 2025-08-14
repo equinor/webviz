@@ -63,10 +63,6 @@ export type CustomColumnFilter<TData extends Record<string, any>, TDataKey exten
     ) => boolean;
 };
 
-export type PendingData = { _pending: true };
-export type LoadedData<TData extends Record<string, any>> = TData;
-export type TableData<TData extends Record<string, any>> = PendingData | LoadedData<TData>;
-
 export type PendingDataWithKey = { _key: string; _pending: true };
 export type LoadedDataWithKey<TData extends Record<string, any>> = { _key: string } & TData;
 export type TableDataWithKey<TData extends Record<string, any>> = PendingDataWithKey | LoadedDataWithKey<TData>;
