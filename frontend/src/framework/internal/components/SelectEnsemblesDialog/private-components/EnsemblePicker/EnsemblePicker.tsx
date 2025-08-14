@@ -19,6 +19,7 @@ import { Select } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
 import { Table } from "@lib/components/Table";
 import type { TableFilters } from "@lib/components/Table/types";
+import { TagPicker } from "@lib/components/TagPicker";
 import { useValidState } from "@lib/hooks/useValidState";
 
 import type { InternalRegularEnsembleSetting } from "../../types";
@@ -67,7 +68,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
         ...(showOnlyOfficialCases && { status: ["official"] }),
     });
 
-    const casteTableColumns = React.useMemo(() => {
+    const caseTableColumns = React.useMemo(() => {
         const disabledFilterComponents = {
             disableAuthorComponent: showOnlyMyCases,
             disableStatusComponent: showOnlyOfficialCases,
@@ -114,6 +115,14 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
             setCurrentStatusOptions(uniqueStatuses);
         }
     }
+
+    const caseStandardResults = React.useMemo(() => {
+        if (!casesQuery.data) {
+            return [];
+        }
+        // return makeCaseStandardResults(casesQuery.data);
+        return ["inplace_volumes", "timeseries", "seismic_surface", "seismic_grid"];
+    }, [casesQuery]);
 
     const caseRowData = React.useMemo(() => {
         if (!casesQuery.data) {
@@ -205,6 +214,10 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
         setSelectedField(fieldIdentifier);
     }
 
+    function handleFilterByStandardResultsChange(selected: string[]) {
+        setSelectedStandardResults(selected);
+    }
+
     function handleOnSelectRowsChange(caseIds: string[]) {
         setSelectedCaseId((prev) => caseIds?.[0] ?? prev);
     }
@@ -254,26 +267,35 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
                     errorComponent={<div className="text-red-500">Error loading cases</div>}
                     loadingComponent={<CircularProgress />}
                 >
-                    <div className="flex justify-end gap-4 items-center">
-                        <span className="grow text-sm text-slate-500">Select from {caseRowData.length} cases</span>
-                        <Label position="right" text="Official" title="Show only cases marked as official">
-                            <Switch checked={showOnlyOfficialCases} onChange={handleOfficialCasesSwitchChange} />
-                        </Label>
-                        <Label position="right" text="My cases" title="Show only my cases">
-                            <Switch checked={showOnlyMyCases} onChange={handleCasesByMeChange} />
-                        </Label>
+                    <div className="flex flex-col gap-4">
+                        <TagPicker
+                            placeholder="Filter by Standard Results ..."
+                            // showTags={false}
+                            tags={caseStandardResults.map((elm) => ({ label: elm, value: elm }))}
+                            value={selectedStandardResults}
+                            onChange={handleFilterByStandardResultsChange}
+                        />
+                        <div className="flex justify-end gap-4 items-center">
+                            <span className="grow text-sm text-slate-500">Select from {caseRowData.length} cases</span>
+                            <Label position="right" text="Official" title="Show only cases marked as official">
+                                <Switch checked={showOnlyOfficialCases} onChange={handleOfficialCasesSwitchChange} />
+                            </Label>
+                            <Label position="right" text="My cases" title="Show only my cases">
+                                <Switch checked={showOnlyMyCases} onChange={handleCasesByMeChange} />
+                            </Label>
+                        </div>
+                        <Table
+                            rowIdentifier="caseId"
+                            height={500}
+                            columns={caseTableColumns}
+                            rows={caseRowData}
+                            selectedRows={["selectedCaseUuid"]}
+                            filters={tableFiltersState}
+                            selectable
+                            onSelectedRowsChange={handleOnSelectRowsChange}
+                            onFiltersChange={handleFiltersChange}
+                        />
                     </div>
-                    <Table
-                        rowIdentifier="caseId"
-                        height={500}
-                        columns={casteTableColumns}
-                        rows={caseRowData}
-                        selectedRows={["selectedCaseUuid"]}
-                        filters={tableFiltersState}
-                        selectable
-                        onSelectedRowsChange={handleOnSelectRowsChange}
-                        onFiltersChange={handleFiltersChange}
-                    />
                 </QueryStateWrapper>
             </Label>
             <Label text="Ensemble">

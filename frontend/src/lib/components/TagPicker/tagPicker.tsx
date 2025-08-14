@@ -8,7 +8,6 @@ import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 
-
 import type { BaseComponentProps } from "../BaseComponent";
 import { BaseComponent } from "../BaseComponent";
 import { Checkbox } from "../Checkbox";
@@ -23,6 +22,10 @@ export type TagOption<T> = {
 export type TagPickerProps<T> = {
     id?: string;
     wrapperId?: string;
+    placeholder?: string;
+
+    /** Determines whether to show the selected tags or text @default true */
+    showTags?: boolean;
     tags: TagOption<T>[];
     value: T[];
     onChange?: (value: T[]) => void;
@@ -260,22 +263,34 @@ export function TagPickerComponent<T>(
                 style={{ width: props.width }}
                 id={props.wrapperId}
                 ref={divRef}
-                className={resolveClassNames("flex w-full border p-1 px-2 rounded-sm text-sm shadow-xs input-comp", {
-                    "outline outline-blue-500": focused,
-                })}
+                className={resolveClassNames(
+                    "flex w-full border p-1.5 px-2 rounded-sm text-sm shadow-xs input-comp bg-white",
+                    {
+                        "outline outline-blue-500": focused,
+                    },
+                )}
                 onClick={handleClick}
             >
                 <div className="min-h-6 grow flex gap-2 justify-start flex-wrap">
-                    {selectedTags.map((tag) => {
-                        const tagOption = props.tags.find((el) => el.value === tag);
-                        if (!tagOption) {
-                            return null;
-                        }
-                        return <Tag key={`${tag}`} tag={tagOption} onRemove={() => removeTag(tag)} />;
-                    })}
+                    {props.showTags !== false &&
+                        selectedTags.map((tag) => {
+                            const tagOption = props.tags.find((el) => el.value === tag);
+                            if (!tagOption) {
+                                return null;
+                            }
+                            return <Tag key={`${tag}`} tag={tagOption} onRemove={() => removeTag(tag)} />;
+                        })}
+
                     <input
                         ref={inputRef}
-                        className="grow outline-hidden min-w-0 h-8 w-0"
+                        className="grow outline-hidden min-w-0 w-0"
+                        placeholder={
+                            props.placeholder && selectedTags.length === 0
+                                ? props.placeholder
+                                : props.showTags === false
+                                  ? `${selectedTags.length}/${props.tags.length} selected`
+                                  : ""
+                        }
                         onClick={handleInputClick}
                         onChange={handleInputChange}
                         onFocus={handleFocus}
@@ -283,11 +298,13 @@ export function TagPickerComponent<T>(
                         value={filter ?? ""}
                     />
                 </div>
-                <div className="h-8 flex flex-col justify-center cursor-pointer">
+                <div className="flex flex-col justify-center cursor-pointer">
                     {selectedTags.length === 0 ? (
-                        <ExpandMore fontSize="inherit" />
+                        <IconButton size="small" title="Expand">
+                            <ExpandMore fontSize="inherit" />
+                        </IconButton>
                     ) : (
-                        <IconButton onClick={handleClearAll} title="Clear selection">
+                        <IconButton size="small" onClick={handleClearAll} title="Clear selection">
                             <Close fontSize="inherit" />
                         </IconButton>
                     )}

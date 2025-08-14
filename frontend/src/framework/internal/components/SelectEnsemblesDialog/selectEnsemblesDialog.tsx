@@ -68,8 +68,10 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const colorSet = useColorSet(props.workbench.getWorkbenchSession().getWorkbenchSettings());
     const currentHash = makeHashFromSelectedEnsembles(selectedRegularEnsembles, selectedDeltaEnsembles);
 
-    if (!isEqual(prevEnsembleSet, ensembleSet)) {
-        setPrevEnsembleSet(ensembleSet);
+    const setEnsembleStatesFromEnsembleSet = React.useCallback(() => {
+        if (!ensembleSet) {
+            return;
+        }
 
         const regularEnsembles = makeRegularEnsembleSettingsFromEnsembleSet(ensembleSet);
         const deltaEnsembles = makeDeltaEnsembleSettingsFromEnsembleSet(ensembleSet);
@@ -79,6 +81,12 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         setSelectedDeltaEnsembles(deltaEnsembles);
         setSelectableEnsemblesForDelta(selectableEnsembles);
         setHash(makeHashFromSelectedEnsembles(regularEnsembles, deltaEnsembles));
+    }, [ensembleSet]);
+
+    // Initialize states from ensemble set
+    if (!isEqual(prevEnsembleSet, ensembleSet)) {
+        setPrevEnsembleSet(ensembleSet);
+        setEnsembleStatesFromEnsembleSet();
     }
 
     const nextEnsembleColor = React.useMemo(() => {
@@ -96,10 +104,16 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         return colorSet.getColor(usedColors.length % colorSet.getColorArray().length);
     }, [selectedDeltaEnsembles, selectedRegularEnsembles, colorSet]);
 
-    function handleClose() {
-        setConfirmCancel(false);
-        setIsOpen(false);
-    }
+    const handleClose = React.useCallback(
+        function handleClose() {
+            // Reset states when discard/close
+            setEnsembleStatesFromEnsembleSet();
+            setConfirmCancel(false);
+            setIsOpen(false);
+            setShowEnsemblePicker(false);
+        },
+        [setEnsembleStatesFromEnsembleSet, setConfirmCancel, setIsOpen, setShowEnsemblePicker],
+    );
 
     function handleCancel() {
         if (currentHash === hash) {
@@ -140,6 +154,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             });
         }
 
+        // TODO: Ensure valid regular ensembles? loadAndSetupEnsembleSet takes type UserEnsembleSetting, but we pass InternalRegularEnsembleSetting
         workbenchSession.loadAndSetupEnsembleSet(selectedRegularEnsembles, validDeltaEnsembles).then(() => {
             setIsOpen(false);
         });

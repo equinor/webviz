@@ -1,8 +1,9 @@
-import { Autocomplete, DateRangePicker } from "@equinor/eds-core-react";
+import { DateRangePicker } from "@equinor/eds-core-react";
 import { Close } from "@mui/icons-material";
 
 import { Input } from "@lib/components/Input";
 import type { TableColumns } from "@lib/components/Table/types";
+import { TagPicker } from "@lib/components/TagPicker";
 import type { CaseInfo_api } from "src/api/autogen/types.gen";
 
 import { UserAvatar } from "../userAvatar";
@@ -85,13 +86,12 @@ export function makeCaseTableColumns(
             sizeInPercent: 15,
             filter: {
                 render: (props) => (
-                    <Autocomplete
-                        selectedOptions={props.value ?? []}
-                        multiple={true}
-                        options={statusOptions}
+                    <TagPicker
+                        value={(props.value as string[]) ?? []}
+                        showTags={false}
+                        tags={statusOptions.map((elm) => ({ label: elm, value: elm }))}
                         disabled={disabledFilterComponents.disableStatusComponent}
-                        onOptionsChange={({ selectedItems }) => props.onFilterChange(selectedItems)}
-                        label={null}
+                        onChange={(selectedItems) => props.onFilterChange(selectedItems)}
                     />
                 ),
                 predicate: (selectedItems: string[], dataValue) => predicateStatusSelection(selectedItems, dataValue),

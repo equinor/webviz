@@ -23,7 +23,6 @@ export type DeltaEnsembleRowProps = {
     deltaEnsembleSetting: InternalDeltaEnsembleSetting;
     regularEnsembleOptions: RegularEnsembleOption[];
     isDuplicate: boolean;
-    isValid: boolean;
     onUpdate: (newItem: InternalDeltaEnsembleSetting) => void;
     onDelete: (item: InternalDeltaEnsembleSetting) => void;
     onRequestOtherComparisonEnsemble: (item: InternalDeltaEnsembleSetting) => void;
@@ -114,12 +113,14 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
         props.onDelete(props.deltaEnsembleSetting);
     }
 
+    const isValid =
+        !!props.deltaEnsembleSetting.comparisonEnsembleIdent && !!props.deltaEnsembleSetting.referenceEnsembleIdent;
+
     return (
         <tr
             className={resolveClassNames("align-center ", {
-                "hover:bg-red-50 odd:bg-red-200 even:bg-red-300": !props.isValid,
-                "hover:bg-blue-50 odd:bg-blue-200 even:bg-blue-300": props.isValid && props.isDuplicate,
-                "hover:bg-slate-100 odd:bg-slate-50": props.isValid && !props.isDuplicate,
+                "hover:bg-blue-50 odd:bg-blue-200 even:bg-blue-300": isValid && props.isDuplicate,
+                "hover:bg-slate-100 odd:bg-slate-50": !props.isDuplicate,
             })}
         >
             <td className="p-2">
@@ -134,14 +135,16 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
             </td>
             <td className="p-2">
                 <Dropdown
-                    value={comparisonEnsValue}
+                    value={comparisonEnsValue ?? ""}
+                    placeholder="Select comparison ensemble..."
                     options={ensembleDropdownOptions}
                     onChange={onComparisonEnsembleChange}
                 />
             </td>
             <td className="p-2">
                 <Dropdown
-                    value={referenceEnsValue}
+                    value={referenceEnsValue ?? ""}
+                    placeholder="Select reference ensemble..."
                     options={ensembleDropdownOptions}
                     onChange={onReferenceEnsembleChange}
                 />

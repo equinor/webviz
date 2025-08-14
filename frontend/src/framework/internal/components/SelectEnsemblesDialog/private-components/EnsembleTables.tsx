@@ -84,28 +84,13 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
     }
 
     function handleCreateDeltaEnsemble() {
-        let referenceEnsembleIdent = null;
-        let comparisonEnsembleIdent = null;
-        if (props.selectedRegularEnsembles.length === 1) {
-            referenceEnsembleIdent = props.selectedRegularEnsembles[0].ensembleIdent;
-            comparisonEnsembleIdent = props.selectedRegularEnsembles[0].ensembleIdent;
-        }
-        if (props.selectedRegularEnsembles.length >= 2) {
-            referenceEnsembleIdent = props.selectedRegularEnsembles[0].ensembleIdent;
-            comparisonEnsembleIdent = props.selectedRegularEnsembles[1].ensembleIdent;
-        }
-
         props.onCreateDeltaEnsemble({
             uuid: v4(),
             color: props.nextEnsembleColor,
-            comparisonEnsembleIdent: comparisonEnsembleIdent,
-            referenceEnsembleIdent: referenceEnsembleIdent,
+            comparisonEnsembleIdent: null,
+            referenceEnsembleIdent: null,
             customName: null,
         });
-    }
-
-    function isValidDelta(deltaEnsemble: InternalDeltaEnsembleSetting): boolean {
-        return !!deltaEnsemble.comparisonEnsembleIdent && !!deltaEnsemble.referenceEnsembleIdent;
     }
 
     return (
@@ -192,7 +177,6 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                                         deltaEnsembleSetting={deltaItem}
                                         regularEnsembleOptions={regularEnsembleOptionsForDelta}
                                         isDuplicate={isDuplicateDelta(deltaItem)}
-                                        isValid={isValidDelta(deltaItem)}
                                         onUpdate={props.onUpdateDeltaEnsemble}
                                         onDelete={props.onRemoveDeltaEnsemble}
                                         onRequestOtherComparisonEnsemble={props.onRequestOtherComparisonEnsemble}
