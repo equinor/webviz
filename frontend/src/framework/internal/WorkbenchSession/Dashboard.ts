@@ -290,8 +290,6 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
         this._atomStoreMaster.removeAtomStoreForModuleInstance(moduleInstanceId);
 
-        const newLayout = this._layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
-        this.setLayout(newLayout);
         if (this._activeModuleInstanceId === moduleInstanceId) {
             this._activeModuleInstanceId = null;
         }

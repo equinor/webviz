@@ -1,7 +1,8 @@
 /* eslint-disable no-console */
-import { getDebugSetting, setDebugSetting } from "@framework/internal/utils/debug";
 import { formatHex } from "culori";
 import { isArray } from "lodash";
+
+import { getDebugSetting, setDebugSetting } from "@framework/internal/utils/debug";
 
 let colorIndex = 0;
 
@@ -169,6 +170,10 @@ class GlobalLog {
             this.setLoggerEnabled(name, false);
             return `Logger "${name}" disabled.`;
         };
+
+        if (this._enabledLoggers.has(name)) {
+            this.getLogger(name).enable();
+        }
 
         return this.getLogger(name);
     }

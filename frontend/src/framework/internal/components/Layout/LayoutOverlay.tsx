@@ -29,6 +29,9 @@ export function LayoutOverlay(props: LayoutOverlayProps) {
     const activeBox = props.pointer ? props.root.findBoxContainingPoint(props.pointer, props.realSize) : null;
 
     const makeBoxEdges = (box: LayoutNode) => {
+        if (props.realSize.width === 0 || props.realSize.height === 0) {
+            return null;
+        }
         const edges: LayoutNodeEdge[] = box.getEdgeRects(props.realSize, EDGE_DROP_WEIGHT, LAYOUT_BOX_DROP_MARGIN);
         let hoveredEdge: Rect2D | null = null;
         if (props.active && props.active !== box.getModuleInstanceId() && activeBox === box) {

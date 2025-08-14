@@ -16,7 +16,23 @@ export const LAYOUT_BOX_DROP_MARGIN = 25;
 export const LAYOUT_BOX_RESIZE_MARGIN = 5;
 export const EDGE_DROP_WEIGHT = 50;
 export const EDGE_RESIZE_WEIGHT = 5;
-const EPSILON = 0.0001; // used to compare floating point numbers
+
+const EPSILON = 1e-6;
+
+function nearlyEqual(a: number, b: number, epsilon: number = EPSILON): boolean {
+    return Math.abs(a - b) <= epsilon;
+}
+
+function dedupeWithEpsilon(sortedNumbers: number[], epsilon: number = EPSILON): number[] {
+    const result: number[] = [];
+    for (let i = 0; i < sortedNumbers.length; i++) {
+        const value = sortedNumbers[i];
+        if (i === 0 || !nearlyEqual(value, sortedNumbers[i - 1], epsilon)) {
+            result.push(value);
+        }
+    }
+    return result;
+}
 
 export enum LayoutNodeEdgeType {
     TOP = "top",
@@ -168,6 +184,175 @@ export class LayoutNode {
         return newRect;
     }
 
+    private findVerticalCuts(elements: LayoutElement[], parentBox: Rect2D): number[] {
+        // collect all candidate x positions (tile edges + parent edges)
+        const candidateEdges: number[] = [];
+        candidateEdges.push(parentBox.x);
+        candidateEdges.push(parentBox.x + parentBox.width);
+
+        for (const element of elements) {
+            const left = element.relX;
+            const right = element.relX + element.relWidth;
+            candidateEdges.push(left);
+            candidateEdges.push(right);
+        }
+
+        candidateEdges.sort((a, b) => a - b);
+        const uniqueEdges: number[] = dedupeWithEpsilon(candidateEdges);
+
+        const cuts: number[] = [];
+        for (const xCut of uniqueEdges) {
+            let crosses = false;
+            for (const el of elements) {
+                const left = el.relX;
+                const right = el.relX + el.relWidth;
+                if (left + EPSILON < xCut && xCut < right - EPSILON) {
+                    crosses = true;
+                    break;
+                }
+            }
+            if (!crosses) cuts.push(xCut);
+        }
+
+        return cuts;
+    }
+
+    private findHorizontalCuts(elements: LayoutElement[], parentBox: Rect2D): number[] {
+        const candidateEdges: number[] = [];
+        candidateEdges.push(parentBox.y);
+        candidateEdges.push(parentBox.y + parentBox.height);
+
+        for (const element of elements) {
+            const top = element.relY;
+            const bottom = element.relY + element.relHeight;
+            candidateEdges.push(top);
+            candidateEdges.push(bottom);
+        }
+
+        candidateEdges.sort((a, b) => a - b);
+        const uniqueEdges: number[] = dedupeWithEpsilon(candidateEdges);
+
+        const cuts: number[] = [];
+        for (const yCut of uniqueEdges) {
+            let crosses = false;
+            for (const el of elements) {
+                const top = el.relY;
+                const bottom = el.relY + el.relHeight;
+                if (top + EPSILON < yCut && yCut < bottom - EPSILON) {
+                    crosses = true;
+                    break;
+                }
+            }
+            if (!crosses) cuts.push(yCut);
+        }
+
+        return cuts;
+    }
+
+    private buildVerticalSegments(
+        elements: LayoutElement[],
+        parent: Rect2D,
+        verticalCuts: number[],
+    ): { rect: Rect2D; elements: LayoutElement[] }[] {
+        if (verticalCuts.length === 0) {
+            return [];
+        }
+
+        const sortedCuts: number[] = [...verticalCuts].sort((a, b) => a - b);
+        const boundaries: number[] = [parent.x, ...sortedCuts, parent.x + parent.width];
+
+        const segments: { rect: Rect2D; elements: LayoutElement[] }[] = [];
+
+        for (let i = 0; i < boundaries.length - 1; i++) {
+            const left = boundaries[i];
+            const right = boundaries[i + 1];
+            const width = right - left;
+            if (width <= EPSILON) {
+                continue;
+            }
+
+            const segmentRect: Rect2D = {
+                x: left,
+                y: parent.y,
+                width: width,
+                height: parent.height,
+            };
+
+            const elementsInSegment: LayoutElement[] = [];
+            for (const element of elements) {
+                const elLeft = element.relX;
+                const elRight = element.relX + element.relWidth;
+                const elTop = element.relY;
+                const elBottom = element.relY + element.relHeight;
+
+                const insideHorizontally = elLeft >= left - EPSILON && elRight <= right + EPSILON;
+                const insideVertically = elTop >= parent.y - EPSILON && elBottom <= parent.y + parent.height + EPSILON;
+
+                if (insideHorizontally && insideVertically) {
+                    elementsInSegment.push(element);
+                }
+            }
+
+            if (elementsInSegment.length > 0) {
+                segments.push({ rect: segmentRect, elements: elementsInSegment });
+            }
+        }
+
+        return segments;
+    }
+
+    private buildHorizontalSegments(
+        elements: LayoutElement[],
+        parent: Rect2D,
+        horizontalCuts: number[],
+    ): { rect: Rect2D; elements: LayoutElement[] }[] {
+        if (horizontalCuts.length === 0) {
+            return [];
+        }
+
+        const sortedCuts: number[] = [...horizontalCuts].sort((a, b) => a - b);
+        const boundaries: number[] = [parent.y, ...sortedCuts, parent.y + parent.height];
+
+        const segments: { rect: Rect2D; elements: LayoutElement[] }[] = [];
+
+        for (let i = 0; i < boundaries.length - 1; i++) {
+            const top = boundaries[i];
+            const bottom = boundaries[i + 1];
+            const height = bottom - top;
+            if (height <= EPSILON) {
+                continue;
+            }
+
+            const segmentRect: Rect2D = {
+                x: parent.x,
+                y: top,
+                width: parent.width,
+                height: height,
+            };
+
+            const elementsInSegment: LayoutElement[] = [];
+            for (const element of elements) {
+                const elLeft = element.relX;
+                const elRight = element.relX + element.relWidth;
+                const elTop = element.relY;
+                const elBottom = element.relY + element.relHeight;
+
+                const insideHorizontally = elLeft >= parent.x - EPSILON && elRight <= parent.x + parent.width + EPSILON;
+                const insideVertically = elTop >= top - EPSILON && elBottom <= bottom + EPSILON;
+
+                if (insideHorizontally && insideVertically) {
+                    elementsInSegment.push(element);
+                }
+            }
+
+            if (elementsInSegment.length > 0) {
+                segments.push({ rect: segmentRect, elements: elementsInSegment });
+            }
+        }
+
+        return segments;
+    }
+
     makeChildren(containedElements: LayoutElement[]) {
         if (containedElements.length === 0) {
             return;
@@ -185,6 +370,7 @@ export class LayoutNode {
                 );
                 childBox._isWrapper = true;
                 childBox.makeChildren(elementsInRect);
+                childBox.reorderChildren();
                 this._children.push(childBox);
                 return;
             }
@@ -196,140 +382,106 @@ export class LayoutNode {
             }
             return;
         }
-        const layoutBoxes: LayoutNode[] = [];
 
-        // First try to rasterize vertically
-        const rasterY: number[] = [];
-        const absoluteRect = this.getAbsoluteRect();
-        let y = absoluteRect.y;
-        while (y < absoluteRect.y + absoluteRect.height) {
-            const elementsAtY = containedElements.filter((layoutElement) => Math.abs(layoutElement.relY - y) < EPSILON);
-            if (elementsAtY.length === 0) {
-                break;
+        const parentRect = this.getAbsoluteRect();
+        const verticalCuts: number[] = this.findVerticalCuts(containedElements, parentRect);
+        const horizontalCuts: number[] = this.findHorizontalCuts(containedElements, parentRect);
+
+        const chooseVertical = verticalCuts.length > horizontalCuts.length;
+        const chooseHorizontal = horizontalCuts.length > verticalCuts.length;
+
+        const tie = verticalCuts.length === horizontalCuts.length;
+
+        if (chooseVertical || (tie && verticalCuts.length > 0)) {
+            const segments = this.buildVerticalSegments(containedElements, parentRect, verticalCuts);
+            if (segments.length > 1) {
+                const children: LayoutNode[] = [];
+
+                for (const segment of segments) {
+                    const childRect = this.transformRectToRelative(segment.rect);
+
+                    const child = new LayoutNode(childRect, LayoutDirection.VERTICAL, this, this._level + 1);
+
+                    child.makeChildren(segment.elements);
+                    child.reorderChildren();
+                    children.push(child);
+                }
+
+                this._children = children;
+
+                if (this._layoutDirection === LayoutDirection.MAIN) {
+                    this._layoutDirection = LayoutDirection.VERTICAL;
+                    const wrapper = new LayoutNode(
+                        this._rectRelativeToParent,
+                        LayoutDirection.HORIZONTAL,
+                        this,
+                        1,
+                        this._children,
+                    );
+                    this._children.forEach((child) => (child._parent = wrapper));
+                    this._level = 0;
+                    this.setChildren([wrapper]);
+                }
             }
-            const maxHeight = Math.max(...elementsAtY.map((layoutElement) => layoutElement.relHeight));
-            y += maxHeight;
-            rasterY.push(y);
         }
 
-        if (rasterY.length > 1) {
-            let lastY = absoluteRect.y;
-            rasterY.forEach((y) => {
-                const rect: Rect2D = {
-                    x: absoluteRect.x,
-                    y: lastY,
-                    width: absoluteRect.width,
-                    height: y - lastY,
-                };
-                const elementsInRect = containedElements.filter((layoutElement) =>
-                    outerRectContainsInnerRect(rect, layoutElementToRect(layoutElement)),
-                );
-                const childBox = new LayoutNode(
-                    this.transformRectToRelative(rect),
-                    LayoutDirection.HORIZONTAL,
-                    this,
-                    this._level + 1,
-                );
-                childBox.makeChildren(elementsInRect);
-                layoutBoxes.push(childBox);
-                lastY = y;
-            });
-            this._children = layoutBoxes;
-            if (this._layoutDirection === LayoutDirection.MAIN) {
-                this._layoutDirection = LayoutDirection.HORIZONTAL;
-                const wrapper = new LayoutNode(
-                    this._rectRelativeToParent,
-                    LayoutDirection.VERTICAL,
-                    this,
-                    1,
-                    this._children,
-                );
-                this._children.forEach((child) => (child._parent = wrapper));
-                this._level = 0;
-                this.setChildren([wrapper]);
-            }
-            return;
-        }
+        if (chooseHorizontal || (tie && horizontalCuts.length > 0)) {
+            const segments = this.buildHorizontalSegments(containedElements, parentRect, horizontalCuts);
+            if (segments.length > 1) {
+                const children: LayoutNode[] = [];
 
-        // Then try to rasterize horizontally
-        const rasterX: number[] = [];
-        let x = absoluteRect.x;
-        while (x < absoluteRect.x + absoluteRect.width) {
-            const elementsAtX = containedElements.filter((layoutElement) => Math.abs(layoutElement.relX - x) < EPSILON);
-            if (elementsAtX.length === 0) {
-                break;
-            }
-            const maxWidth = Math.max(...elementsAtX.map((layoutElement) => layoutElement.relWidth));
-            x += maxWidth;
-            rasterX.push(x);
-        }
+                for (const segment of segments) {
+                    const childRect = this.transformRectToRelative(segment.rect);
 
-        if (rasterX.length > 1) {
-            let lastX = absoluteRect.x;
-            rasterX.forEach((x) => {
-                const rect: Rect2D = {
-                    x: lastX,
-                    y: absoluteRect.y,
-                    width: x - lastX,
-                    height: absoluteRect.height,
-                };
-                const elementsInRect = containedElements.filter((layoutElement) =>
-                    outerRectContainsInnerRect(rect, layoutElementToRect(layoutElement)),
-                );
-                const childBox = new LayoutNode(
-                    this.transformRectToRelative(rect),
-                    LayoutDirection.VERTICAL,
-                    this,
-                    this._level + 1,
-                );
-                childBox.makeChildren(elementsInRect);
-                layoutBoxes.push(childBox);
-                lastX = x;
-            });
-            this._children = layoutBoxes;
-            if (this._layoutDirection === LayoutDirection.MAIN) {
-                this._layoutDirection = LayoutDirection.VERTICAL;
-                const wrapper = new LayoutNode(
-                    this._rectRelativeToParent,
-                    LayoutDirection.HORIZONTAL,
-                    this,
-                    1,
-                    this._children,
-                );
-                this._children.forEach((child) => (child._parent = wrapper));
-                this._level = 0;
-                this.setChildren([wrapper]);
-            }
-            return;
-        }
+                    const child = new LayoutNode(childRect, LayoutDirection.HORIZONTAL, this, this._level + 1);
 
-        this._children = layoutBoxes;
+                    child.makeChildren(segment.elements);
+                    child.reorderChildren();
+                    children.push(child);
+                }
+
+                this._children = children;
+
+                if (this._layoutDirection === LayoutDirection.MAIN) {
+                    this._layoutDirection = LayoutDirection.HORIZONTAL;
+                    const wrapper = new LayoutNode(
+                        this._rectRelativeToParent,
+                        LayoutDirection.VERTICAL,
+                        this,
+                        1,
+                        this._children,
+                    );
+                    this._children.forEach((child) => (child._parent = wrapper));
+                    this._level = 0;
+                    this.setChildren([wrapper]);
+                }
+            }
+        }
     }
 
     private reorderChildren() {
         if (this._children.length === 0) return;
 
-        const isHorizontalLayout = this._layoutDirection === LayoutDirection.HORIZONTAL;
+        const isHorizontalSplit = this._layoutDirection === LayoutDirection.HORIZONTAL;
 
         const existingChildren = this._children.filter((child) => !child._isNewInParent);
+        const numExistingChildren = existingChildren.length;
         const newChildren = this._children.filter((child) => child._isNewInParent);
+        const nTotal = existingChildren.length + newChildren.length;
 
-        const sizeOfExistingChildren = existingChildren.reduce(
-            (sum, child) =>
-                sum + (isHorizontalLayout ? child._rectRelativeToParent.width : child._rectRelativeToParent.height),
+        const evenSharePerChild = 1.0 / nTotal;
+
+        const currentSizeOfExistingChildren = existingChildren.reduce(
+            (acc, child) =>
+                acc + (isHorizontalSplit ? child._rectRelativeToParent.width : child._rectRelativeToParent.height),
             0,
         );
+        const spaceAvailableForExistingChildren = numExistingChildren * evenSharePerChild;
 
-        const remainingSpace = Math.max(1 - sizeOfExistingChildren, 0);
-
-        const numNewChildren = newChildren.length;
-        const sizePerNewChild = numNewChildren > 0 ? remainingSpace / numNewChildren : 0;
-
-        const totalNewShare = sizePerNewChild * numNewChildren;
-
-        const numExistingChildren = existingChildren.length;
         const scaleExistingChildren =
-            numExistingChildren > 0 && sizeOfExistingChildren > 0 ? (1 - totalNewShare) / sizeOfExistingChildren : 0;
+            numExistingChildren > 0 && currentSizeOfExistingChildren > 0
+                ? spaceAvailableForExistingChildren / currentSizeOfExistingChildren
+                : 0;
 
         let cumulativelyAssignedSize = 0;
 
@@ -338,7 +490,7 @@ export class LayoutNode {
             this._children.forEach((child, index) => {
                 let newWidth = child._rectRelativeToParent.width * scaleExistingChildren;
                 if (child._isNewInParent) {
-                    newWidth = sizePerNewChild;
+                    newWidth = evenSharePerChild;
                 }
                 if (index === this._children.length - 1) {
                     newWidth = 1 - cumulativelyAssignedSize; // Ensure the last child takes up the remaining space
@@ -358,7 +510,7 @@ export class LayoutNode {
             this._children.forEach((child, index) => {
                 let newHeight = child._rectRelativeToParent.height * scaleExistingChildren;
                 if (child._isNewInParent) {
-                    newHeight = sizePerNewChild;
+                    newHeight = evenSharePerChild;
                 }
                 if (index === this._children.length - 1) {
                     newHeight = 1 - cumulativelyAssignedSize; // Ensure the last child takes up the remaining space
@@ -758,9 +910,9 @@ export class LayoutNode {
                 destination.convertSingleLayoutToWrapper(layoutType);
             }
             if (source._parent !== destination) {
+                source._parent?.removeChild(source);
                 source._isNewInParent = true;
                 destination.prependChild(source);
-                source._parent?.removeChild(source);
                 source._parent = destination;
             } else {
                 destination._children = [source, ...destination._children.filter((child) => child !== source)];
@@ -776,9 +928,9 @@ export class LayoutNode {
                 destination.convertSingleLayoutToWrapper(layoutType);
             }
             if (source._parent !== destination) {
+                source._parent?.removeChild(source);
                 source._isNewInParent = true;
                 destination.appendChild(source);
-                source._parent?.removeChild(source);
                 source._parent = destination;
             } else {
                 destination._children = [...destination._children.filter((child) => child !== source), source];
@@ -790,9 +942,9 @@ export class LayoutNode {
         if (edge.edge === LayoutNodeEdgeType.VERTICAL || edge.edge === LayoutNodeEdgeType.HORIZONTAL) {
             const index = destination.positionToIndex(edge.position, [source]);
             if (source._parent !== destination) {
+                source._parent?.removeChild(source);
                 source._isNewInParent = true;
                 destination.insertChildAt(source, index);
-                source._parent?.removeChild(source);
                 source._parent = destination;
             } else {
                 const otherElements = destination._children.filter((child) => child !== source);
@@ -1022,6 +1174,6 @@ export class LayoutNode {
 
 export function makeLayoutNodes(layoutElements: LayoutElement[]): LayoutNode {
     const root = new LayoutNode({ x: 0, y: 0, width: 1, height: 1 }, LayoutDirection.MAIN, null, 1);
-    root.makeChildren(layoutElements); // reuse your existing rasterization logic
+    root.makeChildren(layoutElements);
     return root;
 }
