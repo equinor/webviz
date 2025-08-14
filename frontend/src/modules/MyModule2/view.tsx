@@ -1,10 +1,7 @@
 import React from "react";
 
-import { useQuery } from "@tanstack/react-query";
 import { inRange } from "lodash";
 
-import type { WellboreHeader_api } from "@api";
-import { getDrilledWellboreHeadersOptions } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { Button } from "@lib/components/Button";
 import { Table } from "@lib/components/Table";
@@ -19,28 +16,6 @@ import { ToggleButton } from "@lib/components/ToggleButton";
 
 import type { ExampleTabularData } from "./atoms";
 import type { Interfaces } from "./interfaces";
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const TABLE_COLUMNS_2: TableColumns<WellboreHeader_api> = [
-    {
-        _type: "data",
-        columnId: "uniqueWellboreIdentifier",
-        label: "Wellbore",
-        sizeInPercent: 40,
-    },
-    {
-        _type: "data",
-        columnId: "uniqueWellIdentifier",
-        label: "Well",
-        sizeInPercent: 30,
-    },
-    {
-        _type: "data",
-        columnId: "wellboreStatus",
-        label: "Status",
-        sizeInPercent: 30,
-    },
-];
 
 const TABLE_COLUMNS: TableColumns<ExampleTabularData> = [
     {
@@ -203,12 +178,6 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
         setUsingTheCoolFilters(false);
         setTableFilterState(newFilter);
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const wellQuery = useQuery({
-        ...getDrilledWellboreHeadersOptions({ query: { field_identifier: "JOHAN SVERDRUP" } }),
-        enabled: Boolean(false),
-    });
 
     return (
         <div className="h-full w-full flex flex-col">
