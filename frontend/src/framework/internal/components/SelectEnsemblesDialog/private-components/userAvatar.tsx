@@ -9,22 +9,22 @@ import { getUserPhotoOptions } from "@api";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
 export type UserAvatarProps = {
-    userId: string;
+    userEmail: string;
 };
 
-function useUserInfoQuery(userId: string): UseQueryResult<GraphUserPhoto_api> {
+function useUserInfoQuery(userEmail: string): UseQueryResult<GraphUserPhoto_api> {
     return useQuery({
         ...getUserPhotoOptions({
             query: {
-                user_id: userId,
+                user_email: userEmail,
             },
         }),
-        enabled: userId !== "",
+        enabled: userEmail !== "",
     });
 }
 
 export const UserAvatar: React.FC<UserAvatarProps> = (props) => {
-    const userInfo = useUserInfoQuery(props.userId);
+    const userInfo = useUserInfoQuery(props.userEmail);
 
     if (userInfo.isFetching) {
         return <CircularProgress size="medium-small" className="mr-1" />;
@@ -36,12 +36,12 @@ export const UserAvatar: React.FC<UserAvatarProps> = (props) => {
                 src={`data:image/png;base64,${userInfo.data.avatar_b64str}`}
                 alt="Avatar"
                 className="w-5 h-5 rounded-full mr-1"
-                title={props.userId}
+                title={props.userEmail}
             />
         );
     }
     return (
-        <span title={props.userId}>
+        <span title={props.userEmail}>
             <AccountCircle className="w-5 h-5 mr-1" />
         </span>
     );

@@ -2,7 +2,7 @@ import logging
 from typing import Any, Optional
 
 import pyarrow as pa
-from fmu.dataio._models.fmu_results.enums import StandardResultName
+from fmu.datamodels.standard_results.enums import StandardResultName
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 

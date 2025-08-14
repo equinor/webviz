@@ -1164,7 +1164,7 @@ export const getPolygonsData = <ThrowOnError extends boolean = false>(
 
 /**
  * Get User Photo
- * Get username, display name and avatar from Microsoft Graph API for a given user id
+ * Get username, display name and avatar from Microsoft Graph API for a given user email
  */
 export const getUserPhoto = <ThrowOnError extends boolean = false>(
     options: Options<GetUserPhotoData_api, ThrowOnError>,
