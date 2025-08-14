@@ -1,5 +1,3 @@
-import React from "react";
-
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 
@@ -59,10 +57,17 @@ export function defaultDataFilterPredicate<TData extends Record<string, any | nu
 
 export function recursivelyBuildTableCellDefinitions<TData extends Record<string, any>>(
     tableColumns: TableColumns<TData>,
-    depth: number = 0,
-    maxDepth = recursivelyCalcDepth(tableColumns),
+) {
+    const maxDepth = recursivelyCalcDepth(tableColumns);
+
+    return doRecursivelyBuildTableCellDefinitions(tableColumns, 0, maxDepth, []);
+}
+function doRecursivelyBuildTableCellDefinitions<TData extends Record<string, any>>(
+    tableColumns: TableColumns<TData>,
+    depth: number,
+    maxDepth: number,
     // ! Object is mutated as the method runs
-    headerCells: HeaderCellDef[][] = [],
+    headerCells: HeaderCellDef[][],
 ): TableCellDefinitions<TData> {
     const dataCells: DataCellDef<TData, any>[] = [];
     const filterCells: FilterCellDef<TData>[] = [];
@@ -73,7 +78,7 @@ export function recursivelyBuildTableCellDefinitions<TData extends Record<string
 
     for (const tableColumn of tableColumns) {
         if (isColumnGroupDef(tableColumn)) {
-            const nestedDef = recursivelyBuildTableCellDefinitions(
+            const nestedDef = doRecursivelyBuildTableCellDefinitions(
                 tableColumn.subColumns,
                 depth + 1,
                 maxDepth,
@@ -193,25 +198,4 @@ export function computeTableMinWidth(colGroups: ColGroupDef[]) {
     }
 
     return minWidth;
-}
-
-export function useOptInControlledValue<TValue>(
-    initialValue: TValue,
-    controlledProp: TValue | undefined,
-    onValueChange?: (newValue: TValue) => void,
-): [TValue, (newValue: TValue) => void] {
-    const useLocalValue = controlledProp === undefined;
-
-    const [localValue, setLocalValue] = React.useState<TValue>(initialValue);
-
-    const value = useLocalValue ? localValue : controlledProp;
-    const setValue = React.useCallback(
-        function setValue(newValue: TValue) {
-            if (useLocalValue) setLocalValue(newValue);
-            onValueChange?.(newValue);
-        },
-        [useLocalValue, onValueChange],
-    );
-
-    return [value, setValue];
 }

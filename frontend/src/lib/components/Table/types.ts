@@ -105,6 +105,7 @@ export type TableCellDefinitions<TData extends Record<string, any>> = {
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 // - Table collation definitions - --- --- --- --- --- --- --- --- --- --- ---
 export enum SortDirection {
+    // We use the "asc" and "desc" strings here so they can be provided to lodash's sorting function later on
     ASC = "asc",
     DESC = "desc",
 }

@@ -6,6 +6,7 @@ import { v4 } from "uuid";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { ROW_HEIGHT_PX } from "./constants";
+import { useOptInControlledValue } from "./hooks";
 import { TableBody } from "./private-components/tableBody";
 import { TableColGroups } from "./private-components/tableColGroups";
 import { TableHead } from "./private-components/tableHead";
@@ -16,7 +17,6 @@ import {
     isLoadedDataRow,
     recursivelyBuildTableCellDefinitions,
     recursivelyBuildTableColumnGroups,
-    useOptInControlledValue,
 } from "./utils";
 
 export type TableProps<T extends Record<string, any>> = {
@@ -60,6 +60,9 @@ export type TableProps<T extends Record<string, any>> = {
     sorting?: TableSorting;
     /** Filter values for one ore more table columns */
     filters?: TableFilters;
+
+    /** Allow sorting on multiple columns at the same time */
+    multiColumnSort?: boolean;
 
     /** Callback for when the sorting order changes */
     onSortingChange?: (newValue: TableSorting) => void;
@@ -161,7 +164,10 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
     const rowsWithKey = React.useMemo<TableDataWithKey<T>[]>(() => {
         const dataRowsWithKeys = props.rows.map<TableDataWithKey<T>>((r) => {
             const key = !props.rowIdentifier ? v4() : r[props.rowIdentifier];
-            if (!key) throw Error(`Empty value for row identifier "${String(props.rowIdentifier)}`);
+            if (!key)
+                throw Error(
+                    `Row identifier field "${String(props.rowIdentifier)}" is empty for row. Ensure all data rows have a valid value for the specified identifier field.`,
+                );
 
             return { ...r, _key: String(key) };
         });
@@ -189,12 +195,11 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
         if (isEmpty(tableFilterState)) return rowsWithKey;
 
         return rowsWithKey.filter((row) => {
-            // ? Unsure why it couldn't infer correctly here
-            if (!isLoadedDataRow<T>(row)) return true;
+            if (!isLoadedDataRow(row)) return true;
 
             for (const columnId in tableFilterState) {
                 if (!(columnId in row)) {
-                    console.warn(`Attempting to filter data on column ${columnId}, which doesnt exist`);
+                    console.warn(`Attempting to filter data on column ${columnId}, which doesn't exist`);
                     continue;
                 }
 
@@ -256,6 +261,7 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
                     />
 
                     <TableHead
+                        multiColumnSort={props.multiColumnSort}
                         wrapperElement={divWrapperRef}
                         headerCellDefinitions={tableCellDefinitions.headerCells}
                         filterCellDefinitions={tableCellDefinitions.filterCells}
@@ -279,6 +285,12 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
                         onVisibleRowRangeChange={props.onVisibleRowRangeChange}
                     />
                 </table>
+
+                {/* 
+                    We fake the border at the bottom of the table so it still shows when elements overflow
+                    (but still follows the table body height when dealing with locked table-heights)    
+                */}
+                <div className="border-b-2 sticky b-0" />
             </div>
         </>
     );

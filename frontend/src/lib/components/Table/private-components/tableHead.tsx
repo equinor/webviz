@@ -23,7 +23,7 @@ function getSortingForColumn(
 ): undefined | { index: number; direction: SortDirection } {
     const settingIndex = columnSortSettings.findIndex((s) => s.columnId === columnId);
 
-    if (settingIndex < 0) return;
+    if (settingIndex < 0) return undefined;
 
     return {
         direction: columnSortSettings[settingIndex].direction,
@@ -72,7 +72,7 @@ function toggleSortDirection(currentDirection: SortDirection | undefined): SortD
 type HeaderCellProps = {
     alternatingColumnColors: boolean | undefined;
     columnSortSettings: ColumnSorting[];
-    onSortHeader: (columnId: string, direction: SortDirection | undefined, additive: boolean) => void;
+    onSortHeader: (columnId: string, direction: SortDirection | undefined, useMultiSort: boolean) => void;
 } & HeaderCellDef;
 
 function HeaderCell(props: HeaderCellProps) {
@@ -87,9 +87,9 @@ function HeaderCell(props: HeaderCellProps) {
         if (!props.sortable) return;
 
         const newDirection = toggleSortDirection(columnSort?.direction);
-        const additive = evt.shiftKey;
+        const useMultiSort = evt.ctrlKey;
 
-        props.onSortHeader(props.columnId, newDirection, additive);
+        props.onSortHeader(props.columnId, newDirection, useMultiSort);
     }
 
     return (
@@ -118,7 +118,7 @@ export type TableHeadProps<T extends Record<string, any>> = {
     wrapperElement: React.RefObject<HTMLElement>;
     headerCellDefinitions: TableCellDefinitions<T>["headerCells"];
     filterCellDefinitions: TableCellDefinitions<T>["filterCells"];
-
+    multiColumnSort?: boolean;
     alternatingColumnColors: boolean | undefined;
     tableSortState: TableSorting;
     tableFilterState: TableFilters;
@@ -133,22 +133,21 @@ export function TableHead<T extends Record<string, any>>(props: TableHeadProps<T
     const hasFilters = props.filterCellDefinitions.some((def) => def.enabled);
 
     const handleColumnSortChange = React.useCallback(
-        function handleColumnSortChange(columnId: string, direction: SortDirection | undefined, additive: boolean) {
-            let newSettings: TableSorting;
+        function handleColumnSortChange(columnId: string, direction: SortDirection | undefined, useMultiSort: boolean) {
+            const isMultiSort = useMultiSort && props.multiColumnSort;
 
-            if (!additive) {
-                if (!direction) newSettings = [];
-                else newSettings = [{ columnId, direction }];
-            } else {
-                const filteredSettings = props.tableSortState.filter((s) => s.columnId != columnId);
+            let newSettings: TableSorting = isMultiSort ? props.tableSortState : [];
 
-                if (!direction) newSettings = filteredSettings;
-                else newSettings = [...filteredSettings, { columnId, direction }];
+            // The entry might be in the list, so we remove it.
+            newSettings = newSettings.filter((s) => s.columnId !== columnId);
+
+            if (direction) {
+                newSettings.push({ columnId, direction });
             }
 
             onTableSortStateChange(newSettings);
         },
-        [props.tableSortState, onTableSortStateChange],
+        [props.multiColumnSort, props.tableSortState, onTableSortStateChange],
     );
 
     const handleTableFilterChange = React.useCallback(
@@ -166,8 +165,8 @@ export function TableHead<T extends Record<string, any>>(props: TableHeadProps<T
     );
 
     return (
-        // TODO: Fix styling for sticky header. Border collapse doesn't play nice with it
-        // Applying outline as a hack for the missing borders
+        // ! Border styles. border-collapse and sticky headers doesn't play nice, so the borders
+        // ! vanish when it floats. Using outlines here instead as a workaround
         <thead className="select-none border-b-2 border-slate-400 shadow sticky top-0 z-10 [&_th]:outline [&_th]:outline-slate-300">
             {props.headerCellDefinitions.map((headerRow, index) => (
                 <tr key={`header-row-depth${index}`} style={{ height: HEADER_HEIGHT_PX }}>
@@ -185,7 +184,6 @@ export function TableHead<T extends Record<string, any>>(props: TableHeadProps<T
                 </tr>
             ))}
 
-            {/* TODO: Clean up code, and let options define custom filters */}
             {hasFilters && (
                 <tr className="bg-slate-200" style={{ height: HEADER_HEIGHT_PX }}>
                     {props.filterCellDefinitions.map((filterDef) => {
@@ -235,7 +233,8 @@ function FilterCell<T extends Record<string, any>>(props: FilterCellProps<T>): R
 function defaultFilterRender(props: ColumnFilterImplementationProps<string>) {
     const value = props.value ?? "";
 
-    if (value && typeof value !== "string") throw Error("Default filter expects string value");
+    if (value && typeof value !== "string")
+        throw Error(`Default filter expects string value, but received type '${typeof value}'`);
 
     return (
         <Input

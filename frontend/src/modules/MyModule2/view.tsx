@@ -1,7 +1,10 @@
 import React from "react";
 
+import { useQuery } from "@tanstack/react-query";
 import { inRange } from "lodash";
 
+import type { WellboreHeader_api } from "@api";
+import { getDrilledWellboreHeadersOptions } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { Button } from "@lib/components/Button";
 import { Table } from "@lib/components/Table";
@@ -16,6 +19,28 @@ import { ToggleButton } from "@lib/components/ToggleButton";
 
 import type { ExampleTabularData } from "./atoms";
 import type { Interfaces } from "./interfaces";
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const TABLE_COLUMNS_2: TableColumns<WellboreHeader_api> = [
+    {
+        _type: "data",
+        columnId: "uniqueWellboreIdentifier",
+        label: "Wellbore",
+        sizeInPercent: 40,
+    },
+    {
+        _type: "data",
+        columnId: "uniqueWellIdentifier",
+        label: "Well",
+        sizeInPercent: 30,
+    },
+    {
+        _type: "data",
+        columnId: "wellboreStatus",
+        label: "Status",
+        sizeInPercent: 30,
+    },
+];
 
 const TABLE_COLUMNS: TableColumns<ExampleTabularData> = [
     {
@@ -178,26 +203,14 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
         setTableFilterState(newFilter);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const wellQuery = useQuery({
+        ...getDrilledWellboreHeadersOptions({ query: { field_identifier: "JOHAN SVERDRUP" } }),
+        enabled: Boolean(false),
+    });
+
     return (
         <div className="h-full w-full flex flex-col">
-            {/* 
-            <h3 className="mt-6 font-extrabold text-lg">New (un-controlled)</h3>
-            <Table
-                rowIdentifier="id"
-                height={300}
-                columnDefMap={TABLE_DEFINITION}
-                rows={tableData as TableRowData<ColumnDefMap>[]}
-                alternatingColumnColors={alternateColColors}
-                selectable
-                multiSelect={allowMultiSelect}
-                // Listening to the internal changes, and make them update the controlled component
-                onSortingChange={setTableSortingState}
-                onFiltersChange={handleFilterUpdate}
-                onSelectedRowsChange={setSelectedRows}
-                onRowHover={setHoveredItem}
-            />
-             */}
-
             <h3 className="mt-6 font-extrabold text-lg">New (controlled)</h3>
 
             <div className="flex">
@@ -234,7 +247,7 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
 
             <Table
                 rowIdentifier="id"
-                maxHeight={"50%"}
+                height={"50%"}
                 numPendingRows={fillPendingData ? "fill" : numPending}
                 columns={TABLE_COLUMNS}
                 rows={tableData}
@@ -242,6 +255,7 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
                 sorting={tableSortingState}
                 filters={tableFilterState}
                 selectable
+                multiColumnSort
                 multiSelect={allowMultiSelect}
                 onSortingChange={setTableSortingState}
                 onFiltersChange={handleFilterUpdate}
@@ -249,7 +263,6 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
                 onRowHover={setHoveredItem}
                 onVisibleRowRangeChange={(start, end) => setScrollRange([start, end])}
             />
-
             <div className="mt-4 text-xs italic text-gray-600 grid grid-cols-3 w-full">
                 <span>Hovered: {hoveredItem ?? "None"}</span>
                 <span className="text-center">[{scrollRange?.join(", ")}]</span>

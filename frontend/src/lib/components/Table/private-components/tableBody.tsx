@@ -102,7 +102,7 @@ export function TableBody<T extends Record<string, any>>(props: TableBodyProps<T
             />
 
             {props.rows.length === 0 && (
-                <tr style={{ height: ROW_HEIGHT_PX * 2.5 }}>
+                <tr className="border-b-2 border-inherit" style={{ height: ROW_HEIGHT_PX * 2.5 }}>
                     <td
                         className="text-lg italic text-slate-600 text-center align-middle"
                         colSpan={props.dataCellDefinitions.length}
