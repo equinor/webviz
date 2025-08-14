@@ -1,3 +1,4 @@
+import time
 import logging
 from typing import Literal
 from dataclasses import dataclass
@@ -44,6 +45,7 @@ class TaskMetaTrackerFactory:
 @dataclass(frozen=True, kw_only=True)
 class TaskMeta:
     task_system: str
+    start_time_utc_s: float
     final_outcome: Literal["success", "failure"] | None = None
     expected_store_key: str | None = None
 
@@ -57,8 +59,13 @@ class TaskMetaTracker:
         self._redis_client: redis.Redis = redis_client
         self._ttl_s: int = ttl_s
 
-    async def register_task_async(self, task_system: str, task_id: str, expected_store_key: str | None) -> None:
+    async def register_task_async(
+        self, task_system: str, task_id: str, task_start_time_utc_s: float | None, expected_store_key: str | None
+    ) -> None:
         redis_hash_name = self._make_full_redis_key_for_task(task_id)
+
+        if task_start_time_utc_s is None:
+            task_start_time_utc_s = time.time()
 
         # Use hsetnx to provoke an error if an entry for this task id already exists
         res = await self._redis_client.hsetnx(name=redis_hash_name, key="taskSystem", value=task_system)
@@ -72,15 +79,21 @@ class TaskMetaTracker:
         await self._redis_client.hset(
             name=redis_hash_name,
             mapping={
+                "startTimeUtcS": task_start_time_utc_s,
                 "expectedStoreKey": expected_store_key if expected_store_key else "",
             },
         )
 
     async def register_task_with_fingerprint_async(
-        self, task_system: str, task_id: str, fingerprint: str, expected_store_key: str | None
+        self,
+        task_system: str,
+        task_id: str,
+        fingerprint: str,
+        task_start_time_utc_s: float | None,
+        expected_store_key: str | None,
     ) -> None:
         # Register the task itself in the usual way
-        await self.register_task_async(task_system, task_id, expected_store_key)
+        await self.register_task_async(task_system, task_id, task_start_time_utc_s, expected_store_key)
 
         # Register the mapping from task fingerprint to task id
         # May want to set a shorter TTL for this entry
@@ -95,6 +108,8 @@ class TaskMetaTracker:
 
         task_system: str = value_dict.get("taskSystem", "UNKNOWN")
 
+        task_start_time_utc_s: float = _to_float_safe(value_dict.get("startTimeUtcS", None), 0.0)
+
         expected_store_key: str | None = value_dict.get("expectedStoreKey", None)
         if expected_store_key == "":
             expected_store_key = None
@@ -108,6 +123,7 @@ class TaskMetaTracker:
 
         return TaskMeta(
             task_system=task_system,
+            start_time_utc_s=task_start_time_utc_s,
             final_outcome=final_outcome,
             expected_store_key=expected_store_key,
         )
@@ -126,6 +142,16 @@ class TaskMetaTracker:
 
     def _make_full_redis_key_for_fingerprint(self, fingerprint: str) -> str:
         return f"{_REDIS_KEY_PREFIX}:user:{self._user_id}:fingerprint_to_task_map:{fingerprint}"
+
+
+def _to_float_safe(str_value: str | None, default: float) -> float:
+    if str_value is None:
+        return default
+
+    try:
+        return float(str_value)
+    except (ValueError, TypeError):
+        return default
 
 
 def get_task_meta_tracker_for_user(authenticated_user: AuthenticatedUser) -> TaskMetaTracker:

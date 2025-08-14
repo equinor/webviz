@@ -1,5 +1,5 @@
 import asyncio
-import datetime
+import time
 import logging
 from hashlib import sha256
 from typing import Annotated, List, Optional, Literal
@@ -209,6 +209,7 @@ async def get_surface_data(
 
     return surf_data_response
 
+
 ################################################################
 ################################################################
 ################################################################
@@ -244,9 +245,11 @@ async def get_statistical_surface_data_hybrid(
     access = SurfaceAccess.from_iteration_name(access_token, addr.case_uuid, addr.ensemble_name)
 
     new_sumo_job_was_submitted = False
+    task_start_time_utc_s: float
     if sumo_task_id is None:
         LOGGER.info("SUBMITTING new SUMO TASK!!!!!!!!!!!!!!!!")
         service_stat_func_to_compute = StatisticFunction.from_string_value(addr.stat_function)
+        task_start_time_utc_s = time.time()
         sumo_task_id = await access.SUBMIT_get_statistical_surface_data_async(
             statistic_function=service_stat_func_to_compute,
             name=addr.name,
@@ -256,10 +259,22 @@ async def get_statistical_surface_data_hybrid(
         )
 
         if not sumo_task_id:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to submit new task for computing statistical surface")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to submit new task for computing statistical surface",
+            )
 
         new_sumo_job_was_submitted = True
-        await task_tracker.register_task_with_fingerprint_async(task_system="sumo_task", task_id=sumo_task_id, fingerprint=param_hash, expected_store_key=None)
+        await task_tracker.register_task_with_fingerprint_async(
+            task_system="sumo_task",
+            task_id=sumo_task_id,
+            fingerprint=param_hash,
+            task_start_time_utc_s=task_start_time_utc_s,
+            expected_store_key=None,
+        )
+    else:
+        task_meta = await task_tracker.get_task_meta_async(task_id=sumo_task_id)
+        task_start_time_utc_s = task_meta.start_time_utc_s if task_meta else 0
 
     try:
         trigger_dummy_exception = False
@@ -267,11 +282,15 @@ async def get_statistical_surface_data_hybrid(
             if addr.stat_function == "STD":
                 return LroFailureResp(status="failure", error=LroErrorInfo(message="Dummy error message"))
             if addr.stat_function == "MIN":
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Details of dummy exception")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Details of dummy exception"
+                )
             if addr.stat_function == "MAX":
                 trigger_dummy_exception = True
 
-        xtgeo_surf = await access.POLL_get_statistical_surface_data_async(sumo_task_id=sumo_task_id, timeout_s=0, trigger_dummy_exception=trigger_dummy_exception)
+        xtgeo_surf = await access.POLL_get_statistical_surface_data_async(
+            sumo_task_id=sumo_task_id, timeout_s=0, trigger_dummy_exception=trigger_dummy_exception
+        )
         if xtgeo_surf:
             api_surf_data: schemas.SurfaceDataFloat | schemas.SurfaceDataPng
             if data_format == "float":
@@ -280,21 +299,23 @@ async def get_statistical_surface_data_hybrid(
                 api_surf_data = converters.to_api_surface_data_png(xtgeo_surf)
             return LroSuccessResp(status="success", result=api_surf_data)
 
-        progress_msg = "New task submitted" if new_sumo_job_was_submitted else "Waiting for task..."
-        progress_msg += f" [{datetime.datetime.now()}]"
+        progress_msg: str
+        if new_sumo_job_was_submitted:
+            progress_msg = "New task submitted to Sumo"
+        else:
+            elapsed_time_s = time.time() - task_start_time_utc_s
+            progress_msg = f"Waiting for Sumo task... ({elapsed_time_s:.1f}s elapsed)"
 
         response.status_code = status.HTTP_202_ACCEPTED
         response.headers["Cache-Control"] = "no-store"
-        return LroInProgressResp(
-            status="in_progress",
-            task_id=sumo_task_id,
-            progress_message=progress_msg
-        )
+        return LroInProgressResp(status="in_progress", task_id=sumo_task_id, progress_message=progress_msg)
     except Exception as exc:
         LOGGER.error(f"Error occurred while polling for surface data: {exc}")
         await task_tracker.delete_fingerprint_to_task_mapping_async(param_hash)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed while polling for statistical surface data")
-
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed while polling for statistical surface data",
+        )
 
 
 ################################################################
