@@ -80,6 +80,9 @@ export type TableProps<T extends Record<string, any>> = {
     /** Callback for when a row is hovered */
     onRowHover?: (id: string | null, entry: T | null) => void;
 
+    /** Callback for when the table data rows have been collated (sorted and filtered) */
+    onDataCollated?: (collatedData: T[]) => void;
+
     /** Callback for when the virtualized row range changes */
     onVisibleRowRangeChange?: (startIndex: number, endIndex: number) => void;
     // TODO: Other QoL things to add?
@@ -102,7 +105,7 @@ function validateProps<T extends Record<string, any>>(props: TableProps<T>) {
 export function Table<T extends Record<string, any>>(props: TableProps<T>): React.ReactNode {
     validateProps(props);
 
-    const { onHover, onRowHover } = props;
+    const { onHover, onRowHover, onDataCollated } = props;
 
     const divWrapperRef = React.useRef<HTMLDivElement>(null);
     const wrapperSize = useElementSize(divWrapperRef);
@@ -161,8 +164,10 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
         wrapperSize.height,
     ]);
 
+    //  We run data through a couple of collation/fix-up steps here
+    // Add a _key field to use for identification
     const rowsWithKey = React.useMemo<TableDataWithKey<T>[]>(() => {
-        const dataRowsWithKeys = props.rows.map<TableDataWithKey<T>>((r) => {
+        return props.rows.map<TableDataWithKey<T>>((r) => {
             const key = !props.rowIdentifier ? v4() : r[props.rowIdentifier];
             if (!key)
                 throw Error(
@@ -171,13 +176,7 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
 
             return { ...r, _key: String(key) };
         });
-
-        const pendingDataRows = range(0, numberOfPendingRows).map<TableDataWithKey<T>>((n) => {
-            return { _key: `__pending-${n}`, _pending: true };
-        });
-
-        return dataRowsWithKeys.concat(pendingDataRows);
-    }, [props.rows, props.rowIdentifier, numberOfPendingRows]);
+    }, [props.rows, props.rowIdentifier]);
 
     const [prevRowsWithKeys, setPrevRowsWithKeys] = React.useState(rowsWithKey);
 
@@ -190,6 +189,7 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
         }
     }
 
+    // Filter each row according to tableFilterState
     const filteredRows = React.useMemo(() => {
         if (props.controlledCollation) return rowsWithKey;
         if (isEmpty(tableFilterState)) return rowsWithKey;
@@ -219,6 +219,7 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
         });
     }, [props.controlledCollation, rowsWithKey, tableFilterState, colDataDefLookup]);
 
+    // After filtering, sort remaining data according to tableSortState
     const sortedRows = React.useMemo(() => {
         if (props.controlledCollation) return filteredRows;
 
@@ -233,6 +234,19 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
 
         return orderBy(filteredRows, fieldIterateeSetting, dirIterateeSetting);
     }, [tableSortState, props.controlledCollation, filteredRows]);
+
+    // Emit collation whenever we data is handled
+    React.useEffect(() => onDataCollated?.(sortedRows as T[]), [sortedRows, onDataCollated]);
+
+    // Finally, add any pending data rows. These will always be at the bottom of the table, regardless of sorting
+    const collatedDataWithPendingRows = React.useMemo(() => {
+        return sortedRows.concat(
+            range(0, numberOfPendingRows).map<TableDataWithKey<T>>((n) => ({
+                _key: `__pending-${n}`,
+                _pending: true,
+            })),
+        );
+    }, [numberOfPendingRows, sortedRows]);
 
     const handleRowHover = React.useCallback(
         function handleRowHover(id: string | null, entry: T | null) {
@@ -275,7 +289,7 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
                     <TableBody
                         wrapperElement={divWrapperRef}
                         dataCellDefinitions={tableCellDefinitions.dataCells}
-                        rows={sortedRows}
+                        rows={collatedDataWithPendingRows}
                         height={props.height}
                         selectedRows={selectedRows}
                         selectable={props.selectable ?? props.multiSelect}

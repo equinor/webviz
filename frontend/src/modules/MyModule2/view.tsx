@@ -193,6 +193,7 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
 
     const [selectedRows, setSelectedRows] = React.useState<string[]>([]);
     const [hoveredItem, setHoveredItem] = React.useState<string | null>(null);
+    const [collatedData, setCollatedData] = React.useState<typeof tableData>([]);
 
     const [usingTheCoolFilters, setUsingTheCoolFilters] = React.useState(false);
 
@@ -261,10 +262,13 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
                 onFiltersChange={handleFilterUpdate}
                 onSelectedRowsChange={setSelectedRows}
                 onRowHover={setHoveredItem}
+                onDataCollated={setCollatedData}
                 onVisibleRowRangeChange={(start, end) => setScrollRange([start, end])}
             />
-            <div className="mt-4 text-xs italic text-gray-600 grid grid-cols-3 w-full">
+            <div className="mt-4 text-xs italic text-gray-600 grid grid-cols-4 w-full">
                 <span>Hovered: {hoveredItem ?? "None"}</span>
+
+                <span>Valid rows: {collatedData.length} </span>
                 <span className="text-center">[{scrollRange?.join(", ")}]</span>
 
                 <span className="text-right">{selectedRows?.length ?? 0} row(s) selected</span>
