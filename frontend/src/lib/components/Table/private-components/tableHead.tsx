@@ -221,7 +221,7 @@ function FilterCell<T extends Record<string, any>>(props: FilterCellProps<T>): R
 
     if (!props.enabled) return <th />;
     return (
-        <th className="text-xs">
+        <th className="text-xs font-normal">
             {renderFunc({
                 value: props.tableFilterState[props.columnId],
                 onFilterChange: handleFilterChange,
@@ -250,10 +250,6 @@ function defaultFilterRender(props: ColumnFilterImplementationProps<string>) {
                     <Close fontSize="inherit" />
                 </div>
             }
-            wrapperStyle={{
-                fontWeight: "normal",
-                fontSize: "0.25rem",
-            }}
         />
     );
 }

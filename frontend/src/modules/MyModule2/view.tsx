@@ -97,7 +97,7 @@ function RangeFilter(props: ColumnFilterImplementationProps<[number?, number?]>)
     const value = (props.value ?? []) as [min: number, max: number];
 
     return (
-        <div className="bg-white grid grid-cols-2 gap-1 h-full font-normal w-fit">
+        <div className="bg-white grid grid-cols-2 gap-1 h-full w-fit">
             <input
                 className="h-full min-w-0"
                 value={value[0] ?? ""}
