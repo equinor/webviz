@@ -1,110 +1,64 @@
-import React from "react";
+import type React from "react";
 
-import { ArrowBackIosNew, ImageAspectRatioTwoTone } from "@mui/icons-material";
+import { NumberInput } from "@mui/base/Unstable_NumberInput/NumberInput";
+import { useAtom } from "jotai";
 
-import { Dropdown, type DropdownOptionOrGroup } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { Switch } from "@lib/components/Switch";
+
+import {
+    allowMultiSelectAtom,
+    alternateColColorsAtom,
+    amtOfDataAtom,
+    amtOfPendingDataAtom,
+    fillPendingDataAtom,
+} from "./atoms";
 
 export function Settings(): React.ReactNode {
-    const [selectedItem, setSelectedItem] = React.useState<string>();
+    const [alternateCols, setAlternateCols] = useAtom(alternateColColorsAtom);
+    const [allowMultiSelect, setAllowMultiSelect] = useAtom(allowMultiSelectAtom);
+    const [fillPendingData, setFillPendingData] = useAtom(fillPendingDataAtom);
 
-    const options: DropdownOptionOrGroup<string>[] = [
-        {
-            label: "GROUP 1",
-            adornment: <ImageAspectRatioTwoTone fontSize="inherit" className="align-sub" />,
-            options: [
-                {
-                    value: "v1",
-                    label: "V:1 with a very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long name",
-                },
-                {
-                    value: "v2",
-                    label: "V:2",
-                },
-            ],
-        },
-        {
-            label: "GROUP 2 with a very very very very very very very very very very very very very very very very very very very very very very long name",
-            adornment: <ArrowBackIosNew fontSize="inherit" />,
-            options: [
-                {
-                    value: "v3",
-                    label: "V:3",
-                },
-                {
-                    value: "v4",
-                    label: "V:4",
-                },
-            ],
-        },
-        {
-            // This empty group will log a warning
-            label: "Empty group",
-            options: [],
-        },
-        {
-            value: "x1",
-            label: "X:1",
-        },
-        {
-            value: "x2",
-            label: "X:2",
-            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
-        },
-        {
-            value: "x3",
-            label: "X:3",
-            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
-        },
-        {
-            value: "x4",
-            label: "X:4",
-            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
-        },
-        {
-            value: "x5",
-            label: "X:5",
-            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
-        },
-        {
-            value: "x6",
-            label: "X:6",
-            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
-        },
-        {
-            value: "x7",
-            label: "X:7",
-            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
-        },
-        {
-            value: "x8",
-            label: "X:8",
-            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
-        },
-        {
-            value: "x9",
-            label: "X:9",
-            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
-        },
-        {
-            value: "x10",
-            label: "X:10",
-            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
-        },
-    ];
+    const [amtOfData, setAmtOfData] = useAtom(amtOfDataAtom);
+    const [amtOfPendingData, setAmtOfPendingData] = useAtom(amtOfPendingDataAtom);
 
     return (
         <>
-            <Label text="Dropdown">
-                <Dropdown value={selectedItem} options={options} onChange={setSelectedItem} showArrows />
+            <Label text="Rows of data" position="left">
+                <NumberInput
+                    slotProps={{
+                        input: {
+                            className: "input-comp border rounded px-2 py-1 w-full",
+                        },
+                    }}
+                    min={0}
+                    max={10000}
+                    value={amtOfData}
+                    onChange={(evt, v) => setAmtOfData(v ?? 0)}
+                />
             </Label>
-
-            <Label text="Dropdown">
-                <Dropdown value={selectedItem} options={options} onChange={setSelectedItem} />
+            <Label text="Rows of pending data" position="left">
+                <NumberInput
+                    disabled={fillPendingData}
+                    slotProps={{
+                        input: {
+                            className: "input-comp border rounded px-2 py-1 w-full",
+                        },
+                    }}
+                    min={0}
+                    max={10000}
+                    value={amtOfPendingData}
+                    onChange={(evt, v) => setAmtOfPendingData(v ?? 0)}
+                />
             </Label>
-
-            <Label text="Dropdown">
-                <p>Selection: {selectedItem ?? ""}</p>
+            <Label text="Fill with pending data rows" position="left">
+                <Switch checked={fillPendingData} onChange={(e) => setFillPendingData(e.target.checked)} />
+            </Label>
+            <Label text="Alternating columns" position="left">
+                <Switch checked={alternateCols} onChange={(e) => setAlternateCols(e.target.checked)} />
+            </Label>
+            <Label text="Multi-select" position="left">
+                <Switch checked={allowMultiSelect} onChange={(e) => setAllowMultiSelect(e.target.checked)} />
             </Label>
         </>
     );
