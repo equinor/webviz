@@ -10,17 +10,9 @@ from fmu.sumo.explorer.explorer import SumoClient, SearchContext
 from fmu.sumo.explorer.objects import Surface
 
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
-from primary.services.utils.otel_span_tracing import (
-    otel_span_decorator,
-    start_otel_span,
-    start_otel_span_async,
-)
+from primary.services.utils.otel_span_tracing import otel_span_decorator, start_otel_span, start_otel_span_async
 from primary.services.utils.statistic_function import StatisticFunction
-from primary.services.service_exceptions import (
-    Service,
-    MultipleDataMatchesError,
-    InvalidParameterError,
-)
+from primary.services.service_exceptions import Service, MultipleDataMatchesError, InvalidParameterError
 
 from .surface_types import SurfaceMeta, SurfaceMetaSet
 from .generic_types import SumoContent
@@ -52,8 +44,7 @@ class SurfaceAccess:
     async def get_realization_surfaces_metadata_async(self) -> SurfaceMetaSet:
         if not self._iteration_name:
             raise InvalidParameterError(
-                "Iteration name must be set to get metadata for realization surfaces",
-                Service.SUMO,
+                "Iteration name must be set to get metadata for realization surfaces", Service.SUMO
             )
 
         perf_metrics = PerfMetrics()
@@ -130,11 +121,7 @@ class SurfaceAccess:
 
     @otel_span_decorator()
     async def get_realization_surface_data_async(
-        self,
-        real_num: int,
-        name: str,
-        attribute: str,
-        time_or_interval_str: str | None = None,
+        self, real_num: int, name: str, attribute: str, time_or_interval_str: str | None = None
     ) -> xtgeo.RegularSurface | None:
         """
         Get surface data for a realization surface
@@ -162,8 +149,7 @@ class SurfaceAccess:
         surf_count = await search_context.length_async()
         if surf_count > 1:
             raise MultipleDataMatchesError(
-                f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}",
-                Service.SUMO,
+                f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO
             )
         if surf_count == 0:
             LOGGER.warning(f"No realization surface found in Sumo for: {surf_str}")
@@ -213,8 +199,7 @@ class SurfaceAccess:
         surf_count = await search_context.length_async()
         if surf_count > 1:
             raise MultipleDataMatchesError(
-                f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}",
-                Service.SUMO,
+                f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO
             )
         if surf_count == 0:
             LOGGER.warning(f"No observed surface found in Sumo for: {surf_str}")
@@ -326,10 +311,7 @@ class SurfaceAccess:
         return addr_str
 
 
-def filter_search_context_on_attribute(
-    search_context: SearchContext,
-    attribute: str,
-) -> SearchContext:
+def filter_search_context_on_attribute(search_context: SearchContext, attribute: str) -> SearchContext:
     """Adds "attribute" filter to an existing search context. Attribute can be either a tagname or a standard result."""
 
     if attribute.endswith(" (standard result)"):
@@ -399,9 +381,7 @@ def _build_surface_meta_arr(
     return ret_arr
 
 
-def _time_or_interval_str_to_time_filter(
-    time_or_interval_str: str | None,
-) -> TimeFilter:
+def _time_or_interval_str_to_time_filter(time_or_interval_str: str | None) -> TimeFilter:
     if time_or_interval_str is None:
         return TimeFilter(TimeType.NONE)
 
