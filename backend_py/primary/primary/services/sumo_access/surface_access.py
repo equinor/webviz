@@ -142,9 +142,9 @@ class SurfaceAccess:
             iteration=self._iteration_name,
             realization=real_num,
             name=name,
-            tagname=attribute,
             time=time_filter,
         )
+        search_context = _filter_search_context_on_attribute(search_context, attribute)
 
         surf_count = await search_context.length_async()
         if surf_count > 1:
@@ -192,9 +192,9 @@ class SurfaceAccess:
             stage="case",
             is_observation=True,
             name=name,
-            tagname=attribute,
             time=time_filter,
         )
+        search_context = _filter_search_context_on_attribute(search_context, attribute)
 
         surf_count = await search_context.length_async()
         if surf_count > 1:
@@ -256,10 +256,10 @@ class SurfaceAccess:
             aggregation=False,
             iteration=self._iteration_name,
             name=name,
-            tagname=attribute,
             realization=realizations if realizations is not None else True,
             time=time_filter,
         )
+        search_context = _filter_search_context_on_attribute(search_context, attribute)
 
         surf_count = await search_context.length_async()
         perf_metrics.record_lap("locate")
@@ -311,6 +311,19 @@ class SurfaceAccess:
         return addr_str
 
 
+def _filter_search_context_on_attribute(search_context: SearchContext, attribute: str) -> SearchContext:
+    """Adds "attribute" filter to an existing search context. Attribute can be either a tagname or a standard result."""
+
+    if attribute.endswith(" (standard result)"):
+        standard_result = attribute.removesuffix(" (standard result)")
+        return search_context.filter(
+            standard_result=standard_result,
+        )
+    return search_context.filter(
+        tagname=attribute,
+    )
+
+
 def _build_surface_meta_arr(
     src_surf_info_arr: list[SurfInfo], time_type: SurfTimeType, are_observations: bool
 ) -> list[SurfaceMeta]:
@@ -318,10 +331,23 @@ def _build_surface_meta_arr(
 
     for info in src_surf_info_arr:
         content_str = info.content
-
-        if not info.tagname:
-            LOGGER.warning(f"Surface {info.name} (content={content_str}) has empty tagname, ignoring the surface")
+        attribute_str: str | None = None
+        if not info.tagname and not info.standard_result:
+            LOGGER.warning(
+                f"Surface {info.name} (content={content_str})  has empty tagname and standard_result, ignoring the surface"
+            )
             continue
+        if info.tagname and info.standard_result:
+            LOGGER.warning(
+                f"Surface {info.name} (tagname={info.tagname}, content={content_str}) has both tagname and standard_result, ignoring the surface"
+            )
+            continue
+
+        if info.standard_result:
+            attribute_str = f"{info.standard_result} (standard result)"
+
+        else:
+            attribute_str = info.tagname
 
         content_enum = SumoContent.UNKNOWN
         if not content_str:
@@ -342,7 +368,7 @@ def _build_surface_meta_arr(
         ret_arr.append(
             SurfaceMeta(
                 name=info.name,
-                attribute_name=info.tagname,
+                attribute_name=attribute_str,
                 content=content_enum,
                 time_type=time_type,
                 is_observation=are_observations,
