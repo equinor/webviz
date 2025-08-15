@@ -1,6 +1,9 @@
 import React from "react";
 
 import { type Layer } from "@deck.gl/core";
+import type { BoundingBox3D } from "@webviz/subsurface-viewer";
+import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
+
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
@@ -51,8 +54,6 @@ import {
     VisualizationItemType,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/types/deckgl";
-import type { BoundingBox3D } from "@webviz/subsurface-viewer";
-import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 import { PreferredViewLayout } from "../typesAndEnums";

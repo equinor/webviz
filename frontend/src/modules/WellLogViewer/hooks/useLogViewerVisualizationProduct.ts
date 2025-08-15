@@ -9,6 +9,7 @@ import type {
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { VisualizationAssembler } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
+import { makeWellPickCollections } from "../../_shared/types/wellpicks";
 import { AreaPlotProvider } from "../DataProviderFramework/dataProviders/plots/AreaPlotProvider";
 import { DiffPlotProvider } from "../DataProviderFramework/dataProviders/plots/DiffPlotProvider";
 import { LinearPlotProvider } from "../DataProviderFramework/dataProviders/plots/LinearPlotProvider";
@@ -29,7 +30,6 @@ import {
     collectContinuousTrackConfig,
     collectDiscreteTrackConfig,
 } from "../DataProviderFramework/visualizations/tracks";
-import { makeWellPickCollections } from "../DataProviderFramework/visualizations/wellpicks";
 
 type FactoryAccResult = PlotFactoryAccResult;
 

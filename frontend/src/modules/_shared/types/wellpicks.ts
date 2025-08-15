@@ -8,8 +8,8 @@ import {
     type VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-import type { WellPickSettingTypes } from "../dataProviders/wellpicks/WellPicksProvider";
-import { CustomDataProviderType } from "../dataProviderTypes";
+import type { WellPickSettingTypes } from "../../WellLogViewer/DataProviderFramework/dataProviders/wellpicks/WellPicksProvider";
+import { CustomDataProviderType } from "../../WellLogViewer/DataProviderFramework/dataProviderTypes";
 
 type WellpickTransformerArgs = TransformerArgs<WellPickSettingTypes, WellborePick_api[]>;
 

@@ -1,9 +1,10 @@
+import type { Feature } from "geojson";
+
 import type { WellboreTrajectory_api } from "@api";
 import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
-import type { Feature } from "geojson";
 
 export function makeDrilledWellTrajectoriesLayer(
     args: TransformerArgs<any, WellboreTrajectory_api[], any>,

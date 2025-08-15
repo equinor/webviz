@@ -1,5 +1,4 @@
 import type { Layer, PickingInfo } from "@deck.gl/core";
-import { type PublishSubscribe, PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import { Edit, Remove } from "@mui/icons-material";
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
@@ -7,6 +6,8 @@ import { v4 } from "uuid";
 import addPathIcon from "@assets/add_path.cur?url";
 import continuePathIcon from "@assets/continue_path.cur?url";
 import removePathIcon from "@assets/remove_path.cur?url";
+
+import { type PublishSubscribe, PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
 import {
     AllowHoveringOf,

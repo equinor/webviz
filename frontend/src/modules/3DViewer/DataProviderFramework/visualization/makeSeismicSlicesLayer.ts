@@ -1,5 +1,6 @@
-import type { SeismicCubeMeta_api } from "@api";
 import type { Layer } from "@deck.gl/core";
+
+import type { SeismicCubeMeta_api } from "@api";
 import * as bbox from "@lib/utils/bbox";
 import { degreesToRadians, ShapeType, type Geometry } from "@lib/utils/geometry";
 import { rotatePoint2Around } from "@lib/utils/vec2";

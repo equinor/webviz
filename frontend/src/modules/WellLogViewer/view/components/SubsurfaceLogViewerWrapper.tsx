@@ -15,7 +15,7 @@ import type { WellboreHeader_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
-import type { Template } from "@modules/WellLogViewer/types";
+import type { Template } from "@modules/_shared/types/wellLogTemplates";
 
 import type { InterfaceTypes } from "../../interfaces";
 

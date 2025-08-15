@@ -1,3 +1,6 @@
+import { TGrid3DColoringMode } from "@webviz/subsurface-viewer";
+import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
+
 import type { IntersectionRealizationGridSettings } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
@@ -6,8 +9,6 @@ import type {
     FenceMeshSection_trans,
     PolylineIntersection_trans,
 } from "@modules/_shared/Intersection/gridIntersectionTransform";
-import { TGrid3DColoringMode } from "@webviz/subsurface-viewer";
-import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 interface PolyDataVtk {
     points: Float32Array;

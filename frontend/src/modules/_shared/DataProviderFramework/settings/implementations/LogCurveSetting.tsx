@@ -5,7 +5,7 @@ import { chain, sortBy } from "lodash";
 import type { WellboreLogCurveHeader_api } from "@api";
 import type { DropdownOption, DropdownOptionGroup } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
-import { makeSelectValueForCurveHeader } from "@modules/WellLogViewer/utils/strings";
+import { makeSelectValueForCurveHeader } from "@modules/_shared/utils/wellLog";
 
 import type {
     CustomSettingImplementation,

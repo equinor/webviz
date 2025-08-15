@@ -19,6 +19,7 @@ import { Menu } from "@lib/components/Menu";
 import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { CustomDataProviderType } from "@modules/3DViewer/DataProviderFramework/customDataProviderTypes";
 import { PreferredViewLayout } from "@modules/3DViewer/types";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
@@ -42,7 +43,6 @@ import { instanceofItemGroup } from "@modules/_shared/DataProviderFramework/inte
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 export type LayerManagerComponentWrapperProps = {
     dataProviderManager: DataProviderManager;

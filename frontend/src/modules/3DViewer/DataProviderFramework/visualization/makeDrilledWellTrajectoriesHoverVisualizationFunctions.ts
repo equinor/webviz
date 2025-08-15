@@ -1,3 +1,5 @@
+import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
+
 import type { WellboreTrajectory_api } from "@api";
 import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
 import { BiconeLayer } from "@modules/3DViewer/customDeckGlLayers/BiconeLayer";
@@ -8,7 +10,6 @@ import type {
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
-import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
     args: TransformerArgs<any, WellboreTrajectory_api[], any>,

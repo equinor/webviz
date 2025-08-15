@@ -2,11 +2,12 @@ import React from "react";
 
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
+import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { converter } from "culori";
+
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
-import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
-import { converter } from "culori";
 
 import { DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
 import { type Polyline, PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";

@@ -5,6 +5,7 @@ import _ from "lodash";
 import { useStableProp } from "@lib/hooks/useStableProp";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
+
 import { formatNumber } from "../utils/numberFormatting";
 
 export type ReadoutItem = {

@@ -3,10 +3,10 @@ import React from "react";
 import type { ColorScale } from "@lib/utils/ColorScale";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 import type { ColorScaleWithName } from "@modules_shared/utils/ColorScaleWithName";
 
 import type { ColorScaleWithId } from "./colorScaleWithId";
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 const STYLE_CONSTANTS = {
     lineWidth: 6,

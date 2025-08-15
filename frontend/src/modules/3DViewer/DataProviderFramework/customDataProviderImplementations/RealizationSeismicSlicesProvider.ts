@@ -1,3 +1,5 @@
+import { isEqual } from "lodash";
+
 import { type SeismicCubeMeta_api, getSeismicCubeMetaListOptions, getSeismicSlicesOptions } from "@api";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
@@ -11,7 +13,6 @@ import type {
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { NullableStoredData } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/sharedTypes";
 import { type MakeSettingTypesMap, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import { isEqual } from "lodash";
 
 import { type SeismicSliceData_trans, transformSeismicSlice } from "../utils/transformSeismicSlice";
 

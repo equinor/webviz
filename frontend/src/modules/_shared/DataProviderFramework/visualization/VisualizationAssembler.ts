@@ -7,8 +7,8 @@ import * as bbox from "@lib/utils/bbox";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 import type { HighlightItem } from "@modules/_shared/components/EsvIntersection/types";
-import type { WellPickDataCollection } from "@modules/WellLogViewer/DataProviderFramework/visualizations/wellpicks";
-import type { TemplatePlot } from "@modules/WellLogViewer/types";
+import type { TemplatePlot } from "@modules/_shared/types/wellLogTemplates";
+import type { WellPickDataCollection } from "@modules/_shared/types/wellpicks";
 
 import type { GroupDelegate } from "../delegates/GroupDelegate";
 import { DataProvider, DataProviderStatus } from "../framework/DataProvider/DataProvider";

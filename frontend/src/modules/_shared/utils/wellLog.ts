@@ -1,7 +1,7 @@
 import type { WellboreLogCurveData_api, WellboreLogCurveHeader_api } from "@api";
 import { WellLogCurveSourceEnum_api } from "@api";
 
-import type { TemplatePlot } from "../types";
+import type { TemplatePlot } from "../types/wellLogTemplates";
 
 /**
  * Translates a well log curve data source to a more readable string

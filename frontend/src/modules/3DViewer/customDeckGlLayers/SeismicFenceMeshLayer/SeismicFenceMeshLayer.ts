@@ -6,13 +6,14 @@ import {
     type PickingInfo,
     type UpdateParameters,
 } from "@deck.gl/core";
-import { assertNonNull } from "@lib/utils/assertNonNull";
-import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
 import { Geometry } from "@luma.gl/engine";
 import type { ExtendedLayerProps } from "@webviz/subsurface-viewer";
 import type { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
 import { transfer, wrap } from "comlink";
 import { isEqual } from "lodash";
+
+import { assertNonNull } from "@lib/utils/assertNonNull";
+import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
 
 import { PreviewLayer } from "../PreviewLayer/PreviewLayer";
 
