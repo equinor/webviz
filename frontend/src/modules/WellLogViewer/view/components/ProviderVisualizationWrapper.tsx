@@ -8,7 +8,6 @@ import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-
 import type { WellboreTrajectory_api } from "@api";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import type { Template, TemplatePlot, TemplateTrack } from "@modules/_shared/types/wellLogTemplates";
-import { isWellPickVisualization } from "@modules/_shared/types/wellpicks";
 import { getUniqueCurveNameForPlotConfig } from "@modules/_shared/utils/wellLog";
 import { MAIN_AXIS_CURVE } from "@modules/WellLogViewer/constants";
 import type { DiffVisualizationGroup } from "@modules/WellLogViewer/DataProviderFramework/visualizations/plots";
@@ -23,6 +22,7 @@ import {
     type TrackVisualizationGroup,
     isTrackGroup,
 } from "@modules/WellLogViewer/DataProviderFramework/visualizations/tracks";
+import { isWellPickVisualization } from "@modules/WellLogViewer/DataProviderFramework/visualizations/wellpicks";
 import type { WellLogFactoryProduct } from "@modules/WellLogViewer/hooks/useLogViewerVisualizationProduct";
 import { useLogViewerVisualizationProduct } from "@modules/WellLogViewer/hooks/useLogViewerVisualizationProduct";
 import { createLogViewerWellPicks, createWellLogSets } from "@modules/WellLogViewer/utils/queryDataTransform";
