@@ -142,7 +142,7 @@ class SurfaceAccess:
 
         surf_str = self._make_real_surf_log_str(real_num, name, attribute, time_or_interval_str)
 
-        time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
+        time_filter = _time_or_interval_str_to_sumo_time_filter(time_or_interval_str)
         search_context = SearchContext(self._sumo_client).surfaces.filter(
             uuid=self._case_uuid,
             is_observation=False,
@@ -194,7 +194,7 @@ class SurfaceAccess:
 
         surf_str = self._make_obs_surf_log_str(name, attribute, time_or_interval_str)
 
-        time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
+        time_filter = _time_or_interval_str_to_sumo_time_filter(time_or_interval_str)
         search_context = SearchContext(self._sumo_client).surfaces.filter(
             uuid=self._case_uuid,
             stage="case",
@@ -256,7 +256,7 @@ class SurfaceAccess:
 
         surf_str = self._make_stat_surf_log_str(name, attribute, time_or_interval_str)
 
-        time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
+        time_filter = _time_or_interval_str_to_sumo_time_filter(time_or_interval_str)
 
         search_context = SearchContext(self._sumo_client).surfaces.filter(
             uuid=self._case_uuid,
@@ -340,8 +340,6 @@ class SurfaceAccess:
 
         surf_str = self._make_stat_surf_log_str(name, attribute, time_or_interval_str)
 
-        time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
-
         search_context = SearchContext(self._sumo_client).surfaces.filter(
             uuid=self._case_uuid,
             is_observation=False,
@@ -350,7 +348,7 @@ class SurfaceAccess:
             name=name,
             tagname=attribute,
             realization=realizations if realizations is not None else True,
-            time=time_filter,
+            time=_time_or_interval_str_to_sumo_time_filter(time_or_interval_str),
         )
 
         surf_count = await search_context.length_async()
@@ -392,14 +390,14 @@ class SurfaceAccess:
         # LOGGER.debug(json.dumps(agg_spec, indent=2))
         # LOGGER.debug("----------------------")
 
-        post_res = await self._sumo_client.post_async("/aggregations", json=agg_spec)
+        post_resp = await self._sumo_client.post_async("/aggregations", json=agg_spec)
         perf_metrics.record_lap("submit-job")
 
         # We're not getting a task ID back from the POST, but a location header with a URL to poll for the result
         # Do a bit of string manipulation to extract the actual task UUID from the location header
         # The full pull location typically looks something like this:
         #   https://main-sumo-prod.radix.equinor.com/api/v1/tasks('3de7a932-14de-4873-8389-fe3a83213638')/result
-        full_poll_location = post_res.headers.get("location")
+        full_poll_location = post_resp.headers.get("location")
         start = full_poll_location.find("/tasks('") + 8
         end = full_poll_location.find("')/result", start)
         sumo_task_uuid = full_poll_location[start:end]
@@ -432,36 +430,33 @@ class SurfaceAccess:
         retry_after_s = 1
         deadline = time.time() + timeout_s
         while True:
-            poll_response = await self._sumo_client.get_async(poll_path)
-            # dbg_location = poll_response.headers.get("location")
-            # dbg_retry_after = poll_response.headers.get("retry-after")
-            # LOGGER.debug(f"Poll response: {poll_response.status_code}  {dbg_location=} {dbg_retry_after=}")
-            if poll_response.status_code != 202 or time.time() + retry_after_s > deadline:
+            poll_resp = await self._sumo_client.get_async(poll_path)
+            # dbg_location = poll_resp.headers.get("location")
+            # dbg_retry_after = poll_resp.headers.get("retry-after")
+            # LOGGER.debug(f"Poll response: {poll_resp.status_code}  {dbg_location=} {dbg_retry_after=}")
+            if poll_resp.status_code != 202 or time.time() + retry_after_s > deadline:
                 break
 
             await asyncio.sleep(retry_after_s)
 
         perf_metrics.record_lap("polling")
 
-        if poll_response.status_code == 202:
-            LOGGER.debug(
-                f"Polled statistical surface job (still in progress) took: {perf_metrics.to_string()} ({sumo_task_id=})"
-            )
+        if poll_resp.status_code == 202:
+            LOGGER.debug(f"Polled surface job (still in progress) took: {perf_metrics.to_string()} ({sumo_task_id=})")
             return None
 
-        if poll_response.status_code != 200:
+        if poll_resp.status_code != 200:
             raise ServiceRequestError(
-                f"Polling of statistical surface job failed with status code: {poll_response.status_code} ({sumo_task_id=})"
+                f"Polling surface job failed with status code: {poll_resp.status_code} ({sumo_task_id=})", Service.SUMO
             )
-
-        sumo_obj_dict = poll_response.json()
+        sumo_obj_dict = poll_resp.json()
         # LOGGER.debug("POLL DONE:")
         # LOGGER.debug(json.dumps(sumo_obj_dict, indent=2))
 
         sumo_surface_obj = Surface(self._sumo_client, sumo_obj_dict)
         xtgeo_surf = await sumo_surface_obj.to_regular_surface_async()
         if not xtgeo_surf:
-            raise InvalidDataError(f"Could not convert Sumo surface object to regular surface")
+            raise InvalidDataError("Could not convert Sumo surface object to regular surface", Service.SUMO)
         perf_metrics.record_lap("download-and-read")
 
         source_realization_ids = sumo_obj_dict["_source"]["fmu"]["aggregation"]["realization_ids"]
@@ -532,7 +527,7 @@ def _build_surface_meta_arr(
     return ret_arr
 
 
-def _time_or_interval_str_to_time_filter(time_or_interval_str: str | None) -> TimeFilter:
+def _time_or_interval_str_to_sumo_time_filter(time_or_interval_str: str | None) -> TimeFilter:
     if time_or_interval_str is None:
         return TimeFilter(TimeType.NONE)
 
