@@ -7,6 +7,7 @@ import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { ViewStatusWriter } from "@framework/StatusWriter";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
+import { showObservationsAtom } from "../atoms/baseAtoms";
 import { queryIsFetchingAtom, realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "../atoms/derivedAtoms";
 import { vectorObservationsQueriesAtom, regularEnsembleHistoricalVectorDataQueriesAtom } from "../atoms/queryAtoms";
 
@@ -17,7 +18,8 @@ export function useMakeViewStatusWriterMessages(
     ensemblesWithoutParameter: (RegularEnsemble | DeltaEnsemble)[],
 ) {
     const ensembleSet = useAtomValue(EnsembleSetAtom);
-    const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
+    const showObservations = useAtomValue(showObservationsAtom);
+
     const vectorObservationsQueries = useAtomValue(vectorObservationsQueriesAtom);
     const isQueryFetching = useAtomValue(queryIsFetchingAtom);
     const hasHistoricalVectorQueryError = useAtomValue(regularEnsembleHistoricalVectorDataQueriesAtom).isError;

@@ -167,7 +167,12 @@ export class ParameterCorrelationMatrixFigure {
             },
         });
     }
-    build(handleOnClick?: ((event: Readonly<Plotly.PlotMouseEvent>) => void) | undefined): React.ReactNode {
-        return this._figure.makePlot({ onClick: handleOnClick });
+
+    makePlotData() {
+        return this._figure.makeData();
+    }
+
+    makePlotLayout() {
+        return this._figure.makeLayout();
     }
 }
