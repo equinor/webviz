@@ -31,6 +31,8 @@ async def get_fields(
     return ret_arr
 
 
+
+
 @router.get("/cases")
 @no_cache
 async def get_cases(
@@ -50,6 +52,8 @@ async def get_cases(
             status=ci.status,
             user=ci.user,
             updatedAtUtcMs=ci.updated_at_utc_ms,
+            description=ci.description,
+            ensembles=[]
         )
         for ci in case_info_arr
     ]
@@ -76,6 +80,7 @@ async def get_ensembles(
                 caseUpdatedAtUtcMs=it.timestamps.case_updated_at_utc_ms,
                 dataUpdatedAtUtcMs=it.timestamps.data_updated_at_utc_ms,
             ),
+            standardResults=[],
         )
         for it in iteration_info_arr
     ]

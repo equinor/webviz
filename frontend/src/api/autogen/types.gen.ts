@@ -77,6 +77,8 @@ export type CaseInfo_api = {
     status: string;
     user: string;
     updatedAtUtcMs: number;
+    description: string;
+    ensembles: Array<EnsembleInfo_api>;
 };
 
 export type Completions_api = {
@@ -131,6 +133,7 @@ export type EnsembleInfo_api = {
     name: string;
     realizationCount: number;
     timestamps: EnsembleTimestamps_api;
+    standardResults: Array<string>;
 };
 
 /**

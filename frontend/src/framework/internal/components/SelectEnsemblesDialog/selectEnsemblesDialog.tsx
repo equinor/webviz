@@ -24,7 +24,7 @@ import {
     makeRegularEnsembleSettingsFromEnsembleSet,
 } from "./_utils";
 import { EnsemblePicker } from "./private-components/EnsemblePicker/EnsemblePicker";
-import { EnsembleTables } from "./private-components/EnsembleTables";
+import { EnsembleTables } from "./private-components/EnsembleTables/EnsembleTables";
 import type { EnsembleIdentWithCaseName, InternalDeltaEnsembleSetting, InternalRegularEnsembleSetting } from "./types";
 
 enum EnsemblePickerMode {

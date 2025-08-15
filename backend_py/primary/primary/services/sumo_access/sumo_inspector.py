@@ -24,6 +24,7 @@ class CaseInfo(BaseModel):
     status: str
     user: str
     updated_at_utc_ms: int
+    description: str
 
 
 class SumoInspector:
@@ -45,12 +46,17 @@ class SumoInspector:
 
         timestamp_str = case.metadata["_sumo"]["timestamp"]
 
+
+        description_meta = case.metadata.get("fmu", {}).get("case", {}).get("description", None)
+        description_str = description_meta if isinstance(description_meta, str) else ""
+
         return CaseInfo(
             uuid=case.uuid,
             name=case.name,
             status=case.status,
             user=case.user,
             updated_at_utc_ms=datetime_string_to_utc_ms(timestamp_str),
+            description=description_str,
         )
 
     async def get_cases_async(self, field_identifier: str) -> List[CaseInfo]:

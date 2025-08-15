@@ -1,7 +1,5 @@
 import type React from "react";
 
-import { FolderOpen, Remove } from "@mui/icons-material";
-
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { ColorSelect } from "@lib/components/ColorSelect";
 import type { DropdownOption } from "@lib/components/Dropdown";
@@ -9,8 +7,9 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
 import { Input } from "@lib/components/Input";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { FolderOpen, Remove } from "@mui/icons-material";
 
-import type { InternalDeltaEnsembleSetting } from "../types";
+import type { InternalDeltaEnsembleSetting } from "../../types";
 
 export type RegularEnsembleOption = {
     ensembleIdent: RegularEnsembleIdent;

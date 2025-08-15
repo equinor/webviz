@@ -4,7 +4,6 @@ import { Add, Check } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
-import type { CaseInfo_api } from "@api";
 import { getCasesOptions, getEnsemblesOptions, getFieldsOptions } from "@api";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
@@ -120,8 +119,17 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
         if (!casesQuery.data) {
             return [];
         }
-        // return makeCaseStandardResults(casesQuery.data);
-        return ["inplace_volumes", "timeseries", "seismic_surface", "seismic_grid"];
+
+        const standardResults = new Set<string>();
+        for (const c of casesQuery.data) {
+            c.ensembles.forEach((ens) => {
+                ens.standardResults.forEach((res) => {
+                    standardResults.add(res);
+                });
+            });
+        }
+
+        return Array.from(standardResults).sort();
     }, [casesQuery]);
 
     const caseRowData = React.useMemo(() => {
@@ -129,8 +137,16 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
             // TODO: Return loading rows?
             return [];
         }
-        return makeCaseRowData(casesQuery.data);
-    }, [casesQuery]);
+
+        let cases = casesQuery.data;
+        if (selectedStandardResults.length > 0) {
+            cases = cases.filter((c) =>
+                c.ensembles.some((ens) => ens.standardResults.some((res) => selectedStandardResults.includes(res))),
+            );
+        }
+
+        return makeCaseRowData(cases);
+    }, [casesQuery, selectedStandardResults]);
 
     const [selectedCaseUuid, setSelectedCaseId] = useValidState<string>({
         initialState: "",
@@ -269,8 +285,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
                 >
                     <div className="flex flex-col gap-4">
                         <TagPicker
-                            placeholder="Filter by Standard Results ..."
-                            // showTags={false}
+                            placeholder="Filter by Standard Results..."
                             tags={caseStandardResults.map((elm) => ({ label: elm, value: elm }))}
                             value={selectedStandardResults}
                             onChange={handleFilterByStandardResultsChange}

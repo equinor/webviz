@@ -6,9 +6,8 @@ import type { TableColumns } from "@lib/components/Table/types";
 import { TagPicker } from "@lib/components/TagPicker";
 import type { CaseInfo_api } from "src/api/autogen/types.gen";
 
-import { UserAvatar } from "../userAvatar";
-
 import type { CaseRowData } from "./_types";
+import { UserAvatar } from "./userAvatar";
 
 /**
  * Creates the table columns for the case selection table.
@@ -115,7 +114,7 @@ export function makeCaseRowData(apiData: CaseInfo_api[]): CaseRowData[] {
     return apiData.map((item) => ({
         caseId: item.uuid,
         caseName: item.name,
-        description: "Test description", // Placeholder, as the API does not provide a description
+        description: item.description,
         author: item.user,
         status: item.status,
         dateUtcMs: item.updatedAtUtcMs,
