@@ -5,7 +5,7 @@ import { Close, ExpandLess, ExpandMore, Square } from "@mui/icons-material";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { Input } from "../../Input";
-import { ALTERNATING_COLUMN_HEADING_COLORS, HEADER_HEIGHT_PX } from "../constants";
+import { ALTERNATING_COLUMN_HEADING_COLORS } from "../constants";
 import type {
     HeaderCellDef,
     ColumnSorting,
@@ -122,6 +122,7 @@ export type TableHeadProps<T extends Record<string, any>> = {
     alternatingColumnColors: boolean | undefined;
     tableSortState: TableSorting;
     tableFilterState: TableFilters;
+    headerHeight: number;
 
     onTableSortStateChange: (newState: TableSorting) => void;
     onTableFilterStateChange: (newState: TableFilters) => void;
@@ -169,7 +170,7 @@ export function TableHead<T extends Record<string, any>>(props: TableHeadProps<T
         // ! vanish when it floats. Using outlines here instead as a workaround
         <thead className="select-none border-b-2 border-slate-400 shadow sticky top-0 z-10 [&_th]:outline [&_th]:outline-slate-300">
             {props.headerCellDefinitions.map((headerRow, index) => (
-                <tr key={`header-row-depth${index}`} style={{ height: HEADER_HEIGHT_PX }}>
+                <tr key={`header-row-depth${index}`} style={{ height: props.headerHeight }}>
                     {headerRow.map((cellDef) => {
                         return (
                             <HeaderCell
@@ -185,7 +186,7 @@ export function TableHead<T extends Record<string, any>>(props: TableHeadProps<T
             ))}
 
             {hasFilters && (
-                <tr className="bg-slate-200" style={{ height: HEADER_HEIGHT_PX }}>
+                <tr className="bg-slate-200" style={{ height: props.headerHeight }}>
                     {props.filterCellDefinitions.map((filterDef) => {
                         return (
                             <FilterCell

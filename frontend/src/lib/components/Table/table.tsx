@@ -5,7 +5,7 @@ import { v4 } from "uuid";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-import { ROW_HEIGHT_PX } from "./constants";
+import { HEADER_HEIGHT_PX, ROW_HEIGHT_PX } from "./constants";
 import { useOptInControlledValue } from "./hooks";
 import { TableBody } from "./private-components/tableBody";
 import { TableColGroups } from "./private-components/tableColGroups";
@@ -40,6 +40,9 @@ export type TableProps<T extends Record<string, any>> = {
 
     /** Specifies that data collation will be applied outside of the component */
     controlledCollation?: boolean;
+
+    rowHeight?: number;
+    headerHeight?: number;
 
     height?: number | string;
     maxHeight?: number | string;
@@ -105,6 +108,9 @@ function validateProps<T extends Record<string, any>>(props: TableProps<T>) {
 export function Table<T extends Record<string, any>>(props: TableProps<T>): React.ReactNode {
     validateProps(props);
 
+    const rowHeightOrDefault = Math.ceil(props.rowHeight ?? ROW_HEIGHT_PX);
+    const headerHeightOrDefault = Math.ceil(props.headerHeight ?? HEADER_HEIGHT_PX);
+
     const { onHover, onRowHover, onDataCollated } = props;
 
     const divWrapperRef = React.useRef<HTMLDivElement>(null);
@@ -147,18 +153,25 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
             return 0;
         }
         if (props.numPendingRows === "fill") {
+            if (headerHeightOrDefault === 0) return 0;
+
             const numHeaderRows = tableCellDefinitions.headerCells.length;
             const numFilterRows = tableCellDefinitions.filterCells.length ? 1 : 0;
 
-            const maxRowsInTable = Math.floor(wrapperSize.height / ROW_HEIGHT_PX);
+            const totalHeaderHeight = (numHeaderRows + numFilterRows) * headerHeightOrDefault;
 
-            return Math.max(0, maxRowsInTable - numHeaderRows - numFilterRows - props.rows.length);
+            const availableBodyHeight = wrapperSize.height - totalHeaderHeight;
+            const rowsInBody = Math.floor(availableBodyHeight / rowHeightOrDefault);
+
+            return Math.max(0, rowsInBody - props.rows.length);
         }
 
         return props.numPendingRows;
     }, [
         props.numPendingRows,
         props.rows.length,
+        headerHeightOrDefault,
+        rowHeightOrDefault,
         tableCellDefinitions.filterCells.length,
         tableCellDefinitions.headerCells.length,
         wrapperSize.height,
@@ -275,6 +288,7 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
                     />
 
                     <TableHead
+                        headerHeight={headerHeightOrDefault}
                         multiColumnSort={props.multiColumnSort}
                         wrapperElement={divWrapperRef}
                         headerCellDefinitions={tableCellDefinitions.headerCells}
@@ -290,6 +304,7 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
                         wrapperElement={divWrapperRef}
                         dataCellDefinitions={tableCellDefinitions.dataCells}
                         rows={collatedDataWithPendingRows}
+                        rowHeight={rowHeightOrDefault}
                         height={props.height}
                         selectedRows={selectedRows}
                         selectable={props.selectable ?? props.multiSelect}
@@ -304,7 +319,7 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
                     We fake the border at the bottom of the table so it still shows when elements overflow
                     (but still follows the table body height when dealing with locked table-heights)    
                 */}
-                <div className="border-b-2 sticky b-0" />
+                <div className="border-b-2 sticky bottom-0" />
             </div>
         </>
     );

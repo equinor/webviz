@@ -9,6 +9,7 @@ import { TableRow } from "./tableRow";
 
 type TableBodyProps<T extends Record<string, any>> = {
     rows: TableDataWithKey<T>[];
+    rowHeight: number;
     wrapperElement: React.RefObject<HTMLElement>;
     height?: number | string;
     dataCellDefinitions: TableCellDefinitions<T>["dataCells"];
@@ -87,12 +88,13 @@ export function TableBody<T extends Record<string, any>>(props: TableBodyProps<T
                 direction="vertical"
                 placeholderComponent="tr"
                 items={props.rows}
-                itemSize={ROW_HEIGHT_PX}
+                itemSize={props.rowHeight}
                 onScroll={props.onVisibleRowRangeChange}
                 renderItem={(row, rowIndex) => (
                     <TableRow
                         key={row._key}
                         row={row}
+                        height={props.rowHeight}
                         dataCellDefinitions={props.dataCellDefinitions}
                         selected={!!props.selectedRows?.includes(row._key)}
                         onMouseOver={handleRowMouseOver}
@@ -102,7 +104,8 @@ export function TableBody<T extends Record<string, any>>(props: TableBodyProps<T
             />
 
             {props.rows.length === 0 && (
-                <tr className="border-b-2 border-inherit" style={{ height: ROW_HEIGHT_PX * 2.5 }}>
+                // This one doesn't need to follow the custom height prop
+                <tr style={{ height: ROW_HEIGHT_PX * 2.5 }}>
                     <td
                         className="text-lg italic text-slate-600 text-center align-middle"
                         colSpan={props.dataCellDefinitions.length}

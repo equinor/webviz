@@ -4,12 +4,12 @@ import { random } from "lodash";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { ROW_HEIGHT_PX } from "../constants";
 import type { LoadedDataWithKey, TableCellDefinitions, TableDataWithKey } from "../types";
 import { isLoadedDataRow } from "../utils";
 
 export type TableRowProps<T extends Record<string, any>> = {
     row: TableDataWithKey<T>;
+    height: number;
     selected: boolean;
     dataCellDefinitions: TableCellDefinitions<T>["dataCells"];
     onClick: (entry: LoadedDataWithKey<T>, evt: React.MouseEvent) => void;
@@ -39,7 +39,7 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
                             key={String(cellDef.columnId)}
                             className=" border-slate-200 p-2 whitespace-nowrap truncate"
                             title="Data is pending..."
-                            style={{ height: ROW_HEIGHT_PX }}
+                            style={{ height: props.height }}
                         >
                             <div
                                 className="rounded-4xl bg-slate-300/50 h-full w-full animate-pulse transition-opacity"
@@ -57,7 +57,7 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
                         key={String(cellDef.columnId)}
                         className=" border-slate-200 p-1 whitespace-nowrap truncate"
                         title={formattedData}
-                        style={{ maxHeight: ROW_HEIGHT_PX, ...style }}
+                        style={{ height: props.height, ...style }}
                     >
                         {cellDef.render?.(dataValue, row) ?? formattedData ?? dataValue}
                     </td>

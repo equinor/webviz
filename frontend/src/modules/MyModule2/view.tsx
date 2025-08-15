@@ -226,6 +226,7 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
                 filters={tableFilterState}
                 selectable
                 multiColumnSort
+                rowHeight={50}
                 multiSelect={allowMultiSelect}
                 onSortingChange={setTableSortingState}
                 onFiltersChange={handleFilterUpdate}
