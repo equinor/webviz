@@ -234,7 +234,9 @@ async def get_statistical_surface_data_hybrid(
 
     # !!!!!!!!!!!!!
     # Todo!
-    # We should include the most recent case/ensemble/object timestamp here as well
+    # We should include the most recent case/ensemble/object timestamp in the hash here as well
+    # For that to be viable, we must be able to quickly retrieve the timestamp of the latest change
+    # in a specific ensemble, probably by storing this information in redis or similar
     param_hash = sha256(surf_addr_str.encode()).hexdigest()
 
     task_tracker = get_task_meta_tracker_for_user(authenticated_user)
@@ -257,12 +259,6 @@ async def get_statistical_surface_data_hybrid(
             realizations=addr.stat_realizations,
             time_or_interval_str=addr.iso_time_or_interval,
         )
-
-        if not sumo_task_id:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to submit new task for computing statistical surface",
-            )
 
         new_sumo_job_was_submitted = True
         await task_tracker.register_task_with_fingerprint_async(
@@ -309,13 +305,12 @@ async def get_statistical_surface_data_hybrid(
         response.status_code = status.HTTP_202_ACCEPTED
         response.headers["Cache-Control"] = "no-store"
         return LroInProgressResp(status="in_progress", task_id=sumo_task_id, progress_message=progress_msg)
+
     except Exception as exc:
-        LOGGER.error(f"Error occurred while polling for surface data: {exc}")
         await task_tracker.delete_fingerprint_to_task_mapping_async(param_hash)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed while polling for statistical surface data",
-        )
+
+        # re-raise the exception and let our middleware handle it
+        raise
 
 
 ################################################################
