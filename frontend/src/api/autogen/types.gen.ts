@@ -3509,6 +3509,7 @@ export type GetSeismicSlicesData_api = {
          * Depth slice number
          */
         depth_slice_number: number;
+        t?: number;
     };
     url: "/seismic/get_seismic_slices/";
 };
