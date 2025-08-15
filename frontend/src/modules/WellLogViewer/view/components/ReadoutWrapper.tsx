@@ -5,7 +5,7 @@ import { chain, maxBy } from "lodash";
 
 import type { InfoItem, ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
-import type { TemplateTrack } from "@modules/WellLogViewer/types";
+import type { TemplateTrack } from "@modules/_shared/types/wellLogTemplates";
 
 const DEFAULT_MAX_READOUT_ITEMS = 6;
 

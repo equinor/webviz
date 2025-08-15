@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 
 import type { WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 import { WellLogCurveSourceEnum_api } from "@api";
+import type { WellPickDataCollection } from "@modules/_shared/types/wellpicks";
 import { MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE } from "@modules/WellLogViewer/constants";
-import type { WellPickDataCollection } from "@modules/WellLogViewer/DataProviderFramework/visualizations/wellpicks";
 import { createLogViewerWellPicks, createWellLogSets } from "@modules/WellLogViewer/utils/queryDataTransform";
 
 describe("QueryDataTransform", () => {

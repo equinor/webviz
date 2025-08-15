@@ -47,6 +47,21 @@ module.exports = {
                 path: "^src/(?!$1/).*(/_[^/]+/)",
             },
         },
+        {
+            name: "no-cross-module-imports",
+            severity: "error",
+            from: {
+                path: "^src/modules/([^/]+)/",
+            },
+            to: {
+                path: "^src/modules/([^/]+)/",
+                pathNot: [
+                    "^src/modules/_shared/",
+                    // This should allow same-module imports
+                    "($1)",
+                ],
+            },
+        },
     ],
     options: {
         /* conditions specifying which files not to follow further when encountered:
