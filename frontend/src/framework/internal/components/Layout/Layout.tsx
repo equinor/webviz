@@ -338,8 +338,8 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
                     layoutElements={layoutElements}
                     onActiveModuleChange={handleFullscreenModuleChange}
                     getModuleInstanceName={(moduleInstanceId) => {
-                        const el = layoutElements.find((le) => le.moduleInstanceId === moduleInstanceId);
-                        return el ? el.moduleName : undefined;
+                        const el = moduleInstances.find((mi) => mi.getId() === moduleInstanceId);
+                        return el ? el.getTitle() : undefined;
                     }}
                 />
 

@@ -100,8 +100,10 @@ export function QuickSwitchDock(props: QuickSwitchDockProps) {
                 </IconButton>
 
                 <div className="relative grow overflow-x-auto overflow-y-hidden flex whitespace-nowrap gap-2">
+                    {/*
                     <div className="pointer-events-none absolute left-0 top-0 h-full w-6 bg-gradient-to-r from-white to-transparent" />
                     <div className="pointer-events-none absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-white to-transparent" />
+                    */}
                     <div
                         ref={scrollerRef}
                         className="grow overflow-x-auto overflow-y-hidden flex whitespace-nowrap gap-2"
@@ -121,6 +123,7 @@ export function QuickSwitchDock(props: QuickSwitchDockProps) {
                                         variant={el.maximized ? "contained" : "outlined"}
                                         role="tab"
                                         tabIndex={tabIndex}
+                                        size="medium"
                                     >
                                         {props.getModuleInstanceName(el.moduleInstanceId!)}
                                     </Button>
