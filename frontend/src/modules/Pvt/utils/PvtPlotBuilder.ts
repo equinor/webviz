@@ -7,7 +7,6 @@ import type { Size2D } from "@lib/utils/geometry";
 import type { Figure } from "@modules/_shared/Figure";
 import { makeSubplots } from "@modules/_shared/Figure";
 
-
 import {
     ColorBy,
     PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME,
@@ -16,7 +15,6 @@ import {
 } from "../typesAndEnums";
 
 import type { PvtDataAccessor } from "./PvtDataAccessor";
-
 
 type TracePointData = {
     ratio: number;
@@ -287,9 +285,12 @@ export class PvtPlotBuilder {
         }
     }
 
-    makePlot(): React.ReactNode {
-        const figure = this.getFigureAndAssertValidity();
-        return figure.makePlot();
+    makePlotData() {
+        return this.getFigureAndAssertValidity().makeData();
+    }
+
+    makePlotLayout() {
+        return this.getFigureAndAssertValidity().makeLayout();
     }
 
     private makeHoverTemplate(
