@@ -53,12 +53,12 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
 
     React.useEffect(
         function mountScrollEffect() {
+            const currentContainer = props.containerRef.current;
+
             function handleScroll() {
-                if (props.containerRef.current) {
+                if (currentContainer) {
                     const scrollPosition =
-                        props.direction === "vertical"
-                            ? props.containerRef.current.scrollTop
-                            : props.containerRef.current.scrollLeft;
+                        props.direction === "vertical" ? currentContainer.scrollTop : currentContainer.scrollLeft;
 
                     const size = props.direction === "vertical" ? containerSize.height : containerSize.width;
 
@@ -75,23 +75,23 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
                 }
             }
 
-            if (props.containerRef.current) {
-                props.containerRef.current.addEventListener("scroll", handleScroll);
+            if (currentContainer) {
+                currentContainer.addEventListener("scroll", handleScroll);
             }
 
             // Run once to give initial scroll values
             handleScroll();
 
             return function unmountScrollEffect() {
-                if (props.containerRef.current) {
-                    props.containerRef.current.removeEventListener("scroll", handleScroll);
+                if (currentContainer) {
+                    currentContainer.removeEventListener("scroll", handleScroll);
                 }
             };
         },
         [
             props.containerRef,
             props.direction,
-            props.items,
+            props.items.length,
             props.itemSize,
             containerSize.height,
             containerSize.width,
