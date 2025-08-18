@@ -16,6 +16,7 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { Plot } from "@modules/_shared/components/Plot";
 import { getVaryingContinuousParameters } from "@modules/_shared/parameterUtils";
 import type { ResponseData } from "@modules/_shared/rankParameter";
 import type { CorrelationDataItem } from "@modules/_shared/utils/math/correlationMatrix";
@@ -203,7 +204,11 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 plotType,
                 correlationSettings,
             );
-            setContent(figure.build());
+            setContent(
+                <>
+                    <Plot layout={figure.makePlotLayout()} data={figure.makePlotData()} />;
+                </>,
+            );
             return;
         });
     }
