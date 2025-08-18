@@ -3607,9 +3607,9 @@ export type GetUserPhotoData_api = {
     path?: never;
     query: {
         /**
-         * User id
+         * User email or 'me' for the authenticated user
          */
-        user_id: string;
+        user_email: string;
         t?: number;
     };
     url: "/graph/user_photo/";
