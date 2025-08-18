@@ -11,9 +11,10 @@ export type TableRowProps<T extends Record<string, any>> = {
     row: TableDataWithKey<T>;
     height: number;
     selected: boolean;
+    selectionEnabled: boolean | undefined;
     dataCellDefinitions: TableCellDefinitions<T>["dataCells"];
     onClick: (entry: LoadedDataWithKey<T>, evt: React.MouseEvent) => void;
-    onMouseOver: (entry: LoadedDataWithKey<T>, evt: React.MouseEvent<HTMLTableRowElement>) => void;
+    onMouseOver: (entry: LoadedDataWithKey<T>, evt: React.MouseEvent) => void;
 };
 
 export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>): React.ReactNode {
@@ -23,12 +24,25 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
     // Randomizing where in the pulsing animation we start. Wrapped in memo so it stays between rerenders
     const animationDelay = React.useMemo(() => `${random(-1, 0, true)}s`, []);
 
+    const handleMouseDown = React.useCallback(
+        function handleMouseDown(evt: React.MouseEvent) {
+            if (!props.selectionEnabled) return;
+
+            // Default behavior will select cells/text, which is undesirable
+            if (evt.shiftKey || evt.ctrlKey) {
+                evt.preventDefault();
+            }
+        },
+        [props.selectionEnabled],
+    );
+
     return (
         <tr
-            className={resolveClassNames("group/tr border-b-2 last:border-b-0 select-none", {
+            className={resolveClassNames("group/tr border-b-2 last:border-b-0", {
                 "hover:bg-blue-100": !props.selected && isLoaded,
                 "bg-blue-300 text-white hover:bg-blue-200": props.selected && isLoaded,
             })}
+            onMouseDown={handleMouseDown}
             onClick={(evt) => isLoaded && props.onClick(row, evt)}
             onMouseOver={(evt) => isLoaded && props.onMouseOver?.(row, evt)}
         >

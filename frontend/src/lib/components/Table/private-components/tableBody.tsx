@@ -94,6 +94,7 @@ export function TableBody<T extends Record<string, any>>(props: TableBodyProps<T
                     <TableRow
                         key={row._key}
                         row={row}
+                        selectionEnabled={props.selectable}
                         height={props.rowHeight}
                         dataCellDefinitions={props.dataCellDefinitions}
                         selected={!!props.selectedRows?.includes(row._key)}
