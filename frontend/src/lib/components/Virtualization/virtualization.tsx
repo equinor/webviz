@@ -14,6 +14,7 @@ export type VirtualizationProps<T = any> = {
     itemSize: number;
     direction: "vertical" | "horizontal";
     startIndex?: number;
+    overscan?: number | { head: number; tail: number };
     onStartIndexChange?: (newStartIndex: number) => void;
     onRangeComputed?: (startIndex: number, endIndex: number) => void;
 };
@@ -21,6 +22,7 @@ export type VirtualizationProps<T = any> = {
 const defaultProps = {
     placeholderComponent: "div",
     startIndex: 0,
+    overscan: 1,
 };
 
 type VirtualizationRange = { start: number; end: number };
@@ -42,6 +44,12 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
             end: (props.items.length - range.end - 1) * props.itemSize,
         };
     }, [props.itemSize, props.items.length, range.end, range.start]);
+
+    const overscanAmt = React.useMemo(() => {
+        if (typeof props.overscan === "object") return props.overscan;
+
+        return { head: props.overscan, tail: props.overscan };
+    }, [props.overscan]);
 
     const updateVirtualizationRange = React.useCallback(
         function updateVirtualizationRange(newRange: VirtualizationRange) {
@@ -84,9 +92,12 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
                 const scrollPosition = isVertical ? currentContainer.scrollTop : currentContainer.scrollLeft;
                 const size = isVertical ? containerSize.height : containerSize.width;
 
+                const startIndex = Math.floor(scrollPosition / props.itemSize) - overscanAmt.head;
+                const endIndex = Math.floor((scrollPosition + size) / props.itemSize) + overscanAmt.tail;
+
                 const newRange = {
-                    start: Math.max(0, Math.floor(scrollPosition / props.itemSize) - 1),
-                    end: Math.min(props.items.length - 1, Math.ceil((scrollPosition + size) / props.itemSize)),
+                    start: Math.max(0, startIndex),
+                    end: Math.min(props.items.length - 1, endIndex),
                 };
 
                 if (!isEqual(newRange, lastScrolledRange.current)) {
@@ -114,6 +125,8 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
             props.itemSize,
             containerSize.height,
             containerSize.width,
+            overscanAmt.head,
+            overscanAmt.tail,
             updateVirtualizationRange,
         ],
     );
