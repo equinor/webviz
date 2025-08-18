@@ -1,10 +1,11 @@
 import React from "react";
 
+import { DotProgress, LinearProgress } from "@equinor/eds-core-react";
 import { Add, Check } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
-import { getCasesOptions, getEnsemblesOptions, getFieldsOptions } from "@api";
+import { getCasesOptions, getFieldsOptions } from "@api";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { tanstackDebugTimeOverride } from "@framework/internal/utils/debug";
@@ -13,6 +14,7 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
@@ -53,6 +55,8 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
     const userName = React.useMemo(() => {
         return userInfo?.username.replace("@equinor.com", "").toLowerCase() ?? "";
     }, [userInfo]);
+
+    const [numberOfCases, setNumberOfCases] = React.useState<number>(0);
 
     const [currentStatusOptions, setCurrentStatusOptions] = React.useState<string[]>([]);
     const [selectedStandardResults, setSelectedStandardResults] = React.useState<string[]>([]);
@@ -115,7 +119,8 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
         }
     }
 
-    const caseStandardResults = React.useMemo(() => {
+    // Extract unique standard results from cases data when it's available
+    const casesStandardResults = React.useMemo(() => {
         if (!casesQuery.data) {
             return [];
         }
@@ -154,37 +159,26 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
         keepStateWhenInvalid: true,
     });
 
-    const selectedCase = React.useMemo(() => {
-        const cases = casesQuery.data ?? [];
-        return cases.find((c) => c.uuid === selectedCaseUuid);
+    const selectedCaseEnsembles = React.useMemo(() => {
+        const selectedCase = casesQuery.data?.find((c) => c.uuid === selectedCaseUuid);
+        if (!selectedCase) {
+            return [];
+        }
+        return selectedCase.ensembles;
     }, [casesQuery.data, selectedCaseUuid]);
-
-    // Ensemble select
-    const ensemblesQuery = useQuery({
-        ...getEnsemblesOptions({
-            query: { t: selectedCase?.updatedAtUtcMs },
-            path: {
-                case_uuid: selectedCaseUuid,
-            },
-        }),
-        enabled: casesQuery.isSuccess && !!selectedCase,
-        gcTime: CACHE_TIME,
-        staleTime: STALE_TIME,
-    });
 
     const [selectedEnsembleName, setSelectedEnsembleName] = useValidState<string>({
         initialState: "",
-        validStates: ensemblesQuery.data?.map((el) => el.name) ?? [],
+        validStates: selectedCaseEnsembles.map((ens) => ens.name),
         keepStateWhenInvalid: true,
     });
 
     const selectedEnsemble = React.useMemo(() => {
-        const ensembles = ensemblesQuery.data ?? [];
-        return ensembles.find((ens) => ens.name === selectedEnsembleName);
-    }, [ensemblesQuery.data, selectedEnsembleName]);
+        return selectedCaseEnsembles.find((ens) => ens.name === selectedEnsembleName);
+    }, [selectedCaseEnsembles, selectedEnsembleName]);
 
     const ensembleOpts =
-        ensemblesQuery.data?.map((e) => ({
+        selectedCaseEnsembles.map((e) => ({
             label: `${e.name}  (${e.realizationCount} reals)`,
             value: e.name,
         })) ?? [];
@@ -242,6 +236,10 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
         setTableFiltersState(newValue);
     }
 
+    function handleNumberOfCasesChange(newValue: number) {
+        setNumberOfCases(newValue);
+    }
+
     function handleRegularEnsembleChanged(ensembleNames: string[]) {
         setSelectedEnsembleName(ensembleNames[0]);
     }
@@ -257,7 +255,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
             caseName: caseName,
             color: props.nextEnsembleColor,
             customName: null,
-            timestamps: selectedEnsemble.timestamps,
+            timestamp: selectedEnsemble.updatedAtUtcMs,
         });
     }
 
@@ -278,20 +276,25 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
                 </QueryStateWrapper>
             </Label>
             <Label text="Case">
-                <QueryStateWrapper
-                    queryResult={casesQuery}
-                    errorComponent={<div className="text-red-500">Error loading cases</div>}
-                    loadingComponent={<CircularProgress />}
-                >
-                    <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4">
+                    <QueryStateWrapper
+                        queryResult={casesQuery}
+                        errorComponent={<div className="text-red-500">Error loading cases</div>}
+                        loadingComponent={<CircularProgress />}
+                    >
                         <TagPicker
                             placeholder="Filter by Standard Results..."
-                            tags={caseStandardResults.map((elm) => ({ label: elm, value: elm }))}
+                            tags={casesStandardResults.map((elm) => ({ label: elm, value: elm }))}
                             value={selectedStandardResults}
                             onChange={handleFilterByStandardResultsChange}
                         />
+                    </QueryStateWrapper>
+                    <PendingWrapper
+                        isPending={false}
+                        errorMessage={casesQuery.isError ? "Error loading cases" : undefined}
+                    >
                         <div className="flex justify-end gap-4 items-center">
-                            <span className="grow text-sm text-slate-500">Select from {caseRowData.length} cases</span>
+                            <span className="grow text-sm text-slate-500">Select from {numberOfCases} cases</span>
                             <Label position="right" text="Official" title="Show only cases marked as official">
                                 <Switch checked={showOnlyOfficialCases} onChange={handleOfficialCasesSwitchChange} />
                             </Label>
@@ -302,22 +305,23 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
                         <Table
                             rowIdentifier="caseId"
                             height={500}
+                            numPendingRows={!casesQuery.data ? "fill" : undefined}
                             columns={caseTableColumns}
                             rows={caseRowData}
-                            selectedRows={["selectedCaseUuid"]}
+                            selectedRows={[selectedCaseUuid]}
                             filters={tableFiltersState}
                             selectable
                             onSelectedRowsChange={handleOnSelectRowsChange}
                             onFiltersChange={handleFiltersChange}
+                            onDataCollated={(data) => handleNumberOfCasesChange(data.length)}
                         />
-                    </div>
-                </QueryStateWrapper>
+                    </PendingWrapper>
+                </div>
             </Label>
             <Label text="Ensemble">
-                <QueryStateWrapper
-                    queryResult={ensemblesQuery}
-                    errorComponent={<div className="text-red-500">Error loading ensembles</div>}
-                    loadingComponent={<CircularProgress />}
+                <PendingWrapper
+                    isPending={false}
+                    errorMessage={casesQuery.isError ? "Error loading ensembles" : undefined}
                 >
                     <Select
                         options={ensembleOpts}
@@ -327,7 +331,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
                         size={5}
                         width="100%"
                     />
-                </QueryStateWrapper>
+                </PendingWrapper>
             </Label>
             <div className="flex justify-end">
                 <Button

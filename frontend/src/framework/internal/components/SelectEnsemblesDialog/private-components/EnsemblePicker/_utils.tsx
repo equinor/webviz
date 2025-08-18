@@ -103,7 +103,13 @@ export function makeCaseTableColumns(
             sizeInPercent: 20,
             formatValue: (value) => new Date(value).toLocaleDateString(),
             filter: {
-                render: (props) => <DateRangePicker {...props} onChange={props.onFilterChange} />,
+                render: (props) => (
+                    <DateRangePicker
+                        className='overflow-hidden [&_[class*="Icon"]]:h-3.5'
+                        {...props}
+                        onChange={props.onFilterChange}
+                    />
+                ),
                 predicate: (filterValue, dataValue) => predicateDateRangePick(filterValue, dataValue),
             },
         },

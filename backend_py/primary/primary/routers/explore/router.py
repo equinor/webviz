@@ -7,7 +7,8 @@ from fastapi import APIRouter, Depends, Path, Query, Body
 
 from primary.auth.auth_helper import AuthHelper
 from primary.services.sumo_access.case_inspector import CaseInspector
-from primary.services.sumo_access.sumo_inspector import SumoInspector
+# from primary.services.sumo_access.sumo_inspector import SumoInspector
+from primary.services.sumo_access.sumo_inspector_NEW import SumoInspectorNEW
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.middleware.add_browser_cache import no_cache
 
@@ -24,7 +25,7 @@ async def get_fields(
     """
     Get list of fields
     """
-    sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
+    sumo_inspector = SumoInspectorNEW(authenticated_user.get_sumo_access_token())
     field_ident_arr = await sumo_inspector.get_fields_async()
     ret_arr = [schemas.FieldInfo(fieldIdentifier=field_ident.identifier) for field_ident in field_ident_arr]
 
@@ -40,7 +41,7 @@ async def get_cases(
     field_identifier: str = Query(description="Field identifier"),
 ) -> List[schemas.CaseInfo]:
     """Get list of cases for specified field"""
-    sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
+    sumo_inspector = SumoInspectorNEW(authenticated_user.get_sumo_access_token())
     case_info_arr = await sumo_inspector.get_cases_async(field_identifier=field_identifier)
 
     ret_arr: List[schemas.CaseInfo] = []
@@ -53,7 +54,12 @@ async def get_cases(
             user=ci.user,
             updatedAtUtcMs=ci.updated_at_utc_ms,
             description=ci.description,
-            ensembles=[]
+            ensembles=[schemas.EnsembleInfo(
+                name=ei.name,
+                realizationCount=ei.realization_count,
+                updatedAtUtcMs=ei.updated_at_utc_ms,
+                standardResults=ei.standard_results,
+            ) for ei in ci.ensembles]
         )
         for ci in case_info_arr
     ]

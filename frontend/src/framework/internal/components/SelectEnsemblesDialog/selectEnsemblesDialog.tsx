@@ -5,7 +5,7 @@ import { isEqual } from "lodash";
 
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import type { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
+import type { UserDeltaEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { useColorSet } from "@framework/WorkbenchSettings";
@@ -186,7 +186,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     function handlePickEnsemble(newItem: InternalRegularEnsembleSetting) {
         if (ensemblePickerMode === EnsemblePickerMode.ADD_REGULAR_ENSEMBLE) {
-            handleAddSelectedRegularEnsemble(newItem);
+            addSelectedRegularEnsemble(newItem);
             return;
         }
 
@@ -229,8 +229,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         setEnsemblePickerMode(null);
     }
 
-    // function handlePickRegularEnsemble(newItem: InternalRegularEnsembleSetting) {
-    function handleAddSelectedRegularEnsemble(newItem: InternalRegularEnsembleSetting) {
+    function addSelectedRegularEnsemble(newItem: InternalRegularEnsembleSetting) {
         if (selectedRegularEnsembles.some((el) => el.ensembleIdent.equals(newItem.ensembleIdent))) {
             return;
         }
@@ -250,7 +249,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         }
     }
 
-    function handleAddRegularEnsemble() {
+    function handlePickRegularEnsemble() {
         setEnsemblePickerMode(EnsemblePickerMode.ADD_REGULAR_ENSEMBLE);
         setShowEnsemblePicker(true);
     }
@@ -270,7 +269,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         setSelectedRegularEnsembles(updatedRegularEnsembles);
     }
 
-    function handleRemoveRegularEnsemble(removedItem: UserEnsembleSetting) {
+    function handleRemoveRegularEnsemble(removedItem: InternalRegularEnsembleSetting) {
         setSelectedRegularEnsembles((prev) => prev.filter((el) => !el.ensembleIdent.equals(removedItem.ensembleIdent)));
     }
 
@@ -368,7 +367,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         onCreateDeltaEnsemble={handleAddDeltaEnsemble}
                         onUpdateDeltaEnsemble={handleUpdateDeltaEnsemble}
                         onRemoveDeltaEnsemble={handleRemoveDeltaEnsemble}
-                        onAddRegularEnsemble={handleAddRegularEnsemble}
+                        onAddRegularEnsemble={handlePickRegularEnsemble}
                         onUpdateRegularEnsemble={handleUpdateRegularEnsemble}
                         onRequestOtherComparisonEnsemble={handleOnRequestOtherComparisonEnsemble}
                         onRequestOtherReferenceEnsemble={handleOnRequestOtherReferenceEnsemble}

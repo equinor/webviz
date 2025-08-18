@@ -1,8 +1,9 @@
 import type { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
-export type InternalRegularEnsembleSetting = UserEnsembleSetting & {
+export type InternalRegularEnsembleSetting = Omit<UserEnsembleSetting, "timestamps"> & {
     caseName: string;
+    timestamp?: number; // TODO: Should be required? See makeRegularEnsembleSettingsFromEnsembleSet-method for "issue"
 };
 
 // Internal type for selectable ensembles for delta, additional to already selected regular ensembles

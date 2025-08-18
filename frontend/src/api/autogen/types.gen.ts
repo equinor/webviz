@@ -132,7 +132,7 @@ export type EnsembleIdent_api = {
 export type EnsembleInfo_api = {
     name: string;
     realizationCount: number;
-    timestamps: EnsembleTimestamps_api;
+    updatedAtUtcMs: number;
     standardResults: Array<string>;
 };
 

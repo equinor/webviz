@@ -18,7 +18,7 @@ class EnsembleTimestamps(BaseModel):
 class EnsembleInfo(BaseModel):
     name: str
     realizationCount: int
-    timestamps: EnsembleTimestamps
+    updatedAtUtcMs: int
     standardResults: Sequence[str]
 
 
