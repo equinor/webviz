@@ -8,7 +8,7 @@ ENV PATH="${PATH}:/home/appuser/.local/bin"
 
 RUN python3 -m pip install --user pipx
 RUN python3 -m pipx ensurepath
-RUN pipx install poetry==1.8.2
+RUN pipx install poetry==2.1.4
 
 ENV VIRTUAL_ENV=/home/appuser/venv
 RUN python3 -m venv $VIRTUAL_ENV
