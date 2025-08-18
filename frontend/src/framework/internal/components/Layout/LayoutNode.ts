@@ -16,6 +16,8 @@ export const LAYOUT_BOX_DROP_MARGIN = 25;
 export const LAYOUT_BOX_RESIZE_MARGIN = 5;
 export const EDGE_DROP_WEIGHT = 50;
 export const EDGE_RESIZE_WEIGHT = 5;
+export const MIN_FRAME_PX = 4; // minimal inner frame to keep overlays visible
+export const MIN_EDGE_PX = 6; // minimal thickness for drop/resize edges
 
 const EPSILON = 1e-6;
 
@@ -101,24 +103,35 @@ export class LayoutNode {
     getRectWithMargin(realSizeFactor: Size2D): Rect2D {
         const absoluteRect = this.getAbsoluteRect();
 
+        const absoluteWidth = absoluteRect.width * realSizeFactor.width;
+        const absoluteHeight = absoluteRect.height * realSizeFactor.height;
+
         const lvl = this._level;
         const parentLvl = this._parent?._level ?? lvl;
 
-        let mx = parentLvl;
+        let mxLvl = parentLvl;
         if (this._parent === null || this._parent._layoutDirection === LayoutDirection.HORIZONTAL) {
-            mx = lvl;
+            mxLvl = lvl;
         }
 
-        let my = parentLvl;
+        let myLvl = parentLvl;
         if (this._parent === null || this._parent._layoutDirection !== LayoutDirection.HORIZONTAL) {
-            my = lvl;
+            myLvl = lvl;
         }
+
+        // raw margins in px
+        const rawMx = LAYOUT_BOX_DROP_MARGIN * mxLvl;
+        const rawMy = LAYOUT_BOX_DROP_MARGIN * myLvl;
+
+        // clamp so we never invert the rect; also cap to a fraction to stay sane
+        const marginX = Math.min(rawMx, Math.max(0, (absoluteWidth - MIN_FRAME_PX) / 2));
+        const marginY = Math.min(rawMy, Math.max(0, (absoluteHeight - MIN_FRAME_PX) / 2));
 
         return {
-            x: absoluteRect.x * realSizeFactor.width + LAYOUT_BOX_DROP_MARGIN * mx,
-            y: absoluteRect.y * realSizeFactor.height + LAYOUT_BOX_DROP_MARGIN * my,
-            width: absoluteRect.width * realSizeFactor.width - LAYOUT_BOX_DROP_MARGIN * 2 * mx,
-            height: absoluteRect.height * realSizeFactor.height - LAYOUT_BOX_DROP_MARGIN * 2 * my,
+            x: absoluteRect.x * realSizeFactor.width + marginX,
+            y: absoluteRect.y * realSizeFactor.height + marginY,
+            width: Math.max(MIN_FRAME_PX, absoluteWidth - 2 * marginX),
+            height: Math.max(MIN_FRAME_PX, absoluteHeight - 2 * marginY),
         };
     }
 
@@ -605,111 +618,100 @@ export class LayoutNode {
         const rect = this.getRectWithMargin(realSize);
         const edges: LayoutNodeEdge[] = [];
 
+        const clampThickness = (t: number, axis: "x" | "y") =>
+            Math.max(MIN_EDGE_PX, Math.min(t, axis === "x" ? rect.width : rect.height));
+
+        // SINGLE child: fractional bands; clamp those too
         if (this._layoutDirection === LayoutDirection.SINGLE && this._parent) {
-            if (this._parent._layoutDirection === LayoutDirection.HORIZONTAL) {
+            if (
+                this._parent._layoutDirection === LayoutDirection.HORIZONTAL ||
+                this._parent._layoutDirection === LayoutDirection.MAIN
+            ) {
+                const th = clampThickness(rect.height * 0.25, "y");
                 edges.push({
-                    rect: { x: rect.x, y: rect.y, width: rect.width, height: 0.25 * rect.height },
+                    rect: { x: rect.x, y: rect.y, width: rect.width, height: th },
                     edge: LayoutNodeEdgeType.TOP,
                 });
                 edges.push({
-                    rect: { x: rect.x, y: rect.y + 0.75 * rect.height, width: rect.width, height: 0.25 * rect.height },
+                    rect: { x: rect.x, y: rect.y + rect.height - th, width: rect.width, height: th },
                     edge: LayoutNodeEdgeType.BOTTOM,
                 });
             }
-            if (this._parent._layoutDirection === LayoutDirection.VERTICAL) {
+            if (
+                this._parent._layoutDirection === LayoutDirection.VERTICAL ||
+                this._parent._layoutDirection === LayoutDirection.MAIN
+            ) {
+                const tw = clampThickness(rect.width * 0.25, "x");
                 edges.push({
-                    rect: { x: rect.x, y: rect.y, width: 0.25 * rect.width, height: rect.height },
+                    rect: { x: rect.x, y: rect.y, width: tw, height: rect.height },
                     edge: LayoutNodeEdgeType.LEFT,
                 });
                 edges.push({
-                    rect: { x: rect.x + 0.75 * rect.width, y: rect.y, width: 0.25 * rect.width, height: rect.height },
-                    edge: LayoutNodeEdgeType.RIGHT,
-                });
-            }
-            if (this._parent._layoutDirection === LayoutDirection.MAIN) {
-                edges.push({
-                    rect: { x: rect.x, y: rect.y, width: rect.width, height: 0.25 * rect.height },
-                    edge: LayoutNodeEdgeType.TOP,
-                });
-                edges.push({
-                    rect: { x: rect.x, y: rect.y + 0.75 * rect.height, width: rect.width, height: 0.25 * rect.height },
-                    edge: LayoutNodeEdgeType.BOTTOM,
-                });
-                edges.push({
-                    rect: { x: rect.x, y: rect.y, width: 0.25 * rect.width, height: rect.height },
-                    edge: LayoutNodeEdgeType.LEFT,
-                });
-                edges.push({
-                    rect: { x: rect.x + 0.75 * rect.width, y: rect.y, width: 0.25 * rect.width, height: rect.height },
+                    rect: { x: rect.x + rect.width - tw, y: rect.y, width: tw, height: rect.height },
                     edge: LayoutNodeEdgeType.RIGHT,
                 });
             }
         }
+
+        // Container edges
         if (this._layoutDirection === LayoutDirection.HORIZONTAL) {
+            const t = clampThickness(edgeWeight, "x");
             edges.push(
                 {
-                    rect: {
-                        x: rect.x + rect.width - edgeWeight,
-                        y: rect.y,
-                        width: edgeWeight,
-                        height: rect.height,
-                    },
+                    rect: { x: rect.x + rect.width - t, y: rect.y, width: t, height: rect.height },
                     edge: LayoutNodeEdgeType.RIGHT,
                 },
-                {
-                    rect: { x: rect.x, y: rect.y, width: edgeWeight, height: rect.height },
-                    edge: LayoutNodeEdgeType.LEFT,
-                },
+                { rect: { x: rect.x, y: rect.y, width: t, height: rect.height }, edge: LayoutNodeEdgeType.LEFT },
             );
         }
         if (this._layoutDirection === LayoutDirection.VERTICAL) {
+            const t = clampThickness(edgeWeight, "y");
             edges.push(
+                { rect: { x: rect.x, y: rect.y, width: rect.width, height: t }, edge: LayoutNodeEdgeType.TOP },
                 {
-                    rect: { x: rect.x, y: rect.y, width: rect.width, height: edgeWeight },
-                    edge: LayoutNodeEdgeType.TOP,
-                },
-                {
-                    rect: {
-                        x: rect.x,
-                        y: rect.y + rect.height - edgeWeight,
-                        width: rect.width,
-                        height: edgeWeight,
-                    },
+                    rect: { x: rect.x, y: rect.y + rect.height - t, width: rect.width, height: t },
                     edge: LayoutNodeEdgeType.BOTTOM,
                 },
             );
         }
 
+        // Sashes between children — base their span on our safe rect,
+        // and trim a bit but never below MIN_EDGE_PX
+        const trimY = Math.min(edgeMargin * this._level, Math.max(0, rect.height / 4));
+        const trimX = Math.min(edgeMargin * this._level, Math.max(0, rect.width / 4));
+
         if (this._layoutDirection === LayoutDirection.HORIZONTAL) {
+            const t = clampThickness(edgeWeight, "x");
             for (let i = 1; i < this._children.length; i++) {
                 const child = this._children[i];
-                const absoluteRect = child.getAbsoluteRect();
+                const abs = child.getAbsoluteRect();
                 edges.push({
                     rect: {
-                        x: absoluteRect.x * realSize.width - edgeWeight / 2,
-                        y: absoluteRect.y * realSize.height + edgeMargin * this._level,
-                        width: edgeWeight,
-                        height: absoluteRect.height * realSize.height - edgeMargin * this._level * 2,
+                        x: abs.x * realSize.width - t / 2,
+                        y: rect.y + trimY,
+                        width: t,
+                        height: Math.max(MIN_EDGE_PX, rect.height - 2 * trimY),
                     },
                     edge: LayoutNodeEdgeType.VERTICAL,
-                    position: absoluteRect.x,
+                    position: abs.x,
                 });
             }
         }
 
         if (this._layoutDirection === LayoutDirection.VERTICAL) {
+            const t = clampThickness(edgeWeight, "y");
             for (let i = 1; i < this._children.length; i++) {
                 const child = this._children[i];
-                const absoluteRect = child.getAbsoluteRect();
+                const abs = child.getAbsoluteRect();
                 edges.push({
                     rect: {
-                        x: absoluteRect.x * realSize.width + edgeMargin * this._level,
-                        y: absoluteRect.y * realSize.height - edgeWeight / 2,
-                        width: absoluteRect.width * realSize.width - edgeMargin * this._level * 2,
-                        height: edgeWeight,
+                        x: rect.x + trimX,
+                        y: abs.y * realSize.height - t / 2,
+                        width: Math.max(MIN_EDGE_PX, rect.width - 2 * trimX),
+                        height: t,
                     },
                     edge: LayoutNodeEdgeType.HORIZONTAL,
-                    position: absoluteRect.y,
+                    position: abs.y,
                 });
             }
         }

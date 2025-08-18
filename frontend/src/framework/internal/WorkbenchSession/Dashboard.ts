@@ -209,7 +209,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             if (!module) {
                 throw new Error(`Module ${name} not found`);
             }
-            const moduleInstance = await module.makeInstance(id, this._atomStoreMaster);
+            const moduleInstance = module.makeInstance(id, this._atomStoreMaster);
             this.registerModuleInstance(moduleInstance);
         }
 
@@ -255,7 +255,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
     }
 
-    async makeAndAddModuleInstance(moduleName: string): Promise<ModuleInstance<any, any>> {
+    makeAndAddModuleInstance(moduleName: string): ModuleInstance<any, any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
@@ -263,7 +263,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
         const id = v4();
         this._atomStoreMaster.makeAtomStoreForModuleInstance(id);
-        const moduleInstance = await module.makeInstance(id, this._atomStoreMaster);
+        const moduleInstance = module.makeInstance(id, this._atomStoreMaster);
         this._moduleInstances = [...this._moduleInstances, moduleInstance];
         if (this._moduleInstances.length === 1) {
             this._activeModuleInstanceId = moduleInstance.getId();
@@ -313,10 +313,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         return this._activeModuleInstanceId;
     }
 
-    static async fromPersistedState(
-        serializedDashboard: SerializedDashboard,
-        atomStoreMaster: AtomStoreMaster,
-    ): Promise<Dashboard> {
+    static fromPersistedState(serializedDashboard: SerializedDashboard, atomStoreMaster: AtomStoreMaster): Dashboard {
         const dashboard = new Dashboard(atomStoreMaster);
         dashboard._id = serializedDashboard.id;
         dashboard._name = serializedDashboard.name;
@@ -332,7 +329,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             if (!module) {
                 throw new Error(`Module ${name} not found`);
             }
-            const moduleInstance = await module.makeInstance(id, atomStoreMaster);
+            const moduleInstance = module.makeInstance(id, atomStoreMaster);
             dashboard.registerModuleInstance(moduleInstance);
         }
 

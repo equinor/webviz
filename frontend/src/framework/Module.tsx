@@ -306,10 +306,7 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
         return this._syncableSettingKeys.includes(key);
     }
 
-    async makeInstance(
-        id: string,
-        atomStoreMaster: AtomStoreMaster,
-    ): Promise<ModuleInstance<TInterfaceTypes, TSerializedState>> {
+    makeInstance(id: string, atomStoreMaster: AtomStoreMaster): ModuleInstance<TInterfaceTypes, TSerializedState> {
         const instance = new ModuleInstance<TInterfaceTypes, TSerializedState>({
             module: this,
             atomStoreMaster,
@@ -319,7 +316,7 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
         });
         this._moduleInstances.push(instance);
         atomStoreMaster.makeAtomStoreForModuleInstance(id);
-        await this.maybeImportSelf();
+        this.maybeImportSelf();
         return instance;
     }
 

@@ -24,7 +24,7 @@ export type LayoutControllerBindings = {
 
     // Dashboard ops
     commitLayout: (next: LayoutElement[]) => void;
-    createModuleAndCommit: (moduleName: string, next: LayoutElement[], tempId: string) => Promise<void>;
+    createModuleAndCommit: (moduleName: string, next: LayoutElement[], tempId: string) => void;
 
     // Utilities
     toLocalPx: (clientPos: Vec2) => Vec2;
@@ -422,9 +422,8 @@ export class LayoutController {
 
                 if (candidate && candidate.length) {
                     // keep temp visible (loading tile) until creation finishes
-                    this._bindings
-                        .createModuleAndCommit(source.moduleName, candidate, source.id)
-                        .finally(() => this._bindings.setTempLayout(null));
+                    this._bindings.createModuleAndCommit(source.moduleName, candidate, source.id);
+                    this._bindings.setTempLayout(null);
                 } else {
                     // No valid placement → cancel add
                     this._bindings.setTempLayout(null);

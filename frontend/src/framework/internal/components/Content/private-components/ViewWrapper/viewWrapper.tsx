@@ -180,12 +180,13 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 className={resolveClassNames("absolute box-border contain-content", {
                     "p-0.5": !props.isMinimized,
                     invisible: props.changingLayout,
+                    "z-10": props.isMaximized,
                 })}
                 style={{
-                    width: prevWidth,
-                    height: prevHeight,
-                    left: prevX,
-                    top: prevY,
+                    width: props.isMaximized ? "100%" : prevWidth,
+                    height: props.isMaximized ? "100%" : prevHeight,
+                    left: props.isMaximized ? "0px" : prevX,
+                    top: props.isMaximized ? "0px" : prevY,
                 }}
             >
                 <div

@@ -191,7 +191,7 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         this._activeDashboardId = content.activeDashboardId;
         const dashboards: Dashboard[] = [];
         for (const serializedDashboard of content.dashboards) {
-            const dashboard = await Dashboard.fromPersistedState(serializedDashboard, this._atomStoreMaster);
+            const dashboard = Dashboard.fromPersistedState(serializedDashboard, this._atomStoreMaster);
             dashboards.push(dashboard);
         }
         this.setDashboards(dashboards);

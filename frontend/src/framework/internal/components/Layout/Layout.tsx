@@ -19,7 +19,8 @@ import { ViewWrapperPlaceholder } from "../Content/private-components/viewWrappe
 import { LayoutController, DragSourceKind, type DragSource, type ResizeSource } from "./LayoutController";
 import type { LayoutNode } from "./LayoutNode";
 import { makeLayoutNodes } from "./LayoutNode";
-import { LayoutOverlay } from "./LayoutOverlay";
+import { LayoutOverlay } from "./components/LayoutOverlay";
+import { QuickSwitchDock } from "./components/QuickSwitchDock";
 
 export type LayoutProps = { workbench: Workbench };
 
@@ -75,12 +76,12 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
                 commitLayout: (next: LayoutElement[]) => {
                     dashboard.setLayout(next);
                 },
-                createModuleAndCommit: async (moduleName: string, next: LayoutElement[], tempId: string) => {
+                createModuleAndCommit: (moduleName: string, next: LayoutElement[], tempId: string) => {
                     // Show the preview layout immediately so the user sees a tile
                     setTempLayout(next);
 
                     // Atomic create + tempId swap + single setLayout
-                    const instance = await dashboard.makeAndAddModuleInstance(moduleName);
+                    const instance = dashboard.makeAndAddModuleInstance(moduleName);
                     const realId = instance.getId();
 
                     // replace tempId → realId in `next`
@@ -113,6 +114,8 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
         controllerRef.current = new LayoutController(bindings);
     }
     const controller = controllerRef.current;
+
+    const anyModuleMaximized = React.useMemo(() => layoutElements.some((el) => el.maximized), [layoutElements]);
 
     // keep the single instance's bindings fresh
     React.useEffect(
@@ -214,6 +217,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
 
     const onContainerPointerDown = React.useCallback(
         function onContainerPointerDown(e: React.PointerEvent) {
+            if (anyModuleMaximized) return;
             if (!rootNodeRef.current) return;
             const clientPos = { x: e.clientX, y: e.clientY };
             const localPos = bindings.toLocalPx(clientPos);
@@ -233,7 +237,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
             e.preventDefault();
             e.stopPropagation();
         },
-        [controller, bindings, viewportSize],
+        [controller, bindings, viewportSize, anyModuleMaximized],
     );
 
     const convertLayoutRectToRealRect = React.useCallback(function convertLayoutRectToRealRect(
@@ -254,7 +258,14 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
             const el = layoutElements.find((le) => le.moduleInstanceId === instance.getId());
             if (!el) return null;
             const rect = convertLayoutRectToRealRect(el, viewportSize);
-            return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+            return {
+                x: rect.x,
+                y: rect.y,
+                width: rect.width,
+                height: rect.height,
+                isMaximized: el.maximized,
+                isMinimized: el.minimized,
+            };
         },
         [layoutElements, viewportSize, convertLayoutRectToRealRect],
     );
@@ -263,12 +274,30 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
         setCursor("default");
     }, []);
 
+    const handleFullscreenModuleChange = React.useCallback(
+        function handleFullscreenModuleChange(moduleInstanceId: string) {
+            const newLayout = layoutElements.map((el) => {
+                if (el.moduleInstanceId === moduleInstanceId) {
+                    return { ...el, maximized: true };
+                } else if (el.maximized) {
+                    return { ...el, maximized: false };
+                }
+                return el;
+            });
+
+            dashboard.setActiveModuleInstanceId(moduleInstanceId);
+
+            dashboard.setLayout(newLayout);
+        },
+        [moduleInstances],
+    );
+
     return (
         <div ref={rootRef} className="flex flex-col h-full w-full max-w-full">
             <div
                 ref={containerRef}
                 className="relative grow"
-                style={{ cursor }}
+                style={anyModuleMaximized ? undefined : { cursor }}
                 onPointerMoveCapture={onContainerPointerMove}
                 onPointerLeave={onContainerPointerLeave}
                 onPointerDownCapture={onContainerPointerDown}
@@ -302,6 +331,17 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
                         />
                     );
                 })}
+
+                {/* Quick switch dock */}
+                <QuickSwitchDock
+                    isOpen={anyModuleMaximized}
+                    layoutElements={layoutElements}
+                    onActiveModuleChange={handleFullscreenModuleChange}
+                    getModuleInstanceName={(moduleInstanceId) => {
+                        const el = layoutElements.find((le) => le.moduleInstanceId === moduleInstanceId);
+                        return el ? el.moduleName : undefined;
+                    }}
+                />
 
                 {/* Placeholder for NEW module while dragging */}
                 {tempPlaceholderId &&
