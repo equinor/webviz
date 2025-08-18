@@ -7,20 +7,31 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { withDefaults } from "../_component-utils/components";
 
 export type VirtualizationProps<T = any> = {
-    placeholderComponent?: string;
+    /** The HTML tag to use for the generated spacer elements */
+    placeholderComponent?: React.ElementType;
+    /** The scrollable parent to virtualize items inside of */
     containerRef: React.RefObject<HTMLElement>;
+    /** The list of items to virtualize */
     items: Array<T>;
+
+    /** Callback for rendering items in the list. The rendered item's size should match `props.itemSize` */
     renderItem: (item: T, index: number) => React.ReactNode;
+    /** The pixel size of each rendered item */
     itemSize: number;
+    /** Scrolling direction */
     direction: "vertical" | "horizontal";
+    /** The list's scroll position, by item index */
     startIndex?: number;
+    /** The amount of items rendered outside the visible scroll area. A higher number means less flickering as you scroll */
     overscan?: number | { head: number; tail: number };
+    /** Callback for internal start-index. Not called with `props.startIndex` changes */
     onStartIndexChange?: (newStartIndex: number) => void;
+    /** Callback for when the rendered item range changes. *Will* retrigger if `props.startIndex` is changed */
     onRangeComputed?: (startIndex: number, endIndex: number) => void;
 };
 
 const defaultProps = {
-    placeholderComponent: "div",
+    placeholderComponent: "div" as React.ElementType,
     startIndex: 0,
     overscan: 1,
 };
