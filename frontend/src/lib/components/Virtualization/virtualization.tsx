@@ -14,7 +14,8 @@ export type VirtualizationProps<T = any> = {
     itemSize: number;
     direction: "vertical" | "horizontal";
     startIndex?: number;
-    onScroll?: (newStartIndex: number, newEndIndex: number) => void;
+    onStartIndexChange?: (newStartIndex: number) => void;
+    onRangeComputed?: (startIndex: number, endIndex: number) => void;
 };
 
 const defaultProps = {
@@ -22,14 +23,18 @@ const defaultProps = {
     startIndex: 0,
 };
 
+type VirtualizationRange = { start: number; end: number };
+
 export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, (props) => {
-    const { onScroll } = props;
+    const { onStartIndexChange, onRangeComputed } = props;
 
     const containerSize = useElementSize(props.containerRef);
 
     // Ref to avoid unnecessary callbacks
-    const lastScrolledRange = React.useRef({ start: -1, end: -1 });
-    const [range, setRange] = React.useState<{ start: number; end: number }>({ start: props.startIndex, end: 0 });
+    const lastScrolledRange = React.useRef<VirtualizationRange>({ start: -1, end: -1 });
+    const isProgrammaticScroll = React.useRef(false);
+
+    const [range, setRange] = React.useState<VirtualizationRange>({ start: props.startIndex, end: 0 });
 
     const placeholderSizes = React.useMemo(() => {
         return {
@@ -37,6 +42,20 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
             end: (props.items.length - range.end - 1) * props.itemSize,
         };
     }, [props.itemSize, props.items.length, range.end, range.start]);
+
+    const updateVirtualizationRange = React.useCallback(
+        function updateVirtualizationRange(newRange: VirtualizationRange) {
+            setRange(newRange);
+            onRangeComputed?.(newRange.start, newRange.end);
+
+            // Avoid retriggering programmatic index changes
+            if (!isProgrammaticScroll.current) onStartIndexChange?.(newRange.start);
+
+            lastScrolledRange.current = newRange;
+            isProgrammaticScroll.current = false;
+        },
+        [onRangeComputed, onStartIndexChange],
+    );
 
     React.useEffect(
         // As the top index changes, scroll the index into view
@@ -46,6 +65,8 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
             const scrollSide = props.direction === "horizontal" ? "scrollLeft" : "scrollTop";
 
             // ! This will trigger the onScroll event handler
+            // Flag this as a programmatic scroll to avoid callback re-triggering
+            isProgrammaticScroll.current = true;
             props.containerRef.current[scrollSide] = Math.max(0, props.startIndex * props.itemSize);
         },
         [props.containerRef, props.direction, props.itemSize, props.startIndex],
@@ -54,29 +75,27 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
     React.useEffect(
         function mountScrollEffect() {
             const currentContainer = props.containerRef.current;
+            const isVertical = props.direction === "vertical";
 
             function handleScroll() {
-                if (currentContainer) {
-                    const scrollPosition =
-                        props.direction === "vertical" ? currentContainer.scrollTop : currentContainer.scrollLeft;
+                if (!currentContainer) return;
+                if (props.itemSize === 0) return;
 
-                    const size = props.direction === "vertical" ? containerSize.height : containerSize.width;
+                const scrollPosition = isVertical ? currentContainer.scrollTop : currentContainer.scrollLeft;
+                const size = isVertical ? containerSize.height : containerSize.width;
 
-                    const newRange = {
-                        start: Math.max(0, Math.floor(scrollPosition / props.itemSize) - 1),
-                        end: Math.min(props.items.length - 1, Math.ceil((scrollPosition + size) / props.itemSize)),
-                    };
+                const newRange = {
+                    start: Math.max(0, Math.floor(scrollPosition / props.itemSize) - 1),
+                    end: Math.min(props.items.length - 1, Math.ceil((scrollPosition + size) / props.itemSize)),
+                };
 
-                    if (!isEqual(newRange, lastScrolledRange.current)) {
-                        lastScrolledRange.current = newRange;
-                        setRange(newRange);
-                        onScroll?.(newRange.start, newRange.end);
-                    }
+                if (!isEqual(newRange, lastScrolledRange.current)) {
+                    updateVirtualizationRange(newRange);
                 }
             }
 
             if (currentContainer) {
-                currentContainer.addEventListener("scroll", handleScroll);
+                currentContainer?.addEventListener("scroll", handleScroll);
             }
 
             // Run once to give initial scroll values
@@ -95,7 +114,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
             props.itemSize,
             containerSize.height,
             containerSize.width,
-            onScroll,
+            updateVirtualizationRange,
         ],
     );
 

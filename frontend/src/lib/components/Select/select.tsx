@@ -448,7 +448,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                         containerRef={virtualizationRef}
                         items={filteredOptions}
                         itemSize={24}
-                        onScroll={handleVirtualizationScroll}
+                        onStartIndexChange={handleVirtualizationScroll}
                         renderItem={(option, index) => {
                             return (
                                 <div
