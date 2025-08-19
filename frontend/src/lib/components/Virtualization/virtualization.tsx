@@ -47,15 +47,6 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
     const lastScrolledRange = React.useRef<VisibleItemsRange>({ start: -1, end: -1 });
     const isProgrammaticScroll = React.useRef(false);
 
-    const [range, setRange] = React.useState<VirtualizationRange>({ start: props.startIndex, end: 0 });
-
-    const placeholderSizes = React.useMemo(() => {
-        return {
-            start: range.start * props.itemSize,
-            end: (props.items.length - range.end - 1) * props.itemSize,
-        };
-    }, [props.itemSize, props.items.length, range.end, range.start]);
-
     const overscanAmount = React.useMemo(() => {
         if (typeof props.overscan === "object") return props.overscan;
         return { head: props.overscan, tail: props.overscan };
@@ -69,7 +60,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
 
     const placeholderSizes = React.useMemo(() => {
         const hiddenItemsStart = visibleItemsRange.start - overscanAmount.head;
-        const hiddenItemsEnd = props.items.length - visibleItemsRange.end - overscanAmount.tail;
+        const hiddenItemsEnd = props.items.length - visibleItemsRange.end - overscanAmount.tail - 1;
 
         return {
             start: Math.max(0, hiddenItemsStart) * props.itemSize,
@@ -84,12 +75,12 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
         visibleItemsRange.start,
     ]);
 
-    const itemsToRender = React.useMemo(() => {
-        const sliceStart = Math.max(0, visibleItemsRange.start - overscanAmount.head);
-        const sliceEnd = Math.min(props.items.length, visibleItemsRange.end + overscanAmount.tail);
-
-        return props.items.slice(sliceStart, sliceEnd);
-    }, [overscanAmount.head, overscanAmount.tail, props.items, visibleItemsRange.end, visibleItemsRange.start]);
+    const itemRenderRange = React.useMemo(() => {
+        return {
+            start: Math.max(0, visibleItemsRange.start - overscanAmount.head),
+            end: Math.min(props.items.length, visibleItemsRange.end + overscanAmount.tail),
+        };
+    }, [overscanAmount.head, overscanAmount.tail, props.items.length, visibleItemsRange.end, visibleItemsRange.start]);
 
     const updateVirtualizationRange = React.useCallback(
         function updateVirtualizationRange(newRange: VisibleItemsRange) {
@@ -105,7 +96,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
         [onRangeComputed, onStartIndexChange],
     );
 
-    React.useEffect(
+    React.useLayoutEffect(
         // As the top index changes, scroll the index into view
         function scrollToStartIndexEffect() {
             if (!props.containerRef.current || props.startIndex === undefined) return;
@@ -133,7 +124,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
                 const size = isVertical ? containerSize.height : containerSize.width;
 
                 const startIndex = Math.floor(scrollPosition / props.itemSize);
-                const endIndex = Math.ceil((scrollPosition + size) / props.itemSize);
+                const endIndex = Math.ceil((scrollPosition + size) / props.itemSize) - 1;
 
                 const newRange = {
                     start: startIndex,
@@ -146,7 +137,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
             }
 
             if (currentContainer) {
-                currentContainer?.addEventListener("scroll", handleScroll);
+                currentContainer.addEventListener("scroll", handleScroll);
             }
 
             // Run once to give initial scroll values
@@ -183,7 +174,9 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
         <>
             {placeholderSizes.start > 0 &&
                 React.createElement(props.placeholderComponent, { style: makeStyle(placeholderSizes.start) })}
-            {itemsToRender.map((item, index) => props.renderItem(item, visibleItemsRange.start + index))}
+            {props.items
+                .slice(itemRenderRange.start, itemRenderRange.end + 1)
+                .map((item, index) => props.renderItem(item, index + itemRenderRange.start))}
             {placeholderSizes.end > 0 &&
                 React.createElement(props.placeholderComponent, { style: makeStyle(placeholderSizes.end) })}
         </>
