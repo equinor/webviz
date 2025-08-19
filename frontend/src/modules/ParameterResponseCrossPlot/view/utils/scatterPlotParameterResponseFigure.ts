@@ -66,8 +66,12 @@ export class ScatterPlotParameterResponseFigure {
         };
         this._figure.updateLayout(layoutPatch);
     }
-    build() {
-        return this._figure.makePlot();
+
+    makePlotData() {
+        return this._figure.makeData();
+    }
+    makePlotLayout() {
+        return this._figure.makeLayout();
     }
 }
 export type scatterPlotParameterResponseData = {

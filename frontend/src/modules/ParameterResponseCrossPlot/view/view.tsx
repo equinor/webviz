@@ -13,6 +13,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { Plot } from "@modules/_shared/components/Plot";
 
 import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
@@ -185,7 +186,7 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                 }
             }
 
-            setContent(figure.build());
+            setContent(<Plot data={figure.makePlotData()} layout={figure.makePlotLayout()} />);
             return;
         }
     }
