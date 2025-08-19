@@ -7,7 +7,6 @@ import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
-import { hasMoreThanOneFetchingQuery } from "@lib/utils/queryUtils";
 
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import {
@@ -487,17 +486,7 @@ export class DataProvider<
             return;
         }
 
-        if (this._queryKeys.length === 0) {
-            return;
-        }
-
         for (const queryKey of this._queryKeys) {
-            if (hasMoreThanOneFetchingQuery(queryClient, queryKey)) {
-                // If there are multiple queries fetching the same data, we do not cancel them.
-                // This is to avoid cancelling a query that might be needed for another data provider.
-                continue;
-            }
-
             try {
                 await queryClient.cancelQueries(
                     {
