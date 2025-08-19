@@ -5,7 +5,6 @@ import { isEqual } from "lodash";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-
 import { withDefaults } from "../_component-utils/components";
 import type { BaseComponentProps } from "../BaseComponent";
 import { BaseComponent } from "../BaseComponent";
@@ -196,6 +195,7 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
 
     React.useEffect(
         function handleKeyActions() {
+            const currentContainer = ref.current;
             const handleKeyDown = (e: KeyboardEvent) => {
                 setKeysPressed((keysPressed) => [...keysPressed, e.key]);
 
@@ -242,12 +242,12 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
                 setKeysPressed((keysPressed) => keysPressed.filter((key) => key !== e.key));
             };
 
-            window.addEventListener("keydown", handleKeyDown);
-            window.addEventListener("keyup", handleKeyUp);
+            currentContainer?.addEventListener("keydown", handleKeyDown);
+            currentContainer?.addEventListener("keyup", handleKeyUp);
 
             return () => {
-                window.removeEventListener("keydown", handleKeyDown);
-                window.removeEventListener("keyup", handleKeyUp);
+                currentContainer?.removeEventListener("keydown", handleKeyDown);
+                currentContainer?.removeEventListener("keyup", handleKeyUp);
             };
         },
         [currentIndex, selected, filteredOptions, props.size, hasFocus, startIndex, toggleValue],
@@ -294,7 +294,9 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
                                         id={props.id}
                                         type="text"
                                         value={filters[index]}
-                                        onChange={(e) => handleFilterChange(e, index)}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                            handleFilterChange(e, index)
+                                        }
                                         placeholder={`Filter ${headerLabel}...`}
                                         title={`Filter ${headerLabel}...`}
                                     />
