@@ -369,9 +369,6 @@ export class DataProvider<
             getData: () => this._data,
             getWorkbenchSession: () => this._dataProviderManager.getWorkbenchSession(),
             getWorkbenchSettings: () => this._dataProviderManager.getWorkbenchSettings(),
-            setProgressMessage: (message: string | null) => {
-                this.setProgressMessage(message);
-            },
         };
     }
 
@@ -403,6 +400,7 @@ export class DataProvider<
                 ...accessors,
                 queryClient,
                 registerQueryKey: (key) => this.registerQueryKey(key),
+                setProgressMessage: (message) => this.setProgressMessage(message),
             });
 
             // This is a security check to make sure that we are not using a stale transaction id.

@@ -44,7 +44,7 @@ export type StatisticalSurfaceData =
     | { format: SurfaceDataFormat.FLOAT; surfaceData: SurfaceDataFloat_trans }
     | { format: SurfaceDataFormat.PNG; surfaceData: SurfaceDataPng_api };
 
-type StatisticalSurfaceStoredData = {
+export type StatisticalSurfaceStoredData = {
     realizations: readonly number[];
 };
 
