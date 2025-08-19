@@ -420,6 +420,8 @@ class SurfaceAccess:
         # The poll path (which sumo client adds to its base_url) is: /tasks('{taskUuid}')/result
         poll_path = f"/tasks('{sumo_task_id}')/result"
 
+        poll_status_path = f"/tasks('{sumo_task_id}')"
+
         # !!!!!!!!!!!!!!!!!!
         # !!!!!!!!!!!!!!!!!!
         # !!!!!!!!!!!!!!!!!!
@@ -431,6 +433,21 @@ class SurfaceAccess:
         deadline = time.time() + timeout_s
         while True:
             poll_resp = await self._sumo_client.get_async(poll_path)
+
+            LOGGER.debug("---")
+            poll_status_resp = await self._sumo_client.get_async(poll_status_path)
+            #LOGGER.debug(f"Poll status response: {poll_status_resp.status_code=}\n----\n{json.dumps(poll_status_resp.json(), indent=2)}\n----")
+
+            _source_dict = poll_status_resp.json().get('_source',{})
+            _job_dict = _source_dict.get('parameters',{}).get('jobStatuses', [{}])[0]
+            LOGGER.debug(f"_source.start: {_source_dict.get('start')}")
+            LOGGER.debug(f"_source.end: {_source_dict.get('end')}")
+            LOGGER.debug(f"_source.status: {_source_dict.get('status')}")
+            LOGGER.debug(f"_source.parameters.entity: {_source_dict.get('parameters', {}).get('entity')}")
+            LOGGER.debug(f"_source.parameters.jobStatuses[0].status: {_job_dict.get('status')}")
+            LOGGER.debug(f"_source.result_url: {_source_dict.get('result_url')}")
+            LOGGER.debug("---")
+
             # dbg_location = poll_resp.headers.get("location")
             # dbg_retry_after = poll_resp.headers.get("retry-after")
             # LOGGER.debug(f"Poll response: {poll_resp.status_code}  {dbg_location=} {dbg_retry_after=}")
