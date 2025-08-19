@@ -1,9 +1,10 @@
-import type { QueryClient } from "@tanstack/react-query";
+import type { FetchQueryOptions, QueryClient, QueryKey } from "@tanstack/react-query";
 import { isCancelledError } from "@tanstack/react-query";
 import { clone, isEqual } from "lodash";
 
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
+import { CancelableQueryRunner } from "@lib/utils/CancelableQueryRunner";
 import { isDevMode } from "@lib/utils/devMode";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
@@ -114,9 +115,7 @@ export class DataProvider<
     private _itemDelegate: ItemDelegate;
     private _dataProviderManager: DataProviderManager;
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
-    private _cancellationPending: boolean = false;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<DataProviderPayloads<TData>>();
-    private _queryKeys: unknown[][] = [];
     private _status: DataProviderStatus = DataProviderStatus.IDLE;
     private _data: TData | null = null;
     private _error: StatusMessage | string | null = null;
@@ -128,6 +127,7 @@ export class DataProvider<
     private _settingsErrorMessages: string[] = [];
     private _revisionNumber: number = 0;
     private _progressMessage: string | null = null;
+    private _queryRunner: CancelableQueryRunner;
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
         const {
@@ -146,6 +146,7 @@ export class DataProvider<
                 customDataProviderImplementation.getDefaultSettingsValues?.() ?? {},
             ),
         );
+        this._queryRunner = new CancelableQueryRunner(params.dataProviderManager.getQueryClient());
         this._customDataProviderImpl = customDataProviderImplementation;
         this._itemDelegate = new ItemDelegate(
             instanceName ?? customDataProviderImplementation.getDefaultName(),
@@ -235,17 +236,13 @@ export class DataProvider<
             return;
         }
 
-        this._cancellationPending = true;
-
         // It might be that we started a new transaction while the previous one was still running.
         // In this case, we need to make sure that we only use the latest transaction and cancel the previous one.
         this._currentTransactionId += 1;
 
-        this.maybeCancelQuery().then(() => {
-            this.maybeRefetchData().then(() => {
-                this._prevSettings = clone(this._settingsContextDelegate.getValues()) as TSettingTypes;
-                this._prevStoredData = clone(this._settingsContextDelegate.getStoredDataRecord()) as TStoredData;
-            });
+        this.maybeRefetchData().then(() => {
+            this._prevSettings = clone(this._settingsContextDelegate.getValues()) as TSettingTypes;
+            this._prevStoredData = clone(this._settingsContextDelegate.getStoredDataRecord()) as TStoredData;
         });
     }
 
@@ -260,10 +257,6 @@ export class DataProvider<
             this.setStatus(DataProviderStatus.LOADING);
             return;
         }
-    }
-
-    registerQueryKey(queryKey: unknown[]): void {
-        this._queryKeys.push(queryKey);
     }
 
     getStatus(): DataProviderStatus {
@@ -380,15 +373,13 @@ export class DataProvider<
             return;
         }
 
-        if (this._cancellationPending) {
-            return;
-        }
-
         if (this._isSubordinated) {
             return;
         }
 
         const accessors = this.makeAccessors();
+
+        this._queryRunner.cancelActiveFetch();
 
         this.invalidateValueRange();
         this.setStatus(DataProviderStatus.LOADING);
@@ -397,8 +388,9 @@ export class DataProvider<
         try {
             this._data = await this._customDataProviderImpl.fetchData({
                 ...accessors,
-                queryClient,
-                registerQueryKey: (key) => this.registerQueryKey(key),
+                fetchQuery: <TQueryFnData, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = QueryKey>(
+                    options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
+                ) => this._queryRunner.run<TQueryFnData, TError, TData, TQueryKey>(options),
                 setProgressMessage: (message) => this.setProgressMessage(message),
             });
 
@@ -413,12 +405,6 @@ export class DataProvider<
             if (this._customDataProviderImpl.makeValueRange) {
                 this._valueRange = this._customDataProviderImpl.makeValueRange(accessors);
             }
-            if (this._queryKeys.length === null && isDevMode()) {
-                console.warn(
-                    "Did you forget to use 'setQueryKeys' in your custom provider implementation of 'fetchData'? This will cause the queries to not be cancelled when settings change and might lead to undesired behaviour.",
-                );
-            }
-            this._queryKeys = [];
             this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.DATA);
             this.setStatus(DataProviderStatus.SUCCESS);
         } catch (error: any) {
@@ -453,6 +439,7 @@ export class DataProvider<
     beforeDestroy(): void {
         this._settingsContextDelegate.beforeDestroy();
         this._unsubscribeHandler.unsubscribeAll();
+        this._queryRunner.cancelActiveFetch();
     }
 
     private incrementRevisionNumber(): void {
@@ -477,31 +464,5 @@ export class DataProvider<
 
     private invalidateValueRange(): void {
         this._valueRange = null;
-    }
-
-    private async maybeCancelQuery(): Promise<void> {
-        const queryClient = this.getQueryClient();
-
-        if (!queryClient) {
-            return;
-        }
-
-        for (const queryKey of this._queryKeys) {
-            try {
-                await queryClient.cancelQueries(
-                    {
-                        queryKey,
-                    },
-                    {
-                        silent: true,
-                        revert: true,
-                    },
-                );
-            } catch (error) {
-                console.error(`Error while cancelling query with key ${queryKey}:`, error);
-            }
-        }
-        this._queryKeys = [];
-        this._cancellationPending = false;
     }
 }
