@@ -157,7 +157,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
 
             if (currentContainer) {
                 // currentContainer.addEventListener("scrollend", handleScrollEnd); // Not supported in Safari
-                currentContainer.addEventListener("scroll", handleScroll);
+                currentContainer.addEventListener("scroll", handleScroll, { passive: true });
             }
 
             // Run once to give initial scroll values
@@ -167,8 +167,6 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
 
             return function unmountScrollEffect() {
                 if (currentContainer) {
-                    // console.log("remove");
-
                     // currentContainer.removeEventListener("scrollend", handleScrollEnd); // Not supported in Safari
                     currentContainer.removeEventListener("scroll", handleScroll);
                     debouncedScrollEnd.cancel();
