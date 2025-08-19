@@ -128,6 +128,7 @@ export class DataProvider<
     private _revisionNumber: number = 0;
     private _progressMessage: string | null = null;
     private _queryRunner: CancelableQueryRunner;
+    private _refetchScheduled: boolean = false;
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
         const {
@@ -236,14 +237,20 @@ export class DataProvider<
             return;
         }
 
-        // It might be that we started a new transaction while the previous one was still running.
-        // In this case, we need to make sure that we only use the latest transaction and cancel the previous one.
-        this._currentTransactionId += 1;
+        if (this._refetchScheduled) return;
+        this._refetchScheduled = true;
 
-        this.maybeRefetchData().then(() => {
-            this._prevSettings = clone(this._settingsContextDelegate.getValues()) as TSettingTypes;
-            this._prevStoredData = clone(this._settingsContextDelegate.getStoredDataRecord()) as TStoredData;
-        });
+        // Coalesce to next macrotask
+        setTimeout(() => {
+            this.maybeRefetchData().then(() => {
+                this._refetchScheduled = false;
+                // It might be that we started a new transaction while the previous one was still running.
+                // In this case, we need to make sure that we only use the latest transaction and cancel the previous one.
+                this._currentTransactionId += 1;
+                this._prevSettings = clone(this._settingsContextDelegate.getValues()) as TSettingTypes;
+                this._prevStoredData = clone(this._settingsContextDelegate.getStoredDataRecord()) as TStoredData;
+            });
+        }, 0);
     }
 
     handleSettingsStatusChange(): void {
