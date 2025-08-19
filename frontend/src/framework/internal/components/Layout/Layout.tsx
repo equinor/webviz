@@ -16,11 +16,11 @@ import type { Vec2 } from "@lib/utils/vec2";
 import { ViewWrapper } from "../Content/private-components/ViewWrapper";
 import { ViewWrapperPlaceholder } from "../Content/private-components/viewWrapperPlaceholder";
 
+import { LayoutOverlay } from "./components/LayoutOverlay";
+import { QuickSwitchDock } from "./components/QuickSwitchDock";
 import { LayoutController, DragSourceKind, type DragSource, type ResizeSource } from "./LayoutController";
 import type { LayoutNode } from "./LayoutNode";
 import { makeLayoutNodes } from "./LayoutNode";
-import { LayoutOverlay } from "./components/LayoutOverlay";
-import { QuickSwitchDock } from "./components/QuickSwitchDock";
 
 export type LayoutProps = { workbench: Workbench };
 
@@ -193,7 +193,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
                 },
             );
 
-            return () => {
+            return function removeGuiSubscriptions() {
                 unsubHeader();
                 unsubNew();
                 unsubRemove();
@@ -252,7 +252,6 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
         };
     }, []);
 
-    // Compute per-module props (keep your maximize/minimize code if needed)
     const computeModuleLayoutProps = React.useCallback(
         (instance: ModuleInstance<any, any>) => {
             const el = layoutElements.find((le) => le.moduleInstanceId === instance.getId());
@@ -289,7 +288,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
 
             dashboard.setLayout(newLayout);
         },
-        [moduleInstances],
+        [dashboard, layoutElements],
     );
 
     return (

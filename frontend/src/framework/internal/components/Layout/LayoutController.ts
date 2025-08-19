@@ -7,7 +7,7 @@ import { MANHATTAN_LENGTH, type Size2D } from "@lib/utils/geometry";
 import { point2Distance, type Vec2 } from "@lib/utils/vec2";
 import { globalLog } from "@src/Log";
 
-import { LayoutNode, type LayoutNodeEdge } from "./LayoutNode";
+import { LayoutNode, LayoutAxis, type LayoutNodeEdge } from "./LayoutNode";
 
 export type LayoutControllerBindings = {
     // State getters
@@ -55,11 +55,6 @@ function isDragSourceKindNew(src: DragSource): src is DragSource & { kind: DragS
     return src.kind === DragSourceKind.NEW;
 }
 
-export enum ResizeAxis {
-    HORIZONTAL = "horizontal",
-    VERTICAL = "vertical",
-}
-
 enum Phase {
     IDLE = "idle", // No interaction
     HOVER = "hover", // Showing where the user is going to add the module
@@ -67,7 +62,7 @@ enum Phase {
 }
 
 export type ResizeSource = {
-    axis: ResizeAxis;
+    axis: LayoutAxis;
     containerPath: number[];
     index: number;
     pointerDownClientPos: Vec2;
@@ -201,7 +196,7 @@ export class LayoutController {
         };
 
         // lock the appropriate resize cursor for the duration of the resize
-        this._bindings.setCursor(src.axis === ResizeAxis.VERTICAL ? "ew-resize" : "ns-resize");
+        this._bindings.setCursor(src.axis === LayoutAxis.VERTICAL ? "ew-resize" : "ns-resize");
 
         // first preview immediately
         const local = this._bindings.toLocalPx(src.pointerDownClientPos);
@@ -574,24 +569,40 @@ export class LayoutController {
 
     private updateResizePreview() {
         if (this._mode.kind !== ModeKind.RESIZE) return;
+
         const root = this._bindings.getRootNode();
         if (!root) return;
 
         const local = this._lastLocalPos ?? this._bindings.toLocalPx(this._mode.lastClientPos);
+        const viewport = this._bindings.getViewportSize();
+
         const clone = root.clone();
 
-        const container = LayoutNode.findByPath(clone, this._mode.src.containerPath);
+        const dynamicHit = clone.hitTestDivider(local, viewport);
+        const hitAxis = dynamicHit?.axis ?? this._mode.src.axis;
+        const hitIndex = dynamicHit?.index ?? this._mode.src.index;
+        const hitPath = dynamicHit?.containerPath ?? this._mode.src.containerPath;
+
+        const container = LayoutNode.findByPath(clone, hitPath);
         if (!container) {
             this._bindings.setTempLayout(null);
             return;
         }
 
-        const viewport = this._bindings.getViewportSize();
+        if (dynamicHit) {
+            this._mode.src = {
+                ...this._mode.src,
+                axis: hitAxis,
+                index: hitIndex,
+                containerPath: hitPath,
+            };
+        }
+
         const abs = container.getAbsoluteRect(); // in 0..1 relative to root
 
         // map local px to container-relative [0..1] along the axis
         const pos01 =
-            this._mode.src.axis === ResizeAxis.VERTICAL
+            this._mode.src.axis === LayoutAxis.VERTICAL
                 ? (local.x / viewport.width - abs.x) / abs.width
                 : (local.y / viewport.height - abs.y) / abs.height;
 

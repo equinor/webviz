@@ -52,6 +52,11 @@ export enum LayoutDirection {
     MAIN = "main",
 }
 
+export enum LayoutAxis {
+    HORIZONTAL = "horizontal",
+    VERTICAL = "vertical",
+}
+
 export type LayoutNodeEdge =
     | {
           edge: Exclude<LayoutNodeEdgeType, LayoutNodeEdgeType.HORIZONTAL | LayoutNodeEdgeType.VERTICAL>;
@@ -1130,7 +1135,7 @@ export class LayoutNode {
     hitTestDivider(
         pointLocalPx: Vec2,
         viewport: Size2D,
-    ): { containerPath: number[]; axis: "vertical" | "horizontal"; index: number } | null {
+    ): { containerPath: number[]; axis: LayoutAxis; index: number } | null {
         // Only containers (not SINGLE leaves) can own dividers.
         // We recurse so deepest container wins (most specific).
         if (
@@ -1153,7 +1158,7 @@ export class LayoutNode {
                 for (let idx = 0; idx < verticals.length; idx++) {
                     const r = verticals[idx].rect;
                     if (rectContainsPoint(r, pointLocalPx)) {
-                        return { containerPath: this.pathFromRoot(), axis: "vertical", index: idx + 1 };
+                        return { containerPath: this.pathFromRoot(), axis: LayoutAxis.VERTICAL, index: idx + 1 };
                     }
                 }
             }
@@ -1164,7 +1169,7 @@ export class LayoutNode {
                 for (let idx = 0; idx < horizontals.length; idx++) {
                     const r = horizontals[idx].rect;
                     if (rectContainsPoint(r, pointLocalPx)) {
-                        return { containerPath: this.pathFromRoot(), axis: "horizontal", index: idx + 1 };
+                        return { containerPath: this.pathFromRoot(), axis: LayoutAxis.HORIZONTAL, index: idx + 1 };
                     }
                 }
             }
