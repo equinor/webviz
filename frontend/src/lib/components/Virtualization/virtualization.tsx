@@ -1,6 +1,6 @@
 import React from "react";
 
-import { isEqual } from "lodash";
+import { debounce, isEqual } from "lodash";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 
@@ -30,6 +30,8 @@ export type VirtualizationProps<T = any> = {
     onRangeComputed?: (startIndex: number, endIndex: number) => void;
 };
 
+const SCROLL_END_DELAY = 100; // ms
+
 const defaultProps = {
     placeholderComponent: "div" as React.ElementType,
     startIndex: 0,
@@ -46,6 +48,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
     // Refs to avoid unnecessary callbacks
     const lastScrolledRange = React.useRef<VisibleItemsRange>({ start: -1, end: -1 });
     const isProgrammaticScroll = React.useRef(false);
+    const isCurrentlyScrollingRef = React.useRef(false);
 
     const overscanAmount = React.useMemo(() => {
         if (typeof props.overscan === "object") return props.overscan;
@@ -99,7 +102,9 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
     React.useLayoutEffect(
         // As the top index changes, scroll the index into view
         function scrollToStartIndexEffect() {
-            if (!props.containerRef.current || props.startIndex === undefined) return;
+            if (!props.containerRef.current) return;
+            if (props.startIndex === undefined) return;
+            if (isCurrentlyScrollingRef.current) return;
 
             const scrollSide = props.direction === "horizontal" ? "scrollLeft" : "scrollTop";
 
@@ -116,9 +121,16 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
             const currentContainer = props.containerRef.current;
             const isVertical = props.direction === "vertical";
 
+            // Debounce timer for simulating scrollend
+            // ! Preferably, we'd use the "scrollEnd" event, but safari doesn't support it
+            const debouncedScrollEnd = debounce(handleScrollEnd, SCROLL_END_DELAY);
+
             function handleScroll() {
                 if (!currentContainer) return;
                 if (props.itemSize === 0) return;
+
+                // Scroll event might have happened due to programmatic scroll, which means we're "technically" not scrolling
+                isCurrentlyScrollingRef.current = !isProgrammaticScroll.current;
 
                 const scrollPosition = isVertical ? currentContainer.scrollTop : currentContainer.scrollLeft;
                 const size = isVertical ? containerSize.height : containerSize.width;
@@ -134,18 +146,32 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
                 if (!isEqual(newRange, lastScrolledRange.current)) {
                     updateVirtualizationRange(newRange);
                 }
+
+                // Signal end of scrolling
+                debouncedScrollEnd();
+            }
+
+            function handleScrollEnd() {
+                isCurrentlyScrollingRef.current = false;
             }
 
             if (currentContainer) {
+                // currentContainer.addEventListener("scrollend", handleScrollEnd); // Not supported in Safari
                 currentContainer.addEventListener("scroll", handleScroll);
             }
 
             // Run once to give initial scroll values
+            isProgrammaticScroll.current = true;
             handleScroll();
+            handleScrollEnd();
 
             return function unmountScrollEffect() {
                 if (currentContainer) {
+                    // console.log("remove");
+
+                    // currentContainer.removeEventListener("scrollend", handleScrollEnd); // Not supported in Safari
                     currentContainer.removeEventListener("scroll", handleScroll);
+                    debouncedScrollEnd.cancel();
                 }
             };
         },
