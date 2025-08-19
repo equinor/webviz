@@ -323,6 +323,7 @@ export class DataProvider<
             if (topic === DataProviderTopic.PROGRESS_MESSAGE) {
                 return this._progressMessage;
             }
+            throw new Error(`Unknown topic: ${topic}`);
         };
 
         return snapshotGetter;
@@ -393,14 +394,15 @@ export class DataProvider<
         const accessors = this.makeAccessors();
 
         this.invalidateValueRange();
-
         this.setStatus(DataProviderStatus.LOADING);
+        this.setProgressMessage(null);
 
         try {
             this._data = await this._customDataProviderImpl.fetchData({
                 ...accessors,
                 queryClient,
                 registerQueryKey: (key) => this.registerQueryKey(key),
+                setProgressMessage: (message) => this.setProgressMessage(message),
             });
 
             // This is a security check to make sure that we are not using a stale transaction id.
@@ -491,8 +493,8 @@ export class DataProvider<
             return;
         }
 
-        if (this._queryKeys.length > 0) {
-            for (const queryKey of this._queryKeys) {
+        for (const queryKey of this._queryKeys) {
+            try {
                 await queryClient.cancelQueries(
                     {
                         queryKey,
@@ -502,12 +504,11 @@ export class DataProvider<
                         revert: true,
                     },
                 );
-                await queryClient.invalidateQueries({ queryKey });
-                queryClient.removeQueries({ queryKey });
+            } catch (error) {
+                console.error(`Error while cancelling query with key ${queryKey}:`, error);
             }
-            this._queryKeys = [];
         }
-
+        this._queryKeys = [];
         this._cancellationPending = false;
     }
 }

@@ -46,8 +46,17 @@ export type StatisticalSurfaceData =
     | { format: SurfaceDataFormat.FLOAT; surfaceData: SurfaceDataFloat_trans }
     | { format: SurfaceDataFormat.PNG; surfaceData: SurfaceDataPng_api };
 
+export type StatisticalSurfaceStoredData = {
+    realizations: readonly number[];
+};
+
 export class StatisticalSurfaceProvider
-    implements CustomDataProviderImplementation<StatisticalSurfaceSettings, StatisticalSurfaceData>
+    implements
+        CustomDataProviderImplementation<
+            StatisticalSurfaceSettings,
+            StatisticalSurfaceData,
+            StatisticalSurfaceStoredData
+        >
 {
     settings = statisticalSurfaceSettings;
 
@@ -73,7 +82,11 @@ export class StatisticalSurfaceProvider
 
     makeValueRange({
         getData,
-    }: DataProviderInformationAccessors<StatisticalSurfaceSettings, StatisticalSurfaceData>): [number, number] | null {
+    }: DataProviderInformationAccessors<
+        StatisticalSurfaceSettings,
+        StatisticalSurfaceData,
+        StatisticalSurfaceStoredData
+    >): [number, number] | null {
         const data = getData()?.surfaceData;
         if (!data) {
             return null;
@@ -85,9 +98,10 @@ export class StatisticalSurfaceProvider
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
+        storedDataUpdater,
         workbenchSession,
         queryClient,
-    }: DefineDependenciesArgs<StatisticalSurfaceSettings>) {
+    }: DefineDependenciesArgs<StatisticalSurfaceSettings, StatisticalSurfaceStoredData>) {
         availableSettingsUpdater(Setting.STATISTIC_FUNCTION, () => Object.values(SurfaceStatisticFunction_api));
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
@@ -206,16 +220,29 @@ export class StatisticalSurfaceProvider
 
             return availableTimeOrIntervals;
         });
+
+        storedDataUpdater("realizations", ({ getGlobalSetting, getLocalSetting }) => {
+            const filterFunction = getGlobalSetting("realizationFilterFunction");
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
+
+            if (!ensembleIdent) {
+                return [];
+            }
+
+            return filterFunction(ensembleIdent);
+        });
     }
 
     fetchData({
         getSetting,
+        getStoredData,
         getWorkbenchSession,
         registerQueryKey,
         queryClient,
         setProgressMessage,
     }: FetchDataParams<StatisticalSurfaceSettings, StatisticalSurfaceData>): Promise<StatisticalSurfaceData> {
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        let filteredRealizations = getStoredData("realizations") ?? [];
         const surfaceName = getSetting(Setting.SURFACE_NAME);
         const attribute = getSetting(Setting.ATTRIBUTE);
         const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
@@ -232,11 +259,6 @@ export class StatisticalSurfaceProvider
             addrBuilder.withAttribute(attribute);
             addrBuilder.withStatisticFunction(statisticFunction);
 
-            // Get filtered realizations from workbench
-            let filteredRealizations = workbenchSession
-                .getRealizationFilterSet()
-                .getRealizationFilterForEnsembleIdent(ensembleIdent)
-                .getFilteredRealizations();
             const currentEnsemble = workbenchSession.getEnsembleSet().findEnsemble(ensembleIdent);
 
             // If sensitivity is set, filter realizations further to only include the realizations that are in the sensitivity
