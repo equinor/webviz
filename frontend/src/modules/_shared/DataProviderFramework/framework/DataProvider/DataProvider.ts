@@ -470,23 +470,34 @@ export class DataProvider<
             return;
         }
 
-        if (this._queryKeys.length > 0) {
-            for (const queryKey of this._queryKeys) {
-                await queryClient.cancelQueries(
-                    {
-                        queryKey,
-                    },
-                    {
-                        silent: true,
-                        revert: true,
-                    },
-                );
-                await queryClient.invalidateQueries({ queryKey });
-                queryClient.removeQueries({ queryKey });
-            }
-            this._queryKeys = [];
+        if (this._queryKeys.length === 0) {
+            return;
         }
 
+        for (const queryKey of this._queryKeys) {
+            if (hasMoreThanOneFetchingQuery(queryClient, queryKey)) {
+                // If there are multiple queries fetching the same data, we do not cancel them.
+                // This is to avoid cancelling a query that might be needed for another data provider.
+                continue;
+            }
+
+            await queryClient.cancelQueries(
+                {
+                    queryKey,
+                },
+                {
+                    silent: true,
+                    revert: true,
+                },
+            );
+        }
+        this._queryKeys = [];
         this._cancellationPending = false;
     }
+}
+
+function hasMoreThanOneFetchingQuery(queryClient: QueryClient, queryKey: unknown[]): boolean {
+    const queryCache = queryClient.getQueryCache();
+    const activeRequests = queryCache.findAll({ queryKey, fetchStatus: "fetching" });
+    return activeRequests.length > 1;
 }
