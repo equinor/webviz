@@ -33,6 +33,7 @@ export enum DataProviderTopic {
     DATA = "DATA",
     SUBORDINATED = "SUBORDINATED",
     REVISION_NUMBER = "REVISION_NUMBER",
+    PROGRESS_MESSAGE = "PROGRESS_MESSAGE",
 }
 
 export enum DataProviderStatus {
@@ -48,6 +49,7 @@ export type DataProviderPayloads<TData> = {
     [DataProviderTopic.DATA]: TData;
     [DataProviderTopic.SUBORDINATED]: boolean;
     [DataProviderTopic.REVISION_NUMBER]: number;
+    [DataProviderTopic.PROGRESS_MESSAGE]: string | null;
 };
 
 export function isDataProvider(obj: any): obj is DataProvider<any, any> {
@@ -126,6 +128,7 @@ export class DataProvider<
     private _currentTransactionId: number = 0;
     private _settingsErrorMessages: string[] = [];
     private _revisionNumber: number = 0;
+    private _progressMessage: string | null = null;
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
         const {
@@ -318,6 +321,10 @@ export class DataProvider<
             if (topic === DataProviderTopic.REVISION_NUMBER) {
                 return this._revisionNumber;
             }
+            if (topic === DataProviderTopic.PROGRESS_MESSAGE) {
+                return this._progressMessage;
+            }
+            throw new Error(`Unknown topic: ${topic}`);
         };
 
         return snapshotGetter;
@@ -344,6 +351,14 @@ export class DataProvider<
         };
     }
 
+    setProgressMessage(message: string | null): void {
+        if (this._progressMessage === message) {
+            return;
+        }
+        this._progressMessage = message;
+        this._publishSubscribeDelegate.notifySubscribers(DataProviderTopic.PROGRESS_MESSAGE);
+    }
+
     makeAccessors(): DataProviderInformationAccessors<TSettings, TData, TStoredData, TSettingKey> {
         return {
             getSetting: (settingName) => this._settingsContextDelegate.getSettings()[settingName].getValue(),
@@ -354,6 +369,9 @@ export class DataProvider<
             getData: () => this._data,
             getWorkbenchSession: () => this._dataProviderManager.getWorkbenchSession(),
             getWorkbenchSettings: () => this._dataProviderManager.getWorkbenchSettings(),
+            setProgressMessage: (message: string | null) => {
+                this.setProgressMessage(message);
+            },
         };
     }
 
@@ -377,8 +395,8 @@ export class DataProvider<
         const accessors = this.makeAccessors();
 
         this.invalidateValueRange();
-
         this.setStatus(DataProviderStatus.LOADING);
+        this.setProgressMessage(null);
 
         try {
             this._data = await this._customDataProviderImpl.fetchData({
