@@ -7,6 +7,7 @@ import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
+import { hasMoreThanOneFetchingQuery } from "@lib/utils/queryUtils";
 
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import {
@@ -481,23 +482,21 @@ export class DataProvider<
                 continue;
             }
 
-            await queryClient.cancelQueries(
-                {
-                    queryKey,
-                },
-                {
-                    silent: true,
-                    revert: true,
-                },
-            );
+            try {
+                await queryClient.cancelQueries(
+                    {
+                        queryKey,
+                    },
+                    {
+                        silent: true,
+                        revert: true,
+                    },
+                );
+            } catch (error) {
+                console.error(`Error while cancelling query with key ${queryKey}:`, error);
+            }
         }
         this._queryKeys = [];
         this._cancellationPending = false;
     }
-}
-
-function hasMoreThanOneFetchingQuery(queryClient: QueryClient, queryKey: unknown[]): boolean {
-    const queryCache = queryClient.getQueryCache();
-    const activeRequests = queryCache.findAll({ queryKey, fetchStatus: "fetching" });
-    return activeRequests.length > 1;
 }
