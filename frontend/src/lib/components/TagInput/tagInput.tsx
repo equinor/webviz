@@ -61,9 +61,9 @@ function useUncontrolledInput(props: ExtendedInputElementProps) {
 
     const dynamicSetValue = React.useCallback(
         function dynamicSetValue(value: string) {
-        if (props.value === undefined) {
-            setInternalValue(value);
-        } else {
+            if (props.value === undefined) {
+                setInternalValue(value);
+            } else {
                 props.onValueChange?.(value);
             }
         },
@@ -293,19 +293,21 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
                     onCopy={copySelectedTags}
                     onCut={cutSelectedTags}
                 >
-                    {props.tags.map((t) =>
-                        renderTagOrDefault({
-                            tag: t,
-                            separator: separatorOrDefault,
-                            focused: t.id === focusedTagId && !selectedTagIds.length,
-                            focusMovementDirection: focusMovementDirection,
-                            selected: selectedTagIds.includes(t.id),
-                            onChange: handleUpdateTag,
-                            onMoveFocus: moveTagFocus,
-                            onRemove: () => handleRemoveTag(t),
-                            onFocus: () => moveFocusToTag(t),
-                        }),
-                    )}
+                    {props.tags.map((t) => (
+                        <React.Fragment key={t.id}>
+                            {renderTagOrDefault({
+                                tag: t,
+                                separator: separatorOrDefault,
+                                focused: t.id === focusedTagId && !selectedTagIds.length,
+                                focusMovementDirection: focusMovementDirection,
+                                selected: selectedTagIds.includes(t.id),
+                                onChange: handleUpdateTag,
+                                onMoveFocus: moveTagFocus,
+                                onRemove: () => handleRemoveTag(t),
+                                onFocus: () => moveFocusToTag(t),
+                            })}
+                        </React.Fragment>
+                    ))}
                     <li className="grow flex min-w-0 -my-1">
                         <input
                             ref={inputRef}
