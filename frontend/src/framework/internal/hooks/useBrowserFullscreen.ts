@@ -3,9 +3,9 @@ import React from "react";
 export function useBrowserFullscreen(): [boolean, () => void] {
     const [isFullscreen, setIsFullscreen] = React.useState(false);
 
-    const toggleFullscreen = React.useCallback(() => {
+    const toggleFullscreen = React.useCallback(function toggleFullscreen() {
         if (!document.fullscreenEnabled) return console.warn("Fullscreen not allowed");
-        if (document.fullscreenElement) document.exitFullscreen();
+        if (document.fullscreenElement) return document.exitFullscreen();
 
         document.body.requestFullscreen();
     }, []);
