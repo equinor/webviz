@@ -20,7 +20,7 @@ export class ScopedQueryController {
         this.cleanup();
     }
 
-    async run<TQueryFnData, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = QueryKey>(
+    async fetchQuery<TQueryFnData, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = QueryKey>(
         options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
     ): Promise<TData> {
         this.cleanup();

@@ -127,8 +127,8 @@ export class DataProvider<
     private _settingsErrorMessages: string[] = [];
     private _revisionNumber: number = 0;
     private _progressMessage: string | null = null;
-    private _queryRunner: ScopedQueryController;
-    private _refetchScheduled: boolean = false;
+    private _scopedQueryController: ScopedQueryController;
+    private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
         const {
@@ -147,7 +147,7 @@ export class DataProvider<
                 customDataProviderImplementation.getDefaultSettingsValues?.() ?? {},
             ),
         );
-        this._queryRunner = new ScopedQueryController(params.dataProviderManager.getQueryClient());
+        this._scopedQueryController = new ScopedQueryController(params.dataProviderManager.getQueryClient());
         this._customDataProviderImpl = customDataProviderImplementation;
         this._itemDelegate = new ItemDelegate(
             instanceName ?? customDataProviderImplementation.getDefaultName(),
@@ -237,20 +237,27 @@ export class DataProvider<
             return;
         }
 
-        if (this._refetchScheduled) return;
-        this._refetchScheduled = true;
+        this._currentTransactionId += 1;
+        const localTransactionId = this._currentTransactionId;
 
-        // Coalesce to next macrotask
-        setTimeout(() => {
+        // Debounce the refetch to avoid multiple refetches in a short time span.
+        if (this._debounceTimeout) {
+            clearTimeout(this._debounceTimeout);
+        }
+        this._debounceTimeout = setTimeout(() => {
+            if (this._currentTransactionId !== localTransactionId) {
+                // If the transaction id has changed, it means that a new transaction has started while the
+                // previous one was still running. In this case, we do not refetch the data
+                return;
+            }
             this.maybeRefetchData().then(() => {
-                this._refetchScheduled = false;
-                // It might be that we started a new transaction while the previous one was still running.
-                // In this case, we need to make sure that we only use the latest transaction and cancel the previous one.
-                this._currentTransactionId += 1;
-                this._prevSettings = clone(this._settingsContextDelegate.getValues()) as TSettingTypes;
-                this._prevStoredData = clone(this._settingsContextDelegate.getStoredDataRecord()) as TStoredData;
+                if (this._currentTransactionId === localTransactionId) {
+                    // Store the previous settings and stored data after the data has been fetched
+                    this._prevSettings = clone(this._settingsContextDelegate.getValues()) as TSettingTypes;
+                    this._prevStoredData = clone(this._settingsContextDelegate.getStoredDataRecord()) as TStoredData;
+                }
             });
-        }, 0);
+        }, 10);
     }
 
     handleSettingsStatusChange(): void {
@@ -386,7 +393,7 @@ export class DataProvider<
 
         const accessors = this.makeAccessors();
 
-        this._queryRunner.cancelActiveFetch();
+        this._scopedQueryController.cancelActiveFetch();
 
         this.invalidateValueRange();
         this.setStatus(DataProviderStatus.LOADING);
@@ -397,7 +404,7 @@ export class DataProvider<
                 ...accessors,
                 fetchQuery: <TQueryFnData, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = QueryKey>(
                     options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
-                ) => this._queryRunner.run<TQueryFnData, TError, TData, TQueryKey>(options),
+                ) => this._scopedQueryController.fetchQuery<TQueryFnData, TError, TData, TQueryKey>(options),
                 setProgressMessage: (message) => this.setProgressMessage(message),
             });
 
@@ -446,7 +453,10 @@ export class DataProvider<
     beforeDestroy(): void {
         this._settingsContextDelegate.beforeDestroy();
         this._unsubscribeHandler.unsubscribeAll();
-        this._queryRunner.cancelActiveFetch();
+        this._scopedQueryController.cancelActiveFetch();
+        if (this._debounceTimeout) {
+            clearTimeout(this._debounceTimeout);
+        }
     }
 
     private incrementRevisionNumber(): void {
