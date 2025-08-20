@@ -14,15 +14,10 @@ export function DefaultTag(props: TagProps): React.ReactNode {
                     "outline-1 outline-blue-500": props.focused,
                 },
             )}
-            onClick={() => props.onFocus?.()}
+            onClick={props.onFocus}
         >
             <span>{props.tag.value}</span>
-            <IconButton
-                className="align-text-bottom"
-                title="Remove tag"
-                size="small"
-                onClick={() => props.onRemove?.()}
-            >
+            <IconButton className="align-text-bottom" title="Remove tag" size="small" onClick={props.onRemove}>
                 <Close fontSize="inherit" />
             </IconButton>
 

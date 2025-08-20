@@ -1,4 +1,4 @@
-import _ from "lodash";
+import { range } from "lodash";
 
 export type NumberRange = { start: number; end: number };
 export type NumberOrRange = number | NumberRange;
@@ -17,9 +17,9 @@ export function missingNumbers(sortedNumbers: readonly number[]): Set<number> {
     const max = sortedNumbers.at(-1)!;
 
     const numbers = new Set(sortedNumbers);
-    const allNumbers = new Set([..._.range(min, max + 1)]);
+    const allNumbers = new Set([...range(min, max + 1)]);
 
-    // I *want* to use allNumbers.difference, but doesnt seem to work in the test environment :/
+    // I *want* to use `allNumbers.difference(numbers)` here, but it' not available in node version <20, causing vitest to fail
     return new Set([...allNumbers].filter((n) => !numbers.has(n)));
 }
 
@@ -44,7 +44,9 @@ function isNextNumber(current: number, next: number, skippedNumbers?: Set<number
     let incrementedNext = current + 1;
 
     // Skip through numbers until we hit the next included one, or we surpass the next being tested
-    while (incrementedNext < next && skippedNumbers.has(incrementedNext)) incrementedNext++;
+    while (incrementedNext < next && skippedNumbers.has(incrementedNext)) {
+        incrementedNext++;
+    }
 
     return incrementedNext === next;
 }
@@ -67,11 +69,15 @@ export function getNumbersAndRanges(sortedNumbers: number[], skippedNumbers?: Se
         const nextNumber = sortedNumbers[i + 1]; // undefined if last number
         const isExpectedNextNumber = isNextNumber(currentNumber, nextNumber, skippedNumbers);
 
-        // If we havent started a range, and we're not on a skipped number, add current as a start
-        if (rangeStart === null && !skippedNumbers?.has(currentNumber)) rangeStart = currentNumber;
+        // If we haven't started a range, and we're not on a skipped number, add current as a start
+        if (rangeStart === null && !skippedNumbers?.has(currentNumber)) {
+            rangeStart = currentNumber;
+        }
 
         // If the number isn't skipped, it's (potentially) the end of our range
-        if (!skippedNumbers?.has(currentNumber)) rangeEnd = currentNumber;
+        if (!skippedNumbers?.has(currentNumber)) {
+            rangeEnd = currentNumber;
+        }
 
         // End of range
         if (!nextNumber || !isExpectedNextNumber) {

@@ -201,7 +201,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
 
         const inputEl = inputRef.current;
 
-        if ([Key.Enter, separatorOrDefault].includes(evt.key)) {
+        if (inputValue && [Key.Enter, Key.Tab, separatorOrDefault].includes(evt.key)) {
             handleAddTag(inputValue);
 
             setInputValue("");
@@ -252,7 +252,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
         evt.preventDefault();
 
         if (props.onCopyTags) {
-            await props.onCopyTags(selectedTags);
+            props.onCopyTags(selectedTags);
         } else {
             const copyData = selectedTags.map((t) => t.value).join(separatorOrDefault);
 
@@ -285,7 +285,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
         <>
             <ul
                 ref={ref}
-                className="input-comp flex items-center gap-1 border border-gray-300 px-2 py-1 rounded focus-within:outline"
+                className="input-comp flex items-center gap-1 border border-gray-300 px-2 py-1 rounded focus-within:outline-blue-300"
                 onBlur={onRootBlur}
             >
                 <div
@@ -298,7 +298,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
                     {props.tags.map((t) =>
                         renderTagOrDefault({
                             tag: t,
-                            separator: props.separator,
+                            separator: separatorOrDefault,
                             focused: t.id === focusedTagId && !selectedTagIds.length,
                             focusMovementDirection: focusMovementDirection,
                             selected: selectedTagIds.includes(t.id),
@@ -321,7 +321,11 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
                         />
                     </li>
                 </div>
-                <IconButton className="align-middle" title="Clear selection" onClick={clearTags}>
+                <IconButton
+                    className="align-middle focus:outline-2 outline-blue-300"
+                    title="Clear selection"
+                    onClick={clearTags}
+                >
                     <Close fontSize="inherit" />
                 </IconButton>
             </ul>

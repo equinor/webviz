@@ -1,4 +1,4 @@
-import type { NumberRange } from "@framework/utils/numberUtils";
+import type { NumberOrRange, NumberRange } from "@framework/utils/numberUtils";
 
 export enum RealizationFilterType {
     BY_REALIZATION_NUMBER = "byRealizationNumber",
@@ -18,7 +18,7 @@ export const IncludeExcludeFilterEnumToStringMapping = {
     [IncludeExcludeFilter.EXCLUDE_FILTER]: "Exclude Filter",
 };
 
-export type RealizationNumberSelection = NumberRange | number;
+export type RealizationNumberSelection = NumberOrRange;
 
 export type ContinuousParameterValueSelection = Readonly<NumberRange>;
 export type DiscreteParameterValueSelection = readonly string[] | readonly number[];

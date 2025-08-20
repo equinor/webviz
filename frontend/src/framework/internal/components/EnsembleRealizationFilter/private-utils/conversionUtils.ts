@@ -15,19 +15,19 @@ export function createBestSuggestedRealizationNumberSelections(
 ): readonly RealizationNumberSelection[] | null {
     // Sort arrays and remove duplicates
     const validRealizations = [...new Set(validRealizationNumbers)].sort((a, b) => a - b);
-    const selectedRealizations = [...new Set(selectedRealizationNumbers)]
+    const sortedRealizationSelection = [...new Set(selectedRealizationNumbers)]
         .filter((num) => validRealizations.includes(num))
         .sort((a, b) => a - b);
 
-    if (selectedRealizations.length === 0) {
+    if (sortedRealizationSelection.length === 0) {
         return [];
     }
-    if (selectedRealizations.length === 1) {
-        return [selectedRealizations[0]];
+    if (sortedRealizationSelection.length === 1) {
+        return [sortedRealizationSelection[0]];
     }
-    if (isEqual(selectedRealizations, validRealizations)) {
+    if (isEqual(sortedRealizationSelection, validRealizations)) {
         return null;
     }
 
-    return getNumbersAndRanges(selectedRealizations, missingNumbers(validRealizationNumbers));
+    return getNumbersAndRanges(sortedRealizationSelection, missingNumbers(validRealizationNumbers));
 }

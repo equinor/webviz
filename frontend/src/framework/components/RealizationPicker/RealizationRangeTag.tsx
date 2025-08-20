@@ -119,7 +119,9 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
     function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
         const value = event.target.value;
 
-        setEditingValue(value);
+        const sanitizedValue = value.replace(/[^0-9-]/g, "").replace(/--/, "-");
+
+        setEditingValue(sanitizedValue);
     }
 
     function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
@@ -132,8 +134,7 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
         }
     }
 
-    function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
-        e.stopPropagation();
+    function handleBlur() {
         commitEditValue();
     }
 
@@ -155,9 +156,10 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
 
         const isSelecting = target.selectionStart !== target.selectionEnd;
 
-        if (evt.key === Key.Enter || evt.key === props.separator) {
+        if (evt.key === Key.Enter || evt.key === props.separator || evt.key === Key.Tab) {
             commitEditValue();
             props.onMoveFocus?.(Direction.Forwards);
+            evt.preventDefault();
         } else if (evt.key === Key.Backspace && editingValue === "") {
             props.onRemove?.();
         }
@@ -179,7 +181,7 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
         if (validityInfo.validity === SelectionValidity.InputError) {
             return "Invalid input";
         } else if (validityInfo.validity === SelectionValidity.Invalid) {
-            return "This value is not valid for the selected ensemble(s).";
+            return "This value is not valid for ensemble.";
         }
         return undefined;
     }, [validityInfo.validity]);
@@ -234,13 +236,14 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
                 onKeyDown={handleKeyDown}
             />
             <div
+                tabIndex={props.focused ? -1 : undefined}
                 className={resolveClassNames(
                     "text-slate-800 hover:text-slate-600 text-sm cursor-pointer flex items-center",
                     {
                         invisible: props.focused,
                     },
                 )}
-                onClick={() => props.onRemove?.()}
+                onClick={props.onRemove}
             >
                 <Close fontSize="inherit" />
             </div>
