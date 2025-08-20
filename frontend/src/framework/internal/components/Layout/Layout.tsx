@@ -38,7 +38,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
     const trueLayout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.Layout);
 
     // Temp layout for preview (controller drives this)
-    const [tempLayout, setTempLayout] = React.useState<LayoutElement[] | null>(null);
+    const [previewLayout, setPreviewLayout] = React.useState<LayoutElement[] | null>(null);
 
     // Drag overlay visuals
     const [draggingModuleId, setDraggingModuleId] = React.useState<string | null>(null);
@@ -48,8 +48,9 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
     const [cursor, setCursor] = React.useState<React.CSSProperties["cursor"]>("default");
 
     // Build LayoutNode tree (true or temp)
-    const layoutElements = tempLayout ?? trueLayout;
+    const layoutElements = previewLayout ?? trueLayout;
     const rootNode = React.useMemo(() => makeLayoutNodes(layoutElements), [layoutElements]);
+
     // Expose to controller via ref (stable reference)
     const rootNodeRef = React.useRef<LayoutNode | null>(null);
     rootNodeRef.current = rootNode;
@@ -60,10 +61,10 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
                 // Getters
                 getRootNode: () => rootNodeRef.current,
                 getViewportSize: () => viewportSize as Size2D,
-                getCurrentTempLayout: () => tempLayout,
+                getCurrentTempLayout: () => previewLayout,
 
                 // Effects
-                setTempLayout: (next: LayoutElement[] | null) => setTempLayout(next),
+                setTempLayout: (next: LayoutElement[] | null) => setPreviewLayout(next),
                 setDragAndClientPosition: (dragPos: Vec2 | null, pointer: Vec2 | null) => {
                     setDragPosition(dragPos);
                     setPointerPos(pointer);
@@ -78,7 +79,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
                 },
                 createModuleAndCommit: (moduleName: string, next: LayoutElement[], tempId: string) => {
                     // Show the preview layout immediately so the user sees a tile
-                    setTempLayout(next);
+                    setPreviewLayout(next);
 
                     // Atomic create + tempId swap + single setLayout
                     const instance = dashboard.makeAndAddModuleInstance(moduleName);
@@ -94,7 +95,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
                     dashboard.setLayout(patched);
 
                     // Clear temp layout after commit
-                    setTempLayout(null);
+                    setPreviewLayout(null);
                 },
 
                 // Utilities
@@ -106,7 +107,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
                 cancelFrame: (id: number) => window.cancelAnimationFrame(id),
             };
         },
-        [viewportSize, tempLayout, dashboard],
+        [viewportSize, previewLayout, dashboard],
     );
 
     const controllerRef = React.useRef<LayoutController | null>(null);
@@ -173,14 +174,14 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
             const unsubRemove = guiMessageBroker.subscribeToEvent(
                 GuiEvent.RemoveModuleInstanceRequest,
                 (payload: { moduleInstanceId: string }) => {
-                    const current = (tempLayout ?? trueLayout) as LayoutElement[];
+                    const current = (previewLayout ?? trueLayout) as LayoutElement[];
 
                     // 2) Remove the element and repack to fill 100%
                     const remaining = current.filter((el) => el.moduleInstanceId !== payload.moduleInstanceId);
                     const adjusted = makeLayoutNodes(remaining).toLayout();
 
                     // 3) Optimistic preview to avoid flicker (optional but nice)
-                    setTempLayout(adjusted);
+                    setPreviewLayout(adjusted);
 
                     // 4) Do the actual cleanup (channels, stores, etc.)
                     dashboard.removeModuleInstance(payload.moduleInstanceId);
@@ -189,7 +190,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
                     dashboard.setLayout(adjusted);
 
                     // 6) Clear temp — trueLayout now equals `adjusted`
-                    setTempLayout(null);
+                    setPreviewLayout(null);
                 },
             );
 
@@ -199,7 +200,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
                 unsubRemove();
             };
         },
-        [guiMessageBroker, controller, dashboard, tempLayout, trueLayout],
+        [guiMessageBroker, controller, dashboard, previewLayout, trueLayout],
     );
 
     const onContainerPointerMove = React.useCallback(
@@ -325,7 +326,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
                             workbench={props.workbench}
                             isDragged={isDragged}
                             dragPosition={dragPosition ?? { x: 0, y: 0 }}
-                            changingLayout={!!draggingModuleId || !!tempLayout}
+                            changingLayout={!!draggingModuleId || !!previewLayout}
                             {...layoutProps}
                         />
                     );
