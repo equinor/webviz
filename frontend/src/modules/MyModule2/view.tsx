@@ -50,10 +50,12 @@ export const View = () => {
         col2: `Row ${n}, Column 2`,
     }));
 
-    const [value, setValue] = React.useState<string | null>(null);
+    const [value, setValue] = React.useState<string | string[] | null>(null);
 
     return (
         <div className="h-full w-full flex flex-col justify-center [&_thead]:hidden">
+            <h2>{value ?? "Nothing selected"}</h2>
+
             <div className="mt-4 gap-5 grid grid-cols-2">
                 <div className="border-4 col-span-2">
                     <Table height={400} headings={heading} data={tableData} />
@@ -63,7 +65,7 @@ export const View = () => {
 
                 <TagPicker tags={options} value={[]} />
 
-                <Select size={6} options={options} />
+                <Select size={6} options={options} onChange={setValue} />
 
                 <TableSelect size={6} options={tableSelectOptions} headerLabels={["lorem", "foo"]} />
             </div>
