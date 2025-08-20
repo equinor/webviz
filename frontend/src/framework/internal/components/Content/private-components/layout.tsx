@@ -119,10 +119,9 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     const layoutElement = currentLayout.find((el) => el.moduleInstanceId === pointerDownElementId);
                     if (layoutElement) {
                         // This is not working yet as the older layout is not adjusted
-                        dashboard.makeAndAddModuleInstance(moduleName).then((instance) => {
-                            layoutElement.moduleInstanceId = instance.getId();
-                            layoutElement.moduleName = instance.getName();
-                        });
+                        const instance = dashboard.makeAndAddModuleInstance(moduleName);
+                        layoutElement.moduleInstanceId = instance.getId();
+                        layoutElement.moduleName = instance.getName();
                     }
                 }
                 setDraggedModuleInstanceId(null);

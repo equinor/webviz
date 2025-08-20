@@ -18,7 +18,13 @@ import { ViewWrapperPlaceholder } from "../Content/private-components/viewWrappe
 
 import { LayoutOverlay } from "./components/LayoutOverlay";
 import { QuickSwitchDock } from "./components/QuickSwitchDock";
-import { LayoutController, DragSourceKind, type DragSource, type ResizeSource } from "./LayoutController";
+import {
+    LayoutController,
+    DragSourceKind,
+    type DragSource,
+    type ResizeSource,
+    type LayoutControllerBindings,
+} from "./LayoutController";
 import type { LayoutNode } from "./LayoutNode";
 import { makeLayoutNodes } from "./LayoutNode";
 
@@ -40,6 +46,8 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
     // Temp layout for preview (controller drives this)
     const [previewLayout, setPreviewLayout] = React.useState<LayoutElement[] | null>(null);
 
+    const [rootNode, setRootNode] = React.useState<LayoutNode>(() => makeLayoutNodes(trueLayout));
+
     // Drag overlay visuals
     const [draggingModuleId, setDraggingModuleId] = React.useState<string | null>(null);
     const [dragPosition, setDragPosition] = React.useState<Vec2 | null>(null);
@@ -49,21 +57,27 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
 
     // Build LayoutNode tree (true or temp)
     const layoutElements = previewLayout ?? trueLayout;
-    const rootNode = React.useMemo(() => makeLayoutNodes(layoutElements), [layoutElements]);
 
     // Expose to controller via ref (stable reference)
     const rootNodeRef = React.useRef<LayoutNode | null>(null);
     rootNodeRef.current = rootNode;
 
+    const isPreviewing =
+        !!previewLayout || // preview tree exists (drag/resize)
+        !!draggingModuleId || // dragging existing/new module
+        !!tempPlaceholderId;
+
     const bindings = React.useMemo(
-        function makeBinding() {
-            return {
+        function makeBindings() {
+            const bindings: LayoutControllerBindings = {
                 // Getters
-                getRootNode: () => rootNodeRef.current,
                 getViewportSize: () => viewportSize as Size2D,
                 getCurrentTempLayout: () => previewLayout,
 
                 // Effects
+                setRootNode: (node: LayoutNode) => {
+                    setRootNode(node);
+                },
                 setTempLayout: (next: LayoutElement[] | null) => setPreviewLayout(next),
                 setDragAndClientPosition: (dragPos: Vec2 | null, pointer: Vec2 | null) => {
                     setDragPosition(dragPos);
@@ -106,6 +120,8 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
                 scheduleFrame: (cb: FrameRequestCallback) => window.requestAnimationFrame(cb),
                 cancelFrame: (id: number) => window.cancelAnimationFrame(id),
             };
+
+            return bindings;
         },
         [viewportSize, previewLayout, dashboard],
     );
@@ -117,6 +133,17 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
     const controller = controllerRef.current;
 
     const anyModuleMaximized = React.useMemo(() => layoutElements.some((el) => el.maximized), [layoutElements]);
+
+    React.useEffect(
+        function updateLayout() {
+            controller.setCommittedLayout(trueLayout);
+
+            if (!isPreviewing) {
+                setRootNode(makeLayoutNodes(trueLayout));
+            }
+        },
+        [trueLayout, controller, isPreviewing],
+    );
 
     // keep the single instance's bindings fresh
     React.useEffect(
@@ -205,7 +232,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
 
     const onContainerPointerMove = React.useCallback(
         function onContainerPointerMove(e: React.PointerEvent) {
-            if (!rootNodeRef.current || draggingModuleId) return;
+            if (!rootNodeRef.current || isPreviewing) return;
             const local = bindings.toLocalPx({ x: e.clientX, y: e.clientY });
             const hit = rootNodeRef.current.hitTestDivider(local, viewportSize);
             const next = !hit ? "default" : hit.axis === "vertical" ? "ew-resize" : "ns-resize";
@@ -213,12 +240,12 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
                 setCursor(next);
             }
         },
-        [bindings, viewportSize, draggingModuleId, cursor],
+        [bindings, viewportSize, cursor, isPreviewing],
     );
 
     const onContainerPointerDown = React.useCallback(
         function onContainerPointerDown(e: React.PointerEvent) {
-            if (anyModuleMaximized) return;
+            if (anyModuleMaximized || isPreviewing) return;
             if (!rootNodeRef.current) return;
             const clientPos = { x: e.clientX, y: e.clientY };
             const localPos = bindings.toLocalPx(clientPos);
@@ -238,7 +265,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
             e.preventDefault();
             e.stopPropagation();
         },
-        [controller, bindings, viewportSize, anyModuleMaximized],
+        [controller, bindings, viewportSize, anyModuleMaximized, isPreviewing],
     );
 
     const convertLayoutRectToRealRect = React.useCallback(function convertLayoutRectToRealRect(
