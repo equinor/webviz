@@ -1,19 +1,14 @@
 import React from "react";
 
-import { chain, isEqual, range, sortBy } from "lodash";
+import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import { getNumbersAndRanges, missingNumbers } from "@framework/utils/numberUtils";
 import type { BaseComponentProps } from "@lib/components/BaseComponent";
 import { BaseComponent } from "@lib/components/BaseComponent";
 import { TagInput } from "@lib/components/TagInput/tagInput";
 
+import { realizationSelectionToText, textToRealizationSelection, type Selection } from "./_utils";
 import { RealizationRangeTag } from "./RealizationRangeTag";
-
-type Selection = {
-    id: string;
-    value: string;
-};
 
 function calcUniqueSelections(selections: readonly Selection[], validRealizations?: readonly number[]): number[] {
     const uniqueSelections = new Set<number>();
@@ -100,63 +95,26 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
         }, props.debounceTimeMs || 0);
     }
 
-    function addNewSelections(values: string[]) {
-        const newSelections = [...selections, ...values.map((value) => ({ value, id: v4() }))];
-
-        setSelections(newSelections);
-        handleSelectionsChange(newSelections);
-    }
-
     function handlePaste(event: React.ClipboardEvent) {
         event.preventDefault();
 
         const pasteText = event.clipboardData.getData("text");
-        // Drop non-accepted characters and remove dangling separators, and make sure it
-        // follows the supported pattern, i.e. comma-separated numbers or ranges
-        const sanitizedValue = pasteText.replace(/[^0-9,-]/g, "").replace(/^[,-]|[,-]$/g, "");
-        if (!/^\d+(-\d+)?(,\d+(-\d+)?)*$/.test(sanitizedValue)) return;
 
-        const validNumbers = props.validRealizations ? missingNumbers(props.validRealizations) : undefined;
-        const realizationNumbers = [];
-        for (const numberOrRange of sanitizedValue.split(",")) {
-            if (/^[0-9]+-[0-9]+$/.test(numberOrRange)) {
-                // Add each number in the range to the list, as we will create optimal ranges later
-                const [start, end] = numberOrRange.split("-");
-                realizationNumbers.push(...range(parseFloat(start), parseFloat(end) + 1));
-            } else {
-                // By the regex things above, we can safely assume this is a valid number
-                realizationNumbers.push(parseFloat(numberOrRange));
-            }
+        const parsedSelections = textToRealizationSelection(pasteText, props.validRealizations);
+
+        if (parsedSelections) {
+            const newSelections = [...selections, ...parsedSelections];
+
+            setSelections(newSelections);
+            handleSelectionsChange(newSelections);
         }
-
-        // Sort them to keep the order, and remove possible duplicates
-        const sortedUniqueRealizationNumbers = chain(realizationNumbers).sortBy().uniq().value();
-        const numbersAndRanges = getNumbersAndRanges(sortedUniqueRealizationNumbers, validNumbers);
-
-        const rangesAsValueStrings = numbersAndRanges.map((numberOrRange) => {
-            if (typeof numberOrRange === "number") return numberOrRange.toString();
-            else return [numberOrRange.start, numberOrRange.end].join("-");
-        });
-
-        addNewSelections(rangesAsValueStrings);
     }
 
     async function handleCopyTags(selectedTags: Selection[]) {
-        const realizationNumbers: number[] = [];
+        const stringifiedSelections = realizationSelectionToText(selectedTags);
 
-        for (const tag of selectedTags) {
-            const [start, end] = tag.value.split("-").map(parseFloat);
-
-            if (!isNaN(start) && !isNaN(end)) {
-                realizationNumbers.push(...range(start, end + 1));
-            } else {
-                if (!isNaN(start)) realizationNumbers.push(start);
-                if (!isNaN(end)) realizationNumbers.push(end);
-            }
-        }
-
-        if (realizationNumbers.length) {
-            await navigator.clipboard.writeText(sortBy(realizationNumbers).join(","));
+        if (stringifiedSelections) {
+            await navigator.clipboard.writeText(stringifiedSelections);
         }
     }
 

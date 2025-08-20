@@ -7,94 +7,12 @@ import { Direction, type TagProps } from "@lib/components/TagInput";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 
+import type { SelectionValidityInfo } from "./_utils";
+import { computeTagValidityInfo, SelectionValidity } from "./_utils";
+
 type RealizationRangeTagProps = TagProps & {
     validRealizations?: readonly number[];
 };
-
-const REALIZATION_RANGE_REGEX = /^\d+(-\d+)?$/;
-
-enum SelectionValidity {
-    Valid = "valid",
-    InputError = "inputError",
-    Invalid = "invalid",
-}
-
-type SelectionValidityInfo = {
-    validity: SelectionValidity;
-    numMatchedRealizations: number;
-    numMatchedValidRealizations: number;
-};
-
-function computeTagValidityInfo(value: string, validRealizations: undefined | readonly number[]) {
-    if (!REALIZATION_RANGE_REGEX.test(value)) {
-        return {
-            validity: SelectionValidity.InputError,
-            numMatchedRealizations: 0,
-            numMatchedValidRealizations: 0,
-        };
-    }
-
-    const range = value.split("-");
-
-    if (range.length === 1) {
-        if (parseInt(range[0]) < 0) {
-            return {
-                validity: SelectionValidity.InputError,
-                numMatchedRealizations: 0,
-                numMatchedValidRealizations: 0,
-            };
-        }
-        if (validRealizations) {
-            if (!validRealizations.includes(parseInt(range[0]))) {
-                return {
-                    validity: SelectionValidity.Invalid,
-                    numMatchedRealizations: 1,
-                    numMatchedValidRealizations: 0,
-                };
-            }
-        }
-        return {
-            validity: SelectionValidity.Valid,
-            numMatchedRealizations: 1,
-            numMatchedValidRealizations: 1,
-        };
-    } else if (range.length === 2) {
-        if (parseInt(range[0]) < 0 || parseInt(range[1]) <= parseInt(range[0])) {
-            return {
-                validity: SelectionValidity.InputError,
-                numMatchedRealizations: 0,
-                numMatchedValidRealizations: 0,
-            };
-        }
-        const numMatches = parseInt(range[1]) - parseInt(range[0]) + 1;
-        if (validRealizations) {
-            let numNotValid = 0;
-            for (let i = parseInt(range[0]); i <= parseInt(range[1]); i++) {
-                if (!validRealizations.includes(i)) {
-                    numNotValid++;
-                }
-            }
-            if (numNotValid > 0) {
-                return {
-                    validity: SelectionValidity.Invalid,
-                    numMatchedRealizations: numMatches,
-                    numMatchedValidRealizations: numMatches - numNotValid,
-                };
-            }
-        }
-        return {
-            validity: SelectionValidity.Valid,
-            numMatchedRealizations: numMatches,
-            numMatchedValidRealizations: numMatches,
-        };
-    }
-
-    return {
-        validity: SelectionValidity.Valid,
-        numMatchedRealizations: 1,
-        numMatchedValidRealizations: 1,
-    };
-}
 
 export function RealizationRangeTag(props: RealizationRangeTagProps): React.ReactNode {
     const inputRef = React.useRef<HTMLInputElement>(null);
