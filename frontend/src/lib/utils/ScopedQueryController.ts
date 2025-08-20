@@ -2,10 +2,12 @@ import type { FetchQueryOptions, QueryClient, QueryKey, QueryObserverResult } fr
 import { QueryObserver } from "@tanstack/react-query";
 
 /**
- * Manages a single active query fetch via a QueryObserver, with built-in cancellation
- * and race-condition-safe lifecycle.
+ * Manages exactly one active query (serial execution, latest-wins).
+ * Uses a TanStack QueryObserver under the hood; teardown unsubscribes/destroys
+ * only this observer, so in-flight fetches abort **only if no other observers**
+ * exist for the same queryKey.
  */
-export class CancelableQueryRunner {
+export class ScopedQueryController {
     private _queryClient: QueryClient;
     private _activeObserver: QueryObserver<any, any, any, any, any> | null = null;
     private _unsubscribeFn: (() => void) | null = null;
@@ -18,21 +20,10 @@ export class CancelableQueryRunner {
         this.cleanup();
     }
 
-    private cleanup() {
-        if (this._unsubscribeFn) {
-            this._unsubscribeFn();
-            this._unsubscribeFn = null;
-        }
-        if (this._activeObserver) {
-            this._activeObserver.destroy();
-            this._activeObserver = null;
-        }
-    }
-
     async run<TQueryFnData, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = QueryKey>(
         options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
     ): Promise<TData> {
-        this.cancelActiveFetch();
+        this.cleanup();
 
         const observer = new QueryObserver<TQueryFnData, TError, TData, TData, TQueryKey>(this._queryClient, {
             ...options,
@@ -58,7 +49,7 @@ export class CancelableQueryRunner {
                 const current = observer;
                 observer.refetch().finally(() => {
                     if (this._activeObserver === current) {
-                        this.cancelActiveFetch();
+                        this.cleanup();
                     }
                 });
                 resolve(initial.data);
@@ -80,5 +71,16 @@ export class CancelableQueryRunner {
                 reject(err);
             });
         });
+    }
+
+    private cleanup() {
+        if (this._unsubscribeFn) {
+            this._unsubscribeFn();
+            this._unsubscribeFn = null;
+        }
+        if (this._activeObserver) {
+            this._activeObserver.destroy();
+            this._activeObserver = null;
+        }
     }
 }

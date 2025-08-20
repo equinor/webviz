@@ -4,10 +4,10 @@ import { clone, isEqual } from "lodash";
 
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
-import { CancelableQueryRunner } from "@lib/utils/CancelableQueryRunner";
 import { isDevMode } from "@lib/utils/devMode";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
+import { ScopedQueryController } from "@lib/utils/ScopedQueryController";
 
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import {
@@ -127,7 +127,7 @@ export class DataProvider<
     private _settingsErrorMessages: string[] = [];
     private _revisionNumber: number = 0;
     private _progressMessage: string | null = null;
-    private _queryRunner: CancelableQueryRunner;
+    private _queryRunner: ScopedQueryController;
     private _refetchScheduled: boolean = false;
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
@@ -147,7 +147,7 @@ export class DataProvider<
                 customDataProviderImplementation.getDefaultSettingsValues?.() ?? {},
             ),
         );
-        this._queryRunner = new CancelableQueryRunner(params.dataProviderManager.getQueryClient());
+        this._queryRunner = new ScopedQueryController(params.dataProviderManager.getQueryClient());
         this._customDataProviderImpl = customDataProviderImplementation;
         this._itemDelegate = new ItemDelegate(
             instanceName ?? customDataProviderImplementation.getDefaultName(),
