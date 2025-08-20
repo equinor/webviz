@@ -3,6 +3,7 @@ from typing import List, Optional
 import asyncio
 
 from pydantic import BaseModel
+from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.explorer import SumoClient, SearchContext
 from fmu.sumo.explorer.objects import CPGrid
 
@@ -122,14 +123,7 @@ async def _get_grid_model_meta_async(sumo_grid3d_search_context: SearchContext, 
         k_count=grid_metadata["data"]["spec"]["nlay"],
         subgrids=subgrids,
     )
-
-    grid_properties_context = sumo_grid_object.grid_properties
-    property_names = await grid_properties_context.names_async
-
-    property_info_arr = []
-    for property_name in property_names:
-        property_info_arr.append(Grid3dPropertyInfo(property_name=property_name))
-
+    property_info_arr = await get_grid_properties_info_async(sumo_grid_object)
     grid3d_info = Grid3dInfo(
         grid_name=grid_metadata["data"]["name"],
         bbox=bbox,
@@ -138,3 +132,50 @@ async def _get_grid_model_meta_async(sumo_grid3d_search_context: SearchContext, 
     )
 
     return grid3d_info
+
+
+async def get_grid_properties_info_async(cpgrid: CPGrid) -> List[Grid3dPropertyInfo]:
+    """
+    Get grid properties metadata for a given CPGrid object.
+    This is a helper function to extract property metadata from a CPGrid instance.
+    """
+
+    no_time_context = cpgrid.grid_properties.filter(time=TimeFilter(time_type=TimeType.NONE))
+    timestamp_context = cpgrid.grid_properties.filter(time=TimeFilter(time_type=TimeType.TIMESTAMP))
+    interval_context = cpgrid.grid_properties.filter(time=TimeFilter(time_type=TimeType.INTERVAL))
+
+    async with asyncio.TaskGroup() as tg:
+        no_time_property_names_task = tg.create_task(no_time_context.names_async)
+        timestamp_property_names_task = tg.create_task(timestamp_context.names_async)
+        timestamp_property_timestamps_task = tg.create_task(timestamp_context.timestamps_async)
+        interval_property_names_task = tg.create_task(interval_context.names_async)
+        interval_property_intervals_task = tg.create_task(interval_context.intervals_async)
+
+    no_time_property_names = no_time_property_names_task.result()
+    timestamp_property_names = timestamp_property_names_task.result()
+    timestamp_property_timestamps = timestamp_property_timestamps_task.result()
+    interval_property_names = interval_property_names_task.result()
+    interval_property_intervals = interval_property_intervals_task.result()
+
+    property_info_arr: List[Grid3dPropertyInfo] = []
+
+    for property_name in no_time_property_names:
+        property_info_arr.append(Grid3dPropertyInfo(property_name=property_name, iso_date_or_interval=None))
+    for property_name in timestamp_property_names:
+        for timestamp in timestamp_property_timestamps:
+            property_info_arr.append(
+                Grid3dPropertyInfo(
+                    property_name=property_name,
+                    iso_date_or_interval=timestamp,
+                )
+            )
+    for property_name in interval_property_names:
+        for interval in interval_property_intervals:
+            property_info_arr.append(
+                Grid3dPropertyInfo(
+                    property_name=property_name,
+                    iso_date_or_interval=f"{interval[0]}/{interval[1]}",
+                )
+            )
+
+    return property_info_arr
