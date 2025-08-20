@@ -118,8 +118,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
         }
     }
 
-    function handleInputChange(evt: React.ChangeEvent<HTMLInputElement>) {
-        const newValue = evt.target.value;
+    function handleInputChange(newValue: string) {
         const sanitizedValue = newValue.replace(/[^0-9-]/g, "").replace(/--/, "-");
 
         if (sanitizedValue !== currentInputValue) {
@@ -141,7 +140,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
                 inputProps={{
                     value: currentInputValue,
                     className: "!py-1.5",
-                    onChange: handleInputChange,
+                    onValueChange: handleInputChange,
                     onPaste: handlePaste,
                 }}
                 renderTag={(tagProps) => {

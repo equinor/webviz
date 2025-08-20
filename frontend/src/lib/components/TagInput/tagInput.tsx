@@ -12,9 +12,10 @@ import type { TagProps, Tag } from "./typesAndEnums";
 import { Direction } from "./typesAndEnums";
 
 // Limiting the valid inputs to be string only
-type InputElementProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "defaultValue"> & {
+type ExtendedInputElementProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "defaultValue"> & {
     value?: string;
     defaultValue?: string;
+    onValueChange?: (newValue: string) => void;
 };
 
 export type TagInputProps = {
@@ -24,8 +25,12 @@ export type TagInputProps = {
      * A string that will be used to separate tags when pasting or typing multiple tags at once. Defaults to `","`
      */
     separator?: string;
-    /** Props passed to component's internal input element. Can be used both as a controlled or uncontrolled input */
-    inputProps?: InputElementProps;
+    /**
+     * Props passed to component's internal input element. Can be used both as a controlled or uncontrolled input
+     * `onValueChange` should be used to track general input changes, as opposed to `onChange`
+     */
+    inputProps?: ExtendedInputElementProps;
+
     /**
      * A function that renders a custom tag component. It receives a `TagProps` object. If unspecified,
      * the default tag component will be used.
@@ -51,28 +56,21 @@ export type TagInputProps = {
 
 // Utility hook to manage an input that, like the native react-input, can be either
 // controlled or uncontrolled, based on it's props.
-function useUncontrolledInput(props: InputElementProps, inputRef: React.MutableRefObject<HTMLInputElement | null>) {
+function useUncontrolledInput(props: ExtendedInputElementProps) {
     const [internalValue, setInternalValue] = React.useState(props.value ?? props.defaultValue ?? "");
 
-    function setValue(value: string) {
+    const dynamicSetValue = React.useCallback(
+        function dynamicSetValue(value: string) {
         if (props.value === undefined) {
             setInternalValue(value);
         } else {
-            // Manually firing the event since other events might cause text changes, not just onChange (i.e. onKeyDown)
-            // ? Is this the correct react-like way to do this? Couldn't figure out a better way
-            const syntheticEvent = new Event("input", { bubbles: true, cancelable: true });
-
-            Object.defineProperty(syntheticEvent, "target", { writable: false, value: inputRef.current });
-
-            if (inputRef.current) {
-                inputRef.current.value = value;
+                props.onValueChange?.(value);
             }
+        },
+        [props],
+    );
 
-            props.onChange?.(syntheticEvent as unknown as React.ChangeEvent<HTMLInputElement>);
-        }
-    }
-
-    return [props.value ?? internalValue, setValue] as const;
+    return [props.value ?? internalValue, dynamicSetValue] as const;
 }
 
 function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLUListElement>): React.ReactNode {
@@ -80,7 +78,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
     const renderTagOrDefault = props.renderTag ?? ((tagProps) => <DefaultTag {...tagProps} />);
 
     const inputRef = React.useRef<HTMLInputElement | null>(null);
-    const [inputValue, setInputValue] = useUncontrolledInput(props.inputProps ?? {}, inputRef);
+    const [inputValue, setInputValue] = useUncontrolledInput(props.inputProps ?? {});
 
     const [focusedTagId, setFocusedTagId] = React.useState<string | null>(null);
     const [selectedTagIds, setSelectedTagIds] = React.useState<string[]>([]);
