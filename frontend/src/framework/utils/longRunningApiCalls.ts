@@ -1,5 +1,8 @@
+import React from "react";
+
 import type { LroFailureResp_api, LroInProgressResp_api, HttpValidationError_api } from "@api";
 import { client } from "@api";
+import { lroProgressBus, serializeQueryKey } from "@framework/internal/LroProgressBus";
 import type { RequestResult } from "@hey-api/client-axios";
 import type { QueryFunctionContext } from "@tanstack/query-core";
 import type { UseQueryOptions } from "@tanstack/react-query";
@@ -16,18 +19,12 @@ type LongRunningApiResponse<TData> =
 type QueryFn<TArgs, TData> = (
     options: TArgs,
 ) => RequestResult<LongRunningApiResponse<TData>, LroFailureResp_api | HttpValidationError_api, false>;
-
-interface OnProgressCallback {
-    (progressMessage: string | null): void;
-}
-
 interface WrapLongRunningQueryArgs<TArgs, TData> {
     queryFn: QueryFn<TArgs, TData>;
     queryFnArgs: TArgs;
     queryKey: unknown[];
     pollIntervalMs?: number;
     maxRetries?: number;
-    onProgress?: OnProgressCallback;
 }
 
 type PollResource<TArgs, TData> =
@@ -44,14 +41,14 @@ type PollResource<TArgs, TData> =
 
 async function pollUntilDone<T>(options: {
     // The URL to poll for the long-running operation status or the original query function if polled from same endpoint
+    busKey: string;
     pollResource: PollResource<any, T>;
     taskId: string;
     intervalMs: number;
     maxRetries: number;
     signal?: AbortSignal;
-    onProgress?: OnProgressCallback;
 }): Promise<T> {
-    const { pollResource, intervalMs, maxRetries, signal, onProgress } = options;
+    const { pollResource, intervalMs, maxRetries, signal } = options;
     let currentPollUrl: string | null = pollResource.resourceType === "url" ? pollResource.url : null;
 
     for (let i = 0; i < maxRetries; i++) {
@@ -65,10 +62,12 @@ async function pollUntilDone<T>(options: {
 
         if (pollResource.resourceType === "url" && currentPollUrl) {
             // If pollResource is a URL, use it directly
-            response = await client.get<LongRunningApiResponse<T>, LroFailureResp_api | HttpValidationError_api, false>({
-                url: currentPollUrl,
-                signal,
-            });
+            response = await client.get<LongRunningApiResponse<T>, LroFailureResp_api | HttpValidationError_api, false>(
+                {
+                    url: currentPollUrl,
+                    signal,
+                },
+            );
         } else if (pollResource.resourceType === "queryFn") {
             // If pollResource is a function, call it with the operationId
             response = await pollResource.queryFn({
@@ -101,7 +100,7 @@ async function pollUntilDone<T>(options: {
                 }
                 currentPollUrl = data.poll_url;
             }
-            onProgress?.(data.progress_message ?? null);
+            lroProgressBus.publish(options.busKey, data.progress_message ?? null);
         }
 
         await new Promise<void>((resolve, reject) => {
@@ -129,57 +128,93 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
     queryKey,
     pollIntervalMs = 2000,
     maxRetries = 50,
-    onProgress,
 }: WrapLongRunningQueryArgs<TArgs, TData> & { queryKey: TQueryKey }): UseQueryOptions<TData, Error, TData, TQueryKey> {
+    const busKey = serializeQueryKey(queryKey);
     return {
         queryKey,
         queryFn: async (ctx: QueryFunctionContext<TQueryKey>) => {
-            const signal = ctx.signal;
+            try {
+                const signal = ctx.signal;
 
-            const response = await queryFn({ ...queryFnArgs, signal, throwOnError: false });
-            const { data, error } = response;
+                const response = await queryFn({ ...queryFnArgs, signal, throwOnError: false });
+                const { data, error } = response;
 
-            if (error) {
-                throw new AxiosError(
-                    response.message,
-                    response.code,
-                    response.config,
-                    response.request,
-                    response.response,
-                );
-            }
-
-            if (data.status === "success") {
-                if (data.result === undefined) {
-                    throw new Error("Missing result in successful response");
+                if (error) {
+                    throw new AxiosError(
+                        response.message,
+                        response.code,
+                        response.config,
+                        response.request,
+                        response.response,
+                    );
                 }
-                return data.result;
-            } else if (data.status === "in_progress" && data.task_id) {
-                onProgress?.(data.progress_message ?? null);
-                return pollUntilDone<TData>({
-                    pollResource: data.poll_url
-                        ? {
-                              resourceType: "url",
-                              url: data.poll_url,
-                              taskId: data.task_id,
-                          }
-                        : {
-                              resourceType: "queryFn",
-                              queryFn,
-                              options: { ...queryFnArgs },
-                          },
-                    intervalMs: pollIntervalMs,
-                    maxRetries,
-                    signal,
-                    onProgress,
-                    taskId: data.task_id,
-                });
-            }
-            if (data.status === "failure") {
-                throw new Error(data.error?.message || "Unknown error");
-            }
 
-            throw new Error("Invalid response status or missing poll_url");
+                if (data.status === "success") {
+                    if (data.result === undefined) {
+                        throw new Error("Missing result in successful response");
+                    }
+                    return data.result;
+                } else if (data.status === "in_progress" && data.task_id) {
+                    lroProgressBus.publish(busKey, data.progress_message ?? null);
+                    return pollUntilDone<TData>({
+                        busKey,
+                        pollResource: data.poll_url
+                            ? {
+                                  resourceType: "url",
+                                  url: data.poll_url,
+                                  taskId: data.task_id,
+                              }
+                            : {
+                                  resourceType: "queryFn",
+                                  queryFn,
+                                  options: { ...queryFnArgs },
+                              },
+                        intervalMs: pollIntervalMs,
+                        maxRetries,
+                        signal,
+                        taskId: data.task_id,
+                    });
+                }
+                if (data.status === "failure") {
+                    throw new Error(data.error?.message || "Unknown error");
+                }
+
+                throw new Error("Invalid response status or missing poll_url");
+            } finally {
+                lroProgressBus.remove(busKey);
+            }
         },
     };
+}
+
+/*
+ * A hook to subscribe to long-running operation progress messages.
+ * It uses the LroProgressBus to get the last progress message for the given query key.
+ * The optional callback is called whenever the progress message changes.
+ */
+export function useLroProgress(
+    queryKey: readonly unknown[],
+    callback?: (message: string | null) => void,
+): string | null {
+    const serializedKey = serializeQueryKey(queryKey);
+    const prevProgressMessage = React.useRef<string | null>(null);
+    const getSnapshot = React.useCallback(() => lroProgressBus.getLast(serializedKey) ?? null, [serializedKey]);
+
+    const progressMessage = React.useSyncExternalStore(
+        (onStoreChange) => lroProgressBus.subscribe(serializedKey, onStoreChange),
+        getSnapshot,
+        () => null, // Fallback for server-side rendering
+    );
+
+    React.useEffect(
+        function maybeCallCallbackOnMessageChange() {
+            if (progressMessage !== prevProgressMessage.current) {
+                callback?.(progressMessage);
+                prevProgressMessage.current = progressMessage;
+            }
+        },
+        [progressMessage, callback],
+    );
+
+    return progressMessage;
 }

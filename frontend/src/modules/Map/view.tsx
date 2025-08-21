@@ -1,24 +1,22 @@
 import React from "react";
 
+import type { Options } from "@hey-api/client-axios";
+import { useQuery } from "@tanstack/react-query";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 
-import type { SurfaceDef_api } from "@api";
+import type { SurfaceDef_api, GetStatisticalSurfaceDataHybridData_api } from "@api";
+import { getStatisticalSurfaceDataHybrid, getStatisticalSurfaceDataHybridQueryKey } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { useLroProgress, wrapLongRunningQuery } from "@framework/utils/longRunningApiCalls";
 import type { Vec2 } from "@lib/utils/vec2";
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
-import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
-
-import { Options } from "@hey-api/client-axios";
-import { useQuery } from "@tanstack/react-query";
-import { wrapLongRunningQuery } from "@framework/utils/longRunningApiCalls";
-import { getStatisticalSurfaceDataHybrid, GetStatisticalSurfaceDataHybridData_api } from "@api";
-import { getStatisticalSurfaceDataHybridQueryKey } from "@api";
-import { SurfaceDataFloat_trans, transformSurfaceData } from "@modules_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
-
+import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
+import type { SurfaceDataFloat_trans } from "@modules_shared/Surface/queryDataTransforms";
+import { transformSurfaceData } from "@modules_shared/Surface/queryDataTransforms";
 
 import type { Interfaces } from "./interfaces";
 
@@ -31,15 +29,18 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
     //const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "png", null, true);
     //const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, true);
 
-
     //const activeQueryType = "normal";
-    let activeQueryType : "normal" | "hybrid" | null = null;
+    let activeQueryType: "normal" | "hybrid" | null = null;
     if (surfaceAddress) {
         activeQueryType = surfaceAddress.addressType === "STAT" ? "hybrid" : "normal";
     }
 
-    const surfDataQuery_normal = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, activeQueryType === "normal");
-
+    const surfDataQuery_normal = useSurfaceDataQueryByAddress(
+        surfaceAddress,
+        "float",
+        null,
+        activeQueryType === "normal",
+    );
 
     const hybrid_apiFunctionArgs: Options<GetStatisticalSurfaceDataHybridData_api, false> = {
         query: {
@@ -62,13 +63,13 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
         queryKey: hybrid_queryKey,
         pollIntervalMs: 500,
         maxRetries: 240,
-        onProgress: handleProgress
     });
+
+    useLroProgress(hybrid_queryOptions.queryKey, handleProgress);
 
     const surfDataQuery_hybrid = useQuery({ ...hybrid_queryOptions, enabled: activeQueryType === "hybrid" });
 
-
-    const activeSurfDataQuery = (activeQueryType === "hybrid") ? surfDataQuery_hybrid : surfDataQuery_normal;
+    const activeSurfDataQuery = activeQueryType === "hybrid" ? surfDataQuery_hybrid : surfDataQuery_normal;
 
     const isLoading = activeSurfDataQuery.isFetching;
     statusWriter.setLoading(isLoading);
@@ -79,12 +80,10 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const hasError = activeSurfDataQuery.isError;
     usePropagateApiErrorToStatusWriter(activeSurfDataQuery, statusWriter);
 
-
     let surfData: SurfaceDataFloat_trans | undefined = undefined;
     if (surfDataQuery_normal?.data) {
         surfData = surfDataQuery_normal.data;
-    }
-    else if (surfDataQuery_hybrid?.data) {
+    } else if (surfDataQuery_hybrid?.data) {
         surfData = transformSurfaceData(surfDataQuery_hybrid.data) as SurfaceDataFloat_trans;
     }
 

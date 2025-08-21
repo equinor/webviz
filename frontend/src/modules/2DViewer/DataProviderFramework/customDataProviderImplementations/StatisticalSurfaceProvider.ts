@@ -9,6 +9,7 @@ import {
     getStatisticalSurfaceDataHybrid,
     getStatisticalSurfaceDataHybridQueryKey,
 } from "@api";
+import { lroProgressBus, serializeQueryKey } from "@framework/internal/LroProgressBus";
 import { wrapLongRunningQuery } from "@framework/utils/longRunningApiCalls";
 import type {
     CustomDataProviderImplementation,
@@ -318,8 +319,9 @@ export class StatisticalSurfaceProvider
             queryKey: queryKey,
             pollIntervalMs: 500,
             maxRetries: 240,
-            onProgress: handleTaskProgress,
         });
+
+        lroProgressBus.subscribe(serializeQueryKey(queryKey), handleTaskProgress);
 
         registerQueryKey(queryOptions.queryKey);
 
