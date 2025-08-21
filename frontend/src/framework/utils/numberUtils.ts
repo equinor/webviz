@@ -9,9 +9,9 @@ export type NumberOrRange = number | NumberRange;
  *  @returns A set of missing numbers
  * @example getMissingNumbers([1, 2, 4, 6]); // Set(3, 5)
  */
-export function missingNumbers(sortedNumbers: readonly number[]): Set<number> {
+export function missingNumbers(sortedNumbers: readonly number[] | undefined): Set<number> {
     // No missing numbers on a short list
-    if (sortedNumbers.length < 2) return new Set();
+    if (!sortedNumbers || sortedNumbers.length < 2) return new Set();
 
     const min = sortedNumbers.at(0)!;
     const max = sortedNumbers.at(-1)!;

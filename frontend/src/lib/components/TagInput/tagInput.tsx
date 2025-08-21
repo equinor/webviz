@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Close } from "@mui/icons-material";
-import { inRange } from "lodash";
+import { inRange, omit } from "lodash";
 import { Key } from "ts-key-enum";
 import { v4 } from "uuid";
 
@@ -311,7 +311,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
                     <li className="grow flex min-w-0 -my-1">
                         <input
                             ref={inputRef}
-                            {...props.inputProps}
+                            {...omit(props.inputProps, "onValueChange")}
                             className={`pr-2 py-1 grow outline-none ${props.inputProps?.className}`}
                             value={inputValue}
                             onChange={handleInputChange}

@@ -1,35 +1,43 @@
 import React from "react";
 
-import { isEqual } from "lodash";
+import { inRange, isEqual, range } from "lodash";
 import { v4 } from "uuid";
 
+import { missingNumbers } from "@framework/utils/numberUtils";
 import type { BaseComponentProps } from "@lib/components/BaseComponent";
 import { BaseComponent } from "@lib/components/BaseComponent";
 import { TagInput } from "@lib/components/TagInput/tagInput";
+import { pluralize } from "@lib/utils/strings";
 
-import { realizationSelectionToText, textToRealizationSelection, type Selection } from "./_utils";
+import type { RealizationNumberLimits, Selection } from "./_utils";
+import { realizationSelectionToText, sanitizeRangeInput, textToRealizationSelection } from "./_utils";
 import { RealizationRangeTag } from "./RealizationRangeTag";
+function getRangeOfSelection(selection: Selection): [start: number, end: number] {
+    const [start, possibleEnd] = selection.value.split("-");
 
-function calcUniqueSelections(selections: readonly Selection[], validRealizations?: readonly number[]): number[] {
+    return [parseFloat(start), parseFloat(possibleEnd ?? start)];
+}
+
+function calcUniqueSelections(selections: readonly Selection[], limits: RealizationNumberLimits): number[] {
     const uniqueSelections = new Set<number>();
+
     selections.forEach((selection) => {
-        const range = selection.value.split("-");
-        if (range.length === 1) {
-            uniqueSelections.add(parseInt(range[0]));
-        } else if (range.length === 2) {
-            for (let i = parseInt(range[0]); i <= parseInt(range[1]); i++) {
-                uniqueSelections.add(i);
+        let [start, end] = getRangeOfSelection(selection);
+
+        if (!inRange(start, limits.min, limits.max + 1) && !inRange(end, limits.min, limits.max)) return;
+
+        // Clamp range computations to only worry about valid numbers
+        start = Math.max(start, limits.min);
+        end = Math.min(end, limits.max);
+
+        for (const n of range(start, end + 1)) {
+            if (!limits.invalid.has(n)) {
+                uniqueSelections.add(n);
             }
         }
     });
 
-    let uniqueSelectionsArray = Array.from(uniqueSelections);
-
-    if (validRealizations) {
-        uniqueSelectionsArray = uniqueSelectionsArray.filter((realization) => validRealizations.includes(realization));
-    }
-
-    return uniqueSelectionsArray.sort((a, b) => a - b);
+    return Array.from(uniqueSelections).sort((a, b) => a - b);
 }
 
 export type RealizationPickerSelection = {
@@ -48,6 +56,7 @@ export type RealizationPickerProps = {
 function RealizationPickerComponent(props: RealizationPickerProps, ref: React.ForwardedRef<HTMLDivElement>) {
     const debounceTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    const [selectedRealizations, setSelectedRealizations] = React.useState<number[]>([]);
     const [currentInputValue, setCurrentInputValue] = React.useState<string>("");
     const [selections, setSelections] = React.useState<Selection[]>(() => {
         if (!props.initialRangeTags) return [];
@@ -62,7 +71,14 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
         return [...props.selectedRangeTags];
     });
 
-    const numSelectedRealizations = calcUniqueSelections(selections, props.validRealizations).length;
+    const realizationNumberLimits = React.useMemo<RealizationNumberLimits>(() => {
+        const validRealizations = props.validRealizations ?? [];
+        return {
+            min: Math.min(...validRealizations),
+            max: Math.max(...validRealizations),
+            invalid: missingNumbers(validRealizations),
+        };
+    }, [props.validRealizations]);
 
     if (props.selectedRangeTags !== undefined && !isEqual(props.selectedRangeTags, prevSelectedRangeTags)) {
         setPrevSelectedRangeTags(props.selectedRangeTags ? [...props.selectedRangeTags] : []);
@@ -85,11 +101,15 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
             clearTimeout(debounceTimeout.current);
         }
 
+        const newUniqueSelections = calcUniqueSelections(newSelections, realizationNumberLimits);
+
+        setSelectedRealizations(newUniqueSelections);
+
         debounceTimeout.current = setTimeout(() => {
             if (props.onChange) {
                 props.onChange({
-                    selectedRealizations: calcUniqueSelections(newSelections, props.validRealizations),
-                    selectedRangeTags: newSelections.map((selection) => selection.value),
+                    selectedRealizations: newUniqueSelections,
+                    selectedRangeTags: newSelections.map((s) => s.value),
                 });
             }
         }, props.debounceTimeMs || 0);
@@ -100,7 +120,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
 
         const pasteText = event.clipboardData.getData("text");
 
-        const parsedSelections = textToRealizationSelection(pasteText, props.validRealizations);
+        const parsedSelections = textToRealizationSelection(pasteText, realizationNumberLimits);
 
         if (parsedSelections) {
             const newSelections = [...selections, ...parsedSelections];
@@ -119,7 +139,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
     }
 
     function handleInputChange(newValue: string) {
-        const sanitizedValue = newValue.replace(/[^0-9-]/g, "").replace(/--/, "-");
+        const sanitizedValue = sanitizeRangeInput(newValue);
 
         if (sanitizedValue !== currentInputValue) {
             setCurrentInputValue(sanitizedValue);
@@ -147,7 +167,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
                     return (
                         <RealizationRangeTag
                             key={tagProps.tag.id}
-                            validRealizations={props.validRealizations}
+                            realizationNumberLimits={realizationNumberLimits}
                             {...tagProps}
                         />
                     );
@@ -155,7 +175,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
             />
 
             <div className="text-sm text-gray-500 text-right mt-2">
-                {numSelectedRealizations} realization{numSelectedRealizations === 1 ? "" : "s"} selected
+                {pluralize("realization", selectedRealizations.length)} selected
             </div>
         </BaseComponent>
     );

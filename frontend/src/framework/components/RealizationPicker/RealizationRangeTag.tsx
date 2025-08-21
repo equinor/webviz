@@ -7,11 +7,11 @@ import { Direction, type TagProps } from "@lib/components/TagInput";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 
-import type { SelectionValidityInfo } from "./_utils";
-import { computeTagValidityInfo, SelectionValidity } from "./_utils";
+import type { RealizationNumberLimits, SelectionValidityInfo } from "./_utils";
+import { computeTagValidityInfo, sanitizeRangeInput, SelectionValidity } from "./_utils";
 
 type RealizationRangeTagProps = TagProps & {
-    validRealizations?: readonly number[];
+    realizationNumberLimits: RealizationNumberLimits;
 };
 
 export function RealizationRangeTag(props: RealizationRangeTagProps): React.ReactNode {
@@ -31,13 +31,13 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
     }, [props.focusMovementDirection, props.focused, props.tag.value.length]);
 
     const validityInfo = React.useMemo<SelectionValidityInfo>(() => {
-        return computeTagValidityInfo(props.tag.value, props.validRealizations);
-    }, [props.tag.value, props.validRealizations]);
+        return computeTagValidityInfo(props.tag.value, props.realizationNumberLimits);
+    }, [props.tag.value, props.realizationNumberLimits]);
 
     function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
         const value = event.target.value;
 
-        const sanitizedValue = value.replace(/[^0-9-]/g, "").replace(/--/, "-");
+        const sanitizedValue = sanitizeRangeInput(value);
 
         setEditingValue(sanitizedValue);
     }
@@ -154,7 +154,7 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
                 onKeyDown={handleKeyDown}
             />
             <div
-                tabIndex={props.focused ? -1 : undefined}
+                tabIndex={-1}
                 className={resolveClassNames(
                     "text-slate-800 hover:text-slate-600 text-sm cursor-pointer flex items-center",
                     {
