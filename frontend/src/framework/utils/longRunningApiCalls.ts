@@ -1,12 +1,13 @@
 import React from "react";
 
-import type { LroFailureResp_api, LroInProgressResp_api, HttpValidationError_api } from "@api";
-import { client } from "@api";
-import { lroProgressBus, serializeQueryKey } from "@framework/internal/LroProgressBus";
 import type { RequestResult } from "@hey-api/client-axios";
 import type { QueryFunctionContext } from "@tanstack/query-core";
 import type { UseQueryOptions } from "@tanstack/react-query";
 import { AxiosError } from "axios";
+
+import { client } from "@api";
+import type { LroFailureResp_api, LroInProgressResp_api, HttpValidationError_api } from "@api";
+import { lroProgressBus, serializeQueryKey } from "@framework/internal/LroProgressBus";
 
 type LongRunningApiResponse<TData> =
     | LroInProgressResp_api
@@ -53,6 +54,7 @@ async function pollUntilDone<T>(options: {
 
     for (let i = 0; i < maxRetries; i++) {
         if (signal?.aborted) {
+            lroProgressBus.remove(options.busKey);
             throw new Error("Polling aborted");
         }
 
@@ -78,18 +80,22 @@ async function pollUntilDone<T>(options: {
         }
 
         if (!response) {
+            lroProgressBus.remove(options.busKey);
             throw new Error("No response received from polling");
         }
 
         const { data, error } = response;
 
         if (error) {
+            lroProgressBus.remove(options.busKey);
             throw new AxiosError(response.message, response.code, response.config, response.request, response.response);
         }
 
         if (data.status === "success") {
+            lroProgressBus.remove(options.busKey);
             return data.result as T;
         } else if (data.status === "failure") {
+            lroProgressBus.remove(options.busKey);
             throw new Error(data.error?.message || "Unknown error");
         }
 
@@ -106,6 +112,7 @@ async function pollUntilDone<T>(options: {
         await new Promise<void>((resolve, reject) => {
             function onAbort() {
                 clearTimeout(timeout);
+                lroProgressBus.remove(options.busKey);
                 reject(new Error("Polling aborted during wait"));
             }
 
@@ -119,6 +126,7 @@ async function pollUntilDone<T>(options: {
         });
     }
 
+    lroProgressBus.remove(options.busKey);
     throw new Error("Polling timed out");
 }
 
@@ -133,56 +141,55 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
     return {
         queryKey,
         queryFn: async (ctx: QueryFunctionContext<TQueryKey>) => {
-            try {
-                const signal = ctx.signal;
+            const signal = ctx.signal;
 
-                const response = await queryFn({ ...queryFnArgs, signal, throwOnError: false });
-                const { data, error } = response;
+            const response = await queryFn({ ...queryFnArgs, signal, throwOnError: false });
+            const { data, error } = response;
 
-                if (error) {
-                    throw new AxiosError(
-                        response.message,
-                        response.code,
-                        response.config,
-                        response.request,
-                        response.response,
-                    );
-                }
-
-                if (data.status === "success") {
-                    if (data.result === undefined) {
-                        throw new Error("Missing result in successful response");
-                    }
-                    return data.result;
-                } else if (data.status === "in_progress" && data.task_id) {
-                    lroProgressBus.publish(busKey, data.progress_message ?? null);
-                    return pollUntilDone<TData>({
-                        busKey,
-                        pollResource: data.poll_url
-                            ? {
-                                  resourceType: "url",
-                                  url: data.poll_url,
-                                  taskId: data.task_id,
-                              }
-                            : {
-                                  resourceType: "queryFn",
-                                  queryFn,
-                                  options: { ...queryFnArgs },
-                              },
-                        intervalMs: pollIntervalMs,
-                        maxRetries,
-                        signal,
-                        taskId: data.task_id,
-                    });
-                }
-                if (data.status === "failure") {
-                    throw new Error(data.error?.message || "Unknown error");
-                }
-
-                throw new Error("Invalid response status or missing poll_url");
-            } finally {
+            if (error) {
                 lroProgressBus.remove(busKey);
+                throw new AxiosError(
+                    response.message,
+                    response.code,
+                    response.config,
+                    response.request,
+                    response.response,
+                );
             }
+
+            if (data.status === "success") {
+                lroProgressBus.remove(busKey);
+                if (data.result === undefined) {
+                    throw new Error("Missing result in successful response");
+                }
+                return data.result;
+            } else if (data.status === "in_progress" && data.task_id) {
+                lroProgressBus.publish(busKey, data.progress_message ?? null);
+                return pollUntilDone<TData>({
+                    busKey,
+                    pollResource: data.poll_url
+                        ? {
+                              resourceType: "url",
+                              url: data.poll_url,
+                              taskId: data.task_id,
+                          }
+                        : {
+                              resourceType: "queryFn",
+                              queryFn,
+                              options: { ...queryFnArgs },
+                          },
+                    intervalMs: pollIntervalMs,
+                    maxRetries,
+                    signal,
+                    taskId: data.task_id,
+                });
+            }
+            lroProgressBus.remove(busKey);
+            if (data.status === "failure") {
+                throw new Error(data.error?.message || "Unknown error");
+            }
+
+            throw new Error("Invalid response status or missing poll_url");
         },
     };
 }
