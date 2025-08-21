@@ -1,6 +1,7 @@
 import asyncio
 import time
 import logging
+import xtgeo
 from hashlib import sha256
 from typing import Annotated, List, Optional, Literal
 
@@ -30,6 +31,8 @@ from . import dependencies
 
 from .surface_address import RealizationSurfaceAddress, ObservedSurfaceAddress, StatisticalSurfaceAddress
 from .surface_address import decode_surf_addr_str
+
+from primary.services.sumo_access.surface_access import ExpectedError, InProgress
 
 
 LOGGER = logging.getLogger(__name__)
@@ -214,6 +217,15 @@ async def get_surface_data(
 ################################################################
 ################################################################
 
+from typing import TypeVar, Type, Any
+
+T = TypeVar("T")
+
+def expect(value: Any, typ: Type[T] | tuple[Type[Any], ...]) -> T:
+    if not isinstance(value, typ):
+        raise TypeError(f"Expected {typ}, got {type(value).__name__}")
+    return value
+
 
 @router.get("/statistical_surface_data/hybrid")
 async def get_statistical_surface_data_hybrid(
@@ -252,7 +264,7 @@ async def get_statistical_surface_data_hybrid(
         LOGGER.info("SUBMITTING new SUMO TASK!!!!!!!!!!!!!!!!")
         service_stat_func_to_compute = StatisticFunction.from_string_value(addr.stat_function)
         task_start_time_utc_s = time.time()
-        sumo_task_id = await access.SUBMIT_get_statistical_surface_data_async(
+        sumo_task_id = await access.SUBMIT_statistical_surface_calculation_async(
             statistic_function=service_stat_func_to_compute,
             name=addr.name,
             attribute=addr.attribute,
@@ -274,42 +286,49 @@ async def get_statistical_surface_data_hybrid(
 
     try:
         trigger_dummy_exception = False
+        trigger_dummy_error = False
         if not new_sumo_job_was_submitted:
             if addr.stat_function == "STD":
                 return LroFailureResp(status="failure", error=LroErrorInfo(message="Dummy error message"))
             if addr.stat_function == "MIN":
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Details of dummy exception"
-                )
+                trigger_dummy_error = True
             if addr.stat_function == "MAX":
                 trigger_dummy_exception = True
 
-        xtgeo_surf = await access.POLL_get_statistical_surface_data_async(
-            sumo_task_id=sumo_task_id, timeout_s=0, trigger_dummy_exception=trigger_dummy_exception
+
+        xtgeo_surf_or_progress = await access.POLL_statistical_surface_calculation_async(
+            sumo_task_id=sumo_task_id, timeout_s=0, trigger_dummy_exception=trigger_dummy_exception, trigger_dummy_error=trigger_dummy_error
         )
-        if xtgeo_surf:
-            api_surf_data: schemas.SurfaceDataFloat | schemas.SurfaceDataPng
-            if data_format == "float":
-                api_surf_data = converters.to_api_surface_data_float(xtgeo_surf)
-            elif data_format == "png":
-                api_surf_data = converters.to_api_surface_data_png(xtgeo_surf)
-            return LroSuccessResp(status="success", result=api_surf_data)
 
-        progress_msg: str
-        if new_sumo_job_was_submitted:
-            progress_msg = "New task submitted to Sumo"
-        else:
-            elapsed_time_s = time.time() - task_start_time_utc_s
-            progress_msg = f"Waiting for Sumo task... ({elapsed_time_s:.1f}s elapsed)"
+        if isinstance(xtgeo_surf_or_progress, ExpectedError):
+            await task_tracker.delete_fingerprint_to_task_mapping_async(param_hash)
+            response.headers["Cache-Control"] = "no-store"
+            return LroFailureResp(status="failure", error=LroErrorInfo(message=xtgeo_surf_or_progress.message))
 
-        response.status_code = status.HTTP_202_ACCEPTED
-        response.headers["Cache-Control"] = "no-store"
-        return LroInProgressResp(status="in_progress", task_id=sumo_task_id, progress_message=progress_msg)
+        if isinstance(xtgeo_surf_or_progress, InProgress):
+            progress_msg: str
+            if new_sumo_job_was_submitted:
+                progress_msg = "New task submitted to Sumo --- " + xtgeo_surf_or_progress.progress_message
+            else:
+                elapsed_time_s = time.time() - task_start_time_utc_s
+                progress_msg = f"Waiting for Sumo task... ({elapsed_time_s:.1f}s elapsed)"  + xtgeo_surf_or_progress.progress_message
 
-    except Exception as exc:
+            response.status_code = status.HTTP_202_ACCEPTED
+            response.headers["Cache-Control"] = "no-store"
+            return LroInProgressResp(status="in_progress", task_id=sumo_task_id, progress_message=progress_msg)
+
+        xtgeo_surf: xtgeo.RegularSurface = expect(xtgeo_surf_or_progress, xtgeo.RegularSurface)
+
+        api_surf_data: schemas.SurfaceDataFloat | schemas.SurfaceDataPng
+        if data_format == "float":
+            api_surf_data = converters.to_api_surface_data_float(xtgeo_surf)
+        elif data_format == "png":
+            api_surf_data = converters.to_api_surface_data_png(xtgeo_surf)
+        return LroSuccessResp(status="success", result=api_surf_data)
+
+    except Exception as _exc:
+        # Must delete the fingerprint mapping, but then just re-raise the exception and let our middleware handle it
         await task_tracker.delete_fingerprint_to_task_mapping_async(param_hash)
-
-        # re-raise the exception and let our middleware handle it
         raise
 
 

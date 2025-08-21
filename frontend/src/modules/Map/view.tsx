@@ -32,6 +32,7 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
     //const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, true);
 
 
+    //const activeQueryType = "normal";
     let activeQueryType : "normal" | "hybrid" | null = null;
     if (surfaceAddress) {
         activeQueryType = surfaceAddress.addressType === "STAT" ? "hybrid" : "normal";

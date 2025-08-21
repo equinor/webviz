@@ -4,8 +4,10 @@ import time
 import json
 from io import BytesIO
 from typing import Sequence
+from pydantic import BaseModel
 
 import xtgeo
+import httpx
 
 from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.explorer import SumoClient, SearchContext
@@ -28,8 +30,21 @@ from .queries.surface_queries import SurfTimeType, SurfInfo, TimePoint, TimeInte
 from .queries.surface_queries import RealizationSurfQueries, ObservedSurfQueries
 from .sumo_client_factory import create_sumo_client
 
+from dataclasses import dataclass
+from typing import TypeVar, Union
+
 
 LOGGER = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class InProgress:
+    progress_message: str = ""
+
+
+@dataclass(frozen=True)
+class ExpectedError:
+    message: str = ""
 
 
 class SurfaceAccess:
@@ -321,7 +336,7 @@ class SurfaceAccess:
         return addr_str
 
     @otel_span_decorator()
-    async def SUBMIT_get_statistical_surface_data_async(
+    async def SUBMIT_statistical_surface_calculation_async(
         self,
         statistic_function: StatisticFunction,
         name: str,
@@ -330,7 +345,7 @@ class SurfaceAccess:
         time_or_interval_str: str | None = None,
     ) -> str:
         if not self._iteration_name:
-            raise InvalidParameterError("Iteration name must be set to get realization surfaces", Service.SUMO)
+            raise InvalidParameterError("Iteration name must be set to calculate statistical surface", Service.SUMO)
 
         if realizations is not None:
             if len(realizations) == 0:
@@ -350,6 +365,7 @@ class SurfaceAccess:
             realization=realizations if realizations is not None else True,
             time=_time_or_interval_str_to_sumo_time_filter(time_or_interval_str),
         )
+        search_context = _filter_search_context_on_attribute(search_context, attribute)
 
         surf_count = await search_context.length_async()
         perf_metrics.record_lap("locate")
@@ -358,7 +374,7 @@ class SurfaceAccess:
             raise InvalidParameterError(f"No statistical source surfaces found in Sumo for: {surf_str}", Service.SUMO)
         if surf_count == 1:
             # As of now, the Sumo aggregation service does not support single realization aggregation.
-            # For now return None. Alternatively we could fetch the single realization surface
+            # For now throw an error. Alternatively we could fetch the single realization surface
             raise InvalidParameterError(
                 f"Could not calculate statistical surface, only one source surface found for: {surf_str}", Service.SUMO
             )
@@ -375,32 +391,8 @@ class SurfaceAccess:
                 )
 
         sumo_stat_op_str = _map_to_sumo_aggregation_operation(statistic_function)
-        agg_spec = await _build_sumo_aggregation_spec_async(search_context, sumo_stat_op_str)
-        perf_metrics.record_lap("build-agg-spec")
-
-        num_obj_ids_in_spec = len(agg_spec.get("object_ids", []))
-        if num_obj_ids_in_spec != len(realizations_found):
-            raise InvalidDataError(f"Could not find all source surface object ids for for {surf_str}", Service.SUMO)
-
-        LOGGER.debug(
-            f"Submitting aggregation job to Sumo, {sumo_stat_op_str} of {num_obj_ids_in_spec} surfaces for: {surf_str}"
-        )
-        # LOGGER.debug("DOING POST")
-        # LOGGER.debug("----------------------")
-        # LOGGER.debug(json.dumps(agg_spec, indent=2))
-        # LOGGER.debug("----------------------")
-
-        post_resp = await self._sumo_client.post_async("/aggregations", json=agg_spec)
+        sumo_task_uuid = await _start_sumo_aggregation_task_async(search_context, sumo_stat_op_str)
         perf_metrics.record_lap("submit-job")
-
-        # We're not getting a task ID back from the POST, but a location header with a URL to poll for the result
-        # Do a bit of string manipulation to extract the actual task UUID from the location header
-        # The full pull location typically looks something like this:
-        #   https://main-sumo-prod.radix.equinor.com/api/v1/tasks('3de7a932-14de-4873-8389-fe3a83213638')/result
-        full_poll_location = post_resp.headers.get("location")
-        start = full_poll_location.find("/tasks('") + 8
-        end = full_poll_location.find("')/result", start)
-        sumo_task_uuid = full_poll_location[start:end]
 
         LOGGER.debug(
             f"Submitted statistical surface aggregation job in: {perf_metrics.to_string()} "
@@ -410,81 +402,134 @@ class SurfaceAccess:
         return sumo_task_uuid
 
     @otel_span_decorator()
-    async def POLL_get_statistical_surface_data_async(
-        self, sumo_task_id: str, timeout_s: float, trigger_dummy_exception: bool = True
-    ) -> xtgeo.RegularSurface | None:
+    async def POLL_statistical_surface_calculation_async(
+        self, sumo_task_id: str, timeout_s: float, trigger_dummy_exception: bool, trigger_dummy_error: bool
+    ) -> xtgeo.RegularSurface | InProgress | ExpectedError:
 
         perf_metrics = PerfMetrics()
 
-        # For now, we're using the path as task id
         # The poll path (which sumo client adds to its base_url) is: /tasks('{taskUuid}')/result
-        poll_path = f"/tasks('{sumo_task_id}')/result"
+        # Initially we used a poll_path on the form: /tasks('{taskUuid}')/result
+        # After slack discussions with R. Wiker, we now try and use the more generic path
+        # without /result to try and get richer status information
+        poll_path = f"/tasks('{sumo_task_id}')"
 
-        poll_status_path = f"/tasks('{sumo_task_id}')"
-
-        # !!!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!
         # !!!!!!!!!!!!!!!!!!
         # This is just to trigger an exception for testing
         if trigger_dummy_exception:
             raise ValueError("Dummy exception triggered for testing purposes")
+        if trigger_dummy_error:
+            return ExpectedError(message="Dummy error triggered for testing purposes")
+        # !!!!!!!!!!!!!!!!!!
 
         retry_after_s = 1
         deadline = time.time() + timeout_s
         while True:
-            poll_resp = await self._sumo_client.get_async(poll_path)
+            task_state: _SumoTaskState = await _poll_sumo_aggregation_task_state_async(self._sumo_client, sumo_task_id)
 
-            LOGGER.debug("---")
-            poll_status_resp = await self._sumo_client.get_async(poll_status_path)
-            #LOGGER.debug(f"Poll status response: {poll_status_resp.status_code=}\n----\n{json.dumps(poll_status_resp.json(), indent=2)}\n----")
-
-            _source_dict = poll_status_resp.json().get('_source',{})
-            _job_dict = _source_dict.get('parameters',{}).get('jobStatuses', [{}])[0]
-            LOGGER.debug(f"_source.start: {_source_dict.get('start')}")
-            LOGGER.debug(f"_source.end: {_source_dict.get('end')}")
-            LOGGER.debug(f"_source.status: {_source_dict.get('status')}")
-            LOGGER.debug(f"_source.parameters.entity: {_source_dict.get('parameters', {}).get('entity')}")
-            LOGGER.debug(f"_source.parameters.jobStatuses[0].status: {_job_dict.get('status')}")
-            LOGGER.debug(f"_source.result_url: {_source_dict.get('result_url')}")
-            LOGGER.debug("---")
-
-            # dbg_location = poll_resp.headers.get("location")
-            # dbg_retry_after = poll_resp.headers.get("retry-after")
-            # LOGGER.debug(f"Poll response: {poll_resp.status_code}  {dbg_location=} {dbg_retry_after=}")
-            if poll_resp.status_code != 202 or time.time() + retry_after_s > deadline:
+            # Guesses on possible status string values are: "running" | "succeeded" | "failed"
+            # A waiting state was mentioned by Raymond Wiker, but not yet seen in the wild
+            if task_state.status in ["succeeded", "failed"] or time.time() + retry_after_s > deadline:
                 break
 
             await asyncio.sleep(retry_after_s)
 
         perf_metrics.record_lap("polling")
 
-        if poll_resp.status_code == 202:
-            LOGGER.debug(f"Polled surface job (still in progress) took: {perf_metrics.to_string()} ({sumo_task_id=})")
-            return None
+        if task_state.status == "succeeded":
+            if not task_state.result_url:
+                raise InvalidDataError("No result_url was found in the Sumo task response", Service.SUMO)
 
-        if poll_resp.status_code != 200:
-            raise ServiceRequestError(
-                f"Polling surface job failed with status code: {poll_resp.status_code} ({sumo_task_id=})", Service.SUMO
+            relative_result_url = task_state.result_url.removeprefix(self._sumo_client.base_url)
+            result_resp = await self._sumo_client.get_async(relative_result_url)
+            sumo_obj_meta_dict = result_resp.json()
+
+            # Should be a surface
+            if sumo_obj_meta_dict["_source"]["class"] != "surface":
+                raise InvalidDataError("Expected a surface metadata object", Service.SUMO)
+
+            sumo_surface_obj = Surface(self._sumo_client, sumo_obj_meta_dict)
+            xtgeo_surf = await sumo_surface_obj.to_regular_surface_async()
+            if not xtgeo_surf:
+                raise InvalidDataError("Could not convert Sumo surface object to regular surface", Service.SUMO)
+            perf_metrics.record_lap("download-and-read")
+
+            source_realization_ids = sumo_obj_meta_dict["_source"]["fmu"]["aggregation"]["realization_ids"]
+            num_source_surfaces = len(source_realization_ids)
+
+            LOGGER.debug(
+                f"Polled result of successful statistical surface job in: {perf_metrics.to_string()} "
+                f"[{xtgeo_surf.ncol}x{xtgeo_surf.nrow}, real count: {num_source_surfaces}]"
             )
-        sumo_obj_dict = poll_resp.json()
-        # LOGGER.debug("POLL DONE:")
-        # LOGGER.debug(json.dumps(sumo_obj_dict, indent=2))
 
-        sumo_surface_obj = Surface(self._sumo_client, sumo_obj_dict)
-        xtgeo_surf = await sumo_surface_obj.to_regular_surface_async()
-        if not xtgeo_surf:
-            raise InvalidDataError("Could not convert Sumo surface object to regular surface", Service.SUMO)
-        perf_metrics.record_lap("download-and-read")
+            return xtgeo_surf
 
-        source_realization_ids = sumo_obj_dict["_source"]["fmu"]["aggregation"]["realization_ids"]
-        num_source_surfaces = len(source_realization_ids)
+        if task_state.status == "failed":
+            LOGGER.error(f"Statistical surface job failed, {task_state.nested_job_status=} ({sumo_task_id=})")
+            return ExpectedError(message=f"Statistical surface aggregation job failed ({sumo_task_id=})")
 
+        # Assume that the job is still in progress
         LOGGER.debug(
-            f"Polled result of statistical surface job in: {perf_metrics.to_string()} "
-            f"[{xtgeo_surf.ncol}x{xtgeo_surf.nrow}, real count: {num_source_surfaces}]"
+            f"Polled surface job ({task_state.status=}, {task_state.nested_job_status=}) took: {perf_metrics.to_string()} ({sumo_task_id=})"
         )
+        return InProgress(progress_message=f"{task_state.nested_job_status}")
 
-        return xtgeo_surf
+
+async def _start_sumo_aggregation_task_async(search_context: SearchContext, sumo_stat_op_str: str) -> str:
+    httpx_resp = await search_context.aggregate_async(operation=sumo_stat_op_str, no_wait=True)
+
+    # When we call aggregate_async() with no_wait=True, we expect the raw httpx.Response object
+    # from the underlying POST request to be returned.
+    if not isinstance(httpx_resp, httpx.Response):
+        raise TypeError("Unexpected response type from Sumo when submitting statistical surface job")
+
+    # We're not getting a task id back from the POST, but a location header with a URL to poll for the result.
+    # Do a bit of string manipulation to extract the actual task UUID from the location header
+    # The full pull location typically looks something like this:
+    #   https://main-sumo-prod.radix.equinor.com/api/v1/tasks('3de7a932-14de-4873-8389-fe3a83213638')/result
+    full_poll_location = httpx_resp.headers.get("location")
+    start = full_poll_location.find("/tasks('") + 8
+    end = full_poll_location.find("')/result", start)
+    sumo_task_uuid = full_poll_location[start:end]
+
+    return sumo_task_uuid
+
+
+@dataclass(frozen=True)
+class _SumoTaskState:
+    status: str  # The main status of the Sumo task. Observed values: running, succeeded, failed
+    nested_job_status: str  # The status of the nested (radix) job, presumably the raw radix statuses (Waiting, Stopping, Stopped, Active, Running, Succeeded, Failed)
+    result_url: str | None  # The URL to the result of the task, if available
+
+
+async def _poll_sumo_aggregation_task_state_async(sumo_client: SumoClient, sumo_task_id: str) -> _SumoTaskState:
+
+    poll_path = f"/tasks('{sumo_task_id}')"
+    poll_resp = await sumo_client.get_async(poll_path)
+    poll_resp_dict = poll_resp.json()
+
+    # LOGGER.debug("-----")
+    # source_dict = poll_resp_dict.get("_source", {})
+    # job_list = source_dict.get("parameters", {}).get("jobStatuses", [])
+    # first_job_dict = job_list[0] if job_list else {}
+    # LOGGER.debug(f"Poll response status: {poll_resp.status_code=}")
+    # LOGGER.debug(f"Poll response:\n--\n{json.dumps(poll_resp.json(), indent=2)}\n--")
+    # LOGGER.debug(f"_source.start: {source_dict.get('start')}")
+    # LOGGER.debug(f"_source.end: {source_dict.get('end')}")
+    # LOGGER.debug(f"_source.status: {source_dict.get('status')}")
+    # LOGGER.debug(f"_source.parameters.entity: {source_dict.get('parameters', {}).get('entity')}")
+    # LOGGER.debug(f"_source.parameters.jobStatuses[0].status: {first_job_dict.get('status')}")
+    # LOGGER.debug(f"_source.result_url: {source_dict.get('result_url')}")
+    # LOGGER.debug("-----")
+
+    status = poll_resp_dict["_source"]["status"]
+    nested_job_status = poll_resp_dict["_source"]["parameters"]["jobStatuses"][0]["status"]
+    result_url = poll_resp_dict["_source"].get("result_url")
+    return _SumoTaskState(
+        status=status,
+        nested_job_status=nested_job_status,
+        result_url=result_url,
+    )
 
 
 async def _build_sumo_aggregation_spec_async(search_context: SearchContext, sumo_stat_op_str: str) -> dict:

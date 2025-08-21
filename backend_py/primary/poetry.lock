@@ -836,15 +836,13 @@ docs = ["pydocstyle"]
 
 [[package]]
 name = "fmu-sumo"
-version = "2.4.10"
+version = "2.4.11.dev5+gd6d4fcd5a"
 description = "Python package for interacting with Sumo in an FMU setting"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
-files = [
-    {file = "fmu_sumo-2.4.10-py3-none-any.whl", hash = "sha256:5d32bf7c90f328669d9fef18f97313bd27a7cd3ed19066a6eb931a6f53779107"},
-    {file = "fmu_sumo-2.4.10.tar.gz", hash = "sha256:846fb14413bbddc2f9ca81e0fe5cf37d832aeaf851009764458b85513dddea2b"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 deprecation = "*"
@@ -855,6 +853,12 @@ all = ["OpenVDS ; sys_platform != \"darwin\" and python_version < \"3.12\"", "pa
 dev = ["pytest", "ruff"]
 docs = ["autoapi", "sphinx (==6.2.1)", "sphinx-autodoc-typehints", "sphinx-rtd-theme", "sphinxcontrib-apidoc"]
 test = ["OpenVDS ; sys_platform != \"darwin\" and python_version < \"3.12\"", "pandas (>=1.1.3)", "pyarrow ; python_version > \"3.6.1\"", "pytest", "pytest-timeout", "xtgeo"]
+
+[package.source]
+type = "git"
+url = "https://github.com/equinor/fmu-sumo"
+reference = "feat/aggregation-no-wait"
+resolved_reference = "d6d4fcd5a57d817c71524b6ba577b33b68357219"
 
 [[package]]
 name = "fonttools"
@@ -3983,4 +3987,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "b02841dce6412718d1d806f6e3e7be34c9e0c5449016bade6652754af283397a"
+content-hash = "8291d2e4b08ce537394a0c90d4884ea0be77c0d964800fdf57b35f143c28b6b0"
