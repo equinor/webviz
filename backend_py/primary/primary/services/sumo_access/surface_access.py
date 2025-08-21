@@ -403,24 +403,10 @@ class SurfaceAccess:
 
     @otel_span_decorator()
     async def POLL_statistical_surface_calculation_async(
-        self, sumo_task_id: str, timeout_s: float, trigger_dummy_exception: bool, trigger_dummy_error: bool
+        self, sumo_task_id: str, timeout_s: float
     ) -> xtgeo.RegularSurface | InProgress | ExpectedError:
 
         perf_metrics = PerfMetrics()
-
-        # The poll path (which sumo client adds to its base_url) is: /tasks('{taskUuid}')/result
-        # Initially we used a poll_path on the form: /tasks('{taskUuid}')/result
-        # After slack discussions with R. Wiker, we now try and use the more generic path
-        # without /result to try and get richer status information
-        poll_path = f"/tasks('{sumo_task_id}')"
-
-        # !!!!!!!!!!!!!!!!!!
-        # This is just to trigger an exception for testing
-        if trigger_dummy_exception:
-            raise ValueError("Dummy exception triggered for testing purposes")
-        if trigger_dummy_error:
-            return ExpectedError(message="Dummy error triggered for testing purposes")
-        # !!!!!!!!!!!!!!!!!!
 
         retry_after_s = 1
         deadline = time.time() + timeout_s
@@ -503,7 +489,10 @@ class _SumoTaskState:
 
 
 async def _poll_sumo_aggregation_task_state_async(sumo_client: SumoClient, sumo_task_id: str) -> _SumoTaskState:
-
+    # The poll path (which sumo client adds to its base_url) is: /tasks('{taskUuid}')/result
+    # Initially we used a poll_path on the form: /tasks('{taskUuid}')/result
+    # After slack discussions with R. Wiker, we now try and use the more generic path
+    # without /result to try and get richer status information
     poll_path = f"/tasks('{sumo_task_id}')"
     poll_resp = await sumo_client.get_async(poll_path)
     poll_resp_dict = poll_resp.json()
@@ -530,19 +519,6 @@ async def _poll_sumo_aggregation_task_state_async(sumo_client: SumoClient, sumo_
         nested_job_status=nested_job_status,
         result_url=result_url,
     )
-
-
-async def _build_sumo_aggregation_spec_async(search_context: SearchContext, sumo_stat_op_str: str) -> dict:
-    caseuuid, classname, entityuuid, ensemblename = await search_context._verify_aggregation_operation_async(
-        None, sumo_stat_op_str
-    )
-
-    agg_spec = search_context._SearchContext__prepare_aggregation_spec(
-        caseuuid, classname, entityuuid, ensemblename, sumo_stat_op_str, None
-    )
-    agg_spec["object_ids"] = await search_context.uuids_async
-
-    return agg_spec
 
 
 def _filter_search_context_on_attribute(search_context: SearchContext, attribute: str) -> SearchContext:

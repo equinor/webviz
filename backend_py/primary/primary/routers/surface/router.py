@@ -279,19 +279,8 @@ async def get_statistical_surface_data_hybrid(
         task_start_time_utc_s = task_meta.start_time_utc_s if task_meta else 0
 
     try:
-        trigger_dummy_exception = False
-        trigger_dummy_error = False
-        if not new_sumo_job_was_submitted:
-            if addr.stat_function == "STD":
-                return LroFailureResp(status="failure", error=LroErrorInfo(message="Dummy error message"))
-            if addr.stat_function == "MIN":
-                trigger_dummy_error = True
-            if addr.stat_function == "MAX":
-                trigger_dummy_exception = True
-
-
         xtgeo_surf_or_progress = await access.POLL_statistical_surface_calculation_async(
-            sumo_task_id=sumo_task_id, timeout_s=0, trigger_dummy_exception=trigger_dummy_exception, trigger_dummy_error=trigger_dummy_error
+            sumo_task_id=sumo_task_id, timeout_s=0
         )
 
         if isinstance(xtgeo_surf_or_progress, ExpectedError):
@@ -302,10 +291,12 @@ async def get_statistical_surface_data_hybrid(
         if isinstance(xtgeo_surf_or_progress, InProgress):
             progress_msg: str
             if new_sumo_job_was_submitted:
-                progress_msg = "New task submitted to Sumo --- " + xtgeo_surf_or_progress.progress_message
+                progress_msg = f"New task submitted: {xtgeo_surf_or_progress.progress_message}"
             else:
                 elapsed_time_s = time.time() - task_start_time_utc_s
-                progress_msg = f"Waiting for Sumo task... ({elapsed_time_s:.1f}s elapsed)"  + xtgeo_surf_or_progress.progress_message
+                progress_msg = (
+                    f"Sumo task status: {xtgeo_surf_or_progress.progress_message} ({elapsed_time_s:.1f}s elapsed)"
+                )
 
             response.status_code = status.HTTP_202_ACCEPTED
             response.headers["Cache-Control"] = "no-store"
