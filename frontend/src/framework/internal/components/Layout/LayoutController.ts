@@ -1,18 +1,16 @@
 import type { CSSProperties } from "react";
 
-import { isEqual } from "lodash";
-
 import type { LayoutElement } from "@framework/internal/WorkbenchSession/Dashboard";
 import { MANHATTAN_LENGTH, type Size2D } from "@lib/utils/geometry";
 import { point2Distance, type Vec2 } from "@lib/utils/vec2";
 import { globalLog } from "@src/Log";
+import { isEqual } from "lodash";
 
 import { LayoutNode, LayoutAxis, type LayoutNodeEdge, makeLayoutNodes } from "./LayoutNode";
 
 export type LayoutControllerBindings = {
     // State getters
     getViewportSize: () => Size2D;
-    getCurrentTempLayout: () => LayoutElement[] | null;
 
     // React-side effects
     setRootNode: (rootNode: LayoutNode) => void;
@@ -334,6 +332,8 @@ export class LayoutController {
                 this._hoverLocalPos = null;
                 this.clearHoverTimer();
                 this.clearCancelTimer();
+                this._previewRootNode = null;
+
                 return;
             }
 
@@ -429,8 +429,10 @@ export class LayoutController {
                 toCommit = this.synthesizeHoverPreviewLayout();
             }
 
+            /*
+
             // NEW module empty-dashboard fallback (unchanged)
-            if (isDragSourceKindNew(source) && (!toCommit || toCommit.length === 0)) {
+            if (isDragSourceKindNew(source) && (!toCommit || toCommit.length === 0) && this._hoverTarget) {
                 const empty = !this._activeRootNode || this._activeRootNode.getChildren().length === 0;
                 if (empty) {
                     toCommit = [
@@ -445,6 +447,7 @@ export class LayoutController {
                     ];
                 }
             }
+                */
 
             // --- Now clear UI state ---
             this.clearHoverTimer();
@@ -732,9 +735,7 @@ export class LayoutController {
             return false;
         }
 
-        const layout: LayoutElement[] | null = this._previewRootNode
-            ? this._previewRootNode.toLayout()
-            : this._bindings.getCurrentTempLayout();
+        const layout: LayoutElement[] | null = this._previewRootNode.toLayout();
 
         if (!layout) return false;
 
