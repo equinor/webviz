@@ -28,6 +28,8 @@ export function Settings(props: ModuleSettingsProps<any, SerializedState>): Reac
     const [dataProviderManager, setDataProviderManager] = useAtom(dataProviderManagerAtom);
     const [dataProviderState, setDataProviderState] = useAtom(dataProviderStateAtom);
 
+    const dataProviderStateRef = React.useRef(dataProviderState);
+
     const [fieldIdentifier, setFieldIdentifier] = useAtom(fieldIdentifierAtom);
     const [, setPreferredViewLayout] = useAtom(preferredViewLayoutAtom);
 
@@ -48,7 +50,7 @@ export function Settings(props: ModuleSettingsProps<any, SerializedState>): Reac
 
     const applyPersistedState = React.useCallback(
         function applyPersistedState(dataProviderManager: DataProviderManager) {
-            const serializedState = dataProviderState;
+            const serializedState = dataProviderStateRef.current;
 
             if (!serializedState) {
                 return;
@@ -66,7 +68,7 @@ export function Settings(props: ModuleSettingsProps<any, SerializedState>): Reac
                 dataProviderManager.deserializeState(parsedState.dataProviderManager);
             }
         },
-        [setPreferredViewLayout, dataProviderState],
+        [setPreferredViewLayout],
     );
 
     React.useEffect(
