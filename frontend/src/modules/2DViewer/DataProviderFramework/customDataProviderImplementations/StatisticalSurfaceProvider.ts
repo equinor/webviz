@@ -238,8 +238,7 @@ export class StatisticalSurfaceProvider
         getSetting,
         getStoredData,
         getWorkbenchSession,
-        registerQueryKey,
-        queryClient,
+        fetchQuery,
         setProgressMessage,
     }: FetchDataParams<StatisticalSurfaceSettings, StatisticalSurfaceData>): Promise<StatisticalSurfaceData> {
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
@@ -323,13 +322,10 @@ export class StatisticalSurfaceProvider
 
         lroProgressBus.subscribe(serializeQueryKey(queryKey), handleTaskProgress);
 
-        registerQueryKey(queryOptions.queryKey);
-
-        const promise = queryClient
-            .fetchQuery({
-                ...queryOptions,
-            })
-            .then((data) => ({ format: this._dataFormat, surfaceData: transformSurfaceData(data) }));
+        const promise = fetchQuery({ ...queryOptions }).then((data) => ({
+            format: this._dataFormat,
+            surfaceData: transformSurfaceData(data),
+        }));
 
         return promise as Promise<StatisticalSurfaceData>;
     }

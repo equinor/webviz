@@ -301,8 +301,7 @@ export class IntersectionRealizationGridProvider
     fetchData({
         getSetting,
         getStoredData,
-        registerQueryKey,
-        queryClient,
+        fetchQuery,
     }: FetchDataParams<
         IntersectionRealizationGridSettings,
         IntersectionRealizationGridData,
@@ -337,9 +336,7 @@ export class IntersectionRealizationGridProvider
             body: { polyline_utm_xy: polylineWithSectionLengths.polylineUtmXy },
         });
 
-        registerQueryKey(queryOptions.queryKey);
-
-        const gridIntersectionPromise = queryClient.fetchQuery(queryOptions).then(transformPolylineIntersection);
+        const gridIntersectionPromise = fetchQuery(queryOptions).then(transformPolylineIntersection);
 
         return gridIntersectionPromise;
     }
