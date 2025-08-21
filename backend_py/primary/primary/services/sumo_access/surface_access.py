@@ -18,10 +18,11 @@ from primary.services.utils.otel_span_tracing import otel_span_decorator, start_
 from primary.services.utils.statistic_function import StatisticFunction
 from primary.services.service_exceptions import (
     Service,
+    NoDataError,
     MultipleDataMatchesError,
     InvalidParameterError,
-    InvalidDataError,
     ServiceRequestError,
+    InvalidDataError,
 )
 
 from .surface_types import SurfaceMeta, SurfaceMetaSet
@@ -145,7 +146,7 @@ class SurfaceAccess:
     @otel_span_decorator()
     async def get_realization_surface_data_async(
         self, real_num: int, name: str, attribute: str, time_or_interval_str: str | None = None
-    ) -> xtgeo.RegularSurface | None:
+    ) -> xtgeo.RegularSurface:
         """
         Get surface data for a realization surface
         If time_or_interval_str is None, only surfaces with no time information will be considered.
@@ -175,8 +176,7 @@ class SurfaceAccess:
                 f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO
             )
         if surf_count == 0:
-            LOGGER.warning(f"No realization surface found in Sumo for: {surf_str}")
-            return None
+            raise NoDataError(f"No realization surface found in Sumo for: {surf_str}", Service.SUMO)
 
         sumo_surf: Surface = await search_context.getitem_async(0)
         perf_metrics.record_lap("locate")
@@ -201,7 +201,7 @@ class SurfaceAccess:
     @otel_span_decorator()
     async def get_observed_surface_data_async(
         self, name: str, attribute: str, time_or_interval_str: str
-    ) -> xtgeo.RegularSurface | None:
+    ) -> xtgeo.RegularSurface:
         """
         Get surface data for an observed surface
         """
@@ -225,8 +225,7 @@ class SurfaceAccess:
                 f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO
             )
         if surf_count == 0:
-            LOGGER.warning(f"No observed surface found in Sumo for: {surf_str}")
-            return None
+            raise NoDataError(f"No observed surface found in Sumo for: {surf_str}", Service.SUMO)
 
         sumo_surf: Surface = await search_context.getitem_async(0)
         perf_metrics.record_lap("locate")
@@ -253,7 +252,7 @@ class SurfaceAccess:
         attribute: str,
         realizations: Sequence[int] | None = None,
         time_or_interval_str: str | None = None,
-    ) -> xtgeo.RegularSurface | None:
+    ) -> xtgeo.RegularSurface:
         """
         Compute statistic and return surface data
         If realizations is None this is interpreted as a wildcard and surfaces from all realizations will be included
@@ -288,13 +287,13 @@ class SurfaceAccess:
         perf_metrics.record_lap("locate")
 
         if surf_count == 0:
-            LOGGER.warning(f"No statistical source surfaces found in Sumo for: {surf_str}")
-            return None
+            raise InvalidParameterError(f"No statistical source surfaces found in Sumo for: {surf_str}", Service.SUMO)
         if surf_count == 1:
             # As of now, the Sumo aggregation service does not support single realization aggregation.
-            # For now return None. Alternatively we could fetch the single realization surface
-            LOGGER.warning(f"Could not calculate statistical surface, only one source surface found for: {surf_str}")
-            return None
+            # For now throw an error. Alternatively we could fetch the single realization surface
+            raise InvalidParameterError(
+                f"Could not calculate statistical surface, only one source surface found for: {surf_str}", Service.SUMO
+            )
 
         # Ensure that we got data for all the requested realizations
         realizations_found = await search_context.get_field_values_async("fmu.realization.id")
@@ -313,8 +312,9 @@ class SurfaceAccess:
         perf_metrics.record_lap("calc-stat")
 
         if not xtgeo_surf:
-            LOGGER.warning(f"Could not calculate statistical surface using Sumo for: {surf_str}")
-            return None
+            raise ServiceRequestError(
+                f"Could not calculate statistical surface using Sumo for: {surf_str}", Service.SUMO
+            )
 
         LOGGER.debug(
             f"Calculated statistical surface using Sumo in: {perf_metrics.to_string()} "
