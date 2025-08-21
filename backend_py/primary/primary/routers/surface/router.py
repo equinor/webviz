@@ -159,8 +159,6 @@ async def get_surface_data(
             time_or_interval_str=addr.iso_time_or_interval,
         )
         perf_metrics.record_lap("get-surf")
-        if not xtgeo_surf:
-            raise HTTPException(status_code=404, detail="Could not get realization surface")
 
     elif addr.address_type == "STAT":
         service_stat_func_to_compute = StatisticFunction.from_string_value(addr.stat_function)
@@ -176,8 +174,6 @@ async def get_surface_data(
             time_or_interval_str=addr.iso_time_or_interval,
         )
         perf_metrics.record_lap("sumo-calc")
-        if not xtgeo_surf:
-            raise HTTPException(status_code=404, detail="Could not get or compute statistical surface")
 
     elif addr.address_type == "OBS":
         access = SurfaceAccess.from_case_uuid_no_iteration(access_token, addr.case_uuid)
@@ -185,8 +181,6 @@ async def get_surface_data(
             name=addr.name, attribute=addr.attribute, time_or_interval_str=addr.iso_time_or_interval
         )
         perf_metrics.record_lap("get-surf")
-        if not xtgeo_surf:
-            raise HTTPException(status_code=404, detail="Could not get observed surface")
 
     if resample_to is not None:
         xtgeo_surf = converters.resample_to_surface_def(xtgeo_surf, resample_to)
@@ -226,8 +220,6 @@ async def post_get_surface_intersection(
     surface = await access.get_realization_surface_data_async(
         real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval_str
     )
-    if surface is None:
-        raise HTTPException(status_code=404, detail=f"Surface '{name}' not found")
 
     # Ensure name is applied
     surface.name = name
