@@ -1,173 +1,188 @@
 import React from "react";
 
+import { debounce, isEqual } from "lodash";
+
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { withDefaults } from "../_component-utils/components";
 
 export type VirtualizationProps<T = any> = {
-    placeholderComponent?: string;
+    /** The HTML tag to use for the generated spacer elements */
+    placeholderComponent?: React.ElementType;
+    /** The scrollable parent to virtualize items inside of */
     containerRef: React.RefObject<HTMLElement>;
+    /** The list of items to virtualize */
     items: Array<T>;
+
+    /** Callback for rendering items in the list. The rendered item's size should match `props.itemSize` */
     renderItem: (item: T, index: number) => React.ReactNode;
+    /** The pixel size of each rendered item */
     itemSize: number;
+    /** Scrolling direction */
     direction: "vertical" | "horizontal";
+    /** The list's scroll position, by item index */
     startIndex?: number;
-    onScroll?: (newStartIndex: number) => void;
+    /** The amount of items rendered outside the visible scroll area. A higher number means less flickering as you scroll */
+    overscan?: number | { head: number; tail: number };
+    /** Callback for internal start-index. Not called with `props.startIndex` changes */
+    onStartIndexChange?: (newStartIndex: number) => void;
+    /** Callback for when the rendered item range changes. *Will* retrigger if `props.startIndex` is changed */
+    onRangeComputed?: (startIndex: number, endIndex: number) => void;
 };
+
+const SCROLL_END_DELAY = 100; // ms
 
 const defaultProps = {
-    placeholderComponent: "div",
+    placeholderComponent: "div" as React.ElementType,
     startIndex: 0,
+    overscan: 1,
 };
 
-type VirtualizationPropsSubset = Pick<VirtualizationProps, "items" | "startIndex" | "direction" | "itemSize"> | null;
-
-function checkEqualityOfProps(a: VirtualizationPropsSubset, b: VirtualizationPropsSubset): boolean {
-    if (a === null && b === null) {
-        return true;
-    }
-
-    if (a === null || b === null) {
-        return false;
-    }
-
-    return (
-        a.itemSize === b.itemSize &&
-        a.direction === b.direction &&
-        a.startIndex === b.startIndex &&
-        a.items.length === b.items.length
-    );
-}
+type VisibleItemsRange = { start: number; end: number };
 
 export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, (props) => {
-    const { onScroll } = props;
-
-    const [isProgrammaticScroll, setIsProgrammaticScroll] = React.useState(false);
-    const [range, setRange] = React.useState<{ start: number; end: number }>({ start: props.startIndex, end: 0 });
-    const [prevPropsSubset, setPrevPropsSubset] = React.useState<VirtualizationPropsSubset>(null);
-    const [placeholderSizes, setPlaceholderSizes] = React.useState<{ start: number; end: number }>({
-        start: props.startIndex * props.itemSize,
-        end: 0,
-    });
-    const [initialScrollPositions, setInitialScrollPositions] = React.useState<
-        | {
-              top: number;
-              left: number;
-          }
-        | undefined
-    >(undefined);
+    const { onStartIndexChange, onRangeComputed } = props;
 
     const containerSize = useElementSize(props.containerRef);
 
-    const currentPropsSubset = {
-        items: props.items,
-        startIndex: props.startIndex,
-        direction: props.direction,
-        itemSize: props.itemSize,
-    };
+    // Refs to avoid unnecessary callbacks
+    const lastScrolledRange = React.useRef<VisibleItemsRange>({ start: -1, end: -1 });
+    const isProgrammaticScroll = React.useRef(false);
+    const isCurrentlyScrollingRef = React.useRef(false);
 
-    if (!checkEqualityOfProps(prevPropsSubset, currentPropsSubset)) {
-        if (props.containerRef.current) {
-            const newInitialScrollPositions = {
-                top: props.startIndex * props.itemSize,
-                left: props.startIndex * props.itemSize,
-            };
-            let size = containerSize.height;
-            let scrollPosition = newInitialScrollPositions?.top || 0;
-            if (props.direction === "horizontal") {
-                size = containerSize.width;
-                scrollPosition = newInitialScrollPositions?.left || 0;
-            }
+    const overscanAmount = React.useMemo(() => {
+        if (typeof props.overscan === "object") return props.overscan;
+        return { head: props.overscan, tail: props.overscan };
+    }, [props.overscan]);
 
-            const startIndex = Math.max(0, Math.floor(scrollPosition / props.itemSize) - 1);
-            const endIndex = Math.min(props.items.length - 1, Math.ceil((scrollPosition + size) / props.itemSize) + 1);
+    // Items visible within the scroll container
+    const [visibleItemsRange, setVisibleItemsRange] = React.useState<VisibleItemsRange>({
+        start: props.startIndex,
+        end: 0,
+    });
 
-            setRange({ start: startIndex, end: endIndex });
-            setPlaceholderSizes({
-                start: startIndex * props.itemSize,
-                end: (props.items.length - 1 - endIndex) * props.itemSize,
-            });
-            setInitialScrollPositions(newInitialScrollPositions);
-            setPrevPropsSubset({
-                items: props.items,
-                startIndex: props.startIndex,
-                direction: props.direction,
-                itemSize: props.itemSize,
-            });
-        }
-    }
+    const placeholderSizes = React.useMemo(() => {
+        const hiddenItemsStart = visibleItemsRange.start - overscanAmount.head;
+        const hiddenItemsEnd = props.items.length - visibleItemsRange.end - overscanAmount.tail - 1;
 
-    React.useEffect(
-        function applyInitialScrollPositionEffect() {
-            if (props.containerRef.current && initialScrollPositions) {
-                setIsProgrammaticScroll(true);
-                props.containerRef.current.scrollTop = initialScrollPositions.top;
-                props.containerRef.current.scrollLeft = initialScrollPositions.left;
-            }
+        return {
+            start: Math.max(0, hiddenItemsStart) * props.itemSize,
+            end: Math.max(0, hiddenItemsEnd) * props.itemSize,
+        };
+    }, [
+        props.itemSize,
+        props.items.length,
+        overscanAmount.head,
+        overscanAmount.tail,
+        visibleItemsRange.end,
+        visibleItemsRange.start,
+    ]);
+
+    const itemRenderRange = React.useMemo(() => {
+        return {
+            start: Math.max(0, visibleItemsRange.start - overscanAmount.head),
+            end: Math.min(props.items.length, visibleItemsRange.end + overscanAmount.tail),
+        };
+    }, [overscanAmount.head, overscanAmount.tail, props.items.length, visibleItemsRange.end, visibleItemsRange.start]);
+
+    const updateVirtualizationRange = React.useCallback(
+        function updateVirtualizationRange(newRange: VisibleItemsRange) {
+            setVisibleItemsRange(newRange);
+            onRangeComputed?.(newRange.start, newRange.end);
+
+            // Avoid retriggering programmatic index changes
+            if (!isProgrammaticScroll.current) onStartIndexChange?.(newRange.start);
+
+            lastScrolledRange.current = newRange;
+            isProgrammaticScroll.current = false;
         },
-        [props.containerRef, initialScrollPositions],
+        [onRangeComputed, onStartIndexChange],
+    );
+
+    React.useLayoutEffect(
+        // As the top index changes, scroll the index into view
+        function scrollToStartIndexEffect() {
+            if (!props.containerRef.current) return;
+            if (props.startIndex === undefined) return;
+            if (isCurrentlyScrollingRef.current) return;
+
+            const scrollSide = props.direction === "horizontal" ? "scrollLeft" : "scrollTop";
+
+            // ! This will trigger the onScroll event handler
+            // Flag this as a programmatic scroll to avoid callback re-triggering
+            isProgrammaticScroll.current = true;
+            props.containerRef.current[scrollSide] = Math.max(0, props.startIndex * props.itemSize);
+        },
+        [props.containerRef, props.direction, props.itemSize, props.startIndex],
     );
 
     React.useEffect(
         function mountScrollEffect() {
-            let lastScrollPosition = -1;
+            const currentContainer = props.containerRef.current;
+            const isVertical = props.direction === "vertical";
+
+            // Debounce timer for simulating scrollend
+            // ! Preferably, we'd use the "scrollEnd" event, but safari doesn't support it
+            const debouncedScrollEnd = debounce(handleScrollEnd, SCROLL_END_DELAY);
+
             function handleScroll() {
-                if (isProgrammaticScroll) {
-                    setIsProgrammaticScroll(false);
-                    return;
+                if (!currentContainer) return;
+                if (props.itemSize === 0) return;
+
+                // Scroll event might have happened due to programmatic scroll, which means we're "technically" not scrolling
+                isCurrentlyScrollingRef.current = !isProgrammaticScroll.current;
+
+                const scrollPosition = isVertical ? currentContainer.scrollTop : currentContainer.scrollLeft;
+                const size = isVertical ? containerSize.height : containerSize.width;
+
+                const startIndex = Math.floor(scrollPosition / props.itemSize);
+                const endIndex = Math.ceil((scrollPosition + size) / props.itemSize) - 1;
+
+                const newRange = {
+                    start: startIndex,
+                    end: endIndex,
+                };
+
+                if (!isEqual(newRange, lastScrolledRange.current)) {
+                    updateVirtualizationRange(newRange);
                 }
-                if (props.containerRef.current) {
-                    const scrollPosition =
-                        props.direction === "vertical"
-                            ? props.containerRef.current.scrollTop
-                            : props.containerRef.current.scrollLeft;
 
-                    if (scrollPosition === lastScrollPosition) {
-                        return;
-                    }
-
-                    lastScrollPosition = scrollPosition;
-
-                    const size = props.direction === "vertical" ? containerSize.height : containerSize.width;
-
-                    const startIndex = Math.max(0, Math.floor(scrollPosition / props.itemSize) - 1);
-                    const endIndex = Math.min(
-                        props.items.length - 1,
-                        Math.ceil((scrollPosition + size) / props.itemSize) + 1,
-                    );
-
-                    setRange({ start: startIndex, end: endIndex });
-                    setPlaceholderSizes({
-                        start: startIndex * props.itemSize,
-                        end: (props.items.length - 1 - endIndex) * props.itemSize,
-                    });
-
-                    if (onScroll) {
-                        onScroll(startIndex);
-                    }
-                }
+                // Signal end of scrolling
+                debouncedScrollEnd();
             }
 
-            if (props.containerRef.current) {
-                props.containerRef.current.addEventListener("scroll", handleScroll);
+            function handleScrollEnd() {
+                isCurrentlyScrollingRef.current = false;
             }
+
+            if (currentContainer) {
+                // currentContainer.addEventListener("scrollend", handleScrollEnd); // Not supported in Safari
+                currentContainer.addEventListener("scroll", handleScroll, { passive: true });
+            }
+
+            // Run once to give initial scroll values
+            isProgrammaticScroll.current = true;
             handleScroll();
+            handleScrollEnd();
 
             return function unmountScrollEffect() {
-                if (props.containerRef.current) {
-                    props.containerRef.current.removeEventListener("scroll", handleScroll);
+                if (currentContainer) {
+                    // currentContainer.removeEventListener("scrollend", handleScrollEnd); // Not supported in Safari
+                    currentContainer.removeEventListener("scroll", handleScroll);
+                    debouncedScrollEnd.cancel();
                 }
             };
         },
         [
             props.containerRef,
             props.direction,
-            props.items,
+            props.items.length,
             props.itemSize,
             containerSize.height,
             containerSize.width,
-            onScroll,
-            isProgrammaticScroll,
+            overscanAmount.head,
+            overscanAmount.tail,
+            updateVirtualizationRange,
         ],
     );
 
@@ -184,8 +199,8 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
             {placeholderSizes.start > 0 &&
                 React.createElement(props.placeholderComponent, { style: makeStyle(placeholderSizes.start) })}
             {props.items
-                .slice(range.start, range.end + 1)
-                .map((item, index) => props.renderItem(item, range.start + index))}
+                .slice(itemRenderRange.start, itemRenderRange.end + 1)
+                .map((item, index) => props.renderItem(item, index + itemRenderRange.start))}
             {placeholderSizes.end > 0 &&
                 React.createElement(props.placeholderComponent, { style: makeStyle(placeholderSizes.end) })}
         </>
