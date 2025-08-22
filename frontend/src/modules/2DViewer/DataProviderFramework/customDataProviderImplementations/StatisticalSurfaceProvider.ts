@@ -235,8 +235,7 @@ export class StatisticalSurfaceProvider
         getSetting,
         getStoredData,
         getWorkbenchSession,
-        registerQueryKey,
-        queryClient,
+        fetchQuery,
     }: FetchDataParams<StatisticalSurfaceSettings, StatisticalSurfaceData>): Promise<StatisticalSurfaceData> {
         let surfaceAddress: FullSurfaceAddress | null = null;
         const addrBuilder = new SurfaceAddressBuilder();
@@ -297,13 +296,10 @@ export class StatisticalSurfaceProvider
             },
         });
 
-        registerQueryKey(queryOptions.queryKey);
-
-        const promise = queryClient
-            .fetchQuery({
-                ...queryOptions,
-            })
-            .then((data) => ({ format: this._dataFormat, surfaceData: transformSurfaceData(data) }));
+        const promise = fetchQuery({ ...queryOptions }).then((data) => ({
+            format: this._dataFormat,
+            surfaceData: transformSurfaceData(data),
+        }));
 
         return promise as Promise<StatisticalSurfaceData>;
     }
