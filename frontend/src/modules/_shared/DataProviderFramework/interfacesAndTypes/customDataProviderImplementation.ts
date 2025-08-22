@@ -1,4 +1,4 @@
-import type { QueryClient } from "@tanstack/query-core";
+import type { DefaultError, FetchQueryOptions, QueryKey } from "@tanstack/query-core";
 
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
@@ -109,20 +109,27 @@ export type FetchDataParams<
     TData,
     TStoredData extends StoredData = Record<string, never>,
 > = {
-    queryClient: QueryClient;
-
-    /**
-     * Register a query key for the data provider.
-     * @param key The query key to register.
-     */
-    registerQueryKey: (key: unknown[]) => void;
-
     /**
      * Set progress message for the data provider.
      * This message can be used to keep the user informed about the progress of the data provider.
      * @param message The progress message to set.
      */
     setProgressMessage: (message: string | null) => void;
+
+    /**
+     * Fetch data by using the Tanstack Query client.
+     *
+     * @param options Options for the query to fetch data.
+     * @returns A promise that resolves to the fetched data.
+     */
+    fetchQuery: <
+        TQueryFnData = unknown,
+        TError = DefaultError,
+        TData = TQueryFnData,
+        TQueryKey extends QueryKey = QueryKey,
+    >(
+        options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
+    ) => Promise<TData>;
 } & DataProviderInformationAccessors<TSettings, TData, TStoredData>;
 
 export interface CustomDataProviderImplementation<

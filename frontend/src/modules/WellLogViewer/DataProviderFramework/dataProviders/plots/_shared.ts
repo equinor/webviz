@@ -70,14 +70,14 @@ export function verifyBasePlotSettings<T extends readonly Setting[]>(
 export function fetchLogCurveData<T extends Settings>(
     args: FetchDataParams<T, WellboreLogCurveData_api>,
 ): Promise<WellboreLogCurveData_api> {
-    const { getSetting, getGlobalSetting, queryClient } = args;
+    const { getSetting, getGlobalSetting, fetchQuery } = args;
 
     const wellboreId = getGlobalSetting("wellboreUuid");
     const curveHeader = getSetting(Setting.LOG_CURVE);
 
     if (!wellboreId || !curveHeader) return Promise.reject();
 
-    return queryClient.fetchQuery({
+    return fetchQuery({
         ...getLogCurveDataOptions({
             query: {
                 wellbore_uuid: wellboreId,
