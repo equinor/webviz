@@ -31,6 +31,8 @@ export function TableBody<T extends Record<string, any>>(props: TableBodyProps<T
             onRowClick?.(entry._key, entry);
 
             if (!props.selectable) return;
+            // Don't do selection if user marked text
+            if (!window.getSelection()?.isCollapsed) return;
 
             // Shift-click is a special case where we want to select each row between the previous and the newly clicked one
             if (props.multiSelect && evt.shiftKey && selectAnchorIndexRef.current !== -1) {
