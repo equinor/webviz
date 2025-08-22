@@ -16,7 +16,6 @@ import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataT
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
-
 const observedSurfaceSettings = [
     Setting.ENSEMBLE,
     Setting.ATTRIBUTE,
@@ -170,8 +169,7 @@ export class ObservedSurfaceProvider
 
     fetchData({
         getSetting,
-        registerQueryKey,
-        queryClient,
+        fetchQuery,
     }: FetchDataParams<ObservedSurfaceSettings, ObservedSurfaceData>): Promise<ObservedSurfaceData> {
         let surfaceAddress: FullSurfaceAddress | null = null;
         const addrBuilder = new SurfaceAddressBuilder();
@@ -199,12 +197,11 @@ export class ObservedSurfaceProvider
                 resample_to_def_str: null,
             },
         });
-    
-        registerQueryKey(surfaceDataOptions.queryKey);
 
-        const promise = queryClient
-            .fetchQuery(surfaceDataOptions)
-            .then((data) => ({ format: this._dataFormat, surfaceData: transformSurfaceData(data) }));
+        const promise = fetchQuery(surfaceDataOptions).then((data) => ({
+            format: this._dataFormat,
+            surfaceData: transformSurfaceData(data),
+        }));
 
         return promise as Promise<ObservedSurfaceData>;
     }
