@@ -35,7 +35,7 @@ export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>
         return uniqueTableNames;
     },
     isValidFunction: ({ value, precomputedValue: uniqueTableNames }) => {
-        return value !== null && value.every((name) => uniqueTableNames.includes(name));
+        return value.length > 0 && value.every((name) => uniqueTableNames.includes(name));
     },
     fixupFunction: ({ precomputedValue: uniqueTableNames }) => {
         return uniqueTableNames;
@@ -93,7 +93,7 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
         return tableDefinitionsAccessor.getCommonIndicesWithValues();
     },
     isValidFunction: ({ value, precomputedValue }) => {
-        return value !== null && value.every((index) => precomputedValue.includes(index));
+        return value.length > 0 && value.every((index) => precomputedValue.includes(index));
     },
     fixupFunction: ({ value, precomputedValue }) => {
         return fixupUserSelectedIndexValues(value ?? [], precomputedValue, FixupSelection.SELECT_ALL);
