@@ -161,12 +161,10 @@ class CategorizedResultNames:
 class InplaceVolumesIndexWithValues:
     """
     Unique values for an index column in an inplace volumes table
-
-    NOTE: Ideally all values should be strings, but it is possible that some values are integers - especially for REGION
     """
 
     index: InplaceVolumes.TableIndexColumns
-    values: list[str | int]  # list of values: str or int
+    values: list[str]
 
 
 @dataclass
