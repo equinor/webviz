@@ -169,6 +169,7 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
         }
 
         if (this._serializedStateSchema.settings) {
+            // If possible, compilation should only be performed once - as soon as the schema is available - move to constructor?
             const validateSettings = ajv.compile(this._serializedStateSchema.settings);
             const isSettingsValid = parsedSettings === undefined || validateSettings(parsedSettings);
             if (!isSettingsValid) {
@@ -181,6 +182,7 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
         }
 
         if (this._serializedStateSchema.view) {
+            // If possible, compilation should only be performed once - as soon as the schema is available - move to constructor?
             const validateView = ajv.compile(this._serializedStateSchema.view);
             const isViewValid = parsedView === undefined || validateView(parsedView);
 
