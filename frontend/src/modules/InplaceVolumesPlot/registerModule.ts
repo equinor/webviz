@@ -5,12 +5,13 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { channelDefs } from "./channelDefs";
 import type { Interfaces } from "./interfaces";
+import { SERIALIZED_STATE, type SerializedState } from "./persistedState";
 import { preview } from "./preview";
 
 export const MODULE_NAME = "InplaceVolumesPlot";
 const description = "Inplace Volumes Plot";
 
-ModuleRegistry.registerModule<Interfaces>({
+ModuleRegistry.registerModule<Interfaces, SerializedState>({
     moduleName: MODULE_NAME,
     defaultTitle: "Inplace Volumes Plot",
     category: ModuleCategory.MAIN,
@@ -20,4 +21,5 @@ ModuleRegistry.registerModule<Interfaces>({
     syncableSettingKeys: [SyncSettingKey.INPLACE_VOLUMES_FILTER],
     channelDefinitions: channelDefs,
     preview,
+    serializedStateSchema: SERIALIZED_STATE,
 });

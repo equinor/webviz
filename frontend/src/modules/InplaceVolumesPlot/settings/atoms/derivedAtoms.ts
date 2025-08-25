@@ -2,6 +2,8 @@ import { atom } from "jotai";
 
 import type { InplaceVolumesIndexWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { persistableFixableAtom } from "@framework/utils/atomUtils";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
 import { fixupUserSelectedIndexValues } from "@modules/_shared/InplaceVolumes/fixupUserSelectedIndexValues";
@@ -15,52 +17,69 @@ import { makeColorByOptions, makeSubplotByOptions } from "../utils/plotDimension
 import {
     selectedIndexValueCriteriaAtom,
     userSelectedColorByAtom,
-    userSelectedEnsembleIdentsAtom,
     userSelectedIndicesWithValuesAtom,
     userSelectedSecondResultNameAtom,
     userSelectedFirstResultNameAtom,
     userSelectedSelectorColumnAtom,
     userSelectedSubplotByAtom,
-    userSelectedTableNamesAtom,
 } from "./baseAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
 
-export const selectedEnsembleIdentsAtom = atom((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
-    const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
+export const persistedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsembleIdent[]>({
+    initialValue: [],
+    isValidFunction: ({ get, value }) => {
+        const ensembleSet = get(EnsembleSetAtom);
 
-    if (!userSelectedEnsembleIdents) {
-        if (ensembleSet.getRegularEnsembleArray().length === 0) {
-            return [];
-        }
-        return [ensembleSet.getRegularEnsembleArray()[0].getIdent()];
-    }
+        return value !== null && value.every((ident) => ensembleSet.hasEnsemble(ident));
+    },
+    fixupFunction: ({ value, get }) => {
+        const ensembleSet = get(EnsembleSetAtom);
+        return fixupRegularEnsembleIdents(value, ensembleSet) ?? [];
+    },
+});
+// export const persistedTableNamesAtom = atom<string[]>((get) => {
+//     const userSelectedTableNames = get(userSelectedTableNamesAtom);
+//     const tableDefinitionsQueryResult = get(tableDefinitionsQueryAtom);
 
-    const newSelectedEnsembleIdents = userSelectedEnsembleIdents.filter((ensemble) =>
-        ensembleSet.hasEnsemble(ensemble),
-    );
+//     const uniqueTableNames = makeUniqueTableNamesIntersection(tableDefinitionsQueryResult.data);
 
-    const validatedEnsembleIdents = fixupRegularEnsembleIdents(newSelectedEnsembleIdents, ensembleSet);
+//     if (!userSelectedTableNames) {
+//         return uniqueTableNames;
+//     }
 
-    return validatedEnsembleIdents ?? [];
+//     return fixupUserSelection(userSelectedTableNames, uniqueTableNames);
+// });
+
+export const persistedTableNamesAtom = persistableFixableAtom<string[]>({
+    initialValue: [],
+    isValidFunction: ({ get, value }) => {
+        const tableDefinitionsQueryResult = get(tableDefinitionsQueryAtom);
+        const uniqueTableNames = makeUniqueTableNamesIntersection(tableDefinitionsQueryResult.data);
+        return value !== null && value.every((name) => uniqueTableNames.includes(name));
+    },
+    fixupFunction: ({ value, get }) => {
+        const tableDefinitionsQueryResult = get(tableDefinitionsQueryAtom);
+        const uniqueTableNames = makeUniqueTableNamesIntersection(tableDefinitionsQueryResult.data);
+        return fixupUserSelection(value, uniqueTableNames) ?? [];
+    },
 });
 
 export const tableDefinitionsAccessorAtom = atom<TableDefinitionsAccessor>((get) => {
-    const selectedTableNames = get(selectedTableNamesAtom);
+    const selectedTableNames = get(persistedTableNamesAtom);
     const tableDefinitions = get(tableDefinitionsQueryAtom);
     const selectedIndexValueCriteria = get(selectedIndexValueCriteriaAtom);
 
     return new TableDefinitionsAccessor(
         tableDefinitions.isLoading ? [] : tableDefinitions.data,
-        selectedTableNames,
+        selectedTableNames.value,
         selectedIndexValueCriteria,
     );
 });
 
 export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
-    const selectedTableNames = get(selectedTableNamesAtom);
+    const selectedEnsembleIdents = get(persistedEnsembleIdentsAtom);
+    const selectedTableNames = get(persistedTableNamesAtom);
     const selectedFirstResultName = get(selectedFirstResultNameAtom);
     const selectedSecondResultName = get(selectedSecondResultNameAtom);
     const selectedIndicesWithValues = get(selectedIndicesWithValuesAtom);
@@ -71,11 +90,11 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
         return false;
     }
 
-    if (!tableDefinitionsAccessor.hasEnsembleIdents(selectedEnsembleIdents)) {
+    if (!tableDefinitionsAccessor.hasEnsembleIdents(selectedEnsembleIdents.value)) {
         return false;
     }
 
-    if (!tableDefinitionsAccessor.hasTableNames(selectedTableNames)) {
+    if (!tableDefinitionsAccessor.hasTableNames(selectedTableNames.value)) {
         return false;
     }
 
@@ -97,19 +116,6 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
 export const areSelectedTablesComparableAtom = atom<boolean>((get) => {
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
     return tableDefinitionsAccessor.getAreTablesComparable();
-});
-
-export const selectedTableNamesAtom = atom<string[]>((get) => {
-    const userSelectedTableNames = get(userSelectedTableNamesAtom);
-    const tableDefinitionsQueryResult = get(tableDefinitionsQueryAtom);
-
-    const uniqueTableNames = makeUniqueTableNamesIntersection(tableDefinitionsQueryResult.data);
-
-    if (!userSelectedTableNames) {
-        return uniqueTableNames;
-    }
-
-    return fixupUserSelection(userSelectedTableNames, uniqueTableNames);
 });
 
 export const selectedFirstResultNameAtom = atom<string | null>((get) => {
@@ -190,10 +196,10 @@ export const selectedIndicesWithValuesAtom = atom<InplaceVolumesIndexWithValues_
 
 export const selectedSubplotByAtom = atom<string>((get) => {
     const userSelectedSubplotBy = get(userSelectedSubplotByAtom);
-    const selectedTableNames = get(selectedTableNamesAtom);
+    const selectedTableNames = get(persistedTableNamesAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
-    const validOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames).map((el) => el.value);
+    const validOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames.value).map((el) => el.value);
     const fixedSelection = fixupUserSelection([userSelectedSubplotBy], validOptions);
 
     return fixedSelection[0];
@@ -202,12 +208,14 @@ export const selectedSubplotByAtom = atom<string>((get) => {
 export const selectedColorByAtom = atom<string>((get) => {
     const userSelectedColorBy = get(userSelectedColorByAtom);
     const userSelectedSubplotBy = get(userSelectedSubplotByAtom);
-    const selectedTableNames = get(selectedTableNamesAtom);
+    const selectedTableNames = get(persistedTableNamesAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
-    const validOptions = makeColorByOptions(tableDefinitionsAccessor, userSelectedSubplotBy, selectedTableNames).map(
-        (el) => el.value,
-    );
+    const validOptions = makeColorByOptions(
+        tableDefinitionsAccessor,
+        userSelectedSubplotBy,
+        selectedTableNames.value,
+    ).map((el) => el.value);
     const fixedSelection = fixupUserSelection([userSelectedColorBy], validOptions);
 
     return fixedSelection[0];

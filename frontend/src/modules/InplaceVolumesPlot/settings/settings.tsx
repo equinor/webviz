@@ -5,10 +5,12 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
@@ -19,42 +21,35 @@ import { PlotType, plotTypeToStringMapping } from "../typesAndEnums";
 import {
     selectedIndexValueCriteriaAtom,
     userSelectedColorByAtom,
-    userSelectedEnsembleIdentsAtom,
     userSelectedIndicesWithValuesAtom,
     userSelectedPlotTypeAtom,
     userSelectedSecondResultNameAtom,
     userSelectedFirstResultNameAtom,
     userSelectedSelectorColumnAtom,
     userSelectedSubplotByAtom,
-    userSelectedTableNamesAtom,
 } from "./atoms/baseAtoms";
 import {
     selectedColorByAtom,
-    selectedEnsembleIdentsAtom,
+    persistedEnsembleIdentsAtom,
     selectedIndicesWithValuesAtom,
     selectedSecondResultNameAtom,
     selectedFirstResultNameAtom,
     selectedSelectorColumnAtom,
     selectedSubplotByAtom,
-    selectedTableNamesAtom,
+    persistedTableNamesAtom,
     tableDefinitionsAccessorAtom,
 } from "./atoms/derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 import { makeColorByOptions, makeSubplotByOptions } from "./utils/plotDimensionUtils";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
     const tableDefinitionsQueryResult = useAtomValue(tableDefinitionsQueryAtom);
     const tableDefinitionsAccessor = useAtomValue(tableDefinitionsAccessorAtom);
 
-    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
-    const setSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
-
-    const selectedTableNames = useAtomValue(selectedTableNamesAtom);
-    const setSelectedTableNames = useSetAtom(userSelectedTableNamesAtom);
-
+    const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(persistedEnsembleIdentsAtom);
+    // const setSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
+    const [selectedTableNames, setSelectedTableNames] = useAtom(persistedTableNamesAtom);
     const selectedSelectorColumn = useAtomValue(selectedSelectorColumnAtom);
     const setSelectedSelectorColumn = useSetAtom(userSelectedSelectorColumnAtom);
 
@@ -102,8 +97,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         ...tableDefinitionsAccessor.getCommonSelectorColumns().map((name) => ({ label: name, value: name })),
     ];
 
-    const subplotOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames);
-    const colorByOptions = makeColorByOptions(tableDefinitionsAccessor, selectedSubplotBy, selectedTableNames);
+    const subplotOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames.value);
+    const colorByOptions = makeColorByOptions(tableDefinitionsAccessor, selectedSubplotBy, selectedTableNames.value);
     const plotTypeOptions: DropdownOption<PlotType>[] = [];
     for (const [type, label] of Object.entries(plotTypeToStringMapping)) {
         plotTypeOptions.push({ label, value: type as PlotType });
@@ -167,9 +162,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             isPending={tableDefinitionsQueryResult.isLoading}
             availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
             availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
-            selectedEnsembleIdents={selectedEnsembleIdents}
+            selectedEnsembleIdents={selectedEnsembleIdents.value}
             selectedIndicesWithValues={selectedIndicesWithValues}
-            selectedTableNames={selectedTableNames}
+            selectedTableNames={selectedTableNames.value}
             selectedAllowIndicesValuesIntersection={
                 selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
             }

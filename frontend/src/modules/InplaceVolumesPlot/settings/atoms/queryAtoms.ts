@@ -5,7 +5,7 @@ import { getTableDefinitionsOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 
-import { selectedEnsembleIdentsAtom } from "./derivedAtoms";
+import { persistedEnsembleIdentsAtom } from "./derivedAtoms";
 
 export type TableDefinitionsQueryResult = {
     data: {
@@ -16,7 +16,7 @@ export type TableDefinitionsQueryResult = {
 };
 
 export const tableDefinitionsQueryAtom = atomWithQueries((get) => {
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = get(persistedEnsembleIdentsAtom).value;
 
     const queries = selectedEnsembleIdents.map((ensembleIdent) => {
         return () => ({

@@ -5,7 +5,7 @@ import {
     areSelectedTablesComparableAtom,
     areTableDefinitionSelectionsValidAtom,
     selectedColorByAtom,
-    selectedEnsembleIdentsAtom,
+    persistedEnsembleIdentsAtom,
     selectedIndicesWithValuesAtom,
     selectedSecondResultNameAtom,
     selectedFirstResultNameAtom,
@@ -33,7 +33,7 @@ export type Interfaces = {
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     filter: (get) => {
         return {
-            ensembleIdents: get(selectedEnsembleIdentsAtom),
+            ensembleIdents: get(persistedEnsembleIdentsAtom).value,
             tableNames: get(selectedTableNamesAtom),
             indicesWithValues: get(selectedIndicesWithValuesAtom),
             areSelectedTablesComparable: get(areSelectedTablesComparableAtom),
