@@ -138,7 +138,7 @@ class VolumeColumnsAndIndexUniqueValues:
     """
 
     volume_columns: list[str]
-    index_unique_values_map: dict[str, list[str | int]]
+    index_unique_values_map: dict[str, list[str]]
 
 
 @dataclass
