@@ -20,13 +20,10 @@ class InplaceVolumesIndexWithValues(BaseModel):
     """
     Unique values for an index column in an inplace volumes table
 
-    If a column contain
-
-    All values should ideally be strings, but it is common to see integers, especially for REGION
     """
 
     indexColumn: str  # Index column name, e.g. "ZONE", "REGION", etc.
-    values: list[str | int]
+    values: list[str]
 
 
 class InplaceVolumesTableDefinition(BaseModel):
