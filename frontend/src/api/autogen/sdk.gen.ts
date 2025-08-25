@@ -8,9 +8,6 @@ import type {
     GetCasesData_api,
     GetCasesResponse_api,
     GetCasesError_api,
-    GetEnsemblesData_api,
-    GetEnsemblesResponse_api,
-    GetEnsemblesError_api,
     GetEnsembleDetailsData_api,
     GetEnsembleDetailsResponse_api,
     GetEnsembleDetailsError_api,
@@ -269,19 +266,6 @@ export const getCases = <ThrowOnError extends boolean = false>(options: Options<
     return (options?.client ?? client).get<GetCasesResponse_api, GetCasesError_api, ThrowOnError>({
         ...options,
         url: "/cases",
-    });
-};
-
-/**
- * Get Ensembles
- * Get list of ensembles for a case
- */
-export const getEnsembles = <ThrowOnError extends boolean = false>(
-    options: Options<GetEnsemblesData_api, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<GetEnsemblesResponse_api, GetEnsemblesError_api, ThrowOnError>({
-        ...options,
-        url: "/cases/{case_uuid}/ensembles",
     });
 };
 

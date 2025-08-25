@@ -5,7 +5,6 @@ import { isEqual } from "lodash";
 
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import type { UserDeltaEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { useColorSet } from "@framework/WorkbenchSettings";
@@ -22,6 +21,8 @@ import {
     makeHashFromSelectedEnsembles,
     makeSelectableEnsemblesForDeltaFromEnsembleSet,
     makeRegularEnsembleSettingsFromEnsembleSet,
+    makeUserEnsembleSettingsFromInternal,
+    makeValidUserDeltaEnsembleSettingsFromInternal,
 } from "./_utils";
 import { EnsemblePicker } from "./private-components/EnsemblePicker/EnsemblePicker";
 import { EnsembleTables } from "./private-components/EnsembleTables/EnsembleTables";
@@ -124,38 +125,14 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     }
 
     function handleApplyEnsembleSelection() {
-        // Highlight invalid delta ensembles?
         if (selectedDeltaEnsembles.some((elm) => !elm.comparisonEnsembleIdent || !elm.referenceEnsembleIdent)) {
             return;
         }
 
-        const validDeltaEnsembles: UserDeltaEnsembleSetting[] = [];
-        for (const deltaEnsemble of selectedDeltaEnsembles) {
-            if (!deltaEnsemble.comparisonEnsembleIdent || !deltaEnsemble.referenceEnsembleIdent) {
-                continue;
-            }
+        const regularEnsembleSettings = makeUserEnsembleSettingsFromInternal(selectedRegularEnsembles);
+        const deltaEnsembleSettings = makeValidUserDeltaEnsembleSettingsFromInternal(selectedDeltaEnsembles);
 
-            // Ensure no duplicate delta ensembles
-            if (
-                validDeltaEnsembles.some(
-                    (elm) =>
-                        isEqual(elm.comparisonEnsembleIdent, deltaEnsemble.comparisonEnsembleIdent) &&
-                        isEqual(elm.referenceEnsembleIdent, deltaEnsemble.referenceEnsembleIdent),
-                )
-            ) {
-                continue;
-            }
-
-            validDeltaEnsembles.push({
-                comparisonEnsembleIdent: deltaEnsemble.comparisonEnsembleIdent,
-                referenceEnsembleIdent: deltaEnsemble.referenceEnsembleIdent,
-                color: deltaEnsemble.color,
-                customName: deltaEnsemble.customName,
-            });
-        }
-
-        // TODO: Ensure valid regular ensembles? loadAndSetupEnsembleSet takes type UserEnsembleSetting, but we pass InternalRegularEnsembleSetting
-        workbenchSession.loadAndSetupEnsembleSet(selectedRegularEnsembles, validDeltaEnsembles).then(() => {
+        workbenchSession.loadAndSetupEnsembleSet(regularEnsembleSettings, deltaEnsembleSettings).then(() => {
             setIsOpen(false);
         });
     }
@@ -332,6 +309,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 onClose={handleCancel}
                 title="Selected ensembles"
                 modal
+                showCloseCross
                 width={"75%"}
                 minWidth={800}
                 height={"75%"}
@@ -356,7 +334,6 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         </div>
                     </div>
                 }
-                showCloseCross
             >
                 <div className="relative flex flex-col w-full h-full">
                     <EnsembleTables

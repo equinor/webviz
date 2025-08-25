@@ -7,8 +7,7 @@ from fastapi import APIRouter, Depends, Path, Query, Body
 
 from primary.auth.auth_helper import AuthHelper
 from primary.services.sumo_access.case_inspector import CaseInspector
-# from primary.services.sumo_access.sumo_inspector import SumoInspector
-from primary.services.sumo_access.sumo_inspector_NEW import SumoInspectorNEW
+from primary.services.sumo_access.sumo_inspector import SumoInspector
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.middleware.add_browser_cache import no_cache
 
@@ -25,13 +24,11 @@ async def get_fields(
     """
     Get list of fields
     """
-    sumo_inspector = SumoInspectorNEW(authenticated_user.get_sumo_access_token())
+    sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
     field_ident_arr = await sumo_inspector.get_fields_async()
     ret_arr = [schemas.FieldInfo(fieldIdentifier=field_ident.identifier) for field_ident in field_ident_arr]
 
     return ret_arr
-
-
 
 
 @router.get("/cases")
@@ -41,7 +38,7 @@ async def get_cases(
     field_identifier: str = Query(description="Field identifier"),
 ) -> List[schemas.CaseInfo]:
     """Get list of cases for specified field"""
-    sumo_inspector = SumoInspectorNEW(authenticated_user.get_sumo_access_token())
+    sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
     case_info_arr = await sumo_inspector.get_cases_async(field_identifier=field_identifier)
 
     ret_arr: List[schemas.CaseInfo] = []
@@ -57,7 +54,6 @@ async def get_cases(
             ensembles=[schemas.EnsembleInfo(
                 name=ei.name,
                 realizationCount=ei.realization_count,
-                updatedAtUtcMs=ei.updated_at_utc_ms,
                 standardResults=ei.standard_results,
             ) for ei in ci.ensembles]
         )
@@ -65,31 +61,6 @@ async def get_cases(
     ]
 
     return ret_arr
-
-
-@router.get("/cases/{case_uuid}/ensembles")
-@no_cache
-async def get_ensembles(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Path(description="Sumo case uuid"),
-) -> List[schemas.EnsembleInfo]:
-    """Get list of ensembles for a case"""
-
-    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
-    iteration_info_arr = await case_inspector.get_iterations_async()
-
-    return [
-        schemas.EnsembleInfo(
-            name=it.name,
-            realizationCount=it.realization_count,
-            timestamps=schemas.EnsembleTimestamps(
-                caseUpdatedAtUtcMs=it.timestamps.case_updated_at_utc_ms,
-                dataUpdatedAtUtcMs=it.timestamps.data_updated_at_utc_ms,
-            ),
-            standardResults=[],
-        )
-        for it in iteration_info_arr
-    ]
 
 
 @router.get("/cases/{case_uuid}/ensembles/{ensemble_name}")

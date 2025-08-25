@@ -17,6 +17,10 @@ LOGGER = logging.getLogger(__name__)
 class FieldInfo(BaseModel):
     identifier: str
 
+class EnsembleInfo(BaseModel):
+    name: str
+    realization_count: int
+    standard_results: list[str]
 
 class CaseInfo(BaseModel):
     uuid: str
@@ -25,7 +29,7 @@ class CaseInfo(BaseModel):
     user: str
     updated_at_utc_ms: int
     description: str
-
+    ensembles: list[EnsembleInfo]
 
 class SumoInspector:
     def __init__(self, access_token: str):
@@ -41,39 +45,177 @@ class SumoInspector:
         LOGGER.debug(timer.to_string())
         return [FieldInfo(identifier=field_ident) for field_ident in field_idents]
 
-    async def _get_case_info_async(self, search_context: SearchContext, case_uuid: str) -> CaseInfo:
-        case = await search_context.get_case_by_uuid_async(case_uuid)
 
-        timestamp_str = case.metadata["_sumo"]["timestamp"]
+    async def get_cases_async(self, field_identifier: str) -> list[CaseInfo]:   
+        """
+        Get all cases with available result types from SUMO using aggregations and filters
+        """
 
+        payload = {
+            "size": 0,
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "match": {
+                                "masterdata.smda.field.identifier.keyword": field_identifier
+                            }
+                        },
+                    ],
+                    "must_not": [{"exists": {"field": "fmu.aggregation"}}],
+                },
+            },
+            "aggs": {
+                "uuids": {
+                    "terms": {
+                        "field": "fmu.case.uuid.keyword",
+                        "size": 65535,
+                    },
+                    "aggs": {
+                        "description": {
+                            "terms": {
+                                "field": "fmu.case.description.keyword",
+                                "size": 65535,
+                            }
+                        },
+                        "timestamp_max": {
+                            "max": {
+                                "field": "_sumo.timestamp",
+                            }
+                        },
+                        "timestamp_min": {
+                            "min": {
+                                "field": "_sumo.timestamp",
+                            }
+                        },
+                        "status": {
+                            "terms": {
+                                "field": "_sumo.status.keyword",
+                                "size": 10,
+                            }
+                        },
+                        "user": {
+                            "terms": {
+                                "field": "fmu.case.user.id.keyword",
+                                "size": 10,
+                            }
+                        },
+                        "name": {
+                            "terms": {
+                                "field": "fmu.case.name.keyword",
+                                "size": 100,
+                            }
+                        },
+                        "ensemble_uuids": {
+                            "terms": {
+                                "field": "fmu.iteration.name.keyword",
+                                "size": 65535,
+                            },
+                            "aggs": {
+                                "realizations_count": {
+                                    "cardinality": {"field": "fmu.realization.id"}
+                                },
+                                "timestamp_max": {
+                                    "max": {
+                                        "field": "_sumo.timestamp",
+                                    }
+                                },
+                                "timestamp_min": {
+                                    "min": {
+                                        "field": "_sumo.timestamp",
+                                    }
+                                },
+                                "standard_result": {
+                                    "terms": {
+                                        "field": "data.standard_result.name.keyword",
+                                        "size": 10,
+                                    }
+                                },
+                            },
+                        },
+                    },
+                }
+            },
+        }
 
-        description_meta = case.metadata.get("fmu", {}).get("case", {}).get("description", None)
-        description_str = description_meta if isinstance(description_meta, str) else ""
+        response = await self._sumo_client.post_async("/search", json=payload)
+        response_dict = response.json()
 
-        return CaseInfo(
-            uuid=case.uuid,
-            name=case.name,
-            status=case.status,
-            user=case.user,
-            updated_at_utc_ms=datetime_string_to_utc_ms(timestamp_str),
-            description=description_str,
-        )
+        aggs = response_dict.get("aggregations", {})
+        case_buckets = aggs.get("uuids", {}).get("buckets", [])
 
-    async def get_cases_async(self, field_identifier: str) -> List[CaseInfo]:
-        """Get list of cases for specified field"""
-        timer = PerfMetrics()
-        search_context = SearchContext(self._sumo_client)
-        field_context = search_context.filter(field=field_identifier, cls="case")
-        cases = await field_context.cases_async
-        case_uuids = cases.uuids
-        timer.record_lap("get case uuids")
+        case_info_arr: list[CaseInfo] = []
 
-        async with asyncio.TaskGroup() as tg:
-            tasks = [tg.create_task(self._get_case_info_async(search_context, case_uuid)) for case_uuid in case_uuids]
+        for case_bucket in case_buckets:
+            case_uuid = case_bucket["key"]        
+            description = get_all_buckets_key_as_list(case_bucket, "description")
+            case_timestamp_max = get_number_value_for_key(case_bucket, "timestamp_max")
+            case_timestamp_min = get_number_value_for_key(case_bucket, "timestamp_min")
+            status = get_all_buckets_key_as_list(case_bucket, "status")
+            user = get_single_bucket_key_as_str(case_bucket, "user")
+            case_name = get_single_bucket_key_as_str(case_bucket, "name")
 
-        case_info_arr = [task.result() for task in tasks]
+            ensemble_buckets = case_bucket.get("ensemble_uuids", {}).get("buckets", [])
 
-        timer.record_lap("get_cases_for_field")
-        case_info_arr = sorted(case_info_arr, key=lambda case_info: case_info.name)
-        LOGGER.debug(timer.to_string())
+            ensemble_info_arr: list[EnsembleInfo] = []
+            for ensemble_bucket in ensemble_buckets:
+                ensemble_name = ensemble_bucket["key"]
+                realizations_count = get_number_value_for_key(ensemble_bucket, "realizations_count")
+                ens_timestamp_max = get_number_value_for_key(ensemble_bucket, "timestamp_max")
+                ens_timestamp_min = get_number_value_for_key(ensemble_bucket, "timestamp_min")
+                standard_result = get_all_buckets_key_as_list(ensemble_bucket, "standard_result")
+                if realizations_count is not None:
+                    ensemble_info = EnsembleInfo(
+                        name=ensemble_name,
+                        realization_count=realizations_count,
+                        # updated_at_utc_ms=ens_timestamp_max,
+                        standard_results=standard_result,
+                    )
+                    ensemble_info_arr.append(ensemble_info)
+
+                    # Handle cases where realizations_count might be missing or null
+
+            case_info = CaseInfo(
+                uuid=case_uuid,
+                name=case_name,
+                status=status[0] if status else "unknown",  # Default to "unknown" if no status is found
+                user=user,
+                updated_at_utc_ms=case_timestamp_max,
+                description=description[0] if description else "",
+                ensembles=ensemble_info_arr,
+            )
+
+            case_info_arr.append(case_info)
+
         return case_info_arr
+
+
+def get_all_buckets_key_as_list(obj: dict, key: str) -> list[str]:
+    """
+    Get all bucket keys as a list of strings from a dictionary.
+    If the key does not exist or the value is not a list, return an empty list.
+    """
+    buckets = obj.get(key, {}).get("buckets", [])
+    return [bucket.get("key", "") for bucket in buckets if isinstance(bucket, dict)]
+
+
+def get_single_bucket_key_as_str(obj: dict, key: str) -> str:
+    """
+    Get a single bucket key as a string from a dictionary.
+    If the key does not exist or the value is not a string, return an empty string.
+    """
+    buckets = obj.get(key, {}).get("buckets", [])
+    if buckets and len(buckets) == 1 and isinstance(buckets[0], dict):
+        return buckets[0].get("key", "")
+    raise ValueError(f"Expected a single bucket for key '{key}', but found: {buckets}")
+
+def get_number_value_for_key(obj: dict, key: str) -> int:
+    """
+    Get value for key in a dictionary as an integer.
+
+    If value does not exist or is not an integer, return -1
+    """
+    value = obj.get(key, {}).get("value", None)
+    if isinstance(value, int):
+        return value
+    return -1

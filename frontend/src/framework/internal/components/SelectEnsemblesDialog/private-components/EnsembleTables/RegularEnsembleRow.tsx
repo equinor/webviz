@@ -1,9 +1,10 @@
 import type React from "react";
 
+import { Remove } from "@mui/icons-material";
+
 import { ColorSelect } from "@lib/components/ColorSelect";
 import { IconButton } from "@lib/components/IconButton";
 import { Input } from "@lib/components/Input";
-import { Remove } from "@mui/icons-material";
 
 import type { InternalRegularEnsembleSetting } from "../../types";
 

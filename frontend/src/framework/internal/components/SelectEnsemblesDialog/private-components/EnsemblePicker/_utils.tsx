@@ -9,6 +9,27 @@ import type { CaseInfo_api } from "src/api/autogen/types.gen";
 import type { CaseRowData } from "./_types";
 import { UserAvatar } from "./userAvatar";
 
+// TODO: Replace with util for date when introduces in Anders' PR
+const DATE_FORMAT: Intl.DateTimeFormatOptions = {
+    day: "numeric",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+};
+
+export function storeStateInLocalStorage(stateName: string, value: string) {
+    localStorage.setItem(stateName, value);
+}
+
+export function readInitialStateFromLocalStorage(stateName: string): string {
+    const storedState = localStorage.getItem(stateName);
+    if (storedState && typeof storedState === "string") {
+        return storedState;
+    }
+    return "";
+}
+
 /**
  * Creates the table columns for the case selection table.
  *
@@ -101,7 +122,7 @@ export function makeCaseTableColumns(
             _type: "data",
             columnId: "dateUtcMs",
             sizeInPercent: 20,
-            formatValue: (value) => new Date(value).toLocaleDateString(),
+            formatValue: (value) => new Date(value).toLocaleDateString(undefined, DATE_FORMAT),
             filter: {
                 render: (props) => (
                     <DateRangePicker
