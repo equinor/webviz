@@ -73,6 +73,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
 };
 
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
+    console.log(raw);
     const ensembleIdents = raw.ensembleIdents
         ? raw.ensembleIdents.map((id) => RegularEnsembleIdent.fromString(id))
         : [];
@@ -88,4 +89,5 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedColorByAtom, raw.colorBy);
     setIfDefined(set, selectedIndexValueCriteriaAtom, raw.indexValueCriteria);
     setIfDefined(set, selectedIndicesWithValuesAtom, indicesWithValues);
+    setIfDefined(set, selectedTableNamesAtom, raw.tableNames);
 };

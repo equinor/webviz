@@ -63,6 +63,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setSelectedIndexValueCriteria,
     );
     function handleFilterChange(newFilter: InplaceVolumesFilterSettings) {
+        console.log(newFilter);
+        console.log(selectedEnsembleIdents, selectedTableNames, selectedIndicesWithValues);
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);
         setSelectedIndicesWithValues(newFilter.indicesWithValues);
@@ -101,7 +103,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 </Label>
                 <Label text="First Result">
                     <Dropdown
-                        value={selectedFirstResultName ?? undefined}
+                        value={selectedFirstResultName.value ?? undefined}
                         options={resultNameOptions}
                         onChange={setSelectedFirstResultName}
                     />
@@ -109,7 +111,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 {selectedPlotType !== PlotType.BAR ? (
                     <Label text="Second Result">
                         <Dropdown
-                            value={selectedSecondResultName ?? undefined}
+                            value={selectedSecondResultName.value ?? undefined}
                             options={resultNameOptions}
                             onChange={setSelectedSecondResultName}
                             disabled={selectedPlotType !== PlotType.SCATTER}
@@ -118,7 +120,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 ) : (
                     <Label text="Selector">
                         <Dropdown
-                            value={selectedSelectorColumn ?? undefined}
+                            value={selectedSelectorColumn.value ?? undefined}
                             options={selectorOptions}
                             onChange={setSelectedSelectorColumn}
                             disabled={selectedPlotType !== PlotType.BAR}
@@ -127,14 +129,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 )}
                 <Label text="Subplot by">
                     <Dropdown
-                        value={selectedSubplotBy ?? undefined}
+                        value={selectedSubplotBy.value ?? undefined}
                         options={subplotOptions}
                         onChange={setSelectedSubplotBy}
                     />
                 </Label>
                 <Label text="Color by">
                     <Dropdown
-                        value={selectedColorBy ?? undefined}
+                        value={selectedColorBy.value ?? undefined}
                         options={colorByOptions}
                         onChange={setSelectedColorBy}
                     />
@@ -142,7 +144,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             </div>
         </CollapsibleGroup>
     );
-
+    console.log(selectedTableNames);
     return (
         <InplaceVolumesFilterComponent
             ensembleSet={ensembleSet}

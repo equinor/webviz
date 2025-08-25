@@ -34,13 +34,10 @@ export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>
 
         return uniqueTableNames;
     },
-    isValidFunction: ({ value, precomputedValue: precomputed }) => {
-        const uniqueTableNames = precomputed;
-
+    isValidFunction: ({ value, precomputedValue: uniqueTableNames }) => {
         return value !== null && value.every((name) => uniqueTableNames.includes(name));
     },
-    fixupFunction: ({ precomputedValue: precomputed }) => {
-        const uniqueTableNames = precomputed;
+    fixupFunction: ({ precomputedValue: uniqueTableNames }) => {
         return uniqueTableNames;
     },
 });
