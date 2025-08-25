@@ -63,8 +63,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setSelectedIndexValueCriteria,
     );
     function handleFilterChange(newFilter: InplaceVolumesFilterSettings) {
-        console.log(newFilter);
-        console.log(selectedEnsembleIdents, selectedTableNames, selectedIndicesWithValues);
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);
         setSelectedIndicesWithValues(newFilter.indicesWithValues);
@@ -144,7 +142,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             </div>
         </CollapsibleGroup>
     );
-    console.log(selectedTableNames);
+
     return (
         <InplaceVolumesFilterComponent
             ensembleSet={ensembleSet}
