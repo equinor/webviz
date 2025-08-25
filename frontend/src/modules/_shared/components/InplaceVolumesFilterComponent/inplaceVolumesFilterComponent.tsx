@@ -51,7 +51,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     const [prevSyncedFilter, setPrevSyncedFilter] = React.useState<InplaceVolumesFilterSettings | null>(null);
 
     const debounceTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-    console.log(props.selectedEnsembleIdents);
+
     if (!isEqual(props.selectedEnsembleIdents, prevEnsembleIdents)) {
         setEnsembleIdents(props.selectedEnsembleIdents);
         setPrevEnsembleIdents(props.selectedEnsembleIdents);

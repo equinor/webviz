@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
@@ -18,27 +18,18 @@ import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volume
 import type { Interfaces } from "../interfaces";
 import { PlotType, plotTypeToStringMapping } from "../typesAndEnums";
 
-import {
-    selectedIndexValueCriteriaAtom,
-    userSelectedColorByAtom,
-    userSelectedIndicesWithValuesAtom,
-    userSelectedPlotTypeAtom,
-    userSelectedSecondResultNameAtom,
-    userSelectedFirstResultNameAtom,
-    userSelectedSelectorColumnAtom,
-    userSelectedSubplotByAtom,
-} from "./atoms/baseAtoms";
+import { selectedIndexValueCriteriaAtom, selectedPlotTypeAtom } from "./atoms/baseAtoms";
+import { tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
 import {
     selectedColorByAtom,
-    persistedEnsembleIdentsAtom,
+    selectedEnsembleIdentsAtom,
     selectedIndicesWithValuesAtom,
     selectedSecondResultNameAtom,
     selectedFirstResultNameAtom,
     selectedSelectorColumnAtom,
     selectedSubplotByAtom,
-    persistedTableNamesAtom,
-    tableDefinitionsAccessorAtom,
-} from "./atoms/derivedAtoms";
+    selectedTableNamesAtom,
+} from "./atoms/persistedAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 import { makeColorByOptions, makeSubplotByOptions } from "./utils/plotDimensionUtils";
 
@@ -47,28 +38,22 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const tableDefinitionsQueryResult = useAtomValue(tableDefinitionsQueryAtom);
     const tableDefinitionsAccessor = useAtomValue(tableDefinitionsAccessorAtom);
 
-    const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(persistedEnsembleIdentsAtom);
-    // const setSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
-    const [selectedTableNames, setSelectedTableNames] = useAtom(persistedTableNamesAtom);
-    const selectedSelectorColumn = useAtomValue(selectedSelectorColumnAtom);
-    const setSelectedSelectorColumn = useSetAtom(userSelectedSelectorColumnAtom);
+    const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
 
-    const selectedIndicesWithValues = useAtomValue(selectedIndicesWithValuesAtom);
-    const setSelectedIndicesWithValues = useSetAtom(userSelectedIndicesWithValuesAtom);
+    const [selectedTableNames, setSelectedTableNames] = useAtom(selectedTableNamesAtom);
 
-    const selectedFirstResultName = useAtomValue(selectedFirstResultNameAtom);
-    const setSelectedFirstResultName = useSetAtom(userSelectedFirstResultNameAtom);
+    const [selectedSelectorColumn, setSelectedSelectorColumn] = useAtom(selectedSelectorColumnAtom);
 
-    const selectedSecondResultName = useAtomValue(selectedSecondResultNameAtom);
-    const setSelectedSecondResultName = useSetAtom(userSelectedSecondResultNameAtom);
+    const [selectedIndicesWithValues, setSelectedIndicesWithValues] = useAtom(selectedIndicesWithValuesAtom);
 
-    const selectedSubplotBy = useAtomValue(selectedSubplotByAtom);
-    const setSelectedSubplotBy = useSetAtom(userSelectedSubplotByAtom);
+    const [selectedFirstResultName, setSelectedFirstResultName] = useAtom(selectedFirstResultNameAtom);
+    const [selectedSecondResultName, setSelectedSecondResultName] = useAtom(selectedSecondResultNameAtom);
 
-    const selectedColorBy = useAtomValue(selectedColorByAtom);
-    const setSelectedColorBy = useSetAtom(userSelectedColorByAtom);
+    const [selectedSubplotBy, setSelectedSubplotBy] = useAtom(selectedSubplotByAtom);
 
-    const [selectedPlotType, setSelectedPlotType] = useAtom(userSelectedPlotTypeAtom);
+    const [selectedColorBy, setSelectedColorBy] = useAtom(selectedColorByAtom);
+
+    const [selectedPlotType, setSelectedPlotType] = useAtom(selectedPlotTypeAtom);
     const [selectedIndexValueCriteria, setSelectedIndexValueCriteria] = useAtom(selectedIndexValueCriteriaAtom);
 
     useApplyInitialSettingsToState(
@@ -98,7 +83,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     ];
 
     const subplotOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames.value);
-    const colorByOptions = makeColorByOptions(tableDefinitionsAccessor, selectedSubplotBy, selectedTableNames.value);
+    const colorByOptions = makeColorByOptions(
+        tableDefinitionsAccessor,
+        selectedSubplotBy.value,
+        selectedTableNames.value,
+    );
     const plotTypeOptions: DropdownOption<PlotType>[] = [];
     for (const [type, label] of Object.entries(plotTypeToStringMapping)) {
         plotTypeOptions.push({ label, value: type as PlotType });
@@ -163,7 +152,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
             availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
             selectedEnsembleIdents={selectedEnsembleIdents.value}
-            selectedIndicesWithValues={selectedIndicesWithValues}
+            selectedIndicesWithValues={selectedIndicesWithValues.value}
             selectedTableNames={selectedTableNames.value}
             selectedAllowIndicesValuesIntersection={
                 selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION

@@ -1,18 +1,17 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
-import { userSelectedPlotTypeAtom } from "./settings/atoms/baseAtoms";
+import { selectedPlotTypeAtom } from "./settings/atoms/baseAtoms";
+import { areSelectedTablesComparableAtom, areTableDefinitionSelectionsValidAtom } from "./settings/atoms/derivedAtoms";
 import {
-    areSelectedTablesComparableAtom,
-    areTableDefinitionSelectionsValidAtom,
     selectedColorByAtom,
-    persistedEnsembleIdentsAtom,
+    selectedEnsembleIdentsAtom,
     selectedIndicesWithValuesAtom,
     selectedSecondResultNameAtom,
     selectedFirstResultNameAtom,
     selectedSelectorColumnAtom,
     selectedSubplotByAtom,
     selectedTableNamesAtom,
-} from "./settings/atoms/derivedAtoms";
+} from "./settings/atoms/persistedAtoms";
 import type { InplaceVolumesFilterSelections, PlotType } from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
@@ -33,17 +32,17 @@ export type Interfaces = {
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     filter: (get) => {
         return {
-            ensembleIdents: get(persistedEnsembleIdentsAtom).value,
-            tableNames: get(selectedTableNamesAtom),
-            indicesWithValues: get(selectedIndicesWithValuesAtom),
+            ensembleIdents: get(selectedEnsembleIdentsAtom).value,
+            tableNames: get(selectedTableNamesAtom).value,
+            indicesWithValues: get(selectedIndicesWithValuesAtom).value,
             areSelectedTablesComparable: get(areSelectedTablesComparableAtom),
         };
     },
-    firstResultName: (get) => get(selectedFirstResultNameAtom),
-    secondResultName: (get) => get(selectedSecondResultNameAtom),
-    selectorColumn: (get) => get(selectedSelectorColumnAtom),
-    subplotBy: (get) => get(selectedSubplotByAtom),
-    colorBy: (get) => get(selectedColorByAtom),
-    plotType: (get) => get(userSelectedPlotTypeAtom),
+    firstResultName: (get) => get(selectedFirstResultNameAtom).value,
+    secondResultName: (get) => get(selectedSecondResultNameAtom).value,
+    selectorColumn: (get) => get(selectedSelectorColumnAtom).value,
+    subplotBy: (get) => get(selectedSubplotByAtom).value,
+    colorBy: (get) => get(selectedColorByAtom).value,
+    plotType: (get) => get(selectedPlotTypeAtom),
     areTableDefinitionSelectionsValid: (get) => get(areTableDefinitionSelectionsValidAtom),
 };

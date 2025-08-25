@@ -1,44 +1,15 @@
 import { atom } from "jotai";
 
-import type { InplaceVolumesIndexWithValues_api } from "@api";
-import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
-import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
-import { fixupUserSelectedIndexValues } from "@modules/_shared/InplaceVolumes/fixupUserSelectedIndexValues";
-import {
-    TableDefinitionsAccessor,
-    makeUniqueTableNamesIntersection,
-} from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
+import { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 
-import {
-    selectedIndexValueCriteriaAtom,
-    userSelectedGroupByIndicesAtom,
-    userSelectedEnsembleIdentsAtom,
-    userSelectedIndicesWithValuesAtom,
-    userSelectedResultNamesAtom,
-    userSelectedTableNamesAtom,
-} from "./baseAtoms";
+import { selectedIndexValueCriteriaAtom } from "./baseAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
-
-export const selectedEnsembleIdentsAtom = atom((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
-    const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
-
-    if (!userSelectedEnsembleIdents) {
-        if (ensembleSet.getRegularEnsembleArray().length === 0) {
-            return [];
-        }
-        return [ensembleSet.getRegularEnsembleArray()[0].getIdent()];
-    }
-
-    const newSelectedEnsembleIdents = userSelectedEnsembleIdents.filter((ensemble) =>
-        ensembleSet.hasEnsemble(ensemble),
-    );
-
-    const validatedEnsembleIdents = fixupRegularEnsembleIdents(newSelectedEnsembleIdents, ensembleSet);
-
-    return validatedEnsembleIdents ?? [];
-});
+import {
+    selectedEnsembleIdentsAtom,
+    selectedIndicesWithValuesAtom,
+    selectedResultNamesAtom,
+    selectedTableNamesAtom,
+} from "./persistableAtoms";
 
 export const tableDefinitionsAccessorAtom = atom<TableDefinitionsAccessor>((get) => {
     const selectedTableNames = get(selectedTableNamesAtom);
@@ -47,7 +18,7 @@ export const tableDefinitionsAccessorAtom = atom<TableDefinitionsAccessor>((get)
 
     return new TableDefinitionsAccessor(
         tableDefinitions.isLoading ? [] : tableDefinitions.data,
-        selectedTableNames,
+        selectedTableNames.value,
         selectedIndexValueCriteria,
     );
 });
@@ -65,19 +36,19 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
         return false;
     }
 
-    if (!tableDefinitionsAccessor.hasEnsembleIdents(selectedEnsembleIdents)) {
+    if (!tableDefinitionsAccessor.hasEnsembleIdents(selectedEnsembleIdents.value)) {
         return false;
     }
 
-    if (!tableDefinitionsAccessor.hasTableNames(selectedTableNames)) {
+    if (!tableDefinitionsAccessor.hasTableNames(selectedTableNames.value)) {
         return false;
     }
 
-    if (!tableDefinitionsAccessor.hasResultNames(selectedResultNames)) {
+    if (!tableDefinitionsAccessor.hasResultNames(selectedResultNames.value)) {
         return false;
     }
 
-    if (!tableDefinitionsAccessor.hasIndicesWithValues(selectedIndicesWithValues)) {
+    if (!tableDefinitionsAccessor.hasIndicesWithValues(selectedIndicesWithValues.value)) {
         return false;
     }
 
@@ -87,60 +58,4 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
 export const areSelectedTablesComparableAtom = atom<boolean>((get) => {
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
     return tableDefinitionsAccessor.getAreTablesComparable();
-});
-
-export const selectedTableNamesAtom = atom<string[]>((get) => {
-    const userSelectedTableNames = get(userSelectedTableNamesAtom);
-    const tableDefinitionsQueryResult = get(tableDefinitionsQueryAtom);
-
-    const uniqueTableNames = makeUniqueTableNamesIntersection(tableDefinitionsQueryResult.data);
-
-    if (!userSelectedTableNames) {
-        return uniqueTableNames;
-    }
-
-    return fixupUserSelection(userSelectedTableNames, uniqueTableNames);
-});
-
-export const selectedResultNamesAtom = atom<string[]>((get) => {
-    const userSelectedResultNames = get(userSelectedResultNamesAtom);
-    const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
-
-    const fixedSelection = fixupUserSelection(
-        userSelectedResultNames,
-        tableDefinitionsAccessor.getResultNamesIntersection(),
-    );
-
-    return fixedSelection;
-});
-
-export const selectedGroupByIndicesAtom = atom<string[]>((get) => {
-    const userSelectedGroupByIndices = get(userSelectedGroupByIndicesAtom);
-    const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
-
-    const availableUniqueGroupByIndices: string[] = [];
-    for (const indicesWithValues of tableDefinitionsAccessor.getCommonIndicesWithValues()) {
-        availableUniqueGroupByIndices.push(indicesWithValues.indexColumn);
-    }
-
-    if (!userSelectedGroupByIndices || userSelectedGroupByIndices.length === 0) {
-        return [];
-    }
-
-    return fixupUserSelection(userSelectedGroupByIndices, availableUniqueGroupByIndices, FixupSelection.SELECT_NONE);
-});
-
-export const selectedIndicesWithValuesAtom = atom<InplaceVolumesIndexWithValues_api[]>((get) => {
-    const userSelectedIndicesWithValues = get(userSelectedIndicesWithValuesAtom);
-    const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
-
-    const uniqueIndicesWithValues = tableDefinitionsAccessor.getCommonIndicesWithValues();
-
-    const fixedUpIndicesWithValues: InplaceVolumesIndexWithValues_api[] = fixupUserSelectedIndexValues(
-        userSelectedIndicesWithValues,
-        uniqueIndicesWithValues,
-        FixupSelection.SELECT_ALL,
-    );
-
-    return fixedUpIndicesWithValues;
 });
