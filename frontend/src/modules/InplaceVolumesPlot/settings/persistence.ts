@@ -3,6 +3,7 @@ import type { DeserializeStateFunction, SerializeStateFunction } from "@framewor
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
+import type { InplaceVolumesIndexWithValuesAsStrings } from "@modules/_shared/jtd-schemas/definitions/InplaceVolumesIndexWithValues";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
 import { selectedIndexValueCriteriaAtom } from "./atoms/baseAtoms";
@@ -16,14 +17,10 @@ import {
     selectedTableNamesAtom,
 } from "./atoms/persistedAtoms";
 
-// export type InplaceVolumesIndexWithValues_api = {
-//     indexColumn: string;
-//     values: Array<string | number>;
-// };
 export type SerializedSettings = {
     ensembleIdents: string[];
     tableNames: string[];
-    indicesWithValues: string[];
+    indicesWithValues: InplaceVolumesIndexWithValuesAsStrings[];
     firstResultName: string | null;
     secondResultName: string | null;
     groupBy: string;
@@ -32,7 +29,7 @@ export type SerializedSettings = {
     indexValueCriteria: IndexValueCriteria;
 };
 
-const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
+const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
     properties: {
         ensembleIdents: {
             elements: { type: "string" },
@@ -41,7 +38,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
             elements: { type: "string" },
         },
         indicesWithValues: {
-            elements: { type: "string" },
+            ...inject("InplaceVolumesIndexWithValuesAsStrings"),
         },
         firstResultName: { type: "string", nullable: true },
         secondResultName: { type: "string", nullable: true },
@@ -58,12 +55,14 @@ export const SERIALIZED_SETTINGS = schemaBuilder.build();
 
 export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => {
     const selectedEnsembleIdentsString = get(selectedEnsembleIdentsAtom).value.map((ident) => ident.toString());
-    const indicesWithValuesString = get(selectedIndicesWithValuesAtom).value.map((iv) => JSON.stringify(iv));
-
+    const indicesWithStringifiedValues = get(selectedIndicesWithValuesAtom).value.map((index) => ({
+        indexColumn: index.indexColumn,
+        values: index.values.map((value) => value.toString()),
+    }));
     return {
         ensembleIdents: selectedEnsembleIdentsString,
         tableNames: get(selectedTableNamesAtom).value,
-        indicesWithValues: indicesWithValuesString,
+        indicesWithValues: indicesWithStringifiedValues,
         firstResultName: get(selectedFirstResultNameAtom).value,
         secondResultName: get(selectedSecondResultNameAtom).value,
         groupBy: get(selectedSubplotByAtom).value,
@@ -76,17 +75,12 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     const ensembleIdents = raw.ensembleIdents
         ? raw.ensembleIdents.map((id) => RegularEnsembleIdent.fromString(id))
         : [];
-    const indicesWithValues = raw.indicesWithValues
-        ? raw.indicesWithValues.map((jsonString) => {
-              return JSON.parse(jsonString) as InplaceVolumesIndexWithValues_api;
-          })
-        : [];
     setIfDefined(set, selectedEnsembleIdentsAtom, ensembleIdents);
     setIfDefined(set, selectedFirstResultNameAtom, raw.firstResultName);
     setIfDefined(set, selectedSecondResultNameAtom, raw.secondResultName);
     setIfDefined(set, selectedSubplotByAtom, raw.groupBy);
     setIfDefined(set, selectedColorByAtom, raw.colorBy);
     setIfDefined(set, selectedIndexValueCriteriaAtom, raw.indexValueCriteria);
-    setIfDefined(set, selectedIndicesWithValuesAtom, indicesWithValues);
+    setIfDefined(set, selectedIndicesWithValuesAtom, raw.indicesWithValues);
     setIfDefined(set, selectedTableNamesAtom, raw.tableNames);
 };
