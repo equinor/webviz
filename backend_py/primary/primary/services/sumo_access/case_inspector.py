@@ -141,3 +141,10 @@ class CaseInspector:
         case = await self._get_or_create_case_context_async()
         field_identifiers = await case.fieldidentifiers_async
         return field_identifiers
+
+    async def get_standard_results_in_iteration_async(self, iteration_name: str) -> list[str]:
+        """Retrieve the standard results for a specific iteration"""
+        case = await self._get_or_create_case_context_async()
+        iteration = case.filter(iteration=iteration_name)
+        standard_results = await iteration.standard_results_async
+        return standard_results

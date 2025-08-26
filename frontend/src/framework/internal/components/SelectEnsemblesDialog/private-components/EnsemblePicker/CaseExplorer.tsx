@@ -141,7 +141,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         }
 
         return makeCaseRowData(cases);
-    }, [casesQuery, selectedStandardResults]);
+    }, [casesQuery.data, selectedStandardResults]);
 
     const currentCaseSelection: CaseSelection = React.useMemo(() => {
         const selectedCase = casesQuery.data?.find((c) => c.uuid === selectedCaseUuid);

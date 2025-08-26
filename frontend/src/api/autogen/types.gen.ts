@@ -122,6 +122,7 @@ export type EnsembleDetails_api = {
     realizations: Array<number>;
     stratigraphicColumnIdentifier: string;
     timestamps: EnsembleTimestamps_api;
+    standardResults: Array<string>;
 };
 
 export type EnsembleIdent_api = {

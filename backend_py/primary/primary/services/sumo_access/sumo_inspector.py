@@ -17,10 +17,12 @@ LOGGER = logging.getLogger(__name__)
 class FieldInfo(BaseModel):
     identifier: str
 
+
 class EnsembleInfo(BaseModel):
     name: str
     realization_count: int
     standard_results: list[str]
+
 
 class CaseInfo(BaseModel):
     uuid: str
@@ -30,6 +32,7 @@ class CaseInfo(BaseModel):
     updated_at_utc_ms: int
     description: str
     ensembles: list[EnsembleInfo]
+
 
 class SumoInspector:
     def __init__(self, access_token: str):
@@ -45,10 +48,12 @@ class SumoInspector:
         LOGGER.debug(timer.to_string())
         return [FieldInfo(identifier=field_ident) for field_ident in field_idents]
 
-
-    async def get_cases_async(self, field_identifier: str) -> list[CaseInfo]:   
+    async def get_cases_async(self, field_identifier: str) -> list[CaseInfo]:
         """
-        Get all cases with available result types from SUMO using aggregations and filters
+        Get all cases with available result types from SUMO using aggregations and filters.
+
+        - The case timestamp is max timestamp for all documents for given case (including metadata document)
+        - Excluding all aggregated documents
         """
 
         payload = {
@@ -56,11 +61,7 @@ class SumoInspector:
             "query": {
                 "bool": {
                     "must": [
-                        {
-                            "match": {
-                                "masterdata.smda.field.identifier.keyword": field_identifier
-                            }
-                        },
+                        {"match": {"masterdata.smda.field.identifier.keyword": field_identifier}},
                     ],
                     "must_not": [{"exists": {"field": "fmu.aggregation"}}],
                 },
@@ -83,11 +84,6 @@ class SumoInspector:
                                 "field": "_sumo.timestamp",
                             }
                         },
-                        "timestamp_min": {
-                            "min": {
-                                "field": "_sumo.timestamp",
-                            }
-                        },
                         "status": {
                             "terms": {
                                 "field": "_sumo.status.keyword",
@@ -106,25 +102,13 @@ class SumoInspector:
                                 "size": 100,
                             }
                         },
-                        "ensemble_uuids": {
+                        "iteration_names": {
                             "terms": {
                                 "field": "fmu.iteration.name.keyword",
                                 "size": 65535,
                             },
                             "aggs": {
-                                "realizations_count": {
-                                    "cardinality": {"field": "fmu.realization.id"}
-                                },
-                                "timestamp_max": {
-                                    "max": {
-                                        "field": "_sumo.timestamp",
-                                    }
-                                },
-                                "timestamp_min": {
-                                    "min": {
-                                        "field": "_sumo.timestamp",
-                                    }
-                                },
+                                "realizations_count": {"cardinality": {"field": "fmu.realization.id"}},
                                 "standard_result": {
                                     "terms": {
                                         "field": "data.standard_result.name.keyword",
@@ -147,33 +131,27 @@ class SumoInspector:
         case_info_arr: list[CaseInfo] = []
 
         for case_bucket in case_buckets:
-            case_uuid = case_bucket["key"]        
+            case_uuid = case_bucket["key"]
             description = get_all_buckets_key_as_list(case_bucket, "description")
             case_timestamp_max = get_number_value_for_key(case_bucket, "timestamp_max")
-            case_timestamp_min = get_number_value_for_key(case_bucket, "timestamp_min")
             status = get_all_buckets_key_as_list(case_bucket, "status")
             user = get_single_bucket_key_as_str(case_bucket, "user")
             case_name = get_single_bucket_key_as_str(case_bucket, "name")
 
-            ensemble_buckets = case_bucket.get("ensemble_uuids", {}).get("buckets", [])
+            ensemble_buckets = case_bucket.get("iteration_names", {}).get("buckets", [])
 
             ensemble_info_arr: list[EnsembleInfo] = []
             for ensemble_bucket in ensemble_buckets:
                 ensemble_name = ensemble_bucket["key"]
                 realizations_count = get_number_value_for_key(ensemble_bucket, "realizations_count")
-                ens_timestamp_max = get_number_value_for_key(ensemble_bucket, "timestamp_max")
-                ens_timestamp_min = get_number_value_for_key(ensemble_bucket, "timestamp_min")
                 standard_result = get_all_buckets_key_as_list(ensemble_bucket, "standard_result")
                 if realizations_count is not None:
                     ensemble_info = EnsembleInfo(
                         name=ensemble_name,
                         realization_count=realizations_count,
-                        # updated_at_utc_ms=ens_timestamp_max,
                         standard_results=standard_result,
                     )
                     ensemble_info_arr.append(ensemble_info)
-
-                    # Handle cases where realizations_count might be missing or null
 
             case_info = CaseInfo(
                 uuid=case_uuid,
@@ -208,6 +186,7 @@ def get_single_bucket_key_as_str(obj: dict, key: str) -> str:
     if buckets and len(buckets) == 1 and isinstance(buckets[0], dict):
         return buckets[0].get("key", "")
     raise ValueError(f"Expected a single bucket for key '{key}', but found: {buckets}")
+
 
 def get_number_value_for_key(obj: dict, key: str) -> int:
     """

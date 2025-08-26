@@ -51,11 +51,14 @@ async def get_cases(
             user=ci.user,
             updatedAtUtcMs=ci.updated_at_utc_ms,
             description=ci.description,
-            ensembles=[schemas.EnsembleInfo(
-                name=ei.name,
-                realizationCount=ei.realization_count,
-                standardResults=ei.standard_results,
-            ) for ei in ci.ensembles]
+            ensembles=[
+                schemas.EnsembleInfo(
+                    name=ei.name,
+                    realizationCount=ei.realization_count,
+                    standardResults=ei.standard_results,
+                )
+                for ei in ci.ensembles
+            ],
         )
         for ci in case_info_arr
     ]
@@ -78,6 +81,7 @@ async def get_ensemble_details(
     field_identifiers = await case_inspector.get_field_identifiers_async()
     stratigraphic_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
     timestamps = await case_inspector.get_iteration_timestamps_async(ensemble_name)
+    standard_results = await case_inspector.get_standard_results_in_iteration_async(ensemble_name)
 
     if len(field_identifiers) != 1:
         raise NotImplementedError("Multiple field identifiers not supported")
@@ -93,6 +97,7 @@ async def get_ensemble_details(
             caseUpdatedAtUtcMs=timestamps.case_updated_at_utc_ms,
             dataUpdatedAtUtcMs=timestamps.data_updated_at_utc_ms,
         ),
+        standardResults=standard_results,
     )
 
 
