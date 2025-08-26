@@ -1,20 +1,21 @@
+import type { InplaceVolumesIndexWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
-import { tableDefinitionsQueryAtom } from "./queryAtoms";
-import { makeUniqueTableNamesIntersection } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
-import { tableDefinitionsAccessorAtom } from "./derivedAtoms";
-import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
-import type { InplaceVolumesIndexWithValues_api } from "@api";
+import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
 import { fixupUserSelectedIndexValues } from "@modules/_shared/InplaceVolumes/fixupUserSelectedIndexValues";
+import { makeUniqueTableNamesIntersection } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 
-export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsembleIdent[]>({
-    initialValue: [],
+import { tableDefinitionsAccessorAtom } from "./derivedAtoms";
+import { tableDefinitionsQueryAtom } from "./queryAtoms";
+
+export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsembleIdent[] | null>({
+    initialValue: null,
     isValidFunction: ({ get, value }) => {
         const ensembleSet = get(EnsembleSetAtom);
 
-        return value.every((ident) => ensembleSet.hasEnsemble(ident));
+        return value?.every((ident) => ensembleSet.hasEnsemble(ident)) ?? false;
     },
     fixupFunction: ({ value, get }) => {
         const ensembleSet = get(EnsembleSetAtom);
@@ -22,8 +23,8 @@ export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsemble
     },
 });
 
-export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>({
-    initialValue: [],
+export const selectedTableNamesAtom = persistableFixableAtom<string[] | null, string[]>({
+    initialValue: null,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsQueryResult = get(tableDefinitionsQueryAtom);
         const uniqueTableNames = makeUniqueTableNamesIntersection(tableDefinitionsQueryResult.data);
@@ -41,23 +42,23 @@ export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>
     },
 });
 
-export const selectedResultNamesAtom = persistableFixableAtom<string[]>({
-    initialValue: [],
+export const selectedResultNamesAtom = persistableFixableAtom<string[] | null>({
+    initialValue: null,
     isValidFunction: ({ value, get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         const validResultNames = tableDefinitionsAccessor.getResultNamesIntersection();
 
-        return value.every((name) => validResultNames.includes(name));
+        return value?.every((name) => validResultNames.includes(name)) ?? false;
     },
     fixupFunction: ({ value, get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
-        return fixupUserSelection(value, tableDefinitionsAccessor.getResultNamesIntersection());
+        return fixupUserSelection(value ?? [], tableDefinitionsAccessor.getResultNamesIntersection());
     },
 });
 
-export const selectedGroupByIndicesAtom = persistableFixableAtom<string[], string[]>({
-    initialValue: [],
+export const selectedGroupByIndicesAtom = persistableFixableAtom<string[] | null, string[]>({
+    initialValue: null,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         return tableDefinitionsAccessor.getCommonIndicesWithValues().map((el) => el.indexColumn);
@@ -70,8 +71,8 @@ export const selectedGroupByIndicesAtom = persistableFixableAtom<string[], strin
     },
 });
 
-export const selectedIndicesWithValuesAtom = persistableFixableAtom<InplaceVolumesIndexWithValues_api[]>({
-    initialValue: [],
+export const selectedIndicesWithValuesAtom = persistableFixableAtom<InplaceVolumesIndexWithValues_api[] | null>({
+    initialValue: null,
     isValidFunction: ({ value, get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
         const uniqueIndicesWithValues = tableDefinitionsAccessor.getCommonIndicesWithValues();
