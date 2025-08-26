@@ -5,7 +5,9 @@ import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinit
 import type { InplaceVolumesIndexWithValuesAsStrings } from "@modules/_shared/jtd-schemas/definitions/InplaceVolumesIndexWithValues";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import { selectedIndexValueCriteriaAtom } from "./atoms/baseAtoms";
+import { PlotType } from "../typesAndEnums";
+
+import { selectedIndexValueCriteriaAtom, selectedPlotTypeAtom } from "./atoms/baseAtoms";
 import {
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
@@ -24,6 +26,7 @@ export type SerializedSettings = {
     secondResultName: string | null;
     groupBy: string;
     colorBy: string;
+    plotType: PlotType;
 
     indexValueCriteria: IndexValueCriteria;
 };
@@ -47,6 +50,9 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
         indexValueCriteria: {
             enum: Object.values(IndexValueCriteria),
         },
+        plotType: {
+            enum: Object.values(PlotType),
+        },
     },
 }));
 
@@ -67,6 +73,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         groupBy: get(selectedSubplotByAtom).value,
         colorBy: get(selectedColorByAtom).value,
         indexValueCriteria: get(selectedIndexValueCriteriaAtom),
+        plotType: get(selectedPlotTypeAtom),
     };
 };
 
@@ -82,4 +89,5 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedIndexValueCriteriaAtom, raw.indexValueCriteria);
     setIfDefined(set, selectedIndicesWithValuesAtom, raw.indicesWithValues);
     setIfDefined(set, selectedTableNamesAtom, raw.tableNames);
+    setIfDefined(set, selectedPlotTypeAtom, raw.plotType);
 };
