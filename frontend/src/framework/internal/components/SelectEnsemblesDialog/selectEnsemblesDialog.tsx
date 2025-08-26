@@ -334,6 +334,29 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         </div>
                     </div>
                 }
+                drawer={{
+                    open: showEnsemblePicker,
+                    onClose: handleCloseEnsemblePicker,
+                    width: "85%",
+                    content: (
+                        <div className="p-2 h-full">
+                            <EnsemblePicker
+                                nextEnsembleColor={nextEnsembleColor}
+                                selectedEnsembles={
+                                    ensemblePickerMode === EnsemblePickerMode.ADD_REGULAR_ENSEMBLE
+                                        ? selectedRegularEnsembles
+                                        : []
+                                }
+                                onPickEnsemble={handlePickEnsemble}
+                                pickButtonLabel={
+                                    ensemblePickerMode === EnsemblePickerMode.ADD_REGULAR_ENSEMBLE
+                                        ? "Add Ensemble"
+                                        : "Select Ensemble"
+                                }
+                            />
+                        </div>
+                    ),
+                }}
             >
                 <div className="relative flex flex-col w-full h-full">
                     <EnsembleTables
@@ -352,29 +375,6 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     />
                 </div>
                 {isEnsembleSetLoading && <LoadingOverlay text="Loading ensembles..." />}
-            </Dialog>
-            <Dialog
-                open={showEnsemblePicker}
-                title="Explore Ensembles"
-                showCloseCross
-                modal
-                onClose={handleCloseEnsemblePicker}
-                width={"70%"}
-                minWidth={600}
-                height={"75%"}
-            >
-                <EnsemblePicker
-                    nextEnsembleColor={nextEnsembleColor}
-                    selectedEnsembles={
-                        ensemblePickerMode === EnsemblePickerMode.ADD_REGULAR_ENSEMBLE ? selectedRegularEnsembles : []
-                    }
-                    onPickEnsemble={handlePickEnsemble}
-                    pickButtonLabel={
-                        ensemblePickerMode === EnsemblePickerMode.ADD_REGULAR_ENSEMBLE
-                            ? "Add Ensemble"
-                            : "Select Ensemble"
-                    }
-                />
             </Dialog>
             <Dialog
                 open={confirmCancel}

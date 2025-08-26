@@ -161,9 +161,6 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         };
     }, [casesQuery.data, selectedCaseUuid, selectedStandardResults]);
 
-    // TOdO:
-    React.useEffect(() => {}, []);
-
     if (!isEqual(currentCaseSelection, prevCaseSelection)) {
         props.onCaseSelectionChange(currentCaseSelection);
         setPrevCaseSelection(currentCaseSelection);
@@ -221,7 +218,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                 </div>
                 <Table
                     rowIdentifier="caseId"
-                    height={500} // TODO: Fix height to use available space?
+                    height={500} // TODO: Fix height to use available space
                     numPendingRows={!casesQuery.data ? "fill" : undefined}
                     columns={caseTableColumns}
                     rows={caseRowData}

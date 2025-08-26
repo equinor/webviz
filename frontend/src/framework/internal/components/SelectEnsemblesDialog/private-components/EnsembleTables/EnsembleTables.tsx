@@ -140,7 +140,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
             </div>
 
             {/* Delta-ensemble table */}
-            <div className="flex-1 flex-col">
+            <div className="flex-1 flex-col pt-1">
                 <div className="flex justify-between items-center mb-1">
                     <div className="flex items-center">
                         <div className="fill-indigo-600">
