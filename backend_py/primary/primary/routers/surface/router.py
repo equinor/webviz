@@ -7,6 +7,7 @@ from typing import Annotated, List, Optional, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
+from webviz_pkg.core_utils.timestamp_utils import timestamp_utc_ms_to_iso_str
 
 from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.sumo_access.surface_access import SurfaceAccess
@@ -215,6 +216,7 @@ from typing import TypeVar, Type, Any
 
 T = TypeVar("T")
 
+
 def expect(value: Any, typ: Type[T] | tuple[Type[Any], ...]) -> T:
     if not isinstance(value, typ):
         raise TypeError(f"Expected {typ}, got {type(value).__name__}")
@@ -238,6 +240,13 @@ async def get_statistical_surface_data_hybrid(
     if not isinstance(addr, StatisticalSurfaceAddress):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Endpoint only supports address type STAT")
 
+    access_token = authenticated_user.get_sumo_access_token()
+
+    case_inspector = CaseInspector.from_case_uuid(access_token, addr.case_uuid)
+    timestamps = await case_inspector.get_iteration_timestamps_async(addr.ensemble_name)
+    last_updated_iso_str = timestamp_utc_ms_to_iso_str(timestamps.data_updated_at_utc_ms)
+    LOGGER.debug(f"Most recent timestamp as iso str: {last_updated_iso_str}")
+
     # !!!!!!!!!!!!!
     # Todo!
     # We should include the most recent case/ensemble/object timestamp in the hash here as well
@@ -249,7 +258,6 @@ async def get_statistical_surface_data_hybrid(
     sumo_task_id = await task_tracker.get_task_id_by_fingerprint_async(param_hash)
     LOGGER.debug(f"Got existing sumo_task_id: {sumo_task_id=} for param_hash: {param_hash=}")
 
-    access_token = authenticated_user.get_sumo_access_token()
     access = SurfaceAccess.from_iteration_name(access_token, addr.case_uuid, addr.ensemble_name)
 
     new_sumo_job_was_submitted = False
@@ -266,11 +274,15 @@ async def get_statistical_surface_data_hybrid(
             time_or_interval_str=addr.iso_time_or_interval,
         )
 
+        # According to Sumo team, the tasks and task results will be purged after 24 hours,
+        # so we set our TTL slightly shorter at 23 hours
+        task_ttl_s = 23 * 60 * 60
         new_sumo_job_was_submitted = True
         await task_tracker.register_task_with_fingerprint_async(
             task_system="sumo_task",
             task_id=sumo_task_id,
             fingerprint=param_hash,
+            ttl_s=task_ttl_s,
             task_start_time_utc_s=task_start_time_utc_s,
             expected_store_key=None,
         )

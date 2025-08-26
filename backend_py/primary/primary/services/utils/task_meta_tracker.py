@@ -17,17 +17,16 @@ LOGGER = logging.getLogger(__name__)
 class TaskMetaTrackerFactory:
     _instance = None
 
-    def __init__(self, redis_client: redis.Redis, ttl_s: int):
+    def __init__(self, redis_client: redis.Redis):
         self._redis_client: redis.Redis = redis_client
-        self._ttl_s: int = ttl_s
 
     @classmethod
-    def initialize(cls, redis_url: str, ttl_s: int) -> None:
+    def initialize(cls, redis_url: str) -> None:
         if cls._instance is not None:
             raise RuntimeError("TaskMetaTrackerFactory is already initialized")
 
         redis_client = redis.Redis.from_url(redis_url, decode_responses=True)
-        cls._instance = cls(redis_client, ttl_s)
+        cls._instance = cls(redis_client)
 
     @classmethod
     def get_instance(cls) -> "TaskMetaTrackerFactory":
@@ -39,7 +38,7 @@ class TaskMetaTrackerFactory:
         if not user_id:
             raise ValueError("A user_id must be specified")
 
-        return TaskMetaTracker(user_id, self._redis_client, self._ttl_s)
+        return TaskMetaTracker(user_id, self._redis_client)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -51,16 +50,20 @@ class TaskMeta:
 
 
 class TaskMetaTracker:
-    def __init__(self, user_id: str, redis_client: redis.Redis, ttl_s: int):
+    def __init__(self, user_id: str, redis_client: redis.Redis):
         if not user_id:
             raise ValueError("A user_id must be specified")
 
         self._user_id = user_id
         self._redis_client: redis.Redis = redis_client
-        self._ttl_s: int = ttl_s
 
     async def register_task_async(
-        self, task_system: str, task_id: str, task_start_time_utc_s: float | None, expected_store_key: str | None
+        self,
+        task_system: str,
+        task_id: str,
+        ttl_s: int,
+        task_start_time_utc_s: float | None,
+        expected_store_key: str | None,
     ) -> None:
         redis_hash_name = self._make_full_redis_key_for_task(task_id)
 
@@ -73,7 +76,7 @@ class TaskMetaTracker:
             raise ValueError(f"Task with id {task_id} already exists in the tracker")
 
         # Set TTL for the hash
-        await self._redis_client.expire(redis_hash_name, self._ttl_s)
+        await self._redis_client.expire(redis_hash_name, ttl_s)
 
         # Now set the remaining keys/fields in the hash
         await self._redis_client.hset(
@@ -89,16 +92,23 @@ class TaskMetaTracker:
         task_system: str,
         task_id: str,
         fingerprint: str,
+        ttl_s: int,
         task_start_time_utc_s: float | None,
         expected_store_key: str | None,
     ) -> None:
         # Register the task itself in the usual way
-        await self.register_task_async(task_system, task_id, task_start_time_utc_s, expected_store_key)
+        await self.register_task_async(
+            task_system=task_system,
+            task_id=task_id,
+            ttl_s=ttl_s,
+            task_start_time_utc_s=task_start_time_utc_s,
+            expected_store_key=expected_store_key,
+        )
 
         # Register the mapping from task fingerprint to task id
         # May want to set a shorter TTL for this entry
         fingerprint_redis_key = self._make_full_redis_key_for_fingerprint(fingerprint)
-        _res = await self._redis_client.setex(fingerprint_redis_key, self._ttl_s, task_id)
+        _res = await self._redis_client.setex(fingerprint_redis_key, ttl_s, task_id)
 
     async def get_task_meta_async(self, task_id: str) -> TaskMeta | None:
         redis_hash_name = self._make_full_redis_key_for_task(task_id)

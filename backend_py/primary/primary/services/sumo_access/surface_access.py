@@ -1,10 +1,8 @@
 import asyncio
 import logging
 import time
-import json
 from io import BytesIO
 from typing import Sequence
-from pydantic import BaseModel
 
 import xtgeo
 import httpx
@@ -16,6 +14,7 @@ from fmu.sumo.explorer.objects import Surface
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 from primary.services.utils.otel_span_tracing import otel_span_decorator, start_otel_span, start_otel_span_async
 from primary.services.utils.statistic_function import StatisticFunction
+from primary.services.utils.surface_helpers import are_all_surface_values_undefined
 from primary.services.service_exceptions import (
     Service,
     NoDataError,
@@ -32,7 +31,6 @@ from .queries.surface_queries import RealizationSurfQueries, ObservedSurfQueries
 from .sumo_client_factory import create_sumo_client
 
 from dataclasses import dataclass
-from typing import TypeVar, Union
 
 
 LOGGER = logging.getLogger(__name__)
@@ -191,6 +189,9 @@ class SurfaceAccess:
             xtgeo_surf = xtgeo.surface_from_file(byte_stream)
             perf_metrics.record_lap("xtgeo-read")
 
+        if are_all_surface_values_undefined(xtgeo_surf):
+            raise InvalidDataError("Surface contains only undefined attribute values", Service.SUMO)
+
         LOGGER.debug(
             f"Got realization surface from Sumo in: {perf_metrics.to_string()} "
             f"[{xtgeo_surf.ncol}x{xtgeo_surf.nrow}, {size_mb:.2f}MB] ({surf_str})"
@@ -235,6 +236,9 @@ class SurfaceAccess:
 
         xtgeo_surf = xtgeo.surface_from_file(byte_stream)
         perf_metrics.record_lap("xtgeo-read")
+
+        if are_all_surface_values_undefined(xtgeo_surf):
+            raise InvalidDataError("Surface contains only undefined attribute values", Service.SUMO)
 
         size_mb = byte_stream.getbuffer().nbytes / (1024 * 1024)
         LOGGER.debug(
@@ -315,6 +319,9 @@ class SurfaceAccess:
             raise ServiceRequestError(
                 f"Could not calculate statistical surface using Sumo for: {surf_str}", Service.SUMO
             )
+
+        if are_all_surface_values_undefined(xtgeo_surf):
+            raise InvalidDataError("Statistical surface contains only undefined attribute values", Service.SUMO)
 
         LOGGER.debug(
             f"Calculated statistical surface using Sumo in: {perf_metrics.to_string()} "
@@ -439,6 +446,9 @@ class SurfaceAccess:
             if not xtgeo_surf:
                 raise InvalidDataError("Could not convert Sumo surface object to regular surface", Service.SUMO)
             perf_metrics.record_lap("download-and-read")
+
+            if are_all_surface_values_undefined(xtgeo_surf):
+                raise InvalidDataError("Statistical surface contains only undefined attribute values", Service.SUMO)
 
             source_realization_ids = sumo_obj_meta_dict["_source"]["fmu"]["aggregation"]["realization_ids"]
             num_source_surfaces = len(source_realization_ids)

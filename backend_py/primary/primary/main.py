@@ -72,11 +72,7 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     # The first part of this function, before the yield, will be executed before the FastPI application starts.
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
 
-    # !!!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!
-    # Need to think the TTL through here!!
-    TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL, ttl_s=24*60*60)
+    TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
 
     yield
 
