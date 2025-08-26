@@ -8,7 +8,7 @@ const template: Template = {
     name: "Parameter Analysis of Inplace Volumes",
     description: "Inplace volumes overview correlated against input parameters",
     moduleInstances: [
-        createTemplateModuleInstance("InplaceVolumetricsPlot", {
+        createTemplateModuleInstance("InplaceVolumesPlot", {
             instanceRef: "MainInplaceVolumetricsPlotInstance",
             layout: {
                 relHeight: 0.4,
@@ -23,7 +23,7 @@ const template: Template = {
             },
             */
         }),
-        createTemplateModuleInstance("InplaceVolumetricsTable", {
+        createTemplateModuleInstance("InplaceVolumesTable", {
             instanceRef: "MainInplaceVolumetricsTableInstance2",
             layout: {
                 relHeight: 0.2,
@@ -62,7 +62,7 @@ const template: Template = {
             */
             syncedSettings: [SyncSettingKey.PARAMETER],
         }),
-        createTemplateModuleInstance("ParameterCorrelationPlot", {
+        createTemplateModuleInstance("ParameterResponseCorrelationBarPlot", {
             instanceRef: "MyParameterCorrelationPlotInstance",
             layout: {
                 relHeight: 0.8,

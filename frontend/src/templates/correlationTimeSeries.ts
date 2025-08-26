@@ -50,32 +50,7 @@ const template: Template = {
             },
             */
         }),
-        createTemplateModuleInstance("ParameterCorrelationPlot", {
-            instanceRef: "MyParameterCorrelationPlotInstance",
-            layout: {
-                relHeight: 0.5,
-                relWidth: 0.5,
-                relX: 0.5,
-                relY: 0,
-            },
-            syncedSettings: [SyncSettingKey.PARAMETER],
-
-            dataChannelsToInitialSettingsMapping: {
-                channelResponse: {
-                    listensToInstanceRef: "MainSimulationTimeSeriesInstance",
-                    kindOfKey: KeyKind.REALIZATION,
-                    channelIdString: ChannelIds.TIME_SERIES,
-                },
-            },
-            /*
-            initialState: {
-                crossPlottingType: KeyKind.REALIZATION,
-                showLabels: true,
-                numParams: 20,
-            },
-            */
-        }),
-        createTemplateModuleInstance("ParameterCorrelationPlot", {
+        createTemplateModuleInstance("ParameterResponseCorrelationBarPlot", {
             instanceRef: "MyParameterCorrelationPlotInstance",
             layout: {
                 relHeight: 1,

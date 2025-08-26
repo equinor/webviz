@@ -8,7 +8,7 @@ const template: Template = {
     name: "Sensitivity analysis of inplace volumes",
     description: "Inplace volumes analysis for design matrix ensembles.",
     moduleInstances: [
-        createTemplateModuleInstance("InplaceVolumetricsPlot", {
+        createTemplateModuleInstance("InplaceVolumesPlot", {
             instanceRef: "MainInplaceVolumetricsPlotInstance",
             layout: {
                 relHeight: 0.5,
@@ -23,7 +23,7 @@ const template: Template = {
             },
             */
         }),
-        createTemplateModuleInstance("InplaceVolumetricsTable", {
+        createTemplateModuleInstance("InplaceVolumesTable", {
             instanceRef: "MainInplaceVolumetricsTableInstance2",
             layout: {
                 relHeight: 0.5,
