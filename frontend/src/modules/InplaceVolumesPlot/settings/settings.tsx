@@ -14,6 +14,7 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
+import { makePersistableAtomWarningMessage } from "@modules/_shared/utils/persistableAtomWarningMessage";
 
 import type { Interfaces } from "../interfaces";
 import { PlotType, plotTypeToStringMapping } from "../typesAndEnums";
@@ -149,14 +150,27 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             settingsContext={props.settingsContext}
             workbenchServices={props.workbenchServices}
             isPending={tableDefinitionsQueryResult.isLoading}
-            availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
-            availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
-            selectedEnsembleIdents={selectedEnsembleIdents.value}
-            selectedIndicesWithValues={selectedIndicesWithValues.value}
-            selectedTableNames={selectedTableNames.value}
+            settings={{
+                ensembleIdents: {
+                    availableValues: ensembleSet.getRegularEnsembleArray(),
+                    selectedValues: selectedEnsembleIdents.value,
+                    annotations: makePersistableAtomWarningMessage(selectedEnsembleIdentsAtom),
+                },
+                tableNames: {
+                    availableValues: tableDefinitionsAccessor.getTableNamesIntersection(),
+                    selectedValues: selectedTableNames.value,
+                    annotations: makePersistableAtomWarningMessage(selectedTableNamesAtom),
+                },
+                indicesWithValues: {
+                    availableValues: tableDefinitionsAccessor.getCommonIndicesWithValues(),
+                    selectedValues: selectedIndicesWithValues.value,
+                    annotations: makePersistableAtomWarningMessage(selectedIndicesWithValuesAtom),
+                },
+            }}
             selectedAllowIndicesValuesIntersection={
                 selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
             }
+            arePersistedIndicesWithValuesValid={selectedIndicesWithValues.isValidInContext}
             onChange={handleFilterChange}
             additionalSettings={plotSettings}
             areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}

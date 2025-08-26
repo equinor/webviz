@@ -14,7 +14,9 @@ import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import type { TagOption } from "@lib/components/TagPicker";
 import { TagPicker } from "@lib/components/TagPicker";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
+import { PersistableAtomWarningWrapper } from "@modules/_shared/components/PersistableAtomWarningWrapper";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import {
     InplaceVolumesStatisticEnumToStringMapping,
@@ -27,8 +29,6 @@ import type { Interfaces } from "../interfaces";
 
 import { selectedIndexValueCriteriaAtom, selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./atoms/baseAtoms";
 import { tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
-import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import {
     selectedEnsembleIdentsAtom,
     selectedGroupByIndicesAtom,
@@ -36,7 +36,7 @@ import {
     selectedResultNamesAtom,
     selectedTableNamesAtom,
 } from "./atoms/persistableAtoms";
-import { PersistableAtomWarningWrapper } from "@modules/_shared/components/PersistableAtomWarningWrapper";
+import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
