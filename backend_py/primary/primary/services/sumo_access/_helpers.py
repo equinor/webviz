@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 from fmu.sumo.explorer.explorer import SumoClient, SearchContext
 from fmu.sumo.explorer.objects import Case
