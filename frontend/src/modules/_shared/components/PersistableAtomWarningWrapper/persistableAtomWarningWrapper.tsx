@@ -13,20 +13,7 @@ export type PersistableAtomWarningWrapperProps<T> = {
 export function PersistableAtomWarningWrapper<T>(props: PersistableAtomWarningWrapperProps<T>) {
     const { isValidInContext, _source } = useAtomValue(props.atom);
 
-    let warningMessage: string | null = null;
-    if (!isValidInContext && _source) {
-        switch (_source) {
-            case Source.PERSISTENCE:
-                warningMessage = "The persisted value is invalid. Please choose a valid value.";
-                break;
-            case Source.TEMPLATE:
-                warningMessage = "The template value is invalid. Please choose a valid value.";
-                break;
-            default:
-                warningMessage = null;
-                break;
-        }
-    }
+    let warningMessage = makePersistableAtomWarningMessage(props.atom);
 
     return (
         <div className="flex flex-col gap-2">
@@ -39,4 +26,21 @@ export function PersistableAtomWarningWrapper<T>(props: PersistableAtomWarningWr
             )}
         </div>
     );
+}
+
+export function makePersistableAtomWarningMessage(atom: PersistableFixableAtom<any>): string | null {
+    const { isValidInContext, _source } = useAtomValue(atom);
+
+    if (!isValidInContext && _source) {
+        switch (_source) {
+            case Source.PERSISTENCE:
+                return "The persisted value is invalid. Please choose a valid value.";
+            case Source.TEMPLATE:
+                return "The template value is invalid. Please choose a valid value.";
+            default:
+                return null;
+        }
+    }
+
+    return null;
 }
