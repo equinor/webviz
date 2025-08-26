@@ -1,7 +1,8 @@
-import numpy as np
-from numpy.typing import NDArray
-import xtgeo
 from dataclasses import dataclass
+
+import numpy as np
+import xtgeo
+from numpy.typing import NDArray
 
 
 def surface_to_float32_numpy_array(surface: xtgeo.RegularSurface) -> NDArray[np.float32]:
