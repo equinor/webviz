@@ -6,7 +6,9 @@ import { InplaceVolumesStatistic_api } from "@api";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
+import { Source } from "@framework/utils/atomUtils";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
+import { Button } from "@lib/components/Button";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
@@ -24,6 +26,7 @@ import {
     TableTypeToStringMapping,
 } from "@modules/_shared/InplaceVolumes/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
+import { makePersistableAtomWarningMessage } from "@modules/_shared/utils/persistableAtomWarningMessage";
 
 import type { Interfaces } from "../interfaces";
 
@@ -98,6 +101,21 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const tableSettings = (
         <CollapsibleGroup title="Result and grouping" expanded>
+            <Button
+                onClick={() =>
+                    setSelectedIndicesWithValues({
+                        value: [
+                            {
+                                indexColumn: "FLUID",
+                                values: ["unknown"],
+                            },
+                        ],
+                        _source: Source.PERSISTENCE,
+                    })
+                }
+            >
+                Test
+            </Button>
             <div className="flex flex-col gap-2">
                 <Label text="Table type">
                     <Dropdown
@@ -149,14 +167,27 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             settingsContext={props.settingsContext}
             workbenchServices={props.workbenchServices}
             isPending={tableDefinitionsQueryResult.isLoading}
-            availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
-            availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
-            selectedEnsembleIdents={selectedEnsembleIdents.value}
-            selectedIndicesWithValues={selectedIndicesWithValues.value}
-            selectedTableNames={selectedTableNames.value}
+            settings={{
+                ensembleIdents: {
+                    availableValues: ensembleSet.getRegularEnsembleArray(),
+                    selectedValues: selectedEnsembleIdents.value,
+                    annotations: makePersistableAtomWarningMessage(selectedEnsembleIdentsAtom),
+                },
+                tableNames: {
+                    availableValues: tableDefinitionsAccessor.getTableNamesIntersection(),
+                    selectedValues: selectedTableNames.value,
+                    annotations: makePersistableAtomWarningMessage(selectedTableNamesAtom),
+                },
+                indicesWithValues: {
+                    availableValues: tableDefinitionsAccessor.getCommonIndicesWithValues(),
+                    selectedValues: selectedIndicesWithValues.value,
+                    annotations: makePersistableAtomWarningMessage(selectedIndicesWithValuesAtom),
+                },
+            }}
             selectedAllowIndicesValuesIntersection={
                 selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
             }
+            arePersistedIndicesWithValuesValid={selectedIndicesWithValues.isValidInContext}
             onChange={handleFilterChange}
             additionalSettings={tableSettings}
             areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
