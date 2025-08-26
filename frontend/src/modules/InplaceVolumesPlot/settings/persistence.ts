@@ -1,4 +1,3 @@
-import { type InplaceVolumesIndexWithValues_api } from "@api";
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { setIfDefined } from "@framework/utils/atomUtils";
@@ -38,7 +37,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
             elements: { type: "string" },
         },
         indicesWithValues: {
-            ...inject("InplaceVolumesIndexWithValuesAsStrings"),
+            ...inject("InplaceVolumesIndexWithValues"),
         },
         firstResultName: { type: "string", nullable: true },
         secondResultName: { type: "string", nullable: true },

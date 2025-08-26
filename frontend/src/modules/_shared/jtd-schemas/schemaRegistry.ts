@@ -7,5 +7,5 @@ export const schemaRegistry = {
     ViewState: ViewStateSchema,
     Point2D: Point2DSchema,
     Point3D: Point3DSchema,
-    InplaceVolumesIndexWithValuesAsStrings: InplaceVolumesIndexWithValuesAsStringsSchema,
+    InplaceVolumesIndexWithValues: InplaceVolumesIndexWithValuesAsStringsSchema,
 };
