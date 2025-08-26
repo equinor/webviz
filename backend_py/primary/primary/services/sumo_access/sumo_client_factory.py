@@ -22,7 +22,7 @@ class _FakeSyncHttpClient:
 
 def create_sumo_client(access_token: str) -> SumoClient:
     timer: PerfTimer | None = None
-    #timer = PerfTimer()
+    # timer = PerfTimer()
 
     if access_token == "DUMMY_TOKEN_FOR_TESTING":  # nosec bandit B105
         sumo_client = SumoClient(env=config.SUMO_ENV, interactive=False)
