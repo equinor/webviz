@@ -5,13 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from primary.services.database_access.snapshot_access.types import (
     NewSnapshot,
-    SnapshotUpdate,
     SnapshotSortBy,
-    SnapshotSortLogSortBy,
+    SnapshotAccessLogSortBy,
 )
 from primary.middleware.add_browser_cache import no_cache
 from primary.services.database_access.snapshot_access.snapshot_access import SnapshotAccess
-from primary.services.database_access.snapshot_access.snapshot_logs_access import SnapshotLogsAccess
+from primary.services.database_access.snapshot_access.snapshot_log_access import SnapshotLogAccess
 from primary.services.database_access.query_collation_options import QueryCollationOptions, SortDirection
 
 
@@ -33,12 +32,12 @@ router = APIRouter()
 @router.get("/recent_snapshots", response_model=list[schemas.SnapshotAccessLog])
 async def get_recent_snapshots(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    sort_by: Optional[SnapshotSortLogSortBy] = Query(None, description="Sort the result by"),
+    sort_by: Optional[SnapshotAccessLogSortBy] = Query(None, description="Sort the result by"),
     sort_direction: Optional[SortDirection] = Query(None, description="Sort direction: 'asc' or 'desc'"),
     limit: Optional[int] = Query(None, ge=1, le=100, description="Limit the number of results"),
     offset: Optional[int] = Query(None, ge=0, description="The offset of the results"),
 ) -> list[schemas.SnapshotAccessLog]:
-    async with SnapshotLogsAccess.create(user.get_user_id()) as log_access:
+    async with SnapshotLogAccess.create(user.get_user_id()) as log_access:
         collation_options = QueryCollationOptions(sort_by=sort_by, sort_dir=sort_direction, limit=limit, offset=offset)
 
         recent_logs = await log_access.get_access_logs_for_user_async(collation_options)
@@ -67,15 +66,15 @@ async def get_snapshots_metadata(
 async def get_snapshot(
     snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> schemas.Snapshot:
-    access = SnapshotAccess.create(user.get_user_id())
-    logs_access = SnapshotLogsAccess.create(user_id=user.get_user_id())
+    snapshot_access = SnapshotAccess.create(user.get_user_id())
+    log_access = SnapshotLogAccess.create(user_id=user.get_user_id())
 
-    async with access, logs_access:
-        snapshot = await access.get_snapshot_by_id_async(snapshot_id)
+    async with snapshot_access, log_access:
+        snapshot = await snapshot_access.get_snapshot_by_id_async(snapshot_id)
         if not snapshot:
             raise HTTPException(status_code=404, detail="Snapshot not found")
 
-        await logs_access.log_snapshot_visit_async(snapshot_id, snapshot.owner_id)
+        await log_access.log_snapshot_visit_async(snapshot_id, snapshot.owner_id)
 
         return to_api_snapshot(snapshot)
 
@@ -97,32 +96,28 @@ async def get_snapshot_metadata(
 async def create_snapshot(
     session: NewSnapshot, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> str:
-    access = SnapshotAccess.create(user.get_user_id())
-    logs_access = SnapshotLogsAccess.create(user.get_user_id())
+    snapshot_access = SnapshotAccess.create(user.get_user_id())
+    log_access = SnapshotLogAccess.create(user.get_user_id())
 
-    async with access, logs_access:
-        snapshot_id = await access.insert_snapshot_async(session)
+    async with snapshot_access, log_access:
+        snapshot_id = await snapshot_access.insert_snapshot_async(session)
 
         # We count snapshot creation as implicit visit. This also makes it so we can get recently created ones alongside other shared screenshots
-        await logs_access.log_snapshot_visit_async(snapshot_id=snapshot_id, snapshot_owner_id=user.get_user_id())
+        await log_access.log_snapshot_visit_async(snapshot_id=snapshot_id, snapshot_owner_id=user.get_user_id())
         return snapshot_id
-
-
-@router.put("/snapshots/{snapshot_id}")
-async def update_snapshot(
-    snapshot_id: str,
-    snapshot_update: SnapshotUpdate,
-    user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-) -> None:
-    access = SnapshotAccess.create(user.get_user_id())
-    async with access:
-        await access.update_snapshot_metadata_async(snapshot_id, snapshot_update)
 
 
 @router.delete("/snapshots/{snapshot_id}")
 async def delete_snapshot(
     snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> None:
-    access = SnapshotAccess.create(user.get_user_id())
-    async with access:
-        await access.delete_snapshot_async(snapshot_id)
+    snapshot_access = SnapshotAccess.create(user.get_user_id())
+    async with snapshot_access:
+        await snapshot_access.delete_snapshot_async(snapshot_id)
+
+    log_access = SnapshotLogAccess.create(user.get_user_id())
+    async with log_access:
+        # Might want to making this a background task so we don't block on it as it is not critical
+        # for the user to have this done immediately. It could also be done in a queue if we
+        # want to improve responsiveness.
+        await log_access.mark_snapshot_as_deleted_async(snapshot_id)

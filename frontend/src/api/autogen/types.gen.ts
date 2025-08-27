@@ -744,8 +744,17 @@ export type SnapshotAccessLog_api = {
     visits: number;
     firstVisitedAt: string | null;
     lastVisitedAt: string | null;
+    snapshotDeleted: boolean;
     snapshotMetadata: SnapshotMetadata_api;
 };
+
+export enum SnapshotAccessLogSortBy_api {
+    VISITS = "visits",
+    LAST_VISITED_AT = "last_visited_at",
+    SNAPSHOT_METADATA_TITLE = "snapshot_metadata.title",
+    SNAPSHOT_METADATA_TITLE_LOWER = "snapshot_metadata.title__lower",
+    SNAPSHOT_METADATA_CREATED_AT = "snapshot_metadata.created_at",
+}
 
 export type SnapshotMetadata_api = {
     ownerId: string;
@@ -762,23 +771,6 @@ export enum SnapshotSortBy_api {
     TITLE = "title",
     TITLE_LOWER = "title_lower",
 }
-
-export enum SnapshotSortLogSortBy_api {
-    VISITS = "visits",
-    LAST_VISITED_AT = "last_visited_at",
-    SNAPSHOT_METADATA_TITLE = "snapshot_metadata.title",
-    SNAPSHOT_METADATA_TITLE_LOWER = "snapshot_metadata.title__lower",
-    SNAPSHOT_METADATA_CREATED_AT = "snapshot_metadata.created_at",
-}
-
-export type SnapshotUpdate_api = {
-    metadata: SnapshotUserEditableMetadata_api;
-};
-
-export type SnapshotUserEditableMetadata_api = {
-    title: string;
-    description?: string | null;
-};
 
 export enum SortDirection_api {
     ASC = "asc",
@@ -4125,7 +4117,7 @@ export type GetRecentSnapshotsData_api = {
         /**
          * Sort the result by
          */
-        sort_by?: SnapshotSortLogSortBy_api | null;
+        sort_by?: SnapshotAccessLogSortBy_api | null;
         /**
          * Sort direction: 'asc' or 'desc'
          */
@@ -4282,33 +4274,6 @@ export type GetSnapshotResponses_api = {
 };
 
 export type GetSnapshotResponse_api = GetSnapshotResponses_api[keyof GetSnapshotResponses_api];
-
-export type UpdateSnapshotData_api = {
-    body: SnapshotUpdate_api;
-    path: {
-        snapshot_id: string;
-    };
-    query?: {
-        t?: number;
-    };
-    url: "/snapshots/snapshots/{snapshot_id}";
-};
-
-export type UpdateSnapshotErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type UpdateSnapshotError_api = UpdateSnapshotErrors_api[keyof UpdateSnapshotErrors_api];
-
-export type UpdateSnapshotResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
 
 export type GetSnapshotMetadataData_api = {
     body?: never;

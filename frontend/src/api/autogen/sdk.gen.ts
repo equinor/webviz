@@ -225,8 +225,6 @@ import type {
     GetSnapshotData_api,
     GetSnapshotResponse_api,
     GetSnapshotError_api,
-    UpdateSnapshotData_api,
-    UpdateSnapshotError_api,
     GetSnapshotMetadataData_api,
     GetSnapshotMetadataResponse_api,
     GetSnapshotMetadataError_api,
@@ -1394,22 +1392,6 @@ export const deleteSnapshot = <ThrowOnError extends boolean = false>(
 export const getSnapshot = <ThrowOnError extends boolean = false>(options: Options<GetSnapshotData_api, ThrowOnError>) => {
     return (options?.client ?? client).get<GetSnapshotResponse_api, GetSnapshotError_api, ThrowOnError>({
         ...options,
-        url: "/snapshots/snapshots/{snapshot_id}",
-    });
-};
-
-/**
- * Update Snapshot
- */
-export const updateSnapshot = <ThrowOnError extends boolean = false>(
-    options: Options<UpdateSnapshotData_api, ThrowOnError>,
-) => {
-    return (options?.client ?? client).put<unknown, UpdateSnapshotError_api, ThrowOnError>({
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...options?.headers,
-        },
         url: "/snapshots/snapshots/{snapshot_id}",
     });
 };

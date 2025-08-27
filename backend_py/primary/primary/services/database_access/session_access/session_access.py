@@ -82,9 +82,12 @@ class SessionAccess:
         return [self._to_metadata_summary(item) for item in items]
 
     async def get_session_metadata_async(self, session_id: str) -> SessionMetadata:
-        existing = await self._assert_ownership_async(session_id)
+        try:
+            document = await self._assert_ownership_async(session_id)
+        except ServiceRequestError as err:
+            raise ServiceRequestError(f"Session with id '{session_id}' not found.", Service.DATABASE) from err
 
-        return existing.metadata
+        return document.metadata
 
     async def insert_session_async(self, new_session: NewSession) -> str:
         now = datetime.now(timezone.utc)

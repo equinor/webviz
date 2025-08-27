@@ -86,7 +86,6 @@ import {
     createSnapshot,
     deleteSnapshot,
     getSnapshot,
-    updateSnapshot,
     getSnapshotMetadata,
     snapshotPreview,
     loginRoute,
@@ -200,8 +199,6 @@ import type {
     DeleteSnapshotData_api,
     DeleteSnapshotError_api,
     GetSnapshotData_api,
-    UpdateSnapshotData_api,
-    UpdateSnapshotError_api,
     GetSnapshotMetadataData_api,
     SnapshotPreviewData_api,
     LoginRouteData_api,
@@ -1932,20 +1929,6 @@ export const getSnapshotOptions = (options: Options<GetSnapshotData_api>) => {
         },
         queryKey: getSnapshotQueryKey(options),
     });
-};
-
-export const updateSnapshotMutation = (options?: Partial<Options<UpdateSnapshotData_api>>) => {
-    const mutationOptions: UseMutationOptions<unknown, AxiosError<UpdateSnapshotError_api>, Options<UpdateSnapshotData_api>> = {
-        mutationFn: async (localOptions) => {
-            const { data } = await updateSnapshot({
-                ...options,
-                ...localOptions,
-                throwOnError: true,
-            });
-            return data;
-        },
-    };
-    return mutationOptions;
 };
 
 export const getSnapshotMetadataQueryKey = (options: Options<GetSnapshotMetadataData_api>) => [

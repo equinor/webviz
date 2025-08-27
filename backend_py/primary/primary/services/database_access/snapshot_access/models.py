@@ -8,39 +8,16 @@ from primary.services.database_access.snapshot_access.types import SnapshotMetad
 from .util import make_access_log_item_id
 
 
-class SnapshotMetadataDocument(BaseModel):
-    id: str
-    snapshot_id: str
+class SnapshotDocument(BaseModel):
+    id: str  # Partition key
     owner_id: str
     metadata: SnapshotMetadata
-
-    @field_validator("snapshot_id")
-    @classmethod
-    def validate_snapshot_id(cls, val: str, info: ValidationInfo) -> str:
-        if val != info.data.get("id"):
-            raise ValueError("snapshot_id must equal id")
-        return val
-
-    model_config = ConfigDict(extra="ignore")
-
-
-class SnapshotContentDocument(BaseModel):
-    id: str
-    snapshot_id: str
-    owner_id: str
     content: str
 
-    @field_validator("snapshot_id")
-    @classmethod
-    def validate_snapshot_id(cls, val: str, info: ValidationInfo) -> str:
-        if val != info.data.get("id"):
-            raise ValueError("snapshot_id must equal id")
-        return val
-
     model_config = ConfigDict(extra="ignore")
 
 
-class SnapshotAccessLog(BaseModel):
+class SnapshotAccessLogDocument(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     visitor_id: str  # Partition key
@@ -49,6 +26,7 @@ class SnapshotAccessLog(BaseModel):
     visits: int = 0
     first_visited_at: datetime | None = None
     last_visited_at: datetime | None = None
+    snapshot_deleted: bool = False
 
     snapshot_metadata: SnapshotMetadata
 

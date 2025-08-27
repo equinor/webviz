@@ -45,10 +45,6 @@ class SnapshotMetadataWithId(SnapshotMetadata):
     id: str
 
 
-class SnapshotUpdate(BaseModel):
-    metadata: SnapshotUserEditableMetadata
-
-
 class NewSnapshot(BaseModel):
     title: str
     description: Optional[str]
@@ -62,7 +58,7 @@ class SnapshotSortBy(str, Enum):
     TITLE_LOWER = "title_lower"
 
 
-class SnapshotSortLogSortBy(str, Enum):
+class SnapshotAccessLogSortBy(str, Enum):
     VISITS = "visits"
     LAST_VISIT = "last_visited_at"
     TITLE = "snapshot_metadata.title"

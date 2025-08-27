@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Generic, List, Optional, Type, TypeVar
+from typing import Dict, Generic, List, Optional, Sequence, Type, TypeVar
 from azure.cosmos.aio import ContainerProxy
 from azure.cosmos import exceptions
 from pydantic import BaseModel, ValidationError
@@ -106,6 +106,26 @@ class ContainerAccess(Generic[T]):
         except ValidationError as validation_error:
             logger.error("[ContainerAccess] Validation error in '%s': %s", self._container_name, validation_error)
             raise
+        except exceptions.CosmosHttpResponseError as error:
+            self._raise_exception(error.message)
+
+    async def patch_item_async(
+        self,
+        item_id: str,
+        partition_key: str,
+        patch_operations: Sequence[Dict[str, object]],
+        *,
+        filter_predicate: str | None = None,
+    ):
+        try:
+            await self._container.patch_item(
+                item=item_id,
+                partition_key=partition_key,
+                patch_operations=patch_operations,
+                filter_predicate=filter_predicate,
+                no_response=True,
+            )
+            logger.debug("[ContainerAccess] Patched item '%s' in '%s'", item_id, self._container_name)
         except exceptions.CosmosHttpResponseError as error:
             self._raise_exception(error.message)
 
