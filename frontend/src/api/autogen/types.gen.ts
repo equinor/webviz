@@ -704,24 +704,32 @@ export type SessionMetadata_api = {
     hash: string;
 };
 
+export type SessionMetadataUpdate_api = {
+    title?: string;
+    description?: string | null;
+};
+
 export type SessionMetadataWithId_api = {
-    id: string;
     title: string;
     description: string | null;
     createdAt: string;
     updatedAt: string;
     version: number;
+    hash: string;
+    id: string;
 };
+
+export enum SessionSortBy_api {
+    CREATED_AT = "created_at",
+    UPDATED_AT = "updated_at",
+    TITLE = "title",
+    TITLE_LOWER = "title_lower",
+}
 
 export type SessionUpdate_api = {
     id: string;
-    metadata: SessionUserEditableMetadata_api;
-    content: string;
-};
-
-export type SessionUserEditableMetadata_api = {
-    title: string;
-    description?: string | null;
+    metadata?: SessionMetadataUpdate_api;
+    content?: string;
 };
 
 export type Snapshot_api = {
@@ -747,6 +755,21 @@ export type SnapshotMetadata_api = {
     updatedAt: string;
     hash: string;
 };
+
+export enum SnapshotSortBy_api {
+    CREATED_AT = "created_at",
+    UPDATED_AT = "updated_at",
+    TITLE = "title",
+    TITLE_LOWER = "title_lower",
+}
+
+export enum SnapshotSortLogSortBy_api {
+    VISITS = "visits",
+    LAST_VISITED_AT = "last_visited_at",
+    SNAPSHOT_METADATA_TITLE = "snapshot_metadata.title",
+    SNAPSHOT_METADATA_TITLE_LOWER = "snapshot_metadata.title__lower",
+    SNAPSHOT_METADATA_CREATED_AT = "snapshot_metadata.created_at",
+}
 
 export type SnapshotUpdate_api = {
     metadata: SnapshotUserEditableMetadata_api;
@@ -1245,21 +1268,6 @@ export type WellboreTrajectory_api = {
     eastingArr: Array<number>;
     northingArr: Array<number>;
 };
-
-export enum PrimaryServicesDatabaseAccessSessionAccessTypesSortBy_api {
-    CREATED_AT = "created_at",
-    UPDATED_AT = "updated_at",
-    TITLE = "title",
-    TITLE_LOWER = "title_lower",
-}
-
-export enum PrimaryServicesDatabaseAccessSnapshotAccessTypesSortBy_api {
-    CREATED_AT = "created_at",
-    UPDATED_AT = "updated_at",
-    TITLE = "title",
-    TITLE_LOWER = "title_lower",
-    LAST_VISITED_AT = "last_visited_at",
-}
 
 export type GetFieldsData_api = {
     body?: never;
@@ -3936,7 +3944,7 @@ export type GetSessionsMetadataData_api = {
         /**
          * Sort the result by
          */
-        sort_by?: PrimaryServicesDatabaseAccessSessionAccessTypesSortBy_api | null;
+        sort_by?: SessionSortBy_api | null;
         /**
          * Sort direction: 'asc' or 'desc'
          */
@@ -3944,7 +3952,8 @@ export type GetSessionsMetadataData_api = {
         /**
          * Limit the number of results
          */
-        limit?: number | null;
+        limit?: number;
+        page?: number;
         t?: number;
     };
     url: "/sessions/sessions";
@@ -4075,8 +4084,10 @@ export type UpdateSessionResponses_api = {
     /**
      * Successful Response
      */
-    200: unknown;
+    200: SessionDocument_api;
 };
+
+export type UpdateSessionResponse_api = UpdateSessionResponses_api[keyof UpdateSessionResponses_api];
 
 export type GetSessionMetadataData_api = {
     body?: never;
@@ -4114,7 +4125,7 @@ export type GetRecentSnapshotsData_api = {
         /**
          * Sort the result by
          */
-        sort_by?: PrimaryServicesDatabaseAccessSnapshotAccessTypesSortBy_api | null;
+        sort_by?: SnapshotSortLogSortBy_api | null;
         /**
          * Sort direction: 'asc' or 'desc'
          */
@@ -4157,7 +4168,7 @@ export type GetSnapshotsMetadataData_api = {
         /**
          * Sort the result by
          */
-        sort_by?: PrimaryServicesDatabaseAccessSnapshotAccessTypesSortBy_api | null;
+        sort_by?: SnapshotSortBy_api | null;
         /**
          * Sort direction: 'asc' or 'desc'
          */

@@ -50,6 +50,8 @@ class SnapshotAccessLog(BaseModel):
     first_visited_at: datetime | None = None
     last_visited_at: datetime | None = None
 
+    snapshot_metadata: SnapshotMetadata
+
     # Internal item id
     @computed_field  # type: ignore[prop-decorator]
     @property

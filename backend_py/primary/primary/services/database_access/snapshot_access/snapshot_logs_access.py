@@ -1,13 +1,16 @@
 import logging
 from datetime import datetime, timezone
+from typing import Any
 
 
 from primary.services.database_access.container_access import ContainerAccess
 from primary.services.service_exceptions import ServiceRequestError
 
-from .query_collation_options import QueryCollationOptions
+from ..query_collation_options import QueryCollationOptions
 from .models import SnapshotAccessLog
 from .util import make_access_log_item_id
+
+# ! SnapshotAccess is imported at the end of the file
 
 
 LOGGER = logging.getLogger(__name__)
@@ -36,6 +39,13 @@ class SnapshotLogsAccess:
         # Clean up if needed (e.g., closing DB connections)
         await self._container_access.close_async()
 
+    async def update_log_async(self, snapshot_id: str, changes: dict[str, Any]) -> None:
+        existing = await self.get_access_log_async(snapshot_id)
+
+        updated_item = existing.model_copy(update=changes)
+
+        await self._container_access.update_item_async(snapshot_id, updated_item)
+
     async def get_access_logs_for_user_async(self, collation_options: QueryCollationOptions) -> list[SnapshotAccessLog]:
         query = "SELECT * FROM c WHERE c.visitor_id = @visitor_id"
         params = [{"name": "@visitor_id", "value": self._user_id}]
@@ -48,10 +58,15 @@ class SnapshotLogsAccess:
         return await self._container_access.query_items_async(query, params)  # type: ignore[arg-type]
 
     async def create_access_log_async(self, snapshot_id: str, snapshot_owner_id: str) -> SnapshotAccessLog:
+        snapshots = SnapshotAccess.create(self._user_id)
+
+        snapshot_meta = await snapshots.get_snapshot_metadata_async(snapshot_id, snapshot_owner_id)
+
         new_log = SnapshotAccessLog(
             visitor_id=self._user_id,
             snapshot_id=snapshot_id,
             snapshot_owner_id=snapshot_owner_id,
+            snapshot_metadata=snapshot_meta,
         )
 
         _inserted_id = await self._container_access.insert_item_async(new_log)
@@ -72,11 +87,7 @@ class SnapshotLogsAccess:
         try:
             return await self.get_access_log_async(snapshot_id)
         except ServiceRequestError:
-            return SnapshotAccessLog(
-                visitor_id=self._user_id,
-                snapshot_id=snapshot_id,
-                snapshot_owner_id=snapshot_owner_id,
-            )
+            return await self.create_access_log_async(snapshot_id=snapshot_id, snapshot_owner_id=snapshot_owner_id)
 
     async def log_snapshot_visit_async(self, snapshot_id: str, snapshot_owner_id: str) -> SnapshotAccessLog:
         timestamp = datetime.now(timezone.utc)
@@ -96,3 +107,8 @@ class SnapshotLogsAccess:
         await self._container_access.update_item_async(log.id, log)
 
         return log
+
+
+# ! The two access classes use each-other, so we need to put the imports at the bottom of the file
+# pylint: disable=wrong-import-position
+from .snapshot_access import SnapshotAccess
