@@ -36,7 +36,7 @@ class QueryCollationOptions:
 
         # Zero is arguably a valid limit, so explicitly check None
         if self.limit is not None:
-            tokens.append(f"OFFSET {self.offset} LIMIT {self.limit}")
+            tokens.append(f"OFFSET {self.offset or 0} LIMIT {self.limit}")
 
         if tokens:
             return " ".join(tokens)

@@ -66,7 +66,7 @@ async def get_snapshots_metadata(
     access = SnapshotAccess.create(user.get_user_id())
     async with access:
         items = await access.get_filtered_snapshots_metadata_for_user_async(
-            sort_by=sort_by, sort_direction=sort_direction, limit=limit
+            sort_by=sort_by, sort_direction=sort_direction, limit=limit, offset=0
         )
         return [to_api_snapshot_metadata_summary(item) for item in items]
 

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from primary.services.database_access.container_access import ContainerAccess
 from primary.services.service_exceptions import ServiceRequestError
 
-from .query_collation_options import QueryCollationOptions
+from ..query_collation_options import QueryCollationOptions
 from .models import SnapshotAccessLog
 from .util import make_access_log_item_id
 
