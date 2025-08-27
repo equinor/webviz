@@ -6,8 +6,8 @@ import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
-import { Table as TableComponent } from "@lib/components/Table";
-import type { TableHeading, TableRow } from "@lib/components/Table/table";
+import { TableDeprecated as TableComponent } from "@lib/components/TableDeprecated";
+import type { TableHeading, TableRow } from "@lib/components/TableDeprecated/table";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 

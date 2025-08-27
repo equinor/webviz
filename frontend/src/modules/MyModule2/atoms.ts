@@ -1,39 +1,31 @@
 import { atom } from "jotai";
-import { atomWithQuery } from "jotai-tanstack-query";
+import { random, range, sampleSize } from "lodash";
 
-import { getVectorListOptions } from "@api";
-import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+export const alternateColColorsAtom = atom<boolean>(false);
+export const allowMultiSelectAtom = atom<boolean>(false);
+export const fillPendingDataAtom = atom<boolean>(true);
 
+export const amtOfDataAtom = atom<number>(0);
+export const amtOfPendingDataAtom = atom<number>(0);
 
-export const textAtom = atom<string>("I am an atom with text!");
-export const selectedEnsembleAtom = atom<RegularEnsembleIdent | null>(null);
-export const vectorsAtom = atomWithQuery((get) => ({
-    ...getVectorListOptions({
-        query: {
-            case_uuid: get(selectedEnsembleAtom)?.getCaseUuid() ?? "",
-            ensemble_name: get(selectedEnsembleAtom)?.getEnsembleName() ?? "",
-        },
-    }),
-}));
-export const atomBasedOnVectors = atom<boolean>((get) => get(vectorsAtom).isFetching);
-export const userSelectedVectorAtom = atom<string | null>(null);
-export const selectedVectorAtom = atom<string | null>((get) => {
-    const vectors = get(vectorsAtom);
-    const userSelectedVector = get(userSelectedVectorAtom);
+export const DATA_TAGS = ["Tag1", "Tag2", "Tag3", "Tag4", "Tag5", "Tag6"] as const;
 
-    if (userSelectedVector && vectors.data) {
-        if (vectors.data.some((vector) => vector.name === userSelectedVector)) {
-            return userSelectedVector;
-        }
-    }
+export type ExampleTabularData = {
+    id: string;
+    "col1.1": string;
+    "col1.2": string;
+    theNumbers: number;
+    theTags: string[];
+};
 
-    return vectors.data?.at(0)?.name ?? null;
-});
+export const tableDataAtom = atom<ExampleTabularData[]>((get) => {
+    const amtOfData = get(amtOfDataAtom);
 
-export const ensembleSetDependentAtom = atom<RegularEnsembleIdent | DeltaEnsembleIdent | null>((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
-    const firstEnsemble = ensembleSet.getEnsembleArray()[0];
-    return firstEnsemble?.getIdent() ?? null;
+    return range(0, amtOfData).map((i) => ({
+        id: `row-${i}`,
+        "col1.1": `Row ${i + 1}, Column 1.1`,
+        "col1.2": `Row ${i + 1}, Column 1.2`,
+        theNumbers: random(0, 1000),
+        theTags: sampleSize(DATA_TAGS, random(3)),
+    }));
 });

@@ -19,6 +19,7 @@ class SurfInfo:
     name: str
     tagname: str
     content: str
+    standard_result: str | None = None
     is_stratigraphic: bool
     global_min_val: float
     global_max_val: float
@@ -156,15 +157,6 @@ async def _run_query_and_aggregate_surf_info_async(sumo_client: SumoClient, quer
     search_payload = {
         "track_total_hits": True,
         "query": query_dict,
-        # "fields": [
-        #     "data.stratigraphic",
-        #     "data.is_observation",
-        #     "data.name.keyword",
-        #     "data.tagname.keyword",
-        #     "data.content.keyword",
-        # ],
-        # Do a slight trick below in order to capture the boolean data.stratigraphic field
-        # It seems that the "min" aggregation handles boolean fields correctly, reporting the min value as either 0 or 1
         "aggs": {
             "key_combinations": {
                 "composite": {
@@ -172,40 +164,28 @@ async def _run_query_and_aggregate_surf_info_async(sumo_client: SumoClient, quer
                     "sources": [
                         {"k_name": {"terms": {"field": "data.name.keyword"}}},
                         {"k_content": {"terms": {"field": "data.content.keyword"}}},
-                        {"k_tagname": {"terms": {"field": "data.tagname.keyword"}}},
-                        # Experimental - including the available time points/intervals intervals in aggregation
-                        # This is probably not wise since it might explode the number of buckets
-                        # { "k_t0": { "terms": { "field": "data.time.t0.value" } } },
-                        # { "k_t1": { "terms": { "field": "data.time.t1.value" } } },
+                        {
+                            "k_tagname": {
+                                "terms": {
+                                    "field": "data.tagname.keyword",
+                                    "missing_bucket": True,
+                                }
+                            }
+                        },  # Allow missing tagname
+                        {
+                            "k_standard_result": {
+                                "terms": {
+                                    "field": "data.standard_result.name.keyword",
+                                    "missing_bucket": True,  # Allow missing standard_result
+                                }
+                            }
+                        },
                     ],
                 },
                 "aggs": {
-                    # "my_top_hits": {
-                    #     "top_hits": {
-                    #         "_source": False,
-                    #         "size": 1,
-                    #     }
-                    # },
                     "agg_z_val_min": {"min": {"field": "data.bbox.zmin"}},
                     "agg_z_val_max": {"max": {"field": "data.bbox.zmax"}},
                     "agg_is_stratigraphic_min": {"min": {"field": "data.stratigraphic"}},
-                    # Experimental - including the available time points/intervals intervals in aggregation
-                    # Seems we cannot use composite aggregation as a nested aggregation
-                    # "sig_unique_t0s": {
-                    #     "terms": {"field": "data.time.t0.value", "size": 65535},
-                    # },
-                    # "sig_unique_intervals": {
-                    #     "multi_terms": {
-                    #         "size": 65535,
-                    #         "terms": [{"field": "data.time.t0.value" }, {"field": "data.time.t1.value"}],
-                    #     }
-                    # },
-                    # "sig_unique_intervals_handles_missing": {
-                    #     "multi_terms": {
-                    #         "size": 65535,
-                    #         "terms": [{"field": "data.time.t0.value", "missing": 0 }, {"field": "data.time.t1.value", "missing": 0}],
-                    #     }
-                    # },
                 },
             },
         },
@@ -213,21 +193,8 @@ async def _run_query_and_aggregate_surf_info_async(sumo_client: SumoClient, quer
         "size": 0,
     }
 
-    # LOGGER.debug("-----------------")
-    # LOGGER.debug(json.dumps(search_payload, indent=2))
-    # LOGGER.debug("-----------------")
-
     response = await sumo_client.post_async("/search", json=search_payload)
     response_dict = response.json()
-
-    # LOGGER.debug("-----------------")
-    # _delete_key_from_dict_recursive(response_dict, "parameters")
-    # _delete_key_from_dict_recursive(response_dict, "realization_ids")
-    # LOGGER.debug(json.dumps(response_dict, indent=2))
-    # LOGGER.debug("-----------------")
-
-    # LOGGER.debug(f"{response_dict['took']=}")
-    # LOGGER.debug(f"{len(response_dict['aggregations']['key_combinations']['buckets'])=}")
 
     ret_arr: list[SurfInfo] = []
     for bucket in response_dict["aggregations"]["key_combinations"]["buckets"]:
@@ -236,13 +203,13 @@ async def _run_query_and_aggregate_surf_info_async(sumo_client: SumoClient, quer
             SurfInfo(
                 name=bucket["key"]["k_name"],
                 tagname=bucket["key"]["k_tagname"],
+                standard_result=bucket["key"].get("k_standard_result"),
                 content=bucket["key"]["k_content"],
                 is_stratigraphic=is_stratigraphic,
                 global_min_val=bucket["agg_z_val_min"]["value"],
                 global_max_val=bucket["agg_z_val_max"]["value"],
             )
         )
-
     return ret_arr
 
 
@@ -268,21 +235,8 @@ async def _run_query_and_aggregate_time_intervals_async(
         "size": 0,
     }
 
-    # LOGGER.debug("-----------------")
-    # LOGGER.debug(json.dumps(search_payload, indent=2))
-    # LOGGER.debug("-----------------")
-
     response = await sumo_client.post_async("/search", json=search_payload)
     response_dict = response.json()
-
-    # LOGGER.debug("-----------------")
-    # _delete_key_from_dict_recursive(response_dict, "parameters")
-    # _delete_key_from_dict_recursive(response_dict, "realization_ids")
-    # LOGGER.debug(json.dumps(response_dict, indent=2))
-    # LOGGER.debug("-----------------")
-
-    # LOGGER.debug(f"{response_dict['took']=}")
-    # LOGGER.debug(f"{len(response_dict['aggregations']['unique_time_intervals']['buckets'])=}")
 
     ret_arr: list[TimeInterval] = []
     for bucket in response_dict["aggregations"]["unique_time_intervals"]["buckets"]:
@@ -317,15 +271,6 @@ async def _run_query_and_aggregate_time_points_async(sumo_client: SumoClient, qu
     response = await sumo_client.post_async("/search", json=search_payload)
     response_dict = response.json()
 
-    # LOGGER.debug("-----------------")
-    # _delete_key_from_dict_recursive(response_dict, "parameters")
-    # _delete_key_from_dict_recursive(response_dict, "realization_ids")
-    # LOGGER.debug(json.dumps(response_dict, indent=2))
-    # LOGGER.debug("-----------------")
-
-    # LOGGER.debug(f"{response_dict['took']=}")
-    # LOGGER.debug(f"{len(response_dict['aggregations']['unique_time_points']['buckets'])=}")
-
     ret_arr: list[TimePoint] = []
     for bucket in response_dict["aggregations"]["unique_time_points"]["buckets"]:
         t0_ms = bucket["key"]["k_t0"]
@@ -338,7 +283,6 @@ async def _run_query_and_aggregate_time_points_async(sumo_client: SumoClient, qu
 # --------------------------------------------------------------------------------------
 def _timestamp_utc_ms_to_iso_str(timestamp_utc_ms: int) -> str:
     isostr = datetime.datetime.fromtimestamp(timestamp_utc_ms / 1000, datetime.timezone.utc).isoformat()
-    # isostr = isostr..replace("+00:00", "Z")
     isostr = isostr.replace("+00:00", "")
     return isostr
 

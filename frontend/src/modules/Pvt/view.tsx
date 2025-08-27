@@ -11,6 +11,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { Plot } from "@modules/_shared/components/Plot";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 import type { Interfaces } from "./interfaces";
@@ -90,7 +91,7 @@ export function View({ viewContext, workbenchSettings, workbenchSession }: Modul
         pvtPlotBuilder.makeLayout(selectedPhase, selectedPlots, wrapperDivSize);
         pvtPlotBuilder.makeTraces(selectedPlots, selectedPvtNums, selectedPhase, selectedColorBy, colorSet);
 
-        return pvtPlotBuilder.makePlot();
+        return <Plot layout={pvtPlotBuilder.makePlotLayout()} data={pvtPlotBuilder.makePlotData()} />;
     }
 
     return (

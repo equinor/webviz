@@ -11,13 +11,14 @@ import { useColorSet, useContinuousColorScale } from "@framework/WorkbenchSettin
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
+import { Plot } from "@modules/_shared/components/Plot";
 
 import type { Interfaces } from "../interfaces";
 import type { VectorHexColorMap } from "../typesAndEnums";
 import { GroupBy } from "../typesAndEnums";
 
 import { userSelectedActiveTimestampUtcMsAtom } from "./atoms/baseAtoms";
-import { realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
+import { queryIsFetchingAtom, realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { usePlotBuilder } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
@@ -38,6 +39,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const groupBy = viewContext.useSettingsToViewInterfaceValue("groupBy");
     const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
     const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
+    const anyLoading = useAtomValue(queryIsFetchingAtom);
 
     const setActiveTimestampUtcMs = useSetAtom(userSelectedActiveTimestampUtcMsAtom);
 
@@ -46,14 +48,14 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const parameterColorScale = useContinuousColorScale(workbenchSettings, {
         gradientType: ColorScaleGradientType.Diverging,
     });
-    const vectorHexColorMap : VectorHexColorMap = {};
+    const vectorHexColorMap: VectorHexColorMap = {};
     vectorSpecifications.forEach((vectorSpec, index) => {
-        if (vectorSpec.vectorName in vectorHexColorMap ) {
+        if (vectorSpec.vectorName in vectorHexColorMap) {
             return;
         }
         // If the vector name is not already in map, assign a color
         const color = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
-        vectorHexColorMap [vectorSpec.vectorName] = color;
+        vectorHexColorMap[vectorSpec.vectorName] = color;
     });
     const subplotOwner = groupBy === GroupBy.TIME_SERIES ? SubplotOwner.VECTOR : SubplotOwner.ENSEMBLE;
 
@@ -76,35 +78,46 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     }
 
     useMakeViewStatusWriterMessages(viewContext, statusWriter, parameterDisplayName, ensemblesWithoutParameter);
-    usePublishToDataChannels(viewContext, subplotOwner, vectorHexColorMap );
+    usePublishToDataChannels(viewContext, subplotOwner, vectorHexColorMap);
 
-    function handleClickInChart(e: PlotMouseEvent) {
-        const clickedPoint: PlotDatum = e.points[0];
-        if (!clickedPoint) {
-            return;
-        }
-
-        if (clickedPoint.pointIndex >= 0 && clickedPoint.pointIndex < clickedPoint.data.x.length) {
-            const timestampUtcMs = clickedPoint.data.x[clickedPoint.pointIndex];
-            if (typeof timestampUtcMs === "number") {
-                setActiveTimestampUtcMs(timestampUtcMs);
+    const handleClickInChart = React.useCallback(
+        function handleClickInChart(e: PlotMouseEvent) {
+            const clickedPoint: PlotDatum = e.points[0];
+            if (!clickedPoint) {
+                return;
             }
-        }
-    }
 
-    const plot = usePlotBuilder(
+            if (clickedPoint.pointIndex >= 0 && clickedPoint.pointIndex < clickedPoint.data.x.length) {
+                const timestampUtcMs = clickedPoint.data.x[clickedPoint.pointIndex];
+                if (typeof timestampUtcMs === "number") {
+                    setActiveTimestampUtcMs(timestampUtcMs);
+                }
+            }
+        },
+        [setActiveTimestampUtcMs],
+    );
+
+    const plotBuilder = usePlotBuilder(
         viewContext,
         wrapperDivSize,
-        vectorHexColorMap ,
+        vectorHexColorMap,
         subplotOwner,
         ensemblesParameterColoring,
-        handleClickInChart,
     );
     const hasNoQueryErrors = !hasRealizationsQueryError && !hasStatisticsQueryError;
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            {hasNoQueryErrors ? plot : <ContentError>One or more queries have an error state.</ContentError>}
+            {hasNoQueryErrors ? (
+                <Plot
+                    plotUpdateReady={!anyLoading}
+                    onClick={handleClickInChart}
+                    data={plotBuilder.makePlotData()}
+                    layout={plotBuilder.makePlotLayout()}
+                />
+            ) : (
+                <ContentError>One or more queries have an error state.</ContentError>
+            )}
         </div>
     );
 };

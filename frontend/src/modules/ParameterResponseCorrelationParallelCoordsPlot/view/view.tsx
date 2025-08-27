@@ -13,6 +13,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { Plot } from "@modules/_shared/components/Plot";
 import type { ResponseData } from "@modules/_shared/rankParameter";
 import { createRankedParameterCorrelations, getRankedParameterData } from "@modules/_shared/rankParameter";
 
@@ -140,7 +141,7 @@ export function View({ viewContext, workbenchSession: workbenchSession }: Module
             const figure = new ParallelCoordinatesFigure(wrapperDivSize);
             figure.addPlot(responseData, rankedParametersData, {});
 
-            setContent(figure.build());
+            setContent(<Plot data={figure.makePlotData()} layout={figure.makePlotLayout()} />);
             return;
         });
     }
