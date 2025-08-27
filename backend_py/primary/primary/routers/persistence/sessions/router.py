@@ -76,19 +76,20 @@ async def create_session(session: NewSession, user: AuthenticatedUser = Depends(
         return session_id
 
 
-@router.put("/sessions/{session_id}")
+@router.put("/sessions/{session_id}", description="Updates a session object. Allows for partial update objects")
 async def update_session(
     session_id: str,
     session_update: SessionUpdate,
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-):
+) -> schemas.SessionDocument:
     access = SessionAccess.create(user.get_user_id())
     async with access:
-        await access.update_session_async(session_id, session_update)
+        updated_session = await access.update_session_async(session_id, session_update)
+        return to_api_session_record(updated_session)
 
 
 @router.delete("/sessions/{session_id}")
-async def delete_session(session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
+async def delete_session(session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)) -> None:
     access = SessionAccess.create(user.get_user_id())
     async with access:
         await access.delete_session_async(session_id)

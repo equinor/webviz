@@ -206,6 +206,7 @@ import type {
     GetSessionResponse_api,
     GetSessionError_api,
     UpdateSessionData_api,
+    UpdateSessionResponse_api,
     UpdateSessionError_api,
     GetSessionMetadataData_api,
     GetSessionMetadataResponse_api,
@@ -1308,11 +1309,12 @@ export const getSession = <ThrowOnError extends boolean = false>(options: Option
 
 /**
  * Update Session
+ * Updates a session object. Allows for partial update objects
  */
 export const updateSession = <ThrowOnError extends boolean = false>(
     options: Options<UpdateSessionData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).put<unknown, UpdateSessionError_api, ThrowOnError>({
+    return (options?.client ?? client).put<UpdateSessionResponse_api, UpdateSessionError_api, ThrowOnError>({
         ...options,
         headers: {
             "Content-Type": "application/json",

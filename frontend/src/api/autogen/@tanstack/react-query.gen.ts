@@ -188,6 +188,7 @@ import type {
     GetSessionData_api,
     UpdateSessionData_api,
     UpdateSessionError_api,
+    UpdateSessionResponse_api,
     GetSessionMetadataData_api,
     GetRecentSnapshotsData_api,
     GetRecentSnapshotsError_api,
@@ -1753,7 +1754,11 @@ export const getSessionOptions = (options: Options<GetSessionData_api>) => {
 };
 
 export const updateSessionMutation = (options?: Partial<Options<UpdateSessionData_api>>) => {
-    const mutationOptions: UseMutationOptions<unknown, AxiosError<UpdateSessionError_api>, Options<UpdateSessionData_api>> = {
+    const mutationOptions: UseMutationOptions<
+        UpdateSessionResponse_api,
+        AxiosError<UpdateSessionError_api>,
+        Options<UpdateSessionData_api>
+    > = {
         mutationFn: async (localOptions) => {
             const { data } = await updateSession({
                 ...options,

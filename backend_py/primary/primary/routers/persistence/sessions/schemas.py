@@ -2,15 +2,6 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class SessionMetadataWithId(BaseModel):
-    id: str
-    title: str
-    description: Optional[str]
-    createdAt: str
-    updatedAt: str
-    version: int
-
-
 class SessionMetadata(BaseModel):
     title: str
     description: Optional[str]
@@ -18,6 +9,10 @@ class SessionMetadata(BaseModel):
     updatedAt: str
     version: int
     hash: str
+
+
+class SessionMetadataWithId(SessionMetadata):
+    id: str
 
 
 class SessionDocument(BaseModel):

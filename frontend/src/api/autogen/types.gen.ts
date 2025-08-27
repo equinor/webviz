@@ -704,13 +704,19 @@ export type SessionMetadata_api = {
     hash: string;
 };
 
+export type SessionMetadataUpdate_api = {
+    title?: string;
+    description?: string | null;
+};
+
 export type SessionMetadataWithId_api = {
-    id: string;
     title: string;
     description: string | null;
     createdAt: string;
     updatedAt: string;
     version: number;
+    hash: string;
+    id: string;
 };
 
 export enum SessionSortBy_api {
@@ -727,13 +733,8 @@ export enum SessionSortDirection_api {
 
 export type SessionUpdate_api = {
     id: string;
-    metadata: SessionUserEditableMetadata_api;
-    content: string;
-};
-
-export type SessionUserEditableMetadata_api = {
-    title: string;
-    description?: string | null;
+    metadata?: SessionMetadataUpdate_api;
+    content?: string;
 };
 
 export type Snapshot_api = {
@@ -4098,8 +4099,10 @@ export type UpdateSessionResponses_api = {
     /**
      * Successful Response
      */
-    200: unknown;
+    200: SessionDocument_api;
 };
+
+export type UpdateSessionResponse_api = UpdateSessionResponses_api[keyof UpdateSessionResponses_api];
 
 export type GetSessionMetadataData_api = {
     body?: never;

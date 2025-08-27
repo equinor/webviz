@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Any, Optional, List
 from datetime import datetime, timezone
 from nanoid import generate
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
@@ -106,27 +106,32 @@ class SessionAccess:
         await self._assert_ownership_async(session_id)
         await self.session_container_access.delete_item_async(session_id, partition_key=self.user_id)
 
-    async def update_session_async(self, session_id: str, session_update: SessionUpdate):
+    async def update_session_async(self, session_id: str, session_update: SessionUpdate) -> SessionDocument:
         existing = await self._assert_ownership_async(session_id)
 
-        updated_metadata = existing.metadata.model_copy(
-            update={
-                "title": session_update.metadata.title,
-                "description": session_update.metadata.description,
-                "version": existing.metadata.version + 1,
-                "updated_at": datetime.now(timezone.utc),
-                "hash": hash_json_string(session_update.content),
-            }
-        )
+        # Get all explicitly defined changes
+        document_update_dict = session_update.model_dump(exclude_unset=True, exclude=set(["id"]))
+        metadata_update_dict: dict[str, Any] = document_update_dict.get("metadata", {})
 
-        updated_session = SessionDocument(
-            id=session_id,
-            owner_id=self.user_id,
-            content=session_update.content,
-            metadata=updated_metadata,
-        )
+        # Early return if there are no changes
+        if not document_update_dict and not metadata_update_dict:
+            return existing
+
+        # Inject computed fields
+        metadata_update_dict.update({"updated_at": datetime.now(timezone.utc)})
+        metadata_update_dict.update({"version": existing.metadata.version + 1})
+
+        if session_update.content:
+            metadata_update_dict.update({"hash": hash_json_string(session_update.content)})
+
+        updated_metadata = existing.metadata.model_copy(update=metadata_update_dict)
+        document_update_dict.update({"metadata": updated_metadata})
+
+        updated_session = existing.model_copy(update=document_update_dict)
 
         await self.session_container_access.update_item_async(session_id, updated_session)
+
+        return updated_session
 
     async def _assert_ownership_async(self, session_id: str) -> SessionDocument:
         try:

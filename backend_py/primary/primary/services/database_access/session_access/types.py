@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel
+from pydantic.json_schema import SkipJsonSchema
 
 
 class SessionUserEditableMetadata(BaseModel):
@@ -25,10 +26,16 @@ class SessionMetadataWithId(SessionMetadata):
     id: str
 
 
+# SkipJsonSchema is so the field is optional, but not nullable
+class SessionMetadataUpdate(BaseModel):
+    title: str | SkipJsonSchema[None] = None
+    description: str | None = None
+
+
 class SessionUpdate(BaseModel):
     id: str
-    metadata: SessionUserEditableMetadata
-    content: str
+    metadata: SessionMetadataUpdate | SkipJsonSchema[None] = None
+    content: str | SkipJsonSchema[None] = None
 
 
 class NewSession(BaseModel):
