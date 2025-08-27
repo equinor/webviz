@@ -57,6 +57,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     "min-w-lg",
                     "max-w-[75vw]",
                     "pointer-events-auto",
+                    "flex flex-col",
                 )}
                 style={{
                     transform: `translate(-50%, -50%)`,
@@ -78,7 +79,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                         </div>
                     )}
                 </div>
-                <div className="p-4">{props.children}</div>
+                <div className="p-4 grow overflow-auto">{props.children}</div>
                 {props.actions && <div className="flex justify-end mt-4 bg-slate-100 p-4">{props.actions}</div>}
             </div>
         </div>,

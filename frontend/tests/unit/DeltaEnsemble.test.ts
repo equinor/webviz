@@ -5,7 +5,6 @@ import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleParameters, ParameterType } from "@framework/EnsembleParameters";
 import { SensitivityType } from "@framework/EnsembleSensitivities";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
-import { makeEnsembleTimeStamp } from "tests/utils/ensemble";
 
 describe("DeltaEnsemble", () => {
     const COMPARISON_ENSEMBLE = new RegularEnsemble(
@@ -30,7 +29,6 @@ describe("DeltaEnsemble", () => {
         [{ name: "sens1", type: SensitivityType.MONTECARLO, cases: [] }],
         "blue",
         "Custom Name First Ensemble",
-        makeEnsembleTimeStamp(),
     );
 
     const REFERENCE_ENSEMBLE = new RegularEnsemble(
@@ -55,7 +53,6 @@ describe("DeltaEnsemble", () => {
         [{ name: "sens1", type: SensitivityType.MONTECARLO, cases: [] }],
         "green",
         "Custom Name Second Ensemble",
-        makeEnsembleTimeStamp(),
     );
 
     const DELTA_ENSEMBLE = new DeltaEnsemble(

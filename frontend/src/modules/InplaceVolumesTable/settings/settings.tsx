@@ -1,12 +1,12 @@
 import type React from "react";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 
 import { InplaceVolumesStatistic_api } from "@api";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
@@ -25,45 +25,32 @@ import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volume
 
 import type { Interfaces } from "../interfaces";
 
+import { selectedIndexValueCriteriaAtom, selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./atoms/baseAtoms";
+import { tableDefinitionsAccessorAtom } from "./atoms/derivedAtoms";
+import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import {
-    selectedIndexValueCriteriaAtom,
-    selectedStatisticOptionsAtom,
-    selectedTableTypeAtom,
-    userSelectedGroupByIndicesAtom,
-    userSelectedEnsembleIdentsAtom,
-    userSelectedIndicesWithValuesAtom,
-    userSelectedResultNamesAtom,
-    userSelectedTableNamesAtom,
-} from "./atoms/baseAtoms";
-import {
-    selectedGroupByIndicesAtom,
     selectedEnsembleIdentsAtom,
+    selectedGroupByIndicesAtom,
     selectedIndicesWithValuesAtom,
     selectedResultNamesAtom,
     selectedTableNamesAtom,
-    tableDefinitionsAccessorAtom,
-} from "./atoms/derivedAtoms";
-import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
+} from "./atoms/persistableAtoms";
+import { PersistableAtomWarningWrapper } from "@modules/_shared/components/PersistableAtomWarningWrapper";
+import { makePersistableAtomWarningMessage } from "@modules/_shared/utils/persistableAtomWarningMessage";
+import { Button } from "@lib/components/Button";
+import { Source } from "@framework/utils/atomUtils";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
-    const ensembleSet = useEnsembleSet(props.workbenchSession);
+    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
     const tableDefinitionsQueryResult = useAtomValue(tableDefinitionsQueryAtom);
     const tableDefinitionsAccessor = useAtomValue(tableDefinitionsAccessorAtom);
 
-    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
-    const setSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
-
-    const selectedTableNames = useAtomValue(selectedTableNamesAtom);
-    const setSelectedTableNames = useSetAtom(userSelectedTableNamesAtom);
-
-    const selectedIndicesWithValues = useAtomValue(selectedIndicesWithValuesAtom);
-    const setSelectedIndicesWithValues = useSetAtom(userSelectedIndicesWithValuesAtom);
-
-    const selectedResultNames = useAtomValue(selectedResultNamesAtom);
-    const setSelectedResultNames = useSetAtom(userSelectedResultNamesAtom);
-
-    const selectedGroupByIndices = useAtomValue(selectedGroupByIndicesAtom);
-    const setSelectedGroupByIndices = useSetAtom(userSelectedGroupByIndicesAtom);
+    const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
+    const [selectedTableNames, setSelectedTableNames] = useAtom(selectedTableNamesAtom);
+    const [selectedIndicesWithValues, setSelectedIndicesWithValues] = useAtom(selectedIndicesWithValuesAtom);
+    const [selectedResultNames, setSelectedResultNames] = useAtom(selectedResultNamesAtom);
+    const [selectedGroupByIndices, setSelectedGroupByIndices] = useAtom(selectedGroupByIndicesAtom);
 
     const [selectedTableType, setSelectedTableType] = useAtom(selectedTableTypeAtom);
     const [selectedStatisticOptions, setSelectedStatisticOptions] = useAtom(selectedStatisticOptionsAtom);
@@ -114,6 +101,21 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const tableSettings = (
         <CollapsibleGroup title="Result and grouping" expanded>
+            <Button
+                onClick={() =>
+                    setSelectedIndicesWithValues({
+                        value: [
+                            {
+                                indexColumn: "FLUID",
+                                values: ["unknown"],
+                            },
+                        ],
+                        _source: Source.PERSISTENCE,
+                    })
+                }
+            >
+                Test
+            </Button>
             <div className="flex flex-col gap-2">
                 <Label text="Table type">
                     <Dropdown
@@ -134,22 +136,26 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     </Label>
                 )}
                 <Label text="Results">
-                    <Select
-                        value={selectedResultNames}
-                        options={resultNameOptions}
-                        onChange={setSelectedResultNames}
-                        multiple
-                        size={5}
-                        debounceTimeMs={1500}
-                    />
+                    <PersistableAtomWarningWrapper atom={selectedResultNamesAtom}>
+                        <Select
+                            value={selectedResultNames.value}
+                            options={resultNameOptions}
+                            onChange={setSelectedResultNames}
+                            multiple
+                            size={5}
+                            debounceTimeMs={1500}
+                        />
+                    </PersistableAtomWarningWrapper>
                 </Label>
                 <Label text="Grouping">
-                    <TagPicker
-                        value={selectedGroupByIndices}
-                        tags={groupByIndicesOptions}
-                        onChange={handleGroupByIndicesChange}
-                        debounceTimeMs={1500}
-                    />
+                    <PersistableAtomWarningWrapper atom={selectedGroupByIndicesAtom}>
+                        <TagPicker
+                            value={selectedGroupByIndices.value}
+                            tags={groupByIndicesOptions}
+                            onChange={handleGroupByIndicesChange}
+                            debounceTimeMs={1500}
+                        />
+                    </PersistableAtomWarningWrapper>
                 </Label>
             </div>
         </CollapsibleGroup>
@@ -161,14 +167,27 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             settingsContext={props.settingsContext}
             workbenchServices={props.workbenchServices}
             isPending={tableDefinitionsQueryResult.isLoading}
-            availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
-            availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
-            selectedEnsembleIdents={selectedEnsembleIdents}
-            selectedIndicesWithValues={selectedIndicesWithValues}
-            selectedTableNames={selectedTableNames}
+            settings={{
+                ensembleIdents: {
+                    availableValues: ensembleSet.getRegularEnsembleArray(),
+                    selectedValues: selectedEnsembleIdents.value,
+                    annotations: makePersistableAtomWarningMessage(selectedEnsembleIdentsAtom),
+                },
+                tableNames: {
+                    availableValues: tableDefinitionsAccessor.getTableNamesIntersection(),
+                    selectedValues: selectedTableNames.value,
+                    annotations: makePersistableAtomWarningMessage(selectedTableNamesAtom),
+                },
+                indicesWithValues: {
+                    availableValues: tableDefinitionsAccessor.getCommonIndicesWithValues(),
+                    selectedValues: selectedIndicesWithValues.value,
+                    annotations: makePersistableAtomWarningMessage(selectedIndicesWithValuesAtom),
+                },
+            }}
             selectedAllowIndicesValuesIntersection={
                 selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
             }
+            arePersistedIndicesWithValuesValid={selectedIndicesWithValues.isValidInContext}
             onChange={handleFilterChange}
             additionalSettings={tableSettings}
             areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}

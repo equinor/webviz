@@ -9,7 +9,7 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 
 export type SyncedSubsurfaceViewerProps = {
-    viewContext: ViewContext<any>;
+    viewContext: ViewContext<any, any>;
     workbenchServices: WorkbenchServices;
 } & SubsurfaceViewerProps;
 
