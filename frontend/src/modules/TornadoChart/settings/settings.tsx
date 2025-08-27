@@ -1,5 +1,6 @@
 import React from "react";
 
+import { Radio } from "@mui/icons-material";
 import { useAtom, useSetAtom } from "jotai";
 
 import { KeyKind } from "@framework/DataChannelTypes";
@@ -9,17 +10,20 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
+import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 
 import type { Interfaces } from "../interfaces";
-import { DisplayComponentType } from "../typesAndEnums";
+import { BarSortOrder, DisplayComponentType, XAxisBarScaling } from "../typesAndEnums";
 
 import {
+    barSortOrderAtom,
     displayComponentTypeAtom,
     hideZeroYAtom,
     referenceSensitivityNameAtom,
     showLabelsAtom,
     showRealizationPointsAtom,
+    xAxisBarScalingAtom,
 } from "./atoms/baseAtoms";
 
 export function Settings({
@@ -32,6 +36,8 @@ export function Settings({
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
     const [showRealizationPoints, setShowRealizationPoints] = useAtom(showRealizationPointsAtom);
     const setModuleReferenceSensitivityName = useSetAtom(referenceSensitivityNameAtom);
+    const [barSortOrder, setBarSortOrder] = useAtom(barSortOrderAtom);
+    const [xAxisBarScaling, setXAxisBarScaling] = useAtom(xAxisBarScalingAtom);
     const [referenceSensitivityName, setReferenceSensitivityName] = React.useState<string | null>(null);
 
     useApplyInitialSettingsToState(initialSettings, "displayComponentType", "string", setDisplayComponentType);
@@ -100,6 +106,13 @@ export function Settings({
         setShowRealizationPoints(event.target.checked);
     }
 
+    function handleBarSortOrderChange(_: React.ChangeEvent<HTMLInputElement>, value: string | number) {
+        setBarSortOrder(value as BarSortOrder);
+    }
+    function handleXAxisBarScalingChange(_: React.ChangeEvent<HTMLInputElement>, value: string | number) {
+        setXAxisBarScaling(value as XAxisBarScaling);
+    }
+
     return (
         <div className="flex flex-col gap-2">
             <CollapsibleGroup title="Reference sensitivity" expanded>
@@ -127,6 +140,38 @@ export function Settings({
             </CollapsibleGroup>
             <CollapsibleGroup title="View settings" expanded>
                 <div className="flex flex-col gap-4">
+                    <Label text="Scaling">
+                        <RadioGroup
+                            value={xAxisBarScaling}
+                            options={[
+                                {
+                                    label: "Relative",
+                                    value: XAxisBarScaling.RELATIVE,
+                                },
+                                {
+                                    label: "Absolute",
+                                    value: XAxisBarScaling.ABSOLUTE,
+                                },
+                            ]}
+                            onChange={handleXAxisBarScalingChange}
+                        />
+                    </Label>
+                    <Label text="Bar sort order">
+                        <RadioGroup
+                            value={barSortOrder}
+                            options={[
+                                {
+                                    label: "Impact",
+                                    value: BarSortOrder.IMPACT,
+                                },
+                                {
+                                    label: "Alphabetical",
+                                    value: BarSortOrder.ALPHABETICAL,
+                                },
+                            ]}
+                            onChange={handleBarSortOrderChange}
+                        />
+                    </Label>
                     <Checkbox
                         checked={hideZeroY}
                         onChange={handleHideZeroYChange}

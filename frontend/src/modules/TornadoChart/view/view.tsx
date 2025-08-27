@@ -28,6 +28,8 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     const showRealizationPoints = viewContext.useSettingsToViewInterfaceValue("showRealizationPoints");
     const displayComponentType = viewContext.useSettingsToViewInterfaceValue("displayComponentType");
     const referenceSensitivityName = viewContext.useSettingsToViewInterfaceValue("referenceSensitivityName");
+    const barSortOrder = viewContext.useSettingsToViewInterfaceValue("barSortOrder");
+    const xAxisBarScaling = viewContext.useSettingsToViewInterfaceValue("xAxisBarScaling");
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const ensembleSet = useEnsembleSet(workbenchSession);
@@ -81,7 +83,8 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
                 ? referenceSensitivityName
                 : sensitivities.getSensitivityNames()[0],
         );
-        computedSensitivityResponseDataset = sensitivityResponseCalculator.computeSensitivitiesForResponse();
+        computedSensitivityResponseDataset =
+            sensitivityResponseCalculator.computeSensitivitiesForResponse(barSortOrder);
     }
 
     function makeContent() {
@@ -117,6 +120,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
                     showLabels={showLabels}
                     hideZeroY={hideZeroY}
                     showRealizationPoints={showRealizationPoints}
+                    xAxisBarScaling={xAxisBarScaling}
                     onSelectedSensitivity={setSelectedSensitivity}
                 />
             );

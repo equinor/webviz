@@ -1,6 +1,7 @@
 import type { EnsembleSensitivities, Sensitivity, SensitivityCase } from "@framework/EnsembleSensitivities";
 import { SensitivityType } from "@framework/EnsembleSensitivities";
 import { computeQuantile } from "@modules/_shared/utils/math/statistics";
+import { BarSortOrder } from "@modules/TornadoChart/typesAndEnums";
 
 export type EnsembleScalarResponse = {
     realizations: number[];
@@ -8,17 +9,21 @@ export type EnsembleScalarResponse = {
     name?: string;
     unit?: string;
 };
-
+type SensitivityRealizationsData = {
+    realizations: number[];
+    values: number[];
+};
 export interface SensitivityResponse {
     sensitivityName: string;
     lowCaseName: string;
     lowCaseAverage: number;
     lowCaseReferenceDifference: number;
+    lowCaseRealizationValues: number[];
     lowCaseRealizations: number[];
-    // lowCaseRealizationValues: number[]
     highCaseName: string;
     highCaseAverage: number;
     highCaseReferenceDifference: number;
+    highCaseRealizationValues: number[];
     highCaseRealizations: number[];
 }
 export interface SensitivityResponseDataset {
@@ -50,21 +55,21 @@ export class SensitivityResponseCalculator {
     constructor(
         sensitivities: EnsembleSensitivities,
         ensembleResponse: EnsembleScalarResponse,
-        referenceSensitivity: string | null
+        referenceSensitivity: string | null,
     ) {
         this._ensembleResponse = ensembleResponse;
         this._sensitivities = sensitivities;
 
         if (!referenceSensitivity || !this._sensitivities.hasSensitivityName(referenceSensitivity)) {
             throw new Error(
-                `SensitivityResponseCalculator: Reference sensitivity ${referenceSensitivity} not found in ensemble`
+                `SensitivityResponseCalculator: Reference sensitivity ${referenceSensitivity} not found in ensemble`,
             );
         }
         this._referenceSensitivity = referenceSensitivity;
         this._referenceAverage = this.computeSensitivityAverage(this._referenceSensitivity);
     }
 
-    computeSensitivitiesForResponse(): SensitivityResponseDataset {
+    computeSensitivitiesForResponse(barSortOrder: BarSortOrder): SensitivityResponseDataset {
         // Compute sensitivity responses for all sensitivities
         const sensitivityResponses: SensitivityResponse[] = [];
         this._sensitivities.getSensitivityArr().forEach((sensitivity) => {
@@ -83,7 +88,7 @@ export class SensitivityResponseCalculator {
         });
 
         const sensitivityResponseDataset: SensitivityResponseDataset = {
-            sensitivityResponses: this.sortSensitivityResponses(sensitivityResponses),
+            sensitivityResponses: this.sortSensitivityResponses(sensitivityResponses, barSortOrder),
             referenceSensitivity: this._referenceSensitivity,
             referenceAverage: this._referenceAverage,
             scale: SensitivityScale.RELATIVE,
@@ -135,27 +140,36 @@ export class SensitivityResponseCalculator {
         return this.computeResponseAverage(realizations);
     }
 
-    private sortSensitivityResponses(sensitivityResponses: SensitivityResponse[]): SensitivityResponse[] {
+    private sortSensitivityResponses(
+        sensitivityResponses: SensitivityResponse[],
+        sortOrder: BarSortOrder,
+    ): SensitivityResponse[] {
+        if (sortOrder === BarSortOrder.ALPHABETICAL) {
+            return sensitivityResponses.sort((a, b) => b.sensitivityName.localeCompare(a.sensitivityName));
+        }
         // Sort sensitivity responses in descending order of max difference from reference
         const sortedSensitivityResponses = sensitivityResponses.sort(
             (a: SensitivityResponse, b: SensitivityResponse) => {
                 const maxValueA = Math.max(
                     Math.abs(a.lowCaseReferenceDifference),
-                    Math.abs(a.highCaseReferenceDifference)
+                    Math.abs(a.highCaseReferenceDifference),
                 );
                 const maxValueB = Math.max(
                     Math.abs(b.lowCaseReferenceDifference),
-                    Math.abs(b.highCaseReferenceDifference)
+                    Math.abs(b.highCaseReferenceDifference),
                 );
                 return maxValueA - maxValueB;
-            }
+            },
         );
         return sortedSensitivityResponses;
     }
 
-    private getSensitivityRealizationsLessOrEqualToReferenceAverage(sensitivity: Sensitivity): number[] {
+    private getSensitivityRealizationsLessOrEqualToReferenceAverage(
+        sensitivity: Sensitivity,
+    ): SensitivityRealizationsData {
         // Find realizations for which response is less than or equal to reference average
         const realizations: number[] = [];
+        const values: number[] = [];
 
         sensitivity.cases.forEach((case_) => {
             case_.realizations.forEach((realization) => {
@@ -163,16 +177,20 @@ export class SensitivityResponseCalculator {
                     const index = this._ensembleResponse.realizations.indexOf(realization);
                     if (this._ensembleResponse.values[index] <= this._referenceAverage) {
                         realizations.push(realization);
+                        values.push(this._ensembleResponse.values[index]);
                     }
                 }
             });
         });
-        return realizations;
+        return { realizations, values };
     }
 
-    private getSensitivityRealizationsGreaterThanReferenceAverage(sensitivity: Sensitivity): number[] {
+    private getSensitivityRealizationsGreaterThanReferenceAverage(
+        sensitivity: Sensitivity,
+    ): SensitivityRealizationsData {
         // Find realizations for which response is greater than reference average
         const realizations: number[] = [];
+        const values: number[] = [];
 
         sensitivity.cases.forEach((case_) => {
             case_.realizations.forEach((realization) => {
@@ -180,18 +198,19 @@ export class SensitivityResponseCalculator {
                     const index = this._ensembleResponse.realizations.indexOf(realization);
                     if (this._ensembleResponse.values[index] > this._referenceAverage) {
                         realizations.push(realization);
+                        values.push(this._ensembleResponse.values[index]);
                     }
                 }
             });
         });
-        return realizations;
+        return { realizations, values };
     }
 
     private computeMonteCarloSensitivityResponse(sensitivity: Sensitivity): SensitivityResponse {
         // Compute sensitivity response for Monte Carlo sensitivity
         if (sensitivity.cases.length > 1) {
             throw new Error(
-                `SensitivityResponseCalculator: Monte Carlo sensitivity ${sensitivity.name} has more than 1 case`
+                `SensitivityResponseCalculator: Monte Carlo sensitivity ${sensitivity.name} has more than 1 case`,
             );
         }
         const sensitivityCase: SensitivityCase = sensitivity.cases[0];
@@ -201,12 +220,14 @@ export class SensitivityResponseCalculator {
             lowCaseAverage: this.computeResponseOilP90(sensitivityCase.realizations),
             lowCaseReferenceDifference:
                 this.computeResponseOilP90(sensitivityCase.realizations) - this._referenceAverage,
-            lowCaseRealizations: this.getSensitivityRealizationsLessOrEqualToReferenceAverage(sensitivity),
+            lowCaseRealizations: this.getSensitivityRealizationsLessOrEqualToReferenceAverage(sensitivity).realizations,
+            lowCaseRealizationValues: this.getSensitivityRealizationsLessOrEqualToReferenceAverage(sensitivity).values,
             highCaseName: "P10",
             highCaseAverage: this.computeResponseOilP10(sensitivityCase.realizations),
             highCaseReferenceDifference:
                 this.computeResponseOilP10(sensitivityCase.realizations) - this._referenceAverage,
-            highCaseRealizations: this.getSensitivityRealizationsGreaterThanReferenceAverage(sensitivity),
+            highCaseRealizations: this.getSensitivityRealizationsGreaterThanReferenceAverage(sensitivity).realizations,
+            highCaseRealizationValues: this.getSensitivityRealizationsGreaterThanReferenceAverage(sensitivity).values,
         };
         return sensitivityResponse;
     }
@@ -215,7 +236,7 @@ export class SensitivityResponseCalculator {
         // Compute sensitivity response for scenario sensitivity
         if (sensitivity.cases.length > 2) {
             throw new Error(
-                `SensitivityResponseCalculator: Scenario sensitivity ${sensitivity.name} has more than 2 cases`
+                `SensitivityResponseCalculator: Scenario sensitivity ${sensitivity.name} has more than 2 cases`,
             );
         }
         if (sensitivity.cases.length === 1) {
@@ -229,10 +250,12 @@ export class SensitivityResponseCalculator {
                 lowCaseReferenceDifference:
                     this.computeResponseAverage(sensitivityCase.realizations) - this._referenceAverage,
                 lowCaseRealizations: sensitivityCase.realizations,
+                lowCaseRealizationValues: this.getResponseValuesForRealizations(sensitivityCase.realizations),
                 highCaseName: "",
                 highCaseAverage: this._referenceAverage,
                 highCaseReferenceDifference: 0,
                 highCaseRealizations: [],
+                highCaseRealizationValues: [],
             };
         }
 
@@ -252,10 +275,16 @@ export class SensitivityResponseCalculator {
             lowCaseAverage: caseAverages[lowCaseIndex],
             lowCaseReferenceDifference: caseAverages[lowCaseIndex] - this._referenceAverage,
             lowCaseRealizations: sensitivity.cases[lowCaseIndex].realizations,
+            lowCaseRealizationValues: this.getResponseValuesForRealizations(
+                sensitivity.cases[lowCaseIndex].realizations,
+            ),
             highCaseName: sensitivity.cases[highCaseIndex].name,
             highCaseAverage: caseAverages[highCaseIndex],
             highCaseReferenceDifference: caseAverages[highCaseIndex] - this._referenceAverage,
             highCaseRealizations: sensitivity.cases[highCaseIndex].realizations,
+            highCaseRealizationValues: this.getResponseValuesForRealizations(
+                sensitivity.cases[highCaseIndex].realizations,
+            ),
         };
         return sensitivityResponse;
     }

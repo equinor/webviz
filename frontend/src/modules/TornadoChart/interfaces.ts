@@ -1,6 +1,7 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
+    barSortOrderAtom,
     displayComponentTypeAtom,
     hideZeroYAtom,
     referenceSensitivityNameAtom,
@@ -8,8 +9,9 @@ import {
     sensitivityNamesAtom,
     showLabelsAtom,
     showRealizationPointsAtom,
+    xAxisBarScalingAtom,
 } from "./settings/atoms/baseAtoms";
-import type { DisplayComponentType, SelectedSensitivity } from "./typesAndEnums";
+import type { BarSortOrder, DisplayComponentType, SelectedSensitivity, XAxisBarScaling } from "./typesAndEnums";
 import { selectedSensitivityAtom as ViewSelectedSensitivityAtom } from "./view/atoms/baseAtoms";
 
 type SettingsToViewInterface = {
@@ -20,6 +22,8 @@ type SettingsToViewInterface = {
     showLabels: boolean;
     hideZeroY: boolean;
     showRealizationPoints: boolean;
+    barSortOrder: BarSortOrder;
+    xAxisBarScaling: XAxisBarScaling;
 };
 
 export type ViewToSettingsInterface = {
@@ -52,6 +56,12 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     },
     showRealizationPoints: (get) => {
         return get(showRealizationPointsAtom);
+    },
+    barSortOrder: (get) => {
+        return get(barSortOrderAtom);
+    },
+    xAxisBarScaling: (get) => {
+        return get(xAxisBarScalingAtom);
     },
 };
 
