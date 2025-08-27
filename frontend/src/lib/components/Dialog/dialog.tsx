@@ -7,13 +7,14 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type DialogDrawerProps = {
     content: React.ReactNode;
-    width: string | number;
+    width?: string | number;
+    maxWidth?: string | number;
     open: boolean;
     onClose: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
 };
 
 export type DialogProps = {
-    title?: string;
+    title?: string | React.ReactNode;
     children?: React.ReactNode;
     modal?: boolean;
     open?: boolean;
@@ -55,7 +56,9 @@ export const Dialog: React.FC<DialogProps> = (props) => {
             {/* Main dialog */}
             <div
                 ref={dialogRef}
-                className="fixed left-1/2 top-1/2 border rounded-sm bg-white shadow-sm min-w-lg max-w-[75vw] pointer-events-auto flex flex-col"
+                className={
+                    "fixed left-1/2 top-1/2 border rounded-sm bg-white shadow-sm min-w-lg max-w-[75vw] pointer-events-auto flex flex-col overflow-hidden"
+                }
                 style={{
                     transform: `translate(-50%, -50%)`,
                     height: props.height,
@@ -78,33 +81,44 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     )}
                 </div>
 
-                {/* Main content */}
-                <div className="p-4 grow overflow-auto">{props.children}</div>
+                {/* Body */}
+                <div className="flex flex-col h-full relative overflow-hidden">
+                    {/* Main content */}
+                    <div className="p-4 grow overflow-auto">{props.children}</div>
 
-                {/* Actions */}
-                {props.actions && <div className="flex justify-end mt-4 bg-slate-100 p-4">{props.actions}</div>}
+                    {/* Actions */}
+                    {props.actions && <div className="flex justify-end mt-4 bg-slate-100 p-4">{props.actions}</div>}
 
-                {/* Drawer overlay */}
-                {props.drawer && (
-                    <div className={resolveClassNames({ hidden: !props.drawer.open })}>
-                        {/* Semi-transparent background */}
-                        <div
-                            className="absolute top-0 left-0 w-full h-full bg-black/25 z-10"
-                            onClick={props.drawer.onClose}
-                        />
+                    {/* Drawer overlay + content */}
+                    {props.drawer && (
+                        <>
+                            {/* Semi-transparent overlay*/}
+                            {props.drawer.open && (
+                                <div
+                                    className="absolute top-0 left-0 w-full h-full bg-black/25 z-10"
+                                    onClick={props.drawer.onClose}
+                                />
+                            )}
 
-                        {/* Drawer content */}
-                        <div
-                            className="absolute top-0 left-0 h-full bg-white shadow-lg z-20"
-                            style={{
-                                width: props.drawer.width,
-                                maxWidth: "99%", // Set to 99% to allow background click
-                            }}
-                        >
-                            {props.drawer.content}
-                        </div>
-                    </div>
-                )}
+                            {/* Drawer content */}
+                            <div
+                                className={resolveClassNames(
+                                    "absolute top-0 left-0 pl-2 h-full bg-white shadow-lg transition-transform duration-300 z-20",
+                                    {
+                                        "translate-x-0": props.drawer.open,
+                                        "-translate-x-full": !props.drawer.open,
+                                    },
+                                )}
+                                style={{
+                                    width: props.drawer.width ?? "99%",
+                                    maxWidth: props.drawer.maxWidth ?? "99%",
+                                }}
+                            >
+                                {props.drawer.content}
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
         </div>,
     );

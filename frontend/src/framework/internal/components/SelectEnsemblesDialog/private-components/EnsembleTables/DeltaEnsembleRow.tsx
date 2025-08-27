@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { FolderOpen, Remove } from "@mui/icons-material";
+import { FolderOpen, Remove, WarningOutlined } from "@mui/icons-material";
 
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { ColorSelect } from "@lib/components/ColorSelect";
@@ -118,9 +118,9 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
 
     return (
         <tr
-            className={resolveClassNames("align-center ", {
-                "hover:bg-blue-50 odd:bg-blue-200 even:bg-blue-300": isValid && props.isDuplicate,
-                "hover:bg-slate-100 odd:bg-slate-50": !props.isDuplicate,
+            className={resolveClassNames("align-center hover:bg-slate-100", {
+                "odd:bg-blue-100 even:bg-blue-200": isValid && props.isDuplicate,
+                "odd:bg-slate-50": !props.isDuplicate,
             })}
         >
             <td className="p-2">
@@ -150,9 +150,19 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
                 />
             </td>
             <td className="p-2">
-                <IconButton color="danger" title="Remove delta ensemble from selection" onClick={onDelete}>
-                    <Remove fontSize="small" />
-                </IconButton>
+                <div className="flex flex-row">
+                    <IconButton color="danger" title="Remove delta ensemble from selection" onClick={onDelete}>
+                        <Remove fontSize="small" />
+                    </IconButton>
+                    {props.isDuplicate && (
+                        <IconButton
+                            className="ml-2 cursor-help"
+                            title="This delta ensemble is a duplicate of another delta ensemble in the selection."
+                        >
+                            <WarningOutlined fontSize="small" className="text-indigo-600" />
+                        </IconButton>
+                    )}
+                </div>
             </td>
         </tr>
     );

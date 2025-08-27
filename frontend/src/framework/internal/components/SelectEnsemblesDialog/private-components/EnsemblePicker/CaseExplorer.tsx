@@ -193,7 +193,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     );
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col h-full gap-4">
             <QueryStateWrapper
                 queryResult={casesQuery}
                 errorComponent={<div className="text-red-500">Error loading cases</div>}
@@ -206,29 +206,37 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                     onChange={(value) => setSelectedStandardResults([...value])}
                 />
             </QueryStateWrapper>
-            <PendingWrapper isPending={false} errorMessage={casesQuery.isError ? "Error loading cases" : undefined}>
-                <div className="flex justify-end gap-4 items-center">
-                    <span className="grow text-sm text-slate-500">Select from {numberOfCases} cases</span>
-                    <Label position="right" text="Official" title="Show only cases marked as official">
-                        <Switch checked={showOnlyOfficialCases} onChange={handleOfficialCasesSwitchChange} />
-                    </Label>
-                    <Label position="right" text="My cases" title="Show only my cases">
-                        <Switch checked={showOnlyMyCases} onChange={handleCasesByMeChange} />
-                    </Label>
+            <PendingWrapper
+                className="grow min-h-0"
+                isPending={false}
+                errorMessage={casesQuery.isError ? "Error loading cases" : undefined}
+            >
+                <div className="flex flex-col h-full">
+                    <div className="flex justify-end gap-4 items-center">
+                        <span className="grow text-sm text-slate-500">Select from {numberOfCases} cases</span>
+                        <Label position="right" text="Official" title="Show only cases marked as official">
+                            <Switch checked={showOnlyOfficialCases} onChange={handleOfficialCasesSwitchChange} />
+                        </Label>
+                        <Label position="right" text="My cases" title="Show only my cases">
+                            <Switch checked={showOnlyMyCases} onChange={handleCasesByMeChange} />
+                        </Label>
+                    </div>
+                    <div className="grow min-h-0">
+                        <Table
+                            rowIdentifier="caseId"
+                            height={"100%"}
+                            numPendingRows={!casesQuery.data ? "fill" : undefined}
+                            columns={caseTableColumns}
+                            rows={caseRowData}
+                            selectedRows={[selectedCaseUuid]}
+                            filters={tableFiltersState}
+                            selectable
+                            onSelectedRowsChange={(caseIds) => setSelectedCaseId((prev) => caseIds?.[0] ?? prev)}
+                            onFiltersChange={setTableFiltersState}
+                            onDataCollated={(data) => setNumberOfCases(data.length)}
+                        />
+                    </div>
                 </div>
-                <Table
-                    rowIdentifier="caseId"
-                    height={500} // TODO: Fix height to use available space
-                    numPendingRows={!casesQuery.data ? "fill" : undefined}
-                    columns={caseTableColumns}
-                    rows={caseRowData}
-                    selectedRows={[selectedCaseUuid]}
-                    filters={tableFiltersState}
-                    selectable
-                    onSelectedRowsChange={(caseIds) => setSelectedCaseId((prev) => caseIds?.[0] ?? prev)}
-                    onFiltersChange={setTableFiltersState}
-                    onDataCollated={(data) => setNumberOfCases(data.length)}
-                />
             </PendingWrapper>
         </div>
     );

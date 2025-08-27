@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Check } from "@mui/icons-material";
+import { Check, ChevronRight } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
 import type { EnsembleSet } from "@framework/EnsembleSet";
@@ -301,13 +301,36 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         return <Check fontSize="small" />;
     }
 
+    const dialogTitle: React.ReactNode = React.useMemo(() => {
+        if (showEnsemblePicker) {
+            let pickerTitle = "Add Ensemble";
+            if (ensemblePickerMode === EnsemblePickerMode.SELECT_OTHER_REFERENCE_ENSEMBLE) {
+                pickerTitle = "Select Reference Ensemble";
+            } else if (ensemblePickerMode === EnsemblePickerMode.SELECT_OTHER_COMPARISON_ENSEMBLE) {
+                pickerTitle = "Select Comparison Ensemble";
+            }
+
+            return (
+                <div className="flex items-center space-x-1">
+                    <span className="text-slate-400">
+                        Selected Ensembles
+                        <ChevronRight />
+                    </span>
+                    <span className="text-black"> {pickerTitle}</span>
+                </div>
+            );
+        }
+
+        return <div>Selected Ensembles</div>;
+    }, [showEnsemblePicker, ensemblePickerMode]);
+
     const hasAnyChanges = hash !== currentHash;
     return (
         <>
             <Dialog
                 open={isOpen}
                 onClose={handleCancel}
-                title="Selected ensembles"
+                title={dialogTitle}
                 modal
                 showCloseCross
                 width={"75%"}
@@ -318,7 +341,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         <Button onClick={handleClose} color="danger" disabled={isEnsembleSetLoading || !hasAnyChanges}>
                             Discard changes
                         </Button>
-                        <div title={hasDuplicateDeltaEnsembles() ? "Duplicate Delta Ensembles (blue rows)" : ""}>
+                        <div title={hasDuplicateDeltaEnsembles() ? "Duplicate Delta Ensembles (marked blue)" : ""}>
                             <Button
                                 onClick={handleApplyEnsembleSelection}
                                 disabled={
@@ -339,22 +362,20 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     onClose: handleCloseEnsemblePicker,
                     width: "85%",
                     content: (
-                        <div className="p-2 h-full">
-                            <EnsemblePicker
-                                nextEnsembleColor={nextEnsembleColor}
-                                selectedEnsembles={
-                                    ensemblePickerMode === EnsemblePickerMode.ADD_REGULAR_ENSEMBLE
-                                        ? selectedRegularEnsembles
-                                        : []
-                                }
-                                onPickEnsemble={handlePickEnsemble}
-                                pickButtonLabel={
-                                    ensemblePickerMode === EnsemblePickerMode.ADD_REGULAR_ENSEMBLE
-                                        ? "Add Ensemble"
-                                        : "Select Ensemble"
-                                }
-                            />
-                        </div>
+                        <EnsemblePicker
+                            nextEnsembleColor={nextEnsembleColor}
+                            selectedEnsembles={
+                                ensemblePickerMode === EnsemblePickerMode.ADD_REGULAR_ENSEMBLE
+                                    ? selectedRegularEnsembles
+                                    : []
+                            }
+                            onPickEnsemble={handlePickEnsemble}
+                            pickButtonLabel={
+                                ensemblePickerMode === EnsemblePickerMode.ADD_REGULAR_ENSEMBLE
+                                    ? "Add Ensemble"
+                                    : "Select Ensemble"
+                            }
+                        />
                     ),
                 }}
             >

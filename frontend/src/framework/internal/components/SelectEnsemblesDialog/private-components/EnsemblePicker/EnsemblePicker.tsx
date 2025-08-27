@@ -97,7 +97,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
     }
 
     return (
-        <div className="flex flex-col gap-4 p-4 border-r bg-slate-100 h-full rounded-md">
+        <div className="flex flex-col h-full gap-4 p-4 bg-slate-100 ">
             <Label text="Field">
                 <QueryStateWrapper
                     queryResult={fieldsQuery}
@@ -112,7 +112,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
                     />
                 </QueryStateWrapper>
             </Label>
-            <Label text="Case">
+            <Label text="Case" childrenWrapperClassName="grow min-h-0" wrapperClassName="flex flex-col grow min-h-0">
                 <CaseExplorer field={selectedField} onCaseSelectionChange={handleCaseSelectedChange} />
             </Label>
             <Label text="Ensemble">

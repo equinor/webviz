@@ -1,9 +1,10 @@
 import React from "react";
 
-import { Button } from "@lib/components/Button";
-import { ColorTile } from "@lib/components/ColorTile";
 import { Add, History, InfoOutlined } from "@mui/icons-material";
 import { v4 } from "uuid";
+
+import { Button } from "@lib/components/Button";
+import { ColorTile } from "@lib/components/ColorTile";
 
 import type {
     EnsembleIdentWithCaseName,
