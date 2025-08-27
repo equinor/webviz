@@ -761,7 +761,14 @@ export enum SnapshotSortBy_api {
     UPDATED_AT = "updated_at",
     TITLE = "title",
     TITLE_LOWER = "title_lower",
+}
+
+export enum SnapshotSortLogSortBy_api {
+    VISITS = "visits",
     LAST_VISITED_AT = "last_visited_at",
+    SNAPSHOT_METADATA_TITLE = "snapshot_metadata.title",
+    SNAPSHOT_METADATA_TITLE_LOWER = "snapshot_metadata.title__lower",
+    SNAPSHOT_METADATA_CREATED_AT = "snapshot_metadata.created_at",
 }
 
 export type SnapshotUpdate_api = {
@@ -4118,7 +4125,7 @@ export type GetRecentSnapshotsData_api = {
         /**
          * Sort the result by
          */
-        sort_by?: SnapshotSortBy_api | null;
+        sort_by?: SnapshotSortLogSortBy_api | null;
         /**
          * Sort direction: 'asc' or 'desc'
          */

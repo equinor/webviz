@@ -8,7 +8,8 @@ from primary.services.database_access._utils import hash_json_string, cast_query
 from primary.services.service_exceptions import Service, ServiceRequestError
 from primary.services.database_access.query_collation_options import QueryCollationOptions, SortDirection
 from primary.services.database_access.container_access import ContainerAccess
-from primary.services.database_access.snapshot_access.types import (
+
+from .types import (
     NewSnapshot,
     SnapshotMetadata,
     SnapshotMetadataWithId,
@@ -16,6 +17,9 @@ from primary.services.database_access.snapshot_access.types import (
     SnapshotUpdate,
     SnapshotSortBy,
 )
+
+# ! SnapshotLogsAccess is imported at the end of the file
+
 
 # Util dict to handle case insensitive collation
 CASING_FIELD_LOOKUP: dict[SnapshotSortBy | None, SnapshotSortBy] = {SnapshotSortBy.TITLE_LOWER: SnapshotSortBy.TITLE}
@@ -88,6 +92,7 @@ class SnapshotAccess:
         limit: int | None,
         offset: int | None,
     ) -> List[SnapshotMetadataWithId]:
+        # pylint: disable=consider-iterating-dictionary
         sort_by_lowercase = sort_by in CASING_FIELD_LOOKUP.keys()
         sort_by = CASING_FIELD_LOOKUP.get(sort_by, sort_by)
 
@@ -161,6 +166,8 @@ class SnapshotAccess:
         await self.content_container_access.delete_item_async(snapshot_id, partition_key=snapshot_id)
 
     async def update_snapshot_metadata_async(self, snapshot_id: str, snapshot_update: SnapshotUpdate) -> None:
+        logs_access = SnapshotLogsAccess.create(self.user_id)
+
         existing = await self.metadata_container_access.get_item_async(snapshot_id, partition_key=self.user_id)
 
         updated_metadata = existing.metadata.model_copy(
@@ -180,6 +187,8 @@ class SnapshotAccess:
                 metadata=updated_metadata,
             ),
         )
+
+        await logs_access.update_log_async(snapshot_id, {"snapshot_metadata": updated_metadata})
 
     async def _assert_ownership_async(self, snapshot_id: str) -> SnapshotMetadataDocument:
         """Assert that the user owns the snapshot with the given ID."""
@@ -204,3 +213,8 @@ class SnapshotAccess:
     @staticmethod
     def _to_metadata_summary(doc: SnapshotMetadataDocument) -> SnapshotMetadataWithId:
         return SnapshotMetadataWithId(**doc.metadata.model_dump(), id=doc.id)
+
+
+# The two access classes use each-other, so we need to put the imports at the bottom of the file
+# pylint: disable=wrong-import-position
+from .snapshot_logs_access import SnapshotLogsAccess

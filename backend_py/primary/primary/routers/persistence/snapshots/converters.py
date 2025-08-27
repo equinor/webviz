@@ -35,12 +35,12 @@ def to_api_snapshot(snapshot: Snapshot) -> schemas.Snapshot:
     )
 
 
-def to_api_snapshot_access_log(access_log: SnapshotAccessLog, metadata: SnapshotMetadata) -> schemas.SnapshotAccessLog:
+def to_api_snapshot_access_log(access_log: SnapshotAccessLog) -> schemas.SnapshotAccessLog:
     return schemas.SnapshotAccessLog(
         visitorId=access_log.visitor_id,
         snapshotId=access_log.snapshot_id,
         visits=access_log.visits,
         firstVisitedAt=access_log.first_visited_at.isoformat() if access_log.first_visited_at else None,
         lastVisitedAt=access_log.last_visited_at.isoformat() if access_log.last_visited_at else None,
-        snapshotMetadata=to_api_snapshot_metadata(metadata),
+        snapshotMetadata=to_api_snapshot_metadata(access_log.snapshot_metadata),
     )

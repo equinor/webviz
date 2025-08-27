@@ -7,6 +7,7 @@ from primary.services.database_access.snapshot_access.types import (
     NewSnapshot,
     SnapshotUpdate,
     SnapshotSortBy,
+    SnapshotSortLogSortBy,
 )
 from primary.middleware.add_browser_cache import no_cache
 from primary.services.database_access.snapshot_access.snapshot_access import SnapshotAccess
@@ -32,34 +33,24 @@ router = APIRouter()
 @router.get("/recent_snapshots", response_model=list[schemas.SnapshotAccessLog])
 async def get_recent_snapshots(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    sort_by: Optional[SnapshotSortBy] = Query(SnapshotSortBy.LAST_VISIT, description="Sort the result by"),
-    sort_direction: Optional[SortDirection] = Query(SortDirection.DESC, description="Sort direction: 'asc' or 'desc'"),
-    limit: Optional[int] = Query(5, ge=1, le=100, description="Limit the number of results"),
-    offset: Optional[int] = Query(0, ge=0, description="The offset of the results"),
+    sort_by: Optional[SnapshotSortLogSortBy] = Query(None, description="Sort the result by"),
+    sort_direction: Optional[SortDirection] = Query(None, description="Sort direction: 'asc' or 'desc'"),
+    limit: Optional[int] = Query(None, ge=1, le=100, description="Limit the number of results"),
+    offset: Optional[int] = Query(None, ge=0, description="The offset of the results"),
 ) -> list[schemas.SnapshotAccessLog]:
-    async with (
-        SnapshotAccess.create(user.get_user_id()) as snapshot_access,
-        SnapshotLogsAccess.create(user.get_user_id()) as log_access,
-    ):
+    async with SnapshotLogsAccess.create(user.get_user_id()) as log_access:
         collation_options = QueryCollationOptions(sort_by=sort_by, sort_dir=sort_direction, limit=limit, offset=offset)
 
         recent_logs = await log_access.get_access_logs_for_user_async(collation_options)
 
-        payload: list[schemas.SnapshotAccessLog] = []
-
-        for log in recent_logs:
-            metadata = await snapshot_access.get_snapshot_metadata_async(log.snapshot_id, log.snapshot_owner_id)
-
-            payload.append(to_api_snapshot_access_log(log, metadata))
-
-        return payload
+        return [to_api_snapshot_access_log(log) for log in recent_logs]
 
 
 @router.get("/snapshots", response_model=List[schemas.SnapshotMetadata])
 @no_cache
 async def get_snapshots_metadata(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    sort_by: Optional[SnapshotSortBy] = Query(SnapshotSortBy.LAST_VISIT, description="Sort the result by"),
+    sort_by: Optional[SnapshotSortBy] = Query(SnapshotSortBy.UPDATED_AT, description="Sort the result by"),
     sort_direction: Optional[SortDirection] = Query(SortDirection.DESC, description="Sort direction: 'asc' or 'desc'"),
     limit: Optional[int] = Query(10, ge=1, le=100, description="Limit the number of results"),
 ) -> List[schemas.SnapshotMetadata]:
@@ -112,7 +103,7 @@ async def create_snapshot(
     async with access, logs_access:
         snapshot_id = await access.insert_snapshot_async(session)
 
-        # We count snapshot creation as implicit visit. This also makes it so
+        # We count snapshot creation as implicit visit. This also makes it so we can get recently created ones alongside other shared screenshots
         await logs_access.log_snapshot_visit_async(snapshot_id=snapshot_id, snapshot_owner_id=user.get_user_id())
         return snapshot_id
 
