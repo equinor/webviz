@@ -41,7 +41,7 @@ class NewSnapshot(BaseModel):
     content: str
 
 
-class SortBy(str, Enum):
+class SnapshotSortBy(str, Enum):
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"
     TITLE = "title"
@@ -49,6 +49,6 @@ class SortBy(str, Enum):
     LAST_VISIT = "last_visited_at"
 
 
-class SortDirection(str, Enum):
+class SnapshotSortDirection(str, Enum):
     ASC = "asc"
     DESC = "desc"

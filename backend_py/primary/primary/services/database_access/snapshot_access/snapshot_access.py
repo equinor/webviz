@@ -13,8 +13,8 @@ from primary.services.database_access.snapshot_access.types import (
     SnapshotMetadataWithId,
     Snapshot,
     SnapshotUpdate,
-    SortBy,
-    SortDirection,
+    SnapshotSortBy,
+    SnapshotSortDirection,
 )
 
 
@@ -80,18 +80,18 @@ class SnapshotAccess:
 
     async def get_filtered_snapshots_metadata_for_user_async(
         self,
-        sort_by: Optional[SortBy] = SortBy.CREATED_AT,
-        sort_direction: Optional[SortDirection] = SortDirection.ASC,
+        sort_by: Optional[SnapshotSortBy] = SnapshotSortBy.CREATED_AT,
+        sort_direction: Optional[SnapshotSortDirection] = SnapshotSortDirection.ASC,
         limit: Optional[int] = None,
         offset: Optional[int] = 0,
     ) -> List[SnapshotMetadataWithId]:
         if not isinstance(sort_by.value, str) or not sort_by.value.isidentifier():
             raise ServiceRequestError("Invalid sort field specified.", Service.DATABASE)
 
-        if sort_by == SortBy.TITLE_LOWER:
+        if sort_by == SnapshotSortBy.TITLE_LOWER:
             metadata_array = await self.get_all_snapshots_metadata_for_user_async()
 
-            reverse = sort_direction == SortDirection.DESC
+            reverse = sort_direction == SnapshotSortDirection.DESC
             metadata_array.sort(key=lambda s: s.title.lower() if s.title else "", reverse=reverse)
 
             return metadata_array[offset:] if limit is None else metadata_array[offset : offset + limit]

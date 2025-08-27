@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from .types import SortBy, SortDirection
+from .types import SnapshotSortBy, SnapshotSortDirection
 
 
 # TODO: Generalize utility to work with any model
@@ -7,8 +7,8 @@ from .types import SortBy, SortDirection
 class QueryCollationOptions:
     """Helper class for defining NoSQL collation options"""
 
-    sort_by: SortBy | None = None
-    sort_dir: SortDirection | None = None  # "asc" or "desc"
+    sort_by: SnapshotSortBy | None = None
+    sort_dir: SnapshotSortDirection | None = None  # "asc" or "desc"
     limit: int | None = None
     offset: int | None = 0
 

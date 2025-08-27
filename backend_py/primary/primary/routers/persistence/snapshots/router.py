@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from primary.services.database_access.snapshot_access.types import (
     NewSnapshot,
     SnapshotUpdate,
-    SortBy,
-    SortDirection,
+    SnapshotSortBy,
+    SnapshotSortDirection,
 )
 from primary.middleware.add_browser_cache import no_cache
 from primary.services.database_access.snapshot_access.snapshot_access import SnapshotAccess
@@ -33,8 +33,10 @@ router = APIRouter()
 @router.get("/recent_snapshots", response_model=list[schemas.SnapshotAccessLog])
 async def get_recent_snapshots(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    sort_by: Optional[SortBy] = Query(SortBy.LAST_VISIT, description="Sort the result by"),
-    sort_direction: Optional[SortDirection] = Query(SortDirection.DESC, description="Sort direction: 'asc' or 'desc'"),
+    sort_by: Optional[SnapshotSortBy] = Query(SnapshotSortBy.LAST_VISIT, description="Sort the result by"),
+    sort_direction: Optional[SnapshotSortDirection] = Query(
+        SnapshotSortDirection.DESC, description="Sort direction: 'asc' or 'desc'"
+    ),
     limit: Optional[int] = Query(5, ge=1, le=100, description="Limit the number of results"),
     offset: Optional[int] = Query(0, ge=0, description="The offset of the results"),
 ) -> list[schemas.SnapshotAccessLog]:
@@ -60,8 +62,10 @@ async def get_recent_snapshots(
 @no_cache
 async def get_snapshots_metadata(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    sort_by: Optional[SortBy] = Query(SortBy.LAST_VISIT, description="Sort the result by"),
-    sort_direction: Optional[SortDirection] = Query(SortDirection.DESC, description="Sort direction: 'asc' or 'desc'"),
+    sort_by: Optional[SnapshotSortBy] = Query(SnapshotSortBy.LAST_VISIT, description="Sort the result by"),
+    sort_direction: Optional[SnapshotSortDirection] = Query(
+        SnapshotSortDirection.DESC, description="Sort direction: 'asc' or 'desc'"
+    ),
     limit: Optional[int] = Query(10, ge=1, le=100, description="Limit the number of results"),
 ) -> List[schemas.SnapshotMetadata]:
     access = SnapshotAccess.create(user.get_user_id())

@@ -37,13 +37,13 @@ class NewSession(BaseModel):
     content: str
 
 
-class SortBy(str, Enum):
+class SessionSortBy(str, Enum):
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"
     TITLE = "title"
     TITLE_LOWER = "title_lower"
 
 
-class SortDirection(str, Enum):
+class SessionSortDirection(str, Enum):
     ASC = "asc"
     DESC = "desc"

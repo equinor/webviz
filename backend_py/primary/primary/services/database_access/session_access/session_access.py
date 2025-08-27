@@ -12,8 +12,8 @@ from primary.services.database_access.session_access.types import (
     SessionMetadataWithId,
     SessionMetadata,
     SessionUpdate,
-    SortBy,
-    SortDirection,
+    SessionSortBy,
+    SessionSortDirection,
 )
 
 
@@ -48,18 +48,18 @@ class SessionAccess:
 
     async def get_filtered_sessions_metadata_for_user_async(
         self,
-        sort_by: Optional[SortBy] = SortBy.CREATED_AT,
-        sort_direction: Optional[SortDirection] = SortDirection.ASC,
+        sort_by: Optional[SessionSortBy] = SessionSortBy.CREATED_AT,
+        sort_direction: Optional[SessionSortDirection] = SessionSortDirection.ASC,
         limit: Optional[int] = None,
         offset: Optional[int] = 0,
     ) -> List[SessionMetadataWithId]:
         if not isinstance(sort_by.value, str) or not sort_by.value.isidentifier():
             raise ServiceRequestError("Invalid sort field specified.", Service.DATABASE)
 
-        if sort_by == SortBy.TITLE_LOWER:
+        if sort_by == SessionSortBy.TITLE_LOWER:
             metadata_array = await self.get_all_sessions_metadata_for_user_async()
 
-            reverse = sort_direction == SortDirection.DESC
+            reverse = sort_direction == SessionSortDirection.DESC
             metadata_array.sort(key=lambda s: s.title.lower() if s.title else "", reverse=reverse)
 
             return metadata_array[offset:] if limit is None else metadata_array[offset : offset + limit]
