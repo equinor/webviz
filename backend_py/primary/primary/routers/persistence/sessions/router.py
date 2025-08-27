@@ -5,12 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from primary.middleware.add_browser_cache import no_cache
 from primary.services.database_access.session_access.session_access import SessionAccess
+from primary.services.database_access.query_collation_options import SortDirection
 from primary.auth.auth_helper import AuthHelper, AuthenticatedUser
 from primary.services.database_access.session_access.types import (
     NewSession,
     SessionUpdate,
     SessionSortBy,
-    SessionSortDirection,
 )
 from primary.routers.persistence.sessions.converters import (
     to_api_session_metadata_summary,
@@ -29,9 +29,7 @@ router = APIRouter()
 async def get_sessions_metadata(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     sort_by: Optional[SessionSortBy] = Query(None, description="Sort the result by"),
-    sort_direction: Optional[SessionSortDirection] = Query(
-        SessionSortDirection.ASC, description="Sort direction: 'asc' or 'desc'"
-    ),
+    sort_direction: Optional[SortDirection] = Query(SortDirection.ASC, description="Sort direction: 'asc' or 'desc'"),
     limit: int = Query(10, ge=1, le=100, description="Limit the number of results"),
     page: int = Query(0, ge=0),
 ) -> list[schemas.SessionMetadataWithId]:
@@ -43,12 +41,15 @@ async def get_sessions_metadata(
             limit=limit,
             offset=limit * page,
         )
+
         return [to_api_session_metadata_summary(item) for item in items]
 
 
 @router.get("/sessions/{session_id}", response_model=schemas.SessionDocument)
 @no_cache
-async def get_session(session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
+async def get_session(
+    session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+) -> schemas.SessionDocument:
     access = SessionAccess.create(user.get_user_id())
     async with access:
         session = await access.get_session_by_id_async(session_id)
@@ -59,7 +60,9 @@ async def get_session(session_id: str, user: AuthenticatedUser = Depends(AuthHel
 
 @router.get("/sessions/metadata/{session_id}", response_model=schemas.SessionMetadata)
 @no_cache
-async def get_session_metadata(session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
+async def get_session_metadata(
+    session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+) -> schemas.SessionMetadata:
     access = SessionAccess.create(user.get_user_id())
     async with access:
         metadata = await access.get_session_metadata_async(session_id)
@@ -69,7 +72,9 @@ async def get_session_metadata(session_id: str, user: AuthenticatedUser = Depend
 
 
 @router.post("/sessions", response_model=str)
-async def create_session(session: NewSession, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
+async def create_session(
+    session: NewSession, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+) -> str:
     access = SessionAccess.create(user.get_user_id())
     async with access:
         session_id = await access.insert_session_async(session)

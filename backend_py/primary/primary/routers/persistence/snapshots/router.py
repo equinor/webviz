@@ -7,12 +7,11 @@ from primary.services.database_access.snapshot_access.types import (
     NewSnapshot,
     SnapshotUpdate,
     SnapshotSortBy,
-    SnapshotSortDirection,
 )
 from primary.middleware.add_browser_cache import no_cache
 from primary.services.database_access.snapshot_access.snapshot_access import SnapshotAccess
 from primary.services.database_access.snapshot_access.snapshot_logs_access import SnapshotLogsAccess
-from primary.services.database_access.snapshot_access.query_collation_options import QueryCollationOptions
+from primary.services.database_access.query_collation_options import QueryCollationOptions, SortDirection
 
 
 from primary.auth.auth_helper import AuthHelper, AuthenticatedUser
@@ -34,9 +33,7 @@ router = APIRouter()
 async def get_recent_snapshots(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     sort_by: Optional[SnapshotSortBy] = Query(SnapshotSortBy.LAST_VISIT, description="Sort the result by"),
-    sort_direction: Optional[SnapshotSortDirection] = Query(
-        SnapshotSortDirection.DESC, description="Sort direction: 'asc' or 'desc'"
-    ),
+    sort_direction: Optional[SortDirection] = Query(SortDirection.DESC, description="Sort direction: 'asc' or 'desc'"),
     limit: Optional[int] = Query(5, ge=1, le=100, description="Limit the number of results"),
     offset: Optional[int] = Query(0, ge=0, description="The offset of the results"),
 ) -> list[schemas.SnapshotAccessLog]:
@@ -63,9 +60,7 @@ async def get_recent_snapshots(
 async def get_snapshots_metadata(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     sort_by: Optional[SnapshotSortBy] = Query(SnapshotSortBy.LAST_VISIT, description="Sort the result by"),
-    sort_direction: Optional[SnapshotSortDirection] = Query(
-        SnapshotSortDirection.DESC, description="Sort direction: 'asc' or 'desc'"
-    ),
+    sort_direction: Optional[SortDirection] = Query(SortDirection.DESC, description="Sort direction: 'asc' or 'desc'"),
     limit: Optional[int] = Query(10, ge=1, le=100, description="Limit the number of results"),
 ) -> List[schemas.SnapshotMetadata]:
     access = SnapshotAccess.create(user.get_user_id())
@@ -96,7 +91,9 @@ async def get_snapshot(
 
 @router.get("/snapshots/metadata/{snapshot_id}", response_model=schemas.SnapshotMetadata)
 @no_cache
-async def get_snapshot_metadata(snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
+async def get_snapshot_metadata(
+    snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+) -> schemas.SnapshotMetadata:
     access = SnapshotAccess.create(user.get_user_id())
     async with access:
         metadata = await access.get_snapshot_metadata_async(snapshot_id)
@@ -125,14 +122,16 @@ async def update_snapshot(
     snapshot_id: str,
     snapshot_update: SnapshotUpdate,
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-):
+) -> None:
     access = SnapshotAccess.create(user.get_user_id())
     async with access:
         await access.update_snapshot_metadata_async(snapshot_id, snapshot_update)
 
 
 @router.delete("/snapshots/{snapshot_id}")
-async def delete_snapshot(snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)):
+async def delete_snapshot(
+    snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+) -> None:
     access = SnapshotAccess.create(user.get_user_id())
     async with access:
         await access.delete_snapshot_async(snapshot_id)
