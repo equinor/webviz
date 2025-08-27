@@ -236,8 +236,7 @@ export class RealizationSurfacesProvider
     fetchData({
         getSetting,
         getStoredData,
-        registerQueryKey,
-        queryClient,
+        fetchQuery,
     }: FetchDataParams<
         RealizationSurfacesSettings,
         RealizationSurfacesData,
@@ -291,9 +290,7 @@ export class RealizationSurfacesProvider
                     },
                 });
 
-                registerQueryKey(queryOptions.queryKey);
-
-                return queryClient.fetchQuery(queryOptions);
+                return fetchQuery(queryOptions);
             }),
         );
 

@@ -9,7 +9,7 @@ from primary.services.smda_access.types import StratigraphicSurface
 from primary.services.sumo_access.surface_types import SurfaceMetaSet
 from primary.services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionPolyline
 from primary.services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionResult
-from primary.services.utils.surface_to_float32 import surface_to_float32_numpy_array
+from primary.services.utils.surface_helpers import surface_to_float32_numpy_array, get_min_max_surface_values
 from primary.services.utils.surface_to_png import surface_to_png_bytes_optimized
 from primary.services.smda_access import StratigraphicUnit
 
@@ -62,12 +62,16 @@ def to_api_surface_data_float(xtgeo_surf: xtgeo.RegularSurface) -> schemas.Surfa
         min_x=xtgeo_surf.xmin, min_y=xtgeo_surf.ymin, max_x=xtgeo_surf.xmax, max_y=xtgeo_surf.ymax
     )
 
+    surf_min_max_vals = get_min_max_surface_values(xtgeo_surf)
+    if surf_min_max_vals is None:
+        raise ValueError("Failed to get valid min/max values for surface")
+
     return schemas.SurfaceDataFloat(
         format="float",
         surface_def=surface_def,
         transformed_bbox_utm=trans_bb_utm,
-        value_min=xtgeo_surf.values.min(),
-        value_max=xtgeo_surf.values.max(),
+        value_min=surf_min_max_vals.min,
+        value_max=surf_min_max_vals.max,
         values_b64arr=values_b64arr,
     )
 
@@ -94,12 +98,16 @@ def to_api_surface_data_png(xtgeo_surf: xtgeo.RegularSurface) -> schemas.Surface
         min_x=xtgeo_surf.xmin, min_y=xtgeo_surf.ymin, max_x=xtgeo_surf.xmax, max_y=xtgeo_surf.ymax
     )
 
+    surf_min_max_vals = get_min_max_surface_values(xtgeo_surf)
+    if surf_min_max_vals is None:
+        raise ValueError("Failed to get valid min/max attribute values for surface")
+
     return schemas.SurfaceDataPng(
         format="png",
         surface_def=surface_def,
         transformed_bbox_utm=trans_bb_utm,
-        value_min=xtgeo_surf.values.min(),
-        value_max=xtgeo_surf.values.max(),
+        value_min=surf_min_max_vals.min,
+        value_max=surf_min_max_vals.max,
         png_image_base64=png_bytes_base64,
     )
 
