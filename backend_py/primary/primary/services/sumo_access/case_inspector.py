@@ -5,13 +5,14 @@ from fmu.sumo.explorer.explorer import SumoClient
 from fmu.sumo.explorer.objects import Case, SearchContext
 
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
+from webviz_pkg.core_utils.timestamp_utils import iso_str_to_timestamp_utc_ms
 from primary.services.service_exceptions import (
     Service,
     NoDataError,
     MultipleDataMatchesError,
 )
 
-from ._helpers import create_sumo_case_async, datetime_string_to_utc_ms
+from ._helpers import create_sumo_case_async
 from .sumo_client_factory import create_sumo_client
 
 
@@ -51,7 +52,7 @@ class CaseInspector:
     async def get_case_updated_timestamp_async(self) -> int:
         case = await self._get_or_create_case_context_async()
         timestamp_str = case.metadata["_sumo"]["timestamp"]  # Returns a datetime string.
-        return datetime_string_to_utc_ms(timestamp_str)
+        return iso_str_to_timestamp_utc_ms(timestamp_str)
 
     async def get_iteration_data_update_timestamp_async(self, iteration_name: str | None = None) -> int:
         timer = PerfMetrics()

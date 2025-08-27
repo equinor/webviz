@@ -1,9 +1,9 @@
 from enum import Enum
-import datetime
 import logging
 from dataclasses import dataclass
 
 from sumo.wrapper import SumoClient
+from webviz_pkg.core_utils.timestamp_utils import timestamp_utc_ms_to_iso_str_strip_tz
 
 LOGGER = logging.getLogger(__name__)
 
@@ -242,8 +242,8 @@ async def _run_query_and_aggregate_time_intervals_async(
     for bucket in response_dict["aggregations"]["unique_time_intervals"]["buckets"]:
         t0_ms = bucket["key"]["k_t0"]
         t1_ms = bucket["key"]["k_t1"]
-        t0_isostr = _timestamp_utc_ms_to_iso_str(t0_ms)
-        t1_isostr = _timestamp_utc_ms_to_iso_str(t1_ms)
+        t0_isostr = timestamp_utc_ms_to_iso_str_strip_tz(t0_ms, False)
+        t1_isostr = timestamp_utc_ms_to_iso_str_strip_tz(t1_ms, False)
         ret_arr.append(TimeInterval(t0_ms=t0_ms, t1_ms=t1_ms, t0_isostr=t0_isostr, t1_isostr=t1_isostr))
 
     return ret_arr
@@ -274,17 +274,10 @@ async def _run_query_and_aggregate_time_points_async(sumo_client: SumoClient, qu
     ret_arr: list[TimePoint] = []
     for bucket in response_dict["aggregations"]["unique_time_points"]["buckets"]:
         t0_ms = bucket["key"]["k_t0"]
-        t0_isostr = _timestamp_utc_ms_to_iso_str(t0_ms)
+        t0_isostr = timestamp_utc_ms_to_iso_str_strip_tz(t0_ms, False)
         ret_arr.append(TimePoint(t0_ms=t0_ms, t0_isostr=t0_isostr))
 
     return ret_arr
-
-
-# --------------------------------------------------------------------------------------
-def _timestamp_utc_ms_to_iso_str(timestamp_utc_ms: int) -> str:
-    isostr = datetime.datetime.fromtimestamp(timestamp_utc_ms / 1000, datetime.timezone.utc).isoformat()
-    isostr = isostr.replace("+00:00", "")
-    return isostr
 
 
 # --------------------------------------------------------------------------------------
