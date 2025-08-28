@@ -1,5 +1,6 @@
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import {
     type DataProviderManager,
@@ -15,7 +16,6 @@ import type { AvailableValuesType, SettingsKeysFromTuple } from "../interfacesAn
 import type { MakeSettingTypesMap, SettingTypes, Settings } from "../settings/settingsDefinitions";
 
 import { Dependency } from "./_utils/Dependency";
-import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 export enum SettingsContextStatus {
     VALID_SETTINGS = "VALID_SETTINGS",
@@ -69,7 +69,8 @@ export class SettingsContextDelegate<
         [K in TSettingKey]: SettingManager<K, SettingTypes[K] | null>;
     };
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingsContextDelegatePayloads>();
-    private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
+    private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
+        new UnsubscribeFunctionsManagerDelegate();
     private _status: SettingsContextStatus = SettingsContextStatus.LOADING;
     private _storedData: NullableStoredData<TStoredData> = {} as NullableStoredData<TStoredData>;
     private _storedDataLoadingStatus: { [K in TStoredDataKey]: boolean } = {} as {
@@ -93,7 +94,7 @@ export class SettingsContextDelegate<
 
         this._settings = settings;
 
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "dependencies",
             this.getDataProviderManager()
                 .getPublishSubscribeDelegate()
@@ -103,13 +104,13 @@ export class SettingsContextDelegate<
         );
 
         for (const key in this._settings) {
-            this._unsubscribeHandler.registerUnsubscribeFunction(
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "settings",
                 this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(() => {
                     this.handleSettingChanged();
                 }),
             );
-            this._unsubscribeHandler.registerUnsubscribeFunction(
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "settings",
                 this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_LOADING)(
                     () => {
@@ -285,7 +286,7 @@ export class SettingsContextDelegate<
     }
 
     createDependencies(): void {
-        this._unsubscribeHandler.unsubscribe("dependencies");
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("dependencies");
 
         this._dependencies = [];
 
@@ -294,14 +295,14 @@ export class SettingsContextDelegate<
                 const setting = this._settings[key];
                 handler(setting.getValue() as unknown as TSettingTypes[K]);
             };
-            this._unsubscribeHandler.registerUnsubscribeFunction(
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dependencies",
                 this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(
                     handleChange,
                 ),
             );
 
-            this._unsubscribeHandler.registerUnsubscribeFunction(
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dependencies",
                 this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_LOADING)(
                     () => {
@@ -312,14 +313,14 @@ export class SettingsContextDelegate<
                 ),
             );
 
-            this._unsubscribeHandler.registerUnsubscribeFunction(
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dependencies",
                 this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_PERSISTED)(
                     handleChange,
                 ),
             );
 
-            this._unsubscribeHandler.registerUnsubscribeFunction(
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dependencies",
                 this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_INITIALIZED)(
                     handleChange,
@@ -336,7 +337,7 @@ export class SettingsContextDelegate<
             const handleChange = (): void => {
                 handler(this.getDataProviderManager.bind(this)().getGlobalSetting(key));
             };
-            this._unsubscribeHandler.registerUnsubscribeFunction(
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "dependencies",
                 this.getDataProviderManager()
                     .getPublishSubscribeDelegate()
@@ -498,7 +499,7 @@ export class SettingsContextDelegate<
     }
 
     beforeDestroy(): void {
-        this._unsubscribeHandler.unsubscribeAll();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
         for (const dependency of this._dependencies) {
             dependency.beforeDestroy();
         }
