@@ -24,7 +24,11 @@ import {
     removeSessionIdFromUrl,
 } from "./internal/WorkbenchSession/SessionUrlService";
 import { loadSnapshotFromBackend } from "./internal/WorkbenchSession/SnapshotLoader";
-import { readSnapshotIdFromUrl, removeSnapshotIdFromUrl } from "./internal/WorkbenchSession/SnapshotUrlService";
+import {
+    buildSnapshotUrl,
+    readSnapshotIdFromUrl,
+    removeSnapshotIdFromUrl,
+} from "./internal/WorkbenchSession/SnapshotUrlService";
 import { localStorageKeyForSessionId } from "./internal/WorkbenchSession/utils";
 import {
     loadAllWorkbenchSessionsFromLocalStorage,
@@ -376,6 +380,17 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         } finally {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
         }
+    }
+
+    async openSnapshot(snapshotId: string) {
+        this.getGuiMessageBroker().setState(GuiState.IsLoadingSession, true);
+
+        const url = buildSnapshotUrl(snapshotId);
+        history.pushState({}, "", url);
+
+        await this.handleNavigation();
+
+        this.getGuiMessageBroker().setState(GuiState.IsLoadingSession, false);
     }
 
     async makeSnapshot(title: string, description: string): Promise<string | null> {

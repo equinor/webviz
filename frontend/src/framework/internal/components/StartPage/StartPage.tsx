@@ -23,13 +23,20 @@ export function StartPage(props: StartPageProps) {
     }
 
     const [showOverviewDialog, setShowOverviewDialog] = React.useState(false);
+    const [overviewContentMode, setOverviewContentMode] = React.useState<ModalContentMode>("sessions");
 
     function closeOverviewDialog() {
         setShowOverviewDialog(false);
     }
 
-    function openOverviewDialog() {
+    function openOverviewDialogOnSessions() {
         setShowOverviewDialog(true);
+        setOverviewContentMode("sessions");
+    }
+
+    function openOverviewDialogOnSnapshots() {
+        setShowOverviewDialog(true);
+        setOverviewContentMode("snapshots");
     }
 
     return (
@@ -45,7 +52,7 @@ export function StartPage(props: StartPageProps) {
                             </Button>
                         </Tooltip>
                         <Tooltip placement="right" title="Open an existing session.">
-                            <Button variant="text" onClick={openOverviewDialog}>
+                            <Button variant="text" onClick={openOverviewDialogOnSessions}>
                                 <Icon name="folder_open" />
                                 Open session...
                             </Button>
@@ -78,11 +85,17 @@ export function StartPage(props: StartPageProps) {
                     <Typography variant="h2">Recent</Typography>
                     <section>
                         <Typography variant="h6">Sessions</Typography>
-                        <RecentSessions workbench={props.workbench} onOpenSessionDialog={openOverviewDialog} />
+                        <RecentSessions
+                            workbench={props.workbench}
+                            onOpenSessionDialog={openOverviewDialogOnSessions}
+                        />
                     </section>
                     <section>
                         <Typography variant="h6">Snapshots</Typography>
-                        <RecentSnapshots workbench={props.workbench} />
+                        <RecentSnapshots
+                            workbench={props.workbench}
+                            onOpenSessionDialog={openOverviewDialogOnSnapshots}
+                        />
                     </section>
                 </section>
             </div>
@@ -90,8 +103,10 @@ export function StartPage(props: StartPageProps) {
             <SessionOverviewDialog
                 workbench={props.workbench}
                 open={showOverviewDialog}
+                contentMode={overviewContentMode}
                 onNewSession={handleNewSession}
                 onClose={closeOverviewDialog}
+                onChangeModalMode={setOverviewContentMode}
             />
         </div>
     );

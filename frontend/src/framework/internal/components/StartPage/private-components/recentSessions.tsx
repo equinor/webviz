@@ -29,7 +29,7 @@ export function RecentSessions(props: RecentSessionsProps) {
                 limit: 6,
             },
         }),
-        // refetchInterval: 10000,
+        refetchInterval: 10000,
     });
 
     const hasMoreSessions = sessionsQuery.data?.length === 6;
