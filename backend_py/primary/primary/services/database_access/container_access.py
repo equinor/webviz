@@ -1,11 +1,18 @@
 import logging
-from typing import Dict, Generic, List, Optional, Sequence, Type, TypeVar
+from typing import Any, Dict, Generic, List, Optional, Sequence, Type, TypeVar, NoReturn
 from azure.cosmos.aio import ContainerProxy
 from azure.cosmos import exceptions
 from pydantic import BaseModel, ValidationError
 
-from primary.services.service_exceptions import Service, ServiceRequestError
 from .database_access import DatabaseAccess
+from primary.services.database_access.database_access_exceptions import (
+    DatabaseAccessNotFoundError,
+    DatabaseAccessConflictError,
+    DatabaseAccessPreconditionFailedError,
+    DatabaseAccessPermissionError,
+    DatabaseAccessThrottledError,
+    DatabaseAccessTransportError,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -51,10 +58,64 @@ class ContainerAccess(Generic[T]):
     async def __aexit__(self, exc_type, exc_val, exc_tb):  # pylint: disable=C9001
         await self.close_async()
 
-    def _raise_exception(self, message: str):
-        raise ServiceRequestError(
-            f"ContainerAccess ({self._database_name}, {self._container_name}): {message}", Service.DATABASE
+    def _raise_exception(self, op: str, exc: exceptions.CosmosHttpResponseError) -> NoReturn:
+        """Map Cosmos error to a data-access exception with rich context and re-raise."""
+        headers = getattr(exc, "headers", {}) or {}
+        status = getattr(exc, "status_code", None)
+        # Cosmos uses x-ms-substatus for more detail (e.g., 1002)
+        substatus_raw = headers.get("x-ms-substatus")
+        try:
+            substatus = int(substatus_raw) if substatus_raw is not None else None
+        except ValueError:
+            substatus = None
+        activity_id = headers.get("x-ms-activity-id")
+
+        msg = (
+            f"[{op}] Cosmos error on {self._database_name}/{self._container_name}: "
+            f"{getattr(exc, 'message', None) or str(exc)} "
+            f"(status={status}, substatus={substatus}, activity_id={activity_id})"
         )
+
+        # Log with stack trace
+        logger.exception(
+            "[ContainerAccess] %s",
+            msg,
+            extra={
+                "database": self._database_name,
+                "container": self._container_name,
+                "operation": op,
+                "status_code": status,
+                "sub_status": substatus,
+                "activity_id": activity_id,
+            },
+        )
+
+        if status == 404:
+            raise DatabaseAccessNotFoundError(
+                msg, status_code=status, sub_status=substatus, activity_id=activity_id
+            ) from exc
+        if status == 409:
+            raise DatabaseAccessConflictError(
+                msg, status_code=status, sub_status=substatus, activity_id=activity_id
+            ) from exc
+        if status == 412:
+            raise DatabaseAccessPreconditionFailedError(
+                msg, status_code=status, sub_status=substatus, activity_id=activity_id
+            ) from exc
+        if status in (401, 403):
+            raise DatabaseAccessPermissionError(
+                msg, status_code=status, sub_status=substatus, activity_id=activity_id
+            ) from exc
+        if status in (429, 503):
+            # Typically retryable
+            raise DatabaseAccessThrottledError(
+                msg, status_code=status, sub_status=substatus, activity_id=activity_id
+            ) from exc
+
+        # Fallback
+        raise DatabaseAccessTransportError(
+            msg, status_code=status, sub_status=substatus, activity_id=activity_id
+        ) from exc
 
     async def query_items_async(self, query: str, parameters: Optional[List[Dict[str, object]]] = None) -> List[T]:
         try:
@@ -68,7 +129,7 @@ class ContainerAccess(Generic[T]):
             logger.error("[ContainerAccess] Validation error in '%s': %s", self._container_name, validation_error)
             raise
         except exceptions.CosmosHttpResponseError as error:
-            self._raise_exception(error.message)
+            self._raise_exception("query_items_async", error)
 
     async def get_item_async(self, item_id: str, partition_key: str) -> T:
         try:
@@ -78,7 +139,7 @@ class ContainerAccess(Generic[T]):
             logger.error("[ContainerAccess] Validation error in '%s': %s", self._container_name, validation_error)
             raise
         except exceptions.CosmosHttpResponseError as error:
-            self._raise_exception(error.message)
+            self._raise_exception("get_item_async", error)
 
     async def insert_item_async(self, item: T) -> str:
         try:
@@ -89,14 +150,14 @@ class ContainerAccess(Generic[T]):
             logger.error("[ContainerAccess] Validation error in '%s': %s", self._container_name, validation_error)
             raise
         except exceptions.CosmosHttpResponseError as error:
-            self._raise_exception(error.message)
+            self._raise_exception("insert_item_async", error)
 
     async def delete_item_async(self, item_id: str, partition_key: str):
         try:
             await self._container.delete_item(item=item_id, partition_key=partition_key)
             logger.debug("[ContainerAccess] Deleted item '%s' from '%s'", item_id, self._container_name)
         except exceptions.CosmosHttpResponseError as error:
-            self._raise_exception(error.message)
+            self._raise_exception("delete_item_async", error)
 
     async def update_item_async(self, item_id: str, updated_item: T):
         try:
@@ -107,7 +168,7 @@ class ContainerAccess(Generic[T]):
             logger.error("[ContainerAccess] Validation error in '%s': %s", self._container_name, validation_error)
             raise
         except exceptions.CosmosHttpResponseError as error:
-            self._raise_exception(error.message)
+            self._raise_exception("update_item_async", error)
 
     async def patch_item_async(
         self,
@@ -127,7 +188,28 @@ class ContainerAccess(Generic[T]):
             )
             logger.debug("[ContainerAccess] Patched item '%s' in '%s'", item_id, self._container_name)
         except exceptions.CosmosHttpResponseError as error:
-            self._raise_exception(error.message)
+            self._raise_exception("patch_item_async", error)
+
+    async def query_projection_async(
+        self,
+        query: str,
+        parameters: Optional[List[Dict[str, object]]] = None,
+        *,
+        enable_cross_partition_query: bool = False,
+    ) -> List[Dict[str, Any]]:
+        """
+        Run a query that returns raw dicts (no Pydantic validation), useful for
+        projections like SELECT c.id, c.partitionKey.
+        """
+        try:
+            items_iterable = self._container.query_items(
+                query=query,
+                parameters=parameters or [],
+                enable_cross_partition_query=enable_cross_partition_query,
+            )
+            return [item async for item in items_iterable]
+        except exceptions.CosmosHttpResponseError as error:
+            self._raise_exception("query_items_async", error)
 
     async def close_async(self):
         """Close the container access."""
