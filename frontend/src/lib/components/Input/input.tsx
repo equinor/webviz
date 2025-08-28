@@ -17,7 +17,7 @@ export type InputProps = InputUnstyledProps & {
     onValueChange?: (value: string) => void;
 };
 
-function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElement>) {
+function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
     const {
         startAdornment,
         endAdornment,

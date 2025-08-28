@@ -1,7 +1,16 @@
-import type { QueryClient } from "@tanstack/react-query";
+import type { QueryClient, InfiniteData } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 
-import { getRecentSnapshotsQueryKey } from "@api";
+import type { SessionDocument_api, SessionMetadataWithId_api, SessionUpdate_api } from "@api";
+import {
+    deleteSessionMutation,
+    getRecentSnapshotsQueryKey,
+    getSessionMetadataQueryKey,
+    getSessionQueryKey,
+    getSessionsMetadataInfiniteQueryKey,
+    getSessionsMetadataQueryKey,
+    updateSessionMutation,
+} from "@api";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
@@ -26,6 +35,7 @@ import {
 } from "./internal/WorkbenchSession/WorkbenchSessionLoader";
 import { WorkbenchSessionPersistenceService } from "./internal/WorkbenchSession/WorkbenchSessionPersistenceService";
 import { ApiErrorHelper } from "./utils/ApiErrorHelper";
+import { FilterLevel, makeQueryFilters } from "./utils/reactQuery";
 import type { WorkbenchServices } from "./WorkbenchServices";
 
 export enum WorkbenchTopic {
@@ -573,6 +583,55 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
     }
 
+    async deleteSession(sessionId: string): Promise<void> {
+        const result = await confirmationService.confirm({
+            title: "Are you sure?",
+            message:
+                "This session will be deleted. This action can not be reversed. Note that any snapshots made from this session will still be available",
+            actions: [
+                { id: "cancel", label: "Cancel" },
+                { id: "delete", label: "Delete", color: "danger" },
+            ],
+        });
+
+        if (result !== "delete") return;
+
+        await this._queryClient
+            .getMutationCache()
+            .build(this._queryClient, deleteSessionMutation())
+            .execute({ path: { session_id: sessionId } });
+
+        this._queryClient.resetQueries({ queryKey: getSessionsMetadataQueryKey() });
+    }
+
+    async updateSession(updatedSession: SessionUpdate_api) {
+        const queryClient = this._queryClient;
+
+        const mutation = await queryClient
+            .getMutationCache()
+            .build(queryClient, {
+                ...updateSessionMutation(),
+                onSuccess(data, variables, context) {
+                    console.log(data, variables, context);
+
+                    // TODO: Hey-api generates keys unconventionally, so doesn't work particularly well with fuzzy query filters; see https://github.com/hey-api/openapi-ts/issues/653
+
+                    // As a hacky workaround, we can manually check each existing query with the specific keys objects. We can check queryKey[0]._id to check what query it is
+                    // seperate infinite ones with _infinte: true, as the id will be the same as the non-infinite one
+
+                    // We want to invalidate each query that directly fetched this, regardless of query params
+                    invalidateQueriesForSession(queryClient, data);
+
+                    // Fetched lists *might* be heavy for big lists, so we instead wish to
+                    // just update the data directly
+                    // TODO: replace data in list queries
+
+                    replaceSessionInQueriesData(queryClient, data);
+                },
+            })
+            .execute({ path: { session_id: updatedSession.id }, body: updatedSession });
+    }
+
     getAtomStoreMaster(): AtomStoreMaster {
         return this._atomStoreMaster;
     }
@@ -658,4 +717,114 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
     }
         */
+}
+
+// ? Should this be moved somewhere else?
+function invalidateQueriesForSession(queryClient: QueryClient, session: SessionDocument_api) {
+    const options = { path: { session_id: session.id } };
+    const keys = [
+        getSessionMetadataQueryKey(options),
+        getSessionQueryKey(options),
+        // getSessionsMetadataQueryKey(),
+        // getSessionsMetadataInfiniteQueryKey(),
+    ];
+    const queryFilters = makeQueryFilters(keys, FilterLevel.PATH);
+
+    queryClient.invalidateQueries(queryFilters);
+}
+
+function replaceSessionInQueriesData(queryClient: QueryClient, session: SessionDocument_api) {
+    const queryFilters = makeQueryFilters([getSessionsMetadataQueryKey()]);
+
+    // ? Is there any way to have the data-type be inferred from the query-keys being fed?
+    queryClient.setQueriesData(queryFilters, (oldData: SessionMetadataWithId_api[]) => {
+        console.log(">>> setting data", oldData);
+
+        let replaced = false;
+        const mappedData = oldData.map<SessionMetadataWithId_api>((sessionMeta) => {
+            if (sessionMeta.id !== session.id) return sessionMeta;
+
+            replaced = true;
+            return {
+                id: session.id,
+                ...session.metadata,
+            };
+        });
+
+        // Only return if we actually found anything
+        if (replaced) return mappedData;
+    });
+
+    const infiniteQueryFilters = makeQueryFilters([getSessionsMetadataInfiniteQueryKey()]);
+
+    const existingData = queryClient.getQueriesData<InfiniteData<SessionMetadataWithId_api[]>>(infiniteQueryFilters);
+
+    for (const [exactKey, pagedData] of existingData) {
+        queryClient.setQueryData(exactKey, (/* _oldData */) => {
+            // TODO: HER!!!!! Fiks data probleman!!!!
+            console.log("oldData", pagedData);
+
+            const existingPages = pagedData?.pages ?? [];
+
+            let replaced = false;
+            const mappedData = {
+                ...pagedData,
+                pages: [] as SessionMetadataWithId_api[][],
+            };
+
+            for (const page of existingPages) {
+                mappedData.pages.push(
+                    page.map((metaEntry) => {
+                        if (metaEntry.id !== session.id) return metaEntry;
+
+                        replaced = true;
+                        return {
+                            ...metaEntry,
+                            ...session.metadata,
+                        };
+                    }),
+                );
+            }
+
+            if (replaced) return mappedData;
+        });
+    }
+
+    // ? Is there any way to have the data-type be inferred from the query-keys being fed?
+    // queryClient.setQueriesData(infiniteQueryFilters, (oldData: InfiniteData<SessionMetadataWithId_api[]>) => {
+    //     // ! oldData is undefined here, for some reason
+    //     // https://github.com/TanStack/query/issues/9183
+
+    //     // Manually fetching them, as a work-around...
+    //     const existing = queryClient.getQueriesData(infiniteQueryFilters);
+
+    //     // const [, ] = existing;
+
+    //     console.log(">>> setting inf-data", oldData, existing);
+
+    //     // const flattened = oldData.pages.flat()
+
+    //     // let replaced = false;
+
+    //     // const mappedData = oldData.map<SessionMetadataWithId_api>((sessionMeta) => {
+    //     //     if (sessionMeta.id !== session.id) return sessionMeta;
+
+    //     //     replaced = true;
+    //     //     return {
+    //     //         id: session.id,
+    //     //         ...session.metadata,
+    //     //     };
+    //     // });
+
+    //     // // Only return if we actually found anything
+    //     // if (replaced) return mappedData;
+    // });
+
+    // Infinite-queries are paged, so we need to handle them separately
+
+    // const options = { path: { session_id: updatedSession.id } };
+
+    // queryClient.invalidateQueries(queryFilters);
+
+    // const keys2 = [getSessionsMetadataQueryKey()];
 }

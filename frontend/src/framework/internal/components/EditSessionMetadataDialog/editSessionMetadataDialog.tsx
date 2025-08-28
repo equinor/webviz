@@ -1,53 +1,50 @@
 import React from "react";
 
-import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+import type { SessionMetadata_api } from "@api";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
-import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
+// import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
 
-export type SaveSessionDialogProps = {
+export type EditSessionMetadataDialogProps = {
+    open: boolean;
+    sessionId: string;
+    sessionMetadata: SessionMetadata_api;
     workbench: Workbench;
+    onSaved?: () => void;
+    onClose?: () => void;
 };
 
-type SaveSessionDialogInputFeedback = {
+type EditingInputFeedback = {
     title?: string;
     description?: string;
 };
 
-export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNode {
-    const metadata = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
-        PrivateWorkbenchSessionTopic.METADATA,
-    );
-
-    const [saveSessionDialogOpen, setSaveSessionDialogOpen] = useGuiState(
-        props.workbench.getGuiMessageBroker(),
-        GuiState.SaveSessionDialogOpen,
-    );
-    const [prevSaveSessionDialogOpen, setPrevSaveSessionDialogOpen] = React.useState(saveSessionDialogOpen);
-
-    const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
-
+export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps): React.ReactNode {
+    const [prevOpen, setPrevOpen] = React.useState(props.open);
     const [title, setTitle] = React.useState<string>("");
     const [description, setDescription] = React.useState<string>("");
-    const [inputFeedback, setInputFeedback] = React.useState<SaveSessionDialogInputFeedback>({});
 
-    if (prevSaveSessionDialogOpen !== saveSessionDialogOpen) {
-        setPrevSaveSessionDialogOpen(saveSessionDialogOpen);
-        if (saveSessionDialogOpen) {
-            setTitle(metadata.title);
-            setDescription(metadata.description ?? "");
+    const [inputFeedback, setInputFeedback] = React.useState<EditingInputFeedback>({});
+    const [isSaving, setIsSaving] = React.useState(false);
+
+    if (prevOpen !== props.open) {
+        setPrevOpen(props.open);
+        if (props.open) {
+            setTitle(props.sessionMetadata.title);
+            setDescription(props.sessionMetadata.description ?? "");
         }
     }
 
-    function handleSave() {
+    // const [savePending, setSavePending] = React.useState(false);
+
+    // const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
+
+    async function handleSave() {
         if (title.trim() === "") {
             setInputFeedback((prev) => ({ ...prev, title: "Title is required." }));
             return;
@@ -55,44 +52,39 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
             setInputFeedback((prev) => ({ ...prev, title: undefined }));
         }
 
-        if (description.trim() === "") {
-            setInputFeedback((prev) => ({ ...prev, description: "Description is required." }));
-            return;
-        } else {
-            setInputFeedback((prev) => ({ ...prev, description: undefined }));
-        }
-        props.workbench.getWorkbenchSession().updateMetadata({ title, description });
-        props.workbench
-            .saveCurrentSession(true)
-            .then(() => {
-                setTitle("");
-                setDescription("");
-                setInputFeedback({});
-            })
-            .catch((error) => {
-                console.error("Failed to save session:", error);
-            });
+        setIsSaving(true);
+
+        await props.workbench.updateSession({
+            id: props.sessionId,
+            metadata: {
+                title: title,
+                description: description === "" ? null : description,
+            },
+        });
+
+        setIsSaving(false);
+
+        props.onSaved?.();
+        handleClose();
     }
 
-    function handleCancel() {
-        setSaveSessionDialogOpen(false);
+    function handleClose() {
         setTitle("");
         setDescription("");
         setInputFeedback({});
+        props.onClose?.();
     }
-
-    const layout = props.workbench.getWorkbenchSession().getActiveDashboard()?.getLayout() || [];
 
     return (
         <Dialog
-            open={saveSessionDialogOpen}
-            onClose={handleCancel}
+            open={props.open}
+            onClose={handleClose}
             title="Save Session"
             modal
             showCloseCross
             actions={
                 <>
-                    <Button variant="text" disabled={isSaving} onClick={handleCancel}>
+                    <Button variant="text" disabled={isSaving} onClick={handleClose}>
                         Cancel
                     </Button>
                     <Button variant="text" color="success" disabled={isSaving} onClick={handleSave}>
@@ -102,7 +94,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
             }
         >
             <div className="flex gap-4 items-center">
-                <DashboardPreview height={100} width={100} layout={layout} />
+                {/* <DashboardPreview height={100} width={100} layout={layout} /> */}
                 <div className="flex flex-col gap-2 grow min-w-0">
                     <Label text="Title">
                         <>
