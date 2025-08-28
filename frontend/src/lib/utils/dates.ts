@@ -22,13 +22,13 @@ export function timeAgo(msDiff: number): string {
  * @param timestamp - Date object or timestamp in milliseconds
  * @returns Formatted date string like "24 Dec 2023"
  */
-export function formatDate(timestamp: Date | number): string {
+export function formatDate(timestamp: Date | number, formatOptions?: Intl.DateTimeFormatOptions): string {
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
 
-    const options: Intl.DateTimeFormatOptions = {
+    const options: Intl.DateTimeFormatOptions = formatOptions ?? {
         // weekday: "long",
         year: "numeric",
-        month: "short",
+        month: "2-digit",
         day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
