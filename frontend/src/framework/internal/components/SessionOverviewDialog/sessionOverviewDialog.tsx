@@ -1,23 +1,26 @@
 import React from "react";
 
-import { Add, Delete, Edit, FileOpen, Refresh } from "@mui/icons-material";
+import type { Options } from "@hey-api/client-axios";
+import { Add, Delete, Edit, FileOpen } from "@mui/icons-material";
+import type { InfiniteData } from "@tanstack/react-query";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import type { AxiosError } from "axios";
 
-import type { SessionMetadataWithId_api } from "@api";
-import {
-    getSessionsMetadataInfiniteOptions,
-    getSessionsMetadataInfiniteQueryKey,
-    SessionSortBy_api,
-    SessionSortDirection_api,
+import type {
+    GetSessionsMetadataData_api,
+    GetSessionsMetadataError_api,
+    SessionMetadataWithId_api,
+    SortDirection_api,
 } from "@api";
-import { GuiState } from "@framework/GuiMessageBroker";
+import { getSessionsMetadata, SessionSortBy_api } from "@api";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import type { DialogProps } from "@lib/components/Dialog/dialog";
 import { Table } from "@lib/components/Table";
-import type { TableHeading, TableRow } from "@lib/components/Table/table";
+import type { TableSorting, TableColumns } from "@lib/components/Table/types";
+import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
 import { formatDate } from "@lib/utils/dates";
 
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
@@ -27,112 +30,157 @@ export type SessionOverviewDialogProps = {
     onNewSession?: () => void;
 } & Pick<DialogProps, "open" | "onClose">;
 
-// TODO: clean up; include more fields?
-const SESSION_TABLE_HEADINGS: TableHeading = {
-    id: {
-        label: "Id",
-        sizeInPercent: 5,
-        sortable: false,
-    },
-
-    name: {
-        label: "Name",
-        sizeInPercent: 10,
-        sortable: false,
-    },
-
-    description: {
-        label: "Description",
-        sizeInPercent: 10,
-        sortable: false,
-    },
-
-    createdAt: {
-        label: "Created at",
-        sizeInPercent: 10,
-        sortable: true,
-        formatValue(value) {
-            if (typeof value !== "string") return "";
-
-            return formatDate(new Date(value));
-        },
-    },
-
-    updatedAt: {
-        label: "Updated at",
-        sizeInPercent: 10,
-        sortable: true,
-        formatValue(value) {
-            if (typeof value !== "string") return "";
-
-            return formatDate(new Date(value));
-        },
-    },
-} as const;
-
-type SessionTableRow = TableRow<typeof SESSION_TABLE_HEADINGS>;
-
-const USE_ALTERNATING_COLUMN_COLORS = true;
 // To avoid jumpy loads, Page size should at the least be more than the visible amount of rows.
 // CosmosDB has a max size of 100 by default
-const QUERY_PAGE_SIZE = 2;
+const QUERY_PAGE_SIZE = 8;
+const ROW_HEIGHT = 46;
 const NEXT_PAGE_THRESHOLD = 1;
+const USE_ALTERNATING_COLUMN_COLORS = false;
 
-export function SessionOverviewDialog(props: SessionOverviewDialogProps): React.ReactNode {
-    // TODO: Open via gui-events?
+const TABLE_COLUMNS: TableColumns<SessionMetadataWithId_api> = [
+    {
+        _type: "data",
+        columnId: "title",
+        label: "Title",
+        sizeInPercent: 20,
+        filter: false,
+    },
+    {
+        _type: "data",
+        columnId: "description",
+        label: "Description",
+        sizeInPercent: 50,
+        filter: false,
+        sortable: false,
+    },
 
-    const [selectedSessionId, setSelectedSessionId] = React.useState<string | null>(null);
+    // TODO - Future work: Could be nice to show/filter on modules used, but need backend changes and virtual table columns to support that
+    // {
+    //     _type: "virtual",
+    //     columnId: "modules" as keyof SessionMetadataWithId_api,
+    //     label: "Modules",
+    //     sizeInPercent: 15,
+    //     filter: false,
+    // },
+    {
+        _type: "data",
+        columnId: "updatedAt",
+        label: "Updated at",
+        sizeInPercent: 15,
+        filter: false,
+        formatValue: (value) => {
+            return formatDate(new Date(value));
+        },
+    },
+    {
+        _type: "data",
+        columnId: "createdAt",
+        label: "Created at",
+        sizeInPercent: 15,
+        filter: false,
+        formatValue: (value) => {
+            return formatDate(new Date(value));
+        },
+    },
+];
 
-    const [metadataEditOpen, setMetadataEditOpen] = React.useState(false);
+function columnIdToApiSortField(columnId: string): SessionSortBy_api {
+    switch (columnId) {
+        case "title":
+            return SessionSortBy_api.TITLE_LOWER;
+        case "updatedAt":
+            return SessionSortBy_api.UPDATED_AT;
+        case "createdAt":
+            return SessionSortBy_api.CREATED_AT;
 
-    // TODO
-    const [sortingCol, setSortingCol] = React.useState(SessionSortBy_api.UPDATED_AT);
-    const [sortingDirection, setSortingDirection] = React.useState(SessionSortDirection_api.DESC);
-
-    const [deletePending, setDeletePending] = React.useState<boolean>(false);
-
-    const handleClickRow = React.useCallback(function handleClickRow(row: SessionTableRow) {
-        if (typeof row.id !== "string") throw Error("Expected string value for row id");
-
-        setSelectedSessionId((prev) => {
-            if (prev === row.id) return null;
-            return row.id as string;
-        });
-    }, []);
-
-    async function navigateToSelectedSession() {
-        if (!selectedSessionId) return;
-
-        // Load the selected snapshot
-        // TODO: Make this to a workbench method?
-        props.workbench.getGuiMessageBroker().setState(GuiState.IsLoadingSession, true);
-
-        history.pushState(null, "", `/session/${selectedSessionId}`);
-        await props.workbench.handleNavigation();
-
-        props.workbench.getGuiMessageBroker().setState(GuiState.IsLoadingSession, false);
-        // Reset query so that the session list is correct afterwards are fetched when we return to the start page
-        props.workbench.getQueryClient().resetQueries({ queryKey: getSessionsMetadataInfiniteQueryKey() });
+        default:
+            throw new Error(`Unknown columnId: ${columnId}`);
     }
+}
 
-    const sessionsQuery = useInfiniteQuery({
-        ...getSessionsMetadataInfiniteOptions({
-            query: {
-                sort_by: SessionSortBy_api.UPDATED_AT,
-                sort_direction: SessionSortDirection_api.DESC,
-                limit: QUERY_PAGE_SIZE,
-                // "page" prop gets computed by `getNextPageParam`
-            },
-        }),
+function tableSortDirToApiSortDir(sort: TableSortDirection): SortDirection_api {
+    return sort as unknown as SortDirection_api;
+}
+
+// ! We need to manually write out the query because hey-api generates keys in a way that messes with Tanstack's
+// ! ability to set query data (which we use after mutating metadata).
+/* 
+! You'd think this would work, but if I try this; the data never loads
+useInfiniteQuery({
+    ...getSessionsMetadataInfiniteOptions( ... ),
+    queryKey: ["getSessionsMetadata", "infinite", querySortParams?.sort_by, querySortParams?.sort_direction],
+    ...
+});
+*/
+function useInfiniteSessionMetadataQuery(
+    querySortParams: Options<GetSessionsMetadataData_api>["query"],
+    modalOpen: boolean | undefined,
+) {
+    return useInfiniteQuery<
+        SessionMetadataWithId_api[],
+        AxiosError<GetSessionsMetadataError_api>,
+        InfiniteData<SessionMetadataWithId_api[]>,
+        readonly unknown[],
+        number
+    >({
+        queryKey: ["getSessionsMetadata", "infinite", querySortParams?.sort_by, querySortParams?.sort_direction],
         initialPageParam: 0,
-        // refetchInterval: 10000,
-        enabled: props.open,
+        refetchInterval: 10000,
+        enabled: modalOpen,
         // TODO: Currently uses standard SQL pagination. Move over to continuation-tokens for better RU usage
         getNextPageParam(lastPage, pages) {
             if (lastPage.length < QUERY_PAGE_SIZE) return null;
             return pages.length;
         },
+        async queryFn({ pageParam, signal }) {
+            const { data } = await getSessionsMetadata({
+                signal,
+                throwOnError: true,
+                query: {
+                    ...querySortParams,
+                    limit: QUERY_PAGE_SIZE,
+                    page: pageParam,
+                },
+            });
+
+            return data;
+        },
     });
+}
+
+export function SessionOverviewDialog(props: SessionOverviewDialogProps): React.ReactNode {
+    // ? Should this be opened via gui-events?
+
+    const [selectedSessionId, setSelectedSessionId] = React.useState<string | null>(null);
+    const [deletePending, setDeletePending] = React.useState<boolean>(false);
+    const [metadataEditOpen, setMetadataEditOpen] = React.useState(false);
+    const [visibleRowRange, setVisibleRowRange] = React.useState<{ start: number; end: number } | null>(null);
+    const [tableSortState, setTableSortState] = React.useState<TableSorting>([
+        { columnId: "updatedAt", direction: TableSortDirection.DESC },
+    ]);
+
+    const querySortParams = React.useMemo<Options<GetSessionsMetadataData_api>["query"]>(() => {
+        if (!tableSortState?.length) return undefined;
+
+        const sortBy = columnIdToApiSortField(tableSortState[0].columnId);
+        const SortDirection = tableSortDirToApiSortDir(tableSortState[0].direction);
+
+        return {
+            sort_by: sortBy,
+            sort_direction: SortDirection,
+        };
+    }, [tableSortState]);
+
+    const sessionsQuery = useInfiniteSessionMetadataQuery(querySortParams, props.open);
+
+    const tableRows = React.useMemo(() => {
+        if (!sessionsQuery.data) return [];
+        return sessionsQuery.data?.pages?.flat();
+    }, [sessionsQuery.data]);
+
+    const onTableScrollIndexChange = React.useCallback((start: number, end: number) => {
+        setVisibleRowRange({ start, end });
+    }, []);
 
     async function deleteSelectedSession() {
         if (!selectedSessionId) return;
@@ -153,10 +201,32 @@ export function SessionOverviewDialog(props: SessionOverviewDialogProps): React.
         setMetadataEditOpen(true);
     }
 
+    async function navigateToSelectedSession() {
+        if (!selectedSessionId) return;
+
+        props.workbench.openSession(selectedSessionId);
+    }
+
+    React.useEffect(
+        function maybeRefetchNextPageEffect() {
+            if (!visibleRowRange || visibleRowRange.end === -1) return;
+            if (!sessionsQuery.hasNextPage) return;
+            if (sessionsQuery.isFetchingNextPage) return;
+            if (tableRows.length - visibleRowRange?.end <= NEXT_PAGE_THRESHOLD) {
+                sessionsQuery.fetchNextPage();
+            }
+        },
+        [sessionsQuery, tableRows.length, visibleRowRange],
+    );
+
+    const selectedSession = React.useMemo(() => {
+        return sessionsQuery.data?.pages?.flat()?.find((session) => session.id === selectedSessionId) || null;
+    }, [sessionsQuery.data?.pages, selectedSessionId]);
+
     const actions = (
         <>
             <Button color="danger" disabled={!selectedSessionId || deletePending} onClick={deleteSelectedSession}>
-                {deletePending ? <CircularProgress /> : <Delete fontSize="inherit" />} Delete
+                {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />} Delete
             </Button>
             <Button color="primary" disabled={!selectedSessionId} onClick={editSelectedSession}>
                 <Edit fontSize="inherit" /> Edit
@@ -171,58 +241,34 @@ export function SessionOverviewDialog(props: SessionOverviewDialogProps): React.
         </>
     );
 
-    const tableRows = React.useMemo(() => {
-        return makeTableRows(sessionsQuery.data?.pages?.flat());
-    }, [sessionsQuery.data]);
-
-    const onTableRowLoadedChange = React.useCallback(
-        function (startIndex: number, endIndex: number) {
-            if (!sessionsQuery.hasNextPage) return;
-            if (sessionsQuery.isPending) return;
-            if (tableRows.length - endIndex <= NEXT_PAGE_THRESHOLD) {
-                sessionsQuery.fetchNextPage();
-            }
-        },
-        [sessionsQuery, tableRows],
-    );
-
-    const selectedSessionHighlightFilter = React.useCallback(
-        (row: SessionTableRow) => row.id === selectedSessionId,
-        [selectedSessionId],
-    );
-
-    const selectedSession = React.useMemo(() => {
-        return sessionsQuery.data?.pages?.flat()?.find((session) => session.id === selectedSessionId) || null;
-    }, [sessionsQuery.data?.pages, selectedSessionId]);
-
     return (
         <>
-            <Dialog title="Open Session" modal {...props} actions={actions}>
-                <div className="flex gap-2 mb-2 items-center">
-                    <span className="inline-block text-xs text-gray-500 px-1 py-0.5 rounded italic ">
-                        {sessionsQuery.hasNextPage ? "There is more data" : "All data loaded"}
-                    </span>
-
-                    <div className="justify-self-end ml-auto block">
-                        <Button name="Refetch data" color="primary" onClick={() => sessionsQuery.refetch()}>
-                            <Refresh fontSize="inherit" />
-                        </Button>
-                    </div>
-                </div>
-
-                {sessionsQuery.isFetched && !tableRows.length ? (
-                    <p className="text-gray-600 italic text-lg">No sessions have been made</p>
-                ) : (
-                    <Table
-                        headings={SESSION_TABLE_HEADINGS}
-                        data={tableRows}
-                        alternatingColumnColors={USE_ALTERNATING_COLUMN_COLORS}
-                        height={400}
-                        highlightFilter={selectedSessionHighlightFilter}
-                        onClick={handleClickRow}
-                        onRowLoadedRangeChange={onTableRowLoadedChange}
-                    />
-                )}
+            <Dialog title="Sessions" modal {...props} actions={actions} width={1500}>
+                {/* ? Do we want a button to refresh the table manually? Don't know where I'd place it... 
+                <Button
+                    className=" float-right text-sm !px-2 !py-1"
+                    name="Refetch data"
+                    color="primary"
+                    onClick={() => sessionsQuery.refetch()}
+                >
+                    <Refresh fontSize="inherit" />
+                </Button> */}
+                <Table
+                    rowIdentifier="id"
+                    alternatingColumnColors={USE_ALTERNATING_COLUMN_COLORS}
+                    columns={TABLE_COLUMNS}
+                    rows={tableRows}
+                    numPendingRows={sessionsQuery.isLoading || sessionsQuery.isFetchingNextPage ? QUERY_PAGE_SIZE : 0}
+                    rowHeight={ROW_HEIGHT}
+                    height={ROW_HEIGHT * QUERY_PAGE_SIZE}
+                    headerHeight={50}
+                    sorting={tableSortState}
+                    onSortingChange={setTableSortState}
+                    selectable
+                    controlledCollation
+                    onSelectedRowsChange={(selection) => setSelectedSessionId(selection[0])}
+                    onVisibleRowRangeChange={onTableScrollIndexChange}
+                />
             </Dialog>
 
             {selectedSession && (
@@ -236,29 +282,4 @@ export function SessionOverviewDialog(props: SessionOverviewDialogProps): React.
             )}
         </>
     );
-}
-
-// function MetadataEditWrapper(props: {
-//     selectedSession: SessionMetadataWithId_api | null;
-//     onUpdated: (updatedMetadata: SessionMetadataWithId_api) => void;
-// }): React.ReactNode {
-//     if (!props.selectedSession) return null;
-
-//     return <EditSessionMetadataDialog sessionId={selectedSession.id}  />;
-// }
-
-function makeTableRows(sessions: SessionMetadataWithId_api[] | undefined) {
-    const rows = [] as SessionTableRow[];
-
-    for (const session of sessions ?? []) {
-        rows.push({
-            id: session.id,
-            name: session.title,
-            description: session.description,
-            createdAt: session.createdAt,
-            updatedAt: session.updatedAt,
-        });
-    }
-
-    return rows;
 }

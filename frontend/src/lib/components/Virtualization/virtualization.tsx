@@ -23,7 +23,7 @@ const defaultProps = {
 };
 
 export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, (props) => {
-    const { onScroll, onLoadedRangeChange } = props;
+    const { onScroll } = props;
 
     const containerSize = useElementSize(props.containerRef);
 

@@ -1,4 +1,4 @@
-import type { QueryClient, InfiniteData } from "@tanstack/react-query";
+import type { QueryClient, InfiniteData, QueryFilters } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 
 import type { SessionDocument_api, SessionMetadataWithId_api, SessionUpdate_api } from "@api";
@@ -6,8 +6,6 @@ import {
     deleteSessionMutation,
     getRecentSnapshotsQueryKey,
     getSessionMetadataQueryKey,
-    getSessionQueryKey,
-    getSessionsMetadataInfiniteQueryKey,
     getSessionsMetadataQueryKey,
     updateSessionMutation,
 } from "@api";
@@ -607,26 +605,12 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     async updateSession(updatedSession: SessionUpdate_api) {
         const queryClient = this._queryClient;
 
-        const mutation = await queryClient
+        await queryClient
             .getMutationCache()
             .build(queryClient, {
                 ...updateSessionMutation(),
-                onSuccess(data, variables, context) {
-                    console.log(data, variables, context);
-
-                    // TODO: Hey-api generates keys unconventionally, so doesn't work particularly well with fuzzy query filters; see https://github.com/hey-api/openapi-ts/issues/653
-
-                    // As a hacky workaround, we can manually check each existing query with the specific keys objects. We can check queryKey[0]._id to check what query it is
-                    // seperate infinite ones with _infinte: true, as the id will be the same as the non-infinite one
-
-                    // We want to invalidate each query that directly fetched this, regardless of query params
-                    invalidateQueriesForSession(queryClient, data);
-
-                    // Fetched lists *might* be heavy for big lists, so we instead wish to
-                    // just update the data directly
-                    // TODO: replace data in list queries
-
-                    replaceSessionInQueriesData(queryClient, data);
+                onSuccess(data) {
+                    replaceSessionQueryData(queryClient, data);
                 },
             })
             .execute({ path: { session_id: updatedSession.id }, body: updatedSession });
@@ -719,112 +703,57 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         */
 }
 
-// ? Should this be moved somewhere else?
-function invalidateQueriesForSession(queryClient: QueryClient, session: SessionDocument_api) {
-    const options = { path: { session_id: session.id } };
-    const keys = [
-        getSessionMetadataQueryKey(options),
-        getSessionQueryKey(options),
-        // getSessionsMetadataQueryKey(),
-        // getSessionsMetadataInfiniteQueryKey(),
-    ];
-    const queryFilters = makeQueryFilters(keys, FilterLevel.PATH);
+function replaceSessionQueryData(queryClient: QueryClient, newSession: SessionDocument_api) {
+    const sessionMetadataQueryKey = getSessionMetadataQueryKey({ path: { session_id: newSession.id } });
+    const sessionsMetadataQueryKey = getSessionsMetadataQueryKey();
+    // ! Something breaks when using hey-api's generated infinite query options: setQueriesData is unable to get the
+    // ! correct cache entry, and instead makes a new entry. getQueriesData still works as expected...
+    const sessionsMetadataInfiniteQueryKey = ["getSessionsMetadata", "infinite"];
 
-    queryClient.invalidateQueries(queryFilters);
-}
+    // Replace queries that directly get this
+    const singleQueryFilter = makeQueryFilters([sessionMetadataQueryKey], FilterLevel.PATH);
+    queryClient.setQueriesData(singleQueryFilter, newSession.metadata);
 
-function replaceSessionInQueriesData(queryClient: QueryClient, session: SessionDocument_api) {
-    const queryFilters = makeQueryFilters([getSessionsMetadataQueryKey()]);
-
-    // ? Is there any way to have the data-type be inferred from the query-keys being fed?
+    // Replace list data entries
+    const queryFilters = makeQueryFilters([sessionsMetadataQueryKey]);
     queryClient.setQueriesData(queryFilters, (oldData: SessionMetadataWithId_api[]) => {
-        console.log(">>> setting data", oldData);
-
         let replaced = false;
         const mappedData = oldData.map<SessionMetadataWithId_api>((sessionMeta) => {
-            if (sessionMeta.id !== session.id) return sessionMeta;
+            if (sessionMeta.id !== newSession.id) return sessionMeta;
 
             replaced = true;
             return {
-                id: session.id,
-                ...session.metadata,
+                id: newSession.id,
+                ...newSession.metadata,
             };
         });
 
         // Only return if we actually found anything
-        if (replaced) return mappedData;
+        if (replaced) {
+            return mappedData;
+        }
     });
 
-    const infiniteQueryFilters = makeQueryFilters([getSessionsMetadataInfiniteQueryKey()]);
+    const infiniteQueryFilters: QueryFilters = { queryKey: sessionsMetadataInfiniteQueryKey };
+    queryClient.setQueriesData(infiniteQueryFilters, (oldData: InfiniteData<SessionMetadataWithId_api[]>) => {
+        if (!oldData) return undefined;
 
-    const existingData = queryClient.getQueriesData<InfiniteData<SessionMetadataWithId_api[]>>(infiniteQueryFilters);
+        const pageParams = oldData.pageParams;
+        const existingPages = oldData.pages;
 
-    for (const [exactKey, pagedData] of existingData) {
-        queryClient.setQueryData(exactKey, (/* _oldData */) => {
-            // TODO: HER!!!!! Fiks data probleman!!!!
-            console.log("oldData", pagedData);
+        let replaced = false;
 
-            const existingPages = pagedData?.pages ?? [];
+        const newPages = existingPages.map((page) => {
+            return page.map((entry) => {
+                if (entry.id !== newSession.id) return entry;
 
-            let replaced = false;
-            const mappedData = {
-                ...pagedData,
-                pages: [] as SessionMetadataWithId_api[][],
-            };
-
-            for (const page of existingPages) {
-                mappedData.pages.push(
-                    page.map((metaEntry) => {
-                        if (metaEntry.id !== session.id) return metaEntry;
-
-                        replaced = true;
-                        return {
-                            ...metaEntry,
-                            ...session.metadata,
-                        };
-                    }),
-                );
-            }
-
-            if (replaced) return mappedData;
+                replaced = true;
+                return { id: newSession.id, ...newSession.metadata };
+            });
         });
-    }
 
-    // ? Is there any way to have the data-type be inferred from the query-keys being fed?
-    // queryClient.setQueriesData(infiniteQueryFilters, (oldData: InfiniteData<SessionMetadataWithId_api[]>) => {
-    //     // ! oldData is undefined here, for some reason
-    //     // https://github.com/TanStack/query/issues/9183
-
-    //     // Manually fetching them, as a work-around...
-    //     const existing = queryClient.getQueriesData(infiniteQueryFilters);
-
-    //     // const [, ] = existing;
-
-    //     console.log(">>> setting inf-data", oldData, existing);
-
-    //     // const flattened = oldData.pages.flat()
-
-    //     // let replaced = false;
-
-    //     // const mappedData = oldData.map<SessionMetadataWithId_api>((sessionMeta) => {
-    //     //     if (sessionMeta.id !== session.id) return sessionMeta;
-
-    //     //     replaced = true;
-    //     //     return {
-    //     //         id: session.id,
-    //     //         ...session.metadata,
-    //     //     };
-    //     // });
-
-    //     // // Only return if we actually found anything
-    //     // if (replaced) return mappedData;
-    // });
-
-    // Infinite-queries are paged, so we need to handle them separately
-
-    // const options = { path: { session_id: updatedSession.id } };
-
-    // queryClient.invalidateQueries(queryFilters);
-
-    // const keys2 = [getSessionsMetadataQueryKey()];
+        if (replaced) {
+            return { pageParams, pages: newPages };
+        }
+    });
 }
