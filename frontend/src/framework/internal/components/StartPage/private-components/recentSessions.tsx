@@ -4,11 +4,7 @@ import { Typography } from "@equinor/eds-core-react";
 import { Refresh } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
-import {
-    getSessionsMetadataOptions,
-    PrimaryServicesDatabaseAccessSessionAccessTypesSortBy_api,
-    SortDirection_api,
-} from "@api";
+import { getSessionsMetadataOptions, SortDirection_api, SessionSortBy_api } from "@api";
 import { buildSessionUrl } from "@framework/internal/WorkbenchSession/SessionUrlService";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -32,7 +28,7 @@ export function RecentSessions(props: RecentSessionsProps) {
     const sessionsQuery = useQuery({
         ...getSessionsMetadataOptions({
             query: {
-                sort_by: PrimaryServicesDatabaseAccessSessionAccessTypesSortBy_api.UPDATED_AT,
+                sort_by: SessionSortBy_api.UPDATED_AT,
                 sort_direction: SortDirection_api.DESC,
                 limit: 5,
             },

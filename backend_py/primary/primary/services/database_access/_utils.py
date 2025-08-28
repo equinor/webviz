@@ -1,4 +1,5 @@
 import hashlib
+from typing import Any, cast
 
 
 # Utility function to hash a JSON string using SHA-256
@@ -11,3 +12,7 @@ def hash_json_string(json_string: str) -> str:
     hash_bytes = hashlib.sha256(data).digest()
     hash_hex = "".join(f"{b:02x}" for b in hash_bytes)
     return hash_hex
+
+
+def cast_query_params(params: list[dict[str, Any]]) -> list[dict[str, object]]:
+    return cast(list[dict[str, object]], params)

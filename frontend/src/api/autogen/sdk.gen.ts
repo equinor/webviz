@@ -209,6 +209,7 @@ import type {
     GetSessionResponse_api,
     GetSessionError_api,
     UpdateSessionData_api,
+    UpdateSessionResponse_api,
     UpdateSessionError_api,
     GetSessionMetadataData_api,
     GetSessionMetadataResponse_api,
@@ -227,8 +228,6 @@ import type {
     GetSnapshotData_api,
     GetSnapshotResponse_api,
     GetSnapshotError_api,
-    UpdateSnapshotData_api,
-    UpdateSnapshotError_api,
     GetSnapshotMetadataData_api,
     GetSnapshotMetadataResponse_api,
     GetSnapshotMetadataError_api,
@@ -1321,11 +1320,12 @@ export const getSession = <ThrowOnError extends boolean = false>(options: Option
 
 /**
  * Update Session
+ * Updates a session object. Allows for partial update objects
  */
 export const updateSession = <ThrowOnError extends boolean = false>(
     options: Options<UpdateSessionData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).put<unknown, UpdateSessionError_api, ThrowOnError>({
+    return (options?.client ?? client).put<UpdateSessionResponse_api, UpdateSessionError_api, ThrowOnError>({
         ...options,
         headers: {
             "Content-Type": "application/json",
@@ -1405,22 +1405,6 @@ export const deleteSnapshot = <ThrowOnError extends boolean = false>(
 export const getSnapshot = <ThrowOnError extends boolean = false>(options: Options<GetSnapshotData_api, ThrowOnError>) => {
     return (options?.client ?? client).get<GetSnapshotResponse_api, GetSnapshotError_api, ThrowOnError>({
         ...options,
-        url: "/snapshots/snapshots/{snapshot_id}",
-    });
-};
-
-/**
- * Update Snapshot
- */
-export const updateSnapshot = <ThrowOnError extends boolean = false>(
-    options: Options<UpdateSnapshotData_api, ThrowOnError>,
-) => {
-    return (options?.client ?? client).put<unknown, UpdateSnapshotError_api, ThrowOnError>({
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...options?.headers,
-        },
         url: "/snapshots/snapshots/{snapshot_id}",
     });
 };

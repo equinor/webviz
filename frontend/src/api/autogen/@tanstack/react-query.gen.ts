@@ -87,7 +87,6 @@ import {
     createSnapshot,
     deleteSnapshot,
     getSnapshot,
-    updateSnapshot,
     getSnapshotMetadata,
     snapshotPreview,
     loginRoute,
@@ -180,6 +179,8 @@ import type {
     GetVfpTableNamesData_api,
     GetVfpTableData_api,
     GetSessionsMetadataData_api,
+    GetSessionsMetadataError_api,
+    GetSessionsMetadataResponse_api,
     CreateSessionData_api,
     CreateSessionError_api,
     CreateSessionResponse_api,
@@ -188,6 +189,7 @@ import type {
     GetSessionData_api,
     UpdateSessionData_api,
     UpdateSessionError_api,
+    UpdateSessionResponse_api,
     GetSessionMetadataData_api,
     GetRecentSnapshotsData_api,
     GetRecentSnapshotsError_api,
@@ -199,8 +201,6 @@ import type {
     DeleteSnapshotData_api,
     DeleteSnapshotError_api,
     GetSnapshotData_api,
-    UpdateSnapshotData_api,
-    UpdateSnapshotError_api,
     GetSnapshotMetadataData_api,
     SnapshotPreviewData_api,
     LoginRouteData_api,
@@ -1631,6 +1631,76 @@ export const getSessionsMetadataOptions = (options?: Options<GetSessionsMetadata
     });
 };
 
+const createInfiniteParams = <K extends Pick<QueryKey<Options>[0], "body" | "headers" | "path" | "query">>(
+    queryKey: QueryKey<Options>,
+    page: K,
+) => {
+    const params = queryKey[0];
+    if (page.body) {
+        params.body = {
+            ...(queryKey[0].body as any),
+            ...(page.body as any),
+        };
+    }
+    if (page.headers) {
+        params.headers = {
+            ...queryKey[0].headers,
+            ...page.headers,
+        };
+    }
+    if (page.path) {
+        params.path = {
+            ...(queryKey[0].path as any),
+            ...(page.path as any),
+        };
+    }
+    if (page.query) {
+        params.query = {
+            ...(queryKey[0].query as any),
+            ...(page.query as any),
+        };
+    }
+    return params as unknown as typeof page;
+};
+
+export const getSessionsMetadataInfiniteQueryKey = (
+    options?: Options<GetSessionsMetadataData_api>,
+): QueryKey<Options<GetSessionsMetadataData_api>> => [createQueryKey("getSessionsMetadata", options, true)];
+
+export const getSessionsMetadataInfiniteOptions = (options?: Options<GetSessionsMetadataData_api>) => {
+    return infiniteQueryOptions<
+        GetSessionsMetadataResponse_api,
+        AxiosError<GetSessionsMetadataError_api>,
+        InfiniteData<GetSessionsMetadataResponse_api>,
+        QueryKey<Options<GetSessionsMetadataData_api>>,
+        number | Pick<QueryKey<Options<GetSessionsMetadataData_api>>[0], "body" | "headers" | "path" | "query">
+    >(
+        // @ts-ignore
+        {
+            queryFn: async ({ pageParam, queryKey, signal }) => {
+                // @ts-ignore
+                const page: Pick<QueryKey<Options<GetSessionsMetadataData_api>>[0], "body" | "headers" | "path" | "query"> =
+                    typeof pageParam === "object"
+                        ? pageParam
+                        : {
+                              query: {
+                                  page: pageParam,
+                              },
+                          };
+                const params = createInfiniteParams(queryKey, page);
+                const { data } = await getSessionsMetadata({
+                    ...options,
+                    ...params,
+                    signal,
+                    throwOnError: true,
+                });
+                return data;
+            },
+            queryKey: getSessionsMetadataInfiniteQueryKey(options),
+        },
+    );
+};
+
 export const createSessionQueryKey = (options: Options<CreateSessionData_api>) => [
     createQueryKey("createSession", options),
 ];
@@ -1700,7 +1770,11 @@ export const getSessionOptions = (options: Options<GetSessionData_api>) => {
 };
 
 export const updateSessionMutation = (options?: Partial<Options<UpdateSessionData_api>>) => {
-    const mutationOptions: UseMutationOptions<unknown, AxiosError<UpdateSessionError_api>, Options<UpdateSessionData_api>> = {
+    const mutationOptions: UseMutationOptions<
+        UpdateSessionResponse_api,
+        AxiosError<UpdateSessionError_api>,
+        Options<UpdateSessionData_api>
+    > = {
         mutationFn: async (localOptions) => {
             const { data } = await updateSession({
                 ...options,
@@ -1749,38 +1823,6 @@ export const getRecentSnapshotsOptions = (options?: Options<GetRecentSnapshotsDa
         },
         queryKey: getRecentSnapshotsQueryKey(options),
     });
-};
-
-const createInfiniteParams = <K extends Pick<QueryKey<Options>[0], "body" | "headers" | "path" | "query">>(
-    queryKey: QueryKey<Options>,
-    page: K,
-) => {
-    const params = queryKey[0];
-    if (page.body) {
-        params.body = {
-            ...(queryKey[0].body as any),
-            ...(page.body as any),
-        };
-    }
-    if (page.headers) {
-        params.headers = {
-            ...queryKey[0].headers,
-            ...page.headers,
-        };
-    }
-    if (page.path) {
-        params.path = {
-            ...(queryKey[0].path as any),
-            ...(page.path as any),
-        };
-    }
-    if (page.query) {
-        params.query = {
-            ...(queryKey[0].query as any),
-            ...(page.query as any),
-        };
-    }
-    return params as unknown as typeof page;
 };
 
 export const getRecentSnapshotsInfiniteQueryKey = (
@@ -1906,20 +1948,6 @@ export const getSnapshotOptions = (options: Options<GetSnapshotData_api>) => {
         },
         queryKey: getSnapshotQueryKey(options),
     });
-};
-
-export const updateSnapshotMutation = (options?: Partial<Options<UpdateSnapshotData_api>>) => {
-    const mutationOptions: UseMutationOptions<unknown, AxiosError<UpdateSnapshotError_api>, Options<UpdateSnapshotData_api>> = {
-        mutationFn: async (localOptions) => {
-            const { data } = await updateSnapshot({
-                ...options,
-                ...localOptions,
-                throwOnError: true,
-            });
-            return data;
-        },
-    };
-    return mutationOptions;
 };
 
 export const getSnapshotMetadataQueryKey = (options: Options<GetSnapshotMetadataData_api>) => [

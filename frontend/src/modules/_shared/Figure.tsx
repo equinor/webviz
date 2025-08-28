@@ -1,7 +1,5 @@
 import { merge } from "lodash";
-import type { Annotations, AxisType, Layout, PlotData, Shape, XAxisName, YAxisName } from "plotly.js";
-import type { PlotParams } from "react-plotly.js";
-import Plot from "react-plotly.js";
+import type { Annotations, AxisType, Data, Layout, PlotData, Shape, XAxisName, YAxisName } from "plotly.js";
 
 /**
  * Enum for axis coordinate domain.
@@ -168,8 +166,12 @@ export class Figure {
         subplotTitleAnnotation.text = title;
     }
 
+    makeData(): Partial<Data>[] {
+        return [...this._plotData];
+    }
+
     makeLayout(): Partial<Layout> {
-        const layout = { ...this._plotLayout };
+        const layout: Partial<Layout> = { ...this._plotLayout };
         layout.annotations = [
             ...(layout.annotations ?? []),
             ...Array.from(this._axesIndexToSubplotTitleAnnotationMap.values()),
@@ -188,24 +190,6 @@ export class Figure {
 
     updateLayout(patch: Partial<Layout>): void {
         merge(this._plotLayout, patch);
-    }
-
-    makePlot(plotArgs?: Omit<PlotParams, "data" | "layout">): React.ReactNode {
-        const config = plotArgs?.config ?? {
-            displaylogo: false,
-            responsive: true,
-            modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "resetScale2d"],
-        };
-
-        return (
-            <Plot
-                key={this._plotData.length} // Note: Temporary to trigger re-render and remove legends when plotData is empty
-                data={this._plotData}
-                layout={this.makeLayout()}
-                config={config}
-                {...plotArgs}
-            />
-        );
     }
 
     private makeYAxisRef(axisIndex: number, coordinateDomain: CoordinateDomain): YAxisName {
@@ -318,7 +302,7 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
             t: titleMargin,
             b: 0,
         },
-        title: options.title,
+        title: { text: options.title },
     };
 
     const axesIndexToSubplotTitleAnnotationMap: Map<number, Partial<Annotations>> = new Map();
