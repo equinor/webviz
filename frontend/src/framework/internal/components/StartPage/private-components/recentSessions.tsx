@@ -1,6 +1,7 @@
 import React from "react";
 
 import { useQuery } from "@tanstack/react-query";
+import { take } from "lodash";
 
 import { getSessionsMetadataOptions, SessionSortBy_api, SortDirection_api } from "@api";
 import type { Workbench } from "@framework/Workbench";
@@ -9,6 +10,7 @@ import { timeAgo } from "@lib/utils/dates";
 
 export type RecentSessionsProps = {
     workbench: Workbench;
+    onOpenSessionDialog: () => void;
 };
 
 export function RecentSessions(props: RecentSessionsProps) {
@@ -24,11 +26,17 @@ export function RecentSessions(props: RecentSessionsProps) {
             query: {
                 sort_by: SessionSortBy_api.UPDATED_AT,
                 sort_direction: SortDirection_api.DESC,
-                limit: 5,
+                limit: 6,
             },
         }),
         refetchInterval: 10000,
     });
+
+    const hasMoreSessions = sessionsQuery.data?.length === 6;
+    const firstFiveSessions = React.useMemo(() => {
+        if (sessionsQuery.isPending) return [];
+        return take(sessionsQuery.data, 5);
+    }, [sessionsQuery.data, sessionsQuery.isPending]);
 
     if (!sessionsQuery.isFetching) {
         if (sessionsQuery.isError) {
@@ -57,27 +65,41 @@ export function RecentSessions(props: RecentSessionsProps) {
 
         if (state === "success" && sessionsQuery.data && sessionsQuery.data.length > 0) {
             return (
-                <ul className="pl-5">
-                    {sessionsQuery.data.map((session) => (
-                        <li key={session.id} className="flex items-center justify-between gap-4">
-                            <a
-                                href="#"
-                                onClick={(e) => handleSessionClick(e, session.id)}
-                                className="text-blue-600 hover:underline"
-                            >
-                                {session.title}
-                            </a>
-                            <span className="text-gray-500">
-                                ~ {timeAgo(Date.now() - new Date(session.updatedAt).getTime())}
-                            </span>
-                        </li>
-                    ))}
-                </ul>
+                <>
+                    <ul className="pl-5">
+                        {firstFiveSessions.map((session) => (
+                            <li key={session.id} className="flex items-center justify-between gap-4">
+                                <a
+                                    href="#"
+                                    onClick={(e) => handleSessionClick(e, session.id)}
+                                    className="text-blue-600 hover:underline"
+                                >
+                                    {session.title}
+                                </a>
+                                <span className="text-gray-500">
+                                    ~ {timeAgo(Date.now() - new Date(session.updatedAt).getTime())}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                </>
             );
         }
 
         return <div className="text-gray-500">No recent sessions found.</div>;
     }
 
-    return <div className="flex flex-col gap-2">{makeContent()}</div>;
+    return (
+        <>
+            <div className="flex flex-col gap-2">{makeContent()}</div>
+            {hasMoreSessions && (
+                <button
+                    className="inline-block w-fit text-sm text-blue-600 hover:underline cursor-pointer"
+                    onClick={props.onOpenSessionDialog}
+                >
+                    See more...
+                </button>
+            )}
+        </>
+    );
 }
