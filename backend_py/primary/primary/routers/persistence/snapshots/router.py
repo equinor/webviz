@@ -1,7 +1,7 @@
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Query
 
 from primary.services.database_access.snapshot_access.types import (
     NewSnapshot,
@@ -72,11 +72,9 @@ async def get_snapshot(
 
     async with snapshot_access, log_access:
         snapshot = await snapshot_access.get_snapshot_by_id_async(snapshot_id)
-        if not snapshot:
-            raise HTTPException(status_code=404, detail="Snapshot not found")
-
+        # Should we clear the log if a snapshot was not found? This could mean that the snapshot was
+        # deleted but deletion of logs has failed
         await log_access.log_snapshot_visit_async(snapshot_id, snapshot.owner_id)
-
         return to_api_snapshot(snapshot)
 
 
@@ -88,8 +86,6 @@ async def get_snapshot_metadata(
     access = SnapshotAccess.create(user.get_user_id())
     async with access:
         metadata = await access.get_snapshot_metadata_async(snapshot_id)
-        if not metadata:
-            raise HTTPException(status_code=404, detail="Session metadata not found")
         return to_api_snapshot_metadata(metadata)
 
 
@@ -120,5 +116,5 @@ async def delete_snapshot(
 
     # This is the fastest solution for the moment. As we are expecting <= 150 logs per snapshot
     # and consistency is not critical, we can afford to do this in the background and without
-    # a safety net. We can consider later adding this to a queue for better reliability.
+    # a safety net. We can later consider adding this to a queue for better reliability.
     background_tasks.add_task(mark_logs_deleted_worker, snapshot_id=snapshot_id)

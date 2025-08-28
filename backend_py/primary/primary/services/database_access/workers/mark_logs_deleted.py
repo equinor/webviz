@@ -31,9 +31,7 @@ async def mark_logs_deleted_worker(snapshot_id: str) -> None:
         )
         params = [{"name": "@sid", "value": snapshot_id}]
 
-        rows: List[Dict[str, Any]] = await container_access.query_projection_async(
-            query, params, enable_cross_partition_query=True
-        )
+        rows: List[Dict[str, Any]] = await container_access.query_projection_async(query, params)
 
         if not rows:
             LOGGER.info("No snapshot_access_logs to update for snapshot '%s'.", snapshot_id)
@@ -43,16 +41,13 @@ async def mark_logs_deleted_worker(snapshot_id: str) -> None:
 
         operations = [
             {"op": "set", "path": "/snapshot_deleted", "value": True},
-            {"op": "set", "path": "/deleted_at", "value": deleted_at},
+            {"op": "set", "path": "/snapshot_deleted_at", "value": deleted_at},
         ]
 
         # Limit concurrency to avoid RU spikes/throttling
         sem = asyncio.Semaphore(32)
 
-        success = 0
-        fail = 0
-
-        async def _patch_one(rec: Dict[str, Any]) -> None:
+        async def _patch_one(rec: Dict[str, Any]) -> bool:
             async with sem:
                 try:
                     await container_access.patch_item_async(
@@ -60,16 +55,18 @@ async def mark_logs_deleted_worker(snapshot_id: str) -> None:
                         partition_key=rec["visitor_id"],  # /visitor_id is the PK
                         patch_operations=operations,
                     )
-                    success += 1
+                    return True
                 except asyncio.CancelledError:
                     # always re-raise cancellation so shutdowns are graceful
                     raise
                 except ServiceRequestError as e:
-                    fail += 1
                     LOGGER.warning("PATCH failed for log id=%s pk=%s: %s", rec.get("id"), rec.get("visitor_id"), e)
                     # Do not re-raise - we want to continue with other items
+                    return False
 
-        await asyncio.gather(*(_patch_one(r) for r in rows))
+        results = await asyncio.gather(*(_patch_one(r) for r in rows))
+        success = sum(1 for ok in results if ok)
+        fail = len(rows) - success
         LOGGER.info(
             "Marked %d/%d access-log docs deleted for snapshot '%s' (failures=%d).",
             success,

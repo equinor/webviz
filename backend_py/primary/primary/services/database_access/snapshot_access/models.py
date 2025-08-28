@@ -27,6 +27,7 @@ class SnapshotAccessLogDocument(BaseModel):
     first_visited_at: datetime | None = None
     last_visited_at: datetime | None = None
     snapshot_deleted: bool = False
+    snapshot_deleted_at: datetime | None = None
 
     snapshot_metadata: SnapshotMetadata
 

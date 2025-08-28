@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 
 import { getRecentSnapshotsQueryKey } from "@api";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
@@ -24,13 +25,16 @@ import {
     loadWorkbenchSessionFromLocalStorage,
 } from "./internal/WorkbenchSession/WorkbenchSessionLoader";
 import { WorkbenchSessionPersistenceService } from "./internal/WorkbenchSession/WorkbenchSessionPersistenceService";
+import { ApiErrorHelper } from "./utils/ApiErrorHelper";
 import type { WorkbenchServices } from "./WorkbenchServices";
 
 export enum WorkbenchTopic {
+    ACTIVE_SESSION = "activeSession",
     HAS_ACTIVE_SESSION = "hasActiveSession",
 }
 
 export type WorkbenchTopicPayloads = {
+    [WorkbenchTopic.ACTIVE_SESSION]: PrivateWorkbenchSession | null;
     [WorkbenchTopic.HAS_ACTIVE_SESSION]: boolean;
 };
 export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
@@ -65,6 +69,9 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
     makeSnapshotGetter<T extends WorkbenchTopic>(topic: T): () => WorkbenchTopicPayloads[T] {
         const snapshotGetter = (): any => {
+            if (topic === WorkbenchTopic.ACTIVE_SESSION) {
+                return this._workbenchSession;
+            }
             if (topic === WorkbenchTopic.HAS_ACTIVE_SESSION) {
                 return this._workbenchSession !== null;
             }
@@ -110,7 +117,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             if (this._workbenchSession.isSnapshot()) {
                 // If the current session is a snapshot, we can just load the new entity.
                 if (snapshotId) {
-                    await this.loadSnapshot(snapshotId);
+                    await this.openSnapshot(snapshotId);
                 } else if (sessionId) {
                     if (this._workbenchSession.getId() === sessionId) {
                         // If the session id is the same as the current session, we do not need to reload it.
@@ -143,7 +150,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
                     // User chose to save the changes, so we save the current session and then load the new snapshot.
                     await this.saveCurrentSession(true);
                     if (snapshotId) {
-                        await this.loadSnapshot(snapshotId);
+                        await this.openSnapshot(snapshotId);
                     } else if (sessionId) {
                         await this.openSession(sessionId);
                     }
@@ -153,7 +160,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
                     // User chose to discard the changes, so we discard the current session and load the new snapshot.
                     this.unloadCurrentSession();
                     if (snapshotId) {
-                        await this.loadSnapshot(snapshotId);
+                        await this.openSnapshot(snapshotId);
                     } else if (sessionId) {
                         await this.openSession(sessionId);
                     }
@@ -166,7 +173,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
         // If there are no unsaved changes or no active session, we can just load the new snapshot or session.
         if (snapshotId) {
-            await this.loadSnapshot(snapshotId);
+            await this.openSnapshot(snapshotId);
         } else if (sessionId) {
             await this.openSession(sessionId);
         }
@@ -190,7 +197,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         const storedSessions = await loadAllWorkbenchSessionsFromLocalStorage();
 
         if (snapshotId) {
-            this.loadSnapshot(snapshotId);
+            this.openSnapshot(snapshotId);
             return;
         } else if (sessionId) {
             this.openSession(sessionId);
@@ -205,8 +212,9 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         }
     }
 
-    private async loadSnapshot(snapshotId: string): Promise<void> {
+    private async openSnapshot(snapshotId: string): Promise<void> {
         try {
+            this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
             const snapshotData = await loadSnapshotFromBackend(this._queryClient, snapshotId);
             const snapshot = await PrivateWorkbenchSession.fromDataContainer(
                 this._atomStoreMaster,
@@ -225,12 +233,20 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
                 this._guiMessageBroker.setState(GuiState.RightSettingsPanelWidthInPercent, 0);
             }
             return;
-        } catch (error) {
+        } catch (error: any) {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
-            console.error("Failed to load session from backend:", error);
+            console.error("Failed to load snapshot from backend:", error);
+
+            if (isAxiosError(error)) {
+                // Handle Axios error specifically
+                console.error("Axios error details:", error.response?.data);
+            }
+
+            const apiError = ApiErrorHelper.fromError(error);
+
             const result = await confirmationService.confirm({
                 title: "Could not load snapshot",
-                message: `Could not load snapshot with ID ${snapshotId}. The snapshot might not exist or you might not have access to it.`,
+                message: apiError?.getMessage() ?? "Could not open snapshot",
                 actions: [
                     {
                         id: "cancel",
@@ -245,7 +261,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             if (result === "retry") {
                 this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
                 // Retry loading the snapshot
-                await this.loadSnapshot(snapshotId);
+                await this.openSnapshot(snapshotId);
             }
         }
     }
@@ -289,6 +305,8 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             return;
         }
 
+        this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
+
         const sessionData = await loadWorkbenchSessionFromLocalStorage(snapshotId);
         if (!sessionData) {
             console.warn("No workbench session found in local storage.");
@@ -304,6 +322,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         await this.setWorkbenchSession(session);
         this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, false);
         this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, false);
+        this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
     }
 
     async openSession(sessionId: string): Promise<void> {
@@ -392,11 +411,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     }
 
     private async setWorkbenchSession(session: PrivateWorkbenchSession): Promise<void> {
-        if (this._workbenchSession) {
-            console.warn("A workbench session is already active.");
-            return;
-        }
-
         try {
             if (session.getEnsembleSet().getEnsembleArray().length === 0) {
                 this._guiMessageBroker.setState(GuiState.EnsembleDialogOpen, true);
@@ -416,6 +430,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             this._ensembleUpdateMonitor.startPolling();
             await this._workbenchSessionPersistenceService.setWorkbenchSession(session);
             this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
+            this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.ACTIVE_SESSION);
         } catch (error) {
             console.error("Failed to hydrate workbench session:", error);
             throw new Error("Could not load workbench session from data container.");

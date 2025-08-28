@@ -30,6 +30,7 @@ export enum GuiState {
     AppInitialized = "appInitialized",
     NumberOfUnsavedRealizationFilters = "numberOfUnsavedRealizationFilters",
     SaveSessionDialogOpen = "saveSessionDialogOpen",
+    EditSessionDialogOpen = "editSessionDialogOpen",
     SessionHasUnsavedChanges = "sessionHasUnsavedChanges",
     IsSavingSession = "isSavingSession",
     IsMakingSnapshot = "isMakingSnapshot",
@@ -103,6 +104,7 @@ type GuiStateValueTypes = {
     [GuiState.AppInitialized]: boolean;
     [GuiState.NumberOfUnsavedRealizationFilters]: number;
     [GuiState.SaveSessionDialogOpen]: boolean;
+    [GuiState.EditSessionDialogOpen]: boolean;
     [GuiState.IsSavingSession]: boolean;
     [GuiState.IsLoadingSession]: boolean;
     [GuiState.SessionHasUnsavedChanges]: boolean;
