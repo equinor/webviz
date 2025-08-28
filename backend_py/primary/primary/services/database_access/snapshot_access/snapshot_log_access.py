@@ -1,11 +1,11 @@
-import asyncio
 import logging
 from datetime import datetime, timezone
 from typing import Any
 
 
 from primary.services.database_access.container_access import ContainerAccess
-from primary.services.service_exceptions import ServiceRequestError
+from primary.services.database_access.database_access_exceptions import DatabaseAccessError, DatabaseAccessNotFoundError
+from primary.services.service_exceptions import Service, ServiceRequestError
 
 from ..query_collation_options import QueryCollationOptions
 from .models import SnapshotAccessLogDocument
@@ -41,40 +41,49 @@ class SnapshotLogAccess:
         await self._container_access.close_async()
 
     async def update_log_async(self, snapshot_id: str, changes: dict[str, Any]) -> None:
-        existing = await self.get_access_log_async(snapshot_id)
+        try:
+            existing = await self.get_access_log_async(snapshot_id)
 
-        updated_item = existing.model_copy(update=changes)
+            updated_item = existing.model_copy(update=changes)
 
-        await self._container_access.update_item_async(snapshot_id, updated_item)
+            await self._container_access.update_item_async(snapshot_id, updated_item)
+        except DatabaseAccessError as e:
+            raise ServiceRequestError(f"Failed to update access log: {str(e)}", Service.DATABASE) from e
 
     async def get_access_logs_for_user_async(
         self, collation_options: QueryCollationOptions
     ) -> list[SnapshotAccessLogDocument]:
-        query = "SELECT * FROM c WHERE c.visitor_id = @visitor_id"
-        params = [{"name": "@visitor_id", "value": self._user_id}]
+        try:
+            query = "SELECT * FROM c WHERE c.visitor_id = @visitor_id"
+            params = [{"name": "@visitor_id", "value": self._user_id}]
 
-        search_options = collation_options.to_sql_query_string("c")
+            search_options = collation_options.to_sql_query_string("c")
 
-        if search_options:
-            query = f"{query} {search_options}"
+            if search_options:
+                query = f"{query} {search_options}"
 
-        return await self._container_access.query_items_async(query, params)  # type: ignore[arg-type]
+            return await self._container_access.query_items_async(query, params)  # type: ignore[arg-type]
+        except DatabaseAccessError as e:
+            raise ServiceRequestError(f"Failed to get access logs: {str(e)}", Service.DATABASE) from e
 
     async def create_access_log_async(self, snapshot_id: str, snapshot_owner_id: str) -> SnapshotAccessLogDocument:
-        snapshots = SnapshotAccess.create(self._user_id)
+        try:
+            snapshots = SnapshotAccess.create(self._user_id)
 
-        snapshot_meta = await snapshots.get_snapshot_metadata_async(snapshot_id, snapshot_owner_id)
+            snapshot_meta = await snapshots.get_snapshot_metadata_async(snapshot_id, snapshot_owner_id)
 
-        new_log = SnapshotAccessLogDocument(
-            visitor_id=self._user_id,
-            snapshot_id=snapshot_id,
-            snapshot_owner_id=snapshot_owner_id,
-            snapshot_metadata=snapshot_meta,
-        )
+            new_log = SnapshotAccessLogDocument(
+                visitor_id=self._user_id,
+                snapshot_id=snapshot_id,
+                snapshot_owner_id=snapshot_owner_id,
+                snapshot_metadata=snapshot_meta,
+            )
 
-        _inserted_id = await self._container_access.insert_item_async(new_log)
+            _inserted_id = await self._container_access.insert_item_async(new_log)
 
-        return new_log
+            return new_log
+        except DatabaseAccessError as e:
+            raise ServiceRequestError(f"Failed to create access log: {str(e)}", Service.DATABASE) from e
 
     async def get_access_log_async(self, snapshot_id: str) -> SnapshotAccessLogDocument:
         item_id = make_access_log_item_id(snapshot_id, self._user_id)
@@ -91,64 +100,23 @@ class SnapshotLogAccess:
         """
         try:
             return await self.get_access_log_async(snapshot_id)
-        except ServiceRequestError:
+        except DatabaseAccessNotFoundError:
             return await self.create_access_log_async(snapshot_id=snapshot_id, snapshot_owner_id=snapshot_owner_id)
+        except DatabaseAccessError as e:
+            raise ServiceRequestError(f"Failed to get or create access log: {str(e)}", Service.DATABASE) from e
 
     async def log_snapshot_visit_async(self, snapshot_id: str, snapshot_owner_id: str) -> SnapshotAccessLogDocument:
         timestamp = datetime.now(timezone.utc)
-
-        # Should we wrap this?
-        # try:
-        #   <body>
-        # except Exception as e:
-        #   raise ServiceRequestError(f"Failed to log snapshot visit: {str(e)}", Service.DATABASE) from e
-        log = await self.get_existing_or_new_log_item_async(snapshot_id, snapshot_owner_id)
-        log.visits += 1
-        log.last_visited_at = timestamp
-
-        if not log.first_visited_at:
-            log.first_visited_at = timestamp
-
-        await self._container_access.update_item_async(log.id, log)
-
-        return log
-
-    async def mark_snapshot_as_deleted_async(self, snapshot_id: str) -> None:
         try:
-            # Fetch only what we need: id + partition key
-            query = (
-                "SELECT c.id, c.visitor_id "
-                "FROM c "
-                "WHERE c.snapshot_id = @sid "
-                "AND (NOT IS_DEFINED(c.snapshot_deleted) OR c.snapshot_deleted != true)"
-            )
-            params = [{"name": "@sid", "value": snapshot_id}]
-            candidates: list[dict[str, Any]] = await self._container_access.query_items_async(query, params)  # type: ignore
+            log = await self.get_existing_or_new_log_item_async(snapshot_id, snapshot_owner_id)
+            log.visits += 1
+            log.last_visited_at = timestamp
 
-            if not candidates:
-                LOGGER.info(f"No access logs found for snapshot '{snapshot_id}'. Nothing to mark as deleted.")
-                return
+            if not log.first_visited_at:
+                log.first_visited_at = timestamp
 
-            ops = [
-                {"op": "set", "path": "/snapshot_deleted", "value": True},
-            ]
+            await self._container_access.update_item_async(log.id, log)
 
-            # Concurrency control to avoid RU spikes - acting as a bouncer to only allow N concurrent requests
-            semaphore = asyncio.Semaphore(32)  # we have to fine-tune based on RU budget
-
-            async def _patch_one(item: dict[str, Any]) -> None:
-                async with semaphore:
-                    try:
-                        await self._container_access.patch_item_async(
-                            item_id=item["id"],
-                            partition_key=item["visitor_id"],
-                            operations=ops,
-                        )
-                    except ServiceRequestError as e:
-                        LOGGER.warning("Failed to patch log id=%s pk=%s: %s", item["id"], item["visitor_id"], e)
-
-            await asyncio.gather(*(_patch_one(it) for it in candidates))
-        except ServiceRequestError:  # Check error handling!
-            # If there's no log, we don't need to mark it as deleted
-            LOGGER.info(f"No access logs found for snapshot '{snapshot_id}'. Nothing to mark as deleted.")
-            return
+            return log
+        except DatabaseAccessError as e:
+            raise ServiceRequestError(f"Failed to log snapshot visit: {str(e)}", Service.DATABASE) from e

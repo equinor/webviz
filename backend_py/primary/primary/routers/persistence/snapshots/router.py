@@ -1,7 +1,7 @@
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 
 from primary.services.database_access.snapshot_access.types import (
     NewSnapshot,
@@ -12,6 +12,7 @@ from primary.middleware.add_browser_cache import no_cache
 from primary.services.database_access.snapshot_access.snapshot_access import SnapshotAccess
 from primary.services.database_access.snapshot_access.snapshot_log_access import SnapshotLogAccess
 from primary.services.database_access.query_collation_options import QueryCollationOptions, SortDirection
+from primary.services.database_access.workers.mark_logs_deleted import mark_logs_deleted_worker
 
 
 from primary.auth.auth_helper import AuthHelper, AuthenticatedUser
@@ -109,15 +110,15 @@ async def create_snapshot(
 
 @router.delete("/snapshots/{snapshot_id}")
 async def delete_snapshot(
-    snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
+    snapshot_id: str,
+    background_tasks: BackgroundTasks,
+    user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> None:
     snapshot_access = SnapshotAccess.create(user.get_user_id())
     async with snapshot_access:
         await snapshot_access.delete_snapshot_async(snapshot_id)
 
-    log_access = SnapshotLogAccess.create(user.get_user_id())
-    async with log_access:
-        # Might want to making this a background task so we don't block on it as it is not critical
-        # for the user to have this done immediately. It could also be done in a queue if we
-        # want to improve responsiveness.
-        await log_access.mark_snapshot_as_deleted_async(snapshot_id)
+    # This is the fastest solution for the moment. As we are expecting <= 150 logs per snapshot
+    # and consistency is not critical, we can afford to do this in the background and without
+    # a safety net. We can consider later adding this to a queue for better reliability.
+    background_tasks.add_task(mark_logs_deleted_worker, snapshot_id=snapshot_id)
