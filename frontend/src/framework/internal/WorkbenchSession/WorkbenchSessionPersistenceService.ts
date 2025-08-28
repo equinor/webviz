@@ -21,7 +21,7 @@ import {
     objectToJsonString,
     updateSessionWithCacheUpdate,
 } from "./utils";
-import { makeWorkbenchSessionStateString } from "./WorkbenchSessionSerializer";
+import { makeWorkbenchSessionLocalStorageString, makeWorkbenchSessionStateString } from "./WorkbenchSessionSerializer";
 
 export type WorkbenchSessionPersistenceInfo = {
     lastModifiedMs: number;
@@ -278,8 +278,8 @@ export class WorkbenchSessionPersistenceService
     private persistToLocalStorage() {
         const key = this.makeLocalStorageKey();
 
-        if (this._currentStateString) {
-            localStorage.setItem(key, this._currentStateString);
+        if (this._workbenchSession) {
+            localStorage.setItem(key, makeWorkbenchSessionLocalStorageString(this._workbenchSession));
         }
     }
 
@@ -291,9 +291,6 @@ export class WorkbenchSessionPersistenceService
         }
 
         await this.pullFullSessionState({ immediate: true });
-        if (!this._currentStateString) {
-            throw new Error("Current state string is not set. Cannot make a snapshot.");
-        }
         const toastId = toast.loading("Creating snapshot...");
 
         try {

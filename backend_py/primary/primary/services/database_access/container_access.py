@@ -194,8 +194,6 @@ class ContainerAccess(Generic[T]):
         self,
         query: str,
         parameters: Optional[List[Dict[str, object]]] = None,
-        *,
-        enable_cross_partition_query: bool = False,
     ) -> List[Dict[str, Any]]:
         """
         Run a query that returns raw dicts (no Pydantic validation), useful for
@@ -205,7 +203,6 @@ class ContainerAccess(Generic[T]):
             items_iterable = self._container.query_items(
                 query=query,
                 parameters=parameters or [],
-                enable_cross_partition_query=enable_cross_partition_query,
             )
             return [item async for item in items_iterable]
         except exceptions.CosmosHttpResponseError as error:
