@@ -160,7 +160,7 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
         },
     });
 
-    const tableRows = React.useMemo(() => {
+    const tableData = React.useMemo(() => {
         if (!sessionsQuery.data) return [];
         return sessionsQuery.data?.pages?.flat().map((v) => {
             const ret = { ...v } as Record<string, any>;
@@ -184,11 +184,11 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
             if (!visibleRowRange || visibleRowRange.end === -1) return;
             if (!sessionsQuery.hasNextPage) return;
             if (sessionsQuery.isFetchingNextPage) return;
-            if (tableRows.length - visibleRowRange?.end <= NEXT_PAGE_THRESHOLD) {
+            if (tableData.length - visibleRowRange?.end <= NEXT_PAGE_THRESHOLD) {
                 sessionsQuery.fetchNextPage();
             }
         },
-        [sessionsQuery, tableRows.length, visibleRowRange],
+        [sessionsQuery, tableData.length, visibleRowRange],
     );
 
     return (
@@ -197,7 +197,7 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
                 rowIdentifier="snapshotId"
                 alternatingColumnColors={USE_ALTERNATING_COLUMN_COLORS}
                 columns={TABLE_COLUMNS}
-                rows={tableRows}
+                rows={tableData}
                 numPendingRows={sessionsQuery.isLoading || sessionsQuery.isFetchingNextPage ? QUERY_PAGE_SIZE : 0}
                 rowHeight={ROW_HEIGHT}
                 height={TABLE_HEIGHT}

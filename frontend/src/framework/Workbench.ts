@@ -1,4 +1,4 @@
-import type { QueryClient, InfiniteData, QueryFilters } from "@tanstack/react-query";
+import type { QueryClient, InfiniteData } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 
 import type { SessionDocument_api, SessionMetadataWithId_api, SessionUpdate_api } from "@api";
@@ -6,6 +6,7 @@ import {
     deleteSessionMutation,
     getRecentSnapshotsQueryKey,
     getSessionMetadataQueryKey,
+    getSessionQueryKey,
     getSessionsMetadataQueryKey,
     updateSessionMutation,
 } from "@api";
@@ -24,11 +25,7 @@ import {
     removeSessionIdFromUrl,
 } from "./internal/WorkbenchSession/SessionUrlService";
 import { loadSnapshotFromBackend } from "./internal/WorkbenchSession/SnapshotLoader";
-import {
-    buildSnapshotUrl,
-    readSnapshotIdFromUrl,
-    removeSnapshotIdFromUrl,
-} from "./internal/WorkbenchSession/SnapshotUrlService";
+import { readSnapshotIdFromUrl, removeSnapshotIdFromUrl } from "./internal/WorkbenchSession/SnapshotUrlService";
 import { localStorageKeyForSessionId } from "./internal/WorkbenchSession/utils";
 import {
     loadAllWorkbenchSessionsFromLocalStorage,
@@ -37,7 +34,7 @@ import {
 } from "./internal/WorkbenchSession/WorkbenchSessionLoader";
 import { WorkbenchSessionPersistenceService } from "./internal/WorkbenchSession/WorkbenchSessionPersistenceService";
 import { ApiErrorHelper } from "./utils/ApiErrorHelper";
-import { FilterLevel, makeQueryFilters } from "./utils/reactQuery";
+import { FilterLevel, makeTanstackQueryFilters } from "./utils/reactQuery";
 import type { WorkbenchServices } from "./WorkbenchServices";
 
 export enum WorkbenchTopic {
@@ -382,17 +379,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         }
     }
 
-    async openSnapshot(snapshotId: string) {
-        this.getGuiMessageBroker().setState(GuiState.IsLoadingSession, true);
-
-        const url = buildSnapshotUrl(snapshotId);
-        history.pushState({}, "", url);
-
-        await this.handleNavigation();
-
-        this.getGuiMessageBroker().setState(GuiState.IsLoadingSession, false);
-    }
-
     async makeSnapshot(title: string, description: string): Promise<string | null> {
         if (!this._workbenchSession) {
             throw new Error("No active workbench session to make a snapshot.");
@@ -614,7 +600,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             .build(this._queryClient, deleteSessionMutation())
             .execute({ path: { session_id: sessionId } });
 
-        this._queryClient.resetQueries({ queryKey: getSessionsMetadataQueryKey() });
+        removeSessionQueryData(this._queryClient, sessionId);
     }
 
     async updateSession(updatedSession: SessionUpdate_api) {
@@ -718,57 +704,73 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         */
 }
 
+function removeSessionQueryData(queryClient: QueryClient, deletedSessionId: string) {
+    const sessionsListFilter = makeTanstackQueryFilters([getSessionsMetadataQueryKey()]);
+    const sessionsInfiniteListFilter = { queryKey: ["getSessionsMetadata", "infinite"] };
+
+    queryClient.setQueriesData(sessionsListFilter, function dropSessionFromList(list: SessionMetadataWithId_api[]) {
+        if (!list) return undefined;
+
+        let replaced = false;
+
+        const filteredList = list.filter((session) => {
+            if (session.id !== deletedSessionId) return true;
+
+            replaced = true;
+            return true;
+        });
+
+        if (replaced) return filteredList;
+        return undefined;
+    });
+    queryClient.setQueriesData(
+        sessionsInfiniteListFilter,
+        function dropSessionFromList(oldData: InfiniteData<SessionMetadataWithId_api[]>) {
+            if (!oldData) return undefined;
+
+            const pageParams = oldData.pageParams;
+            const existingPages = oldData.pages;
+
+            let dropped = false;
+
+            const newPages = existingPages.map((page) => {
+                return page.map((entry) => {
+                    if (entry.id !== deletedSessionId) return entry;
+
+                    dropped = true;
+                    // TODO: as long as "getNextPageParam" is dependent on page.length, we can't fully drop the element
+                    return null;
+                });
+            });
+
+            if (dropped) {
+                return { pageParams, pages: newPages };
+            }
+        },
+    );
+}
+
 function replaceSessionQueryData(queryClient: QueryClient, newSession: SessionDocument_api) {
     const sessionMetadataQueryKey = getSessionMetadataQueryKey({ path: { session_id: newSession.id } });
+    const sessionQueryKey = getSessionQueryKey({ path: { session_id: newSession.id } });
+
     const sessionsMetadataQueryKey = getSessionsMetadataQueryKey();
     // ! Something breaks when using hey-api's generated infinite query options: setQueriesData is unable to get the
     // ! correct cache entry, and instead makes a new entry. getQueriesData still works as expected...
     const sessionsMetadataInfiniteQueryKey = ["getSessionsMetadata", "infinite"];
 
-    // Replace queries that directly get this
-    const singleQueryFilter = makeQueryFilters([sessionMetadataQueryKey], FilterLevel.PATH);
-    queryClient.setQueriesData(singleQueryFilter, newSession.metadata);
+    // Replace query data that directly refers to this session
+    queryClient.setQueriesData(makeTanstackQueryFilters([sessionQueryKey], FilterLevel.PATH), newSession);
+    queryClient.setQueriesData(
+        makeTanstackQueryFilters([sessionMetadataQueryKey], FilterLevel.PATH),
+        newSession.metadata,
+    );
 
     // Replace list data entries
-    const queryFilters = makeQueryFilters([sessionsMetadataQueryKey]);
-    queryClient.setQueriesData(queryFilters, (oldData: SessionMetadataWithId_api[]) => {
-        let replaced = false;
-        const mappedData = oldData.map<SessionMetadataWithId_api>((sessionMeta) => {
-            if (sessionMeta.id !== newSession.id) return sessionMeta;
+    // ! We sort these queries server-side; updating entries in these lists *might* result in an an incorrectly
+    // ! sorted state. We could theoretically make a filter that matches only unsorted lists, but the easier option
+    // ! is to just refetch all of them...
 
-            replaced = true;
-            return {
-                id: newSession.id,
-                ...newSession.metadata,
-            };
-        });
-
-        // Only return if we actually found anything
-        if (replaced) {
-            return mappedData;
-        }
-    });
-
-    const infiniteQueryFilters: QueryFilters = { queryKey: sessionsMetadataInfiniteQueryKey };
-    queryClient.setQueriesData(infiniteQueryFilters, (oldData: InfiniteData<SessionMetadataWithId_api[]>) => {
-        if (!oldData) return undefined;
-
-        const pageParams = oldData.pageParams;
-        const existingPages = oldData.pages;
-
-        let replaced = false;
-
-        const newPages = existingPages.map((page) => {
-            return page.map((entry) => {
-                if (entry.id !== newSession.id) return entry;
-
-                replaced = true;
-                return { id: newSession.id, ...newSession.metadata };
-            });
-        });
-
-        if (replaced) {
-            return { pageParams, pages: newPages };
-        }
-    });
+    queryClient.invalidateQueries(makeTanstackQueryFilters([sessionMetadataQueryKey, sessionsMetadataQueryKey]));
+    queryClient.invalidateQueries({ queryKey: sessionsMetadataInfiniteQueryKey });
 }

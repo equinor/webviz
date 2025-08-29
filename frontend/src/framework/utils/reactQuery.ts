@@ -32,7 +32,7 @@ export enum FilterLevel {
     FULL = 4,
 }
 
-export function makeQueryFilters<TOptions extends Options>(
+export function makeTanstackQueryFilters<TOptions extends Options>(
     // ! For some strange reason, hey-api's key generators does NOT return their keys as constant arrays...
     // ! To avoid typing issues for implementers, we need to accept key arrays of any length
     queryKeys: HeyApiQueryKey<TOptions>[0][][],

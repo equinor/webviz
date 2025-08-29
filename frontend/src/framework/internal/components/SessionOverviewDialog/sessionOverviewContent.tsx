@@ -166,9 +166,12 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
 
     const sessionsQuery = useInfiniteSessionMetadataQuery(querySortParams);
 
-    const tableRows = React.useMemo(() => {
+    const tableData = React.useMemo(() => {
         if (!sessionsQuery.data) return [];
-        return sessionsQuery.data?.pages?.flat();
+
+        // The backend wont ever return a null in this list, but the entry might be replaced locally during a
+        // delete-mutation side-effect, where we set it to null to maintain a consistent page-size
+        return sessionsQuery.data?.pages?.flat().filter((entry) => entry != null);
     }, [sessionsQuery.data]);
 
     const onTableScrollIndexChange = React.useCallback((start: number, end: number) => {
@@ -180,16 +183,17 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
             if (!visibleRowRange || visibleRowRange.end === -1) return;
             if (!sessionsQuery.hasNextPage) return;
             if (sessionsQuery.isFetchingNextPage) return;
-            if (tableRows.length - visibleRowRange?.end <= NEXT_PAGE_THRESHOLD) {
+            if (tableData.length - visibleRowRange?.end <= NEXT_PAGE_THRESHOLD) {
                 sessionsQuery.fetchNextPage();
             }
         },
-        [sessionsQuery, tableRows.length, visibleRowRange],
+        [sessionsQuery, tableData.length, visibleRowRange],
     );
 
     const selectedSession = React.useMemo(() => {
-        return sessionsQuery.data?.pages?.flat()?.find((session) => session.id === props.selectedSession) || null;
-    }, [sessionsQuery.data?.pages, props.selectedSession]);
+        if (!props.selectedSession) return null;
+        return tableData.find((session) => session.id === props.selectedSession) || null;
+    }, [tableData, props.selectedSession]);
 
     return (
         <>
@@ -197,7 +201,7 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
                 rowIdentifier="id"
                 alternatingColumnColors={USE_ALTERNATING_COLUMN_COLORS}
                 columns={TABLE_COLUMNS}
-                rows={tableRows}
+                rows={tableData}
                 numPendingRows={sessionsQuery.isLoading || sessionsQuery.isFetchingNextPage ? QUERY_PAGE_SIZE : 0}
                 rowHeight={ROW_HEIGHT}
                 height={TABLE_HEIGHT}

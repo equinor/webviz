@@ -7,6 +7,7 @@ import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 
 import { SessionOverviewDialog } from "../SessionOverviewDialog";
+import type { ModalContentMode } from "../SessionOverviewDialog/sessionOverviewDialog";
 
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";
