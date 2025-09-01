@@ -20,10 +20,11 @@
         "test:ct:ui": "playwright test -c playwright.ct.config.ts --ui"
     },
     "-- Comments --": [
+        "By default we install deps with ^ versions. Any package with ~ versions tends to put breaking changes in minor updates",
         "`buffer` is installed as a workaround for issue in the map module. See webviz-subsurface-components issue #2540 for details"
     ],
     "dependencies": {
-        "@equinor/eds-core-react": "^0.46.0",
+        "@equinor/eds-core-react": "~0.48.0",
         "@equinor/esv-intersection": "^3.1.4",
         "@headlessui/react": "^1.7.8",
         "@hey-api/client-axios": "^0.4.0",
@@ -55,8 +56,8 @@
     },
     "devDependencies": {
         "@hey-api/openapi-ts": "^0.61.1",
-        "@playwright/experimental-ct-react": "^1.50.1",
-        "@playwright/test": "^1.50.1",
+        "@playwright/experimental-ct-react": "~1.55.0",
+        "@playwright/test": "~1.55.0",
         "@tailwindcss/vite": "^4.0.9",
         "@types/culori": "^2.0.0",
         "@types/geojson": "^7946.0.16",
