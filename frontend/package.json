@@ -20,7 +20,7 @@
         "test:ct:ui": "playwright test -c playwright.ct.config.ts --ui"
     },
     "-- Comments --": [
-        "vite-plugin-node-polyfills is only installed as a workaround for an import issue in the map module. See webviz-subsurface-components issue #2540 for details"
+        "`buffer` is installed as a workaround for issue in the map module. See webviz-subsurface-components issue #2540 for details"
     ],
     "dependencies": {
         "@equinor/eds-core-react": "^0.46.0",
@@ -38,6 +38,7 @@
         "@webviz/well-log-viewer": "^2.4.4",
         "animate.css": "^4.1.1",
         "axios": "^1.8.3",
+        "buffer": "^6.0.3",
         "culori": "^3.2.0",
         "geojson": "^0.5.0",
         "jotai": "^2.6.2",
@@ -50,7 +51,6 @@
         "react-plotly.js": "^2.6.0",
         "simplify-js": "^1.2.4",
         "uuid": "^9.0.0",
-        "vite-plugin-node-polyfills": "^0.24.0",
         "wonka": "^6.3.4"
     },
     "devDependencies": {
@@ -85,10 +85,5 @@
         "vite": "^6.3.5",
         "vite-plugin-checker": "^0.9.0",
         "vitest": "^3.0.7"
-    },
-    "overrides": {
-        "vite-plugin-node-polyfills": {
-            "pbkdf2": "^3.1.3"
-        }
     }
 }
