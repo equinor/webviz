@@ -1,5 +1,4 @@
 import eslintCore from "@eslint/js";
-
 import configPrettier from "eslint-config-prettier";
 import * as importPlugin from "eslint-plugin-import";
 import reactPlugin from "eslint-plugin-react";
@@ -66,29 +65,29 @@ export default eslintTypescript.config(
             "no-console": ["error", { allow: ["debug", "info", "warn", "error"] }],
             "import/no-named-as-default-member": "off", // Conflicts with us requiring always using the react default
             "import/order": [
-            "warn",
-            {
-                groups: [
-                    "builtin",       // Node.js builtins: fs, path, etc.
-                    "external",      // Packages from node_modules
-                    "internal",      // Aliased paths (e.g. @, @core)
-                    "parent",        // ../
-                    "sibling",       // ./file
-                    "index",         // ./index
-                ],
-                pathGroups: [
-                    { pattern: "react", group: "external", position: "before" },
-                    { pattern: "@core/**", group: "internal", position: "before" },
-                    { pattern: "@components/**", group: "internal", position: "before" },
-                    { pattern: "@shared-types/**", group: "internal", position: "before" },
-                    { pattern: "@assets/**", group: "internal", position: "before" },
-                    { pattern: "@/**", group: "internal" }, // fallback for anything else under @
-                ],
-                pathGroupsExcludedImportTypes: ["react"],
-                alphabetize: { order: "asc", caseInsensitive: true },
-                "newlines-between": "always",
-            },
-        ],
+                "warn",
+                {
+                    groups: [
+                        "builtin", // Node.js builtins: fs, path, etc.
+                        "external", // Packages from node_modules
+                        "internal", // Aliased paths (e.g. @, @core)
+                        "parent", // ../
+                        "sibling", // ./file
+                        "index", // ./index
+                    ],
+                    pathGroups: [
+                        { pattern: "react", group: "external", position: "before" },
+                        { pattern: "@core/**", group: "internal", position: "before" },
+                        { pattern: "@components/**", group: "internal", position: "before" },
+                        { pattern: "@shared-types/**", group: "internal", position: "before" },
+                        { pattern: "@assets/**", group: "internal", position: "before" },
+                        { pattern: "@/**", group: "internal" }, // fallback for anything else under @
+                    ],
+                    pathGroupsExcludedImportTypes: ["react"],
+                    alphabetize: { order: "asc", caseInsensitive: true },
+                    "newlines-between": "always",
+                },
+            ],
         },
     },
 );
