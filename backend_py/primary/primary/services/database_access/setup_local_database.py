@@ -22,9 +22,8 @@ COSMOS_SCHEMA: List[Dict[str, Any]] = [
         "offer_throughput": 4000,
         "containers": [
             {"id": "sessions", "partition_key": "/owner_id"},
-            {"id": "snapshots_metadata", "partition_key": "/owner_id"},
-            {"id": "snapshots_content", "partition_key": "/snapshot_id"},
-            {"id": "snapshot_access_log", "partition_key": "/visitor_id"},
+            {"id": "snapshots", "partition_key": "/id"},
+            {"id": "snapshot_access_logs", "partition_key": "/visitor_id"},
         ],
     },
 ]

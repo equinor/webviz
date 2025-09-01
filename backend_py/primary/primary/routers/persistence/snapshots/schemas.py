@@ -29,6 +29,7 @@ class SnapshotAccessLog(BaseModel):
     visits: int
     firstVisitedAt: str | None
     lastVisitedAt: str | None
+    snapshotDeleted: bool
 
     snapshotMetadata: SnapshotMetadata
 

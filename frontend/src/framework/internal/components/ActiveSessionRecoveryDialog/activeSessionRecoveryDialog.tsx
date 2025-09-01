@@ -1,6 +1,6 @@
 import React from "react";
 
-import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import {
     extractLayout,
     type WorkbenchSessionDataContainer,
@@ -8,6 +8,7 @@ import {
 import { loadAllWorkbenchSessionsFromLocalStorage } from "@framework/internal/WorkbenchSession/WorkbenchSessionLoader";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
 import { timeAgo } from "@lib/utils/dates";
 
@@ -24,6 +25,7 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
     );
 
     const activeSession = props.workbench.getWorkbenchSession();
+    const isLoading = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsLoadingSession);
 
     const [session, setSession] = React.useState<WorkbenchSessionDataContainer | null>(null);
 
@@ -67,10 +69,11 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
             title="Do you want to recover your session?"
             actions={
                 <>
-                    <Button onClick={handleOpen} variant="text">
+                    <Button onClick={handleOpen} variant="text" disabled={isLoading}>
+                        {isLoading && <CircularProgress size="small" />}
                         Open
                     </Button>
-                    <Button onClick={handleDiscard} variant="text" color="danger">
+                    <Button onClick={handleDiscard} variant="text" color="danger" disabled={isLoading}>
                         Discard
                     </Button>
                 </>
@@ -84,7 +87,7 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
                 <div className="flex flex-col gap-2">
                     <div className="flex flex-col gap-1">
                         <strong className="text-xs text-gray-500">Title</strong>
-                        {session?.metadata.title}
+                        {session.metadata.title}
                     </div>
                     <div className="flex flex-col gap-1">
                         <strong className="text-xs text-gray-500">Last modified</strong>

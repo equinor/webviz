@@ -125,8 +125,13 @@ function EditSessionButton(props: EditSessionButtonProps): React.ReactNode {
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
     );
 
+    const [, setEditSessionDialogOpen] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.EditSessionDialogOpen,
+    );
+
     function handleEditTitleClick() {
-        alert("Edit title functionality is not implemented yet.");
+        setEditSessionDialogOpen(true);
     }
 
     if (isSnapshot || !isPersisted) {

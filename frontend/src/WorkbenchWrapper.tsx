@@ -1,10 +1,12 @@
 import React from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
+
 import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { ActiveSessionBoundary } from "@framework/internal/components/ActiveSessionBoundary";
 import { ActiveSessionRecoveryDialog } from "@framework/internal/components/ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
 import { CreateSnapshotDialog } from "@framework/internal/components/CreateSnapshotDialog/createSnapshotDialog";
+import { EditSessionDialog } from "@framework/internal/components/EditSessionDialog";
 import { LoadingOverlay } from "@framework/internal/components/LoadingOverlay";
 import { MultiSessionsRecoveryDialog } from "@framework/internal/components/MultiSessionsRecoveryDialog";
 import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
@@ -68,6 +70,7 @@ export function WorkbenchWrapper() {
                 <SaveSessionDialog workbench={workbench} />
                 <CreateSnapshotDialog workbench={workbench} />
                 <ActiveSessionRecoveryDialog workbench={workbench} />
+                <EditSessionDialog workbench={workbench} />
             </ActiveSessionBoundary>
             <TemplatesDialog workbench={workbench} />
             <MultiSessionsRecoveryDialog workbench={workbench} />
