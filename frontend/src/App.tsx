@@ -177,8 +177,8 @@ function App() {
             )}
             <div
                 className={resolveClassNames("h-screen flex flex-row transition-opacity ease-in-out duration-1000", {
-                    "opacity-0": isInitializingApp,
-                    "opacity-100": !isInitializingApp,
+                    invisible: isInitializingApp,
+                    visible: !isInitializingApp,
                 })}
             >
                 <>
