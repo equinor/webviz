@@ -20,7 +20,7 @@
         "test:ct:ui": "playwright test -c playwright.ct.config.ts --ui"
     },
     "-- Comments --": [
-        "Some packages are dropping Node 18, and cannot be updated. This includes: `react@19`, `vite@17`, `@vitejs/plugin-react@5`, `vite-plugin-checker@0.10`, `glob@11`",
+        "Some packages are dropping Node 18, and cannot be updated. This includes: `react@19`, `vite@17`, `@vitejs/plugin-react@5`, `vite-plugin-checker@0.10`, `glob@11`, dependency-cruiser@17",
         "By default we install deps with ^ versions. Any package with ~ versions tends to put breaking changes in minor updates",
         "`buffer` is installed as a workaround for issue in the map module. See webviz-subsurface-components issue #2540 for details"
     ],
@@ -69,7 +69,7 @@
         "@types/uuid": "^10.0.0",
         "@vitejs/plugin-react": "^4.4.1",
         "@vitest/coverage-istanbul": "^3.0.7",
-        "dependency-cruiser": "^14.0.0",
+        "dependency-cruiser": "^16.10.4",
         "eslint": "^9.15.0",
         "eslint-config-prettier": "^10.0.2",
         "eslint-import-resolver-typescript": "^3.8.3",
