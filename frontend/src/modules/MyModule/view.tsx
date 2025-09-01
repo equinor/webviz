@@ -5,9 +5,12 @@ import type { PlotData } from "plotly.js";
 import type { ModuleViewProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleType } from "@lib/utils/ColorScale";
-import { Plot } from "@modules/_shared/components/Plot";
 
 import type { Interfaces } from "./interfaces";
+import { SortableList } from "@lib/components/SortableList";
+import { SortableItem } from "@lib/components/SortableList/genericSortableListElement";
+import { DragHandle } from "@lib/components/SortableList/dragHandle";
+import { DragIndicator } from "@mui/icons-material";
 
 const countryData = [
     "Belarus",
@@ -440,8 +443,27 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     };
 
     return (
+        <SortableList rootElement="div" isMoveAllowed={() => true}>
+            <SortableItem id="test">
+                <DragHandle>
+                    <DragIndicator fontSize="inherit" className="pointer-events-none" />
+                </DragHandle>{" "}
+                Test
+            </SortableItem>
+            <SortableItem id="test2">
+                <DragHandle>
+                    <DragIndicator fontSize="inherit" className="pointer-events-none" />
+                </DragHandle>{" "}
+                Test2
+            </SortableItem>
+        </SortableList>
+    );
+
+    /*
+    return (
         <div ref={ref} className="w-full h-full">
             <Plot data={[data]} layout={layout} />
         </div>
     );
+    */
 }
