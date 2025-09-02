@@ -58,16 +58,6 @@ export const createLowBarTrace = (props: TornadoBarTraceProps): TornadoChartTrac
 };
 export const createHighBarTrace = (props: TornadoBarTraceProps): TornadoChartTraceData => {
     const { xValues, yValues, customdata, baseValues, selectedBar, namedColorMap, label, transparency } = props;
-    console.log("createHighBarTrace", {
-        xValues,
-        yValues,
-        customdata,
-        baseValues,
-        selectedBar,
-        namedColorMap,
-        label,
-        transparency,
-    });
     return {
         x: xValues,
         y: yValues,

@@ -127,7 +127,6 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
                         sensitivityResponseDataset={computedSensitivityResponseDataset}
                         sensitivityDataScaler={sensitivityDataScaler}
                         onSelectedSensitivity={setSelectedSensitivity}
-                        hideZeroY={hideZeroY}
                     />
                 </div>
             </div>

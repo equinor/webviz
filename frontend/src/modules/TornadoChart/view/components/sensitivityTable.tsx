@@ -10,7 +10,6 @@ import type { SensitivityDataScaler } from "../utils/sensitivityDataScaler";
 export interface SensitivityTableProps {
     sensitivityResponseDataset: SensitivityResponseDataset;
     sensitivityDataScaler: SensitivityDataScaler;
-    hideZeroY: boolean;
     onSelectedSensitivity?: (selectedSensitivity: SelectedSensitivity) => void;
 }
 
@@ -93,40 +92,35 @@ const tableColumns: TableColumns<TableRowData> = [
     },
 ];
 
-const SensitivityTable: React.FC<SensitivityTableProps> = (props) => {
-    let filteredSensitivityResponses = props.sensitivityResponseDataset.sensitivityResponses;
-    if (props.hideZeroY) {
-        filteredSensitivityResponses = filteredSensitivityResponses.filter(
-            (s) => s.lowCaseReferenceDifference !== 0.0 || s.highCaseReferenceDifference !== 0.0,
-        );
-    }
-    const isPercentage = props.sensitivityDataScaler.isRelativePercentage;
-    const tableRows: TableRowData[] = filteredSensitivityResponses
+const SensitivityTable: React.FC<SensitivityTableProps> = ({
+    sensitivityResponseDataset,
+    sensitivityDataScaler,
+    onSelectedSensitivity,
+}) => {
+    const isPercentage = sensitivityDataScaler.isRelativePercentage;
+    const tableRows: TableRowData[] = sensitivityResponseDataset.sensitivityResponses
         .slice()
         .reverse()
         .map((sensitivityResponse) => ({
-            response: props.sensitivityResponseDataset.responseName || "",
+            response: sensitivityResponseDataset.responseName || "",
             sensitivity: sensitivityResponse.sensitivityName,
-            deltaLow: numFormat(props.sensitivityDataScaler.calculateLowLabelValue(sensitivityResponse), isPercentage),
-            deltaHigh: numFormat(
-                props.sensitivityDataScaler.calculateHighLabelValue(sensitivityResponse),
-                isPercentage,
-            ),
+            deltaLow: numFormat(sensitivityDataScaler.calculateLowLabelValue(sensitivityResponse), isPercentage),
+            deltaHigh: numFormat(sensitivityDataScaler.calculateHighLabelValue(sensitivityResponse), isPercentage),
             trueLow: numFormat(sensitivityResponse.lowCaseAverage),
             trueHigh: numFormat(sensitivityResponse.highCaseAverage),
             lowReals: sensitivityResponse.lowCaseRealizations.length,
             highReals: sensitivityResponse.highCaseRealizations.length,
-            reference: numFormat(props.sensitivityResponseDataset.referenceAverage),
+            reference: numFormat(sensitivityResponseDataset.referenceAverage),
         }));
 
     const handleClick = (id: string, row: TableRowData) => {
-        if (props.onSelectedSensitivity) {
+        if (onSelectedSensitivity) {
             const selectedSensitivity: SelectedSensitivity = {
                 selectedSensitivity: row.sensitivity,
                 selectedSensitivityCase: null,
             };
 
-            props.onSelectedSensitivity(selectedSensitivity);
+            onSelectedSensitivity(selectedSensitivity);
         }
     };
 

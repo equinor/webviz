@@ -3,7 +3,6 @@ import type { SensitivityColorMap } from "@modules/_shared/sensitivityColors";
 import type { PlotData } from "plotly.js";
 
 import type { SensitivityResponseDataset, SensitivityResponse } from "../../../_shared/SensitivityProcessing/types";
-import type { XAxisBarScaling } from "../../typesAndEnums";
 import type { SensitivityDataScaler } from "../utils/sensitivityDataScaler";
 import {
     createHighBarTrace,
