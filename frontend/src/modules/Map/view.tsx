@@ -2,7 +2,7 @@ import type React from "react";
 
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 
-import type { SurfaceDef_api } from "@api";
+import { DataFormatEnum_api, type SurfaceDef_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { Vec2 } from "@lib/utils/vec2";
@@ -19,7 +19,7 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
 
     //const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "png", null, true);
-    const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, true);
+    const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, DataFormatEnum_api.FLOAT, null, true);
 
     const isLoading = surfDataQuery.isFetching;
     statusWriter.setLoading(isLoading);

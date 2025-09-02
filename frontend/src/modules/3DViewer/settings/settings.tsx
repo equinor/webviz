@@ -4,7 +4,7 @@ import { Delete, Edit } from "@mui/icons-material";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { isEqual } from "lodash";
 
-import type { Grid3dInfo_api, WellboreHeader_api } from "@api";
+import type { Grid3DInfo_api, WellboreHeader_api } from "@api";
 import { ColorScaleSelector } from "@framework/components/ColorScaleSelector";
 import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
@@ -468,11 +468,11 @@ function makeRealizationOptions(realizations: readonly number[]): SelectOption[]
     return realizations.map((realization) => ({ label: realization.toString(), value: realization.toString() }));
 }
 
-function makeGridModelOptions(gridModelsInfo: Grid3dInfo_api[]): SelectOption[] {
+function makeGridModelOptions(gridModelsInfo: Grid3DInfo_api[]): SelectOption[] {
     return gridModelsInfo.map((gridModel) => ({ label: gridModel.grid_name, value: gridModel.grid_name }));
 }
 
-function makeGridParameterNameOptions(gridModelInfo: Grid3dInfo_api | null): SelectOption[] {
+function makeGridParameterNameOptions(gridModelInfo: Grid3DInfo_api | null): SelectOption[] {
     if (!gridModelInfo) {
         return [];
     }

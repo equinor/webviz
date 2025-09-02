@@ -1,11 +1,10 @@
 import { atom } from "jotai";
 
-import type { Grid3dDimensions_api } from "@api";
+import type { Grid3DDimensions_api } from "@api";
 import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
 import type { GridCellIndexRanges } from "@modules/3DViewer/typesAndEnums";
-
 
 import {
     userSelectedCustomIntersectionPolylineIdAtom,
@@ -247,13 +246,13 @@ export const selectedGridCellIndexRangesAtom = atom<GridCellIndexRanges>((get) =
 
     return assertGridDimensionRangesContainedInGridDimensions(
         userSelectedGridCellIndexRanges as GridCellIndexRanges,
-        gridModelDimensions as Grid3dDimensions_api,
+        gridModelDimensions as Grid3DDimensions_api,
     );
 });
 
 function assertGridDimensionRangesContainedInGridDimensions(
     cellIndexRanges: GridCellIndexRanges,
-    other: Grid3dDimensions_api,
+    other: Grid3DDimensions_api,
 ): GridCellIndexRanges {
     const assertedGridDimensionRanges: GridCellIndexRanges = {
         ...cellIndexRanges,

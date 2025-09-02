@@ -203,12 +203,12 @@ export function makeStatisticalTableColumnDataFromApiData(
                     throw new Error(`Expected statistical columns for ${resultColumn.columnName} not found`);
                 }
 
-                statisticalColumns.mean?.addRowValues(resultColumn.statisticValues["mean"]);
-                statisticalColumns.stddev?.addRowValues(resultColumn.statisticValues["stddev"]);
-                statisticalColumns.p90?.addRowValues(resultColumn.statisticValues["p90"]);
-                statisticalColumns.p10?.addRowValues(resultColumn.statisticValues["p10"]);
-                statisticalColumns.min?.addRowValues(resultColumn.statisticValues["min"]);
-                statisticalColumns.max?.addRowValues(resultColumn.statisticValues["max"]);
+                statisticalColumns.mean?.addRowValues(resultColumn.statisticValues["mean"]!);
+                statisticalColumns.stddev?.addRowValues(resultColumn.statisticValues["stddev"]!);
+                statisticalColumns.p90?.addRowValues(resultColumn.statisticValues["p90"]!);
+                statisticalColumns.p10?.addRowValues(resultColumn.statisticValues["p10"]!);
+                statisticalColumns.min?.addRowValues(resultColumn.statisticValues["min"]!);
+                statisticalColumns.max?.addRowValues(resultColumn.statisticValues["max"]!);
             }
 
             // Fill in untouched results with null for statistics

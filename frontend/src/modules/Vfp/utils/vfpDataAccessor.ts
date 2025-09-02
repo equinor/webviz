@@ -1,10 +1,9 @@
-import type { Gfr_api, VfpInjTable_api, VfpProdTable_api, Wfr_api } from "@api";
-import { Alq_api, FlowRateType_api } from "@api";
+import type { GFR_api, VfpInjTable_api, VfpProdTable_api, WFR_api } from "@api";
+import { ALQ_api, FlowRateType_api } from "@api";
 
 import { VfpParam, VfpType } from "../types";
 
 import { isInjTable, isProdTable } from "./vfpTableClassifier";
-
 
 export class VfpDataAccessor {
     private _vfpTable: VfpProdTable_api | VfpInjTable_api;
@@ -110,7 +109,7 @@ export class VfpDataAccessor {
             } else if (vfpParam === VfpParam.GFR) {
                 label = this._vfpTable.gfrType;
             } else if (vfpParam === VfpParam.ALQ) {
-                if (this._vfpTable.alqType === Alq_api["''"]) {
+                if (this._vfpTable.alqType === ALQ_api["''"]) {
                     label = "ALQ";
                 } else {
                     label = "ALQ: " + this._vfpTable.alqType;
@@ -124,7 +123,7 @@ export class VfpDataAccessor {
         return label;
     }
 
-    getWfrType(): Wfr_api {
+    getWfrType(): WFR_api {
         if (isProdTable(this._vfpTable)) {
             // This means that it is a VFPPROD table
             return this._vfpTable.wfrType;
@@ -132,7 +131,7 @@ export class VfpDataAccessor {
         throw Error("WFR type is not valid for VFPINJ tables.");
     }
 
-    getGfrType(): Gfr_api {
+    getGfrType(): GFR_api {
         if (isProdTable(this._vfpTable)) {
             // This means that it is a VFPPROD table
             return this._vfpTable.gfrType;
@@ -140,7 +139,7 @@ export class VfpDataAccessor {
         throw Error("GFR type is not valid for VFPINJ tables.");
     }
 
-    getAlqType(): Alq_api {
+    getAlqType(): ALQ_api {
         if (isProdTable(this._vfpTable)) {
             // This means that it is a VFPPROD table
             return this._vfpTable.alqType;

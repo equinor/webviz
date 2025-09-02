@@ -1,7 +1,7 @@
 import type {
     FenceMeshSection_api,
-    Grid3dGeometry_api,
-    Grid3dMappedProperty_api,
+    Grid3DGeometry_api,
+    Grid3DMappedProperty_api,
     PolylineIntersection_api,
 } from "@api";
 import {
@@ -13,7 +13,7 @@ import {
 // Data structure for the transformed GridSurface data
 // Removes the base64 encoded data and replaces them with typed arrays
 export type GridSurface_trans = Omit<
-    Grid3dGeometry_api,
+    Grid3DGeometry_api,
     "points_b64arr" | "polys_b64arr" | "poly_source_cell_indices_b64arr"
 > & {
     pointsFloat32Arr: Float32Array;
@@ -21,7 +21,7 @@ export type GridSurface_trans = Omit<
     polySourceCellIndicesUint32Arr: Uint32Array;
 };
 
-export function transformGridSurface(apiData: Grid3dGeometry_api): GridSurface_trans {
+export function transformGridSurface(apiData: Grid3DGeometry_api): GridSurface_trans {
     const startTS = performance.now();
 
     const { points_b64arr, polys_b64arr, poly_source_cell_indices_b64arr, ...untransformedData } = apiData;
@@ -39,11 +39,11 @@ export function transformGridSurface(apiData: Grid3dGeometry_api): GridSurface_t
     };
 }
 
-export type GridMappedProperty_trans = Omit<Grid3dMappedProperty_api, "poly_props_b64arr"> & {
+export type GridMappedProperty_trans = Omit<Grid3DMappedProperty_api, "poly_props_b64arr"> & {
     polyPropsFloat32Arr: Float32Array;
 };
 
-export function transformGridMappedProperty(apiData: Grid3dMappedProperty_api): GridMappedProperty_trans {
+export function transformGridMappedProperty(apiData: Grid3DMappedProperty_api): GridMappedProperty_trans {
     const startTS = performance.now();
 
     const { poly_props_b64arr, ...untransformedData } = apiData;

@@ -1,9 +1,10 @@
-import type { IR, Plugin } from "@hey-api/openapi-ts";
+import type { IR } from "@hey-api/openapi-ts";
+import { set } from "lodash";
 
-import type { Config } from "./types";
+import type { CacheBustingPlugin } from "./types";
 
-export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
-    const cacheKeyCfg = plugin.cacheKey;
+export const handler: CacheBustingPlugin["Handler"] = ({ plugin }) => {
+    const cacheKeyCfg = plugin.config.cacheKey;
 
     let cacheKey: string;
     let cacheParmObj: IR.ParameterObject;
@@ -22,15 +23,13 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
         };
     }
 
-    context.subscribe("operation", (ctx) => {
-        const existingParams = ctx.operation.parameters;
+    plugin.forEach("operation", (event) => {
+        if (event.operation.parameters?.query?.[cacheKey]) {
+            throw Error(
+                `Cannot add cache busting parameter. Operation ${event.operation.id} already has already defined ${cacheKey} as a query field!`,
+            );
+        }
 
-        ctx.operation.parameters = {
-            ...existingParams,
-            query: {
-                ...existingParams?.query,
-                [cacheKey]: cacheParmObj,
-            },
-        };
+        set(event, `operation.parameters.query.${cacheKey}`, cacheParmObj);
     });
 };
