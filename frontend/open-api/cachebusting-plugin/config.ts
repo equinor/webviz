@@ -1,18 +1,15 @@
-import type { Plugin } from "@hey-api/openapi-ts";
+import { definePluginConfig } from "@hey-api/openapi-ts";
 
 import { handler } from "./plugin";
-import type { Config } from "./types";
+import type { CacheBustingPlugin } from "./types";
 
-export const defaultConfig: Plugin.Config<Config> = {
+export const defaultConfig: CacheBustingPlugin["Config"] = {
     name: "cache-busting",
-    output: "types",
-    cacheKey: "t",
-    // No need to define this
-    _handlerLegacy: () => {},
-    _handler: handler,
+    handler: handler,
+    output: {},
+    config: {
+        cacheKey: "t",
+    },
 };
 
-export const makePlugin: Plugin.DefineConfig<Config> = (config) => ({
-    ...defaultConfig,
-    ...config,
-});
+export const makePlugin = definePluginConfig(defaultConfig);

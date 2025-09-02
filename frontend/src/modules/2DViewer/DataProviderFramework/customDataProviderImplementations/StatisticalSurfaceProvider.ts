@@ -2,6 +2,7 @@ import { isEqual } from "lodash";
 
 import type { SurfaceDataPng_api } from "@api";
 import {
+    DataFormatEnum_api,
     SurfaceStatisticFunction_api,
     SurfaceTimeType_api,
     getRealizationSurfacesMetadataOptions,
@@ -35,14 +36,9 @@ const statisicalSurfaceSettings = [
 export type StatisticalSurfaceSettings = typeof statisicalSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<StatisticalSurfaceSettings>;
 
-export enum SurfaceDataFormat {
-    FLOAT = "float",
-    PNG = "png",
-}
-
 export type StatisticalSurfaceData =
-    | { format: SurfaceDataFormat.FLOAT; surfaceData: SurfaceDataFloat_trans }
-    | { format: SurfaceDataFormat.PNG; surfaceData: SurfaceDataPng_api };
+    | { format: DataFormatEnum_api.FLOAT; surfaceData: SurfaceDataFloat_trans }
+    | { format: DataFormatEnum_api.PNG; surfaceData: SurfaceDataPng_api };
 
 export type StatisticalSurfaceStoredData = {
     realizations: readonly number[];
@@ -58,10 +54,10 @@ export class StatisticalSurfaceProvider
 {
     settings = statisicalSurfaceSettings;
 
-    private _dataFormat: SurfaceDataFormat;
+    private _dataFormat: DataFormatEnum_api;
 
-    constructor(dataFormat?: SurfaceDataFormat) {
-        this._dataFormat = dataFormat ?? SurfaceDataFormat.PNG;
+    constructor(dataFormat?: DataFormatEnum_api) {
+        this._dataFormat = dataFormat ?? DataFormatEnum_api.PNG;
     }
 
     getDefaultSettingsValues() {

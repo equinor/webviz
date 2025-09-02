@@ -11,7 +11,7 @@
         "dev": "vite --host",
         "build": "tsc && NODE_OPTIONS='--max-old-space-size=8192' vite build",
         "preview": "vite preview",
-        "generate-api": "openapi-ts && node scripts/add-api-suffix.cjs --suffix '_api' --dir src/api/autogen --exportTanstackQueryFromIndex",
+        "generate-api": "openapi-ts",
         "typecheck": "tsc --noEmit",
         "lint": "eslint 'src/**/*.+(ts|tsx|js|jsx|json)' 'tests/**/*.+(ts|tsx|js|jsx|json)' --max-warnings=0",
         "lint:fix": "eslint 'src/**/*.+(ts|tsx|js|jsx|json)' 'tests/**/*.+(ts|tsx|js|jsx|json)' --fix",
@@ -31,7 +31,6 @@
     "dependencies": {
         "@equinor/eds-core-react": "~0.48.0",
         "@equinor/esv-intersection": "^3.1.4",
-        "@hey-api/client-axios": "^0.4.0",
         "@mui/base": "^5.0.0-beta.3",
         "@mui/icons-material": "^5.14.9",
         "@tanstack/query-core": "^5.62.16",
@@ -59,7 +58,7 @@
         "wonka": "^6.3.4"
     },
     "devDependencies": {
-        "@hey-api/openapi-ts": "^0.61.1",
+        "@hey-api/openapi-ts": "^0.82.3",
         "@playwright/experimental-ct-react": "~1.55.0",
         "@playwright/test": "~1.55.0",
         "@tailwindcss/vite": "^4.0.9",

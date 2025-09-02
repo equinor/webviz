@@ -3,7 +3,13 @@ import React from "react";
 import { ContinuousLegend } from "@emerson-eps/color-tables";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
-import type { BoundingBox2D_api, PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
+import {
+    DataFormatEnum_api,
+    type BoundingBox2D_api,
+    type PolygonData_api,
+    type SurfaceDef_api,
+    type WellboreTrajectory_api,
+} from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
@@ -15,7 +21,6 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { usePolygonsDataQueryByAddress } from "@modules/_shared/Polygons";
 import { useFieldWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
-
 
 import {
     createAxesLayer,
@@ -93,7 +98,7 @@ export function View({
     const colorTables = createContinuousColorScaleForMap(surfaceColorScale);
     const show3D: boolean = viewSettings?.show3d ?? true;
 
-    const meshSurfDataQuery = useSurfaceDataQueryByAddress(meshSurfAddr, "float", null, true);
+    const meshSurfDataQuery = useSurfaceDataQueryByAddress(meshSurfAddr, DataFormatEnum_api.FLOAT, null, true);
 
     let hasMeshSurfData = false;
     let resampleTo: SurfaceDef_api | null = null;
@@ -101,7 +106,12 @@ export function View({
         hasMeshSurfData = true;
         resampleTo = meshSurfDataQuery.data.surface_def;
     }
-    const propertySurfDataQuery = useSurfaceDataQueryByAddress(propertySurfAddr, "float", resampleTo, hasMeshSurfData);
+    const propertySurfDataQuery = useSurfaceDataQueryByAddress(
+        propertySurfAddr,
+        DataFormatEnum_api.FLOAT,
+        resampleTo,
+        hasMeshSurfData,
+    );
 
     let fieldIdentifier: null | string = null;
     if (meshSurfAddr) {

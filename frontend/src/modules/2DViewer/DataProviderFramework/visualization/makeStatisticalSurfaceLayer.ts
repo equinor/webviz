@@ -1,6 +1,6 @@
 import { ColormapLayer, Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import type { SurfaceDef_api } from "@api";
+import { DataFormatEnum_api, type SurfaceDef_api } from "@api";
 import { degreesToRadians } from "@lib/utils/geometry";
 import type { Vec2 } from "@lib/utils/vec2";
 import { rotatePoint2Around } from "@lib/utils/vec2";
@@ -12,7 +12,6 @@ import {
     type StatisticalSurfaceData,
     type StatisticalSurfaceSettings,
     type StatisticalSurfaceStoredData,
-    SurfaceDataFormat,
 } from "../customDataProviderImplementations/StatisticalSurfaceProvider";
 
 function calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [number, number, number, number] {
@@ -48,7 +47,7 @@ export function makeStatisticalSurfaceLayer({
         return null;
     }
 
-    if (data.format === SurfaceDataFormat.FLOAT) {
+    if (data.format === DataFormatEnum_api.FLOAT) {
         return new Grid3DLayer({
             id,
             name,

@@ -1,7 +1,12 @@
 import { isEqual } from "lodash";
 
 import type { SurfaceDataPng_api } from "@api";
-import { SurfaceTimeType_api, getRealizationSurfacesMetadataOptions, getSurfaceDataOptions } from "@api";
+import {
+    DataFormatEnum_api,
+    SurfaceTimeType_api,
+    getRealizationSurfacesMetadataOptions,
+    getSurfaceDataOptions,
+} from "@api";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
@@ -27,24 +32,19 @@ const realizationSurfaceSettings = [
 export type RealizationSurfaceSettings = typeof realizationSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationSurfaceSettings>;
 
-export enum SurfaceDataFormat {
-    FLOAT = "float",
-    PNG = "png",
-}
-
 export type RealizationSurfaceData =
-    | { format: SurfaceDataFormat.FLOAT; surfaceData: SurfaceDataFloat_trans }
-    | { format: SurfaceDataFormat.PNG; surfaceData: SurfaceDataPng_api };
+    | { format: DataFormatEnum_api.FLOAT; surfaceData: SurfaceDataFloat_trans }
+    | { format: DataFormatEnum_api.PNG; surfaceData: SurfaceDataPng_api };
 
 export class RealizationSurfaceProvider
     implements CustomDataProviderImplementation<RealizationSurfaceSettings, RealizationSurfaceData>
 {
     settings = realizationSurfaceSettings;
 
-    private _dataFormat: SurfaceDataFormat;
+    private _dataFormat: DataFormatEnum_api;
 
-    constructor(dataFormat?: SurfaceDataFormat) {
-        this._dataFormat = dataFormat ?? SurfaceDataFormat.PNG;
+    constructor(dataFormat?: DataFormatEnum_api) {
+        this._dataFormat = dataFormat ?? DataFormatEnum_api.PNG;
     }
 
     getDefaultName(): string {
