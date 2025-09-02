@@ -5,6 +5,7 @@ import type { SensitivityColorMap } from "@modules/_shared/sensitivityColors";
 import type { SensitivityResponseDataset } from "@modules/_shared/SensitivityProcessing/types";
 import type { Interfaces } from "@modules/TornadoChart/interfaces";
 
+import type { ColorBy } from "../components/sensitivityChartFigure";
 import { SensitivityChartFigure } from "../components/sensitivityChartFigure";
 import type { SensitivityDataScaler } from "../utils/sensitivityDataScaler";
 
@@ -15,6 +16,7 @@ export function useSensitivityChart(
     sensitivityColorMap: SensitivityColorMap,
     sensitivityResponseDataset: SensitivityResponseDataset | null,
     sensitivityDataScaler: SensitivityDataScaler,
+    colorBy: ColorBy,
 ): SensitivityChartFigure | null {
     const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");
 
@@ -30,7 +32,9 @@ export function useSensitivityChart(
             sensitivityResponseDataset,
             sensitivityDataScaler,
             sensitivityColorMap,
-            {},
+            {
+                colorBy: colorBy,
+            },
         );
 
         if (showRealizationPoints) {
@@ -48,6 +52,7 @@ export function useSensitivityChart(
         sensitivityDataScaler,
         showRealizationPoints,
         showLabels,
+        colorBy,
     ]);
     return chartFigure;
 }

@@ -28,6 +28,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     const referenceSensitivityName = viewContext.useSettingsToViewInterfaceValue("referenceSensitivityName");
     const barSortOrder = viewContext.useSettingsToViewInterfaceValue("barSortOrder");
     const xAxisBarScaling = viewContext.useSettingsToViewInterfaceValue("xAxisBarScaling");
+    const colorBy = viewContext.useSettingsToViewInterfaceValue("colorBy");
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const colorSet = workbenchSettings.useColorSet();
@@ -62,6 +63,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
         sensitivitiesColorMap,
         computedSensitivityResponseDataset,
         sensitivityDataScaler,
+        colorBy,
     );
 
     let instanceTitle = "Tornado chart";

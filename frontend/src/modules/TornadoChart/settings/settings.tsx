@@ -15,6 +15,7 @@ import { RadioGroup } from "@lib/components/RadioGroup";
 import { SensitivitySortOrder } from "../../_shared/SensitivityProcessing/types";
 import type { Interfaces } from "../interfaces";
 import { DisplayComponentType, XAxisBarScaling } from "../typesAndEnums";
+import { ColorBy } from "../view/components/sensitivityChartFigure";
 
 import {
     barSortOrderAtom,
@@ -24,6 +25,7 @@ import {
     showLabelsAtom,
     showRealizationPointsAtom,
     xAxisBarScalingAtom,
+    colorByAtom,
 } from "./atoms/baseAtoms";
 
 export function Settings({
@@ -39,7 +41,7 @@ export function Settings({
     const [barSortOrder, setBarSortOrder] = useAtom(barSortOrderAtom);
     const [xAxisBarScaling, setXAxisBarScaling] = useAtom(xAxisBarScalingAtom);
     const [referenceSensitivityName, setReferenceSensitivityName] = React.useState<string | null>(null);
-
+    const [colorBy, setColorBy] = useAtom(colorByAtom);
     useApplyInitialSettingsToState(initialSettings, "displayComponentType", "string", setDisplayComponentType);
 
     const ensembleSet = workbenchSession.getEnsembleSet();
@@ -117,7 +119,9 @@ export function Settings({
     function handleXAxisBarScalingChange(_: React.ChangeEvent<HTMLInputElement>, value: string | number) {
         setXAxisBarScaling(value as XAxisBarScaling);
     }
-
+    function handleColorByChange(_: React.ChangeEvent<HTMLInputElement>, value: string | number) {
+        setColorBy(value as ColorBy);
+    }
     return (
         <div className="flex flex-col gap-2">
             <CollapsibleGroup title="Reference sensitivity" expanded>
@@ -165,6 +169,23 @@ export function Settings({
                             onChange={handleXAxisBarScalingChange}
                         />
                     </Label>
+                    <Label text="Color by">
+                        <RadioGroup
+                            value={colorBy}
+                            options={[
+                                {
+                                    label: "Sensitivity",
+                                    value: ColorBy.SENSITIVITY,
+                                },
+                                {
+                                    label: "Low/High",
+                                    value: ColorBy.LOW_HIGH,
+                                },
+                            ]}
+                            onChange={handleColorByChange}
+                        />
+                    </Label>
+
                     <Label text="Bar sort order">
                         <RadioGroup
                             value={barSortOrder}

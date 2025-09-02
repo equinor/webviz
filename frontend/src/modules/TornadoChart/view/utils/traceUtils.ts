@@ -19,13 +19,13 @@ export type TornadoBarTraceProps = {
     customdata: string[];
     baseValues: number[];
     selectedBar: SelectedBar | null;
-    namedColorMap: { [name: string]: string };
+    colors: string[];
     label?: string[];
     transparency: boolean;
 };
 
 export const createLowBarTrace = (props: TornadoBarTraceProps): TornadoChartTraceData => {
-    const { xValues, yValues, customdata, baseValues, selectedBar, namedColorMap, label, transparency } = props;
+    const { xValues, yValues, customdata, baseValues, selectedBar, colors, label, transparency } = props;
     return {
         x: xValues,
         y: yValues,
@@ -40,7 +40,7 @@ export const createLowBarTrace = (props: TornadoBarTraceProps): TornadoChartTrac
         showlegend: false,
         orientation: "h",
         marker: {
-            color: yValues.map((s) => namedColorMap[s]),
+            color: colors,
             opacity: transparency ? 0.3 : 1,
             line: {
                 width: 3,
@@ -57,7 +57,7 @@ export const createLowBarTrace = (props: TornadoBarTraceProps): TornadoChartTrac
     };
 };
 export const createHighBarTrace = (props: TornadoBarTraceProps): TornadoChartTraceData => {
-    const { xValues, yValues, customdata, baseValues, selectedBar, namedColorMap, label, transparency } = props;
+    const { xValues, yValues, customdata, baseValues, selectedBar, colors, label, transparency } = props;
     return {
         x: xValues,
         y: yValues,
@@ -72,7 +72,7 @@ export const createHighBarTrace = (props: TornadoBarTraceProps): TornadoChartTra
         showlegend: false,
         orientation: "h",
         marker: {
-            color: yValues.map((s) => namedColorMap[s]),
+            color: colors,
             opacity: transparency ? 0.3 : 1,
             line: {
                 width: 3,
@@ -91,8 +91,9 @@ export const createHighBarTrace = (props: TornadoBarTraceProps): TornadoChartTra
 export const createLowRealizationPointsTrace = (
     xValues: number[],
     yLabels: string[],
-    namedColorMap: { [name: string]: string },
+    colors: string[],
 ): Partial<PlotData> => {
+    console.log(colors);
     return {
         x: xValues,
         y: yLabels,
@@ -101,7 +102,7 @@ export const createLowRealizationPointsTrace = (
         name: "Low Realizations",
         showlegend: false,
         marker: {
-            color: yLabels.map((s) => namedColorMap[s]),
+            color: colors,
             size: 8,
             symbol: "circle",
         },
@@ -112,7 +113,7 @@ export const createLowRealizationPointsTrace = (
 export const createHighRealizationPointsTrace = (
     xValues: number[],
     yLabels: string[],
-    namedColorMap: { [name: string]: string },
+    colors: string[],
 ): Partial<PlotData> => {
     return {
         x: xValues,
@@ -122,7 +123,7 @@ export const createHighRealizationPointsTrace = (
         name: "High Realizations",
         showlegend: false,
         marker: {
-            color: yLabels.map((s) => namedColorMap[s]),
+            color: colors,
             size: 8,
             symbol: "circle",
         },
