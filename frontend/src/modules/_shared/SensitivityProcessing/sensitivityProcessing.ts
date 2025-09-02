@@ -53,7 +53,11 @@ export const computeSensitivitiesForResponse = (
     );
 
     return {
-        sensitivityResponses: sortSensitivityResponses(filteredSensitivityResponses, barSortOrder),
+        sensitivityResponses: sortSensitivityResponses(
+            filteredSensitivityResponses,
+            referenceSensitivity,
+            barSortOrder,
+        ),
         referenceSensitivity,
         referenceAverage,
         responseName: ensembleResponse.name,

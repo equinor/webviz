@@ -4,7 +4,7 @@ import type { PlotData } from "plotly.js";
 
 import type { SensitivityResponseDataset, SensitivityResponse } from "../../../_shared/SensitivityProcessing/types";
 import type { XAxisBarScaling } from "../../typesAndEnums";
-import { SensitivityDataScaler } from "../utils/sensitivityDataScaler";
+import type { SensitivityDataScaler } from "../utils/sensitivityDataScaler";
 import {
     createHighBarTrace,
     createHighRealizationPointsTrace,
@@ -41,9 +41,9 @@ export class SensitivityChartFigure {
         width: number,
         height: number,
         sensitivityResponseDataset: SensitivityResponseDataset,
+        sensitivityDataScaler: SensitivityDataScaler,
         sensitivityColorMap: SensitivityColorMap,
         options: {
-            xAxisBarScaling: XAxisBarScaling;
             selectedBar?: SelectedBar | null;
         },
     ) {
@@ -69,7 +69,7 @@ export class SensitivityChartFigure {
         this._responseUnit = sensitivityResponseDataset.responseUnit;
         this._referenceAverage = sensitivityResponseDataset.referenceAverage;
         this._sensitivityColorMap = sensitivityColorMap;
-        this._scaler = new SensitivityDataScaler(options.xAxisBarScaling, this._referenceAverage);
+        this._scaler = sensitivityDataScaler;
         this._selectedBar = options.selectedBar || null;
     }
 

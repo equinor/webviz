@@ -23,6 +23,7 @@ export function extractSensitivityRealizations(sensitivity: Sensitivity): number
 // Sorting functions
 export const sortSensitivityResponses = (
     responses: SensitivityResponse[],
+    referenceSensitivity: string,
     sortOrder: SensitivitySortOrder,
 ): SensitivityResponse[] => {
     if (sortOrder === SensitivitySortOrder.ALPHABETICAL) {
@@ -30,6 +31,10 @@ export const sortSensitivityResponses = (
     }
 
     return [...responses].sort((a, b) => {
+        // Sort reference sensitivity last
+        if (a.sensitivityName === referenceSensitivity) return 1;
+        if (b.sensitivityName === referenceSensitivity) return -1;
+
         const maxA = Math.max(Math.abs(a.lowCaseReferenceDifference), Math.abs(a.highCaseReferenceDifference));
         const maxB = Math.max(Math.abs(b.lowCaseReferenceDifference), Math.abs(b.highCaseReferenceDifference));
         return maxA - maxB;

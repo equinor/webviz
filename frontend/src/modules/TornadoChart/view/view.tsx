@@ -19,6 +19,7 @@ import { selectedSensitivityAtom } from "./atoms/baseAtoms";
 import SensitivityTable from "./components/sensitivityTable";
 import { useResponseChannel } from "./hooks/useResponseChannel";
 import { useSensitivityChart } from "./hooks/useSensitivityChart";
+import { SensitivityDataScaler } from "./utils/sensitivityDataScaler";
 
 export const View = ({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const setSelectedSensitivity = useSetAtom(selectedSensitivityAtom);
@@ -26,6 +27,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     const displayComponentType = viewContext.useSettingsToViewInterfaceValue("displayComponentType");
     const referenceSensitivityName = viewContext.useSettingsToViewInterfaceValue("referenceSensitivityName");
     const barSortOrder = viewContext.useSettingsToViewInterfaceValue("barSortOrder");
+    const xAxisBarScaling = viewContext.useSettingsToViewInterfaceValue("xAxisBarScaling");
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const colorSet = workbenchSettings.useColorSet();
@@ -49,13 +51,17 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
             hideZeroY,
         );
     }
-
+    const sensitivityDataScaler = new SensitivityDataScaler(
+        xAxisBarScaling,
+        computedSensitivityResponseDataset ? computedSensitivityResponseDataset.referenceAverage : 0,
+    );
     const sensitivityChartBuilder = useSensitivityChart(
         viewContext,
         wrapperDivSize.width,
         wrapperDivSize.height,
         sensitivitiesColorMap,
         computedSensitivityResponseDataset,
+        sensitivityDataScaler,
     );
 
     let instanceTitle = "Tornado chart";
@@ -119,6 +125,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
                 <div className="text-sm">
                     <SensitivityTable
                         sensitivityResponseDataset={computedSensitivityResponseDataset}
+                        sensitivityDataScaler={sensitivityDataScaler}
                         onSelectedSensitivity={setSelectedSensitivity}
                         hideZeroY={hideZeroY}
                     />
