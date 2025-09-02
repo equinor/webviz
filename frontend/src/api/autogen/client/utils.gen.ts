@@ -4,7 +4,6 @@ import { getAuthToken } from "../core/auth.gen";
 import type { QuerySerializerOptions } from "../core/bodySerializer.gen";
 import { serializeArrayParam, serializeObjectParam, serializePrimitiveParam } from "../core/pathSerializer.gen";
 import { getUrl } from "../core/utils.gen";
-
 import type { Client, ClientOptions, Config, RequestOptions } from "./types.gen";
 
 export const createQuerySerializer = <T = unknown>({ allowReserved, array, object }: QuerySerializerOptions = {}) => {
