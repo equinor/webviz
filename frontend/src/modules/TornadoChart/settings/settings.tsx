@@ -1,6 +1,5 @@
 import React from "react";
 
-import { Radio } from "@mui/icons-material";
 import { useAtom, useSetAtom } from "jotai";
 
 import { KeyKind } from "@framework/DataChannelTypes";
@@ -13,8 +12,9 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 
+import { SensitivitySortOrder } from "../../_shared/SensitivityProcessing/types";
 import type { Interfaces } from "../interfaces";
-import { BarSortOrder, DisplayComponentType, XAxisBarScaling } from "../typesAndEnums";
+import { DisplayComponentType, XAxisBarScaling } from "../typesAndEnums";
 
 import {
     barSortOrderAtom,
@@ -82,9 +82,14 @@ export function Settings({
         }
     }
 
-    if (!referenceSensitivityName && sensitivityNames.length > 0) {
+    if (
+        (!referenceSensitivityName || !sensitivityNames.includes(referenceSensitivityName)) &&
+        sensitivityNames.length > 0
+    ) {
         if (sensitivityNames.includes("rms_seed")) {
             setReferenceSensitivityName("rms_seed");
+        } else if (sensitivityNames.includes("rms")) {
+            setReferenceSensitivityName("rms");
         } else {
             setReferenceSensitivityName(sensitivityNames[0]);
         }
@@ -107,7 +112,7 @@ export function Settings({
     }
 
     function handleBarSortOrderChange(_: React.ChangeEvent<HTMLInputElement>, value: string | number) {
-        setBarSortOrder(value as BarSortOrder);
+        setBarSortOrder(value as SensitivitySortOrder);
     }
     function handleXAxisBarScalingChange(_: React.ChangeEvent<HTMLInputElement>, value: string | number) {
         setXAxisBarScaling(value as XAxisBarScaling);
@@ -149,6 +154,10 @@ export function Settings({
                                     value: XAxisBarScaling.RELATIVE,
                                 },
                                 {
+                                    label: "Relative %",
+                                    value: XAxisBarScaling.RELATIVE_PERCENTAGE,
+                                },
+                                {
                                     label: "Absolute",
                                     value: XAxisBarScaling.ABSOLUTE,
                                 },
@@ -162,11 +171,11 @@ export function Settings({
                             options={[
                                 {
                                     label: "Impact",
-                                    value: BarSortOrder.IMPACT,
+                                    value: SensitivitySortOrder.IMPACT,
                                 },
                                 {
                                     label: "Alphabetical",
-                                    value: BarSortOrder.ALPHABETICAL,
+                                    value: SensitivitySortOrder.ALPHABETICAL,
                                 },
                             ]}
                             onChange={handleBarSortOrderChange}

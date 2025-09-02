@@ -8,11 +8,8 @@ export type SelectedSensitivity = {
     selectedSensitivityCase: string | null;
 };
 
-export enum BarSortOrder {
-    IMPACT = "impact",
-    ALPHABETICAL = "alphabetical",
-}
 export enum XAxisBarScaling {
     RELATIVE = "relative",
     ABSOLUTE = "absolute",
+    RELATIVE_PERCENTAGE = "relative_percentage",
 }

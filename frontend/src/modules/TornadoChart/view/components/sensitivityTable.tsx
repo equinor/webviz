@@ -4,7 +4,7 @@ import { TableDeprecated } from "@lib/components/TableDeprecated";
 import type { TableHeading, TableProps } from "@lib/components/TableDeprecated/table";
 import type { SelectedSensitivity } from "@modules/TornadoChart/typesAndEnums";
 
-import type { SensitivityResponseDataset } from "../utils/sensitivityResponseCalculator";
+import type { SensitivityResponseDataset } from "../../../_shared/SensitivityProcessing/types";
 
 export interface SensitivityTableProps {
     sensitivityResponseDataset: SensitivityResponseDataset;
@@ -61,7 +61,7 @@ const SensitivityTable: React.FC<SensitivityTableProps> = (props) => {
                 [TableColumns.TRUE_HIGH]: numFormat(sensitivityResponse.highCaseAverage),
                 [TableColumns.LOW_REALS]: sensitivityResponse.lowCaseRealizations.length,
                 [TableColumns.HIGH_REALS]: sensitivityResponse.highCaseRealizations.length,
-                [TableColumns.REFERENCE]: props.sensitivityResponseDataset.referenceSensitivity,
+                [TableColumns.REFERENCE]: numFormat(props.sensitivityResponseDataset.referenceAverage),
             }));
         setTableRows(rows);
     }, [props.sensitivityResponseDataset, props.hideZeroY]);

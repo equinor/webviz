@@ -1,5 +1,7 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
+import type { SensitivitySortOrder } from "../_shared/SensitivityProcessing/types";
+
 import {
     barSortOrderAtom,
     displayComponentTypeAtom,
@@ -11,7 +13,7 @@ import {
     showRealizationPointsAtom,
     xAxisBarScalingAtom,
 } from "./settings/atoms/baseAtoms";
-import type { BarSortOrder, DisplayComponentType, SelectedSensitivity, XAxisBarScaling } from "./typesAndEnums";
+import type { DisplayComponentType, SelectedSensitivity, XAxisBarScaling } from "./typesAndEnums";
 import { selectedSensitivityAtom as ViewSelectedSensitivityAtom } from "./view/atoms/baseAtoms";
 
 type SettingsToViewInterface = {
@@ -22,7 +24,7 @@ type SettingsToViewInterface = {
     showLabels: boolean;
     hideZeroY: boolean;
     showRealizationPoints: boolean;
-    barSortOrder: BarSortOrder;
+    barSortOrder: SensitivitySortOrder;
     xAxisBarScaling: XAxisBarScaling;
 };
 
