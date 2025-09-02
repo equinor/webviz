@@ -8,23 +8,16 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 import { point2Distance, vec2FromPointerEvent } from "@lib/utils/vec2";
 
-import type { SortableGroupProps, SortableItemProps } from "./genericSortableListElement";
+import { Content } from "./sub-components/Content";
+import { DragHandle } from "./sub-components/dragHandle";
+import { Group } from "./sub-components/Group";
+import { Item } from "./sub-components/Item";
+import { ScrollContainer } from "./sub-components/ScrollContainer";
 
 export enum ItemType {
     ITEM = "item",
     GROUP = "group",
 }
-
-export type ItemElement = "div" | "li" | "tr";
-export type RootElement = "div" | "ul" | "table";
-
-type DomFor<T extends RootElement> = T extends "div"
-    ? HTMLDivElement
-    : T extends "ul"
-      ? HTMLUListElement
-      : T extends "table"
-        ? HTMLTableSectionElement
-        : never;
 
 export type IsMoveAllowedArgs = {
     movedItemId: string;
@@ -41,6 +34,10 @@ export type SortableListContextType = {
     hoveredElementId: string | null;
     hoveredArea: HoveredArea | null;
     dragPosition: Vec2 | null;
+
+    registerContentContainer: (el: HTMLElement | null) => void;
+    reportContentBoundingRect: (rect: DOMRectReadOnly) => void;
+    registerScrollContainerElement: (el: HTMLElement | null) => void;
 };
 
 export const SortableListContext = React.createContext<SortableListContextType>({
@@ -48,12 +45,15 @@ export const SortableListContext = React.createContext<SortableListContextType>(
     hoveredElementId: null,
     hoveredArea: null,
     dragPosition: null,
+
+    registerContentContainer: () => {},
+    reportContentBoundingRect: () => {},
+    registerScrollContainerElement: () => {},
 });
 
-export type SortableListProps<TRoot extends RootElement> = {
-    rootElement: TRoot;
+export type SortableListProps = {
     contentWhenEmpty?: React.ReactNode;
-    children: React.ReactElement<SortableItemProps | SortableGroupProps>[];
+    children: React.ReactNode;
     isMoveAllowed?: (args: IsMoveAllowedArgs) => boolean;
     onItemMoved?: (
         movedItemId: string,
@@ -61,6 +61,14 @@ export type SortableListProps<TRoot extends RootElement> = {
         destinationId: string | null,
         position: number,
     ) => void;
+};
+
+export type SortableListCompound = React.FC<SortableListProps> & {
+    Content: typeof Content;
+    ScrollContainer: typeof ScrollContainer;
+    Item: typeof Item;
+    Group: typeof Group;
+    DragHandle: typeof DragHandle;
 };
 
 const ITEM_TOP_AND_BOTTOM_AREA_SIZE_IN_PERCENT = 50;
@@ -77,7 +85,7 @@ const DEFAULT_SCROLL_TIME = 100;
  *
  * @returns {React.ReactNode} A sortable list component.
  */
-export function SortableList<TRoot extends RootElement>(props: SortableListProps<TRoot>): React.ReactNode {
+export const SortableList = function SortableListImpl(props: SortableListProps) {
     const { onItemMoved, isMoveAllowed } = props;
 
     const [isDragging, setIsDragging] = React.useState<boolean>(false);
@@ -85,26 +93,42 @@ export function SortableList<TRoot extends RootElement>(props: SortableListProps
     const [hoveredItemIdAndArea, setHoveredItemIdAndArea] = React.useState<HoveredItemIdAndArea | null>(null);
     const [dragPosition, setDragPosition] = React.useState<Vec2>({ x: 0, y: 0 });
     const [currentScrollPosition, setCurrentScrollPosition] = React.useState<number>(0);
-    const [prevChildren, setPrevChildren] = React.useState<
-        React.ReactElement<SortableItemProps | SortableGroupProps>[]
-    >(props.children);
+    const [prevChildren, setPrevChildren] = React.useState<React.ReactNode>(props.children);
+    const [contentContainerElement, setContentContainerElement] = React.useState<HTMLElement | null>(null);
+    const [scrollContainerElement, setScrollContainerElement] = React.useState<HTMLElement | null>(null);
+    const [contentContainerRect, setContentContainerRect] = React.useState<DOMRectReadOnly | null>(null);
+
+    const context = React.useMemo<SortableListContextType>(
+        () => ({
+            draggedElementId: draggedItemId,
+            hoveredElementId: hoveredItemIdAndArea?.id ?? null,
+            hoveredArea: hoveredItemIdAndArea?.area ?? null,
+            dragPosition,
+            registerContentContainer: setContentContainerElement,
+            registerScrollContainerElement: setScrollContainerElement,
+            reportContentBoundingRect: setContentContainerRect,
+        }),
+        [draggedItemId, hoveredItemIdAndArea, dragPosition],
+    );
 
     const mainRef = React.useRef<HTMLDivElement>(null);
+    /*
     const listRef = React.useRef<DomFor<TRoot>>(null);
     const scrollRef = React.useRef<HTMLDivElement>(null);
+    */
     const upperScrollRef = React.useRef<HTMLDivElement>(null);
     const lowerScrollRef = React.useRef<HTMLDivElement>(null);
 
     if (!isEqual(prevChildren, props.children)) {
         setPrevChildren(props.children);
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = currentScrollPosition;
+        if (scrollContainerElement) {
+            scrollContainerElement.scrollTop = currentScrollPosition;
         }
     }
 
     React.useEffect(
         function addEventListeners() {
-            if (!listRef.current) {
+            if (!contentContainerElement) {
                 return;
             }
 
@@ -112,7 +136,7 @@ export function SortableList<TRoot extends RootElement>(props: SortableListProps
                 return;
             }
 
-            const currentListRef = listRef.current;
+            const currentListRef = contentContainerElement;
             const currentMainRef = mainRef.current;
 
             let pointerDownPosition: Vec2 | null = null;
@@ -169,7 +193,11 @@ export function SortableList<TRoot extends RootElement>(props: SortableListProps
             }
 
             function maybeScroll(position: Vec2) {
-                if (upperScrollRef.current === null || lowerScrollRef.current === null || scrollRef.current === null) {
+                if (
+                    upperScrollRef.current === null ||
+                    lowerScrollRef.current === null ||
+                    scrollContainerElement === null
+                ) {
                     return;
                 }
 
@@ -191,8 +219,8 @@ export function SortableList<TRoot extends RootElement>(props: SortableListProps
 
             function scrollUpRepeatedly() {
                 currentScrollTime = Math.max(10, currentScrollTime - 5);
-                if (scrollRef.current) {
-                    scrollRef.current.scrollTop = Math.max(0, scrollRef.current.scrollTop - 10);
+                if (scrollContainerElement) {
+                    scrollContainerElement.scrollTop = Math.max(0, scrollContainerElement.scrollTop - 10);
                 }
                 if (doScroll) {
                     scrollTimeout = setTimeout(scrollUpRepeatedly, currentScrollTime);
@@ -201,10 +229,10 @@ export function SortableList<TRoot extends RootElement>(props: SortableListProps
 
             function scrollDownRepeatedly() {
                 currentScrollTime = Math.max(10, currentScrollTime - 5);
-                if (scrollRef.current) {
-                    scrollRef.current.scrollTop = Math.min(
-                        scrollRef.current.scrollHeight,
-                        scrollRef.current.scrollTop + 10,
+                if (scrollContainerElement) {
+                    scrollContainerElement.scrollTop = Math.min(
+                        scrollContainerElement.scrollHeight,
+                        scrollContainerElement.scrollTop + 10,
                     );
                 }
                 if (doScroll) {
@@ -241,6 +269,7 @@ export function SortableList<TRoot extends RootElement>(props: SortableListProps
                     return null;
                 }
 
+                if (directChildren.length === 0) return null;
                 return { element: directChildren[directChildren.length - 1], area: HoveredArea.BOTTOM };
             }
 
@@ -504,12 +533,21 @@ export function SortableList<TRoot extends RootElement>(props: SortableListProps
                 setDraggedItemId(null);
             };
         },
-        [onItemMoved, isMoveAllowed, props.children],
+        [
+            onItemMoved,
+            isMoveAllowed,
+            props.children,
+            currentScrollPosition,
+            scrollContainerElement,
+            contentContainerElement,
+        ],
     );
 
     function handleScroll(e: React.UIEvent<HTMLDivElement>) {
         setCurrentScrollPosition(e.currentTarget.scrollTop);
     }
+
+    /*
 
     function makeChildren(): React.ReactNode[] {
         const children: React.ReactNode[] = [];
@@ -546,101 +584,17 @@ export function SortableList<TRoot extends RootElement>(props: SortableListProps
         }
         return children;
     }
-
-    const rootTag = props.rootElement ?? "div";
-
-    function TableContainer({
-        children,
-        listRef,
-    }: {
-        children: React.ReactNode;
-        listRef: React.RefObject<HTMLTableSectionElement>;
-    }) {
-        return (
-            <table className="relative min-h-0 w-full">
-                <tbody ref={listRef}>
-                    {children}
-                    {/* spacer */}
-                    <tr className="h-2 min-h-2">
-                        <td>
-                            <div className="h-2" />
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        );
-    }
-
-    function UlContainer({
-        children,
-        listRef,
-    }: {
-        children: React.ReactNode;
-        listRef: React.RefObject<HTMLUListElement>;
-    }) {
-        return (
-            <ul className="flex flex-col relative min-h-0" ref={listRef}>
-                {children}
-                <li className="h-2 min-h-2">
-                    <div className="h-2" />
-                </li>
-            </ul>
-        );
-    }
-
-    function DivContainer({
-        children,
-        listRef,
-    }: {
-        children: React.ReactNode;
-        listRef: React.RefObject<HTMLDivElement>;
-    }) {
-        return (
-            <div className="flex flex-col relative min-h-0" ref={listRef}>
-                {children}
-                <div className="h-2 min-h-2">
-                    <div className="h-2" />
-                </div>
-            </div>
-        );
-    }
+        */
 
     return (
         <div className="w-full h-full flex flex-col relative min-h-0 max-h-full" ref={mainRef}>
-            <SortableListContext.Provider
-                value={{
-                    draggedElementId: draggedItemId,
-                    hoveredElementId: hoveredItemIdAndArea?.id ?? null,
-                    hoveredArea: hoveredItemIdAndArea?.area ?? null,
-                    dragPosition,
-                }}
-            >
+            <SortableListContext.Provider value={context}>
                 <div className="absolute top-0 left-0 w-full h-5 z-50 pointer-events-none" ref={upperScrollRef}></div>
                 <div
                     className="absolute left-0 bottom-0 w-full h-5 z-50 pointer-events-none"
                     ref={lowerScrollRef}
                 ></div>
-                <div
-                    className="grow overflow-auto min-h-0 bg-slate-200 relative"
-                    ref={scrollRef}
-                    onScroll={handleScroll}
-                >
-                    {props.rootElement === "table" && (
-                        <TableContainer listRef={listRef as React.RefObject<HTMLTableSectionElement>}>
-                            {makeChildren()}
-                        </TableContainer>
-                    )}
-                    {props.rootElement === "div" && (
-                        <DivContainer listRef={listRef as React.RefObject<HTMLDivElement>}>
-                            {makeChildren()}
-                        </DivContainer>
-                    )}
-                    {props.rootElement === "ul" && (
-                        <UlContainer listRef={listRef as React.RefObject<HTMLUListElement>}>
-                            {makeChildren()}
-                        </UlContainer>
-                    )}
-                </div>
+                {props.children}
                 {isDragging &&
                     createPortal(
                         <div
@@ -653,13 +607,13 @@ export function SortableList<TRoot extends RootElement>(props: SortableListProps
             </SortableListContext.Provider>
         </div>
     );
-}
+} as SortableListCompound;
 
-const ITEM_ELEMENT_FOR_ROOT_ELEMENT = {
-    div: "div",
-    ul: "li",
-    table: "tr",
-} as const;
+SortableList.Content = Content;
+SortableList.ScrollContainer = ScrollContainer;
+SortableList.Item = Item;
+SortableList.Group = Group;
+SortableList.DragHandle = DragHandle;
 
 export enum HoveredArea {
     TOP = "top",
@@ -696,7 +650,7 @@ function assertTargetIsSortableListItemAndExtractProps(
         return null;
     }
 
-    const sortableListElement = target.closest("[data-sortable='item']");
+    const sortableListElement = handle.closest("[data-sortable='item'], [data-sortable='group']");
     if (!(sortableListElement instanceof HTMLElement)) {
         return null;
     }
@@ -758,7 +712,7 @@ function getItemParent(item: HTMLElement | null): HTMLElement | null {
         return null;
     }
 
-    const group = item.parentElement?.closest(".sortable-list-group");
+    const group = item.parentElement?.closest("[data-sortable='group']");
     if (!group || !(group instanceof HTMLElement)) {
         return null;
     }

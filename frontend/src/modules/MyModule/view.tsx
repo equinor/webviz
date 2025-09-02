@@ -1,16 +1,14 @@
 import React from "react";
 
+import { DragIndicator } from "@mui/icons-material";
 import type { PlotData } from "plotly.js";
 
 import type { ModuleViewProps } from "@framework/Module";
+import { SortableList } from "@lib/components/SortableList";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleType } from "@lib/utils/ColorScale";
 
 import type { Interfaces } from "./interfaces";
-import { SortableList } from "@lib/components/SortableList";
-import { SortableItem } from "@lib/components/SortableList/genericSortableListElement";
-import { DragHandle } from "@lib/components/SortableList/dragHandle";
-import { DragIndicator } from "@mui/icons-material";
 
 const countryData = [
     "Belarus",
@@ -411,6 +409,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const min = props.viewContext.useSettingsToViewInterfaceValue("min");
     const max = props.viewContext.useSettingsToViewInterfaceValue("max");
     const divMidPoint = props.viewContext.useSettingsToViewInterfaceValue("divMidPoint");
+    const [items, setItems] = React.useState<string[]>(["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]);
 
     const ref = React.useRef<HTMLDivElement>(null);
 
@@ -442,20 +441,58 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         margin: { t: 0, b: 0 },
     };
 
+    function onMove(movedItemId: string, originId: string | null, destinationId: string | null, position: number) {
+        // Update the items state based on the move
+        setItems((prevItems) => {
+            const newItems = [...prevItems];
+            const movedItemIndex = newItems.findIndex((item) => item === movedItemId);
+            if (movedItemIndex !== -1) {
+                newItems.splice(movedItemIndex, 1);
+                newItems.splice(position, 0, movedItemId);
+            }
+            return newItems;
+        });
+    }
+
     return (
-        <SortableList rootElement="div" isMoveAllowed={() => true}>
-            <SortableItem id="test">
-                <DragHandle>
-                    <DragIndicator fontSize="inherit" className="pointer-events-none" />
-                </DragHandle>{" "}
-                Test
-            </SortableItem>
-            <SortableItem id="test2">
-                <DragHandle>
-                    <DragIndicator fontSize="inherit" className="pointer-events-none" />
-                </DragHandle>{" "}
-                Test2
-            </SortableItem>
+        <SortableList isMoveAllowed={() => true} onItemMoved={onMove}>
+            <table className="w-full">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Name</th>
+                        <th>Test</th>
+                    </tr>
+                </thead>
+                <SortableList.Content>
+                    <tbody>
+                        {items.map((item) => (
+                            <SortableList.Item
+                                key={item}
+                                id={item}
+                                dropIndicator={
+                                    <tr>
+                                        <td
+                                            colSpan={3}
+                                            className="h-4 bg-blue-200 border-t border-b border-blue-400"
+                                        ></td>
+                                    </tr>
+                                }
+                            >
+                                <tr>
+                                    <td>
+                                        <SortableList.DragHandle>
+                                            <DragIndicator fontSize="inherit" className="pointer-events-none" />
+                                        </SortableList.DragHandle>
+                                    </td>
+                                    <td>{item}</td>
+                                    <td>Test</td>
+                                </tr>
+                            </SortableList.Item>
+                        ))}
+                    </tbody>
+                </SortableList.Content>
+            </table>
         </SortableList>
     );
 
