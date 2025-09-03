@@ -28,7 +28,7 @@ async def handle_table_definitions_for_deprecated_format_async(
     Create table definitions from deprecated format for the given case and ensemble.
     """
 
-    access = DEPRECATED_InplaceVolumetricsAccess.from_iteration_name(
+    access = DEPRECATED_InplaceVolumetricsAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     assembler = DEPRECATED_InplaceVolumetricsAssembler(access)
@@ -50,7 +50,7 @@ async def handle_aggregated_per_realization_table_data_for_deprecated_format_asy
     Create aggregated per realization table data from deprecated format for the given case and ensemble.
     """
 
-    access = DEPRECATED_InplaceVolumetricsAccess.from_iteration_name(
+    access = DEPRECATED_InplaceVolumetricsAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
@@ -91,7 +91,7 @@ async def handle_aggregated_statistical_table_data_for_deprecated_format_async(
     Create aggregated statistical table data from deprecated format for the given case and ensemble.
     """
 
-    access = DEPRECATED_InplaceVolumetricsAccess.from_iteration_name(
+    access = DEPRECATED_InplaceVolumetricsAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
