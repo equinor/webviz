@@ -126,14 +126,14 @@ async def main() -> None:
         sys.exit(1)
 
     case_inspector = CaseInspector.from_case_uuid(access_token, sumo_case_id)
-    iteration_list = await case_inspector.get_iterations_async()
+    ensemble_list = await case_inspector.get_ensembles_async()
     print("\n\n")
-    for iteration_info in iteration_list:
-        print(iteration_info)
+    for ensemble_info in ensemble_list:
+        print(ensemble_info)
 
-    iteration_name = iteration_list[0].name
+    ensemble_name = ensemble_list[0].name
     summary_access = SummaryAccess.from_ensemble_name(
-        access_token=access_token, case_uuid=sumo_case_id, ensemble_name=iteration_name
+        access_token=access_token, case_uuid=sumo_case_id, ensemble_name=ensemble_name
     )
     await test_summary_access(summary_access)
 

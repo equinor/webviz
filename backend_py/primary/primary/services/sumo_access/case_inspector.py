@@ -19,15 +19,15 @@ from .sumo_client_factory import create_sumo_client
 LOGGER = logging.getLogger(__name__)
 
 
-class IterationTimestamps(BaseModel):
+class EnsembleTimestamps(BaseModel):
     case_updated_at_utc_ms: int
     data_updated_at_utc_ms: int
 
 
-class IterationInfo(BaseModel):
+class EnsembleInfo(BaseModel):
     name: str
     realization_count: int
-    timestamps: IterationTimestamps
+    timestamps: EnsembleTimestamps
 
 
 class CaseInspector:
@@ -49,17 +49,17 @@ class CaseInspector:
 
         return self._cached_case_context
 
-    async def get_case_updated_timestamp_async(self) -> int:
+    async def _get_case_updated_timestamp_async(self) -> int:
         case = await self._get_or_create_case_context_async()
         timestamp_str = case.metadata["_sumo"]["timestamp"]  # Returns a datetime string.
         return iso_str_to_timestamp_utc_ms(timestamp_str)
 
-    async def get_iteration_data_update_timestamp_async(self, iteration_name: str | None = None) -> int:
+    async def _get_ensemble_data_update_timestamp_async(self, ensemble_name: str) -> int:
         timer = PerfMetrics()
         case_context = await self._get_or_create_case_context_async()
 
         search_context = SearchContext(self._sumo_client).filter(
-            uuid=case_context.uuid, iteration=iteration_name, realization=True
+            uuid=case_context.uuid, ensemble=ensemble_name, realization=True
         )
 
         data_timestamp_int = await search_context.metrics.max_async("_sumo.timestamp")
@@ -69,60 +69,60 @@ class CaseInspector:
 
         return data_timestamp_int or -1
 
-    async def get_iteration_timestamps_async(self, iteration_name: str) -> IterationTimestamps:
-        case_updated_at = await self.get_case_updated_timestamp_async()
-        # Data is occasionally None. This is likely due to data errors, so we just default to 0 (since an iteration with bad data probably won't be used)
-        data_updated_at = await self.get_iteration_data_update_timestamp_async(iteration_name) or 0
+    async def get_ensemble_timestamps_async(self, ensemble_name: str) -> EnsembleTimestamps:
+        case_updated_at = await self._get_case_updated_timestamp_async()
+        # Data is occasionally None. This is likely due to data errors, so we just default to 0 (since an ensemble with bad data probably won't be used)
+        data_updated_at = await self._get_ensemble_data_update_timestamp_async(ensemble_name) or 0
 
-        return IterationTimestamps(case_updated_at_utc_ms=case_updated_at, data_updated_at_utc_ms=data_updated_at)
+        return EnsembleTimestamps(case_updated_at_utc_ms=case_updated_at, data_updated_at_utc_ms=data_updated_at)
 
     async def get_case_name_async(self) -> str:
         """Get name of the case"""
         case = await self._get_or_create_case_context_async()
         return case.name
 
-    async def _get_iteration_info_async(self, iteration_uuid: str) -> IterationInfo:
+    async def _get_ensemble_info_async(self, ensemble_uuid: str) -> EnsembleInfo:
         search_context = SearchContext(self._sumo_client)
-        iteration = await search_context.get_iteration_by_uuid_async(iteration_uuid)
-        realization_count = len(await iteration.realizations_async)
+        ensemble_obj = await search_context.get_ensemble_by_uuid_async(ensemble_uuid)
+        realization_count = len(await ensemble_obj.realizations_async)
 
-        iteration_timestamps = await self.get_iteration_timestamps_async(iteration.name)
+        ensemble_timestamps = await self.get_ensemble_timestamps_async(ensemble_obj.name)
 
-        return IterationInfo(name=iteration.name, realization_count=realization_count, timestamps=iteration_timestamps)
+        return EnsembleInfo(name=ensemble_obj.name, realization_count=realization_count, timestamps=ensemble_timestamps)
 
-    async def get_iterations_async(self) -> list[IterationInfo]:
-        """Get list of iterations for a case"""
+    async def get_ensembles_async(self) -> list[EnsembleInfo]:
+        """Get list of ensembles for a case"""
         timer = PerfMetrics()
         case = await self._get_or_create_case_context_async()
         timer.record_lap("get_case_obj")
-        iterations = await case.iterations_async
-        iteration_uuids = iterations.uuids
-        timer.record_lap("get_iteration uuids")
+        ensembles = await case.ensembles_async
+        ensemble_uuids = ensembles.uuids
+        timer.record_lap("get_ensemble_uuids")
 
         async with asyncio.TaskGroup() as tg:
             tasks = [
-                tg.create_task(self._get_iteration_info_async(iteration_uuid)) for iteration_uuid in iteration_uuids
+                tg.create_task(self._get_ensemble_info_async(ens_uuid)) for ens_uuid in ensemble_uuids
             ]
 
-        iter_info_arr: list[IterationInfo] = [task.result() for task in tasks]
+        ens_info_arr: list[EnsembleInfo] = [task.result() for task in tasks]
 
-        # Sort on iteration name before returning
-        iter_info_arr.sort(key=lambda iter_info: iter_info.name)
-        timer.record_lap("create_iteration_info")
+        # Sort on ensemble name before returning
+        ens_info_arr.sort(key=lambda ens_info: ens_info.name)
+        timer.record_lap("create_ensemble_info")
 
-        LOGGER.debug(f"get_iterations_async {timer.to_string()}")
-        return iter_info_arr
+        LOGGER.debug(f"get_ensembles_async {timer.to_string()}")
+        return ens_info_arr
 
-    async def get_realizations_in_iteration_async(self, iteration_name: str) -> list[int]:
-        """Get list of realizations for the specified iteration"""
+    async def get_realizations_in_ensemble_async(self, ensemble_name: str) -> list[int]:
+        """Get list of realizations for the specified ensemble"""
         timer = PerfMetrics()
         case = await self._get_or_create_case_context_async()
 
-        ensemble = case.filter(iteration=iteration_name, realization=True)
+        ensemble = case.filter(ensemble=ensemble_name, realization=True)
         realization_list = await ensemble.realizationids_async
         timer.record_lap("get_realizations")
 
-        LOGGER.debug(f"get_realizations_in_iteration_async {timer.to_string()}")
+        LOGGER.debug(f"get_realizations_in_ensemble_async {timer.to_string()}")
         return sorted([int(real) for real in realization_list])
 
     async def get_stratigraphic_column_identifier_async(self) -> str:
