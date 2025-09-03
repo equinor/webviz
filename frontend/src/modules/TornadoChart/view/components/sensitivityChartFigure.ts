@@ -140,6 +140,7 @@ export class SensitivityChartFigure {
                 this._createHighRealizationsValues(),
                 this._createHighRealizationsLabels(),
                 this.createHighRealizationPointsColors(),
+                this._getHighRealizations(),
             ),
         );
         this._figure.addTrace(
@@ -147,6 +148,7 @@ export class SensitivityChartFigure {
                 this._createLowRealizationsValues(),
                 this._createLowRealizationsLabels(),
                 this.createLowRealizationPointsColors(),
+                this._getLowRealizations(),
             ),
         );
     }
@@ -242,7 +244,12 @@ export class SensitivityChartFigure {
             transparency,
         });
     }
-
+    private _getLowRealizations(): number[] {
+        return this._sensitivityResponses.flatMap((s) => s.lowCaseRealizations);
+    }
+    private _getHighRealizations(): number[] {
+        return this._sensitivityResponses.flatMap((s) => s.highCaseRealizations);
+    }
     private _createLowRealizationsValues(): number[] {
         return this._scaler.createLowRealizationsValues(this._sensitivityResponses);
     }
@@ -265,6 +272,9 @@ export class SensitivityChartFigure {
 
     private _computeLowLabel(sensitivity: SensitivityResponse): string {
         const lowValue = this._scaler.calculateLowLabelValue(sensitivity);
+        if (this._scaler.isAbsolute) {
+            return this._numFormat(lowValue);
+        }
         const highValue = this._scaler.calculateHighLabelValue(sensitivity);
 
         // Combine labels if they appear on the both side
@@ -275,8 +285,11 @@ export class SensitivityChartFigure {
     }
 
     private _computeHighLabel(sensitivity: SensitivityResponse): string {
-        const lowValue = this._scaler.calculateLowLabelValue(sensitivity);
         const highValue = this._scaler.calculateHighLabelValue(sensitivity);
+        if (this._scaler.isAbsolute) {
+            return this._numFormat(highValue);
+        }
+        const lowValue = this._scaler.calculateLowLabelValue(sensitivity);
 
         // Combine labels if they appear on the both side
         if (lowValue > 0 || highValue < 0) {

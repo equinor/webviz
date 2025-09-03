@@ -92,21 +92,27 @@ export const createLowRealizationPointsTrace = (
     xValues: number[],
     yLabels: string[],
     colors: string[],
+    realizations: number[],
 ): Partial<PlotData> => {
-    console.log(colors);
     return {
         x: xValues,
         y: yLabels,
         type: "scatter",
         mode: "markers",
         name: "Low Realizations",
+        customdata: realizations,
         showlegend: false,
         marker: {
             color: colors,
             size: 8,
             symbol: "circle",
         },
-        hoverinfo: "x+y",
+        hovertemplate:
+            "Realization = <b>%{customdata}</b><br>Value=<b>%{x}</b><br>Sensitivity = <b>%{y}</b><extra></extra>",
+        hoverlabel: {
+            bgcolor: "white",
+            font: { size: 12, color: "black" },
+        },
     };
 };
 
@@ -114,11 +120,13 @@ export const createHighRealizationPointsTrace = (
     xValues: number[],
     yLabels: string[],
     colors: string[],
+    realizations: number[],
 ): Partial<PlotData> => {
     return {
         x: xValues,
         y: yLabels,
         type: "scatter",
+        customdata: realizations,
         mode: "markers",
         name: "High Realizations",
         showlegend: false,
@@ -127,6 +135,11 @@ export const createHighRealizationPointsTrace = (
             size: 8,
             symbol: "circle",
         },
-        hoverinfo: "x+y",
+        hovertemplate:
+            "Realization = <b>%{customdata}</b><br>Value=<b>%{x}</b><br>Sensitivity = <b>%{y}</b><extra></extra>",
+        hoverlabel: {
+            bgcolor: "white",
+            font: { size: 12, color: "black" },
+        },
     };
 };
