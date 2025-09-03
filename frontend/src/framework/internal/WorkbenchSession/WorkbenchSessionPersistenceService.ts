@@ -234,10 +234,8 @@ export class WorkbenchSessionPersistenceService
         this._lastPersistedMs = null;
         this._lastModifiedMs = 0;
 
-        if (this._pullDebounceTimeout) {
-            clearTimeout(this._pullDebounceTimeout);
-            this._pullDebounceTimeout = null;
-        }
+        this.maybeClearPullDebounceTimeout();
+
         this._pullCounter++;
         this._pullInProgress = false;
 
@@ -311,10 +309,15 @@ export class WorkbenchSessionPersistenceService
         }
     }
 
-    private schedulePullFullSessionState(delay: number = 200) {
+    private maybeClearPullDebounceTimeout() {
         if (this._pullDebounceTimeout) {
             clearTimeout(this._pullDebounceTimeout);
+            this._pullDebounceTimeout = null;
         }
+    }
+
+    private schedulePullFullSessionState(delay: number = 200) {
+        this.maybeClearPullDebounceTimeout();
 
         this._pullDebounceTimeout = setTimeout(() => {
             this._pullDebounceTimeout = null;
@@ -376,6 +379,10 @@ export class WorkbenchSessionPersistenceService
         if (!this._currentStateString) {
             throw new Error("Current state string is not set. Cannot persist session state.");
         }
+
+        // Make sure we pull the latest session before we save
+        this.maybeClearPullDebounceTimeout();
+        await this.pullFullSessionState();
 
         const metadata = this._workbenchSession.getMetadata();
         const id = this._workbenchSession.getId();
