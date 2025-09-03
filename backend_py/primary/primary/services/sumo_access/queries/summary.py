@@ -24,7 +24,7 @@ async def find_summary_vector_tables_async(
             "must": [
                 {"term": {"class": "table"}},
                 {"term": {"_sumo.parent_object.keyword": case_uuid}},
-                {"term": {"fmu.iteration.name.keyword": ensemble_name}},
+                {"term": {"fmu.ensemble.name.keyword": ensemble_name}},
                 {"term": {"fmu.context.stage.keyword": "iteration"}},
                 {"term": {"fmu.aggregation.operation.keyword": "collection"}},
                 {"term": {"data.tagname.keyword": "summary"}},
