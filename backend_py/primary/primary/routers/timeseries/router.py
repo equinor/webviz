@@ -505,7 +505,7 @@ async def get_statistical_vector_data_per_sensitivity(
     summmary_access = SummaryAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    parameter_access = ParameterAccess.from_iteration_name(
+    parameter_access = ParameterAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     sensitivities = (await parameter_access.get_parameters_and_sensitivities_async()).sensitivities
