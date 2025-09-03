@@ -1,82 +1,130 @@
-import React from "react";
+import type React from "react";
 
-import { TableDeprecated } from "@lib/components/TableDeprecated";
-import type { TableHeading, TableProps } from "@lib/components/TableDeprecated/table";
+import { Table } from "@lib/components/Table";
+import type { TableColumns } from "@lib/components/Table/types";
 import type { SelectedSensitivity } from "@modules/TornadoChart/typesAndEnums";
 
-import type { SensitivityResponseDataset } from "../utils/sensitivityResponseCalculator";
+import type { SensitivityResponseDataset } from "../../../_shared/SensitivityProcessing/types";
+import type { SensitivityDataScaler } from "../utils/sensitivityDataScaler";
 
 export interface SensitivityTableProps {
     sensitivityResponseDataset: SensitivityResponseDataset;
-    hideZeroY: boolean;
+    sensitivityDataScaler: SensitivityDataScaler;
     onSelectedSensitivity?: (selectedSensitivity: SelectedSensitivity) => void;
 }
-const numFormat = (number: number): string => {
-    return Intl.NumberFormat("en", { notation: "compact", minimumFractionDigits: 2, maximumFractionDigits: 3 }).format(
-        number,
+
+type TableRowData = {
+    response: string;
+    sensitivity: string;
+    deltaLow: string;
+    deltaHigh: string;
+    trueLow: string;
+    trueHigh: string;
+    lowReals: number;
+    highReals: number;
+    reference: string;
+};
+const numFormat = (number: number, isPercentage = false): string => {
+    return (
+        Intl.NumberFormat("en", {
+            notation: "compact",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+            style: "decimal",
+        }).format(number) + (isPercentage ? "%" : "")
     );
 };
-enum TableColumns {
-    RESPONSE = "Response",
-    SENSITIVITY = "Sensitivity",
-    DELTA_LOW = "Delta low",
-    DELTA_HIGH = "Delta high",
-    TRUE_LOW = "True low",
-    TRUE_HIGH = "True high",
-    LOW_REALS = "Low #reals",
-    HIGH_REALS = "High #reals",
-    REFERENCE = "Reference",
-}
-const tableHeading: TableHeading = {
-    [TableColumns.RESPONSE]: { label: TableColumns.RESPONSE, sizeInPercent: 9 },
-    [TableColumns.SENSITIVITY]: { label: TableColumns.SENSITIVITY, sizeInPercent: 9 },
-    [TableColumns.DELTA_LOW]: { label: TableColumns.DELTA_LOW, sizeInPercent: 9 },
-    [TableColumns.DELTA_HIGH]: { label: TableColumns.DELTA_HIGH, sizeInPercent: 9 },
-    [TableColumns.TRUE_LOW]: { label: TableColumns.TRUE_LOW, sizeInPercent: 9 },
-    [TableColumns.TRUE_HIGH]: { label: TableColumns.TRUE_HIGH, sizeInPercent: 9 },
-    [TableColumns.LOW_REALS]: { label: TableColumns.LOW_REALS, sizeInPercent: 9 },
-    [TableColumns.HIGH_REALS]: { label: TableColumns.HIGH_REALS, sizeInPercent: 9 },
-    [TableColumns.REFERENCE]: { label: TableColumns.REFERENCE, sizeInPercent: 9 },
-};
 
-const SensitivityTable: React.FC<SensitivityTableProps> = (props) => {
-    const [tableRows, setTableRows] = React.useState<any>([]);
+const tableColumns: TableColumns<TableRowData> = [
+    {
+        _type: "data",
+        columnId: "response",
+        label: "Response",
+        sizeInPercent: 15,
+    },
+    {
+        _type: "data",
+        columnId: "sensitivity",
+        label: "Sensitivity",
+        sizeInPercent: 15,
+    },
+    {
+        _type: "data",
+        columnId: "deltaLow",
+        label: "Delta low",
+        sizeInPercent: 10,
+    },
+    {
+        _type: "data",
+        columnId: "deltaHigh",
+        label: "Delta high",
+        sizeInPercent: 10,
+    },
+    {
+        _type: "data",
+        columnId: "trueLow",
+        label: "True low",
+        sizeInPercent: 10,
+    },
+    {
+        _type: "data",
+        columnId: "trueHigh",
+        label: "True high",
+        sizeInPercent: 10,
+    },
+    {
+        _type: "data",
+        columnId: "lowReals",
+        label: "Low #reals",
+        sizeInPercent: 10,
+    },
+    {
+        _type: "data",
+        columnId: "highReals",
+        label: "High #reals",
+        sizeInPercent: 10,
+    },
+    {
+        _type: "data",
+        columnId: "reference",
+        label: "Reference",
+        sizeInPercent: 10,
+    },
+];
 
-    React.useEffect(() => {
-        let filteredSensitivityResponses = props.sensitivityResponseDataset.sensitivityResponses;
-        if (props.hideZeroY) {
-            filteredSensitivityResponses = filteredSensitivityResponses.filter(
-                (s) => s.lowCaseReferenceDifference !== 0.0 || s.highCaseReferenceDifference !== 0.0,
-            );
-        }
-        const rows = filteredSensitivityResponses
-            .slice()
-            .reverse()
-            .map((sensitivityResponse) => ({
-                [TableColumns.RESPONSE]: props.sensitivityResponseDataset.responseName,
-                [TableColumns.SENSITIVITY]: sensitivityResponse.sensitivityName,
-                [TableColumns.DELTA_LOW]: numFormat(sensitivityResponse.lowCaseReferenceDifference),
-                [TableColumns.DELTA_HIGH]: numFormat(sensitivityResponse.highCaseReferenceDifference),
-                [TableColumns.TRUE_LOW]: numFormat(sensitivityResponse.lowCaseAverage),
-                [TableColumns.TRUE_HIGH]: numFormat(sensitivityResponse.highCaseAverage),
-                [TableColumns.LOW_REALS]: sensitivityResponse.lowCaseRealizations.length,
-                [TableColumns.HIGH_REALS]: sensitivityResponse.highCaseRealizations.length,
-                [TableColumns.REFERENCE]: props.sensitivityResponseDataset.referenceSensitivity,
-            }));
-        setTableRows(rows);
-    }, [props.sensitivityResponseDataset, props.hideZeroY]);
+const SensitivityTable: React.FC<SensitivityTableProps> = ({
+    sensitivityResponseDataset,
+    sensitivityDataScaler,
+    onSelectedSensitivity,
+}) => {
+    const isPercentage = sensitivityDataScaler.isRelativePercentage;
+    const tableRows: TableRowData[] = sensitivityResponseDataset.sensitivityResponses
+        .slice()
+        .reverse()
+        .map((sensitivityResponse) => ({
+            response: sensitivityResponseDataset.responseName || "",
+            sensitivity: sensitivityResponse.sensitivityName,
+            deltaLow: numFormat(sensitivityDataScaler.calculateLowLabelValue(sensitivityResponse), isPercentage),
+            deltaHigh: numFormat(sensitivityDataScaler.calculateHighLabelValue(sensitivityResponse), isPercentage),
+            trueLow: numFormat(sensitivityResponse.lowCaseAverage),
+            trueHigh: numFormat(sensitivityResponse.highCaseAverage),
+            lowReals: sensitivityResponse.lowCaseRealizations.length,
+            highReals: sensitivityResponse.highCaseRealizations.length,
+            reference: numFormat(sensitivityResponseDataset.referenceAverage),
+        }));
 
-    const handleClick = (row: TableProps<TableHeading>["data"][0]) => {
-        if (props.onSelectedSensitivity) {
+    const handleClick = (id: string, row: TableRowData) => {
+        if (onSelectedSensitivity) {
             const selectedSensitivity: SelectedSensitivity = {
-                selectedSensitivity: row.Sensitivity as string,
+                selectedSensitivity: row.sensitivity,
                 selectedSensitivityCase: null,
             };
 
-            props.onSelectedSensitivity(selectedSensitivity);
+            onSelectedSensitivity(selectedSensitivity);
         }
     };
-    return <TableDeprecated headings={tableHeading} data={tableRows} onClick={handleClick} />;
+
+    return <Table columns={tableColumns} rows={tableRows} rowIdentifier="sensitivity" onRowClick={handleClick} />;
 };
 
 export default SensitivityTable;
