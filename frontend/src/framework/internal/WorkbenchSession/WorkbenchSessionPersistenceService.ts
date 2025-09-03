@@ -418,6 +418,10 @@ export class WorkbenchSessionPersistenceService
                     description: metadata.description ?? null,
                     content: objectToJsonString(this._workbenchSession.getContent()),
                 });
+
+                // ! Make sure you remove the localStorage backup BEFORE you store the new session id
+                this.removeFromLocalStorage();
+
                 this._workbenchSession.setId(id);
                 toast.dismiss(toastId);
                 toast.success("Session successfully created and persisted.");
