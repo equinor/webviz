@@ -12,18 +12,18 @@ from .sumo_client_factory import create_sumo_client
 class TableAccess:
     """Generic access to Sumo tables"""
 
-    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, ensemble_name: str):
         self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
-        self._iteration_name: str = iteration_name
+        self._ensemble_name: str = ensemble_name
         self._ensemble_context = SearchContext(sumo=self._sumo_client).filter(
-            uuid=self._case_uuid, iteration=self._iteration_name
+            uuid=self._case_uuid, ensemble=self._ensemble_name
         )
 
     @classmethod
-    def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "TableAccess":
+    def from_ensemble_name(cls, access_token: str, case_uuid: str, ensemble_name: str) -> "TableAccess":
         sumo_client = create_sumo_client(access_token)
-        return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
+        return cls(sumo_client=sumo_client, case_uuid=case_uuid, ensemble_name=ensemble_name)
 
     async def get_table_schemas_single_realization_async(self, realization: int = 0) -> List[SumoTableSchema]:
         """Get all table descriptions for a given realization"""
@@ -47,7 +47,7 @@ class TableAccess:
     ) -> pa.Table:
         """Get a pyarrow table for a given realization"""
 
-        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
         table_loader.require_tagname(table_schema.tagname)
         table_loader.require_table_name(table_schema.name)
 
