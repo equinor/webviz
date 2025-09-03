@@ -25,7 +25,11 @@ import {
     removeSessionIdFromUrl,
 } from "./internal/WorkbenchSession/SessionUrlService";
 import { loadSnapshotFromBackend } from "./internal/WorkbenchSession/SnapshotLoader";
-import { readSnapshotIdFromUrl, removeSnapshotIdFromUrl } from "./internal/WorkbenchSession/SnapshotUrlService";
+import {
+    buildSnapshotUrl,
+    readSnapshotIdFromUrl,
+    removeSnapshotIdFromUrl,
+} from "./internal/WorkbenchSession/SnapshotUrlService";
 import { localStorageKeyForSessionId } from "./internal/WorkbenchSession/utils";
 import {
     loadAllWorkbenchSessionsFromLocalStorage,
@@ -221,8 +225,11 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         }
     }
 
-    private async openSnapshot(snapshotId: string): Promise<void> {
+    async openSnapshot(snapshotId: string): Promise<void> {
         try {
+            const url = buildSnapshotUrl(snapshotId);
+            window.history.pushState({}, "", url);
+
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
             const snapshotData = await loadSnapshotFromBackend(this._queryClient, snapshotId);
             const snapshot = await PrivateWorkbenchSession.fromDataContainer(
@@ -241,6 +248,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
                 );
                 this._guiMessageBroker.setState(GuiState.RightSettingsPanelWidthInPercent, 0);
             }
+            this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
             return;
         } catch (error: any) {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
