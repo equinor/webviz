@@ -28,7 +28,7 @@ async def get_vfp_table_names(
 ) -> list[str]:
     perf_metrics = ResponsePerfMetrics(response)
 
-    vfp_access = VfpAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    vfp_access = VfpAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     perf_metrics.record_lap("get-access")
     vfp_table_names = await vfp_access.get_all_vfp_table_names_for_realization_async(realization=realization)
     perf_metrics.record_lap("get-available-vfp-table-names")
@@ -50,7 +50,7 @@ async def get_vfp_table(
 ) -> schemas.VfpProdTable | schemas.VfpInjTable:
     perf_metrics = ResponsePerfMetrics(response)
 
-    vfp_access = VfpAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    vfp_access = VfpAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     perf_metrics.record_lap("get-access")
     try:
         vfp_table: VfpProdTable | VfpInjTable = await vfp_access.get_vfp_table_from_tagname_async(
