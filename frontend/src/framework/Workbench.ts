@@ -402,6 +402,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             }
             this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
             this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
+            this._guiMessageBroker.setState(GuiState.EditSessionDialogOpen, false);
             this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
             return;
         }
