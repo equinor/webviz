@@ -836,7 +836,7 @@ docs = ["pydocstyle"]
 
 [[package]]
 name = "fmu-sumo"
-version = "2.4.11.dev5+gd6d4fcd5a"
+version = "2.5.1.dev4+gb9a21bf87"
 description = "Python package for interacting with Sumo in an FMU setting"
 optional = false
 python-versions = ">=3.11"
@@ -857,8 +857,8 @@ test = ["OpenVDS ; sys_platform != \"darwin\" and python_version < \"3.12\"", "p
 [package.source]
 type = "git"
 url = "https://github.com/equinor/fmu-sumo"
-reference = "feat/aggregation-no-wait"
-resolved_reference = "d6d4fcd5a57d817c71524b6ba577b33b68357219"
+reference = "main"
+resolved_reference = "b9a21bf872b5720e8f07a7b6e8700cd869477925"
 
 [[package]]
 name = "fonttools"
@@ -3987,4 +3987,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "8291d2e4b08ce537394a0c90d4884ea0be77c0d964800fdf57b35f143c28b6b0"
+content-hash = "2600ae31ce912324ec9860af6de519ed3c2a559e7034c133938375d0010cd8ce"
