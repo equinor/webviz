@@ -32,7 +32,7 @@ async def get_realization_flow_network(
     group_tree_access = GroupTreeAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    summary_access = SummaryAccess.from_iteration_name(
+    summary_access = SummaryAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     summary_frequency = Frequency.from_string_value(resampling_frequency.value)

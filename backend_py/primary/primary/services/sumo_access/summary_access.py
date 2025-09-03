@@ -33,32 +33,32 @@ LOGGER = logging.getLogger(__name__)
 
 
 class SummaryAccess:
-    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, ensemble_name: str):
         self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
-        self._iteration_name: str = iteration_name
+        self._ensemble_name: str = ensemble_name
 
     @classmethod
-    def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "SummaryAccess":
+    def from_ensemble_name(cls, access_token: str, case_uuid: str, ensemble_name: str) -> "SummaryAccess":
         sumo_client = create_sumo_client(access_token)
-        return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
+        return cls(sumo_client=sumo_client, case_uuid=case_uuid, ensemble_name=ensemble_name)
 
     @otel_span_decorator()
     async def get_available_vectors_async(self) -> List[VectorInfo]:
         timer = PerfTimer()
 
         table_context = SearchContext(sumo=self._sumo_client).tables.filter(
-            uuid=self._case_uuid, iteration=self._iteration_name, tagname="summary"
+            uuid=self._case_uuid, ensemble=self._ensemble_name, tagname="summary"
         )
 
         table_names = await table_context.names_async
         if len(table_names) == 0:
             raise NoDataError(
-                f"No summary tables found in case={self._case_uuid}, iteration={self._iteration_name}", Service.SUMO
+                f"No summary tables found in case={self._case_uuid}, ensemble={self._ensemble_name}", Service.SUMO
             )
         if len(table_names) > 1:
             raise MultipleDataMatchesError(
-                f"Multiple summary tables found in case={self._case_uuid}, iteration={self._iteration_name}: {table_names=}",
+                f"Multiple summary tables found in case={self._case_uuid}, ensemble={self._ensemble_name}: {table_names=}",
                 Service.SUMO,
             )
         column_names = await table_context.columns_async
@@ -108,7 +108,7 @@ class SummaryAccess:
         """
         timer = PerfTimer()
 
-        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
         # New metadata uses simulationtimeseries, but most existing cases use timeseries
         table_loader.require_content_type(["timeseries", "simulationtimeseries"])
         table = await table_loader.get_aggregated_single_column_async(vector_name)
@@ -208,7 +208,7 @@ class SummaryAccess:
             raise InvalidParameterError("List of requested vector names is empty", Service.SUMO)
 
         timer = PerfTimer()
-        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
         table_loader.require_content_type(["timeseries", "simulationtimeseries"])
         table = await table_loader.get_single_realization_async(realization)
 
@@ -271,7 +271,7 @@ class SummaryAccess:
         if not hist_vec_name:
             return None
 
-        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
         table_loader.require_content_type(["timeseries", "simulationtimeseries"])
         table = await table_loader.get_aggregated_single_column_async(hist_vec_name)
         _validate_single_vector_table(table, hist_vec_name)
