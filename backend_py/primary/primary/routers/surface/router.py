@@ -248,7 +248,7 @@ async def post_get_sample_surface_in_points(
     result_arr: List[RealizationSampleResult] = await batch_sample_surface_in_points_async(
         sumo_access_token=sumo_access_token,
         case_uuid=case_uuid,
-        iteration_name=ensemble_name,
+        ensemble_name=ensemble_name,
         surface_name=surface_name,
         surface_attribute=surface_attribute,
         realizations=realization_nums,
