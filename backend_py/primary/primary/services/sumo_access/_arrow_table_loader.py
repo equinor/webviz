@@ -18,10 +18,10 @@ LOGGER = logging.getLogger(__name__)
 
 
 class ArrowTableLoader:
-    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, ensemble_name: str):
         self._sumo_client: SumoClient = sumo_client
         self._case_uuid: str = case_uuid
-        self._iteration_name: str = iteration_name
+        self._ensemble_name: str = ensemble_name
         self._req_table_name: str | None = None
         self._req_content_types: list[str] | None = None
         self._req_tagname: str | None = None
@@ -50,7 +50,7 @@ class ArrowTableLoader:
 
         sc_tables_basis = SearchContext(sumo=self._sumo_client).tables.filter(
             uuid=self._case_uuid,
-            iteration=self._iteration_name,
+            ensemble=self._ensemble_name,
             column=column_name,
             name=self._req_table_name,
             content=self._req_content_types,
@@ -178,7 +178,7 @@ class ArrowTableLoader:
 
         sc_tables = SearchContext(sumo=self._sumo_client).tables.filter(
             uuid=self._case_uuid,
-            iteration=self._iteration_name,
+            ensemble=self._ensemble_name,
             realization=realization,
             name=self._req_table_name,
             content=self._req_content_types,
