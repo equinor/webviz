@@ -24,21 +24,21 @@ ALLOWED_RFT_RESPONSE_NAMES = ["PRESSURE", "SGAS", "SWAT", "SOIL"]
 
 
 class RftAccess:
-    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, ensemble_name: str):
         self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
-        self._iteration_name: str = iteration_name
+        self._ensemble_name: str = ensemble_name
         self._ensemble_context = SearchContext(sumo=self._sumo_client).filter(
-            uuid=self._case_uuid, iteration=self._iteration_name
+            uuid=self._case_uuid, ensemble=self._ensemble_name
         )
 
     @classmethod
-    def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "RftAccess":
+    def from_ensemble_name(cls, access_token: str, case_uuid: str, ensemble_name: str) -> "RftAccess":
         sumo_client = create_sumo_client(access_token)
-        return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
+        return cls(sumo_client=sumo_client, case_uuid=case_uuid, ensemble_name=ensemble_name)
 
     async def get_rft_info_async(self) -> RftTableDefinition:
-        """Get a collection of rft tables for a case and iteration"""
+        """Get a collection of rft tables for a case and ensemble"""
         timer = PerfMetrics()
 
         table_context = self._ensemble_context.filter(cls="table", tagname="rft")
@@ -48,18 +48,18 @@ class RftAccess:
 
         if len(table_names) == 0:
             raise NoDataError(
-                f"No rft tables found in case={self._case_uuid}, iteration={self._iteration_name}", Service.SUMO
+                f"No rft tables found in case={self._case_uuid}, ensemble={self._ensemble_name}", Service.SUMO
             )
         if len(table_names) > 1:
             raise MultipleDataMatchesError(
-                f"Multiple rft tables found in case={self._case_uuid}, iteration={self._iteration_name}: {table_names=}",
+                f"Multiple rft tables found in case={self._case_uuid}, ensemble={self._ensemble_name}: {table_names=}",
                 Service.SUMO,
             )
 
         columns = await table_context.columns_async
         available_response_names = [col for col in columns if col in ALLOWED_RFT_RESPONSE_NAMES]
 
-        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
         table_loader.require_content_type("rft")
         table_loader.require_table_name(table_names[0])
         table = await table_loader.get_aggregated_multiple_columns_async(available_response_names)
@@ -76,7 +76,7 @@ class RftAccess:
             rft_well_infos.append(RftWellInfo(well_name=well_name, timestamps_utc_ms=timestamps_utc_ms))
 
         timer.record_lap("process_well_infos")
-        LOGGER.debug(f"{timer.to_string()}, {self._case_uuid=}, {self._iteration_name=}")
+        LOGGER.debug(f"{timer.to_string()}, {self._case_uuid=}, {self._ensemble_name=}")
         return RftTableDefinition(response_names=available_response_names, well_infos=rft_well_infos)
 
     async def get_rft_well_realization_data_async(
@@ -90,7 +90,7 @@ class RftAccess:
         timer = PerfMetrics()
         column_names = [response_name, "DEPTH"]
 
-        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
         table_loader.require_content_type("rft")
 
         table = await table_loader.get_aggregated_multiple_columns_async(column_names)
@@ -126,6 +126,6 @@ class RftAccess:
         ret_arr_rows = polars_table.iter_rows(named=True)
         ret_arr = [RftRealizationData(**row) for row in ret_arr_rows]
         LOGGER.debug(
-            f"{timer.to_string()}, {self._case_uuid=}, {self._iteration_name=}, {well_name=}, {response_name=}"
+            f"{timer.to_string()}, {self._case_uuid=}, {self._ensemble_name=}, {well_name=}, {response_name=}"
         )
         return ret_arr
