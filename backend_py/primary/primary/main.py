@@ -34,6 +34,7 @@ from primary.routers.timeseries.router import router as timeseries_router
 from primary.routers.vfp.router import router as vfp_router
 from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
+from primary.services.sumo_access.sumo_fingerprinter import SumoFingerprinterFactory
 from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from primary.services.utils.task_meta_tracker import TaskMetaTrackerFactory
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry
@@ -73,6 +74,7 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
 
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
+    SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
 
     yield
 

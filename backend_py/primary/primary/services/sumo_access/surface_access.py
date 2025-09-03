@@ -1,11 +1,12 @@
 import asyncio
 import logging
 import time
+from dataclasses import dataclass
 from io import BytesIO
 from typing import Sequence
 
-import xtgeo
 import httpx
+import xtgeo
 
 from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.explorer import SumoClient, SearchContext
@@ -29,8 +30,6 @@ from .generic_types import SumoContent
 from .queries.surface_queries import SurfTimeType, SurfInfo, TimePoint, TimeInterval
 from .queries.surface_queries import RealizationSurfQueries, ObservedSurfQueries
 from .sumo_client_factory import create_sumo_client
-
-from dataclasses import dataclass
 
 
 LOGGER = logging.getLogger(__name__)

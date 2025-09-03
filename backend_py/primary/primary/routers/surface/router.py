@@ -1,26 +1,27 @@
 import asyncio
-import time
 import logging
-import xtgeo
+import time
 from hashlib import sha256
 from typing import Annotated, List, Optional, Literal
 
+import xtgeo
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
-from webviz_pkg.core_utils.timestamp_utils import timestamp_utc_ms_to_iso_str
 
 from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.sumo_access.surface_access import SurfaceAccess
+from primary.services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user, SumoFingerprinter
+from primary.services.sumo_access.surface_access import ExpectedError, InProgress
 from primary.services.smda_access import SmdaAccess, StratigraphicUnit
 from primary.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
 from primary.services.smda_access.drogon import DrogonSmdaAccess
 from primary.services.utils.statistic_function import StatisticFunction
 from primary.services.utils.surface_intersect_with_polyline import intersect_surface_with_polyline
 from primary.services.utils.authenticated_user import AuthenticatedUser
+from primary.services.utils.task_meta_tracker import get_task_meta_tracker_for_user
 from primary.auth.auth_helper import AuthHelper
 from primary.services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
 from primary.services.surface_query_service.surface_query_service import RealizationSampleResult
-from primary.services.utils.task_meta_tracker import get_task_meta_tracker_for_user
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.drogon import is_drogon_identifier
 
@@ -32,8 +33,6 @@ from . import dependencies
 
 from .surface_address import RealizationSurfaceAddress, ObservedSurfaceAddress, StatisticalSurfaceAddress
 from .surface_address import decode_surf_addr_str
-
-from primary.services.sumo_access.surface_access import ExpectedError, InProgress
 
 
 LOGGER = logging.getLogger(__name__)
@@ -233,7 +232,6 @@ async def get_statistical_surface_data_hybrid(
     # fmt:on
 ) -> LroSuccessResp[schemas.SurfaceDataFloat | schemas.SurfaceDataPng] | LroInProgressResp | LroFailureResp:
 
-    perf_metrics = ResponsePerfMetrics(response)
     LOGGER.info(f"Getting HYBRID statistical surface data for address: {surf_addr_str}")
 
     addr = decode_surf_addr_str(surf_addr_str)
@@ -242,10 +240,9 @@ async def get_statistical_surface_data_hybrid(
 
     access_token = authenticated_user.get_sumo_access_token()
 
-    case_inspector = CaseInspector.from_case_uuid(access_token, addr.case_uuid)
-    timestamps = await case_inspector.get_iteration_timestamps_async(addr.ensemble_name)
-    last_updated_iso_str = timestamp_utc_ms_to_iso_str(timestamps.data_updated_at_utc_ms)
-    LOGGER.debug(f"Most recent timestamp as iso str: {last_updated_iso_str}")
+    fingerprinter: SumoFingerprinter = get_sumo_fingerprinter_for_user(authenticated_user=authenticated_user, cache_ttl_s=1)
+    ensemble_fp = await fingerprinter.get_or_compute_ensemble_fingerprint_async(addr.case_uuid, addr.ensemble_name, "surface")
+    LOGGER.debug(f"Ensemble fingerprint: {ensemble_fp=}")
 
     # !!!!!!!!!!!!!
     # Todo!
