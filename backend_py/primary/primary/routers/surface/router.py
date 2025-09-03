@@ -70,7 +70,7 @@ async def get_realization_surfaces_metadata(
     perf_metrics = ResponsePerfMetrics(response)
 
     async with asyncio.TaskGroup() as tg:
-        access = SurfaceAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+        access = SurfaceAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
         case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
 
         surf_meta_task = tg.create_task(access.get_realization_surfaces_metadata_async())
@@ -107,7 +107,7 @@ async def get_observed_surfaces_metadata(
     perf_metrics = ResponsePerfMetrics(response)
 
     async with asyncio.TaskGroup() as tg:
-        access = SurfaceAccess.from_case_uuid_no_iteration(authenticated_user.get_sumo_access_token(), case_uuid)
+        access = SurfaceAccess.from_case_uuid_no_ensemble(authenticated_user.get_sumo_access_token(), case_uuid)
         case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
 
         surf_meta_task = tg.create_task(access.get_observed_surfaces_metadata_async())
@@ -151,7 +151,7 @@ async def get_surface_data(
         raise HTTPException(status_code=404, detail="Endpoint only supports address types REAL, OBS and STAT")
 
     if addr.address_type == "REAL":
-        access = SurfaceAccess.from_iteration_name(access_token, addr.case_uuid, addr.ensemble_name)
+        access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
         xtgeo_surf = await access.get_realization_surface_data_async(
             real_num=addr.realization,
             name=addr.name,
@@ -165,7 +165,7 @@ async def get_surface_data(
         if service_stat_func_to_compute is None:
             raise HTTPException(status_code=404, detail="Invalid statistic requested")
 
-        access = SurfaceAccess.from_iteration_name(access_token, addr.case_uuid, addr.ensemble_name)
+        access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
         xtgeo_surf = await access.get_statistical_surface_data_async(
             statistic_function=service_stat_func_to_compute,
             name=addr.name,
@@ -176,7 +176,7 @@ async def get_surface_data(
         perf_metrics.record_lap("sumo-calc")
 
     elif addr.address_type == "OBS":
-        access = SurfaceAccess.from_case_uuid_no_iteration(access_token, addr.case_uuid)
+        access = SurfaceAccess.from_case_uuid_no_ensemble(access_token, addr.case_uuid)
         xtgeo_surf = await access.get_observed_surface_data_async(
             name=addr.name, attribute=addr.attribute, time_or_interval_str=addr.iso_time_or_interval
         )
@@ -215,7 +215,7 @@ async def post_get_surface_intersection(
     The surface intersection data for surface name contains: An array of z-points, i.e. one z-value/depth per (x, y)-point in polyline,
     and cumulative lengths, the accumulated length at each z-point in the array.
     """
-    access = SurfaceAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = SurfaceAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     surface = await access.get_realization_surface_data_async(
         real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval_str
