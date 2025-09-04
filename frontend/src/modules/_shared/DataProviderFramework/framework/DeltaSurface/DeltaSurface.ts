@@ -1,7 +1,8 @@
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
+
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SettingsContextDelegateTopic } from "../../delegates/SettingsContextDelegate";
-import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import type { ItemGroup } from "../../interfacesAndTypes/entities";
 import type { SerializedDeltaSurface } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
@@ -11,13 +12,14 @@ import type { DataProviderManager } from "../DataProviderManager/DataProviderMan
 export class DeltaSurface implements ItemGroup {
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
-    private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
+    private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
+        new UnsubscribeFunctionsManagerDelegate();
     private _childrenDataProviderSet: Set<DataProvider<any, any>> = new Set();
 
     constructor(name: string, dataProviderManager: DataProviderManager) {
         this._groupDelegate = new GroupDelegate(this);
 
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "children",
             this._groupDelegate.getPublishSubscribeDelegate().makeSubscriberFunction(GroupDelegateTopic.CHILDREN)(
                 () => {
@@ -31,7 +33,7 @@ export class DeltaSurface implements ItemGroup {
     }
 
     private handleChildrenChange(): void {
-        this._unsubscribeHandler.unsubscribe("providers");
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("providers");
 
         for (const provider of this._childrenDataProviderSet) {
             provider.setIsSubordinated(false);
@@ -44,7 +46,7 @@ export class DeltaSurface implements ItemGroup {
                 child.setIsSubordinated(true);
                 this._childrenDataProviderSet.add(child);
 
-                this._unsubscribeHandler.registerUnsubscribeFunction(
+                this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                     "providers",
                     child
                         .getSettingsContextDelegate()

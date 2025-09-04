@@ -8,7 +8,6 @@ import type { ViewContext } from "@framework/ModuleContext";
 import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 
-
 import type { SubsurfaceViewerWrapperProps } from "./SubsurfaceViewerWrapper";
 import { SubsurfaceViewerWrapper } from "./SubsurfaceViewerWrapper";
 
@@ -16,7 +15,7 @@ export type HoverUpdateWrapperProps = {
     wellboreUuid: string | null;
     intersectionReferenceSystem?: IntersectionReferenceSystem;
     workbenchServices: WorkbenchServices;
-    viewContext: ViewContext<any>;
+    viewContext: ViewContext<any, any>;
 } & SubsurfaceViewerWrapperProps;
 
 export function HoverUpdateWrapper(props: HoverUpdateWrapperProps): React.ReactNode {

@@ -44,7 +44,7 @@ e.g. typically when a new dependency is added, the relevant component needs to b
 All the content in `/frontend/src/api/autogen` is auto-generated using the defined endpoints
 in the Python backend. In order to update the auto-generated code you can either
 
-1. Run `npm run generate-api --prefix ./frontend`.
+1. Run `npm run generate:api --prefix ./frontend`.
 2. Use the VSCode tasks shortcut:
    a) `Ctrl + P` to open the command palette.
    b) Type `> Tasks` and enter to filter to commands only.
