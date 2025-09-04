@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
+
 from pydantic import BaseModel, computed_field
 from pydantic.json_schema import SkipJsonSchema
 
@@ -59,10 +60,10 @@ class NewSession(BaseModel):
 
 
 class SessionSortBy(str, Enum):
-    CREATED_AT = "created_at"
-    UPDATED_AT = "updated_at"
-    TITLE = "title"
-    TITLE_LOWER = "title_lower"
+    CREATED_AT = "metadata.created_at"
+    UPDATED_AT = "metadata.updated_at"
+    TITLE = "metadata.title"
+    TITLE_LOWER = "metadata.title__lower"
 
 
 class SessionSortDirection(str, Enum):

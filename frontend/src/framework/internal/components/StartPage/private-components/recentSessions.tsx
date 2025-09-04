@@ -24,7 +24,7 @@ export function RecentSessions(props: RecentSessionsProps) {
     const sessionsQuery = useQuery({
         ...getSessionsMetadataOptions({
             query: {
-                sort_by: SessionSortBy_api.UPDATED_AT,
+                sort_by: SessionSortBy_api.METADATA_UPDATED_AT,
                 sort_direction: SortDirection_api.DESC,
                 limit: 6,
             },

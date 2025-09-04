@@ -720,10 +720,10 @@ export type SessionMetadataWithId_api = {
 };
 
 export enum SessionSortBy_api {
-    CREATED_AT = "created_at",
-    UPDATED_AT = "updated_at",
-    TITLE = "title",
-    TITLE_LOWER = "title_lower",
+    METADATA_CREATED_AT = "metadata.created_at",
+    METADATA_UPDATED_AT = "metadata.updated_at",
+    METADATA_TITLE = "metadata.title",
+    METADATA_TITLE_LOWER = "metadata.title__lower",
 }
 
 export type SessionUpdate_api = {
@@ -3946,6 +3946,18 @@ export type GetSessionsMetadataData_api = {
          */
         limit?: number;
         page?: number;
+        /**
+         * Filter results by title (case insensitive)
+         */
+        filter_title?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_updated_from?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_updated_to?: string | null;
         t?: number;
     };
     url: "/sessions/sessions";

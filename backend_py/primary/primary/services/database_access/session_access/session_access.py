@@ -6,7 +6,7 @@ from primary.services.database_access.session_access.model import SessionDocumen
 from primary.services.database_access._utils import hash_json_string, cast_query_params
 from primary.services.service_exceptions import Service, ServiceRequestError
 from primary.services.database_access.container_access import ContainerAccess
-from primary.services.database_access.query_collation_options import QueryCollationOptions, SortDirection
+from primary.services.database_access.query_collation_options import QueryCollationOptions, SortDirection, Filter
 from primary.services.database_access.session_access.types import (
     NewSession,
     SessionMetadataWithId,
@@ -68,10 +68,22 @@ class SessionAccess:
         sort_direction: SortDirection | None,
         limit: int | None,
         offset: int | None,
+        filter_title: str | None,
+        filter_updated_from: str | None,
+        filter_updated_to: str | None,
     ) -> List[SessionMetadataWithId]:
         try:
             sort_by_lowercase = sort_by in CASING_FIELD_LOOKUP.keys()
             sort_by = CASING_FIELD_LOOKUP.get(sort_by, sort_by)
+
+            filters: list[Filter] = [Filter("owner_id", self.user_id)]
+
+            if filter_title:
+                filters.append(Filter(SessionSortBy.TITLE_LOWER.value, filter_title.lower(), "CONTAINS"))
+            if filter_updated_from:
+                filters.append(Filter(SessionSortBy.UPDATED_AT.value, filter_updated_from, "MORE", "from"))
+            if filter_updated_to:
+                filters.append(Filter(SessionSortBy.UPDATED_AT.value, filter_updated_to, "LESS", "to"))
 
             collation_options = QueryCollationOptions(
                 sort_lowercase=sort_by_lowercase,
@@ -79,11 +91,12 @@ class SessionAccess:
                 sort_by=sort_by,
                 offset=offset,
                 limit=limit,
+                filters=filters,
             )
 
-            query = "SELECT * from c WHERE c.owner_id = @owner_id"
-            params = cast_query_params([{"name": "@owner_id", "value": self.user_id}])
-            search_options = collation_options.to_sql_query_string("c.metadata")
+            query = "SELECT * from c"
+            params = collation_options.make_query_params()
+            search_options = collation_options.to_sql_query_string()
 
             if search_options:
                 query = f"{query} {search_options}"
