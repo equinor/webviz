@@ -7,9 +7,11 @@ import { KeyKind } from "@framework/DataChannelTypes";
 import type { ModuleViewProps } from "@framework/Module";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
+import { useColorSet } from "@framework/WorkbenchSettings";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage/contentMessage";
 
 import { createSensitivityColorMap } from "../../_shared/sensitivityColors";
@@ -30,7 +32,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     const referenceSensitivityName = viewContext.useSettingsToViewInterfaceValue("referenceSensitivityName");
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const ensembleSet = useEnsembleSet(workbenchSession);
+    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.EnsembleSet);
 
     const responseReceiver = viewContext.useChannelReceiver({
         receiverIdString: "response",
@@ -60,7 +62,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     }
 
     const sensitivities = channelEnsemble?.getSensitivities();
-    const colorSet = workbenchSettings.useColorSet();
+    const colorSet = useColorSet(workbenchSettings);
     const sensitivitiesColorMap = createSensitivityColorMap(
         sensitivities?.getSensitivityNames().sort() ?? [],
         colorSet,
