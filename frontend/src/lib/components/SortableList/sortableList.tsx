@@ -285,7 +285,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
             }
 
             function getItemPositionInGroup(item: HTMLElement, ignoreItem?: HTMLElement): number {
-                let group = item.parentElement?.closest("[data-sortable='group']") as HTMLElement | null;
+                let group = item.parentElement?.closest("[data-sortable-list-group-content='']") as HTMLElement | null;
                 if (!group || !(group instanceof HTMLElement)) {
                     group = currentListRef;
                 }
