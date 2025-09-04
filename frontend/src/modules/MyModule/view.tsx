@@ -403,13 +403,37 @@ for (let i = 0; i < countryData.length; i += 2) {
     alcConsumption.push(countryData[i + 1] as number);
 }
 
+type ItemOrGroup = {
+    id: string;
+    type: "item" | "group";
+    children?: ItemOrGroup[];
+};
+
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const type = props.viewContext.useSettingsToViewInterfaceValue("type");
     const gradientType = props.viewContext.useSettingsToViewInterfaceValue("gradientType");
     const min = props.viewContext.useSettingsToViewInterfaceValue("min");
     const max = props.viewContext.useSettingsToViewInterfaceValue("max");
     const divMidPoint = props.viewContext.useSettingsToViewInterfaceValue("divMidPoint");
-    const [items, setItems] = React.useState<string[]>(["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]);
+    const [items, setItems] = React.useState<ItemOrGroup[]>([
+        {
+            id: "Group 1",
+            type: "group",
+            children: [
+                { id: "Item 1", type: "item" },
+                { id: "Item 2", type: "item" },
+            ],
+        },
+        {
+            id: "Group 2",
+            type: "group",
+            children: [
+                { id: "Item 3", type: "item" },
+                { id: "Item 4", type: "item" },
+                { id: "Item 5", type: "item" },
+            ],
+        },
+    ]);
 
     const ref = React.useRef<HTMLDivElement>(null);
 
@@ -444,11 +468,31 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     function onMove(movedItemId: string, originId: string | null, destinationId: string | null, position: number) {
         // Update the items state based on the move
         setItems((prevItems) => {
+            if (originId !== destinationId) {
+                // Handle moving between groups
+                const newItems = [...prevItems];
+                const originGroupIndex = newItems.findIndex((item) => item.id === originId && item.type === "group");
+                const destinationGroupIndex = newItems.findIndex(
+                    (item) => item.id === destinationId && item.type === "group",
+                );
+                if (originGroupIndex !== -1 && destinationGroupIndex !== -1) {
+                    const originGroup = newItems[originGroupIndex];
+                    const destinationGroup = newItems[destinationGroupIndex];
+                    if (originGroup.children && destinationGroup.children) {
+                        const movedItemIndex = originGroup.children.findIndex((item) => item.id === movedItemId);
+                        if (movedItemIndex !== -1) {
+                            const [movedItem] = originGroup.children.splice(movedItemIndex, 1);
+                            destinationGroup.children.splice(position, 0, movedItem);
+                        }
+                    }
+                }
+                return newItems;
+            }
             const newItems = [...prevItems];
-            const movedItemIndex = newItems.findIndex((item) => item === movedItemId);
+            const movedItemIndex = newItems.findIndex((item) => item.id === movedItemId);
             if (movedItemIndex !== -1) {
                 newItems.splice(movedItemIndex, 1);
-                newItems.splice(position, 0, movedItemId);
+                newItems.splice(position, 0, { id: movedItemId, type: "item" });
             }
             return newItems;
         });
@@ -465,32 +509,70 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     </tr>
                 </thead>
                 <SortableList.Content>
-                    <tbody>
-                        {items.map((item) => (
-                            <SortableList.Item
-                                key={item}
-                                id={item}
-                                dropIndicator={
-                                    <tr>
-                                        <td
-                                            colSpan={3}
-                                            className="h-4 bg-blue-200 border-t border-b border-blue-400"
-                                        ></td>
-                                    </tr>
+                    <SortableList.ScrollContainer>
+                        <tbody>
+                            {items.map((item) => {
+                                if (item.type === "item") {
+                                    return (
+                                        <SortableList.Item key={item.id} id={item.id}>
+                                            <tr>
+                                                <td>
+                                                    <SortableList.DragHandle>
+                                                        <DragIndicator
+                                                            fontSize="inherit"
+                                                            className="pointer-events-none"
+                                                        />
+                                                    </SortableList.DragHandle>
+                                                </td>
+                                                <td>{item.id}</td>
+                                                <td>Test</td>
+                                            </tr>
+                                        </SortableList.Item>
+                                    );
                                 }
-                            >
-                                <tr>
-                                    <td>
-                                        <SortableList.DragHandle>
-                                            <DragIndicator fontSize="inherit" className="pointer-events-none" />
-                                        </SortableList.DragHandle>
-                                    </td>
-                                    <td>{item}</td>
-                                    <td>Test</td>
-                                </tr>
-                            </SortableList.Item>
-                        ))}
-                    </tbody>
+                                if (item.type === "group") {
+                                    return (
+                                        <SortableList.Group key={item.id} id={item.id}>
+                                            <tr className="bg-gray-200">
+                                                <td colSpan={3} className="font-bold">
+                                                    <table className="w-full">
+                                                        <thead>
+                                                            <tr>
+                                                                <th></th>
+                                                                <th>Name</th>
+                                                                <th>Test</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <SortableList.GroupContent>
+                                                            <tbody>
+                                                                {item.children &&
+                                                                    item.children.map((child) => (
+                                                                        <SortableList.Item key={child.id} id={child.id}>
+                                                                            <tr>
+                                                                                <td>
+                                                                                    <SortableList.DragHandle>
+                                                                                        <DragIndicator
+                                                                                            fontSize="inherit"
+                                                                                            className="pointer-events-none"
+                                                                                        />
+                                                                                    </SortableList.DragHandle>
+                                                                                </td>
+                                                                                <td>{child.id}</td>
+                                                                                <td>Test</td>
+                                                                            </tr>
+                                                                        </SortableList.Item>
+                                                                    ))}
+                                                            </tbody>
+                                                        </SortableList.GroupContent>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </SortableList.Group>
+                                    );
+                                }
+                            })}
+                        </tbody>
+                    </SortableList.ScrollContainer>
                 </SortableList.Content>
             </table>
         </SortableList>

@@ -13,6 +13,10 @@ import { DragHandle } from "./sub-components/dragHandle";
 import { Group } from "./sub-components/Group";
 import { Item } from "./sub-components/Item";
 import { ScrollContainer } from "./sub-components/ScrollContainer";
+import { DropIndicatorOverlay } from "./sub-components/DropIndicatorOverlay";
+import { DragPlaceholderOverlay } from "./sub-components/DragPlaceholderOverlay";
+import { OverlayViewport } from "./sub-components/OverlayViewport";
+import { SortableListGroupContent } from "./sub-components/GroupContent";
 
 export enum ItemType {
     ITEM = "item",
@@ -69,6 +73,7 @@ export type SortableListCompound = React.FC<SortableListProps> & {
     Item: typeof Item;
     Group: typeof Group;
     DragHandle: typeof DragHandle;
+    GroupContent: typeof SortableListGroupContent;
 };
 
 const ITEM_TOP_AND_BOTTOM_AREA_SIZE_IN_PERCENT = 50;
@@ -91,6 +96,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
     const [isDragging, setIsDragging] = React.useState<boolean>(false);
     const [draggedItemId, setDraggedItemId] = React.useState<string | null>(null);
     const [hoveredItemIdAndArea, setHoveredItemIdAndArea] = React.useState<HoveredItemIdAndArea | null>(null);
+    const [draggedElement, setDraggedElement] = React.useState<HTMLElement | null>(null);
     const [dragPosition, setDragPosition] = React.useState<Vec2>({ x: 0, y: 0 });
     const [currentScrollPosition, setCurrentScrollPosition] = React.useState<number>(0);
     const [prevChildren, setPrevChildren] = React.useState<React.ReactNode>(props.children);
@@ -162,6 +168,9 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                 }
 
                 const element = sortableListItemProps.element;
+
+                setDraggedElement(element);
+
                 draggedElementInfo = {
                     element,
                     id: sortableListItemProps.id,
@@ -246,12 +255,14 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                     if (rectContainsPoint(element.getBoundingClientRect(), vec2FromPointerEvent(e))) {
                         const type = getItemType(element);
                         if (type === ItemType.GROUP) {
-                            const content = element.querySelector(".sortable-list-group-content");
+                            const content = element.querySelector(
+                                "[data-sortable-list-group-content]",
+                            ) as HTMLElement | null;
                             if (
                                 content &&
                                 rectContainsPoint(content.getBoundingClientRect(), vec2FromPointerEvent(e)) &&
-                                (content.getElementsByClassName("sortable-list-item").length > 0 ||
-                                    content.getElementsByClassName("sortable-list-group").length > 0)
+                                (content.querySelectorAll("[data-sortable='item']").length > 0 ||
+                                    content.getElementsByClassName("[data-sortable='group']").length > 0)
                             ) {
                                 continue;
                             }
@@ -274,7 +285,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
             }
 
             function getItemPositionInGroup(item: HTMLElement, ignoreItem?: HTMLElement): number {
-                let group = item.parentElement?.closest(".sortable-list-group-content");
+                let group = item.parentElement?.closest("[data-sortable='group']") as HTMLElement | null;
                 if (!group || !(group instanceof HTMLElement)) {
                     group = currentListRef;
                 }
@@ -288,7 +299,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                     if (elm === ignoreItem) {
                         continue;
                     }
-                    if (group.children[i] === item) {
+                    if (elm.dataset.itemId === item.dataset.itemId) {
                         return pos;
                     }
                     pos++;
@@ -501,6 +512,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                 draggedElementInfo = null;
                 currentlyHoveredElementInfo = null;
                 setIsDragging(false);
+                setDraggedElement(null);
                 setDraggedItemId(null);
                 setHoveredItemIdAndArea(null);
                 doScroll = false;
@@ -605,6 +617,14 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                         ></div>,
                     )}
             </SortableListContext.Provider>
+            <OverlayViewport rootEl={mainRef.current} scrollEl={scrollContainerElement}>
+                <DropIndicatorOverlay
+                    containerEl={contentContainerElement /* from Content registration */}
+                    scrollEl={scrollContainerElement /* from ScrollContainer marker, or null */}
+                    hovered={hoveredItemIdAndArea}
+                />
+                <DragPlaceholderOverlay scrollEl={scrollContainerElement} draggedItem={draggedElement} />
+            </OverlayViewport>
         </div>
     );
 } as SortableListCompound;
@@ -613,6 +633,7 @@ SortableList.Content = Content;
 SortableList.ScrollContainer = ScrollContainer;
 SortableList.Item = Item;
 SortableList.Group = Group;
+SortableList.GroupContent = SortableListGroupContent;
 SortableList.DragHandle = DragHandle;
 
 export enum HoveredArea {
@@ -734,7 +755,7 @@ function getDragElementsRecursively(parentElement: HTMLElement): HTMLElement[] {
         }
         if (child.getAttribute("data-sortable") === "group") {
             items.push(child);
-            const content = child.querySelector(".sortable-list-group-content");
+            const content = child.querySelector("[data-sortable-list-group-content]");
             if (content && content instanceof HTMLElement) {
                 items.push(...getDragElementsRecursively(content));
             }
