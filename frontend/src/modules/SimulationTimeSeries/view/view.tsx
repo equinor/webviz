@@ -17,8 +17,8 @@ import type { Interfaces } from "../interfaces";
 import type { VectorHexColorMap } from "../typesAndEnums";
 import { GroupBy } from "../typesAndEnums";
 
-import { userSelectedActiveTimestampUtcMsAtom } from "./atoms/baseAtoms";
 import { queryIsFetchingAtom, realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
+import { activeTimestampUtcMsAtom } from "./atoms/persistableFixableAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { usePlotBuilder } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
@@ -41,7 +41,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
     const anyLoading = useAtomValue(queryIsFetchingAtom);
 
-    const setActiveTimestampUtcMs = useSetAtom(userSelectedActiveTimestampUtcMsAtom);
+    const setActiveTimestampUtcMs = useSetAtom(activeTimestampUtcMsAtom);
 
     // Color palettes
     const colorSet = useColorSet(workbenchSettings);

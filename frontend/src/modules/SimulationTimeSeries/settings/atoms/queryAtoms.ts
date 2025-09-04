@@ -6,13 +6,11 @@ import { atomWithQueries } from "@framework/utils/atomUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { makeTimestampQueryParam } from "@framework/utils/queryUtils";
 
-import { selectedEnsembleIdentsAtom } from "./derivedAtoms";
-
-type T = <K extends object>(query: K) => K;
+import { selectedEnsembleIdentsAtom } from "./persistableFixableAtoms";
 
 export const vectorListQueriesAtom = atomWithQueries((get) => {
     const ensembleSet = get(EnsembleSetAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
 
     const queries = selectedEnsembleIdents.map((ensembleIdent) => {
         // Regular Ensemble
