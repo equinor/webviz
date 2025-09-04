@@ -1,10 +1,19 @@
 {
     "compilerOptions": {
+        "allowImportingTsExtensions": true,
         "composite": true,
         "module": "Node16",
         "moduleResolution": "node16",
         "allowSyntheticDefaultImports": true,
-        "resolveJsonModule": true
+        "resolveJsonModule": true,
+        "noEmit": true
     },
-    "include": ["vite.config.ts", "aliases.json", "tests/ct/_playwright.config.ts", "tests/ct/playwright/"]
+    "include": [
+        "vite.config.ts",
+        "aliases.json",
+        "tests/ct/_playwright.config.ts",
+        "tests/ct/playwright/",
+        "vite-plugins/**/*.ts",
+        "scripts/**/*.ts"
+    ]
 }

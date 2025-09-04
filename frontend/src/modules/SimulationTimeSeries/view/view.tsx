@@ -7,6 +7,7 @@ import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ModuleViewProps } from "@framework/Module";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { useColorSet, useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
@@ -16,8 +17,8 @@ import type { Interfaces } from "../interfaces";
 import type { VectorHexColorMap } from "../typesAndEnums";
 import { GroupBy } from "../typesAndEnums";
 
-import { userSelectedActiveTimestampUtcMsAtom } from "./atoms/baseAtoms";
 import { queryIsFetchingAtom, realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
+import { activeTimestampUtcMsAtom } from "./atoms/persistableFixableAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { usePlotBuilder } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
@@ -40,11 +41,11 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
     const anyLoading = useAtomValue(queryIsFetchingAtom);
 
-    const setActiveTimestampUtcMs = useSetAtom(userSelectedActiveTimestampUtcMsAtom);
+    const setActiveTimestampUtcMs = useSetAtom(activeTimestampUtcMsAtom);
 
     // Color palettes
-    const colorSet = workbenchSettings.useColorSet();
-    const parameterColorScale = workbenchSettings.useContinuousColorScale({
+    const colorSet = useColorSet(workbenchSettings);
+    const parameterColorScale = useContinuousColorScale(workbenchSettings, {
         gradientType: ColorScaleGradientType.Diverging,
     });
     const vectorHexColorMap: VectorHexColorMap = {};

@@ -5,3 +5,4 @@ import "./correlationTimeSeries";
 import "./correlationMatrixTimeSeries";
 import "./oatTimeSeries";
 import "./oatInplace";
+import "./test";

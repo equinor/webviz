@@ -27,7 +27,7 @@ const plotTypes = [{ value: PlotType.ParameterResponseCrossPlot, label: "Paramet
 export function Settings({
     initialSettings,
     settingsContext,
-    workbenchSession,
+    workbenchSession: workbenchSession,
     workbenchServices,
 }: ModuleSettingsProps<Interfaces>) {
     const [plotType, setPlotType] = useAtom(plotTypeAtom);

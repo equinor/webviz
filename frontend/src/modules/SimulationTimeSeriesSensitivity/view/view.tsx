@@ -5,8 +5,8 @@ import { useAtomValue, useSetAtom } from "jotai";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { useColorSet } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
-
 
 import type { Interfaces } from "../interfaces";
 
@@ -17,7 +17,6 @@ import { TimeSeriesChart } from "./components/timeSeriesChart";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { useTimeSeriesChartTracesDataArrayBuilder } from "./hooks/useTimeSeriesChartTracesDataArrayBuilder";
-
 
 export const View = ({ viewContext, workbenchSettings, workbenchServices }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -34,7 +33,7 @@ export const View = ({ viewContext, workbenchSettings, workbenchServices }: Modu
     useMakeViewStatusWriterMessages(statusWriter);
     usePublishToDataChannels(viewContext);
 
-    const colorSet = workbenchSettings.useColorSet();
+    const colorSet = useColorSet(workbenchSettings);
     const traceDataArr = useTimeSeriesChartTracesDataArrayBuilder(colorSet);
 
     function handleHoverInChart(hoverInfo: TimeSeriesChartHoverInfo | null) {

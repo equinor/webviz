@@ -8,12 +8,14 @@ import { Dialog } from "@lib/components/Dialog";
 
 import { ModuleInstanceLog } from "./private-components/ModuleInstanceLog/moduleInstanceLog";
 import { RealizationFilterSettings } from "./private-components/RealizationFilterSettings";
+import { ModulesList } from "../ModulesList";
 
 type RightSettingsPanelProps = { workbench: Workbench };
 
 export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
     const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
+    const mainRef = React.useRef<HTMLDivElement>(null);
 
     const [, setRightDrawerContent] = useGuiState(guiMessageBroker, GuiState.RightDrawerContent);
     const [, setRightSettingsPanelWidth] = useGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
@@ -56,7 +58,8 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
     }
 
     return (
-        <div className="bg-white border-r-2 z-50 flex flex-col w-full h-full">
+        <div ref={mainRef} className="bg-white border-r-2 flex flex-col w-full h-full">
+            <ModulesList workbench={props.workbench} onClose={handleOnClose} />
             <RealizationFilterSettings workbench={props.workbench} onClose={handleOnClose} />
             <ModuleInstanceLog workbench={props.workbench} onClose={handleOnClose} />
             <Dialog

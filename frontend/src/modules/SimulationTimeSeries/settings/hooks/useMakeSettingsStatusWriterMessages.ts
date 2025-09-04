@@ -6,9 +6,9 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { SettingsStatusWriter } from "@framework/StatusWriter";
 import { joinStringArrayToHumanReadableString } from "@modules/SimulationTimeSeries/utils/stringUtils";
 
-
 import { selectedVectorNamesAtom } from "../atoms/baseAtoms";
-import { ensembleVectorListsHelperAtom, selectedEnsembleIdentsAtom } from "../atoms/derivedAtoms";
+import { ensembleVectorListsHelperAtom } from "../atoms/derivedAtoms";
+import { selectedEnsembleIdentsAtom } from "../atoms/persistableFixableAtoms";
 import { vectorListQueriesAtom } from "../atoms/queryAtoms";
 
 export function useMakeSettingsStatusWriterMessages(statusWriter: SettingsStatusWriter, selectedVectorTags: string[]) {
@@ -16,7 +16,7 @@ export function useMakeSettingsStatusWriterMessages(statusWriter: SettingsStatus
 
     const vectorListQueries = useAtomValue(vectorListQueriesAtom);
     const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
-    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom).value;
     const selectedVectorNames = useAtomValue(selectedVectorNamesAtom);
 
     // Set error if all vector list queries fail
