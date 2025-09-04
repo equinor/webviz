@@ -43,7 +43,7 @@ jobs:
         working-directory: ./backend_py/primary
         run: |
           pip install --upgrade pip
-          pip install poetry==1.8.5  # Pin Poetry to version 1.8.5
+          pip install poetry==2.1.4
           poetry config virtualenvs.create false
           poetry check --lock  # Check lock file is consistent with pyproject.toml
           poetry install --with dev

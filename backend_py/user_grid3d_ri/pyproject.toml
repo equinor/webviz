@@ -1,13 +1,17 @@
-[tool.poetry]
-package-mode = false
+[project]
 name = "user-grid3d-ri"
+requires-python = "^3.11"
+dynamic = ["dependencies"]
+
+[tool.poetry]
+requires-poetry = ">=2.1"
+package-mode = false
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
-python = "^3.11"
 fastapi = "^0.116.0"
 uvicorn = "^0.35.0"
 httpx = "^0.28.1"

@@ -1,7 +1,6 @@
 import React from "react";
 
 import type { PlotData } from "plotly.js";
-import Plot from "react-plotly.js";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -10,6 +9,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { Plot } from "@modules/_shared/components/Plot";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "./interfaces";

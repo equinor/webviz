@@ -10,7 +10,6 @@ import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramew
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-
 const realizationPolygonsSettings = [
     Setting.ENSEMBLE,
     Setting.REALIZATION,
@@ -117,8 +116,7 @@ export class RealizationPolygonsProvider
 
     fetchData({
         getSetting,
-        registerQueryKey,
-        queryClient,
+        fetchQuery,
     }: FetchDataParams<RealizationPolygonsSettings, RealizationPolygonsData>): Promise<PolygonData_api[]> {
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         const realizationNum = getSetting(Setting.REALIZATION);
@@ -135,18 +133,8 @@ export class RealizationPolygonsProvider
             },
         });
 
-        registerQueryKey(queryOptions.queryKey);
-
-        const promise = queryClient.fetchQuery({
-            ...getPolygonsDataOptions({
-                query: {
-                    case_uuid: ensembleIdent?.getCaseUuid() ?? "",
-                    ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
-                    realization_num: realizationNum ?? 0,
-                    name: polygonsName ?? "",
-                    attribute: polygonsAttribute ?? "",
-                },
-            }),
+        const promise = fetchQuery({
+            ...queryOptions,
         });
 
         return promise;

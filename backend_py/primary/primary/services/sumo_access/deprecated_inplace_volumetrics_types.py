@@ -101,12 +101,10 @@ class CategorizedResultNames:
 class InplaceVolumetricsIdentifierWithValues:
     """
     Unique values for an identifier column in an inplace volumetric table
-
-    NOTE: Ideally all values should be strings, but it is possible that some values are integers - especially for REGION
     """
 
     identifier: InplaceVolumetricsIdentifier
-    values: list[str | int]  # list of values: str or int
+    values: list[str]
 
 
 @dataclass

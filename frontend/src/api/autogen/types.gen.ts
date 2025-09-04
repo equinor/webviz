@@ -311,14 +311,10 @@ export type HttpValidationError_api = {
 
 /**
  * Unique values for an index column in an inplace volumes table
- *
- * If a column contain
- *
- * All values should ideally be strings, but it is common to see integers, especially for REGION
  */
 export type InplaceVolumesIndexWithValues_api = {
     indexColumn: string;
-    values: Array<string | number>;
+    values: Array<string>;
 };
 
 /**

@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 import logging
-from typing import Annotated
+from typing import Annotated, Literal
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
@@ -15,11 +15,39 @@ from primary.services.user_session_manager.user_session_manager import _USER_SES
 from primary.services.user_session_manager._radix_helpers import RadixResourceRequests, RadixJobApi
 from primary.services.user_session_manager._user_session_directory import UserSessionDirectory
 from primary.services.user_grid3d_service.user_grid3d_service import UserGrid3dService, IJKIndexFilter
+from primary.services.service_exceptions import Service, ServiceUnavailableError
 
 LOGGER = logging.getLogger(__name__)
 
 
 router = APIRouter()
+
+
+@router.get("/provoke_error/{error_type}")
+async def get_provoke_error(
+    # fmt:off
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    error_type: Annotated[Literal["TypeError", "ValueError", "ServiceUnavailableError", "HttpException", "NoError"], Path(description="The error type to throw")],
+    status_code: Annotated[int, Query(description="Status code to use when throwing HttpException")] = 400,
+    # fmt:on
+) -> str:
+    # A validation error can be provoked by passing an invalid value for error_type
+    LOGGER.info(f"About to provoke error of type {error_type=}")
+
+    if error_type == "TypeError":
+        raise TypeError("This is a dummy type error")
+
+    elif error_type == "ValueError":
+        raise ValueError("This is a dummy value error")
+
+    elif error_type == "ServiceUnavailableError":
+        raise ServiceUnavailableError("Dummy message for SUMO service error", Service.SUMO)
+
+    elif error_type == "HttpException":
+        raise HTTPException(status_code=status_code, detail="My dummy HTTP error")
+
+    # We will only end up here, with a 200 reply, if the specified exception type is unrecognized
+    return f"This is a 200 OK response!\n\nOoops, couldn't throw exception {error_type=}"
 
 
 @router.get("/usersession/{user_component}/call")

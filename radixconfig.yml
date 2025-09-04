@@ -242,3 +242,8 @@ spec:
   dnsAppAlias:
     environment: prod
     component: frontend
+  dnsExternalAlias:
+    - alias: webviz.fmu.equinor.com
+      component: frontend
+      environment: prod
+      useCertificateAutomation: true

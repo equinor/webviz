@@ -5,7 +5,6 @@ import { getDrilledWellboreHeadersOptions, getWellTrajectoriesOptions } from "@a
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
-
 import type {
     CustomDataProviderImplementation,
     FetchDataParams,
@@ -34,8 +33,7 @@ export class DrilledWellTrajectoriesProvider
     fetchData({
         getSetting,
         getGlobalSetting,
-        registerQueryKey,
-        queryClient,
+        fetchQuery,
     }: FetchDataParams<
         DrilledWellTrajectoriesSettings,
         DrilledWellTrajectoriesData
@@ -51,17 +49,13 @@ export class DrilledWellTrajectoriesProvider
             query: { field_identifier: fieldIdentifier ?? "" },
         });
 
-        registerQueryKey(queryOptions.queryKey);
-
-        const promise = queryClient
-            .fetchQuery({
-                ...queryOptions,
-                staleTime: 1800000, // TODO: Both stale and gcTime are set to 30 minutes for now since SMDA is quite slow for fields with many wells - this should be adjusted later
-                gcTime: 1800000,
-            })
-            .then((response: DrilledWellTrajectoriesData) => {
-                return response.filter((trajectory) => selectedWellboreUuids.includes(trajectory.wellboreUuid));
-            });
+        const promise = fetchQuery({
+            ...queryOptions,
+            staleTime: 1800000, // TODO: Both stale and gcTime are set to 30 minutes for now since SMDA is quite slow for fields with many wells - this should be adjusted later
+            gcTime: 1800000,
+        }).then((response: DrilledWellTrajectoriesData) => {
+            return response.filter((trajectory) => selectedWellboreUuids.includes(trajectory.wellboreUuid));
+        });
 
         return promise;
     }

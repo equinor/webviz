@@ -1,7 +1,6 @@
 import React from "react";
 
 import type { PlotData } from "plotly.js";
-import Plot from "react-plotly.js";
 
 import type { RftRealizationData_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
@@ -10,8 +9,8 @@ import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtil
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { Plot } from "@modules/_shared/components/Plot";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
-
 
 import type { Interfaces } from "./interfaces";
 
