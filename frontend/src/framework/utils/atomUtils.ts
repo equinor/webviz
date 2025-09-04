@@ -90,6 +90,12 @@ type PersistableFixableAtomOptionsWithPrecompute<TValue, TPrecomputedValue> = {
      */
     initialValue: TValue;
 
+    /**
+     * A function to compare two values for equality.
+     * This is used to optimize updates by preventing unnecessary re-renders.
+     */
+    areEqualFunction?: (a: TValue, b: TValue) => boolean;
+
     precomputeFunction: (options: { value: TValue; get: Getter }) => TPrecomputedValue;
     /**
      * A function to validate whether the given value is valid in the current application context.
@@ -122,6 +128,12 @@ type PersistableFixableAtomOptionsWithoutPrecompute<TValue> = {
      * This is typically a safe default value used when no persisted state is present.
      */
     initialValue: TValue;
+
+    /**
+     * A function to compare two values for equality.
+     * This is used to optimize updates by preventing unnecessary re-renders.
+     */
+    areEqualFunction?: (a: TValue, b: TValue) => boolean;
 
     /**
      * A function to validate whether the given value is valid in the current application context.
@@ -226,20 +238,28 @@ export function persistableFixableAtom<TValue, TPrecomputedValue>(
                 _source: internalState._source,
             };
         },
-        (_, set, update: TValue | PersistableAtomState<TValue>) => {
+        (get, set, update: TValue | PersistableAtomState<TValue>) => {
+            const areEqualFunc = options.areEqualFunction;
+            const currentState = get(internalStateAtom);
+
             if (isInternalState(update)) {
-                set(internalStateAtom, {
-                    ...update,
-                });
+                if (areEqualFunc && areEqualFunc(currentState.value, update.value)) {
+                    // If values are equal, preserve value reference, but update source if different
+                    if (currentState._source !== update._source) {
+                        set(internalStateAtom, { value: currentState.value, _source: update._source });
+                    }
+                    return;
+                }
+                set(internalStateAtom, { ...update });
                 return;
             }
 
-            const newInternalState: PersistableAtomState<TValue> = {
-                value: update,
-                _source: Source.USER,
-            };
-
-            set(internalStateAtom, newInternalState);
+            // Handle direct value updates (non-internal state)
+            const value =
+                areEqualFunc && areEqualFunc(currentState.value, update)
+                    ? currentState.value // Preserve reference when equal
+                    : update;
+            set(internalStateAtom, { value, _source: Source.USER });
         },
     );
 
