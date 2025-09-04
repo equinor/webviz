@@ -1,119 +1,587 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 
-import { postGetTimestampsForEnsemblesOptions, type EnsembleIdent_api, type EnsembleTimestamps_api } from "@api";
+import { getRecentSnapshotsQueryKey } from "@api";
+import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
-import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
-import { InitialSettings } from "./InitialSettings";
-import { loadMetadataFromBackendAndCreateEnsembleSet } from "./internal/EnsembleSetLoader";
+import { confirmationService } from "./ConfirmationService";
+import { GuiMessageBroker, GuiState, LeftDrawerContent, RightDrawerContent } from "./GuiMessageBroker";
+import { NavigationObserver } from "./internal/NavigationObserver";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
-import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
-import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
-import { ImportState } from "./Module";
-import type { ModuleInstance } from "./ModuleInstance";
-import { ModuleRegistry } from "./ModuleRegistry";
-import type { RegularEnsemble } from "./RegularEnsemble";
-import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
-import type { Template } from "./TemplateRegistry";
-import { isEnsembleOutdated } from "./utils/ensembleTimestampUtils";
+import { EnsembleUpdateMonitor } from "./internal/WorkbenchSession/EnsembleUpdateMonitor";
+import { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
+import {
+    buildSessionUrl,
+    readSessionIdFromUrl,
+    removeSessionIdFromUrl,
+} from "./internal/WorkbenchSession/SessionUrlService";
+import { loadSnapshotFromBackend } from "./internal/WorkbenchSession/SnapshotLoader";
+import { readSnapshotIdFromUrl, removeSnapshotIdFromUrl } from "./internal/WorkbenchSession/SnapshotUrlService";
+import { localStorageKeyForSessionId } from "./internal/WorkbenchSession/utils";
+import {
+    loadAllWorkbenchSessionsFromLocalStorage,
+    loadWorkbenchSessionFromBackend,
+    loadWorkbenchSessionFromLocalStorage,
+} from "./internal/WorkbenchSession/WorkbenchSessionLoader";
+import { WorkbenchSessionPersistenceService } from "./internal/WorkbenchSession/WorkbenchSessionPersistenceService";
+import { ApiErrorHelper } from "./utils/ApiErrorHelper";
 import type { WorkbenchServices } from "./WorkbenchServices";
 
-export enum WorkbenchEvents {
-    LayoutChanged = "LayoutChanged",
-    ModuleInstancesChanged = "ModuleInstancesChanged",
+export enum WorkbenchTopic {
+    ACTIVE_SESSION = "activeSession",
+    HAS_ACTIVE_SESSION = "hasActiveSession",
 }
 
-export type LayoutElement = {
-    moduleInstanceId?: string;
-    moduleName: string;
-    relX: number;
-    relY: number;
-    relHeight: number;
-    relWidth: number;
-    minimized?: boolean;
-    maximized?: boolean;
+export type WorkbenchTopicPayloads = {
+    [WorkbenchTopic.ACTIVE_SESSION]: PrivateWorkbenchSession | null;
+    [WorkbenchTopic.HAS_ACTIVE_SESSION]: boolean;
 };
+export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<WorkbenchTopicPayloads>();
 
-export type UserEnsembleSetting = {
-    ensembleIdent: RegularEnsembleIdent;
-    customName: string | null;
-    color: string;
-    timestamps: EnsembleTimestamps_api | null;
-};
-
-export type UserDeltaEnsembleSetting = {
-    comparisonEnsembleIdent: RegularEnsembleIdent;
-    referenceEnsembleIdent: RegularEnsembleIdent;
-    customName: string | null;
-    color: string;
-};
-
-export type StoredUserEnsembleSetting = {
-    ensembleIdent: string;
-    customName: string | null;
-    color: string;
-    timestamps: EnsembleTimestamps_api | null;
-};
-
-export type StoredUserDeltaEnsembleSetting = {
-    comparisonEnsembleIdent: string;
-    referenceEnsembleIdent: string;
-    customName: string | null;
-    color: string;
-};
-
-function ensembleToUserSettings(ensemble: RegularEnsemble): UserEnsembleSetting {
-    return {
-        color: ensemble.getColor(),
-        customName: ensemble.getCustomName(),
-        ensembleIdent: ensemble.getIdent(),
-        timestamps: ensemble.getTimestamps(),
-    };
-}
-
-const ENSEMBLE_POLLING_INTERVAL = 60000; // 1 minute
-
-export class Workbench {
-    private _moduleInstances: ModuleInstance<any>[];
-    private _workbenchSession: WorkbenchSessionPrivate;
+    private _workbenchSession: PrivateWorkbenchSession | null = null;
     private _workbenchServices: PrivateWorkbenchServices;
-    private _workbenchSettings: PrivateWorkbenchSettings;
     private _guiMessageBroker: GuiMessageBroker;
-    private _subscribersMap: { [key: string]: Set<() => void> };
-    private _layout: LayoutElement[];
-    private _perModuleRunningInstanceNumber: Record<string, number>;
     private _atomStoreMaster: AtomStoreMaster;
+    private _queryClient: QueryClient;
+    private _workbenchSessionPersistenceService: WorkbenchSessionPersistenceService;
+    private _navigationObserver: NavigationObserver;
+    private _ensembleUpdateMonitor: EnsembleUpdateMonitor;
+    private _isInitialized: boolean = false;
 
-    constructor() {
-        this._moduleInstances = [];
+    constructor(queryClient: QueryClient) {
+        this._queryClient = queryClient;
         this._atomStoreMaster = new AtomStoreMaster();
-        this._workbenchSession = new WorkbenchSessionPrivate(this._atomStoreMaster);
         this._workbenchServices = new PrivateWorkbenchServices(this);
-        this._workbenchSettings = new PrivateWorkbenchSettings();
+        this._workbenchSessionPersistenceService = new WorkbenchSessionPersistenceService(this);
         this._guiMessageBroker = new GuiMessageBroker();
-        this._subscribersMap = {};
-        this._layout = [];
-        this._perModuleRunningInstanceNumber = {};
+        this._navigationObserver = new NavigationObserver({
+            onBeforeUnload: () => this.isWorkbenchDirty(),
+            onNavigate: async () => this.handleNavigation(),
+        });
+        this._ensembleUpdateMonitor = new EnsembleUpdateMonitor(queryClient, this);
     }
 
-    loadLayoutFromLocalStorage(): boolean {
-        const layoutString = localStorage.getItem("layout");
-        if (!layoutString) return false;
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<WorkbenchTopicPayloads> {
+        return this._publishSubscribeDelegate;
+    }
 
-        const layout = JSON.parse(layoutString) as LayoutElement[];
-        this.makeLayout(layout);
+    makeSnapshotGetter<T extends WorkbenchTopic>(topic: T): () => WorkbenchTopicPayloads[T] {
+        const snapshotGetter = (): any => {
+            if (topic === WorkbenchTopic.ACTIVE_SESSION) {
+                return this._workbenchSession;
+            }
+            if (topic === WorkbenchTopic.HAS_ACTIVE_SESSION) {
+                return this._workbenchSession !== null;
+            }
+            throw new Error(`No snapshot getter implemented for topic ${topic}`);
+        };
+        return snapshotGetter;
+    }
+
+    getQueryClient(): QueryClient {
+        return this._queryClient;
+    }
+
+    getWorkbenchSessionPersistenceService(): WorkbenchSessionPersistenceService {
+        return this._workbenchSessionPersistenceService;
+    }
+
+    private isWorkbenchDirty(): boolean {
+        if (!this._workbenchSession) {
+            return false; // No active session, so nothing to save.
+        }
+
+        return (
+            (this._workbenchSessionPersistenceService.hasChanges() || !this._workbenchSession.getIsPersisted()) &&
+            !this._workbenchSession.isSnapshot()
+        );
+    }
+
+    async handleNavigation(): Promise<boolean> {
+        // When the user navigates with forward/backward buttons, they might want to load a snapshot. In this case,
+        // we first have to check if a snapshot id is present in the URL.
+        // If it is, we have to check for unsaved changes and then load the snapshot.
+        const snapshotId = readSnapshotIdFromUrl();
+        const sessionId = readSessionIdFromUrl();
+        if (!snapshotId && !sessionId) {
+            // No snapshot/session id in URL, so we can proceed with the navigation - if a session is active, it will be closed.
+            if (this._workbenchSession) {
+                await this.maybeCloseCurrentSession();
+                return true; // Proceed with the navigation.
+            }
+        }
+
+        if (this._workbenchSession) {
+            if (this._workbenchSession.isSnapshot()) {
+                // If the current session is a snapshot, we can just load the new entity.
+                if (snapshotId) {
+                    await this.openSnapshot(snapshotId);
+                } else if (sessionId) {
+                    if (this._workbenchSession.getId() === sessionId) {
+                        // If the session id is the same as the current session, we do not need to reload it.
+                        return true; // Proceed with the navigation.
+                    }
+                    await this.openSession(sessionId);
+                }
+                return true; // Proceed with the navigation.
+            }
+
+            // If the current session is not a snapshot, we have to check for unsaved changes.
+            if (this._workbenchSessionPersistenceService.hasChanges() || !this._workbenchSession.getIsPersisted()) {
+                // If there are unsaved changes, we show a dialog to the user to confirm if they want to discard the
+                // current session and load the new one.
+                const result = await confirmationService.confirm({
+                    title: "Unsaved Changes",
+                    message: "You have unsaved changes in your current session. Do you want to save or discard them?",
+                    actions: [
+                        { id: "save", label: "Save Changes", color: "success" },
+                        { id: "discard", label: "Discard Changes", color: "danger" },
+                        { id: "cancel", label: "Cancel" },
+                    ],
+                });
+
+                if (result === "cancel") {
+                    // User chose to cancel the navigation, so we do nothing.
+                    return false;
+                }
+                if (result === "save") {
+                    // User chose to save the changes, so we save the current session and then load the new snapshot.
+                    await this.saveCurrentSession(true);
+                    if (snapshotId) {
+                        await this.openSnapshot(snapshotId);
+                    } else if (sessionId) {
+                        await this.openSession(sessionId);
+                    }
+                    return true; // Proceed with the navigation.
+                }
+                if (result === "discard") {
+                    // User chose to discard the changes, so we discard the current session and load the new snapshot.
+                    this.unloadCurrentSession();
+                    if (snapshotId) {
+                        await this.openSnapshot(snapshotId);
+                    } else if (sessionId) {
+                        await this.openSession(sessionId);
+                    }
+                    return true; // Proceed with the navigation.
+                }
+
+                throw new Error(`Unexpected confirmation result: ${result}`);
+            }
+        }
+
+        // If there are no unsaved changes or no active session, we can just load the new snapshot or session.
+        if (snapshotId) {
+            await this.openSnapshot(snapshotId);
+        } else if (sessionId) {
+            await this.openSession(sessionId);
+        }
+        return true; // Proceed with the navigation.
+    }
+
+    async initialize() {
+        if (this._isInitialized) {
+            console.info(
+                "Workbench is already initialized. This might happen in strict mode due to useEffects being called multiple times.",
+            );
+            return;
+        }
+
+        this._isInitialized = true;
+
+        // First, check if a snapshot id is provided in the URL
+        const snapshotId = readSnapshotIdFromUrl();
+        const sessionId = readSessionIdFromUrl();
+
+        const storedSessions = await loadAllWorkbenchSessionsFromLocalStorage();
+
+        if (snapshotId) {
+            this.openSnapshot(snapshotId);
+            return;
+        } else if (sessionId) {
+            this.openSession(sessionId);
+            if (storedSessions.find((el) => el.id === sessionId)) {
+                this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, true);
+            }
+            return;
+        }
+
+        if (storedSessions.length > 0) {
+            this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, true);
+        }
+    }
+
+    private async openSnapshot(snapshotId: string): Promise<void> {
+        try {
+            this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
+            const snapshotData = await loadSnapshotFromBackend(this._queryClient, snapshotId);
+            const snapshot = await PrivateWorkbenchSession.fromDataContainer(
+                this._atomStoreMaster,
+                this._queryClient,
+                snapshotData,
+            );
+            await this.setWorkbenchSession(snapshot);
+            if (this.getGuiMessageBroker().getState(GuiState.LeftDrawerContent) !== LeftDrawerContent.ModuleSettings) {
+                this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
+            }
+            if (this.getGuiMessageBroker().getState(GuiState.RightDrawerContent) === RightDrawerContent.ModulesList) {
+                this._guiMessageBroker.setState(
+                    GuiState.RightDrawerContent,
+                    RightDrawerContent.RealizationFilterSettings,
+                );
+                this._guiMessageBroker.setState(GuiState.RightSettingsPanelWidthInPercent, 0);
+            }
+            return;
+        } catch (error: any) {
+            this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
+            console.error("Failed to load snapshot from backend:", error);
+
+            if (isAxiosError(error)) {
+                // Handle Axios error specifically
+                console.error("Axios error details:", error.response?.data);
+            }
+
+            const apiError = ApiErrorHelper.fromError(error);
+
+            const result = await confirmationService.confirm({
+                title: "Could not load snapshot",
+                message: apiError?.getMessage() ?? "Could not open snapshot",
+                actions: [
+                    {
+                        id: "cancel",
+                        label: "Cancel",
+                    },
+                    {
+                        id: "retry",
+                        label: "Retry",
+                    },
+                ],
+            });
+            if (result === "retry") {
+                this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
+                // Retry loading the snapshot
+                await this.openSnapshot(snapshotId);
+            }
+        }
+    }
+
+    makeSessionFromSnapshot(): void {
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session.");
+        }
+
+        this._workbenchSessionPersistenceService.removeWorkbenchSession();
+        this._workbenchSession.setMetadata({
+            title: "New Session from Snapshot",
+            description: undefined,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            lastModifiedMs: Date.now(),
+        });
+        this._workbenchSession.setIsSnapshot(false);
+        this._workbenchSessionPersistenceService.setWorkbenchSession(this._workbenchSession);
+        removeSnapshotIdFromUrl();
+    }
+
+    discardLocalStorageSession(snapshotId: string | null, unloadSession = true): void {
+        const key = localStorageKeyForSessionId(snapshotId);
+        localStorage.removeItem(key);
+
+        if (!unloadSession) {
+            return;
+        }
+
+        this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
+        this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
+        this._workbenchSessionPersistenceService.removeWorkbenchSession();
+        this._workbenchSession = null;
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
+    }
+
+    async openSessionFromLocalStorage(snapshotId: string | null, forceOpen = false): Promise<void> {
+        if (this._workbenchSession && !forceOpen) {
+            console.warn("A workbench session is already active. Please close it before opening a new one.");
+            return;
+        }
+
+        this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
+
+        const sessionData = await loadWorkbenchSessionFromLocalStorage(snapshotId);
+        if (!sessionData) {
+            console.warn("No workbench session found in local storage.");
+            return;
+        }
+
+        const session = await PrivateWorkbenchSession.fromDataContainer(
+            this._atomStoreMaster,
+            this._queryClient,
+            sessionData,
+        );
+
+        await this.setWorkbenchSession(session);
+        this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, false);
+        this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, false);
+        this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
+    }
+
+    async openSession(sessionId: string): Promise<void> {
+        if (this._workbenchSession) {
+            console.warn("A workbench session is already active. Please close it before opening a new one.");
+            return;
+        }
+
+        this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
+
+        const url = buildSessionUrl(sessionId);
+        window.history.pushState({}, "", url);
+
+        try {
+            const sessionData = await loadWorkbenchSessionFromBackend(this._queryClient, sessionId);
+            const session = await PrivateWorkbenchSession.fromDataContainer(
+                this._atomStoreMaster,
+                this._queryClient,
+                sessionData,
+            );
+            await this.setWorkbenchSession(session);
+        } catch (error) {
+            console.error("Failed to load session from backend:", error);
+            this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
+            const result = await confirmationService.confirm({
+                title: "Could not load session",
+                message: `Could not load session with ID ${sessionId}. The session might not exist or you might not have access to it.`,
+                actions: [
+                    {
+                        id: "cancel",
+                        label: "Cancel",
+                    },
+                    {
+                        id: "retry",
+                        label: "Retry",
+                    },
+                ],
+            });
+            if (result === "retry") {
+                // Retry loading the session
+                await this.openSession(sessionId);
+            }
+        } finally {
+            this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
+        }
+    }
+
+    async makeSnapshot(title: string, description: string): Promise<string | null> {
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to make a snapshot.");
+        }
+
+        this._guiMessageBroker.setState(GuiState.IsMakingSnapshot, true);
+
+        const snapshotId = await this._workbenchSessionPersistenceService.makeSnapshot(title, description);
+        this._guiMessageBroker.setState(GuiState.IsMakingSnapshot, false);
+
+        // Reset this, so it'll fetch fresh copies
+        this._queryClient.resetQueries({ queryKey: getRecentSnapshotsQueryKey() });
+
+        return snapshotId;
+    }
+
+    async saveCurrentSession(forceSave = false): Promise<void> {
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to save.");
+        }
+
+        if (this._workbenchSession.getIsPersisted() || forceSave) {
+            this._guiMessageBroker.setState(GuiState.IsSavingSession, true);
+            const wasPersisted = this._workbenchSession.getIsPersisted();
+            await this._workbenchSessionPersistenceService.persistSessionState();
+            const id = this._workbenchSession.getId();
+            if (!wasPersisted && id) {
+                const url = buildSessionUrl(id);
+                window.history.pushState({}, "", url);
+            }
+            this._guiMessageBroker.setState(GuiState.IsSavingSession, false);
+            this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
+            this._guiMessageBroker.setState(GuiState.EditSessionDialogOpen, false);
+            this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
+            return;
+        }
+
+        this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
+        this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, true);
+    }
+
+    private async setWorkbenchSession(session: PrivateWorkbenchSession): Promise<void> {
+        try {
+            if (session.getEnsembleSet().getEnsembleArray().length === 0) {
+                this._guiMessageBroker.setState(GuiState.EnsembleDialogOpen, true);
+            }
+
+            this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
+
+            if (session.getActiveDashboard().getLayout().length === 0) {
+                this._guiMessageBroker.setState(GuiState.RightDrawerContent, RightDrawerContent.ModulesList);
+                if (this._guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) === 0) {
+                    this._guiMessageBroker.setState(GuiState.RightSettingsPanelWidthInPercent, 20);
+                }
+            }
+
+            this._workbenchSession = session;
+            await this._ensembleUpdateMonitor.pollImmediately();
+            this._ensembleUpdateMonitor.startPolling();
+            await this._workbenchSessionPersistenceService.setWorkbenchSession(session);
+            this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
+            this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.ACTIVE_SESSION);
+        } catch (error) {
+            console.error("Failed to hydrate workbench session:", error);
+            throw new Error("Could not load workbench session from data container.");
+        } finally {
+            this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
+            this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
+        }
+    }
+
+    async startNewSession(): Promise<void> {
+        if (this._workbenchSession) {
+            console.warn("A workbench session is already active. Please close it before starting a new one.");
+            return;
+        }
+
+        const session = new PrivateWorkbenchSession(this._atomStoreMaster, this._queryClient);
+        session.makeDefaultDashboard();
+
+        await this.setWorkbenchSession(session);
+    }
+
+    async maybeCloseCurrentSession(): Promise<boolean> {
+        if (!this._workbenchSession) {
+            console.warn("No active workbench session to close.");
+            return true;
+        }
+
+        if (
+            (this._workbenchSessionPersistenceService.hasChanges() || !this._workbenchSession.getIsPersisted()) &&
+            !this._workbenchSession.isSnapshot()
+        ) {
+            const result = await confirmationService.confirm({
+                title: "Unsaved Changes",
+                message: "You have unsaved changes in your current session. Do you want to save them before closing?",
+                actions: [
+                    { id: "cancel", label: "Cancel" },
+                    { id: "discard", label: "Discard Changes", color: "danger" },
+                    { id: "save", label: "Save Changes", color: "success" },
+                ],
+            });
+
+            if (result === "cancel") {
+                // User chose to cancel the close operation, so we do nothing.
+                return false;
+            }
+            if (result === "save") {
+                // User chose to save the changes, so we save the current session and then close it
+                if (!this._workbenchSession.getIsPersisted()) {
+                    this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, true);
+                    return false; // Do not proceed with the close operation, wait for the user to save
+                }
+                await this.saveCurrentSession(true);
+                this.closeCurrentSession();
+                return true; // Proceed with the close operation.
+            }
+            if (result === "discard") {
+                // User chose to discard the changes, so we unload the current session and close it.
+                this.closeCurrentSession();
+                return true; // Proceed with the close operation.
+            }
+
+            throw new Error(`Unexpected confirmation result: ${result}`);
+        }
+
+        this.closeCurrentSession();
         return true;
     }
 
-    getLayout(): LayoutElement[] {
-        return this._layout;
+    async maybeRefreshSession(): Promise<void> {
+        if (!this._workbenchSession) {
+            console.warn("No active workbench session to refresh.");
+            return;
+        }
+
+        if (this._workbenchSession.isSnapshot() || !this._workbenchSession.getIsPersisted()) {
+            throw new Error("Cannot refresh a snapshot or non-persisted session.");
+        }
+
+        const sessionId = this._workbenchSession.getId();
+
+        if (!sessionId) {
+            throw new Error("Cannot refresh session without a valid session ID.");
+        }
+
+        if (
+            (this._workbenchSessionPersistenceService.hasChanges() || !this._workbenchSession.getIsPersisted()) &&
+            !this._workbenchSession.isSnapshot()
+        ) {
+            const result = await confirmationService.confirm({
+                title: "Unsaved Changes",
+                message:
+                    "You have unsaved changes in your current session. By refreshing, you will lose these changes. Do you want to proceed?",
+                actions: [
+                    { id: "cancel", label: "Cancel" },
+                    { id: "discard", label: "Discard & Refresh", color: "danger" },
+                ],
+            });
+
+            if (result === "cancel") {
+                // User chose to cancel the close operation, so we do nothing.
+                return;
+            }
+            if (result === "discard") {
+                // User chose to discard the changes, so we unload the current session and refresh it.
+                this.unloadCurrentSession();
+                await this.openSession(sessionId);
+                return;
+            }
+
+            throw new Error(`Unexpected confirmation result: ${result}`);
+        }
+
+        this.unloadCurrentSession();
+        await this.openSession(sessionId);
+    }
+
+    private unloadCurrentSession(): void {
+        if (!this._workbenchSession) {
+            console.warn("No active workbench session to unload.");
+            return;
+        }
+
+        this._ensembleUpdateMonitor.stopPolling();
+
+        this._workbenchSession.beforeDestroy();
+        this._workbenchSessionPersistenceService.removeWorkbenchSession();
+        this._workbenchSession = null;
+    }
+
+    closeCurrentSession(): void {
+        if (!this._workbenchSession) {
+            console.warn("No active workbench session to close.");
+            return;
+        }
+
+        removeSnapshotIdFromUrl();
+        removeSessionIdFromUrl();
+        this.unloadCurrentSession();
+
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
     }
 
     getAtomStoreMaster(): AtomStoreMaster {
         return this._atomStoreMaster;
     }
 
-    getWorkbenchSession(): WorkbenchSessionPrivate {
+    getWorkbenchSession(): PrivateWorkbenchSession {
+        if (!this._workbenchSession) {
+            throw new Error("Workbench session has not been started. Call startNewSession() first.");
+        }
         return this._workbenchSession;
     }
 
@@ -121,343 +589,19 @@ export class Workbench {
         return this._workbenchServices;
     }
 
-    getWorkbenchSettings(): PrivateWorkbenchSettings {
-        return this._workbenchSettings;
-    }
-
     getGuiMessageBroker(): GuiMessageBroker {
         return this._guiMessageBroker;
     }
 
-    private notifySubscribers(event: WorkbenchEvents): void {
-        const subscribers = this._subscribersMap[event];
-        if (!subscribers) return;
-
-        subscribers.forEach((subscriber) => {
-            subscriber();
-        });
+    beforeDestroy(): void {
+        this._navigationObserver.beforeDestroy();
     }
 
-    subscribe(event: WorkbenchEvents, cb: () => void) {
-        const subscribersSet = this._subscribersMap[event] || new Set();
-        subscribersSet.add(cb);
-        this._subscribersMap[event] = subscribersSet;
-        return () => {
-            subscribersSet.delete(cb);
-        };
+    clear(): void {
+        // this._workbenchSession.clear();
     }
 
-    getModuleInstances(): ModuleInstance<any>[] {
-        return this._moduleInstances;
-    }
-
-    getModuleInstance(id: string): ModuleInstance<any> | undefined {
-        return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
-    }
-
-    private getNextModuleInstanceNumber(moduleName: string): number {
-        if (moduleName in this._perModuleRunningInstanceNumber) {
-            this._perModuleRunningInstanceNumber[moduleName] += 1;
-        } else {
-            this._perModuleRunningInstanceNumber[moduleName] = 1;
-        }
-        return this._perModuleRunningInstanceNumber[moduleName];
-    }
-
-    makeLayout(layout: LayoutElement[]): void {
-        this._moduleInstances = [];
-        this.setLayout(layout);
-        layout.forEach((element, index: number) => {
-            const module = ModuleRegistry.getModule(element.moduleName);
-            if (!module) {
-                throw new Error(`Module ${element.moduleName} not found`);
-            }
-
-            module.setWorkbench(this);
-            const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
-            this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
-            this._moduleInstances.push(moduleInstance);
-            this._layout[index] = { ...this._layout[index], moduleInstanceId: moduleInstance.getId() };
-            this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
-            this.notifySubscribers(WorkbenchEvents.LayoutChanged);
-        });
-    }
-
-    resetModuleInstanceNumbers(): void {
-        this._perModuleRunningInstanceNumber = {};
-    }
-
-    clearLayout(): void {
-        for (const moduleInstance of this._moduleInstances) {
-            const manager = moduleInstance.getChannelManager();
-            manager.unregisterAllChannels();
-            manager.unregisterAllReceivers();
-        }
-        this._moduleInstances = [];
-        this._layout = [];
-        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
-        this.notifySubscribers(WorkbenchEvents.LayoutChanged);
-    }
-
-    makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
-        const module = ModuleRegistry.getModule(moduleName);
-        if (!module) {
-            throw new Error(`Module ${moduleName} not found`);
-        }
-
-        module.setWorkbench(this);
-
-        const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
-        this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
-        this._moduleInstances.push(moduleInstance);
-
-        this._layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
-        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
-        this.notifySubscribers(WorkbenchEvents.LayoutChanged);
-        this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, moduleInstance.getId());
-        return moduleInstance;
-    }
-
-    removeModuleInstance(moduleInstanceId: string): void {
-        const moduleInstance = this.getModuleInstance(moduleInstanceId);
-
-        if (moduleInstance) {
-            const manager = moduleInstance.getChannelManager();
-
-            moduleInstance.unload();
-            manager.unregisterAllChannels();
-            manager.unregisterAllReceivers();
-        }
-
-        this._moduleInstances = this._moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
-
-        this._atomStoreMaster.removeAtomStoreForModuleInstance(moduleInstanceId);
-
-        const newLayout = this._layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
-        this.setLayout(newLayout);
-        const activeModuleInstanceId = this.getGuiMessageBroker().getState(GuiState.ActiveModuleInstanceId);
-        if (activeModuleInstanceId === moduleInstanceId) {
-            this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, "");
-        }
-        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
-    }
-
-    setLayout(layout: LayoutElement[]): void {
-        this._layout = layout;
-
-        const modifiedLayout = layout.map((el) => {
-            return { ...el, moduleInstanceId: undefined };
-        });
-        localStorage.setItem("layout", JSON.stringify(modifiedLayout));
-        this.notifySubscribers(WorkbenchEvents.LayoutChanged);
-    }
-
-    maybeMakeFirstModuleInstanceActive(): void {
-        const activeModuleInstanceId = this.getGuiMessageBroker().getState(GuiState.ActiveModuleInstanceId);
-        if (!this._moduleInstances.some((el) => el.getId() === activeModuleInstanceId)) {
-            const newActiveModuleInstanceId =
-                this._moduleInstances
-                    .filter((el) => el.getImportState() === ImportState.Imported)
-                    .at(0)
-                    ?.getId() || "";
-            this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, newActiveModuleInstanceId);
-        }
-    }
-
-    async initWorkbenchFromLocalStorage(queryClient: QueryClient): Promise<void> {
-        const storedUserEnsembleSettings = this.maybeLoadEnsembleSettingsFromLocalStorage();
-        const storedUserDeltaEnsembleSettings = this.maybeLoadDeltaEnsembleSettingsFromLocalStorage();
-
-        if (!storedUserEnsembleSettings && !storedUserDeltaEnsembleSettings) {
-            return;
-        }
-
-        await this.loadAndSetupEnsembleSetInSession(
-            queryClient,
-            storedUserEnsembleSettings ?? [],
-            storedUserDeltaEnsembleSettings ?? [],
-        );
-
-        this.beginEnsembleUpdatePolling(queryClient);
-    }
-
-    async storeSettingsInLocalStorageAndLoadAndSetupEnsembleSetInSession(
-        queryClient: QueryClient,
-        userEnsembleSettings: UserEnsembleSetting[],
-        userDeltaEnsembleSettings: UserDeltaEnsembleSetting[],
-    ): Promise<void> {
-        this.storeEnsembleSetInLocalStorage(userEnsembleSettings);
-        this.storeDeltaEnsembleSetInLocalStorage(userDeltaEnsembleSettings);
-
-        await this.loadAndSetupEnsembleSetInSession(queryClient, userEnsembleSettings, userDeltaEnsembleSettings);
-    }
-
-    private async loadAndSetupEnsembleSetInSession(
-        queryClient: QueryClient,
-        userEnsembleSettings: UserEnsembleSetting[],
-        userDeltaEnsembleSettings: UserDeltaEnsembleSetting[],
-    ): Promise<void> {
-        console.debug("loadAndSetupEnsembleSetInSession - starting load");
-        this._workbenchSession.setEnsembleSetLoadingState(true);
-        const newEnsembleSet = await loadMetadataFromBackendAndCreateEnsembleSet(
-            queryClient,
-            userEnsembleSettings,
-            userDeltaEnsembleSettings,
-        );
-        console.debug("loadAndSetupEnsembleSetInSession - loading done");
-        console.debug("loadAndSetupEnsembleSetInSession - publishing");
-        this._workbenchSession.setEnsembleSetLoadingState(false);
-        this._workbenchSession.setEnsembleSet(newEnsembleSet);
-    }
-
-    private _pollingEnabled = false;
-    private _waitingPollingRun?: NodeJS.Timeout;
-
-    /**
-     * Starts a background polling routine, that repeats at a set interval.
-     * @param queryClient The QueryClient to use for fetching ensemble timestamps.
-     */
-    beginEnsembleUpdatePolling(queryClient: QueryClient) {
-        if (this._pollingEnabled) return;
-
-        // This shouldn't happen, but we check just in case
-        if (this._waitingPollingRun) {
-            console.warn("Found a waiting polling call, even though polling was disabled");
-            clearTimeout(this._waitingPollingRun);
-        }
-
-        // Start polling
-        console.debug("checkForEnsembleUpdate - initializing...");
-        this._pollingEnabled = true;
-        this.recursivelyQueueEnsemblePolling(queryClient);
-    }
-
-    stopEnsembleUpdatePolling() {
-        clearTimeout(this._waitingPollingRun);
-        this._waitingPollingRun = undefined;
-        this._pollingEnabled = false;
-    }
-
-    private async recursivelyQueueEnsemblePolling(queryClient: QueryClient) {
-        if (!this._pollingEnabled) return;
-
-        await this.pollForEnsembleChange(queryClient);
-
-        // Checking the variable again in case polling was disabled *during* the async call
-        if (!this._pollingEnabled) return;
-
-        console.debug("checkForEnsembleUpdate - queuing next...");
-        this._waitingPollingRun = setTimeout(async () => {
-            this.recursivelyQueueEnsemblePolling(queryClient);
-        }, ENSEMBLE_POLLING_INTERVAL);
-    }
-
-    private async pollForEnsembleChange(queryClient: QueryClient) {
-        console.debug("checkForEnsembleUpdate - fetching...");
-
-        const regularEnsembleSet = this._workbenchSession.getEnsembleSet().getRegularEnsembleArray();
-
-        const latestTimestamps = await this.getLatestEnsembleTimestamps(queryClient, regularEnsembleSet);
-
-        const newSettings = latestTimestamps.reduce((acc, [ens, ts]) => {
-            if (!isEnsembleOutdated(ens, ts)) return acc;
-
-            return acc.concat({
-                ...ensembleToUserSettings(ens),
-                timestamps: ts,
-            });
-        }, [] as UserEnsembleSetting[]);
-
-        if (newSettings.length) {
-            this.updateExistingUserEnsembleSettings(queryClient, newSettings);
-        }
-
-        console.debug("checkForEnsembleUpdate - done...");
-    }
-
-    private async getLatestEnsembleTimestamps(
-        queryClient: QueryClient,
-        ensembles: readonly RegularEnsemble[],
-    ): Promise<[RegularEnsemble, EnsembleTimestamps_api][]> {
-        const idents = ensembles.map<EnsembleIdent_api>((ens) => ({
-            caseUuid: ens.getCaseUuid(),
-            ensembleName: ens.getEnsembleName(),
-        }));
-
-        const timestamps = await queryClient.fetchQuery({
-            ...postGetTimestampsForEnsemblesOptions({ body: idents }),
-            staleTime: 0,
-            gcTime: 0,
-        });
-
-        return ensembles.map((ens, i) => [ens, timestamps[i]]);
-    }
-
-    private async updateExistingUserEnsembleSettings(queryClient: QueryClient, newSettings: UserEnsembleSetting[]) {
-        if (newSettings.length === 0) return;
-
-        const existingEnsembleSettings = this.maybeLoadEnsembleSettingsFromLocalStorage() ?? [];
-        const existingDeltaEnsembleSettings = this.maybeLoadDeltaEnsembleSettingsFromLocalStorage() ?? [];
-
-        const newEnsembleSettings = existingEnsembleSettings.map((el) => {
-            const newSetting = newSettings.find((newEl) => newEl.ensembleIdent.equals(el.ensembleIdent));
-            if (newSetting) return newSetting;
-            return el;
-        });
-
-        await this.storeSettingsInLocalStorageAndLoadAndSetupEnsembleSetInSession(
-            queryClient,
-            newEnsembleSettings,
-            existingDeltaEnsembleSettings,
-        );
-    }
-
-    private storeEnsembleSetInLocalStorage(ensembleSettingsToStore: UserEnsembleSetting[]): void {
-        const ensembleSettingsArrayToStore: StoredUserEnsembleSetting[] = ensembleSettingsToStore.map((el) => ({
-            ...el,
-            ensembleIdent: el.ensembleIdent.toString(),
-        }));
-        localStorage.setItem("userEnsembleSettings", JSON.stringify(ensembleSettingsArrayToStore));
-    }
-
-    private storeDeltaEnsembleSetInLocalStorage(deltaEnsembleSettingsToStore: UserDeltaEnsembleSetting[]): void {
-        const deltaEnsembleSettingsArrayToStore: StoredUserDeltaEnsembleSetting[] = deltaEnsembleSettingsToStore.map(
-            (el) => ({
-                ...el,
-                comparisonEnsembleIdent: el.comparisonEnsembleIdent.toString(),
-                referenceEnsembleIdent: el.referenceEnsembleIdent.toString(),
-            }),
-        );
-        localStorage.setItem("userDeltaEnsembleSettings", JSON.stringify(deltaEnsembleSettingsArrayToStore));
-    }
-
-    maybeLoadEnsembleSettingsFromLocalStorage(): UserEnsembleSetting[] | null {
-        const ensembleSettingsString = localStorage.getItem("userEnsembleSettings");
-        if (!ensembleSettingsString) return null;
-
-        const ensembleSettingsArray = JSON.parse(ensembleSettingsString) as StoredUserEnsembleSetting[];
-        const parsedEnsembleSettingsArray: UserEnsembleSetting[] = ensembleSettingsArray.map((el) => ({
-            ...el,
-            ensembleIdent: RegularEnsembleIdent.fromString(el.ensembleIdent),
-        }));
-
-        return parsedEnsembleSettingsArray;
-    }
-
-    maybeLoadDeltaEnsembleSettingsFromLocalStorage(): UserDeltaEnsembleSetting[] | null {
-        const deltaEnsembleSettingsString = localStorage.getItem("userDeltaEnsembleSettings");
-        if (!deltaEnsembleSettingsString) return null;
-
-        const deltaEnsembleSettingsArray = JSON.parse(deltaEnsembleSettingsString) as StoredUserDeltaEnsembleSetting[];
-        const parsedDeltaEnsembleSettingsArray: UserDeltaEnsembleSetting[] = deltaEnsembleSettingsArray.map((el) => ({
-            ...el,
-            comparisonEnsembleIdent: RegularEnsembleIdent.fromString(el.comparisonEnsembleIdent),
-            referenceEnsembleIdent: RegularEnsembleIdent.fromString(el.referenceEnsembleIdent),
-        }));
-
-        return parsedDeltaEnsembleSettingsArray;
-    }
-
+    /*
     applyTemplate(template: Template): void {
         this.clearLayout();
 
@@ -514,4 +658,5 @@ export class Workbench {
 
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
     }
+        */
 }
