@@ -12,7 +12,7 @@ export function Content(props: ContentProps): React.ReactNode {
     const containerRef = React.useRef<HTMLElement | null>(null);
     const onlyChild = React.Children.only(props.children) as React.ReactElement;
 
-    const { registerContentContainer, registerScrollContainerElement, reportContentBoundingRect } = context;
+    const { registerContentContainer, reportContentBoundingRect } = context;
 
     const setContainer = React.useCallback(
         function setContainer(el: Element | null) {
@@ -23,7 +23,7 @@ export function Content(props: ContentProps): React.ReactNode {
                 reportContentBoundingRect(node.getBoundingClientRect());
             }
         },
-        [reportContentBoundingRect],
+        [reportContentBoundingRect, registerContentContainer],
     );
 
     const mergedRef = composeRefs<HTMLElement>(setContainer, (onlyChild as any).ref);
@@ -33,15 +33,6 @@ export function Content(props: ContentProps): React.ReactNode {
             const container = containerRef.current;
             if (!container) return;
 
-            let scrollEl: HTMLElement | null = null;
-            if (container.hasAttribute("data-sl-scroll-container")) {
-                scrollEl = container;
-            } else {
-                scrollEl = container.querySelector<HTMLElement>("[data-sl-scroll-container]");
-            }
-
-            registerScrollContainerElement(scrollEl ?? null);
-
             const reportContentRect = () => {
                 reportContentBoundingRect(container.getBoundingClientRect());
             };
@@ -49,22 +40,14 @@ export function Content(props: ContentProps): React.ReactNode {
             const resizeObserver = new ResizeObserver(reportContentRect);
             resizeObserver.observe(container);
 
-            if (scrollEl) {
-                scrollEl.addEventListener("scroll", reportContentRect, { passive: true });
-            }
-
             reportContentRect();
 
             return () => {
                 resizeObserver.disconnect();
-                if (scrollEl) {
-                    scrollEl.removeEventListener("scroll", reportContentRect);
-                }
-                registerScrollContainerElement(null);
                 registerContentContainer(null);
             };
         },
-        [reportContentBoundingRect, registerScrollContainerElement, registerContentContainer],
+        [reportContentBoundingRect, registerContentContainer],
     );
 
     return React.cloneElement(onlyChild, {

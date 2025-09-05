@@ -1,7 +1,5 @@
 import React from "react";
 
-import { isEqual } from "lodash";
-
 import { createPortal } from "@lib/utils/createPortal";
 import { MANHATTAN_LENGTH, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -11,12 +9,9 @@ import { point2Distance, vec2FromPointerEvent } from "@lib/utils/vec2";
 import { Content } from "./sub-components/Content";
 import { DragHandle } from "./sub-components/dragHandle";
 import { Group } from "./sub-components/Group";
+import { SortableListGroupContent } from "./sub-components/GroupContent";
 import { Item } from "./sub-components/Item";
 import { ScrollContainer } from "./sub-components/ScrollContainer";
-import { DropIndicatorOverlay } from "./sub-components/DropIndicatorOverlay";
-import { DragPlaceholderOverlay } from "./sub-components/DragPlaceholderOverlay";
-import { OverlayViewport } from "./sub-components/OverlayViewport";
-import { SortableListGroupContent } from "./sub-components/GroupContent";
 
 export enum ItemType {
     ITEM = "item",
@@ -39,6 +34,7 @@ export type SortableListContextType = {
     hoveredArea: HoveredArea | null;
     dragPosition: Vec2 | null;
 
+    getContentContainer: () => HTMLElement | null;
     registerContentContainer: (el: HTMLElement | null) => void;
     reportContentBoundingRect: (rect: DOMRectReadOnly) => void;
     registerScrollContainerElement: (el: HTMLElement | null) => void;
@@ -50,6 +46,7 @@ export const SortableListContext = React.createContext<SortableListContextType>(
     hoveredArea: null,
     dragPosition: null,
 
+    getContentContainer: () => null,
     registerContentContainer: () => {},
     reportContentBoundingRect: () => {},
     registerScrollContainerElement: () => {},
@@ -110,27 +107,49 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
             hoveredElementId: hoveredItemIdAndArea?.id ?? null,
             hoveredArea: hoveredItemIdAndArea?.area ?? null,
             dragPosition,
+            getContentContainer: () => contentContainerElement,
             registerContentContainer: setContentContainerElement,
             registerScrollContainerElement: setScrollContainerElement,
             reportContentBoundingRect: setContentContainerRect,
         }),
-        [draggedItemId, hoveredItemIdAndArea, dragPosition],
+        [contentContainerElement, draggedItemId, hoveredItemIdAndArea, dragPosition],
     );
 
     const mainRef = React.useRef<HTMLDivElement>(null);
-    /*
-    const listRef = React.useRef<DomFor<TRoot>>(null);
-    const scrollRef = React.useRef<HTMLDivElement>(null);
-    */
     const upperScrollRef = React.useRef<HTMLDivElement>(null);
     const lowerScrollRef = React.useRef<HTMLDivElement>(null);
 
-    if (!isEqual(prevChildren, props.children)) {
-        setPrevChildren(props.children);
-        if (scrollContainerElement) {
-            scrollContainerElement.scrollTop = currentScrollPosition;
-        }
-    }
+    const scrollPosByEl = React.useRef(new WeakMap<HTMLElement, number>());
+
+    const orderKey = React.useMemo(() => {
+        if (!contentContainerElement) return "";
+        return Array.from(contentContainerElement.querySelectorAll("[data-sortable='item']"))
+            .map((el) => (el as HTMLElement).dataset.itemId ?? "")
+            .join("|");
+    }, [contentContainerElement, props.children]);
+
+    React.useEffect(() => {
+        const el = scrollContainerElement;
+        if (!el) return;
+
+        const onScroll = () => {
+            scrollPosByEl.current.set(el, el.scrollTop);
+        };
+
+        // restore any saved position for this element immediately
+        const saved = scrollPosByEl.current.get(el);
+        if (typeof saved === "number") el.scrollTop = saved;
+
+        el.addEventListener("scroll", onScroll, { passive: true });
+        return () => el.removeEventListener("scroll", onScroll);
+    }, [scrollContainerElement]);
+
+    React.useLayoutEffect(() => {
+        const el = scrollContainerElement;
+        if (!el) return;
+        const saved = scrollPosByEl.current.get(el);
+        if (typeof saved === "number") el.scrollTop = saved;
+    }, [scrollContainerElement, orderKey]);
 
     React.useEffect(
         function addEventListeners() {
@@ -262,7 +281,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                                 content &&
                                 rectContainsPoint(content.getBoundingClientRect(), vec2FromPointerEvent(e)) &&
                                 (content.querySelectorAll("[data-sortable='item']").length > 0 ||
-                                    content.getElementsByClassName("[data-sortable='group']").length > 0)
+                                    content.querySelectorAll("[data-sortable='group']").length > 0)
                             ) {
                                 continue;
                             }
@@ -285,7 +304,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
             }
 
             function getItemPositionInGroup(item: HTMLElement, ignoreItem?: HTMLElement): number {
-                let group = item.parentElement?.closest("[data-sortable-list-group-content='']") as HTMLElement | null;
+                let group = item.parentElement?.closest("[data-sortable-list-group-content]") as HTMLElement | null;
                 if (!group || !(group instanceof HTMLElement)) {
                     group = currentListRef;
                 }
@@ -519,6 +538,8 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
 
                 document.removeEventListener("pointermove", handlePointerMove);
                 document.removeEventListener("pointerup", handlePointerUp);
+
+                scrollTimeout && clearTimeout(scrollTimeout);
             }
 
             function handleKeyDown(e: KeyboardEvent) {
@@ -617,14 +638,6 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                         ></div>,
                     )}
             </SortableListContext.Provider>
-            <OverlayViewport rootEl={mainRef.current} scrollEl={scrollContainerElement}>
-                <DropIndicatorOverlay
-                    containerEl={contentContainerElement /* from Content registration */}
-                    scrollEl={scrollContainerElement /* from ScrollContainer marker, or null */}
-                    hovered={hoveredItemIdAndArea}
-                />
-                <DragPlaceholderOverlay scrollEl={scrollContainerElement} draggedItem={draggedElement} />
-            </OverlayViewport>
         </div>
     );
 } as SortableListCompound;

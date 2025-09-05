@@ -10,8 +10,8 @@ export function DragPlaceholderOverlay({
     const draggedItemRect = draggedItem.getBoundingClientRect();
     const scrollRect = scrollEl.getBoundingClientRect();
 
-    const left = Math.round(draggedItemRect.x - scrollRect.left - scrollEl.scrollLeft);
-    const top = Math.round(draggedItemRect.y - scrollRect.top - scrollEl.scrollTop);
+    const left = Math.round(draggedItemRect.x - scrollRect.left);
+    const top = Math.round(draggedItemRect.y - scrollRect.top);
 
     return (
         <div
