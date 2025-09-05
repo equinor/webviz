@@ -96,10 +96,10 @@ export function RecentSessions(props: RecentSessionsProps) {
 
     return (
         <section>
-            <Typography className="flex gap-1 items-center" variant="h6">
-                Sessions
+            <Typography className="flex gap-1 items-center justify-between" variant="h2">
+                Recent sessions
                 <IconButton disabled={sessionsQuery.isRefetching} onClick={() => sessionsQuery.refetch()}>
-                    <Refresh fontSize="inherit" />
+                    <Refresh fontSize="small" />
                 </IconButton>
             </Typography>
             <div className="flex flex-col gap-2">{makeContent()}</div>

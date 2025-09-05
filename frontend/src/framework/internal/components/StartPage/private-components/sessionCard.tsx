@@ -7,7 +7,6 @@ import type { GraphUser_api } from "@api";
 import { getUserInfoOptions } from "@api";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { timeAgo } from "@lib/utils/dates";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { UserAvatar } from "../../UserAvatar";
 
@@ -28,7 +27,6 @@ export type SessionCardProps = {
 export function SessionCard(props: SessionCardProps): React.ReactNode {
     const showOwnerRow = props.ownerId;
 
-    const paddingClass = showOwnerRow ? "py-1" : "py-3.5";
     const ownerInfo = useUserGraphInfo(props.ownerId);
 
     const allTooltipInfo = React.useMemo(() => {
@@ -41,24 +39,21 @@ export function SessionCard(props: SessionCardProps): React.ReactNode {
     }, [ownerInfo, props.tooltipInfo]);
 
     return (
-        <li>
+        <li className="max-w-sm">
             <Tooltip
                 title={<TooltipContent {...props} owner={ownerInfo} tooltipInfo={allTooltipInfo} />}
                 placement="right"
             >
                 <a
-                    className={resolveClassNames(
-                        "flex gap-4 items-center px-4 rounded hover:bg-indigo-100",
-                        paddingClass,
-                    )}
+                    className="flex gap-4 items-center px-4 py-1 rounded hover:bg-indigo-100"
                     href={props.href}
                     onClick={(evt) => props.onClick?.(props.id, evt)}
                 >
-                    <div className="overflow-hidden">
-                        <span className="truncate text-lg">{props.title}</span>
+                    <div className="overflow-hidden truncate">
+                        <span>{props.title}</span>
                         {showOwnerRow && <OwnerLine owner={ownerInfo} />}
                     </div>
-                    <span className="ml-auto text-base text-gray-500 whitespace-nowrap">
+                    <span className="ml-auto text-gray-500 whitespace-nowrap">
                         ~ {timeAgo(Date.now() - new Date(props.timestamp).getTime())}
                     </span>
                 </a>
@@ -74,7 +69,7 @@ function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
     const isSelf = activeUserInfo && props.owner?.id === activeUserInfo.user_id;
 
     return (
-        <div className="-mt-1 flex gap-1 items-center text-base italic text-gray-500">
+        <div className="-mt-1 flex gap-1 items-center text-sm italic text-gray-500">
             <UserAvatar userEmail={props.owner?.id ?? ""} className="shrink-0 inline" />
             <span className="truncate">{name}</span>
             {isSelf && <span>(You)</span>}

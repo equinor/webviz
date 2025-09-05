@@ -95,10 +95,10 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
 
     return (
         <section>
-            <Typography className="flex gap-1 items-center" variant="h6">
-                Snapshots
+            <Typography className="flex gap-1 items-center justify-between" variant="h2">
+                Recent snapshots
                 <IconButton disabled={recentSnapshotsQuery.isRefetching} onClick={() => recentSnapshotsQuery.refetch()}>
-                    <Refresh fontSize="inherit" />
+                    <Refresh fontSize="small" />
                 </IconButton>
             </Typography>
             {makeContent()}
