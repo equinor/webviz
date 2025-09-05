@@ -6,12 +6,13 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 import { point2Distance, vec2FromPointerEvent } from "@lib/utils/vec2";
 
-import { Content } from "./sub-components/Content";
-import { DragHandle } from "./sub-components/dragHandle";
-import { Group } from "./sub-components/Group";
-import { SortableListGroupContent } from "./sub-components/GroupContent";
-import { Item } from "./sub-components/Item";
-import { ScrollContainer } from "./sub-components/ScrollContainer";
+import { Content } from "./private/Content";
+import { DragHandle } from "./private/dragHandle";
+import { DropIndicatorOverlay } from "./private/DropIndicatorOverlay";
+import { Group } from "./private/Group";
+import { SortableListGroupContent } from "./private/GroupContent";
+import { Item } from "./private/Item";
+import { ScrollContainer } from "./private/ScrollContainer";
 
 export enum ItemType {
     ITEM = "item",
@@ -576,10 +577,6 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
         ],
     );
 
-    function handleScroll(e: React.UIEvent<HTMLDivElement>) {
-        setCurrentScrollPosition(e.currentTarget.scrollTop);
-    }
-
     /*
 
     function makeChildren(): React.ReactNode[] {
@@ -628,6 +625,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                     ref={lowerScrollRef}
                 ></div>
                 {props.children}
+                <div className="h-5" />
                 {isDragging &&
                     createPortal(
                         <div
@@ -637,6 +635,11 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                             })}
                         ></div>,
                     )}
+                <DropIndicatorOverlay
+                    containerEl={mainRef.current}
+                    scrollEl={scrollContainerElement}
+                    hovered={hoveredItemIdAndArea}
+                />
             </SortableListContext.Provider>
         </div>
     );

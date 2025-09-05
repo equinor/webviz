@@ -1,3 +1,5 @@
+import { createPortal } from "react-dom";
+
 import { HoveredArea } from "../sortableList";
 
 export function DropIndicatorOverlay({
@@ -23,7 +25,10 @@ export function DropIndicatorOverlay({
     const left = containerRect.left - scrollRect.left;
     const width = containerRect.width;
 
-    return (
+    if (y > scrollRect.height) return null;
+    if (y < 0) return null;
+
+    return createPortal(
         <div
             data-sl-indicator
             style={{
@@ -35,6 +40,7 @@ export function DropIndicatorOverlay({
                 background: "#3b82f6",
                 pointerEvents: "none",
             }}
-        />
+        />,
+        scrollEl,
     );
 }

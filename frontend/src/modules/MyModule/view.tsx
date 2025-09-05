@@ -507,9 +507,9 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                         <table className="w-full table-fixed border-collapse">
                             <thead className="sticky top-0 bg-white z-10">
                                 <tr>
-                                    <th className="w-auto"></th>
-                                    <th className="w-auto">Name</th>
-                                    <th className="w-auto">Test</th>
+                                    <th></th>
+                                    <th>Name</th>
+                                    <th>Test</th>
                                 </tr>
                             </thead>
                             <SortableList.Content>
@@ -519,7 +519,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                                             return (
                                                 <SortableList.Item key={item.id} id={item.id}>
                                                     <tr>
-                                                        <td className="w-auto">
+                                                        <td>
                                                             <SortableList.DragHandle>
                                                                 <DragIndicator
                                                                     fontSize="inherit"
@@ -527,8 +527,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                                                                 />
                                                             </SortableList.DragHandle>
                                                         </td>
-                                                        <td className="w-auto">{item.id}</td>
-                                                        <td className="w-auto">Test</td>
+                                                        <td>{item.id}</td>
+                                                        <td>Test</td>
                                                     </tr>
                                                 </SortableList.Item>
                                             );
@@ -538,12 +538,19 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                                                 <SortableList.Group key={item.id} id={item.id}>
                                                     <tr className="bg-gray-200">
                                                         <td colSpan={3} className="font-bold">
-                                                            <table className="w-full ml-4">
+                                                            <table className="w-full">
                                                                 <thead>
                                                                     <tr>
-                                                                        <th className="w-auto"></th>
-                                                                        <th className="w-auto">Name</th>
-                                                                        <th className="w-auto">Test</th>
+                                                                        <th>
+                                                                            <SortableList.DragHandle>
+                                                                                <DragIndicator
+                                                                                    fontSize="inherit"
+                                                                                    className="pointer-events-none"
+                                                                                />
+                                                                            </SortableList.DragHandle>
+                                                                        </th>
+                                                                        <th>Name</th>
+                                                                        <th>Test</th>
                                                                     </tr>
                                                                 </thead>
                                                                 <SortableList.GroupContent>
@@ -555,7 +562,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                                                                                     id={child.id}
                                                                                 >
                                                                                     <tr>
-                                                                                        <td className="w-auto">
+                                                                                        <td>
                                                                                             <SortableList.DragHandle>
                                                                                                 <DragIndicator
                                                                                                     fontSize="inherit"
@@ -563,10 +570,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                                                                                                 />
                                                                                             </SortableList.DragHandle>
                                                                                         </td>
-                                                                                        <td className="w-auto">
-                                                                                            {child.id}
-                                                                                        </td>
-                                                                                        <td className="w-auto">Test</td>
+                                                                                        <td>{child.id}</td>
+                                                                                        <td>Test</td>
                                                                                     </tr>
                                                                                 </SortableList.Item>
                                                                             ))}
