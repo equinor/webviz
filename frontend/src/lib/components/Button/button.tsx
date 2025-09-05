@@ -57,7 +57,7 @@ function ButtonComponent(props: ButtonProps, ref: React.ForwardedRef<HTMLDivElem
             classNames.push("bg-slate-500", "hover:bg-slate-600");
         }
     } else {
-        classNames.push("bg-transparent");
+        classNames.push("border", "border-transparent", "bg-transparent");
         if (color === "primary" || !color) {
             classNames.push("text-indigo-600", "hover:bg-indigo-100");
         } else if (color === "danger") {

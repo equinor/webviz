@@ -6,7 +6,7 @@ import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type DialogProps = {
-    title?: string;
+    title?: React.ReactNode;
     children?: React.ReactNode;
     modal?: boolean;
     open?: boolean;
@@ -67,7 +67,11 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                 }}
             >
                 <div className="flex justify-between p-4 border-b shadow-inner">
-                    <h2 className="text-slate-800 font-bold text-lg">{props.title}</h2>
+                    {typeof props.title === "string" ? (
+                        <h2 className="text-slate-800 font-bold text-lg">{props.title}</h2>
+                    ) : (
+                        props.title
+                    )}
                     {props.showCloseCross && (
                         <div
                             className="hover:text-slate-500 cursor-pointer ml-4"

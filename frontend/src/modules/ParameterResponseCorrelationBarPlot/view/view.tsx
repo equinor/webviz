@@ -34,7 +34,11 @@ function MaxNumberPlotsExceededMessage() {
     );
 }
 
-export function View({ viewContext, workbenchSession, workbenchServices }: ModuleViewProps<Interfaces>) {
+export function View({
+    viewContext,
+    workbenchSession: workbenchSession,
+    workbenchServices,
+}: ModuleViewProps<Interfaces>) {
     const [isPending, startTransition] = React.useTransition();
     const [content, setContent] = React.useState<React.ReactNode>(null);
     const [revNumberResponse, setRevNumberResponse] = React.useState<number>(0);

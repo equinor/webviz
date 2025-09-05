@@ -5,8 +5,10 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
+import { useColorSet } from "@framework/WorkbenchSettings";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import {
     DataProviderManager,
@@ -23,9 +25,9 @@ import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
-    const ensembleSet = useEnsembleSet(props.workbenchSession);
+    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
     const queryClient = useQueryClient();
-    const colorSet = props.workbenchSettings.useColorSet();
+    const colorSet = useColorSet(props.workbenchSettings);
 
     const [dataProviderManager, setDataProviderManager] = useAtom(dataProviderManagerAtom);
 
