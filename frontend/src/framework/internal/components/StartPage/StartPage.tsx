@@ -52,7 +52,7 @@ export function StartPage(props: StartPageProps) {
                         </Button>
                     </Tooltip>
                     <Tooltip placement="right" title="Open an existing session.">
-                        <Button variant="text">
+                        <Button variant="text" onClick={openOverviewDialogOnSessions}>
                             <Icon name="folder_open" />
                             Open session...
                         </Button>

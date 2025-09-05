@@ -3,9 +3,11 @@ import React from "react";
 import { DateRangePicker } from "@equinor/eds-core-react";
 import type { Options } from "@hey-api/client-axios";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 
 import type { GetRecentSnapshotsData_api, SnapshotAccessLog_api, SortDirection_api } from "@api";
 import { SnapshotAccessLogSortBy_api, getRecentSnapshotsInfiniteOptions } from "@api";
+import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/SnapshotUrlService";
 import type { Workbench } from "@framework/Workbench";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
@@ -57,11 +59,34 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
         _type: "data",
         columnId: "snapshotMetadata.description",
         label: "Description",
-        sizeInPercent: 34,
+        sizeInPercent: 26,
         filter: false,
         sortable: false,
         renderData(value) {
             return value || <span className="text-gray-400 italic">N/A</span>;
+        },
+    },
+    {
+        // TODO: This too could be a "virtual" column
+        _type: "data",
+        columnId: "snapshotId",
+        label: "Url",
+        sortable: false,
+        filter: false,
+        sizeInPercent: 12,
+        renderData(snapshotId) {
+            const url = buildSnapshotUrl(snapshotId);
+            return (
+                <a
+                    className="px-1 inline-block font-mono bg-gray-100 rounded border text-blue-700 border-gray-200"
+                    href={url}
+                    onClick={(evt) => {
+                        evt.preventDefault();
+                        navigator.clipboard.writeText(url);
+                        toast.info("Url copied");
+                    }}
+                >{`/${snapshotId}`}</a>
+            );
         },
     },
     {
@@ -70,7 +95,7 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
         label: "Owner",
         sortable: false,
         filter: false,
-        sizeInPercent: 15,
+        sizeInPercent: 11,
         renderData() {
             // TODO: Need new backend oid
             return (
@@ -83,7 +108,6 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
             );
         },
     },
-
     {
         _type: "data",
         label: "Last visited at",

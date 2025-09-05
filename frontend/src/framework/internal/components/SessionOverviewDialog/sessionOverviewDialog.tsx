@@ -1,7 +1,9 @@
 import React from "react";
 
-import { Add, Delete, Edit, FileOpen } from "@mui/icons-material";
+import { Add, Delete, Edit, FileOpen, Link } from "@mui/icons-material";
+import { toast } from "react-toastify";
 
+import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/SnapshotUrlService";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -48,6 +50,14 @@ export function SessionOverviewDialog(props: SessionOverviewDialogProps): React.
         }
     }
 
+    function copySelectedUrl() {
+        if (!selectedEntryId) return;
+        if (props.contentMode === "snapshots") {
+            navigator.clipboard.writeText(buildSnapshotUrl(selectedEntryId));
+            toast.info("Url copied");
+        }
+    }
+
     async function deleteSelectedEntry() {
         if (!selectedEntryId || props.contentMode !== "sessions") return;
 
@@ -79,6 +89,9 @@ export function SessionOverviewDialog(props: SessionOverviewDialogProps): React.
             </>
         ) : (
             <>
+                <Button color="secondary" disabled={!selectedEntryId} onClick={copySelectedUrl}>
+                    <Link fontSize="inherit" /> Copy url
+                </Button>
                 <Button color="primary" disabled={!selectedEntryId} onClick={goToSelectedEntry}>
                     <FileOpen fontSize="inherit" /> Open
                 </Button>
