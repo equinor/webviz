@@ -4,7 +4,12 @@ import { Typography } from "@equinor/eds-core-react";
 import { Refresh } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
-import { getRecentSnapshotsOptions, getRecentSnapshotsQueryKey } from "@api";
+import {
+    getRecentSnapshotsOptions,
+    getRecentSnapshotsQueryKey,
+    SnapshotAccessLogSortBy_api,
+    SortDirection_api,
+} from "@api";
 import { GuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -19,7 +24,13 @@ export type RecentSnapshotsProps = {
 
 export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
     const recentSnapshotsQuery = useQuery({
-        ...getRecentSnapshotsOptions(),
+        ...getRecentSnapshotsOptions({
+            query: {
+                sort_by: SnapshotAccessLogSortBy_api.LAST_VISITED_AT,
+                sort_direction: SortDirection_api.DESC,
+                limit: 5,
+            },
+        }),
         refetchInterval: 10000,
     });
 
@@ -82,10 +93,10 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
 
     return (
         <section>
-            <Typography className="flex gap-1 items-center" variant="h6">
-                Snapshots
+            <Typography className="flex gap-1 items-center justify-between" variant="h2">
+                Recent snapshots
                 <IconButton disabled={recentSnapshotsQuery.isRefetching} onClick={() => recentSnapshotsQuery.refetch()}>
-                    <Refresh fontSize="inherit" />
+                    <Refresh fontSize="small" />
                 </IconButton>
             </Typography>
             {makeContent()}
