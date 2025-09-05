@@ -14,7 +14,7 @@ import {
 import { useAtom } from "jotai";
 
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
-import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { useColorSet, type WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { Menu } from "@lib/components/Menu";
 import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
@@ -52,7 +52,7 @@ export type LayerManagerComponentWrapperProps = {
 };
 
 export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperProps): React.ReactNode {
-    const colorSet = props.workbenchSettings.useColorSet();
+    const colorSet = useColorSet(props.workbenchSettings);
     const [preferredViewLayout, setPreferredViewLayout] = useAtom(preferredViewLayoutAtom);
 
     const groupDelegate = props.dataProviderManager.getGroupDelegate();

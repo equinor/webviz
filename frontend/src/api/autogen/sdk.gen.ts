@@ -176,6 +176,9 @@ import type {
     GetPolygonsDataData_api,
     GetPolygonsDataResponse_api,
     GetPolygonsDataError_api,
+    GetUserInfoData_api,
+    GetUserInfoResponse_api,
+    GetUserInfoError_api,
     GetUserPhotoData_api,
     GetUserPhotoResponse_api,
     GetUserPhotoError_api,
@@ -194,6 +197,43 @@ import type {
     GetVfpTableData_api,
     GetVfpTableResponse_api,
     GetVfpTableError_api,
+    GetSessionsMetadataData_api,
+    GetSessionsMetadataResponse_api,
+    GetSessionsMetadataError_api,
+    CreateSessionData_api,
+    CreateSessionResponse_api,
+    CreateSessionError_api,
+    DeleteSessionData_api,
+    DeleteSessionError_api,
+    GetSessionData_api,
+    GetSessionResponse_api,
+    GetSessionError_api,
+    UpdateSessionData_api,
+    UpdateSessionResponse_api,
+    UpdateSessionError_api,
+    GetSessionMetadataData_api,
+    GetSessionMetadataResponse_api,
+    GetSessionMetadataError_api,
+    GetRecentSnapshotsData_api,
+    GetRecentSnapshotsResponse_api,
+    GetRecentSnapshotsError_api,
+    GetSnapshotsMetadataData_api,
+    GetSnapshotsMetadataResponse_api,
+    GetSnapshotsMetadataError_api,
+    CreateSnapshotData_api,
+    CreateSnapshotResponse_api,
+    CreateSnapshotError_api,
+    DeleteSnapshotData_api,
+    DeleteSnapshotError_api,
+    GetSnapshotData_api,
+    GetSnapshotResponse_api,
+    GetSnapshotError_api,
+    GetSnapshotMetadataData_api,
+    GetSnapshotMetadataResponse_api,
+    GetSnapshotMetadataError_api,
+    SnapshotPreviewData_api,
+    SnapshotPreviewResponse_api,
+    SnapshotPreviewError_api,
     LoginRouteData_api,
     LoginRouteError_api,
     AuthorizedCallbackRouteData_api,
@@ -1147,6 +1187,16 @@ export const getPolygonsData = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get User Info
+ */
+export const getUserInfo = <ThrowOnError extends boolean = false>(options: Options<GetUserInfoData_api, ThrowOnError>) => {
+    return (options?.client ?? client).get<GetUserInfoResponse_api, GetUserInfoError_api, ThrowOnError>({
+        ...options,
+        url: "/graph/user_info/{user_id_or_email}",
+    });
+};
+
+/**
  * Get User Photo
  * Get username, display name and avatar from Microsoft Graph API for a given user email
  */
@@ -1215,6 +1265,172 @@ export const getVfpTable = <ThrowOnError extends boolean = false>(options: Optio
     return (options?.client ?? client).get<GetVfpTableResponse_api, GetVfpTableError_api, ThrowOnError>({
         ...options,
         url: "/vfp/vfp_table/",
+    });
+};
+
+/**
+ * Get Sessions Metadata
+ */
+export const getSessionsMetadata = <ThrowOnError extends boolean = false>(
+    options?: Options<GetSessionsMetadataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetSessionsMetadataResponse_api, GetSessionsMetadataError_api, ThrowOnError>({
+        ...options,
+        url: "/sessions/sessions",
+    });
+};
+
+/**
+ * Create Session
+ */
+export const createSession = <ThrowOnError extends boolean = false>(
+    options: Options<CreateSessionData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).post<CreateSessionResponse_api, CreateSessionError_api, ThrowOnError>({
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options?.headers,
+        },
+        url: "/sessions/sessions",
+    });
+};
+
+/**
+ * Delete Session
+ */
+export const deleteSession = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteSessionData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).delete<unknown, DeleteSessionError_api, ThrowOnError>({
+        ...options,
+        url: "/sessions/sessions/{session_id}",
+    });
+};
+
+/**
+ * Get Session
+ */
+export const getSession = <ThrowOnError extends boolean = false>(options: Options<GetSessionData_api, ThrowOnError>) => {
+    return (options?.client ?? client).get<GetSessionResponse_api, GetSessionError_api, ThrowOnError>({
+        ...options,
+        url: "/sessions/sessions/{session_id}",
+    });
+};
+
+/**
+ * Update Session
+ * Updates a session object. Allows for partial update objects
+ */
+export const updateSession = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateSessionData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).put<UpdateSessionResponse_api, UpdateSessionError_api, ThrowOnError>({
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options?.headers,
+        },
+        url: "/sessions/sessions/{session_id}",
+    });
+};
+
+/**
+ * Get Session Metadata
+ */
+export const getSessionMetadata = <ThrowOnError extends boolean = false>(
+    options: Options<GetSessionMetadataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetSessionMetadataResponse_api, GetSessionMetadataError_api, ThrowOnError>({
+        ...options,
+        url: "/sessions/sessions/metadata/{session_id}",
+    });
+};
+
+/**
+ * Get Recent Snapshots
+ */
+export const getRecentSnapshots = <ThrowOnError extends boolean = false>(
+    options?: Options<GetRecentSnapshotsData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetRecentSnapshotsResponse_api, GetRecentSnapshotsError_api, ThrowOnError>({
+        ...options,
+        url: "/snapshots/recent_snapshots",
+    });
+};
+
+/**
+ * Get Snapshots Metadata
+ */
+export const getSnapshotsMetadata = <ThrowOnError extends boolean = false>(
+    options?: Options<GetSnapshotsMetadataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetSnapshotsMetadataResponse_api, GetSnapshotsMetadataError_api, ThrowOnError>({
+        ...options,
+        url: "/snapshots/snapshots",
+    });
+};
+
+/**
+ * Create Snapshot
+ */
+export const createSnapshot = <ThrowOnError extends boolean = false>(
+    options: Options<CreateSnapshotData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).post<CreateSnapshotResponse_api, CreateSnapshotError_api, ThrowOnError>({
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options?.headers,
+        },
+        url: "/snapshots/snapshots",
+    });
+};
+
+/**
+ * Delete Snapshot
+ */
+export const deleteSnapshot = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteSnapshotData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).delete<unknown, DeleteSnapshotError_api, ThrowOnError>({
+        ...options,
+        url: "/snapshots/snapshots/{snapshot_id}",
+    });
+};
+
+/**
+ * Get Snapshot
+ */
+export const getSnapshot = <ThrowOnError extends boolean = false>(options: Options<GetSnapshotData_api, ThrowOnError>) => {
+    return (options?.client ?? client).get<GetSnapshotResponse_api, GetSnapshotError_api, ThrowOnError>({
+        ...options,
+        url: "/snapshots/snapshots/{snapshot_id}",
+    });
+};
+
+/**
+ * Get Snapshot Metadata
+ */
+export const getSnapshotMetadata = <ThrowOnError extends boolean = false>(
+    options: Options<GetSnapshotMetadataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetSnapshotMetadataResponse_api, GetSnapshotMetadataError_api, ThrowOnError>({
+        ...options,
+        url: "/snapshots/snapshots/metadata/{snapshot_id}",
+    });
+};
+
+/**
+ * Snapshot Preview
+ */
+export const snapshotPreview = <ThrowOnError extends boolean = false>(
+    options: Options<SnapshotPreviewData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<SnapshotPreviewResponse_api, SnapshotPreviewError_api, ThrowOnError>({
+        ...options,
+        responseType: "text",
+        url: "/snapshot-preview/{snapshot_id}",
     });
 };
 

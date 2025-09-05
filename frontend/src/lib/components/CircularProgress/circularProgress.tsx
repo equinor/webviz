@@ -1,10 +1,12 @@
+import type { SizeName } from "@framework/utils/getNamedSizeClass";
+import { getSizeClass } from "@framework/utils/getNamedSizeClass";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { OptionalValues } from "../_component-utils/components";
 import { withDefaults } from "../_component-utils/components";
 
 export type CircularProgressProps = {
-    size?: "extra-small" | "small" | "medium-small" | "medium" | "large";
+    size?: SizeName;
     color?: string;
     variant?: "determinate" | "indeterminate";
     value?: number;
@@ -17,23 +19,13 @@ const defaultProps: OptionalValues<CircularProgressProps> = {
 };
 
 export const CircularProgress = withDefaults<CircularProgressProps>()(defaultProps, (props) => {
+    const sizeClass = getSizeClass(props.size!);
+
     return (
-        <div
-            className={resolveClassNames(
-                {
-                    "w-3 h-3": props.size === "extra-small",
-                    "w-4 h-4": props.size === "small",
-                    "w-5 h-5": props.size === "medium-small",
-                    "w-8 h-8": props.size === "medium",
-                    "w-12 h-12": props.size === "large",
-                },
-                "relative",
-                props.className ?? "",
-            )}
-        >
+        <div className={resolveClassNames(sizeClass, "relative", props.className ?? "")}>
             <svg
                 aria-hidden="true"
-                className="w-full h-full text-gray-200 animate-spin fill-blue-600"
+                className="text-gray-200 animate-spin fill-blue-600"
                 viewBox="0 0 100 101"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"

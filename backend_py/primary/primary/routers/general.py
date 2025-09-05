@@ -15,6 +15,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class UserInfo(BaseModel):
+    user_id: str
     username: str
     display_name: str | None = None
     avatar_b64str: str | None = None
@@ -63,6 +64,7 @@ async def get_logged_in_user(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No user is logged in")
 
     user_info = UserInfo(
+        user_id=authenticated_user.get_user_id(),
         username=authenticated_user.get_username(),
         avatar_b64str=None,
         display_name=None,
