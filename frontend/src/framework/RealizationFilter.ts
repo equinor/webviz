@@ -8,12 +8,12 @@ import type { RegularEnsemble } from "./RegularEnsemble";
 import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import type {
     DiscreteParameterValueSelection,
-    NumberRange,
     ParameterValueSelection,
     RealizationNumberSelection,
 } from "./types/realizationFilterTypes";
 import { IncludeExcludeFilter, RealizationFilterType } from "./types/realizationFilterTypes";
 import { isArrayOfNumbers, isArrayOfStrings } from "./utils/arrayUtils";
+import type { NumberRange } from "./utils/numberUtils";
 import {
     isValueSelectionAnArrayOfNumber,
     isValueSelectionAnArrayOfString,
