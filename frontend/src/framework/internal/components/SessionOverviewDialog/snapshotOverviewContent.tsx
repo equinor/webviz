@@ -14,7 +14,7 @@ import type { TableColumns, TableSorting } from "@lib/components/Table/types";
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
 import { formatDate } from "@lib/utils/dates";
 
-import { UserAvatar } from "../SelectEnsemblesDialog/private-components/userAvatar";
+import { UserAvatar } from "../UserAvatar";
 
 import { edsRangeChoiceToFilterRange, type EdsFilterRange, type FilterRange } from "./_utils";
 import {

@@ -1,12 +1,18 @@
 import React from "react";
 
+import { Typography } from "@equinor/eds-core-react";
+import { Refresh } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { take } from "lodash";
 
 import { getSessionsMetadataOptions, SessionSortBy_api, SortDirection_api } from "@api";
+import { buildSessionUrl } from "@framework/internal/WorkbenchSession/SessionUrlService";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { IconButton } from "@lib/components/IconButton";
 import { timeAgo } from "@lib/utils/dates";
+
+import { SessionCard } from "./sessionCard";
 
 export type RecentSessionsProps = {
     workbench: Workbench;
@@ -16,8 +22,8 @@ export type RecentSessionsProps = {
 export function RecentSessions(props: RecentSessionsProps) {
     const [state, setState] = React.useState<ReturnType<typeof useQuery>["status"]>("pending");
 
-    function handleSessionClick(e: React.MouseEvent, sessionId: string) {
-        e.preventDefault();
+    function handleSessionClick(sessionId: string, evt: React.MouseEvent) {
+        evt.preventDefault();
         props.workbench.openSession(sessionId);
     }
 
@@ -65,24 +71,23 @@ export function RecentSessions(props: RecentSessionsProps) {
 
         if (state === "success" && sessionsQuery.data && sessionsQuery.data.length > 0) {
             return (
-                <>
-                    <ul className="pl-5">
-                        {firstFiveSessions.map((session) => (
-                            <li key={session.id} className="flex items-center justify-between gap-4">
-                                <a
-                                    href="#"
-                                    onClick={(e) => handleSessionClick(e, session.id)}
-                                    className="text-blue-600 hover:underline"
-                                >
-                                    {session.title}
-                                </a>
-                                <span className="text-gray-500">
-                                    ~ {timeAgo(Date.now() - new Date(session.updatedAt).getTime())}
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
-                </>
+                <ul>
+                    {firstFiveSessions.map((session) => (
+                        <SessionCard
+                            href={buildSessionUrl(session.id)}
+                            key={session.id}
+                            id={session.id}
+                            title={session.title}
+                            timestamp={session.updatedAt}
+                            description={session.description}
+                            onClick={handleSessionClick}
+                            tooltipInfo={{
+                                Created: timeAgo(Date.now() - new Date(session.createdAt ?? "").getTime()),
+                                Updated: timeAgo(Date.now() - new Date(session.updatedAt ?? "").getTime()),
+                            }}
+                        />
+                    ))}
+                </ul>
             );
         }
 
@@ -90,7 +95,13 @@ export function RecentSessions(props: RecentSessionsProps) {
     }
 
     return (
-        <>
+        <section>
+            <Typography className="flex gap-1 items-center" variant="h6">
+                Sessions
+                <IconButton disabled={sessionsQuery.isRefetching} onClick={() => sessionsQuery.refetch()}>
+                    <Refresh fontSize="inherit" />
+                </IconButton>
+            </Typography>
             <div className="flex flex-col gap-2">{makeContent()}</div>
             {hasMoreSessions && (
                 <button
@@ -100,6 +111,6 @@ export function RecentSessions(props: RecentSessionsProps) {
                     See more...
                 </button>
             )}
-        </>
+        </section>
     );
 }

@@ -55,12 +55,6 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
             setInputFeedback((prev) => ({ ...prev, title: undefined }));
         }
 
-        if (description.trim() === "") {
-            setInputFeedback((prev) => ({ ...prev, description: "Description is required." }));
-            return;
-        } else {
-            setInputFeedback((prev) => ({ ...prev, description: undefined }));
-        }
         props.workbench.getWorkbenchSession().updateMetadata({ title, description });
         props.workbench
             .saveCurrentSession(true)
@@ -119,7 +113,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                             )}
                         </>
                     </Label>
-                    <Label text="Description">
+                    <Label text="Description (optional)">
                         <>
                             <Input
                                 placeholder="Enter session description"

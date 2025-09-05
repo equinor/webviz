@@ -82,22 +82,10 @@ export function StartPage(props: StartPageProps) {
                         </a>
                     </section>
                 </div>
-                <section className="flex flex-col gap-4">
+                <section className="flex flex-col gap-4 w-sm">
                     <Typography variant="h2">Recent</Typography>
-                    <section>
-                        <Typography variant="h6">Sessions</Typography>
-                        <RecentSessions
-                            workbench={props.workbench}
-                            onOpenSessionDialog={openOverviewDialogOnSessions}
-                        />
-                    </section>
-                    <section>
-                        <Typography variant="h6">Snapshots</Typography>
-                        <RecentSnapshots
-                            workbench={props.workbench}
-                            onOpenSessionDialog={openOverviewDialogOnSnapshots}
-                        />
-                    </section>
+                    <RecentSessions workbench={props.workbench} onOpenSessionDialog={openOverviewDialogOnSessions} />
+                    <RecentSnapshots workbench={props.workbench} onOpenSessionDialog={openOverviewDialogOnSnapshots} />
                 </section>
             </div>
 
