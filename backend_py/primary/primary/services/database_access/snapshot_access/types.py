@@ -62,5 +62,4 @@ class SnapshotAccessLogSortBy(str, Enum):
     VISITS = "visits"
     LAST_VISIT = "last_visited_at"
     TITLE = "snapshot_metadata.title"
-    TITLE_LOWER = "snapshot_metadata.title__lower"
     CREATED_AT = "snapshot_metadata.created_at"

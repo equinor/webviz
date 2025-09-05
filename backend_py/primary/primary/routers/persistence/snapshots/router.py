@@ -11,7 +11,7 @@ from primary.services.database_access.snapshot_access.types import (
 from primary.middleware.add_browser_cache import no_cache
 from primary.services.database_access.snapshot_access.snapshot_access import SnapshotAccess
 from primary.services.database_access.snapshot_access.snapshot_log_access import SnapshotLogAccess
-from primary.services.database_access.query_collation_options import QueryCollationOptions, SortDirection
+from primary.services.database_access.query_collation_options import SortDirection
 from primary.services.database_access.workers.mark_logs_deleted import mark_logs_deleted_worker
 
 
@@ -37,11 +37,21 @@ async def get_recent_snapshots(
     sort_direction: Optional[SortDirection] = Query(None, description="Sort direction: 'asc' or 'desc'"),
     limit: Optional[int] = Query(None, ge=1, le=100, description="Limit the number of results"),
     offset: Optional[int] = Query(None, ge=0, description="The offset of the results"),
+    # ? Is this becoming too many args? Should we make a post-search endpoint instead?
+    filter_title: Optional[str] = Query(None, description="Filter results by title (case insensitive)"),
+    filter_updated_from: Optional[str] = Query(None, description="Filter results by date"),
+    filter_updated_to: Optional[str] = Query(None, description="Filter results by date"),
 ) -> list[schemas.SnapshotAccessLog]:
     async with SnapshotLogAccess.create(user.get_user_id()) as log_access:
-        collation_options = QueryCollationOptions(sort_by=sort_by, sort_dir=sort_direction, limit=limit, offset=offset)
-
-        recent_logs = await log_access.get_access_logs_for_user_async(collation_options)
+        recent_logs = await log_access.get_access_logs_for_user_async(
+            sort_by=sort_by,
+            sort_direction=sort_direction,
+            limit=limit,
+            offset=offset,
+            filter_title=filter_title,
+            filter_updated_from=filter_updated_from,
+            filter_updated_to=filter_updated_to,
+        )
 
         return [to_api_snapshot_access_log(log) for log in recent_logs]
 

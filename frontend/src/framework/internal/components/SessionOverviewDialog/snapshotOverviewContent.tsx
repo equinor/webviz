@@ -1,11 +1,14 @@
 import React from "react";
 
+import { DateRangePicker } from "@equinor/eds-core-react";
 import type { Options } from "@hey-api/client-axios";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
 import type { GetRecentSnapshotsData_api, SnapshotAccessLog_api, SortDirection_api } from "@api";
 import { SnapshotAccessLogSortBy_api, getRecentSnapshotsInfiniteOptions } from "@api";
 import type { Workbench } from "@framework/Workbench";
+import { Input } from "@lib/components/Input";
+import { Label } from "@lib/components/Label";
 import { Table } from "@lib/components/Table";
 import type { TableColumns, TableSorting } from "@lib/components/Table/types";
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
@@ -13,6 +16,7 @@ import { formatDate } from "@lib/utils/dates";
 
 import { UserAvatar } from "../SelectEnsemblesDialog/private-components/userAvatar";
 
+import { edsRangeChoiceToFilterRange, type EdsFilterRange, type FilterRange } from "./_utils";
 import {
     HEADER_HEIGHT,
     NEXT_PAGE_THRESHOLD,
@@ -27,19 +31,25 @@ type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetad
     [K in keyof SnapshotAccessLog_api["snapshotMetadata"] as `snapshotMetadata.${Extract<K, string>}`]: SnapshotAccessLog_api["snapshotMetadata"][K];
 };
 
+type TableFilter = {
+    title?: string;
+    visitedAt?: FilterRange;
+};
+
 const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
     {
         _type: "data",
         label: "Visits",
-        sizeInPercent: 5,
+        sizeInPercent: 7,
         columnId: "visits",
+        sortable: false, // The sorting adornments require too much space, so the table looks off
         filter: false,
         formatStyle: () => ({ textAlign: "center", paddingRight: "0.5rem" }),
     },
     {
         _type: "data",
         label: "Title",
-        sizeInPercent: 15,
+        sizeInPercent: 24,
         columnId: "snapshotMetadata.title",
         filter: false,
     },
@@ -47,7 +57,7 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
         _type: "data",
         columnId: "snapshotMetadata.description",
         label: "Description",
-        sizeInPercent: 30,
+        sizeInPercent: 34,
         filter: false,
         sortable: false,
         renderData(value) {
@@ -85,17 +95,6 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
             return formatDate(new Date(value));
         },
     },
-    {
-        _type: "data",
-        label: "Created at",
-        sizeInPercent: 20,
-        columnId: "snapshotMetadata.createdAt",
-        filter: false,
-        renderData(value) {
-            if (!value) return <span className="text-gray-400 italic">N/A</span>;
-            return formatDate(new Date(value));
-        },
-    },
 ];
 
 function columnIdToApiSortField(columnId: string): SnapshotAccessLogSortBy_api {
@@ -103,7 +102,7 @@ function columnIdToApiSortField(columnId: string): SnapshotAccessLogSortBy_api {
         case "visits":
             return SnapshotAccessLogSortBy_api.VISITS;
         case "snapshotMetadata.title":
-            return SnapshotAccessLogSortBy_api.SNAPSHOT_METADATA_TITLE_LOWER;
+            return SnapshotAccessLogSortBy_api.SNAPSHOT_METADATA_TITLE;
         case "lastVisitedAt":
             return SnapshotAccessLogSortBy_api.LAST_VISITED_AT;
         case "snapshotMetadata.createdAt":
@@ -130,6 +129,7 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
     // ? Should this be opened via gui-events?
 
     const [visibleRowRange, setVisibleRowRange] = React.useState<{ start: number; end: number } | null>(null);
+    const [tableFilter, setTableFilter] = React.useState<TableFilter>({});
     const [tableSortState, setTableSortState] = React.useState<TableSorting>([
         { columnId: "lastVisitedAt", direction: TableSortDirection.DESC },
     ]);
@@ -143,8 +143,11 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
         return {
             sort_by: sortBy,
             sort_direction: SortDirection,
+            filter_title: tableFilter.title,
+            filter_updated_from: tableFilter.visitedAt?.from,
+            filter_updated_to: tableFilter.visitedAt?.to,
         };
-    }, [tableSortState]);
+    }, [tableFilter, tableSortState]);
 
     // const sessionsQuery = useInfiniteSessionMetadataQuery(querySortParams);
     const sessionsQuery = useInfiniteQuery({
@@ -159,6 +162,24 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
             return pages.length;
         },
     });
+
+    function onFilterRangeChange(newRange: null | EdsFilterRange) {
+        setTableFilter((prev) => {
+            return {
+                ...prev,
+                visitedAt: edsRangeChoiceToFilterRange(newRange),
+            };
+        });
+    }
+
+    function handleTitleFilterValueChange(newValue: string) {
+        setTableFilter((prev) => {
+            return {
+                ...prev,
+                title: newValue || undefined,
+            };
+        });
+    }
 
     const tableData = React.useMemo(() => {
         if (!sessionsQuery.data) return [];
@@ -193,6 +214,24 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
 
     return (
         <>
+            <div className="mb-8 flex gap-4">
+                <Label text="Title" wrapperClassName="grow">
+                    <Input
+                        value={tableFilter.title ?? ""}
+                        placeholder="Search title"
+                        onValueChange={handleTitleFilterValueChange}
+                    />
+                </Label>
+
+                {/* TODO: Allow the user to filter on owner. Awaiting fixed picker comp, which I think is being done on the ensemble dialog */}
+                {/* <Label text="Last visited at" wrapperClassName="">
+                </Label> */}
+
+                <Label text="Last visited at" wrapperClassName="min-w-2xs">
+                    <DateRangePicker onChange={onFilterRangeChange} />
+                </Label>
+            </div>
+
             <Table
                 rowIdentifier="snapshotId"
                 alternatingColumnColors={USE_ALTERNATING_COLUMN_COLORS}

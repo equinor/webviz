@@ -23,6 +23,8 @@ import { formatDate } from "@lib/utils/dates";
 
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 
+import type { EdsFilterRange, FilterRange } from "./_utils";
+import { edsRangeChoiceToFilterRange } from "./_utils";
 import {
     QUERY_PAGE_SIZE,
     NEXT_PAGE_THRESHOLD,
@@ -33,8 +35,8 @@ import {
 } from "./constants";
 
 type TableFilter = {
-    [SessionSortBy_api.METADATA_TITLE_LOWER]?: string;
-    [SessionSortBy_api.METADATA_UPDATED_AT]?: { from?: string; to?: string };
+    title?: string;
+    updatedAt?: FilterRange;
 };
 
 const TABLE_COLUMNS: TableColumns<SessionMetadataWithId_api> = [
@@ -90,7 +92,7 @@ const TABLE_COLUMNS: TableColumns<SessionMetadataWithId_api> = [
 function columnIdToApiSortField(columnId: string): SessionSortBy_api {
     switch (columnId) {
         case "title":
-            return SessionSortBy_api.METADATA_TITLE_LOWER;
+            return SessionSortBy_api.METADATA_TITLE;
         case "updatedAt":
             return SessionSortBy_api.METADATA_UPDATED_AT;
         case "createdAt":
@@ -181,9 +183,9 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
         return {
             sort_by: sortBy,
             sort_direction: SortDirection,
-            filter_title: tableFilter[SessionSortBy_api.METADATA_TITLE_LOWER]?.toLowerCase(),
-            filter_updated_from: tableFilter[SessionSortBy_api.METADATA_UPDATED_AT]?.from,
-            filter_updated_to: tableFilter[SessionSortBy_api.METADATA_UPDATED_AT]?.to,
+            filter_title: tableFilter.title,
+            filter_updated_from: tableFilter.updatedAt?.from,
+            filter_updated_to: tableFilter.updatedAt?.to,
         };
     }, [tableFilter, tableSortState]);
 
@@ -218,41 +220,21 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
         return tableData.find((session) => session.id === props.selectedSession) || null;
     }, [tableData, props.selectedSession]);
 
-    function onFilterRangeChange(newRange: null | { from: Date | null; to: Date | null }) {
-        // TODO
-
+    function onFilterRangeChange(newRange: null | EdsFilterRange) {
         setTableFilter((prev) => {
-            const newFilter = { ...prev };
-
-            if (newRange?.from || newRange?.to) {
-                newFilter[SessionSortBy_api.METADATA_UPDATED_AT] = {};
-                const rangeFilter = newFilter[SessionSortBy_api.METADATA_UPDATED_AT];
-
-                if (newRange.from) rangeFilter.from = newRange.from.toISOString();
-                if (newRange.to) {
-                    // The range component always uses hour 0 for the time
-                    // We set the time to 23:59:59 to range inclusive
-                    const toDate = new Date(newRange.to);
-                    toDate.setHours(23, 59, 59);
-                    rangeFilter.to = toDate.toISOString();
-                }
-            } else {
-                delete newFilter[SessionSortBy_api.METADATA_UPDATED_AT];
-            }
-
-
-            return newFilter;
+            return {
+                ...prev,
+                updatedAt: edsRangeChoiceToFilterRange(newRange),
+            };
         });
     }
 
     function handleTitleFilterValueChange(newValue: string) {
         setTableFilter((prev) => {
-            const newFilter = { ...prev };
-
-            if (newValue) newFilter[SessionSortBy_api.METADATA_TITLE_LOWER] = newValue;
-            else newFilter[SessionSortBy_api.METADATA_TITLE_LOWER] = undefined;
-
-            return newFilter;
+            return {
+                ...prev,
+                title: newValue || undefined,
+            };
         });
     }
 
@@ -261,7 +243,7 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
             <div className="mb-8 flex gap-4">
                 <Label text="Title" wrapperClassName="grow">
                     <Input
-                        value={tableFilter[SessionSortBy_api.METADATA_TITLE_LOWER] ?? ""}
+                        value={tableFilter.title ?? ""}
                         placeholder="Search title"
                         onValueChange={handleTitleFilterValueChange}
                     />

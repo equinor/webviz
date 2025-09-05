@@ -63,7 +63,6 @@ class SessionSortBy(str, Enum):
     CREATED_AT = "metadata.created_at"
     UPDATED_AT = "metadata.updated_at"
     TITLE = "metadata.title"
-    TITLE_LOWER = "metadata.title__lower"
 
 
 class SessionSortDirection(str, Enum):

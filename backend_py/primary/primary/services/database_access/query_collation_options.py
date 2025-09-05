@@ -28,7 +28,7 @@ class Filter:
 class QueryCollationOptions:
     """Helper class for defining NoSQL collation options"""
 
-    sort_by: Enum | None = None
+    sort_by: str | None = None
     sort_dir: SortDirection | None = None  # "asc" or "desc"
     sort_lowercase: bool | None = None
     limit: int | None = None
@@ -64,7 +64,7 @@ class QueryCollationOptions:
                     raise NotImplementedError(f"{query_filter.operator} has not been implemented yet")
 
         if self.sort_by:
-            sort_by_field = self.sort_by.value + (LOWER_CASE_PREFIX if self.sort_lowercase else "")
+            sort_by_field = self.sort_by + (LOWER_CASE_PREFIX if self.sort_lowercase else "")
 
             tokens.append(f"ORDER BY {variable_name}.{sort_by_field}")
 

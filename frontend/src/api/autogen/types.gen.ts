@@ -723,7 +723,6 @@ export enum SessionSortBy_api {
     METADATA_CREATED_AT = "metadata.created_at",
     METADATA_UPDATED_AT = "metadata.updated_at",
     METADATA_TITLE = "metadata.title",
-    METADATA_TITLE_LOWER = "metadata.title__lower",
 }
 
 export type SessionUpdate_api = {
@@ -752,7 +751,6 @@ export enum SnapshotAccessLogSortBy_api {
     VISITS = "visits",
     LAST_VISITED_AT = "last_visited_at",
     SNAPSHOT_METADATA_TITLE = "snapshot_metadata.title",
-    SNAPSHOT_METADATA_TITLE_LOWER = "snapshot_metadata.title__lower",
     SNAPSHOT_METADATA_CREATED_AT = "snapshot_metadata.created_at",
 }
 
@@ -4142,6 +4140,18 @@ export type GetRecentSnapshotsData_api = {
          * The offset of the results
          */
         offset?: number | null;
+        /**
+         * Filter results by title (case insensitive)
+         */
+        filter_title?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_updated_from?: string | null;
+        /**
+         * Filter results by date
+         */
+        filter_updated_to?: string | null;
         t?: number;
     };
     url: "/snapshots/recent_snapshots";

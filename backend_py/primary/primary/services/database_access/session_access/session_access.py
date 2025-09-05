@@ -20,7 +20,7 @@ from primary.services.database_access.database_access_exceptions import (
 from primary.services.database_access.error_converter import raise_service_error_from_database_access
 
 # Util dict to handle case insensitive collation
-CASING_FIELD_LOOKUP: dict[SessionSortBy | None, SessionSortBy] = {SessionSortBy.TITLE_LOWER: SessionSortBy.TITLE}
+LOWERCASED_FIELDS = [SessionSortBy.TITLE]
 
 
 class SessionAccess:
@@ -73,22 +73,22 @@ class SessionAccess:
         filter_updated_to: str | None,
     ) -> List[SessionMetadataWithId]:
         try:
-            sort_by_lowercase = sort_by in CASING_FIELD_LOOKUP.keys()
-            sort_by = CASING_FIELD_LOOKUP.get(sort_by, sort_by)
+            sort_by_field = sort_by.value if sort_by else None
+            sort_by_lowercase = sort_by in LOWERCASED_FIELDS
 
             filters: list[Filter] = [Filter("owner_id", self.user_id)]
 
             if filter_title:
-                filters.append(Filter(SessionSortBy.TITLE_LOWER.value, filter_title.lower(), "CONTAINS"))
+                filters.append(Filter("metadata.title__lower", filter_title.lower(), "CONTAINS"))
             if filter_updated_from:
-                filters.append(Filter(SessionSortBy.UPDATED_AT.value, filter_updated_from, "MORE", "from"))
+                filters.append(Filter("metadata.updated_at", filter_updated_from, "MORE", "_from"))
             if filter_updated_to:
-                filters.append(Filter(SessionSortBy.UPDATED_AT.value, filter_updated_to, "LESS", "to"))
+                filters.append(Filter("metadata.updated_at", filter_updated_to, "LESS", "_to"))
 
             collation_options = QueryCollationOptions(
                 sort_lowercase=sort_by_lowercase,
                 sort_dir=sort_direction,
-                sort_by=sort_by,
+                sort_by=sort_by_field,
                 offset=offset,
                 limit=limit,
                 filters=filters,
@@ -104,8 +104,8 @@ class SessionAccess:
             items = await self.session_container_access.query_items_async(query=query, parameters=params)
 
             return [self._to_metadata_summary(item) for item in items]
-        except DatabaseAccessError as e:
-            raise_service_error_from_database_access(e)
+        except DatabaseAccessError as err:
+            raise_service_error_from_database_access(err)
 
     async def get_session_metadata_async(self, session_id: str) -> SessionMetadata:
         try:
