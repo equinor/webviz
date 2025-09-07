@@ -133,7 +133,7 @@ def _build_observed_surfs_query_dict(case_uuid: str, time_type: SurfTimeType) ->
     must_arr.append({"term": {"data.is_observation": True}})
     must_arr.append({"term": {"data.format": "irap_binary"}})
     must_not_arr.append({"exists": {"field": "fmu.ensemble.name.keyword"}})
-    must_not_arr.append({"exists": {"field": "fmu.iteration.name.keyword"}})
+    must_not_arr.append({"exists": {"field": "fmu.iteration.name.keyword"}}) # Do we still need/want this?
     must_not_arr.append({"exists": {"field": "fmu.realization.id"}})
 
     if time_type == SurfTimeType.TIME_POINT:
