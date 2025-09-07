@@ -125,7 +125,5 @@ class RftAccess:
         timer.record_lap("process_table_in_polars")
         ret_arr_rows = polars_table.iter_rows(named=True)
         ret_arr = [RftRealizationData(**row) for row in ret_arr_rows]
-        LOGGER.debug(
-            f"{timer.to_string()}, {self._case_uuid=}, {self._ensemble_name=}, {well_name=}, {response_name=}"
-        )
+        LOGGER.debug(f"{timer.to_string()}, {self._case_uuid=}, {self._ensemble_name=}, {well_name=}, {response_name=}")
         return ret_arr

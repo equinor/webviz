@@ -100,9 +100,7 @@ class CaseInspector:
         timer.record_lap("get_ensemble_uuids")
 
         async with asyncio.TaskGroup() as tg:
-            tasks = [
-                tg.create_task(self._get_ensemble_info_async(ens_uuid)) for ens_uuid in ensemble_uuids
-            ]
+            tasks = [tg.create_task(self._get_ensemble_info_async(ens_uuid)) for ens_uuid in ensemble_uuids]
 
         ens_info_arr: list[EnsembleInfo] = [task.result() for task in tasks]
 
