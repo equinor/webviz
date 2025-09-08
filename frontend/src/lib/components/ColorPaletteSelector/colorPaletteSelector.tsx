@@ -58,7 +58,7 @@ const ColorPaletteItem: React.FC<ColorPaletteItemProps> = (props) => {
             onClick={handleItemClick}
         >
             <span
-                className="text-sm leading-none min-w-0 w-20 whitespace-nowrap text-ellipsis overflow-hidden"
+                className="text-sm leading-none min-w-0 w-40 whitespace-nowrap text-ellipsis overflow-hidden"
                 title={props.colorPalette.getName()}
             >
                 {props.colorPalette.getName()}
