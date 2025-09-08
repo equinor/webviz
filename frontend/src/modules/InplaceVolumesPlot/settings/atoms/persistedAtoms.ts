@@ -16,6 +16,9 @@ import { tableDefinitionsQueryAtom } from "./queryAtoms";
 export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsembleIdent[]>({
     initialValue: [],
     isValidFunction: ({ get, value }) => {
+        if (value.length === 0) {
+            return false;
+        }
         const ensembleSet = get(EnsembleSetAtom);
 
         return value.every((ident) => ensembleSet.hasEnsemble(ident));
