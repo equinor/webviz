@@ -39,3 +39,8 @@ class SnapshotAccessLog(BaseModel):
     # ↳ pylint v2 will complain about names that are shorter than 3 characters
     def id(self) -> str:
         return make_access_log_item_id(self.snapshotId, self.visitorId)
+
+
+class SnapshotAccessLogIndexPage(BaseModel):
+    items: list[SnapshotAccessLog]
+    continuation_token: str | None

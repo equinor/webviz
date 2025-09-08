@@ -1,13 +1,12 @@
-import React from "react";
+import type React from "react";
 
 import { Typography } from "@equinor/eds-core-react";
 import { Refresh } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
-import { take } from "lodash";
 
 import {
-    getRecentSnapshotsOptions,
-    getRecentSnapshotsQueryKey,
+    getVisitedSnapshotsOptions,
+    getVisitedSnapshotsQueryKey,
     SnapshotAccessLogSortBy_api,
     SortDirection_api,
 } from "@api";
@@ -16,6 +15,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { IconButton } from "@lib/components/IconButton";
 import { timeAgo } from "@lib/utils/dates";
 
+import { RECENT_CARDS_LIST_LENGTH } from "./constants";
 import { SessionCard } from "./sessionCard";
 
 export type RecentSnapshotsProps = {
@@ -25,21 +25,18 @@ export type RecentSnapshotsProps = {
 
 export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
     const recentSnapshotsQuery = useQuery({
-        ...getRecentSnapshotsOptions({
+        ...getVisitedSnapshotsOptions({
             query: {
                 sort_by: SnapshotAccessLogSortBy_api.LAST_VISITED_AT,
                 sort_direction: SortDirection_api.DESC,
-                limit: 6,
+                limit: RECENT_CARDS_LIST_LENGTH,
             },
         }),
         refetchInterval: 10000,
     });
 
-    const hasMoreSnapshots = recentSnapshotsQuery.data?.length === 6;
-    const firstFiveSnapshots = React.useMemo(() => {
-        if (recentSnapshotsQuery.isPending) return [];
-        return take(recentSnapshotsQuery.data, 5);
-    }, [recentSnapshotsQuery.data, recentSnapshotsQuery.isPending]);
+    const snapshots = recentSnapshotsQuery.data?.items ?? [];
+    const hasMoreSnapshots = !!recentSnapshotsQuery.data?.continuation_token;
 
     async function handleSnapshotClick(snapshotId: string, e: React.MouseEvent<HTMLAnchorElement>) {
         e.preventDefault();
@@ -48,7 +45,7 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
         props.workbench.openSnapshot(snapshotId);
 
         // Reset query so that fresh snapshots are fetched when we return to the start page
-        props.workbench.getQueryClient().resetQueries({ queryKey: getRecentSnapshotsQueryKey() });
+        props.workbench.getQueryClient().resetQueries({ queryKey: getVisitedSnapshotsQueryKey() });
     }
 
     function makeContent() {
@@ -64,13 +61,13 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
             return <span className="text-red-800">Could not fetch recent snapshots...</span>;
         }
 
-        if (!recentSnapshotsQuery.data.length) {
+        if (!snapshots.length) {
             return <span className="text-gray-500">No recently visited snapshots.</span>;
         }
 
         return (
             <ul>
-                {firstFiveSnapshots.map((snapshot) => (
+                {snapshots.map((snapshot) => (
                     <SessionCard
                         href={`/snapshot/${snapshot.snapshotId}`}
                         key={snapshot.snapshotId}

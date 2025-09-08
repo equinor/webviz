@@ -1,13 +1,13 @@
 import type { QueryClient, InfiniteData } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 
-import type { SessionDocument_api, SessionMetadataWithId_api, SessionUpdate_api } from "@api";
+import type { SessionDocument_api, SessionIndexPage_api, SessionUpdate_api } from "@api";
 import {
     deleteSessionMutation,
-    getRecentSnapshotsQueryKey,
     getSessionMetadataQueryKey,
     getSessionQueryKey,
     getSessionsMetadataQueryKey,
+    getVisitedSnapshotsQueryKey,
     updateSessionMutation,
 } from "@api";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
@@ -398,7 +398,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._guiMessageBroker.setState(GuiState.IsMakingSnapshot, false);
 
         // Reset this, so it'll fetch fresh copies
-        this._queryClient.resetQueries({ queryKey: getRecentSnapshotsQueryKey() });
+        this._queryClient.resetQueries({ queryKey: getVisitedSnapshotsQueryKey() });
 
         return snapshotId;
     }
@@ -717,24 +717,25 @@ function removeSessionQueryData(queryClient: QueryClient, deletedSessionId: stri
     const sessionsListFilter = makeTanstackQueryFilters([getSessionsMetadataQueryKey()]);
     const sessionsInfiniteListFilter = { queryKey: ["getSessionsMetadata", "infinite"] };
 
-    queryClient.setQueriesData(sessionsListFilter, function dropSessionFromList(list: SessionMetadataWithId_api[]) {
-        if (!list) return undefined;
+    queryClient.setQueriesData(sessionsListFilter, function dropSessionFromList(page: SessionIndexPage_api) {
+        if (!page) return undefined;
 
-        let replaced = false;
+        const { continuation_token, items } = page;
+        let dropped = false;
 
-        const filteredList = list.filter((session) => {
+        const newItems = items.filter((session) => {
             if (session.id !== deletedSessionId) return true;
 
-            replaced = true;
-            return true;
+            dropped = true;
+            return false;
         });
 
-        if (replaced) return filteredList;
+        if (dropped) return { continuation_token, items: newItems };
         return undefined;
     });
     queryClient.setQueriesData(
         sessionsInfiniteListFilter,
-        function dropSessionFromList(oldData: InfiniteData<SessionMetadataWithId_api[]>) {
+        function dropSessionFromList(oldData: InfiniteData<SessionIndexPage_api>) {
             if (!oldData) return undefined;
 
             const pageParams = oldData.pageParams;
@@ -743,18 +744,20 @@ function removeSessionQueryData(queryClient: QueryClient, deletedSessionId: stri
             let dropped = false;
 
             const newPages = existingPages.map((page) => {
-                return page.map((entry) => {
-                    if (entry.id !== deletedSessionId) return entry;
+                const { continuation_token, items } = page;
+
+                const newItems = items.filter((session) => {
+                    if (session.id !== deletedSessionId) return true;
 
                     dropped = true;
-                    // TODO: as long as "getNextPageParam" is dependent on page.length, we can't fully drop the element
-                    return null;
+                    return false;
                 });
+
+                return { continuation_token, items: newItems };
             });
 
-            if (dropped) {
-                return { pageParams, pages: newPages };
-            }
+            if (dropped) return { pageParams, pages: newPages };
+            return undefined;
         },
     );
 }

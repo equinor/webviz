@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -8,45 +8,48 @@ from primary.services.database_access.session_access.session_access import Sessi
 from primary.services.database_access.query_collation_options import SortDirection
 from primary.auth.auth_helper import AuthHelper, AuthenticatedUser
 from primary.services.database_access.session_access.types import NewSession, SessionUpdate, SessionSortBy
-from primary.routers.persistence.sessions.converters import (
-    to_api_session_metadata_summary,
-    to_api_session_metadata,
-    to_api_session_record,
-)
 
 from . import schemas
+from .converters import (
+    to_api_session_metadata,
+    to_api_session_record,
+    to_api_session_index_page,
+)
+
 
 LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/sessions", response_model=List[schemas.SessionMetadataWithId])
+@router.get("/sessions", response_model=schemas.SessionIndexPage)
 @no_cache
 async def get_sessions_metadata(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    # ! Must be named "cursor" or "page" to make hey-api generate infinite-queries
+    # ! When we've updated to the latest hey-api version, we can change this to something custom
+    cursor: None | str = Query(None),
     sort_by: Optional[SessionSortBy] = Query(None, description="Sort the result by"),
     sort_direction: Optional[SortDirection] = Query(SortDirection.ASC, description="Sort direction: 'asc' or 'desc'"),
     limit: int = Query(10, ge=1, le=100, description="Limit the number of results"),
-    page: int = Query(0, ge=0),
     # ? Is this becoming too many args? Should we make a post-search endpoint instead?
     filter_title: Optional[str] = Query(None, description="Filter results by title (case insensitive)"),
     filter_updated_from: Optional[str] = Query(None, description="Filter results by date"),
     filter_updated_to: Optional[str] = Query(None, description="Filter results by date"),
-) -> list[schemas.SessionMetadataWithId]:
+) -> schemas.SessionIndexPage:
     access = SessionAccess.create(user.get_user_id())
 
     async with access:
-        items = await access.get_filtered_sessions_metadata_for_user_async(
+        (items, cont_token) = await access.get_user_sessions_by_page_async(
+            continuation_token=cursor,
+            page_size=limit,
             sort_by=sort_by,
             sort_direction=sort_direction,
-            limit=limit,
-            offset=limit * page,
             filter_title=filter_title,
             filter_updated_from=filter_updated_from,
             filter_updated_to=filter_updated_to,
         )
 
-        return [to_api_session_metadata_summary(item) for item in items]
+        return to_api_session_index_page(items, cont_token)
 
 
 @router.get("/sessions/{session_id}", response_model=schemas.SessionDocument)

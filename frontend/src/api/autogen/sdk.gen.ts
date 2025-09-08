@@ -214,9 +214,9 @@ import type {
     GetSessionMetadataData_api,
     GetSessionMetadataResponse_api,
     GetSessionMetadataError_api,
-    GetRecentSnapshotsData_api,
-    GetRecentSnapshotsResponse_api,
-    GetRecentSnapshotsError_api,
+    GetVisitedSnapshotsData_api,
+    GetVisitedSnapshotsResponse_api,
+    GetVisitedSnapshotsError_api,
     GetSnapshotsMetadataData_api,
     GetSnapshotsMetadataResponse_api,
     GetSnapshotsMetadataError_api,
@@ -1348,14 +1348,14 @@ export const getSessionMetadata = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get Recent Snapshots
+ * Get Visited Snapshots
  */
-export const getRecentSnapshots = <ThrowOnError extends boolean = false>(
-    options?: Options<GetRecentSnapshotsData_api, ThrowOnError>,
+export const getVisitedSnapshots = <ThrowOnError extends boolean = false>(
+    options?: Options<GetVisitedSnapshotsData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).get<GetRecentSnapshotsResponse_api, GetRecentSnapshotsError_api, ThrowOnError>({
+    return (options?.client ?? client).get<GetVisitedSnapshotsResponse_api, GetVisitedSnapshotsError_api, ThrowOnError>({
         ...options,
-        url: "/snapshots/recent_snapshots",
+        url: "/snapshots/visited_snapshots",
     });
 };
 

@@ -53,49 +53,45 @@ class SnapshotLogAccess:
         except DatabaseAccessError as e:
             raise ServiceRequestError(f"Failed to update access log: {str(e)}", Service.DATABASE) from e
 
-    async def get_access_logs_for_user_async(
+    async def get_user_access_log_by_page_async(
         self,
+        continuation_token: str | None,
+        page_size: int | None,
         sort_by: SnapshotAccessLogSortBy | None,
         sort_direction: SortDirection | None,
-        limit: int | None,
-        offset: int | None,
         filter_title: str | None,
         filter_updated_from: str | None,
         filter_updated_to: str | None,
-    ) -> list[SnapshotAccessLogDocument]:
-        try:
-            sort_by_field = sort_by.value if sort_by else None
-            sort_by_lowercase = sort_by in LOWERCASED_FIELDS
+    ) -> tuple[list[SnapshotAccessLogDocument], str | None]:
+        sort_by_field = sort_by.value if sort_by else None
+        sort_by_lowercase = sort_by in LOWERCASED_FIELDS
 
-            filters: list[Filter] = [Filter("visitor_id", self._user_id)]
+        filters: list[Filter] = [Filter("visitor_id", self._user_id)]
 
-            if filter_title:
-                filters.append(Filter("snapshot_metadata.title__lower", filter_title.lower(), "CONTAINS"))
-            if filter_updated_from:
-                filters.append(Filter("snapshot_metadata.updated_at", filter_updated_from, "MORE", "_from"))
-            if filter_updated_to:
-                filters.append(Filter("snapshot_metadata.updated_at", filter_updated_to, "LESS", "_to"))
+        if filter_title:
+            filters.append(Filter("snapshot_metadata.title__lower", filter_title.lower(), "CONTAINS"))
+        if filter_updated_from:
+            filters.append(Filter("snapshot_metadata.updated_at", filter_updated_from, "MORE", "_from"))
+        if filter_updated_to:
+            filters.append(Filter("snapshot_metadata.updated_at", filter_updated_to, "LESS", "_to"))
 
-            collation_options = QueryCollationOptions(
-                sort_lowercase=sort_by_lowercase,
-                sort_dir=sort_direction,
-                sort_by=sort_by_field,
-                offset=offset,
-                limit=limit,
-                filters=filters,
-            )
+        collation_options = QueryCollationOptions(
+            sort_lowercase=sort_by_lowercase,
+            sort_dir=sort_direction,
+            sort_by=sort_by_field,
+            filters=filters,
+        )
 
-            query = "SELECT * from c"
+        query = "SELECT * from c"
+        params = collation_options.make_query_params()
+        search_options = collation_options.to_sql_query_string()
 
-            params = collation_options.make_query_params()
-            search_options = collation_options.to_sql_query_string()
+        if search_options:
+            query = f"{query} {search_options}"
 
-            if search_options:
-                query = f"{query} {search_options}"
-
-            return await self._container_access.query_items_async(query, params)
-        except DatabaseAccessError as err:
-            raise ServiceRequestError(f"Failed to get access logs: {str(err)}", Service.DATABASE) from err
+        return await self._container_access.query_items_by_page_token_async(
+            query=query, parameters=params, page_size=page_size, page_token=continuation_token
+        )
 
     async def create_access_log_async(self, snapshot_id: str, snapshot_owner_id: str) -> SnapshotAccessLogDocument:
         try:

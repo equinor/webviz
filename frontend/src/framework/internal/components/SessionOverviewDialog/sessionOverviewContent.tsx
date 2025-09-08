@@ -9,6 +9,7 @@ import type { AxiosError } from "axios";
 import type {
     GetSessionsMetadataData_api,
     GetSessionsMetadataError_api,
+    GetSessionsMetadataResponse_api,
     SessionMetadataWithId_api,
     SortDirection_api,
 } from "@api";
@@ -107,23 +108,43 @@ function tableSortDirToApiSortDir(sort: TableSortDirection): SortDirection_api {
     return sort as unknown as SortDirection_api;
 }
 
-// ! We need to manually write out the query because hey-api generates keys in a way that messes with Tanstack's
-// ! ability to set query data (which we use after mutating metadata).
-/* 
-! You'd think this would work, but if I try this; the data never loads
-useInfiniteQuery({
-    ...getSessionsMetadataInfiniteOptions( ... ),
-    queryKey: ["getSessionsMetadata", "infinite", querySortParams?.sort_by, querySortParams?.sort_direction],
-    ...
-});
-*/
 function useInfiniteSessionMetadataQuery(querySortParams: Options<GetSessionsMetadataData_api>["query"]) {
+    // ! We need to manually write out the query because hey-api generates keys in a way that messes with Tanstack's
+    // ! ability to set query data (which we use after mutating metadata).
+    // ! You'd think this would work, but if I try this; the data never loads, because it tries to get the query
+    // ! params from the key...
+    // return useInfiniteQuery({
+    //     ...getSessionsMetadataInfiniteOptions({
+    //         query: {
+    //             ...querySortParams,
+    //             limit: QUERY_PAGE_SIZE,
+    //             // // TODO: Rename `cursor` to `continuation_token` once we update to latest hey-api version
+    //             // cursor: pageParam,
+    //         },
+    //     }),
+    //     queryKey: [
+    //         // @ts-expect-error -- Ignore expected tanstack key type
+    //         "getSessionsMetadata",
+    //         "infinite",
+    //         querySortParams?.filter_title,
+    //         querySortParams?.filter_updated_from,
+    //         querySortParams?.filter_updated_to,
+    //         querySortParams?.sort_by,
+    //         querySortParams?.sort_direction,
+    //     ],
+    //     initialPageParam: null,
+    //     refetchInterval: 20000,
+    //     getNextPageParam(lastPage) {
+    //         return lastPage.continuation_token;
+    //     },
+    // });
+
     return useInfiniteQuery<
-        SessionMetadataWithId_api[],
+        GetSessionsMetadataResponse_api,
         AxiosError<GetSessionsMetadataError_api>,
-        InfiniteData<SessionMetadataWithId_api[]>,
+        InfiniteData<GetSessionsMetadataResponse_api>,
         readonly unknown[],
-        number
+        string | null
     >({
         queryKey: [
             "getSessionsMetadata",
@@ -134,12 +155,10 @@ function useInfiniteSessionMetadataQuery(querySortParams: Options<GetSessionsMet
             querySortParams?.sort_by,
             querySortParams?.sort_direction,
         ],
-        initialPageParam: 0,
+        initialPageParam: null,
         refetchInterval: 20000,
-        // TODO: Currently uses standard SQL pagination. Move over to continuation-tokens for better RU usage
-        getNextPageParam(lastPage, pages) {
-            if (lastPage.length < QUERY_PAGE_SIZE) return null;
-            return pages.length;
+        getNextPageParam(lastPage) {
+            return lastPage.continuation_token;
         },
         async queryFn({ pageParam, signal }) {
             const { data } = await getSessionsMetadata({
@@ -148,7 +167,8 @@ function useInfiniteSessionMetadataQuery(querySortParams: Options<GetSessionsMet
                 query: {
                     ...querySortParams,
                     limit: QUERY_PAGE_SIZE,
-                    page: pageParam,
+                    // TODO: Rename `cursor` to `continuation_token` once we update to latest hey-api version
+                    cursor: pageParam,
                 },
             });
 
@@ -194,9 +214,7 @@ export function SessionOverviewContent(props: SessionOverviewContentProps): Reac
     const tableData = React.useMemo(() => {
         if (!sessionsQuery.data) return [];
 
-        // The backend wont ever return a null in this list, but the entry might be replaced locally during a
-        // delete-mutation side-effect, where we set it to null to maintain a consistent page-size
-        return sessionsQuery.data?.pages?.flat().filter((entry) => entry != null);
+        return sessionsQuery.data.pages?.flatMap(({ items }) => items);
     }, [sessionsQuery.data]);
 
     const onTableScrollIndexChange = React.useCallback((start: number, end: number) => {

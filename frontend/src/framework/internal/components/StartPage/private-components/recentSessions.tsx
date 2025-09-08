@@ -3,7 +3,6 @@ import React from "react";
 import { Typography } from "@equinor/eds-core-react";
 import { Refresh } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
-import { take } from "lodash";
 
 import { getSessionsMetadataOptions, SessionSortBy_api, SortDirection_api } from "@api";
 import { buildSessionUrl } from "@framework/internal/WorkbenchSession/SessionUrlService";
@@ -12,6 +11,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { IconButton } from "@lib/components/IconButton";
 import { timeAgo } from "@lib/utils/dates";
 
+import { RECENT_CARDS_LIST_LENGTH } from "./constants";
 import { SessionCard } from "./sessionCard";
 
 export type RecentSessionsProps = {
@@ -32,17 +32,14 @@ export function RecentSessions(props: RecentSessionsProps) {
             query: {
                 sort_by: SessionSortBy_api.METADATA_UPDATED_AT,
                 sort_direction: SortDirection_api.DESC,
-                limit: 6,
+                limit: RECENT_CARDS_LIST_LENGTH,
             },
         }),
         refetchInterval: 10000,
     });
 
-    const hasMoreSessions = sessionsQuery.data?.length === 6;
-    const firstFiveSessions = React.useMemo(() => {
-        if (sessionsQuery.isPending) return [];
-        return take(sessionsQuery.data, 5);
-    }, [sessionsQuery.data, sessionsQuery.isPending]);
+    const sessions = sessionsQuery.data?.items ?? [];
+    const hasMoreSessions = !!sessionsQuery.data?.continuation_token;
 
     if (!sessionsQuery.isFetching) {
         if (sessionsQuery.isError) {
@@ -69,10 +66,10 @@ export function RecentSessions(props: RecentSessionsProps) {
             return <span className="text-red-800">Could not fetch recent sessions...</span>;
         }
 
-        if (state === "success" && sessionsQuery.data && sessionsQuery.data.length > 0) {
+        if (state === "success" && sessionsQuery.data && sessions.length > 0) {
             return (
                 <ul>
-                    {firstFiveSessions.map((session) => (
+                    {sessions.map((session) => (
                         <SessionCard
                             href={buildSessionUrl(session.id)}
                             key={session.id}

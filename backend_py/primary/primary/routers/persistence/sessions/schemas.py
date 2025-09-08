@@ -20,3 +20,8 @@ class SessionDocument(BaseModel):
     ownerId: str
     metadata: SessionMetadata
     content: str
+
+
+class SessionIndexPage(BaseModel):
+    items: list[SessionMetadataWithId]
+    continuation_token: str | None

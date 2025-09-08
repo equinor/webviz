@@ -702,6 +702,11 @@ export type SessionDocument_api = {
     content: string;
 };
 
+export type SessionIndexPage_api = {
+    items: Array<SessionMetadataWithId_api>;
+    continuation_token: string | null;
+};
+
 export type SessionMetadata_api = {
     title: string;
     description: string | null;
@@ -752,6 +757,11 @@ export type SnapshotAccessLog_api = {
     lastVisitedAt: string | null;
     snapshotDeleted: boolean;
     snapshotMetadata: SnapshotMetadata_api;
+};
+
+export type SnapshotAccessLogIndexPage_api = {
+    items: Array<SnapshotAccessLog_api>;
+    continuation_token: string | null;
 };
 
 export enum SnapshotAccessLogSortBy_api {
@@ -3971,6 +3981,7 @@ export type GetSessionsMetadataData_api = {
     body?: never;
     path?: never;
     query?: {
+        cursor?: string | null;
         /**
          * Sort the result by
          */
@@ -3983,7 +3994,6 @@ export type GetSessionsMetadataData_api = {
          * Limit the number of results
          */
         limit?: number;
-        page?: number;
         /**
          * Filter results by title (case insensitive)
          */
@@ -4014,7 +4024,7 @@ export type GetSessionsMetadataResponses_api = {
     /**
      * Successful Response
      */
-    200: Array<SessionMetadataWithId_api>;
+    200: SessionIndexPage_api;
 };
 
 export type GetSessionsMetadataResponse_api = GetSessionsMetadataResponses_api[keyof GetSessionsMetadataResponses_api];
@@ -4160,10 +4170,18 @@ export type GetSessionMetadataResponses_api = {
 
 export type GetSessionMetadataResponse_api = GetSessionMetadataResponses_api[keyof GetSessionMetadataResponses_api];
 
-export type GetRecentSnapshotsData_api = {
+export type GetVisitedSnapshotsData_api = {
     body?: never;
     path?: never;
     query?: {
+        /**
+         * Continuation token for pagination
+         */
+        cursor?: string | null;
+        /**
+         * Limit the number of results
+         */
+        limit?: number | null;
         /**
          * Sort the result by
          */
@@ -4172,14 +4190,6 @@ export type GetRecentSnapshotsData_api = {
          * Sort direction: 'asc' or 'desc'
          */
         sort_direction?: SortDirection_api | null;
-        /**
-         * Limit the number of results
-         */
-        limit?: number | null;
-        /**
-         * The offset of the results
-         */
-        offset?: number | null;
         /**
          * Filter results by title (case insensitive)
          */
@@ -4194,26 +4204,26 @@ export type GetRecentSnapshotsData_api = {
         filter_updated_to?: string | null;
         t?: number;
     };
-    url: "/snapshots/recent_snapshots";
+    url: "/snapshots/visited_snapshots";
 };
 
-export type GetRecentSnapshotsErrors_api = {
+export type GetVisitedSnapshotsErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type GetRecentSnapshotsError_api = GetRecentSnapshotsErrors_api[keyof GetRecentSnapshotsErrors_api];
+export type GetVisitedSnapshotsError_api = GetVisitedSnapshotsErrors_api[keyof GetVisitedSnapshotsErrors_api];
 
-export type GetRecentSnapshotsResponses_api = {
+export type GetVisitedSnapshotsResponses_api = {
     /**
      * Successful Response
      */
-    200: Array<SnapshotAccessLog_api>;
+    200: SnapshotAccessLogIndexPage_api;
 };
 
-export type GetRecentSnapshotsResponse_api = GetRecentSnapshotsResponses_api[keyof GetRecentSnapshotsResponses_api];
+export type GetVisitedSnapshotsResponse_api = GetVisitedSnapshotsResponses_api[keyof GetVisitedSnapshotsResponses_api];
 
 export type GetSnapshotsMetadataData_api = {
     body?: never;

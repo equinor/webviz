@@ -59,8 +59,46 @@ class SessionAccess:
             params = cast_query_params([{"name": "@owner_id", "value": self.user_id}])
             items = await self.session_container_access.query_items_async(query=query, parameters=params)
             return [self._to_metadata_summary(item) for item in items]
-        except DatabaseAccessError as e:
-            raise_service_error_from_database_access(e)
+
+    async def get_user_sessions_by_page_async(
+        self,
+        continuation_token: str | None = None,
+        page_size: int | None = None,
+        sort_by: SessionSortBy | None = None,
+        sort_direction: SortDirection | None = None,
+        filter_title: str | None = None,
+        filter_updated_from: str | None = None,
+        filter_updated_to: str | None = None,
+    ) -> tuple[list[SessionDocument], str | None]:
+        sort_by_field = sort_by.value if sort_by else None
+        sort_by_lowercase = sort_by in LOWERCASED_FIELDS
+
+        filters: list[Filter] = [Filter("owner_id", self.user_id)]
+
+        if filter_title:
+            filters.append(Filter("metadata.title__lower", filter_title.lower(), "CONTAINS"))
+        if filter_updated_from:
+            filters.append(Filter("metadata.updated_at", filter_updated_from, "MORE", "_from"))
+        if filter_updated_to:
+            filters.append(Filter("metadata.updated_at", filter_updated_to, "LESS", "_to"))
+
+        collation_options = QueryCollationOptions(
+            sort_lowercase=sort_by_lowercase,
+            sort_dir=sort_direction,
+            sort_by=sort_by_field,
+            filters=filters,
+        )
+
+        query = "SELECT * from c"
+        params = collation_options.make_query_params()
+        search_options = collation_options.to_sql_query_string()
+
+        if search_options:
+            query = f"{query} {search_options}"
+
+        return await self.session_container_access.query_items_by_page_token_async(
+            query=query, parameters=params, page_size=page_size, page_token=continuation_token
+        )
 
     async def get_filtered_sessions_metadata_for_user_async(
         self,

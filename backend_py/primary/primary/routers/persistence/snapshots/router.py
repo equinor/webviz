@@ -16,44 +16,47 @@ from primary.services.database_access.workers.mark_logs_deleted import mark_logs
 
 
 from primary.auth.auth_helper import AuthHelper, AuthenticatedUser
-from primary.routers.persistence.snapshots.converters import (
-    to_api_snapshot,
-    to_api_snapshot_access_log,
-    to_api_snapshot_metadata,
-    to_api_snapshot_metadata_summary,
-)
 
 
 from . import schemas
+from .converters import (
+    to_api_snapshot,
+    to_api_snapshot_metadata,
+    to_api_snapshot_metadata_summary,
+    to_api_access_log_index_page,
+)
+
 
 LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/recent_snapshots", response_model=list[schemas.SnapshotAccessLog])
-async def get_recent_snapshots(
+@router.get("/visited_snapshots", response_model=schemas.SnapshotAccessLogIndexPage)
+async def get_visited_snapshots(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    # ! Must be named "cursor" or "page" to make hey-api generate infinite-queries
+    # ! When we've updated to the latest hey-api version, we can change this to something custom
+    cursor: Optional[str] = Query(None, description="Continuation token for pagination"),
+    limit: Optional[int] = Query(10, ge=1, le=100, description="Limit the number of results"),
     sort_by: Optional[SnapshotAccessLogSortBy] = Query(None, description="Sort the result by"),
     sort_direction: Optional[SortDirection] = Query(None, description="Sort direction: 'asc' or 'desc'"),
-    limit: Optional[int] = Query(None, ge=1, le=100, description="Limit the number of results"),
-    offset: Optional[int] = Query(None, ge=0, description="The offset of the results"),
     # ? Is this becoming too many args? Should we make a post-search endpoint instead?
     filter_title: Optional[str] = Query(None, description="Filter results by title (case insensitive)"),
     filter_updated_from: Optional[str] = Query(None, description="Filter results by date"),
     filter_updated_to: Optional[str] = Query(None, description="Filter results by date"),
-) -> list[schemas.SnapshotAccessLog]:
+) -> schemas.SnapshotAccessLogIndexPage:
     async with SnapshotLogAccess.create(user.get_user_id()) as log_access:
-        recent_logs = await log_access.get_access_logs_for_user_async(
+        (items, cont_token) = await log_access.get_user_access_log_by_page_async(
+            continuation_token=cursor,
+            page_size=limit,
             sort_by=sort_by,
             sort_direction=sort_direction,
-            limit=limit,
-            offset=offset,
             filter_title=filter_title,
             filter_updated_from=filter_updated_from,
             filter_updated_to=filter_updated_to,
         )
 
-        return [to_api_snapshot_access_log(log) for log in recent_logs]
+        return to_api_access_log_index_page(items, cont_token)
 
 
 @router.get("/snapshots", response_model=List[schemas.SnapshotMetadata])

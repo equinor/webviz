@@ -3,10 +3,11 @@ import React from "react";
 import { DateRangePicker } from "@equinor/eds-core-react";
 import type { Options } from "@hey-api/client-axios";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { omit } from "lodash";
 import { toast } from "react-toastify";
 
-import type { GetRecentSnapshotsData_api, SnapshotAccessLog_api, SortDirection_api } from "@api";
-import { SnapshotAccessLogSortBy_api, getRecentSnapshotsInfiniteOptions } from "@api";
+import type { GetVisitedSnapshotsData_api, SnapshotAccessLog_api, SortDirection_api } from "@api";
+import { getVisitedSnapshotsInfiniteOptions, SnapshotAccessLogSortBy_api } from "@api";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/SnapshotUrlService";
 import type { Workbench } from "@framework/Workbench";
 import { Input } from "@lib/components/Input";
@@ -141,6 +142,17 @@ function tableSortDirToApiSortDir(sort: TableSortDirection): SortDirection_api {
     return sort as unknown as SortDirection_api;
 }
 
+export function flattenSnapshotAccessLogEntry(logEntry: SnapshotAccessLog_api): FlattenedSnapshotAccessLog_api {
+    const ret = omit(logEntry, ["snapshotMetadata"]) as Record<string, any>;
+
+    Object.entries(logEntry.snapshotMetadata).forEach(([k, v]) => {
+        const flattenedKey = `snapshotMetadata.${k}`;
+        ret[flattenedKey] = v;
+    });
+
+    return ret as FlattenedSnapshotAccessLog_api;
+}
+
 export type SnapshotOverviewContentProps = {
     selectedSession: string | null;
     workbench: Workbench;
@@ -158,7 +170,7 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
         { columnId: "lastVisitedAt", direction: TableSortDirection.DESC },
     ]);
 
-    const querySortParams = React.useMemo<Options<GetRecentSnapshotsData_api>["query"]>(() => {
+    const querySortParams = React.useMemo<Options<GetVisitedSnapshotsData_api>["query"]>(() => {
         if (!tableSortState?.length) return undefined;
 
         const sortBy = columnIdToApiSortField(tableSortState[0].columnId);
@@ -173,17 +185,16 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
         };
     }, [tableFilter, tableSortState]);
 
-    // const sessionsQuery = useInfiniteSessionMetadataQuery(querySortParams);
     const sessionsQuery = useInfiniteQuery({
-        ...getRecentSnapshotsInfiniteOptions({
+        ...getVisitedSnapshotsInfiniteOptions({
             query: { ...querySortParams, limit: QUERY_PAGE_SIZE },
         }),
-        initialPageParam: 0,
+        // Tanstack requires initialPageParam. The correct option would be `null`, but that causes an
+        // undefined-error in `getVisitedSnapshotsInfiniteOptions(...)` since it thinks it's an object.
+        initialPageParam: "",
         refetchInterval: 10000,
-        // TODO: Currently uses standard SQL pagination. Move over to continuation-tokens for better RU usage
-        getNextPageParam(lastPage, pages) {
-            if (lastPage.length < QUERY_PAGE_SIZE) return null;
-            return pages.length;
+        getNextPageParam(lastPage) {
+            return lastPage.continuation_token;
         },
     });
 
@@ -207,16 +218,9 @@ export function SnapshotOverviewContent(props: SnapshotOverviewContentProps): Re
 
     const tableData = React.useMemo(() => {
         if (!sessionsQuery.data) return [];
-        return sessionsQuery.data?.pages?.flat().map((v) => {
-            const ret = { ...v } as Record<string, any>;
 
-            Object.entries(v.snapshotMetadata).forEach(([k, v]) => {
-                ret[`snapshotMetadata.${k}`] = v;
-            });
-
-            delete ret.snapshotMetadata;
-
-            return ret as FlattenedSnapshotAccessLog_api;
+        return sessionsQuery.data?.pages?.flatMap(({ items }) => {
+            return items.map(flattenSnapshotAccessLogEntry);
         });
     }, [sessionsQuery.data]);
 
