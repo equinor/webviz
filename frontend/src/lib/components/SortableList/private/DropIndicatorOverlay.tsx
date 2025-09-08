@@ -1,39 +1,35 @@
+import { HoveredArea } from "../sortableList";
 import { createPortal } from "react-dom";
 
-import { HoveredArea } from "../sortableList";
-
-export function DropIndicatorOverlay({
-    containerEl,
-    scrollEl,
-    hovered,
-}: {
+export type DropIndicatorOverlayProps = {
     containerEl: HTMLElement | null;
     scrollEl: HTMLElement | null;
     hovered: { id: string; area: HoveredArea } | null;
-}) {
-    // nothing to draw
-    if (!containerEl || !scrollEl || !hovered) return null;
+};
 
-    const target = containerEl.querySelector<HTMLElement>(`[data-item-id="${hovered.id}"]`);
+export function DropIndicatorOverlay(props: DropIndicatorOverlayProps) {
+    if (!props.containerEl || !props.scrollEl || !props.hovered) return null;
+
+    const target = props.containerEl.querySelector<HTMLElement>(`[data-item-id="${props.hovered.id}"]`);
     if (!target) return null;
 
-    const scrollRect = scrollEl.getBoundingClientRect();
-    const containerRect = containerEl.getBoundingClientRect();
+    const scrollRect = props.scrollEl.getBoundingClientRect();
+    const containerRect = props.containerEl.getBoundingClientRect();
     const targetRect = target.getBoundingClientRect();
 
-    const y = (hovered.area === HoveredArea.TOP ? targetRect.top : targetRect.bottom) - scrollRect.top;
+    const top = (props.hovered.area === HoveredArea.TOP ? targetRect.top : targetRect.bottom) - scrollRect.top;
     const left = containerRect.left - scrollRect.left;
     const width = containerRect.width;
 
-    if (y > scrollRect.height) return null;
-    if (y < 0) return null;
+    if (top > scrollRect.height) return null;
+    if (top < 0) return null;
 
     return createPortal(
         <div
             data-sl-indicator
             style={{
                 position: "absolute",
-                top: Math.round(y) - 1,
+                top: Math.round(top) - 1,
                 left: Math.round(left),
                 width: Math.round(width),
                 height: 2,
@@ -41,6 +37,6 @@ export function DropIndicatorOverlay({
                 pointerEvents: "none",
             }}
         />,
-        scrollEl,
+        props.scrollEl
     );
 }

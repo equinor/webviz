@@ -1,14 +1,12 @@
-import React from "react";
-
+import { SortableListContext } from "../sortableList";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
-import { SortableListContext } from "../sortableList";
+import React from "react";
 
 export function useMakeDragGhostElement(
     id: string,
     element: React.ReactElement,
-    ref: React.MutableRefObject<HTMLElement | null>,
+    ref: React.MutableRefObject<HTMLElement | null>
 ): React.ReactElement | null {
     const context = React.useContext(SortableListContext);
     const boundingClientRect = useElementBoundingRect(ref);

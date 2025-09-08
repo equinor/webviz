@@ -1,17 +1,13 @@
-import type React from "react";
-
-import { Delete, ExpandLess, ExpandMore, Link } from "@mui/icons-material";
-
+import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
+import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
+import type { SharedSetting } from "./SharedSetting";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
 import { SortableListItem } from "@lib/components/SortableList";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
-import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
-
-import type { SharedSetting } from "./SharedSetting";
+import { Delete, ExpandLess, ExpandMore, Link } from "@mui/icons-material";
+import type React from "react";
 
 export type SharedSettingComponentProps = {
     sharedSetting: SharedSetting<any>;

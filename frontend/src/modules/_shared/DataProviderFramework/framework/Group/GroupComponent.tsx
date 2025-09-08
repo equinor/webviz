@@ -1,11 +1,6 @@
-import React from "react";
-
-import { ColorSelect } from "@lib/components/ColorSelect";
-import { SortableListGroup } from "@lib/components/SortableList";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-
 import type { ActionGroup } from "../../Actions";
 import { Actions } from "../../Actions";
+import { SortableListGroup } from "../../components/group";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
@@ -17,8 +12,10 @@ import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllB
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
-
 import type { Group } from "./Group";
+import { ColorSelect } from "@lib/components/ColorSelect";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import React from "react";
 
 export type GroupComponentProps = {
     group: Group<any, any>;
@@ -103,7 +100,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
             }
         >
             {children.map((child: Item) =>
-                makeSortableListItemComponent(child, props.makeActionsForGroup, props.onActionClick),
+                makeSortableListItemComponent(child, props.makeActionsForGroup, props.onActionClick)
             )}
         </SortableListGroup>
     );

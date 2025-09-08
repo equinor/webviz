@@ -1,12 +1,6 @@
-import React from "react";
-
-import { SettingsApplications } from "@mui/icons-material";
-
-import { SortableListGroup } from "@lib/components/SortableList";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-
 import type { ActionGroup } from "../../Actions";
 import { Actions } from "../../Actions";
+import { SortableListGroup } from "../../components/group";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
@@ -14,6 +8,9 @@ import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { SettingsApplications } from "@mui/icons-material";
+import React from "react";
 
 export type SettingsGroupComponentProps = {
     group: ItemGroup;
@@ -67,7 +64,7 @@ export function SettingsGroupComponent(props: SettingsGroupComponentProps): Reac
             expanded={isExpanded}
         >
             {children.map((child: Item) =>
-                makeSortableListItemComponent(child, props.makeActionsForGroup, props.onActionClick),
+                makeSortableListItemComponent(child, props.makeActionsForGroup, props.onActionClick)
             )}
         </SortableListGroup>
     );

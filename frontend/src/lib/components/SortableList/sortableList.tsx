@@ -1,18 +1,16 @@
-import React from "react";
-
-import { createPortal } from "@lib/utils/createPortal";
-import { MANHATTAN_LENGTH, rectContainsPoint } from "@lib/utils/geometry";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import type { Vec2 } from "@lib/utils/vec2";
-import { point2Distance, vec2FromPointerEvent } from "@lib/utils/vec2";
-
 import { Content } from "./private/Content";
-import { DragHandle } from "./private/dragHandle";
 import { DropIndicatorOverlay } from "./private/DropIndicatorOverlay";
 import { Group } from "./private/Group";
 import { SortableListGroupContent } from "./private/GroupContent";
 import { Item } from "./private/Item";
 import { ScrollContainer } from "./private/ScrollContainer";
+import { DragHandle } from "./private/dragHandle";
+import { createPortal } from "@lib/utils/createPortal";
+import { MANHATTAN_LENGTH, rectContainsPoint } from "@lib/utils/geometry";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import type { Vec2 } from "@lib/utils/vec2";
+import { point2Distance, vec2FromPointerEvent } from "@lib/utils/vec2";
+import React from "react";
 
 export enum ItemType {
     ITEM = "item",
@@ -61,7 +59,7 @@ export type SortableListProps = {
         movedItemId: string,
         originId: string | null,
         destinationId: string | null,
-        position: number,
+        position: number
     ) => void;
 };
 
@@ -74,8 +72,11 @@ export type SortableListCompound = React.FC<SortableListProps> & {
     GroupContent: typeof SortableListGroupContent;
 };
 
+// This defines the size of the areas determining if the dragged item should be inserted above or below the hovered item
 const ITEM_TOP_AND_BOTTOM_AREA_SIZE_IN_PERCENT = 50;
+// This defines the size of the areas determining if the the dragged item should be inserted above or below the hovered group
 const GROUP_TOP_AND_BOTTOM_AREA_SIZE_IN_PERCENT = 30;
+// Defines after how many milliseconds hover time over the top or bottom of the sroll container it should start scrolling
 const DEFAULT_SCROLL_TIME = 100;
 
 /**
@@ -96,8 +97,6 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
     const [hoveredItemIdAndArea, setHoveredItemIdAndArea] = React.useState<HoveredItemIdAndArea | null>(null);
     const [draggedElement, setDraggedElement] = React.useState<HTMLElement | null>(null);
     const [dragPosition, setDragPosition] = React.useState<Vec2>({ x: 0, y: 0 });
-    const [currentScrollPosition, setCurrentScrollPosition] = React.useState<number>(0);
-    const [prevChildren, setPrevChildren] = React.useState<React.ReactNode>(props.children);
     const [contentContainerElement, setContentContainerElement] = React.useState<HTMLElement | null>(null);
     const [scrollContainerElement, setScrollContainerElement] = React.useState<HTMLElement | null>(null);
     const [contentContainerRect, setContentContainerRect] = React.useState<DOMRectReadOnly | null>(null);
@@ -113,7 +112,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
             registerScrollContainerElement: setScrollContainerElement,
             reportContentBoundingRect: setContentContainerRect,
         }),
-        [contentContainerElement, draggedItemId, hoveredItemIdAndArea, dragPosition],
+        [contentContainerElement, draggedItemId, hoveredItemIdAndArea, dragPosition]
     );
 
     const mainRef = React.useRef<HTMLDivElement>(null);
@@ -261,7 +260,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                 if (scrollContainerElement) {
                     scrollContainerElement.scrollTop = Math.min(
                         scrollContainerElement.scrollHeight,
-                        scrollContainerElement.scrollTop + 10,
+                        scrollContainerElement.scrollTop + 10
                     );
                 }
                 if (doScroll) {
@@ -276,7 +275,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                         const type = getItemType(element);
                         if (type === ItemType.GROUP) {
                             const content = element.querySelector(
-                                "[data-sortable-list-group-content]",
+                                "[data-sortable-list-group-content]"
                             ) as HTMLElement | null;
                             if (
                                 content &&
@@ -567,54 +566,8 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                 setDraggedItemId(null);
             };
         },
-        [
-            onItemMoved,
-            isMoveAllowed,
-            props.children,
-            currentScrollPosition,
-            scrollContainerElement,
-            contentContainerElement,
-        ],
+        [onItemMoved, isMoveAllowed, props.children, scrollContainerElement, contentContainerElement]
     );
-
-    /*
-
-    function makeChildren(): React.ReactNode[] {
-        const children: React.ReactNode[] = [];
-        if (props.children.length === 0 && props.contentWhenEmpty) {
-            if (typeof props.contentWhenEmpty === "string") {
-                children.push(props.contentWhenEmpty);
-            } else if (React.isValidElement(props.contentWhenEmpty)) {
-                children.push(
-                    React.cloneElement(props.contentWhenEmpty, {
-                        key: "contentWhenEmpty",
-                    }),
-                );
-            }
-            return children;
-        }
-
-        for (const child of props.children) {
-            if (typeof child.type === "string") {
-                continue;
-            }
-            if (child.type.name === "SortableListItem") {
-                children.push(
-                    React.cloneElement(child, {
-                        key: child.props.id,
-                    }),
-                );
-            } else {
-                children.push(
-                    React.cloneElement(child, {
-                        key: child.props.id,
-                    }),
-                );
-            }
-        }
-        return children;
-    }
-        */
 
     return (
         <div className="w-full h-full flex flex-col relative min-h-0 max-h-full" ref={mainRef}>
@@ -633,7 +586,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                                 "cursor-not-allowed": !hoveredItemIdAndArea,
                                 "cursor-grabbing": hoveredItemIdAndArea !== null,
                             })}
-                        ></div>,
+                        ></div>
                     )}
                 <DropIndicatorOverlay
                     containerEl={mainRef.current}
@@ -676,7 +629,7 @@ type HoveredItemIdAndArea = {
 };
 
 function assertTargetIsSortableListItemAndExtractProps(
-    target: EventTarget | null,
+    target: EventTarget | null
 ): { element: HTMLElement; id: string; parentElement: HTMLElement | null; parentId: string | null } | null {
     if (!target || !(target instanceof HTMLElement)) {
         return null;
