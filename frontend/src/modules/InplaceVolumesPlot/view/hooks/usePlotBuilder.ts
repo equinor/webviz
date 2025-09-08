@@ -84,6 +84,8 @@ export function useBuildPlotAndTable(
     } else if (plotType === PlotType.CONVERGENCE) {
         plotbuilder.setXAxisOptions({ title: { text: "Realizations", standoff: 5 } });
         plotbuilder.setYAxisOptions({ title: { text: firstResultName ?? "", standoff: 5 } });
+    } else if (plotType === PlotType.BOX) {
+        plotbuilder.setYAxisOptions({ showticklabels: false });
     }
 
     const horizontalSpacing = 80 / width;
