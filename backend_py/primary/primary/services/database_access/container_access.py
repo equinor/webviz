@@ -53,13 +53,15 @@ class ContainerAccess(Generic[T]):
         logger.debug("[ContainerAccess] Created for container '%s' in database '%s'", container_name, database_name)
         return cls(database_name, container_name, db_access, container, validation_model)
 
-    async def __aenter__(self):  # pylint: disable=C9001
+    async def __aenter__(self) -> "ContainerAccess":
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):  # pylint: disable=C9001
+    async def __aexit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object | None
+    ) -> None:
         await self.close_async()
 
-    def _raise_exception(self, op: str, exc: exceptions.CosmosHttpResponseError) -> NoReturn:
+    def _raise_exception(self, operation: str, exc: exceptions.CosmosHttpResponseError) -> NoReturn:
         """Map Cosmos error to a data-access exception with rich context and re-raise."""
         headers = getattr(exc, "headers", {}) or {}
         status = getattr(exc, "status_code", None)
@@ -72,7 +74,7 @@ class ContainerAccess(Generic[T]):
         activity_id = headers.get("x-ms-activity-id")
 
         msg = (
-            f"[{op}] Cosmos error on {self._database_name}/{self._container_name}: "
+            f"[{operation}] Cosmos error on {self._database_name}/{self._container_name}: "
             f"{getattr(exc, 'message', None) or str(exc)} "
             f"(status={status}, substatus={substatus}, activity_id={activity_id})"
         )
@@ -84,7 +86,7 @@ class ContainerAccess(Generic[T]):
             extra={
                 "database": self._database_name,
                 "container": self._container_name,
-                "operation": op,
+                "operation": operation,
                 "status_code": status,
                 "sub_status": substatus,
                 "activity_id": activity_id,
@@ -162,8 +164,9 @@ class ContainerAccess(Generic[T]):
 
     async def insert_item_async(self, item: T) -> str:
         try:
-            item = self._validation_model.model_validate(item).model_dump(by_alias=True, mode="json")
-            result = await self._container.upsert_item(item)
+            validated_item = self._validation_model.model_validate(item)
+            dumped_item = validated_item.model_dump(by_alias=True, mode="json")
+            result = await self._container.upsert_item(dumped_item)
             return result["id"]
         except ValidationError as validation_error:
             logger.error("[ContainerAccess] Validation error in '%s': %s", self._container_name, validation_error)
@@ -171,14 +174,14 @@ class ContainerAccess(Generic[T]):
         except exceptions.CosmosHttpResponseError as error:
             self._raise_exception("insert_item_async", error)
 
-    async def delete_item_async(self, item_id: str, partition_key: str):
+    async def delete_item_async(self, item_id: str, partition_key: str) -> None:
         try:
             await self._container.delete_item(item=item_id, partition_key=partition_key)
             logger.debug("[ContainerAccess] Deleted item '%s' from '%s'", item_id, self._container_name)
         except exceptions.CosmosHttpResponseError as error:
             self._raise_exception("delete_item_async", error)
 
-    async def update_item_async(self, item_id: str, updated_item: T):
+    async def update_item_async(self, item_id: str, updated_item: T) -> None:
         try:
             validated = self._validation_model.model_validate(updated_item).model_dump(by_alias=True, mode="json")
             await self._container.upsert_item(validated)
@@ -196,12 +199,12 @@ class ContainerAccess(Generic[T]):
         patch_operations: Sequence[Dict[str, object]],
         *,
         filter_predicate: str | None = None,
-    ):
+    ) -> None:
         try:
             await self._container.patch_item(
                 item=item_id,
                 partition_key=partition_key,
-                patch_operations=patch_operations,
+                patch_operations=list(patch_operations),
                 filter_predicate=filter_predicate,
                 no_response=True,
             )
@@ -227,10 +230,13 @@ class ContainerAccess(Generic[T]):
         except exceptions.CosmosHttpResponseError as error:
             self._raise_exception("query_items_async", error)
 
-    async def close_async(self):
+    async def close_async(self) -> None:
         """Close the container access."""
         if self._database_access:
             logger.debug("[ContainerAccess] Closing access to '%s/%s'", self._database_name, self._container_name)
             await self._database_access.close_async()
-            self._database_access = None
-        self._container = None
+
+            # These should never be accessed anymore. We'll ignore the
+            # typing, and unset them to crash on further access attempts
+            self._database_access = None  # type: ignore[assignment]
+        self._container = None  # type: ignore[assignment]

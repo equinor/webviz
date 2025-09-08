@@ -50,8 +50,8 @@ class SnapshotLogAccess:
             updated_item = existing.model_copy(update=changes)
 
             await self._container_access.update_item_async(snapshot_id, updated_item)
-        except DatabaseAccessError as e:
-            raise ServiceRequestError(f"Failed to update access log: {str(e)}", Service.DATABASE) from e
+        except DatabaseAccessError as err:
+            raise ServiceRequestError(f"Failed to update access log: {str(err)}", Service.DATABASE) from err
 
     async def get_user_access_log_by_page_async(
         self,
@@ -109,8 +109,8 @@ class SnapshotLogAccess:
             _inserted_id = await self._container_access.insert_item_async(new_log)
 
             return new_log
-        except DatabaseAccessError as e:
-            raise ServiceRequestError(f"Failed to create access log: {str(e)}", Service.DATABASE) from e
+        except DatabaseAccessError as err:
+            raise ServiceRequestError(f"Failed to create access log: {str(err)}", Service.DATABASE) from err
 
     async def get_access_log_async(self, snapshot_id: str) -> SnapshotAccessLogDocument:
         item_id = make_access_log_item_id(snapshot_id, self._user_id)
@@ -129,8 +129,8 @@ class SnapshotLogAccess:
             return await self.get_access_log_async(snapshot_id)
         except DatabaseAccessNotFoundError:
             return await self.create_access_log_async(snapshot_id=snapshot_id, snapshot_owner_id=snapshot_owner_id)
-        except DatabaseAccessError as e:
-            raise ServiceRequestError(f"Failed to get or create access log: {str(e)}", Service.DATABASE) from e
+        except DatabaseAccessError as err:
+            raise ServiceRequestError(f"Failed to get or create access log: {str(err)}", Service.DATABASE) from err
 
     async def log_snapshot_visit_async(self, snapshot_id: str, snapshot_owner_id: str) -> SnapshotAccessLogDocument:
         timestamp = datetime.now(timezone.utc)
@@ -145,5 +145,5 @@ class SnapshotLogAccess:
             await self._container_access.update_item_async(log.id, log)
 
             return log
-        except DatabaseAccessError as e:
-            raise ServiceRequestError(f"Failed to log snapshot visit: {str(e)}", Service.DATABASE) from e
+        except DatabaseAccessError as err:
+            raise ServiceRequestError(f"Failed to log snapshot visit: {str(err)}", Service.DATABASE) from err

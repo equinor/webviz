@@ -50,8 +50,8 @@ class SessionAccess:
                 item_id=session_id, partition_key=self.user_id
             )
             return document
-        except DatabaseAccessError as e:
-            raise_service_error_from_database_access(e)
+        except DatabaseAccessError as err:
+            raise_service_error_from_database_access(err)
 
     async def get_all_sessions_metadata_for_user_async(self) -> List[SessionMetadataWithId]:
         try:
@@ -59,6 +59,8 @@ class SessionAccess:
             params = cast_query_params([{"name": "@owner_id", "value": self.user_id}])
             items = await self.session_container_access.query_items_async(query=query, parameters=params)
             return [self._to_metadata_summary(item) for item in items]
+        except DatabaseAccessError as err:
+            raise_service_error_from_database_access(err)
 
     async def get_user_sessions_by_page_async(
         self,
@@ -149,8 +151,8 @@ class SessionAccess:
         try:
             document = await self._assert_ownership_async(session_id)
             return document.metadata
-        except DatabaseAccessError as e:
-            raise_service_error_from_database_access(e)
+        except DatabaseAccessError as err:
+            raise_service_error_from_database_access(err)
 
     async def insert_session_async(self, new_session: NewSession) -> str:
         try:
@@ -170,8 +172,8 @@ class SessionAccess:
                 content=new_session.content,
             )
             return await self.session_container_access.insert_item_async(session)
-        except DatabaseAccessError as e:
-            raise_service_error_from_database_access(e)
+        except DatabaseAccessError as err:
+            raise_service_error_from_database_access(err)
 
     async def delete_session_async(self, session_id: str) -> None:
         await self._assert_ownership_async(session_id)
@@ -204,14 +206,14 @@ class SessionAccess:
             await self.session_container_access.update_item_async(session_id, updated_session)
 
             return updated_session
-        except DatabaseAccessError as e:
-            raise_service_error_from_database_access(e)
+        except DatabaseAccessError as err:
+            raise_service_error_from_database_access(err)
 
     async def _assert_ownership_async(self, session_id: str) -> SessionDocument:
         try:
             session = await self.session_container_access.get_item_async(item_id=session_id, partition_key=self.user_id)
-        except DatabaseAccessError as e:
-            raise_service_error_from_database_access(e)
+        except DatabaseAccessError as err:
+            raise_service_error_from_database_access(err)
 
         if session.owner_id != self.user_id:
             raise ServiceRequestError(f"You do not have permission to access session '{session_id}'.", Service.DATABASE)

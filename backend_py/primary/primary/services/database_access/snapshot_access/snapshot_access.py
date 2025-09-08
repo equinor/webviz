@@ -52,12 +52,12 @@ class SnapshotAccess:
             document = await self.container_access.get_item_async(item_id=snapshot_id, partition_key=snapshot_id)
 
             return document
-        except DatabaseAccessNotFoundError as e:
+        except DatabaseAccessNotFoundError as err:
             raise ServiceRequestError(
                 f"Snapshot with id '{snapshot_id}' not found. It might have been deleted.", Service.DATABASE
-            ) from e
-        except DatabaseAccessError as e:
-            raise_service_error_from_database_access(e)
+            ) from err
+        except DatabaseAccessError as err:
+            raise_service_error_from_database_access(err)
 
     async def get_all_snapshots_metadata_for_user_async(self) -> List[SnapshotMetadataWithId]:
         try:
@@ -65,8 +65,8 @@ class SnapshotAccess:
             params = cast_query_params([{"name": "@owner_id", "value": self.user_id}])
             items = await self.container_access.query_items_async(query=query, parameters=params)
             return [self._to_metadata_summary(item) for item in items]
-        except DatabaseAccessError as e:
-            raise_service_error_from_database_access(e)
+        except DatabaseAccessError as err:
+            raise_service_error_from_database_access(err)
 
     async def get_filtered_snapshots_metadata_for_user_async(
         self,
@@ -98,15 +98,15 @@ class SnapshotAccess:
             items = await self.container_access.query_items_async(query=query, parameters=params)
 
             return [self._to_metadata_summary(item) for item in items]
-        except DatabaseAccessError as e:
-            raise_service_error_from_database_access(e)
+        except DatabaseAccessError as err:
+            raise_service_error_from_database_access(err)
 
-    async def get_snapshot_metadata_async(self, snapshot_id: str, owner_id: Optional[str] = None) -> SnapshotMetadata:
+    async def get_snapshot_metadata_async(self, snapshot_id: str, _owner_id: Optional[str] = None) -> SnapshotMetadata:
         try:
             document = await self.container_access.get_item_async(snapshot_id, partition_key=snapshot_id)
             return document.metadata
-        except DatabaseAccessError as e:
-            raise_service_error_from_database_access(e)
+        except DatabaseAccessError as err:
+            raise_service_error_from_database_access(err)
 
     async def insert_snapshot_async(self, new_snapshot: NewSnapshot) -> str:
         try:
@@ -128,8 +128,8 @@ class SnapshotAccess:
             )
 
             return await self.container_access.insert_item_async(snapshot)
-        except DatabaseAccessError as e:
-            raise_service_error_from_database_access(e)
+        except DatabaseAccessError as err:
+            raise_service_error_from_database_access(err)
 
     async def delete_snapshot_async(self, snapshot_id: str) -> None:
         await self._assert_ownership_async(snapshot_id)
@@ -139,8 +139,8 @@ class SnapshotAccess:
         """Assert that the user owns the snapshot with the given ID."""
         try:
             document = await self.container_access.get_item_async(item_id=snapshot_id, partition_key=snapshot_id)
-        except DatabaseAccessError as e:
-            raise_service_error_from_database_access(e)
+        except DatabaseAccessError as err:
+            raise_service_error_from_database_access(err)
 
         # Check if the snapshot belongs to the user - this should not be necessary if the partition key is set correctly,
         # but it's a good practice to ensure the user has access.
