@@ -27,17 +27,17 @@ export const defaultColorPalettes = [
         id: "tab10",
     }),
     new ColorPalette({
-        name: "Set1 (ColorBrewer)",
+        name: "Set1",
         colors: ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"],
         id: "set1",
     }),
     new ColorPalette({
-        name: "Dark2 (ColorBrewer)",
+        name: "Dark2",
         colors: ["#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02", "#a6761d", "#666666"],
         id: "dark2",
     }),
     new ColorPalette({
-        name: "Paired (ColorBrewer)",
+        name: "Paired",
         colors: [
             "#a6cee3",
             "#1f78b4",
@@ -58,27 +58,27 @@ export const defaultColorPalettes = [
 
 export const defaultContinuousSequentialColorPalettes = [
     new ColorPalette({
-        name: "Viridis (Matplotlib)",
+        name: "Viridis",
         colors: ["#440154", "#482777", "#3f4a8a", "#31678e", "#26838f", "#1f9d8a", "#6cce5a", "#b6de2b", "#fee825"],
         id: "viridis",
     }),
     new ColorPalette({
-        name: "Plasma (Matplotlib)",
+        name: "Plasma",
         colors: ["#0d0887", "#5302a3", "#8b0aa5", "#b83289", "#db5c68", "#f48849", "#febd2a", "#f0f921"],
         id: "plasma",
     }),
     new ColorPalette({
-        name: "Inferno (Matplotlib)",
+        name: "Inferno",
         colors: ["#000004", "#1b0c41", "#4a0c6b", "#781c6d", "#a52c60", "#cf4446", "#ed6925", "#fb9b06", "#fcfdbf"],
         id: "inferno",
     }),
     new ColorPalette({
-        name: "Cividis (Matplotlib)",
+        name: "Cividis",
         colors: ["#00224e", "#123570", "#3b496c", "#575d6d", "#707173", "#8a8678", "#a59c74", "#c3b369", "#e1cc55"],
         id: "cividis",
     }),
     new ColorPalette({
-        name: "Blues (ColorBrewer)",
+        name: "Blues",
         colors: ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#08519c", "#08306b"],
         id: "blues",
     }),
@@ -86,7 +86,7 @@ export const defaultContinuousSequentialColorPalettes = [
 
 export const defaultContinuousDivergingColorPalettes = [
     new ColorPalette({
-        name: "RdBu (ColorBrewer)",
+        name: "RdBu",
         colors: [
             "#67001f",
             "#b2182b",
@@ -103,7 +103,7 @@ export const defaultContinuousDivergingColorPalettes = [
         id: "rdbu",
     }),
     new ColorPalette({
-        name: "RdYlBu (ColorBrewer)",
+        name: "RdYlBu",
         colors: [
             "#a50026",
             "#d73027",
@@ -120,7 +120,7 @@ export const defaultContinuousDivergingColorPalettes = [
         id: "rdylbu",
     }),
     new ColorPalette({
-        name: "Coolwarm (Matplotlib)",
+        name: "Coolwarm",
         colors: [
             "#3a4cc0",
             "#6788ee",
@@ -136,7 +136,7 @@ export const defaultContinuousDivergingColorPalettes = [
         id: "coolwarm",
     }),
     new ColorPalette({
-        name: "Spectral (ColorBrewer)",
+        name: "Spectral",
         colors: [
             "#9e0142",
             "#d53e4f",
@@ -153,7 +153,7 @@ export const defaultContinuousDivergingColorPalettes = [
         id: "spectral",
     }),
     new ColorPalette({
-        name: "Seismic (Matplotlib)",
+        name: "Seismic",
         colors: [
             "#00004c",
             "#000080",
