@@ -83,11 +83,6 @@ class CaseInspector:
 
     async def _get_iteration_info_async(self, iteration_uuid: str) -> IterationInfo:
         search_context = SearchContext(self._sumo_client)
-
-        # !!!!!!!!!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!!!!!!
-        #iteration = await search_context.get_ensemble_by_uuid_async(iteration_uuid)
-
         iteration = await search_context.get_iteration_by_uuid_async(iteration_uuid)
         realization_count = len(await iteration.realizations_async)
 
