@@ -106,7 +106,7 @@ export function makePlotData(
             } else if (plotType === PlotType.BOX) {
                 let yAxisPosition = boxPlotKeyToPositionMap.get(key.toString());
                 if (yAxisPosition === undefined) {
-                    yAxisPosition = -boxPlotKeyToPositionMap.size;
+                    yAxisPosition = -boxPlotKeyToPositionMap.size; // Negative value for placing top down
                     boxPlotKeyToPositionMap.set(key.toString(), yAxisPosition);
                 }
                 data.push(...makeBoxPlot(title, table, firstResultName, keyColor, yAxisPosition));
