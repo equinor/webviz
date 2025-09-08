@@ -1,0 +1,1 @@
+export const RECENT_CARDS_LIST_LENGTH = 5;
