@@ -176,6 +176,7 @@ async def post_get_aggregated_statistical_table_data(
             result_names,
             indices_with_values,
             group_by_indices,
+            realizations,
         )
 
     assembler = InplaceVolumesTableAssembler(access)
