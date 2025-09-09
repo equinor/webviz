@@ -29,7 +29,7 @@ async def get_polygons_directory(
     """
     Get a directory of polygons in a Sumo ensemble
     """
-    access = PolygonsAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = PolygonsAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     polygons_dir = await access.get_polygons_directory_async()
 
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
@@ -57,7 +57,7 @@ async def get_polygons_data(
 ) -> List[schemas.PolygonData]:
     timer = PerfTimer()
 
-    access = PolygonsAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = PolygonsAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_poly = await access.get_polygons_async(real_num=realization_num, name=name, attribute=attribute)
 
     if not xtgeo_poly:

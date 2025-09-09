@@ -33,32 +33,32 @@ LOGGER = logging.getLogger(__name__)
 
 
 class SurfaceAccess:
-    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str | None):
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, ensemble_name: str | None):
         self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
-        self._iteration_name: str | None = iteration_name
+        self._ensemble_name: str | None = ensemble_name
 
     @classmethod
-    def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "SurfaceAccess":
+    def from_ensemble_name(cls, access_token: str, case_uuid: str, ensemble_name: str) -> "SurfaceAccess":
         sumo_client = create_sumo_client(access_token)
-        return SurfaceAccess(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
+        return SurfaceAccess(sumo_client=sumo_client, case_uuid=case_uuid, ensemble_name=ensemble_name)
 
     @classmethod
-    def from_case_uuid_no_iteration(cls, access_token: str, case_uuid: str) -> "SurfaceAccess":
+    def from_case_uuid_no_ensemble(cls, access_token: str, case_uuid: str) -> "SurfaceAccess":
         sumo_client = create_sumo_client(access_token)
-        return SurfaceAccess(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=None)
+        return SurfaceAccess(sumo_client=sumo_client, case_uuid=case_uuid, ensemble_name=None)
 
     @otel_span_decorator()
     async def get_realization_surfaces_metadata_async(self) -> SurfaceMetaSet:
-        if not self._iteration_name:
+        if not self._ensemble_name:
             raise InvalidParameterError(
-                "Iteration name must be set to get metadata for realization surfaces", Service.SUMO
+                "Ensemble name must be set to get metadata for realization surfaces", Service.SUMO
             )
 
         perf_metrics = PerfMetrics()
 
         async with asyncio.TaskGroup() as tg:
-            queries = RealizationSurfQueries(self._sumo_client, self._case_uuid, self._iteration_name)
+            queries = RealizationSurfQueries(self._sumo_client, self._case_uuid, self._ensemble_name)
             static_surfs_task = tg.create_task(queries.find_surf_info_async(SurfTimeType.NO_TIME))
             time_point_surfs_task = tg.create_task(queries.find_surf_info_async(SurfTimeType.TIME_POINT))
             interval_surfs_task = tg.create_task(queries.find_surf_info_async(SurfTimeType.INTERVAL))
@@ -135,8 +135,8 @@ class SurfaceAccess:
         Get surface data for a realization surface
         If time_or_interval_str is None, only surfaces with no time information will be considered.
         """
-        if not self._iteration_name:
-            raise InvalidParameterError("Iteration name must be set to get realization surface", Service.SUMO)
+        if not self._ensemble_name:
+            raise InvalidParameterError("Ensemble name must be set to get realization surface", Service.SUMO)
 
         perf_metrics = PerfMetrics()
 
@@ -147,7 +147,7 @@ class SurfaceAccess:
             uuid=self._case_uuid,
             is_observation=False,
             aggregation=False,
-            iteration=self._iteration_name,
+            ensemble=self._ensemble_name,
             realization=real_num,
             name=name,
             time=time_filter,
@@ -249,8 +249,8 @@ class SurfaceAccess:
         in the statistics. The list of realizations cannon be empty.
         If time_or_interval_str is None, only surfaces with no time information will be considered.
         """
-        if not self._iteration_name:
-            raise InvalidParameterError("Iteration name must be set to get realization surfaces", Service.SUMO)
+        if not self._ensemble_name:
+            raise InvalidParameterError("Ensemble name must be set to get realization surfaces", Service.SUMO)
 
         if realizations is not None:
             if len(realizations) == 0:
@@ -266,7 +266,7 @@ class SurfaceAccess:
             uuid=self._case_uuid,
             is_observation=False,
             aggregation=False,
-            iteration=self._iteration_name,
+            ensemble=self._ensemble_name,
             name=name,
             realization=realizations if realizations is not None else True,
             time=time_filter,
@@ -317,7 +317,7 @@ class SurfaceAccess:
         return xtgeo_surf
 
     def _make_real_surf_log_str(self, real_num: int, name: str, attribute: str, date_str: str | None) -> str:
-        addr_str = f"N={name}, A={attribute}, R={real_num}, D={date_str}, C={self._case_uuid}, I={self._iteration_name}"
+        addr_str = f"N={name}, A={attribute}, R={real_num}, D={date_str}, C={self._case_uuid}, E={self._ensemble_name}"
         return addr_str
 
     def _make_obs_surf_log_str(self, name: str, attribute: str, date_str: str) -> str:
@@ -325,7 +325,7 @@ class SurfaceAccess:
         return addr_str
 
     def _make_stat_surf_log_str(self, name: str, attribute: str, date_str: str | None) -> str:
-        addr_str = f"N={name}, A={attribute}, D={date_str}, C={self._case_uuid}, I={self._iteration_name}"
+        addr_str = f"N={name}, A={attribute}, D={date_str}, C={self._case_uuid}, E={self._ensemble_name}"
         return addr_str
 
 
