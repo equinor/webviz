@@ -64,6 +64,7 @@ disable = [
     "line-too-long",
     "logging-fstring-interpolation",
     "duplicate-code",
+    "too-many-positional-arguments",
 ]
 extension-pkg-whitelist = "pydantic"
 init-hook = 'import sys; sys.path.append("./pylint/plugins")'
