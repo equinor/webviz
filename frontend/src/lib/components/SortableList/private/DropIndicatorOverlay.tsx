@@ -18,7 +18,19 @@ export function DropIndicatorOverlay(props: DropIndicatorOverlayProps) {
     const containerRect = props.containerEl.getBoundingClientRect();
     const targetRect = target.getBoundingClientRect();
 
-    const top = (props.hovered.area === HoveredArea.TOP ? targetRect.top : targetRect.bottom) - scrollRect.top;
+    let top =
+        ([HoveredArea.TOP, HoveredArea.HEADER].includes(props.hovered.area) ? targetRect.top : targetRect.bottom) -
+        scrollRect.top +
+        props.scrollEl.scrollTop;
+
+    if (props.hovered.area === HoveredArea.CENTER) {
+        const content = target.querySelector<HTMLElement>("[data-sortable-list-group-content]");
+        if (content) {
+            const contentRect = content.getBoundingClientRect();
+            top = contentRect.top - scrollRect.top;
+        }
+    }
+
     const left = containerRect.left - scrollRect.left;
     const width = containerRect.width - 1;
 

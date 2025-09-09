@@ -32,7 +32,7 @@ export function DraggedElementPlaceholder({ containerEl, scrollEl, draggedItemId
         const targetR = target.getBoundingClientRect();
 
         const x = Math.round(targetR.left - hostR.left);
-        const y = Math.round(targetR.top - hostR.top);
+        const y = Math.round(targetR.top - hostR.top + host.scrollTop);
         const w = Math.round(targetR.width - 2);
         const h = Math.round(targetR.height);
 

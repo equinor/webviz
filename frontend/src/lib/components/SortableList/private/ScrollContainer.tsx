@@ -28,6 +28,7 @@ export const ScrollContainer = React.forwardRef<HTMLElement, ScrollContainerProp
         return React.cloneElement(onlyChild, {
             ref: mergedRef,
             "data-sl-scroll-container": "",
+            className: resolveClassNames(onlyChild.props.className, "relative"),
         });
     },
 );
