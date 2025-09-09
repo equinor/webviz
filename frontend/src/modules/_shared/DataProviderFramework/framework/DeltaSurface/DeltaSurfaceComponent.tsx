@@ -1,6 +1,5 @@
 import React from "react";
 
-import { SortableListGroup } from "@lib/components/SortableList";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { ActionGroup } from "../../Actions";
@@ -17,6 +16,7 @@ import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
 import type { DeltaSurface } from "./DeltaSurface";
+import { SortableListGroup } from "../../components/group";
 
 export type DeltaSurfaceComponentProps = {
     deltaSurface: DeltaSurface;
