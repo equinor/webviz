@@ -1,5 +1,6 @@
-import { composeRefs } from "../utils/composeRefs";
 import React from "react";
+
+import { composeRefs } from "../utils/composeRefs";
 
 export type SortableListGroupContentProps = {
     children: React.ReactElement;

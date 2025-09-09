@@ -1,5 +1,6 @@
-import { HoveredArea } from "../sortableList";
 import { createPortal } from "react-dom";
+
+import { HoveredArea } from "../sortableList";
 
 export type DropIndicatorOverlayProps = {
     containerEl: HTMLElement | null;
@@ -19,7 +20,7 @@ export function DropIndicatorOverlay(props: DropIndicatorOverlayProps) {
 
     const top = (props.hovered.area === HoveredArea.TOP ? targetRect.top : targetRect.bottom) - scrollRect.top;
     const left = containerRect.left - scrollRect.left;
-    const width = containerRect.width;
+    const width = containerRect.width - 1;
 
     if (top > scrollRect.height) return null;
     if (top < 0) return null;
@@ -37,6 +38,6 @@ export function DropIndicatorOverlay(props: DropIndicatorOverlayProps) {
                 pointerEvents: "none",
             }}
         />,
-        props.scrollEl
+        props.scrollEl,
     );
 }

@@ -1,11 +1,11 @@
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { SortableList } from "@lib/components/SortableList";
-import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { createPortal } from "@lib/utils/createPortal";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import React from "react";
+
 import { DragIndicator, ExpandLess, ExpandMore } from "@mui/icons-material";
 import { isEqual } from "lodash";
-import React from "react";
+
+import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { SortableList } from "@lib/components/SortableList";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type SortableListGroupProps = {
     id: string;
@@ -100,7 +100,7 @@ function Header(props: HeaderProps): React.ReactNode {
                 {
                     "bg-blue-300!": props.hovered,
                     "bg-slate-300": !props.hovered,
-                }
+                },
             )}
             style={props.headerStyle}
         >

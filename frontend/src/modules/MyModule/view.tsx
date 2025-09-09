@@ -1,11 +1,11 @@
 import React from "react";
 
 import { DragIndicator } from "@mui/icons-material";
-import type { PlotData } from "plotly.js";
+// import type { PlotData } from "plotly.js";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { SortableList } from "@lib/components/SortableList";
-import { useElementSize } from "@lib/hooks/useElementSize";
+// import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleType } from "@lib/utils/ColorScale";
 
 import type { Interfaces } from "./interfaces";
@@ -435,9 +435,9 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         },
     ]);
 
-    const ref = React.useRef<HTMLDivElement>(null);
+    // const ref = React.useRef<HTMLDivElement>(null);
 
-    const size = useElementSize(ref);
+    // const size = useElementSize(ref);
 
     const colorScale =
         type === ColorScaleType.Continuous
@@ -450,6 +450,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     colorScale.setRangeAndMidPoint(min, max, divMidPoint);
 
+    /*
     const data: Partial<PlotData & { zmid: number }> = {
         ...colorScale.getAsPlotlyColorScaleMapObject(),
         type: "choropleth",
@@ -464,6 +465,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         height: size.height,
         margin: { t: 0, b: 0 },
     };
+    */
 
     function onMove(movedItemId: string, originId: string | null, destinationId: string | null, position: number) {
         // Update the items state based on the move

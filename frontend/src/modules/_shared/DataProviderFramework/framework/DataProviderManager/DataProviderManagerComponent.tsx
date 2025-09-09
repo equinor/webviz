@@ -1,3 +1,15 @@
+import React from "react";
+
+import { Add } from "@mui/icons-material";
+
+import { SortableList } from "@lib/components/SortableList";
+import type { IsMoveAllowedArgs } from "@lib/components/SortableList";
+import { useElementSize } from "@lib/hooks/useElementSize";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
+import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
+import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
+
 import type { ActionGroup } from "../../Actions";
 import { Actions } from "../../Actions";
 import { View } from "../../groups/implementations/View";
@@ -6,16 +18,10 @@ import { instanceofItemGroup } from "../../interfacesAndTypes/entities";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
+
 import type { DataProviderManager } from "./DataProviderManager";
-import { SortableList } from "@lib/components/SortableList";
-import type { IsMoveAllowedArgs } from "@lib/components/SortableList";
-import { useElementSize } from "@lib/hooks/useElementSize";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
-import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
-import { Add } from "@mui/icons-material";
-import React from "react";
+
+
 
 export type DataProviderManagerComponentProps = {
     title: string;

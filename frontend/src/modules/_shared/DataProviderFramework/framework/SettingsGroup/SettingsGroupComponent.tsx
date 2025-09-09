@@ -1,3 +1,9 @@
+import React from "react";
+
+import { SettingsApplications } from "@mui/icons-material";
+
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+
 import type { ActionGroup } from "../../Actions";
 import { Actions } from "../../Actions";
 import { SortableListGroup } from "../../components/group";
@@ -8,9 +14,7 @@ import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { SettingsApplications } from "@mui/icons-material";
-import React from "react";
+
 
 export type SettingsGroupComponentProps = {
     group: ItemGroup;

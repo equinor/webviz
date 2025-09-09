@@ -1,9 +1,9 @@
-import { SortableList } from "@lib/components/SortableList";
-import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { createPortal } from "@lib/utils/createPortal";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import type React from "react";
+
 import { DragIndicator } from "@mui/icons-material";
-import React from "react";
+
+import { SortableList } from "@lib/components/SortableList";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type SortableListItemProps = {
     id: string;
@@ -48,7 +48,7 @@ function Header(props: HeaderProps): React.ReactNode {
         <div
             className={resolveClassNames(
                 "w-full flex gap-1 h-8 bg-slate-100 text-sm items-center border-b border-b-gray-300 px-2",
-                props.headerClassNames ?? ""
+                props.headerClassNames ?? "",
             )}
         >
             <SortableList.DragHandle>

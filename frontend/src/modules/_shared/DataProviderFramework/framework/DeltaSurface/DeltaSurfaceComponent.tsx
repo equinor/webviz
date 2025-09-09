@@ -4,6 +4,7 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 
 import type { ActionGroup } from "../../Actions";
 import { Actions } from "../../Actions";
+import { SortableListGroup } from "../../components/group";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
@@ -16,7 +17,6 @@ import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
 import type { DeltaSurface } from "./DeltaSurface";
-import { SortableListGroup } from "../../components/group";
 
 export type DeltaSurfaceComponentProps = {
     deltaSurface: DeltaSurface;
