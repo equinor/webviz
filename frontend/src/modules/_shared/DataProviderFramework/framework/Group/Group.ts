@@ -121,7 +121,7 @@ export class Group<
             color: this._groupDelegate.getColor() ?? "",
             settings:
                 this._sharedSettingsDelegate?.serializeSettings() ??
-                ([] as unknown as SerializedSettingsState<TSettings, TSettingKey>),
+                ({} as SerializedSettingsState<TSettings, TSettingKey>),
             children: this._groupDelegate.serializeChildren(),
         };
     }
