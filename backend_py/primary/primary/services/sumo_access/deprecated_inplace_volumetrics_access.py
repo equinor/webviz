@@ -65,20 +65,20 @@ class DEPRECATED_InplaceVolumetricsAccess:
     This class is deprecated and will be removed in the future.
     """
 
-    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, ensemble_name: str):
         self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
-        self._iteration_name: str = iteration_name
+        self._ensemble_name: str = ensemble_name
         self._ensemble_context = SearchContext(sumo=self._sumo_client).filter(
-            uuid=self._case_uuid, iteration=self._iteration_name
+            uuid=self._case_uuid, ensemble=self._ensemble_name
         )
 
     @classmethod
-    def from_iteration_name(
-        cls, access_token: str, case_uuid: str, iteration_name: str
+    def from_ensemble_name(
+        cls, access_token: str, case_uuid: str, ensemble_name: str
     ) -> "DEPRECATED_InplaceVolumetricsAccess":
         sumo_client = create_sumo_client(access_token)
-        return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
+        return cls(sumo_client=sumo_client, case_uuid=case_uuid, ensemble_name=ensemble_name)
 
     @staticmethod
     def get_possible_identifier_columns() -> List[str]:
@@ -101,7 +101,7 @@ class DEPRECATED_InplaceVolumetricsAccess:
         self, table_name: str, volumetric_columns: Optional[set[str]] = None
     ) -> pa.Table:
         """
-        Get inplace volumes table data for list of volumetric columns for given case and iteration as a pyarrow table.
+        Get inplace volumes table data for list of volumetric columns for given case and ensemble as a pyarrow table.
 
         The volumes are fetched from collection in Sumo and put together in a single table, i.e. a column per response.
 
@@ -132,7 +132,7 @@ class DEPRECATED_InplaceVolumetricsAccess:
 
         requested_columns = available_response_names if volumetric_columns is None else list(volumetric_columns)
 
-        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
         table_loader.require_content_type("volumes")
         table_loader.require_table_name(table_name)
         pa_table = await table_loader.get_aggregated_multiple_columns_async(requested_columns)
@@ -148,7 +148,7 @@ class DEPRECATED_InplaceVolumetricsAccess:
 
     async def get_inplace_volumetrics_columns_async(self, table_name: str) -> dict[str, List[str]]:
         """
-        Get inplace volumetrics data for list of columns for given case and iteration as a pyarrow table.
+        Get inplace volumetrics data for list of columns for given case and ensemble as a pyarrow table.
 
         The volumes are fetched from collection in Sumo and put together in a single table, i.e. a column per response.
 
@@ -159,10 +159,10 @@ class DEPRECATED_InplaceVolumetricsAccess:
         realizations = await self._ensemble_context.realizationids_async
         if len(realizations) == 0:
             raise InvalidDataError(
-                f"No realizations found in the ensemble {self._case_uuid}, {self._iteration_name}",
+                f"No realizations found in the ensemble {self._case_uuid}, {self._ensemble_name}",
                 Service.SUMO,
             )
-        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
         table_loader.require_content_type("volumes")
         table_loader.require_table_name(table_name)
 
