@@ -42,7 +42,7 @@ async def get_table_definitions(
 ) -> list[schemas.InplaceVolumesTableDefinition]:
     """Get the inplace volumes tables definitions for a given ensemble."""
 
-    access = InplaceVolumesTableAccess.from_iteration_name(
+    access = InplaceVolumesTableAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
@@ -90,7 +90,7 @@ async def post_get_aggregated_per_realization_table_data(
 
     perf_metrics.record_lap("decode realizations array")
 
-    access = InplaceVolumesTableAccess.from_iteration_name(
+    access = InplaceVolumesTableAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
@@ -160,7 +160,7 @@ async def post_get_aggregated_statistical_table_data(
 
     perf_metrics.record_lap("decode realizations array")
 
-    access = InplaceVolumesTableAccess.from_iteration_name(
+    access = InplaceVolumesTableAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
