@@ -7,11 +7,12 @@ import type {
     UpdateFunc,
 } from "../interfacesAndTypes/customSettingsHandler";
 import type { Item } from "../interfacesAndTypes/entities";
-import { SerializedSettingsState } from "../interfacesAndTypes/serialization";
+import type { SerializedSettingsState } from "../interfacesAndTypes/serialization";
 import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { MakeSettingTypesMap, SettingTypes, Settings } from "../settings/settingsDefinitions";
-import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
+
 import { Dependency } from "./_utils/Dependency";
+import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 export class SharedSettingsDelegate<
     TSettings extends Settings,

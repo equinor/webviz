@@ -1,7 +1,9 @@
+import type { ColorScaleSerialization } from "@lib/utils/ColorScale";
+
 import type { GroupType } from "../groups/groupTypes";
 import type { Setting, Settings } from "../settings/settingsDefinitions";
+
 import type { SettingsKeysFromTuple } from "./utils";
-import type { ColorScaleSerialization } from "@lib/utils/ColorScale";
 
 // The following interfaces/types are used to define the structure of the serialized state of the respective items in the data provider framework.
 
