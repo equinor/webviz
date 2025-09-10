@@ -241,15 +241,17 @@ async def get_statistical_surface_data_hybrid(
     access_token = authenticated_user.get_sumo_access_token()
 
     # For how long should we cache the ensemble fingerprint?
-    # The TTL for fingerprints should be aligned with the polling interval we use for busting the client side browser cache
-    fingerprinter: SumoFingerprinter = get_sumo_fingerprinter_for_user(authenticated_user=authenticated_user, cache_ttl_s=60)
+    # The TTL for fingerprints should be aligned with the polling interval we use for busting the client side browser cache.
+    # Actually the backend code that provides data for the the client side browser caching should probably go via 
+    # the very same SumoFingerprinter cache.
+    fingerprinter: SumoFingerprinter = get_sumo_fingerprinter_for_user(authenticated_user=authenticated_user, cache_ttl_s=30)
     ens_fingerprint = await fingerprinter.get_or_compute_ensemble_fingerprint_async(addr.case_uuid, addr.ensemble_name, "surface")
     LOGGER.debug(f"Ensemble fingerprint: {ens_fingerprint=}")
 
     # !!!!!!!!!!!!!
     # Todo!
     # We need to come up with a way to bust the task tracker cache in cases where tasks get "stuck".
-    # One way of achieving this may be to have a sepaate endpoint to clear the task tracker cache for the user.
+    # One way of achieving this may be to have a separate endpoint to clear the task tracker cache for the user.
 
     # Note that we include the ensemble fingerprint in the task hash/fingerprint
     task_fingerprint = sha256((surf_addr_str + ens_fingerprint).encode()).hexdigest()
