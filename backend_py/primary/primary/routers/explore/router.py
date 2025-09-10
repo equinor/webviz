@@ -66,18 +66,18 @@ async def get_ensembles(
     """Get list of ensembles for a case"""
 
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
-    iteration_info_arr = await case_inspector.get_iterations_async()
+    ensemble_info_arr = await case_inspector.get_ensembles_async()
 
     return [
         schemas.EnsembleInfo(
-            name=it.name,
-            realizationCount=it.realization_count,
+            name=ens_info.name,
+            realizationCount=ens_info.realization_count,
             timestamps=schemas.EnsembleTimestamps(
-                caseUpdatedAtUtcMs=it.timestamps.case_updated_at_utc_ms,
-                dataUpdatedAtUtcMs=it.timestamps.data_updated_at_utc_ms,
+                caseUpdatedAtUtcMs=ens_info.timestamps.case_updated_at_utc_ms,
+                dataUpdatedAtUtcMs=ens_info.timestamps.data_updated_at_utc_ms,
             ),
         )
-        for it in iteration_info_arr
+        for ens_info in ensemble_info_arr
     ]
 
 
@@ -92,10 +92,10 @@ async def get_ensemble_details(
 
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     case_name = await case_inspector.get_case_name_async()
-    realizations = await case_inspector.get_realizations_in_iteration_async(ensemble_name)
+    realizations = await case_inspector.get_realizations_in_ensemble_async(ensemble_name)
     field_identifiers = await case_inspector.get_field_identifiers_async()
     stratigraphic_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
-    timestamps = await case_inspector.get_iteration_timestamps_async(ensemble_name)
+    timestamps = await case_inspector.get_ensemble_timestamps_async(ensemble_name)
 
     if len(field_identifiers) != 1:
         raise NotImplementedError("Multiple field identifiers not supported")
@@ -138,7 +138,7 @@ async def _get_ensemble_timestamps_for_ident_async(
 
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
 
-    timestamps = await case_inspector.get_iteration_timestamps_async(ensemble_name)
+    timestamps = await case_inspector.get_ensemble_timestamps_async(ensemble_name)
 
     return schemas.EnsembleTimestamps(
         caseUpdatedAtUtcMs=timestamps.case_updated_at_utc_ms,
