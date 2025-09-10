@@ -3,6 +3,7 @@
 
 import type { SerializedSettings as M_2DViewerSettings } from "@modules/2DViewer/settings/persistence";
 import type { SerializedSettings as MyModuleSettings } from "@modules/MyModule/settings/persistence";
+import type { SerializedSettings as WellCompletionsSettings } from "@modules/WellCompletions/settings/persistence";
 import type { SerializedView as M_2DViewerView } from "@modules/2DViewer/view/persistence";
 
 export type ModuleSerializedStateMap = {
@@ -27,6 +28,10 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "Grid3D": {
+    settings?: never,
+    view?: never,
+  },
+  "Grid3DIntersection": {
     settings?: never,
     view?: never,
   },
@@ -82,6 +87,18 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
+  "SeismicIntersection": {
+    settings?: never,
+    view?: never,
+  },
+  "SeismicMap": {
+    settings?: never,
+    view?: never,
+  },
+  "Sensitivity": {
+    settings?: never,
+    view?: never,
+  },
   "SimulationTimeSeries": {
     settings?: never,
     view?: never,
@@ -90,11 +107,19 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
+  "StructuralUncertaintyIntersection": {
+    settings?: never,
+    view?: never,
+  },
   "SubsurfaceMap": {
     settings?: never,
     view?: never,
   },
   "TimeSeriesParameterDistribution": {
+    settings?: never,
+    view?: never,
+  },
+  "TopographicMap": {
     settings?: never,
     view?: never,
   },
@@ -107,7 +132,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "WellCompletions": {
-    settings?: never,
+    settings?: Partial<WellCompletionsSettings>,
     view?: never,
   },
   "WellLogViewer": {

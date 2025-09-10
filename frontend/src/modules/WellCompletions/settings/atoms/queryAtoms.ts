@@ -1,17 +1,17 @@
 import { atomWithQuery } from "jotai-tanstack-query";
 
 import { getWellCompletionsDataOptions } from "@api";
-import { RealizationSelection } from "@modules/WellCompletions/typesAndEnums";
+import { RealizationMode } from "@modules/WellCompletions/typesAndEnums";
 
-
-import { userSelectedRealizationSelectionAtom } from "./baseAtoms";
-import { selectedEnsembleIdentAtom, selectedRealizationNumberAtom, validRealizationNumbersAtom } from "./derivedAtoms";
+import { realizationModeAtom } from "./baseAtoms";
+import { availableRealizationsAtom } from "./derivedAtoms";
+import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "./persistableFixableAtoms";
 
 export const wellCompletionsQueryAtom = atomWithQuery((get) => {
-    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
-    const selectedRealizationNumber = get(selectedRealizationNumberAtom);
-    const userSelectedRealizationSelection = get(userSelectedRealizationSelectionAtom);
-    const validRealizationNumbers = get(validRealizationNumbersAtom);
+    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom).value;
+    const selectedRealization = get(selectedRealizationAtom).value;
+    const realizationMode = get(realizationModeAtom);
+    const validRealizationNumbers = get(availableRealizationsAtom);
 
     const caseUuid = selectedEnsembleIdent?.getCaseUuid();
     const ensembleName = selectedEnsembleIdent?.getEnsembleName();
@@ -19,9 +19,9 @@ export const wellCompletionsQueryAtom = atomWithQuery((get) => {
     // Initialize with multiple realizations request
     let realizations: number | number[] | null = validRealizationNumbers;
     let hasValidRealizations = validRealizationNumbers.length !== 0;
-    if (userSelectedRealizationSelection === RealizationSelection.SINGLE) {
-        realizations = selectedRealizationNumber;
-        hasValidRealizations = selectedRealizationNumber !== null;
+    if (realizationMode === RealizationMode.SINGLE) {
+        realizations = selectedRealization;
+        hasValidRealizations = selectedRealization !== null;
     }
 
     // Disable query if realization number is null for single realization request
