@@ -21,6 +21,8 @@ import { makeSortableListItemComponent } from "../utils/makeSortableListItemComp
 
 import type { DataProviderManager } from "./DataProviderManager";
 
+
+
 export type DataProviderManagerComponentProps = {
     title: string;
     dataProviderManager: DataProviderManager;
@@ -100,7 +102,7 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
         movedItemId: string,
         originId: string | null,
         destinationId: string | null,
-        position: number,
+        position: number
     ) {
         const movedItem = groupDelegate.findDescendantById(movedItemId);
         if (!movedItem) {
@@ -168,9 +170,15 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
                             </div>
                         }
                     >
-                        {items.map((item: Item) =>
-                            makeSortableListItemComponent(item, makeActionsForGroup, handleActionClick),
-                        )}
+                        <SortableList.Content>
+                            <SortableList.ScrollContainer>
+                                <div className="grow overflow-auto min-h-0 bg-slate-200 relative">
+                                    {items.map((item: Item) =>
+                                        makeSortableListItemComponent(item, makeActionsForGroup, handleActionClick)
+                                    )}
+                                </div>
+                            </SortableList.ScrollContainer>
+                        </SortableList.Content>
                     </SortableList>
                 </div>
             </div>
