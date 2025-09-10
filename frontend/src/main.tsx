@@ -1,6 +1,7 @@
 import React from "react";
 
 import { createRoot } from "react-dom/client";
+import { ToastContainer } from "react-toastify";
 
 import { client } from "@api";
 import { AuthProvider } from "@framework/internal/providers/AuthProvider";
@@ -8,7 +9,6 @@ import { CustomQueryClientProvider } from "@framework/internal/providers/QueryCl
 
 import App from "./App";
 import { GlobalErrorBoundary } from "./GlobalErrorBoundary";
-import { ToastContainer } from "react-toastify";
 
 /*
     If the `cleanStart` query parameter is given, 

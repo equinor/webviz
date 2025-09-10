@@ -1,8 +1,13 @@
 import { InplaceVolumesStatistic_api } from "@api";
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { setIfDefined } from "@framework/utils/atomUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { TableType } from "@modules/_shared/InplaceVolumes/types";
+import type { InplaceVolumesIndexWithValuesAsStrings } from "@modules/_shared/jtd-schemas/definitions/InplaceVolumesIndexWithValues";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
+
+import { selectedIndexValueCriteriaAtom, selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./atoms/baseAtoms";
 import {
     selectedEnsembleIdentsAtom,
     selectedGroupByIndicesAtom,
@@ -10,10 +15,6 @@ import {
     selectedResultNamesAtom,
     selectedTableNamesAtom,
 } from "./atoms/persistableAtoms";
-import { selectedIndexValueCriteriaAtom, selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./atoms/baseAtoms";
-import type { InplaceVolumesIndexWithValuesAsStrings } from "@modules/_shared/jtd-schemas/definitions/InplaceVolumesIndexWithValues";
-import { setIfDefined } from "@framework/utils/atomUtils";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 export type SerializedSettings = {
     selectedEnsembleIdents: string[];

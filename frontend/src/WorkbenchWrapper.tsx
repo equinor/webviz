@@ -14,13 +14,14 @@ import { SaveSessionDialog } from "@framework/internal/components/SaveSessionDia
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { StartPage } from "@framework/internal/components/StartPage/StartPage";
+import { TemplatesDialog } from "@framework/internal/components/TemplatesDialog/templatesDialog";
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { TopBar } from "@framework/internal/components/TopBar/topBar";
 import { Workbench, WorkbenchTopic } from "@framework/Workbench";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { TemplatesDialog } from "@framework/internal/components/TemplatesDialog/templatesDialog";
 
 export function WorkbenchWrapper() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.

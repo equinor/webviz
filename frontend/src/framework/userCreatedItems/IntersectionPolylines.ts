@@ -1,9 +1,9 @@
+import type { JTDSchemaType } from "ajv/dist/core";
 import { atom } from "jotai";
 import { cloneDeep } from "lodash";
 import { v4 } from "uuid";
 
 import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
-import type { JTDSchemaType } from "ajv/dist/core";
 
 export type SerializedIntersectionPolylines = {
     intersectionPolylines: IntersectionPolyline[];

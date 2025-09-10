@@ -159,7 +159,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
     let selectedEnsembleIdent: RegularEnsembleIdent | null = null;
     try {
         selectedEnsembleIdent = new RegularEnsembleIdent(selectedCaseUuid, selectedEnsembleName);
-    } catch (_e) {
+    } catch {
         selectedEnsembleIdent = null;
     }
     const ensembleAlreadySelected =

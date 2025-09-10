@@ -1,9 +1,11 @@
+import React from "react";
+
+import { ArrowLeftRounded, ArrowRightRounded, WebAsset } from "@mui/icons-material";
+
 import type { LayoutElement } from "@framework/internal/WorkbenchSession/Dashboard";
 import { Button } from "@lib/components/Button";
 import { IconButton } from "@lib/components/IconButton";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { ArrowLeftRounded, ArrowRightRounded, WebAsset } from "@mui/icons-material";
-import React from "react";
 
 export type QuickSwitchDockProps = {
     isOpen: boolean;
@@ -13,6 +15,8 @@ export type QuickSwitchDockProps = {
 };
 
 export function QuickSwitchDock(props: QuickSwitchDockProps) {
+    const { onActiveModuleChange } = props;
+
     const [visible, setVisible] = React.useState<boolean>(false);
 
     const scrollerRef = React.useRef<HTMLDivElement>(null);
@@ -36,9 +40,9 @@ export function QuickSwitchDock(props: QuickSwitchDockProps) {
             if (!id) {
                 return;
             }
-            props.onActiveModuleChange(id);
+            onActiveModuleChange(id);
         },
-        [activeModuleInstanceIndex, props.layoutElements, props.onActiveModuleChange],
+        [activeModuleInstanceIndex, props.layoutElements, onActiveModuleChange],
     );
 
     const handleNextModuleInstanceClick = React.useCallback(
@@ -51,16 +55,16 @@ export function QuickSwitchDock(props: QuickSwitchDockProps) {
             if (!id) {
                 return;
             }
-            props.onActiveModuleChange(id);
+            onActiveModuleChange(id);
         },
-        [activeModuleInstanceIndex, props.layoutElements, props.onActiveModuleChange],
+        [activeModuleInstanceIndex, props.layoutElements, onActiveModuleChange],
     );
 
     const handleModuleInstanceClick = React.useCallback(
         function handleModuleInstanceClick(moduleInstanceId: string) {
-            props.onActiveModuleChange(moduleInstanceId);
+            onActiveModuleChange(moduleInstanceId);
         },
-        [props.onActiveModuleChange],
+        [onActiveModuleChange],
     );
 
     function handleToggleVisibilityClick() {

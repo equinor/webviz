@@ -1,14 +1,10 @@
 import React from "react";
 
-import type { PlotData } from "plotly.js";
-
 import type { ModuleViewProps } from "@framework/Module";
-import { useElementSize } from "@lib/hooks/useElementSize";
-import { ColorScaleType } from "@lib/utils/ColorScale";
-import { Plot } from "@modules/_shared/components/Plot";
 
 import type { Interfaces } from "./interfaces";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ref = React.useRef<HTMLDivElement>(null);
 

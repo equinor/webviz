@@ -1,5 +1,8 @@
 import React, { type CSSProperties } from "react";
 
+import { WebAsset } from "@mui/icons-material";
+import { v4 } from "uuid";
+
 import { GuiEvent } from "@framework/GuiMessageBroker";
 import type { LayoutElement } from "@framework/internal/WorkbenchSession/Dashboard";
 import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
@@ -9,8 +12,6 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import type { Vec2 } from "@lib/utils/vec2";
-import { WebAsset } from "@mui/icons-material";
-import { v4 } from "uuid";
 
 import { ViewWrapper } from "../Content/private-components/ViewWrapper";
 import { ViewWrapperPlaceholder } from "../Content/private-components/viewWrapperPlaceholder";

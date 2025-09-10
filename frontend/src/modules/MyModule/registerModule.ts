@@ -1,8 +1,8 @@
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
+import type { InterfaceTypes } from "@modules/WellLogViewer/interfaces";
 
 import { SERIALIZED_STATE, type SerializedState } from "./persistedState";
-import type { InterfaceTypes } from "@modules/WellLogViewer/interfaces";
 
 ModuleRegistry.registerModule<InterfaceTypes, SerializedState>({
     moduleName: "MyModule",

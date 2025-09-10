@@ -26,7 +26,7 @@ import {
     TableTypeToStringMapping,
 } from "@modules/_shared/InplaceVolumes/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
-import { makePersistableAtomWarningMessage } from "@modules/_shared/utils/persistableAtomWarningMessage";
+import { usePersistableAtomWarningMessage } from "@modules/_shared/utils/persistableAtomWarningMessage";
 
 import type { Interfaces } from "../interfaces";
 
@@ -171,17 +171,17 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 ensembleIdents: {
                     availableValues: ensembleSet.getRegularEnsembleArray(),
                     selectedValues: selectedEnsembleIdents.value,
-                    annotations: makePersistableAtomWarningMessage(selectedEnsembleIdentsAtom),
+                    annotations: usePersistableAtomWarningMessage(selectedEnsembleIdentsAtom),
                 },
                 tableNames: {
                     availableValues: tableDefinitionsAccessor.getTableNamesIntersection(),
                     selectedValues: selectedTableNames.value,
-                    annotations: makePersistableAtomWarningMessage(selectedTableNamesAtom),
+                    annotations: usePersistableAtomWarningMessage(selectedTableNamesAtom),
                 },
                 indicesWithValues: {
                     availableValues: tableDefinitionsAccessor.getCommonIndicesWithValues(),
                     selectedValues: selectedIndicesWithValues.value,
-                    annotations: makePersistableAtomWarningMessage(selectedIndicesWithValuesAtom),
+                    annotations: usePersistableAtomWarningMessage(selectedIndicesWithValuesAtom),
                 },
             }}
             selectedAllowIndicesValuesIntersection={

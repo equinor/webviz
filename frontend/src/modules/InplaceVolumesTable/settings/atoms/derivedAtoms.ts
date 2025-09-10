@@ -3,13 +3,13 @@ import { atom } from "jotai";
 import { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 
 import { selectedIndexValueCriteriaAtom } from "./baseAtoms";
-import { tableDefinitionsQueryAtom } from "./queryAtoms";
 import {
     selectedEnsembleIdentsAtom,
     selectedIndicesWithValuesAtom,
     selectedResultNamesAtom,
     selectedTableNamesAtom,
 } from "./persistableAtoms";
+import { tableDefinitionsQueryAtom } from "./queryAtoms";
 
 export const tableDefinitionsAccessorAtom = atom<TableDefinitionsAccessor>((get) => {
     const selectedTableNames = get(selectedTableNamesAtom);

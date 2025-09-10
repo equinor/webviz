@@ -165,14 +165,6 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
     );
 
-    function handleEditTitleClick() {
-        // props.workbench.editSession();
-    }
-
-    function handleCloseSessionClick() {
-        props.workbench.maybeCloseCurrentSession();
-    }
-
     function makeContent() {
         let content: React.ReactNode = null;
         if (isSnapshot) {

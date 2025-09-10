@@ -1,10 +1,11 @@
 import type { CSSProperties } from "react";
 
+import { isEqual } from "lodash";
+
 import type { LayoutElement } from "@framework/internal/WorkbenchSession/Dashboard";
 import { MANHATTAN_LENGTH, type Size2D } from "@lib/utils/geometry";
 import { point2Distance, type Vec2 } from "@lib/utils/vec2";
 import { globalLog } from "@src/Log";
-import { isEqual } from "lodash";
 
 import { LayoutNode, LayoutAxis, type LayoutNodeEdge, makeLayoutNodes } from "./LayoutNode";
 

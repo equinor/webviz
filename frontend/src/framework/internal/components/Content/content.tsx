@@ -1,9 +1,9 @@
 import type React from "react";
 
+import { Layout } from "@framework/internal/components/Layout";
 import type { Workbench } from "@framework/Workbench";
 
 import { DataChannelVisualizationLayer } from "./private-components/DataChannelVisualizationLayer";
-import { Layout } from "@framework/internal/components/Layout";
 
 type ContentProps = {
     workbench: Workbench;

@@ -6,6 +6,7 @@ import type { InplaceVolumesIndexWithValues_api } from "@api";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { SettingsContext } from "@framework/ModuleContext";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
@@ -18,7 +19,6 @@ import {
     SettingAnnotationsWrapper,
     type SettingAnnotation,
 } from "@lib/components/SettingAnnotationsWrapper/settingAnnotationsWrapper";
-import type { RegularEnsemble } from "@framework/RegularEnsemble";
 
 export type Setting<TAvailableValues, TSelectedValues = TAvailableValues> = {
     availableValues: TAvailableValues;

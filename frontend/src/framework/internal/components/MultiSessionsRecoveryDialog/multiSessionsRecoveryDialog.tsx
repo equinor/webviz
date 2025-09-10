@@ -26,6 +26,7 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
 
             setSessions(loadedSessions);
         },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [props.workbench],
     );
 

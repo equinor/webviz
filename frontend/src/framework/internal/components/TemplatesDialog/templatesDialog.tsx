@@ -5,10 +5,10 @@ import { ModuleDataTags, type ModuleDataTagId } from "@framework/ModuleDataTags"
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { TemplateRegistry, type Template } from "@framework/TemplateRegistry";
 import type { Workbench } from "@framework/Workbench";
+import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 import { Input } from "@lib/components/Input";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Button } from "@lib/components/Button";
 
 export type TemplatesDialogProps = {
     workbench: Workbench;

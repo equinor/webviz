@@ -4,6 +4,7 @@ import type { InplaceVolumesTableDefinition_api } from "@api";
 import { getTableDefinitionsOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
+
 import { selectedEnsembleIdentsAtom } from "./persistableAtoms";
 
 export type TableDefinitionsQueryResult = {
