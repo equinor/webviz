@@ -11,7 +11,7 @@ type GroupDropOverlayProps = {
 
 export function GroupDropOverlay({ containerEl, scrollEl, hoveredId, hoveredArea }: GroupDropOverlayProps) {
     const nodeRef = React.useRef<HTMLDivElement | null>(null);
-    const rafRef = React.useRef<number | null>(null);
+    const requestAnimationFrameRef = React.useRef<number | null>(null);
 
     // keep latest params for rAF
     const containerRef = React.useRef(containerEl);
@@ -23,49 +23,52 @@ export function GroupDropOverlay({ containerEl, scrollEl, hoveredId, hoveredArea
     idRef.current = hoveredId;
     areaRef.current = hoveredArea;
 
-    const tick = React.useCallback(() => {
-        const node = nodeRef.current;
-        const host = scrollRef.current;
-        const container = containerRef.current;
-        const id = idRef.current;
-        const area = areaRef.current;
-        if (!node || !host || !container || !id) return;
+    const tick = React.useCallback(
+        function tick() {
+            const node = nodeRef.current;
+            const host = scrollRef.current;
+            const container = containerRef.current;
+            const id = idRef.current;
+            const area = areaRef.current;
+            if (!node || !host || !container || !id) return;
 
-        // only show when we're hovering a group and the area indicates "drop into group"
-        const group = container.querySelector<HTMLElement>(`[data-item-id="${id}"][data-sortable="group"]`);
-        if (!group) return;
-        if (!(area === HoveredArea.HEADER || area === HoveredArea.CENTER)) {
-            node.style.opacity = "0";
-            rafRef.current = requestAnimationFrame(tick);
-            return;
-        }
+            // only show when we're hovering a group and the area indicates "drop into group"
+            const group = container.querySelector<HTMLElement>(`[data-item-id="${id}"][data-sortable="group"]`);
+            if (!group) return;
+            if (!(area === HoveredArea.HEADER || area === HoveredArea.CENTER)) {
+                node.style.opacity = "0";
+                requestAnimationFrameRef.current = requestAnimationFrame(tick);
+                return;
+            }
 
-        const hostRect = host.getBoundingClientRect();
-        const groupRect = group.getBoundingClientRect();
+            const hostRect = host.getBoundingClientRect();
+            const groupRect = group.getBoundingClientRect();
 
-        const left = Math.max(0, groupRect.left - hostRect.left + host.scrollLeft);
-        const top = Math.max(0, groupRect.top - hostRect.top + host.scrollTop);
+            const left = Math.max(0, groupRect.left - hostRect.left + host.scrollLeft);
+            const top = Math.max(0, groupRect.top - hostRect.top + host.scrollTop);
 
-        const w = Math.max(0, groupRect.width);
-        const h = Math.max(0, groupRect.height);
-        const x = Math.round(left);
-        const y = Math.round(top);
+            const w = Math.max(0, groupRect.width);
+            const h = Math.max(0, groupRect.height);
+            const x = Math.round(left);
+            const y = Math.round(top);
 
-        node.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-        node.style.width = `${w}px`;
-        node.style.height = `${h}px`;
-        node.style.opacity = "1";
+            node.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+            node.style.width = `${w}px`;
+            node.style.height = `${h}px`;
+            node.style.opacity = "1";
 
-        rafRef.current = requestAnimationFrame(tick);
-    }, []);
+            requestAnimationFrameRef.current = requestAnimationFrame(tick);
+        },
+        [hoveredId],
+    );
 
     React.useEffect(() => {
         if (!containerEl || !scrollEl || !hoveredId) return;
-        rafRef.current = requestAnimationFrame(tick);
+        requestAnimationFrameRef.current = requestAnimationFrame(tick);
 
         const onScroll = () => {
             // ensure we apply a fresh position immediately on scroll
-            if (rafRef.current == null) tick();
+            if (requestAnimationFrameRef.current == null) tick();
         };
         scrollEl.addEventListener("scroll", onScroll, { passive: true });
 
@@ -76,14 +79,13 @@ export function GroupDropOverlay({ containerEl, scrollEl, hoveredId, hoveredArea
         return () => {
             scrollEl.removeEventListener("scroll", onScroll);
             ro.disconnect();
-            if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
-            rafRef.current = null;
+            if (requestAnimationFrameRef.current != null) cancelAnimationFrame(requestAnimationFrameRef.current);
+            requestAnimationFrameRef.current = null;
         };
     }, [containerEl, scrollEl, hoveredId, tick]);
 
     if (!containerEl || !scrollEl || !hoveredId) return null;
 
-    // host should be position: relative to anchor the overlay
     const node = (
         <div
             ref={nodeRef}
