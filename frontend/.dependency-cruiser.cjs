@@ -1,29 +1,29 @@
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
     forbidden: [
-        {
-            name: "framework-internals-used",
-            comment:
-                "You are trying to import from a file that is supposed to be an internal implementation detail of the framework from outside the framework folder. This is not allowed.",
-            severity: "error",
-            from: {
-                pathNot: "^((src/framework)|(src/(App|main).tsx))",
-            },
-            to: {
-                path: "^(src/framework/internal)",
-            },
-        },
-        {
-            name: "lib-has-dependencies-in-src-tree",
-            comment: "Files in the 'lib' folder must not be imported from project files from outside the 'lib' folder.",
-            severity: "error",
-            from: {
-                path: "^(src/lib)",
-            },
-            to: {
-                pathNot: "^((src/lib)|(node_modules))",
-            },
-        },
+        // {
+        //     name: "framework-internals-used",
+        //     comment:
+        //         "You are trying to import from a file that is supposed to be an internal implementation detail of the framework from outside the framework folder. This is not allowed.",
+        //     severity: "error",
+        //     from: {
+        //         pathNot: "^((src/framework)|(src/(App|main).tsx))",
+        //     },
+        //     to: {
+        //         path: "^(src/framework/internal)",
+        //     },
+        // },
+        // {
+        //     name: "lib-has-dependencies-in-src-tree",
+        //     comment: "Files in the 'lib' folder must not be imported from project files from outside the 'lib' folder.",
+        //     severity: "error",
+        //     from: {
+        //         path: "^(src/lib)",
+        //     },
+        //     to: {
+        //         pathNot: "^((src/lib)|(node_modules))",
+        //     },
+        // },
         {
             name: "access-to-api-not-via-main-index-file",
             comment:

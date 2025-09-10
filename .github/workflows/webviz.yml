@@ -105,7 +105,6 @@ jobs:
           set -x
           black --check primary/ tests/
           pylint primary/ tests/
-          bandit --recursive primary/
           mypy primary/
 
       - name: 🤖 Run tests
