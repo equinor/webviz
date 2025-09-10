@@ -88,7 +88,7 @@ type PersistableFixableAtomOptionsWithPrecompute<TValue, TPrecomputedValue> = {
      * The initial value for the atom before any user or persisted value is applied.
      * This is typically a safe default value used when no persisted state is present.
      */
-    initialValue: TValue;
+    initialValue?: TValue;
 
     /**
      * A function to compare two values for equality.
@@ -96,7 +96,7 @@ type PersistableFixableAtomOptionsWithPrecompute<TValue, TPrecomputedValue> = {
      */
     areEqualFunction?: (a: TValue, b: TValue) => boolean;
 
-    precomputeFunction: (options: { value: TValue; get: Getter }) => TPrecomputedValue;
+    precomputeFunction: (options: { value: TValue | undefined; get: Getter }) => TPrecomputedValue;
     /**
      * A function to validate whether the given value is valid in the current application context.
      * Called whenever the atom is read to determine if a persisted value is still valid.
@@ -119,7 +119,7 @@ type PersistableFixableAtomOptionsWithPrecompute<TValue, TPrecomputedValue> = {
      * @param precomputed - The precomputed value from the precompute function.
      * @returns A valid fallback value to use instead.
      */
-    fixupFunction: (options: { value: TValue; get: Getter; precomputedValue: TPrecomputedValue }) => TValue;
+    fixupFunction: (options: { value: TValue | undefined; get: Getter; precomputedValue: TPrecomputedValue }) => TValue;
 };
 
 type PersistableFixableAtomOptionsWithoutPrecompute<TValue> = {
@@ -155,7 +155,7 @@ type PersistableFixableAtomOptionsWithoutPrecompute<TValue> = {
      * @param get - The Jotai getter to access other atoms, if necessary.
      * @returns A valid fallback value to use instead.
      */
-    fixupFunction: (options: { value: TValue; get: Getter }) => TValue;
+    fixupFunction: (options: { value: TValue | undefined; get: Getter }) => TValue;
 };
 
 export type PersistableFixableAtomOptions<TValue, TPrecomputedValue = unknown> =
@@ -181,7 +181,7 @@ export function persistableFixableAtom<TValue>(
 export function persistableFixableAtom<TValue, TPrecomputedValue>(
     options: PersistableFixableAtomOptions<TValue, TPrecomputedValue>,
 ): WritableAtom<PersistableFixableRead<TValue>, [TValue | PersistableAtomState<TValue>], void> {
-    const internalStateAtom = atom<PersistableAtomState<TValue>>({
+    const internalStateAtom = atom<PersistableAtomState<TValue | undefined>>({
         value: options.initialValue,
         _source: Source.USER,
     });
@@ -199,15 +199,20 @@ export function persistableFixableAtom<TValue, TPrecomputedValue>(
             if (hasPrecompute(options)) {
                 const precomputed = options.precomputeFunction({ value: internalState.value, get });
 
-                const isValid = options.isValidFunction({
-                    value: internalState.value,
-                    get,
-                    precomputedValue: precomputed,
-                });
+                const isValid =
+                    internalState.value !== undefined &&
+                    options.isValidFunction({
+                        value: internalState.value,
+                        get,
+                        precomputedValue: precomputed,
+                    });
 
                 if (internalState._source === Source.PERSISTENCE || internalState._source === Source.TEMPLATE) {
+                    if (internalState.value === undefined) {
+                        throw new Error("Persisted or template value cannot be undefined.");
+                    }
                     return {
-                        value: internalState.value,
+                        value: internalState.value as TValue,
                         isValidInContext: isValid,
                         _source: internalState._source,
                     };
@@ -215,25 +220,33 @@ export function persistableFixableAtom<TValue, TPrecomputedValue>(
 
                 return {
                     value: isValid
-                        ? internalState.value
+                        ? (internalState.value as TValue)
                         : options.fixupFunction({ value: internalState.value, get, precomputedValue: precomputed }),
                     isValidInContext: true,
                     _source: internalState._source,
                 };
             }
 
-            const isValid = options.isValidFunction({ value: internalState.value, get });
+            const isValid =
+                internalState.value !== undefined && options.isValidFunction({ value: internalState.value, get });
 
             if (internalState._source === Source.PERSISTENCE || internalState._source === Source.TEMPLATE) {
+                if (internalState.value === undefined) {
+                    throw new Error(
+                        "Persisted or template value cannot be undefined when a precompute function is used and no initial value is provided.",
+                    );
+                }
                 return {
-                    value: internalState.value,
+                    value: internalState.value as TValue,
                     isValidInContext: isValid,
                     _source: internalState._source,
                 };
             }
 
             return {
-                value: isValid ? internalState.value : options.fixupFunction({ value: internalState.value, get }),
+                value: isValid
+                    ? (internalState.value as TValue)
+                    : options.fixupFunction({ value: internalState.value, get }),
                 isValidInContext: true,
                 _source: internalState._source,
             };
@@ -243,7 +256,11 @@ export function persistableFixableAtom<TValue, TPrecomputedValue>(
             const currentState = get(internalStateAtom);
 
             if (isInternalState(update)) {
-                if (areEqualFunc && areEqualFunc(currentState.value, update.value)) {
+                if (
+                    currentState.value !== undefined &&
+                    areEqualFunc &&
+                    areEqualFunc(currentState.value, update.value)
+                ) {
                     // If values are equal, preserve value reference, but update source if different
                     if (currentState._source !== update._source) {
                         set(internalStateAtom, { value: currentState.value, _source: update._source });
@@ -256,7 +273,7 @@ export function persistableFixableAtom<TValue, TPrecomputedValue>(
 
             // Handle direct value updates (non-internal state)
             const value =
-                areEqualFunc && areEqualFunc(currentState.value, update)
+                currentState.value !== undefined && areEqualFunc && areEqualFunc(currentState.value, update)
                     ? currentState.value // Preserve reference when equal
                     : update;
             set(internalStateAtom, { value, _source: Source.USER });
