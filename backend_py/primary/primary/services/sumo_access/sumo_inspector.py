@@ -6,10 +6,9 @@ from pydantic import BaseModel
 
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
+from webviz_pkg.core_utils.timestamp_utils import iso_str_to_timestamp_utc_ms
 
 from .sumo_client_factory import create_sumo_client
-
-from ._helpers import datetime_string_to_utc_ms
 
 LOGGER = logging.getLogger(__name__)
 
@@ -50,7 +49,7 @@ class SumoInspector:
             name=case.name,
             status=case.status,
             user=case.user,
-            updated_at_utc_ms=datetime_string_to_utc_ms(timestamp_str),
+            updated_at_utc_ms=iso_str_to_timestamp_utc_ms(timestamp_str),
         )
 
     async def get_cases_async(self, field_identifier: str) -> List[CaseInfo]:
