@@ -4,7 +4,6 @@ import type { TableType } from "@modules/_shared/InplaceVolumes/types";
 
 import { selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./settings/atoms/baseAtoms";
 import { areSelectedTablesComparableAtom, areTableDefinitionSelectionsValidAtom } from "./settings/atoms/derivedAtoms";
-import type { InplaceVolumesFilterSelections } from "./types";
 import {
     selectedEnsembleIdentsAtom,
     selectedGroupByIndicesAtom,
@@ -12,6 +11,7 @@ import {
     selectedResultNamesAtom,
     selectedTableNamesAtom,
 } from "./settings/atoms/persistableAtoms";
+import type { InplaceVolumesFilterSelections } from "./types";
 
 export type SettingsToViewInterface = {
     filter: InplaceVolumesFilterSelections;

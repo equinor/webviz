@@ -10,7 +10,8 @@ import { makeUniqueTableNamesIntersection } from "@modules/_shared/InplaceVolume
 import { tableDefinitionsAccessorAtom } from "./derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
 
-export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsembleIdent[] | null>({
+export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsembleIdent[]>({
+    // @ts-expect-error -- TEMP HOTFIx; we don't want the atom to be typed as null, but the type doesnt support different init and fixed up values
     initialValue: null,
     isValidFunction: ({ get, value }) => {
         const ensembleSet = get(EnsembleSetAtom);
@@ -23,7 +24,8 @@ export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsemble
     },
 });
 
-export const selectedTableNamesAtom = persistableFixableAtom<string[] | null, string[]>({
+export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>({
+    // @ts-expect-error -- TEMP HOTFIx; we don't want the atom to be typed as null, but the type doesnt support different init and fixed up values
     initialValue: null,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsQueryResult = get(tableDefinitionsQueryAtom);
@@ -42,7 +44,8 @@ export const selectedTableNamesAtom = persistableFixableAtom<string[] | null, st
     },
 });
 
-export const selectedResultNamesAtom = persistableFixableAtom<string[] | null>({
+export const selectedResultNamesAtom = persistableFixableAtom<string[]>({
+    // @ts-expect-error -- TEMP HOTFIx; we don't want the atom to be typed as null, but the type doesnt support different init and fixed up values
     initialValue: null,
     isValidFunction: ({ value, get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
@@ -57,7 +60,8 @@ export const selectedResultNamesAtom = persistableFixableAtom<string[] | null>({
     },
 });
 
-export const selectedGroupByIndicesAtom = persistableFixableAtom<string[] | null, string[]>({
+export const selectedGroupByIndicesAtom = persistableFixableAtom<string[], string[]>({
+    // @ts-expect-error -- TEMP HOTFIx; we don't want the atom to be typed as null, but the type doesnt support different init and fixed up values
     initialValue: null,
     precomputeFunction: ({ get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
@@ -71,7 +75,8 @@ export const selectedGroupByIndicesAtom = persistableFixableAtom<string[] | null
     },
 });
 
-export const selectedIndicesWithValuesAtom = persistableFixableAtom<InplaceVolumesIndexWithValues_api[] | null>({
+export const selectedIndicesWithValuesAtom = persistableFixableAtom<InplaceVolumesIndexWithValues_api[]>({
+    // @ts-expect-error -- TEMP HOTFIx; we don't want the atom to be typed as null, but the type doesnt support different init and fixed up values
     initialValue: null,
     isValidFunction: ({ value, get }) => {
         const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
