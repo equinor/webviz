@@ -240,20 +240,23 @@ async def get_statistical_surface_data_hybrid(
 
     access_token = authenticated_user.get_sumo_access_token()
 
-    fingerprinter: SumoFingerprinter = get_sumo_fingerprinter_for_user(authenticated_user=authenticated_user, cache_ttl_s=1)
-    ensemble_fp = await fingerprinter.get_or_compute_ensemble_fingerprint_async(addr.case_uuid, addr.ensemble_name, "surface")
-    LOGGER.debug(f"Ensemble fingerprint: {ensemble_fp=}")
+    # For how long should we cache the ensemble fingerprint?
+    # The TTL for fingerprints should be aligned with the polling interval we use for busting the client side browser cache
+    fingerprinter: SumoFingerprinter = get_sumo_fingerprinter_for_user(authenticated_user=authenticated_user, cache_ttl_s=60)
+    ens_fingerprint = await fingerprinter.get_or_compute_ensemble_fingerprint_async(addr.case_uuid, addr.ensemble_name, "surface")
+    LOGGER.debug(f"Ensemble fingerprint: {ens_fingerprint=}")
 
     # !!!!!!!!!!!!!
     # Todo!
-    # We should include the most recent case/ensemble/object timestamp in the hash here as well
-    # For that to be viable, we must be able to quickly retrieve the timestamp of the latest change
-    # in a specific ensemble, probably by storing this information in redis or similar
-    param_hash = sha256(surf_addr_str.encode()).hexdigest()
+    # We need to come up with a way to bust the task tracker cache in cases where tasks get "stuck".
+    # One way of achieving this may be to have a sepaate endpoint to clear the task tracker cache for the user.
+
+    # Note that we include the ensemble fingerprint in the task hash/fingerprint
+    task_fingerprint = sha256((surf_addr_str + ens_fingerprint).encode()).hexdigest()
 
     task_tracker = get_task_meta_tracker_for_user(authenticated_user)
-    sumo_task_id = await task_tracker.get_task_id_by_fingerprint_async(param_hash)
-    LOGGER.debug(f"Got existing sumo_task_id: {sumo_task_id=} for param_hash: {param_hash=}")
+    sumo_task_id = await task_tracker.get_task_id_by_fingerprint_async(task_fingerprint)
+    LOGGER.debug(f"Got existing sumo_task_id: {sumo_task_id=} for task_fingerprint: {task_fingerprint=}")
 
     access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
 
@@ -278,7 +281,7 @@ async def get_statistical_surface_data_hybrid(
         await task_tracker.register_task_with_fingerprint_async(
             task_system="sumo_task",
             task_id=sumo_task_id,
-            fingerprint=param_hash,
+            fingerprint=task_fingerprint,
             ttl_s=task_ttl_s,
             task_start_time_utc_s=task_start_time_utc_s,
             expected_store_key=None,
@@ -293,7 +296,7 @@ async def get_statistical_surface_data_hybrid(
         )
 
         if isinstance(xtgeo_surf_or_progress, ExpectedError):
-            await task_tracker.delete_fingerprint_to_task_mapping_async(param_hash)
+            await task_tracker.delete_fingerprint_to_task_mapping_async(task_fingerprint)
             response.headers["Cache-Control"] = "no-store"
             return LroFailureResp(status="failure", error=LroErrorInfo(message=xtgeo_surf_or_progress.message))
 
@@ -322,7 +325,7 @@ async def get_statistical_surface_data_hybrid(
 
     except Exception as _exc:
         # Must delete the fingerprint mapping, but then just re-raise the exception and let our middleware handle it
-        await task_tracker.delete_fingerprint_to_task_mapping_async(param_hash)
+        await task_tracker.delete_fingerprint_to_task_mapping_async(task_fingerprint)
         raise
 
 
