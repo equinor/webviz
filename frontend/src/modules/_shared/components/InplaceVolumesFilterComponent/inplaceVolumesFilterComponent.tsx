@@ -12,19 +12,30 @@ import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolum
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { ErrorWrapper } from "@lib/components/ErrorWrapper";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
+import {
+    SettingAnnotationsWrapper,
+    type SettingAnnotation,
+} from "@lib/components/SettingAnnotationsWrapper/settingAnnotationsWrapper";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
+
+export type Setting<TAvailableValues, TSelectedValues = TAvailableValues> = {
+    availableValues: TAvailableValues;
+    selectedValues: TSelectedValues;
+    annotations?: SettingAnnotation[];
+};
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
     settingsContext: SettingsContext<any, any>;
     workbenchServices: WorkbenchServices;
-    availableTableNames: string[];
-    availableIndicesWithValues: InplaceVolumesIndexWithValues_api[];
-    selectedEnsembleIdents: RegularEnsembleIdent[];
-    selectedTableNames: string[];
-    selectedIndicesWithValues: InplaceVolumesIndexWithValues_api[];
+    settings: {
+        ensembleIdents: Setting<readonly RegularEnsemble[], RegularEnsembleIdent[]>;
+        tableNames: Setting<string[]>;
+        indicesWithValues: Setting<InplaceVolumesIndexWithValues_api[]>;
+    };
+    arePersistedIndicesWithValuesValid: boolean;
     selectedAllowIndicesValuesIntersection: boolean;
     onChange: (filter: InplaceVolumesFilterSettings) => void;
     isPending?: boolean;
@@ -35,37 +46,39 @@ export type InplaceVolumesFilterComponentProps = {
 };
 
 export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterComponentProps): React.ReactNode {
-    const [ensembleIdents, setEnsembleIdents] = React.useState<RegularEnsembleIdent[]>(props.selectedEnsembleIdents);
-    const [tableNames, setTableNames] = React.useState<string[]>(props.selectedTableNames);
+    const [ensembleIdents, setEnsembleIdents] = React.useState<RegularEnsembleIdent[]>(
+        props.settings.ensembleIdents.selectedValues,
+    );
+    const [tableNames, setTableNames] = React.useState<string[]>(props.settings.tableNames.selectedValues);
     const [indicesWithValues, setIndicesWithValues] = React.useState<InplaceVolumesIndexWithValues_api[]>(
-        props.selectedIndicesWithValues,
+        props.settings.indicesWithValues.selectedValues,
     );
 
     const [prevEnsembleIdents, setPrevEnsembleIdents] = React.useState<RegularEnsembleIdent[]>(
-        props.selectedEnsembleIdents,
+        props.settings.ensembleIdents.selectedValues,
     );
-    const [prevTableNames, setPrevTableNames] = React.useState<string[]>(props.selectedTableNames);
+    const [prevTableNames, setPrevTableNames] = React.useState<string[]>(props.settings.tableNames.selectedValues);
     const [prevIndicesWithValues, setPrevIndicesWithValues] = React.useState<InplaceVolumesIndexWithValues_api[]>(
-        props.selectedIndicesWithValues,
+        props.settings.indicesWithValues.selectedValues,
     );
     const [prevSyncedFilter, setPrevSyncedFilter] = React.useState<InplaceVolumesFilterSettings | null>(null);
 
     const debounceTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    if (!isEqual(props.selectedEnsembleIdents, prevEnsembleIdents)) {
-        setEnsembleIdents(props.selectedEnsembleIdents);
-        setPrevEnsembleIdents(props.selectedEnsembleIdents);
+    if (!isEqual(props.settings.ensembleIdents.selectedValues, prevEnsembleIdents)) {
+        setEnsembleIdents(props.settings.ensembleIdents.selectedValues);
+        setPrevEnsembleIdents(props.settings.ensembleIdents.selectedValues);
     }
 
-    if (!isEqual(props.selectedTableNames, prevTableNames)) {
-        setTableNames(props.selectedTableNames);
-        setPrevTableNames(props.selectedTableNames);
+    if (!isEqual(props.settings.tableNames.selectedValues, prevTableNames)) {
+        setTableNames(props.settings.tableNames.selectedValues);
+        setPrevTableNames(props.settings.tableNames.selectedValues);
     }
 
-    if (!isEqual(props.selectedIndicesWithValues, prevIndicesWithValues)) {
+    if (!isEqual(props.settings.indicesWithValues.selectedValues, prevIndicesWithValues)) {
         setIndicesWithValues((prev) => {
             const newIndexValues = [...prev];
-            for (const [i, indexWithValues] of props.selectedIndicesWithValues.entries()) {
+            for (const [i, indexWithValues] of props.settings.indicesWithValues.selectedValues.entries()) {
                 if (
                     !isEqual(
                         prevIndicesWithValues.find((filter) => filter.indexColumn === indexWithValues.indexColumn)
@@ -78,7 +91,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
             }
             return newIndexValues;
         });
-        setPrevIndicesWithValues(props.selectedIndicesWithValues);
+        setPrevIndicesWithValues(props.settings.indicesWithValues.selectedValues);
     }
 
     const syncedSettingKeys = props.settingsContext.useSyncedSettingKeys();
@@ -225,26 +238,39 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
         maybeDebounceOnChange(filter, publish);
     }
 
-    const tableSourceOptions = props.availableTableNames.map((source) => ({ value: source, label: source }));
+    const tableSourceOptions = props.settings.tableNames.availableValues.map((source) => ({
+        value: source,
+        label: source,
+    }));
+
+    const tableNamesAnnotations: SettingAnnotation[] = [];
+    if (tableSourceOptions.length === 0 && !props.isPending) {
+        tableNamesAnnotations.push({
+            type: "error",
+            message: "No table names are available for the selected ensembles",
+        });
+    }
+    if (props.settings.tableNames.annotations) {
+        tableNamesAnnotations.push(...props.settings.tableNames.annotations);
+    }
 
     return (
         <>
             <CollapsibleGroup title="Ensembles" expanded>
-                <EnsembleSelect
-                    ensembles={props.ensembleSet.getRegularEnsembleArray()}
-                    value={ensembleIdents}
-                    onChange={handleEnsembleIdentsChange}
-                    size={5}
-                />
+                <SettingAnnotationsWrapper annotations={props.settings.ensembleIdents.annotations}>
+                    <EnsembleSelect
+                        ensembles={props.ensembleSet.getRegularEnsembleArray()}
+                        value={ensembleIdents}
+                        onChange={handleEnsembleIdentsChange}
+                        size={5}
+                    />
+                </SettingAnnotationsWrapper>
             </CollapsibleGroup>
             <PendingWrapper isPending={props.isPending ?? false} errorMessage={props.errorMessage}>
                 <div className="flex flex-col gap-2">{props.additionalSettings}</div>
                 <div className="flex flex-col gap-2">
                     <CollapsibleGroup title="Inplace volumes table names" expanded>
-                        <ErrorWrapper
-                            isError={tableSourceOptions.length === 0 && !props.isPending}
-                            message={"No table names"}
-                        >
+                        <SettingAnnotationsWrapper annotations={tableNamesAnnotations}>
                             <Select
                                 options={tableSourceOptions}
                                 value={tableNames}
@@ -252,7 +278,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                                 multiple
                                 size={3}
                             />
-                        </ErrorWrapper>
+                        </SettingAnnotationsWrapper>
                     </CollapsibleGroup>
                     <CollapsibleGroup title="Index filters" expanded>
                         <div className="flex flex-col gap-2">
@@ -263,40 +289,84 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                                     onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
                                 />
                             </div>
-                            <ErrorWrapper
-                                isError={!props.areCurrentlySelectedTablesComparable}
-                                message={"Selected tables are not comparable due to mismatching index columns"}
+                            <SettingAnnotationsWrapper
+                                annotations={[
+                                    ...(!props.areCurrentlySelectedTablesComparable &&
+                                    props.settings.indicesWithValues.availableValues.length > 0
+                                        ? [
+                                              {
+                                                  type: "error",
+                                                  message:
+                                                      "Selected tables are not comparable due to mismatching index columns",
+                                              } as SettingAnnotation,
+                                          ]
+                                        : []),
+                                    ...(props.settings.indicesWithValues.availableValues.length === 0
+                                        ? [
+                                              {
+                                                  type: "warning",
+                                                  message: "No index filters available",
+                                              } as SettingAnnotation,
+                                          ]
+                                        : []),
+                                ]}
                             >
-                                {props.availableIndicesWithValues.map((indexWithValues) => (
+                                {props.settings.indicesWithValues.availableValues.map((indexWithValues) => (
                                     <CollapsibleGroup
                                         key={indexWithValues.indexColumn}
                                         title={indexWithValues.indexColumn}
                                         expanded
                                     >
-                                        <Select
-                                            options={indexWithValues.values.toSorted().map((value) => ({
-                                                value: value,
-                                                label: value.toString(),
-                                            }))}
-                                            value={
-                                                indicesWithValues.find(
-                                                    (el) => el.indexColumn === indexWithValues.indexColumn,
-                                                )?.values ?? []
+                                        <SettingAnnotationsWrapper
+                                            annotations={
+                                                !areSelectedValuesContainedInAvailableValues(
+                                                    indicesWithValues.find(
+                                                        (el) => el.indexColumn === indexWithValues.indexColumn,
+                                                    )?.values ?? [],
+                                                    indexWithValues.values,
+                                                ) && !props.arePersistedIndicesWithValuesValid
+                                                    ? [
+                                                          {
+                                                              type: "error",
+                                                              message:
+                                                                  "Selected values are not contained in available values",
+                                                          },
+                                                      ]
+                                                    : undefined
                                             }
-                                            onChange={(value) =>
-                                                handleIndexValuesChange(indexWithValues.indexColumn, value)
-                                            }
-                                            multiple
-                                            size={Math.max(Math.min(indexWithValues.values.length, 10), 3)}
-                                            showQuickSelectButtons={true}
-                                        />
+                                        >
+                                            <Select
+                                                options={indexWithValues.values.toSorted().map((value) => ({
+                                                    value: value,
+                                                    label: value.toString(),
+                                                }))}
+                                                value={
+                                                    indicesWithValues.find(
+                                                        (el) => el.indexColumn === indexWithValues.indexColumn,
+                                                    )?.values ?? []
+                                                }
+                                                onChange={(value) =>
+                                                    handleIndexValuesChange(indexWithValues.indexColumn, value)
+                                                }
+                                                multiple
+                                                size={Math.max(Math.min(indexWithValues.values.length, 10), 3)}
+                                                showQuickSelectButtons={true}
+                                            />
+                                        </SettingAnnotationsWrapper>
                                     </CollapsibleGroup>
                                 ))}
-                            </ErrorWrapper>
+                            </SettingAnnotationsWrapper>
                         </div>
                     </CollapsibleGroup>
                 </div>
             </PendingWrapper>
         </>
     );
+}
+
+function areSelectedValuesContainedInAvailableValues(
+    selectedValues: (string | number)[],
+    availableValues: (string | number)[],
+): boolean {
+    return selectedValues.every((value) => availableValues.includes(value));
 }

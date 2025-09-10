@@ -1,31 +1,30 @@
 import type { ErrorInfo } from "react";
 import React from "react";
 
-import type { JTDDataType } from "ajv/dist/core";
-import { Ajv } from "ajv/dist/jtd";
 import type { Atom } from "jotai";
 import { atom } from "jotai";
 import { atomEffect } from "jotai-effect";
 
+import type { AtomStoreMaster } from "./AtomStoreMaster";
 import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import type { InitialSettings } from "./InitialSettings";
-import { ChannelManager } from "./internal/DataChannels/ChannelManager";
+import { ChannelManager, type DataChannelReceiverSubscription } from "./internal/DataChannels/ChannelManager";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
+import type { Dashboard } from "./internal/WorkbenchSession/Dashboard";
 import type {
     ImportStatus,
     Module,
-    ModuleStateBaseSchema,
+    ModuleComponentSerializationFunctions,
+    ModuleComponentsStateBase,
     ModuleInterfaceTypes,
     ModuleSettings,
-    SerializedModuleState,
     ModuleView,
 } from "./Module";
 import { ModuleContext } from "./ModuleContext";
+import { ModuleInstanceSerializer } from "./ModuleInstanceSerializer";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import { UniDirectionalModuleComponentsInterface } from "./UniDirectionalModuleComponentsInterface";
-
-const ajv = new Ajv();
 
 export enum ModuleInstanceLifeCycleState {
     INITIALIZING,
@@ -47,28 +46,24 @@ export type ModuleInstanceTopicValueTypes = {
     [ModuleInstanceTopic.SYNCED_SETTINGS]: SyncSettingKey[];
     [ModuleInstanceTopic.LIFECYCLE_STATE]: ModuleInstanceLifeCycleState;
     [ModuleInstanceTopic.IMPORT_STATUS]: ImportStatus;
-    [ModuleInstanceTopic.SERIALIZED_STATE]: ModuleStateBaseSchema;
+    [ModuleInstanceTopic.SERIALIZED_STATE]: ModuleComponentsStateBase;
 };
 
 export interface ModuleInstanceOptions<
     TInterfaceTypes extends ModuleInterfaceTypes,
-    TSerializedStateSchema extends ModuleStateBaseSchema,
+    TSerializedStateSchema extends ModuleComponentsStateBase,
 > {
     module: Module<TInterfaceTypes, TSerializedStateSchema>;
+    atomStoreMaster: AtomStoreMaster;
     id: string;
     channelDefinitions: ChannelDefinition[] | null;
     channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
 }
 
-export type ModuleInstanceFullState = {
+export type ModuleInstanceSerializedState = {
     id: string;
     name: string;
-    dataChannelReceiverSubscriptions: {
-        idString: string;
-        listensToModuleInstanceId: string;
-        channelIdString: string;
-        contentIdStrings: string[];
-    }[];
+    dataChannelReceiverSubscriptions: DataChannelReceiverSubscription[];
     syncedSettingKeys: SyncSettingKey[];
     serializedState: StringifiedSerializedModuleState | null;
 };
@@ -78,9 +73,14 @@ type StringifiedSerializedModuleState = {
     view?: string;
 };
 
+export type PartialSerializedModuleState<T extends ModuleComponentsStateBase> = {
+    settings?: Partial<T["settings"]>;
+    view?: Partial<T["view"]>;
+};
+
 export class ModuleInstance<
     TInterfaceTypes extends ModuleInterfaceTypes,
-    TSerializedStateSchema extends ModuleStateBaseSchema,
+    TSerializedStateSchema extends ModuleComponentsStateBase,
 > {
     private _id: string;
     private _title: string;
@@ -102,12 +102,18 @@ export class ModuleInstance<
     > | null = null;
     private _settingsToViewInterfaceEffectsAtom: Atom<void> | null = null;
     private _viewToSettingsInterfaceEffectsAtom: Atom<void> | null = null;
-    private _serializedState: SerializedModuleState<TSerializedStateSchema> | null = null;
+    private _atomStoreMaster: AtomStoreMaster;
+
+    private _serializer: ModuleInstanceSerializer<TSerializedStateSchema> | null = null;
+    private _storedSerializedState: ModuleInstanceSerializedState | null = null;
+    private _storedTemplateState: PartialSerializedModuleState<TSerializedStateSchema> | null = null;
+    private _dashboard: Dashboard | null = null;
 
     constructor(options: ModuleInstanceOptions<TInterfaceTypes, TSerializedStateSchema>) {
         this._id = options.id;
         this._title = options.module.getDefaultTitle();
         this._module = options.module;
+        this._atomStoreMaster = options.atomStoreMaster;
 
         this._channelManager = new ChannelManager(this._id);
 
@@ -125,67 +131,15 @@ export class ModuleInstance<
         }
     }
 
-    setSerializedState(serializedState: SerializedModuleState<TSerializedStateSchema>): void {
-        this._serializedState = serializedState;
+    handleStateChange(): void {
+        this.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE);
     }
 
-    getSerializedState(): SerializedModuleState<TSerializedStateSchema> | null {
-        return this._serializedState;
-    }
-
-    deserializeSerializedState(raw: StringifiedSerializedModuleState): void {
-        const schema = this._module.getSerializedStateSchema();
-        if (!schema) {
-            return; // No schema defined, cannot deserialize
-        }
-
-        let parsedSettings: unknown;
-        let parsedView: unknown;
-        try {
-            parsedSettings = raw.settings ? JSON.parse(raw.settings) : undefined;
-            parsedView = raw.view ? JSON.parse(raw.view) : undefined;
-        } catch (e) {
-            console.warn(`Invalid JSON in module state for ${this._module.getName()}:`, e);
-            this._serializedState = null;
-            return;
-        }
-
-        const validateSettings = ajv.compile(schema.settings);
-        const validateView = ajv.compile(schema.view);
-
-        const isSettingsValid = parsedSettings === undefined || validateSettings(parsedSettings);
-        const isViewValid = parsedView === undefined || validateView(parsedView);
-
-        if (!isSettingsValid || !isViewValid) {
-            console.warn(`Validation failed for ${this._module.getName()}`, {
-                settingsErrors: validateSettings.errors,
-                viewErrors: validateView.errors,
-            });
-            this._serializedState = null;
-            return;
-        }
-
-        this._serializedState = {
-            settings: parsedSettings as JTDDataType<TSerializedStateSchema["settings"]>,
-            view: parsedView as JTDDataType<TSerializedStateSchema["view"]>,
-        };
-    }
-
-    setFullState(fullState: ModuleInstanceFullState): void {
-        this._syncedSettingKeys = fullState.syncedSettingKeys;
-
-        this._id = fullState.id;
-        this._title = fullState.name;
-
-        if (fullState.serializedState) {
-            this.deserializeSerializedState(fullState.serializedState);
-        }
-    }
-
-    getFullState(): ModuleInstanceFullState {
+    serialize(): ModuleInstanceSerializedState {
         return {
             id: this._id,
             name: this._module.getName(),
+            // Replace with channel manager's own serialization logic
             dataChannelReceiverSubscriptions: this._channelManager
                 .getReceivers()
                 .filter((receiver) => receiver.hasActiveSubscription())
@@ -196,27 +150,45 @@ export class ModuleInstance<
                     contentIdStrings: receiver.getContentIdStrings(),
                 })),
             syncedSettingKeys: this._syncedSettingKeys,
-            serializedState: {
-                settings: JSON.stringify(this._serializedState?.settings ?? ""),
-                view: JSON.stringify(this._serializedState?.view ?? ""),
-            },
+            serializedState: this._serializer?.getStringifiedSerializedState() ?? null,
         };
     }
 
-    serializeSettingsState(state: JTDDataType<TSerializedStateSchema["settings"]>): void {
-        this._serializedState = {
-            ...(this._serializedState ?? ({} as SerializedModuleState<TSerializedStateSchema>)),
-            settings: state,
-        };
-        this.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE);
+    initiateDeserialization(raw: ModuleInstanceSerializedState, dashboard: Dashboard): void {
+        this._storedSerializedState = raw;
+        this._dashboard = dashboard;
+        this.deserialize();
     }
 
-    serializeViewState(state: JTDDataType<TSerializedStateSchema["view"]>): void {
-        this._serializedState = {
-            ...(this._serializedState ?? ({} as SerializedModuleState<TSerializedStateSchema>)),
-            view: state,
-        };
-        this.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE);
+    initiateTemplateStateApplication(initialState: PartialSerializedModuleState<TSerializedStateSchema>): void {
+        this._storedTemplateState = initialState;
+        this.applyTemplateState();
+    }
+
+    private applyTemplateState(): void {
+        if (this._initialized && this._storedTemplateState && this._serializer) {
+            this._serializer.applyTemplateState(this._storedTemplateState);
+            this._storedTemplateState = null;
+        }
+    }
+
+    private deserialize(): void {
+        if (this._initialized && this._storedSerializedState && this._dashboard) {
+            this._syncedSettingKeys = this._storedSerializedState.syncedSettingKeys;
+
+            this._id = this._storedSerializedState.id;
+
+            if (this._storedSerializedState.serializedState && this._serializer) {
+                this._serializer.deserializeState(this._storedSerializedState.serializedState);
+            }
+
+            this._channelManager.deserialize(
+                this._storedSerializedState.dataChannelReceiverSubscriptions,
+                this._dashboard,
+            );
+
+            this._storedSerializedState = null;
+        }
     }
 
     getUniDirectionalSettingsToViewInterface(): UniDirectionalModuleComponentsInterface<
@@ -245,6 +217,8 @@ export class ModuleInstance<
         this._context = new ModuleContext<TInterfaceTypes, TSerializedStateSchema>(this);
         this._initialized = true;
         this.setModuleInstanceState(ModuleInstanceLifeCycleState.OK);
+        this.deserialize();
+        this.applyTemplateState();
     }
 
     makeSettingsToViewInterface(
@@ -263,6 +237,18 @@ export class ModuleInstance<
             return;
         }
         this._viewToSettingsInterface = new UniDirectionalModuleComponentsInterface(interfaceInitialization);
+    }
+
+    makeSerializer(serializationFunctions: ModuleComponentSerializationFunctions<TSerializedStateSchema> | null): void {
+        if (serializationFunctions) {
+            this._serializer = new ModuleInstanceSerializer<TSerializedStateSchema>(
+                this,
+                this._atomStoreMaster.getAtomStoreForModuleInstance(this._id),
+                this._module.getSerializedStateSchema(),
+                serializationFunctions,
+                this.handleStateChange.bind(this),
+            );
+        }
     }
 
     makeSettingsToViewInterfaceEffectsAtom(): void {
@@ -317,19 +303,27 @@ export class ModuleInstance<
 
     getSettingsToViewInterfaceEffectsAtom(): Atom<void> {
         if (!this._settingsToViewInterfaceEffectsAtom) {
-            throw `Module instance '${this._title}' does not have settings to view interface effects yet. Did you forget to init the module?`;
+            throw new Error(
+                `Module instance '${this._title}' does not have settings to view interface effects yet. Did you forget to init the module?`,
+            );
         }
         return this._settingsToViewInterfaceEffectsAtom;
     }
 
     getViewToSettingsInterfaceEffectsAtom(): Atom<void> {
         if (!this._viewToSettingsInterfaceEffectsAtom) {
-            throw `Module instance '${this._title}' does not have view to settings interface effects yet. Did you forget to init the module?`;
+            throw new Error(
+                `Module instance '${this._title}' does not have view to settings interface effects yet. Did you forget to init the module?`,
+            );
         }
         return this._viewToSettingsInterfaceEffectsAtom;
     }
 
     addSyncedSetting(settingKey: SyncSettingKey): void {
+        if (this._syncedSettingKeys.includes(settingKey)) {
+            console.warn(`Setting key '${settingKey}' is already synced for module instance '${this._title}'.`);
+            return;
+        }
         this._syncedSettingKeys.push(settingKey);
         this.notifySubscribers(ModuleInstanceTopic.SYNCED_SETTINGS);
     }
@@ -365,7 +359,9 @@ export class ModuleInstance<
 
     getContext(): ModuleContext<TInterfaceTypes, TSerializedStateSchema> {
         if (!this._context) {
-            throw `Module context is not available yet. Did you forget to init the module '${this._title}.'?`;
+            throw new Error(
+                `Module context is not available yet. Did you forget to init the module '${this._title}.'?`,
+            );
         }
         return this._context;
     }
@@ -426,7 +422,8 @@ export class ModuleInstance<
                 return this.getImportState();
             }
             if (topic === ModuleInstanceTopic.SERIALIZED_STATE) {
-                return this.getSerializedState();
+                // !This is not reference-stable, so we return a new object each time
+                return this.serialize();
             }
         };
 

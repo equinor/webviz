@@ -20,11 +20,14 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
     );
     const [sessions, setSessions] = React.useState<WorkbenchSessionDataContainer[]>([]);
 
-    async function loadSessions() {
-        const loadedSessions = await loadAllWorkbenchSessionsFromLocalStorage();
+    const loadSessions = React.useCallback(
+        async function loadSessions() {
+            const loadedSessions = await loadAllWorkbenchSessionsFromLocalStorage();
 
-        setSessions(loadedSessions);
-    }
+            setSessions(loadedSessions);
+        },
+        [props.workbench],
+    );
 
     React.useEffect(
         function loadSessionOnOpen() {
@@ -32,7 +35,7 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
                 loadSessions();
             }
         },
-        [isOpen],
+        [isOpen, loadSessions],
     );
 
     if (!isOpen) {

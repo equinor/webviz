@@ -3,8 +3,8 @@ import type React from "react";
 import { Settings as SettingsIcon } from "@mui/icons-material";
 import { Provider } from "jotai";
 
-import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
+import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { ImportStatus } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
@@ -30,11 +30,9 @@ type ModuleSettingsProps = {
 };
 
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
+    const workbenchSession = props.workbench.getWorkbenchSession();
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
-    const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
-    );
+    const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
 
     const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ActiveModuleInstanceId);
 
@@ -42,7 +40,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         props.moduleInstance,
         ModuleInstanceTopic.LIFECYCLE_STATE,
     );
-    const atomStore = props.workbench.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
+    const atomStore = workbenchSession.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
 
     if (importState !== ImportStatus.Imported || !props.moduleInstance.isInitialized()) {
         return null;
@@ -121,14 +119,6 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                                                 .getWorkbenchSession()
                                                 .getWorkbenchSettings()}
                                             initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                                            persistence={{
-                                                serializedState:
-                                                    props.moduleInstance.getSerializedState()?.["settings"] ??
-                                                    undefined,
-                                                serializeState: props.moduleInstance.serializeSettingsState.bind(
-                                                    props.moduleInstance,
-                                                ),
-                                            }}
                                         />
                                     </ApplyInterfaceEffectsToSettings>
                                 </HydrateQueryClientAtom>

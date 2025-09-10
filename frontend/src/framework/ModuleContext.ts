@@ -13,7 +13,7 @@
 import type { ChannelContentDefinition, KeyKind } from "./DataChannelTypes";
 import { useChannelReceiver } from "./internal/DataChannels/hooks/useChannelReceiver";
 import { usePublishChannelContents } from "./internal/DataChannels/hooks/usePublishChannelContents";
-import type { ModuleStateBaseSchema, ModuleInterfaceTypes, NoModuleStateSchema } from "./Module";
+import type { ModuleComponentsStateBase, ModuleInterfaceTypes, NoModuleStateSchema } from "./Module";
 import type { ModuleInstance, ModuleInstanceTopicValueTypes } from "./ModuleInstance";
 import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "./ModuleInstance";
 import type { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
@@ -23,7 +23,7 @@ import { useInterfaceValue } from "./UniDirectionalModuleComponentsInterface";
 
 export class ModuleContext<
     TInterfaceTypes extends ModuleInterfaceTypes,
-    TSerializedStateDef extends ModuleStateBaseSchema,
+    TSerializedStateDef extends ModuleComponentsStateBase,
 > {
     protected _moduleInstance: ModuleInstance<TInterfaceTypes, TSerializedStateDef>;
 
@@ -97,7 +97,7 @@ export class ModuleContext<
 
 export type ViewContext<
     TInterfaceType extends InterfaceBaseType,
-    TSerializedStateDef extends ModuleStateBaseSchema = NoModuleStateSchema,
+    TSerializedStateDef extends ModuleComponentsStateBase = NoModuleStateSchema,
 > = Omit<
     ModuleContext<TInterfaceType, TSerializedStateDef>,
     "useViewToSettingsInterfaceValue" | "useSettingsAtom" | "useSetSettingsAtom" | "useSettingsAtomValue"
@@ -105,7 +105,7 @@ export type ViewContext<
 
 export type SettingsContext<
     TInterfaceType extends InterfaceBaseType,
-    TSerializedStateDef extends ModuleStateBaseSchema = NoModuleStateSchema,
+    TSerializedStateDef extends ModuleComponentsStateBase = NoModuleStateSchema,
 > = Omit<
     ModuleContext<TInterfaceType, TSerializedStateDef>,
     "useSettingsToViewInterfaceValue" | "useViewAtom" | "useViewAtomValue" | "useSetViewAtom"

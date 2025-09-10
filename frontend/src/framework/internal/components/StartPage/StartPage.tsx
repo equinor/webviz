@@ -3,6 +3,7 @@ import React from "react";
 import { Icon, Tooltip, Typography } from "@equinor/eds-core-react";
 import { category, dashboard, folder_open, github, external_link } from "@equinor/eds-icons";
 
+import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 
@@ -19,6 +20,11 @@ export type StartPageProps = {
 };
 
 export function StartPage(props: StartPageProps) {
+    const [, setIsOpenTemplatesDialog] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.TemplatesDialogOpen,
+    );
+
     function handleNewSession() {
         props.workbench.startNewSession();
     }
@@ -38,6 +44,9 @@ export function StartPage(props: StartPageProps) {
     function openOverviewDialogOnSnapshots() {
         setShowOverviewDialog(true);
         setOverviewContentMode("snapshots");
+    }
+    function handleOpenTemplatesDialog() {
+        setIsOpenTemplatesDialog(true);
     }
 
     return (
@@ -61,7 +70,7 @@ export function StartPage(props: StartPageProps) {
                         placement="right"
                         title="Start from a template to quickly set up a session with predefined settings and data."
                     >
-                        <Button variant="text">
+                        <Button variant="text" onClick={handleOpenTemplatesDialog}>
                             <Icon name="dashboard" />
                             Start from template...
                         </Button>

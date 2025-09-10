@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/query-core";
 
-import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
+import { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleTimestampsStore } from "@framework/EnsembleTimestampsStore";
 import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
@@ -99,10 +99,10 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     private _loadedFromLocalStorage: boolean = false;
     private _settings: PrivateWorkbenchSettings = new PrivateWorkbenchSettings();
 
-    constructor(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient, isSnapshot = false) {
-        this._atomStoreMaster = atomStoreMaster;
+    constructor(queryClient: QueryClient, isSnapshot = false) {
+        this._atomStoreMaster = new AtomStoreMaster();
         this._queryClient = queryClient;
-        this._userCreatedItems = new UserCreatedItems(atomStoreMaster);
+        this._userCreatedItems = new UserCreatedItems(this._atomStoreMaster);
         this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, this._realizationFilterSet);
         this._isSnapshot = isSnapshot;
     }
@@ -117,6 +117,10 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
 
     getWorkbenchSettings(): PrivateWorkbenchSettings {
         return this._settings;
+    }
+
+    getAtomStoreMaster(): AtomStoreMaster {
+        return this._atomStoreMaster;
     }
 
     getId(): string | null {
@@ -185,11 +189,12 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     async loadContent(content: WorkbenchSessionContent): Promise<void> {
         this._isPersisted = this._id !== null;
         this._activeDashboardId = content.activeDashboardId;
-        this._dashboards = content.dashboards.map((s) => {
-            const d = new Dashboard(this._atomStoreMaster);
-            d.deserializeState(s);
-            return d;
-        });
+        const dashboards: Dashboard[] = [];
+        for (const serializedDashboard of content.dashboards) {
+            const dashboard = Dashboard.fromPersistedState(serializedDashboard, this._atomStoreMaster);
+            dashboards.push(dashboard);
+        }
+        this.setDashboards(dashboards);
 
         this._settings.deserializeState(content.settings);
         this._userCreatedItems.deserializeState(content.userCreatedItems);
@@ -283,6 +288,17 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         return this._dashboards;
     }
 
+    setDashboards(dashboards: Dashboard[]): void {
+        this._dashboards = dashboards;
+        if (dashboards.length > 0) {
+            this._activeDashboardId = dashboards[0].getId();
+        } else {
+            this._activeDashboardId = null;
+        }
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+    }
+
     getIsPersisted(): boolean {
         return this._isPersisted;
     }
@@ -327,11 +343,10 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     }
 
     static async fromDataContainer(
-        atomStoreMaster: AtomStoreMaster,
         queryClient: QueryClient,
         dataContainer: WorkbenchSessionDataContainer,
     ): Promise<PrivateWorkbenchSession> {
-        const session = new PrivateWorkbenchSession(atomStoreMaster, queryClient, isSnapshot(dataContainer));
+        const session = new PrivateWorkbenchSession(queryClient, isSnapshot(dataContainer));
 
         if (isPersisted(dataContainer)) {
             session.setId(dataContainer.id);

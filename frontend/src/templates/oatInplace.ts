@@ -1,17 +1,15 @@
 import { KeyKind } from "@framework/DataChannelTypes";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
-import { TemplateRegistry } from "@framework/TemplateRegistry";
-import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
+import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
 import { ChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
-import { DisplayComponentType } from "@modules/TornadoChart/typesAndEnums";
 
 const template: Template = {
+    name: "Sensitivity analysis of inplace volumes",
     description: "Inplace volumes analysis for design matrix ensembles.",
     moduleInstances: [
-        {
-            instanceRef: "MainInplaceVolumesPlotInstance",
-            moduleName: "InplaceVolumesPlot",
+        createTemplateModuleInstance("InplaceVolumesPlot", {
+            instanceRef: "MainInplaceVolumetricsPlotInstance",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -19,13 +17,14 @@ const template: Template = {
                 relY: 0,
             },
             syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER, SyncSettingKey.INPLACE_VOLUMES_RESULT_NAME],
-            initialSettings: {
-                selectedIndexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
+            /*
+            initialState: {
+                selectedIdentifierValueCriteria: IdentifierValueCriteria.ALLOW_INTERSECTION,
             },
-        },
-        {
-            instanceRef: "MainInplaceVolumesTableInstance2",
-            moduleName: "InplaceVolumesTable",
+            */
+        }),
+        createTemplateModuleInstance("InplaceVolumesTable", {
+            instanceRef: "MainInplaceVolumetricsTableInstance2",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -33,13 +32,14 @@ const template: Template = {
                 relY: 0.5,
             },
             syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER, SyncSettingKey.INPLACE_VOLUMES_RESULT_NAME],
-            initialSettings: {
-                selectedIndexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
+            /*
+            initialState: {
+                selectedIdentifierValueCriteria: IdentifierValueCriteria.ALLOW_INTERSECTION,
             },
-        },
-        {
+            */
+        }),
+        createTemplateModuleInstance("TornadoChart", {
             instanceRef: "TornadoChartInstance",
-            moduleName: "TornadoChart",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -54,13 +54,14 @@ const template: Template = {
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,
                 },
             },
-            initialSettings: {
+            /*
+            initialState: {
                 displayComponentType: DisplayComponentType.TornadoChart,
             },
-        },
-        {
+            */
+        }),
+        createTemplateModuleInstance("TornadoChart", {
             instanceRef: "TornadoChartInstance2",
-            moduleName: "TornadoChart",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -75,11 +76,13 @@ const template: Template = {
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,
                 },
             },
-            initialSettings: {
+            /*
+            initialState: {
                 displayComponentType: DisplayComponentType.Table,
             },
-        },
+            */
+        }),
     ],
 };
 
-TemplateRegistry.registerTemplate("Sensitivity analysis of inplace volumes", template);
+TemplateRegistry.registerTemplate(template);

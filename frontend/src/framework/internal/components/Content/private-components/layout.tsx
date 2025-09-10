@@ -1,5 +1,6 @@
 import React from "react";
 
+import { WebAsset } from "@mui/icons-material";
 import { v4 } from "uuid";
 
 import type { LayoutBox } from "@framework/components/LayoutBox";
@@ -62,8 +63,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         let dragging = false;
         let moduleInstanceId: string | null = null;
         let moduleName: string | null = null;
-        let originalLayout: LayoutElement[] = dashboard.getLayout();
-        let currentLayout: LayoutElement[] = dashboard.getLayout();
+        let originalLayout: LayoutElement[] = trueLayout;
+        let currentLayout: LayoutElement[] = trueLayout;
         let originalLayoutBox = makeLayoutBoxes(originalLayout);
         let currentLayoutBox = originalLayoutBox;
         layoutBoxRef.current = currentLayoutBox;
@@ -115,7 +116,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 if (isNewModule && moduleName) {
                     const layoutElement = currentLayout.find((el) => el.moduleInstanceId === pointerDownElementId);
                     if (layoutElement) {
-                        const instance = dashboard.makeAndAddModuleInstance(moduleName, layoutElement);
+                        // This is not working yet as the older layout is not adjusted
+                        const instance = dashboard.makeAndAddModuleInstance(moduleName);
                         layoutElement.moduleInstanceId = instance.getId();
                         layoutElement.moduleName = instance.getName();
                     }
@@ -128,7 +130,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 originalLayoutBox = currentLayoutBox;
                 layoutBoxRef.current = currentLayoutBox;
                 setTempLayout(null);
-                dashboard.setLayout(currentLayout);
                 setPosition({ x: 0, y: 0 });
                 setPointer({ x: -1, y: -1 });
 
@@ -141,6 +142,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             moduleInstanceId = null;
             dragging = false;
             originalLayout = currentLayout;
+            dashboard.setLayout(currentLayout);
             removeDraggingEventListeners();
         }
 
@@ -325,7 +327,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 clearTimeout(delayTimer);
             }
         };
-    }, [layoutDivSize, moduleInstances, guiMessageBroker, dashboard]);
+    }, [layoutDivSize, moduleInstances, guiMessageBroker, trueLayout, dashboard]);
 
     function makeTempViewWrapperPlaceholder() {
         if (!tempLayoutBoxId) {
@@ -425,7 +427,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                         pointer={pointer}
                     />
                 )}
-
                 {moduleInstances.map((instance) => {
                     const layoutProps = computeModuleLayoutProps(instance);
                     const isDragged = draggedModuleInstanceId === instance.getId();
@@ -445,6 +446,10 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     );
                 })}
                 {makeTempViewWrapperPlaceholder()}
+                <div className="flex flex-col justify-center items-center w-full h-full text-slate-400 gap-4 text-center p-4 text-sm">
+                    <WebAsset fontSize="large" />
+                    Drag modules here to add them to the layout
+                </div>
             </div>
         </div>
     );

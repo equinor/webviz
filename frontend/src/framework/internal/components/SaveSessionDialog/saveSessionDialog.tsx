@@ -38,6 +38,16 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
     const [title, setTitle] = React.useState<string>("");
     const [description, setDescription] = React.useState<string>("");
     const [inputFeedback, setInputFeedback] = React.useState<SaveSessionDialogInputFeedback>({});
+    const inputRef = React.useRef<HTMLInputElement>(null);
+
+    React.useEffect(
+        function focusInput() {
+            if (saveSessionDialogOpen && inputRef.current) {
+                inputRef.current.focus();
+            }
+        },
+        [saveSessionDialogOpen],
+    );
 
     if (prevSaveSessionDialogOpen !== saveSessionDialogOpen) {
         setPrevSaveSessionDialogOpen(saveSessionDialogOpen);
@@ -58,7 +68,10 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
         props.workbench.getWorkbenchSession().updateMetadata({ title, description });
         props.workbench
             .saveCurrentSession(true)
-            .then(() => {
+            .then((result) => {
+                if (!result) {
+                    return; // Save was not successful, do not close dialog
+                }
                 setTitle("");
                 setDescription("");
                 setInputFeedback({});
@@ -101,12 +114,12 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                     <Label text="Title">
                         <>
                             <Input
+                                inputRef={inputRef}
                                 placeholder="Enter session title"
                                 type="text"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 error={!!inputFeedback.title}
-                                autoFocus
                             />
                             {inputFeedback.title && (
                                 <div className="text-red-600 text-sm mt-1">{inputFeedback.title}</div>

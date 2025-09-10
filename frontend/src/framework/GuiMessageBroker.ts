@@ -8,7 +8,6 @@ import type { UnsavedChangesAction } from "./types/unsavedChangesAction";
 
 export enum LeftDrawerContent {
     ModuleSettings = "ModuleSettings",
-    TemplatesList = "TemplatesList",
     SyncSettings = "SyncSettings",
     ColorPaletteSettings = "ColorPaletteSettings",
 }
@@ -39,6 +38,7 @@ export enum GuiState {
     MultiSessionsRecoveryDialogOpen = "multiSessionsRecoveryDialogOpen",
     ActiveSessionRecoveryDialogOpen = "activeSessionRecoveryDialogOpen",
     MakeSnapshotDialogOpen = "makeSnapshotDialogOpen",
+    TemplatesDialogOpen = "templatesDialogOpen",
 }
 
 export enum GuiEvent {
@@ -113,6 +113,7 @@ type GuiStateValueTypes = {
     [GuiState.ActiveSessionRecoveryDialogOpen]: boolean;
     [GuiState.MakeSnapshotDialogOpen]: boolean;
     [GuiState.IsMakingSnapshot]: boolean;
+    [GuiState.TemplatesDialogOpen]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -134,6 +135,7 @@ defaultStates.set(GuiState.MultiSessionsRecoveryDialogOpen, false);
 defaultStates.set(GuiState.ActiveSessionRecoveryDialogOpen, false);
 defaultStates.set(GuiState.MakeSnapshotDialogOpen, false);
 defaultStates.set(GuiState.IsMakingSnapshot, false);
+defaultStates.set(GuiState.TemplatesDialogOpen, false);
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelWidthInPercent,
