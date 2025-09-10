@@ -19,7 +19,7 @@ pyarrow = "^19.0.0"
 python-dotenv = "^1.1.0"
 pyjwt = "^2.6.0"
 pydantic = "^2.3.0"
-numpy = "^1.24.1"
+numpy = "^2.3.2"
 orjson = "^3.8.10"
 pandas = { version = "^2.0.1", extras = ["performance"] }
 httpx = "^0.28.1"
@@ -30,12 +30,13 @@ opentelemetry-instrumentation-httpx = "*"
 opentelemetry-instrumentation-redis = "*"
 requests-toolbelt = "^1.0.0"
 pottery = "^3.0.0"
-xtgeo = "^3.8.0"
+xtgeo = "^4.11.0"
 core_utils = { path = "../libs/core_utils", develop = true }
 server_schemas = { path = "../libs/server_schemas", develop = true }
 
 # Polars does breaking changes in minor versions
 polars = "~1.33.0"
+
 fmu-datamodels = "0.0.1"
 
 [tool.poetry.group.dev.dependencies]
