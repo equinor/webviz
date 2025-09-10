@@ -23,7 +23,7 @@ export class DeserializationAssistant {
     makeItem(serialized: SerializedItem): Item {
         if (serialized.type === SerializedType.DATA_PROVIDER_MANAGER) {
             throw new Error(
-                "Cannot deserialize a DataProviderManager in DeserializationFactory. A DataProviderManager can never be a descendant of a DataProviderManager.",
+                "Cannot deserialize a DataProviderManager in DeserializationFactory. A DataProviderManager can never be a descendant of a DataProviderManager."
             );
         }
 
@@ -32,7 +32,7 @@ export class DeserializationAssistant {
             const provider = DataProviderRegistry.makeDataProvider(
                 serializedDataProvider.dataProviderType,
                 this._dataProviderManager,
-                serializedDataProvider.name,
+                serializedDataProvider.name
             );
             provider.deserializeState(serializedDataProvider);
             provider.getItemDelegate().setId(serializedDataProvider.id);
@@ -41,7 +41,7 @@ export class DeserializationAssistant {
         }
 
         if (serialized.type === SerializedType.GROUP) {
-            const serializedGroup = serialized as SerializedGroup;
+            const serializedGroup = serialized as SerializedGroup<any>;
             const group = GroupRegistry.makeGroup(serializedGroup.groupType, this._dataProviderManager);
             group.deserializeState(serializedGroup);
             return group;
@@ -59,7 +59,7 @@ export class DeserializationAssistant {
             const setting = new SharedSetting(
                 serializedSharedSetting.wrappedSettingType,
                 serializedSharedSetting.value,
-                this._dataProviderManager,
+                this._dataProviderManager
             );
             setting.deserializeState(serializedSharedSetting);
             return setting;
