@@ -13,7 +13,6 @@ export function GroupDropOverlay({ containerEl, scrollEl, hoveredId, hoveredArea
     const nodeRef = React.useRef<HTMLDivElement | null>(null);
     const requestAnimationFrameRef = React.useRef<number | null>(null);
 
-    // keep latest params for rAF
     const containerRef = React.useRef(containerEl);
     const scrollRef = React.useRef(scrollEl);
     const idRef = React.useRef(hoveredId);
@@ -30,14 +29,24 @@ export function GroupDropOverlay({ containerEl, scrollEl, hoveredId, hoveredArea
             const container = containerRef.current;
             const id = idRef.current;
             const area = areaRef.current;
-            if (!node || !host || !container || !id) return;
+            if (!node || !host || !container || !id) {
+                return;
+            }
 
-            // only show when we're hovering a group and the area indicates "drop into group"
-            const group = container.querySelector<HTMLElement>(`[data-item-id="${id}"][data-sortable="group"]`);
-            if (!group) return;
-            if (!(area === HoveredArea.HEADER || area === HoveredArea.CENTER)) {
-                node.style.opacity = "0";
-                requestAnimationFrameRef.current = requestAnimationFrame(tick);
+            const hoveredElement = container.querySelector<HTMLElement>(`[data-item-id="${id}"]`);
+            if (!hoveredElement) {
+                node.style.display = "none";
+                return;
+            }
+
+            const group = hoveredElement.closest<HTMLElement>(`[data-sortable="group"]`);
+            if (!group) {
+                node.style.display = "none";
+                return;
+            }
+
+            if (hoveredElement === group && ![HoveredArea.HEADER, HoveredArea.CENTER].includes(area!)) {
+                node.style.display = "none";
                 return;
             }
 
@@ -56,10 +65,11 @@ export function GroupDropOverlay({ containerEl, scrollEl, hoveredId, hoveredArea
             node.style.width = `${w}px`;
             node.style.height = `${h}px`;
             node.style.opacity = "1";
+            node.style.display = "";
 
             requestAnimationFrameRef.current = requestAnimationFrame(tick);
         },
-        [hoveredId],
+        [hoveredId, hoveredArea],
     );
 
     React.useEffect(() => {
