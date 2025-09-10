@@ -43,13 +43,11 @@ export function GroupDropOverlay({ containerEl, scrollEl, hoveredId, hoveredArea
         const hostRect = host.getBoundingClientRect();
         const groupRect = group.getBoundingClientRect();
 
-        const left = Math.max(0, groupRect.left - hostRect.left);
+        const left = Math.max(0, groupRect.left - hostRect.left + host.scrollLeft);
         const top = Math.max(0, groupRect.top - hostRect.top + host.scrollTop);
-        const right = Math.min(hostRect.width, groupRect.right - hostRect.left);
-        const bottom = Math.min(hostRect.height, groupRect.bottom - hostRect.top + host.scrollTop);
 
-        const w = Math.max(0, Math.round(right - left)) - 1;
-        const h = Math.max(0, Math.round(bottom - top));
+        const w = Math.max(0, groupRect.width);
+        const h = Math.max(0, groupRect.height);
         const x = Math.round(left);
         const y = Math.round(top);
 

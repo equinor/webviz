@@ -15,7 +15,6 @@ export function DropIndicatorOverlay(props: DropIndicatorOverlayProps) {
     if (!target) return null;
 
     const scrollRect = props.scrollEl.getBoundingClientRect();
-    const containerRect = props.containerEl.getBoundingClientRect();
     const targetRect = target.getBoundingClientRect();
 
     let top =
@@ -27,15 +26,12 @@ export function DropIndicatorOverlay(props: DropIndicatorOverlayProps) {
         const content = target.querySelector<HTMLElement>("[data-sortable-list-group-content]");
         if (content) {
             const contentRect = content.getBoundingClientRect();
-            top = contentRect.top - scrollRect.top;
+            top = contentRect.top - scrollRect.top + props.scrollEl.scrollTop;
         }
     }
 
-    const left = containerRect.left - scrollRect.left;
-    const width = containerRect.width - 1;
-
-    if (top > scrollRect.height) return null;
-    if (top < 0) return null;
+    const left = targetRect.left - scrollRect.left + props.scrollEl.scrollLeft;
+    const width = props.scrollEl.clientWidth;
 
     return createPortal(
         <div
