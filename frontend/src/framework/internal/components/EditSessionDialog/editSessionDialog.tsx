@@ -1,5 +1,7 @@
 import React from "react";
 
+import { isEqual } from "lodash";
+
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import type { WorkbenchSessionMetadata } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
@@ -10,7 +12,6 @@ import { Dialog } from "@lib/components/Dialog";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { isEqual } from "lodash";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
 
@@ -52,12 +53,6 @@ export function EditSessionDialog(props: EditSessionDialogProps): React.ReactNod
             setInputFeedback((prev) => ({ ...prev, title: undefined }));
         }
 
-        if (description.trim() === "") {
-            setInputFeedback((prev) => ({ ...prev, description: "Description is required." }));
-            return;
-        } else {
-            setInputFeedback((prev) => ({ ...prev, description: undefined }));
-        }
         props.workbench.getWorkbenchSession().updateMetadata({ title, description });
         props.workbench
             .saveCurrentSession()
@@ -112,7 +107,7 @@ export function EditSessionDialog(props: EditSessionDialogProps): React.ReactNod
                             )}
                         </>
                     </Label>
-                    <Label text="Description">
+                    <Label text="Description (optional)">
                         <>
                             <Input
                                 placeholder="Enter session description"

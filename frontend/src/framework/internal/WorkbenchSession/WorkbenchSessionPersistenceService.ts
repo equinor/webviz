@@ -234,10 +234,8 @@ export class WorkbenchSessionPersistenceService
         this._lastPersistedMs = null;
         this._lastModifiedMs = 0;
 
-        if (this._pullDebounceTimeout) {
-            clearTimeout(this._pullDebounceTimeout);
-            this._pullDebounceTimeout = null;
-        }
+        this.maybeClearPullDebounceTimeout();
+
         this._pullCounter++;
         this._pullInProgress = false;
 
@@ -311,10 +309,15 @@ export class WorkbenchSessionPersistenceService
         }
     }
 
-    private schedulePullFullSessionState(delay: number = 200) {
+    private maybeClearPullDebounceTimeout() {
         if (this._pullDebounceTimeout) {
             clearTimeout(this._pullDebounceTimeout);
+            this._pullDebounceTimeout = null;
         }
+    }
+
+    private schedulePullFullSessionState(delay: number = 200) {
+        this.maybeClearPullDebounceTimeout();
 
         this._pullDebounceTimeout = setTimeout(() => {
             this._pullDebounceTimeout = null;
@@ -377,6 +380,10 @@ export class WorkbenchSessionPersistenceService
             throw new Error("Current state string is not set. Cannot persist session state.");
         }
 
+        // Make sure we pull the latest session before we save
+        this.maybeClearPullDebounceTimeout();
+        await this.pullFullSessionState();
+
         const metadata = this._workbenchSession.getMetadata();
         const id = this._workbenchSession.getId();
         const toastId = toast.loading("Persisting session state...");
@@ -411,6 +418,10 @@ export class WorkbenchSessionPersistenceService
                     description: metadata.description ?? null,
                     content: objectToJsonString(this._workbenchSession.getContent()),
                 });
+
+                // ! Make sure you remove the localStorage backup BEFORE you store the new session id
+                this.removeFromLocalStorage();
+
                 this._workbenchSession.setId(id);
                 toast.dismiss(toastId);
                 toast.success("Session successfully created and persisted.");

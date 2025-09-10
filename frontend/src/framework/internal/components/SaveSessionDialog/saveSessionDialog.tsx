@@ -108,7 +108,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                             )}
                         </>
                     </Label>
-                    <Label text="Description">
+                    <Label text="Description (optional)">
                         <>
                             <Input
                                 placeholder="Enter session description"
