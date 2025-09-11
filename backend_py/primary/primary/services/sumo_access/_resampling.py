@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from typing import Dict
-from datetime import date
 
 import numpy as np
 import pyarrow as pa
@@ -9,13 +8,13 @@ from ._field_metadata import is_rate_from_field_meta
 from .summary_types import Frequency
 
 
-def _truncate_day_to_monday(datetime_day: np.datetime64) -> np.datetime64[date]:
+def _truncate_day_to_monday(datetime_day: np.datetime64) -> np.datetime64:
     # A bit hackish, utilizes the fact that datetime64 is relative to epoch
     # 1970-01-01 which is a Thursday
     return datetime_day.astype("datetime64[W]").astype("datetime64[D]") + 4
 
 
-def _quarter_start_month(datetime_day: np.datetime64) -> np.datetime64[date]:
+def _quarter_start_month(datetime_day: np.datetime64) -> np.datetime64:
     # A bit hackish, utilizes the fact that datetime64 is relative to epoch
     # 1970-01-01 which is the first day in Q1.
     datetime_month = np.datetime64(str(datetime_day), "M")
@@ -27,6 +26,9 @@ def generate_normalized_sample_dates(min_date: np.datetime64, max_date: np.datet
     Returns array of normalized sample dates to cover the min_date to max_date range with the specified frequency.
     The return numpy array will have sample dates with dtype datetime64[ms]
     """
+    # Define generic types to avoid type conflicts further down
+    start: np.datetime64
+    stop: np.datetime64
 
     if freq == Frequency.DAILY:
         start = np.datetime64(str(min_date), "D")

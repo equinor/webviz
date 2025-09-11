@@ -67,10 +67,12 @@ class RftAccess:
         timer.record_lap("load_aggregated_arrow_table")
 
         rft_well_infos: list[RftWellInfo] = []
-        well_names = table["WELL"].unique().tolist()
+        well_names = table["WELL"].unique().to_pylist()
 
         for well_name in well_names:
-            well_table = table.filter(pc.equal(table["WELL"], well_name))
+            assert well_name is not None  # Shouldn't trigger, but to_pylist is typed as list[<v> | None]
+
+            well_table = table.filter(pc.equal(table["WELL"], pa.scalar(well_name)))
             timestamps_utc_ms = sorted(list(set(well_table["DATE"].to_numpy().astype(int).tolist())))
 
             rft_well_infos.append(RftWellInfo(well_name=well_name, timestamps_utc_ms=timestamps_utc_ms))
@@ -101,7 +103,7 @@ class RftAccess:
             mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
             table = table.filter(mask)
 
-        mask = pc.equal(table["WELL"], well_name)
+        mask = pc.equal(table["WELL"], pa.scalar(well_name))
         table = table.filter(mask)
         if timestamps_utc_ms is not None:
             mask = pc.is_in(table["DATE"], value_set=pa.array(timestamps_utc_ms))
