@@ -1,3 +1,9 @@
+"""
+This file contains general utility functions for the Inplace Volumetrics provider
+
+The methods can be used to calculate, aggregate and create data for the Inplace Volumetrics provider
+"""
+
 from typing import Callable
 
 import numpy as np
@@ -15,12 +21,6 @@ from primary.services.sumo_access.deprecated_inplace_volumetrics_types import (
 )
 
 from primary.services.sumo_access.deprecated_inplace_volumetrics_access import DEPRECATED_InplaceVolumetricsAccess
-
-"""
-This file contains general utility functions for the Inplace Volumetrics provider
-
-The methods can be used to calculate, aggregate and create data for the Inplace Volumetrics provider
-"""
 
 
 def get_valid_result_names_from_list(result_names: list[str]) -> list[str]:

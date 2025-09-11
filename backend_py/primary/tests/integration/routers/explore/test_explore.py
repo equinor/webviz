@@ -2,7 +2,7 @@ from primary.routers.explore import router
 from primary.routers.explore import schemas
 
 
-async def test_get_fields(test_user, sumo_test_ensemble_ahm) -> None:
+async def test_get_fields(test_user: object, sumo_test_ensemble_ahm: object) -> None:
     fields = await router.get_fields(test_user)
     assert all(isinstance(f, schemas.FieldInfo) for f in fields)
     assert any(f.fieldIdentifier == sumo_test_ensemble_ahm.field_identifier for f in fields)

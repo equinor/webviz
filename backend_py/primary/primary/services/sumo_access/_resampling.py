@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Dict
+from datetime import date
 
 import numpy as np
 import pyarrow as pa
@@ -8,16 +9,16 @@ from ._field_metadata import is_rate_from_field_meta
 from .summary_types import Frequency
 
 
-def _truncate_day_to_monday(datetime_day: np.datetime64) -> np.datetime64:
+def _truncate_day_to_monday(datetime_day: np.datetime64) -> np.datetime64[date]:
     # A bit hackish, utilizes the fact that datetime64 is relative to epoch
     # 1970-01-01 which is a Thursday
     return datetime_day.astype("datetime64[W]").astype("datetime64[D]") + 4
 
 
-def _quarter_start_month(datetime_day: np.datetime64) -> np.datetime64:
+def _quarter_start_month(datetime_day: np.datetime64) -> np.datetime64[date]:
     # A bit hackish, utilizes the fact that datetime64 is relative to epoch
     # 1970-01-01 which is the first day in Q1.
-    datetime_month = np.datetime64(datetime_day, "M")
+    datetime_month = np.datetime64(str(datetime_day), "M")
     return datetime_month - (datetime_month.astype(int) % 3)
 
 
@@ -28,22 +29,22 @@ def generate_normalized_sample_dates(min_date: np.datetime64, max_date: np.datet
     """
 
     if freq == Frequency.DAILY:
-        start = np.datetime64(min_date, "D")
-        stop = np.datetime64(max_date, "D")
+        start = np.datetime64(str(min_date), "D")
+        stop = np.datetime64(str(max_date), "D")
         if stop < max_date:
             stop += 1
         sampledates = np.arange(start, stop + 1)
     elif freq == Frequency.WEEKLY:
-        start = _truncate_day_to_monday(np.datetime64(min_date, "D"))
-        stop = _truncate_day_to_monday(np.datetime64(max_date, "D"))
+        start = _truncate_day_to_monday(np.datetime64(str(min_date), "M"))
+        stop = _truncate_day_to_monday(np.datetime64(str(max_date), "D"))
         if start > min_date:
             start -= 7
         if stop < max_date:
             stop += 7
         sampledates = np.arange(start, stop + 1, 7)
     elif freq == Frequency.MONTHLY:
-        start = np.datetime64(min_date, "M")
-        stop = np.datetime64(max_date, "M")
+        start = np.datetime64(str(min_date), "M")
+        stop = np.datetime64(str(max_date), "M")
         if stop < max_date:
             stop += 1
         sampledates = np.arange(start, stop + 1)
@@ -54,8 +55,8 @@ def generate_normalized_sample_dates(min_date: np.datetime64, max_date: np.datet
             stop += 3
         sampledates = np.arange(start, stop + 1, 3)
     elif freq == Frequency.YEARLY:
-        start = np.datetime64(min_date, "Y")
-        stop = np.datetime64(max_date, "Y")
+        start = np.datetime64(str(min_date), "Y")
+        stop = np.datetime64(str(max_date), "Y")
         if stop < max_date:
             stop += 1
         sampledates = np.arange(start, stop + 1)
