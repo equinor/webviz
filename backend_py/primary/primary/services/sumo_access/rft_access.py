@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, cast
 
 import pyarrow as pa
 import pyarrow.compute as pc
@@ -67,11 +67,10 @@ class RftAccess:
         timer.record_lap("load_aggregated_arrow_table")
 
         rft_well_infos: list[RftWellInfo] = []
-        well_names = table["WELL"].unique().to_pylist()
+        # ! We assume that list never has None
+        well_names = cast(list[str], table["WELL"].unique().to_pylist())
 
         for well_name in well_names:
-            assert well_name is not None  # Shouldn't trigger, but to_pylist is typed as list[<v> | None]
-
             well_table = table.filter(pc.equal(table["WELL"], pa.scalar(well_name)))
             timestamps_utc_ms = sorted(list(set(well_table["DATE"].to_numpy().astype(int).tolist())))
 
