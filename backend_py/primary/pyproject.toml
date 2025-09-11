@@ -19,7 +19,7 @@ pyarrow = "^19.0.0"
 python-dotenv = "^1.1.0"
 pyjwt = "^2.6.0"
 pydantic = "^2.3.0"
-numpy = "^2.3.2"
+numpy = "^2.2.0"
 orjson = "^3.8.10"
 pandas = { version = "^2.0.1", extras = ["performance"] }
 httpx = "^0.28.1"
