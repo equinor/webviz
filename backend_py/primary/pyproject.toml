@@ -15,7 +15,7 @@ uvicorn = "^0.35.0"
 msal = "^1.32.0"
 starsessions = "^2.2.1"
 redis = "^4.6.0"
-pyarrow = "^19.0.0"
+pyarrow = "^21.0.0"
 python-dotenv = "^1.1.0"
 pyjwt = "^2.6.0"
 pydantic = "^2.3.0"
@@ -60,6 +60,7 @@ types-redis = "^4.6.0"
 pytest-timeout = "^2.3.1"
 pytest-asyncio = "^1.1.0"
 astroid = "^3.3.11"
+pyarrow-stubs = "^20.0.0.20250825"
 
 
 [build-system]
