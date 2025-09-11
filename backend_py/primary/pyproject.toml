@@ -2,7 +2,7 @@
 name = "primary"
 authors = [{ name = "R&T Equinor" }, { name = "Ceetron Solutions AS" }]
 readme = "README.md"
-requires-python = "^3.11"
+requires-python = "^3.13"
 dynamic = ["dependencies"]
 
 [tool.poetry]
