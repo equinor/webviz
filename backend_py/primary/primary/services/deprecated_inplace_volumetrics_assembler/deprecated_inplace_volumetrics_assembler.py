@@ -78,6 +78,7 @@ class DEPRECATED_InplaceVolumetricsAssembler:
     def __init__(self, inplace_volumetrics_access: DEPRECATED_InplaceVolumetricsAccess):
         self._inplace_volumetrics_access = inplace_volumetrics_access
 
+    # pylint: disable=too-many-locals
     async def get_volumetric_table_metadata_async(self) -> list[InplaceVolumetricsTableDefinition]:
         vol_table_names = await self._inplace_volumetrics_access.get_inplace_volumetrics_table_names_async()
 

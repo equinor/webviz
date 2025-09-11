@@ -206,7 +206,7 @@ def create_grouped_statistical_result_table_data_polars(
         # Only keep the result name columns and its statistics (i.e. keep no identifier columns)
         per_group_statistical_df = result_df.select(statistic_aggregation_expressions)
     else:
-        group_by_identifier_values = list(set([elm.value for elm in group_by_identifiers]))
+        group_by_identifier_values = list({elm.value for elm in group_by_identifiers})
         # Perform aggregation per grouping
         per_group_statistical_df = (
             result_df.select(group_by_identifier_values + valid_result_names)

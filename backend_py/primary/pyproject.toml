@@ -43,7 +43,6 @@ polars = "~1.33.0"
 fmu-datamodels = "0.14.0"
 
 
-
 [tool.poetry.group.overrides.dependencies]
 # The `numba` dependency in `pandas` is a bit too loose, so it ends up pulling a release-candidate branch if we don't pin it
 numba = "0.61.2"
@@ -87,6 +86,10 @@ min-public-methods = 0
 max-args = 9
 max-locals = 19
 max-branches = 14
+
+# Reverts fixme to previous behavior (allowing TODO)
+notes = ["FIXME", "XXX"]
+
 
 [tool.mypy]
 ignore_missing_imports = true
