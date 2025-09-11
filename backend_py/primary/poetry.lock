@@ -833,14 +833,14 @@ files = [
 
 [[package]]
 name = "fmu-datamodels"
-version = "0.0.1"
+version = "0.14.0"
 description = "FMU data standard, including models and schemas"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
 files = [
-    {file = "fmu_datamodels-0.0.1-py3-none-any.whl", hash = "sha256:60ba07b91c486c6a2f27bd35089c13c418e856ca2f78a6d9b3e5b62d733d25c2"},
-    {file = "fmu_datamodels-0.0.1.tar.gz", hash = "sha256:ac42873ef5691474fe003f5b6dbe52ac232586a3d27aacc2ad430e7f27ffe1ba"},
+    {file = "fmu_datamodels-0.14.0-py3-none-any.whl", hash = "sha256:bca37b0a7297eee6062bdd21ffce0141f8d29b87689d961d725bf44b1676ea1e"},
+    {file = "fmu_datamodels-0.14.0.tar.gz", hash = "sha256:bfef13c8921098c5ef79115f0a281908fcbc7cd22d9288bf252eb2ebdcbceaec"},
 ]
 
 [package.dependencies]
@@ -4083,4 +4083,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "8a1056b6aee572626e02c896e6b76c8a77bb3c4c4253e0568d70f2b6b2cdb114"
+content-hash = "0180048c46db7648ecbd9fabebf730e5973713532f7affd38b9b2420547cab18"

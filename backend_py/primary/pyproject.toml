@@ -34,10 +34,20 @@ xtgeo = "^4.11.0"
 core_utils = { path = "../libs/core_utils", develop = true }
 server_schemas = { path = "../libs/server_schemas", develop = true }
 
-# Polars does breaking changes in minor versions
+
+# Special cases
+### Polars does breaking changes in minor versions
 polars = "~1.33.0"
 
-fmu-datamodels = "0.0.1"
+### Might change model fields in minor updates, so pinned for stability 
+fmu-datamodels = "0.14.0"
+
+
+
+[tool.poetry.group.overrides.dependencies]
+# The `numba` dependency in `pandas` is a bit too loose, so it ends up pulling a release-candidate branch if we don't pin it
+numba = "0.61.2"
+
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"
