@@ -164,7 +164,7 @@ async def get_seismic_slices(
     depth_slice_number: int = Query(description="Depth slice number"),
 ) -> Tuple[schemas.SeismicSliceData, schemas.SeismicSliceData, schemas.SeismicSliceData]:
     """Get a seismic depth slice from a seismic cube."""
-    seismic_access = SeismicAccess.from_iteration_name(
+    seismic_access = SeismicAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
