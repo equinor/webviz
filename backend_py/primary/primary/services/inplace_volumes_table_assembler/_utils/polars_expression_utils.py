@@ -1,3 +1,7 @@
+"""
+This file contains general utility functions for polars DataFrame utils
+"""
+
 import numpy as np
 import polars as pl
 
@@ -6,10 +10,6 @@ from primary.services.sumo_access.inplace_volumes_table_types import (
     Property,
     InplaceVolumes,
 )
-
-"""
-This file contains general utility functions for polars DataFrame utils
-"""
 
 
 def create_named_expression_with_nan_for_inf(expr: pl.Expr, name: str) -> pl.Expr:

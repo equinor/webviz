@@ -1,7 +1,6 @@
 from astroid import nodes
 
 from pylint.checkers import BaseChecker
-from pylint.interfaces import IAstroidChecker
 from pylint.lint import PyLinter
 
 
@@ -10,7 +9,6 @@ FAST_API_ROUTER_DECORATOR = "fastapi.routing.APIRouter.api_route.decorator"
 
 
 class AsyncSuffixChecker(BaseChecker):
-    __implements__ = IAstroidChecker
 
     name = "async-suffix"
     msgs = {

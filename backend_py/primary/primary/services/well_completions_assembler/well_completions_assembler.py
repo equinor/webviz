@@ -112,7 +112,9 @@ class WellCompletionsAssembler:
         }
 
         # Create date index column, for faster access to date index
-        date_index_column_expression = pl.col("DATE").map_elements(date_to_index_map.get).alias("DATE_INDEX")
+        date_index_column_expression = (
+            pl.col("DATE").map_elements(date_to_index_map.get, return_dtype=pl.Int64).alias("DATE_INDEX")
+        )
         self._well_completions_df = self._well_completions_df.with_columns(date_index_column_expression)
 
     def create_well_completions_data(self) -> WellCompletionsData:

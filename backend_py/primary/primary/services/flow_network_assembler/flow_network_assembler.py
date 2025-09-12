@@ -970,9 +970,9 @@ def _create_network_node(
             data = nan_array
 
         if info.EDGE_NODE == EdgeOrNode.EDGE:
-            edge_data[datatype] = data
+            edge_data[datatype] = list(data)
         else:
-            node_data[datatype] = data
+            node_data[datatype] = list(data)
 
     # children = [], and are added below after each node is created, to prevent recursive search
     return NetworkNode(
