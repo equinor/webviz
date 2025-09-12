@@ -4,12 +4,9 @@ import { AddCircle, Delete, Report } from "@mui/icons-material";
 
 import type { EnsembleParameters } from "@framework/EnsembleParameters";
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
-import type {
-    DiscreteParameterValueSelection,
-    NumberRange,
-    ParameterValueSelection,
-} from "@framework/types/realizationFilterTypes";
+import type { DiscreteParameterValueSelection, ParameterValueSelection } from "@framework/types/realizationFilterTypes";
 import { isArrayOfNumbers, isArrayOfStrings } from "@framework/utils/arrayUtils";
+import type { NumberRange } from "@framework/utils/numberUtils";
 import {
     isValueSelectionAnArrayOfNumber,
     isValueSelectionAnArrayOfString,

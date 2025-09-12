@@ -23,7 +23,7 @@ ModuleRegistry.registerModule<InterfaceTypes>({
     preview,
 
     category: ModuleCategory.MAIN,
-    devState: ModuleDevState.DEV,
+    devState: ModuleDevState.PROD,
 
     syncableSettingKeys: [SyncSettingKey.INTERSECTION, SyncSettingKey.VERTICAL_SCALE],
     onInstanceUnload(instanceId) {

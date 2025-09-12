@@ -1,13 +1,9 @@
 import { isEqual, range } from "lodash";
 
-import type {
-    NumberRange,
-    ParameterValueSelection,
-    RealizationNumberSelection,
-} from "@framework/types/realizationFilterTypes";
-
+import type { ParameterValueSelection, RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 
 import { isArrayOfNumbers, isArrayOfStrings } from "./arrayUtils";
+import type { NumberRange } from "./numberUtils";
 
 /**
  * Check if value selection is a number range

@@ -1,9 +1,9 @@
 from enum import Enum
-import datetime
 import logging
 from dataclasses import dataclass
 
 from sumo.wrapper import SumoClient
+from webviz_pkg.core_utils.timestamp_utils import timestamp_utc_ms_to_iso_str_strip_tz
 
 LOGGER = logging.getLogger(__name__)
 
@@ -40,23 +40,23 @@ class TimePoint:
 
 
 class RealizationSurfQueries:
-    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, ensemble_name: str):
         self._sumo_client: SumoClient = sumo_client
         self._case_uuid: str = case_uuid
-        self._iteration_name: str = iteration_name
+        self._ensemble_name: str = ensemble_name
 
     async def find_surf_info_async(self, time_type: SurfTimeType) -> list[SurfInfo]:
-        query_dict = _build_realization_surfs_query_dict(self._case_uuid, self._iteration_name, time_type)
+        query_dict = _build_realization_surfs_query_dict(self._case_uuid, self._ensemble_name, time_type)
         ret_arr = await _run_query_and_aggregate_surf_info_async(self._sumo_client, query_dict=query_dict)
         return ret_arr
 
     async def find_surf_time_points_async(self) -> list[TimePoint]:
-        query_dict = _build_realization_surfs_query_dict(self._case_uuid, self._iteration_name, SurfTimeType.TIME_POINT)
+        query_dict = _build_realization_surfs_query_dict(self._case_uuid, self._ensemble_name, SurfTimeType.TIME_POINT)
         ret_arr = await _run_query_and_aggregate_time_points_async(self._sumo_client, query_dict=query_dict)
         return ret_arr
 
     async def find_surf_time_intervals_async(self) -> list[TimeInterval]:
-        query_dict = _build_realization_surfs_query_dict(self._case_uuid, self._iteration_name, SurfTimeType.INTERVAL)
+        query_dict = _build_realization_surfs_query_dict(self._case_uuid, self._ensemble_name, SurfTimeType.INTERVAL)
         ret_arr = await _run_query_and_aggregate_time_intervals_async(self._sumo_client, query_dict=query_dict)
         return ret_arr
 
@@ -83,14 +83,14 @@ class ObservedSurfQueries:
 
 
 # --------------------------------------------------------------------------------------
-def _build_realization_surfs_query_dict(case_uuid: str, iteration_name: str, time_type: SurfTimeType) -> dict:
+def _build_realization_surfs_query_dict(case_uuid: str, ensemble_name: str, time_type: SurfTimeType) -> dict:
     must_arr: list[dict] = []
     should_arr: list[dict] = []
     must_not_arr: list[dict] = []
 
     must_arr.append({"term": {"class.keyword": "surface"}})
     must_arr.append({"term": {"_sumo.parent_object.keyword": case_uuid}})
-    must_arr.append({"term": {"fmu.iteration.name.keyword": iteration_name}})
+    must_arr.append({"term": {"fmu.ensemble.name.keyword": ensemble_name}})
     must_arr.append({"term": {"data.is_observation": False}})
     must_arr.append({"term": {"data.format": "irap_binary"}})
     must_arr.append({"exists": {"field": "fmu.realization.id"}})
@@ -132,7 +132,8 @@ def _build_observed_surfs_query_dict(case_uuid: str, time_type: SurfTimeType) ->
     must_arr.append({"term": {"fmu.context.stage.keyword": "case"}})
     must_arr.append({"term": {"data.is_observation": True}})
     must_arr.append({"term": {"data.format": "irap_binary"}})
-    must_not_arr.append({"exists": {"field": "fmu.iteration.name.keyword"}})
+    must_not_arr.append({"exists": {"field": "fmu.ensemble.name.keyword"}})
+    must_not_arr.append({"exists": {"field": "fmu.iteration.name.keyword"}})  # Do we still need/want this?
     must_not_arr.append({"exists": {"field": "fmu.realization.id"}})
 
     if time_type == SurfTimeType.TIME_POINT:
@@ -242,8 +243,8 @@ async def _run_query_and_aggregate_time_intervals_async(
     for bucket in response_dict["aggregations"]["unique_time_intervals"]["buckets"]:
         t0_ms = bucket["key"]["k_t0"]
         t1_ms = bucket["key"]["k_t1"]
-        t0_isostr = _timestamp_utc_ms_to_iso_str(t0_ms)
-        t1_isostr = _timestamp_utc_ms_to_iso_str(t1_ms)
+        t0_isostr = timestamp_utc_ms_to_iso_str_strip_tz(t0_ms, False)
+        t1_isostr = timestamp_utc_ms_to_iso_str_strip_tz(t1_ms, False)
         ret_arr.append(TimeInterval(t0_ms=t0_ms, t1_ms=t1_ms, t0_isostr=t0_isostr, t1_isostr=t1_isostr))
 
     return ret_arr
@@ -274,17 +275,10 @@ async def _run_query_and_aggregate_time_points_async(sumo_client: SumoClient, qu
     ret_arr: list[TimePoint] = []
     for bucket in response_dict["aggregations"]["unique_time_points"]["buckets"]:
         t0_ms = bucket["key"]["k_t0"]
-        t0_isostr = _timestamp_utc_ms_to_iso_str(t0_ms)
+        t0_isostr = timestamp_utc_ms_to_iso_str_strip_tz(t0_ms, False)
         ret_arr.append(TimePoint(t0_ms=t0_ms, t0_isostr=t0_isostr))
 
     return ret_arr
-
-
-# --------------------------------------------------------------------------------------
-def _timestamp_utc_ms_to_iso_str(timestamp_utc_ms: int) -> str:
-    isostr = datetime.datetime.fromtimestamp(timestamp_utc_ms / 1000, datetime.timezone.utc).isoformat()
-    isostr = isostr.replace("+00:00", "")
-    return isostr
 
 
 # --------------------------------------------------------------------------------------
