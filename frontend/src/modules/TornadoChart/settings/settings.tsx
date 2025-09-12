@@ -205,7 +205,7 @@ export function Settings({
                     <Checkbox
                         checked={hideZeroY}
                         onChange={handleHideZeroYChange}
-                        label="Show sensitivities without impact"
+                        label="Hide sensitivities without impact"
                     />
                     <Checkbox
                         checked={showLabels}
