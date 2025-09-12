@@ -1,17 +1,15 @@
 import { KeyKind } from "@framework/DataChannelTypes";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
-import { TemplateRegistry } from "@framework/TemplateRegistry";
-import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
+import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
 import { ChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
-import { PlotType as CrossPlotType } from "@modules/ParameterResponseCrossPlot/typesAndEnums";
 
 const template: Template = {
+    name: "Parameter Analysis of Inplace Volumes",
     description: "Inplace volumes overview correlated against input parameters",
     moduleInstances: [
-        {
-            instanceRef: "MainInplaceVolumesPlotInstance",
-            moduleName: "InplaceVolumesPlot",
+        createTemplateModuleInstance("InplaceVolumesPlot", {
+            instanceRef: "MainInplaceVolumetricsPlotInstance",
             layout: {
                 relHeight: 0.4,
                 relWidth: 0.5,
@@ -19,13 +17,14 @@ const template: Template = {
                 relY: 0,
             },
             syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER],
-            initialSettings: {
-                selectedIndexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
+            /*
+            initialState: {
+                selectedIdentifierValueCriteria: IdentifierValueCriteria.ALLOW_INTERSECTION,
             },
-        },
-        {
-            instanceRef: "MainInplaceVolumesTableInstance2",
-            moduleName: "InplaceVolumesTable",
+            */
+        }),
+        createTemplateModuleInstance("InplaceVolumesTable", {
+            instanceRef: "MainInplaceVolumetricsTableInstance2",
             layout: {
                 relHeight: 0.2,
                 relWidth: 1,
@@ -33,13 +32,14 @@ const template: Template = {
                 relY: 0.8,
             },
             syncedSettings: [SyncSettingKey.INPLACE_VOLUMES_FILTER],
-            initialSettings: {
-                selectedIndexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
+            /*
+            initialState: {
+                selectedIdentifierValueCriteria: IdentifierValueCriteria.ALLOW_INTERSECTION,
             },
-        },
-        {
+            */
+        }),
+        createTemplateModuleInstance("TornadoChart", {
             instanceRef: "MyParameterResponseCrossPlotInstance",
-            moduleName: "ParameterResponseCrossPlot",
             layout: {
                 relHeight: 0.4,
                 relWidth: 0.5,
@@ -54,15 +54,16 @@ const template: Template = {
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,
                 },
             },
-            initialSettings: {
+            /*
+            initialState: {
                 plotType: CrossPlotType.ParameterResponseCrossPlot,
                 crossPlottingType: KeyKind.REALIZATION,
             },
+            */
             syncedSettings: [SyncSettingKey.PARAMETER],
-        },
-        {
-            instanceRef: "MyParameterResponseCorrelationBarPlotInstance",
-            moduleName: "ParameterResponseCorrelationBarPlot",
+        }),
+        createTemplateModuleInstance("ParameterResponseCorrelationBarPlot", {
+            instanceRef: "MyParameterCorrelationPlotInstance",
             layout: {
                 relHeight: 0.8,
                 relWidth: 0.5,
@@ -77,14 +78,16 @@ const template: Template = {
                     channelIdString: ChannelIds.RESPONSE_PER_REAL,
                 },
             },
-            initialSettings: {
+            /*
+            initialState: {
                 crossPlottingType: KeyKind.REALIZATION,
                 showLabels: true,
                 numParams: 10,
             },
+            */
             syncedSettings: [SyncSettingKey.PARAMETER],
-        },
+        }),
     ],
 };
 
-TemplateRegistry.registerTemplate("Correlations between input parameters and inplace volumes", template);
+TemplateRegistry.registerTemplate(template);

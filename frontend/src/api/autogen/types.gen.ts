@@ -391,6 +391,18 @@ export type NetworkNode_api = {
     children: Array<NetworkNode_api>;
 };
 
+export type NewSession_api = {
+    title: string;
+    description: string | null;
+    content: string;
+};
+
+export type NewSnapshot_api = {
+    title: string;
+    description: string | null;
+    content: string;
+};
+
 export enum NodeType_api {
     PROD = "prod",
     INJ = "inj",
@@ -674,6 +686,80 @@ export type SeismicSliceData_api = {
 export enum SensitivityType_api {
     MONTECARLO = "montecarlo",
     SCENARIO = "scenario",
+}
+
+export type SessionDocument_api = {
+    id: string;
+    ownerId: string;
+    metadata: SessionMetadata_api;
+    content: string;
+};
+
+export type SessionMetadata_api = {
+    title: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
+    version: number;
+    hash: string;
+};
+
+export type SessionMetadataWithId_api = {
+    id: string;
+    title: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
+    version: number;
+};
+
+export type SessionUpdate_api = {
+    id: string;
+    metadata: SessionUserEditableMetadata_api;
+    content: string;
+};
+
+export type SessionUserEditableMetadata_api = {
+    title: string;
+    description?: string | null;
+};
+
+export type Snapshot_api = {
+    id: string;
+    metadata: SnapshotMetadata_api;
+    content: string;
+};
+
+export type SnapshotAccessLog_api = {
+    visitorId: string;
+    snapshotId: string;
+    visits: number;
+    firstVisitedAt: string | null;
+    lastVisitedAt: string | null;
+    snapshotMetadata: SnapshotMetadata_api;
+};
+
+export type SnapshotMetadata_api = {
+    ownerId: string;
+    title: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
+    hash: string;
+};
+
+export type SnapshotUpdate_api = {
+    metadata: SnapshotUserEditableMetadata_api;
+};
+
+export type SnapshotUserEditableMetadata_api = {
+    title: string;
+    description?: string | null;
+};
+
+export enum SortDirection_api {
+    ASC = "asc",
+    DESC = "desc",
 }
 
 export enum StatisticFunction_api {
@@ -1160,6 +1246,21 @@ export type WellboreTrajectory_api = {
     northingArr: Array<number>;
 };
 
+export enum PrimaryServicesDatabaseAccessSessionAccessTypesSortBy_api {
+    CREATED_AT = "created_at",
+    UPDATED_AT = "updated_at",
+    TITLE = "title",
+    TITLE_LOWER = "title_lower",
+}
+
+export enum PrimaryServicesDatabaseAccessSnapshotAccessTypesSortBy_api {
+    CREATED_AT = "created_at",
+    UPDATED_AT = "updated_at",
+    TITLE = "title",
+    TITLE_LOWER = "title_lower",
+    LAST_VISITED_AT = "last_visited_at",
+}
+
 export type GetFieldsData_api = {
     body?: never;
     path?: never;
@@ -1384,7 +1485,8 @@ export type GetDeltaEnsembleVectorListErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetDeltaEnsembleVectorListError_api = GetDeltaEnsembleVectorListErrors_api[keyof GetDeltaEnsembleVectorListErrors_api];
+export type GetDeltaEnsembleVectorListError_api =
+    GetDeltaEnsembleVectorListErrors_api[keyof GetDeltaEnsembleVectorListErrors_api];
 
 export type GetDeltaEnsembleVectorListResponses_api = {
     /**
@@ -1432,7 +1534,8 @@ export type GetRealizationsVectorDataErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetRealizationsVectorDataError_api = GetRealizationsVectorDataErrors_api[keyof GetRealizationsVectorDataErrors_api];
+export type GetRealizationsVectorDataError_api =
+    GetRealizationsVectorDataErrors_api[keyof GetRealizationsVectorDataErrors_api];
 
 export type GetRealizationsVectorDataResponses_api = {
     /**
@@ -1572,7 +1675,8 @@ export type GetHistoricalVectorDataErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetHistoricalVectorDataError_api = GetHistoricalVectorDataErrors_api[keyof GetHistoricalVectorDataErrors_api];
+export type GetHistoricalVectorDataError_api =
+    GetHistoricalVectorDataErrors_api[keyof GetHistoricalVectorDataErrors_api];
 
 export type GetHistoricalVectorDataResponses_api = {
     /**
@@ -1581,7 +1685,8 @@ export type GetHistoricalVectorDataResponses_api = {
     200: VectorHistoricalData_api;
 };
 
-export type GetHistoricalVectorDataResponse_api = GetHistoricalVectorDataResponses_api[keyof GetHistoricalVectorDataResponses_api];
+export type GetHistoricalVectorDataResponse_api =
+    GetHistoricalVectorDataResponses_api[keyof GetHistoricalVectorDataResponses_api];
 
 export type GetStatisticalVectorDataData_api = {
     body?: never;
@@ -1623,7 +1728,8 @@ export type GetStatisticalVectorDataErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetStatisticalVectorDataError_api = GetStatisticalVectorDataErrors_api[keyof GetStatisticalVectorDataErrors_api];
+export type GetStatisticalVectorDataError_api =
+    GetStatisticalVectorDataErrors_api[keyof GetStatisticalVectorDataErrors_api];
 
 export type GetStatisticalVectorDataResponses_api = {
     /**
@@ -2084,7 +2190,8 @@ export type PostGetSurfaceIntersectionErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type PostGetSurfaceIntersectionError_api = PostGetSurfaceIntersectionErrors_api[keyof PostGetSurfaceIntersectionErrors_api];
+export type PostGetSurfaceIntersectionError_api =
+    PostGetSurfaceIntersectionErrors_api[keyof PostGetSurfaceIntersectionErrors_api];
 
 export type PostGetSurfaceIntersectionResponses_api = {
     /**
@@ -2237,7 +2344,8 @@ export type GetMisfitSurfaceDataResponses_api = {
     200: Array<SurfaceDataFloat_api>;
 };
 
-export type GetMisfitSurfaceDataResponse_api = GetMisfitSurfaceDataResponses_api[keyof GetMisfitSurfaceDataResponses_api];
+export type GetMisfitSurfaceDataResponse_api =
+    GetMisfitSurfaceDataResponses_api[keyof GetMisfitSurfaceDataResponses_api];
 
 export type DeprecatedGetStratigraphicUnitsData_api = {
     body?: never;
@@ -2764,7 +2872,8 @@ export type GetRealizationFlowNetworkErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetRealizationFlowNetworkError_api = GetRealizationFlowNetworkErrors_api[keyof GetRealizationFlowNetworkErrors_api];
+export type GetRealizationFlowNetworkError_api =
+    GetRealizationFlowNetworkErrors_api[keyof GetRealizationFlowNetworkErrors_api];
 
 export type GetRealizationFlowNetworkResponses_api = {
     /**
@@ -2852,7 +2961,8 @@ export type GetWellCompletionsDataResponses_api = {
     200: WellCompletionsData_api;
 };
 
-export type GetWellCompletionsDataResponse_api = GetWellCompletionsDataResponses_api[keyof GetWellCompletionsDataResponses_api];
+export type GetWellCompletionsDataResponse_api =
+    GetWellCompletionsDataResponses_api[keyof GetWellCompletionsDataResponses_api];
 
 export type GetDrilledWellboreHeadersData_api = {
     body?: never;
@@ -2874,7 +2984,8 @@ export type GetDrilledWellboreHeadersErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetDrilledWellboreHeadersError_api = GetDrilledWellboreHeadersErrors_api[keyof GetDrilledWellboreHeadersErrors_api];
+export type GetDrilledWellboreHeadersError_api =
+    GetDrilledWellboreHeadersErrors_api[keyof GetDrilledWellboreHeadersErrors_api];
 
 export type GetDrilledWellboreHeadersResponses_api = {
     /**
@@ -2941,7 +3052,8 @@ export type GetWellborePickIdentifiersErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetWellborePickIdentifiersError_api = GetWellborePickIdentifiersErrors_api[keyof GetWellborePickIdentifiersErrors_api];
+export type GetWellborePickIdentifiersError_api =
+    GetWellborePickIdentifiersErrors_api[keyof GetWellborePickIdentifiersErrors_api];
 
 export type GetWellborePickIdentifiersResponses_api = {
     /**
@@ -3122,7 +3234,8 @@ export type GetWellboreCompletionsResponses_api = {
     200: Array<WellboreCompletion_api>;
 };
 
-export type GetWellboreCompletionsResponse_api = GetWellboreCompletionsResponses_api[keyof GetWellboreCompletionsResponses_api];
+export type GetWellboreCompletionsResponse_api =
+    GetWellboreCompletionsResponses_api[keyof GetWellboreCompletionsResponses_api];
 
 export type GetWellboreCasingsData_api = {
     body?: never;
@@ -3175,7 +3288,8 @@ export type GetWellborePerforationsErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetWellborePerforationsError_api = GetWellborePerforationsErrors_api[keyof GetWellborePerforationsErrors_api];
+export type GetWellborePerforationsError_api =
+    GetWellborePerforationsErrors_api[keyof GetWellborePerforationsErrors_api];
 
 export type GetWellborePerforationsResponses_api = {
     /**
@@ -3184,7 +3298,8 @@ export type GetWellborePerforationsResponses_api = {
     200: Array<WellborePerforation_api>;
 };
 
-export type GetWellborePerforationsResponse_api = GetWellborePerforationsResponses_api[keyof GetWellborePerforationsResponses_api];
+export type GetWellborePerforationsResponse_api =
+    GetWellborePerforationsResponses_api[keyof GetWellborePerforationsResponses_api];
 
 export type GetWellboreLogCurveHeadersData_api = {
     body?: never;
@@ -3210,7 +3325,8 @@ export type GetWellboreLogCurveHeadersErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetWellboreLogCurveHeadersError_api = GetWellboreLogCurveHeadersErrors_api[keyof GetWellboreLogCurveHeadersErrors_api];
+export type GetWellboreLogCurveHeadersError_api =
+    GetWellboreLogCurveHeadersErrors_api[keyof GetWellboreLogCurveHeadersErrors_api];
 
 export type GetWellboreLogCurveHeadersResponses_api = {
     /**
@@ -3298,7 +3414,8 @@ export type GetSeismicCubeMetaListResponses_api = {
     200: Array<SeismicCubeMeta_api>;
 };
 
-export type GetSeismicCubeMetaListResponse_api = GetSeismicCubeMetaListResponses_api[keyof GetSeismicCubeMetaListResponses_api];
+export type GetSeismicCubeMetaListResponse_api =
+    GetSeismicCubeMetaListResponses_api[keyof GetSeismicCubeMetaListResponses_api];
 
 export type GetInlineSliceData_api = {
     body?: never;
@@ -3549,7 +3666,8 @@ export type GetPolygonsDirectoryResponses_api = {
     200: Array<PolygonsMeta_api>;
 };
 
-export type GetPolygonsDirectoryResponse_api = GetPolygonsDirectoryResponses_api[keyof GetPolygonsDirectoryResponses_api];
+export type GetPolygonsDirectoryResponse_api =
+    GetPolygonsDirectoryResponses_api[keyof GetPolygonsDirectoryResponses_api];
 
 export type GetPolygonsDataData_api = {
     body?: never;
@@ -3827,6 +3945,435 @@ export type GetVfpTableResponses_api = {
 };
 
 export type GetVfpTableResponse_api = GetVfpTableResponses_api[keyof GetVfpTableResponses_api];
+
+export type GetSessionsMetadataData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Sort the result by
+         */
+        sort_by?: PrimaryServicesDatabaseAccessSessionAccessTypesSortBy_api | null;
+        /**
+         * Sort direction: 'asc' or 'desc'
+         */
+        sort_direction?: SortDirection_api | null;
+        /**
+         * Limit the number of results
+         */
+        limit?: number | null;
+        t?: number;
+    };
+    url: "/sessions/sessions";
+};
+
+export type GetSessionsMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSessionsMetadataError_api = GetSessionsMetadataErrors_api[keyof GetSessionsMetadataErrors_api];
+
+export type GetSessionsMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<SessionMetadataWithId_api>;
+};
+
+export type GetSessionsMetadataResponse_api = GetSessionsMetadataResponses_api[keyof GetSessionsMetadataResponses_api];
+
+export type CreateSessionData_api = {
+    body: NewSession_api;
+    path?: never;
+    query?: {
+        t?: number;
+    };
+    url: "/sessions/sessions";
+};
+
+export type CreateSessionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type CreateSessionError_api = CreateSessionErrors_api[keyof CreateSessionErrors_api];
+
+export type CreateSessionResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type CreateSessionResponse_api = CreateSessionResponses_api[keyof CreateSessionResponses_api];
+
+export type DeleteSessionData_api = {
+    body?: never;
+    path: {
+        session_id: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/sessions/sessions/{session_id}";
+};
+
+export type DeleteSessionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type DeleteSessionError_api = DeleteSessionErrors_api[keyof DeleteSessionErrors_api];
+
+export type DeleteSessionResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetSessionData_api = {
+    body?: never;
+    path: {
+        session_id: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/sessions/sessions/{session_id}";
+};
+
+export type GetSessionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSessionError_api = GetSessionErrors_api[keyof GetSessionErrors_api];
+
+export type GetSessionResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SessionDocument_api;
+};
+
+export type GetSessionResponse_api = GetSessionResponses_api[keyof GetSessionResponses_api];
+
+export type UpdateSessionData_api = {
+    body: SessionUpdate_api;
+    path: {
+        session_id: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/sessions/sessions/{session_id}";
+};
+
+export type UpdateSessionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type UpdateSessionError_api = UpdateSessionErrors_api[keyof UpdateSessionErrors_api];
+
+export type UpdateSessionResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetSessionMetadataData_api = {
+    body?: never;
+    path: {
+        session_id: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/sessions/sessions/metadata/{session_id}";
+};
+
+export type GetSessionMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSessionMetadataError_api = GetSessionMetadataErrors_api[keyof GetSessionMetadataErrors_api];
+
+export type GetSessionMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SessionMetadata_api;
+};
+
+export type GetSessionMetadataResponse_api = GetSessionMetadataResponses_api[keyof GetSessionMetadataResponses_api];
+
+export type GetRecentSnapshotsData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Sort the result by
+         */
+        sort_by?: PrimaryServicesDatabaseAccessSnapshotAccessTypesSortBy_api | null;
+        /**
+         * Sort direction: 'asc' or 'desc'
+         */
+        sort_direction?: SortDirection_api | null;
+        /**
+         * Limit the number of results
+         */
+        limit?: number | null;
+        /**
+         * The offset of the results
+         */
+        offset?: number | null;
+        t?: number;
+    };
+    url: "/snapshots/recent_snapshots";
+};
+
+export type GetRecentSnapshotsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetRecentSnapshotsError_api = GetRecentSnapshotsErrors_api[keyof GetRecentSnapshotsErrors_api];
+
+export type GetRecentSnapshotsResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<SnapshotAccessLog_api>;
+};
+
+export type GetRecentSnapshotsResponse_api = GetRecentSnapshotsResponses_api[keyof GetRecentSnapshotsResponses_api];
+
+export type GetSnapshotsMetadataData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Sort the result by
+         */
+        sort_by?: PrimaryServicesDatabaseAccessSnapshotAccessTypesSortBy_api | null;
+        /**
+         * Sort direction: 'asc' or 'desc'
+         */
+        sort_direction?: SortDirection_api | null;
+        /**
+         * Limit the number of results
+         */
+        limit?: number | null;
+        t?: number;
+    };
+    url: "/snapshots/snapshots";
+};
+
+export type GetSnapshotsMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSnapshotsMetadataError_api = GetSnapshotsMetadataErrors_api[keyof GetSnapshotsMetadataErrors_api];
+
+export type GetSnapshotsMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<SnapshotMetadata_api>;
+};
+
+export type GetSnapshotsMetadataResponse_api =
+    GetSnapshotsMetadataResponses_api[keyof GetSnapshotsMetadataResponses_api];
+
+export type CreateSnapshotData_api = {
+    body: NewSnapshot_api;
+    path?: never;
+    query?: {
+        t?: number;
+    };
+    url: "/snapshots/snapshots";
+};
+
+export type CreateSnapshotErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type CreateSnapshotError_api = CreateSnapshotErrors_api[keyof CreateSnapshotErrors_api];
+
+export type CreateSnapshotResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type CreateSnapshotResponse_api = CreateSnapshotResponses_api[keyof CreateSnapshotResponses_api];
+
+export type DeleteSnapshotData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/snapshots/snapshots/{snapshot_id}";
+};
+
+export type DeleteSnapshotErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type DeleteSnapshotError_api = DeleteSnapshotErrors_api[keyof DeleteSnapshotErrors_api];
+
+export type DeleteSnapshotResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetSnapshotData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/snapshots/snapshots/{snapshot_id}";
+};
+
+export type GetSnapshotErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSnapshotError_api = GetSnapshotErrors_api[keyof GetSnapshotErrors_api];
+
+export type GetSnapshotResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Snapshot_api;
+};
+
+export type GetSnapshotResponse_api = GetSnapshotResponses_api[keyof GetSnapshotResponses_api];
+
+export type UpdateSnapshotData_api = {
+    body: SnapshotUpdate_api;
+    path: {
+        snapshot_id: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/snapshots/snapshots/{snapshot_id}";
+};
+
+export type UpdateSnapshotErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type UpdateSnapshotError_api = UpdateSnapshotErrors_api[keyof UpdateSnapshotErrors_api];
+
+export type UpdateSnapshotResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetSnapshotMetadataData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/snapshots/snapshots/metadata/{snapshot_id}";
+};
+
+export type GetSnapshotMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSnapshotMetadataError_api = GetSnapshotMetadataErrors_api[keyof GetSnapshotMetadataErrors_api];
+
+export type GetSnapshotMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SnapshotMetadata_api;
+};
+
+export type GetSnapshotMetadataResponse_api = GetSnapshotMetadataResponses_api[keyof GetSnapshotMetadataResponses_api];
+
+export type SnapshotPreviewData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/snapshot-preview/{snapshot_id}";
+};
+
+export type SnapshotPreviewErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type SnapshotPreviewError_api = SnapshotPreviewErrors_api[keyof SnapshotPreviewErrors_api];
+
+export type SnapshotPreviewResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type SnapshotPreviewResponse_api = SnapshotPreviewResponses_api[keyof SnapshotPreviewResponses_api];
 
 export type LoginRouteData_api = {
     body?: never;
