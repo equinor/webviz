@@ -36,7 +36,7 @@ async def get_grid_models_info(
     Get metadata for all 3D grid models, including bbox, dimensions and properties
     """
     perf_metrics = PerfMetrics()
-    access = Grid3dAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = Grid3dAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     perf_metrics.record_lap("get-grid-access")
 
     model_infos = await access.get_models_info_arr_async(realization_num)

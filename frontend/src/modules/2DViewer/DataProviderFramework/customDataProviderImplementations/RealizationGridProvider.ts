@@ -74,8 +74,7 @@ export class RealizationGridProvider
     fetchData({
         getSetting,
         getStoredData,
-        registerQueryKey,
-        queryClient,
+        fetchQuery,
     }: FetchDataParams<RealizationGridSettings, RealizationGridData, StoredData>): Promise<{
         gridSurfaceData: GridSurface_trans;
         gridParameterData: GridMappedProperty_trans;
@@ -114,8 +113,6 @@ export class RealizationGridProvider
             },
         });
 
-        registerQueryKey(gridParameterOptions.queryKey);
-
         const gridSurfaceOptions = getGridSurfaceOptions({
             query: {
                 case_uuid: ensembleIdent?.getCaseUuid() ?? "",
@@ -131,11 +128,9 @@ export class RealizationGridProvider
             },
         });
 
-        registerQueryKey(gridSurfaceOptions.queryKey);
+        const gridParameterPromise = fetchQuery(gridParameterOptions).then(transformGridMappedProperty);
 
-        const gridParameterPromise = queryClient.fetchQuery(gridParameterOptions).then(transformGridMappedProperty);
-
-        const gridSurfacePromise = queryClient.fetchQuery(gridSurfaceOptions).then(transformGridSurface);
+        const gridSurfacePromise = fetchQuery(gridSurfaceOptions).then(transformGridSurface);
 
         return Promise.all([gridSurfacePromise, gridParameterPromise]).then(([gridSurfaceData, gridParameterData]) => ({
             gridSurfaceData,

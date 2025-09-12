@@ -324,8 +324,7 @@ export class IntersectionRealizationSeismicProvider
     fetchData({
         getSetting,
         getStoredData,
-        registerQueryKey,
-        queryClient,
+        fetchQuery,
     }: FetchDataParams<
         IntersectionRealizationSeismicSettings,
         IntersectionRealizationSeismicData,
@@ -359,9 +358,7 @@ export class IntersectionRealizationSeismicProvider
             },
         });
 
-        registerQueryKey(queryOptions.queryKey);
-
-        const seismicFenceDataPromise = queryClient.fetchQuery(queryOptions).then(transformSeismicFenceData);
+        const seismicFenceDataPromise = fetchQuery(queryOptions).then(transformSeismicFenceData);
 
         return seismicFenceDataPromise;
     }

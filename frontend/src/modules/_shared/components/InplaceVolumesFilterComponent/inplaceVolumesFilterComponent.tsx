@@ -207,7 +207,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
         maybeDebounceOnChange(filter, doPublish, dropDebounce);
     }
 
-    function handleIndexValuesChange(indexColumn: string, values: (string | number)[], publish = true): void {
+    function handleIndexValuesChange(indexColumn: string, values: string[], publish = true): void {
         const newIndicesWithValues = cloneDeep(indicesWithValues);
         const indexValues = newIndicesWithValues.find((filter) => filter.indexColumn === indexColumn);
         if (!indexValues) {

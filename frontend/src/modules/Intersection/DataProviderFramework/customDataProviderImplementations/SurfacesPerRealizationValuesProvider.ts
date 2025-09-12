@@ -259,8 +259,7 @@ export class SurfacesPerRealizationValuesProvider
     fetchData({
         getSetting,
         getStoredData,
-        registerQueryKey,
-        queryClient,
+        fetchQuery,
     }: FetchDataParams<
         SurfacesPerRealizationValuesSettings,
         SurfacesPerRealizationValuesData,
@@ -299,9 +298,7 @@ export class SurfacesPerRealizationValuesProvider
                 },
             });
 
-            registerQueryKey(queryOptions.queryKey);
-
-            return { surfaceName: surfaceName, fetchPromise: queryClient.fetchQuery(queryOptions) };
+            return { surfaceName: surfaceName, fetchPromise: fetchQuery(queryOptions) };
         });
 
         // Assemble into one promise
