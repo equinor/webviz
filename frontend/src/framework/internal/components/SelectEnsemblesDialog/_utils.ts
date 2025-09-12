@@ -126,12 +126,10 @@ export function makeHashFromSelectedEnsembles(
 ): string {
     const regularHash = selectedRegularEnsembles
         .map((item) => `${item.customName}~@@~${item.ensembleIdent.toString()}~@@~${item.color}`)
-        .sort()
         .join(",");
 
     const deltaHash = selectedDeltaEnsembles
         .map((item) => `${item.customName}~@@~${makeHashFromDeltaEnsemble(item)}~@@~${item.color}`)
-        .sort()
         .join(",");
 
     return `${regularHash}|${deltaHash}`;

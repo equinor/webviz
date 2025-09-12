@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { FolderOpen, Remove, WarningOutlined } from "@mui/icons-material";
+import { DragIndicator, FolderOpen, Remove, WarningOutlined } from "@mui/icons-material";
 
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { ColorSelect } from "@lib/components/ColorSelect";
@@ -8,6 +8,7 @@ import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 import { IconButton } from "@lib/components/IconButton";
 import { Input } from "@lib/components/Input";
+import { SortableList } from "@lib/components/SortableList";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { InternalDeltaEnsembleSetting } from "../../types";
@@ -117,53 +118,60 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
         !!props.deltaEnsembleSetting.comparisonEnsembleIdent && !!props.deltaEnsembleSetting.referenceEnsembleIdent;
 
     return (
-        <tr
-            className={resolveClassNames("align-center hover:bg-slate-100", {
-                "odd:bg-blue-100 even:bg-blue-200": isValid && props.isDuplicate,
-                "odd:bg-slate-50": !props.isDuplicate,
-            })}
-        >
-            <td className="p-2">
-                <ColorSelect value={props.deltaEnsembleSetting.color} onChange={onColorChange} />
-            </td>
-            <td className="p-2">
-                <Input
-                    value={props.deltaEnsembleSetting.customName ?? ""}
-                    placeholder="Give a custom name..."
-                    onValueChange={onNameChange}
-                />
-            </td>
-            <td className="p-2">
-                <Dropdown
-                    value={comparisonEnsValue ?? ""}
-                    placeholder="Select comparison ensemble..."
-                    options={ensembleDropdownOptions}
-                    onChange={onComparisonEnsembleChange}
-                />
-            </td>
-            <td className="p-2">
-                <Dropdown
-                    value={referenceEnsValue ?? ""}
-                    placeholder="Select reference ensemble..."
-                    options={ensembleDropdownOptions}
-                    onChange={onReferenceEnsembleChange}
-                />
-            </td>
-            <td className="p-2">
-                <div className="flex flex-row">
-                    <IconButton color="danger" title="Remove delta ensemble from selection" onClick={onDelete}>
-                        <Remove fontSize="small" />
-                    </IconButton>
-                    {props.isDuplicate && (
-                        <IconButton
-                            className="ml-2 cursor-help"
-                            title="This delta ensemble is a duplicate of another delta ensemble in the selection."
-                        >
-                            <WarningOutlined fontSize="small" className="text-indigo-600" />
+        <SortableList.Item key={props.deltaEnsembleSetting.uuid} id={props.deltaEnsembleSetting.uuid}>
+            <tr
+                className={resolveClassNames("align-center hover:bg-slate-100", {
+                    "odd:bg-blue-100 even:bg-blue-200": isValid && props.isDuplicate,
+                    "odd:bg-slate-50": !props.isDuplicate,
+                })}
+            >
+                <td>
+                    <SortableList.DragHandle className="flex justify-center items-center">
+                        <DragIndicator fontSize="inherit" className="pointer-events-none" />
+                    </SortableList.DragHandle>
+                </td>
+                <td className="p-2">
+                    <ColorSelect value={props.deltaEnsembleSetting.color} onChange={onColorChange} />
+                </td>
+                <td className="p-2">
+                    <Input
+                        value={props.deltaEnsembleSetting.customName ?? ""}
+                        placeholder="Give a custom name..."
+                        onValueChange={onNameChange}
+                    />
+                </td>
+                <td className="p-2">
+                    <Dropdown
+                        value={comparisonEnsValue ?? ""}
+                        placeholder="Select comparison ensemble..."
+                        options={ensembleDropdownOptions}
+                        onChange={onComparisonEnsembleChange}
+                    />
+                </td>
+                <td className="p-2">
+                    <Dropdown
+                        value={referenceEnsValue ?? ""}
+                        placeholder="Select reference ensemble..."
+                        options={ensembleDropdownOptions}
+                        onChange={onReferenceEnsembleChange}
+                    />
+                </td>
+                <td className="p-2">
+                    <div className="flex flex-row">
+                        <IconButton color="danger" title="Remove delta ensemble from selection" onClick={onDelete}>
+                            <Remove fontSize="small" />
                         </IconButton>
-                    )}
-                </div>
-            </td>
-        </tr>
+                        {props.isDuplicate && (
+                            <IconButton
+                                className="ml-2 cursor-help"
+                                title="This delta ensemble is a duplicate of another delta ensemble in the selection."
+                            >
+                                <WarningOutlined fontSize="small" className="text-indigo-600" />
+                            </IconButton>
+                        )}
+                    </div>
+                </td>
+            </tr>
+        </SortableList.Item>
     );
 }

@@ -294,6 +294,34 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         setSelectedDeltaEnsembles((prev) => prev.filter((i) => i.uuid !== removedItem.uuid));
     }
 
+    function handleMoveRegularEnsemble(movedEnsemble: InternalRegularEnsembleSetting, newIndex: number) {
+        const currentIndex = selectedRegularEnsembles.findIndex((el) =>
+            el.ensembleIdent.equals(movedEnsemble.ensembleIdent),
+        );
+        if (currentIndex === -1 || currentIndex === newIndex) {
+            return;
+        }
+
+        const newOrder = [...selectedRegularEnsembles];
+        newOrder.splice(currentIndex, 1);
+        newOrder.splice(newIndex, 0, movedEnsemble);
+
+        setSelectedRegularEnsembles(newOrder);
+    }
+
+    function handleMoveDeltaEnsemble(movedEnsemble: InternalDeltaEnsembleSetting, newIndex: number) {
+        const currentIndex = selectedDeltaEnsembles.findIndex((el) => el.uuid === movedEnsemble.uuid);
+        if (currentIndex === -1 || currentIndex === newIndex) {
+            return;
+        }
+
+        const newOrder = [...selectedDeltaEnsembles];
+        newOrder.splice(currentIndex, 1);
+        newOrder.splice(newIndex, 0, movedEnsemble);
+
+        setSelectedDeltaEnsembles(newOrder);
+    }
+
     function makeApplyButtonStartIcon() {
         if (isEnsembleSetLoading) {
             return <CircularProgress size="small" />;
@@ -383,16 +411,18 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     <EnsembleTables
                         nextEnsembleColor={nextEnsembleColor}
                         selectedRegularEnsembles={selectedRegularEnsembles}
-                        selectableEnsemblesForDelta={selectableEnsemblesForDelta}
                         selectedDeltaEnsembles={selectedDeltaEnsembles}
+                        selectableEnsemblesForDelta={selectableEnsemblesForDelta}
+                        onAddRegularEnsemble={handlePickRegularEnsemble}
+                        onUpdateRegularEnsemble={handleUpdateRegularEnsemble}
+                        onRemoveRegularEnsemble={handleRemoveRegularEnsemble}
+                        onMoveRegularEnsemble={handleMoveRegularEnsemble}
                         onCreateDeltaEnsemble={handleAddDeltaEnsemble}
                         onUpdateDeltaEnsemble={handleUpdateDeltaEnsemble}
                         onRemoveDeltaEnsemble={handleRemoveDeltaEnsemble}
-                        onAddRegularEnsemble={handlePickRegularEnsemble}
-                        onUpdateRegularEnsemble={handleUpdateRegularEnsemble}
+                        onMoveDeltaEnsemble={handleMoveDeltaEnsemble}
                         onRequestOtherComparisonEnsemble={handleOnRequestOtherComparisonEnsemble}
                         onRequestOtherReferenceEnsemble={handleOnRequestOtherReferenceEnsemble}
-                        onRemoveRegularEnsemble={handleRemoveRegularEnsemble}
                     />
                 </div>
                 {isEnsembleSetLoading && <LoadingOverlay text="Loading ensembles..." />}
