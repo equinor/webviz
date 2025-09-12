@@ -45,7 +45,7 @@ SERVICE_ENDPOINT = f"{config.SURFACE_QUERY_URL}/sample_in_points"
 async def batch_sample_surface_in_points_async(
     sumo_access_token: str,
     case_uuid: str,
-    iteration_name: str,
+    ensemble_name: str,
     surface_name: str,
     surface_attribute: str,
     realizations: Optional[List[int]],
@@ -57,7 +57,7 @@ async def batch_sample_surface_in_points_async(
     realization_object_ids = await _get_object_uuids_for_surface_realizations_async(
         sumo_access_token=sumo_access_token,
         case_uuid=case_uuid,
-        iteration_name=iteration_name,
+        ensemble_name=ensemble_name,
         surface_name=surface_name,
         surface_attribute=surface_attribute,
         realizations=realizations,
@@ -99,7 +99,7 @@ async def batch_sample_surface_in_points_async(
 async def _get_object_uuids_for_surface_realizations_async(
     sumo_access_token: str,
     case_uuid: str,
-    iteration_name: str,
+    ensemble_name: str,
     surface_name: str,
     surface_attribute: str,
     realizations: Optional[List[int]],
@@ -109,7 +109,7 @@ async def _get_object_uuids_for_surface_realizations_async(
     # What about time here??
     search_context = SearchContext(sumo_client).surfaces.filter(
         uuid=case_uuid,
-        iteration=iteration_name,
+        ensemble=ensemble_name,
         name=surface_name,
         tagname=surface_attribute,
         realization=realizations if realizations is not None else True,

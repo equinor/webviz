@@ -11,7 +11,7 @@ import type {
 import { includesSettings } from "../../interfacesAndTypes/customGroupImplementation";
 import type { DefineBasicDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 import type { ItemGroup } from "../../interfacesAndTypes/entities";
-import type { SerializedGroup } from "../../interfacesAndTypes/serialization";
+import type { SerializedGroup, SerializedSettingsState } from "../../interfacesAndTypes/serialization";
 import { SerializedType } from "../../interfacesAndTypes/serialization";
 import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import type { MakeSettingTypesMap, SettingTypes, Settings } from "../../settings/settingsDefinitions";
@@ -37,7 +37,7 @@ export function isGroup(obj: any): obj is Group {
 
 export type GroupParams<
     TSettingTypes extends Settings,
-    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
+    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>
 > = {
     dataProviderManager: DataProviderManager;
     color?: string;
@@ -50,7 +50,7 @@ export type GroupParams<
 export class Group<
     TSettings extends Settings = [],
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
 > implements ItemGroup
 {
     private _itemDelegate: ItemDelegate;
@@ -70,11 +70,11 @@ export class Group<
                 this,
                 makeSettings<TSettings, TSettingTypes, TSettingKey>(
                     customGroupImplementation.settings as unknown as TSettings,
-                    customGroupImplementation.getDefaultSettingsValues?.() ?? {},
+                    customGroupImplementation.getDefaultSettingsValues?.() ?? {}
                 ),
                 customGroupImplementation.defineDependencies as unknown as
                     | ((args: DefineBasicDependenciesArgs<TSettings, TSettingTypes>) => void)
-                    | undefined,
+                    | undefined
             );
         }
         this._type = type;
@@ -114,20 +114,24 @@ export class Group<
         return this._type;
     }
 
-    serializeState(): SerializedGroup {
+    serializeState(): SerializedGroup<TSettings, TSettingKey> {
         return {
             ...this._itemDelegate.serializeState(),
             type: SerializedType.GROUP,
             groupType: this._type,
             color: this._groupDelegate.getColor() ?? "",
+            settings:
+                this._sharedSettingsDelegate?.serializeSettings() ??
+                ({} as SerializedSettingsState<TSettings, TSettingKey>),
             children: this._groupDelegate.serializeChildren(),
         };
     }
 
-    deserializeState(serialized: SerializedGroup) {
+    deserializeState(serialized: SerializedGroup<TSettings, TSettingKey>) {
         this._itemDelegate.deserializeState(serialized);
         this._groupDelegate.setColor(serialized.color);
         this._groupDelegate.deserializeChildren(serialized.children);
+        this._sharedSettingsDelegate?.deserializeSettings(serialized.settings);
     }
 
     beforeDestroy(): void {
