@@ -9,17 +9,23 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
+import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 
+import { SensitivitySortOrder } from "../../_shared/SensitivityProcessing/types";
 import type { Interfaces } from "../interfaces";
-import { DisplayComponentType } from "../typesAndEnums";
+import { DisplayComponentType, XAxisBarScaling } from "../typesAndEnums";
+import { ColorBy } from "../view/components/sensitivityChartFigure";
 
 import {
+    barSortOrderAtom,
     displayComponentTypeAtom,
     hideZeroYAtom,
     referenceSensitivityNameAtom,
     showLabelsAtom,
     showRealizationPointsAtom,
+    xAxisBarScalingAtom,
+    colorByAtom,
 } from "./atoms/baseAtoms";
 
 export function Settings({
@@ -32,8 +38,10 @@ export function Settings({
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
     const [showRealizationPoints, setShowRealizationPoints] = useAtom(showRealizationPointsAtom);
     const setModuleReferenceSensitivityName = useSetAtom(referenceSensitivityNameAtom);
+    const [barSortOrder, setBarSortOrder] = useAtom(barSortOrderAtom);
+    const [xAxisBarScaling, setXAxisBarScaling] = useAtom(xAxisBarScalingAtom);
     const [referenceSensitivityName, setReferenceSensitivityName] = React.useState<string | null>(null);
-
+    const [colorBy, setColorBy] = useAtom(colorByAtom);
     useApplyInitialSettingsToState(initialSettings, "displayComponentType", "string", setDisplayComponentType);
 
     const ensembleSet = workbenchSession.getEnsembleSet();
@@ -76,9 +84,14 @@ export function Settings({
         }
     }
 
-    if (!referenceSensitivityName && sensitivityNames.length > 0) {
+    if (
+        (!referenceSensitivityName || !sensitivityNames.includes(referenceSensitivityName)) &&
+        sensitivityNames.length > 0
+    ) {
         if (sensitivityNames.includes("rms_seed")) {
             setReferenceSensitivityName("rms_seed");
+        } else if (sensitivityNames.includes("rms")) {
+            setReferenceSensitivityName("rms");
         } else {
             setReferenceSensitivityName(sensitivityNames[0]);
         }
@@ -100,6 +113,15 @@ export function Settings({
         setShowRealizationPoints(event.target.checked);
     }
 
+    function handleBarSortOrderChange(_: React.ChangeEvent<HTMLInputElement>, value: string | number) {
+        setBarSortOrder(value as SensitivitySortOrder);
+    }
+    function handleXAxisBarScalingChange(_: React.ChangeEvent<HTMLInputElement>, value: string | number) {
+        setXAxisBarScaling(value as XAxisBarScaling);
+    }
+    function handleColorByChange(_: React.ChangeEvent<HTMLInputElement>, value: string | number) {
+        setColorBy(value as ColorBy);
+    }
     return (
         <div className="flex flex-col gap-2">
             <CollapsibleGroup title="Reference sensitivity" expanded>
@@ -127,10 +149,63 @@ export function Settings({
             </CollapsibleGroup>
             <CollapsibleGroup title="View settings" expanded>
                 <div className="flex flex-col gap-4">
+                    <Label text="Scaling">
+                        <RadioGroup
+                            value={xAxisBarScaling}
+                            options={[
+                                {
+                                    label: "Relative",
+                                    value: XAxisBarScaling.RELATIVE,
+                                },
+                                {
+                                    label: "Relative %",
+                                    value: XAxisBarScaling.RELATIVE_PERCENTAGE,
+                                },
+                                {
+                                    label: "Absolute",
+                                    value: XAxisBarScaling.ABSOLUTE,
+                                },
+                            ]}
+                            onChange={handleXAxisBarScalingChange}
+                        />
+                    </Label>
+                    <Label text="Color by">
+                        <RadioGroup
+                            value={colorBy}
+                            options={[
+                                {
+                                    label: "Sensitivity",
+                                    value: ColorBy.SENSITIVITY,
+                                },
+                                {
+                                    label: "Low/High",
+                                    value: ColorBy.LOW_HIGH,
+                                },
+                            ]}
+                            onChange={handleColorByChange}
+                        />
+                    </Label>
+
+                    <Label text="Bar sort order">
+                        <RadioGroup
+                            value={barSortOrder}
+                            options={[
+                                {
+                                    label: "Impact",
+                                    value: SensitivitySortOrder.IMPACT,
+                                },
+                                {
+                                    label: "Alphabetical",
+                                    value: SensitivitySortOrder.ALPHABETICAL,
+                                },
+                            ]}
+                            onChange={handleBarSortOrderChange}
+                        />
+                    </Label>
                     <Checkbox
                         checked={hideZeroY}
                         onChange={handleHideZeroYChange}
-                        label="Show sensitivities without impact"
+                        label="Hide sensitivities without impact"
                     />
                     <Checkbox
                         checked={showLabels}

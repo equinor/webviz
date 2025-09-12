@@ -1,6 +1,10 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
+import type { SensitivitySortOrder } from "../_shared/SensitivityProcessing/types";
+
 import {
+    barSortOrderAtom,
+    colorByAtom,
     displayComponentTypeAtom,
     hideZeroYAtom,
     referenceSensitivityNameAtom,
@@ -8,9 +12,11 @@ import {
     sensitivityNamesAtom,
     showLabelsAtom,
     showRealizationPointsAtom,
+    xAxisBarScalingAtom,
 } from "./settings/atoms/baseAtoms";
-import type { DisplayComponentType, SelectedSensitivity } from "./typesAndEnums";
+import type { DisplayComponentType, SelectedSensitivity, XAxisBarScaling } from "./typesAndEnums";
 import { selectedSensitivityAtom as ViewSelectedSensitivityAtom } from "./view/atoms/baseAtoms";
+import type { ColorBy } from "./view/components/sensitivityChartFigure";
 
 type SettingsToViewInterface = {
     displayComponentType: DisplayComponentType;
@@ -20,6 +26,9 @@ type SettingsToViewInterface = {
     showLabels: boolean;
     hideZeroY: boolean;
     showRealizationPoints: boolean;
+    barSortOrder: SensitivitySortOrder;
+    xAxisBarScaling: XAxisBarScaling;
+    colorBy: ColorBy;
 };
 
 export type ViewToSettingsInterface = {
@@ -52,6 +61,15 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     },
     showRealizationPoints: (get) => {
         return get(showRealizationPointsAtom);
+    },
+    barSortOrder: (get) => {
+        return get(barSortOrderAtom);
+    },
+    xAxisBarScaling: (get) => {
+        return get(xAxisBarScalingAtom);
+    },
+    colorBy: (get) => {
+        return get(colorByAtom);
     },
 };
 
