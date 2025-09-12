@@ -14,11 +14,12 @@ import { chain, clone, round, set } from "lodash";
 import { WellLogCurveSourceEnum_api } from "@api";
 import type { WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 
+import type { WellPickDataCollection } from "../../_shared/types/wellpicks";
+import { getUniqueCurveNameForCurveData } from "../../_shared/utils/wellLog";
 import { MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE } from "../constants";
-import type { WellPickDataCollection } from "../DataProviderFramework/visualizations/wellpicks";
 
 import { COLOR_TABLES } from "./logViewerColors";
-import { getUniqueCurveNameForCurveData } from "./strings";
+
 
 type DataRowAccumulatorMap = Record<number, SafeWellLogDataRow>;
 

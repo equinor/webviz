@@ -1,6 +1,11 @@
+import type { Color } from "@deck.gl/core";
+import type { LineString, Point } from "geojson";
 import simplify from "simplify-js";
 
+import type { WellboreTrajectory_api } from "@api";
 import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
+
+import type { GeoWellFeature } from "../DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 
 function normalizeVector(vector: number[]): number[] {
     const vectorLength = Math.sqrt(vector[0] ** 2 + vector[1] ** 2);
@@ -117,4 +122,55 @@ export function calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
         simplifiedWellboreTrajectoryXy: simplifiedTrajectoryXy,
         actualSectionLengths,
     };
+}
+
+export function zipCoords(x_arr: number[], y_arr: number[], z_arr: number[]): number[][] {
+    const coords: number[][] = [];
+    for (let i = 0; i < x_arr.length; i++) {
+        coords.push([x_arr[i], y_arr[i], z_arr[i]]);
+    }
+
+    return coords;
+}
+
+export function wellTrajectoryToGeojson(
+    wellTrajectory: WellboreTrajectory_api,
+    selectedWellboreUuid?: string,
+): GeoWellFeature {
+    const wellHeadPoint: Point = {
+        type: "Point",
+        coordinates: [wellTrajectory.eastingArr[0], wellTrajectory.northingArr[0], wellTrajectory.tvdMslArr[0]],
+    };
+    const trajectoryLineString: LineString = {
+        type: "LineString",
+        coordinates: zipCoords(wellTrajectory.eastingArr, wellTrajectory.northingArr, wellTrajectory.tvdMslArr),
+    };
+
+    let color = [150, 150, 150] as Color;
+    let lineWidth = 2;
+    let wellHeadSize = 1;
+    if (wellTrajectory.wellboreUuid === selectedWellboreUuid) {
+        color = [255, 0, 0];
+        lineWidth = 5;
+        wellHeadSize = 10;
+    }
+
+    const geometryCollection: GeoWellFeature = {
+        type: "Feature",
+        geometry: {
+            type: "GeometryCollection",
+            geometries: [wellHeadPoint, trajectoryLineString],
+        },
+        properties: {
+            uuid: wellTrajectory.wellboreUuid,
+            uwi: wellTrajectory.uniqueWellboreIdentifier,
+            lineWidth,
+            wellHeadSize,
+            name: wellTrajectory.uniqueWellboreIdentifier,
+            color,
+            md: [wellTrajectory.mdArr],
+        },
+    };
+
+    return geometryCollection;
 }

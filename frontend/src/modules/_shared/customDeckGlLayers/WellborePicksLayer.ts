@@ -1,6 +1,7 @@
 import type { CompositeLayerProps, FilterContext, Layer, UpdateParameters } from "@deck.gl/core";
 import { CompositeLayer } from "@deck.gl/core";
 import { GeoJsonLayer, TextLayer } from "@deck.gl/layers";
+import type { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
 import type { Feature, FeatureCollection } from "geojson";
 
 export type WellborePicksLayerData = {
@@ -20,6 +21,9 @@ type TextLayerData = {
 export type WellBorePicksLayerProps = {
     id: string;
     data: WellborePicksLayerData[];
+
+    // Non-public property:
+    reportBoundingBox?: React.Dispatch<ReportBoundingBoxAction>;
 };
 
 export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> {
@@ -35,13 +39,22 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
         return true;
     }
 
-    updateState(params: UpdateParameters<Layer<WellBorePicksLayerProps & Required<CompositeLayerProps>>>): void {
-        const features: Feature[] = params.props.data.map((wellPick) => {
+    updateState({
+        props,
+        changeFlags,
+    }: UpdateParameters<Layer<WellBorePicksLayerProps & Required<CompositeLayerProps>>>): void {
+        if (props.reportBoundingBox && changeFlags.dataChanged) {
+            props.reportBoundingBox({
+                layerBoundingBox: this.calcBoundingBox(),
+            });
+        }
+
+        const features: Feature[] = props.data.map((wellPick) => {
             return {
                 type: "Feature",
                 geometry: {
                     type: "Point",
-                    coordinates: [wellPick.easting, wellPick.northing],
+                    coordinates: [wellPick.easting, wellPick.northing, -wellPick.tvdMsl],
                 },
                 properties: {
                     name: `${wellPick.wellBoreUwi}, TVD_MSL: ${wellPick.tvdMsl}, MD: ${wellPick.md}`,
@@ -57,13 +70,37 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
 
         const textData: TextLayerData[] = this.props.data.map((wellPick) => {
             return {
-                coordinates: [wellPick.easting, wellPick.northing, wellPick.tvdMsl],
+                coordinates: [wellPick.easting, wellPick.northing, -wellPick.tvdMsl],
                 name: wellPick.wellBoreUwi,
             };
         });
 
         this._pointsData = pointsData;
         this._textData = textData;
+    }
+
+    private calcBoundingBox(): BoundingBox3D {
+        let xmin = Number.POSITIVE_INFINITY;
+        let ymin = Number.POSITIVE_INFINITY;
+        let zmin = Number.POSITIVE_INFINITY;
+        let xmax = Number.NEGATIVE_INFINITY;
+        let ymax = Number.NEGATIVE_INFINITY;
+        let zmax = Number.NEGATIVE_INFINITY;
+
+        for (const wellPick of this.props.data) {
+            const easting = wellPick.easting;
+            const northing = wellPick.northing;
+            const tvdMsl = -wellPick.tvdMsl; // Invert Z for depth
+
+            xmin = Math.min(xmin, easting);
+            ymin = Math.min(ymin, northing);
+            zmin = Math.min(zmin, tvdMsl);
+            xmax = Math.max(xmax, easting);
+            ymax = Math.max(ymax, northing);
+            zmax = Math.max(zmax, tvdMsl);
+        }
+
+        return [xmin, ymin, zmin, xmax, ymax, zmax];
     }
 
     renderLayers() {

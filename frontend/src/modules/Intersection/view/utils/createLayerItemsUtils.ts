@@ -10,7 +10,7 @@ import {
     type VisualizationGroup,
     type VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import type { IntersectionInjectedData } from "@modules/Intersection/DataProviderFramework/injectedDataType";
+
 
 import type { TargetViewReturnTypes } from "../components/DataProvidersWrapper";
 
@@ -24,7 +24,7 @@ import { createWellboreLayerItems } from "./createWellboreLayerItems";
  * in an array. The items are assigned order based on the order of the providers in the view.
  */
 export function makeViewProvidersVisualizationLayerItems(
-    view: VisualizationGroup<VisualizationTarget.ESV, TargetViewReturnTypes, IntersectionInjectedData, GroupType>,
+    view: VisualizationGroup<VisualizationTarget.ESV, TargetViewReturnTypes, Record<string, never>, GroupType>,
     intersectionReferenceSystem: IntersectionReferenceSystem,
 ): LayerItem[] {
     // Make LayerItems per provider, using maker function

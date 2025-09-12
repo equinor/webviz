@@ -13,7 +13,7 @@ import type {
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import type { TemplatePlot } from "@modules/WellLogViewer/types";
+import type { TemplatePlot } from "@modules/_shared/types/wellLogTemplates";
 import { isNumericalDataPoints } from "@modules/WellLogViewer/utils/queryDataTransform";
 
 import type { AreaPlotSettingTypes } from "../dataProviders/plots/AreaPlotProvider";
@@ -152,7 +152,13 @@ export function plotDataAccumulator(
 
             colorMapFuncDefs.push({
                 name: colorFuncName(args),
-                func: makeColorMapFunctionFromColorScale(colorScale, minValue, maxValue)!,
+                func: (value: number) => {
+                    const colorWithAlpha = makeColorMapFunctionFromColorScale(
+                        { colorScale, areBoundariesUserDefined: false },
+                        { valueMin: minValue, valueMax: maxValue },
+                    )!(value);
+                    return [colorWithAlpha[0], colorWithAlpha[1], colorWithAlpha[2]];
+                },
             });
         }
     }
