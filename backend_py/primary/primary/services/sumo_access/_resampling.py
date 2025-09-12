@@ -37,7 +37,7 @@ def generate_normalized_sample_dates(min_date: np.datetime64, max_date: np.datet
             stop += 1
         sampledates = np.arange(start, stop + 1)
     elif freq == Frequency.WEEKLY:
-        start = _truncate_day_to_monday(np.datetime64(str(min_date), "M"))
+        start = _truncate_day_to_monday(np.datetime64(str(min_date), "D"))
         stop = _truncate_day_to_monday(np.datetime64(str(max_date), "D"))
         if start > min_date:
             start -= 7
