@@ -83,7 +83,7 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
                     },
                     pickable: false,
                     wellNameVisible: false,
-                    ZIncreasingDownwards: false,
+                    ZIncreasingDownwards: true,
                     visible: visible,
                     depthTest: false,
                 }),

@@ -133,8 +133,7 @@ export class RealizationSeismicSlicesProvider
     fetchData({
         getSetting,
         getStoredData,
-        registerQueryKey,
-        queryClient,
+        fetchQuery,
     }: FetchDataParams<
         RealizationSeismicSlicesSettings,
         RealizationSeismicSlicesData
@@ -159,17 +158,13 @@ export class RealizationSeismicSlicesProvider
             },
         });
 
-        registerQueryKey(queryOptions.queryKey);
-
-        return queryClient
-            .fetchQuery({
-                ...queryOptions,
-            })
-            .then((data) => ({
-                inline: transformSeismicSlice(data[0]),
-                crossline: transformSeismicSlice(data[1]),
-                depthSlice: transformSeismicSlice(data[2]),
-            }));
+        return fetchQuery({
+            ...queryOptions,
+        }).then((data) => ({
+            inline: transformSeismicSlice(data[0]),
+            crossline: transformSeismicSlice(data[1]),
+            depthSlice: transformSeismicSlice(data[2]),
+        }));
     }
 
     defineDependencies({

@@ -228,8 +228,7 @@ export class RealizationSurfaceProvider
 
     fetchData({
         getSetting,
-        registerQueryKey,
-        queryClient,
+        fetchQuery,
     }: FetchDataParams<RealizationSurfaceSettings, RealizationSurfaceData>): Promise<RealizationSurfaceData> {
         let surfaceAddress: FullSurfaceAddress | null = null;
         const addrBuilder = new SurfaceAddressBuilder();
@@ -265,11 +264,10 @@ export class RealizationSurfaceProvider
             },
         });
 
-        registerQueryKey(surfaceDataOptions.queryKey);
-
-        const promise = queryClient
-            .fetchQuery(surfaceDataOptions)
-            .then((data) => ({ format: this._dataFormat, surfaceData: transformSurfaceData(data) }));
+        const promise = fetchQuery(surfaceDataOptions).then((data) => ({
+            format: this._dataFormat,
+            surfaceData: transformSurfaceData(data),
+        }));
 
         return promise as Promise<RealizationSurfaceData>;
     }

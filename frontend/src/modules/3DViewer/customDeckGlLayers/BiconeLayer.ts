@@ -165,6 +165,10 @@ export class BiconeLayer extends CompositeLayer<DiscLayerProps> {
             this.props.minSizeInMeters ?? 0,
         );
 
+        if (this.props.modelMatrix) {
+            this.props.modelMatrix[10] = 1; // Prevent scaling in Z direction
+        }
+
         return [
             new SimpleMeshLayer(
                 super.getSubLayerProps({
