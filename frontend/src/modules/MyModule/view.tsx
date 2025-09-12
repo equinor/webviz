@@ -441,10 +441,10 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const colorScale =
         type === ColorScaleType.Continuous
-            ? props.workbenchSettings.useContinuousColorScale({
+            ? props.workbenchSettings.makeContinuousColorScale({
                   gradientType,
               })
-            : props.workbenchSettings.useDiscreteColorScale({
+            : props.workbenchSettings.makeDiscreteColorScale({
                   gradientType,
               });
 
