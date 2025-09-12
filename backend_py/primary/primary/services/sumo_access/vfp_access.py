@@ -31,23 +31,23 @@ class VfpAccess:
     Class for accessing and retrieving Vfp tables
     """
 
-    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, ensemble_name: str):
         self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
-        self._iteration_name: str = iteration_name
+        self._ensemble_name: str = ensemble_name
         self._ensemble_context = SearchContext(sumo=self._sumo_client).filter(
-            uuid=self._case_uuid, iteration=self._iteration_name
+            uuid=self._case_uuid, ensemble=self._ensemble_name
         )
 
     @classmethod
-    def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "VfpAccess":
+    def from_ensemble_name(cls, access_token: str, case_uuid: str, ensemble_name: str) -> "VfpAccess":
         sumo_client = create_sumo_client(access_token)
-        return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
+        return cls(sumo_client=sumo_client, case_uuid=case_uuid, ensemble_name=ensemble_name)
 
     async def get_all_vfp_table_names_for_realization_async(self, realization: int) -> List[str]:
         """Returns all VFP table names/tagnames for a realization."""
         table_context = self._ensemble_context.tables.filter(
-            content="lift_curves", realization=realization, iteration=self._iteration_name
+            content="lift_curves", realization=realization, ensemble=self._ensemble_name
         )
         table_count = await table_context.length_async()
         if table_count == 0:
@@ -61,7 +61,7 @@ class VfpAccess:
         and realization.
         """
 
-        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
         table_loader.require_tagname(tagname)
         pa_table = await table_loader.get_single_realization_async(realization)
 
