@@ -1,6 +1,8 @@
 import * as React from "react";
+
 import { createPortal } from "react-dom";
-import { HoveredArea, ItemType } from "../sortableList";
+
+import { HoveredArea } from "../sortableList";
 
 type GroupDropOverlayProps = {
     containerEl: HTMLElement | null; // content container (e.g., <tbody>, <ul>, <div>)
@@ -9,26 +11,22 @@ type GroupDropOverlayProps = {
     hoveredArea: HoveredArea | null; // context.hoveredArea
 };
 
-export function GroupDropOverlay({ containerEl, scrollEl, hoveredId, hoveredArea }: GroupDropOverlayProps) {
+export function GroupDropOverlay(props: GroupDropOverlayProps) {
     const nodeRef = React.useRef<HTMLDivElement | null>(null);
     const requestAnimationFrameRef = React.useRef<number | null>(null);
 
-    const containerRef = React.useRef(containerEl);
-    const scrollRef = React.useRef(scrollEl);
-    const idRef = React.useRef(hoveredId);
-    const areaRef = React.useRef(hoveredArea);
-    containerRef.current = containerEl;
-    scrollRef.current = scrollEl;
-    idRef.current = hoveredId;
-    areaRef.current = hoveredArea;
+    const containerRef = React.useRef(props.containerEl);
+    const scrollRef = React.useRef(props.scrollEl);
+    containerRef.current = props.containerEl;
+    scrollRef.current = props.scrollEl;
 
     const tick = React.useCallback(
         function tick() {
             const node = nodeRef.current;
             const host = scrollRef.current;
             const container = containerRef.current;
-            const id = idRef.current;
-            const area = areaRef.current;
+            const id = props.hoveredId;
+            const area = props.hoveredArea;
             if (!node || !host || !container || !id) {
                 return;
             }
@@ -69,32 +67,39 @@ export function GroupDropOverlay({ containerEl, scrollEl, hoveredId, hoveredArea
 
             requestAnimationFrameRef.current = requestAnimationFrame(tick);
         },
-        [hoveredId, hoveredArea],
+        [props.hoveredArea, props.hoveredId],
     );
 
-    React.useEffect(() => {
-        if (!containerEl || !scrollEl || !hoveredId) return;
-        requestAnimationFrameRef.current = requestAnimationFrame(tick);
+    React.useEffect(
+        function mountScrollAndResizeEffect() {
+            const scrollEl = props.scrollEl;
+            if (!props.containerEl || !scrollEl || !props.hoveredId) return;
+            requestAnimationFrameRef.current = requestAnimationFrame(tick);
 
-        const onScroll = () => {
-            // ensure we apply a fresh position immediately on scroll
-            if (requestAnimationFrameRef.current == null) tick();
-        };
-        scrollEl.addEventListener("scroll", onScroll, { passive: true });
+            function onScroll() {
+                if (requestAnimationFrameRef.current == null) tick();
+            }
+            scrollEl.addEventListener("scroll", onScroll, { passive: true });
 
-        const ro = new ResizeObserver(() => tick());
-        ro.observe(scrollEl);
-        ro.observe(containerEl);
+            const resizeObserver = new ResizeObserver(() => tick());
+            resizeObserver.observe(scrollEl);
+            resizeObserver.observe(props.containerEl);
 
-        return () => {
-            scrollEl.removeEventListener("scroll", onScroll);
-            ro.disconnect();
-            if (requestAnimationFrameRef.current != null) cancelAnimationFrame(requestAnimationFrameRef.current);
-            requestAnimationFrameRef.current = null;
-        };
-    }, [containerEl, scrollEl, hoveredId, tick]);
+            return function unmountScrollAndResizEffect() {
+                scrollEl.removeEventListener("scroll", onScroll);
+                resizeObserver.disconnect();
+                if (requestAnimationFrameRef.current != null) {
+                    cancelAnimationFrame(requestAnimationFrameRef.current);
+                }
+                requestAnimationFrameRef.current = null;
+            };
+        },
+        [props.containerEl, props.scrollEl, props.hoveredId, tick],
+    );
 
-    if (!containerEl || !scrollEl || !hoveredId) return null;
+    if (!props.containerEl || !props.scrollEl || !props.hoveredId) {
+        return null;
+    }
 
     const node = (
         <div
@@ -116,5 +121,5 @@ export function GroupDropOverlay({ containerEl, scrollEl, hoveredId, hoveredArea
         />
     );
 
-    return createPortal(node, scrollEl);
+    return createPortal(node, props.scrollEl);
 }

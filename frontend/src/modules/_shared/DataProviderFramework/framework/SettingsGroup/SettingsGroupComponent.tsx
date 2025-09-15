@@ -15,7 +15,6 @@ import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllB
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
-
 export type SettingsGroupComponentProps = {
     group: ItemGroup;
     makeActionsForGroup: (group: ItemGroup) => ActionGroup[];
@@ -68,7 +67,7 @@ export function SettingsGroupComponent(props: SettingsGroupComponentProps): Reac
             expanded={isExpanded}
         >
             {children.map((child: Item) =>
-                makeSortableListItemComponent(child, props.makeActionsForGroup, props.onActionClick)
+                makeSortableListItemComponent(child, props.makeActionsForGroup, props.onActionClick),
             )}
         </SortableListGroup>
     );

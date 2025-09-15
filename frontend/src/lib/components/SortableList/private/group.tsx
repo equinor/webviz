@@ -1,13 +1,10 @@
 import React from "react";
 
 import { createPortal } from "@lib/utils/createPortal";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { composeRefs } from "../utils/composeRefs";
 
 import { useMakeDragGhostElement } from "./useMakeDragGhostElement";
-import { useMakeElementClassName } from "./useMakeElementClassNames";
-
 
 export type GroupProps = {
     id: string;
@@ -23,11 +20,8 @@ export const Group = React.forwardRef<HTMLElement, GroupProps>(function Group(pr
         (el) => {
             localRef.current = el;
         },
-        (only as any).ref
+        (only as any).ref,
     );
-
-    let className = useMakeElementClassName(props.id);
-    className = resolveClassNames(only.props.className, className);
 
     const dragGhostElement = useMakeDragGhostElement(props.id, only, localRef);
 
@@ -37,7 +31,6 @@ export const Group = React.forwardRef<HTMLElement, GroupProps>(function Group(pr
                 ref: mergedRef,
                 "data-sortable": "group",
                 "data-item-id": props.id,
-                className,
             })}
             {createPortal(dragGhostElement)}
         </>

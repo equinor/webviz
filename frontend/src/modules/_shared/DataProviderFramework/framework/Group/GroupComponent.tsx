@@ -20,7 +20,6 @@ import { makeSortableListItemComponent } from "../utils/makeSortableListItemComp
 
 import type { Group } from "./Group";
 
-
 export type GroupComponentProps = {
     group: Group<any, any>;
     makeActionsForGroup: (group: ItemGroup) => ActionGroup[];
@@ -104,7 +103,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
             }
         >
             {children.map((child: Item) =>
-                makeSortableListItemComponent(child, props.makeActionsForGroup, props.onActionClick)
+                makeSortableListItemComponent(child, props.makeActionsForGroup, props.onActionClick),
             )}
         </SortableListGroup>
     );

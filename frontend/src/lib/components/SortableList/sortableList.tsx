@@ -6,15 +6,15 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 import { point2Distance, vec2FromPointerEvent } from "@lib/utils/vec2";
 
-import { Content } from "./private/Content";
+import { Content } from "./private/content";
+import { DraggedElementPlaceholder } from "./private/draggedElementPlaceholder";
 import { DragHandle } from "./private/dragHandle";
-import { DropIndicatorOverlay } from "./private/DropIndicatorOverlay";
-import { Group } from "./private/Group";
-import { SortableListGroupContent } from "./private/GroupContent";
-import { Item } from "./private/Item";
-import { ScrollContainer } from "./private/ScrollContainer";
-import { DraggedElementPlaceholder } from "./private/DraggedElementPlaceholder";
-import { GroupDropOverlay } from "./private/GroupDropOverlay";
+import { DropIndicatorOverlay } from "./private/dropIndicatorOverlay";
+import { Group } from "./private/group";
+import { GroupContent } from "./private/groupContent";
+import { GroupDropOverlay } from "./private/groupDropOverlay";
+import { Item } from "./private/item";
+import { ScrollContainer } from "./private/scrollContainer";
 
 export enum ItemType {
     ITEM = "item",
@@ -69,7 +69,7 @@ export type SortableListCompound = React.FC<SortableListProps> & {
     Item: typeof Item;
     Group: typeof Group;
     DragHandle: typeof DragHandle;
-    GroupContent: typeof SortableListGroupContent;
+    GroupContent: typeof GroupContent;
 };
 
 // This defines the size of the areas determining if the dragged item should be inserted above or below the hovered item
@@ -563,7 +563,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
     );
 
     return (
-        <div className="w-full h-full flex flex-col relative min-h-0 max-h-full" ref={mainRef}>
+        <div className="flex flex-col relative min-h-0 max-h-full" ref={mainRef}>
             <SortableListContext.Provider value={context}>
                 <div className="absolute top-0 left-0 w-full h-5 z-50 pointer-events-none" ref={upperScrollRef}></div>
                 <div
@@ -606,7 +606,7 @@ SortableList.Content = Content;
 SortableList.ScrollContainer = ScrollContainer;
 SortableList.Item = Item;
 SortableList.Group = Group;
-SortableList.GroupContent = SortableListGroupContent;
+SortableList.GroupContent = GroupContent;
 SortableList.DragHandle = DragHandle;
 
 export enum HoveredArea {

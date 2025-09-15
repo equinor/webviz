@@ -4,7 +4,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type DragHandleProps = {
     className?: string;
-    children?: React.ReactNode;
+    children: React.ReactNode;
 };
 
 export function DragHandle(props: DragHandleProps) {
