@@ -167,10 +167,11 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
                                 Click on <Add fontSize="inherit" /> to add an item.
                             </div>
                         }
+                        className="h-full"
                     >
                         <SortableList.Content>
                             <SortableList.ScrollContainer>
-                                <div className="grow overflow-auto min-h-0 bg-slate-200 relative">
+                                <div className="grow overflow-auto min-h-0 bg-slate-200 relative h-full">
                                     {items.map((item: Item) =>
                                         makeSortableListItemComponent(item, makeActionsForGroup, handleActionClick),
                                     )}

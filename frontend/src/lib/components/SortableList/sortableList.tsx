@@ -61,6 +61,7 @@ export type SortableListProps = {
         destinationId: string | null,
         position: number,
     ) => void;
+    className?: string;
 };
 
 export type SortableListCompound = React.FC<SortableListProps> & {
@@ -563,7 +564,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
     );
 
     return (
-        <div className="flex flex-col relative min-h-0 max-h-full" ref={mainRef}>
+        <div className={resolveClassNames(props.className, "flex flex-col relative min-h-0 max-h-full")} ref={mainRef}>
             <SortableListContext.Provider value={context}>
                 <div className="absolute top-0 left-0 w-full h-5 z-50 pointer-events-none" ref={upperScrollRef}></div>
                 <div

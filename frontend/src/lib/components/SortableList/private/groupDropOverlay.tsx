@@ -27,7 +27,7 @@ export function GroupDropOverlay(props: GroupDropOverlayProps) {
             const container = containerRef.current;
             const id = props.hoveredId;
             const area = props.hoveredArea;
-            if (!node || !host || !container || !id) {
+            if (!node || !host || !container || !id || !area) {
                 return;
             }
 
@@ -43,7 +43,7 @@ export function GroupDropOverlay(props: GroupDropOverlayProps) {
                 return;
             }
 
-            if (hoveredElement === group && ![HoveredArea.HEADER, HoveredArea.CENTER].includes(area!)) {
+            if (hoveredElement === group && ![HoveredArea.HEADER, HoveredArea.CENTER].includes(area)) {
                 node.style.display = "none";
                 return;
             }

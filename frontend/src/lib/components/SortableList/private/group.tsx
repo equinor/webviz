@@ -5,6 +5,7 @@ import { createPortal } from "@lib/utils/createPortal";
 import { composeRefs } from "../utils/composeRefs";
 
 import { useMakeDragGhostElement } from "./useMakeDragGhostElement";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type GroupProps = {
     id: string;
@@ -12,7 +13,7 @@ export type GroupProps = {
 };
 
 export const Group = React.forwardRef<HTMLElement, GroupProps>(function Group(props, externalRef) {
-    const only = React.Children.only(props.children) as React.ReactElement;
+    const onlyChild = React.Children.only(props.children) as React.ReactElement;
 
     const localRef = React.useRef<HTMLElement | null>(null);
     const mergedRef = composeRefs<HTMLElement>(
@@ -20,14 +21,14 @@ export const Group = React.forwardRef<HTMLElement, GroupProps>(function Group(pr
         (el) => {
             localRef.current = el;
         },
-        (only as any).ref,
+        (onlyChild as any).ref,
     );
 
-    const dragGhostElement = useMakeDragGhostElement(props.id, only, localRef);
+    const dragGhostElement = useMakeDragGhostElement(props.id, onlyChild, localRef);
 
     return (
         <>
-            {React.cloneElement(only, {
+            {React.cloneElement(onlyChild, {
                 ref: mergedRef,
                 "data-sortable": "group",
                 "data-item-id": props.id,
