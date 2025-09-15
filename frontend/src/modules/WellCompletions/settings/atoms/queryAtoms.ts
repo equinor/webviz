@@ -17,14 +17,14 @@ export const wellCompletionsQueryAtom = atomWithQuery((get) => {
     const ensembleName = selectedEnsembleIdent?.getEnsembleName();
 
     // Initialize with multiple realizations request
-    let realizationsOrRealizationsEncodedAsUintListStr: number | string | null = null;
+    let realizationsEncodedAsUintListStr: string | null = null;
     let hasValidRealizations = false;
-    if (userSelectedRealizationSelection === RealizationSelection.SINGLE) {
-        realizationsOrRealizationsEncodedAsUintListStr = selectedRealizationNumber;
-        hasValidRealizations = selectedRealizationNumber !== null;
+    if (userSelectedRealizationSelection === RealizationSelection.SINGLE && selectedRealizationNumber !== null) {
+        realizationsEncodedAsUintListStr = encodeAsUintListStr([selectedRealizationNumber]);
+        hasValidRealizations = true;
     }
     if (userSelectedRealizationSelection === RealizationSelection.AGGREGATED) {
-        realizationsOrRealizationsEncodedAsUintListStr = encodeAsUintListStr(validRealizationNumbers);
+        realizationsEncodedAsUintListStr = encodeAsUintListStr(validRealizationNumbers);
         hasValidRealizations = validRealizationNumbers.length !== 0;
     }
 
@@ -34,7 +34,7 @@ export const wellCompletionsQueryAtom = atomWithQuery((get) => {
             query: {
                 case_uuid: caseUuid ?? "",
                 ensemble_name: ensembleName ?? "",
-                realization_or_realizations_encoded_as_uint_list_str: realizationsOrRealizationsEncodedAsUintListStr,
+                realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
             },
         }),
         enabled: Boolean(caseUuid && ensembleName && hasValidRealizations),
