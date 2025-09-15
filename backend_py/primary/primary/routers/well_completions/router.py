@@ -21,7 +21,7 @@ async def get_well_completions_data(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
-    realization_or_realizations_encoded_as_uint_list_str: Annotated[int | str | None, Query( description="Optional realizations to include. Provide single realization or list of realizations encoded as string. If not specified, all realizations will be returned.")] = None,
+    realizations_encoded_as_uint_list_str: Annotated[int | str | None, Query( description="Optional realizations to include, list encoded as string. If not specified, all realizations will be returned.")] = None,
     # fmt:on
 ) -> schemas.WellCompletionsData:
     access = WellCompletionsAccess.from_ensemble_name(
@@ -31,19 +31,12 @@ async def get_well_completions_data(
     well_completions_assembler = WellCompletionsAssembler(well_completions_access=access)
 
     # Decode realizations if encoded string is provided
-    realizations: int | list[int] | None = None
-    if isinstance(realization_or_realizations_encoded_as_uint_list_str, int):
-        realizations = realization_or_realizations_encoded_as_uint_list_str
-    elif isinstance(realization_or_realizations_encoded_as_uint_list_str, str):
-        realizations = decode_uint_list_str(realization_or_realizations_encoded_as_uint_list_str)
+    realizations: list[int] | None = None
+    if isinstance(realizations_encoded_as_uint_list_str, str):
+        realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
     # Fetch and initialize table data
-    if isinstance(realizations, int):
-        await well_completions_assembler.fetch_and_initialize_well_completions_single_realization_table_data_async(
-            realization=realizations
-        )
-
-    elif realizations is not None and len(realizations) == 1:
+    if realizations is not None and len(realizations) == 1:
         await well_completions_assembler.fetch_and_initialize_well_completions_single_realization_table_data_async(
             realization=realizations[0]
         )
