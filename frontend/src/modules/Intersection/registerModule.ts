@@ -12,7 +12,7 @@ ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,
     defaultTitle: "Intersection",
     category: ModuleCategory.MAIN,
-    devState: ModuleDevState.DEV,
+    devState: ModuleDevState.PROD,
     description: "Generic intersection viewer for co-visualization of data from various sources.",
     preview,
     dataTagIds: [
