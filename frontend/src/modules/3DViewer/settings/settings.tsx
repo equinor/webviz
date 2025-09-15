@@ -16,7 +16,7 @@ import type { Intersection } from "@framework/types/intersection";
 import { IntersectionType } from "@framework/types/intersection";
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
@@ -28,6 +28,7 @@ import { Select } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
 import type { TableSelectOption } from "@lib/components/TableSelect";
 import { TableSelect } from "@lib/components/TableSelect";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { isoIntervalStringToDateLabel, isoStringToDateLabel } from "@modules/_shared/utils/isoDatetimeStringFormatting";
@@ -71,7 +72,7 @@ import { GridCellIndexFilter } from "./components/gridCellIndexFilter";
 import { WellboreSelector } from "./components/wellboreSelector";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
-    const ensembleSet = useEnsembleSet(props.workbenchSession);
+    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
 
     const [showGridLines, setShowGridLines] = useAtom(showGridlinesAtom);

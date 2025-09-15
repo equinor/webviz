@@ -15,8 +15,10 @@ import type {
     IntersectionPolyline,
     IntersectionPolylineWithoutId,
 } from "@framework/userCreatedItems/IntersectionPolylines";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
+import { useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { calcExtendedSimplifiedWellboreTrajectoryInXYPlane } from "@modules/_shared/utils/wellbore";
@@ -38,7 +40,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
 
     let colorScale = props.viewContext.useSettingsToViewInterfaceValue("colorScale");
-    const defaultColorScale = props.workbenchSettings.useContinuousColorScale({
+    const defaultColorScale = useContinuousColorScale(props.workbenchSettings, {
         gradientType: ColorScaleGradientType.Sequential,
     });
     if (!colorScale) {
@@ -68,7 +70,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const intersectionType = props.viewContext.useSettingsToViewInterfaceValue("intersectionType");
     const setIntersectionType = useSetAtom(intersectionTypeAtom);
 
-    const ensembleSet = useEnsembleSet(props.workbenchSession);
+    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
 
     const fieldId = ensembleIdent ? (ensembleSet.getEnsemble(ensembleIdent)?.getFieldIdentifier() ?? null) : null;
 

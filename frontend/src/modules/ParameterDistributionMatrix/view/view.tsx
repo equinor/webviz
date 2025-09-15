@@ -9,7 +9,6 @@ import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSess
 import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-
 import type { Interfaces } from "../interfaces";
 import type { ParameterDataArr } from "../typesAndEnums";
 

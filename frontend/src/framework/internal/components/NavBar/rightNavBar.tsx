@@ -1,12 +1,14 @@
 import type React from "react";
 
-import { FilterAlt, Fullscreen, FullscreenExit, History } from "@mui/icons-material";
+import { FilterAlt, Fullscreen, FullscreenExit, History, WebAsset } from "@mui/icons-material";
 
 import { GuiState, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
 import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
 import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type RightNavBarProps = {
@@ -14,6 +16,7 @@ type RightNavBarProps = {
 };
 
 export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
+    const workbenchSession = props.workbench.getWorkbenchSession();
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     const [isFullscreen, toggleFullScreen] = useBrowserFullscreen();
@@ -26,6 +29,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
         guiMessageBroker,
         GuiState.RightSettingsPanelWidthInPercent,
     );
+    const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     function ensureSettingsPanelIsVisible() {
         if (rightSettingsPanelWidth <= 5) {
@@ -46,6 +50,11 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
         }
     }
 
+    function handleModulesListClick() {
+        ensureSettingsPanelIsVisible();
+        setDrawerContent(RightDrawerContent.ModulesList);
+    }
+
     function handleRealizationFilterClick() {
         togglePanelContent(RightDrawerContent.RealizationFilterSettings);
     }
@@ -56,11 +65,18 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
 
     return (
         <div
-            className={resolveClassNames(
-                "bg-white p-2 border-r-2 border-slate-200 z-50 shadow-lg flex flex-col w-[4.5rem]",
-            )}
+            className={resolveClassNames("bg-white p-2 border-r-2 border-slate-200 z-50 shadow-lg flex flex-col w-16")}
         >
             <div className="flex flex-col gap-2 grow">
+                <NavBarButton
+                    active={drawerContent === RightDrawerContent.ModulesList}
+                    title="Show modules list"
+                    disabledTitle="Modules cannot be added in snapshot mode"
+                    icon={<WebAsset fontSize="small" className="size-5" />}
+                    onClick={handleModulesListClick}
+                    disabled={isSnapshot}
+                />
+                <NavBarDivider />
                 <NavBarButton
                     active={drawerContent === RightDrawerContent.RealizationFilterSettings}
                     title={`Open realization filter panel${
@@ -84,9 +100,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                     title="Open module history"
                     onClick={handleModuleInstanceLogClick}
                 />
-
                 <NavBarDivider />
-
                 <NavBarButton
                     active={isFullscreen}
                     icon={<Fullscreen fontSize="small" className="size-5 mr-2" />}

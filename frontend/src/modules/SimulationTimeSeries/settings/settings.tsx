@@ -14,7 +14,7 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -27,6 +27,7 @@ import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select } from "@lib/components/Select";
 import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { Switch } from "@lib/components/Switch";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 
@@ -79,7 +80,7 @@ export function Settings({
     workbenchSession,
     workbenchServices,
 }: ModuleSettingsProps<Interfaces>) {
-    const ensembleSet = useEnsembleSet(workbenchSession);
+    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.EnsembleSet);
     const statusWriter = useSettingsStatusWriter(settingsContext);
 
     const [selectedVectorTags, setSelectedVectorTags] = React.useState<string[]>([]);
@@ -370,7 +371,7 @@ export function Settings({
                     })}
                     onChange={(_, value) => handleVisualizationModeChange(value)}
                 />
-                <div className="mt-6 p-2 rounded-md outline outline-1 outline-slate-300">
+                <div className="mt-6 p-2 rounded-md outline-1 outline-slate-300">
                     <div
                         className={resolveClassNames("", {
                             hidden: visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS,

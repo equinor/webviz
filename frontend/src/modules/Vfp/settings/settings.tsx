@@ -4,15 +4,15 @@ import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc, WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
-
 
 import type { Interfaces } from "../interfaces";
 import { PressureOption, VfpParam, VfpType } from "../types";
@@ -44,10 +44,9 @@ import {
 } from "./atoms/derivedAtoms";
 import { vfpTableQueryAtom } from "./atoms/queryAtoms";
 
-
-export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
+export function Settings({ workbenchSession: workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);
-    const ensembleSet = useEnsembleSet(workbenchSession);
+    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.EnsembleSet);
 
     const vfpTableQuery = useAtomValue(vfpTableQueryAtom);
 

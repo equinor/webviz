@@ -5,21 +5,23 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 
 import {
     DataProviderManager,
     DataProviderManagerTopic,
 } from "../../_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import type { SerializedState } from "../persistedState";
 
 import { dataProviderManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
 
-export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
-    const ensembleSet = useEnsembleSet(props.workbenchSession);
+export function Settings(props: ModuleSettingsProps<any, SerializedState>): React.ReactNode {
+    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
     const queryClient = useQueryClient();
 
     const [dataProviderManager, setDataProviderManager] = useAtom(dataProviderManagerAtom);
@@ -39,19 +41,27 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 fieldIdentifier,
                 preferredViewLayout,
             };
+            /*
             window.localStorage.setItem(
                 `${props.settingsContext.getInstanceIdString()}-settings`,
                 JSON.stringify(serializedState),
             );
+            */
+            props.persistence.serializeState({
+                dataProviderData: JSON.stringify(serializedState),
+            });
         },
-        [dataProviderManager, fieldIdentifier, preferredViewLayout, props.settingsContext],
+        [dataProviderManager, fieldIdentifier, preferredViewLayout, props.persistence],
     );
 
     const applyPersistedState = React.useCallback(
         function applyPersistedState(layerManager: DataProviderManager) {
-            const serializedState = window.localStorage.getItem(
+            /*const serializedState = window.localStorage.getItem(
                 `${props.settingsContext.getInstanceIdString()}-settings`,
-            );
+            );*/
+
+            const serializedState = props.persistence.serializedState?.dataProviderData;
+
             if (!serializedState) {
                 return;
             }
@@ -72,7 +82,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 layerManager.deserializeState(parsedState.layerManager);
             }
         },
-        [setFieldIdentifier, setPreferredViewLayout, props.settingsContext],
+        [setFieldIdentifier, setPreferredViewLayout, props.persistence],
     );
 
     React.useEffect(

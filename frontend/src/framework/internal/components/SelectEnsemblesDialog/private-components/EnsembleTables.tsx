@@ -5,54 +5,53 @@ import { v4 } from "uuid";
 
 import { IconButton } from "@lib/components/IconButton";
 
-import { isSameEnsembleItem } from "../_utils";
-import type { InternalDeltaEnsembleItem, RegularEnsembleItem } from "../types";
+import type { InternalDeltaEnsembleSetting, InternalRegularEnsembleSetting } from "../types";
 
 import { DeltaEnsembleRow } from "./DeltaEnsembleRow";
 import { RegularEnsembleRow } from "./RegularEnsembleRow";
 
 export type EnsembleTablesProps = {
     nextEnsembleColor: string;
-    regularEnsembles: RegularEnsembleItem[];
-    deltaEnsembles: InternalDeltaEnsembleItem[];
+    regularEnsembles: InternalRegularEnsembleSetting[];
+    deltaEnsembles: InternalDeltaEnsembleSetting[];
 
-    onUpdateRegularEnsemble: (updatedEnsemble: RegularEnsembleItem) => void;
-    onRemoveRegularEnsemble: (removedEnsemble: RegularEnsembleItem) => void;
+    onUpdateRegularEnsemble: (updatedEnsemble: InternalRegularEnsembleSetting) => void;
+    onRemoveRegularEnsemble: (removedEnsemble: InternalRegularEnsembleSetting) => void;
 
-    onAddDeltaEnsemble: (newEnsemble: InternalDeltaEnsembleItem) => void;
-    onUpdateDeltaEnsemble: (updatedEnsemble: InternalDeltaEnsembleItem) => void;
-    onRemoveDeltaEnsemble: (removedEnsemble: InternalDeltaEnsembleItem) => void;
+    onAddDeltaEnsemble: (newEnsemble: InternalDeltaEnsembleSetting) => void;
+    onUpdateDeltaEnsemble: (updatedEnsemble: InternalDeltaEnsembleSetting) => void;
+    onRemoveDeltaEnsemble: (removedEnsemble: InternalDeltaEnsembleSetting) => void;
 };
 
 export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
-    function isDuplicateDelta(deltaEnsemble: InternalDeltaEnsembleItem) {
-        const { uuid, referenceEnsemble, comparisonEnsemble } = deltaEnsemble;
+    function isDuplicateDelta(deltaEnsemble: InternalDeltaEnsembleSetting) {
+        const { uuid, referenceEnsembleIdent, comparisonEnsembleIdent } = deltaEnsemble;
 
         return props.deltaEnsembles.some((other) => {
             if (other.uuid === uuid) return false;
 
             return (
-                isSameEnsembleItem(other.comparisonEnsemble, comparisonEnsemble) &&
-                isSameEnsembleItem(other.referenceEnsemble, referenceEnsemble)
+                other.comparisonEnsembleIdent.equals(comparisonEnsembleIdent) &&
+                other.referenceEnsembleIdent.equals(referenceEnsembleIdent)
             );
         });
     }
 
-    function isValidDelta(deltaEnsemble: InternalDeltaEnsembleItem) {
-        return !!deltaEnsemble.comparisonEnsemble && !!deltaEnsemble.referenceEnsemble;
+    function isValidDelta(deltaEnsemble: InternalDeltaEnsembleSetting) {
+        return !!deltaEnsemble.comparisonEnsembleIdent && !!deltaEnsemble.referenceEnsembleIdent;
     }
 
     function createNewDeltaEnsemble() {
         if (!props.regularEnsembles.length) return;
 
-        const comparisonEns = props.regularEnsembles[0];
-        const referenceEns = props.regularEnsembles[1] ?? props.regularEnsembles[0];
+        const comparisonEns = props.regularEnsembles[0].ensembleIdent;
+        const referenceEns = props.regularEnsembles[1]?.ensembleIdent ?? props.regularEnsembles[0].ensembleIdent;
 
         props.onAddDeltaEnsemble({
             uuid: v4(),
             color: props.nextEnsembleColor,
-            comparisonEnsemble: comparisonEns,
-            referenceEnsemble: referenceEns,
+            comparisonEnsembleIdent: comparisonEns,
+            referenceEnsembleIdent: referenceEns,
             customName: null,
         });
     }
@@ -76,8 +75,8 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                         <tbody>
                             {props.regularEnsembles.map((item) => (
                                 <RegularEnsembleRow
-                                    key={`${item.caseName}-${item.ensembleName}`}
-                                    ensembleItem={item}
+                                    key={`${item.ensembleIdent.toString()}`}
+                                    ensembleSetting={item}
                                     onUpdate={props.onUpdateRegularEnsemble}
                                     onDelete={props.onRemoveRegularEnsemble}
                                 />
@@ -123,8 +122,8 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                                 return (
                                     <DeltaEnsembleRow
                                         key={deltaItem.uuid}
-                                        deltaEnsembleItem={deltaItem}
-                                        availableRegularEnsembles={props.regularEnsembles}
+                                        deltaEnsembleSetting={deltaItem}
+                                        availableRegularEnsembleSettings={props.regularEnsembles}
                                         isDuplicate={isDuplicateDelta(deltaItem)}
                                         isValid={isValidDelta(deltaItem)}
                                         onUpdate={props.onUpdateDeltaEnsemble}

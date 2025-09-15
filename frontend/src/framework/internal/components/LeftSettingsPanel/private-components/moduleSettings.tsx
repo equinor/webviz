@@ -3,40 +3,59 @@ import type React from "react";
 import { Settings as SettingsIcon } from "@mui/icons-material";
 import { Provider } from "jotai";
 
+import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
-import { ImportState } from "@framework/Module";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+import { ImportStatus } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
-import { ModuleInstanceState, ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/ModuleInstance";
+import {
+    ModuleInstanceTopic,
+    ModuleInstanceLifeCycleState,
+    useModuleInstanceTopicValue,
+} from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
 
 import { ApplyInterfaceEffectsToSettings } from "../../ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
 
 type ModuleSettingsProps = {
-    moduleInstance: ModuleInstance<any>;
-    activeModuleInstanceId: string;
+    moduleInstance: ModuleInstance<any, any>;
     workbench: Workbench;
 };
 
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
-    const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATE);
-    const moduleInstanceState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.STATE);
+    const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
+    const dashboard = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
+    );
+
+    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ActiveModuleInstanceId);
+
+    const moduleInstanceLifecycleState = useModuleInstanceTopicValue(
+        props.moduleInstance,
+        ModuleInstanceTopic.LIFECYCLE_STATE,
+    );
     const atomStore = props.workbench.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
 
-    if (importState !== ImportState.Imported || !props.moduleInstance.isInitialized()) {
+    if (importState !== ImportStatus.Imported || !props.moduleInstance.isInitialized()) {
         return null;
     }
 
     if (
-        moduleInstanceState === ModuleInstanceState.INITIALIZING ||
-        moduleInstanceState === ModuleInstanceState.RESETTING
+        moduleInstanceLifecycleState === ModuleInstanceLifeCycleState.INITIALIZING ||
+        moduleInstanceLifecycleState === ModuleInstanceLifeCycleState.RESETTING
     ) {
-        const text = moduleInstanceState === ModuleInstanceState.INITIALIZING ? "Initializing..." : "Resetting...";
+        const text =
+            moduleInstanceLifecycleState === ModuleInstanceLifeCycleState.INITIALIZING
+                ? "Initializing..."
+                : "Resetting...";
         return (
             <div className="h-full w-full flex flex-col justify-center items-center m-2">
                 <CircularProgress />
@@ -45,14 +64,14 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         );
     }
 
-    if (moduleInstanceState === ModuleInstanceState.ERROR) {
+    if (moduleInstanceLifecycleState === ModuleInstanceLifeCycleState.ERROR) {
         const errorObject = props.moduleInstance.getFatalError();
         if (errorObject) {
             return (
                 <div
                     className="text-red-600 m-2"
                     style={{
-                        display: props.activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "none",
+                        display: activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "none",
                     }}
                 >
                     This module instance has encountered an error. Please see its view for more details.
@@ -66,7 +85,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         <div
             key={props.moduleInstance.getId()}
             className={resolveClassNames(
-                props.activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "hidden",
+                activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "hidden",
                 "flex-col h-full w-full relative",
             )}
             style={{ contain: "content" }}
@@ -94,10 +113,22 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                                     <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
                                         <Settings
                                             settingsContext={props.moduleInstance.getContext()}
-                                            workbenchSession={props.workbench.getWorkbenchSession()}
+                                            workbenchSession={
+                                                props.workbench.getWorkbenchSession() as unknown as WorkbenchSession
+                                            }
                                             workbenchServices={props.workbench.getWorkbenchServices()}
-                                            workbenchSettings={props.workbench.getWorkbenchSettings()}
+                                            workbenchSettings={props.workbench
+                                                .getWorkbenchSession()
+                                                .getWorkbenchSettings()}
                                             initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                                            persistence={{
+                                                serializedState:
+                                                    props.moduleInstance.getSerializedState()?.["settings"] ??
+                                                    undefined,
+                                                serializeState: props.moduleInstance.serializeSettingsState.bind(
+                                                    props.moduleInstance,
+                                                ),
+                                            }}
                                         />
                                     </ApplyInterfaceEffectsToSettings>
                                 </HydrateQueryClientAtom>
