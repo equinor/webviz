@@ -116,6 +116,7 @@ class SnapshotAccess:
         try:
             document = await self.metadata_container_access.get_item_async(snapshot_id, partition_key=owner)
         except CosmosResourceNotFoundError:
+            # pylint: disable=raise-missing-from
             raise ServiceRequestError(f"Snapshot '{snapshot_id}' not found for user '{owner}'.", Service.DATABASE)
         return document.metadata
 
@@ -187,6 +188,7 @@ class SnapshotAccess:
                 item_id=snapshot_id, partition_key=self.user_id
             )
         except CosmosResourceNotFoundError:
+            # pylint: disable=raise-missing-from
             raise ServiceRequestError(
                 f"Snapshot with id '{snapshot_id}' not found for user '{self.user_id}'.", Service.DATABASE
             )

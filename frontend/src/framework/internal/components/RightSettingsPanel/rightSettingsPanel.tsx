@@ -6,9 +6,10 @@ import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 
+import { ModulesList } from "../ModulesList";
+
 import { ModuleInstanceLog } from "./private-components/ModuleInstanceLog/moduleInstanceLog";
 import { RealizationFilterSettings } from "./private-components/RealizationFilterSettings";
-import { ModulesList } from "../ModulesList";
 
 type RightSettingsPanelProps = { workbench: Workbench };
 

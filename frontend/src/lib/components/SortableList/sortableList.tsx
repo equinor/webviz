@@ -7,14 +7,14 @@ import type { Vec2 } from "@lib/utils/vec2";
 import { point2Distance, vec2FromPointerEvent } from "@lib/utils/vec2";
 
 import { Content } from "./private/Content";
+import { DraggedElementPlaceholder } from "./private/DraggedElementPlaceholder";
 import { DragHandle } from "./private/dragHandle";
 import { DropIndicatorOverlay } from "./private/DropIndicatorOverlay";
 import { Group } from "./private/Group";
 import { SortableListGroupContent } from "./private/GroupContent";
+import { GroupDropOverlay } from "./private/GroupDropOverlay";
 import { Item } from "./private/Item";
 import { ScrollContainer } from "./private/ScrollContainer";
-import { DraggedElementPlaceholder } from "./private/DraggedElementPlaceholder";
-import { GroupDropOverlay } from "./private/GroupDropOverlay";
 
 export enum ItemType {
     ITEM = "item",

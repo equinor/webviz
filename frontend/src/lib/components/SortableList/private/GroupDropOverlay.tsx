@@ -1,6 +1,8 @@
 import * as React from "react";
+
 import { createPortal } from "react-dom";
-import { HoveredArea, ItemType } from "../sortableList";
+
+import { HoveredArea } from "../sortableList";
 
 type GroupDropOverlayProps = {
     containerEl: HTMLElement | null; // content container (e.g., <tbody>, <ul>, <div>)
@@ -22,55 +24,52 @@ export function GroupDropOverlay({ containerEl, scrollEl, hoveredId, hoveredArea
     idRef.current = hoveredId;
     areaRef.current = hoveredArea;
 
-    const tick = React.useCallback(
-        function tick() {
-            const node = nodeRef.current;
-            const host = scrollRef.current;
-            const container = containerRef.current;
-            const id = idRef.current;
-            const area = areaRef.current;
-            if (!node || !host || !container || !id) {
-                return;
-            }
+    const tick = React.useCallback(function tick() {
+        const node = nodeRef.current;
+        const host = scrollRef.current;
+        const container = containerRef.current;
+        const id = idRef.current;
+        const area = areaRef.current;
+        if (!node || !host || !container || !id) {
+            return;
+        }
 
-            const hoveredElement = container.querySelector<HTMLElement>(`[data-item-id="${id}"]`);
-            if (!hoveredElement) {
-                node.style.display = "none";
-                return;
-            }
+        const hoveredElement = container.querySelector<HTMLElement>(`[data-item-id="${id}"]`);
+        if (!hoveredElement) {
+            node.style.display = "none";
+            return;
+        }
 
-            const group = hoveredElement.closest<HTMLElement>(`[data-sortable="group"]`);
-            if (!group) {
-                node.style.display = "none";
-                return;
-            }
+        const group = hoveredElement.closest<HTMLElement>(`[data-sortable="group"]`);
+        if (!group) {
+            node.style.display = "none";
+            return;
+        }
 
-            if (hoveredElement === group && ![HoveredArea.HEADER, HoveredArea.CENTER].includes(area!)) {
-                node.style.display = "none";
-                return;
-            }
+        if (hoveredElement === group && ![HoveredArea.HEADER, HoveredArea.CENTER].includes(area!)) {
+            node.style.display = "none";
+            return;
+        }
 
-            const hostRect = host.getBoundingClientRect();
-            const groupRect = group.getBoundingClientRect();
+        const hostRect = host.getBoundingClientRect();
+        const groupRect = group.getBoundingClientRect();
 
-            const left = Math.max(0, groupRect.left - hostRect.left + host.scrollLeft);
-            const top = Math.max(0, groupRect.top - hostRect.top + host.scrollTop);
+        const left = Math.max(0, groupRect.left - hostRect.left + host.scrollLeft);
+        const top = Math.max(0, groupRect.top - hostRect.top + host.scrollTop);
 
-            const w = Math.max(0, groupRect.width);
-            const h = Math.max(0, groupRect.height);
-            const x = Math.round(left);
-            const y = Math.round(top);
+        const w = Math.max(0, groupRect.width);
+        const h = Math.max(0, groupRect.height);
+        const x = Math.round(left);
+        const y = Math.round(top);
 
-            node.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-            node.style.width = `${w}px`;
-            node.style.height = `${h}px`;
-            node.style.opacity = "1";
-            node.style.display = "";
+        node.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        node.style.width = `${w}px`;
+        node.style.height = `${h}px`;
+        node.style.opacity = "1";
+        node.style.display = "";
 
-            requestAnimationFrameRef.current = requestAnimationFrame(tick);
-        },
-        [hoveredId, hoveredArea],
-    );
+        requestAnimationFrameRef.current = requestAnimationFrame(tick);
+    }, []);
 
     React.useEffect(() => {
         if (!containerEl || !scrollEl || !hoveredId) return;

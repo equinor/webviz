@@ -60,7 +60,7 @@ def create_per_group_summed_realization_volume_df(
 
     # Selector columns not in group by will be excluded, these should not be aggregated
     per_group_summed_df = volume_df.group_by(columns_to_group_by_for_sum).agg(
-        [pl.sum("*").exclude(possible_selector_columns)]
+        [pl.all().exclude(possible_selector_columns).sum()]
     )
 
     return per_group_summed_df

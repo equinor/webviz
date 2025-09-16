@@ -1,5 +1,7 @@
 import React from "react";
 
+import type { JTDSchemaType } from "ajv/dist/core";
+
 import type { AtomStoreMaster } from "./AtomStoreMaster";
 import {
     INTERSECTION_POLYLINES_JTD_SCHEMA,
@@ -8,7 +10,6 @@ import {
     type SerializedIntersectionPolylines,
 } from "./userCreatedItems/IntersectionPolylines";
 import type { WorkbenchSession } from "./WorkbenchSession";
-import type { JTDSchemaType } from "ajv/dist/core";
 
 export type SerializedUserCreatedItems = {
     intersectionPolylines: SerializedIntersectionPolylines;

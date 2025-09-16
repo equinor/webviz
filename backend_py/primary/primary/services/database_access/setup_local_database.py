@@ -4,7 +4,7 @@ This file is only used for setting up the local database for development and tes
 
 import logging
 import time
-from typing import Optional, List, Dict, Any
+from typing import List, Dict, Any
 import ssl
 import urllib.request
 from urllib.error import URLError
@@ -32,6 +32,7 @@ COSMOS_SCHEMA: List[Dict[str, Any]] = [
 
 def wait_for_emulator(uri: str, key: str, retries: int = 50, delay: int = 10) -> CosmosClient:
     probe_url = f"{uri.rstrip('/')}/_explorer/emulator.pem"
+    # pylint: disable=protected-access
     context = ssl._create_unverified_context()
 
     for attempt in range(retries):
@@ -40,8 +41,8 @@ def wait_for_emulator(uri: str, key: str, retries: int = 50, delay: int = 10) ->
                 if response.status == 200:
                     LOGGER.info("✅ Emulator HTTPS endpoint is up. Proceeding to create CosmosClient.")
                     break
-        except URLError as e:
-            LOGGER.warning("⏳ Emulator cert endpoint not ready (attempt %d): %s", attempt + 1, e.reason)
+        except URLError as err:
+            LOGGER.warning("⏳ Emulator cert endpoint not ready (attempt %d): %s", attempt + 1, err.reason)
         time.sleep(delay)
     else:
         raise RuntimeError("❌ Cosmos Emulator certificate endpoint not ready after timeout")
@@ -55,6 +56,7 @@ def create_database_with_retry(client: CosmosClient, db_def: Dict[str, Any], max
     for attempt in range(1, max_attempts + 1):
         try:
             return client.create_database_if_not_exists(db_name, offer_throughput=db_def.get("offer_throughput"))
+        # pylint: disable=broad-except
         except Exception as error:
             LOGGER.warning("⚠️ Failed to create database '%s' (attempt %d): %s", db_name, attempt, error)
             if attempt == max_attempts:
@@ -91,6 +93,7 @@ def maybe_setup_local_database() -> None:
                     )
                     LOGGER.info("    ✅ Created container '%s' (attempt %d)", container_def["id"], attempt)
                     break
+                # pylint: disable=broad-except
                 except Exception as error:
                     LOGGER.warning(
                         "    ⚠️ Failed to create container '%s' (attempt %d): %s", container_def["id"], attempt, error

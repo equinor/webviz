@@ -1,7 +1,8 @@
 /* eslint-disable no-console */
-import { getDebugSetting, setDebugSetting } from "@framework/internal/utils/debug";
 import { formatHex } from "culori";
 import { isArray } from "lodash";
+
+import { getDebugSetting, setDebugSetting } from "@framework/internal/utils/debug";
 
 let colorIndex = 0;
 

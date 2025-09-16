@@ -1,5 +1,5 @@
-import type { LayoutElement } from "./internal/WorkbenchSession/Dashboard";
 import type { KeyKind } from "./DataChannelTypes";
+import type { LayoutElement } from "./internal/WorkbenchSession/Dashboard";
 import type { SyncSettingKey } from "./SyncSettings";
 
 export type DataChannelTemplate = {

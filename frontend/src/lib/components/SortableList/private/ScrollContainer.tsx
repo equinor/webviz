@@ -1,8 +1,9 @@
 import React from "react";
 
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
 import { SortableListContext } from "../sortableList";
 import { composeRefs } from "../utils/composeRefs";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type ScrollContainerProps = {
     children: React.ReactNode;

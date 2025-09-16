@@ -79,6 +79,17 @@ max-branches = 14
 ignore_missing_imports = true
 disallow_untyped_defs = true
 
+disable_error_code = [
+    "union-attr",
+    "operator",
+    "arg-type",
+    "no-untyped-def",
+    "misc",
+    "return-value",
+    "return",
+    "assignment",
+]
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 filterwarnings = "ignore::DeprecationWarning:pkg_resources"

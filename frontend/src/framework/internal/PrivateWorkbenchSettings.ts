@@ -1,3 +1,5 @@
+import type { JTDSchemaType } from "ajv/dist/core";
+
 import {
     defaultColorPalettes,
     defaultContinuousDivergingColorPalettes,
@@ -13,7 +15,6 @@ import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType, type ColorScaleOptions } from "@lib/utils/ColorScale";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
-import type { JTDSchemaType } from "ajv/dist/core";
 
 export type UseDiscreteColorScaleOptions = {
     gradientType: ColorScaleGradientType;

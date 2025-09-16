@@ -1,7 +1,6 @@
 from typing import List
 import logging
 
-import asyncio
 from pydantic import BaseModel
 
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
@@ -9,7 +8,6 @@ from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from .sumo_client_factory import create_sumo_client
 
-from ._helpers import datetime_string_to_utc_ms
 
 LOGGER = logging.getLogger(__name__)
 
@@ -48,6 +46,7 @@ class SumoInspector:
         LOGGER.debug(timer.to_string())
         return [FieldInfo(identifier=field_ident) for field_ident in field_idents]
 
+    # pylint: disable=too-many-locals
     async def get_cases_async(self, field_identifier: str) -> list[CaseInfo]:
         """
         Get all cases with available result types from SUMO using aggregations and filters.

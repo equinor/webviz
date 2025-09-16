@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from .types import SortBy, SortDirection
 
 
+# pylint: disable=fixme
 # TODO: Generalize utility to work with any model
 @dataclass
 class QueryCollationOptions:

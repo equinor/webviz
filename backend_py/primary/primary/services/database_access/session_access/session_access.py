@@ -28,11 +28,11 @@ class SessionAccess:
     async def __aenter__(self):  # pylint: disable=C9001
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):  # pylint: disable=C9001
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:  # pylint: disable=C9001
         await self.session_container_access.close_async()
 
     @classmethod
-    def create(cls, user_id: str):
+    def create(cls, user_id: str) -> "SessionAccess":
         session_container_access = ContainerAccess.create(cls.DATABASE_NAME, cls.CONTAINER_NAME, SessionDocument)
         return cls(user_id=user_id, session_container_access=session_container_access)
 
