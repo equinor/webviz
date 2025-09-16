@@ -12,114 +12,117 @@ type GroupDropOverlayProps = {
 };
 
 export function GroupDropOverlay(props: GroupDropOverlayProps) {
-    const nodeRef = React.useRef<HTMLDivElement | null>(null);
-    const requestAnimationFrameRef = React.useRef<number | null>(null);
+    const overlayRef = React.useRef<HTMLDivElement | null>(null);
+    const rafIdRef = React.useRef<number | null>(null);
 
-    const containerRef = React.useRef(props.containerEl);
-    const scrollRef = React.useRef(props.scrollEl);
-    containerRef.current = props.containerEl;
-    scrollRef.current = props.scrollEl;
+    React.useLayoutEffect(
+        function mountListeners() {
+            const { containerEl, scrollEl, hoveredId, hoveredArea } = props;
+            if (!containerEl || !scrollEl || !hoveredId || !hoveredArea) return;
 
-    const tick = React.useCallback(
-        function tick() {
-            const node = nodeRef.current;
-            const host = scrollRef.current;
-            const container = containerRef.current;
-            const id = props.hoveredId;
-            const area = props.hoveredArea;
-            if (!node || !host || !container || !id || !area) {
-                return;
+            function findHoveredElement(container: HTMLElement, id: string): HTMLElement | null {
+                return container.querySelector<HTMLElement>(`[data-item-id="${id}"]`);
             }
 
-            const hoveredElement = container.querySelector<HTMLElement>(`[data-item-id="${id}"]`);
-            if (!hoveredElement) {
-                node.style.display = "none";
-                return;
+            function findGroupElement(el: HTMLElement): HTMLElement | null {
+                return el.closest<HTMLElement>(`[data-sortable="group"]`);
             }
 
-            const group = hoveredElement.closest<HTMLElement>(`[data-sortable="group"]`);
-            if (!group) {
-                node.style.display = "none";
-                return;
-            }
+            function updateOverlayPosition(): void {
+                const overlay = overlayRef.current;
+                if (!overlay) return;
 
-            if (hoveredElement === group && ![HoveredArea.HEADER, HoveredArea.CENTER].includes(area)) {
-                node.style.display = "none";
-                return;
-            }
-
-            const hostRect = host.getBoundingClientRect();
-            const groupRect = group.getBoundingClientRect();
-
-            const left = Math.max(0, groupRect.left - hostRect.left + host.scrollLeft);
-            const top = Math.max(0, groupRect.top - hostRect.top + host.scrollTop);
-
-            const w = Math.max(0, groupRect.width);
-            const h = Math.max(0, groupRect.height);
-            const x = Math.round(left);
-            const y = Math.round(top);
-
-            node.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-            node.style.width = `${w}px`;
-            node.style.height = `${h}px`;
-            node.style.opacity = "1";
-            node.style.display = "";
-
-            requestAnimationFrameRef.current = requestAnimationFrame(tick);
-        },
-        [props.hoveredArea, props.hoveredId],
-    );
-
-    React.useEffect(
-        function mountScrollAndResizeEffect() {
-            const scrollEl = props.scrollEl;
-            if (!props.containerEl || !scrollEl || !props.hoveredId) return;
-            requestAnimationFrameRef.current = requestAnimationFrame(tick);
-
-            function onScroll() {
-                if (requestAnimationFrameRef.current == null) tick();
-            }
-            scrollEl.addEventListener("scroll", onScroll, { passive: true });
-
-            const resizeObserver = new ResizeObserver(() => tick());
-            resizeObserver.observe(scrollEl);
-            resizeObserver.observe(props.containerEl);
-
-            return function unmountScrollAndResizEffect() {
-                scrollEl.removeEventListener("scroll", onScroll);
-                resizeObserver.disconnect();
-                if (requestAnimationFrameRef.current != null) {
-                    cancelAnimationFrame(requestAnimationFrameRef.current);
+                const hoveredEl = findHoveredElement(containerEl!, hoveredId!);
+                if (!hoveredEl) {
+                    overlay.style.display = "none";
+                    return;
                 }
-                requestAnimationFrameRef.current = null;
+
+                const groupEl = findGroupElement(hoveredEl);
+                if (!groupEl) {
+                    overlay.style.display = "none";
+                    return;
+                }
+
+                // If hovering the group box itself but not header/center, don't show overlay
+                if (hoveredEl === groupEl && hoveredArea !== HoveredArea.HEADER && hoveredArea !== HoveredArea.CENTER) {
+                    overlay.style.display = "none";
+                    return;
+                }
+
+                const hostRect = scrollEl!.getBoundingClientRect();
+                const groupRect = groupEl.getBoundingClientRect();
+
+                const left = Math.max(0, groupRect.left - hostRect.left + scrollEl!.scrollLeft);
+                const top = Math.max(0, groupRect.top - hostRect.top + scrollEl!.scrollTop);
+
+                const width = Math.max(0, groupRect.width);
+                const height = Math.max(0, groupRect.height);
+
+                overlay.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`;
+                overlay.style.width = `${Math.round(width)}px`;
+                overlay.style.height = `${Math.round(height)}px`;
+                overlay.style.display = "";
+            }
+
+            function scheduleUpdate(): void {
+                if (rafIdRef.current != null) return;
+                rafIdRef.current = requestAnimationFrame(function onFrame() {
+                    rafIdRef.current = null;
+                    updateOverlayPosition();
+                });
+            }
+
+            // Initial position
+            scheduleUpdate();
+
+            function handleScroll(): void {
+                scheduleUpdate();
+            }
+            function handleWindowResize(): void {
+                scheduleUpdate();
+            }
+            function handleObservedResize(): void {
+                scheduleUpdate();
+            }
+
+            scrollEl.addEventListener("scroll", handleScroll, { passive: true });
+            window.addEventListener("resize", handleWindowResize);
+
+            const resizeObserver = new ResizeObserver(function onResize() {
+                handleObservedResize();
+            });
+
+            resizeObserver.observe(scrollEl);
+            resizeObserver.observe(containerEl);
+
+            return function cleanup() {
+                scrollEl.removeEventListener("scroll", handleScroll);
+                window.removeEventListener("resize", handleWindowResize);
+                resizeObserver.disconnect();
+                if (rafIdRef.current != null) cancelAnimationFrame(rafIdRef.current);
+                rafIdRef.current = null;
             };
         },
-        [props.containerEl, props.scrollEl, props.hoveredId, tick],
+        [props.containerEl, props.scrollEl, props.hoveredId, props.hoveredArea],
     );
 
     if (!props.containerEl || !props.scrollEl || !props.hoveredId) {
         return null;
     }
 
-    const node = (
+    return createPortal(
         <div
-            ref={nodeRef}
+            ref={overlayRef}
             data-sl-group-overlay
+            className="absolute top-0 left-0 bg-blue-500 outline-blue-600 pointer-events-none z-10 opacity-30"
             style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
                 transform: "translate3d(0,0,0)",
                 width: 0,
                 height: 0,
-                background: "rgba(59, 130, 246, 0.15)", // blue-500 @ 15%
-                outline: "1px solid rgba(59, 130, 246, 0.35)",
-                pointerEvents: "none",
-                opacity: 0,
-                willChange: "transform,width,height,opacity",
+                willChange: "transform,width,height",
             }}
-        />
+        />,
+        props.scrollEl,
     );
-
-    return createPortal(node, props.scrollEl);
 }

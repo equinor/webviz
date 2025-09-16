@@ -118,38 +118,42 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
 
     const scrollPosByEl = React.useRef(new WeakMap<HTMLElement, number>());
 
-    const orderKey = React.useMemo(() => {
-        if (!contentContainerElement) return "";
-        return Array.from(contentContainerElement.querySelectorAll("[data-sortable='item']"))
-            .map((el) => (el as HTMLElement).dataset.itemId ?? "")
-            .join("|");
-    }, [contentContainerElement]);
-
-    React.useEffect(() => {
-        const el = scrollContainerElement;
-        if (!el) return;
-
-        const onScroll = () => {
-            scrollPosByEl.current.set(el, el.scrollTop);
-        };
-
-        // restore any saved position for this element immediately
-        const saved = scrollPosByEl.current.get(el);
-        if (typeof saved === "number") el.scrollTop = saved;
-
-        el.addEventListener("scroll", onScroll, { passive: true });
-        return () => el.removeEventListener("scroll", onScroll);
-    }, [scrollContainerElement]);
-
-    React.useLayoutEffect(() => {
-        const el = scrollContainerElement;
-        if (!el) return;
-        const saved = scrollPosByEl.current.get(el);
-        if (typeof saved === "number") el.scrollTop = saved;
-    }, [scrollContainerElement, orderKey]);
-
+    // tracks & persists scrollTop for the current scroll container
     React.useEffect(
-        function addEventListeners() {
+        function trackScrollPositionEffect() {
+            const el = scrollContainerElement;
+            if (!el) return;
+
+            function handleScroll() {
+                scrollPosByEl.current.set(el!, el!.scrollTop);
+            }
+
+            // restore on mount
+            const saved = scrollPosByEl.current.get(el);
+            if (typeof saved === "number") el.scrollTop = saved;
+
+            el.addEventListener("scroll", handleScroll, { passive: true });
+            return function cleanupTrackScrollPositionEffect() {
+                el.removeEventListener("scroll", handleScroll);
+            };
+        },
+        [scrollContainerElement],
+    );
+
+    // restores scrollTop when the container (and optionally order) changes
+    React.useLayoutEffect(
+        function restoreScrollPositionEffect() {
+            const el = scrollContainerElement;
+            if (!el) return;
+            const saved = scrollPosByEl.current.get(el);
+            if (typeof saved === "number") el.scrollTop = saved;
+        },
+        [scrollContainerElement /* , orderKey */],
+    );
+
+    // installs drag interaction listeners on the list DOM
+    React.useEffect(
+        function attachDragInteractionListenersEffect() {
             if (!contentContainerElement) {
                 return;
             }
@@ -208,8 +212,9 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                     x: e.clientX - element.getBoundingClientRect().left,
                     y: e.clientY - element.getBoundingClientRect().top,
                 };
-                document.addEventListener("pointermove", handlePointerMove);
-                document.addEventListener("pointerup", handlePointerUp);
+
+                document.addEventListener("pointermove", handlePointerMove as EventListener);
+                document.addEventListener("pointerup", handlePointerUp as EventListener, { once: true });
 
                 e.preventDefault();
                 e.stopPropagation();
@@ -515,7 +520,8 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                 onItemMoved(draggedElementInfo.id, originId, destinationId, position);
             }
 
-            function handlePointerUp() {
+            function handlePointerUp(e: PointerEvent) {
+                document.removeEventListener("pointermove", handlePointerMove);
                 maybeCallItemMoveCallback();
                 cancelDragging();
             }
@@ -531,7 +537,6 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                 doScroll = false;
 
                 document.removeEventListener("pointermove", handlePointerMove);
-                document.removeEventListener("pointerup", handlePointerUp);
 
                 scrollTimeout && clearTimeout(scrollTimeout);
             }
@@ -553,14 +558,13 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
             return function removeEventListeners() {
                 currentListRef.removeEventListener("pointerdown", handlePointerDown as EventListener);
                 document.removeEventListener("pointermove", handlePointerMove);
-                document.removeEventListener("pointerup", handlePointerUp);
                 document.removeEventListener("keydown", handleKeyDown);
                 window.removeEventListener("blur", handleWindowBlur);
                 setIsDragging(false);
                 setDraggedItemId(null);
             };
         },
-        [onItemMoved, isMoveAllowed, props.children, scrollContainerElement, contentContainerElement],
+        [onItemMoved, isMoveAllowed, scrollContainerElement, contentContainerElement],
     );
 
     return (
@@ -576,7 +580,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                 {isDragging &&
                     createPortal(
                         <div
-                            className={resolveClassNames("absolute z-100 inset-0", {
+                            className={resolveClassNames("absolute z-[400] inset-0", {
                                 "cursor-not-allowed": !hoveredItemIdAndArea,
                                 "cursor-grabbing": hoveredItemIdAndArea !== null,
                             })}

@@ -1,29 +1,40 @@
 import React from "react";
 
 import { SortableListContext } from "../sortableList";
-import { composeRefs } from "../utils/composeRefs";
+import { useComposedRefs } from "../utils/useComposeRefs";
+import { isDevMode } from "@lib/utils/devMode";
 
 export type ContentProps = {
-    children: React.ReactNode;
+    // The content element that wraps all sortable items. Must be a single React element.
+    // If a functional component is used, it must be wrapped in React.forwardRef.
+    children: React.ReactElement;
 };
 
-export function Content(props: ContentProps): React.ReactNode {
-    const context = React.useContext(SortableListContext);
+export function Content(props: ContentProps): React.ReactElement {
+    const { registerContentContainer } = React.useContext(SortableListContext);
+
     const containerRef = React.useRef<HTMLElement | null>(null);
     const onlyChild = React.Children.only(props.children) as React.ReactElement;
 
-    const { registerContentContainer } = context;
+    React.useEffect(function devWarningEffect() {
+        if (isDevMode() && containerRef.current == null) {
+            console.warn("[SortableList.Content] No DOM node registered. Child likely isn't ref-forwarding.");
+        }
+    }, []);
 
     const setContainer = React.useCallback(
         function setContainer(el: Element | null) {
             const node = (el as HTMLElement | null) ?? null;
+            if (containerRef.current === node) {
+                return;
+            }
             containerRef.current = node;
             registerContentContainer(node);
         },
         [registerContentContainer],
     );
 
-    const mergedRef = composeRefs<HTMLElement>(setContainer, (onlyChild as any).ref);
+    const mergedRef = useComposedRefs<HTMLElement>(setContainer, (onlyChild as any).ref);
 
     return React.cloneElement(onlyChild, {
         ref: mergedRef,

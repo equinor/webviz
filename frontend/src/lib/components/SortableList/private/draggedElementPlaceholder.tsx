@@ -1,95 +1,102 @@
 import * as React from "react";
-
 import { createPortal } from "react-dom";
 
 export type DraggedElementPlaceholderProps = {
-    containerEl: HTMLElement | null; // e.g. <tbody>, <ul>, ...
-    scrollEl: HTMLElement | null; // scroll host (wrapper div or same as container)
+    /** The element that contains the sortable items (where data-item-id elements live). */
+    containerEl: HTMLElement | null;
+    /** The scrollable element that visually hosts the placeholder (should be position: relative). */
+    scrollEl: HTMLElement | null;
+    /** The id of the currently dragged item (matched via [data-item-id="<id>"]). */
     draggedItemId: string | null;
 };
 
-export function DraggedElementPlaceholder({ containerEl, scrollEl, draggedItemId }: DraggedElementPlaceholderProps) {
-    const nodeRef = React.useRef<HTMLDivElement | null>(null);
-    const rafRef = React.useRef<number | null>(null);
-
-    const containerRef = React.useRef(containerEl);
-    const scrollRef = React.useRef(scrollEl);
-    const idRef = React.useRef(draggedItemId);
-    containerRef.current = containerEl;
-    scrollRef.current = scrollEl;
-    idRef.current = draggedItemId;
-
-    const tick = React.useCallback(function tick() {
-        const node = nodeRef.current;
-        const host = scrollRef.current;
-        const container = containerRef.current;
-        const id = idRef.current;
-        if (!node || !host || !container || !id) return;
-
-        const target = container.querySelector<HTMLElement>(`[data-item-id="${id}"]`);
-        if (!target) return;
-
-        const hostR = host.getBoundingClientRect();
-        const targetR = target.getBoundingClientRect();
-
-        const x = Math.round(targetR.left - hostR.left);
-        const y = Math.round(targetR.top - hostR.top + host.scrollTop);
-        const w = Math.round(targetR.width - 2);
-        const h = Math.round(targetR.height);
-
-        node.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-        node.style.width = `${w}px`;
-        node.style.height = `${h}px`;
-
-        rafRef.current = requestAnimationFrame(tick);
-    }, []);
+export function DraggedElementPlaceholder(props: DraggedElementPlaceholderProps): React.ReactElement | null {
+    const placeholderRef = React.useRef<HTMLDivElement | null>(null);
+    const animationFrameIdRef = React.useRef<number | null>(null);
 
     React.useEffect(
-        function addScrollAndResizeEffects() {
-            if (!scrollEl || !containerEl || !draggedItemId) {
-                return;
+        function setupObserversAndListeners() {
+            if (!props.scrollEl || !props.containerEl || !props.draggedItemId) return;
+
+            function updatePlaceholderPosition(): void {
+                const placeholder = placeholderRef.current;
+                const scrollHost = props.scrollEl;
+                const container = props.containerEl;
+                const id = props.draggedItemId;
+
+                if (!placeholder || !scrollHost || !container || !id) return;
+
+                const targetSelector = `[data-item-id="${id}"]`;
+                const target = container.querySelector<HTMLElement>(targetSelector);
+                if (!target) return;
+
+                const hostRect = scrollHost.getBoundingClientRect();
+                const targetRect = target.getBoundingClientRect();
+
+                const x = Math.round(targetRect.left - hostRect.left + scrollHost.scrollLeft);
+                const y = Math.round(targetRect.top - hostRect.top + scrollHost.scrollTop);
+                const width = Math.round(targetRect.width - 2);
+                const height = Math.round(targetRect.height);
+
+                placeholder.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+                placeholder.style.width = `${width}px`;
+                placeholder.style.height = `${height}px`;
             }
-            rafRef.current = requestAnimationFrame(tick);
 
-            function onScroll() {
-                if (rafRef.current == null) {
-                    tick();
-                }
+            function scheduleUpdate(): void {
+                if (animationFrameIdRef.current != null) return;
+                animationFrameIdRef.current = requestAnimationFrame(function onFrame() {
+                    animationFrameIdRef.current = null;
+                    updatePlaceholderPosition();
+                });
             }
-            scrollEl.addEventListener("scroll", onScroll, { passive: true });
 
-            const resizeObserver = new ResizeObserver(() => tick());
-            resizeObserver.observe(containerEl);
+            // Initial placement
+            scheduleUpdate();
 
-            return function removeScrollAndResizeEffects() {
-                scrollEl.removeEventListener("scroll", onScroll);
+            function handleScroll() {
+                scheduleUpdate();
+            }
+            function handleWindowResize() {
+                scheduleUpdate();
+            }
+
+            props.scrollEl.addEventListener("scroll", handleScroll, { passive: true });
+            window.addEventListener("resize", handleWindowResize, { passive: true });
+
+            const resizeObserver = new ResizeObserver(function handleResize() {
+                scheduleUpdate();
+            });
+            resizeObserver.observe(props.containerEl);
+            resizeObserver.observe(props.scrollEl);
+
+            return function cleanup() {
+                props.scrollEl?.removeEventListener("scroll", handleScroll);
+                window.removeEventListener("resize", handleWindowResize);
                 resizeObserver.disconnect();
-                if (rafRef.current != null) {
-                    cancelAnimationFrame(rafRef.current);
+                if (animationFrameIdRef.current != null) {
+                    cancelAnimationFrame(animationFrameIdRef.current);
                 }
-                rafRef.current = null;
+                animationFrameIdRef.current = null;
             };
         },
-        [scrollEl, containerEl, draggedItemId, tick],
+        [props.scrollEl, props.containerEl, props.draggedItemId],
     );
 
-    if (!scrollEl || !containerEl || !draggedItemId) return null;
+    if (!props.scrollEl || !props.containerEl || !props.draggedItemId) {
+        return null;
+    }
 
-    const node = (
+    return createPortal(
         <div
-            ref={nodeRef}
+            ref={placeholderRef}
             data-sl-indicator
+            className="absolute top-0 left-0 pointer-events-none bg-blue-500"
             style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
                 transform: "translate3d(0,0,0)",
-                pointerEvents: "none",
-                background: "#3b82f6",
                 willChange: "transform,width,height",
             }}
-        />
+        />,
+        props.scrollEl,
     );
-
-    return createPortal(node, scrollEl);
 }
