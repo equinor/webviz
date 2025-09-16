@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
@@ -106,11 +106,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         groupByIndicesOptions.push({ label: indicesWithValues.indexColumn, value: indicesWithValues.indexColumn });
     }
 
-    const statisticOptions: TagOption<InplaceVolumesStatistic_api>[] = Object.values(InplaceVolumesStatistic_api).map(
-        (elm: InplaceVolumesStatistic_api) => {
-            return { label: InplaceVolumesStatisticEnumToStringMapping[elm], value: elm };
-        },
-    );
+    const statisticOptions = React.useMemo<TagOption<InplaceVolumesStatistic_api>[]>(() => {
+        return Object.values(InplaceVolumesStatistic_api).map((v) => {
+            return { value: v, label: InplaceVolumesStatisticEnumToStringMapping[v] };
+        });
+    }, []);
 
     const tableSettings = (
         <CollapsibleGroup title="Result and grouping" expanded>
@@ -127,8 +127,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 {selectedTableType === TableType.STATISTICAL && (
                     <Label text="Statistics">
                         <TagPicker
-                            value={selectedStatisticOptions}
-                            tags={statisticOptions}
+                            selection={selectedStatisticOptions}
+                            tagOptions={statisticOptions}
                             onChange={handleStatisticOptionsChange}
                         />
                     </Label>
@@ -145,8 +145,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 </Label>
                 <Label text="Grouping">
                     <TagPicker
-                        value={selectedGroupByIndices}
-                        tags={groupByIndicesOptions}
+                        selection={selectedGroupByIndices}
+                        tagOptions={groupByIndicesOptions}
                         onChange={handleGroupByIndicesChange}
                         debounceTimeMs={1500}
                     />
