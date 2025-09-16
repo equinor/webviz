@@ -30,23 +30,61 @@ export type TagInputProps = {
      */
     inputProps?: ExtendedInputElementProps;
 
-    /** */
+    /**
+     * Ref to the internal input form element
+     */
+    inputRef?: React.RefObject<HTMLInputElement>;
+
+    /**
+     * If true, backspace will fully remove a tag, as opposed to adding its contents to the input field
+     */
     fullDeleteOnBackspace?: boolean;
+
+    /**
+     * A placeholder to show in the input field. By default, the placeholder only shows if the tags list is empty
+     */
+    placeholder?: string;
+
+    /**
+     * If true, the inputs placeholder value will always be shown
+     */
+    alwaysShowPlaceholder?: boolean;
+
+    /**
+     * Validates a tag being added. If false is returned, the tag will not be added
+     * @param tag A string tag
+     * @returns `true` if the tag can be added
+     */
+    validateTag?: (tag: string) => boolean;
+
+    /**
+     * Callback for rendering tags in the list
+     */
+    makeLabel?: (tag: string) => string | undefined;
+
+    /**
+     * A function that renders the list of tags. If this is used, `renderTag` is not called
+     */
+    renderTags?: (tags: string[]) => React.ReactNode;
 
     /**
      * A function that renders a custom tag component. It receives a `TagProps` object. If unspecified,
      * the default tag component will be used.
      */
     renderTag?: (props: TagProps) => React.ReactNode;
-    /** Callback for adding a new tag */
+
+    /** Callback for adding a new tag. */
     onAddTag?: (newTag: string) => void;
+
     /** Callback for removing a tag */
     onRemoveTag?: (indexToRemove: number, tag: string) => void;
+
     /** General callback for changes to the tags array.
      *
      * Note: this event is also fired when `onAddTag` and `onRemoveTag` is fired
      */
     onTagsChange?: (newTags: string[]) => void;
+
     /**
      * Callback when the user copies a set of tags. if omitted, the default implementation will copy the tags as a
      * list of tag-values separator, divided by the `separator` value.
@@ -76,11 +114,12 @@ function useUncontrolledInput(props: ExtendedInputElementProps) {
     return [props.value ?? internalValue, dynamicSetValue] as const;
 }
 
-function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLUListElement>): React.ReactNode {
+function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
     const separatorOrDefault = props.separator ?? ",";
     const renderTagOrDefault = props.renderTag ?? ((tagProps) => <DefaultTag {...tagProps} />);
 
-    const inputRef = React.useRef<HTMLInputElement | null>(null);
+    const innerInputRef = React.useRef<HTMLInputElement>(null);
+    React.useImperativeHandle(props.inputRef, () => innerInputRef.current!, []);
     const [inputValue, setInputValue] = useUncontrolledInput(props.inputProps ?? {});
 
     const [focusedTagIndex, setFocusedTagIndex] = React.useState<number | null>(null);
@@ -88,10 +127,16 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
 
     const [focusMovementDirection, setFocusMovementDirection] = React.useState(Direction.None);
 
+    const inputPlaceholder = React.useMemo(() => {
+        if (props.alwaysShowPlaceholder) return props.placeholder;
+        if (!props.tags.length) return props.placeholder;
+        return undefined;
+    }, [props.alwaysShowPlaceholder, props.placeholder, props.tags.length]);
+
     // Safety-hatch in-case the currently focused tag index gets invalidated between renders.
     if (focusedTagIndex && focusedTagIndex > props.tags.length - 1) {
         setFocusedTagIndex(null);
-        inputRef.current?.focus();
+        innerInputRef.current?.focus();
     }
 
     // ------------------------------------------------------------------------
@@ -101,10 +146,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
         const currentFocusedIndex = focusedTagIndex ?? props.tags.length;
         const nextIndex = currentFocusedIndex + direction;
 
-        // const prevTag = props.tags[currentFocusedIndex];
-        // const nextTag = props.tags[nextIndex];
-
-        if (isSelecting) inputRef.current?.focus();
+        if (isSelecting) innerInputRef.current?.focus();
 
         if (inRange(nextIndex, 0, props.tags.length)) {
             if (isSelecting) {
@@ -113,21 +155,15 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
                 } else {
                     setSelectedTagIndices((prev) => [...prev, nextIndex]);
                 }
-                // if (selectedTagIds.includes(getTagValue(nextTag)) && selectedTagIds.includes(getTagValue(prevTag)))
-                //     setSelectedTagIds(selectedTagIds.filter((s) => s !== getTagValue(prevTag)));
-                // else {
-                //     setSelectedTagIds([...selectedTagIds, getTagValue(nextTag)]);
-                // }
             } else {
                 setSelectedTagIndices([]);
             }
 
             setFocusMovementDirection(direction);
             setFocusedTagIndex(nextIndex);
-            // setFocusedTagValue(getTagValue(nextTag));
         } else if (nextIndex >= props.tags.length) {
             resetSelect();
-            inputRef.current?.focus();
+            innerInputRef.current?.focus();
         }
     }
 
@@ -144,8 +180,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
     // Tag management events
     function handleAddTag(newValue: string) {
         if (!newValue) return;
-
-        // const newTag = { id: v4(), value: newValue };
+        if (props.validateTag?.(newValue) === false) return;
 
         const newTags = [...props.tags, newValue];
 
@@ -154,6 +189,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
     }
 
     function handleAddTags(newValues: string[]) {
+        newValues = newValues.filter((t) => props.validateTag?.(t) !== false);
         props.onTagsChange?.([...props.tags, ...newValues]);
     }
 
@@ -185,7 +221,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
         resetSelect();
         props.onClearTags?.();
         props.onTagsChange?.([]);
-        inputRef.current?.focus();
+        innerInputRef.current?.focus();
     }
 
     // Input events
@@ -193,9 +229,9 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
         props.inputProps?.onKeyDown?.(evt);
         if (evt.defaultPrevented) return;
 
-        if (!inputRef.current) return;
+        if (!innerInputRef.current) return;
 
-        const inputEl = inputRef.current;
+        const inputEl = innerInputRef.current;
 
         if (inputValue && [Key.Enter, Key.Tab, separatorOrDefault].includes(evt.key)) {
             handleAddTag(inputValue);
@@ -287,46 +323,51 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
 
     return (
         <>
-            <ul
+            <div
                 ref={ref}
                 className="input-comp flex items-center gap-1 border border-gray-300 px-2 py-1 rounded focus-within:outline focus-within:outline-blue-500"
                 onBlur={onRootBlur}
             >
-                <div
+                <ul
                     className="grow flex gap-1 flex-wrap"
                     tabIndex={-1}
-                    onFocus={() => inputRef.current?.focus()}
+                    onFocus={() => innerInputRef.current?.focus()}
                     onCopy={copySelectedTags}
                     onCut={cutSelectedTags}
                 >
-                    {props.tags.map((t, index) => (
-                        <React.Fragment key={index}>
-                            {renderTagOrDefault({
-                                tag: t,
-                                separator: separatorOrDefault,
-                                focused: index === focusedTagIndex,
-                                focusMovementDirection: focusMovementDirection,
-                                selected: selectedTagIndices.includes(index),
-                                onMoveFocus: moveTagFocus,
-                                onChange: (newTag) => handleUpdateTag(newTag, index),
-                                onRemove: () => handleRemoveTag(index),
-                                onFocus: () => moveFocusToIndex(index),
-                            })}
-                        </React.Fragment>
-                    ))}
+                    {props.renderTags
+                        ? props.renderTags(props.tags)
+                        : props.tags.map((t, index) => (
+                              <React.Fragment key={index}>
+                                  {renderTagOrDefault({
+                                      tag: t,
+                                      label: props.makeLabel?.(t),
+                                      separator: separatorOrDefault,
+                                      focused: index === focusedTagIndex,
+                                      focusMovementDirection: focusMovementDirection,
+                                      selected: selectedTagIndices.includes(index),
+                                      onMoveFocus: moveTagFocus,
+                                      onChange: (newTag) => handleUpdateTag(newTag, index),
+                                      onRemove: () => handleRemoveTag(index),
+                                      onFocus: () => moveFocusToIndex(index),
+                                  })}
+                              </React.Fragment>
+                          ))}
                     <li className="grow flex min-w-0 -my-1">
                         <input
-                            ref={inputRef}
+                            ref={innerInputRef}
+                            placeholder={inputPlaceholder}
                             {...omit(props.inputProps, "onValueChange")}
                             className={`pr-2 py-1 grow outline-none min-w-0 w-0 ${props.inputProps?.className}`}
                             value={inputValue}
+                            // ! Each listener here should emit the event up
                             onChange={handleInputChange}
                             onPaste={handlePaste}
                             onKeyDown={handleKeyDown}
                             onFocus={handleInputFocus}
                         />
                     </li>
-                </div>
+                </ul>
                 <IconButton
                     className="align-middle focus:outline-2 outline-blue-300"
                     title="Clear selection"
@@ -334,7 +375,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
                 >
                     <Close fontSize="inherit" />
                 </IconButton>
-            </ul>
+            </div>
         </>
     );
 }
@@ -343,6 +384,4 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLULi
  * A general form component for managing a list of tags. Contains an input field to create new
  * tags, and supports cut, copy and paste of the tags in it's list
  */
-export const TagInput = React.forwardRef(TagInputComponent) as (
-    props: TagInputProps & { ref?: React.Ref<HTMLUListElement> },
-) => React.ReactElement;
+export const TagInput = React.forwardRef<HTMLDivElement, TagInputProps>(TagInputComponent);
