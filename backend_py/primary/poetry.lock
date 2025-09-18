@@ -836,13 +836,15 @@ docs = ["pydocstyle"]
 
 [[package]]
 name = "fmu-sumo"
-version = "2.5.1.dev4+gb9a21bf87"
+version = "2.6.0"
 description = "Python package for interacting with Sumo in an FMU setting"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
-files = []
-develop = false
+files = [
+    {file = "fmu_sumo-2.6.0-py3-none-any.whl", hash = "sha256:a73d0d9b109d80b3213a32ef6fc096f428cc16b39fb854c1e375e4dfedd9cba6"},
+    {file = "fmu_sumo-2.6.0.tar.gz", hash = "sha256:cb8da7fe06c0a158517a3fbf348adbc3eabfeefd1163ba6f9a2fe689285b52a3"},
+]
 
 [package.dependencies]
 deprecation = "*"
@@ -853,12 +855,6 @@ all = ["OpenVDS ; sys_platform != \"darwin\" and python_version < \"3.12\"", "pa
 dev = ["pytest", "ruff"]
 docs = ["autoapi", "sphinx (==6.2.1)", "sphinx-autodoc-typehints", "sphinx-rtd-theme", "sphinxcontrib-apidoc"]
 test = ["OpenVDS ; sys_platform != \"darwin\" and python_version < \"3.12\"", "pandas (>=1.1.3)", "pyarrow ; python_version > \"3.6.1\"", "pytest", "pytest-timeout", "xtgeo"]
-
-[package.source]
-type = "git"
-url = "https://github.com/equinor/fmu-sumo"
-reference = "main"
-resolved_reference = "b9a21bf872b5720e8f07a7b6e8700cd869477925"
 
 [[package]]
 name = "fonttools"
@@ -3987,4 +3983,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "2600ae31ce912324ec9860af6de519ed3c2a559e7034c133938375d0010cd8ce"
+content-hash = "d3364db81d4ad681388ed6c1405c69144b7e220e41132c377f0a6d6036593a58"

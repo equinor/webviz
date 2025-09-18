@@ -23,9 +23,9 @@ numpy = "^1.24.1"
 orjson = "^3.8.10"
 pandas = { version = "^2.0.1", extras = ["performance"] }
 httpx = "^0.28.1"
-#fmu-sumo = "^2.5.0"
+fmu-sumo = "^2.6.0"
 #fmu-sumo = { git = "https://github.com/equinor/fmu-sumo", branch = "feat/aggregation-no-wait" }
-fmu-sumo = { git = "https://github.com/equinor/fmu-sumo", branch = "main" }
+#fmu-sumo = { git = "https://github.com/equinor/fmu-sumo", branch = "main" }
 sumo-wrapper-python = "^1.1.2"
 azure-monitor-opentelemetry = "^1.6.13"
 opentelemetry-instrumentation-httpx = "*"
