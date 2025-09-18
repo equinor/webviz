@@ -17,7 +17,11 @@ export function GroupDropOverlay(props: GroupDropOverlayProps) {
 
     React.useLayoutEffect(
         function mountListeners() {
-            const { containerEl, scrollEl, hoveredId, hoveredArea } = props;
+            const containerEl = props.containerEl;
+            const scrollEl = props.scrollEl;
+            const hoveredId = props.hoveredId;
+            const hoveredArea = props.hoveredArea;
+
             if (!containerEl || !scrollEl || !hoveredId || !hoveredArea) return;
 
             function findHoveredElement(container: HTMLElement, id: string): HTMLElement | null {

@@ -52,7 +52,6 @@ export const SortableListContext = React.createContext<SortableListContextType>(
 });
 
 export type SortableListProps = {
-    contentWhenEmpty?: React.ReactNode;
     children: React.ReactNode;
     isMoveAllowed?: (args: IsMoveAllowedArgs) => boolean;
     onItemMoved?: (
@@ -85,8 +84,8 @@ const DEFAULT_SCROLL_TIME = 100;
  * @param {SortableListProps} props Object of properties for the SortableList component (see below for details).
  * @param {function} props.onItemMoved Callback that is called when an item is moved. Should be wrapped inside a React.useCallback.
  * @param {function} props.isMoveAllowed Callback that is called to check if an item can be moved. Should be wrapped inside a React.useCallback.
- * @param {React.ReactNode} props.contentWhenEmpty A React node that is displayed when the list is empty.
  * @param {React.ReactNode} props.children Child components that must be of either type SortableListItem or SortableListGroup.
+ * @param {string} props.className Optional class name for the main list container.
  *
  * @returns {React.ReactNode} A sortable list component.
  */
@@ -520,7 +519,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                 onItemMoved(draggedElementInfo.id, originId, destinationId, position);
             }
 
-            function handlePointerUp(e: PointerEvent) {
+            function handlePointerUp() {
                 document.removeEventListener("pointermove", handlePointerMove);
                 maybeCallItemMoveCallback();
                 cancelDragging();

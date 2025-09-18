@@ -1,12 +1,12 @@
 import React from "react";
 
 import { createPortal } from "@lib/utils/createPortal";
+import { isDevMode } from "@lib/utils/devMode";
 
 import { useComposedRefs } from "../utils/useComposeRefs";
+import { assertSafeId } from "../utils/validateId";
 
 import { useMakeDragGhostElement } from "./useMakeDragGhostElement";
-import { isDevMode } from "@lib/utils/devMode";
-import { assertSafeId } from "../utils/validateId";
 
 export type GroupProps = {
     id: string;

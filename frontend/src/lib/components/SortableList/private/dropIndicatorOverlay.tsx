@@ -1,8 +1,11 @@
+import React from "react";
+
 import { createPortal } from "react-dom";
 
+import type { Rect2D } from "@lib/utils/geometry";
+import { rectsAreEqual } from "@lib/utils/geometry";
+
 import { HoveredArea } from "../sortableList";
-import React from "react";
-import { Rect2D, rectsAreEqual } from "@lib/utils/geometry";
 
 export type DropIndicatorOverlayProps = {
     containerEl: HTMLElement | null;
@@ -16,9 +19,12 @@ export function DropIndicatorOverlay(props: DropIndicatorOverlayProps): React.Re
 
     React.useLayoutEffect(
         function computeAndSubscribe() {
-            const { containerEl, scrollEl, hovered } = props;
+            const containerEl = props.containerEl;
+            const scrollEl = props.scrollEl;
+            const hoveredId = props.hovered?.id;
+            const hoveredArea = props.hovered?.area;
 
-            if (!containerEl || !scrollEl || !hovered) {
+            if (!containerEl || !scrollEl || !hoveredId || !hoveredArea) {
                 setGeometry(null);
                 prevGeometryRef.current = null;
                 return;
@@ -33,18 +39,18 @@ export function DropIndicatorOverlay(props: DropIndicatorOverlayProps): React.Re
             }
 
             function computeGeometry(): Rect2D | null {
-                const target = findTargetElement(containerEl!, hovered!.id);
+                const target = findTargetElement(containerEl!, hoveredId!);
                 if (!target) return null;
 
                 const scrollRect = scrollEl!.getBoundingClientRect();
                 const targetRect = target.getBoundingClientRect();
 
-                const top = computeTop(scrollRect.top, targetRect, hovered!.area, target, scrollEl!);
+                const top = computeTop(scrollRect.top, targetRect, hoveredArea!, target, scrollEl!);
 
                 let left = targetRect.left - scrollRect.left + scrollEl!.scrollLeft;
                 let width = targetRect.width;
 
-                if (hovered!.area === HoveredArea.CENTER) {
+                if (hoveredArea === HoveredArea.CENTER) {
                     const content = getContentElement(target);
                     if (content) {
                         const clientRect = content.getBoundingClientRect();
@@ -145,7 +151,6 @@ function computeTop(
             return targetRect.top - scrollTopViewport + scrollEl.scrollTop;
         }
         default:
-            // BOTTOM (or any bottom-like)
             return targetRect.bottom - scrollTopViewport + scrollEl.scrollTop;
     }
 }

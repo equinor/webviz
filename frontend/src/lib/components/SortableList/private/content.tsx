@@ -1,8 +1,9 @@
 import React from "react";
 
+import { isDevMode } from "@lib/utils/devMode";
+
 import { SortableListContext } from "../sortableList";
 import { useComposedRefs } from "../utils/useComposeRefs";
-import { isDevMode } from "@lib/utils/devMode";
 
 export type ContentProps = {
     // The content element that wraps all sortable items. Must be a single React element.
