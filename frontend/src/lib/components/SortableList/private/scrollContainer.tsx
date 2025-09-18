@@ -4,7 +4,7 @@ import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { SortableListContext } from "../sortableList";
-import { useComposedRefs } from "../utils/useComposeRefs";
+import { useComposedRefs } from "../utils/useComposedRefs";
 
 export type ScrollContainerProps = {
     children: React.ReactElement;
