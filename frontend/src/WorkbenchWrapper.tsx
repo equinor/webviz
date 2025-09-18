@@ -4,16 +4,10 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { ActiveSessionBoundary } from "@framework/internal/components/ActiveSessionBoundary";
-import { ActiveSessionRecoveryDialog } from "@framework/internal/components/ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
-import { CreateSnapshotDialog } from "@framework/internal/components/CreateSnapshotDialog/createSnapshotDialog";
-import { EditSessionDialog } from "@framework/internal/components/EditSessionDialog";
 import { LoadingOverlay } from "@framework/internal/components/LoadingOverlay";
-import { MultiSessionsRecoveryDialog } from "@framework/internal/components/MultiSessionsRecoveryDialog";
 import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
-import { SaveSessionDialog } from "@framework/internal/components/SaveSessionDialog/saveSessionDialog";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
-import { StartPage } from "@framework/internal/components/StartPage/StartPage";
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { TopBar } from "@framework/internal/components/TopBar/topBar";
 import { Workbench, WorkbenchTopic } from "@framework/Workbench";
@@ -57,8 +51,6 @@ export function WorkbenchWrapper() {
                 </div>
             </>
         );
-    } else {
-        content = <StartPage workbench={workbench} />;
     }
 
     return (
@@ -66,12 +58,7 @@ export function WorkbenchWrapper() {
             <TopBar workbench={workbench} />
             <ActiveSessionBoundary workbench={workbench}>
                 <SelectEnsemblesDialog workbench={workbench} />
-                <SaveSessionDialog workbench={workbench} />
-                <CreateSnapshotDialog workbench={workbench} />
-                <ActiveSessionRecoveryDialog workbench={workbench} />
-                <EditSessionDialog workbench={workbench} />
             </ActiveSessionBoundary>
-            <MultiSessionsRecoveryDialog workbench={workbench} />
             {content}
             <ToggleDevToolsButton guiMessageBroker={workbench.getGuiMessageBroker()} />
         </>

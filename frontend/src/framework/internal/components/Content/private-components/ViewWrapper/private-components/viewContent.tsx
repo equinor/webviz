@@ -21,7 +21,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { CrashView } from "./crashView";
 
 type ViewContentProps = {
-    moduleInstance: ModuleInstance<any, any>;
+    moduleInstance: ModuleInstance<any>;
     workbench: Workbench;
 };
 
@@ -127,13 +127,6 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                                     workbenchServices={props.workbench.getWorkbenchServices()}
                                     workbenchSettings={props.workbench.getWorkbenchSession().getWorkbenchSettings()}
                                     initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                                    persistence={{
-                                        serializedState:
-                                            props.moduleInstance.getSerializedState()?.["view"] ?? undefined,
-                                        serializeState: props.moduleInstance.serializeViewState.bind(
-                                            props.moduleInstance,
-                                        ),
-                                    }}
                                 />
                             </ApplyInterfaceEffectsToView>
                         </HydrateQueryClientAtom>

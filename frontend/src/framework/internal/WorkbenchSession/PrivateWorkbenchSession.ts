@@ -17,7 +17,7 @@ import {
 } from "../EnsembleSetLoader";
 import { PrivateWorkbenchSettings, type SerializedWorkbenchSettings } from "../PrivateWorkbenchSettings";
 
-import { isPersisted, isSnapshot, type WorkbenchSessionDataContainer } from "./WorkbenchSessionDataContainer";
+import { type WorkbenchSessionDataContainer } from "./WorkbenchSessionDataContainer";
 
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
@@ -331,12 +331,7 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         queryClient: QueryClient,
         dataContainer: WorkbenchSessionDataContainer,
     ): Promise<PrivateWorkbenchSession> {
-        const session = new PrivateWorkbenchSession(atomStoreMaster, queryClient, isSnapshot(dataContainer));
-
-        if (isPersisted(dataContainer)) {
-            session.setId(dataContainer.id);
-            session.setIsPersisted(true);
-        }
+        const session = new PrivateWorkbenchSession(atomStoreMaster, queryClient, false);
 
         session.setMetadata(dataContainer.metadata);
         await session.loadContent(dataContainer.content);

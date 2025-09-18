@@ -367,7 +367,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         rows = Math.ceil(minimizedLayouts.length / elementsPerRow);
     }
 
-    function computeModuleLayoutProps(moduleInstance: ModuleInstance<any, any>) {
+    function computeModuleLayoutProps(moduleInstance: ModuleInstance<any>) {
         const moduleId = moduleInstance.getId();
         const layoutElement = layout.find((element) => element.moduleInstanceId === moduleId);
 

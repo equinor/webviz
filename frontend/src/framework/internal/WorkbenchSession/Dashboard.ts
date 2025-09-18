@@ -7,6 +7,8 @@ import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/Publ
 import type { AtomStoreMaster } from "../../AtomStoreMaster";
 import type { ModuleInstance, ModuleInstanceFullState } from "../../ModuleInstance";
 import { ModuleRegistry } from "../../ModuleRegistry";
+import { Template } from "@framework/TemplateRegistry";
+import { InitialSettings } from "@framework/InitialSettings";
 
 export type LayoutElement = {
     moduleInstanceId?: string;
@@ -48,13 +50,6 @@ const moduleInstanceSchema: JTDSchemaType<ModuleInstanceStateAndLayoutInfo> = {
     properties: {
         id: { type: "string" },
         name: { type: "string" },
-        serializedState: {
-            optionalProperties: {
-                view: { type: "string" },
-                settings: { type: "string" },
-            },
-            nullable: true,
-        },
         syncedSettingKeys: {
             elements: {
                 enum: Object.values(SyncSettingKey),
@@ -98,7 +93,7 @@ export enum DashboardTopic {
 
 export type DashboardTopicPayloads = {
     [DashboardTopic.Layout]: LayoutElement[];
-    [DashboardTopic.ModuleInstances]: ModuleInstance<any, any>[];
+    [DashboardTopic.ModuleInstances]: ModuleInstance<any>[];
     [DashboardTopic.ActiveModuleInstanceId]: string | null;
 };
 
@@ -109,7 +104,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     private _name: string;
     private _description?: string;
     private _layout: LayoutElement[] = [];
-    private _moduleInstances: ModuleInstance<any, any>[] = [];
+    private _moduleInstances: ModuleInstance<any>[] = [];
     private _activeModuleInstanceId: string | null = null;
     private _atomStoreMaster: AtomStoreMaster;
 
@@ -158,7 +153,58 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.Layout);
     }
 
-    getModuleInstances(): ModuleInstance<any, any>[] {
+    applyTemplate(template: Template): void {
+        this.clearLayout();
+
+        template.moduleInstances.forEach((el) => {
+            this.makeAndAddModuleInstance(el.moduleName, { ...el.layout, moduleName: el.moduleName });
+        });
+
+        for (let i = 0; i < this._moduleInstances.length; i++) {
+            const moduleInstance = this._moduleInstances[i];
+            const templateModule = template.moduleInstances[i];
+            if (templateModule.syncedSettings) {
+                for (const syncSettingKey of templateModule.syncedSettings) {
+                    moduleInstance.addSyncedSetting(syncSettingKey);
+                }
+            }
+
+            const initialSettings: Record<string, unknown> = templateModule.initialSettings || {};
+
+            if (templateModule.dataChannelsToInitialSettingsMapping) {
+                for (const propName of Object.keys(templateModule.dataChannelsToInitialSettingsMapping)) {
+                    const dataChannel = templateModule.dataChannelsToInitialSettingsMapping[propName];
+
+                    const moduleInstanceIndex = template.moduleInstances.findIndex(
+                        (el) => el.instanceRef === dataChannel.listensToInstanceRef,
+                    );
+                    if (moduleInstanceIndex === -1) {
+                        throw new Error("Could not find module instance for data channel");
+                    }
+
+                    const listensToModuleInstance = this._moduleInstances[moduleInstanceIndex];
+                    const channel = listensToModuleInstance.getChannelManager().getChannel(dataChannel.channelIdString);
+                    if (!channel) {
+                        throw new Error("Could not find channel");
+                    }
+
+                    const receiver = moduleInstance.getChannelManager().getReceiver(propName);
+
+                    if (!receiver) {
+                        throw new Error("Could not find receiver");
+                    }
+
+                    receiver.subscribeToChannel(channel, "All");
+                }
+            }
+
+            moduleInstance.setInitialSettings(new InitialSettings(initialSettings));
+        }
+
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
+    }
+
+    getModuleInstances(): ModuleInstance<any>[] {
         return this._moduleInstances;
     }
 
@@ -238,13 +284,13 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.Layout);
     }
 
-    registerModuleInstance(moduleInstance: ModuleInstance<any, any>): void {
+    registerModuleInstance(moduleInstance: ModuleInstance<any>): void {
         this._moduleInstances = [...this._moduleInstances, moduleInstance];
         this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
     }
 
-    makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any, any> {
+    makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
@@ -284,7 +330,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
     }
 
-    getModuleInstance(id: string): ModuleInstance<any, any> | undefined {
+    getModuleInstance(id: string): ModuleInstance<any> | undefined {
         return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
     }
 

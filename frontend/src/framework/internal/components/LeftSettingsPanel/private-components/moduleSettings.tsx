@@ -25,7 +25,7 @@ import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
 
 type ModuleSettingsProps = {
-    moduleInstance: ModuleInstance<any, any>;
+    moduleInstance: ModuleInstance<any>;
     workbench: Workbench;
 };
 
@@ -121,14 +121,6 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                                                 .getWorkbenchSession()
                                                 .getWorkbenchSettings()}
                                             initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                                            persistence={{
-                                                serializedState:
-                                                    props.moduleInstance.getSerializedState()?.["settings"] ??
-                                                    undefined,
-                                                serializeState: props.moduleInstance.serializeSettingsState.bind(
-                                                    props.moduleInstance,
-                                                ),
-                                            }}
                                         />
                                     </ApplyInterfaceEffectsToSettings>
                                 </HydrateQueryClientAtom>

@@ -11,11 +11,10 @@ import { RadioGroup } from "@lib/components/RadioGroup";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 import type { Interfaces } from "../interfaces";
-import type { SerializedState } from "../persistedState";
 
 import { divMidPointAtom, gradientTypeAtom, maxAtom, minAtom, typeAtom } from "./atoms/baseAtoms";
 
-export function Settings(props: ModuleSettingsProps<Interfaces, SerializedState>): React.ReactNode {
+export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const [type, setType] = useAtom(typeAtom);
     const [gradientType, setGradientType] = useAtom(gradientTypeAtom);
     const [min, setMin] = useAtom(minAtom);
@@ -28,9 +27,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces, SerializedState>
 
     function handleGradientTypeChange(e: React.ChangeEvent<HTMLInputElement>) {
         setGradientType(e.target.value as ColorScaleGradientType);
-        props.persistence.serializeState({
-            myData: e.target.value,
-        });
     }
 
     const continuousColorScale = useContinuousColorScale(props.workbenchSettings, { gradientType });

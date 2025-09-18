@@ -50,14 +50,12 @@ export type ModuleSettingsProps<
         settingsToView: Record<string, never>;
         viewToSettings: Record<string, never>;
     },
-    TSerializedStateDef extends ModuleStateBaseSchema = NoModuleStateSchema,
 > = {
-    settingsContext: SettingsContext<TInterfaceTypes, TSerializedStateDef>;
+    settingsContext: SettingsContext<TInterfaceTypes>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
-    persistence: ModulePersistence<TSerializedStateDef["settings"]>;
 };
 
 export type ModuleViewProps<
@@ -65,14 +63,12 @@ export type ModuleViewProps<
         settingsToView: Record<string, never>;
         viewToSettings: Record<string, never>;
     },
-    TSerializedStateDef extends ModuleStateBaseSchema = NoModuleStateSchema,
 > = {
-    viewContext: ViewContext<TInterfaceTypes, TSerializedStateDef>;
+    viewContext: ViewContext<TInterfaceTypes>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
-    persistence: ModulePersistence<TSerializedStateDef["view"]>;
 };
 
 export type ModulePersistence<TSerializedStateDef extends JTDBaseType> = {
@@ -112,16 +108,14 @@ export type ModuleSettings<
         settingsToView: Record<string, never>;
         viewToSettings: Record<string, never>;
     },
-    TSerializedStateDef extends ModuleStateBaseSchema = NoModuleStateSchema,
-> = React.FC<ModuleSettingsProps<TInterfaceTypes, TSerializedStateDef>>;
+> = React.FC<ModuleSettingsProps<TInterfaceTypes>>;
 
 export type ModuleView<
     TInterfaceTypes extends ModuleInterfaceTypes = {
         settingsToView: Record<string, never>;
         viewToSettings: Record<string, never>;
     },
-    TSerializedStateDef extends ModuleStateBaseSchema = NoModuleStateSchema,
-> = React.FC<ModuleViewProps<TInterfaceTypes, TSerializedStateDef>>;
+> = React.FC<ModuleViewProps<TInterfaceTypes>>;
 
 export enum ImportStatus {
     NotImported = "NotImported",
@@ -130,7 +124,7 @@ export enum ImportStatus {
     Failed = "Failed",
 }
 
-export interface ModuleOptions<TSerializedStateSchema extends ModuleStateBaseSchema> {
+export interface ModuleOptions {
     name: string;
     defaultTitle: string;
     category: ModuleCategory;
@@ -142,19 +136,15 @@ export interface ModuleOptions<TSerializedStateSchema extends ModuleStateBaseSch
     channelDefinitions?: ChannelDefinition[];
     channelReceiverDefinitions?: ChannelReceiverDefinition[];
     onInstanceUnloadFunc?: OnInstanceUnloadFunc;
-    serializedStateSchema?: TSerializedStateSchema;
 }
 
-export class Module<
-    TInterfaceTypes extends ModuleInterfaceTypes,
-    TSerializedStateSchema extends ModuleStateBaseSchema,
-> {
+export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
     private _name: string;
     private _defaultTitle: string;
-    public viewFC: ModuleView<TInterfaceTypes, TSerializedStateSchema>;
-    public settingsFC: ModuleSettings<TInterfaceTypes, TSerializedStateSchema>;
+    public viewFC: ModuleView<TInterfaceTypes>;
+    public settingsFC: ModuleSettings<TInterfaceTypes>;
     protected _importState: ImportStatus = ImportStatus.NotImported;
-    private _moduleInstances: ModuleInstance<TInterfaceTypes, TSerializedStateSchema>[] = [];
+    private _moduleInstances: ModuleInstance<TInterfaceTypes>[] = [];
     private _settingsToViewInterfaceInitialization: InterfaceInitialization<
         Exclude<TInterfaceTypes["settingsToView"], undefined>
     > | null = null;
@@ -174,9 +164,8 @@ export class Module<
     private _category: ModuleCategory;
     private _devState: ModuleDevState;
     private _dataTagIds: ModuleDataTagId[];
-    private _serializedStateSchema: TSerializedStateSchema | null;
 
-    constructor(options: ModuleOptions<TSerializedStateSchema>) {
+    constructor(options: ModuleOptions) {
         this._name = options.name;
         this._defaultTitle = options.defaultTitle;
         this._category = options.category;
@@ -190,11 +179,6 @@ export class Module<
         this._channelDefinitions = options.channelDefinitions ?? null;
         this._channelReceiverDefinitions = options.channelReceiverDefinitions ?? null;
         this._dataTagIds = options.dataTagIds ?? [];
-        this._serializedStateSchema = options.serializedStateSchema ?? null;
-    }
-
-    getSerializedStateSchema(): TSerializedStateSchema | null {
-        return this._serializedStateSchema;
     }
 
     getDrawPreviewFunc(): DrawPreviewFunc | null {
@@ -269,8 +253,8 @@ export class Module<
         return this._syncableSettingKeys.includes(key);
     }
 
-    makeInstance(id: string): ModuleInstance<TInterfaceTypes, TSerializedStateSchema> {
-        const instance = new ModuleInstance<TInterfaceTypes, TSerializedStateSchema>({
+    makeInstance(id: string): ModuleInstance<TInterfaceTypes> {
+        const instance = new ModuleInstance<TInterfaceTypes>({
             module: this,
             id,
             channelDefinitions: this._channelDefinitions,
@@ -292,7 +276,7 @@ export class Module<
         });
     }
 
-    private initializeModuleInstance(instance: ModuleInstance<TInterfaceTypes, TSerializedStateSchema>): void {
+    private initializeModuleInstance(instance: ModuleInstance<TInterfaceTypes>): void {
         instance.initialize();
         if (this._settingsToViewInterfaceInitialization) {
             instance.makeSettingsToViewInterface(this._settingsToViewInterfaceInitialization);

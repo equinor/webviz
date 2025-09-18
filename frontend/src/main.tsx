@@ -8,7 +8,6 @@ import { CustomQueryClientProvider } from "@framework/internal/providers/QueryCl
 
 import App from "./App";
 import { GlobalErrorBoundary } from "./GlobalErrorBoundary";
-import { ToastContainer } from "react-toastify";
 
 /*
     If the `cleanStart` query parameter is given, 
@@ -52,7 +51,6 @@ root.render(
             <AuthProvider>
                 <CustomQueryClientProvider>
                     <>
-                        <ToastContainer stacked newestOnTop limit={3} position="bottom-right" />
                         <App />
                     </>
                 </CustomQueryClientProvider>

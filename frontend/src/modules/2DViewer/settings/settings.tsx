@@ -14,13 +14,12 @@ import {
     DataProviderManager,
     DataProviderManagerTopic,
 } from "../../_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
-import type { SerializedState } from "../persistedState";
 
 import { dataProviderManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
 
-export function Settings(props: ModuleSettingsProps<any, SerializedState>): React.ReactNode {
+export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
     const queryClient = useQueryClient();
 
@@ -41,26 +40,20 @@ export function Settings(props: ModuleSettingsProps<any, SerializedState>): Reac
                 fieldIdentifier,
                 preferredViewLayout,
             };
-            /*
+
             window.localStorage.setItem(
                 `${props.settingsContext.getInstanceIdString()}-settings`,
                 JSON.stringify(serializedState),
             );
-            */
-            props.persistence.serializeState({
-                dataProviderData: JSON.stringify(serializedState),
-            });
         },
-        [dataProviderManager, fieldIdentifier, preferredViewLayout, props.persistence],
+        [dataProviderManager, fieldIdentifier, preferredViewLayout],
     );
 
     const applyPersistedState = React.useCallback(
         function applyPersistedState(layerManager: DataProviderManager) {
-            /*const serializedState = window.localStorage.getItem(
+            const serializedState = window.localStorage.getItem(
                 `${props.settingsContext.getInstanceIdString()}-settings`,
-            );*/
-
-            const serializedState = props.persistence.serializedState?.dataProviderData;
+            );
 
             if (!serializedState) {
                 return;
@@ -82,7 +75,7 @@ export function Settings(props: ModuleSettingsProps<any, SerializedState>): Reac
                 layerManager.deserializeState(parsedState.layerManager);
             }
         },
-        [setFieldIdentifier, setPreferredViewLayout, props.persistence],
+        [setFieldIdentifier, setPreferredViewLayout],
     );
 
     React.useEffect(

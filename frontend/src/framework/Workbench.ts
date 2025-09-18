@@ -7,9 +7,15 @@ import { AtomStoreMaster } from "./AtomStoreMaster";
 import { GuiMessageBroker, GuiState, LeftDrawerContent, RightDrawerContent } from "./GuiMessageBroker";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { EnsembleUpdateMonitor } from "./internal/WorkbenchSession/EnsembleUpdateMonitor";
-import { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
+import {
+    PrivateWorkbenchSession,
+    PrivateWorkbenchSessionTopic,
+} from "./internal/WorkbenchSession/PrivateWorkbenchSession";
 import { ApiErrorHelper } from "./utils/ApiErrorHelper";
 import type { WorkbenchServices } from "./WorkbenchServices";
+import { localStorageKeyForSessionId } from "./internal/WorkbenchSession/utils";
+import { loadWorkbenchSessionFromLocalStorage } from "./internal/WorkbenchSession/WorkbenchSessionLoader";
+import { Template } from "./TemplateRegistry";
 
 export enum WorkbenchTopic {
     ACTIVE_SESSION = "activeSession",
@@ -70,7 +76,17 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
         this._isInitialized = true;
 
-        // First, check if a snapshot id is provided in the URL
+        const key = localStorageKeyForSessionId("default");
+        const hasSessionInLocalStorage = window.localStorage.getItem(key) !== null;
+        if (hasSessionInLocalStorage) {
+            await this.openSessionFromLocalStorage("default", true);
+        } else {
+            await this.startNewSession();
+        }
+
+        if (!this._workbenchSession) {
+            throw new Error("Failed to initialize workbench session.");
+        }
     }
 
     discardLocalStorageSession(snapshotId: string | null, unloadSession = true): void {
@@ -181,62 +197,12 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         // this._workbenchSession.clear();
     }
 
-    /*
     applyTemplate(template: Template): void {
-        this.clearLayout();
-
-        const newLayout = template.moduleInstances.map((el) => {
-            return { ...el.layout, moduleName: el.moduleName };
-        });
-
-        this.makeLayout(newLayout);
-
-        for (let i = 0; i < this._moduleInstances.length; i++) {
-            const moduleInstance = this._moduleInstances[i];
-            const templateModule = template.moduleInstances[i];
-            if (templateModule.syncedSettings) {
-                for (const syncSettingKey of templateModule.syncedSettings) {
-                    moduleInstance.addSyncedSetting(syncSettingKey);
-                }
-            }
-
-            const initialSettings: Record<string, unknown> = templateModule.initialSettings || {};
-
-            if (templateModule.dataChannelsToInitialSettingsMapping) {
-                for (const propName of Object.keys(templateModule.dataChannelsToInitialSettingsMapping)) {
-                    const dataChannel = templateModule.dataChannelsToInitialSettingsMapping[propName];
-
-                    const moduleInstanceIndex = template.moduleInstances.findIndex(
-                        (el) => el.instanceRef === dataChannel.listensToInstanceRef,
-                    );
-                    if (moduleInstanceIndex === -1) {
-                        throw new Error("Could not find module instance for data channel");
-                    }
-
-                    const listensToModuleInstance = this._moduleInstances[moduleInstanceIndex];
-                    const channel = listensToModuleInstance.getChannelManager().getChannel(dataChannel.channelIdString);
-                    if (!channel) {
-                        throw new Error("Could not find channel");
-                    }
-
-                    const receiver = moduleInstance.getChannelManager().getReceiver(propName);
-
-                    if (!receiver) {
-                        throw new Error("Could not find receiver");
-                    }
-
-                    receiver.subscribeToChannel(channel, "All");
-                }
-            }
-
-            moduleInstance.setInitialSettings(new InitialSettings(initialSettings));
-
-            if (i === 0) {
-                this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, moduleInstance.getId());
-            }
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session.");
         }
 
-        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
+        const dashboard = this._workbenchSession.getActiveDashboard();
+        dashboard.applyTemplate(template);
     }
-        */
 }
