@@ -274,7 +274,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                                         expanded
                                     >
                                         <Select
-                                            options={indexWithValues.values.toSorted().map((value) => ({
+                                            options={indexWithValues.values.map((value) => ({
                                                 value: value,
                                                 label: value.toString(),
                                             }))}
