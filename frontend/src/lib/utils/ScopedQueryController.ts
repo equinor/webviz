@@ -1,86 +1,140 @@
-import type { FetchQueryOptions, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/react-query";
-import { QueryObserver } from "@tanstack/react-query";
+import type {
+    FetchQueryOptions,
+    QueryClient,
+    QueryKey,
+    QueryObserverResult,
+    RefetchOptions,
+    RefetchQueryFilters,
+} from "@tanstack/react-query";
+import { QueryObserver, hashKey } from "@tanstack/react-query";
 
-/**
- * Manages exactly one active query (serial execution, latest-wins).
- * Uses a TanStack QueryObserver under the hood; teardown unsubscribes/destroys
- * only this observer, so in-flight fetches abort **only if no other observers**
- * exist for the same queryKey.
- */
+type RefetchArgs = RefetchOptions & RefetchQueryFilters;
+
+type Entry = {
+    observer: QueryObserver<any, any, any, any, any>;
+    unsubscribe?: () => void;
+};
+
 export class ScopedQueryController {
     private _queryClient: QueryClient;
-    private _activeObserver: QueryObserver<any, any, any, any, any> | null = null;
-    private _unsubscribeFn: (() => void) | null = null;
+    private _entries = new Map<string, Entry>();
 
     constructor(queryClient: QueryClient) {
         this._queryClient = queryClient;
     }
 
-    cancelActiveFetch(): void {
-        this.cleanup();
+    /** Cancel the active fetch for a specific key (or all if none provided). */
+    cancelActiveFetch(queryKey?: QueryKey): void {
+        if (!queryKey) {
+            this.cleanupAll();
+            return;
+        }
+        const hash = hashKey(queryKey);
+        this.cleanupEntry(hash);
     }
 
-    async fetchQuery<TQueryFnData, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = QueryKey>(
-        options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
+    /**
+     * One-at-a-time per key. Fresh-by-default.
+     * If you want stale-while-revalidate, pass { staleWhileRevalidate: true }.
+     */
+    async fetchQuery<TQueryFnData, TError = unknown, TData = TQueryFnData, TQueryKey extends QueryKey = QueryKey>(
+        options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey> & {
+            staleWhileRevalidate?: boolean;
+            refetchArgs?: RefetchArgs;
+        },
     ): Promise<TData> {
-        this.cleanup();
+        const { staleWhileRevalidate = false, refetchArgs, ...observerOpts } = options;
+        const keyHash = hashKey(observerOpts.queryKey as QueryKey);
 
-        const observer = new QueryObserver<TQueryFnData, TError, TData, TData, TQueryKey>(this._queryClient, {
-            ...options,
-        });
+        this.cleanupEntry(keyHash);
 
-        this._activeObserver = observer;
+        const observer = new QueryObserver<TQueryFnData, TError, TData, TData, TQueryKey>(
+            this._queryClient,
+            observerOpts as any,
+        );
+
+        const entry: Entry = { observer };
+        this._entries.set(keyHash, entry);
 
         return new Promise<TData>((resolve, reject) => {
+            const finish = (fn: () => void) => {
+                // Only finish if this is still the active entry for this key
+                const current = this._entries.get(keyHash);
+                if (current && current.observer === observer) {
+                    this.cleanupEntry(keyHash);
+                    fn();
+                }
+            };
+
             const initial = observer.getCurrentResult();
 
+            // Immediate error from cache
             if (initial.isError && initial.error) {
-                this.cleanup();
-                reject(initial.error);
+                finish(() => reject(initial.error as TError));
                 return;
             }
 
+            // Cache hit
             if (initial.isSuccess) {
-                if (!initial.isStale) {
-                    this.cleanup();
-                    resolve(initial.data);
+                if (!initial.isStale || staleWhileRevalidate) {
+                    // Return now; optionally refresh in background
+                    if (initial.isStale && staleWhileRevalidate) {
+                        observer.refetch(refetchArgs).catch(() => {
+                            // Fire-and-forget but avoid unhandled rejection after cleanup/destroy
+                        });
+                    }
+                    finish(() => resolve(initial.data as TData));
                     return;
                 }
-                const current = observer;
-                observer.refetch().finally(() => {
-                    if (this._activeObserver === current) {
-                        this.cleanup();
-                    }
-                });
-                resolve(initial.data);
+
+                // Stale and we want fresh -> wait for refetch
+                observer
+                    .refetch(refetchArgs)
+                    .then((result) => {
+                        if (result.isError && result.error) {
+                            finish(() => reject(result.error as TError));
+                        } else {
+                            finish(() => resolve(result.data as TData));
+                        }
+                    })
+                    .catch((err) => finish(() => reject(err as TError)));
                 return;
             }
 
-            this._unsubscribeFn = observer.subscribe((result: QueryObserverResult<TData, TError>) => {
+            // Pending/idle: subscribe and kick refetch
+            entry.unsubscribe = observer.subscribe((result: QueryObserverResult<TData, TError>) => {
+                const current = this._entries.get(keyHash);
+                if (!current || current.observer !== observer) return; // older call, ignore
+
                 if (result.isError && result.error) {
-                    this.cleanup();
-                    reject(result.error);
+                    finish(() => reject(result.error));
                 } else if (result.isSuccess) {
-                    this.cleanup();
-                    resolve(result.data);
+                    finish(() => resolve(result.data));
                 }
             });
 
-            observer.refetch().catch((err) => {
-                this.cleanup();
-                reject(err);
+            observer.refetch(refetchArgs).catch((err) => {
+                finish(() => reject(err as TError));
             });
         });
     }
 
-    private cleanup() {
-        if (this._unsubscribeFn) {
-            this._unsubscribeFn();
-            this._unsubscribeFn = null;
+    /** Clean up everything (all keys). */
+    private cleanupAll() {
+        for (const hash of Array.from(this._entries.keys())) {
+            this.cleanupEntry(hash);
         }
-        if (this._activeObserver) {
-            this._activeObserver.destroy();
-            this._activeObserver = null;
+    }
+
+    /** Clean up one entry by hash. */
+    private cleanupEntry(hash: string) {
+        const entry = this._entries.get(hash);
+        if (!entry) return;
+        if (entry.unsubscribe) {
+            entry.unsubscribe();
+            entry.unsubscribe = undefined;
         }
+        entry.observer.destroy();
+        this._entries.delete(hash);
     }
 }
