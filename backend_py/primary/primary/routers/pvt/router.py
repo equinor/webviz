@@ -26,7 +26,7 @@ async def get_table_data(
 ) -> List[PvtData]:
     """Get pvt table data for a given Sumo ensemble and realization"""
 
-    access = TableAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = TableAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     # Get all table schemas for a given realization and find the pvt table
     table_schemas = await access.get_table_schemas_single_realization_async(realization=realization)
