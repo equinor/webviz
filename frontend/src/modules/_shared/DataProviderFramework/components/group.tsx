@@ -45,16 +45,6 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
         setPrevExpanded(props.expanded);
     }
 
-    /*
-    const isHovered = sortableListContext.hoveredElementId === props.id;
-    const isHeaderHovered =
-        isHovered &&
-        (sortableListContext.hoveredArea === HoveredArea.HEADER ||
-            sortableListContext.hoveredArea === HoveredArea.CENTER);
-    const isDragging = sortableListContext.draggedElementId === props.id;
-    const dragPosition = sortableListContext.dragPosition;
-    */
-
     function handleToggleExpanded() {
         setIsExpanded(!isExpanded);
     }
