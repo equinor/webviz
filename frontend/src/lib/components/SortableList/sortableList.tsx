@@ -662,7 +662,15 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                 setDraggedItemId(null);
             };
         },
-        [onItemMoved, isMoveAllowed, scrollContainerElement, contentContainerElement],
+        [
+            onItemMoved,
+            isMoveAllowed,
+            scrollContainerElement,
+            contentContainerElement,
+            noDropZoneElements,
+            scrollOverlayMargins.top,
+            scrollOverlayMargins.bottom,
+        ],
     );
 
     return (

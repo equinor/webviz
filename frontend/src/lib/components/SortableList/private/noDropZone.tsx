@@ -2,8 +2,8 @@ import React from "react";
 
 import { isDevMode } from "@lib/utils/devMode";
 
-import { useComposedRefs } from "../utils/useComposedRefs";
 import { SortableListContext } from "../sortableList";
+import { useComposedRefs } from "../utils/useComposedRefs";
 
 export type DropZoneProps = {
     children: React.ReactElement;
