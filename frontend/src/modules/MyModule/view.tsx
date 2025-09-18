@@ -504,16 +504,18 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         <div className="flex flex-col gap-4">
             <h2>Table</h2>
             <SortableList isMoveAllowed={() => true} onItemMoved={onMove}>
-                <SortableList.ScrollContainer>
+                <SortableList.ScrollContainer overlayMarginTop={20}>
                     <div className="max-h-[150px] overflow-auto">
                         <table className="w-full table-fixed border-collapse">
-                            <thead className="sticky top-0 bg-white z-10">
-                                <tr>
-                                    <th></th>
-                                    <th>Name</th>
-                                    <th>Test</th>
-                                </tr>
-                            </thead>
+                            <SortableList.NoDropZone>
+                                <thead className="sticky top-0 bg-white z-100">
+                                    <tr>
+                                        <th></th>
+                                        <th>Name</th>
+                                        <th>Test</th>
+                                    </tr>
+                                </thead>
+                            </SortableList.NoDropZone>
                             <SortableList.Content>
                                 <tbody>
                                     {items.map((item) => {

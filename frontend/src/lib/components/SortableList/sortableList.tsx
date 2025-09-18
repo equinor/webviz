@@ -14,11 +14,18 @@ import { Group } from "./private/group";
 import { GroupContent } from "./private/groupContent";
 import { GroupDropOverlay } from "./private/groupDropOverlay";
 import { Item } from "./private/item";
+import { NoDropZone } from "./private/noDropZone";
 import { ScrollContainer } from "./private/scrollContainer";
 
 export enum ItemType {
     ITEM = "item",
     GROUP = "group",
+}
+
+enum Cursor {
+    GRABBING = "grabbing",
+    NOT_ALLOWED = "not-allowed",
+    NONE = "none",
 }
 
 export type IsMoveAllowedArgs = {
@@ -39,6 +46,9 @@ export type SortableListContextType = {
 
     registerContentContainer: (el: HTMLElement | null) => void;
     registerScrollContainerElement: (el: HTMLElement | null) => void;
+    registerNoDropZoneElement: (el: HTMLElement | null) => void;
+    unregisterNoDropZoneElement: (el: HTMLElement | null) => void;
+    setScrollOverlayMargins: (args: { top: number; bottom: number }) => void;
 };
 
 export const SortableListContext = React.createContext<SortableListContextType>({
@@ -49,6 +59,9 @@ export const SortableListContext = React.createContext<SortableListContextType>(
 
     registerContentContainer: () => {},
     registerScrollContainerElement: () => {},
+    registerNoDropZoneElement: () => {},
+    unregisterNoDropZoneElement: () => {},
+    setScrollOverlayMargins: () => {},
 });
 
 export type SortableListProps = {
@@ -68,6 +81,7 @@ export type SortableListCompound = React.FC<SortableListProps> & {
     ScrollContainer: typeof ScrollContainer;
     Item: typeof Item;
     Group: typeof Group;
+    NoDropZone: typeof NoDropZone;
     DragHandle: typeof DragHandle;
     GroupContent: typeof GroupContent;
 };
@@ -78,6 +92,8 @@ const ITEM_TOP_AND_BOTTOM_AREA_SIZE_IN_PERCENT = 50;
 const GROUP_TOP_AND_BOTTOM_AREA_SIZE_IN_PERCENT = 30;
 // Defines after how many milliseconds hover time over the top or bottom of the sroll container it should start scrolling
 const DEFAULT_SCROLL_TIME = 100;
+// Defines the size of the area at the top and bottom of the scroll container where auto-scrolling should start
+const AUTO_SCROLL_EDGE_PX = 20;
 
 /**
  *
@@ -95,9 +111,37 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
     const [isDragging, setIsDragging] = React.useState<boolean>(false);
     const [draggedItemId, setDraggedItemId] = React.useState<string | null>(null);
     const [hoveredItemIdAndArea, setHoveredItemIdAndArea] = React.useState<HoveredItemIdAndArea | null>(null);
+    const [cursor, setCursor] = React.useState<Cursor>(Cursor.NONE);
+    const [isScrolling, setIsScrolling] = React.useState<boolean>(false);
     const [dragPosition, setDragPosition] = React.useState<Vec2>({ x: 0, y: 0 });
     const [contentContainerElement, setContentContainerElement] = React.useState<HTMLElement | null>(null);
     const [scrollContainerElement, setScrollContainerElement] = React.useState<HTMLElement | null>(null);
+    const [scrollOverlayMargins, setScrollOverlayMargins] = React.useState<{ top: number; bottom: number }>({
+        top: 0,
+        bottom: 0,
+    });
+    const [noDropZoneElements, setNoDropZoneElements] = React.useState<Set<HTMLElement>>(new Set());
+
+    const registerNoDropZoneElement = React.useCallback(function registerNoDropZoneElement(el: HTMLElement | null) {
+        setNoDropZoneElements((prev) => {
+            if (el && !prev.has(el)) {
+                const next = new Set(prev);
+                next.add(el);
+                return next;
+            }
+            return prev;
+        });
+    }, []);
+    const unregisterNoDropZoneElement = React.useCallback(function unregisterNoDropZoneElement(el: HTMLElement | null) {
+        setNoDropZoneElements((prev) => {
+            if (el && prev.has(el)) {
+                const next = new Set(prev);
+                next.delete(el);
+                return next;
+            }
+            return prev;
+        });
+    }, []);
 
     const context = React.useMemo<SortableListContextType>(
         () => ({
@@ -107,13 +151,14 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
             dragPosition,
             registerContentContainer: setContentContainerElement,
             registerScrollContainerElement: setScrollContainerElement,
+            registerNoDropZoneElement: registerNoDropZoneElement,
+            unregisterNoDropZoneElement: unregisterNoDropZoneElement,
+            setScrollOverlayMargins: setScrollOverlayMargins,
         }),
-        [draggedItemId, hoveredItemIdAndArea, dragPosition],
+        [draggedItemId, hoveredItemIdAndArea, dragPosition, registerNoDropZoneElement, unregisterNoDropZoneElement],
     );
 
     const mainRef = React.useRef<HTMLDivElement>(null);
-    const upperScrollRef = React.useRef<HTMLDivElement>(null);
-    const lowerScrollRef = React.useRef<HTMLDivElement>(null);
 
     const scrollPosByEl = React.useRef(new WeakMap<HTMLElement, number>());
 
@@ -147,7 +192,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
             const saved = scrollPosByEl.current.get(el);
             if (typeof saved === "number") el.scrollTop = saved;
         },
-        [scrollContainerElement /* , orderKey */],
+        [scrollContainerElement],
     );
 
     // installs drag interaction listeners on the list DOM
@@ -220,11 +265,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
             }
 
             function maybeScroll(position: Vec2) {
-                if (
-                    upperScrollRef.current === null ||
-                    lowerScrollRef.current === null ||
-                    scrollContainerElement === null
-                ) {
+                if (currentMainRef === null) {
                     return;
                 }
 
@@ -233,18 +274,39 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                     currentScrollTime = 100;
                 }
 
-                if (rectContainsPoint(upperScrollRef.current.getBoundingClientRect(), position)) {
+                const boundingRect = currentMainRef.getBoundingClientRect();
+                const rect = {
+                    top: boundingRect.top + scrollOverlayMargins.top,
+                    bottom: boundingRect.bottom - scrollOverlayMargins.bottom,
+                    left: boundingRect.left,
+                    right: boundingRect.right,
+                };
+
+                const inTopBand =
+                    position.y >= rect.top &&
+                    position.y <= rect.top + AUTO_SCROLL_EDGE_PX &&
+                    position.x >= rect.left &&
+                    position.x <= rect.right;
+                const inBottomBand =
+                    position.y >= rect.bottom - AUTO_SCROLL_EDGE_PX &&
+                    position.y <= rect.bottom &&
+                    position.x >= rect.left &&
+                    position.x <= rect.right;
+
+                if (inTopBand) {
                     doScroll = true;
                     scrollTimeout = setTimeout(scrollUpRepeatedly, currentScrollTime);
-                } else if (rectContainsPoint(lowerScrollRef.current.getBoundingClientRect(), position)) {
+                } else if (inBottomBand) {
                     doScroll = true;
                     scrollTimeout = setTimeout(scrollDownRepeatedly, currentScrollTime);
                 } else {
+                    setIsScrolling(false);
                     doScroll = false;
                 }
             }
 
             function scrollUpRepeatedly() {
+                setIsScrolling(true);
                 currentScrollTime = Math.max(10, currentScrollTime - 5);
                 if (scrollContainerElement) {
                     scrollContainerElement.scrollTop = Math.max(0, scrollContainerElement.scrollTop - 10);
@@ -255,6 +317,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
             }
 
             function scrollDownRepeatedly() {
+                setIsScrolling(true);
                 currentScrollTime = Math.max(10, currentScrollTime - 5);
                 if (scrollContainerElement) {
                     scrollContainerElement.scrollTop = Math.min(
@@ -265,6 +328,15 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                 if (doScroll) {
                     scrollTimeout = setTimeout(scrollDownRepeatedly, currentScrollTime);
                 }
+            }
+
+            function assertTargetIsNotNoDropZone(e: PointerEvent): boolean {
+                for (const noDropZoneElement of noDropZoneElements) {
+                    if (rectContainsPoint(noDropZoneElement.getBoundingClientRect(), vec2FromPointerEvent(e))) {
+                        return false;
+                    }
+                }
+                return true;
             }
 
             function getHoveredElementAndArea(e: PointerEvent): { element: HTMLElement; area: HoveredArea } | null {
@@ -357,6 +429,24 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
 
                 if (rectContainsPoint(draggedElementInfo.element.getBoundingClientRect(), point)) {
                     // Hovering the dragged element itself
+                    setCursor(Cursor.GRABBING);
+                    currentlyHoveredElementInfo = null;
+                    setHoveredItemIdAndArea(null);
+                    return;
+                }
+
+                const mainBoundingRect = currentMainRef.getBoundingClientRect();
+                if (!rectContainsPoint(mainBoundingRect, point)) {
+                    // Outside of the main list area
+                    setCursor(Cursor.NOT_ALLOWED);
+                    currentlyHoveredElementInfo = null;
+                    setHoveredItemIdAndArea(null);
+                    return;
+                }
+
+                if (!assertTargetIsNotNoDropZone(e)) {
+                    // In a no-drop zone
+                    setCursor(Cursor.NOT_ALLOWED);
                     currentlyHoveredElementInfo = null;
                     setHoveredItemIdAndArea(null);
                     return;
@@ -364,12 +454,14 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
 
                 const hoveredElementAndArea = getHoveredElementAndArea(e);
                 if (!hoveredElementAndArea) {
+                    setCursor(Cursor.NOT_ALLOWED);
                     currentlyHoveredElementInfo = null;
                     setHoveredItemIdAndArea(null);
                     return;
                 }
 
                 if (hoveredElementAndArea.element === draggedElementInfo.element) {
+                    setCursor(Cursor.NOT_ALLOWED);
                     currentlyHoveredElementInfo = null;
                     setHoveredItemIdAndArea(null);
                     return;
@@ -380,6 +472,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                     hoveredElementAndArea.area === HoveredArea.HEADER
                 ) {
                     // Dragged element should not be moved into its own parent
+                    setCursor(Cursor.NOT_ALLOWED);
                     currentlyHoveredElementInfo = null;
                     setHoveredItemIdAndArea(null);
                     return;
@@ -396,6 +489,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                     draggedElementParentId === getGroupId(getItemParent(hoveredElementAndArea.element)) &&
                     newPosition === currentPosition
                 ) {
+                    setCursor(Cursor.GRABBING);
                     currentlyHoveredElementInfo = null;
                     setHoveredItemIdAndArea(null);
                     return;
@@ -407,6 +501,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                     (hoveredElementAndArea.area === HoveredArea.CENTER ||
                         hoveredElementAndArea.area === HoveredArea.HEADER)
                 ) {
+                    setCursor(Cursor.NOT_ALLOWED);
                     currentlyHoveredElementInfo = null;
                     setHoveredItemIdAndArea(null);
                     return;
@@ -442,6 +537,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                         position: newPosition,
                     })
                 ) {
+                    setCursor(Cursor.NOT_ALLOWED);
                     currentlyHoveredElementInfo = null;
                     setHoveredItemIdAndArea(null);
                     return;
@@ -451,6 +547,8 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                     id: hoveredElementId,
                     area: hoveredElementAndArea.area,
                 });
+
+                setCursor(Cursor.GRABBING);
 
                 let parent: Omit<ElementWithInfo, "parent"> | null = null;
                 if (parentElement && destinationId) {
@@ -521,6 +619,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
 
             function handlePointerUp() {
                 document.removeEventListener("pointermove", handlePointerMove);
+                setCursor(Cursor.NONE);
                 maybeCallItemMoveCallback();
                 cancelDragging();
             }
@@ -569,19 +668,15 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
     return (
         <div className={resolveClassNames(props.className, "flex flex-col relative min-h-0 max-h-full")} ref={mainRef}>
             <SortableListContext.Provider value={context}>
-                <div className="absolute top-0 left-0 w-full h-5 z-50 pointer-events-none" ref={upperScrollRef}></div>
-                <div
-                    className="absolute left-0 bottom-0 w-full h-5 z-50 pointer-events-none"
-                    ref={lowerScrollRef}
-                ></div>
                 {props.children}
                 <div className="h-5" />
                 {isDragging &&
                     createPortal(
                         <div
                             className={resolveClassNames("absolute z-[400] inset-0", {
-                                "cursor-not-allowed": !hoveredItemIdAndArea,
-                                "cursor-grabbing": hoveredItemIdAndArea !== null,
+                                "cursor-grabbing": cursor === Cursor.GRABBING,
+                                "cursor-not-allowed": cursor === Cursor.NOT_ALLOWED,
+                                "cursor-n-resize": isScrolling,
                             })}
                         ></div>,
                     )}
@@ -610,6 +705,7 @@ SortableList.Content = Content;
 SortableList.ScrollContainer = ScrollContainer;
 SortableList.Item = Item;
 SortableList.Group = Group;
+SortableList.NoDropZone = NoDropZone;
 SortableList.GroupContent = GroupContent;
 SortableList.DragHandle = DragHandle;
 

@@ -7,6 +7,8 @@ import { SortableListContext } from "../sortableList";
 import { useComposedRefs } from "../utils/useComposedRefs";
 
 export type ScrollContainerProps = {
+    overlayMarginTop?: number;
+    overlayMarginBottom?: number;
     children: React.ReactElement;
 };
 
@@ -14,7 +16,14 @@ export const ScrollContainer = React.forwardRef<HTMLElement, ScrollContainerProp
     function ScrollContainer(props, forwardedRef): React.ReactElement {
         const onlyChild = React.Children.only(props.children) as React.ReactElement;
         const lastNodeRef = React.useRef<HTMLElement | null>(null);
-        const { registerScrollContainerElement } = React.useContext(SortableListContext);
+        const { registerScrollContainerElement, setScrollOverlayMargins } = React.useContext(SortableListContext);
+
+        React.useEffect(
+            function updateMarginsEffect() {
+                setScrollOverlayMargins({ top: props.overlayMarginTop ?? 0, bottom: props.overlayMarginBottom ?? 0 });
+            },
+            [props.overlayMarginTop, props.overlayMarginBottom, setScrollOverlayMargins],
+        );
 
         const setScroller = React.useCallback(
             function setScroller(el: Element | null) {
