@@ -1,7 +1,7 @@
 import React from "react";
 
 import { createPortal } from "@lib/utils/createPortal";
-import { MANHATTAN_LENGTH, rectContainsPoint } from "@lib/utils/geometry";
+import { MANHATTAN_LENGTH, Rect2D, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 import { point2Distance, vec2FromPointerEvent } from "@lib/utils/vec2";
@@ -226,7 +226,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                     return;
                 }
 
-                const sortableListItemProps = assertTargetIsSortableListItemAndExtractProps(target);
+                const sortableListItemProps = verifyTargetIsSortableListItemAndExtractProps(target);
                 if (!sortableListItemProps) {
                     return;
                 }
@@ -277,23 +277,21 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                 }
 
                 const boundingRect = currentMainRef.getBoundingClientRect();
-                const rect = {
-                    top: boundingRect.top + scrollOverlayMargins.top,
-                    bottom: boundingRect.bottom - scrollOverlayMargins.bottom,
-                    left: boundingRect.left,
-                    right: boundingRect.right,
+                const topBandRect: Rect2D = {
+                    x: boundingRect.left,
+                    y: boundingRect.top + scrollOverlayMargins.top,
+                    width: boundingRect.width,
+                    height: AUTO_SCROLL_EDGE_PX,
+                };
+                const bottomBandRect: Rect2D = {
+                    x: boundingRect.left,
+                    y: boundingRect.bottom - AUTO_SCROLL_EDGE_PX - scrollOverlayMargins.bottom,
+                    width: boundingRect.width,
+                    height: AUTO_SCROLL_EDGE_PX,
                 };
 
-                const inTopBand =
-                    position.y >= rect.top &&
-                    position.y <= rect.top + AUTO_SCROLL_EDGE_PX &&
-                    position.x >= rect.left &&
-                    position.x <= rect.right;
-                const inBottomBand =
-                    position.y >= rect.bottom - AUTO_SCROLL_EDGE_PX &&
-                    position.y <= rect.bottom &&
-                    position.x >= rect.left &&
-                    position.x <= rect.right;
+                const inTopBand = rectContainsPoint(topBandRect, position);
+                const inBottomBand = rectContainsPoint(bottomBandRect, position);
 
                 if (inTopBand) {
                     doScroll = true;
@@ -332,13 +330,13 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                 }
             }
 
-            function assertTargetIsNotNoDropZone(e: PointerEvent): boolean {
+            function isTargetNoDropZone(e: PointerEvent): boolean {
                 for (const noDropZoneElement of noDropZoneElements) {
                     if (rectContainsPoint(noDropZoneElement.getBoundingClientRect(), vec2FromPointerEvent(e))) {
-                        return false;
+                        return true;
                     }
                 }
-                return true;
+                return false;
             }
 
             function getHoveredElementAndArea(e: PointerEvent): { element: HTMLElement; area: HoveredArea } | null {
@@ -448,7 +446,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                     return;
                 }
 
-                if (!assertTargetIsNotNoDropZone(e)) {
+                if (isTargetNoDropZone(e)) {
                     // In a no-drop zone
                     setCursor(Cursor.NOT_ALLOWED);
                     currentlyHoveredElementInfo = null;
@@ -744,7 +742,7 @@ type HoveredItemIdAndArea = {
     area: HoveredArea;
 };
 
-function assertTargetIsSortableListItemAndExtractProps(
+function verifyTargetIsSortableListItemAndExtractProps(
     target: EventTarget | null,
 ): { element: HTMLElement; id: string; parentElement: HTMLElement | null; parentId: string | null } | null {
     if (!target || !(target instanceof HTMLElement)) {
