@@ -1,5 +1,7 @@
 import React from "react";
 
+import { Input } from "@mui/icons-material";
+
 import type { ModuleViewProps } from "@framework/Module";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -7,7 +9,6 @@ import { ContentInfo } from "@modules/_shared/components/ContentMessage/contentM
 import { Plot } from "@modules/_shared/components/Plot";
 import { computeSensitivitiesForResponse } from "@modules/_shared/SensitivityProcessing/sensitivityProcessing";
 import type { SensitivityResponseDataset } from "@modules/_shared/SensitivityProcessing/types";
-import { Input } from "@mui/icons-material";
 
 import { createSensitivityColorMap } from "../../_shared/sensitivityColors";
 import type { Interfaces } from "../interfaces";

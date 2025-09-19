@@ -1,8 +1,9 @@
+import { atom } from "jotai";
+
 import { SensitivitySortBy } from "@modules/_shared/SensitivityProcessing/types";
 import type { SelectedSensitivity } from "@modules/SensitivityPlot/typesAndEnums";
 import { DisplayComponentType, SensitivityScaling } from "@modules/SensitivityPlot/typesAndEnums";
 import { ColorBy } from "@modules/SensitivityPlot/view/components/sensitivityChartFigure";
-import { atom } from "jotai";
 
 export const displayComponentTypeAtom = atom<DisplayComponentType>(DisplayComponentType.TornadoChart);
 export const referenceSensitivityNameAtom = atom<string | null>(null);
