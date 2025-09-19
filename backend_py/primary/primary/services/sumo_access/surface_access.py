@@ -429,7 +429,6 @@ class SurfaceAccess:
             if task_state.status in ["succeeded", "failed"] or next_delay_s is None:
                 break
 
-            LOGGER.debug(f"Waiting to poll again, {next_delay_s=:.1f}s,  elapsed/remaining: {backoff_timer.elapsed_s():.1f}/{backoff_timer.remaining_s():.1f}")
             await asyncio.sleep(next_delay_s)
 
         perf_metrics.record_lap("polling")

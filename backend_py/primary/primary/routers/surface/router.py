@@ -208,10 +208,6 @@ async def get_surface_data(
     return surf_data_response
 
 
-################################################################
-################################################################
-################################################################
-
 @router.get("/statistical_surface_data/hybrid")
 async def get_statistical_surface_data_hybrid(
     # fmt:off
@@ -307,10 +303,6 @@ async def get_statistical_surface_data_hybrid(
         # Must delete the fingerprint mapping, but then just re-raise the exception and let our middleware handle it
         await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
         raise
-
-################################################################
-################################################################
-################################################################
 
 
 @router.post("/get_surface_intersection")
