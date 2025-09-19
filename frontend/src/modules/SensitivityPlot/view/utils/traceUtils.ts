@@ -21,7 +21,7 @@ export type TornadoBarTraceProps = {
     selectedBar: SelectedBar | null;
     colors: string[];
     label?: string[];
-    transparency: boolean;
+    transparency: number;
 };
 
 export const createLowBarTrace = (props: TornadoBarTraceProps): TornadoChartTraceData => {
@@ -41,7 +41,7 @@ export const createLowBarTrace = (props: TornadoBarTraceProps): TornadoChartTrac
         orientation: "h",
         marker: {
             color: colors,
-            opacity: transparency ? 0.3 : 1,
+            opacity: transparency,
             line: {
                 width: 3,
 
@@ -73,7 +73,7 @@ export const createHighBarTrace = (props: TornadoBarTraceProps): TornadoChartTra
         orientation: "h",
         marker: {
             color: colors,
-            opacity: transparency ? 0.3 : 1,
+            opacity: transparency,
             line: {
                 width: 3,
                 color: yValues.map((s, idx) =>

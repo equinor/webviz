@@ -30,7 +30,7 @@ export interface SensitivityResponseDataset {
     responseUnit: string | undefined;
 }
 
-export enum SensitivitySortOrder {
+export enum SensitivitySortBy {
     IMPACT = "impact",
     ALPHABETICAL = "alphabetical",
 }

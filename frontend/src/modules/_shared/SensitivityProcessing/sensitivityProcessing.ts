@@ -5,11 +5,11 @@ import {
     computeReferenceAverage,
     filterSensitivityResponses,
     sortSensitivityResponses,
-    validateReferenceSensitivity,
+    getReferenceSensitivityName,
 } from "./helpers";
 import { processMonteCarloSensitivity } from "./processMontecarlo";
 import { processScenarioSensitivity } from "./processScenario";
-import { type EnsembleScalarResponse, type SensitivityResponseDataset, type SensitivitySortOrder } from "./types";
+import { type EnsembleScalarResponse, type SensitivityResponseDataset, type SensitivitySortBy } from "./types";
 
 // Domain specific thing (Reference realization?). This case name should be ignored.
 const IGNORED_CASE = "ref";
@@ -38,12 +38,12 @@ export const computeSensitivitiesForResponse = (
     sensitivities: EnsembleSensitivities,
     ensembleResponse: EnsembleScalarResponse,
     referenceSensitivity: string,
-    barSortOrder: SensitivitySortOrder,
+    sensitivitySortBy: SensitivitySortBy,
     hideNoImpactSensitivities: boolean,
 ): SensitivityResponseDataset => {
-    validateReferenceSensitivity(sensitivities, referenceSensitivity);
+    const validReferenceSensitivity = getReferenceSensitivityName(sensitivities, referenceSensitivity);
 
-    const referenceAverage = computeReferenceAverage(sensitivities, ensembleResponse, referenceSensitivity);
+    const referenceAverage = computeReferenceAverage(sensitivities, ensembleResponse, validReferenceSensitivity);
 
     const processedSensitivityResponses = processSensitivities(sensitivities, ensembleResponse, referenceAverage);
 
@@ -56,7 +56,7 @@ export const computeSensitivitiesForResponse = (
         sensitivityResponses: sortSensitivityResponses(
             filteredSensitivityResponses,
             referenceSensitivity,
-            barSortOrder,
+            sensitivitySortBy,
         ),
         referenceSensitivity,
         referenceAverage,

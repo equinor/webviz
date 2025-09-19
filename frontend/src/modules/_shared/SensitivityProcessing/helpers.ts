@@ -1,7 +1,7 @@
 import type { EnsembleScalarResponse_api } from "@api";
 import type { EnsembleSensitivities, Sensitivity } from "@framework/EnsembleSensitivities";
 
-import { SensitivitySortOrder, type EnsembleScalarResponse, type SensitivityResponse } from "./types";
+import { SensitivitySortBy, type EnsembleScalarResponse, type SensitivityResponse } from "./types";
 
 // Extract response values for the relevant realizations
 export function extractResponseValues(ensembleResponse: EnsembleScalarResponse_api, realizations: number[]): number[] {
@@ -24,9 +24,9 @@ export function extractSensitivityRealizations(sensitivity: Sensitivity): number
 export const sortSensitivityResponses = (
     responses: SensitivityResponse[],
     referenceSensitivity: string,
-    sortOrder: SensitivitySortOrder,
+    sortBy: SensitivitySortBy,
 ): SensitivityResponse[] => {
-    if (sortOrder === SensitivitySortOrder.ALPHABETICAL) {
+    if (sortBy === SensitivitySortBy.ALPHABETICAL) {
         return [...responses].sort((a, b) => b.sensitivityName.localeCompare(a.sensitivityName)); // Reverse alphabetical
     }
 
@@ -60,8 +60,15 @@ export function filterSensitivityResponses(
         return response.lowCaseReferenceDifference !== 0 || response.highCaseReferenceDifference !== 0;
     });
 }
-export function validateReferenceSensitivity(sensitivities: EnsembleSensitivities, referenceSensitivity: string): void {
+export function getReferenceSensitivityName(
+    sensitivities: EnsembleSensitivities,
+    referenceSensitivity: string,
+): string {
     if (!referenceSensitivity || !sensitivities.hasSensitivityName(referenceSensitivity)) {
-        throw new Error(`Reference sensitivity ${referenceSensitivity} not found in ensemble`);
+        if (sensitivities.getSensitivityNames().length === 0) {
+            throw new Error("No sensitivities available");
+        }
+        return sensitivities.getSensitivityNames()[0]; // Default to first sensitivity
     }
+    return referenceSensitivity;
 }

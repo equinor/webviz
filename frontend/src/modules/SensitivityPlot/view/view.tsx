@@ -1,8 +1,5 @@
 import React from "react";
 
-import { Input } from "@mui/icons-material";
-import { useSetAtom } from "jotai";
-
 import type { ModuleViewProps } from "@framework/Module";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -10,25 +7,23 @@ import { ContentInfo } from "@modules/_shared/components/ContentMessage/contentM
 import { Plot } from "@modules/_shared/components/Plot";
 import { computeSensitivitiesForResponse } from "@modules/_shared/SensitivityProcessing/sensitivityProcessing";
 import type { SensitivityResponseDataset } from "@modules/_shared/SensitivityProcessing/types";
+import { Input } from "@mui/icons-material";
 
 import { createSensitivityColorMap } from "../../_shared/sensitivityColors";
 import type { Interfaces } from "../interfaces";
 import { DisplayComponentType } from "../typesAndEnums";
 
-import { selectedSensitivityAtom } from "./atoms/baseAtoms";
 import SensitivityTable from "./components/sensitivityTable";
 import { useResponseChannel } from "./hooks/useResponseChannel";
 import { useSensitivityChart } from "./hooks/useSensitivityChart";
 import { SensitivityDataScaler } from "./utils/sensitivityDataScaler";
 
 export const View = ({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<Interfaces>) => {
-    const setSelectedSensitivity = useSetAtom(selectedSensitivityAtom);
     const hideZeroY = viewContext.useSettingsToViewInterfaceValue("hideZeroY");
     const displayComponentType = viewContext.useSettingsToViewInterfaceValue("displayComponentType");
     const referenceSensitivityName = viewContext.useSettingsToViewInterfaceValue("referenceSensitivityName");
-    const barSortOrder = viewContext.useSettingsToViewInterfaceValue("barSortOrder");
-    const xAxisBarScaling = viewContext.useSettingsToViewInterfaceValue("xAxisBarScaling");
-    const colorBy = viewContext.useSettingsToViewInterfaceValue("colorBy");
+    const sensitivitySortBy = viewContext.useSettingsToViewInterfaceValue("sensitivitySortBy");
+    const sensitivityScaling = viewContext.useSettingsToViewInterfaceValue("sensitivityScaling");
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const colorSet = workbenchSettings.useColorSet();
@@ -48,12 +43,12 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
             sensitivities,
             responseChannelData.ensembleResponse,
             referenceSensitivityName,
-            barSortOrder,
+            sensitivitySortBy,
             hideZeroY,
         );
     }
     const sensitivityDataScaler = new SensitivityDataScaler(
-        xAxisBarScaling,
+        sensitivityScaling,
         computedSensitivityResponseDataset ? computedSensitivityResponseDataset.referenceAverage : 0,
     );
     const sensitivityChartBuilder = useSensitivityChart(
@@ -63,7 +58,6 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
         sensitivitiesColorMap,
         computedSensitivityResponseDataset,
         sensitivityDataScaler,
-        colorBy,
     );
 
     let instanceTitle = "Tornado chart";
@@ -76,9 +70,9 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     }
     viewContext.setInstanceTitle(instanceTitle);
 
-    if (!responseChannelData.hasChannel) {
-        return (
-            <div className="w-full h-full" ref={wrapperDivRef}>
+    function makeViewContent(): React.ReactNode {
+        if (!responseChannelData.hasChannel) {
+            return (
                 <ContentInfo>
                     <span>
                         Data channel required for use. Add a main module to the workbench and use the data channels icon{" "}
@@ -86,54 +80,45 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
                     </span>
                     <Tag label="Response" />
                 </ContentInfo>
-            </div>
-        );
-    }
-
-    if (!responseChannelData.hasChannelContents) {
-        return (
-            <div className="w-full h-full" ref={wrapperDivRef}>
-                <ContentInfo>No data received on channel {responseChannelData.displayName ?? "Unknown"}</ContentInfo>
-            </div>
-        );
-    }
-
-    if (!computedSensitivityResponseDataset) {
-        return (
-            <div className="w-full h-full" ref={wrapperDivRef}>
-                <ContentInfo>No sensitivities available</ContentInfo>
-            </div>
-        );
-    }
-
-    if (displayComponentType === DisplayComponentType.TornadoChart) {
-        if (!sensitivityChartBuilder) {
-            return (
-                <div className="w-full h-full" ref={wrapperDivRef}>
-                    <ContentInfo>No chart data available</ContentInfo>
-                </div>
             );
         }
-        return (
-            <div className="w-full h-full" ref={wrapperDivRef}>
-                <Plot layout={sensitivityChartBuilder.makePlotLayout()} data={sensitivityChartBuilder.makePlotData()} />
-            </div>
-        );
-    }
 
-    if (displayComponentType === DisplayComponentType.Table) {
-        return (
-            <div className="w-full h-full" ref={wrapperDivRef}>
+        if (!responseChannelData.hasChannelContents) {
+            return (
+                <ContentInfo>No data received on channel {responseChannelData.displayName ?? "Unknown"}</ContentInfo>
+            );
+        }
+
+        if (!computedSensitivityResponseDataset) {
+            return <ContentInfo>No sensitivities available</ContentInfo>;
+        }
+
+        if (displayComponentType === DisplayComponentType.TornadoChart) {
+            if (!sensitivityChartBuilder) {
+                return <ContentInfo>No chart data available</ContentInfo>;
+            }
+            return (
+                <Plot layout={sensitivityChartBuilder.makePlotLayout()} data={sensitivityChartBuilder.makePlotData()} />
+            );
+        }
+
+        if (displayComponentType === DisplayComponentType.Table) {
+            return (
                 <div className="text-sm">
                     <SensitivityTable
                         sensitivityResponseDataset={computedSensitivityResponseDataset}
                         sensitivityDataScaler={sensitivityDataScaler}
-                        onSelectedSensitivity={setSelectedSensitivity}
                     />
                 </div>
-            </div>
-        );
+            );
+        }
+
+        return null;
     }
 
-    return <div className="w-full h-full" ref={wrapperDivRef} />;
+    return (
+        <div className="w-full h-full" ref={wrapperDivRef}>
+            {makeViewContent()}
+        </div>
+    );
 };

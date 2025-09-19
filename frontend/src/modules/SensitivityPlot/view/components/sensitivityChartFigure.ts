@@ -1,8 +1,7 @@
-import type { PlotData } from "plotly.js";
-
 import { SensitivityType } from "@framework/EnsembleSensitivities";
 import { makeSubplots, type Figure } from "@modules/_shared/Figure";
 import type { SensitivityColorMap } from "@modules/_shared/sensitivityColors";
+import type { PlotData } from "plotly.js";
 
 import type { SensitivityResponseDataset, SensitivityResponse } from "../../../_shared/SensitivityProcessing/types";
 import type { SensitivityDataScaler } from "../utils/sensitivityDataScaler";
@@ -29,12 +28,9 @@ export enum ColorBy {
 export class SensitivityChartFigure {
     private _figure: Figure;
     private _scaler: SensitivityDataScaler;
-
     private _sensitivityColorMap: SensitivityColorMap;
     private _selectedBar: SelectedBar | null;
     private _sensitivityResponses: SensitivityResponse[];
-    private _responseName?: string;
-    private _responseUnit?: string;
     private _referenceAverage: number;
     private _formatter: Intl.NumberFormat = Intl.NumberFormat("en", {
         notation: "compact",
@@ -42,6 +38,9 @@ export class SensitivityChartFigure {
         maximumFractionDigits: 2,
     });
     private _colorBy: ColorBy;
+    private readonly _lowBarOrMonteCarloColor = "#1f77b4";
+    private readonly _highBarColor = "#ff7f0e";
+
     constructor(
         width: number,
         height: number,
@@ -53,6 +52,13 @@ export class SensitivityChartFigure {
             colorBy: ColorBy;
         },
     ) {
+        // Calculate dynamic left margin based on y-axis labels
+        const maxLabelLength = Math.max(
+            ...sensitivityResponseDataset.sensitivityResponses.map((s) => s.sensitivityName.length),
+        );
+
+        const dynamicLeftMargin = Math.min(200, maxLabelLength * 8 + 50);
+
         this._figure = makeSubplots({
             numRows: 1,
             numCols: 1,
@@ -65,28 +71,19 @@ export class SensitivityChartFigure {
                 t: 20,
                 r: 20,
                 b: 20,
-                l: 200,
+                l: dynamicLeftMargin,
             },
             showGrid: true,
         });
 
         this._sensitivityResponses = sensitivityResponseDataset.sensitivityResponses;
-        this._responseName = sensitivityResponseDataset.responseName;
-        this._responseUnit = sensitivityResponseDataset.responseUnit;
         this._referenceAverage = sensitivityResponseDataset.referenceAverage;
         this._sensitivityColorMap = sensitivityColorMap;
         this._scaler = sensitivityDataScaler;
         this._selectedBar = options.selectedBar || null;
         this._colorBy = options.colorBy;
     }
-    private getLowBarOrMonteCarloColor() {
-        // blue
-        return "#1f77b4";
-    }
-    private getHighBarColor() {
-        // orange
-        return "#ff7f0e";
-    }
+
     private _updateLayout() {
         const xAxisRange = this._scaler.calculateXAxisRange(this._sensitivityResponses);
         const referencePosition = this._scaler.getXAxisReferencePosition();
@@ -95,13 +92,8 @@ export class SensitivityChartFigure {
             barmode: "overlay",
             uirevision: "do not touch",
             ["xaxis1"]: {
-                title: {
-                    text: `${this._responseName} (${this._responseUnit})`,
-                    standoff: 40,
-                },
                 range: xAxisRange,
             },
-
             shapes: [
                 {
                     type: "line",
@@ -130,9 +122,9 @@ export class SensitivityChartFigure {
         );
     }
 
-    public buildBarTraces(showLabels: boolean, transparency = false) {
-        this._figure.addTrace(this._createLowTrace(showLabels, transparency));
-        this._figure.addTrace(this._createHighTrace(showLabels, transparency));
+    public buildBarTraces(showLabels: boolean, isTransparent = false) {
+        this._figure.addTrace(this._createLowTrace(showLabels, isTransparent));
+        this._figure.addTrace(this._createHighTrace(showLabels, isTransparent));
     }
     public buildRealizationTraces() {
         this._figure.addTrace(
@@ -154,7 +146,7 @@ export class SensitivityChartFigure {
     }
     private createSensitivitiesLowCaseColors(): string[] {
         if (this._colorBy === ColorBy.LOW_HIGH) {
-            return this._sensitivityResponses.map(() => this.getLowBarOrMonteCarloColor());
+            return this._sensitivityResponses.map(() => this._lowBarOrMonteCarloColor);
         }
         return this._sensitivityResponses.map((s) => this._sensitivityColorMap[s.sensitivityName]);
     }
@@ -162,8 +154,8 @@ export class SensitivityChartFigure {
         if (this._colorBy === ColorBy.LOW_HIGH) {
             return this._sensitivityResponses.map((sensitivity) =>
                 sensitivity.sensitivityType === SensitivityType.MONTECARLO
-                    ? this.getLowBarOrMonteCarloColor()
-                    : this.getHighBarColor(),
+                    ? this._lowBarOrMonteCarloColor
+                    : this._highBarColor,
             );
         }
         return this._sensitivityResponses.map((s) => this._sensitivityColorMap[s.sensitivityName]);
@@ -171,7 +163,7 @@ export class SensitivityChartFigure {
     private createLowRealizationPointsColors(): string[] {
         if (this._colorBy === ColorBy.LOW_HIGH) {
             return this._sensitivityResponses.flatMap((sensitivity) =>
-                sensitivity.lowCaseRealizationValues.map(() => this.getLowBarOrMonteCarloColor()),
+                sensitivity.lowCaseRealizationValues.map(() => this._lowBarOrMonteCarloColor),
             );
         }
         return this._sensitivityResponses.flatMap((sensitivity) =>
@@ -183,8 +175,8 @@ export class SensitivityChartFigure {
             return this._sensitivityResponses.flatMap((sensitivity) =>
                 sensitivity.highCaseRealizationValues.map(() =>
                     sensitivity.sensitivityType === SensitivityType.MONTECARLO
-                        ? this.getLowBarOrMonteCarloColor()
-                        : this.getHighBarColor(),
+                        ? this._lowBarOrMonteCarloColor
+                        : this._highBarColor,
                 ),
             );
         }
@@ -219,7 +211,7 @@ export class SensitivityChartFigure {
     private _createLowBase(): number[] {
         return this._scaler.createLowBase(this._sensitivityResponses);
     }
-    private _createHighTrace(showLabels: boolean, transparency = false): Partial<PlotData> {
+    private _createHighTrace(showLabels: boolean, isTransparent = false): Partial<PlotData> {
         return createHighBarTrace({
             xValues: this._calculateHighXValues(),
             yValues: this._createSensitivityNames(),
@@ -228,11 +220,11 @@ export class SensitivityChartFigure {
             selectedBar: this._selectedBar,
             colors: this.createSensitivitiesHighCaseColors(),
             label: showLabels ? this._createHighLabel() : undefined,
-            transparency,
+            transparency: isTransparent ? 0.3 : 1,
         });
     }
 
-    private _createLowTrace(showLabels: boolean, transparency = false): Partial<PlotData> {
+    private _createLowTrace(showLabels: boolean, isTransparent = false): Partial<PlotData> {
         return createLowBarTrace({
             xValues: this._calculateLowXValues(),
             yValues: this._createSensitivityNames(),
@@ -241,7 +233,7 @@ export class SensitivityChartFigure {
             selectedBar: this._selectedBar,
             colors: this.createSensitivitiesLowCaseColors(),
             label: showLabels ? this._createLowLabel() : undefined,
-            transparency,
+            transparency: isTransparent ? 0.3 : 1,
         });
     }
     private _getLowRealizations(): number[] {
@@ -299,7 +291,7 @@ export class SensitivityChartFigure {
     }
 
     makePlotData() {
-        return this._figure.makeData() as any;
+        return this._figure.makeData();
     }
 
     makePlotLayout() {

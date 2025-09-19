@@ -10,21 +10,20 @@ import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { RadioGroup } from "@lib/components/RadioGroup";
 
-import { SensitivitySortOrder } from "../../_shared/SensitivityProcessing/types";
+import { SensitivitySortBy } from "../../_shared/SensitivityProcessing/types";
 import type { Interfaces } from "../interfaces";
-import { DisplayComponentType, XAxisBarScaling } from "../typesAndEnums";
+import { DisplayComponentType, SensitivityScaling } from "../typesAndEnums";
 import { ColorBy } from "../view/components/sensitivityChartFigure";
 
 import {
-    barSortOrderAtom,
+    sensitivitySortByAtom,
     displayComponentTypeAtom,
     hideZeroYAtom,
     referenceSensitivityNameAtom,
     showLabelsAtom,
     showRealizationPointsAtom,
-    xAxisBarScalingAtom,
+    sensitivityScalingAtom,
     colorByAtom,
 } from "./atoms/baseAtoms";
 
@@ -38,8 +37,8 @@ export function Settings({
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
     const [showRealizationPoints, setShowRealizationPoints] = useAtom(showRealizationPointsAtom);
     const setModuleReferenceSensitivityName = useSetAtom(referenceSensitivityNameAtom);
-    const [barSortOrder, setBarSortOrder] = useAtom(barSortOrderAtom);
-    const [xAxisBarScaling, setXAxisBarScaling] = useAtom(xAxisBarScalingAtom);
+    const [sensitivitySortBy, setSensitivitySortBy] = useAtom(sensitivitySortByAtom);
+    const [sensitivityScaling, setSensitivityScaling] = useAtom(sensitivityScalingAtom);
     const [referenceSensitivityName, setReferenceSensitivityName] = React.useState<string | null>(null);
     const [colorBy, setColorBy] = useAtom(colorByAtom);
     useApplyInitialSettingsToState(initialSettings, "displayComponentType", "string", setDisplayComponentType);
@@ -47,7 +46,7 @@ export function Settings({
     const ensembleSet = workbenchSession.getEnsembleSet();
 
     React.useEffect(
-        function propogateReferenceSensitivityName() {
+        function propagateReferenceSensitivityName() {
             setModuleReferenceSensitivityName(referenceSensitivityName);
         },
         [referenceSensitivityName, setModuleReferenceSensitivityName],
@@ -97,10 +96,6 @@ export function Settings({
         }
     }
 
-    function handleDisplayComponentChange(_: React.ChangeEvent<HTMLInputElement>, value: string | number) {
-        setDisplayComponentType(value as DisplayComponentType);
-    }
-
     function handleHideZeroYChange(event: React.ChangeEvent<HTMLInputElement>) {
         setHideZeroY(event.target.checked);
     }
@@ -113,15 +108,6 @@ export function Settings({
         setShowRealizationPoints(event.target.checked);
     }
 
-    function handleBarSortOrderChange(_: React.ChangeEvent<HTMLInputElement>, value: string | number) {
-        setBarSortOrder(value as SensitivitySortOrder);
-    }
-    function handleXAxisBarScalingChange(_: React.ChangeEvent<HTMLInputElement>, value: string | number) {
-        setXAxisBarScaling(value as XAxisBarScaling);
-    }
-    function handleColorByChange(_: React.ChangeEvent<HTMLInputElement>, value: string | number) {
-        setColorBy(value as ColorBy);
-    }
     return (
         <div className="flex flex-col gap-2">
             <CollapsibleGroup title="Reference sensitivity" expanded>
@@ -131,94 +117,93 @@ export function Settings({
                     onChange={setReferenceSensitivityName}
                 />
             </CollapsibleGroup>
-            <CollapsibleGroup title="View component" expanded>
-                <RadioGroup
-                    value={displayComponentType}
-                    options={[
-                        {
-                            label: "Tornado chart",
-                            value: DisplayComponentType.TornadoChart,
-                        },
-                        {
-                            label: "Table",
-                            value: DisplayComponentType.Table,
-                        },
-                    ]}
-                    onChange={handleDisplayComponentChange}
-                />
-            </CollapsibleGroup>
-            <CollapsibleGroup title="View settings" expanded>
+
+            <CollapsibleGroup title="Plot settings" expanded>
                 <div className="flex flex-col gap-4">
+                    <Label text="Plot type">
+                        <Dropdown
+                            value={displayComponentType}
+                            options={[
+                                {
+                                    label: "Tornado chart",
+                                    value: DisplayComponentType.TornadoChart,
+                                },
+                                {
+                                    label: "Table",
+                                    value: DisplayComponentType.Table,
+                                },
+                            ]}
+                            onChange={setDisplayComponentType}
+                        />
+                    </Label>
                     <Label text="Scaling">
-                        <RadioGroup
-                            value={xAxisBarScaling}
+                        <Dropdown
+                            value={sensitivityScaling}
                             options={[
                                 {
                                     label: "Relative",
-                                    value: XAxisBarScaling.RELATIVE,
+                                    value: SensitivityScaling.RELATIVE,
                                 },
                                 {
                                     label: "Relative %",
-                                    value: XAxisBarScaling.RELATIVE_PERCENTAGE,
+                                    value: SensitivityScaling.RELATIVE_PERCENTAGE,
                                 },
                                 {
                                     label: "Absolute",
-                                    value: XAxisBarScaling.ABSOLUTE,
+                                    value: SensitivityScaling.ABSOLUTE,
                                 },
                             ]}
-                            onChange={handleXAxisBarScalingChange}
+                            onChange={setSensitivityScaling}
                         />
                     </Label>
-                    <Label text="Color by">
-                        <RadioGroup
-                            value={colorBy}
-                            options={[
-                                {
-                                    label: "Sensitivity",
-                                    value: ColorBy.SENSITIVITY,
-                                },
-                                {
-                                    label: "Low/High",
-                                    value: ColorBy.LOW_HIGH,
-                                },
-                            ]}
-                            onChange={handleColorByChange}
-                        />
-                    </Label>
-
-                    <Label text="Bar sort order">
-                        <RadioGroup
-                            value={barSortOrder}
+                    <Label text="Sensitivity sort order">
+                        <Dropdown
+                            value={sensitivitySortBy}
                             options={[
                                 {
                                     label: "Impact",
-                                    value: SensitivitySortOrder.IMPACT,
+                                    value: SensitivitySortBy.IMPACT,
                                 },
                                 {
                                     label: "Alphabetical",
-                                    value: SensitivitySortOrder.ALPHABETICAL,
+                                    value: SensitivitySortBy.ALPHABETICAL,
                                 },
                             ]}
-                            onChange={handleBarSortOrderChange}
+                            onChange={setSensitivitySortBy}
                         />
                     </Label>
+
                     <Checkbox
                         checked={hideZeroY}
                         onChange={handleHideZeroYChange}
                         label="Hide sensitivities without impact"
                     />
-                    <Checkbox
-                        checked={showLabels}
-                        onChange={handleShowLabelsChange}
-                        disabled={displayComponentType !== DisplayComponentType.TornadoChart}
-                        label="Show labels"
-                    />
-                    <Checkbox
-                        checked={showRealizationPoints}
-                        onChange={handleShowRealizationPointsChange}
-                        disabled={displayComponentType !== DisplayComponentType.TornadoChart}
-                        label="Show realization points"
-                    />
+                    {displayComponentType === DisplayComponentType.TornadoChart && (
+                        <>
+                            <Checkbox
+                                checked={showRealizationPoints}
+                                onChange={handleShowRealizationPointsChange}
+                                label="Show realization points"
+                            />
+                            <Checkbox checked={showLabels} onChange={handleShowLabelsChange} label="Show labels" />
+                            <Label text="Color by">
+                                <Dropdown
+                                    value={colorBy}
+                                    options={[
+                                        {
+                                            label: "Sensitivity",
+                                            value: ColorBy.SENSITIVITY,
+                                        },
+                                        {
+                                            label: "Low/High",
+                                            value: ColorBy.LOW_HIGH,
+                                        },
+                                    ]}
+                                    onChange={setColorBy}
+                                />
+                            </Label>
+                        </>
+                    )}
                 </div>
             </CollapsibleGroup>
         </div>

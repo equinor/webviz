@@ -4,7 +4,7 @@ import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import type { Interfaces } from "@modules/TornadoChart/interfaces";
+import type { Interfaces } from "@modules/SensitivityPlot/interfaces";
 
 export interface EnsembleResponse {
     realizations: number[];
@@ -54,7 +54,7 @@ export function useResponseChannel(
     });
 
     let channelEnsemble: RegularEnsemble | null = null;
-    if (content.metaData.ensembleIdentString && typeof content.metaData.ensembleIdentString === "string") {
+    if (content.metaData.ensembleIdentString) {
         const ensembleIdent = RegularEnsembleIdent.fromString(content.metaData.ensembleIdentString);
         channelEnsemble = ensembleSet.findEnsemble(ensembleIdent);
     }

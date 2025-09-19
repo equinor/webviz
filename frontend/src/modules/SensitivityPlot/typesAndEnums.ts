@@ -8,7 +8,7 @@ export type SelectedSensitivity = {
     selectedSensitivityCase: string | null;
 };
 
-export enum XAxisBarScaling {
+export enum SensitivityScaling {
     RELATIVE = "relative",
     ABSOLUTE = "absolute",
     RELATIVE_PERCENTAGE = "relative_percentage",

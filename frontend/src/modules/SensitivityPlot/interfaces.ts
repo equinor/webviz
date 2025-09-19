@@ -1,9 +1,9 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
-import type { SensitivitySortOrder } from "../_shared/SensitivityProcessing/types";
+import type { SensitivitySortBy } from "../_shared/SensitivityProcessing/types";
 
 import {
-    barSortOrderAtom,
+    sensitivitySortByAtom,
     colorByAtom,
     displayComponentTypeAtom,
     hideZeroYAtom,
@@ -12,10 +12,9 @@ import {
     sensitivityNamesAtom,
     showLabelsAtom,
     showRealizationPointsAtom,
-    xAxisBarScalingAtom,
+    sensitivityScalingAtom,
 } from "./settings/atoms/baseAtoms";
-import type { DisplayComponentType, SelectedSensitivity, XAxisBarScaling } from "./typesAndEnums";
-import { selectedSensitivityAtom as ViewSelectedSensitivityAtom } from "./view/atoms/baseAtoms";
+import type { DisplayComponentType, SensitivityScaling } from "./typesAndEnums";
 import type { ColorBy } from "./view/components/sensitivityChartFigure";
 
 type SettingsToViewInterface = {
@@ -26,18 +25,13 @@ type SettingsToViewInterface = {
     showLabels: boolean;
     hideZeroY: boolean;
     showRealizationPoints: boolean;
-    barSortOrder: SensitivitySortOrder;
-    xAxisBarScaling: XAxisBarScaling;
+    sensitivitySortBy: SensitivitySortBy;
+    sensitivityScaling: SensitivityScaling;
     colorBy: ColorBy;
-};
-
-export type ViewToSettingsInterface = {
-    selectedSensitivity: SelectedSensitivity | null;
 };
 
 export type Interfaces = {
     settingsToView: SettingsToViewInterface;
-    viewToSettings: ViewToSettingsInterface;
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
@@ -62,19 +56,13 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     showRealizationPoints: (get) => {
         return get(showRealizationPointsAtom);
     },
-    barSortOrder: (get) => {
-        return get(barSortOrderAtom);
+    sensitivitySortBy: (get) => {
+        return get(sensitivitySortByAtom);
     },
-    xAxisBarScaling: (get) => {
-        return get(xAxisBarScalingAtom);
+    sensitivityScaling: (get) => {
+        return get(sensitivityScalingAtom);
     },
     colorBy: (get) => {
         return get(colorByAtom);
-    },
-};
-
-export const viewToSettingsInterfaceInitialization: InterfaceInitialization<ViewToSettingsInterface> = {
-    selectedSensitivity: (get) => {
-        return get(ViewSelectedSensitivityAtom);
     },
 };
