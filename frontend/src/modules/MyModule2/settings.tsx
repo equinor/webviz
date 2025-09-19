@@ -1,10 +1,15 @@
-import type React from "react";
+import React from "react";
 
 import { NumberInput } from "@mui/base/Unstable_NumberInput/NumberInput";
+import { Check } from "@mui/icons-material";
 import { useAtom } from "jotai";
+import { random, range } from "lodash";
 
 import { Label } from "@lib/components/Label";
 import { Switch } from "@lib/components/Switch";
+import type { TagProps } from "@lib/components/TagInput";
+import type { TagOption, TagOptionProps } from "@lib/components/TagPicker";
+import { TagPicker } from "@lib/components/TagPicker";
 
 import {
     allowMultiSelectAtom,
@@ -22,8 +27,42 @@ export function Settings(): React.ReactNode {
     const [amtOfData, setAmtOfData] = useAtom(amtOfDataAtom);
     const [amtOfPendingData, setAmtOfPendingData] = useAtom(amtOfPendingDataAtom);
 
+    const [tagSelection, setTagSelection] = React.useState<string[]>([]);
+    const [tagSelection2, setTagSelection2] = React.useState<string[]>([]);
+
+    const tags = React.useMemo(() => {
+        return range(0, 100).map<TagOption>((i) => ({ value: String(i), label: `Tag ${i}` }));
+    }, []);
+
     return (
         <>
+            <div className="mb-4">
+                <div className="mb-2 text-xs">Selected: {tagSelection.join(", ") || "none"}</div>
+                <Label text="X/N selected">
+                    <TagPicker
+                        placeholder="Select tags"
+                        tagOptions={tags}
+                        selection={tagSelection}
+                        showListAsSelectionCount
+                        onChange={setTagSelection}
+                    />
+                </Label>
+            </div>
+
+            <div className="mb-12">
+                <div className="mb-2 text-xs">Selected: {tagSelection2.join(", ") || "none"}</div>
+                <Label text="Custom tags and options">
+                    <TagPicker
+                        placeholder="Select tags"
+                        tagOptions={tags}
+                        selection={tagSelection2}
+                        onChange={setTagSelection2}
+                        renderTag={(props) => <CoolTag {...props} />}
+                        renderTagOption={(props) => <ExcitedTagOption {...props} />}
+                    />
+                </Label>
+            </div>
+
             <Label text="Rows of data" position="left">
                 <NumberInput
                     slotProps={{
@@ -65,3 +104,60 @@ export function Settings(): React.ReactNode {
 }
 
 Settings.displayName = "Settings";
+
+/** Two examples of custom tags and options */
+function CoolTag(props: TagProps): React.ReactNode {
+    return (
+        <div
+            className="text-xs flex items-center align-middle px-2 py-1 rounded text-white font-bold"
+            style={{
+                background:
+                    "linear-gradient(270deg, #ff0000, #ff9900, #ffff00, #33ff00, #00ffff, #3300ff, #ff00cc, #ff0000)",
+                backgroundSize: "1400% 1400%",
+                animation: `gradientBG 3s linear infinite ${random(0, 0.15, true)}s`,
+            }}
+            onClick={props.onRemove}
+        >
+            {props.label ?? props.tag}
+            <style>
+                {`
+                @keyframes gradientBG {
+                    0% {background-position:0% 50%}
+                    50% {background-position:100% 50%}
+                    100% {background-position:0% 50%}
+                }
+            `}
+            </style>
+        </div>
+    );
+}
+
+function ExcitedTagOption(props: TagOptionProps) {
+    return (
+        <li className="px-2 py-1  cursor-pointer" onClick={props.onToggle}>
+            <span
+                style={
+                    props.isSelected
+                        ? {
+                              display: "inline-block",
+                              animation: `vibrate 0.15s infinite linear ${random(0, 0.15, true)}s`,
+                          }
+                        : undefined
+                }
+            >
+                {props.label ?? props.value}
+                {props.isSelected && <Check className="ml-3" fontSize="inherit" />}
+                <style>
+                    {`@keyframes vibrate {
+                        0% { transform: translate(0, 0); }
+                        20% { transform: translate(-2px, 2px); }
+                        40% { transform: translate(-2px, -2px); }
+                        60% { transform: translate(2px, 2px); }
+                        80% { transform: translate(2px, -2px); }
+                        100% { transform: translate(0, 0); }
+                    }`}
+                </style>
+            </span>
+        </li>
+    );
+}

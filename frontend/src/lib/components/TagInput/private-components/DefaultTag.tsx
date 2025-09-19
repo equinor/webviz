@@ -9,14 +9,14 @@ export function DefaultTag(props: TagProps): React.ReactNode {
     return (
         <li
             className={resolveClassNames(
-                "text-sm rounded pl-2 pr-1 py-0.5 bg-gray-100 flex gap-1 items-center relative",
+                "text-sm rounded pl-2 pr-1 py-0.5 bg-blue-200 flex gap-1 items-center relative",
                 {
                     "outline-1 outline-blue-500": props.focused,
                 },
             )}
             onClick={props.onFocus}
         >
-            <span>{props.tag.value}</span>
+            <span>{props.label ?? String(props.tag)}</span>
             <IconButton className="align-text-bottom" title="Remove tag" size="small" onClick={props.onRemove}>
                 <Close fontSize="inherit" />
             </IconButton>

@@ -1,6 +1,6 @@
-import { describe, it, expect, vitest } from "vitest";
+import { describe, it, expect } from "vitest";
 
-import type { RealizationNumberLimits, Selection } from "@framework/components/RealizationPicker/_utils";
+import type { RealizationNumberLimits } from "@framework/components/RealizationPicker/_utils";
 import {
     computeTagValidityInfo,
     realizationSelectionToText,
@@ -9,20 +9,11 @@ import {
     textToRealizationSelection,
 } from "@framework/components/RealizationPicker/_utils";
 
-// Mock uuid to return predictable ids
-vitest.mock("uuid", () => ({
-    v4: () => "mock-uuid",
-}));
-
 const numberLimits: RealizationNumberLimits = {
     min: 0,
     max: 100,
     invalid: new Set(),
 };
-
-function makeSelections(...selectionStrings: string[]): Selection[] {
-    return selectionStrings.map((v) => ({ value: v, id: "mock-uuid" }));
-}
 
 describe("textToRealizationSelection", () => {
     it("returns null for invalid input", () => {
@@ -35,22 +26,22 @@ describe("textToRealizationSelection", () => {
     it("parses single numbers", () => {
         const result = textToRealizationSelection("1,2,3", numberLimits);
 
-        expect(result).toEqual(makeSelections("1-3"));
+        expect(result).toEqual(["1-3"]);
     });
 
     it("parses ranges", () => {
         const result = textToRealizationSelection("1-3,5", numberLimits);
-        expect(result).toEqual(makeSelections("1-3", "5"));
+        expect(result).toEqual(["1-3", "5"]);
     });
 
     it("merges overlapping ranges", () => {
         const result = textToRealizationSelection("1-3,2-6,6-9", numberLimits);
-        expect(result).toEqual(makeSelections("1-9"));
+        expect(result).toEqual(["1-9"]);
     });
 
     it("removes duplicates and sorts", () => {
         const result = textToRealizationSelection("3,2,1,2,3", numberLimits);
-        expect(result).toEqual([{ value: "1-3", id: "mock-uuid" }]);
+        expect(result).toEqual(["1-3"]);
     });
 
     it("handles invalid numbers", () => {
@@ -63,30 +54,30 @@ describe("textToRealizationSelection", () => {
         const result2 = textToRealizationSelection("2,4,5,6", numberLimitsWithInvalid);
         const result3 = textToRealizationSelection("5-7", numberLimitsWithInvalid);
 
-        expect(result1).toEqual(makeSelections("1-7")); // Ranges are allowed to extend over invalid numbers
-        expect(result2).toEqual(makeSelections("2", "4"));
-        expect(result3).toEqual(makeSelections("7"));
+        expect(result1).toEqual(["1-7"]); // Ranges are allowed to extend over invalid numbers
+        expect(result2).toEqual(["2", "4"]);
+        expect(result3).toEqual(["7"]);
     });
 
     it("sanitizes input", () => {
         const result = textToRealizationSelection(" 1 , 2 - 3 ,a4 ", numberLimits);
-        expect(result).toEqual(makeSelections("1-4"));
+        expect(result).toEqual(["1-4"]);
     });
 });
 
 describe("realizationSelectionToText", () => {
     it("expands single numbers", () => {
-        const selections: Selection[] = makeSelections("2");
+        const selections = ["2"];
         expect(realizationSelectionToText(selections)).toBe("2");
     });
 
     it("expands ranges", () => {
-        const selections: Selection[] = makeSelections("1-3", "5");
+        const selections = ["1-3", "5"];
         expect(realizationSelectionToText(selections)).toBe("1,2,3,5");
     });
 
     it("handles invalid numbers gracefully", () => {
-        const selections: Selection[] = makeSelections("a-b", "2");
+        const selections = ["a-b", "2"];
         expect(realizationSelectionToText(selections)).toBe("2");
     });
 });

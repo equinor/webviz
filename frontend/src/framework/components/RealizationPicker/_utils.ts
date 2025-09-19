@@ -1,5 +1,4 @@
 import { chain, inRange, range } from "lodash";
-import { v4 } from "uuid";
 
 import { getNumbersAndRanges } from "@framework/utils/numberUtils";
 
@@ -9,11 +8,6 @@ export type RealizationNumberLimits = {
     min: number;
     max: number;
     invalid: Set<number>;
-};
-
-export type Selection = {
-    id: string;
-    value: string;
 };
 
 export enum SelectionValidity {
@@ -47,7 +41,7 @@ export function sanitizeRangeInput(rangeInput: string): string {
  * @private
  * @returns An array of strings representing the selections, or null if the input is invalid.
  */
-export function textToRealizationSelection(pasteText: string, limits: RealizationNumberLimits): Selection[] | null {
+export function textToRealizationSelection(pasteText: string, limits: RealizationNumberLimits): string[] | null {
     // Drop non-accepted characters and remove dangling separators, and make sure it
     // follows the supported pattern, i.e. comma-separated numbers or ranges
     const sanitizedValue = pasteText.replace(/[^0-9,-]/g, "").replace(/^[,-]|[,-]$/g, "");
@@ -76,18 +70,18 @@ export function textToRealizationSelection(pasteText: string, limits: Realizatio
         else return [numberOrRange.start, numberOrRange.end].join("-");
     });
 
-    return rangesAsValueStrings.map((n) => ({ value: n, id: v4() }));
+    return rangesAsValueStrings;
 }
 
 /**
  * Stringifies a set of realization selections into a comma-separated string. Ranges are spread into individual numbers
  * @param realizationSelection An array of realization selection strings (single numbers or ranges).
  */
-export function realizationSelectionToText(selections: Selection[]): string {
+export function realizationSelectionToText(selections: string[]): string {
     const realizationNumbers: number[] = [];
 
     for (const tag of selections) {
-        const [start, end] = tag.value.split("-").map((v) => parseFloat(v));
+        const [start, end] = tag.split("-").map((v) => parseFloat(v));
 
         if (!isNaN(start) && !isNaN(end)) {
             const relRange = range(start, end + 1);
