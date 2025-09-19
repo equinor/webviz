@@ -16,7 +16,7 @@ import { HoverTopic, useHover } from "@framework/HoverService";
 import type { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
-import type { Template } from "@modules/WellLogViewer/types";
+import type { Template } from "@modules/_shared/types/wellLogTemplates";
 
 import type { InterfaceTypes } from "../../interfaces";
 
@@ -120,25 +120,25 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     const [wellLogController, setWellLogController] = React.useState<WellLogController | null>(null);
     const [wellLogReadout, setWellLogReadout] = React.useState<Info[]>([]);
 
-    const [hoveredMd, setHoveredMd] = useHover(HoverTopic.MD, hoverService, moduleInstanceId);
-    const [hoveredWellbore, setHoveredWellbore] = useHover(HoverTopic.WELLBORE, hoverService, moduleInstanceId);
+    const [hoveredWellboreMd, setHoveredWellboreMd] = useHover(HoverTopic.WELLBORE_MD, hoverService, moduleInstanceId);
 
-    const isHoveringThisWellbore = hoveredWellbore === wellboreUuid && hoveredMd != null;
+    const isHoveringThisWellbore = hoveredWellboreMd?.wellboreUuid === wellboreUuid && hoveredWellboreMd.md != null;
 
     const wellLogSelection = React.useMemo<[number | undefined, undefined]>(() => {
         if (!isHoveringThisWellbore) return [undefined, undefined];
-        return [hoveredMd ?? undefined, undefined];
-    }, [hoveredMd, isHoveringThisWellbore]);
+        return [hoveredWellboreMd.md ?? undefined, undefined];
+    }, [hoveredWellboreMd?.md, isHoveringThisWellbore]);
 
     const broadcastMdHover = React.useCallback(
         function broadcastWellboreAndMdHover(md: number | null) {
             // An md of null implies we've stopped hovering this wellbore
-            const wellbore = md == null ? null : wellboreUuid;
-
-            setHoveredWellbore(wellbore);
-            setHoveredMd(md);
+            if (md === null || wellboreUuid === null) {
+                setHoveredWellboreMd(null);
+            } else {
+                setHoveredWellboreMd({ md, wellboreUuid });
+            }
         },
-        [setHoveredMd, setHoveredWellbore, wellboreUuid],
+        [setHoveredWellboreMd, wellboreUuid],
     );
 
     // Set up global vertical scale synchronization
