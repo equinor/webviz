@@ -151,7 +151,7 @@ export class RealizationSurfacesProvider
             return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
         });
 
-        const depthSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
+        const surfaceMetadataSetDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
 
             if (!ensembleIdent) {
@@ -168,15 +168,17 @@ export class RealizationSurfacesProvider
                 }),
             });
 
-            const depthSurfacesMetadata = surfaceMetadata.surfaces.filter(
-                (elm) => elm.attribute_type === SurfaceAttributeType_api.DEPTH,
-            );
-            return depthSurfacesMetadata;
+            return surfaceMetadata;
         });
 
         availableSettingsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
-            const depthSurfacesMetadata = getHelperDependency(depthSurfaceMetadataDep);
-
+            const surfaceMetadataSet = getHelperDependency(surfaceMetadataSetDep);
+            if (!surfaceMetadataSet) {
+                return [];
+            }
+            const depthSurfacesMetadata = surfaceMetadataSet.surfaces.filter(
+                (elm) => elm.attribute_type === SurfaceAttributeType_api.DEPTH,
+            );
             if (!depthSurfacesMetadata) {
                 return [];
             }
@@ -186,16 +188,20 @@ export class RealizationSurfacesProvider
 
         availableSettingsUpdater(Setting.SURFACE_NAMES, ({ getLocalSetting, getHelperDependency }) => {
             const attribute = getLocalSetting(Setting.ATTRIBUTE);
-            const depthSurfacesMetadata = getHelperDependency(depthSurfaceMetadataDep);
+            const surfaceMetadataSet = getHelperDependency(surfaceMetadataSetDep);
 
-            if (!attribute || !depthSurfacesMetadata) {
+            if (!attribute || !surfaceMetadataSet) {
                 return [];
             }
+            const depthSurfacesMetadata = surfaceMetadataSet.surfaces.filter(
+                (elm) => elm.attribute_type === SurfaceAttributeType_api.DEPTH,
+            );
 
-            // Filter depth surfaces metadata by the selected attribute
-            return Array.from(
-                new Set(depthSurfacesMetadata.filter((elm) => elm.attribute_name === attribute).map((elm) => elm.name)),
-            ).sort();
+            const filteredSurfaceNames = new Set(
+                depthSurfacesMetadata.filter((elm) => elm.attribute_name === attribute).map((elm) => elm.name),
+            );
+
+            return surfaceMetadataSet.surface_names_in_strat_order.filter((name) => filteredSurfaceNames.has(name));
         });
 
         // Create intersection polyline and actual section lengths data asynchronously
