@@ -2077,6 +2077,10 @@ export type GetStatisticalSurfaceDataHybridData_api = {
          * Format of binary data in the response
          */
         data_format?: "float" | "png";
+        /**
+         * Definition of the surface onto which the data should be resampled. *SurfaceDef_api* object properties encoded as a `KeyValStr` string.
+         */
+        resample_to_def_str?: string | null;
         t?: number;
     };
     url: "/surface/statistical_surface_data/hybrid";

@@ -289,25 +289,11 @@ export class StatisticalSurfaceProvider
 
         const surfAddrStr = surfaceAddress ? encodeSurfAddrStr(surfaceAddress) : null;
 
-        // const queryOptions = getSurfaceDataOptions({
-        //     query: {
-        //         surf_addr_str: surfAddrStr ?? "",
-        //         data_format: this._dataFormat,
-        //         resample_to_def_str: null,
-        //     },
-        // });
-
-        function handleTaskProgress(progressMessage: string | null) {
-            if (progressMessage) {
-                console.debug("Statistical surface progress:", progressMessage);
-            }
-            setProgressMessage(progressMessage);
-        }
-
         const apiFunctionArgs: Options<GetStatisticalSurfaceDataHybridData_api, false> = {
             query: {
                 surf_addr_str: surfAddrStr ?? "NO_SURF_ADDR",
                 data_format: this._dataFormat,
+                resample_to_def_str: null,
             },
         };
         const queryKey = getStatisticalSurfaceDataHybridQueryKey(apiFunctionArgs);
@@ -320,6 +306,12 @@ export class StatisticalSurfaceProvider
             maxRetries: 240,
         });
 
+        function handleTaskProgress(progressMessage: string | null) {
+            if (progressMessage) {
+                console.debug("Statistical surface progress:", progressMessage);
+            }
+            setProgressMessage(progressMessage);
+        }
         lroProgressBus.subscribe(serializeQueryKey(queryKey), handleTaskProgress);
 
         const promise = fetchQuery({ ...queryOptions }).then((data) => ({

@@ -215,8 +215,11 @@ async def get_statistical_surface_data_hybrid(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     surf_addr_str: Annotated[str, Query(description="Surface address string, supported address type is *STAT*")],
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
+    resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
     # fmt:on
 ) -> LroSuccessResp[schemas.SurfaceDataFloat | schemas.SurfaceDataPng] | LroInProgressResp | LroFailureResp:
+
+    perf_metrics = ResponsePerfMetrics(response)
 
     LOGGER.info(f"Getting HYBRID statistical surface data for address: {surf_addr_str}")
 
@@ -292,11 +295,17 @@ async def get_statistical_surface_data_hybrid(
 
         xtgeo_surf: xtgeo.RegularSurface = expect_type(maybe_xtgeo_surf, xtgeo.RegularSurface)
 
+        if resample_to is not None:
+            xtgeo_surf = converters.resample_to_surface_def(xtgeo_surf, resample_to)
+            perf_metrics.record_lap("resample")
+
         api_surf_data: schemas.SurfaceDataFloat | schemas.SurfaceDataPng
         if data_format == "float":
             api_surf_data = converters.to_api_surface_data_float(xtgeo_surf)
         elif data_format == "png":
             api_surf_data = converters.to_api_surface_data_png(xtgeo_surf)
+        perf_metrics.record_lap("convert")
+
         return LroSuccessResp(status="success", result=api_surf_data)
 
     except Exception as _exc:

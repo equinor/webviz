@@ -13,10 +13,10 @@ import type { Vec2 } from "@lib/utils/vec2";
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { useSurfaceDataQueryByAddress } from "@modules/_shared/Surface";
+import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
+import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
-import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
-import type { SurfaceDataFloat_trans } from "@modules_shared/Surface/queryDataTransforms";
-import { transformSurfaceData } from "@modules_shared/Surface/queryDataTransforms";
 
 import type { Interfaces } from "./interfaces";
 
@@ -26,21 +26,17 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
     const [hybridProgressText, setHybridProgressText] = React.useState<string | null>(null);
 
-    //const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "png", null, true);
-    //const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, true);
-
-    //const activeQueryType = "normal";
     let activeQueryType: "normal" | "hybrid" | null = null;
+    const enableHybridEndpoint = true;
     if (surfaceAddress) {
-        activeQueryType = surfaceAddress.addressType === "STAT" ? "hybrid" : "normal";
+        if (enableHybridEndpoint && surfaceAddress.addressType === "STAT") {
+            activeQueryType = "hybrid";
+        } else {
+            activeQueryType = "normal";
+        }
     }
 
-    const surfDataQuery_normal = useSurfaceDataQueryByAddress(
-        surfaceAddress,
-        "float",
-        null,
-        activeQueryType === "normal",
-    );
+    const normal_dataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, activeQueryType === "normal");
 
     const hybrid_apiFunctionArgs: Options<GetStatisticalSurfaceDataHybridData_api, false> = {
         query: {
@@ -48,15 +44,6 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
         },
     };
     const hybrid_queryKey = getStatisticalSurfaceDataHybridQueryKey(hybrid_apiFunctionArgs);
-
-    function handleProgress(progressMessage: string | null) {
-        console.debug("handleProgress()");
-        if (progressMessage) {
-            console.debug(`PROGRESS: ${progressMessage}`);
-            setHybridProgressText(progressMessage);
-        }
-    }
-
     const hybrid_queryOptions = wrapLongRunningQuery({
         queryFn: getStatisticalSurfaceDataHybrid,
         queryFnArgs: hybrid_apiFunctionArgs,
@@ -64,27 +51,32 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
         pollIntervalMs: 500,
         maxRetries: 240,
     });
+    const hybrid_dataQuery = useQuery({ ...hybrid_queryOptions, enabled: activeQueryType === "hybrid" });
 
+    function handleProgress(progressMessage: string | null) {
+        if (progressMessage) {
+            console.debug(`HYBRID PROGRESS: ${progressMessage}`);
+            setHybridProgressText(progressMessage);
+        }
+    }
     useLroProgress(hybrid_queryOptions.queryKey, handleProgress);
 
-    const surfDataQuery_hybrid = useQuery({ ...hybrid_queryOptions, enabled: activeQueryType === "hybrid" });
+    const activeDataQuery = activeQueryType === "hybrid" ? hybrid_dataQuery : normal_dataQuery;
 
-    const activeSurfDataQuery = activeQueryType === "hybrid" ? surfDataQuery_hybrid : surfDataQuery_normal;
-
-    const isLoading = activeSurfDataQuery.isFetching;
+    const isLoading = activeDataQuery.isFetching;
     statusWriter.setLoading(isLoading);
     if (!isLoading && hybridProgressText) {
         setHybridProgressText(null);
     }
 
-    const hasError = activeSurfDataQuery.isError;
-    usePropagateApiErrorToStatusWriter(activeSurfDataQuery, statusWriter);
+    const hasError = activeDataQuery.isError;
+    usePropagateApiErrorToStatusWriter(activeDataQuery, statusWriter);
 
     let surfData: SurfaceDataFloat_trans | undefined = undefined;
-    if (surfDataQuery_normal?.data) {
-        surfData = surfDataQuery_normal.data;
-    } else if (surfDataQuery_hybrid?.data) {
-        surfData = transformSurfaceData(surfDataQuery_hybrid.data) as SurfaceDataFloat_trans;
+    if (normal_dataQuery?.data) {
+        surfData = normal_dataQuery.data;
+    } else if (hybrid_dataQuery?.data) {
+        surfData = transformSurfaceData(hybrid_dataQuery.data) as SurfaceDataFloat_trans;
     }
 
     return (
