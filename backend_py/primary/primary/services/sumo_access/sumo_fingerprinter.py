@@ -1,5 +1,5 @@
 import asyncio
-# import json
+
 import logging
 from dataclasses import dataclass
 
@@ -10,7 +10,10 @@ from webviz_pkg.core_utils.timestamp_utils import timestamp_utc_ms_to_iso_str
 
 from primary.services.utils.authenticated_user import AuthenticatedUser
 
+from .queries.doc_checksum_agg import build_case_level_docs_query_dict, build_ensemble_level_docs_query_dict
+from .queries.doc_checksum_agg import run_query_and_do_checksum_agg_async
 from .sumo_client_factory import create_sumo_client
+
 
 _REDIS_KEY_PREFIX = "sumo_fingerprinter"
 
@@ -54,34 +57,30 @@ class SumoFingerprinter:
         self._redis_client = redis_client
         self._cache_ttl_s = cache_ttl_s
 
-    async def get_or_compute_ensemble_fingerprint_async(
-        self, case_uuid: str, ensemble_name: str, class_name: str | None
-    ) -> str | None:
+    async def get_or_calc_ensemble_fp_async(self, case_uuid: str, ensemble_name: str, class_name: str | None) -> str:
+        """
+        Get from cache or calculate the fingerprint string for contents of an ensemble.
+        See calc_ensemble_fp_async() for details.
+        """
         perf_metrics = PerfMetrics()
 
         redis_key = self._make_full_redis_key(case_uuid=case_uuid, ensemble_name=ensemble_name, class_name=class_name)
 
-        fingerprint = await self._redis_client.get(redis_key)
+        cached_fp = await self._redis_client.get(redis_key)
         perf_metrics.record_lap("redis-get")
-        if fingerprint is not None:
-            LOGGER.debug(
-                f"get_or_compute_ensemble_fingerprint_async() got cached fingerprint in: {perf_metrics.to_string()} [{fingerprint=}]"
-            )
-            return fingerprint
+        if cached_fp is not None:
+            LOGGER.debug(f"get_or_calc_ensemble_fp_async() - from cache in: {perf_metrics.to_string()} [{cached_fp=}]")
+            return cached_fp
 
-        fingerprint = await compute_ensemble_fingerprint_async(self._sumo_client, case_uuid, ensemble_name, class_name)
-        perf_metrics.record_lap("compute")
-        if fingerprint is None:
-            return None
+        new_fp = await calc_ensemble_fp_async(self._sumo_client, case_uuid, ensemble_name, class_name)
+        perf_metrics.record_lap("calc-fp")
 
-        asyncio.create_task(self._redis_client.set(name=redis_key, value=fingerprint, ex=self._cache_ttl_s))
+        # Schedule the Redis set call, but don't await it
+        asyncio.create_task(self._redis_client.set(name=redis_key, value=new_fp, ex=self._cache_ttl_s))
         perf_metrics.record_lap("schedule-redis-set")
 
-        LOGGER.debug(
-            f"get_or_compute_ensemble_fingerprint_async() computed fingerprint in: {perf_metrics.to_string()} [{fingerprint=}]"
-        )
-
-        return fingerprint
+        LOGGER.debug(f"get_or_calc_ensemble_fp_async() - calculated in: {perf_metrics.to_string()} [{new_fp=}]")
+        return new_fp
 
     def _make_full_redis_key(self, case_uuid: str, ensemble_name: str, class_name: str | None) -> str:
         return (
@@ -94,14 +93,24 @@ def get_sumo_fingerprinter_for_user(authenticated_user: AuthenticatedUser, cache
     return factory.get_fingerprinter_for_user(authenticated_user, cache_ttl_s)
 
 
-async def compute_ensemble_fingerprint_async(
+async def calc_ensemble_fp_async(
     sumo_client: SumoClient, case_uuid: str, ensemble_name: str, class_name: str | None
 ) -> str:
+    """
+    Calculate fingerprint string for contents of an ensemble, optionally filtered by document class name.
+
+    Note that the ensemble fingerprint is calculated based on both the documents in the ensemble
+    and the documents in the parent case.
+
+    The fingerprint string has the format:
+        {max_timestamp}__case:{num_docs_in_case}:{case_checksum}__ens:{num_docs_in_ens}:{ens_checksum}
+    where max_timestamp is the maximum timestamp of any document in either the ensemble or the parent case.
+    """
     perf_metrics = PerfMetrics()
 
-    # case_digest: DocSetDigest = await _gather_case_digest_async(sumo_client, case_uuid)
+    # case_digest: DocSetDigest = await _gather_case_digest_old_elastic_async(sumo_client, case_uuid)
     # perf_metrics.record_lap("case-digest")
-    # ens_digest: DocSetDigest = await _gather_ensemble_digest_async(sumo_client, case_uuid, ensemble_name, class_name)
+    # ens_digest: DocSetDigest = await _gather_ensemble_digest_old_elastic_async(sumo_client, case_uuid, ensemble_name, class_name)
     # perf_metrics.record_lap("ens-digest")
 
     async with asyncio.TaskGroup() as tg:
@@ -112,29 +121,21 @@ async def compute_ensemble_fingerprint_async(
         ens_task.add_done_callback(lambda _: perf_metrics.record_lap_no_reset("ens-digest"))
 
     perf_metrics.reset_lap_timer()
+
     case_digest: DocSetDigest = case_task.result()
     ens_digest: DocSetDigest = ens_task.result()
 
-    case_time_str = "N/A"
-    ens_time_str = "N/A"
-    if case_digest.max_timestamp_utc_ms > 0:
-        case_time_str = timestamp_utc_ms_to_iso_str(case_digest.max_timestamp_utc_ms)
-    if ens_digest.max_timestamp_utc_ms > 0:
-        ens_time_str = timestamp_utc_ms_to_iso_str(ens_digest.max_timestamp_utc_ms)
-    LOGGER.debug(
-        f"compute_ensemble_fingerprint_async() - case: time={case_time_str}, docs fp/tot={case_digest.num_docs_in_checksum}/{case_digest.total_num_docs}, checksum={case_digest.checksum}"
-    )
-    LOGGER.debug(
-        f"compute_ensemble_fingerprint_async() - ens:  time={ens_time_str}, docs fp/tot={ens_digest.num_docs_in_checksum}/{ens_digest.total_num_docs}, checksum={ens_digest.checksum}"
-    )
+    LOGGER.debug(f"calc_ensemble_fp_async() case: {_digest_to_str(case_digest)}")
+    LOGGER.debug(f"calc_ensemble_fp_async() ens:  {_digest_to_str(ens_digest)}")
 
+    # Choose the max timestamp from either the case or the ensemble
     max_timestamp = max(0, case_digest.max_timestamp_utc_ms)
     max_timestamp = max(max_timestamp, ens_digest.max_timestamp_utc_ms)
     max_time_iso_str = timestamp_utc_ms_to_iso_str(max_timestamp) if max_timestamp > 0 else "NO_TS"
 
     fingerprint = f"{max_time_iso_str}__case:{case_digest.total_num_docs}:{case_digest.checksum}__ens:{ens_digest.total_num_docs}:{ens_digest.checksum}"
 
-    LOGGER.debug(f"compute_ensemble_fingerprint_async() took: {perf_metrics.to_string()} - fingerprint: {fingerprint}")
+    LOGGER.debug(f"calc_ensemble_fp_async() took: {perf_metrics.to_string()} - fingerprint: {fingerprint}")
 
     return fingerprint
 
@@ -147,11 +148,13 @@ class DocSetDigest:
     max_timestamp_utc_ms: int  # -1 if no timestamp
 
 
+def _digest_to_str(digest: DocSetDigest) -> str:
+    time_str = timestamp_utc_ms_to_iso_str(digest.max_timestamp_utc_ms) if digest.max_timestamp_utc_ms > 0 else "N/A"
+    return f"max time={time_str}, docs fp/tot={digest.num_docs_in_checksum}/{digest.total_num_docs}, checksum={digest.checksum}"
+
+
 async def _gather_case_digest_async(sumo_client: SumoClient, case_uuid: str) -> DocSetDigest:
     search_context = SearchContext(sumo_client).filter(uuid=case_uuid, ensemble=False, aggregation=False)
-
-    # fnv1a_res = await search_context.metrics.fnv1a_async(field="file.checksum_md5.keyword")
-    # max_timestamp_utc_ms = await search_context.metrics.max_async("_sumo.timestamp")
 
     async with asyncio.TaskGroup() as tg:
         fnv1a_checksum_task = tg.create_task(search_context.metrics.fnv1a_async(field="file.checksum_md5.keyword"))
@@ -167,8 +170,8 @@ async def _gather_case_digest_async(sumo_client: SumoClient, case_uuid: str) -> 
     if not isinstance(max_timestamp_utc_ms, int):
         max_timestamp_utc_ms = -1
 
-    # query_dict = _build_case_level_docs_query_dict(case_uuid)
-    # checksum_res = await _run_query_and_do_checksum_agg_async(sumo_client, query_dict)
+    # query_dict = build_case_level_docs_query_dict(case_uuid)
+    # checksum_res = await run_query_and_do_checksum_agg_async(sumo_client, query_dict)
     # doc_count_from_sc = await search_context.length_async()
     # LOGGER.debug("-----------------")
     # LOGGER.debug(f"{fnv1a_res=}")
@@ -199,9 +202,6 @@ async def _gather_ensemble_digest_async(
     if class_name is not None:
         search_context = search_context.filter(cls=class_name)
 
-    # fnv1a_res = await search_context.metrics.fnv1a_async(field="file.checksum_md5.keyword")
-    # max_timestamp_utc_ms = await search_context.metrics.max_async("_sumo.timestamp")
-
     async with asyncio.TaskGroup() as tg:
         fnv1a_checksum_task = tg.create_task(search_context.metrics.fnv1a_async(field="file.checksum_md5.keyword"))
         max_timestamp_task = tg.create_task(search_context.metrics.max_async("_sumo.timestamp"))
@@ -216,8 +216,8 @@ async def _gather_ensemble_digest_async(
     if not isinstance(max_timestamp_utc_ms, int):
         max_timestamp_utc_ms = -1
 
-    # query_dict = _build_ensemble_level_docs_query_dict(case_uuid, ensemble_name, class_name)
-    # checksum_res = await _run_query_and_do_checksum_agg_async(sumo_client, query_dict)
+    # query_dict = build_ensemble_level_docs_query_dict(case_uuid, ensemble_name, class_name)
+    # checksum_res = await run_query_and_do_checksum_agg_async(sumo_client, query_dict)
     # doc_count_from_sc = await search_context.length_async()
     # LOGGER.debug("-----------------")
     # LOGGER.debug(f"{fnv1a_res=}")
@@ -244,20 +244,11 @@ async def _gather_ensemble_digest_async(
 async def _gather_case_digest_old_elastic_async(sumo_client: SumoClient, case_uuid: str) -> DocSetDigest:
     search_context = SearchContext(sumo_client).filter(uuid=case_uuid, ensemble=False, aggregation=False)
 
-    query_dict = _build_case_level_docs_query_dict(case_uuid)
+    query_dict = build_case_level_docs_query_dict(case_uuid)
 
-    # checksum_res = await _run_query_and_do_checksum_agg_async(sumo_client, query_dict)
-    # doc_count_from_sc = await search_context.length_async()
-    # max_timestamp_utc_ms = await search_context.metrics.max_async("_sumo.timestamp")
-
-    async with asyncio.TaskGroup() as tg:
-        checksum_task = tg.create_task(_run_query_and_do_checksum_agg_async(sumo_client, query_dict))
-        doc_count_task = tg.create_task(search_context.length_async())
-        max_timestamp_task = tg.create_task(search_context.metrics.max_async("_sumo.timestamp"))
-
-    checksum_res = await checksum_task
-    doc_count_from_sc = await doc_count_task
-    max_timestamp_utc_ms = await max_timestamp_task
+    checksum_res = await run_query_and_do_checksum_agg_async(sumo_client, query_dict)
+    doc_count_from_sc = await search_context.length_async()
+    max_timestamp_utc_ms = await search_context.metrics.max_async("_sumo.timestamp")
 
     if not isinstance(max_timestamp_utc_ms, int):
         max_timestamp_utc_ms = -1
@@ -277,20 +268,11 @@ async def _gather_ensemble_digest_old_elastic_async(
     if class_name is not None:
         search_context = search_context.filter(cls=class_name)
 
-    query_dict = _build_ensemble_level_docs_query_dict(case_uuid, ensemble_name, class_name)
+    query_dict = build_ensemble_level_docs_query_dict(case_uuid, ensemble_name, class_name)
 
-    # checksum_res = await _run_query_and_do_checksum_agg_async(sumo_client, query_dict)
-    # doc_count_from_sc = await search_context.length_async()
-    # max_timestamp_utc_ms = await search_context.metrics.max_async("_sumo.timestamp")
-
-    async with asyncio.TaskGroup() as tg:
-        checksum_task = tg.create_task(_run_query_and_do_checksum_agg_async(sumo_client, query_dict))
-        doc_count_task = tg.create_task(search_context.length_async())
-        max_timestamp_task = tg.create_task(search_context.metrics.max_async("_sumo.timestamp"))
-
-    checksum_res = await checksum_task
-    doc_count_from_sc = await doc_count_task
-    max_timestamp_utc_ms = await max_timestamp_task
+    checksum_res = await run_query_and_do_checksum_agg_async(sumo_client, query_dict)
+    doc_count_from_sc = await search_context.length_async()
+    max_timestamp_utc_ms = await search_context.metrics.max_async("_sumo.timestamp")
 
     if not isinstance(max_timestamp_utc_ms, int):
         max_timestamp_utc_ms = -1
@@ -300,113 +282,4 @@ async def _gather_ensemble_digest_old_elastic_async(
         checksum=checksum_res.fnv1a_checksum,
         num_docs_in_checksum=checksum_res.docs_in_checksum,
         max_timestamp_utc_ms=max_timestamp_utc_ms,
-    )
-
-
-def _build_case_level_docs_query_dict(case_uuid: str) -> dict:
-    must_arr: list[dict] = []
-    must_not_arr: list[dict] = []
-
-    must_arr.append({"term": {"fmu.case.uuid.keyword": case_uuid}})
-    must_not_arr.append({"exists": {"field": "fmu.ensemble"}})
-    must_not_arr.append({"exists": {"field": "fmu.iteration"}})
-
-    query_dict = {
-        "bool": {
-            "must": must_arr,
-            "must_not": must_not_arr,
-        }
-    }
-
-    return query_dict
-
-
-def _build_ensemble_level_docs_query_dict(case_uuid: str, ensemble_name: str, class_name: str | None) -> dict:
-    must_arr: list[dict] = []
-    must_not_arr: list[dict] = []
-
-    must_arr.append({"term": {"fmu.case.uuid.keyword": case_uuid}})
-    must_arr.append({"term": {"fmu.ensemble.name.keyword": ensemble_name}})
-
-    if class_name is not None:
-        must_arr.append({"term": {"class.keyword": class_name}})
-
-    must_not_arr.append({"exists": {"field": "fmu.aggregation"}})
-
-    query_dict = {
-        "bool": {
-            "must": must_arr,
-            "must_not": must_not_arr,
-        }
-    }
-
-    return query_dict
-
-
-@dataclass(frozen=True)
-class ChecksumResult:
-    fnv1a_checksum: str
-    docs_in_checksum: int
-    docs_total: int
-
-
-async def _run_query_and_do_checksum_agg_async(sumo_client: SumoClient, query_dict: dict) -> ChecksumResult:
-    perf_metrics = PerfMetrics()
-
-    search_payload = {
-        "track_total_hits": True,
-        "_source": True,
-        "size": 0,
-        "query": query_dict,
-        "aggs": {
-            "mytest": {
-                "scripted_metric": {
-                    "init_script": "state.h = 0L; state.count = 0L; state.total = 0L",
-                    "map_script": """
-                        state.total += 1L;
-                        if (doc['file.checksum_md5.keyword'].size() == 0) return;
-                        def s = doc.get('file.checksum_md5.keyword').value;
-                        long h = -3750763034362895579L;    // FNV-1a offset (0xcbf29ce484222325)
-                        for (int i = 0; i < s.length(); i++) {
-                            h ^= (long) s.charAt(i);
-                            h *= 1099511628211L;
-                        }
-                        state.h ^= h;
-                        state.count += 1L;
-                    """,
-                    "combine_script": "return state;",
-                    "reduce_script": """
-                        long h = 0L; long c = 0L; long t = 0L;
-                        for (st in states) { h ^= st.h; c += st.count; t += st.total }
-                        return ['checksum': Long.toHexString(h), 'docs_in_checksum': c, 'docs_total': t];
-                    """,
-                }
-            }
-        },
-    }
-
-    response = await sumo_client.post_async("/search", json=search_payload)
-    response_dict = response.json()
-
-    # LOGGER.debug("-----------------")
-    # LOGGER.debug(json.dumps(response_dict, indent=2))
-    # LOGGER.debug("-----------------")
-    # LOGGER.debug(f"{response_dict['took']=}")
-
-    elastic_time_ms = response_dict.get("took", -1)
-    elastic_hit_count = response_dict.get("hits", {}).get("total", {}).get("value", -1)
-
-    agg_value_dict = response_dict.get("aggregations", {}).get("mytest", {}).get("value", {})
-    fnv_hash = agg_value_dict.get("checksum", None)
-    docs_in_checksum = agg_value_dict.get("docs_in_checksum", 0)
-    docs_total = agg_value_dict.get("docs_total", 0)
-
-    LOGGER.debug(
-        f"_run_query_and_do_checksum_agg_async() took: {perf_metrics.to_string()} ({elastic_time_ms=}, {elastic_hit_count=}, {docs_in_checksum=}, {docs_total=})- checksum: {fnv_hash=}"
-    )
-
-    return ChecksumResult(
-        fnv1a_checksum=fnv_hash,
-        docs_in_checksum=docs_in_checksum,
-        docs_total=docs_total,
     )

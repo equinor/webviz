@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import time
 from dataclasses import dataclass
 from io import BytesIO
 from typing import Sequence
@@ -12,6 +11,7 @@ from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.explorer import SumoClient, SearchContext
 from fmu.sumo.explorer.objects import Surface
 
+from webviz_pkg.core_utils.exponential_backoff_timer import ExponentialBackoffTimer
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 from primary.services.utils.otel_span_tracing import otel_span_decorator, start_otel_span, start_otel_span_async
 from primary.services.utils.statistic_function import StatisticFunction
@@ -329,20 +329,8 @@ class SurfaceAccess:
 
         return xtgeo_surf
 
-    def _make_real_surf_log_str(self, real_num: int, name: str, attribute: str, date_str: str | None) -> str:
-        addr_str = f"N={name}, A={attribute}, R={real_num}, D={date_str}, C={self._case_uuid}, E={self._ensemble_name}"
-        return addr_str
-
-    def _make_obs_surf_log_str(self, name: str, attribute: str, date_str: str) -> str:
-        addr_str = f"N={name}, A={attribute}, D={date_str}, C={self._case_uuid}"
-        return addr_str
-
-    def _make_stat_surf_log_str(self, name: str, attribute: str, date_str: str | None) -> str:
-        addr_str = f"N={name}, A={attribute}, D={date_str}, C={self._case_uuid}, E={self._ensemble_name}"
-        return addr_str
-
     @otel_span_decorator()
-    async def SUBMIT_statistical_surface_calculation_async(
+    async def submit_statistical_surface_calculation_task_async(
         self,
         statistic_function: StatisticFunction,
         name: str,
@@ -350,6 +338,13 @@ class SurfaceAccess:
         realizations: Sequence[int] | None = None,
         time_or_interval_str: str | None = None,
     ) -> str:
+        """
+        Submit a statistical surface calculation task to Sumo and return the Sumo task id string.
+
+        As of now there is no deduplication of tasks in Sumo so submitting a new calculation task will always
+        start a new calculation, even if an identical calculation has been done before or is already in progress.
+        """
+
         if not self._ensemble_name:
             raise InvalidParameterError("Ensemble name must be set to calculate statistical surface", Service.SUMO)
 
@@ -408,23 +403,34 @@ class SurfaceAccess:
         return sumo_task_uuid
 
     @otel_span_decorator()
-    async def POLL_statistical_surface_calculation_async(
+    async def poll_statistical_surface_calculation_task_async(
         self, sumo_task_id: str, timeout_s: float
     ) -> xtgeo.RegularSurface | InProgress | ExpectedError:
+        """
+        Poll the specified Sumo task, waiting up to timeout_s seconds for it to complete.
+
+        Use a timeout_s of 0 to do a single poll.
+
+        If the task has completed successfully a statistical surface will be returned.
+        Otherwise either an InProgress or ExpectedError object will be returned. Note that this method
+        may also raise exceptions if something unexpected happens.
+        """
 
         perf_metrics = PerfMetrics()
 
-        retry_after_s = 1
-        deadline = time.time() + timeout_s
+        backoff_timer = ExponentialBackoffTimer(initial_delay_s=1, max_delay_s=10, max_total_duration_s=timeout_s)
         while True:
             task_state: _SumoTaskState = await _poll_sumo_aggregation_task_state_async(self._sumo_client, sumo_task_id)
 
-            # Guesses on possible status string values are: "running" | "succeeded" | "failed"
+            # Current guesses on possible status string values are: "running" | "succeeded" | "failed"
             # A waiting state was mentioned by Raymond Wiker, but not yet seen in the wild
-            if task_state.status in ["succeeded", "failed"] or time.time() + retry_after_s > deadline:
+            # Note that the backoff timer will return None when the max_total_duration_s has expired
+            next_delay_s = backoff_timer.next_delay_s()
+            if task_state.status in ["succeeded", "failed"] or next_delay_s is None:
                 break
 
-            await asyncio.sleep(retry_after_s)
+            LOGGER.debug(f"Waiting to poll again, {next_delay_s=:.1f}s,  elapsed/remaining: {backoff_timer.elapsed_s():.1f}/{backoff_timer.remaining_s():.1f}")
+            await asyncio.sleep(next_delay_s)
 
         perf_metrics.record_lap("polling")
 
@@ -469,6 +475,18 @@ class SurfaceAccess:
         )
         return InProgress(progress_message=f"{task_state.nested_job_status}")
 
+    def _make_real_surf_log_str(self, real_num: int, name: str, attribute: str, date_str: str | None) -> str:
+        addr_str = f"N={name}, A={attribute}, R={real_num}, D={date_str}, C={self._case_uuid}, E={self._ensemble_name}"
+        return addr_str
+
+    def _make_obs_surf_log_str(self, name: str, attribute: str, date_str: str) -> str:
+        addr_str = f"N={name}, A={attribute}, D={date_str}, C={self._case_uuid}"
+        return addr_str
+
+    def _make_stat_surf_log_str(self, name: str, attribute: str, date_str: str | None) -> str:
+        addr_str = f"N={name}, A={attribute}, D={date_str}, C={self._case_uuid}, E={self._ensemble_name}"
+        return addr_str
+
 
 async def _start_sumo_aggregation_task_async(search_context: SearchContext, sumo_stat_op_str: str) -> str:
     httpx_resp = await search_context.aggregate_async(operation=sumo_stat_op_str, no_wait=True)
@@ -500,8 +518,7 @@ class _SumoTaskState:
 async def _poll_sumo_aggregation_task_state_async(sumo_client: SumoClient, sumo_task_id: str) -> _SumoTaskState:
     # The poll path (which sumo client adds to its base_url) is: /tasks('{taskUuid}')/result
     # Initially we used a poll_path on the form: /tasks('{taskUuid}')/result
-    # After slack discussions with R. Wiker, we now try and use the more generic path
-    # without /result to try and get richer status information
+    # After slack discussions with R. Wiker, we now try and use the more generic path without /result to try and get richer status information
     poll_path = f"/tasks('{sumo_task_id}')"
     poll_resp = await sumo_client.get_async(poll_path)
     poll_resp_dict = poll_resp.json()

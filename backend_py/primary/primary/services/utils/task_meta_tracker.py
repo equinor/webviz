@@ -44,6 +44,7 @@ class TaskMetaTrackerFactory:
 @dataclass(frozen=True, kw_only=True)
 class TaskMeta:
     task_system: str
+    task_id: str
     start_time_utc_s: float
     final_outcome: Literal["success", "failure"] | None = None
     expected_store_key: str | None = None
@@ -64,7 +65,7 @@ class TaskMetaTracker:
         ttl_s: int,
         task_start_time_utc_s: float | None,
         expected_store_key: str | None,
-    ) -> None:
+    ) -> TaskMeta:
         redis_hash_name = self._make_full_redis_key_for_task(task_id)
 
         if task_start_time_utc_s is None:
@@ -87,6 +88,14 @@ class TaskMetaTracker:
             },
         )
 
+        return TaskMeta(
+            task_system=task_system,
+            task_id=task_id,
+            start_time_utc_s=task_start_time_utc_s,
+            final_outcome=None,
+            expected_store_key=expected_store_key,
+        )
+
     async def register_task_with_fingerprint_async(
         self,
         task_system: str,
@@ -95,9 +104,9 @@ class TaskMetaTracker:
         ttl_s: int,
         task_start_time_utc_s: float | None,
         expected_store_key: str | None,
-    ) -> None:
+    ) -> TaskMeta:
         # Register the task itself in the usual way
-        await self.register_task_async(
+        task_meta = await self.register_task_async(
             task_system=task_system,
             task_id=task_id,
             ttl_s=ttl_s,
@@ -109,6 +118,8 @@ class TaskMetaTracker:
         # May want to set a shorter TTL for this entry
         fingerprint_redis_key = self._make_full_redis_key_for_fingerprint(fingerprint)
         _res = await self._redis_client.setex(fingerprint_redis_key, ttl_s, task_id)
+
+        return task_meta
 
     async def get_task_meta_async(self, task_id: str) -> TaskMeta | None:
         redis_hash_name = self._make_full_redis_key_for_task(task_id)
@@ -133,10 +144,18 @@ class TaskMetaTracker:
 
         return TaskMeta(
             task_system=task_system,
+            task_id=task_id,
             start_time_utc_s=task_start_time_utc_s,
             final_outcome=final_outcome,
             expected_store_key=expected_store_key,
         )
+
+    async def get_task_meta_by_fingerprint_async(self, fingerprint: str) -> TaskMeta | None:
+        task_id = await self.get_task_id_by_fingerprint_async(fingerprint)
+        if task_id is None:
+            return None
+
+        return await self.get_task_meta_async(task_id)
 
     async def delete_fingerprint_to_task_mapping_async(self, fingerprint: str) -> None:
         fingerprint_redis_key = self._make_full_redis_key_for_fingerprint(fingerprint)
