@@ -1,14 +1,16 @@
+"""
+This file contains general utility functions for handling DataFrames for result volumes.
+
+The methods can be used to calculate, aggregate and create result volumes data for the Inplace Volumes Table Assembler
+
+Results = volumes + properties + calculated volumes
+"""
+
 from typing import Callable, Iterable
 
 import numpy as np
 import polars as pl
 
-from .conversion_utils import create_repeated_table_column_data_from_polars_column, get_fluid_from_string
-from .polars_column_utils import is_invalid_column
-from .polars_expression_utils import (
-    create_calculated_volume_column_expressions,
-    create_property_column_expressions,
-)
 
 from primary.services.sumo_access.inplace_volumes_table_types import (
     CategorizedResultNames,
@@ -20,13 +22,12 @@ from primary.services.sumo_access.inplace_volumes_table_types import (
 
 from primary.services.service_exceptions import Service, InvalidDataError
 
-"""
-This file contains general utility functions for handling DataFrames for result volumes.
-
-The methods can be used to calculate, aggregate and create result volumes data for the Inplace Volumes Table Assembler
-
-Results = volumes + properties + calculated volumes
-"""
+from .conversion_utils import create_repeated_table_column_data_from_polars_column, get_fluid_from_string
+from .polars_column_utils import is_invalid_column
+from .polars_expression_utils import (
+    create_calculated_volume_column_expressions,
+    create_property_column_expressions,
+)
 
 
 def create_per_fluid_results_df(
