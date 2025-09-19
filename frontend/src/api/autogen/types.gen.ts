@@ -3393,7 +3393,7 @@ export type GetInlineSliceData_api = {
         /**
          * Inline number
          */
-        inline_no: number;
+        inline_number: number;
         t?: number;
     };
     url: "/seismic/get_inline_slice/";
@@ -3448,7 +3448,7 @@ export type GetCrosslineSliceData_api = {
         /**
          * Crossline number
          */
-        crossline_no: number;
+        crossline_num: number;
         t?: number;
     };
     url: "/seismic/get_crossline_slice/";
@@ -3501,9 +3501,9 @@ export type GetDepthSliceData_api = {
          */
         observed: boolean;
         /**
-         * Depth slice no
+         * Depth slice number
          */
-        depth_slice_no: number;
+        depth_slice_num: number;
         t?: number;
     };
     url: "/seismic/get_depth_slice/";
@@ -3526,6 +3526,69 @@ export type GetDepthSliceResponses_api = {
 };
 
 export type GetDepthSliceResponse_api = GetDepthSliceResponses_api[keyof GetDepthSliceResponses_api];
+
+export type GetSeismicSlicesData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Realization number
+         */
+        realization_num: number;
+        /**
+         * Seismic cube attribute
+         */
+        seismic_attribute: string;
+        /**
+         * Timestamp or timestep
+         */
+        time_or_interval_str: string;
+        /**
+         * Observed or simulated
+         */
+        observed: boolean;
+        /**
+         * Inline number
+         */
+        inline_number: number;
+        /**
+         * Crossline number
+         */
+        crossline_number: number;
+        /**
+         * Depth slice number
+         */
+        depth_slice_number: number;
+        t?: number;
+    };
+    url: "/seismic/get_seismic_slices/";
+};
+
+export type GetSeismicSlicesErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSeismicSlicesError_api = GetSeismicSlicesErrors_api[keyof GetSeismicSlicesErrors_api];
+
+export type GetSeismicSlicesResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: [SeismicSliceData_api, SeismicSliceData_api, SeismicSliceData_api];
+};
+
+export type GetSeismicSlicesResponse_api = GetSeismicSlicesResponses_api[keyof GetSeismicSlicesResponses_api];
 
 export type PostGetSeismicFenceData_api = {
     body: BodyPostGetSeismicFence_api;

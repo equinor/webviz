@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorSelect } from "@lib/components/ColorSelect";
@@ -59,15 +59,16 @@ export class SingleColorSetting implements CustomSettingImplementation<ValueType
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.STATIC>) => React.ReactNode {
         return function SingleColorSettingComponent(props: SettingComponentProps<ValueType, SettingCategory.STATIC>) {
+            const initialColor = props.value?.slice(0, 7) ?? "#000000";
+
+            const [color, setColor] = React.useState<string>(initialColor);
+
             function handleColorChange(color: string) {
+                setColor(color);
                 props.onValueChange(color);
             }
 
-            return (
-                <div className="single-color-setting">
-                    <ColorSelect onChange={handleColorChange} value={props.value!} dense />
-                </div>
-            );
+            return <ColorSelect onChange={handleColorChange} value={color!} dense />;
         };
     }
 
