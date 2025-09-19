@@ -2,7 +2,7 @@ import React from "react";
 
 import { throttle } from "lodash";
 
-import { PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
 export enum HoverTopic {
     MD = "hover.md",

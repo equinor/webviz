@@ -363,14 +363,13 @@ async def get_log_curve_data(
     # Handle DROGON
     if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
         well_access_drogon = DrogonWellAccess(authenticated_user.get_ssdl_access_token())
-        curve_data = await well_access_drogon.get_log_curve_data_async(wellbore_uuid, curve_name)
+        curve_data = await well_access_drogon.get_log_curve_data_async(wellbore_uuid, curve_name, log_name)
 
         return converters.convert_wellbore_log_curve_data_to_schema(curve_data)
 
     if source == schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG:
-        # Note that log name is not used on SSDL; but afaik curve names are not unique across all logs...
         well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
-        log_curve = await well_access.get_log_curve_data_async(wellbore_uuid, curve_name)
+        log_curve = await well_access.get_log_curve_data_async(wellbore_uuid, curve_name, log_name)
 
         return converters.convert_wellbore_log_curve_data_to_schema(log_curve)
 

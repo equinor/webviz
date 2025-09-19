@@ -13,12 +13,13 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { Plot } from "@modules/_shared/components/Plot";
 
 import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
 
-import type { scatterPlotParameterResponseData } from "./scatterPlotParameterResponseFigure";
-import { ScatterPlotParameterResponseFigure } from "./scatterPlotParameterResponseFigure";
+import type { scatterPlotParameterResponseData } from "./utils/scatterPlotParameterResponseFigure";
+import { ScatterPlotParameterResponseFigure } from "./utils/scatterPlotParameterResponseFigure";
 
 const MAX_NUM_PLOTS = 12;
 
@@ -167,13 +168,14 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
 
                     const responseName = responseChannelData.displayName;
                     const parameterName = parameterData.name;
-
+                    const color = responseChannelData.metaData.preferredColor ?? "#000000";
                     const scatterPlotData: scatterPlotParameterResponseData = {
                         responseValues,
                         parameterValues,
                         realizationValues,
                         parameterName,
                         responseName,
+                        color,
                     };
 
                     const channelTitle = `${parameterIdent.name} / <b>${responseChannelData.metaData.displayString}`;
@@ -184,7 +186,7 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                 }
             }
 
-            setContent(figure.build());
+            setContent(<Plot data={figure.makePlotData()} layout={figure.makePlotLayout()} />);
             return;
         }
     }

@@ -1,3 +1,5 @@
+import type { EnsembleTimestamps_api } from "@api";
+
 import type { Parameter } from "./EnsembleParameters";
 import { EnsembleParameters } from "./EnsembleParameters";
 import type { Sensitivity } from "./EnsembleSensitivities";
@@ -14,6 +16,7 @@ export class RegularEnsemble {
     private _sensitivities: EnsembleSensitivities | null;
     private _color: string;
     private _customName: string | null;
+    private _timestamps: EnsembleTimestamps_api | null;
 
     constructor(
         fieldIdentifier: string,
@@ -26,6 +29,7 @@ export class RegularEnsemble {
         sensitivityArray: Sensitivity[] | null,
         color: string,
         customName: string | null = null,
+        timestamps: EnsembleTimestamps_api | null = null,
     ) {
         this._ensembleIdent = new RegularEnsembleIdent(caseUuid, ensembleName);
         this._fieldIdentifier = fieldIdentifier;
@@ -35,6 +39,7 @@ export class RegularEnsemble {
         this._parameters = new EnsembleParameters(parameterArray);
         this._color = color;
         this._customName = customName;
+        this._timestamps = timestamps;
 
         this._sensitivities = null;
         if (sensitivityArray && sensitivityArray.length > 0) {
@@ -103,5 +108,9 @@ export class RegularEnsemble {
 
     getCustomName(): string | null {
         return this._customName;
+    }
+
+    getTimestamps(): EnsembleTimestamps_api | null {
+        return this._timestamps;
     }
 }

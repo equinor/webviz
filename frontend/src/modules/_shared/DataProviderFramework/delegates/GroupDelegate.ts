@@ -1,5 +1,6 @@
-import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
-import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
+import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
+
 import { DataProvider } from "../framework/DataProvider/DataProvider";
 import { DeserializationAssistant } from "../framework/utils/DeserializationAssistant";
 import { instanceofItemGroup, type Item } from "../interfacesAndTypes/entities";

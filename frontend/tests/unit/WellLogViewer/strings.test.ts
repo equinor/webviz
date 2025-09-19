@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { WellLogCurveSourceEnum_api } from "@api";
-import type { TemplatePlotConfig } from "@modules/WellLogViewer/types";
+import type { TemplatePlot } from "@modules/WellLogViewer/types";
 import {
     curveSourceToText,
     getUniqueCurveNameForPlotConfig,
@@ -38,42 +38,31 @@ describe("simplifyLogName", () => {
 
 describe("getUniqueCurveNameForPlotConfig", () => {
     it("should return the plot name if it's unique", () => {
-        const plot: TemplatePlotConfig = {
+        const plot: TemplatePlot = {
             name: "unique",
-            // @ts-expect-error Only these fields are relevant
-            _curveHeader: { curveName: "curve", logName: "log" },
+            logName: "log",
         };
-
         expect(getUniqueCurveNameForPlotConfig(plot)).toEqual("unique");
     });
-
     it("should return a compound name if the plot name is not unique", () => {
-        const plot: TemplatePlotConfig = {
+        const plot: TemplatePlot = {
             name: "not_unique",
-            // @ts-expect-error Only these fields are relevant
-            _curveHeader: { curveName: "curve", logName: "log" },
+            logName: "log",
         };
-
         const nonUniqueNames = new Set(["not_unique"]);
-
-        expect(getUniqueCurveNameForPlotConfig(plot, nonUniqueNames)).toEqual("curve - log");
+        expect(getUniqueCurveNameForPlotConfig(plot, nonUniqueNames)).toEqual("not_unique - log");
     });
-
     it("should throw for invalid config", () => {
-        const plot1: TemplatePlotConfig = {
+        const plot1: TemplatePlot = {
             name: "",
-            // @ts-expect-error Only these fields are relevant
-            _curveHeader: { curveName: "curve", logName: "log" },
+            logName: "log",
         };
 
-        // @ts-expect-error Only these fields are relevant
-        const plot2: TemplatePlotConfig = {
+        const plot2: TemplatePlot = {
             name: "name",
-            _curveHeader: null,
+            logName: "",
         };
-
         expect(() => getUniqueCurveNameForPlotConfig(plot1)).toThrow("Unexpected invalid config");
-
         expect(() => getUniqueCurveNameForPlotConfig(plot2)).toThrow("Unexpected invalid config");
     });
 });

@@ -6,9 +6,9 @@ import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { SortableListItem } from "@lib/components/SortableList";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";

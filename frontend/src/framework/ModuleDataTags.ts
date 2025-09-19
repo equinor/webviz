@@ -4,7 +4,7 @@ export enum ModuleDataTagId {
     GROUP_TREE = "group-tree",
     DRILLED_WELLS = "drilled-wells",
     SUMMARY = "summary",
-    INPLACE_VOLUMETRICS = "inplace-volumetrics",
+    INPLACE_VOLUMES = "inplace-volumes",
     PARAMETERS = "parameters",
     PVT = "pvt",
     RFT = "rft",
@@ -53,9 +53,9 @@ export const ModuleDataTags: ModuleDataTag[] = [
         description: "Summary data from the simulator",
     },
     {
-        id: ModuleDataTagId.INPLACE_VOLUMETRICS,
-        name: "In-place volumetrics",
-        description: "In-place volumetrics",
+        id: ModuleDataTagId.INPLACE_VOLUMES,
+        name: "In-place volumes",
+        description: "In-place volumes table data",
     },
     {
         id: ModuleDataTagId.PARAMETERS,

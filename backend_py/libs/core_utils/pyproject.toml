@@ -1,13 +1,17 @@
-[tool.poetry]
+[project]
 name = "core-utils"
-version = "0.0.1"
+version = "0.1.0"
+authors = [{ name = "R&T Equinor" }, { name = "Ceetron Solutions AS" }]
 description = "Package with general Webviz utilities"
-authors = ["R&T Equinor", "Ceetron Solutions AS"]
-packages = [ { include = "webviz_pkg" } ]
+requires-python = "^3.11"
+dynamic = ["dependencies"]
+
+[tool.poetry]
+requires-poetry = ">=2.1"
+packages = [{ include = "webviz_pkg" }]
 
 [tool.poetry.dependencies]
-python = "^3.11"
-numpy = "^1.24.1"
+numpy = "^2.2.3"
 pydantic = "^2.3.0"
 
 [build-system]
@@ -19,7 +23,12 @@ build-backend = "poetry.core.masonry.api"
 line-length = 120
 
 [tool.pylint]
-disable = ["missing-docstring", "line-too-long", "logging-fstring-interpolation", "duplicate-code"]
+disable = [
+    "missing-docstring",
+    "line-too-long",
+    "logging-fstring-interpolation",
+    "duplicate-code",
+]
 
 [tool.mypy]
 ignore_missing_imports = true

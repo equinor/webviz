@@ -1,29 +1,37 @@
 import React from "react";
 
-import type { colorTablesObj } from "@emerson-eps/color-tables";
-import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { WellLogViewer } from "@webviz/well-log-viewer";
 import type { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
-import type { WellLogController } from "@webviz/well-log-viewer/dist/components/WellLogView";
-import { useAtomValue } from "jotai";
-import _ from "lodash";
+import type { WellLogSet } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
+import type {
+    WellLogController,
+    WellLogViewOptions,
+    WellPickProps,
+} from "@webviz/well-log-viewer/dist/components/WellLogView";
+import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
+import { isNaN } from "lodash";
 
-import type { WellboreHeader_api, WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
+import type { WellboreHeader_api } from "@api";
 import { HoverTopic, useHover } from "@framework/HoverService";
 import type { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
-import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { createContinuousColorScaleForMap } from "@modules/3DViewer/view/utils/colorTables";
-import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
+import type { Template } from "@modules/WellLogViewer/types";
 
 import type { InterfaceTypes } from "../../interfaces";
-import { createLogTemplate } from "../../utils/logViewerTemplate";
-import { createLogViewerWellPicks, createWellLogSets } from "../../utils/queryDataTransform";
-import { nonUniqueCurveNamesAtom } from "../atoms/derivedAtoms";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
+
+const VIEWER_OPTIONS: WellLogViewOptions = {
+    // Disable selection (pinning a range) for now. Might reintroduce later.
+    hideSelectionInterval: true,
+    // We think it's unlikely a user will have more than 12, and the viewers scrolling feature is somewhat cumbersome.
+    // Could consider having this be computed based on track sizes, and available module space
+    maxVisibleTrackNum: 12,
+};
+
+// Removes the default right-side readout panel
+const VIEWER_LAYOUT = { right: undefined };
 
 const AXIS_MNEMOS = {
     md: ["RKB", "DEPTH", "DEPT", "MD", "TDEP", "MD_RKB"],
@@ -40,15 +48,13 @@ const AXIS_TITLES = {
 export type SubsurfaceLogViewerWrapperProps = {
     // Data
     wellboreHeader: WellboreHeader_api | null;
-    curveData: WellboreLogCurveData_api[];
-    trajectoryData: WellboreTrajectory_api;
-    intersectionReferenceSystem: IntersectionReferenceSystem;
-    wellpicks: WellborePick_api[];
+    wellLogSets: WellLogSet[];
+    wellPicks?: WellPickProps;
 
     // Viewer config
+    viewerTemplate: Template;
+    colorMapFunctions?: ColorMapFunction[];
     horizontal: boolean;
-    padDataWithEmptyRows: boolean;
-    templateTrackConfigs: TemplateTrackConfig[];
 
     // Passing the module props to make context and service access less cumbersome
     moduleProps: ModuleViewProps<InterfaceTypes>;
@@ -103,57 +109,14 @@ function useCreateGlobalVerticalScaleBroadcastFunc(
     return broadcastVerticalScaleChange;
 }
 
-export function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
-    const nonUniqueCurveNames = useAtomValue(nonUniqueCurveNamesAtom);
-
-    const trackConfigs = props.templateTrackConfigs;
-    const trajectoryData = props.trajectoryData;
-    const curveData = props.curveData;
-    const intersectionReferenceSystem = props.intersectionReferenceSystem;
-    const padDataWithEmptyRows = props.padDataWithEmptyRows;
-
-    const wellpicks = React.useMemo(() => createLogViewerWellPicks(props.wellpicks), [props.wellpicks]);
-
-    // Curve data transform is a bit heavy, so we use Memo-hooks to reduce re-render overhead
-    const template = React.useMemo(
-        () => createLogTemplate(trackConfigs, nonUniqueCurveNames),
-        [trackConfigs, nonUniqueCurveNames],
-    );
-
-    const welllog = React.useMemo(() => {
-        return createWellLogSets(
-            curveData,
-            trajectoryData,
-            intersectionReferenceSystem,
-            nonUniqueCurveNames,
-            padDataWithEmptyRows,
-        );
-    }, [curveData, trajectoryData, intersectionReferenceSystem, padDataWithEmptyRows, nonUniqueCurveNames]);
-
-    return { template, welllog, wellpicks };
-}
-
-function useWorkbenchColorTables(workbenchSettings: WorkbenchSettings): colorTablesObj[] {
-    const workbenchColorScale = workbenchSettings.useContinuousColorScale({
-        gradientType: ColorScaleGradientType.Sequential,
-    });
-
-    return React.useMemo(() => createContinuousColorScaleForMap(workbenchColorScale), [workbenchColorScale]);
-}
-
 export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProps) {
-    const colorTables = useWorkbenchColorTables(props.moduleProps.workbenchSettings);
-    const moduleInstanceId = props.moduleProps.viewContext.getInstanceIdString();
-    const syncableSettingKeys = props.moduleProps.viewContext.useSyncedSettingKeys();
-
     const wellboreUuid = props.wellboreHeader?.wellboreUuid ?? null;
     const hoverService = props.moduleProps.hoverService;
 
-    // Main log viewer data
-    const { template, welllog, wellpicks } = useViewerDataTransform(props);
+    const moduleInstanceId = props.moduleProps.viewContext.getInstanceIdString();
+    const syncableSettingKeys = props.moduleProps.viewContext.useSyncedSettingKeys();
 
-    // WellLogViewer uses an internal controller to change things like zoom, selection and so on. Use this when possible to avoid uneccessary re-renders
-    // ? Would a ref be more correct?
+    // <WellLogViewer /> uses an internal controller to change things like zoom, selection and so on. Use this when possible to avoid uneccessary re-renders
     const [wellLogController, setWellLogController] = React.useState<WellLogController | null>(null);
     const [wellLogReadout, setWellLogReadout] = React.useState<Info[]>([]);
 
@@ -216,7 +179,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
         function handleSelection() {
             let currentSelection = wellLogController?.getContentSelection()[0] ?? null;
             // Value given is occasionally NaN (i.e. when hovering an empty log)
-            if (_.isNaN(currentSelection)) currentSelection = null;
+            if (isNaN(currentSelection)) currentSelection = null;
 
             broadcastMdHover(currentSelection);
 
@@ -238,18 +201,17 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
         <div className="h-full [&_.welllogview_.overlay_.depth]:invisible!" onMouseLeave={handleMouseOut}>
             <WellLogViewer
                 id="well-log-viewer"
-                wellLogSets={welllog}
-                template={template}
-                wellpick={wellpicks}
-                selection={wellLogSelection}
+                template={props.viewerTemplate}
+                wellLogSets={props.wellLogSets}
+                wellpick={props.wellPicks}
                 horizontal={props.horizontal}
-                // Removes the default right-side readout panel
-                layout={{ right: undefined }}
+                selection={wellLogSelection}
+                layout={VIEWER_LAYOUT}
                 axisMnemos={AXIS_MNEMOS}
                 axisTitles={AXIS_TITLES}
-                colorMapFunctions={colorTables}
+                colorMapFunctions={props.colorMapFunctions ?? []}
                 // Disable the pin and selection logic, since we dont use that for anything yet
-                options={{ hideSelectionInterval: true, maxVisibleTrackNum: 12 }}
+                options={VIEWER_OPTIONS}
                 onTrackMouseEvent={handleTrackMouseEvent}
                 onCreateController={handleCreateController}
                 onContentSelection={handleSelection}
@@ -258,7 +220,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
             />
 
             <ReadoutWrapper
-                templateTracks={props.templateTrackConfigs}
+                templateTracks={props.viewerTemplate?.tracks ?? []}
                 wellLogReadout={wellLogReadout}
                 hide={!isHoveringThisWellbore}
             />

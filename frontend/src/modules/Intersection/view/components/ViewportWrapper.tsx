@@ -50,7 +50,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const [prevViewport, setPrevViewport] = React.useState<Viewport | null>(null);
     const [prevSyncedViewport, setPrevSyncedViewport] = React.useState<Viewport | null>(null);
 
-    const [verticalScale, setVerticalScale] = React.useState<number>(1);
+    const [verticalScale, setVerticalScale] = React.useState<number>(10.0);
     const [prevSyncedVerticalScale, setPrevSyncedVerticalScale] = React.useState<number | null>(null);
 
     const [fitInViewStatus, setFitInViewStatus] = React.useState<FitInViewStatus>(FitInViewStatus.ON);
@@ -98,6 +98,23 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
         [props.focusBounds, onViewportRefocused, verticalScalingFactor, viewport],
     );
 
+    React.useEffect(() => {
+        if (props.doRefocus && props.focusBounds && isValidBounds(props.focusBounds)) {
+            refocusViewport();
+        }
+    }, [props.doRefocus, props.focusBounds, refocusViewport]);
+
+    React.useEffect(() => {
+        if (!isEqual(props.focusBounds, prevFocusBounds)) {
+            setPrevFocusBounds(cloneDeep(props.focusBounds));
+
+            // Update viewport if fit in view is ON
+            if (props.focusBounds && fitInViewStatus === FitInViewStatus.ON) {
+                refocusViewport();
+            }
+        }
+    }, [props.focusBounds, fitInViewStatus, prevFocusBounds, refocusViewport]);
+
     if (viewport && isValidViewport(viewport) && !isEqual(viewport, prevViewport)) {
         setPrevViewport(cloneDeep(viewport));
         setPrevSyncedViewport(cloneDeep(viewport));
@@ -115,23 +132,10 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
         }
     }
 
-    if (props.doRefocus && props.focusBounds && isValidBounds(props.focusBounds)) {
-        refocusViewport();
-    }
-
     if (syncedVerticalScale !== prevSyncedVerticalScale) {
         setPrevSyncedVerticalScale(syncedVerticalScale);
         if (syncedVerticalScale !== null) {
             setVerticalScale(syncedVerticalScale);
-        }
-    }
-
-    if (!isEqual(props.focusBounds, prevFocusBounds)) {
-        setPrevFocusBounds(cloneDeep(props.focusBounds));
-
-        // Update viewport if fit in view is ON
-        if (props.focusBounds && fitInViewStatus === FitInViewStatus.ON) {
-            refocusViewport();
         }
     }
 
@@ -191,7 +195,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const handleVerticalScaleIncrease = React.useCallback(
         function handleVerticalScaleIncrease(): void {
             setVerticalScale((prev) => {
-                const newVerticalScale = prev + 0.1;
+                const newVerticalScale = Math.floor(prev + 1.0);
                 setVerticalScale(newVerticalScale);
                 props.workbenchServices.publishGlobalData(
                     "global.syncValue.verticalScale",
@@ -205,9 +209,9 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     );
 
     const handleVerticalScaleDecrease = React.useCallback(
-        function handleVerticalScaleIncrease(): void {
+        function handleVerticalScaleDecrease(): void {
             setVerticalScale((prev) => {
-                const newVerticalScale = Math.max(0.1, prev - 0.1);
+                const newVerticalScale = Math.max(1.0, Math.ceil(prev - 1.0));
                 setVerticalScale(newVerticalScale);
                 props.workbenchServices.publishGlobalData(
                     "global.syncValue.verticalScale",

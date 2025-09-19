@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
+from webviz_pkg.core_utils.timestamp_utils import iso_str_to_timestamp_utc_ms
 
 from .sumo_client_factory import create_sumo_client
 
@@ -21,6 +22,7 @@ class CaseInfo(BaseModel):
     name: str
     status: str
     user: str
+    updated_at_utc_ms: int
 
 
 class SumoInspector:
@@ -38,10 +40,17 @@ class SumoInspector:
         return [FieldInfo(identifier=field_ident) for field_ident in field_idents]
 
     async def _get_case_info_async(self, search_context: SearchContext, case_uuid: str) -> CaseInfo:
-
         case = await search_context.get_case_by_uuid_async(case_uuid)
-        print(await case.timestamps_async)
-        return CaseInfo(uuid=case.uuid, name=case.name, status=case.status, user=case.user)
+
+        timestamp_str = case.metadata["_sumo"]["timestamp"]
+
+        return CaseInfo(
+            uuid=case.uuid,
+            name=case.name,
+            status=case.status,
+            user=case.user,
+            updated_at_utc_ms=iso_str_to_timestamp_utc_ms(timestamp_str),
+        )
 
     async def get_cases_async(self, field_identifier: str) -> List[CaseInfo]:
         """Get list of cases for specified field"""

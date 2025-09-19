@@ -72,21 +72,31 @@ def pvt_dataframe_to_api_data(data_frame: pd.DataFrame) -> List[PvtData]:
                 volumefactor=df_grouped_on_pvtnum["VOLUMEFACTOR"].tolist(),
                 viscosity=df_grouped_on_pvtnum["VISCOSITY"].tolist(),
                 density=df_grouped_on_pvtnum["DENSITY"].tolist(),
-                pressure_unit=df_grouped_on_pvtnum["PRESSURE_UNIT"].iloc[0]
-                if "PRESSURE_UNIT" in df_grouped_on_pvtnum.columns
-                else "bar",
-                volumefactor_unit=df_grouped_on_pvtnum["VOLUMEFACTOR_UNIT"].iloc[0]
-                if "VOLUMEFACTOR_UNIT" in df_grouped_on_pvtnum.columns
-                else "Rm³/Sm³",
-                viscosity_unit=df_grouped_on_pvtnum["VISCOSITY_UNIT"].iloc[0]
-                if "VISCOSITY_UNIT" in df_grouped_on_pvtnum.columns
-                else "cP",
-                density_unit=df_grouped_on_pvtnum["DENSITY_UNIT"].iloc[0]
-                if "DENSITY_UNIT" in df_grouped_on_pvtnum.columns
-                else "kg/m³",
-                ratio_unit=df_grouped_on_pvtnum["RATIO_UNIT"].iloc[0]
-                if "RATIO_UNIT" in df_grouped_on_pvtnum.columns
-                else "Sm³/Sm³",
+                pressure_unit=(
+                    df_grouped_on_pvtnum["PRESSURE_UNIT"].iloc[0]
+                    if "PRESSURE_UNIT" in df_grouped_on_pvtnum.columns
+                    else "bar"
+                ),
+                volumefactor_unit=(
+                    df_grouped_on_pvtnum["VOLUMEFACTOR_UNIT"].iloc[0]
+                    if "VOLUMEFACTOR_UNIT" in df_grouped_on_pvtnum.columns
+                    else "Rm³/Sm³"
+                ),
+                viscosity_unit=(
+                    df_grouped_on_pvtnum["VISCOSITY_UNIT"].iloc[0]
+                    if "VISCOSITY_UNIT" in df_grouped_on_pvtnum.columns
+                    else "cP"
+                ),
+                density_unit=(
+                    df_grouped_on_pvtnum["DENSITY_UNIT"].iloc[0]
+                    if "DENSITY_UNIT" in df_grouped_on_pvtnum.columns
+                    else "kg/m³"
+                ),
+                ratio_unit=(
+                    df_grouped_on_pvtnum["RATIO_UNIT"].iloc[0]
+                    if "RATIO_UNIT" in df_grouped_on_pvtnum.columns
+                    else "Sm³/Sm³"
+                ),
             )
             list_of_pvtdata.append(pvt_data)
 

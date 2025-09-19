@@ -56,10 +56,10 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
     // Field select
     const fieldsQuery = useQuery({ ...getFieldsOptions() });
 
-    const fieldOpts = fieldsQuery.data?.map((f) => ({ value: f.field_identifier, label: f.field_identifier })) ?? [];
+    const fieldOpts = fieldsQuery.data?.map((f) => ({ value: f.fieldIdentifier, label: f.fieldIdentifier })) ?? [];
     const [selectedField, setSelectedField] = useValidState<string>({
         initialState: readInitialStateFromLocalStorage("selectedField"),
-        validStates: fieldsQuery.data?.map((item) => item.field_identifier) ?? [],
+        validStates: fieldsQuery.data?.map((item) => item.fieldIdentifier) ?? [],
         keepStateWhenInvalid: true,
     });
 
@@ -110,7 +110,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
             id: el.uuid,
             values: [
                 { label: el.name },
-                { label: el.user, adornment: <UserAvatar key={el.uuid} userId={el.user} /> },
+                { label: el.user, adornment: <UserAvatar key={el.uuid} userEmail={`${el.user}@equinor.com`} /> },
                 { label: el.status },
             ],
         })) ?? [];
@@ -121,26 +121,38 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
         keepStateWhenInvalid: true,
     });
 
+    const selectedCase = React.useMemo(() => {
+        const cases = casesQuery.data ?? [];
+        return cases.find((c) => c.uuid === selectedCaseId);
+    }, [casesQuery.data, selectedCaseId]);
+
     // Ensemble select
     const ensemblesQuery = useQuery({
         ...getEnsemblesOptions({
+            query: { t: selectedCase?.updatedAtUtcMs },
             path: {
                 case_uuid: selectedCaseId,
             },
         }),
-        enabled: casesQuery.isSuccess,
+        enabled: casesQuery.isSuccess && !!selectedCase,
         gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
     });
+
     const [selectedEnsembleName, setSelectedEnsembleName] = useValidState<string>({
         initialState: "",
         validStates: ensemblesQuery.data?.map((el) => el.name) ?? [],
         keepStateWhenInvalid: true,
     });
 
+    const selectedEnsemble = React.useMemo(() => {
+        const ensembles = ensemblesQuery.data ?? [];
+        return ensembles.find((ens) => ens.name === selectedEnsembleName);
+    }, [ensemblesQuery.data, selectedEnsembleName]);
+
     const ensembleOpts =
         ensemblesQuery.data?.map((e) => ({
-            label: `${e.name}  (${e.realization_count} reals)`,
+            label: `${e.name}  (${e.realizationCount} reals)`,
             value: e.name,
         })) ?? [];
 
@@ -171,6 +183,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
 
     function handleAddRegularEnsemble() {
         if (ensembleAlreadySelected) return;
+        if (!selectedEnsemble) return;
 
         const caseName = casesQuery.data?.find((c) => c.uuid === selectedCaseId)?.name ?? "UNKNOWN";
 
@@ -180,6 +193,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
             ensembleName: selectedEnsembleName,
             color: props.nextEnsembleColor,
             customName: null,
+            timestamps: selectedEnsemble.timestamps,
         });
     }
 

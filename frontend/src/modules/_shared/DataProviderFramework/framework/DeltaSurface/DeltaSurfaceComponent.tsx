@@ -1,9 +1,8 @@
 import React from "react";
 
 import { SortableListGroup } from "@lib/components/SortableList";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
-
-import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import type { ActionGroup } from "../../Actions";
 import { Actions } from "../../Actions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";

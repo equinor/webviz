@@ -1,6 +1,6 @@
 import type { QueryObserverResult } from "@tanstack/react-query";
 
-import type { Observations_api } from "@api";
+import type { Observations_api, VectorHistoricalData_api } from "@api";
 import {
     Frequency_api,
     getDeltaEnsembleRealizationsVectorData,
@@ -16,7 +16,11 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
-import type { EnsembleVectorObservationDataMap } from "@modules/SimulationTimeSeries/typesAndEnums";
+import { showHistoricalAtom } from "@modules/SimulationTimeSeries/settings/atoms/baseAtoms";
+import type {
+    EnsembleVectorObservationDataMap,
+    VectorWithHistoricalData,
+} from "@modules/SimulationTimeSeries/typesAndEnums";
 import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 import {
@@ -25,7 +29,6 @@ import {
     vectorSpecificationsAtom,
     visualizationModeAtom,
 } from "./baseAtoms";
-import { regularEnsembleVectorSpecificationsAtom } from "./derivedAtoms";
 
 export const vectorDataQueriesAtom = atomWithQueries((get) => {
     const vectorSpecifications = get(vectorSpecificationsAtom);
@@ -250,13 +253,23 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
     };
 });
 
+/**
+ * Create an array of object with vector specification and its historical vector data
+ *
+ * As not all vector specifications have historical vectors, we create an array of object with
+ * vector specification and its historical vectors data, for each vector specification that has historical vectors.
+ */
 export const regularEnsembleHistoricalVectorDataQueriesAtom = atomWithQueries((get) => {
+    const showHistorical = get(showHistoricalAtom);
     const resampleFrequency = get(resampleFrequencyAtom);
-    const regularEnsembleVectorSpecifications = get(regularEnsembleVectorSpecificationsAtom);
+    const vectorSpecifications = get(vectorSpecificationsAtom);
 
-    const enabled = regularEnsembleVectorSpecifications.some((elm) => elm.hasHistoricalVector);
+    // Vector specifications for Regular Ensemble that have historical vectors
+    const vectorSpecificationsWithHistorical = vectorSpecifications.filter(
+        (elm) => isEnsembleIdentOfType(elm.ensembleIdent, RegularEnsembleIdent) && elm.hasHistoricalVector,
+    );
 
-    const queries = regularEnsembleVectorSpecifications.map((item) => {
+    const queries = vectorSpecificationsWithHistorical.map((item) => {
         const vectorSpecification = {
             ...item,
             ensembleIdent: item.ensembleIdent as RegularEnsembleIdent,
@@ -284,7 +297,7 @@ export const regularEnsembleHistoricalVectorDataQueriesAtom = atomWithQueries((g
                 return data;
             },
             enabled: Boolean(
-                enabled &&
+                showHistorical &&
                     vectorSpecification.vectorName &&
                     vectorSpecification.ensembleIdent.getCaseUuid() &&
                     vectorSpecification.ensembleIdent.getEnsembleName(),
@@ -294,9 +307,40 @@ export const regularEnsembleHistoricalVectorDataQueriesAtom = atomWithQueries((g
 
     return {
         queries,
+        combine: (results: QueryObserverResult<VectorHistoricalData_api>[]) => {
+            const vectorsWithHistoricalData: VectorWithHistoricalData[] = [];
+            if (!vectorSpecificationsWithHistorical) {
+                return { isFetching: false, isError: false, vectorsWithHistoricalData };
+            }
+
+            results.forEach((result, index) => {
+                const vectorSpecification = vectorSpecificationsWithHistorical.at(index);
+                if (!vectorSpecification || !result.data) {
+                    return;
+                }
+
+                vectorsWithHistoricalData.push({
+                    vectorSpecification,
+                    data: result.data,
+                });
+            });
+
+            return {
+                isFetching: results.some((result) => result.isFetching),
+                isError: results.some((result) => result.isError),
+                vectorsWithHistoricalData,
+            };
+        },
     };
 });
 
+/**
+ * Create map of ensemble ident and its observation data per vector
+ *
+ * As observations are provided per ensemble, we must retrieve ensemble observations and look for the
+ * selected vector specifications among the observations data. If selected vector specification is among the
+ * observations, we add it to a map for vector and observations data for respective ensemble ident.
+ */
 export const vectorObservationsQueriesAtom = atomWithQueries((get) => {
     const showObservations = get(showObservationsAtom);
     const vectorSpecifications = get(vectorSpecificationsAtom);

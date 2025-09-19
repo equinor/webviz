@@ -37,19 +37,19 @@ def get_time_filter(time_or_interval_str: Optional[str]) -> TimeFilter:
 
 async def get_grid_geometry_blob_id_async(
     sumo_client: SumoClient,
-    case_id: str,
-    iteration: str,
+    case_uuid: str,
+    ensemble_name: str,
     realization: int,
     grid_name: str,
 ) -> str:
-    """Get the blob id for a given grid geometry in a case, iteration and realization"""
+    """Get the blob id for a given grid geometry in a case, ensemble and realization"""
     payload = {
         "query": {
             "bool": {
                 "must": [
-                    {"match": {"_sumo.parent_object.keyword": case_id}},
+                    {"match": {"_sumo.parent_object.keyword": case_uuid}},
                     {"match": {"class": "cpgrid"}},
-                    {"match": {"fmu.iteration.name": iteration}},
+                    {"match": {"fmu.ensemble.name": ensemble_name}},
                     {"match": {"fmu.realization.id": realization}},
                     {"match": {"data.name.keyword": grid_name}},
                 ]
@@ -68,23 +68,23 @@ async def get_grid_geometry_blob_id_async(
 
 async def get_grid_geometry_and_property_blob_ids_async(
     sumo_client: SumoClient,
-    case_id: str,
-    iteration: str,
+    case_uuid: str,
+    ensemble_name: str,
     realization: int,
     grid_name: str,
     parameter_name: str,
     parameter_time_or_interval_str: Optional[str] = None,
 ) -> Tuple[str, str]:
-    """Get the blob ids for both grid geometry and grid property in a case, iteration, and realization"""
+    """Get the blob ids for both grid geometry and grid property in a case, ensemble, and realization"""
     query: Dict[str, Any] = {
         "bool": {
             "should": [
                 {
                     "bool": {
                         "must": [
-                            {"term": {"_sumo.parent_object.keyword": case_id}},
+                            {"term": {"_sumo.parent_object.keyword": case_uuid}},
                             {"term": {"class.keyword": "cpgrid"}},
-                            {"term": {"fmu.iteration.name.keyword": iteration}},
+                            {"term": {"fmu.ensemble.name.keyword": ensemble_name}},
                             {"term": {"fmu.realization.id": realization}},
                             {"term": {"data.name.keyword": grid_name}},
                         ]
@@ -93,9 +93,9 @@ async def get_grid_geometry_and_property_blob_ids_async(
                 {
                     "bool": {
                         "must": [
-                            {"term": {"_sumo.parent_object.keyword": case_id}},
+                            {"term": {"_sumo.parent_object.keyword": case_uuid}},
                             {"term": {"class.keyword": "cpgrid_property"}},
-                            {"term": {"fmu.iteration.name.keyword": iteration}},
+                            {"term": {"fmu.ensemble.name.keyword": ensemble_name}},
                             {"term": {"fmu.realization.id": realization}},
                             {"term": {"data.name.keyword": parameter_name}},
                             {
@@ -118,10 +118,20 @@ async def get_grid_geometry_and_property_blob_ids_async(
     }
     time_filter = get_time_filter(parameter_time_or_interval_str)
 
-    if time_filter.time_type != TimeType.NONE:
-        query["bool"]["should"][1]["bool"]["must"].append({"term": {"data.time.t0.value": time_filter.start}})
-    if time_filter.time_type == TimeType.INTERVAL:
-        query["bool"]["should"][1]["bool"]["must"].append({"term": {"data.time.t1.value": time_filter.end}})
+    grid_property_must_clause = query["bool"]["should"][1]["bool"]["must"]
+
+    if time_filter.time_type == TimeType.NONE:
+        grid_property_must_clause.append({"bool": {"must_not": {"exists": {"field": "data.time"}}}})
+
+    elif time_filter.time_type == TimeType.TIMESTAMP:
+        # For a single timestamp, t0 must match AND t1 must NOT exist.
+        grid_property_must_clause.append({"term": {"data.time.t0.value": time_filter.start}})
+        grid_property_must_clause.append({"bool": {"must_not": {"exists": {"field": "data.time.t1"}}}})
+
+    elif time_filter.time_type == TimeType.INTERVAL:
+        # For an interval, both t0 and t1 must match exactly.
+        grid_property_must_clause.append({"term": {"data.time.t0.value": time_filter.start}})
+        grid_property_must_clause.append({"term": {"data.time.t1.value": time_filter.end}})
 
     payload = {
         "query": query,
@@ -143,6 +153,9 @@ async def get_grid_geometry_and_property_blob_ids_async(
             grid_property_id = hit["_id"]
 
     if not grid_geometry_id or not grid_property_id:
-        raise InvalidDataError("Did not find expected document types", service=Service.SUMO)
+        raise InvalidDataError(
+            f"Did not find expected document types: {parameter_name=} {parameter_time_or_interval_str=} {grid_name=} {grid_geometry_id=} {grid_property_id=}",
+            service=Service.SUMO,
+        )
 
     return grid_geometry_id, grid_property_id

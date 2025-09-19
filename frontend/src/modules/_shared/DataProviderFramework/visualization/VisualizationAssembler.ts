@@ -6,6 +6,8 @@ import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
 import * as bbox from "@lib/utils/bbox";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
+import type { WellPickDataCollection } from "@modules/WellLogViewer/DataProviderFramework/visualizations/wellpicks";
+import type { TemplatePlot } from "@modules/WellLogViewer/types";
 
 import type { GroupDelegate } from "../delegates/GroupDelegate";
 import { DataProvider, DataProviderStatus } from "../framework/DataProvider/DataProvider";
@@ -34,6 +36,7 @@ export enum VisualizationItemType {
 export enum VisualizationTarget {
     DECK_GL = "deck_gl",
     ESV = "esv",
+    WSC_WELL_LOG = "wsc_well_log",
     // VIDEX = "videx",
 }
 
@@ -45,6 +48,7 @@ export interface EsvLayerItemsMaker {
 export type DataProviderVisualizationTargetTypes = {
     [VisualizationTarget.DECK_GL]: DeckGlLayer<any>;
     [VisualizationTarget.ESV]: EsvLayerItemsMaker;
+    [VisualizationTarget.WSC_WELL_LOG]: TemplatePlot | WellPickDataCollection;
 };
 
 export type DataProviderVisualization<

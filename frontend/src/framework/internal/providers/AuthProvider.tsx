@@ -39,6 +39,9 @@ export const AuthProvider: React.FC<{ children: React.ReactElement }> = (props) 
 
     React.useEffect(() => {
         getLoggedInUser({
+            query: {
+                includeGraphApiInfo: true,
+            },
             throwOnError: true,
         })
             .then((user) => {

@@ -11,6 +11,7 @@ import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/vis
 import {
     type StatisticalSurfaceData,
     type StatisticalSurfaceSettings,
+    type StatisticalSurfaceStoredData,
     SurfaceDataFormat,
 } from "../customDataProviderImplementations/StatisticalSurfaceProvider";
 
@@ -36,7 +37,10 @@ export function makeStatisticalSurfaceLayer({
     name,
     getData,
     getSetting,
-}: TransformerArgs<StatisticalSurfaceSettings, StatisticalSurfaceData>): ColormapLayer | Grid3DLayer | null {
+}: TransformerArgs<StatisticalSurfaceSettings, StatisticalSurfaceData, StatisticalSurfaceStoredData>):
+    | ColormapLayer
+    | Grid3DLayer
+    | null {
     const data = getData();
     const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
 

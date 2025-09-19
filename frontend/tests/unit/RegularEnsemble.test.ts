@@ -5,7 +5,7 @@ import { EnsembleParameters, ParameterType } from "@framework/EnsembleParameters
 import type { Sensitivity } from "@framework/EnsembleSensitivities";
 import { EnsembleSensitivities, SensitivityType } from "@framework/EnsembleSensitivities";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
-
+import { makeEnsembleTimeStamp } from "tests/utils/ensemble";
 
 describe("RegularEnsemble", () => {
     const fieldIdentifier = "field1";
@@ -41,6 +41,7 @@ describe("RegularEnsemble", () => {
         sensitivityArray,
         color,
         customName,
+        makeEnsembleTimeStamp(),
     );
 
     test("should create an instance of RegularEnsemble", () => {
