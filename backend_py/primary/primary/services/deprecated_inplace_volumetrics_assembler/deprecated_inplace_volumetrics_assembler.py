@@ -1,7 +1,10 @@
 import asyncio
 
+import logging
 import pyarrow as pa
 import polars as pl
+
+from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary.services.sumo_access.deprecated_inplace_volumetrics_access import (
     DEPRECATED_InplaceVolumetricsAccess,
@@ -48,9 +51,6 @@ from ._utils import (
 )
 
 
-import logging
-from webviz_pkg.core_utils.perf_timer import PerfTimer
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -78,10 +78,11 @@ class DEPRECATED_InplaceVolumetricsAssembler:
     def __init__(self, inplace_volumetrics_access: DEPRECATED_InplaceVolumetricsAccess):
         self._inplace_volumetrics_access = inplace_volumetrics_access
 
+    # pylint: disable=too-many-locals
     async def get_volumetric_table_metadata_async(self) -> list[InplaceVolumetricsTableDefinition]:
         vol_table_names = await self._inplace_volumetrics_access.get_inplace_volumetrics_table_names_async()
 
-        async def get_named_inplace_volumetrics_table_async(table_name: str) -> dict[str, pa.Table]:
+        async def get_named_inplace_volumetrics_table_async(table_name: str) -> dict[str, dict[str, list[str]]]:
             return {
                 table_name: await self._inplace_volumetrics_access.get_inplace_volumetrics_columns_async(table_name)
             }

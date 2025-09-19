@@ -1,4 +1,4 @@
-FROM python:3.11-slim@sha256:ad2c4e5884418404c5289acad4a471dde8500e24ba57ad574cdcae46523e507a
+FROM python:3.13-slim@sha256:1bca0202e953784ac2a1daf36ebbc9cbebed48afcfba12d1225aaab3793eca33
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends git ca-certificates \

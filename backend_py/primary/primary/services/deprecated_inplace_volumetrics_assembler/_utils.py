@@ -1,3 +1,9 @@
+"""
+This file contains general utility functions for the Inplace Volumetrics provider
+
+The methods can be used to calculate, aggregate and create data for the Inplace Volumetrics provider
+"""
+
 from typing import Callable
 
 import numpy as np
@@ -15,12 +21,6 @@ from primary.services.sumo_access.deprecated_inplace_volumetrics_types import (
 )
 
 from primary.services.sumo_access.deprecated_inplace_volumetrics_access import DEPRECATED_InplaceVolumetricsAccess
-
-"""
-This file contains general utility functions for the Inplace Volumetrics provider
-
-The methods can be used to calculate, aggregate and create data for the Inplace Volumetrics provider
-"""
 
 
 def get_valid_result_names_from_list(result_names: list[str]) -> list[str]:
@@ -60,7 +60,7 @@ def create_per_group_summed_realization_volume_df(
 
     # Selector columns not in group by will be excluded, these should not be aggregated
     per_group_summed_df = volume_df.group_by(columns_to_group_by_for_sum).agg(
-        [pl.sum("*").exclude(possible_selector_columns)]
+        [pl.all().exclude(possible_selector_columns).sum()]
     )
 
     return per_group_summed_df
@@ -206,7 +206,7 @@ def create_grouped_statistical_result_table_data_polars(
         # Only keep the result name columns and its statistics (i.e. keep no identifier columns)
         per_group_statistical_df = result_df.select(statistic_aggregation_expressions)
     else:
-        group_by_identifier_values = list(set([elm.value for elm in group_by_identifiers]))
+        group_by_identifier_values = list({elm.value for elm in group_by_identifiers})
         # Perform aggregation per grouping
         per_group_statistical_df = (
             result_df.select(group_by_identifier_values + valid_result_names)
