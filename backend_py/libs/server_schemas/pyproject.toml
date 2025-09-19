@@ -1,19 +1,18 @@
 [project]
 name = "server-schemas"
 version = "0.0.1"
-authors = [ { name = "R&T Equinor" }, { name = "Ceetron Solutions AS" } ]
+authors = [{ name = "R&T Equinor" }, { name = "Ceetron Solutions AS" }]
 description = "Package with shared schemas for server messages/requests/responses"
 requires-python = "^3.11"
 dynamic = ["dependencies"]
 
 [tool.poetry]
 requires-poetry = ">=2.1"
-packages = [ { include = "webviz_pkg" } ]
+packages = [{ include = "webviz_pkg" }]
 
 [tool.poetry.dependencies]
-numpy = "^1.24.1"
 pydantic = "^2.3.0"
-core_utils = {path = "../core_utils", develop = true}
+core_utils = { path = "../core_utils", develop = true }
 
 [build-system]
 requires = ["poetry-core"]
