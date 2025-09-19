@@ -12,7 +12,15 @@ from fmu.sumo.explorer.objects import Surface
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 from primary.services.utils.otel_span_tracing import otel_span_decorator, start_otel_span, start_otel_span_async
 from primary.services.utils.statistic_function import StatisticFunction
-from primary.services.service_exceptions import Service, MultipleDataMatchesError, InvalidParameterError
+from primary.services.utils.surface_helpers import are_all_surface_values_undefined
+from primary.services.service_exceptions import (
+    Service,
+    NoDataError,
+    MultipleDataMatchesError,
+    InvalidParameterError,
+    ServiceRequestError,
+    InvalidDataError,
+)
 
 from .surface_types import SurfaceMeta, SurfaceMetaSet
 from .generic_types import SumoContent
@@ -25,32 +33,32 @@ LOGGER = logging.getLogger(__name__)
 
 
 class SurfaceAccess:
-    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str | None):
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, ensemble_name: str | None):
         self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
-        self._iteration_name: str | None = iteration_name
+        self._ensemble_name: str | None = ensemble_name
 
     @classmethod
-    def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "SurfaceAccess":
+    def from_ensemble_name(cls, access_token: str, case_uuid: str, ensemble_name: str) -> "SurfaceAccess":
         sumo_client = create_sumo_client(access_token)
-        return SurfaceAccess(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
+        return SurfaceAccess(sumo_client=sumo_client, case_uuid=case_uuid, ensemble_name=ensemble_name)
 
     @classmethod
-    def from_case_uuid_no_iteration(cls, access_token: str, case_uuid: str) -> "SurfaceAccess":
+    def from_case_uuid_no_ensemble(cls, access_token: str, case_uuid: str) -> "SurfaceAccess":
         sumo_client = create_sumo_client(access_token)
-        return SurfaceAccess(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=None)
+        return SurfaceAccess(sumo_client=sumo_client, case_uuid=case_uuid, ensemble_name=None)
 
     @otel_span_decorator()
     async def get_realization_surfaces_metadata_async(self) -> SurfaceMetaSet:
-        if not self._iteration_name:
+        if not self._ensemble_name:
             raise InvalidParameterError(
-                "Iteration name must be set to get metadata for realization surfaces", Service.SUMO
+                "Ensemble name must be set to get metadata for realization surfaces", Service.SUMO
             )
 
         perf_metrics = PerfMetrics()
 
         async with asyncio.TaskGroup() as tg:
-            queries = RealizationSurfQueries(self._sumo_client, self._case_uuid, self._iteration_name)
+            queries = RealizationSurfQueries(self._sumo_client, self._case_uuid, self._ensemble_name)
             static_surfs_task = tg.create_task(queries.find_surf_info_async(SurfTimeType.NO_TIME))
             time_point_surfs_task = tg.create_task(queries.find_surf_info_async(SurfTimeType.TIME_POINT))
             interval_surfs_task = tg.create_task(queries.find_surf_info_async(SurfTimeType.INTERVAL))
@@ -122,24 +130,24 @@ class SurfaceAccess:
     @otel_span_decorator()
     async def get_realization_surface_data_async(
         self, real_num: int, name: str, attribute: str, time_or_interval_str: str | None = None
-    ) -> xtgeo.RegularSurface | None:
+    ) -> xtgeo.RegularSurface:
         """
         Get surface data for a realization surface
         If time_or_interval_str is None, only surfaces with no time information will be considered.
         """
-        if not self._iteration_name:
-            raise InvalidParameterError("Iteration name must be set to get realization surface", Service.SUMO)
+        if not self._ensemble_name:
+            raise InvalidParameterError("Ensemble name must be set to get realization surface", Service.SUMO)
 
         perf_metrics = PerfMetrics()
 
         surf_str = self._make_real_surf_log_str(real_num, name, attribute, time_or_interval_str)
 
-        time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
+        time_filter = _time_or_interval_str_to_sumo_time_filter(time_or_interval_str)
         search_context = SearchContext(self._sumo_client).surfaces.filter(
             uuid=self._case_uuid,
             is_observation=False,
             aggregation=False,
-            iteration=self._iteration_name,
+            ensemble=self._ensemble_name,
             realization=real_num,
             name=name,
             time=time_filter,
@@ -152,8 +160,7 @@ class SurfaceAccess:
                 f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO
             )
         if surf_count == 0:
-            LOGGER.warning(f"No realization surface found in Sumo for: {surf_str}")
-            return None
+            raise NoDataError(f"No realization surface found in Sumo for: {surf_str}", Service.SUMO)
 
         sumo_surf: Surface = await search_context.getitem_async(0)
         perf_metrics.record_lap("locate")
@@ -168,6 +175,9 @@ class SurfaceAccess:
             xtgeo_surf = xtgeo.surface_from_file(byte_stream)
             perf_metrics.record_lap("xtgeo-read")
 
+        if are_all_surface_values_undefined(xtgeo_surf):
+            raise InvalidDataError("Surface contains only undefined attribute values", Service.SUMO)
+
         LOGGER.debug(
             f"Got realization surface from Sumo in: {perf_metrics.to_string()} "
             f"[{xtgeo_surf.ncol}x{xtgeo_surf.nrow}, {size_mb:.2f}MB] ({surf_str})"
@@ -178,7 +188,7 @@ class SurfaceAccess:
     @otel_span_decorator()
     async def get_observed_surface_data_async(
         self, name: str, attribute: str, time_or_interval_str: str
-    ) -> xtgeo.RegularSurface | None:
+    ) -> xtgeo.RegularSurface:
         """
         Get surface data for an observed surface
         """
@@ -186,7 +196,7 @@ class SurfaceAccess:
 
         surf_str = self._make_obs_surf_log_str(name, attribute, time_or_interval_str)
 
-        time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
+        time_filter = _time_or_interval_str_to_sumo_time_filter(time_or_interval_str)
         search_context = SearchContext(self._sumo_client).surfaces.filter(
             uuid=self._case_uuid,
             stage="case",
@@ -202,8 +212,7 @@ class SurfaceAccess:
                 f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO
             )
         if surf_count == 0:
-            LOGGER.warning(f"No observed surface found in Sumo for: {surf_str}")
-            return None
+            raise NoDataError(f"No observed surface found in Sumo for: {surf_str}", Service.SUMO)
 
         sumo_surf: Surface = await search_context.getitem_async(0)
         perf_metrics.record_lap("locate")
@@ -213,6 +222,9 @@ class SurfaceAccess:
 
         xtgeo_surf = xtgeo.surface_from_file(byte_stream)
         perf_metrics.record_lap("xtgeo-read")
+
+        if are_all_surface_values_undefined(xtgeo_surf):
+            raise InvalidDataError("Surface contains only undefined attribute values", Service.SUMO)
 
         size_mb = byte_stream.getbuffer().nbytes / (1024 * 1024)
         LOGGER.debug(
@@ -230,15 +242,15 @@ class SurfaceAccess:
         attribute: str,
         realizations: Sequence[int] | None = None,
         time_or_interval_str: str | None = None,
-    ) -> xtgeo.RegularSurface | None:
+    ) -> xtgeo.RegularSurface:
         """
         Compute statistic and return surface data
         If realizations is None this is interpreted as a wildcard and surfaces from all realizations will be included
         in the statistics. The list of realizations cannon be empty.
         If time_or_interval_str is None, only surfaces with no time information will be considered.
         """
-        if not self._iteration_name:
-            raise InvalidParameterError("Iteration name must be set to get realization surfaces", Service.SUMO)
+        if not self._ensemble_name:
+            raise InvalidParameterError("Ensemble name must be set to get realization surfaces", Service.SUMO)
 
         if realizations is not None:
             if len(realizations) == 0:
@@ -248,13 +260,13 @@ class SurfaceAccess:
 
         surf_str = self._make_stat_surf_log_str(name, attribute, time_or_interval_str)
 
-        time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
+        time_filter = _time_or_interval_str_to_sumo_time_filter(time_or_interval_str)
 
         search_context = SearchContext(self._sumo_client).surfaces.filter(
             uuid=self._case_uuid,
             is_observation=False,
             aggregation=False,
-            iteration=self._iteration_name,
+            ensemble=self._ensemble_name,
             name=name,
             realization=realizations if realizations is not None else True,
             time=time_filter,
@@ -265,13 +277,13 @@ class SurfaceAccess:
         perf_metrics.record_lap("locate")
 
         if surf_count == 0:
-            LOGGER.warning(f"No statistical source surfaces found in Sumo for: {surf_str}")
-            return None
+            raise InvalidParameterError(f"No statistical source surfaces found in Sumo for: {surf_str}", Service.SUMO)
         if surf_count == 1:
             # As of now, the Sumo aggregation service does not support single realization aggregation.
-            # For now return None. Alternatively we could fetch the single realization surface
-            LOGGER.warning(f"Could not calculate statistical surface, only one source surface found for: {surf_str}")
-            return None
+            # For now throw an error. Alternatively we could fetch the single realization surface
+            raise InvalidParameterError(
+                f"Could not calculate statistical surface, only one source surface found for: {surf_str}", Service.SUMO
+            )
 
         # Ensure that we got data for all the requested realizations
         realizations_found = await search_context.get_field_values_async("fmu.realization.id")
@@ -284,12 +296,18 @@ class SurfaceAccess:
                     Service.SUMO,
                 )
 
-        xtgeo_surf = await _compute_statistical_surface_async(statistic_function, search_context)
+        sumo_stat_op_str = _map_to_sumo_aggregation_operation(statistic_function)
+        sumo_surf_obj = await search_context.aggregate_async(operation=sumo_stat_op_str)
+        xtgeo_surf = await sumo_surf_obj.to_regular_surface_async() if sumo_surf_obj else None
         perf_metrics.record_lap("calc-stat")
 
         if not xtgeo_surf:
-            LOGGER.warning(f"Could not calculate statistical surface using Sumo for: {surf_str}")
-            return None
+            raise ServiceRequestError(
+                f"Could not calculate statistical surface using Sumo for: {surf_str}", Service.SUMO
+            )
+
+        if are_all_surface_values_undefined(xtgeo_surf):
+            raise InvalidDataError("Statistical surface contains only undefined attribute values", Service.SUMO)
 
         LOGGER.debug(
             f"Calculated statistical surface using Sumo in: {perf_metrics.to_string()} "
@@ -299,7 +317,7 @@ class SurfaceAccess:
         return xtgeo_surf
 
     def _make_real_surf_log_str(self, real_num: int, name: str, attribute: str, date_str: str | None) -> str:
-        addr_str = f"N={name}, A={attribute}, R={real_num}, D={date_str}, C={self._case_uuid}, I={self._iteration_name}"
+        addr_str = f"N={name}, A={attribute}, R={real_num}, D={date_str}, C={self._case_uuid}, E={self._ensemble_name}"
         return addr_str
 
     def _make_obs_surf_log_str(self, name: str, attribute: str, date_str: str) -> str:
@@ -307,7 +325,7 @@ class SurfaceAccess:
         return addr_str
 
     def _make_stat_surf_log_str(self, name: str, attribute: str, date_str: str | None) -> str:
-        addr_str = f"N={name}, A={attribute}, D={date_str}, C={self._case_uuid}, I={self._iteration_name}"
+        addr_str = f"N={name}, A={attribute}, D={date_str}, C={self._case_uuid}, E={self._ensemble_name}"
         return addr_str
 
 
@@ -381,7 +399,7 @@ def _build_surface_meta_arr(
     return ret_arr
 
 
-def _time_or_interval_str_to_time_filter(time_or_interval_str: str | None) -> TimeFilter:
+def _time_or_interval_str_to_sumo_time_filter(time_or_interval_str: str | None) -> TimeFilter:
     if time_or_interval_str is None:
         return TimeFilter(TimeType.NONE)
 
@@ -404,25 +422,18 @@ def _time_or_interval_str_to_time_filter(time_or_interval_str: str | None) -> Ti
     )
 
 
-async def _compute_statistical_surface_async(
-    statistic: StatisticFunction, surface_context: SearchContext
-) -> xtgeo.RegularSurface:
-    xtgeo_surf: xtgeo.RegularSurface = None
-    if statistic == StatisticFunction.MIN:
-        xtgeo_surf = await surface_context.aggregate_async(operation="min")
-    elif statistic == StatisticFunction.MAX:
-        xtgeo_surf = await surface_context.aggregate_async(operation="max")
-    elif statistic == StatisticFunction.MEAN:
-        xtgeo_surf = await surface_context.aggregate_async(operation="mean")
-    elif statistic == StatisticFunction.P10:
-        xtgeo_surf = await surface_context.aggregate_async(operation="p10")
-    elif statistic == StatisticFunction.P90:
-        xtgeo_surf = await surface_context.aggregate_async(operation="p90")
-    elif statistic == StatisticFunction.P50:
-        xtgeo_surf = await surface_context.aggregate_async(operation="p50")
-    elif statistic == StatisticFunction.STD:
-        xtgeo_surf = await surface_context.aggregate_async(operation="std")
-    else:
-        raise ValueError("Unhandled statistic function")
+def _map_to_sumo_aggregation_operation(statistic_function: StatisticFunction) -> str:
+    sumo_agg_op = {
+        StatisticFunction.MIN: "min",
+        StatisticFunction.MAX: "max",
+        StatisticFunction.MEAN: "mean",
+        StatisticFunction.P10: "p10",
+        StatisticFunction.P90: "p90",
+        StatisticFunction.P50: "p50",
+        StatisticFunction.STD: "std",
+    }.get(statistic_function)
 
-    return await xtgeo_surf.to_regular_surface_async()
+    if sumo_agg_op is None:
+        raise ValueError(f"Unhandled statistic function: {statistic_function}")
+
+    return sumo_agg_op
