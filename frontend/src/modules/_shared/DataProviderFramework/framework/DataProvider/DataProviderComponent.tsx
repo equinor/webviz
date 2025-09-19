@@ -5,10 +5,10 @@ import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { SortableListItem } from "@lib/components/SortableList";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { SortableListItem } from "../../components/item";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
@@ -18,6 +18,8 @@ import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 
 import { DataProviderStatus, DataProviderTopic } from "./DataProvider";
 import type { DataProvider } from "./DataProvider";
+
+
 
 export type DataProviderComponentProps = {
     dataProvider: DataProvider<any, any>;

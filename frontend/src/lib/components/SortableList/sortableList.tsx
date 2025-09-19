@@ -1,19 +1,31 @@
 import React from "react";
 
-import { isEqual } from "lodash";
-
 import { createPortal } from "@lib/utils/createPortal";
-import { MANHATTAN_LENGTH, rectContainsPoint } from "@lib/utils/geometry";
+import { MANHATTAN_LENGTH, type Rect2D, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 import { point2Distance, vec2FromPointerEvent } from "@lib/utils/vec2";
 
-import type { SortableListGroupProps } from "./sortableListGroup";
-import type { SortableListItemProps } from "./sortableListItem";
+import { Content } from "./private/content";
+import { DraggedElementPlaceholder } from "./private/draggedElementPlaceholder";
+import { DragHandle } from "./private/dragHandle";
+import { DropIndicatorOverlay } from "./private/dropIndicatorOverlay";
+import { Group } from "./private/group";
+import { GroupContent } from "./private/groupContent";
+import { GroupDropOverlay } from "./private/groupDropOverlay";
+import { Item } from "./private/item";
+import { NoDropZone } from "./private/noDropZone";
+import { ScrollContainer } from "./private/scrollContainer";
 
 export enum ItemType {
     ITEM = "item",
     GROUP = "group",
+}
+
+enum Cursor {
+    GRABBING = "grabbing",
+    NOT_ALLOWED = "not-allowed",
+    NONE = "none",
 }
 
 export type IsMoveAllowedArgs = {
@@ -31,6 +43,12 @@ export type SortableListContextType = {
     hoveredElementId: string | null;
     hoveredArea: HoveredArea | null;
     dragPosition: Vec2 | null;
+
+    registerContentContainer: (el: HTMLElement | null) => void;
+    registerScrollContainerElement: (el: HTMLElement | null) => void;
+    registerNoDropZoneElement: (el: HTMLElement | null) => void;
+    unregisterNoDropZoneElement: (el: HTMLElement | null) => void;
+    setScrollOverlayMargins: (args: { top: number; bottom: number }) => void;
 };
 
 export const SortableListContext = React.createContext<SortableListContextType>({
@@ -38,11 +56,16 @@ export const SortableListContext = React.createContext<SortableListContextType>(
     hoveredElementId: null,
     hoveredArea: null,
     dragPosition: null,
+
+    registerContentContainer: () => {},
+    registerScrollContainerElement: () => {},
+    registerNoDropZoneElement: () => {},
+    unregisterNoDropZoneElement: () => {},
+    setScrollOverlayMargins: () => {},
 });
 
 export type SortableListProps = {
-    contentWhenEmpty?: React.ReactNode;
-    children: React.ReactElement<SortableListItemProps | SortableListGroupProps>[];
+    children: React.ReactNode;
     isMoveAllowed?: (args: IsMoveAllowedArgs) => boolean;
     onItemMoved?: (
         movedItemId: string,
@@ -50,59 +73,141 @@ export type SortableListProps = {
         destinationId: string | null,
         position: number,
     ) => void;
+    className?: string;
 };
 
+export type SortableListCompound = React.FC<SortableListProps> & {
+    Content: typeof Content;
+    ScrollContainer: typeof ScrollContainer;
+    Item: typeof Item;
+    Group: typeof Group;
+    NoDropZone: typeof NoDropZone;
+    DragHandle: typeof DragHandle;
+    GroupContent: typeof GroupContent;
+};
+
+// This defines the size of the areas determining if the dragged item should be inserted above or below the hovered item
 const ITEM_TOP_AND_BOTTOM_AREA_SIZE_IN_PERCENT = 50;
+// This defines the size of the areas determining if the the dragged item should be inserted above or below the hovered group
 const GROUP_TOP_AND_BOTTOM_AREA_SIZE_IN_PERCENT = 30;
+// Defines after how many milliseconds hover time over the top or bottom of the sroll container it should start scrolling
 const DEFAULT_SCROLL_TIME = 100;
+// Defines the size of the area at the top and bottom of the scroll container where auto-scrolling should start
+const AUTO_SCROLL_EDGE_PX = 20;
 
 /**
  *
  * @param {SortableListProps} props Object of properties for the SortableList component (see below for details).
  * @param {function} props.onItemMoved Callback that is called when an item is moved. Should be wrapped inside a React.useCallback.
  * @param {function} props.isMoveAllowed Callback that is called to check if an item can be moved. Should be wrapped inside a React.useCallback.
- * @param {React.ReactNode} props.contentWhenEmpty A React node that is displayed when the list is empty.
  * @param {React.ReactNode} props.children Child components that must be of either type SortableListItem or SortableListGroup.
+ * @param {string} props.className Optional class name for the main list container.
  *
  * @returns {React.ReactNode} A sortable list component.
  */
-export function SortableList(props: SortableListProps): React.ReactNode {
+export const SortableList = function SortableListImpl(props: SortableListProps) {
     const { onItemMoved, isMoveAllowed } = props;
 
     const [isDragging, setIsDragging] = React.useState<boolean>(false);
     const [draggedItemId, setDraggedItemId] = React.useState<string | null>(null);
     const [hoveredItemIdAndArea, setHoveredItemIdAndArea] = React.useState<HoveredItemIdAndArea | null>(null);
+    const [cursor, setCursor] = React.useState<Cursor>(Cursor.NONE);
+    const [isScrolling, setIsScrolling] = React.useState<boolean>(false);
     const [dragPosition, setDragPosition] = React.useState<Vec2>({ x: 0, y: 0 });
-    const [currentScrollPosition, setCurrentScrollPosition] = React.useState<number>(0);
-    const [prevChildren, setPrevChildren] = React.useState<
-        React.ReactElement<SortableListItemProps | SortableListGroupProps>[]
-    >(props.children);
+    const [contentContainerElement, setContentContainerElement] = React.useState<HTMLElement | null>(null);
+    const [scrollContainerElement, setScrollContainerElement] = React.useState<HTMLElement | null>(null);
+    const [scrollOverlayMargins, setScrollOverlayMargins] = React.useState<{ top: number; bottom: number }>({
+        top: 0,
+        bottom: 0,
+    });
+    const [noDropZoneElements, setNoDropZoneElements] = React.useState<Set<HTMLElement>>(new Set());
 
-    const mainDivRef = React.useRef<HTMLDivElement>(null);
-    const listDivRef = React.useRef<HTMLDivElement>(null);
-    const scrollDivRef = React.useRef<HTMLDivElement>(null);
-    const upperScrollDivRef = React.useRef<HTMLDivElement>(null);
-    const lowerScrollDivRef = React.useRef<HTMLDivElement>(null);
+    const registerNoDropZoneElement = React.useCallback(function registerNoDropZoneElement(el: HTMLElement | null) {
+        setNoDropZoneElements((prev) => {
+            if (el && !prev.has(el)) {
+                const next = new Set(prev);
+                next.add(el);
+                return next;
+            }
+            return prev;
+        });
+    }, []);
+    const unregisterNoDropZoneElement = React.useCallback(function unregisterNoDropZoneElement(el: HTMLElement | null) {
+        setNoDropZoneElements((prev) => {
+            if (el && prev.has(el)) {
+                const next = new Set(prev);
+                next.delete(el);
+                return next;
+            }
+            return prev;
+        });
+    }, []);
 
-    if (!isEqual(prevChildren, props.children)) {
-        setPrevChildren(props.children);
-        if (scrollDivRef.current) {
-            scrollDivRef.current.scrollTop = currentScrollPosition;
-        }
-    }
+    const context = React.useMemo<SortableListContextType>(
+        () => ({
+            draggedElementId: draggedItemId,
+            hoveredElementId: hoveredItemIdAndArea?.id ?? null,
+            hoveredArea: hoveredItemIdAndArea?.area ?? null,
+            dragPosition,
+            registerContentContainer: setContentContainerElement,
+            registerScrollContainerElement: setScrollContainerElement,
+            registerNoDropZoneElement: registerNoDropZoneElement,
+            unregisterNoDropZoneElement: unregisterNoDropZoneElement,
+            setScrollOverlayMargins: setScrollOverlayMargins,
+        }),
+        [draggedItemId, hoveredItemIdAndArea, dragPosition, registerNoDropZoneElement, unregisterNoDropZoneElement],
+    );
 
+    const mainRef = React.useRef<HTMLDivElement>(null);
+
+    const scrollPosByEl = React.useRef(new WeakMap<HTMLElement, number>());
+
+    // tracks & persists scrollTop for the current scroll container
     React.useEffect(
-        function addEventListeners() {
-            if (!listDivRef.current) {
+        function trackScrollPositionEffect() {
+            const el = scrollContainerElement;
+            if (!el) return;
+
+            function handleScroll() {
+                scrollPosByEl.current.set(el!, el!.scrollTop);
+            }
+
+            // restore on mount
+            const saved = scrollPosByEl.current.get(el);
+            if (typeof saved === "number") el.scrollTop = saved;
+
+            el.addEventListener("scroll", handleScroll, { passive: true });
+            return function cleanupTrackScrollPositionEffect() {
+                el.removeEventListener("scroll", handleScroll);
+            };
+        },
+        [scrollContainerElement],
+    );
+
+    // restores scrollTop when the container (and optionally order) changes
+    React.useLayoutEffect(
+        function restoreScrollPositionEffect() {
+            const el = scrollContainerElement;
+            if (!el) return;
+            const saved = scrollPosByEl.current.get(el);
+            if (typeof saved === "number") el.scrollTop = saved;
+        },
+        [scrollContainerElement],
+    );
+
+    // installs drag interaction listeners on the list DOM
+    React.useEffect(
+        function attachDragInteractionListenersEffect() {
+            if (!contentContainerElement) {
                 return;
             }
 
-            if (!mainDivRef.current) {
+            if (!mainRef.current) {
                 return;
             }
 
-            const currentListDivRef = listDivRef.current;
-            const currentMainDivRef = mainDivRef.current;
+            const currentListRef = contentContainerElement;
+            const currentMainRef = mainRef.current;
 
             let pointerDownPosition: Vec2 | null = null;
             let pointerDownPositionRelativeToElement: Vec2 = { x: 0, y: 0 };
@@ -121,12 +226,13 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                     return;
                 }
 
-                const sortableListItemProps = assertTargetIsSortableListItemAndExtractProps(target);
+                const sortableListItemProps = verifyTargetIsSortableListItemAndExtractProps(target);
                 if (!sortableListItemProps) {
                     return;
                 }
 
                 const element = sortableListItemProps.element;
+
                 draggedElementInfo = {
                     element,
                     id: sortableListItemProps.id,
@@ -146,23 +252,22 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 pointerDownPosition = { x: e.clientX, y: e.clientY };
                 draggingActive = false;
 
+                setCursor(Cursor.GRABBING);
+
                 pointerDownPositionRelativeToElement = {
                     x: e.clientX - element.getBoundingClientRect().left,
                     y: e.clientY - element.getBoundingClientRect().top,
                 };
-                document.addEventListener("pointermove", handlePointerMove);
-                document.addEventListener("pointerup", handlePointerUp);
+
+                document.addEventListener("pointermove", handlePointerMove as EventListener);
+                document.addEventListener("pointerup", handlePointerUp as EventListener, { once: true });
 
                 e.preventDefault();
                 e.stopPropagation();
             }
 
             function maybeScroll(position: Vec2) {
-                if (
-                    upperScrollDivRef.current === null ||
-                    lowerScrollDivRef.current === null ||
-                    scrollDivRef.current === null
-                ) {
+                if (currentMainRef === null) {
                     return;
                 }
 
@@ -171,21 +276,40 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                     currentScrollTime = 100;
                 }
 
-                if (rectContainsPoint(upperScrollDivRef.current.getBoundingClientRect(), position)) {
+                const boundingRect = currentMainRef.getBoundingClientRect();
+                const topBandRect: Rect2D = {
+                    x: boundingRect.left,
+                    y: boundingRect.top + scrollOverlayMargins.top,
+                    width: boundingRect.width,
+                    height: AUTO_SCROLL_EDGE_PX,
+                };
+                const bottomBandRect: Rect2D = {
+                    x: boundingRect.left,
+                    y: boundingRect.bottom - AUTO_SCROLL_EDGE_PX - scrollOverlayMargins.bottom,
+                    width: boundingRect.width,
+                    height: AUTO_SCROLL_EDGE_PX,
+                };
+
+                const inTopBand = rectContainsPoint(topBandRect, position);
+                const inBottomBand = rectContainsPoint(bottomBandRect, position);
+
+                if (inTopBand) {
                     doScroll = true;
                     scrollTimeout = setTimeout(scrollUpRepeatedly, currentScrollTime);
-                } else if (rectContainsPoint(lowerScrollDivRef.current.getBoundingClientRect(), position)) {
+                } else if (inBottomBand) {
                     doScroll = true;
                     scrollTimeout = setTimeout(scrollDownRepeatedly, currentScrollTime);
                 } else {
+                    setIsScrolling(false);
                     doScroll = false;
                 }
             }
 
             function scrollUpRepeatedly() {
+                setIsScrolling(true);
                 currentScrollTime = Math.max(10, currentScrollTime - 5);
-                if (scrollDivRef.current) {
-                    scrollDivRef.current.scrollTop = Math.max(0, scrollDivRef.current.scrollTop - 10);
+                if (scrollContainerElement) {
+                    scrollContainerElement.scrollTop = Math.max(0, scrollContainerElement.scrollTop - 10);
                 }
                 if (doScroll) {
                     scrollTimeout = setTimeout(scrollUpRepeatedly, currentScrollTime);
@@ -193,11 +317,12 @@ export function SortableList(props: SortableListProps): React.ReactNode {
             }
 
             function scrollDownRepeatedly() {
+                setIsScrolling(true);
                 currentScrollTime = Math.max(10, currentScrollTime - 5);
-                if (scrollDivRef.current) {
-                    scrollDivRef.current.scrollTop = Math.min(
-                        scrollDivRef.current.scrollHeight,
-                        scrollDivRef.current.scrollTop + 10,
+                if (scrollContainerElement) {
+                    scrollContainerElement.scrollTop = Math.min(
+                        scrollContainerElement.scrollHeight,
+                        scrollContainerElement.scrollTop + 10,
                     );
                 }
                 if (doScroll) {
@@ -205,18 +330,29 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 }
             }
 
+            function isTargetNoDropZone(e: PointerEvent): boolean {
+                for (const noDropZoneElement of noDropZoneElements) {
+                    if (rectContainsPoint(noDropZoneElement.getBoundingClientRect(), vec2FromPointerEvent(e))) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             function getHoveredElementAndArea(e: PointerEvent): { element: HTMLElement; area: HoveredArea } | null {
-                const elements = getDragElementsRecursively(currentListDivRef);
+                const elements = getDragElementsRecursively(currentListRef);
                 for (const element of elements) {
                     if (rectContainsPoint(element.getBoundingClientRect(), vec2FromPointerEvent(e))) {
                         const type = getItemType(element);
                         if (type === ItemType.GROUP) {
-                            const content = element.querySelector(".sortable-list-group-content");
+                            const content = element.querySelector(
+                                "[data-sortable-list-group-content]",
+                            ) as HTMLElement | null;
                             if (
                                 content &&
                                 rectContainsPoint(content.getBoundingClientRect(), vec2FromPointerEvent(e)) &&
-                                (content.getElementsByClassName("sortable-list-item").length > 0 ||
-                                    content.getElementsByClassName("sortable-list-group").length > 0)
+                                (content.querySelectorAll("[data-sortable='item']").length > 0 ||
+                                    content.querySelectorAll("[data-sortable='group']").length > 0)
                             ) {
                                 continue;
                             }
@@ -227,20 +363,21 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 }
 
                 // If no element was found, check if the pointer is in the bottom area of the main list
-                const directChildren = elements.filter((el) => el.parentElement === currentListDivRef);
-                const mainDivRect = currentMainDivRef.getBoundingClientRect();
+                const directChildren = elements.filter((el) => el.parentElement === currentListRef);
+                const mainDivRect = currentMainRef.getBoundingClientRect();
 
                 if (!rectContainsPoint(mainDivRect, vec2FromPointerEvent(e))) {
                     return null;
                 }
 
+                if (directChildren.length === 0) return null;
                 return { element: directChildren[directChildren.length - 1], area: HoveredArea.BOTTOM };
             }
 
             function getItemPositionInGroup(item: HTMLElement, ignoreItem?: HTMLElement): number {
-                let group = item.parentElement?.closest(".sortable-list-group-content");
+                let group = item.parentElement?.closest("[data-sortable-list-group-content]") as HTMLElement | null;
                 if (!group || !(group instanceof HTMLElement)) {
-                    group = currentListDivRef;
+                    group = currentListRef;
                 }
 
                 let pos = 0;
@@ -252,7 +389,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                     if (elm === ignoreItem) {
                         continue;
                     }
-                    if (group.children[i] === item) {
+                    if (elm.dataset.itemId === item.dataset.itemId) {
                         return pos;
                     }
                     pos++;
@@ -265,6 +402,8 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 if (!pointerDownPosition || !draggedElementInfo) {
                     return;
                 }
+
+                setCursor(Cursor.GRABBING);
 
                 if (
                     !draggingActive &&
@@ -292,6 +431,24 @@ export function SortableList(props: SortableListProps): React.ReactNode {
 
                 if (rectContainsPoint(draggedElementInfo.element.getBoundingClientRect(), point)) {
                     // Hovering the dragged element itself
+                    setCursor(Cursor.GRABBING);
+                    currentlyHoveredElementInfo = null;
+                    setHoveredItemIdAndArea(null);
+                    return;
+                }
+
+                const mainBoundingRect = currentMainRef.getBoundingClientRect();
+                if (!rectContainsPoint(mainBoundingRect, point)) {
+                    // Outside of the main list area
+                    setCursor(Cursor.NOT_ALLOWED);
+                    currentlyHoveredElementInfo = null;
+                    setHoveredItemIdAndArea(null);
+                    return;
+                }
+
+                if (isTargetNoDropZone(e)) {
+                    // In a no-drop zone
+                    setCursor(Cursor.NOT_ALLOWED);
                     currentlyHoveredElementInfo = null;
                     setHoveredItemIdAndArea(null);
                     return;
@@ -299,12 +456,14 @@ export function SortableList(props: SortableListProps): React.ReactNode {
 
                 const hoveredElementAndArea = getHoveredElementAndArea(e);
                 if (!hoveredElementAndArea) {
+                    setCursor(Cursor.NOT_ALLOWED);
                     currentlyHoveredElementInfo = null;
                     setHoveredItemIdAndArea(null);
                     return;
                 }
 
                 if (hoveredElementAndArea.element === draggedElementInfo.element) {
+                    setCursor(Cursor.NOT_ALLOWED);
                     currentlyHoveredElementInfo = null;
                     setHoveredItemIdAndArea(null);
                     return;
@@ -315,6 +474,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                     hoveredElementAndArea.area === HoveredArea.HEADER
                 ) {
                     // Dragged element should not be moved into its own parent
+                    setCursor(Cursor.NOT_ALLOWED);
                     currentlyHoveredElementInfo = null;
                     setHoveredItemIdAndArea(null);
                     return;
@@ -331,6 +491,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                     draggedElementParentId === getGroupId(getItemParent(hoveredElementAndArea.element)) &&
                     newPosition === currentPosition
                 ) {
+                    setCursor(Cursor.GRABBING);
                     currentlyHoveredElementInfo = null;
                     setHoveredItemIdAndArea(null);
                     return;
@@ -342,6 +503,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                     (hoveredElementAndArea.area === HoveredArea.CENTER ||
                         hoveredElementAndArea.area === HoveredArea.HEADER)
                 ) {
+                    setCursor(Cursor.NOT_ALLOWED);
                     currentlyHoveredElementInfo = null;
                     setHoveredItemIdAndArea(null);
                     return;
@@ -377,6 +539,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                         position: newPosition,
                     })
                 ) {
+                    setCursor(Cursor.NOT_ALLOWED);
                     currentlyHoveredElementInfo = null;
                     setHoveredItemIdAndArea(null);
                     return;
@@ -386,6 +549,8 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                     id: hoveredElementId,
                     area: hoveredElementAndArea.area,
                 });
+
+                setCursor(Cursor.GRABBING);
 
                 let parent: Omit<ElementWithInfo, "parent"> | null = null;
                 if (parentElement && destinationId) {
@@ -455,6 +620,8 @@ export function SortableList(props: SortableListProps): React.ReactNode {
             }
 
             function handlePointerUp() {
+                document.removeEventListener("pointermove", handlePointerMove);
+                setCursor(Cursor.NONE);
                 maybeCallItemMoveCallback();
                 cancelDragging();
             }
@@ -470,7 +637,8 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 doScroll = false;
 
                 document.removeEventListener("pointermove", handlePointerMove);
-                document.removeEventListener("pointerup", handlePointerUp);
+
+                scrollTimeout && clearTimeout(scrollTimeout);
             }
 
             function handleKeyDown(e: KeyboardEvent) {
@@ -483,106 +651,73 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 cancelDragging();
             }
 
-            currentListDivRef.addEventListener("pointerdown", handlePointerDown);
+            currentListRef.addEventListener("pointerdown", handlePointerDown as EventListener);
             document.addEventListener("keydown", handleKeyDown);
-            window.addEventListener("blur-sm", handleWindowBlur);
+            window.addEventListener("blur", handleWindowBlur);
 
             return function removeEventListeners() {
-                currentListDivRef.removeEventListener("pointerdown", handlePointerDown);
+                currentListRef.removeEventListener("pointerdown", handlePointerDown as EventListener);
                 document.removeEventListener("pointermove", handlePointerMove);
-                document.removeEventListener("pointerup", handlePointerUp);
                 document.removeEventListener("keydown", handleKeyDown);
-                window.removeEventListener("blur-sm", handleWindowBlur);
+                window.removeEventListener("blur", handleWindowBlur);
                 setIsDragging(false);
                 setDraggedItemId(null);
             };
         },
-        [onItemMoved, isMoveAllowed, props.children],
+        [
+            onItemMoved,
+            isMoveAllowed,
+            scrollContainerElement,
+            contentContainerElement,
+            noDropZoneElements,
+            scrollOverlayMargins.top,
+            scrollOverlayMargins.bottom,
+        ],
     );
 
-    function handleScroll(e: React.UIEvent<HTMLDivElement>) {
-        setCurrentScrollPosition(e.currentTarget.scrollTop);
-    }
-
-    function makeChildren(): React.ReactNode[] {
-        const children: React.ReactNode[] = [];
-        if (props.children.length === 0 && props.contentWhenEmpty) {
-            if (typeof props.contentWhenEmpty === "string") {
-                children.push(props.contentWhenEmpty);
-            } else if (React.isValidElement(props.contentWhenEmpty)) {
-                children.push(
-                    React.cloneElement(props.contentWhenEmpty, {
-                        key: "contentWhenEmpty",
-                    }),
-                );
-            }
-            return children;
-        }
-
-        for (const child of props.children) {
-            if (typeof child.type === "string") {
-                continue;
-            }
-            if (child.type.name === "SortableListItem") {
-                children.push(
-                    React.cloneElement(child, {
-                        key: child.props.id,
-                    }),
-                );
-            } else {
-                children.push(
-                    React.cloneElement(child, {
-                        key: child.props.id,
-                    }),
-                );
-            }
-        }
-        return children;
-    }
-
     return (
-        <div className="w-full h-full flex flex-col relative min-h-0 max-h-full" ref={mainDivRef}>
-            <SortableListContext.Provider
-                value={{
-                    draggedElementId: draggedItemId,
-                    hoveredElementId: hoveredItemIdAndArea?.id ?? null,
-                    hoveredArea: hoveredItemIdAndArea?.area ?? null,
-                    dragPosition,
-                }}
-            >
-                <div
-                    className="absolute top-0 left-0 w-full h-5 z-50 pointer-events-none"
-                    ref={upperScrollDivRef}
-                ></div>
-                <div
-                    className="absolute left-0 bottom-0 w-full h-5 z-50 pointer-events-none"
-                    ref={lowerScrollDivRef}
-                ></div>
-                <div
-                    className="grow overflow-auto min-h-0 bg-slate-200 relative"
-                    ref={scrollDivRef}
-                    onScroll={handleScroll}
-                >
-                    <div className="flex flex-col relative min-h-0" ref={listDivRef}>
-                        {makeChildren()}
-                        <div className="h-2 min-h-2">
-                            <div className="h-2" />
-                        </div>
-                    </div>
-                </div>
-                {isDragging &&
+        <div className={resolveClassNames(props.className, "flex flex-col relative min-h-0 max-h-full")} ref={mainRef}>
+            <SortableListContext.Provider value={context}>
+                {props.children}
+                <div className="h-5" />
+                {(cursor !== Cursor.NONE || isDragging) &&
                     createPortal(
                         <div
-                            className={resolveClassNames("absolute z-100 inset-0", {
-                                "cursor-not-allowed": !hoveredItemIdAndArea,
-                                "cursor-grabbing": hoveredItemIdAndArea !== null,
+                            className={resolveClassNames("absolute z-[400] inset-0", {
+                                "cursor-grabbing": cursor === Cursor.GRABBING,
+                                "cursor-not-allowed": cursor === Cursor.NOT_ALLOWED,
+                                "cursor-n-resize": isScrolling,
                             })}
                         ></div>,
                     )}
+                <DropIndicatorOverlay
+                    containerEl={mainRef.current}
+                    scrollEl={scrollContainerElement}
+                    hovered={hoveredItemIdAndArea}
+                />
+                <DraggedElementPlaceholder
+                    containerEl={mainRef.current}
+                    scrollEl={scrollContainerElement}
+                    draggedItemId={draggedItemId}
+                />
+                <GroupDropOverlay
+                    containerEl={contentContainerElement}
+                    scrollEl={scrollContainerElement}
+                    hoveredId={hoveredItemIdAndArea?.id ?? null}
+                    hoveredArea={hoveredItemIdAndArea?.area ?? null}
+                />
             </SortableListContext.Provider>
         </div>
     );
-}
+} as SortableListCompound;
+
+SortableList.Content = Content;
+SortableList.ScrollContainer = ScrollContainer;
+SortableList.Item = Item;
+SortableList.Group = Group;
+SortableList.NoDropZone = NoDropZone;
+SortableList.GroupContent = GroupContent;
+SortableList.DragHandle = DragHandle;
 
 export enum HoveredArea {
     TOP = "top",
@@ -607,28 +742,19 @@ type HoveredItemIdAndArea = {
     area: HoveredArea;
 };
 
-function assertTargetIsSortableListItemAndExtractProps(
+function verifyTargetIsSortableListItemAndExtractProps(
     target: EventTarget | null,
 ): { element: HTMLElement; id: string; parentElement: HTMLElement | null; parentId: string | null } | null {
-    if (!target) {
+    if (!target || !(target instanceof HTMLElement)) {
         return null;
     }
 
-    const element = target as HTMLElement;
-    if (!element || !(element instanceof HTMLElement)) {
+    const handle = target.closest("[data-sort-handle]");
+    if (!handle) {
         return null;
     }
 
-    const sortableListItemIndicator = element.closest(".sortable-list-element-indicator");
-    if (!sortableListItemIndicator) {
-        return null;
-    }
-
-    const sortableListElement = element.closest(".sortable-list-element");
-    if (!sortableListElement) {
-        return null;
-    }
-
+    const sortableListElement = handle.closest("[data-sortable='item'], [data-sortable='group']");
     if (!(sortableListElement instanceof HTMLElement)) {
         return null;
     }
@@ -639,23 +765,15 @@ function assertTargetIsSortableListItemAndExtractProps(
     }
 
     const parentGroup = getItemParent(sortableListElement);
+    const parentId = parentGroup?.dataset.itemId ?? null;
 
-    if (parentGroup) {
-        const parentId = parentGroup.dataset.itemId;
-        if (parentId) {
-            return { element: sortableListElement, id, parentElement: parentGroup, parentId };
-        }
-    }
-
-    return { element: sortableListElement, id, parentElement: null, parentId: null };
+    return { element: sortableListElement, id, parentElement: parentGroup, parentId };
 }
 
 function getItemType(item: HTMLElement): ItemType | null {
-    if (item.classList.contains("sortable-list-item")) {
-        return ItemType.ITEM;
-    } else if (item.classList.contains("sortable-list-group")) {
-        return ItemType.GROUP;
-    }
+    const attr = item.getAttribute("data-sortable");
+    if (attr === "item") return ItemType.ITEM;
+    if (attr === "group") return ItemType.GROUP;
     return null;
 }
 
@@ -698,7 +816,7 @@ function getItemParent(item: HTMLElement | null): HTMLElement | null {
         return null;
     }
 
-    const group = item.parentElement?.closest(".sortable-list-group");
+    const group = item.parentElement?.closest("[data-sortable='group']");
     if (!group || !(group instanceof HTMLElement)) {
         return null;
     }
@@ -713,12 +831,14 @@ function getDragElementsRecursively(parentElement: HTMLElement): HTMLElement[] {
     const items: HTMLElement[] = [];
 
     for (const child of parentElement.children) {
-        if (child instanceof HTMLElement && child.classList.contains("sortable-list-item")) {
+        if (!(child instanceof HTMLElement)) continue;
+
+        if (child.getAttribute("data-sortable") === "item") {
             items.push(child);
         }
-        if (child instanceof HTMLElement && child.classList.contains("sortable-list-group")) {
+        if (child.getAttribute("data-sortable") === "group") {
             items.push(child);
-            const content = child.querySelector(".sortable-list-group-content");
+            const content = child.querySelector("[data-sortable-list-group-content]");
             if (content && content instanceof HTMLElement) {
                 items.push(...getDragElementsRecursively(content));
             }
