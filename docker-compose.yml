@@ -89,6 +89,8 @@ services:
 
   redis-cache:
     image: bitnami/redis:6.2.10@sha256:bd42fcdab5959ce2b21b6ea8410d4b3ee87ecb2e320260326ec731ecfcffbd0e
+    ports:
+      - 6379:6379
     expose:
       - 6379
     environment:

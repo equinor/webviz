@@ -379,6 +379,9 @@ export class DataProvider<
             getData: () => this._data,
             getWorkbenchSession: () => this._dataProviderManager.getWorkbenchSession(),
             getWorkbenchSettings: () => this._dataProviderManager.getWorkbenchSettings(),
+            setProgressMessage: (message: string | null) => {
+                this.setProgressMessage(message);
+            },
         };
     }
 
@@ -433,7 +436,11 @@ export class DataProvider<
             if (apiError) {
                 this._error = apiError.makeStatusMessage();
             } else {
-                this._error = error.message;
+                if (typeof error === "string") {
+                    this._error = error;
+                } else if (error instanceof Error) {
+                    this._error = error.message;
+                }
             }
             this.setStatus(DataProviderStatus.ERROR);
         }

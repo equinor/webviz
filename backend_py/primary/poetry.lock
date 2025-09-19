@@ -852,14 +852,14 @@ docs = ["pydocstyle"]
 
 [[package]]
 name = "fmu-sumo"
-version = "2.5.0"
+version = "2.6.0"
 description = "Python package for interacting with Sumo in an FMU setting"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
 files = [
-    {file = "fmu_sumo-2.5.0-py3-none-any.whl", hash = "sha256:242953e306a9985b10988b7ad774ed9bc0492b789dbb4f2ffb847dcacc2e1232"},
-    {file = "fmu_sumo-2.5.0.tar.gz", hash = "sha256:bbac4c5b5c3acf0654e6f516b04bec1e39f1d60ddfbfee262e4eb142a578801d"},
+    {file = "fmu_sumo-2.6.0-py3-none-any.whl", hash = "sha256:a73d0d9b109d80b3213a32ef6fc096f428cc16b39fb854c1e375e4dfedd9cba6"},
+    {file = "fmu_sumo-2.6.0.tar.gz", hash = "sha256:cb8da7fe06c0a158517a3fbf348adbc3eabfeefd1163ba6f9a2fe689285b52a3"},
 ]
 
 [package.dependencies]
@@ -3280,19 +3280,22 @@ files = [
 
 [[package]]
 name = "redis"
-version = "4.6.0"
+version = "5.3.1"
 description = "Python client for Redis database and key-value store"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "redis-4.6.0-py3-none-any.whl", hash = "sha256:e2b03db868160ee4591de3cb90d40ebb50a90dd302138775937f6a42b7ed183c"},
-    {file = "redis-4.6.0.tar.gz", hash = "sha256:585dc516b9eb042a619ef0a39c3d7d55fe81bdb4df09a52c9cdde0d07bf1aa7d"},
+    {file = "redis-5.3.1-py3-none-any.whl", hash = "sha256:dc1909bd24669cc31b5f67a039700b16ec30571096c5f1f0d9d2324bff31af97"},
+    {file = "redis-5.3.1.tar.gz", hash = "sha256:ca49577a531ea64039b5a36db3d6cd1a0c7a60c34124d46924a45b956e8cf14c"},
 ]
 
+[package.dependencies]
+PyJWT = ">=2.9.0"
+
 [package.extras]
-hiredis = ["hiredis (>=1.0.0)"]
-ocsp = ["cryptography (>=36.0.1)", "pyopenssl (==20.0.1)", "requests (>=2.26.0)"]
+hiredis = ["hiredis (>=3.0.0)"]
+ocsp = ["cryptography (>=36.0.1)", "pyopenssl (==23.2.1)", "requests (>=2.31.0)"]
 
 [[package]]
 name = "requests"
@@ -4099,4 +4102,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "ee1d388f86aad9d159740fb4b180b39a09e66324997a8685917b6a2b126658cf"
+content-hash = "714724e13cc8e2de0293906716e192b78851d3668cb0381d1a990475cfadb3d1"

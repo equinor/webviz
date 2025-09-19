@@ -88,6 +88,13 @@ export type DataProviderInformationAccessors<
      * @returns The workbench settings.
      */
     getWorkbenchSettings: () => WorkbenchSettings;
+
+    /**
+     * Set progress message for the data provider.
+     * This message can be used to keep the user informed about the progress of the data provider.
+     * @param message The progress message to set.
+     */
+    setProgressMessage: (message: string | null) => void;
 };
 
 export type AreSettingsValidArgs<
