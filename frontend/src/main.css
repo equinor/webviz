@@ -1,3 +1,6 @@
+/* Importing additional animations. Imported first, so potential name conflicts prioritizes tailwind  */
+@import "animate.css/animate.css";
+
 @import "tailwindcss";
 
 /* Additional tailwind component classes */

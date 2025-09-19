@@ -1,7 +1,7 @@
 import React from "react";
 
-import type { TableHeading, TableProps } from "@lib/components/Table/table";
-import { Table } from "@lib/components/Table/table";
+import { TableDeprecated } from "@lib/components/TableDeprecated";
+import type { TableHeading, TableProps } from "@lib/components/TableDeprecated/table";
 import type { SelectedSensitivity } from "@modules/TornadoChart/typesAndEnums";
 
 import type { SensitivityResponseDataset } from "../utils/sensitivityResponseCalculator";
@@ -76,7 +76,7 @@ const SensitivityTable: React.FC<SensitivityTableProps> = (props) => {
             props.onSelectedSensitivity(selectedSensitivity);
         }
     };
-    return <Table headings={tableHeading} data={tableRows} onClick={handleClick} />;
+    return <TableDeprecated headings={tableHeading} data={tableRows} onClick={handleClick} />;
 };
 
 export default SensitivityTable;

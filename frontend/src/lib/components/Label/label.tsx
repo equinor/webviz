@@ -11,6 +11,7 @@ export type LabelProps = {
     children: React.ReactElement;
     wrapperClassName?: string;
     labelClassName?: string;
+    childrenWrapperClassName?: string;
     synced?: boolean;
     position?: "above" | "left" | "right";
 };
@@ -49,7 +50,11 @@ export const Label: React.FC<LabelProps> = (props) => {
                 )}
                 {props.text}
             </label>
-            <div className={resolveClassNames({ grow: props.position === "left" || props.position === "right" })}>
+            <div
+                className={resolveClassNames(props.childrenWrapperClassName ?? "", {
+                    grow: props.position === "left" || props.position === "right",
+                })}
+            >
                 {props.children.props.id ? props.children : React.cloneElement(props.children, { id: id.current })}
             </div>
         </div>

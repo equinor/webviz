@@ -24,7 +24,7 @@ async def get_seismic_cube_meta_list(
     """
     Get a list of seismic cube meta.
     """
-    access = SeismicAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    access = SeismicAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     seismic_cube_meta_list = await access.get_seismic_cube_meta_list_async()
     try:
         return [converters.to_api_vds_cube_meta(meta) for meta in seismic_cube_meta_list]
@@ -44,7 +44,7 @@ async def get_inline_slice(
     inline_no: int = Query(description="Inline number"),
 ) -> schemas.SeismicSliceData:
     """Get a seismic inline from a seismic cube."""
-    seismic_access = SeismicAccess.from_iteration_name(
+    seismic_access = SeismicAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
@@ -83,7 +83,7 @@ async def get_crossline_slice(
     crossline_no: int = Query(description="Crossline number"),
 ) -> schemas.SeismicSliceData:
     """Get a seismic crossline from a seismic cube."""
-    seismic_access = SeismicAccess.from_iteration_name(
+    seismic_access = SeismicAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
@@ -122,7 +122,7 @@ async def get_depth_slice(
     depth_slice_no: int = Query(description="Depth slice no"),
 ) -> schemas.SeismicSliceData:
     """Get a seismic depth slice from a seismic cube."""
-    seismic_access = SeismicAccess.from_iteration_name(
+    seismic_access = SeismicAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
@@ -168,7 +168,7 @@ async def post_get_seismic_fence(
     Returns:
     A SeismicFenceData object with fence traces in encoded 1D array, metadata for trace array decoding and fence min/max depth.
     """
-    seismic_access = SeismicAccess.from_iteration_name(
+    seismic_access = SeismicAccess.from_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
