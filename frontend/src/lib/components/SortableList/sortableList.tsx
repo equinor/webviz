@@ -252,6 +252,8 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                 pointerDownPosition = { x: e.clientX, y: e.clientY };
                 draggingActive = false;
 
+                setCursor(Cursor.GRABBING);
+
                 pointerDownPositionRelativeToElement = {
                     x: e.clientX - element.getBoundingClientRect().left,
                     y: e.clientY - element.getBoundingClientRect().top,
@@ -402,6 +404,8 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                 if (!pointerDownPosition || !draggedElementInfo) {
                     return;
                 }
+
+                setCursor(Cursor.GRABBING);
 
                 if (
                     !draggingActive &&
@@ -678,7 +682,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
             <SortableListContext.Provider value={context}>
                 {props.children}
                 <div className="h-5" />
-                {isDragging &&
+                {(cursor !== Cursor.NONE || isDragging) &&
                     createPortal(
                         <div
                             className={resolveClassNames("absolute z-[400] inset-0", {
