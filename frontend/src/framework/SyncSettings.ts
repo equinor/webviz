@@ -50,13 +50,13 @@ export const SyncSettingsMeta = {
 
 export class SyncSettingsHelper {
     private _workbenchServices: WorkbenchServices;
-    private _moduleContext: SettingsContext<any> | ViewContext<any> | null;
+    private _moduleContext: SettingsContext<any, any> | ViewContext<any, any> | null;
     private _activeSyncedKeys: SyncSettingKey[];
 
     constructor(
         activeSyncedKeys: SyncSettingKey[],
         workbenchServices: WorkbenchServices,
-        moduleContext?: SettingsContext<any> | ViewContext<any>,
+        moduleContext?: SettingsContext<any, any> | ViewContext<any, any>,
     ) {
         this._activeSyncedKeys = activeSyncedKeys;
         this._workbenchServices = workbenchServices;
