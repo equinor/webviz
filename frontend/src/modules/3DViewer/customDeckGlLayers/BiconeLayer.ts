@@ -166,7 +166,10 @@ export class BiconeLayer extends CompositeLayer<DiscLayerProps> {
         );
 
         if (this.props.modelMatrix) {
-            this.props.modelMatrix[10] = 1; // Prevent scaling in Z direction
+            // Apply scaling from model matrix to center point and reset scaling in model matrix
+            // We don't want to scale the bicone, just adjust its position
+            centerPoint[2] *= this.props.modelMatrix[10];
+            this.props.modelMatrix[10] = 1;
         }
 
         return [
