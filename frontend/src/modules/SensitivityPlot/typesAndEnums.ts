@@ -7,3 +7,9 @@ export type SelectedSensitivity = {
     selectedSensitivity: string;
     selectedSensitivityCase: string | null;
 };
+
+export enum SensitivityScaling {
+    RELATIVE = "relative",
+    ABSOLUTE = "absolute",
+    RELATIVE_PERCENTAGE = "relative_percentage",
+}
