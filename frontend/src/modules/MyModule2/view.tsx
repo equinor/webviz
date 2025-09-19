@@ -1,9 +1,11 @@
 import React from "react";
 
-import { inRange } from "lodash";
+import { inRange, range } from "lodash";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { Button } from "@lib/components/Button";
+import { Dropdown } from "@lib/components/Dropdown";
+import { Select } from "@lib/components/Select";
 import { Table } from "@lib/components/Table";
 import type {
     TableFilters,
@@ -12,6 +14,9 @@ import type {
     TableColumns,
 } from "@lib/components/Table/types";
 import { SortDirection } from "@lib/components/Table/types";
+import type { TableSelectOption } from "@lib/components/TableSelect";
+import { TableSelect } from "@lib/components/TableSelect";
+import { TagPicker } from "@lib/components/TagPicker";
 import { ToggleButton } from "@lib/components/ToggleButton";
 
 import type { ExampleTabularData } from "./atoms";
@@ -154,8 +159,16 @@ function Tags(props: { tags: string[] }): React.ReactNode {
         </div>
     );
 }
+/*
 
+
+    return (
+        <div className="h-full w-full flex flex-col justify-center [&_thead]:hidden">
+            
+*/
 export const View = (props: ModuleViewProps<Interfaces>) => {
+    const itemsRange = range(0, 30);
+
     const alternateColColors = props.viewContext.useSettingsToViewInterfaceValue("alternateColColors");
     const allowMultiSelect = props.viewContext.useSettingsToViewInterfaceValue("allowMultiSelect");
     const numPending = props.viewContext.useSettingsToViewInterfaceValue("numPendingRows");
@@ -179,8 +192,32 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
         setTableFilterState(newFilter);
     }
 
+    const options = itemsRange.map((n) => ({
+        label: "Item " + n,
+        value: "item_" + n,
+    }));
+
+    const tableSelectOptions: TableSelectOption[] = itemsRange.map((n) => ({
+        id: "item_" + n,
+        values: [{ label: "ipsum" + n }, { label: "bar" + n }],
+    }));
+
+    const [value, setValue] = React.useState<string | string[] | null>(null);
+
     return (
         <div className="h-full w-full flex flex-col">
+            <h2>{value ?? "Nothing selected"}</h2>
+
+            <div className="mt-4 gap-5 grid grid-cols-2">
+                <Dropdown value={value} options={options} onChange={setValue} />
+
+                <TagPicker tags={options} value={[]} />
+
+                <Select size={6} options={options} onChange={setValue} />
+
+                <TableSelect size={6} options={tableSelectOptions} headerLabels={["lorem", "foo"]} />
+            </div>
+
             <h3 className="mt-6 font-extrabold text-lg">New (controlled)</h3>
 
             <div className="flex">

@@ -8,7 +8,6 @@ import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 
-
 import type { BaseComponentProps } from "../BaseComponent";
 import { BaseComponent } from "../BaseComponent";
 import { Checkbox } from "../Checkbox";
@@ -32,6 +31,7 @@ export type TagPickerProps<T> = {
 
 const MIN_HEIGHT = 200;
 const TAG_HEIGHT = 32;
+const DROPDOWN_OPTION_HEIGHT = 32;
 
 type DropdownRect = {
     left?: number;
@@ -296,7 +296,7 @@ export function TagPickerComponent<T>(
             {dropdownVisible &&
                 createPortal(
                     <div
-                        className="absolute bg-white border border-gray-300 rounded-md shadow-md overflow-y-auto z-50 box-border flex flex-col gap-1 p-1"
+                        className="absolute bg-white border border-gray-300 rounded-md shadow-md overflow-y-auto z-50 box-border p-1"
                         style={{ ...dropdownRect }}
                         ref={dropdownRef}
                     >
@@ -308,16 +308,17 @@ export function TagPickerComponent<T>(
                         <Virtualization
                             direction="vertical"
                             items={filteredTags}
-                            itemSize={TAG_HEIGHT}
+                            itemSize={DROPDOWN_OPTION_HEIGHT}
                             containerRef={dropdownRef}
                             startIndex={startIndex}
                             renderItem={(option) => (
-                                <Checkbox
-                                    key={option.value}
-                                    checked={selectedTags.includes(option.value)}
-                                    onChange={() => handleTagToggle(option.value)}
-                                    label={option.label}
-                                />
+                                <div key={option.value} className="" style={{ minHeight: DROPDOWN_OPTION_HEIGHT }}>
+                                    <Checkbox
+                                        checked={selectedTags.includes(option.value)}
+                                        onChange={() => handleTagToggle(option.value)}
+                                        label={option.label}
+                                    />
+                                </div>
                             )}
                         />
                     </div>,
