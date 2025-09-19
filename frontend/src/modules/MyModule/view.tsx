@@ -2,10 +2,7 @@ import React from "react";
 
 import { DragIndicator } from "@mui/icons-material";
 
-import type { ModuleViewProps } from "@framework/Module";
 import { SortableList } from "@lib/components/SortableList";
-
-import type { Interfaces } from "./interfaces";
 
 type ItemOrGroup = {
     id: string;
@@ -13,7 +10,7 @@ type ItemOrGroup = {
     children?: ItemOrGroup[];
 };
 
-export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
+export function View(): React.ReactNode {
     const [items, setItems] = React.useState<ItemOrGroup[]>([
         {
             id: "Group 1",
