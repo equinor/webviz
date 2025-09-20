@@ -7,6 +7,7 @@ import {
     postGetSurfaceIntersectionOptions,
 } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
+import { sortStringArray } from "@lib/utils/arrays";
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
@@ -197,11 +198,10 @@ export class RealizationSurfacesProvider
                 (elm) => elm.attribute_type === SurfaceAttributeType_api.DEPTH,
             );
 
-            const filteredSurfaceNames = new Set(
-                depthSurfacesMetadata.filter((elm) => elm.attribute_name === attribute).map((elm) => elm.name),
+            const filteredSurfaceNames = Array.from(
+                new Set(depthSurfacesMetadata.filter((elm) => elm.attribute_name === attribute).map((elm) => elm.name)),
             );
-
-            return surfaceMetadataSet.surface_names_in_strat_order.filter((name) => filteredSurfaceNames.has(name));
+            return sortStringArray(filteredSurfaceNames, surfaceMetadataSet.surface_names_in_strat_order);
         });
 
         // Create intersection polyline and actual section lengths data asynchronously
