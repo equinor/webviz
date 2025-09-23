@@ -77,5 +77,7 @@ export function makeRealizationSurfaceLayer({
             valueMax: data.surfaceData.value_max,
             denormalize: true,
         }),
+        contours: getSetting(Setting.SHOW_CONTOURS) ?? false,
+        contourInterval: getSetting(Setting.CONTOUR_INTERVAL) ?? 10,
     });
 }

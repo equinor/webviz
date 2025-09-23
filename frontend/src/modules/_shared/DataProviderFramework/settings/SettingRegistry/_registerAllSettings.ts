@@ -52,7 +52,10 @@ SettingRegistry.registerSetting(Setting.ENSEMBLE, "Ensemble", EnsembleSetting);
 SettingRegistry.registerSetting(Setting.COLOR_SCALE, "Color Scale", ColorScaleSetting);
 SettingRegistry.registerSetting(Setting.COLOR, "Color", SingleColorSetting);
 SettingRegistry.registerSetting(Setting.COLOR_SET, "Color Set", ColorSetSetting);
-
+SettingRegistry.registerSetting(Setting.SHOW_CONTOURS, "Show Contours", BooleanSetting);
+SettingRegistry.registerSetting(Setting.CONTOUR_INTERVAL, "Contour Interval", InputNumberSetting, {
+    customConstructorParameters: [{ min: 10, max: 200 }],
+});
 SettingRegistry.registerSetting(Setting.GRID_LAYER_K, "Grid Layer K", GridLayerSetting, {
     customConstructorParameters: [GridLayerDirection.K],
 });

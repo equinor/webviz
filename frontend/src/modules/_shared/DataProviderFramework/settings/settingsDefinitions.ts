@@ -44,6 +44,8 @@ export enum Setting {
     COLOR_SCALE = "colorScale",
     COLOR_SET = "colorSet",
     COLOR = "color",
+    SHOW_CONTOURS = "showContours",
+    CONTOUR_INTERVAL = "contourInterval",
     GRID_LAYER_RANGE = "gridLayerRange",
     GRID_LAYER_K = "gridLayerK",
     GRID_NAME = "gridName",
@@ -82,6 +84,8 @@ export const settingCategories = {
     [Setting.COLOR_SCALE]: SettingCategory.STATIC,
     [Setting.COLOR_SET]: SettingCategory.STATIC,
     [Setting.COLOR]: SettingCategory.STATIC,
+    [Setting.SHOW_CONTOURS]: SettingCategory.BOOLEAN,
+    [Setting.CONTOUR_INTERVAL]: SettingCategory.NUMBER,
     [Setting.GRID_LAYER_RANGE]: SettingCategory.XYZ_RANGE,
     [Setting.GRID_LAYER_K]: SettingCategory.NUMBER,
     [Setting.GRID_NAME]: SettingCategory.SINGLE_SELECT,
@@ -122,6 +126,8 @@ export type SettingTypes = {
     [Setting.COLOR_SCALE]: ColorScaleSpecification | null;
     [Setting.COLOR_SET]: ColorSet | null;
     [Setting.COLOR]: string | null;
+    [Setting.SHOW_CONTOURS]: boolean;
+    [Setting.CONTOUR_INTERVAL]: number | null;
     [Setting.GRID_LAYER_RANGE]: [[number, number], [number, number], [number, number]] | null;
     [Setting.GRID_LAYER_K]: number | null;
     [Setting.GRID_NAME]: string | null;
