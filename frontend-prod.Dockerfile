@@ -12,7 +12,7 @@ USER node
 COPY --chown=node:node . /usr/src/app
 
 WORKDIR /usr/src/app/frontend
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 # Building wsc requires increasing memory allocated to Node
 ENV NODE_OPTIONS="--max-old-space-size=4096"
