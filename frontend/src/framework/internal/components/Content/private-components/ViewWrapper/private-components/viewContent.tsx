@@ -84,7 +84,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
             );
         }
 
-        return false;
+        return null;
     }
 
     const stateRelatedContent = makeStateRelatedContent();
