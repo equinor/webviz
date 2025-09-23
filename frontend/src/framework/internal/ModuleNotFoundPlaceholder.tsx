@@ -1,6 +1,6 @@
 import { BugReport, Forum, WebAssetOff } from "@mui/icons-material";
 
-import { ImportState, Module, ModuleCategory, ModuleDevState } from "@framework/Module";
+import { ImportStatus, Module, ModuleCategory, ModuleDevState } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { Button } from "@lib/components/Button";
 import { Tag } from "@lib/components/Tag";
@@ -13,11 +13,11 @@ export class ModuleNotFoundPlaceholder extends Module<any> {
             category: ModuleCategory.MAIN,
             devState: ModuleDevState.PROD,
         });
-        this._importState = ImportState.Imported;
+        this._importState = ImportStatus.Imported;
     }
 
-    makeInstance(instanceNumber: number): ModuleInstance<any> {
-        const instance = super.makeInstance(instanceNumber);
+    makeInstance(id: string): ModuleInstance<any> {
+        const instance = super.makeInstance(id);
         return instance;
     }
 

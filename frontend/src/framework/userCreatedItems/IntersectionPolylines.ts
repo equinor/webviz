@@ -1,14 +1,38 @@
+import type { JTDSchemaType } from "ajv/dist/core";
 import { atom } from "jotai";
 import { cloneDeep, isEqual } from "lodash";
 import { v4 } from "uuid";
 
 import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
-import type { UserCreatedItemSet } from "@framework/UserCreatedItems";
+
+export type SerializedIntersectionPolylines = {
+    intersectionPolylines: IntersectionPolyline[];
+};
+
+export const INTERSECTION_POLYLINES_JTD_SCHEMA: JTDSchemaType<SerializedIntersectionPolylines> = {
+    properties: {
+        intersectionPolylines: {
+            elements: {
+                properties: {
+                    id: { type: "string" },
+                    name: { type: "string" },
+                    color: { type: "string" },
+                    path: {
+                        elements: {
+                            elements: { type: "float64" },
+                        },
+                    },
+                    fieldId: { type: "string" },
+                },
+            },
+        },
+    },
+} as const;
 
 export type IntersectionPolyline = {
     id: string;
     name: string;
-    color: [number, number, number];
+    color: string;
     path: number[][];
     fieldId: string;
 };
@@ -19,7 +43,7 @@ export enum IntersectionPolylinesEvent {
     CHANGE = "IntersectionPolylinesChange",
 }
 
-export class IntersectionPolylines implements UserCreatedItemSet {
+export class IntersectionPolylines {
     private _atomStoreMaster: AtomStoreMaster;
     private _polylines: IntersectionPolyline[] = [];
     private _subscribersMap: Map<IntersectionPolylinesEvent, Set<() => void>> = new Map();
@@ -28,12 +52,16 @@ export class IntersectionPolylines implements UserCreatedItemSet {
         this._atomStoreMaster = atomStoreMaster;
     }
 
-    serialize(): string {
-        return JSON.stringify(this._polylines);
+    serializeState(): SerializedIntersectionPolylines {
+        return {
+            intersectionPolylines: this._polylines,
+        };
     }
 
-    populateFromData(data: string): void {
-        this._polylines = JSON.parse(data);
+    deserializeState(data: SerializedIntersectionPolylines): void {
+        this._polylines = data.intersectionPolylines.map((polyline) => ({
+            ...polyline,
+        }));
         this.notifySubscribers(IntersectionPolylinesEvent.CHANGE);
     }
 

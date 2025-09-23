@@ -10,6 +10,7 @@ import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
@@ -71,11 +72,9 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const colorScaleWithGradient = workbenchSettings
-        .useContinuousColorScale({
-            gradientType: ColorScaleGradientType.Diverging,
-        })
-        .getPlotlyColorScale();
+    const colorScaleWithGradient = useContinuousColorScale(workbenchSettings, {
+        gradientType: ColorScaleGradientType.Diverging,
+    }).getPlotlyColorScale();
 
     const receiverResponses = [
         viewContext.useChannelReceiver({

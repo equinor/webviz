@@ -1,5 +1,6 @@
 import type React from "react";
 
+import type { JTDDataType } from "ajv/dist/core";
 import type { Getter, Setter } from "jotai";
 
 import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
@@ -10,7 +11,6 @@ import { ModuleInstance, ModuleInstanceTopic } from "./ModuleInstance";
 import type { DrawPreviewFunc } from "./Preview";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceBaseType, InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
-import type { Workbench } from "./Workbench";
 import type { WorkbenchServices } from "./WorkbenchServices";
 import type { WorkbenchSession } from "./WorkbenchSession";
 import type { WorkbenchSettings } from "./WorkbenchSettings";
@@ -71,11 +71,37 @@ export type ModuleViewProps<
     initialSettings?: InitialSettings;
 };
 
+export type ModulePersistence<TSerializedStateDef extends JTDBaseType> = {
+    serializedState: JTDDataType<TSerializedStateDef>;
+    serializeState: (state: JTDDataType<TSerializedStateDef>) => void;
+};
+
 export type InterfaceEffects<TInterfaceType extends InterfaceBaseType> = ((
     getInterfaceValue: <TKey extends keyof TInterfaceType>(key: TKey) => TInterfaceType[TKey],
     setAtomValue: Setter,
     getAtomValue: Getter,
 ) => void)[];
+
+export type JTDBaseType = Record<string, unknown>;
+
+export type ModuleStateBaseSchema = {
+    settings: JTDBaseType;
+    view: JTDBaseType;
+};
+
+export type NoModuleStateSchema = {
+    settings: Record<string, never>;
+    view: Record<string, never>;
+};
+
+export type SerializedModuleState<TSerializedStateDef extends ModuleStateBaseSchema> = {
+    view: JTDDataType<TSerializedStateDef["view"]>;
+    settings: JTDDataType<TSerializedStateDef["settings"]>;
+};
+
+export type MakeReadonly<T> = {
+    readonly [P in keyof T]: T[P];
+};
 
 export type ModuleSettings<
     TInterfaceTypes extends ModuleInterfaceTypes = {
@@ -91,7 +117,7 @@ export type ModuleView<
     },
 > = React.FC<ModuleViewProps<TInterfaceTypes>>;
 
-export enum ImportState {
+export enum ImportStatus {
     NotImported = "NotImported",
     Importing = "Importing",
     Imported = "Imported",
@@ -117,7 +143,7 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
     private _defaultTitle: string;
     public viewFC: ModuleView<TInterfaceTypes>;
     public settingsFC: ModuleSettings<TInterfaceTypes>;
-    protected _importState: ImportState = ImportState.NotImported;
+    protected _importState: ImportStatus = ImportStatus.NotImported;
     private _moduleInstances: ModuleInstance<TInterfaceTypes>[] = [];
     private _settingsToViewInterfaceInitialization: InterfaceInitialization<
         Exclude<TInterfaceTypes["settingsToView"], undefined>
@@ -129,7 +155,6 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
         [];
     private _settingsToViewInterfaceEffects: InterfaceEffects<Exclude<TInterfaceTypes["viewToSettings"], undefined>> =
         [];
-    private _workbench: Workbench | null = null;
     private _syncableSettingKeys: SyncSettingKey[];
     private _drawPreviewFunc: DrawPreviewFunc | null;
     private _onInstanceUnloadFunc: OnInstanceUnloadFunc | null;
@@ -160,7 +185,7 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
         return this._drawPreviewFunc;
     }
 
-    getImportState(): ImportState {
+    getImportState(): ImportStatus {
         return this._importState;
     }
 
@@ -186,10 +211,6 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
 
     getDescription(): string | null {
         return this._description;
-    }
-
-    setWorkbench(workbench: Workbench): void {
-        this._workbench = workbench;
     }
 
     setSettingsToViewInterfaceInitialization(
@@ -232,15 +253,10 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
         return this._syncableSettingKeys.includes(key);
     }
 
-    makeInstance(instanceNumber: number): ModuleInstance<TInterfaceTypes> {
-        if (!this._workbench) {
-            throw new Error("Module must be added to a workbench before making an instance");
-        }
-
+    makeInstance(id: string): ModuleInstance<TInterfaceTypes> {
         const instance = new ModuleInstance<TInterfaceTypes>({
             module: this,
-            workbench: this._workbench,
-            instanceNumber,
+            id,
             channelDefinitions: this._channelDefinitions,
             channelReceiverDefinitions: this._channelReceiverDefinitions,
         });
@@ -253,15 +269,11 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
         this._onInstanceUnloadFunc?.(instanceId);
     }
 
-    private setImportState(state: ImportState): void {
+    private setImportState(state: ImportStatus): void {
         this._importState = state;
         this._moduleInstances.forEach((instance) => {
-            instance.notifySubscribers(ModuleInstanceTopic.IMPORT_STATE);
+            instance.notifySubscribers(ModuleInstanceTopic.IMPORT_STATUS);
         });
-
-        if (this._workbench && state === ImportState.Imported) {
-            this._workbench.maybeMakeFirstModuleInstanceActive();
-        }
     }
 
     private initializeModuleInstance(instance: ModuleInstance<TInterfaceTypes>): void {
@@ -277,8 +289,8 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
     }
 
     private maybeImportSelf(): void {
-        if (this._importState !== ImportState.NotImported) {
-            if (this._importState === ImportState.Imported) {
+        if (this._importState !== ImportStatus.NotImported) {
+            if (this._importState === ImportStatus.Imported) {
                 this._moduleInstances.forEach((instance) => {
                     if (instance.isInitialized()) {
                         return;
@@ -289,27 +301,27 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
             return;
         }
 
-        this.setImportState(ImportState.Importing);
+        this.setImportState(ImportStatus.Importing);
 
         const path = `/src/modules/${this._name}/loadModule.tsx`;
         const importer = moduleImporters[path];
 
         if (!importer) {
             console.error(`Module importer not found for ${path}`);
-            this.setImportState(ImportState.Failed);
+            this.setImportState(ImportStatus.Failed);
             return;
         }
 
         importer()
             .then(() => {
-                this.setImportState(ImportState.Imported);
+                this.setImportState(ImportStatus.Imported);
                 this._moduleInstances.forEach((instance) => {
                     this.initializeModuleInstance(instance);
                 });
             })
             .catch((e) => {
                 console.error(`Failed to import module ${this._name}`, e);
-                this.setImportState(ImportState.Failed);
+                this.setImportState(ImportStatus.Failed);
             });
     }
 }
