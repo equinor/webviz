@@ -197,10 +197,17 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
                         const patch: Partial<Layout> = {
                             [`xaxis${cellIndex + 1}`]: {
-                                title: makeTitleFromChannelContent(data),
+                                title: {
+                                    text: makeTitleFromChannelContent(data),
+                                },
+                                tickangle: 0,
+                                tickson: "boundaries",
+                                ticklabeloverflow: "hide past div",
                             },
                             [`yaxis${cellIndex + 1}`]: {
-                                title: "Percent",
+                                title: {
+                                    text: "Percent",
+                                },
                             },
                         };
                         figure.updateLayout(patch);

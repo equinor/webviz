@@ -69,8 +69,10 @@ export function makeHistogramTrace({
         }
         bins = makeHistogramBinRangesFromValuesArray({ xValuesArray: [xValues], numBins });
     }
-    const binValues: number[] = bins.map((range) => xValues.filter((el) => el >= range.from && el < range.to).length);
-    const binStrings = bins.map((range) => `${nFormatter(range.from, 2)}-${nFormatter(range.to, 2)}`);
+    const binValues: number[] = bins.map(
+        (range) => (xValues.filter((el) => el >= range.from && el < range.to).length / xValues.length) * 100,
+    );
+    const binStrings = bins.map((range) => `${nFormatter((range.from + range.to) / 2, 2)}`);
 
     const trace: Partial<PlotData> = {
         x: binStrings,
