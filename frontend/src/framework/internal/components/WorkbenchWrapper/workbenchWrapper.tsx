@@ -11,13 +11,13 @@ import { SettingsContentPanels } from "@framework/internal/components/SettingsCo
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { TopBar } from "@framework/internal/components/TopBar/topBar";
 import { Workbench, WorkbenchTopic } from "@framework/Workbench";
-import "./modules/registerAllModules";
-import "./templates/registerAllTemplates";
+import "../../../../modules/registerAllModules";
+import "../../../../templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 export function WorkbenchWrapper() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
-    // Otherwise, the workbench will be reset on every code change. This would cause it to loose its state and will
+    // Otherwise, the workbench will be reset on every code change. This would cause it to lose its state and will
     // cause the app to crash.
     const queryClient = useQueryClient();
     const [workbench] = React.useState(new Workbench(queryClient));

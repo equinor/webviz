@@ -1,9 +1,9 @@
+import type { JTDSchemaType } from "ajv/dist/core";
 import { atom } from "jotai";
 import { cloneDeep, isEqual } from "lodash";
 import { v4 } from "uuid";
 
 import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
-import type { JTDSchemaType } from "ajv/dist/core";
 
 export type SerializedIntersectionPolylines = {
     intersectionPolylines: IntersectionPolyline[];
@@ -16,6 +16,7 @@ export const INTERSECTION_POLYLINES_JTD_SCHEMA: JTDSchemaType<SerializedIntersec
                 properties: {
                     id: { type: "string" },
                     name: { type: "string" },
+                    color: { type: "string" },
                     path: {
                         elements: {
                             elements: { type: "float64" },
@@ -31,7 +32,7 @@ export const INTERSECTION_POLYLINES_JTD_SCHEMA: JTDSchemaType<SerializedIntersec
 export type IntersectionPolyline = {
     id: string;
     name: string;
-    color: [number, number, number];
+    color: string;
     path: number[][];
     fieldId: string;
 };

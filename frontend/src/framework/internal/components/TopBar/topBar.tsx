@@ -1,17 +1,11 @@
-import React from "react";
+import type React from "react";
 
-import { Icon, Tooltip, Typography } from "@equinor/eds-core-react";
+import { Icon } from "@equinor/eds-core-react";
 import { category } from "@equinor/eds-icons";
-import { AddLink, Category, Close, Edit, Link, Lock, Refresh, Save } from "@mui/icons-material";
 
 import FmuLogo from "@assets/fmu.svg";
 
-import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
-import type { ButtonProps } from "@lib/components/Button/button";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

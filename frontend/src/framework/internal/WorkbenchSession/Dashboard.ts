@@ -1,14 +1,14 @@
 import type { JTDSchemaType } from "ajv/dist/core";
 import { v4 } from "uuid";
 
+import { InitialSettings } from "@framework/InitialSettings";
 import { SyncSettingKey } from "@framework/SyncSettings";
+import type { Template } from "@framework/TemplateRegistry";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { AtomStoreMaster } from "../../AtomStoreMaster";
 import type { ModuleInstance, ModuleInstanceFullState } from "../../ModuleInstance";
 import { ModuleRegistry } from "../../ModuleRegistry";
-import { Template } from "@framework/TemplateRegistry";
-import { InitialSettings } from "@framework/InitialSettings";
 
 export type LayoutElement = {
     moduleInstanceId?: string;

@@ -46,7 +46,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 JSON.stringify(serializedState),
             );
         },
-        [dataProviderManager, fieldIdentifier, preferredViewLayout],
+        [dataProviderManager, fieldIdentifier, preferredViewLayout, props.settingsContext],
     );
 
     const applyPersistedState = React.useCallback(
@@ -75,7 +75,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 layerManager.deserializeState(parsedState.layerManager);
             }
         },
-        [setFieldIdentifier, setPreferredViewLayout],
+        [setFieldIdentifier, setPreferredViewLayout, props.settingsContext],
     );
 
     React.useEffect(

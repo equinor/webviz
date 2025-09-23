@@ -1,8 +1,8 @@
-import { globalLog } from "@src/Log";
 import type { QueryClient } from "@tanstack/query-core";
 
 import { postGetTimestampsForEnsemblesOptions, type EnsembleIdent_api } from "@api";
 import { EnsembleTimestampsStore, type EnsembleTimestamps } from "@framework/EnsembleTimestampsStore";
+import { globalLog } from "@framework/Log";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { Workbench } from "@framework/Workbench";
 

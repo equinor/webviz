@@ -2,7 +2,7 @@ import { AuthenticationBoundary } from "@framework/internal/components/Authentic
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
 
-import { WorkbenchWrapper } from "./WorkbenchWrapper";
+import { WorkbenchWrapper } from "./framework/internal/components/WorkbenchWrapper/workbenchWrapper";
 
 function App() {
     return (

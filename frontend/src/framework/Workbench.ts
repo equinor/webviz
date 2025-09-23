@@ -1,5 +1,4 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { isAxiosError } from "axios";
 
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
@@ -7,15 +6,11 @@ import { AtomStoreMaster } from "./AtomStoreMaster";
 import { GuiMessageBroker, GuiState, LeftDrawerContent, RightDrawerContent } from "./GuiMessageBroker";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { EnsembleUpdateMonitor } from "./internal/WorkbenchSession/EnsembleUpdateMonitor";
-import {
-    PrivateWorkbenchSession,
-    PrivateWorkbenchSessionTopic,
-} from "./internal/WorkbenchSession/PrivateWorkbenchSession";
-import { ApiErrorHelper } from "./utils/ApiErrorHelper";
-import type { WorkbenchServices } from "./WorkbenchServices";
+import { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
 import { localStorageKeyForSessionId } from "./internal/WorkbenchSession/utils";
 import { loadWorkbenchSessionFromLocalStorage } from "./internal/WorkbenchSession/WorkbenchSessionLoader";
-import { Template } from "./TemplateRegistry";
+import type { Template } from "./TemplateRegistry";
+import type { WorkbenchServices } from "./WorkbenchServices";
 
 export enum WorkbenchTopic {
     ACTIVE_SESSION = "activeSession",

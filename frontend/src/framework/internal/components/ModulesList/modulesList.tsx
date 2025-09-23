@@ -574,23 +574,3 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         </div>
     );
 };
-
-type NotificationProps = {
-    visible: boolean;
-    onClick: () => void;
-};
-
-function Notification(props: NotificationProps): React.ReactNode {
-    if (!props.visible) {
-        return null;
-    }
-    return (
-        <div
-            className="bg-green-600 hover:bg-green-500 p-2 mb-4 text-sm cursor-pointer text-white"
-            onClick={props.onClick}
-        >
-            <p className="font-bold mb-1">Done editing?</p>
-            Click here or on a module header to start using your dashboard.
-        </div>
-    );
-}
