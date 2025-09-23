@@ -1,16 +1,24 @@
 import type { QueryClient } from "@tanstack/react-query";
 
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
 import { GuiMessageBroker, GuiState, LeftDrawerContent, RightDrawerContent } from "./GuiMessageBroker";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
+import { DashboardTopic } from "./internal/WorkbenchSession/Dashboard";
 import { EnsembleUpdateMonitor } from "./internal/WorkbenchSession/EnsembleUpdateMonitor";
-import { PrivateWorkbenchSession } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
+import {
+    PrivateWorkbenchSession,
+    PrivateWorkbenchSessionTopic,
+} from "./internal/WorkbenchSession/PrivateWorkbenchSession";
 import { localStorageKeyForSessionId } from "./internal/WorkbenchSession/utils";
 import { loadWorkbenchSessionFromLocalStorage } from "./internal/WorkbenchSession/WorkbenchSessionLoader";
+import { makeWorkbenchSessionLocalStorageString } from "./internal/WorkbenchSession/WorkbenchSessionSerializer";
 import type { Template } from "./TemplateRegistry";
+import { UserCreatedItemsEvent } from "./UserCreatedItems";
 import type { WorkbenchServices } from "./WorkbenchServices";
+import { WorkbenchSettingsTopic } from "./WorkbenchSettings";
 
 export enum WorkbenchTopic {
     ACTIVE_SESSION = "activeSession",
@@ -31,6 +39,10 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     private _queryClient: QueryClient;
     private _ensembleUpdateMonitor: EnsembleUpdateMonitor;
     private _isInitialized: boolean = false;
+    private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
+    private _pullDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
+    private _pullInProgress = false;
+    private _pullCounter = 0;
 
     constructor(queryClient: QueryClient) {
         this._queryClient = queryClient;
@@ -140,6 +152,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             }
 
             this._workbenchSession = session;
+            this.subscribeToSessionChanges();
             await this._ensembleUpdateMonitor.pollImmediately();
             this._ensembleUpdateMonitor.startPolling();
             this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
@@ -199,5 +212,157 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
         const dashboard = this._workbenchSession.getActiveDashboard();
         dashboard.applyTemplate(template);
+    }
+
+    private subscribeToSessionChanges() {
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to subscribe to changes.");
+        }
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "workbench-session",
+            this._workbenchSession
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(PrivateWorkbenchSessionTopic.DASHBOARDS)(() => {
+                this.schedulePullFullSessionState();
+                this.subscribeToDashboardUpdates();
+            }),
+        );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "workbench-session",
+            this._workbenchSession
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(PrivateWorkbenchSessionTopic.ENSEMBLE_SET)(() => {
+                this.schedulePullFullSessionState();
+            }),
+        );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "workbench-session",
+            this._workbenchSession
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET)(() => {
+                this.schedulePullFullSessionState();
+            }),
+        );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "workbench-session",
+            this._workbenchSession
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(PrivateWorkbenchSessionTopic.METADATA)(() => {
+                this.schedulePullFullSessionState();
+            }),
+        );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "workbench-session",
+            this._workbenchSession
+                .getWorkbenchSettings()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(WorkbenchSettingsTopic.SelectedColorPalettes)(() => {
+                this.schedulePullFullSessionState();
+            }),
+        );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "workbench-session",
+            this._workbenchSession
+                .getUserCreatedItems()
+                .subscribe(UserCreatedItemsEvent.INTERSECTION_POLYLINES_CHANGE, () => {
+                    this.schedulePullFullSessionState();
+                }),
+        );
+
+        this.subscribeToDashboardUpdates();
+    }
+
+    private subscribeToDashboardUpdates() {
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to subscribe to dashboard updates.");
+        }
+
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("dashboards");
+
+        const dashboards = this._workbenchSession.getDashboards();
+
+        for (const dashboard of dashboards) {
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "dashboards",
+                dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.Layout)(() => {
+                    this.schedulePullFullSessionState();
+                }),
+            );
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "dashboards",
+                dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.ModuleInstances)(() => {
+                    this.schedulePullFullSessionState();
+                }),
+            );
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "dashboards",
+                dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.ActiveModuleInstanceId)(
+                    () => {
+                        this.schedulePullFullSessionState();
+                    },
+                ),
+            );
+        }
+    }
+
+    private schedulePullFullSessionState(delay: number = 200) {
+        this.maybeClearPullDebounceTimeout();
+
+        this._pullDebounceTimeout = setTimeout(() => {
+            this._pullDebounceTimeout = null;
+            this.pullFullSessionState();
+        }, delay);
+    }
+
+    private maybeClearPullDebounceTimeout() {
+        if (this._pullDebounceTimeout) {
+            clearTimeout(this._pullDebounceTimeout);
+            this._pullDebounceTimeout = null;
+        }
+    }
+
+    private async pullFullSessionState({ immediate = false } = {}): Promise<boolean> {
+        if (!this._workbenchSession) {
+            console.warn("No active workbench session to pull state from.");
+            return false;
+        }
+
+        if (this._pullInProgress && !immediate) {
+            // Do not allow concurrent pulls – let debounce handle retries
+            return false;
+        }
+
+        this._pullInProgress = true;
+        const localPullId = ++this._pullCounter;
+
+        try {
+            // Only apply if it's still the latest pull
+            if (localPullId !== this._pullCounter) {
+                return false;
+            }
+
+            this.persistToLocalStorage();
+
+            return true;
+        } catch (error) {
+            console.error("Failed to pull full session state:", error);
+            return false;
+        } finally {
+            this._pullInProgress = false;
+        }
+    }
+
+    private persistToLocalStorage() {
+        const key = localStorageKeyForSessionId("default");
+
+        if (this._workbenchSession) {
+            localStorage.setItem(key, makeWorkbenchSessionLocalStorageString(this._workbenchSession));
+        }
     }
 }
