@@ -1,7 +1,8 @@
 import type { CompositeLayerProps, FilterContext, Layer, UpdateParameters } from "@deck.gl/core";
 import { CompositeLayer } from "@deck.gl/core";
 import { GeoJsonLayer, TextLayer } from "@deck.gl/layers";
-import type { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
+import type { ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/layers/utils/layerTools";
+import type { BoundingBox3D } from "@webviz/subsurface-viewer/dist/utils";
 import type { Feature, FeatureCollection } from "geojson";
 
 export type WellborePicksLayerData = {
