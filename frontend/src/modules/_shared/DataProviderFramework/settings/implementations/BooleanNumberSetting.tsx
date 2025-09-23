@@ -135,7 +135,6 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
                         disabled={!booleanValue}
                         debounceTimeMs={200}
                         onValueChange={handleNumberChange}
-                        style={{ width: "80px" }}
                     />
                 </div>
             );
