@@ -24,6 +24,7 @@ export enum SettingCategory {
     // XYZ_NUMBER = "xyzNumber",
     XYZ_RANGE = "xyzRange",
     BOOLEAN = "boolean",
+    BOOLEAN_NUMBER = "booleanNumber",
     STATIC = "static",
     XYZ_VALUES_WITH_VISIBILITY = "rangesWithVisibility",
 }
@@ -44,8 +45,7 @@ export enum Setting {
     COLOR_SCALE = "colorScale",
     COLOR_SET = "colorSet",
     COLOR = "color",
-    SHOW_CONTOURS = "showContours",
-    CONTOUR_INTERVAL = "contourInterval",
+    CONTOURS = "contours",
     GRID_LAYER_RANGE = "gridLayerRange",
     GRID_LAYER_K = "gridLayerK",
     GRID_NAME = "gridName",
@@ -84,8 +84,7 @@ export const settingCategories = {
     [Setting.COLOR_SCALE]: SettingCategory.STATIC,
     [Setting.COLOR_SET]: SettingCategory.STATIC,
     [Setting.COLOR]: SettingCategory.STATIC,
-    [Setting.SHOW_CONTOURS]: SettingCategory.BOOLEAN,
-    [Setting.CONTOUR_INTERVAL]: SettingCategory.NUMBER,
+    [Setting.CONTOURS]: SettingCategory.BOOLEAN_NUMBER,
     [Setting.GRID_LAYER_RANGE]: SettingCategory.XYZ_RANGE,
     [Setting.GRID_LAYER_K]: SettingCategory.NUMBER,
     [Setting.GRID_NAME]: SettingCategory.SINGLE_SELECT,
@@ -126,8 +125,7 @@ export type SettingTypes = {
     [Setting.COLOR_SCALE]: ColorScaleSpecification | null;
     [Setting.COLOR_SET]: ColorSet | null;
     [Setting.COLOR]: string | null;
-    [Setting.SHOW_CONTOURS]: boolean;
-    [Setting.CONTOUR_INTERVAL]: number | null;
+    [Setting.CONTOURS]: [boolean, number] | null;
     [Setting.GRID_LAYER_RANGE]: [[number, number], [number, number], [number, number]] | null;
     [Setting.GRID_LAYER_K]: number | null;
     [Setting.GRID_NAME]: string | null;
@@ -322,6 +320,29 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
         };
         return newValue;
     },
+    [SettingCategory.BOOLEAN_NUMBER]: <TSetting extends PossibleSettingsForCategory<SettingCategory.BOOLEAN_NUMBER>>(
+        value: SettingTypes[TSetting],
+        availableValues: AvailableValuesType<TSetting>,
+    ) => {
+        if (value === null) {
+            // Default: boolean false, number at min value or 0
+            const defaultNumber = availableValues ? availableValues[0] : 0;
+            return [false, defaultNumber] as SettingTypes[TSetting];
+        }
+
+        if (availableValues === null) {
+            // If no available values, return value as-is
+            return value;
+        }
+
+        const [booleanValue, numberValue] = value;
+        const [min, max] = availableValues;
+
+        // Clamp the number value to the available range
+        const clampedNumber = Math.max(min, Math.min(max, numberValue));
+
+        return [booleanValue, clampedNumber] as SettingTypes[TSetting];
+    },
     [SettingCategory.STATIC]: (value) => value,
     [SettingCategory.BOOLEAN]: (value) => value,
 };
@@ -385,6 +406,24 @@ export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
             value[2][0] <= zRange[1] &&
             value[2][1] >= zRange[0] &&
             value[2][1] <= zRange[1]
+        );
+    },
+    [SettingCategory.BOOLEAN_NUMBER]: (value, availableValues) => {
+        if (value === null) {
+            return false;
+        }
+        if (availableValues === null) {
+            // If no available values, just check type validity
+            const [booleanValue, numberValue] = value;
+            return typeof booleanValue === "boolean" && typeof numberValue === "number";
+        }
+        const [booleanValue, numberValue] = value;
+        const [min, max] = availableValues;
+        return (
+            typeof booleanValue === "boolean" &&
+            typeof numberValue === "number" &&
+            numberValue >= min &&
+            numberValue <= max
         );
     },
     [SettingCategory.STATIC]: () => true,

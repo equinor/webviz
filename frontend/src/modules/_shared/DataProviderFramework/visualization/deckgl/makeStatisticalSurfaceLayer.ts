@@ -81,7 +81,7 @@ export function makeStatisticalSurfaceLayer({
             valueMax: data.surfaceData.value_max,
             denormalize: true,
         }),
-        contours: getSetting(Setting.SHOW_CONTOURS) ?? false,
-        contourInterval: getSetting(Setting.CONTOUR_INTERVAL) ?? 10,
+        contours: getSetting(Setting.CONTOURS)?.[0] ?? false,
+        contourInterval: getSetting(Setting.CONTOURS)?.[1] ?? 10,
     });
 }
