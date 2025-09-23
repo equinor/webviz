@@ -175,6 +175,10 @@ export class DataProvider<
         );
     }
 
+    getRevisionNumber(): number {
+        return this._revisionNumber;
+    }
+
     areCurrentSettingsValid(): boolean {
         if (!this._customDataProviderImpl.areCurrentSettingsValid) {
             return true;
