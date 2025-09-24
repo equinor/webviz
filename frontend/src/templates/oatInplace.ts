@@ -4,7 +4,7 @@ import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { ChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
-import { DisplayComponentType } from "@modules/TornadoChart/typesAndEnums";
+import { DisplayComponentType } from "@modules/SensitivityPlot/typesAndEnums";
 
 const template: Template = {
     description: "Inplace volumes analysis for design matrix ensembles.",
@@ -38,8 +38,8 @@ const template: Template = {
             },
         },
         {
-            instanceRef: "TornadoChartInstance",
-            moduleName: "TornadoChart",
+            instanceRef: "SensitivityPlotInstance",
+            moduleName: "SensitivityPlot",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -59,8 +59,8 @@ const template: Template = {
             },
         },
         {
-            instanceRef: "TornadoChartInstance2",
-            moduleName: "TornadoChart",
+            instanceRef: "SensitivityPlotInstance2",
+            moduleName: "SensitivityPlot",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
