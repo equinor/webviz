@@ -4,7 +4,7 @@ import logging
 from typing import Annotated, Literal
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query, Path
+from fastapi import APIRouter, Depends, HTTPException, Query, Path, Response
 
 from webviz_pkg.core_utils.background_tasks import run_in_background_task
 
@@ -16,6 +16,8 @@ from primary.services.user_session_manager._radix_helpers import RadixResourceRe
 from primary.services.user_session_manager._user_session_directory import UserSessionDirectory
 from primary.services.user_grid3d_service.user_grid3d_service import UserGrid3dService, IJKIndexFilter
 from primary.services.service_exceptions import Service, ServiceUnavailableError
+from primary.services.utils.task_meta_tracker import get_task_meta_tracker_for_user
+from primary.utils.response_perf_metrics import ResponsePerfMetrics
 
 LOGGER = logging.getLogger(__name__)
 
@@ -48,6 +50,22 @@ async def get_provoke_error(
 
     # We will only end up here, with a 200 reply, if the specified exception type is unrecognized
     return f"This is a 200 OK response!\n\nOoops, couldn't throw exception {error_type=}"
+
+
+@router.get("/tasks/purge")
+async def get_tasks_purge(
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+) -> str:
+    perf_metrics = ResponsePerfMetrics(response)
+    LOGGER.debug(f"get_tasks_purge() - start")
+
+    task_tracker = get_task_meta_tracker_for_user(authenticated_user)
+    await task_tracker.purge_all_task_meta_async()
+
+    LOGGER.debug(f"get_tasks_purge() - done in {perf_metrics.to_string()}")
+
+    return f"All tasks purged in {perf_metrics.to_string()}"
 
 
 @router.get("/usersession/{user_component}/call")

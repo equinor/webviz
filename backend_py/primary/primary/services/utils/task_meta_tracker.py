@@ -166,6 +166,14 @@ class TaskMetaTracker:
         task_id = await self._redis_client.get(fingerprint_redis_key)
         return task_id
 
+    async def purge_all_task_meta_async(self) -> None:
+        # Purge all existing keys for user by setting their TTL to 1ms
+        # Note that this is not atomic, but use it as a first experiment.
+        # We should probably go for a solution with versioned namespaces instead.
+        pattern = f"{_REDIS_KEY_PREFIX}:user:{self._user_id}:*"
+        async for key in self._redis_client.scan_iter(match=pattern):
+            await self._redis_client.pexpire(key, 1)
+
     def _make_full_redis_key_for_task(self, task_id: str) -> str:
         return f"{_REDIS_KEY_PREFIX}:user:{self._user_id}:task:{task_id}"
 
