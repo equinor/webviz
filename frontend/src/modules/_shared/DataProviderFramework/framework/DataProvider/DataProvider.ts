@@ -403,8 +403,8 @@ export class DataProvider<
         this._scopedQueryController.cancelActiveFetch();
 
         this.invalidateValueRange();
-        this.setStatus(DataProviderStatus.LOADING);
         this.setProgressMessage(null);
+        this.setStatus(DataProviderStatus.LOADING);
 
         try {
             this._data = await this._customDataProviderImpl.fetchData({

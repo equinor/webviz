@@ -11,7 +11,7 @@ import {
     getStatisticalSurfaceDataHybridQueryKey,
 } from "@api";
 import { lroProgressBus } from "@framework/LroProgressBus";
-import { wrapLongRunningQuery } from "@framework/utils/longRunningApiCalls";
+import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
@@ -313,8 +313,8 @@ export class StatisticalSurfaceProvider
             queryFn: getStatisticalSurfaceDataHybrid,
             queryFnArgs: apiFunctionArgs,
             queryKey: queryKey,
-            pollIntervalMs: 500,
-            maxRetries: 240,
+            delayBetweenPollsSecs: 0.5,
+            maxTotalDurationSecs: 120,
         });
 
         function handleTaskProgress(progressMessage: string | null) {

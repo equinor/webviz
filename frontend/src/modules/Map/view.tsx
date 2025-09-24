@@ -8,7 +8,7 @@ import type { SurfaceDef_api, GetStatisticalSurfaceDataHybridData_api } from "@a
 import { getStatisticalSurfaceDataHybrid, getStatisticalSurfaceDataHybridQueryKey } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { useLroProgress, wrapLongRunningQuery } from "@framework/utils/longRunningApiCalls";
+import { useLroProgress, wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import type { Vec2 } from "@lib/utils/vec2";
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
@@ -48,8 +48,8 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
         queryFn: getStatisticalSurfaceDataHybrid,
         queryFnArgs: hybrid_apiFunctionArgs,
         queryKey: hybrid_queryKey,
-        pollIntervalMs: 500,
-        maxRetries: 240,
+        delayBetweenPollsSecs: 0.5,
+        maxTotalDurationSecs: 120,
     });
     const hybrid_dataQuery = useQuery({ ...hybrid_queryOptions, enabled: activeQueryType === "hybrid" });
 
