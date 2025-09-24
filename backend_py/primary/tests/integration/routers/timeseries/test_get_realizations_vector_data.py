@@ -1,9 +1,12 @@
+# pylint: disable=async-suffix
+
 import pytest
 import numpy as np
 
 from primary.routers.timeseries import router
 from primary.routers.timeseries import schemas
 from primary.utils.query_string_utils import encode_as_uint_list_str
+from tests.integration.conftest import SumoTestEnsemble
 
 
 @pytest.mark.parametrize(
@@ -16,11 +19,15 @@ from primary.utils.query_string_utils import encode_as_uint_list_str
     ],
 )
 async def test_get_realizations_vector_data_dates(
-    test_user, sumo_test_ensemble_ahm, frequency, date_count, expected_mean
+    test_user: router.AuthenticatedUser,
+    sumo_test_ensemble_ahm: SumoTestEnsemble,
+    frequency: schemas.Frequency,
+    date_count: int,
+    expected_mean: str,
 ) -> None:
 
     realization_data = await router.get_realizations_vector_data(
-        None,
+        None,  # type: ignore
         test_user,
         sumo_test_ensemble_ahm.case_uuid,
         sumo_test_ensemble_ahm.ensemble_name,
@@ -44,11 +51,15 @@ async def test_get_realizations_vector_data_dates(
     ],
 )
 async def test_get_realizations_vector_data_realizations(
-    test_user, sumo_test_ensemble_ahm, realizations, real_count, expected_mean
+    test_user: router.AuthenticatedUser,
+    sumo_test_ensemble_ahm: SumoTestEnsemble,
+    realizations: str | None,
+    real_count: int,
+    expected_mean: str,
 ) -> None:
 
     realization_data = await router.get_realizations_vector_data(
-        None,
+        None,  # type: ignore
         test_user,
         sumo_test_ensemble_ahm.case_uuid,
         sumo_test_ensemble_ahm.ensemble_name,

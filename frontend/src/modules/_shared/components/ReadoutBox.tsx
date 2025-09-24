@@ -6,6 +6,8 @@ import { useStableProp } from "@lib/hooks/useStableProp";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 
+import { formatNumber } from "../utils/numberFormatting";
+
 export type ReadoutItem = {
     label: string;
     info: InfoItem[];
@@ -182,7 +184,7 @@ function makeFormattedInfoValue(value: string | number | boolean | number[]): st
 
 function formatValue(value: number | string | boolean): string {
     if (typeof value === "number") {
-        return (+value.toFixed(2)).toString();
+        return formatNumber(value);
     }
     return value.toString();
 }

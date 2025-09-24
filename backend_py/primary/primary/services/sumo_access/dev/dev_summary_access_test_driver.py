@@ -4,16 +4,18 @@ import logging
 import asyncio
 
 import pyarrow as pa
+import pyarrow.compute as pc
 
 from fmu.sumo.explorer.explorer import SumoClient
 
 from primary.services.summary_vector_statistics import compute_vector_statistics_table, compute_vector_statistics
-from ..summary_access import SummaryAccess, RealizationVector, Frequency
-from ..sumo_inspector import SumoInspector
-from ..case_inspector import CaseInspector
+
+from primary.services.sumo_access.summary_access import SummaryAccess, RealizationVector, Frequency
+from primary.services.sumo_access.sumo_inspector import SumoInspector
+from primary.services.sumo_access.case_inspector import CaseInspector
 
 
-async def test_summary_access(summary_access: SummaryAccess) -> None:
+async def test_summary_access(summary_access: SummaryAccess) -> None:  # pylint: disable=async-suffix
     vector_info_list = await summary_access.get_available_vectors_async()
     if len(vector_info_list) == 0:
         print("\n\nNo summary vectors found, giving up!\n")
@@ -58,7 +60,7 @@ async def test_summary_access(summary_access: SummaryAccess) -> None:
     vector_table, _vector_meta = await summary_access.get_vector_table_async(
         vector_name="FOPT", resampling_frequency=Frequency.YEARLY, realizations=[0, 1]
     )
-    vector_table = vector_table.filter(pa.compute.equal(vector_table["REAL"], 0))
+    vector_table = vector_table.filter(pc.equal(vector_table["REAL"], pa.scalar(0)))
     print(vector_table)
     print(vector_table.shape)
 
@@ -86,7 +88,7 @@ async def test_summary_access(summary_access: SummaryAccess) -> None:
     print(vec_stats)
 
 
-async def main() -> None:
+async def main() -> None:  # pylint: disable=async-suffix
     print("\n\n")
     print("## Running dev_summary_access_test_driver")
     print("## =================================================")

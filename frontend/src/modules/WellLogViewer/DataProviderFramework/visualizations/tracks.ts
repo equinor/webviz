@@ -9,7 +9,7 @@ import type {
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import type { TemplateTrack } from "@modules/WellLogViewer/types";
+import type { TemplateTrack } from "@modules/_shared/types/wellLogTemplates";
 
 import type { baseSettings } from "../groups/_shared";
 import type { ContinuousTrackSettings } from "../groups/ContinuousLogTrack";
