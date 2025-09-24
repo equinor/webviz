@@ -17,8 +17,13 @@ export function makeHistogramTrace({
 
     // Add epsilon to ensure the last bin includes the maximum value
     // This is necessary because Plotly's histogram bins are [start, end) intervals
-    const end = xMax + Math.max(binSize * 1e-6, 1e-10);
+    const EPSILON_MULTIPLIER = 1e-6;
+    const MIN_EPSILON = 1e-10;
+    const epsilon = Math.max(binSize * EPSILON_MULTIPLIER, MIN_EPSILON);
+    const end = xMax + epsilon;
 
+    // Adjust binSize to maintain exactly numBins
+    const adjustedBinSize = (range + epsilon) / numBins;
     const trace: Partial<PlotData> = {
         x: xValues,
         type: "histogram",
@@ -36,7 +41,7 @@ export function makeHistogramTrace({
         xbins: {
             start: xMin,
             end: end,
-            size: binSize,
+            size: adjustedBinSize,
         },
 
         autobinx: false,
