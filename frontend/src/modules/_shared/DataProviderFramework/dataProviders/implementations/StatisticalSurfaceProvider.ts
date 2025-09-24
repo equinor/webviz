@@ -298,6 +298,16 @@ export class StatisticalSurfaceProvider
         };
         const queryKey = getStatisticalSurfaceDataHybridQueryKey(apiFunctionArgs);
 
+        // !!!!!!!!!!!!!!!!!
+        // To discuss
+        // Suggested parameters for polling:
+        //  * maxTotalDurationS
+        //  * delayS - delay between retries
+        //
+        // Maybe extend to:
+        //  * backoff: none, linear, exponential
+        //  * maxDelayS - maximum delay for linear or exponential backoff
+        // !!!!!!!!!!!!!!!!!
         const queryOptions = wrapLongRunningQuery({
             queryFn: getStatisticalSurfaceDataHybrid,
             queryFnArgs: apiFunctionArgs,
