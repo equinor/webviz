@@ -215,7 +215,7 @@ async def get_statistical_surface_data_hybrid(
 
     perf_metrics = ResponsePerfMetrics(response)
 
-    LOGGER.info(f"Getting HYBRID statistical surface data for address: {surf_addr_str}")
+    # LOGGER.debug(f"Entering HYBRID endpoint for statistical surface data  for address: {surf_addr_str}")
 
     addr = decode_surf_addr_str(surf_addr_str)
     if not isinstance(addr, StatisticalSurfaceAddress):
@@ -224,28 +224,30 @@ async def get_statistical_surface_data_hybrid(
     access_token = authenticated_user.get_sumo_access_token()
     access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
     task_tracker = get_task_meta_tracker_for_user(authenticated_user)
-
-    # !!!!!!!!!!!!!
-    # LOGGING!!!!!!
-    # LOGGING!!!!!!
+    perf_metrics.record_lap("init")
 
     # !!!!!!!!!!!!!
     # Todo!
     # We need to come up with a way to bust the task tracker cache in cases where tasks get "stuck".
     # One way of achieving this may be to have a separate endpoint to clear the task tracker cache for the user.
     task_fp = await task_helpers.determine_surf_task_fingerprint_async(authenticated_user, addr)
+    perf_metrics.record_lap("fingerprint")
+
+    task_meta = await task_tracker.get_task_meta_by_fingerprint_async(task_fp)
+    perf_metrics.record_lap("task-meta")
 
     new_sumo_task_was_submitted = False
-    task_meta = await task_tracker.get_task_meta_by_fingerprint_async(task_fp)
     if not task_meta:
-        LOGGER.info("SUBMITTING new SUMO TASK!!!!!!!!!!!!!!!!")
         task_meta = await task_helpers.submit_and_track_stat_surf_task_async(access, addr, task_tracker, task_fp)
+        LOGGER.info(f"Submitted new statistical surface calculation task for address: {surf_addr_str}")
         new_sumo_task_was_submitted = True
+        perf_metrics.record_lap("submit")
 
     try:
         maybe_xtgeo_surf = await access.poll_statistical_surface_calculation_task_async(
             sumo_task_id=task_meta.task_id, timeout_s=0
         )
+        perf_metrics.record_lap("poll")
 
         if isinstance(maybe_xtgeo_surf, ExpectedError):
             await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
@@ -253,6 +255,7 @@ async def get_statistical_surface_data_hybrid(
             return task_helpers.make_lro_failure_resp(maybe_xtgeo_surf)
 
         if isinstance(maybe_xtgeo_surf, InProgress):
+            LOGGER.info(f"Returning in-progress for statistical surface task (hybrid), took: {perf_metrics.to_string()}")
             response.status_code = status.HTTP_202_ACCEPTED
             response.headers["Cache-Control"] = "no-store"
             return task_helpers.make_lro_in_progress_resp(task_meta, new_sumo_task_was_submitted, maybe_xtgeo_surf)
@@ -262,6 +265,8 @@ async def get_statistical_surface_data_hybrid(
         api_surf_data = _resample_and_convert_to_surface_data_response(
             xtgeo_surf=xtgeo_surf, resample_to=resample_to, data_format=data_format, perf_metrics=perf_metrics
         )
+
+        LOGGER.info(f"Got statistical surface data (hybrid) in: {perf_metrics.to_string()}")
 
         return LroSuccessResp(status="success", result=api_surf_data)
 

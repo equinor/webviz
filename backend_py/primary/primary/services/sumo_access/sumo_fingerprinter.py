@@ -69,7 +69,7 @@ class SumoFingerprinter:
         cached_fp = await self._redis_client.get(redis_key)
         perf_metrics.record_lap("redis-get")
         if cached_fp is not None:
-            LOGGER.debug(f"get_or_calc_ensemble_fp_async() - from cache in: {perf_metrics.to_string()} [{cached_fp=}]")
+            # LOGGER.debug(f"get_or_calc_ensemble_fp_async() - from cache in: {perf_metrics.to_string()} [{cached_fp=}]")
             return cached_fp
 
         new_fp = await calc_ensemble_fp_async(self._sumo_client, case_uuid, ensemble_name, class_name)
@@ -79,7 +79,7 @@ class SumoFingerprinter:
         asyncio.create_task(self._redis_client.set(name=redis_key, value=new_fp, ex=self._cache_ttl_s))
         perf_metrics.record_lap("schedule-redis-set")
 
-        LOGGER.debug(f"get_or_calc_ensemble_fp_async() - calculated in: {perf_metrics.to_string()} [{new_fp=}]")
+        # LOGGER.debug(f"get_or_calc_ensemble_fp_async() - calculated in: {perf_metrics.to_string()} [{new_fp=}]")
         return new_fp
 
     def _make_full_redis_key(self, case_uuid: str, ensemble_name: str, class_name: str | None) -> str:
@@ -125,8 +125,8 @@ async def calc_ensemble_fp_async(
     case_digest: DocSetDigest = case_task.result()
     ens_digest: DocSetDigest = ens_task.result()
 
-    LOGGER.debug(f"calc_ensemble_fp_async() case: {_digest_to_str(case_digest)}")
-    LOGGER.debug(f"calc_ensemble_fp_async() ens:  {_digest_to_str(ens_digest)}")
+    # LOGGER.debug(f"calc_ensemble_fp_async() case: {_digest_to_str(case_digest)}")
+    # LOGGER.debug(f"calc_ensemble_fp_async() ens:  {_digest_to_str(ens_digest)}")
 
     # Choose the max timestamp from either the case or the ensemble
     max_timestamp = max(0, case_digest.max_timestamp_utc_ms)
@@ -135,7 +135,7 @@ async def calc_ensemble_fp_async(
 
     fingerprint = f"{max_time_iso_str}__case:{case_digest.total_num_docs}:{case_digest.checksum}__ens:{ens_digest.total_num_docs}:{ens_digest.checksum}"
 
-    LOGGER.debug(f"calc_ensemble_fp_async() took: {perf_metrics.to_string()} - fingerprint: {fingerprint}")
+    # LOGGER.debug(f"calc_ensemble_fp_async() took: {perf_metrics.to_string()} - fingerprint: {fingerprint}")
 
     return fingerprint
 
