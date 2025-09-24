@@ -22,7 +22,12 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
     private _staticProps: StaticProps | null;
 
     constructor(props: StaticProps) {
-        if (props && !!props.min && !!props.max && props.min > props.max) {
+        if (
+            props &&
+            props.min != null &&
+            props.max != null &&
+            props.min > props.max
+        ) {
             throw new Error("Min value cannot be greater than max value");
         }
 
