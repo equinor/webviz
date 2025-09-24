@@ -104,8 +104,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             return;
         }
 
-        this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
-        this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
         this._workbenchSession = null;
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
     }
@@ -115,8 +113,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             console.warn("A workbench session is already active. Please close it before opening a new one.");
             return;
         }
-
-        this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
 
         const sessionData = await loadWorkbenchSessionFromLocalStorage(snapshotId);
         if (!sessionData) {
@@ -131,8 +127,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         );
 
         await this.setWorkbenchSession(session);
-        this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, false);
-        this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, false);
         this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
     }
 
@@ -160,9 +154,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         } catch (error) {
             console.error("Failed to hydrate workbench session:", error);
             throw new Error("Could not load workbench session from data container.");
-        } finally {
-            this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
-            this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, false);
         }
     }
 
