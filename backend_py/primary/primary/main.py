@@ -142,7 +142,10 @@ app.add_middleware(
 session_store = RedisStore(config.REDIS_USER_SESSION_URL, prefix="auth-sessions:")
 app.add_middleware(SessionMiddleware, store=session_store)
 
-app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
+
+# As of mypy 1.16 and Starlette 47, the ProxyHeadersMiddleware gives an incorrect type error here
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")  # type: ignore[arg-type]
+
 
 # This middleware instance measures execution time of the endpoints, including the cost of other middleware
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")

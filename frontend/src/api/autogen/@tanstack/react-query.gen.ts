@@ -66,6 +66,7 @@ import {
     getInlineSlice,
     getCrosslineSlice,
     getDepthSlice,
+    getSeismicSlices,
     postGetSeismicFence,
     getPolygonsDirectory,
     getPolygonsData,
@@ -165,6 +166,7 @@ import type {
     GetInlineSliceData_api,
     GetCrosslineSliceData_api,
     GetDepthSliceData_api,
+    GetSeismicSlicesData_api,
     PostGetSeismicFenceData_api,
     PostGetSeismicFenceError_api,
     PostGetSeismicFenceResponse_api,
@@ -1405,6 +1407,25 @@ export const getDepthSliceOptions = (options: Options<GetDepthSliceData_api>) =>
             return data;
         },
         queryKey: getDepthSliceQueryKey(options),
+    });
+};
+
+export const getSeismicSlicesQueryKey = (options: Options<GetSeismicSlicesData_api>) => [
+    createQueryKey("getSeismicSlices", options),
+];
+
+export const getSeismicSlicesOptions = (options: Options<GetSeismicSlicesData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getSeismicSlices({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getSeismicSlicesQueryKey(options),
     });
 };
 

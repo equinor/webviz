@@ -20,10 +20,13 @@ export enum SettingCategory {
     SINGLE_SELECT = "singleSelect",
     MULTI_SELECT = "multiSelect",
     NUMBER = "number",
-    RANGE = "range",
     NUMBER_WITH_STEP = "numberWithStep",
+    // XYZ_NUMBER = "xyzNumber",
+    XYZ_RANGE = "xyzRange",
     BOOLEAN = "boolean",
+    BOOLEAN_NUMBER = "booleanNumber",
     STATIC = "static",
+    XYZ_VALUES_WITH_VISIBILITY = "rangesWithVisibility",
 }
 
 export enum Setting {
@@ -35,17 +38,16 @@ export enum Setting {
     SCALE = "scale",
 
     LOG_CURVE = "logCurve",
-    PLOT_VARIANT = "plotType",
+    PLOT_VARIANT = "plotVariant",
 
     ATTRIBUTE = "attribute",
     ENSEMBLE = "ensemble",
     COLOR_SCALE = "colorScale",
     COLOR_SET = "colorSet",
     COLOR = "color",
-    GRID_LAYER_I_RANGE = "gridLayerIRange",
-    GRID_LAYER_J_RANGE = "gridLayerJRange",
+    CONTOURS = "contours",
+    GRID_LAYER_RANGE = "gridLayerRange",
     GRID_LAYER_K = "gridLayerK",
-    GRID_LAYER_K_RANGE = "gridLayerKRange",
     GRID_NAME = "gridName",
     INTERSECTION = "intersection",
     OPACITY_PERCENT = "opacityPercent",
@@ -55,9 +57,7 @@ export enum Setting {
     STRAT_COLUMN = "stratColumn",
     REALIZATIONS = "realizations",
     SAMPLE_RESOLUTION_IN_METERS = "sampleResolutionInMeters",
-    SEISMIC_CROSSLINE = "seismicCrossline",
-    SEISMIC_DEPTH_SLICE = "seismicDepthSlice",
-    SEISMIC_INLINE = "seismicInline",
+    SEISMIC_SLICES = "seismicSlices",
     SENSITIVITY = "sensitivity",
     SHOW_GRID_LINES = "showGridLines",
     SMDA_INTERPRETER = "smdaInterpreter",
@@ -68,6 +68,7 @@ export enum Setting {
     TIME_OR_INTERVAL = "timeOrInterval",
     WELLBORE_EXTENSION_LENGTH = "wellboreExtensionLength",
     WELLBORE_PICKS = "wellborePicks",
+    WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
 }
 
 export const settingCategories = {
@@ -83,10 +84,9 @@ export const settingCategories = {
     [Setting.COLOR_SCALE]: SettingCategory.STATIC,
     [Setting.COLOR_SET]: SettingCategory.STATIC,
     [Setting.COLOR]: SettingCategory.STATIC,
-    [Setting.GRID_LAYER_I_RANGE]: SettingCategory.RANGE,
-    [Setting.GRID_LAYER_J_RANGE]: SettingCategory.RANGE,
+    [Setting.CONTOURS]: SettingCategory.BOOLEAN_NUMBER,
+    [Setting.GRID_LAYER_RANGE]: SettingCategory.XYZ_RANGE,
     [Setting.GRID_LAYER_K]: SettingCategory.NUMBER,
-    [Setting.GRID_LAYER_K_RANGE]: SettingCategory.RANGE,
     [Setting.GRID_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.INTERSECTION]: SettingCategory.SINGLE_SELECT,
     [Setting.OPACITY_PERCENT]: SettingCategory.NUMBER_WITH_STEP,
@@ -95,9 +95,7 @@ export const settingCategories = {
     [Setting.REALIZATION]: SettingCategory.SINGLE_SELECT,
     [Setting.REALIZATIONS]: SettingCategory.MULTI_SELECT,
     [Setting.SAMPLE_RESOLUTION_IN_METERS]: SettingCategory.NUMBER,
-    [Setting.SEISMIC_CROSSLINE]: SettingCategory.NUMBER_WITH_STEP,
-    [Setting.SEISMIC_DEPTH_SLICE]: SettingCategory.NUMBER_WITH_STEP,
-    [Setting.SEISMIC_INLINE]: SettingCategory.NUMBER_WITH_STEP,
+    [Setting.SEISMIC_SLICES]: SettingCategory.XYZ_VALUES_WITH_VISIBILITY,
     [Setting.SENSITIVITY]: SettingCategory.SINGLE_SELECT,
     [Setting.SHOW_GRID_LINES]: SettingCategory.BOOLEAN,
     [Setting.SMDA_INTERPRETER]: SettingCategory.SINGLE_SELECT,
@@ -109,6 +107,7 @@ export const settingCategories = {
     [Setting.TIME_OR_INTERVAL]: SettingCategory.SINGLE_SELECT,
     [Setting.WELLBORE_EXTENSION_LENGTH]: SettingCategory.NUMBER,
     [Setting.WELLBORE_PICKS]: SettingCategory.MULTI_SELECT,
+    [Setting.WELLBORE_PICK_IDENTIFIER]: SettingCategory.SINGLE_SELECT,
 } as const;
 
 export type SettingCategories = typeof settingCategories;
@@ -126,10 +125,9 @@ export type SettingTypes = {
     [Setting.COLOR_SCALE]: ColorScaleSpecification | null;
     [Setting.COLOR_SET]: ColorSet | null;
     [Setting.COLOR]: string | null;
-    [Setting.GRID_LAYER_I_RANGE]: [number, number] | null;
-    [Setting.GRID_LAYER_J_RANGE]: [number, number] | null;
+    [Setting.CONTOURS]: { enabled: boolean; value: number } | null;
+    [Setting.GRID_LAYER_RANGE]: [[number, number], [number, number], [number, number]] | null;
     [Setting.GRID_LAYER_K]: number | null;
-    [Setting.GRID_LAYER_K_RANGE]: [number, number] | null;
     [Setting.GRID_NAME]: string | null;
     [Setting.INTERSECTION]: IntersectionSettingValue | null;
     [Setting.OPACITY_PERCENT]: number | null;
@@ -138,9 +136,11 @@ export type SettingTypes = {
     [Setting.REALIZATION]: number | null;
     [Setting.REALIZATIONS]: number[] | null;
     [Setting.SAMPLE_RESOLUTION_IN_METERS]: number | null;
-    [Setting.SEISMIC_CROSSLINE]: number | null;
-    [Setting.SEISMIC_DEPTH_SLICE]: number | null;
-    [Setting.SEISMIC_INLINE]: number | null;
+    [Setting.SEISMIC_SLICES]: {
+        value: [number, number, number];
+        visible: [boolean, boolean, boolean];
+        applied: boolean;
+    } | null;
     [Setting.SENSITIVITY]: SensitivityNameCasePair | null;
     [Setting.SHOW_GRID_LINES]: boolean;
     [Setting.SMDA_INTERPRETER]: string | null;
@@ -152,6 +152,7 @@ export type SettingTypes = {
     [Setting.TIME_OR_INTERVAL]: string | null;
     [Setting.WELLBORE_EXTENSION_LENGTH]: number | null;
     [Setting.WELLBORE_PICKS]: WellborePick_api[] | null;
+    [Setting.WELLBORE_PICK_IDENTIFIER]: string | null;
 };
 
 export type PossibleSettingsForCategory<TCategory extends SettingCategory> = {
@@ -272,25 +273,74 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
         const steps = Math.round((value - min) / step);
         return min + steps * step;
     },
-    [SettingCategory.RANGE]: <TSetting extends PossibleSettingsForCategory<SettingCategory.RANGE>>(
+    [SettingCategory.XYZ_RANGE]: <TSetting extends PossibleSettingsForCategory<SettingCategory.XYZ_RANGE>>(
         value: SettingTypes[TSetting],
         availableValues: AvailableValuesType<TSetting>,
     ) => {
         if (value === null) {
-            return availableValues;
+            return [
+                [availableValues[0][0], availableValues[0][1]],
+                [availableValues[1][0], availableValues[1][1]],
+                [availableValues[2][0], availableValues[2][1]],
+            ];
+        }
+
+        const [xRange, yRange, zRange] = availableValues;
+
+        const newValue: SettingTypes[TSetting] = [
+            [Math.max(xRange[0], value[0][0]), Math.min(xRange[1], value[0][1])],
+            [Math.max(yRange[0], value[1][0]), Math.min(yRange[1], value[1][1])],
+            [Math.max(zRange[0], value[2][0]), Math.min(zRange[1], value[2][1])],
+        ];
+        return newValue;
+    },
+    [SettingCategory.XYZ_VALUES_WITH_VISIBILITY]: <
+        TSetting extends PossibleSettingsForCategory<SettingCategory.XYZ_VALUES_WITH_VISIBILITY>,
+    >(
+        value: SettingTypes[TSetting],
+        availableValues: AvailableValuesType<TSetting>,
+    ) => {
+        if (value === null) {
+            return {
+                value: [availableValues[0][0], availableValues[1][0], availableValues[2][0]],
+                visible: [true, true, true],
+                applied: false,
+            };
+        }
+
+        const [xRange, yRange, zRange] = availableValues;
+
+        const newValue: SettingTypes[TSetting] = {
+            ...value,
+            value: [
+                Math.max(xRange[0], Math.min(xRange[1], value.value[0])),
+                Math.max(yRange[0], Math.min(yRange[1], value.value[1])),
+                Math.max(zRange[0], Math.min(zRange[1], value.value[2])),
+            ],
+        };
+        return newValue;
+    },
+    [SettingCategory.BOOLEAN_NUMBER]: <TSetting extends PossibleSettingsForCategory<SettingCategory.BOOLEAN_NUMBER>>(
+        value: SettingTypes[TSetting],
+        availableValues: AvailableValuesType<TSetting>,
+    ) => {
+        if (value === null) {
+            // Default: boolean false, number at min value or 0
+            const defaultNumber = availableValues ? availableValues[0] : 0;
+            return { enabled: false, value: defaultNumber } as SettingTypes[TSetting];
+        }
+
+        if (availableValues === null) {
+            // If no available values, return value as-is
+            return value;
         }
 
         const [min, max] = availableValues;
 
-        if (value[0] < min) {
-            value[0] = min;
-        }
+        // Clamp the number value to the available range
+        const clampedNumber = Math.max(min, Math.min(max, value.value));
 
-        if (value[1] > max) {
-            value[1] = max;
-        }
-
-        return value;
+        return { enabled: value.enabled, value: clampedNumber } as SettingTypes[TSetting];
     },
     [SettingCategory.STATIC]: (value) => value,
     [SettingCategory.BOOLEAN]: (value) => value,
@@ -323,12 +373,55 @@ export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
         const [min, max, step] = availableValues;
         return value >= min && value <= max && (value - min) % step === 0;
     },
-    [SettingCategory.RANGE]: (value, availableValues) => {
+    [SettingCategory.XYZ_VALUES_WITH_VISIBILITY]: (value, availableValues) => {
         if (value === null) {
             return false;
         }
+        const [xRange, yRange, zRange] = availableValues;
+        return (
+            value.value[0] >= xRange[0] &&
+            value.value[0] <= xRange[1] &&
+            value.value[1] >= yRange[0] &&
+            value.value[1] <= yRange[1] &&
+            value.value[2] >= zRange[0] &&
+            value.value[2] <= zRange[1]
+        );
+    },
+    [SettingCategory.XYZ_RANGE]: (value, availableValues) => {
+        if (value === null) {
+            return false;
+        }
+        const [xRange, yRange, zRange] = availableValues;
+        return (
+            value[0][0] >= xRange[0] &&
+            value[0][0] <= xRange[1] &&
+            value[0][1] >= xRange[0] &&
+            value[0][1] <= xRange[1] &&
+            value[1][0] >= yRange[0] &&
+            value[1][0] <= yRange[1] &&
+            value[1][1] >= yRange[0] &&
+            value[1][1] <= yRange[1] &&
+            value[2][0] >= zRange[0] &&
+            value[2][0] <= zRange[1] &&
+            value[2][1] >= zRange[0] &&
+            value[2][1] <= zRange[1]
+        );
+    },
+    [SettingCategory.BOOLEAN_NUMBER]: (value, availableValues) => {
+        if (value === null) {
+            return false;
+        }
+        if (availableValues === null) {
+            // If no available values, just check type validity
+            return typeof value.enabled === "boolean" && typeof value.value === "number";
+        }
         const [min, max] = availableValues;
-        return value[0] >= min && value[1] <= max;
+        return (
+            typeof value.enabled === "boolean" &&
+            typeof value.value === "number" &&
+            value.value >= min &&
+            value.value <= max
+        );
     },
     [SettingCategory.STATIC]: () => true,
     [SettingCategory.BOOLEAN]: () => true,
@@ -357,16 +450,6 @@ export const settingCategoryAvailableValuesIntersectionReducerMap: SettingCatego
             isValid: (availableValues) => availableValues.length > 0,
         },
         [SettingCategory.NUMBER]: {
-            reducer: (accumulator, currentAvailableValues) => {
-                const [min, max] = accumulator;
-                const [currentMin, currentMax] = currentAvailableValues;
-
-                return [Math.max(min, currentMin), Math.min(max, currentMax)];
-            },
-            startingValue: [-Number.MAX_VALUE, Number.MAX_VALUE],
-            isValid: (availableValues) => availableValues[0] < availableValues[1],
-        },
-        [SettingCategory.RANGE]: {
             reducer: (accumulator, currentAvailableValues) => {
                 const [min, max] = accumulator;
                 const [currentMin, currentMax] = currentAvailableValues;
