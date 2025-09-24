@@ -18,9 +18,12 @@ export function makeRealizationSurfaceLayer({
     const data = getData();
     const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
     let contours: [number, number] = [-1, -1];
-    const contourSetting = getSetting(Setting.CONTOURS);
-    if (contourSetting?.[0] && contourSetting?.[1] !== null) {
-        contours = [0, contourSetting[1]];
+    const { enabled: contourEnabled, value: contourValue } = getSetting(Setting.CONTOURS) ?? {
+        enabled: false,
+        value: 0,
+    };
+    if (contourEnabled && contourValue !== null) {
+        contours = [0, contourValue];
     }
     if (!data) {
         return null;

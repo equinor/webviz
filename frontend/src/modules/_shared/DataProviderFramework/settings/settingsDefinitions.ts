@@ -125,7 +125,7 @@ export type SettingTypes = {
     [Setting.COLOR_SCALE]: ColorScaleSpecification | null;
     [Setting.COLOR_SET]: ColorSet | null;
     [Setting.COLOR]: string | null;
-    [Setting.CONTOURS]: [boolean, number] | null;
+    [Setting.CONTOURS]: { enabled: boolean; value: number } | null;
     [Setting.GRID_LAYER_RANGE]: [[number, number], [number, number], [number, number]] | null;
     [Setting.GRID_LAYER_K]: number | null;
     [Setting.GRID_NAME]: string | null;
@@ -327,7 +327,7 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
         if (value === null) {
             // Default: boolean false, number at min value or 0
             const defaultNumber = availableValues ? availableValues[0] : 0;
-            return [false, defaultNumber] as SettingTypes[TSetting];
+            return { enabled: false, value: defaultNumber } as SettingTypes[TSetting];
         }
 
         if (availableValues === null) {
@@ -335,13 +335,12 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
             return value;
         }
 
-        const [booleanValue, numberValue] = value;
         const [min, max] = availableValues;
 
         // Clamp the number value to the available range
-        const clampedNumber = Math.max(min, Math.min(max, numberValue));
+        const clampedNumber = Math.max(min, Math.min(max, value.value));
 
-        return [booleanValue, clampedNumber] as SettingTypes[TSetting];
+        return { enabled: value.enabled, value: clampedNumber } as SettingTypes[TSetting];
     },
     [SettingCategory.STATIC]: (value) => value,
     [SettingCategory.BOOLEAN]: (value) => value,
@@ -414,16 +413,14 @@ export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
         }
         if (availableValues === null) {
             // If no available values, just check type validity
-            const [booleanValue, numberValue] = value;
-            return typeof booleanValue === "boolean" && typeof numberValue === "number";
+            return typeof value.enabled === "boolean" && typeof value.value === "number";
         }
-        const [booleanValue, numberValue] = value;
         const [min, max] = availableValues;
         return (
-            typeof booleanValue === "boolean" &&
-            typeof numberValue === "number" &&
-            numberValue >= min &&
-            numberValue <= max
+            typeof value.enabled === "boolean" &&
+            typeof value.value === "number" &&
+            value.value >= min &&
+            value.value <= max
         );
     },
     [SettingCategory.STATIC]: () => true,

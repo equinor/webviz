@@ -11,7 +11,10 @@ import type {
 import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
 import type { SettingCategory } from "../settingsDefinitions";
 
-type ValueType = [boolean, number] | null;
+type ValueType = {
+    enabled: boolean;
+    value: number;
+} | null;
 
 type StaticProps = { min?: number; max?: number };
 
@@ -36,29 +39,26 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
 
         // If static props are provided, use those for validation
         if (this._staticProps) {
-            const [booleanValue, numberValue] = value;
             const min = this._staticProps.min ?? 0;
             const max = this._staticProps.max ?? 100;
             return (
-                typeof booleanValue === "boolean" &&
-                typeof numberValue === "number" &&
-                numberValue >= min &&
-                numberValue <= max
+                typeof value.enabled === "boolean" &&
+                typeof value.value === "number" &&
+                value.value >= min &&
+                value.value <= max
             );
         }
 
         if (availableValues === null) {
             // If no available values are provided, any valid tuple is acceptable
-            const [booleanValue, numberValue] = value;
-            return typeof booleanValue === "boolean" && typeof numberValue === "number";
+            return typeof value.enabled === "boolean" && typeof value.value === "number";
         }
-        const [booleanValue, numberValue] = value;
         const [min, max] = availableValues;
         return (
-            typeof booleanValue === "boolean" &&
-            typeof numberValue === "number" &&
-            numberValue >= min &&
-            numberValue <= max
+            typeof value.enabled === "boolean" &&
+            typeof value.value === "number" &&
+            value.value >= min &&
+            value.value <= max
         );
     }
 
@@ -78,16 +78,21 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
             } else if (availableValues) {
                 defaultNumber = availableValues[0];
             }
-            return [false, defaultNumber];
+            return {
+                enabled: false,
+                value: defaultNumber,
+            };
         }
 
         // If static props are provided, use those for clamping
         if (this._staticProps) {
-            const [booleanValue, numberValue] = currentValue;
             const min = this._staticProps.min ?? 0;
             const max = this._staticProps.max ?? 100;
-            const clampedNumber = Math.max(min, Math.min(max, numberValue));
-            return [booleanValue, clampedNumber];
+            const clampedNumber = Math.max(min, Math.min(max, currentValue.value));
+            return {
+                enabled: currentValue.enabled,
+                value: clampedNumber,
+            };
         }
 
         if (availableValues === null) {
@@ -95,13 +100,15 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
             return currentValue;
         }
 
-        const [booleanValue, numberValue] = currentValue;
         const [min, max] = availableValues;
 
         // Clamp the number value to the available range
-        const clampedNumber = Math.max(min, Math.min(max, numberValue));
+        const clampedNumber = Math.max(min, Math.min(max, currentValue.value));
 
-        return [booleanValue, clampedNumber];
+        return {
+            enabled: currentValue.enabled,
+            value: clampedNumber,
+        };
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.BOOLEAN_NUMBER>) => React.ReactNode {
@@ -111,28 +118,28 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
         return function BooleanNumberSetting(props: SettingComponentProps<ValueType, SettingCategory.BOOLEAN_NUMBER>) {
             const defaultMin = isStatic ? (staticProps?.min ?? 0) : (props.availableValues?.[0] ?? 0);
 
-            const [booleanValue, numberValue] = props.value ?? [false, defaultMin];
+            const { enabled, value } = props.value ?? { enabled: false, value: defaultMin };
             const min = isStatic ? (staticProps?.min ?? 0) : (props.availableValues?.[0] ?? 0);
             const max = isStatic ? (staticProps?.max ?? 100) : (props.availableValues?.[1] ?? 100);
 
             function handleBooleanChange(e: ChangeEvent<HTMLInputElement>) {
-                props.onValueChange([e.target.checked, numberValue]);
+                props.onValueChange({ enabled: e.target.checked, value });
             }
 
             function handleNumberChange(value: string) {
                 const numValue = Number(value);
-                props.onValueChange([booleanValue, numValue]);
+                props.onValueChange({ enabled, value: numValue });
             }
 
             return (
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Switch checked={booleanValue} onChange={handleBooleanChange} />
+                    <Switch checked={enabled} onChange={handleBooleanChange} />
                     <Input
                         type="number"
-                        value={numberValue}
+                        value={value}
                         min={min}
                         max={max}
-                        disabled={!booleanValue}
+                        disabled={!enabled}
                         debounceTimeMs={200}
                         onValueChange={handleNumberChange}
                     />
