@@ -1,4 +1,5 @@
 import type { Options } from "@hey-api/client-axios";
+import { hashKey } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
 import type { SurfaceDataPng_api, GetStatisticalSurfaceDataHybridData_api } from "@api";
@@ -9,7 +10,7 @@ import {
     getStatisticalSurfaceDataHybrid,
     getStatisticalSurfaceDataHybridQueryKey,
 } from "@api";
-import { lroProgressBus, serializeQueryKey } from "@framework/internal/LroProgressBus";
+import { lroProgressBus } from "@framework/LroProgressBus";
 import { wrapLongRunningQuery } from "@framework/utils/longRunningApiCalls";
 import type {
     CustomDataProviderImplementation,
@@ -302,9 +303,9 @@ export class StatisticalSurfaceProvider
         // To discuss
         // Suggested parameters for polling:
         //  * maxTotalDurationS
-        //  * delayS - delay between retries
+        //  * delayBetweenPollsS - delay between retries
         //
-        // Maybe extend to:
+        // Maybe extend to (later):
         //  * backoff: none, linear, exponential
         //  * maxDelayS - maximum delay for linear or exponential backoff
         // !!!!!!!!!!!!!!!!!
@@ -322,7 +323,7 @@ export class StatisticalSurfaceProvider
             }
             setProgressMessage(progressMessage);
         }
-        lroProgressBus.subscribe(serializeQueryKey(queryKey), handleTaskProgress);
+        lroProgressBus.subscribe(hashKey(queryKey), handleTaskProgress);
 
         const promise = fetchQuery({ ...queryOptions }).then((data) => ({
             format: this._dataFormat,

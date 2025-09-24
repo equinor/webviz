@@ -3,11 +3,12 @@ import React from "react";
 import type { RequestResult } from "@hey-api/client-axios";
 import type { QueryFunctionContext } from "@tanstack/query-core";
 import type { UseQueryOptions } from "@tanstack/react-query";
+import { hashKey } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 
 import { client } from "@api";
 import type { LroFailureResp_api, LroInProgressResp_api, HttpValidationError_api } from "@api";
-import { lroProgressBus, serializeQueryKey } from "@framework/internal/LroProgressBus";
+import { lroProgressBus } from "@framework/LroProgressBus";
 
 type LongRunningApiResponse<TData> =
     | LroInProgressResp_api
@@ -137,7 +138,7 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
     pollIntervalMs = 2000,
     maxRetries = 50,
 }: WrapLongRunningQueryArgs<TArgs, TData> & { queryKey: TQueryKey }): UseQueryOptions<TData, Error, TData, TQueryKey> {
-    const busKey = serializeQueryKey(queryKey);
+    const busKey = hashKey(queryKey);
     return {
         queryKey,
         queryFn: async (ctx: QueryFunctionContext<TQueryKey>) => {
@@ -203,7 +204,7 @@ export function useLroProgress(
     queryKey: readonly unknown[],
     callback?: (message: string | null) => void,
 ): string | null {
-    const serializedKey = serializeQueryKey(queryKey);
+    const serializedKey = hashKey(queryKey);
     const prevProgressMessage = React.useRef<string | null>(null);
     const getSnapshot = React.useCallback(() => lroProgressBus.getLast(serializedKey) ?? null, [serializedKey]);
 
