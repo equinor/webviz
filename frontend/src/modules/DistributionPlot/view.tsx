@@ -170,6 +170,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     sharedYAxes: false,
                     verticalSpacing: 100 / (wrapperDivSize.height - 50),
                     horizontalSpacing: 0.2 / numCols,
+
                     margin: {
                         t: 0,
                         r: 20,
@@ -206,7 +207,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                             },
                             [`yaxis${cellIndex + 1}`]: {
                                 title: {
-                                    text: "Percent",
+                                    text: "Percentage (%)",
                                 },
                             },
                         };

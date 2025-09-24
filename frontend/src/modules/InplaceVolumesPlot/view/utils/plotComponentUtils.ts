@@ -5,8 +5,7 @@ import type { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
-import type { HistogramBinRange } from "@modules/_shared/histogram";
-import { makeHistogramBinRangesFromMinAndMaxValues, makeHistogramTrace } from "@modules/_shared/histogram";
+import { makeHistogramTrace } from "@modules/_shared/histogram";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
@@ -42,31 +41,6 @@ export function makePlotData(
     const boxPlotKeyToPositionMap: Map<string, number> = new Map();
 
     return (table: Table): Partial<PlotData>[] => {
-        let binRanges: HistogramBinRange[] = [];
-        if (plotType === PlotType.HISTOGRAM) {
-            const column = table.getColumn(firstResultName);
-            if (!column) {
-                return [];
-            }
-            const resultMinAndMax = column.reduce(
-                (acc: { min: number; max: number }, value: string | number) => {
-                    if (typeof value !== "number") {
-                        return acc;
-                    }
-                    return {
-                        min: Math.min(acc.min, value),
-                        max: Math.max(acc.max, value),
-                    };
-                },
-                { min: Number.POSITIVE_INFINITY, max: Number.NEGATIVE_INFINITY },
-            );
-            binRanges = makeHistogramBinRangesFromMinAndMaxValues({
-                xMin: resultMinAndMax.min,
-                xMax: resultMinAndMax.max,
-                numBins: 20,
-            });
-        }
-
         if (table.getColumn(colorBy) === undefined) {
             throw new Error(`Column to color by "${colorBy}" not found in the table.`);
         }
@@ -98,7 +72,7 @@ export function makePlotData(
             }
 
             if (plotType === PlotType.HISTOGRAM) {
-                data.push(...makeHistogram(title, table, firstResultName, keyColor, binRanges));
+                data.push(...makeHistogram(title, table, firstResultName, keyColor, 10));
             } else if (plotType === PlotType.CONVERGENCE) {
                 data.push(...makeConvergencePlot(title, table, firstResultName, keyColor));
             } else if (plotType === PlotType.DISTRIBUTION) {
@@ -242,7 +216,7 @@ function makeHistogram(
     table: Table,
     resultName: string,
     color: string,
-    binRanges: HistogramBinRange[],
+    numBins: number,
 ): Partial<PlotData>[] {
     const data: Partial<PlotData>[] = [];
 
@@ -253,7 +227,7 @@ function makeHistogram(
 
     const histogram = makeHistogramTrace({
         xValues: resultColumn.getAllRowValues() as number[],
-        bins: binRanges,
+        numBins: numBins,
         color,
     });
 
