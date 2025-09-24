@@ -1,7 +1,5 @@
 import asyncio
 import logging
-import time
-from hashlib import sha256
 from typing import Annotated, List, Optional, Literal
 
 import xtgeo
@@ -11,7 +9,6 @@ from webviz_pkg.core_utils.type_utils import expect_type
 
 from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.sumo_access.surface_access import SurfaceAccess
-from primary.services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
 from primary.services.sumo_access.surface_access import ExpectedError, InProgress
 from primary.services.smda_access import SmdaAccess, StratigraphicUnit
 from primary.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
@@ -26,11 +23,12 @@ from primary.services.surface_query_service.surface_query_service import Realiza
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.drogon import is_drogon_identifier
 
-from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp, LroErrorInfo
+from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp
 
 from . import converters
 from . import schemas
 from . import dependencies
+from . import task_helpers
 
 from .surface_address import RealizationSurfaceAddress, ObservedSurfaceAddress, StatisticalSurfaceAddress
 from .surface_address import decode_surf_addr_str
@@ -159,6 +157,7 @@ async def get_surface_data(
     if not isinstance(addr, RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress):
         raise HTTPException(status_code=404, detail="Endpoint only supports address types REAL, OBS and STAT")
 
+    xtgeo_surf: xtgeo.RegularSurface | None = None
     if addr.address_type == "REAL":
         access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
         xtgeo_surf = await access.get_realization_surface_data_async(
@@ -191,17 +190,12 @@ async def get_surface_data(
         )
         perf_metrics.record_lap("get-surf")
 
-    if resample_to is not None:
-        xtgeo_surf = converters.resample_to_surface_def(xtgeo_surf, resample_to)
-        perf_metrics.record_lap("resample")
+    if not xtgeo_surf:
+        raise HTTPException(status_code=500, detail="Did not get a valid xtgeo surface from Sumo")
 
-    surf_data_response: schemas.SurfaceDataFloat | schemas.SurfaceDataPng
-    if data_format == "float":
-        surf_data_response = converters.to_api_surface_data_float(xtgeo_surf)
-    elif data_format == "png":
-        surf_data_response = converters.to_api_surface_data_png(xtgeo_surf)
-
-    perf_metrics.record_lap("convert")
+    surf_data_response = _resample_and_convert_to_surface_data_response(
+        xtgeo_surf=xtgeo_surf, resample_to=resample_to, data_format=data_format, perf_metrics=perf_metrics
+    )
 
     LOGGER.info(f"Got {addr.address_type} surface in: {perf_metrics.to_string()}")
 
@@ -227,50 +221,26 @@ async def get_statistical_surface_data_hybrid(
     if not isinstance(addr, StatisticalSurfaceAddress):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Endpoint only supports address type STAT")
 
-    # For how long should we cache the ensemble fingerprint?
-    # The TTL for fingerprints should be aligned with the polling interval we use for busting the client side browser cache.
-    # Actually, the backend code that provides data for the the client side browser caching should probably go via the very same SumoFingerprinter cache.
-    fingerprinter = get_sumo_fingerprinter_for_user(authenticated_user=authenticated_user, cache_ttl_s=30)
-    ensemble_fp = await fingerprinter.get_or_calc_ensemble_fp_async(addr.case_uuid, addr.ensemble_name, "surface")
-    LOGGER.debug(f"Ensemble fingerprint: {ensemble_fp=}")
+    access_token = authenticated_user.get_sumo_access_token()
+    access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
+    task_tracker = get_task_meta_tracker_for_user(authenticated_user)
+
+    # !!!!!!!!!!!!!
+    # LOGGING!!!!!!
+    # LOGGING!!!!!!
 
     # !!!!!!!!!!!!!
     # Todo!
     # We need to come up with a way to bust the task tracker cache in cases where tasks get "stuck".
     # One way of achieving this may be to have a separate endpoint to clear the task tracker cache for the user.
+    task_fp = await task_helpers.determine_surf_task_fingerprint_async(authenticated_user, addr)
 
-    # Note that we include the ensemble fingerprint in the task hash/fingerprint
-    task_fp = sha256((surf_addr_str + ensemble_fp).encode()).hexdigest()
-
-    task_tracker = get_task_meta_tracker_for_user(authenticated_user)
+    new_sumo_task_was_submitted = False
     task_meta = await task_tracker.get_task_meta_by_fingerprint_async(task_fp)
-
-    access = SurfaceAccess.from_ensemble_name(
-        authenticated_user.get_sumo_access_token(), addr.case_uuid, addr.ensemble_name
-    )
-
-    new_sumo_task_id: str | None = None
-    if task_meta is None:
+    if not task_meta:
         LOGGER.info("SUBMITTING new SUMO TASK!!!!!!!!!!!!!!!!")
-        task_start_time_utc_s = time.time()
-        new_sumo_task_id = await access.submit_statistical_surface_calculation_task_async(
-            statistic_function=StatisticFunction.from_string_value(addr.stat_function),
-            name=addr.name,
-            attribute=addr.attribute,
-            realizations=addr.stat_realizations,
-            time_or_interval_str=addr.iso_time_or_interval,
-        )
-        assert isinstance(new_sumo_task_id, str)
-
-        # According to Sumo team, the tasks and task results will be purged after 24 hours, so we set our TTL slightly shorter at 23 hours
-        task_meta = await task_tracker.register_task_with_fingerprint_async(
-            task_system="sumo_task",
-            task_id=new_sumo_task_id,
-            fingerprint=task_fp,
-            ttl_s=23 * 60 * 60,
-            task_start_time_utc_s=task_start_time_utc_s,
-            expected_store_key=None,
-        )
+        task_meta = await task_helpers.submit_and_track_stat_surf_task_async(access, addr, task_tracker, task_fp)
+        new_sumo_task_was_submitted = True
 
     try:
         maybe_xtgeo_surf = await access.poll_statistical_surface_calculation_task_async(
@@ -280,36 +250,24 @@ async def get_statistical_surface_data_hybrid(
         if isinstance(maybe_xtgeo_surf, ExpectedError):
             await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
             response.headers["Cache-Control"] = "no-store"
-            return LroFailureResp(status="failure", error=LroErrorInfo(message=maybe_xtgeo_surf.message))
+            return task_helpers.make_lro_failure_resp(maybe_xtgeo_surf.message)
 
         if isinstance(maybe_xtgeo_surf, InProgress):
-            if new_sumo_task_id is not None:
-                prog_msg = f"New task submitted: {maybe_xtgeo_surf.progress_message}"
-            else:
-                elapsed_time_s = time.time() - task_meta.start_time_utc_s
-                prog_msg = f"Sumo task status: {maybe_xtgeo_surf.progress_message} ({elapsed_time_s:.1f}s elapsed)"
-
             response.status_code = status.HTTP_202_ACCEPTED
             response.headers["Cache-Control"] = "no-store"
-            return LroInProgressResp(status="in_progress", task_id=task_meta.task_id, progress_message=prog_msg)
+            return task_helpers.make_lro_in_progress_resp(task_meta, new_sumo_task_was_submitted, maybe_xtgeo_surf)
 
+        # We should now be left with a xtgeo RegularSurface
         xtgeo_surf: xtgeo.RegularSurface = expect_type(maybe_xtgeo_surf, xtgeo.RegularSurface)
-
-        if resample_to is not None:
-            xtgeo_surf = converters.resample_to_surface_def(xtgeo_surf, resample_to)
-            perf_metrics.record_lap("resample")
-
-        api_surf_data: schemas.SurfaceDataFloat | schemas.SurfaceDataPng
-        if data_format == "float":
-            api_surf_data = converters.to_api_surface_data_float(xtgeo_surf)
-        elif data_format == "png":
-            api_surf_data = converters.to_api_surface_data_png(xtgeo_surf)
-        perf_metrics.record_lap("convert")
+        api_surf_data = _resample_and_convert_to_surface_data_response(
+            xtgeo_surf=xtgeo_surf, resample_to=resample_to, data_format=data_format, perf_metrics=perf_metrics
+        )
 
         return LroSuccessResp(status="success", result=api_surf_data)
 
     except Exception as _exc:
-        # Must delete the fingerprint mapping, but then just re-raise the exception and let our middleware handle it
+        # Must delete the fingerprint mapping so that the next call to this endpoint starts fresh.
+        # Then just re-raise the exception and let our middleware handle it
         await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
         raise
 
@@ -473,3 +431,27 @@ async def _get_stratigraphic_units_for_strat_column_async(
     LOGGER.info(f"Got stratigraphic units for case in : {perf_metrics.to_string()}")
 
     return strat_units
+
+
+def _resample_and_convert_to_surface_data_response(
+    xtgeo_surf: xtgeo.RegularSurface,
+    resample_to: schemas.SurfaceDef | None,
+    data_format: Literal["float", "png"],
+    perf_metrics: PerfMetrics,
+) -> schemas.SurfaceDataFloat | schemas.SurfaceDataPng:
+    """
+    Helper to do both resampling (if any) and conversion to API response format.
+    """
+    if resample_to is not None:
+        xtgeo_surf = converters.resample_to_surface_def(xtgeo_surf, resample_to)
+        perf_metrics.record_lap("resample")
+
+    surf_data_response: schemas.SurfaceDataFloat | schemas.SurfaceDataPng
+    if data_format == "float":
+        surf_data_response = converters.to_api_surface_data_float(xtgeo_surf)
+    elif data_format == "png":
+        surf_data_response = converters.to_api_surface_data_png(xtgeo_surf)
+
+    perf_metrics.record_lap("convert")
+
+    return surf_data_response
