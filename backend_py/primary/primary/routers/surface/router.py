@@ -255,7 +255,7 @@ async def get_statistical_surface_data_hybrid(
             return task_helpers.make_lro_failure_resp(maybe_xtgeo_surf)
 
         if isinstance(maybe_xtgeo_surf, InProgress):
-            LOGGER.info(f"Returning in-progress for statistical surface task (hybrid), took: {perf_metrics.to_string()}")
+            LOGGER.info(f"Returning in-progress for statistical surface task (hybrid) in: {perf_metrics.to_string()}")
             response.status_code = status.HTTP_202_ACCEPTED
             response.headers["Cache-Control"] = "no-store"
             return task_helpers.make_lro_in_progress_resp(task_meta, new_sumo_task_was_submitted, maybe_xtgeo_surf)
