@@ -250,15 +250,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "workbench-session",
             this._workbenchSession
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(PrivateWorkbenchSessionTopic.METADATA)(() => {
-                this.schedulePullFullSessionState();
-            }),
-        );
-
-        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-            "workbench-session",
-            this._workbenchSession
                 .getWorkbenchSettings()
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(WorkbenchSettingsTopic.SelectedColorPalettes)(() => {

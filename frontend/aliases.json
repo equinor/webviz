@@ -7,8 +7,7 @@
             "@framework/*": ["./src/framework/*"],
             "@lib/*": ["./src/lib/*"],
             "@modules/*": ["./src/modules/*"],
-            "@modules_shared/*": ["./src/modules/_shared/*"],
-            "@src/*": ["./src/*"]
+            "@modules_shared/*": ["./src/modules/_shared/*"]
         }
     }
 }

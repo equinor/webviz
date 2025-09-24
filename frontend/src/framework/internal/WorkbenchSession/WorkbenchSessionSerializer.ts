@@ -1,16 +1,11 @@
 import { Ajv } from "ajv/dist/jtd";
 
-import type {
-    PrivateWorkbenchSession,
-    WorkbenchSessionContent,
-    WorkbenchSessionMetadata,
-} from "./PrivateWorkbenchSession";
+import type { PrivateWorkbenchSession, WorkbenchSessionContent } from "./PrivateWorkbenchSession";
 import { objectToJsonString, sessionIdFromLocalStorageKey } from "./utils";
 import { workbenchSessionSchema } from "./workbenchSession.jtd";
 import { WorkbenchSessionSource, type WorkbenchSessionDataContainer } from "./WorkbenchSessionDataContainer";
 
 export type SerializedWorkbenchSession = {
-    metadata: WorkbenchSessionMetadata;
     content: WorkbenchSessionContent;
 };
 const ajv = new Ajv();
@@ -27,7 +22,6 @@ export function deserializeFromLocalStorage(key: string): WorkbenchSessionDataCo
     }
 
     const session: WorkbenchSessionDataContainer = {
-        metadata: parsed.metadata,
         content: parsed.content,
         id: sessionIdFromLocalStorageKey(key) ?? undefined,
         source: WorkbenchSessionSource.LOCAL_STORAGE,
@@ -38,17 +32,12 @@ export function deserializeFromLocalStorage(key: string): WorkbenchSessionDataCo
 
 export function makeWorkbenchSessionStateString(session: PrivateWorkbenchSession): string {
     return objectToJsonString({
-        metadata: {
-            title: session.getMetadata().title,
-            description: session.getMetadata().description,
-        },
         content: session.getContent(),
     });
 }
 
 export function makeWorkbenchSessionLocalStorageString(session: PrivateWorkbenchSession): string {
     return objectToJsonString({
-        metadata: session.getMetadata(),
         content: session.getContent(),
     });
 }

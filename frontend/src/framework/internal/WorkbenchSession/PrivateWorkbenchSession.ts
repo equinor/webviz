@@ -45,21 +45,11 @@ export type WorkbenchSessionContent = {
     userCreatedItems: SerializedUserCreatedItems;
 };
 
-export type WorkbenchSessionMetadata = {
-    title: string;
-    description?: string;
-    updatedAt: number; // Timestamp of the last modification
-    createdAt: number; // Timestamp of creation
-    hash?: string; // Optional hash for content integrity
-    lastModifiedMs: number; // Last modified timestamp for internal use
-};
-
 export enum PrivateWorkbenchSessionTopic {
     ENSEMBLE_SET = "EnsembleSet",
     IS_ENSEMBLE_SET_LOADING = "EnsembleSetLoadingState",
     REALIZATION_FILTER_SET = "RealizationFilterSet",
     ACTIVE_DASHBOARD = "ActiveDashboard",
-    METADATA = "Metadata",
     DASHBOARDS = "Dashboards",
     IS_PERSISTED = "IsPersisted",
     IS_SNAPSHOT = "IsSnapshot",
@@ -70,7 +60,6 @@ export type PrivateWorkbenchSessionTopicPayloads = {
     [PrivateWorkbenchSessionTopic.ENSEMBLE_SET]: EnsembleSet;
     [PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET]: RealizationFilterSet;
     [PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD]: Dashboard;
-    [PrivateWorkbenchSessionTopic.METADATA]: WorkbenchSessionMetadata;
     [PrivateWorkbenchSessionTopic.DASHBOARDS]: Dashboard[];
     [PrivateWorkbenchSessionTopic.IS_PERSISTED]: boolean;
     [PrivateWorkbenchSessionTopic.IS_SNAPSHOT]: boolean;
@@ -88,15 +77,11 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     private _activeDashboardId: string | null = null;
     private _ensembleSet: EnsembleSet = new EnsembleSet([]);
     private _realizationFilterSet = new RealizationFilterSet();
-    private _userCreatedItems: UserCreatedItems;
-    private _metadata: WorkbenchSessionMetadata = {
-        title: "New Workbench Session",
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        lastModifiedMs: Date.now(),
+    private _wrappedRealizationFilterSet = {
+        filterSet: this._realizationFilterSet,
     };
+    private _userCreatedItems: UserCreatedItems;
     private _isEnsembleSetLoading: boolean = false;
-    private _loadedFromLocalStorage: boolean = false;
     private _settings: PrivateWorkbenchSettings = new PrivateWorkbenchSettings();
 
     constructor(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient, isSnapshot = false) {
@@ -107,53 +92,8 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         this._isSnapshot = isSnapshot;
     }
 
-    getIsLoadedFromLocalStorage(): boolean {
-        return this._loadedFromLocalStorage;
-    }
-
-    setLoadedFromLocalStorage(loaded: boolean): void {
-        this._loadedFromLocalStorage = loaded;
-    }
-
     getWorkbenchSettings(): PrivateWorkbenchSettings {
         return this._settings;
-    }
-
-    getId(): string | null {
-        return this._id;
-    }
-
-    setId(id: string): void {
-        if (this._id) throw new Error("Session ID already set");
-        this._id = id;
-    }
-
-    isSnapshot(): boolean {
-        return this._isSnapshot;
-    }
-
-    setIsSnapshot(isSnapshot: boolean): void {
-        this._isSnapshot = isSnapshot;
-        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
-    }
-
-    getMetadata(): WorkbenchSessionMetadata {
-        return this._metadata;
-    }
-
-    setMetadata(metadata: WorkbenchSessionMetadata): void {
-        this._metadata = metadata;
-        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.METADATA);
-    }
-
-    updateMetadata(update: Partial<Omit<WorkbenchSessionMetadata, "createdAt">>, notify = true): void {
-        this._metadata = { ...this._metadata, ...update };
-
-        if (!notify) {
-            return;
-        }
-
-        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.METADATA);
     }
 
     getContent(): WorkbenchSessionContent {
@@ -252,11 +192,9 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
                 case PrivateWorkbenchSessionTopic.ENSEMBLE_SET:
                     return this._ensembleSet;
                 case PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET:
-                    return this._realizationFilterSet;
+                    return this._wrappedRealizationFilterSet;
                 case PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD:
                     return this.getActiveDashboard();
-                case PrivateWorkbenchSessionTopic.METADATA:
-                    return this._metadata;
                 case PrivateWorkbenchSessionTopic.DASHBOARDS:
                     return this._dashboards;
                 case PrivateWorkbenchSessionTopic.IS_PERSISTED:
@@ -305,6 +243,12 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     }
 
     notifyAboutEnsembleRealizationFilterChange(): void {
+        this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, {
+            filterSet: this._realizationFilterSet,
+        });
+        this._wrappedRealizationFilterSet = {
+            filterSet: this._realizationFilterSet,
+        };
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET);
     }
 
@@ -333,7 +277,6 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     ): Promise<PrivateWorkbenchSession> {
         const session = new PrivateWorkbenchSession(atomStoreMaster, queryClient, false);
 
-        session.setMetadata(dataContainer.metadata);
         await session.loadContent(dataContainer.content);
 
         return session;
