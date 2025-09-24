@@ -1,6 +1,10 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
+import type { SensitivitySortBy } from "../_shared/SensitivityProcessing/types";
+
 import {
+    sensitivitySortByAtom,
+    colorByAtom,
     displayComponentTypeAtom,
     hideZeroYAtom,
     referenceSensitivityNameAtom,
@@ -8,9 +12,10 @@ import {
     sensitivityNamesAtom,
     showLabelsAtom,
     showRealizationPointsAtom,
+    sensitivityScalingAtom,
 } from "./settings/atoms/baseAtoms";
-import type { DisplayComponentType, SelectedSensitivity } from "./typesAndEnums";
-import { selectedSensitivityAtom as ViewSelectedSensitivityAtom } from "./view/atoms/baseAtoms";
+import type { DisplayComponentType, SensitivityScaling } from "./typesAndEnums";
+import type { ColorBy } from "./view/components/sensitivityChartFigure";
 
 type SettingsToViewInterface = {
     displayComponentType: DisplayComponentType;
@@ -20,15 +25,13 @@ type SettingsToViewInterface = {
     showLabels: boolean;
     hideZeroY: boolean;
     showRealizationPoints: boolean;
-};
-
-export type ViewToSettingsInterface = {
-    selectedSensitivity: SelectedSensitivity | null;
+    sensitivitySortBy: SensitivitySortBy;
+    sensitivityScaling: SensitivityScaling;
+    colorBy: ColorBy;
 };
 
 export type Interfaces = {
     settingsToView: SettingsToViewInterface;
-    viewToSettings: ViewToSettingsInterface;
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
@@ -53,10 +56,13 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     showRealizationPoints: (get) => {
         return get(showRealizationPointsAtom);
     },
-};
-
-export const viewToSettingsInterfaceInitialization: InterfaceInitialization<ViewToSettingsInterface> = {
-    selectedSensitivity: (get) => {
-        return get(ViewSelectedSensitivityAtom);
+    sensitivitySortBy: (get) => {
+        return get(sensitivitySortByAtom);
+    },
+    sensitivityScaling: (get) => {
+        return get(sensitivityScalingAtom);
+    },
+    colorBy: (get) => {
+        return get(colorByAtom);
     },
 };
