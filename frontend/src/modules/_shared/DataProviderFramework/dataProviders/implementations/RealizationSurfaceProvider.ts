@@ -28,6 +28,7 @@ const realizationSurfaceSettings = [
     Setting.SURFACE_NAME,
     Setting.TIME_OR_INTERVAL,
     Setting.COLOR_SCALE,
+    Setting.CONTOURS,
 ] as const;
 export type RealizationSurfaceSettings = typeof realizationSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationSurfaceSettings>;
