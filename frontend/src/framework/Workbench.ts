@@ -386,6 +386,15 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         return snapshotId;
     }
 
+    saveCurrentSessionAs(): void {
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to save.");
+        }
+
+        this._guiMessageBroker.setState(GuiState.SessionHasUnsavedChanges, false);
+        this._guiMessageBroker.setState(GuiState.SaveSessionDialogOpen, true);
+    }
+
     async saveCurrentSession(forceSave = false): Promise<void> {
         if (!this._workbenchSession) {
             throw new Error("No active workbench session to save.");
@@ -600,63 +609,4 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     clear(): void {
         // this._workbenchSession.clear();
     }
-
-    /*
-    applyTemplate(template: Template): void {
-        this.clearLayout();
-
-        const newLayout = template.moduleInstances.map((el) => {
-            return { ...el.layout, moduleName: el.moduleName };
-        });
-
-        this.makeLayout(newLayout);
-
-        for (let i = 0; i < this._moduleInstances.length; i++) {
-            const moduleInstance = this._moduleInstances[i];
-            const templateModule = template.moduleInstances[i];
-            if (templateModule.syncedSettings) {
-                for (const syncSettingKey of templateModule.syncedSettings) {
-                    moduleInstance.addSyncedSetting(syncSettingKey);
-                }
-            }
-
-            const initialSettings: Record<string, unknown> = templateModule.initialSettings || {};
-
-            if (templateModule.dataChannelsToInitialSettingsMapping) {
-                for (const propName of Object.keys(templateModule.dataChannelsToInitialSettingsMapping)) {
-                    const dataChannel = templateModule.dataChannelsToInitialSettingsMapping[propName];
-
-                    const moduleInstanceIndex = template.moduleInstances.findIndex(
-                        (el) => el.instanceRef === dataChannel.listensToInstanceRef,
-                    );
-                    if (moduleInstanceIndex === -1) {
-                        throw new Error("Could not find module instance for data channel");
-                    }
-
-                    const listensToModuleInstance = this._moduleInstances[moduleInstanceIndex];
-                    const channel = listensToModuleInstance.getChannelManager().getChannel(dataChannel.channelIdString);
-                    if (!channel) {
-                        throw new Error("Could not find channel");
-                    }
-
-                    const receiver = moduleInstance.getChannelManager().getReceiver(propName);
-
-                    if (!receiver) {
-                        throw new Error("Could not find receiver");
-                    }
-
-                    receiver.subscribeToChannel(channel, "All");
-                }
-            }
-
-            moduleInstance.setInitialSettings(new InitialSettings(initialSettings));
-
-            if (i === 0) {
-                this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, moduleInstance.getId());
-            }
-        }
-
-        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
-    }
-        */
 }

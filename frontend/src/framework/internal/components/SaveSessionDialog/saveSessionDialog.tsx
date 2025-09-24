@@ -63,7 +63,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
         <Dialog
             open={saveSessionDialogOpen}
             onClose={handleCancel}
-            title="Save Session"
+            title="Save Session as ..."
             modal
             showCloseCross
             actions={

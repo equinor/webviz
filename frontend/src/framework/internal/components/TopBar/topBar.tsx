@@ -2,7 +2,8 @@ import React from "react";
 
 import { Icon, Tooltip, Typography } from "@equinor/eds-core-react";
 import { category } from "@equinor/eds-icons";
-import { AddLink, Category, Close, Edit, Link, Lock, Refresh, Save } from "@mui/icons-material";
+import { Dropdown, MenuButton } from "@mui/base";
+import { AddLink, ArrowDropDown, Category, Close, Edit, Link, Lock, Refresh, Save, SaveAs } from "@mui/icons-material";
 
 import FmuLogo from "@assets/fmu.svg";
 
@@ -13,6 +14,8 @@ import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import type { ButtonProps } from "@lib/components/Button/button";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { Menu } from "@lib/components/Menu";
+import { MenuItem } from "@lib/components/MenuItem";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -165,6 +168,17 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
     );
 
+    const persistenceInfo = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSessionPersistenceService(),
+        WorkbenchSessionPersistenceServiceTopic.PERSISTENCE_INFO,
+    );
+
+    // A session is considered to have unsaved changes if it has changes and is persisted.
+    // Unsaved changes are not tracked for non-persisted sessions, as they have never been saved.
+    // Snapshots are never persisted, so they cannot have unsaved changes.
+    //
+    const hasChanges = persistenceInfo.hasChanges && persistenceInfo.lastPersistedMs !== null && isPersisted;
+
     function makeContent() {
         let content: React.ReactNode = null;
         if (isSnapshot) {
@@ -208,6 +222,11 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
                         })}
                     >
                         {metadata.title}
+                        {hasChanges && (
+                            <Tooltip title="You have unsaved changes">
+                                <span className="text-amber-600 ml-2 text-2xl">*</span>
+                            </Tooltip>
+                        )}
                     </Typography>
                 </>
             );
@@ -278,24 +297,35 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
         props.workbench.saveCurrentSession();
     };
 
-    const enabled = persistenceInfo.hasChanges || !isPersisted;
+    const handleSaveAsClick = () => {
+        props.workbench.saveCurrentSessionAs();
+    };
+
+    const saveEnabled = persistenceInfo.hasChanges && isPersisted;
 
     return (
-        <div
-            className={resolveClassNames("p-2 flex items-center justify-center text-sm gap-4 w-14", {
-                "bg-amber-100": persistenceInfo.hasChanges && persistenceInfo.lastPersistedMs !== null && isPersisted,
-            })}
-        >
+        <div className={resolveClassNames("p-2 flex items-center justify-center text-sm gap-4 w-14")}>
             {isSaving ? (
                 <CircularProgress size="medium-small" className="text-amber-600" />
             ) : (
-                <TopBarButton
-                    onClick={handleSaveClick}
-                    title={enabled ? "Save session" : "No changes to save"}
-                    disabled={!enabled}
-                >
-                    <Save fontSize="small" />
-                </TopBarButton>
+                <Dropdown>
+                    <Tooltip title="Save session options">
+                        <MenuButton className="flex items-center gap-2 hover:bg-indigo-100 p-2 font-medium rounded-md">
+                            <Save fontSize="small" />
+                            <ArrowDropDown fontSize="small" />
+                        </MenuButton>
+                    </Tooltip>
+                    <Menu anchorOrigin="bottom-start">
+                        <MenuItem onClick={handleSaveClick} disabled={!saveEnabled}>
+                            <Save fontSize="small" className="mr-2" />
+                            Save session
+                        </MenuItem>
+                        <MenuItem onClick={handleSaveAsClick}>
+                            <SaveAs fontSize="small" className="mr-2" />
+                            Save session as ...
+                        </MenuItem>
+                    </Menu>
+                </Dropdown>
             )}
         </div>
     );
