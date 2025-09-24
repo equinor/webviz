@@ -3,17 +3,9 @@ import React from "react";
 import { DragIndicator, ExpandLess, ExpandMore } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
-import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { createPortal } from "@lib/utils/createPortal";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { SortableList } from "@lib/components/SortableList";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
-
-import { DenseIconButton } from "../DenseIconButton";
-
-import { HoveredArea, SortableListContext } from "./sortableList";
-import { SortableListDropIndicator } from "./sortableListDropIndicator";
-import type { SortableListItemProps } from "./sortableListItem";
-
 
 export type SortableListGroupProps = {
     id: string;
@@ -25,7 +17,7 @@ export type SortableListGroupProps = {
     content?: React.ReactNode;
     contentStyle?: React.CSSProperties;
     contentWhenEmpty?: React.ReactNode;
-    children?: React.ReactElement<SortableListItemProps>[];
+    children?: React.ReactElement[];
 };
 
 /**
@@ -53,18 +45,6 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
         setPrevExpanded(props.expanded);
     }
 
-    const divRef = React.useRef<HTMLDivElement>(null);
-    const boundingClientRect = useElementBoundingRect(divRef);
-    const sortableListContext = React.useContext(SortableListContext);
-
-    const isHovered = sortableListContext.hoveredElementId === props.id;
-    const isHeaderHovered =
-        isHovered &&
-        (sortableListContext.hoveredArea === HoveredArea.HEADER ||
-            sortableListContext.hoveredArea === HoveredArea.CENTER);
-    const isDragging = sortableListContext.draggedElementId === props.id;
-    const dragPosition = sortableListContext.dragPosition;
-
     function handleToggleExpanded() {
         setIsExpanded(!isExpanded);
     }
@@ -72,55 +52,22 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
     const hasContent = props.children !== undefined && props.children.length > 0;
 
     return (
-        <>
-            {isHovered && sortableListContext.hoveredArea === HoveredArea.TOP && <SortableListDropIndicator />}
-            <div
-                className={resolveClassNames("sortable-list-element sortable-list-group relative bg-gray-200")}
-                data-item-id={props.id}
-                ref={divRef}
-            >
-                <div
-                    className={resolveClassNames("z-30 w-full h-full absolute left-0 top-0 bg-blue-500", {
-                        hidden: !isDragging,
-                    })}
-                ></div>
-                <Header
-                    {...props}
-                    onToggleExpanded={handleToggleExpanded}
-                    expanded={isExpanded}
-                    hovered={isHeaderHovered}
-                />
-                {isDragging &&
-                    dragPosition &&
-                    createPortal(
-                        <div
-                            className={resolveClassNames(
-                                "flex h-8 bg-blue-50 text-sm items-center gap-1 border-b border-b-gray-300 absolute z-50 opacity-75",
-                            )}
-                            style={{
-                                left: dragPosition.x,
-                                top: dragPosition.y,
-                                width: isDragging ? boundingClientRect.width : undefined,
-                            }}
-                        >
-                            <Header expanded={isExpanded} hovered={isHeaderHovered} {...props} />
-                        </div>,
-                    )}
-                <div
-                    className={resolveClassNames(
-                        "sortable-list-group-content pl-1 bg-white shadow-inner border-b border-b-gray-300",
-                        {
+        <SortableList.Group id={props.id}>
+            <div className={resolveClassNames("bg-gray-200")}>
+                <Header {...props} onToggleExpanded={handleToggleExpanded} expanded={isExpanded} hovered={false} />
+                <SortableList.GroupContent>
+                    <div
+                        className={resolveClassNames("pl-1 bg-white shadow-inner border-b border-b-gray-300", {
                             hidden: !isExpanded,
-                        },
-                    )}
-                    style={props.contentStyle}
-                >
-                    {props.content}
-                    {hasContent ? props.children : props.contentWhenEmpty}
-                </div>
+                        })}
+                        style={props.contentStyle}
+                    >
+                        {props.content}
+                        {hasContent ? props.children : props.contentWhenEmpty}
+                    </div>
+                </SortableList.GroupContent>
             </div>
-            {isHovered && sortableListContext.hoveredArea === HoveredArea.BOTTOM && <SortableListDropIndicator />}
-        </>
+        </SortableList.Group>
     );
 }
 
@@ -147,9 +94,9 @@ function Header(props: HeaderProps): React.ReactNode {
             )}
             style={props.headerStyle}
         >
-            <div className={resolveClassNames("sortable-list-element-indicator hover:cursor-grab")}>
+            <SortableList.DragHandle>
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />
-            </div>
+            </SortableList.DragHandle>
             <DenseIconButton
                 onClick={props.onToggleExpanded}
                 title={props.expanded ? "Hide children" : "Show children"}
