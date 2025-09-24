@@ -86,6 +86,8 @@ export function useBuildPlotAndTable(
         plotbuilder.setYAxisOptions({ title: { text: firstResultName ?? "", standoff: 5 } });
     } else if (plotType === PlotType.BOX) {
         plotbuilder.setYAxisOptions({ showticklabels: false });
+    } else if (plotType === PlotType.HISTOGRAM) {
+        plotbuilder.setYAxisOptions({ title: { text: "Percentage (%)" } });
     }
 
     const horizontalSpacing = 80 / width;

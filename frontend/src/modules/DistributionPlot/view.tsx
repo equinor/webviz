@@ -170,6 +170,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     sharedYAxes: false,
                     verticalSpacing: 100 / (wrapperDivSize.height - 50),
                     horizontalSpacing: 0.2 / numCols,
+
                     margin: {
                         t: 0,
                         r: 20,
@@ -197,10 +198,17 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
                         const patch: Partial<Layout> = {
                             [`xaxis${cellIndex + 1}`]: {
-                                title: makeTitleFromChannelContent(data),
+                                title: {
+                                    text: makeTitleFromChannelContent(data),
+                                },
+                                tickangle: 0,
+                                tickson: "boundaries",
+                                ticklabeloverflow: "hide past div",
                             },
                             [`yaxis${cellIndex + 1}`]: {
-                                title: "Percent",
+                                title: {
+                                    text: "Percentage (%)",
+                                },
                             },
                         };
                         figure.updateLayout(patch);
