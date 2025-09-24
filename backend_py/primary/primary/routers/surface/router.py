@@ -250,7 +250,7 @@ async def get_statistical_surface_data_hybrid(
         if isinstance(maybe_xtgeo_surf, ExpectedError):
             await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
             response.headers["Cache-Control"] = "no-store"
-            return task_helpers.make_lro_failure_resp(maybe_xtgeo_surf.message)
+            return task_helpers.make_lro_failure_resp(maybe_xtgeo_surf)
 
         if isinstance(maybe_xtgeo_surf, InProgress):
             response.status_code = status.HTTP_202_ACCEPTED
