@@ -212,9 +212,10 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                 ref={tagInputRef}
                 inputRef={filterInputRef}
                 placeholder={tagInputPlaceholder}
-                fullDeleteOnBackspace
                 tags={selection}
                 alwaysShowPlaceholder={props.showListAsSelectionCount}
+                backspaceDeleteMode={props.showListAsSelectionCount ? "none" : "hard"}
+                tagListSelectionMode={props.showListAsSelectionCount ? "none" : "multiple"}
                 makeLabel={makeTagLabel}
                 validateTag={validateTag}
                 renderTag={props.renderTag}

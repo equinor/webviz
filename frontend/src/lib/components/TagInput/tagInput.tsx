@@ -36,9 +36,20 @@ export type TagInputProps = {
     inputRef?: React.RefObject<HTMLInputElement>;
 
     /**
-     * If true, backspace will fully remove a tag, as opposed to adding its contents to the input field
+     * Determines how deletions are handled when the input is empty and the user presses backspace.
+     * - "soft" will remove the last tag (or selected tags) and add its contents to the input field (default)
+     * - "hard" will fully remove the last tag (or selected tags)
+     * - "none" will disable backspace tag removal altogether
      */
-    fullDeleteOnBackspace?: boolean;
+    backspaceDeleteMode?: "soft" | "hard" | "none";
+
+    /**
+     * Determines how tag selection (left/right arrows) is handled in the tag list.
+     * - "multiple" allows multiple tags to be selected
+     * - "single" allows only a single tag to be selected
+     * - "none" will disable tag selection
+     */
+    tagListSelectionMode?: "none" | "single" | "multiple";
 
     /**
      * A placeholder to show in the input field. By default, the placeholder only shows if the tags list is empty
@@ -145,15 +156,20 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
     function moveTagFocus(direction: Direction, isSelecting?: boolean) {
         const currentFocusedIndex = focusedTagIndex ?? props.tags.length;
         const nextIndex = currentFocusedIndex + direction;
+        isSelecting = isSelecting && tagListSelectionModeOrDefault === "multiple";
 
         if (isSelecting) innerInputRef.current?.focus();
 
         if (inRange(nextIndex, 0, props.tags.length)) {
-            if (isSelecting) {
-                if (selectedTagIndices.includes(nextIndex) && selectedTagIndices.includes(currentFocusedIndex)) {
-                    setSelectedTagIndices((prev) => prev.filter((s) => s !== currentFocusedIndex));
-                } else {
-                    setSelectedTagIndices((prev) => [...prev, nextIndex]);
+            if (isSelecting && tagListSelectionModeOrDefault !== "none") {
+                if (tagListSelectionModeOrDefault === "single") {
+                    setSelectedTagIndices([nextIndex]);
+                } else if (tagListSelectionModeOrDefault === "multiple") {
+                    if (selectedTagIndices.includes(nextIndex) && selectedTagIndices.includes(currentFocusedIndex)) {
+                        setSelectedTagIndices((prev) => prev.filter((s) => s !== currentFocusedIndex));
+                    } else {
+                        setSelectedTagIndices((prev) => [...prev, nextIndex]);
+                    }
                 }
             } else {
                 setSelectedTagIndices([]);
@@ -239,27 +255,44 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
             setInputValue("");
 
             evt.preventDefault();
-        } else if (Key.Backspace === evt.key) {
+        } else if (Key.Backspace === evt.key && backspaceDeleteModeOrDefault !== "none") {
             if (selectedTagIndices.length) {
+                // No good way to put multiple tags to a string, so soft
+                // delete only works if a single item is selected
+                if (backspaceDeleteModeOrDefault === "soft" && selectedTagIndices.length === 1) {
+                    setInputValue(props.tags[selectedTagIndices[0]]);
+                    resetSelect();
+                }
+
                 removeSelectedTags();
                 evt.preventDefault();
-            } else if (!inputEl.value && focusedTagIndex != null) {
+            } else if (!inputEl.value && focusedTagIndex !== null) {
+                // Handle focused tag deletion
+                const tagToRemove = props.tags[focusedTagIndex];
                 handleRemoveTag(focusedTagIndex);
                 evt.preventDefault();
+
+                // If soft delete, add the string
+                if (backspaceDeleteModeOrDefault === "soft") {
+                    setInputValue(tagToRemove);
+                    resetSelect();
+                }
             } else if (!inputEl.value && props.tags.length) {
+                // Handle last tag deletion when nothing is focused
                 const lastTag = props.tags.at(-1)!;
-
                 handleRemoveTag(props.tags.length - 1);
-                if (!props.fullDeleteOnBackspace) setInputValue(lastTag);
-
                 evt.preventDefault();
+
+                if (backspaceDeleteModeOrDefault === "soft") {
+                    setInputValue(lastTag);
+                }
             }
-        } else if (Key.ArrowLeft === evt.key) {
+        } else if (Key.ArrowLeft === evt.key && tagListSelectionModeOrDefault !== "none") {
             if (inputEl.selectionStart === 0 && inputEl.selectionEnd === 0) {
                 moveTagFocus(Direction.Backwards, evt.shiftKey);
                 evt.preventDefault();
             }
-        } else if (Key.ArrowRight === evt.key) {
+        } else if (Key.ArrowRight === evt.key && tagListSelectionModeOrDefault !== "none") {
             if (inputEl.selectionStart === inputEl.value.length && inputEl.selectionEnd === inputEl.value.length) {
                 moveTagFocus(Direction.Forwards, evt.shiftKey);
                 evt.preventDefault();
