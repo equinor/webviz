@@ -15,7 +15,8 @@ from primary.services.user_session_manager.user_session_manager import _USER_SES
 from primary.services.user_session_manager._radix_helpers import RadixResourceRequests, RadixJobApi
 from primary.services.user_session_manager._user_session_directory import UserSessionDirectory
 from primary.services.user_grid3d_service.user_grid3d_service import UserGrid3dService, IJKIndexFilter
-from primary.services.service_exceptions import Service, ServiceUnavailableError
+from primary.services.service_exceptions import Service, ServiceUnavailableError, ServiceRequestError
+from primary.services.utils.otel_span_tracing import start_otel_span_async
 from primary.services.utils.task_meta_tracker import get_task_meta_tracker_for_user
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 
@@ -25,17 +26,34 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
+ErrorTypes = Literal[
+    "TypeError", "ValueError", "ServiceUnavailableError", "NestedValueError", "HttpException", "NoError"
+]
+
+
 @router.get("/provoke_error/{error_type}")
 async def get_provoke_error(
     # fmt:off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    error_type: Annotated[Literal["TypeError", "ValueError", "ServiceUnavailableError", "HttpException", "NoError"], Path(description="The error type to throw")],
+    error_type: Annotated[ErrorTypes, Path(description="The error type to throw")],
+    use_span: Annotated[bool, Query(description="Whether to use an OpenTelemetry span when trhowing error")] = False,
     status_code: Annotated[int, Query(description="Status code to use when throwing HttpException")] = 400,
     # fmt:on
 ) -> str:
     # A validation error can be provoked by passing an invalid value for error_type
     LOGGER.info(f"About to provoke error of type {error_type=}")
 
+    if use_span:
+        async with start_otel_span_async("my-fake-span") as span:
+            _my_provoking_function(error_type, status_code)
+    else:
+        _my_provoking_function(error_type, status_code)
+
+    # We will only end up here, with a 200 reply, if the specified exception type is unrecognized
+    return f"This is a 200 OK response!\n\nOoops, couldn't throw exception {error_type=}"
+
+
+def _my_provoking_function(error_type: ErrorTypes, status_code: int) -> None:
     if error_type == "TypeError":
         raise TypeError("This is a dummy type error")
 
@@ -43,13 +61,20 @@ async def get_provoke_error(
         raise ValueError("This is a dummy value error")
 
     elif error_type == "ServiceUnavailableError":
-        raise ServiceUnavailableError("Dummy message for SUMO service error", Service.SUMO)
+        raise ServiceUnavailableError("Dummy message for SUMO service unavailable error", Service.SUMO)
+
+    elif error_type == "NestedValueError":
+        try:
+            _always_throws_error()
+        except ValueError as exc:
+            raise ServiceRequestError("Service request error as a result of ValueError", Service.SUMO) from exc
 
     elif error_type == "HttpException":
         raise HTTPException(status_code=status_code, detail="My dummy HTTP error")
 
-    # We will only end up here, with a 200 reply, if the specified exception type is unrecognized
-    return f"This is a 200 OK response!\n\nOoops, couldn't throw exception {error_type=}"
+
+def _always_throws_error() -> None:
+    raise ValueError("This is a dummy nested value error from _always_throws_error()")
 
 
 @router.get("/tasks/purge")
