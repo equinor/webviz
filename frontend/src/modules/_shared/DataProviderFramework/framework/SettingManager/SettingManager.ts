@@ -5,8 +5,8 @@ import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
-import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import type { CustomSettingImplementation } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SettingAttributes } from "../../interfacesAndTypes/customSettingsHandler";
 import type { AvailableValuesType, MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
@@ -89,7 +89,8 @@ export class SettingManager<
         visible: true,
     };
     private _externalController: ExternalSettingController<TSetting, TValue, TCategory> | null = null;
-    private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
+    private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
+        new UnsubscribeFunctionsManagerDelegate();
 
     constructor({
         type,
@@ -115,7 +116,7 @@ export class SettingManager<
     ): void {
         this._externalController = externalController;
         this._value = externalController.getSetting().getValue();
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "external-setting-controller",
             externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(
                 () => {
@@ -124,7 +125,7 @@ export class SettingManager<
                 },
             ),
         );
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "external-setting-controller",
             externalController.getSetting().getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_VALID)(
                 () => {
@@ -132,7 +133,7 @@ export class SettingManager<
                 },
             ),
         );
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "external-setting-controller",
             externalController
                 .getSetting()
@@ -141,7 +142,7 @@ export class SettingManager<
                 this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_LOADING);
             }),
         );
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "external-setting-controller",
             externalController
                 .getSetting()
@@ -150,7 +151,7 @@ export class SettingManager<
                 this._publishSubscribeDelegate.notifySubscribers(SettingTopic.ATTRIBUTES);
             }),
         );
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "external-setting-controller",
             externalController
                 .getSetting()
@@ -159,7 +160,7 @@ export class SettingManager<
                 this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_ABOUT_TO_BE_CHANGED);
             }),
         );
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "external-setting-controller",
             externalController
                 .getSetting()
@@ -168,7 +169,7 @@ export class SettingManager<
                 this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_INITIALIZED);
             }),
         );
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "external-setting-controller",
             externalController
                 .getSetting()
@@ -177,7 +178,7 @@ export class SettingManager<
                 this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_PERSISTED);
             }),
         );
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "external-setting-controller",
             externalController
                 .getSetting()
@@ -191,12 +192,12 @@ export class SettingManager<
     unregisterExternalSettingController(): void {
         this._value = this._externalController?.getSetting().getValue() ?? this._value;
         this._externalController = null;
-        this._unsubscribeHandler.unsubscribe("external-setting-controller");
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("external-setting-controller");
         this.applyAvailableValues();
     }
 
     beforeDestroy(): void {
-        this._unsubscribeHandler.unsubscribeAll();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
     }
 
     getId(): string {

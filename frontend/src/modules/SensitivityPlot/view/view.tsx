@@ -3,6 +3,7 @@ import React from "react";
 import { Input } from "@mui/icons-material";
 
 import type { ModuleViewProps } from "@framework/Module";
+import { useColorSet } from "@framework/WorkbenchSettings";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage/contentMessage";
@@ -27,7 +28,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     const sensitivityScaling = viewContext.useSettingsToViewInterfaceValue("sensitivityScaling");
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const colorSet = workbenchSettings.useColorSet();
+    const colorSet = useColorSet(workbenchSettings);
 
     const responseChannelData = useResponseChannel(viewContext, workbenchSession);
 

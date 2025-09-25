@@ -1,6 +1,7 @@
 import React from "react";
 
 import { createRoot } from "react-dom/client";
+import { ToastContainer } from "react-toastify";
 
 import { client } from "@api";
 import { AuthProvider } from "@framework/internal/providers/AuthProvider";
@@ -16,8 +17,13 @@ import { GlobalErrorBoundary } from "./GlobalErrorBoundary";
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has("cleanStart")) {
     localStorage.clear();
-    urlParams.delete("cleanStart");
-    window.location.search = urlParams.toString();
+
+    const url = new URL(window.location.href);
+    url.pathname = "/"; // Reset to root
+    url.search = ""; // Clear any existing query parameters
+    url.hash = ""; // Clear any existing hash
+
+    window.history.pushState({}, "", url.toString());
 }
 
 // --------------------------------------------------------------------
@@ -50,9 +56,12 @@ root.render(
         <GlobalErrorBoundary>
             <AuthProvider>
                 <CustomQueryClientProvider>
-                    <App />
+                    <>
+                        <ToastContainer stacked newestOnTop limit={3} position="bottom-right" />
+                        <App />
+                    </>
                 </CustomQueryClientProvider>
             </AuthProvider>
         </GlobalErrorBoundary>
-    </React.StrictMode>
+    </React.StrictMode>,
 );

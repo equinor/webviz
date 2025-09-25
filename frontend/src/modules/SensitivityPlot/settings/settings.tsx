@@ -30,7 +30,7 @@ import {
 export function Settings({
     initialSettings,
     settingsContext,
-    workbenchSession,
+    workbenchSession: workbenchSession,
 }: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const [displayComponentType, setDisplayComponentType] = useAtom(displayComponentTypeAtom);
     const [hideZeroY, setHideZeroY] = useAtom(hideZeroYAtom);

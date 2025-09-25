@@ -3,7 +3,7 @@ import React from "react";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 
 export type Props = {
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     children?: React.ReactNode;
 };
 
