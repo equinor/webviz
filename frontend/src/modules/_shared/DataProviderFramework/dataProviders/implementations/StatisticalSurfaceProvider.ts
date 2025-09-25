@@ -301,28 +301,20 @@ export class StatisticalSurfaceProvider
         };
         const queryKey = getStatisticalSurfaceDataHybridQueryKey(apiFunctionArgs);
 
-        // !!!!!!!!!!!!!!!!!
-        // To discuss
-        // Suggested parameters for polling:
-        //  * maxTotalDurationS
-        //  * delayBetweenPollsS - delay between retries
-        //
-        // Maybe extend to (later):
+        // For now use just a fixed delay and max duration in seconds
+        // Maybe later extend delay/backoff to include:
         //  * backoff: none, linear, exponential
         //  * maxDelayS - maximum delay for linear or exponential backoff
-        // !!!!!!!!!!!!!!!!!
+        //  * jitter
         const queryOptions = wrapLongRunningQuery({
             queryFn: getStatisticalSurfaceDataHybrid,
             queryFnArgs: apiFunctionArgs,
             queryKey: queryKey,
-            delayBetweenPollsSecs: 0.5,
+            delayBetweenPollsSecs: 1.0,
             maxTotalDurationSecs: 120,
         });
 
         function handleTaskProgress(progressMessage: string | null) {
-            if (progressMessage) {
-                console.debug("Statistical surface progress:", progressMessage);
-            }
             setProgressMessage(progressMessage);
         }
         const unsubscribe = lroProgressBus.subscribe(hashKey(queryKey), handleTaskProgress);
