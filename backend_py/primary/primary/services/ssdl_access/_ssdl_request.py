@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
