@@ -32,7 +32,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     // ADDED COMMENT JUST FOR TESTING HERE
     // and here comes some malicious code...
-    // and here some more..
+    // and here some more...
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
     const parameterIdent = viewContext.useSettingsToViewInterfaceValue("parameterIdent");
     const selectedEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedRegularEnsembles");
