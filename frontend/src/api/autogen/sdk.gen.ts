@@ -979,7 +979,7 @@ export const getWellboreStratigraphicColumns = <ThrowOnError extends boolean = f
 
 /**
  * Get Wellbore Completions
- * Get well bore completions for a single well bore
+ * Get wellbore completions
  */
 export const getWellboreCompletions = <ThrowOnError extends boolean = false>(
     options: Options<GetWellboreCompletionsData_api, ThrowOnError>,
@@ -992,7 +992,7 @@ export const getWellboreCompletions = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Wellbore Casings
- * Get well bore casings for a single well bore
+ * Get wellbore casings
  */
 export const getWellboreCasings = <ThrowOnError extends boolean = false>(
     options: Options<GetWellboreCasingsData_api, ThrowOnError>,
@@ -1005,7 +1005,7 @@ export const getWellboreCasings = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Wellbore Perforations
- * Get well bore casing for a single well bore
+ * Get wellbore perforations
  */
 export const getWellborePerforations = <ThrowOnError extends boolean = false>(
     options: Options<GetWellborePerforationsData_api, ThrowOnError>,

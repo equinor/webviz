@@ -3,6 +3,8 @@ from pydantic import BaseModel
 
 
 class WellboreCompletion(BaseModel):
+    wellbore_id: str
+    wellbore_uuid: str
     md_top: float
     md_bottom: float
     tvd_top: float | None
@@ -13,6 +15,8 @@ class WellboreCompletion(BaseModel):
 
 
 class WellboreCasing(BaseModel):
+    wellbore_id: str
+    wellbore_uuid: str
     item_type: str  # Casing type
     diameter_numeric: float
     diameter_inner: float
@@ -26,6 +30,8 @@ class WellboreCasing(BaseModel):
 
 
 class WellborePerforation(BaseModel):
+    wellbore_id: str
+    wellbore_uuid: str
     md_top: float
     md_bottom: float
     tvd_top: float
