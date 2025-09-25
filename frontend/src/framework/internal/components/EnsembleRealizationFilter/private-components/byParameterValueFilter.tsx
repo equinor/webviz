@@ -282,7 +282,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                     showListAsSelectionCount
                     selection={valueSelection.map((elm) => String(elm))}
                     tagOptions={uniqueValues.map((elm) => {
-                        return { label: elm.toString(), value: String(elm) };
+                        return { label: String(elm), value: String(elm) };
                     })}
                     onChange={(value) =>
                         handleDiscreteParameterValueSelectionChange(parameterIdentString, value.map(Number))

@@ -8,7 +8,7 @@ import { BaseComponent } from "../BaseComponent";
 import type { TagInputProps } from "../TagInput";
 import { TagInput } from "../TagInput";
 
-import { useDebouncedStateEmit } from "./hooks";
+import { useDebouncedStateEmit, useOnScreenChangeHandler } from "./hooks";
 import { DefaultTagOption, type TagOptionProps } from "./private-components/defaultTagOption";
 import { DropdownItemList } from "./private-components/dropdownItemList";
 
@@ -133,14 +133,13 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
         function validateTag(tag: string) {
             if (selection.some((v) => isEqual(v, tag))) return false;
 
-            return !props.tagOptions.some((t) => t.value === tag);
+            return props.tagOptions.some((t) => t.value === tag);
         },
         [selection, props.tagOptions],
     );
 
     const handleTagsChange = React.useCallback(
         function handleTagsChange(newTags: string[]) {
-            setInputValue("");
             filterInputRef.current?.focus();
 
             debouncedOnChange?.(newTags);
@@ -173,7 +172,6 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
 
             if (evt.key === Key.Enter) {
                 evt.preventDefault();
-                setInputValue("");
 
                 if (!dropdownVisible) {
                     setDropdownVisible(true);
@@ -198,13 +196,20 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
 
                 if (evt.shiftKey) selectionMove *= 10;
 
-                setFocusedItemIndex((prev) => clamp(prev + selectionMove, 0, props.tagOptions.length - 1));
+                setFocusedItemIndex((prev) => clamp(prev + selectionMove, 0, filteredTags.length - 1));
             }
         },
-        [dropdownVisible, filteredTags, focusedItemIndex, handleToggleTag, props.tagOptions.length],
+        [dropdownVisible, filteredTags, focusedItemIndex, handleToggleTag],
     );
 
     const makeTagLabel = React.useCallback((tag: string) => tagLabelLookup[tag], [tagLabelLookup]);
+
+    useOnScreenChangeHandler(
+        tagInputRef,
+        React.useCallback(function handleAnchorOnScreenChange(isOnScreen: boolean) {
+            if (!isOnScreen) setDropdownVisible(false);
+        }, []),
+    );
 
     return (
         <BaseComponent ref={ref} disabled={props.disabled}>
@@ -248,6 +253,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                                 isFocused: focusedItemIndex === index,
                                 height: TAG_OPTION_HEIGHT,
                                 onToggle: () => handleToggleTag(option.value),
+                                onHover: () => setFocusedItemIndex(index),
                             })}
                         </React.Fragment>
                     )}

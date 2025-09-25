@@ -11,21 +11,21 @@ export type TagOptionProps = {
     isFocused: boolean;
     height: number;
     onToggle: () => void;
+    onHover: () => void;
 };
 
 export function DefaultTagOption(props: TagOptionProps): React.ReactNode {
     return (
         <>
             <li
-                className={resolveClassNames("-mx-2 px-2 flex items-center", { "bg-blue-100": props.isFocused })}
+                className={resolveClassNames("-mx-2 flex items-center", { "bg-blue-100": props.isFocused })}
                 style={{ height: props.height }}
+                onMouseMove={props.onHover}
             >
-                <Checkbox
-                    className="w-full"
-                    checked={props.isSelected}
-                    label={props.label ?? props.value}
-                    onChange={props.onToggle}
-                />
+                <label className="flex size-full px-2 py-1 text-gray-900 cursor-pointer gap-2">
+                    <Checkbox className="w-full" checked={props.isSelected} onChange={props.onToggle} />
+                    {props.label ?? props.value}
+                </label>
             </li>
         </>
     );

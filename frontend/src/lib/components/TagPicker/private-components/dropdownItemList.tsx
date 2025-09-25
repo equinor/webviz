@@ -2,6 +2,7 @@ import React from "react";
 
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { Virtualization } from "../../Virtualization";
 
@@ -11,11 +12,7 @@ export type DropdownItemListProps<T> = {
     emptyListText: string;
     optionHeight: number;
     dropdownMaxHeight: number;
-
-    // Item selection props
-    // highlightIndex?: number;
     itemFocusIndex?: number;
-
     renderItem?: (item: T, index: number) => React.ReactNode;
 };
 
@@ -40,6 +37,7 @@ export function DropdownItemListComponent<T>(
     const bodyRect = useElementBoundingRect(bodyRef);
     const anchorRect = useElementBoundingRect(props.anchorElRef);
 
+    const [dropdownFlipped, setDropdownFlipped] = React.useState(false);
     const [dropdownRect, setDropdownRect] = React.useState<DropdownRect>({
         width: 0,
         minWidth: 0,
@@ -70,6 +68,7 @@ export function DropdownItemListComponent<T>(
             if (anchorRect.width === 0 && anchorRect.height === 0) return;
 
             const listLength = Math.max(props.items.length * props.optionHeight, props.optionHeight);
+            let isFlipped = false;
 
             // 9 added to accommodate for border + padding in the list container
             const dropdownHeight = Math.min(listLength + 9, props.dropdownMaxHeight);
@@ -79,14 +78,22 @@ export function DropdownItemListComponent<T>(
                 height: dropdownHeight,
             };
 
-            if (anchorRect.y + anchorRect.height + dropdownHeight > window.innerHeight) {
+            const anchorTop = anchorRect.y;
+            const anchorBottom = anchorRect.y + anchorRect.height;
+            const hasSpaceAbove = anchorTop > dropdownHeight;
+            const hasSpaceBelow = window.innerHeight - anchorBottom >= dropdownHeight;
+
+            if (hasSpaceBelow) {
+                newDropdownRect.top = anchorRect.y + anchorRect.height;
+            } else if (hasSpaceAbove) {
+                isFlipped = true;
                 newDropdownRect.top = anchorRect.y - dropdownHeight;
-                newDropdownRect.height = Math.min(dropdownHeight, anchorRect.y);
             } else {
+                // If neither has space, put it below, but squish the height to fit
                 newDropdownRect.top = anchorRect.y + anchorRect.height;
                 newDropdownRect.height = Math.min(
                     dropdownHeight,
-                    window.innerHeight - anchorRect.y - anchorRect.height,
+                    window.innerHeight - anchorRect.y - anchorRect.height - 4,
                 );
             }
 
@@ -96,6 +103,7 @@ export function DropdownItemListComponent<T>(
                 newDropdownRect.left = anchorRect.x;
             }
 
+            setDropdownFlipped(isFlipped);
             setDropdownRect((prev) => ({ ...newDropdownRect, width: prev.width }) as DropdownRect);
         },
         [anchorRect, bodyRect, props.dropdownMaxHeight, props.items.length, props.optionHeight],
@@ -103,7 +111,13 @@ export function DropdownItemListComponent<T>(
 
     return createPortal(
         <ul
-            className="absolute bg-white border border-t-0 border-gray-300 rounded-md rounded-t-none  shadow-md overflow-y-auto z-50 box-border gap-1 px-2 py-1"
+            className={resolveClassNames(
+                "absolute bg-white border border-gray-300 rounded-md shadow-md overflow-y-auto z-50 box-border gap-1 px-2 py-1",
+                {
+                    "border-t-0 rounded-t-none": !dropdownFlipped,
+                    "border-b-0 rounded-b-none": dropdownFlipped,
+                },
+            )}
             style={{ ...dropdownRect }}
             ref={innerDropdownRef}
         >

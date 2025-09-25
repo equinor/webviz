@@ -127,6 +127,8 @@ function useUncontrolledInput(props: ExtendedInputElementProps) {
 
 function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
     const separatorOrDefault = props.separator ?? ",";
+    const backspaceDeleteModeOrDefault = props.backspaceDeleteMode ?? "soft";
+    const tagListSelectionModeOrDefault = props.tagListSelectionMode ?? "multiple";
     const renderTagOrDefault = props.renderTag ?? ((tagProps) => <DefaultTag {...tagProps} />);
 
     const innerInputRef = React.useRef<HTMLInputElement>(null);
@@ -145,7 +147,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
     }, [props.alwaysShowPlaceholder, props.placeholder, props.tags.length]);
 
     // Safety-hatch in-case the currently focused tag index gets invalidated between renders.
-    if (focusedTagIndex && focusedTagIndex > props.tags.length - 1) {
+    if (focusedTagIndex !== null && focusedTagIndex > props.tags.length - 1) {
         setFocusedTagIndex(null);
         innerInputRef.current?.focus();
     }
@@ -224,7 +226,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
         props.onTagsChange?.(newTags);
     }
 
-    async function removeSelectedTags() {
+    function removeSelectedTags() {
         const newTags = props.tags.filter((t, index) => !selectedTagIndices.includes(index));
 
         props.onTagsChange?.(newTags);
@@ -307,7 +309,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
     }
 
     async function cutSelectedTags(evt: React.ClipboardEvent) {
-        copySelectedTags(evt);
+        await copySelectedTags(evt);
         removeSelectedTags();
     }
 
