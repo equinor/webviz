@@ -103,6 +103,5 @@ async def _ssdl_request_async(
             f"Cannot {method.lower()} data from endpoint {endpoint}: {response.text}", Service.SSDL
         )
 
-    print(f"TIME SSDL {method.lower()} {endpoint} took {timer.lap_s():.2f} seconds")
     LOGGER.debug(f"TIME SSDL {method.lower()} {endpoint} took {timer.lap_s():.2f} seconds")
     return results
