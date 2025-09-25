@@ -11,6 +11,7 @@ import { lroProgressBus } from "@framework/LroProgressBus";
 
 import type { BackoffStrategy } from "./backoffStrategies/BackoffStrategy";
 import { FixedBackoffStrategy } from "./backoffStrategies/FixedBackoffStrategy";
+import { AxiosError } from "axios";
 
 export class LroError extends Error {
     payload: unknown | undefined;
@@ -147,7 +148,14 @@ async function pollUntilDone<T>(options: {
             const { data, error } = response;
 
             if (error) {
-                throw new LroError("Polling request failed", undefined, response.code, { cause: error });
+                const axiosError = new AxiosError(
+                    response.message,
+                    response.code,
+                    response.config,
+                    response.request,
+                    response.response,
+                );
+                throw new LroError("Polling request failed", undefined, response.code, { cause: axiosError });
             }
 
             if (data.status === "success") {
@@ -213,7 +221,14 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
 
                 if (response.error) {
                     lroProgressBus.remove(busKey);
-                    throw new LroError("Initial request failed", undefined, response.code, { cause: response.error });
+                    const axiosError = new AxiosError(
+                        response.message,
+                        response.code,
+                        response.config,
+                        response.request,
+                        response.response,
+                    );
+                    throw new LroError("Initial request failed", undefined, response.code, { cause: axiosError });
                 }
 
                 const data = response.data;
