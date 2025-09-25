@@ -35,6 +35,7 @@ const statisticalSurfaceSettings = [
     Setting.SURFACE_NAME,
     Setting.TIME_OR_INTERVAL,
     Setting.COLOR_SCALE,
+    Setting.CONTOURS,
 ] as const;
 export type StatisticalSurfaceSettings = typeof statisticalSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<StatisticalSurfaceSettings>;
