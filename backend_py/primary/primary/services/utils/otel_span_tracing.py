@@ -18,7 +18,9 @@ async def start_otel_span_async(span_name: str, span_attributes: Attributes = No
     async with start_otel_span_async("span_name", {"key": "value"}) as span:
         my_value = await some_async_function()
     """
-    with _tracer.start_as_current_span(name=span_name, record_exception=True, set_status_on_exception=True, attributes=span_attributes) as span:
+    with _tracer.start_as_current_span(
+        name=span_name, record_exception=True, set_status_on_exception=True, attributes=span_attributes
+    ) as span:
         yield span
 
 
@@ -32,7 +34,9 @@ def start_otel_span(span_name: str, span_attributes: Attributes = None) -> Itera
         # Do something
         pass
     """
-    with _tracer.start_as_current_span(name=span_name, record_exception=True, set_status_on_exception=True, attributes=span_attributes) as span:
+    with _tracer.start_as_current_span(
+        name=span_name, record_exception=True, set_status_on_exception=True, attributes=span_attributes
+    ) as span:
         yield span
 
 
