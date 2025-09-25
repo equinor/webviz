@@ -196,7 +196,7 @@ async def get_wellbore_completions(
     wellbore_uuids: List[str] = Query(description="List of wellbore uuids"),
     # fmt:on
 ) -> List[schemas.WellboreCompletion]:
-    """Get well bore completions for a single well bore"""
+    """Get wellbore completions"""
 
     # Handle DROGON (if any of the wellbores are from drogon, return empty list)
     if any(is_drogon_identifier(wellbore_uuid=uuid) for uuid in wellbore_uuids):
@@ -218,7 +218,7 @@ async def get_wellbore_casings(
     wellbore_uuids: List[str] = Query(description="List of wellbore uuids"),
     # fmt:on
 ) -> List[schemas.WellboreCasing]:
-    """Get well bore casings for a single well bore"""
+    """Get wellbore casings"""
 
     # Handle DROGON (if any of the wellbores are from drogon, return empty list)
     if any(is_drogon_identifier(wellbore_uuid=uuid) for uuid in wellbore_uuids):
@@ -238,7 +238,7 @@ async def get_wellbore_perforations(
     wellbore_uuids: List[str] = Query(description="List of wellbore uuids"),
     # fmt:on
 ) -> List[schemas.WellborePerforation]:
-    """Get well bore casing for a single well bore"""
+    """Get wellbore perforations"""
 
     # Handle DROGON (if any of the wellbores are from drogon, return empty list)
     if any(is_drogon_identifier(wellbore_uuid=uuid) for uuid in wellbore_uuids):
