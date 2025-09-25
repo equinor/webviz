@@ -20,7 +20,7 @@ export function useWellboreTrajectoriesQuery(
 export function useWellboreCasingsQuery(wellboreUuid: string | null): UseQueryResult<WellboreCasing_api[]> {
     return useQuery({
         ...getWellboreCasingsOptions({
-            query: { wellbore_uuid: wellboreUuid ?? "" },
+            query: { wellbore_uuids: wellboreUuid ? [wellboreUuid] : [] },
         }),
         enabled: Boolean(wellboreUuid),
     });

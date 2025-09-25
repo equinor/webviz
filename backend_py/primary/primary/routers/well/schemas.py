@@ -60,6 +60,8 @@ class WellborePick(BaseModel):
 
 
 class WellboreCompletion(BaseModel):
+    wellboreUuid: str
+    uniqueWellboreIdentifier: str
     mdTop: float
     mdBottom: float
     tvdTop: float | None
@@ -70,6 +72,8 @@ class WellboreCompletion(BaseModel):
 
 
 class WellboreCasing(BaseModel):
+    wellboreUuid: str
+    uniqueWellboreIdentifier: str
     itemType: str  # Casing type
     diameterNumeric: float
     diameterInner: float
@@ -83,6 +87,8 @@ class WellboreCasing(BaseModel):
 
 
 class WellborePerforation(BaseModel):
+    wellboreUuid: str
+    uniqueWellboreIdentifier: str
     mdTop: float
     mdBottom: float
     tvdTop: float

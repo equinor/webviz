@@ -1,51 +1,74 @@
-from typing import List
-from pydantic import ValidationError
+from typing import List, Type, TypeVar, Dict, Any
+from pydantic import BaseModel, ValidationError
 from primary.services.service_exceptions import (
     Service,
     InvalidDataError,
 )
-from ._ssdl_get_request import ssdl_get_request_async
+from ._ssdl_request import ssdl_get_request_async, ssdl_post_request_async
 
 from . import types
+
+T = TypeVar("T", bound=BaseModel)
 
 
 class WellAccess:
     def __init__(self, access_token: str):
         self._ssdl_token = access_token
 
-    async def get_completions_for_wellbore_async(self, wellbore_uuid: str) -> List[types.WellboreCompletion]:
-        endpoint = f"Wellbores/{wellbore_uuid}/completion"
-        params = {"normalized_data": True}
+    async def _get_wellbore_list_data_async(
+        self, wellbore_uuids: List[str], endpoint: str, params: dict, model_class: Type[T], data_type_name: str
+    ) -> List[T]:
+        """
+        Generic method to fetch and validate wellbore data that returns lists of items per wellbore.
+        Specifically handles the pattern used by completions, casings, and perforations endpoints.
+        """
+        ssdl_data = await ssdl_post_request_async(
+            access_token=self._ssdl_token, endpoint=endpoint, data=wellbore_uuids, params=params
+        )
 
-        ssdl_data = await ssdl_get_request_async(access_token=self._ssdl_token, endpoint=endpoint, params=params)
-        try:
-            result = [types.WellboreCompletion.model_validate(casing) for casing in ssdl_data]
-        except ValidationError as error:
-            raise InvalidDataError(
-                f"Invalid completion data for wellbore {wellbore_uuid} {error}", Service.SSDL
-            ) from error
+        result = []
+        for wellbore_uuid, items in ssdl_data.items():
+            if not isinstance(items, list):
+                raise InvalidDataError(
+                    f"Invalid {data_type_name} data for wellbore {wellbore_uuid}: Expected a list but got {type(items)}",
+                    Service.SSDL,
+                )
+            for item in items:
+                try:
+                    validated_item = model_class.model_validate(item)
+                    result.append(validated_item)
+                except ValidationError as error:
+                    raise InvalidDataError(
+                        f"Invalid {data_type_name} data for wellbore {wellbore_uuid}: {error}", Service.SSDL
+                    ) from error
         return result
 
-    async def get_casings_for_wellbore_async(self, wellbore_uuid: str) -> List[types.WellboreCasing]:
-        endpoint = f"Wellbores/{wellbore_uuid}/casing"
-        params = {"source": "dbr"}
-        ssdl_data = await ssdl_get_request_async(access_token=self._ssdl_token, endpoint=endpoint, params=params)
-        try:
-            result = [types.WellboreCasing.model_validate(casing) for casing in ssdl_data]
-        except ValidationError as error:
-            raise InvalidDataError(f"Invalid casing data for wellbore {wellbore_uuid}", Service.SSDL) from error
-        return result
+    async def get_completions_for_wellbores_async(self, wellbore_uuids: List[str]) -> List[types.WellboreCompletion]:
+        return await self._get_wellbore_list_data_async(
+            wellbore_uuids=wellbore_uuids,
+            endpoint="Wellbores/completions",
+            params={"normalized_data": True},
+            model_class=types.WellboreCompletion,
+            data_type_name="completion",
+        )
 
-    async def get_perforations_for_wellbore_async(self, wellbore_uuid: str) -> List[types.WellborePerforation]:
-        endpoint = f"Wellbores/{wellbore_uuid}/perforations"
-        params = {"normalized-data": False, "details": True}
+    async def get_casings_for_wellbores_async(self, wellbore_uuids: List[str]) -> List[types.WellboreCasing]:
+        return await self._get_wellbore_list_data_async(
+            wellbore_uuids=wellbore_uuids,
+            endpoint="Wellbores/casings",
+            params={"source": "dbr"},
+            model_class=types.WellboreCasing,
+            data_type_name="casing",
+        )
 
-        ssdl_data = await ssdl_get_request_async(access_token=self._ssdl_token, endpoint=endpoint, params=params)
-        try:
-            result = [types.WellborePerforation.model_validate(casing) for casing in ssdl_data]
-        except ValidationError as error:
-            raise InvalidDataError(f"Invalid casing data for wellbore {wellbore_uuid}", Service.SSDL) from error
-        return result
+    async def get_perforations_for_wellbores_async(self, wellbore_uuids: List[str]) -> List[types.WellborePerforation]:
+        return await self._get_wellbore_list_data_async(
+            wellbore_uuids=wellbore_uuids,
+            endpoint="Wellbores/perforations",
+            params={"normalized-data": False, "details": True},
+            model_class=types.WellborePerforation,
+            data_type_name="perforation",
+        )
 
     async def get_log_curve_headers_for_wellbore_async(self, wellbore_uuid: str) -> List[types.WellboreLogCurveHeader]:
         endpoint = f"WellLog/{wellbore_uuid}"
