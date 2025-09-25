@@ -1,349 +1,268 @@
 import React from "react";
 
-import { Close, ExpandMore } from "@mui/icons-material";
-import { isEqual } from "lodash";
-
-import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { createPortal } from "@lib/utils/createPortal";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { getTextWidthWithFont } from "@lib/utils/textSize";
-
+import { clamp, isEqual } from "lodash";
+import { Key } from "ts-key-enum";
 
 import type { BaseComponentProps } from "../BaseComponent";
 import { BaseComponent } from "../BaseComponent";
-import { Checkbox } from "../Checkbox";
-import { IconButton } from "../IconButton";
-import { Virtualization } from "../Virtualization";
+import type { TagInputProps } from "../TagInput";
+import { TagInput } from "../TagInput";
 
-export type TagOption<T> = {
-    value: T;
-    label: string;
+import { useDebouncedStateEmit, useOnScreenChangeHandler } from "./hooks";
+import { DefaultTagOption, type TagOptionProps } from "./private-components/defaultTagOption";
+import { DropdownItemList } from "./private-components/dropdownItemList";
+
+const DROPDOWN_MAX_HEIGHT = 200;
+const TAG_OPTION_HEIGHT = 32;
+
+const NO_MATCHING_TAGS_TEXT = "No matching options";
+const NO_TAGS_TEXT = "No options";
+
+export type TagOption<TValue extends string = string> = {
+    label?: string;
+    value: TValue;
 };
 
-export type TagPickerProps<T> = {
-    id?: string;
+export type TagPickerProps<TValue extends string = string> = {
+    selection: TValue[];
+    inputId?: string;
     wrapperId?: string;
-    tags: TagOption<T>[];
-    value: T[];
-    onChange?: (value: T[]) => void;
-    width?: string | number;
+    tagOptions: TagOption<TValue>[];
+    placeholder?: string;
+    showListAsSelectionCount?: boolean;
     debounceTimeMs?: number;
-} & BaseComponentProps;
+    renderTagOption?: (props: TagOptionProps) => React.ReactNode;
+    onChange?: (newSelection: TValue[]) => void;
+} & Pick<TagInputProps, "renderTag"> &
+    BaseComponentProps;
 
-const MIN_HEIGHT = 200;
-const TAG_HEIGHT = 32;
+export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactElement {
+    const renderTagOptionOrDefault = props.renderTagOption ?? ((tagProps) => <DefaultTagOption {...tagProps} />);
 
-type DropdownRect = {
-    left?: number;
-    top?: number;
-    right?: number;
-    width: number;
-    height: number;
-    minWidth: number;
-};
+    // --- Refs
+    const tagInputRef = React.useRef<HTMLDivElement>(null);
+    const filterInputRef = React.useRef<HTMLInputElement>(null);
+    const dropdownRef = React.useRef<HTMLUListElement | null>(null);
 
-const NO_MATCHING_TAGS_TEXT = "No matching tags";
-const NO_TAGS_TEXT = "No tags";
-
-export function TagPickerComponent<T>(
-    props: TagPickerProps<T>,
-    ref: React.ForwardedRef<HTMLDivElement>,
-): React.ReactElement {
-    const [selectedTags, setSelectedTags] = React.useState<T[]>(props.value);
-    const [prevSelectedTags, setPrevSelectedTags] = React.useState<T[]>(props.value);
+    // --- State variables
+    const [inputValue, setInputValue] = React.useState("");
     const [dropdownVisible, setDropdownVisible] = React.useState<boolean>(false);
-    const [dropdownRect, setDropdownRect] = React.useState<DropdownRect>({
-        width: 0,
-        minWidth: 0,
-        height: 0,
-    });
-    const [filter, setFilter] = React.useState<string | null>(null);
-    const [filteredTags, setFilteredTags] = React.useState<TagOption<T>[]>(props.tags);
-    const [startIndex, setStartIndex] = React.useState<number>(0);
-    const [focused, setFocused] = React.useState<boolean>(false);
+    const [focusedItemIndex, setFocusedItemIndex] = React.useState<number>(-1);
 
-    const divRef = React.useRef<HTMLDivElement>(null);
-    const inputRef = React.useRef<HTMLInputElement>(null);
-    const dropdownRef = React.useRef<HTMLDivElement>(null);
-    const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [selection, debouncedOnChange, flushDebounce] = useDebouncedStateEmit(
+        props.selection,
+        props.onChange,
+        props.debounceTimeMs,
+    );
 
-    const divBoundingRect = useElementBoundingRect(divRef);
+    // --- Derived values
+    const tagInputPlaceholder = React.useMemo(() => {
+        if (props.showListAsSelectionCount) return `${selection.length}/${props.tagOptions.length} selected`;
+        if (props.placeholder && !selection.length) return props.placeholder;
+        return undefined;
+    }, [props.showListAsSelectionCount, props.tagOptions.length, props.placeholder, selection.length]);
 
-    if (!isEqual(props.value, prevSelectedTags)) {
-        setSelectedTags(props.value);
-        if (filter) {
-            setFilteredTags(props.tags.filter((option) => option.label.toLowerCase().includes(filter)));
-        } else {
-            setFilteredTags(props.tags);
-        }
-        setPrevSelectedTags(props.value);
+    const tagLabelLookup = React.useMemo(
+        () => Object.fromEntries(props.tagOptions.map((option) => [option.value, option.label])),
+        [props.tagOptions],
+    );
+
+    const renderSelectedTags = React.useMemo(() => {
+        if (props.showListAsSelectionCount) return () => null;
+        return undefined;
+    }, [props.showListAsSelectionCount]);
+
+    const filteredTags = React.useMemo(() => {
+        return props.tagOptions.filter((t) => {
+            const tagString = t.label ?? String(t.value);
+            return tagString.toLocaleLowerCase().includes(inputValue.toLocaleLowerCase());
+        });
+    }, [inputValue, props.tagOptions]);
+    const [prevFilteredTags, setPrevFilteredTags] = React.useState(filteredTags);
+
+    // Reset the dropdown item focus whenever filtered tags change, as the focused item likely went away.
+    if (prevFilteredTags !== filteredTags) {
+        setPrevFilteredTags(filteredTags);
+        setFocusedItemIndex(-1);
     }
 
-    React.useEffect(function handleMount() {
-        const debounceTimerRefCurrent = debounceTimerRef.current;
-        return function handleUnmount() {
-            if (debounceTimerRefCurrent) {
-                clearTimeout(debounceTimerRefCurrent);
-            }
-        };
+    // --- Callbacks
+    const handleInputFocus = React.useCallback(function handleInputFocus() {
+        setDropdownVisible(true);
     }, []);
 
-    React.useEffect(function handleTagsChange() {
-        function handleMouseDown(event: MouseEvent) {
+    const handleFocusOut = React.useCallback(
+        function handleFocusOut(evt: FocusEvent) {
             if (
-                dropdownRef.current &&
-                !dropdownRef.current.contains(event.target as Node) &&
-                divRef.current &&
-                !divRef.current.contains(event.target as Node)
+                !tagInputRef.current?.contains(evt.relatedTarget as Node) &&
+                !dropdownRef.current?.contains(evt.relatedTarget as Node)
             ) {
                 setDropdownVisible(false);
+                flushDebounce();
             }
-        }
+        },
+        [flushDebounce],
+    );
 
-        function handleKeyDown(event: KeyboardEvent) {
-            if (event.key === "Escape") {
-                setDropdownVisible(false);
-                inputRef.current?.blur();
-                setFocused(false);
+    // The dropdown gets remounted on show, so the ref will change every time.
+    // We need to use a ref-callback here, to re-attach the listener
+    const setDropdownRef = React.useCallback<React.RefCallback<HTMLUListElement>>(
+        (el) => {
+            dropdownRef.current = el;
+
+            if (!dropdownRef.current) return;
+
+            dropdownRef.current.tabIndex = -1;
+            dropdownRef.current.addEventListener("focusout", handleFocusOut);
+        },
+        [handleFocusOut],
+    );
+
+    React.useEffect(
+        function addFocusEventListenerEffect() {
+            // Input element never changes during this components lifetime
+            const tagInputEl = tagInputRef.current!;
+
+            tagInputEl.addEventListener("focusout", handleFocusOut);
+            return () => tagInputEl.removeEventListener("focusout", handleFocusOut);
+        },
+        [handleFocusOut],
+    );
+
+    const validateTag = React.useCallback(
+        function validateTag(tag: string) {
+            if (selection.some((v) => isEqual(v, tag))) return false;
+
+            return props.tagOptions.some((t) => t.value === tag);
+        },
+        [selection, props.tagOptions],
+    );
+
+    const handleTagsChange = React.useCallback(
+        function handleTagsChange(newTags: string[]) {
+            filterInputRef.current?.focus();
+
+            debouncedOnChange?.(newTags);
+        },
+        [debouncedOnChange],
+    );
+
+    const handleToggleTag = React.useCallback(
+        function handleToggleTag(tag: string) {
+            const newSelection = [...selection];
+            const tagIndex = selection.indexOf(tag);
+
+            if (tagIndex === -1) {
+                newSelection.push(tag);
+            } else {
+                newSelection.splice(tagIndex, 1);
+            }
+
+            handleTagsChange(newSelection);
+        },
+        [handleTagsChange, selection],
+    );
+
+    const handleInputKeyDown = React.useCallback(
+        function handleInputKeyDown(evt: React.KeyboardEvent<HTMLInputElement>) {
+            if (evt.key === Key.Escape) {
+                evt.preventDefault();
+                return setDropdownVisible(false);
+            }
+
+            if (evt.key === Key.Enter) {
+                evt.preventDefault();
+
+                if (!dropdownVisible) {
+                    setDropdownVisible(true);
+                } else if (focusedItemIndex !== -1) {
+                    handleToggleTag(filteredTags[focusedItemIndex].value);
+                } else if (filteredTags.length === 1) {
+                    handleToggleTag(filteredTags[0].value);
+                } else if (filteredTags.length > 0) {
+                    setFocusedItemIndex(0);
+                }
+
                 return;
             }
-        }
 
-        document.addEventListener("mousedown", handleMouseDown);
-        document.addEventListener("keydown", handleKeyDown);
+            if (!dropdownVisible) return;
+            // Change the selection. If the popover is closed, we immediately select the next option
+            let selectionMove = 0;
+            if (evt.key === "ArrowUp") selectionMove = -1;
+            if (evt.key === "ArrowDown") selectionMove = 1;
+            if (selectionMove) {
+                evt.preventDefault();
 
-        return () => {
-            document.removeEventListener("mousedown", handleMouseDown);
-        };
-    }, []);
+                if (evt.shiftKey) selectionMove *= 10;
 
-    React.useEffect(
-        function updateDropdownRectWidth() {
-            let longestTagWidth = props.tags.reduce((prev, current) => {
-                const labelWidth = getTextWidthWithFont(current.label, "Equinor", 1);
-                const totalWidth = labelWidth;
-                if (totalWidth > prev) {
-                    return totalWidth;
-                }
-                return prev;
-            }, 0);
-
-            if (longestTagWidth === 0) {
-                if (props.tags.length === 0 || filter === "") {
-                    longestTagWidth = getTextWidthWithFont(NO_TAGS_TEXT, "Equinor", 1);
-                } else {
-                    longestTagWidth = getTextWidthWithFont(NO_MATCHING_TAGS_TEXT, "Equinor", 1);
-                }
-            }
-            setDropdownRect((prev) => ({ ...prev, width: longestTagWidth + 32 }));
-
-            const newFilteredOptions = props.tags.filter((tag) => tag.label.toLowerCase().includes(filter || ""));
-            setFilteredTags(newFilteredOptions);
-        },
-        [props.tags, filter],
-    );
-
-    React.useEffect(
-        function computeDropdownRect() {
-            if (dropdownVisible) {
-                const divClientBoundingRect = divRef.current?.getBoundingClientRect();
-                const bodyClientBoundingRect = document.body.getBoundingClientRect();
-
-                const height = Math.min(MIN_HEIGHT, Math.max(filteredTags.length * TAG_HEIGHT, TAG_HEIGHT)) + 2;
-
-                if (divClientBoundingRect && bodyClientBoundingRect) {
-                    const newDropdownRect: DropdownRect = {
-                        minWidth: divBoundingRect.width,
-                        width: dropdownRect.width,
-                        height: height,
-                    };
-
-                    if (divClientBoundingRect.y + divBoundingRect.height + height > window.innerHeight) {
-                        newDropdownRect.top = divClientBoundingRect.y - height;
-                        newDropdownRect.height = Math.min(height, divClientBoundingRect.y);
-                    } else {
-                        newDropdownRect.top = divClientBoundingRect.y + divBoundingRect.height;
-                        newDropdownRect.height = Math.min(
-                            height,
-                            window.innerHeight - divClientBoundingRect.y - divBoundingRect.height,
-                        );
-                    }
-                    if (divClientBoundingRect.x + divBoundingRect.width > window.innerWidth / 2) {
-                        newDropdownRect.right = window.innerWidth - (divClientBoundingRect.x + divBoundingRect.width);
-                    } else {
-                        newDropdownRect.left = divClientBoundingRect.x;
-                    }
-
-                    setDropdownRect((prev) => ({ ...newDropdownRect, width: prev.width }));
-
-                    setStartIndex(
-                        Math.max(
-                            0,
-                            Math.round(
-                                (filteredTags.findIndex((tag) => tag.value === selectedTags[selectedTags.length - 1]) ||
-                                    0) -
-                                    height / TAG_HEIGHT / 2,
-                            ),
-                        ),
-                    );
-                }
+                setFocusedItemIndex((prev) => clamp(prev + selectionMove, 0, filteredTags.length - 1));
             }
         },
-        [divBoundingRect, dropdownVisible, filteredTags, selectedTags, dropdownRect.width, props.tags],
+        [dropdownVisible, filteredTags, focusedItemIndex, handleToggleTag],
     );
 
-    function handleInputClick() {
-        setDropdownVisible(true);
-    }
+    const makeTagLabel = React.useCallback((tag: string) => tagLabelLookup[tag], [tagLabelLookup]);
 
-    function handleTagToggle(value: T) {
-        let newSelectedTags = [...selectedTags];
-        if (selectedTags.includes(value)) {
-            newSelectedTags = newSelectedTags.filter((v) => v !== value);
-        } else {
-            newSelectedTags.push(value);
-        }
-
-        setFilter(null);
-        inputRef.current?.focus();
-        setSelectedTags(newSelectedTags);
-
-        if (props.debounceTimeMs) {
-            if (debounceTimerRef.current) {
-                clearTimeout(debounceTimerRef.current);
-            }
-            debounceTimerRef.current = setTimeout(() => {
-                props.onChange?.(newSelectedTags);
-            }, props.debounceTimeMs);
-        } else {
-            props.onChange?.(newSelectedTags);
-        }
-    }
-
-    function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-        const newFilter = event.target.value.toLowerCase();
-        setFilter(newFilter);
-        const newFilteredOptions = props.tags.filter((option) =>
-            option.label.toLowerCase().includes(newFilter.toLowerCase()),
-        );
-        setFilteredTags(newFilteredOptions);
-    }
-
-    function handleClick() {
-        setDropdownVisible(true);
-        if (inputRef.current) {
-            inputRef.current.focus();
-        }
-    }
-
-    function removeTag(value: T) {
-        setSelectedTags(selectedTags.filter((tag) => tag !== value));
-        props.onChange?.(selectedTags.filter((tag) => tag !== value));
-    }
-
-    function handleClearAll() {
-        setSelectedTags([]);
-        props.onChange?.([]);
-    }
-
-    function handleFocus() {
-        setFocused(true);
-    }
-
-    function handleBlur() {
-        setFocused(false);
-    }
+    useOnScreenChangeHandler(
+        tagInputRef,
+        React.useCallback(function handleAnchorOnScreenChange(isOnScreen: boolean) {
+            if (!isOnScreen) setDropdownVisible(false);
+        }, []),
+    );
 
     return (
         <BaseComponent ref={ref} disabled={props.disabled}>
-            <div
-                style={{ width: props.width }}
-                id={props.wrapperId}
-                ref={divRef}
-                className={resolveClassNames("flex w-full border p-1 px-2 rounded-sm text-sm shadow-xs input-comp", {
-                    "outline outline-blue-500": focused,
-                })}
-                onClick={handleClick}
-            >
-                <div className="min-h-6 grow flex gap-2 justify-start flex-wrap">
-                    {selectedTags.map((tag) => {
-                        const tagOption = props.tags.find((el) => el.value === tag);
-                        if (!tagOption) {
-                            return null;
-                        }
-                        return <Tag key={`${tag}`} tag={tagOption} onRemove={() => removeTag(tag)} />;
-                    })}
-                    <input
-                        ref={inputRef}
-                        className="grow outline-hidden min-w-0 h-8 w-0"
-                        onClick={handleInputClick}
-                        onChange={handleInputChange}
-                        onFocus={handleFocus}
-                        onBlur={handleBlur}
-                        value={filter ?? ""}
-                    />
-                </div>
-                <div className="h-8 flex flex-col justify-center cursor-pointer">
-                    {selectedTags.length === 0 ? (
-                        <ExpandMore fontSize="inherit" />
-                    ) : (
-                        <IconButton onClick={handleClearAll} title="Clear selection">
-                            <Close fontSize="inherit" />
-                        </IconButton>
+            <TagInput
+                ref={tagInputRef}
+                inputRef={filterInputRef}
+                placeholder={tagInputPlaceholder}
+                tags={selection}
+                alwaysShowPlaceholder={props.showListAsSelectionCount}
+                backspaceDeleteMode={props.showListAsSelectionCount ? "none" : "hard"}
+                tagListSelectionMode={props.showListAsSelectionCount ? "none" : "multiple"}
+                makeLabel={makeTagLabel}
+                validateTag={validateTag}
+                renderTag={props.renderTag}
+                renderTags={renderSelectedTags}
+                onTagsChange={handleTagsChange}
+                inputProps={{
+                    id: props.inputId,
+                    value: inputValue,
+                    onValueChange: setInputValue,
+                    onFocus: handleInputFocus,
+                    onKeyDown: handleInputKeyDown,
+                }}
+            />
+
+            {dropdownVisible && (
+                <DropdownItemList<TagOption>
+                    ref={setDropdownRef}
+                    anchorElRef={tagInputRef}
+                    items={filteredTags}
+                    optionHeight={TAG_OPTION_HEIGHT}
+                    itemFocusIndex={focusedItemIndex}
+                    dropdownMaxHeight={DROPDOWN_MAX_HEIGHT}
+                    emptyListText={props.tagOptions.length === 0 ? NO_TAGS_TEXT : NO_MATCHING_TAGS_TEXT}
+                    renderItem={(option, index) => (
+                        <React.Fragment key={index}>
+                            {renderTagOptionOrDefault({
+                                value: option.value,
+                                label: option.label,
+                                isSelected: selection.includes(option.value),
+                                isFocused: focusedItemIndex === index,
+                                height: TAG_OPTION_HEIGHT,
+                                onToggle: () => handleToggleTag(option.value),
+                                onHover: () => setFocusedItemIndex(index),
+                            })}
+                        </React.Fragment>
                     )}
-                </div>
-            </div>
-            {dropdownVisible &&
-                createPortal(
-                    <div
-                        className="absolute bg-white border border-gray-300 rounded-md shadow-md overflow-y-auto z-50 box-border flex flex-col gap-1 p-1"
-                        style={{ ...dropdownRect }}
-                        ref={dropdownRef}
-                    >
-                        {filteredTags.length === 0 && (
-                            <div className="p-1 flex items-center text-gray-400 select-none">
-                                {props.tags.length === 0 || filter === "" ? NO_TAGS_TEXT : NO_MATCHING_TAGS_TEXT}
-                            </div>
-                        )}
-                        <Virtualization
-                            direction="vertical"
-                            items={filteredTags}
-                            itemSize={TAG_HEIGHT}
-                            containerRef={dropdownRef}
-                            startIndex={startIndex}
-                            renderItem={(option) => (
-                                <Checkbox
-                                    key={option.value}
-                                    checked={selectedTags.includes(option.value)}
-                                    onChange={() => handleTagToggle(option.value)}
-                                    label={option.label}
-                                />
-                            )}
-                        />
-                    </div>,
-                )}
+                />
+            )}
         </BaseComponent>
     );
 }
 
-export const TagPicker = React.forwardRef(TagPickerComponent) as <T>(
+export const TagPicker = React.forwardRef(TagPickerComponent) as <T extends string = string>(
     props: TagPickerProps<T> & { ref?: React.Ref<HTMLDivElement> },
 ) => React.ReactElement;
-
-type TagProps<T> = {
-    tag: TagOption<T>;
-    onRemove: () => void;
-};
-
-function Tag<T>(props: TagProps<T>): React.ReactNode {
-    return (
-        <div className="bg-blue-200 p-1 pl-2 rounded-sm flex gap-1 items-center input-comp">
-            <span>{props.tag.label}</span>
-            {
-                <IconButton onClick={props.onRemove} title="Remove tag">
-                    <Close fontSize="inherit" />
-                </IconButton>
-            }
-        </div>
-    );
-}
