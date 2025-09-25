@@ -46,7 +46,7 @@ class WellAccess:
     async def get_completions_for_wellbores_async(self, wellbore_uuids: List[str]) -> List[types.WellboreCompletion]:
         return await self._get_wellbore_list_data_async(
             wellbore_uuids=wellbore_uuids,
-            endpoint="Wellbores/completions",
+            endpoint="Wellbores/completion",
             params={"normalized_data": True},
             model_class=types.WellboreCompletion,
             data_type_name="completion",
