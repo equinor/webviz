@@ -91,7 +91,7 @@ export function TableBody<T extends Record<string, any>>(props: TableBodyProps<T
                 placeholderComponent="tr"
                 items={props.rows}
                 itemSize={props.rowHeight}
-                onScroll={props.onVisibleRowRangeChange}
+                onRangeComputed={props.onVisibleRowRangeChange}
                 renderItem={(row, rowIndex) => (
                     <TableRow
                         key={row._key}

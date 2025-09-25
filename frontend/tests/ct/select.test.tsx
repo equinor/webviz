@@ -62,7 +62,7 @@ test.describe("Select", () => {
         // Make sure Home is working
         await select.press("Home");
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
-        expect(select).toContainText(selectOptions1[0].value);
+        await expect(select).toContainText(selectOptions1[0].value);
 
         // Make sure PageDown and PageUp are working
         await select.press("PageDown");
@@ -75,12 +75,13 @@ test.describe("Select", () => {
 
         // Make sure End is working
         await select.press("End");
+
         expect(selection.includes(selectOptions1[selectOptions1.length - 1].value)).toBeTruthy();
-        expect(select).toContainText(selectOptions1[selectOptions1.length - 1].value);
+        await expect(select).toContainText(selectOptions1[selectOptions1.length - 1].value);
 
         await select.press("Home");
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
-        expect(select).toContainText(selectOptions1[0].value);
+        await expect(select).toContainText(selectOptions1[0].value);
 
         // Click on fourth element and expect selection
         options = await select.locator("div").nth(1).locator("div");
@@ -129,53 +130,53 @@ test.describe("Select", () => {
         // Make sure Home is working
         await select.press("Home");
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
-        expect(select).toContainText(selectOptions1[0].value);
+        await expect(select).toContainText(selectOptions1[0].value);
 
         // Make sure PageDown and PageUp are working
         await select.press("PageDown");
         expect(selection.includes(selectOptions1[SIZE].value)).toBeTruthy();
-        expect(select).toContainText(selectOptions1[SIZE].value);
+        await expect(select).toContainText(selectOptions1[SIZE].value);
 
         await select.press("PageUp");
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
-        expect(select).toContainText(selectOptions1[0].value);
+        await expect(select).toContainText(selectOptions1[0].value);
 
         // Make sure End is working
         await select.press("End");
         expect(selection.includes(selectOptions1[selectOptions1.length - 1].value)).toBeTruthy();
-        expect(select).toContainText(selectOptions1[selectOptions1.length - 1].value);
+        await expect(select).toContainText(selectOptions1[selectOptions1.length - 1].value);
 
         await select.press("Home");
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
-        expect(select).toContainText(selectOptions1[0].value);
+        await expect(select).toContainText(selectOptions1[0].value);
 
         // Make sure selections with PageDown are working
         await select.press("Shift+PageDown");
         const expectedSelection = selectOptions1.slice(0, SIZE).map((el) => el.value);
         expect(arrayContainsOtherArray(selection, expectedSelection)).toBeTruthy();
         for (let i = 0; i < expectedSelection.length; i++) {
-            expect(select).toContainText(expectedSelection[i]);
+            await expect(select).toContainText(expectedSelection[i]);
         }
 
         // Reset selection and make sure PageUp is working
         await select.press("Home");
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
-        expect(select).toContainText(selectOptions1[0].value);
+        await expect(select).toContainText(selectOptions1[0].value);
 
         await select.press("PageDown");
         expect(selection.includes(selectOptions1[SIZE].value)).toBeTruthy();
-        expect(select).toContainText(selectOptions1[SIZE].value);
+        await expect(select).toContainText(selectOptions1[SIZE].value);
 
         await select.press("Shift+PageUp");
         expect(arrayContainsOtherArray(selection, expectedSelection)).toBeTruthy();
         for (let i = 0; i < expectedSelection.length; i++) {
-            expect(select).toContainText(expectedSelection[i]);
+            await expect(select).toContainText(expectedSelection[i]);
         }
 
         // Reset and make sure End and Home are working
         await select.press("Home");
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
-        expect(select).toContainText(selectOptions1[0].value);
+        await expect(select).toContainText(selectOptions1[0].value);
 
         await select.press("Shift+End");
         expect(
@@ -185,12 +186,12 @@ test.describe("Select", () => {
             ),
         ).toBeTruthy();
         for (let i = selectOptions1.length - SIZE; i < selectOptions1.length; i++) {
-            expect(select).toContainText(selectOptions1[i].value);
+            await expect(select).toContainText(selectOptions1[i].value);
         }
 
         await select.press("End");
         expect(selection.includes(selectOptions1[selectOptions1.length - 1].value)).toBeTruthy();
-        expect(select).toContainText(selectOptions1[selectOptions1.length - 1].value);
+        await expect(select).toContainText(selectOptions1[selectOptions1.length - 1].value);
 
         await select.press("Shift+Home");
         expect(
@@ -209,12 +210,12 @@ test.describe("Select", () => {
 
         const select = await mount(<Select options={selectOptions1} size={SIZE} onChange={handleChange} multiple />);
         for (let i = 0; i < SIZE; i++) {
-            expect(select).toContainText(selectOptions1[i].value);
+            await expect(select).toContainText(selectOptions1[i].value);
         }
 
         await select.update(<Select options={selectOptions2} size={SIZE} onChange={handleChange} multiple />);
         for (let i = 0; i < SIZE; i++) {
-            expect(select).toContainText(selectOptions2[i].value);
+            await expect(select).toContainText(selectOptions2[i].value);
         }
 
         // Click on first element and expect selection
