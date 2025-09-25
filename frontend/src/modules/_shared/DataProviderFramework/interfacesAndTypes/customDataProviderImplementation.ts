@@ -137,6 +137,7 @@ export type FetchDataParams<
     >(
         options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
     ) => Promise<TData>;
+    onFetchCancel: (callback: () => void) => void;
 } & DataProviderInformationAccessors<TSettings, TData, TStoredData>;
 
 export interface CustomDataProviderImplementation<

@@ -1,13 +1,12 @@
 import React from "react";
 
+import type { LroFailureResp_api, LroInProgressResp_api, HttpValidationError_api } from "@api";
+import { client } from "@api";
+import { lroProgressBus } from "@framework/LroProgressBus";
 import type { RequestResult } from "@hey-api/client-axios";
 import type { QueryFunctionContext } from "@tanstack/query-core";
 import type { UseQueryOptions } from "@tanstack/react-query";
 import { hashKey } from "@tanstack/react-query";
-
-import type { LroFailureResp_api, LroInProgressResp_api, HttpValidationError_api } from "@api";
-import { client } from "@api";
-import { lroProgressBus } from "@framework/LroProgressBus";
 
 import type { BackoffStrategy } from "./backoffStrategies/BackoffStrategy";
 import { FixedBackoffStrategy } from "./backoffStrategies/FixedBackoffStrategy";
@@ -212,6 +211,7 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
                 const response = await queryFn({ ...queryFnArgs, signal, throwOnError: false });
 
                 if (response.error) {
+                    lroProgressBus.remove(busKey);
                     throw new LroError("Initial request failed", undefined, response.code, { cause: response.error });
                 }
 

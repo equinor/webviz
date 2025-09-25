@@ -13,6 +13,7 @@ type RefetchArgs = RefetchOptions & RefetchQueryFilters;
 type Entry = {
     observer: QueryObserver<any, any, any, any, any>;
     unsubscribe?: () => void;
+    reject?: (err: unknown) => void;
 };
 
 export class ScopedQueryController {
@@ -57,6 +58,8 @@ export class ScopedQueryController {
         this._entries.set(keyHash, entry);
 
         return new Promise<TData>((resolve, reject) => {
+            entry.reject = reject;
+
             const finish = (fn: () => void) => {
                 // Only finish if this is still the active entry for this key
                 const current = this._entries.get(keyHash);
@@ -113,9 +116,13 @@ export class ScopedQueryController {
                 }
             });
 
-            observer.refetch(refetchArgs).catch((err) => {
+            try {
+                observer.refetch(refetchArgs).catch((err) => {
+                    finish(() => reject(err as TError));
+                });
+            } catch (err) {
                 finish(() => reject(err as TError));
-            });
+            }
         });
     }
 
@@ -129,12 +136,22 @@ export class ScopedQueryController {
     /** Clean up one entry by hash. */
     private cleanupEntry(hash: string) {
         const entry = this._entries.get(hash);
+
         if (!entry) return;
-        if (entry.unsubscribe) {
-            entry.unsubscribe();
-            entry.unsubscribe = undefined;
+
+        try {
+            entry.unsubscribe?.();
+        } catch {
+            // Ignore
         }
-        entry.observer.destroy();
+        entry.unsubscribe = undefined;
+
+        try {
+            entry.observer.destroy();
+        } catch {
+            // Ignore
+        }
+
         this._entries.delete(hash);
     }
 }
