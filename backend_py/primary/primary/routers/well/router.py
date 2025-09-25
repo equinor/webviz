@@ -66,6 +66,7 @@ async def get_well_trajectories(
         field_identifier=field_identifier,
         wellbore_uuids=wellbore_uuids,
     )
+
     return [
         converters.convert_well_trajectory_to_schema(wellbore_trajectory)
         for wellbore_trajectory in wellbore_trajectories
