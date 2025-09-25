@@ -3,7 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import type { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api, EnsembleTimestamps_api } from "@api";
 import { SensitivityType_api, getEnsembleDetailsOptions, getParametersOptions, getSensitivitiesOptions } from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
-import type { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/Workbench";
+import { type EnsembleTimestamps } from "@framework/EnsembleTimestampsStore";
 
 import type { ContinuousParameter, DiscreteParameter, Parameter } from "../EnsembleParameters";
 import { ParameterType } from "../EnsembleParameters";
@@ -24,18 +24,32 @@ type EnsembleIdentStringToEnsembleApiDataMap = {
     [ensembleIdentString: string]: EnsembleApiData;
 };
 
+export type UserEnsembleSetting = {
+    ensembleIdent: RegularEnsembleIdent;
+    customName: string | null;
+    color: string;
+    timestamps?: EnsembleTimestamps_api;
+};
+
+export type UserDeltaEnsembleSetting = {
+    comparisonEnsembleIdent: RegularEnsembleIdent;
+    referenceEnsembleIdent: RegularEnsembleIdent;
+    customName: string | null;
+    color: string;
+};
+
 export async function loadMetadataFromBackendAndCreateEnsembleSet(
     queryClient: QueryClient,
     userEnsembleSettings: UserEnsembleSetting[],
     userDeltaEnsembleSettings: UserDeltaEnsembleSetting[],
 ): Promise<EnsembleSet> {
     // Get ensemble idents to load
-    const ensembleTimestampMap = {} as Record<string, EnsembleTimestamps_api>;
-    const ensembleIdentsToLoad = [] as RegularEnsembleIdent[];
+    const ensembleTimestampMap = new Map<string, EnsembleTimestamps>();
+    const ensembleIdentsToLoad: RegularEnsembleIdent[] = [];
 
     for (const ensembleSetting of userEnsembleSettings) {
         if (ensembleSetting.timestamps) {
-            ensembleTimestampMap[ensembleSetting.ensembleIdent.toString()] = ensembleSetting.timestamps;
+            ensembleTimestampMap.set(ensembleSetting.ensembleIdent.toString(), ensembleSetting.timestamps);
         }
         ensembleIdentsToLoad.push(ensembleSetting.ensembleIdent);
     }
@@ -80,7 +94,6 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                 sensitivityArray,
                 ensembleSetting.color,
                 ensembleSetting.customName,
-                ensembleApiData.ensembleDetails.timestamps,
             ),
         );
     }
@@ -134,7 +147,6 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                   nullSensitivityArray,
                   emptyColor,
                   comparisonEnsembleCustomName,
-                  comparisonEnsembleApiData.ensembleDetails.timestamps,
               );
 
         const referenceEnsemble = existingReferenceEnsemble
@@ -150,7 +162,6 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                   nullSensitivityArray,
                   emptyColor,
                   referenceEnsembleCustomName,
-                  referenceEnsembleApiData.ensembleDetails.timestamps,
               );
 
         outDeltaEnsembleArray.push(
@@ -169,7 +180,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
 async function loadEnsembleApiDataMapFromBackend(
     queryClient: QueryClient,
     ensembleIdents: RegularEnsembleIdent[],
-    ensembleTimestampMap: Record<string, EnsembleTimestamps_api>,
+    ensembleTimestampMap: Map<string, EnsembleTimestamps>,
 ): Promise<EnsembleIdentStringToEnsembleApiDataMap> {
     console.debug("loadEnsembleIdentStringToApiDataMapFromBackend", ensembleIdents);
     const STALE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
@@ -182,7 +193,7 @@ async function loadEnsembleApiDataMapFromBackend(
     for (const ensembleIdent of ensembleIdents) {
         const caseUuid = ensembleIdent.getCaseUuid();
         const ensembleName = ensembleIdent.getEnsembleName();
-        const timestamps = ensembleTimestampMap[ensembleIdent.toString()];
+        const timestamps = ensembleTimestampMap.get(ensembleIdent.toString());
 
         const ensembleDetailsPromise = queryClient.fetchQuery({
             ...getEnsembleDetailsOptions({

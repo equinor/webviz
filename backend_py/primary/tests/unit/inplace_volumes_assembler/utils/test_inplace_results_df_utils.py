@@ -41,7 +41,9 @@ class TestCreatePerFluidResultsDf:
             volume_names=["STOIIP"], calculated_volume_names=["STOIIP_TOTAL"], property_names=["BG", "SW"]
         )
 
-    def test_create_per_fluid_results_df_fluid_column_throw_error(self, volumetric_df, categorized_result_names):
+    def test_create_per_fluid_results_df_fluid_column_throw_error(
+        self, volumetric_df: pl.DataFrame, categorized_result_names: CategorizedResultNames
+    ) -> None:
         fluid_columns = ["oil", "oil", "oil", "oil", "gas", "gas", "gas", "gas"]
         df_with_fluid_column = volumetric_df.with_columns(pl.Series("FLUID", fluid_columns))
 
@@ -52,7 +54,9 @@ class TestCreatePerFluidResultsDf:
         ):
             create_per_fluid_results_df(df_with_fluid_column, categorized_result_names, "gas")
 
-    def test_create_per_fluid_results_df_for_oil(self, volumetric_df, categorized_result_names):
+    def test_create_per_fluid_results_df_for_oil(
+        self, volumetric_df: pl.DataFrame, categorized_result_names: CategorizedResultNames
+    ) -> None:
         # Call the function
         result_df = create_per_fluid_results_df(volumetric_df, categorized_result_names, "oil")
 
@@ -76,7 +80,9 @@ class TestCreatePerFluidResultsDf:
         assert result_df["STOIIP_TOTAL"].equals(volumetric_df["STOIIP"])  # For oil
         assert result_df["SW"].equals(expected_sw)
 
-    def test_create_per_fluid_results_df_for_gas(self, volumetric_df, categorized_result_names):
+    def test_create_per_fluid_results_df_for_gas(
+        self, volumetric_df: pl.DataFrame, categorized_result_names: CategorizedResultNames
+    ) -> None:
         # Call the function
         result_df = create_per_fluid_results_df(volumetric_df, categorized_result_names, "gas")
 
@@ -104,7 +110,9 @@ class TestCreatePerFluidResultsDf:
         assert result_df["SW"].equals(expected_sw)
         assert result_df["BG"].equals(expected_bg)
 
-    def test_create_per_fluid_results_df_for_summed_fluids(self, volumetric_df, categorized_result_names):
+    def test_create_per_fluid_results_df_for_summed_fluids(
+        self, volumetric_df: pl.DataFrame, categorized_result_names: CategorizedResultNames
+    ) -> None:
         # Call the function
         result_df = create_per_fluid_results_df(volumetric_df, categorized_result_names, "oil + gas")
 
@@ -142,7 +150,9 @@ class TestCreateStatisticalResultTableDataFromDf:
             }
         )
 
-    def test_create_statistical_result_table_data_from_df_with_fluid_column_error(self, result_df):
+    def test_create_statistical_result_table_data_from_df_with_fluid_column_error(
+        self, result_df: pl.DataFrame
+    ) -> None:
         # Add a FLUID column to the DataFrame
         df_with_fluid = result_df.with_columns([pl.lit("oil").alias("FLUID")])
 
@@ -153,7 +163,9 @@ class TestCreateStatisticalResultTableDataFromDf:
         ):
             create_statistical_result_table_data_from_df(df_with_fluid)
 
-    def test_create_statistical_result_table_data_from_df_without_real_column_error(self, result_df):
+    def test_create_statistical_result_table_data_from_df_without_real_column_error(
+        self, result_df: pl.DataFrame
+    ) -> None:
         # Remove the REAL column from the DataFrame
         df_without_real = result_df.drop("REAL")
 
@@ -164,7 +176,7 @@ class TestCreateStatisticalResultTableDataFromDf:
         ):
             create_statistical_result_table_data_from_df(df_without_real)
 
-    def test_create_statistical_result_table_data_from_df_with_index_columns(self, result_df):
+    def test_create_statistical_result_table_data_from_df_with_index_columns(self, result_df: pl.DataFrame) -> None:
 
         # Call the function
         selector_column_data_list, results_statistical_data_list = create_statistical_result_table_data_from_df(
@@ -200,7 +212,7 @@ class TestCreateStatisticalResultTableDataFromDf:
         assert result_statistical_data.statistic_values[Statistic.P10] == p10_values
         assert result_statistical_data.statistic_values[Statistic.P90] == p90_values
 
-    def test_create_statistical_result_table_data_from_df_without_index_columns(self, result_df):
+    def test_create_statistical_result_table_data_from_df_without_index_columns(self, result_df: pl.DataFrame) -> None:
         # Remove all index columns
         df_without_indices = result_df.select(["REAL", "result_column"])
 

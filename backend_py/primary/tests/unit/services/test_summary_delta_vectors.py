@@ -8,7 +8,13 @@ from primary.services.summary_delta_vectors import (
 )
 
 
-VECTOR_TABLE_SCHEMA = pa.schema([("DATE", pa.timestamp("ms")), ("REAL", pa.int16()), ("vector", pa.float32())])
+VECTOR_TABLE_FIELDS: list[tuple[str, pa.DataType]] = [
+    ("DATE", pa.timestamp("ms")),
+    ("REAL", pa.int16()),
+    ("vector", pa.float32()),
+]
+
+VECTOR_TABLE_SCHEMA = pa.schema(VECTOR_TABLE_FIELDS)
 
 
 def test_create_delta_vector_table() -> None:

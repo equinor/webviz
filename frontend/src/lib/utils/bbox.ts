@@ -116,12 +116,12 @@ export function combine(box1: BBox, box2: BBox): BBox {
         vec3.create(
             Math.min(box1.min.x, box2.min.x),
             Math.min(box1.min.y, box2.min.y),
-            Math.min(box1.min.z, box2.min.z)
+            Math.min(box1.min.z, box2.min.z),
         ),
         vec3.create(
             Math.max(box1.max.x, box2.max.x),
             Math.max(box1.max.y, box2.max.y),
-            Math.max(box1.max.z, box2.max.z)
-        )
+            Math.max(box1.max.z, box2.max.z),
+        ),
     );
 }

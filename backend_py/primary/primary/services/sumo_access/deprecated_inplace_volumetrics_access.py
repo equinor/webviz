@@ -51,7 +51,7 @@ def _tmp_remove_license_column_if_all_values_are_total(pa_table: pa.Table) -> pa
     """
     if "LICENSE" in pa_table.column_names:
         license_col = pa_table.column("LICENSE")
-        is_total_array = pc.equal(license_col, "Totals")
+        is_total_array = pc.equal(license_col, pa.scalar("Totals"))
         all_totals = pc.all(is_total_array).as_py()
         if all_totals:
             pa_table = pa_table.drop("LICENSE")
@@ -173,5 +173,5 @@ class DEPRECATED_InplaceVolumetricsAccess:
         column_names = pa_table.column_names
         column_names_and_values = {}
         for col in column_names:
-            column_names_and_values[col] = pa_table[col].unique().to_pylist()
+            column_names_and_values[col] = [nv for nv in pa_table[col].unique().to_pylist() if nv is not None]
         return column_names_and_values

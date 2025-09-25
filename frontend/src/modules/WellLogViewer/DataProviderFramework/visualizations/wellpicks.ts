@@ -7,18 +7,12 @@ import {
     VisualizationItemType,
     type VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type { WellPickDataCollection } from "@modules/_shared/types/wellpicks";
 
 import type { WellPickSettingTypes } from "../dataProviders/wellpicks/WellPicksProvider";
 import { CustomDataProviderType } from "../dataProviderTypes";
 
 type WellpickTransformerArgs = TransformerArgs<WellPickSettingTypes, WellborePick_api[]>;
-
-export type WellPickDataCollection = {
-    picks: WellborePick_api[];
-    // We currently don't use these fields anywhere, but I'm leaving them here so they're available in the future
-    stratColumn: string;
-    interpreter: string;
-};
 
 export function makeWellPickCollections(args: WellpickTransformerArgs): WellPickDataCollection | null {
     const data = args.getData();

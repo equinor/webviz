@@ -89,7 +89,7 @@ export class IntersectionRealizationSeismicProvider
 
         return {
             [Setting.WELLBORE_EXTENSION_LENGTH]: 500.0,
-            [Setting.SAMPLE_RESOLUTION_IN_METERS]: 1.0,
+            [Setting.SAMPLE_RESOLUTION_IN_METERS]: 25.0,
             [Setting.COLOR_SCALE]: {
                 colorScale: defaultColorScale,
                 areBoundariesUserDefined: false,

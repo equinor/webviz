@@ -12,7 +12,7 @@ USER node
 COPY --chown=node:node . /usr/src/app
 
 WORKDIR /usr/src/app/frontend
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 # Building wsc requires increasing memory allocated to Node
 ENV NODE_OPTIONS="--max-old-space-size=4096"
@@ -26,11 +26,11 @@ RUN npm ci --include=dev && npm run build && node compress_static.cjs
 FROM nginxinc/nginx-unprivileged:${NGINX_TAG} AS builder_nginx
 
 USER root
-RUN apk add abuild musl-dev make mercurial gcc
+RUN apk add abuild musl-dev make gcc git
 
 USER nginx
 RUN cd /tmp \
-    && hg clone -r ${NGINX_VERSION}-${PKG_RELEASE} https://hg.nginx.org/pkg-oss
+    && git clone https://github.com/nginx/pkg-oss.git --branch ${NGINX_VERSION}-${PKG_RELEASE} --single-branch --depth 1
 
 WORKDIR /tmp/pkg-oss/alpine
 RUN make abuild-module-brotli

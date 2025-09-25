@@ -40,7 +40,7 @@ export function scaleVec2NonUniform(vector: Vec2, scalarX: number, scalarY: numb
     return { x: vector.x * scalarX, y: vector.y * scalarY };
 }
 
-export function multiplyVec2(vecA: Vec2, vecB: Vec2): Vec2 {
+export function multiplyElementwiseVec2(vecA: Vec2, vecB: Vec2): Vec2 {
     return { x: vecA.x * vecB.x, y: vecA.y * vecB.y };
 }
 

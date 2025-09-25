@@ -18,7 +18,7 @@ import { Select } from "@lib/components/Select";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
-    settingsContext: SettingsContext<any>;
+    settingsContext: SettingsContext<any, any>;
     workbenchServices: WorkbenchServices;
     availableTableNames: string[];
     availableIndicesWithValues: InplaceVolumesIndexWithValues_api[];
@@ -274,7 +274,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                                         expanded
                                     >
                                         <Select
-                                            options={indexWithValues.values.toSorted().map((value) => ({
+                                            options={indexWithValues.values.map((value) => ({
                                                 value: value,
                                                 label: value.toString(),
                                             }))}

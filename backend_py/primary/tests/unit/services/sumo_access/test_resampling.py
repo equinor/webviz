@@ -15,11 +15,11 @@ def _create_table_from_row_data(per_row_input_data: list, schema: pa.Schema) -> 
     # Turn rows into columns
     columns_with_header = list(zip(*per_row_input_data))
 
-    input_dict = {}
+    input_dict: dict[str, list] = {}
     for col in columns_with_header:
         colname = col[0]
         coldata = col[1:]
-        input_dict[colname] = coldata
+        input_dict[colname] = list(coldata)
 
     table = pa.Table.from_pydict(input_dict, schema=schema)
 
@@ -124,13 +124,13 @@ def test_resample_single_real_table() -> None:
     ]
     # fmt:on
 
-    schema = pa.schema(
-        [
-            pa.field("DATE", pa.timestamp("ms")),
-            pa.field("T", pa.float32(), metadata={b"is_rate": b"False"}),
-            pa.field("R", pa.float32(), metadata={b"is_rate": b"True"}),
-        ]
-    )
+    fields: list[pa.Field] = [
+        pa.field("DATE", pa.timestamp("ms")),
+        pa.field("T", pa.float32(), metadata={b"is_rate": b"False"}),
+        pa.field("R", pa.float32(), metadata={b"is_rate": b"True"}),
+    ]
+
+    schema = pa.schema(fields)
 
     raw_table = _create_table_from_row_data(per_row_input_data=input_data, schema=schema)
     res_table = resample_single_real_table(raw_table, Frequency.DAILY)
@@ -175,20 +175,20 @@ def test_resample_segmented_multi_real_table() -> None:
     ]
     # fmt:on
 
-    schema = pa.schema(
-        [
-            pa.field("DATE", pa.timestamp("ms")),
-            pa.field("REAL", pa.int64()),
-            pa.field("T", pa.float32(), metadata={b"is_rate": b"False"}),
-            pa.field("R", pa.float32(), metadata={b"is_rate": b"True"}),
-        ]
-    )
+    fields: list[pa.Field] = [
+        pa.field("DATE", pa.timestamp("ms")),
+        pa.field("REAL", pa.int64()),
+        pa.field("T", pa.float32(), metadata={b"is_rate": b"False"}),
+        pa.field("R", pa.float32(), metadata={b"is_rate": b"True"}),
+    ]
+
+    schema = pa.schema(fields)
 
     raw_table = _create_table_from_row_data(per_row_input_data=input_data, schema=schema)
     res_table = resample_segmented_multi_real_table(raw_table, Frequency.DAILY)
 
-    res_table_r1 = res_table.filter(pc.equal(res_table["REAL"], 1))
-    res_table_r2 = res_table.filter(pc.equal(res_table["REAL"], 2))
+    res_table_r1 = res_table.filter(pc.equal(res_table["REAL"], pa.scalar(1)))
+    res_table_r2 = res_table.filter(pc.equal(res_table["REAL"], pa.scalar(2)))
 
     date_arr_r1 = res_table_r1["DATE"].to_numpy()
     assert date_arr_r1[0] == np.datetime64("2020-01-01", "ms")
@@ -209,19 +209,19 @@ def test_resample_segmented_multi_real_table() -> None:
     # Check interpolation for the total column
     tot_arr_1 = res_table_r1["T"].to_numpy()
     tot_arr_2 = res_table_r2["T"].to_numpy()
-    assert tot_arr_1[0] == tot_arr_1[0] == 10
-    assert tot_arr_1[1] == tot_arr_1[1] == 20
-    assert tot_arr_1[2] == tot_arr_1[2] == 30
-    assert tot_arr_1[3] == tot_arr_1[3] == 40
-    assert tot_arr_1[4] == tot_arr_1[4] == 50
-    assert tot_arr_1[5] == tot_arr_1[5] == 60
+    assert tot_arr_1[0] == tot_arr_2[0] == 10
+    assert tot_arr_1[1] == tot_arr_2[1] == 20
+    assert tot_arr_1[2] == tot_arr_2[2] == 30
+    assert tot_arr_1[3] == tot_arr_2[3] == 40
+    assert tot_arr_1[4] == tot_arr_2[4] == 50
+    assert tot_arr_1[5] == tot_arr_2[5] == 60
 
     # Check backfill for the rate column
     rate_arr_1 = res_table_r1["R"].to_numpy()
     rate_arr_2 = res_table_r2["R"].to_numpy()
-    assert rate_arr_1[0] == rate_arr_1[0] == 1
-    assert rate_arr_1[1] == rate_arr_1[1] == 4
-    assert rate_arr_1[2] == rate_arr_1[2] == 4
-    assert rate_arr_1[3] == rate_arr_1[3] == 4
-    assert rate_arr_1[4] == rate_arr_1[4] == 6
-    assert rate_arr_1[5] == rate_arr_1[5] == 6
+    assert rate_arr_1[0] == rate_arr_2[0] == 1
+    assert rate_arr_1[1] == rate_arr_2[1] == 4
+    assert rate_arr_1[2] == rate_arr_2[2] == 4
+    assert rate_arr_1[3] == rate_arr_2[3] == 4
+    assert rate_arr_1[4] == rate_arr_2[4] == 6
+    assert rate_arr_1[5] == rate_arr_2[5] == 6
