@@ -181,14 +181,14 @@ spec:
       variables:
         ALLOW_EMPTY_PASSWORD: yes
         # https://redis.io/docs/management/config/#configuring-redis-as-a-cache
-        # maxmemory for redis must be aligned with component's requested memory, here 1gb vs 2gb
-        REDIS_EXTRA_FLAGS: --maxmemory 1gb  --maxmemory-policy allkeys-lru  --save ''  --appendonly no  --loglevel verbose
+        # maxmemory for redis must be aligned with component's requested memory, here 3gb vs 4gb
+        REDIS_EXTRA_FLAGS: --maxmemory 3gb  --maxmemory-policy allkeys-lru  --save ''  --appendonly no  --loglevel verbose
       resources:
         requests:
-          memory: 2Gi
-          cpu: 200m
+          memory: 4Gi
+          cpu: 1000m
         limits:
-          memory: 2Gi
+          memory: 4Gi
 
   jobs:
     - name: user-mock

@@ -129,6 +129,7 @@ export class DataProvider<
     private _progressMessage: string | null = null;
     private _scopedQueryController: ScopedQueryController;
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
+    private _onFetchCancelFn: () => void = () => {};
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
         const {
@@ -379,6 +380,9 @@ export class DataProvider<
             getData: () => this._data,
             getWorkbenchSession: () => this._dataProviderManager.getWorkbenchSession(),
             getWorkbenchSettings: () => this._dataProviderManager.getWorkbenchSettings(),
+            setProgressMessage: (message: string | null) => {
+                this.setProgressMessage(message);
+            },
         };
     }
 
@@ -398,10 +402,18 @@ export class DataProvider<
         const accessors = this.makeAccessors();
 
         this._scopedQueryController.cancelActiveFetch();
+        if (this._onFetchCancelFn) {
+            this._onFetchCancelFn();
+            this._onFetchCancelFn = () => {};
+        }
 
         this.invalidateValueRange();
-        this.setStatus(DataProviderStatus.LOADING);
         this.setProgressMessage(null);
+        this.setStatus(DataProviderStatus.LOADING);
+
+        const onFetchCancel = (fnc: () => void) => {
+            this._onFetchCancelFn = fnc;
+        };
 
         try {
             this._data = await this._customDataProviderImpl.fetchData({
@@ -409,6 +421,7 @@ export class DataProvider<
                 fetchQuery: <TQueryFnData, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = QueryKey>(
                     options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
                 ) => this._scopedQueryController.fetchQuery<TQueryFnData, TError, TData, TQueryKey>(options),
+                onFetchCancel,
                 setProgressMessage: (message) => this.setProgressMessage(message),
             });
 
@@ -433,9 +446,16 @@ export class DataProvider<
             if (apiError) {
                 this._error = apiError.makeStatusMessage();
             } else {
-                this._error = error.message;
+                if (typeof error === "string") {
+                    this._error = error;
+                } else if (error instanceof Error) {
+                    this._error = error.message;
+                }
             }
             this.setStatus(DataProviderStatus.ERROR);
+        } finally {
+            this._onFetchCancelFn?.();
+            this.setProgressMessage(null);
         }
     }
 

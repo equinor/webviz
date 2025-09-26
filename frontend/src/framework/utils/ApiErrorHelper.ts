@@ -31,10 +31,15 @@ export class ApiErrorHelper {
     }
 
     static fromError(error: Error): ApiErrorHelper | null {
-        if (!(error instanceof AxiosError)) {
-            return null;
+        if (error instanceof AxiosError) {
+            return new ApiErrorHelper(error);
         }
-        return new ApiErrorHelper(error);
+
+        if (error.cause && error.cause instanceof AxiosError) {
+            return new ApiErrorHelper(error.cause);
+        }
+
+        return null;
     }
 
     private extractInfoFromErrorBody(apiError: AxiosError): void {
