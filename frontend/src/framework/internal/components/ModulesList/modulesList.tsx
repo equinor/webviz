@@ -525,7 +525,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                 title="Add modules"
                 icon={<WebAsset />}
                 showSearch
-                searchInputPlaceholder="Filter modules..."
+                searchInputPlaceholder="Search modules..."
                 onSearchQueryChange={handleSearchQueryChange}
                 filterItems={[
                     {

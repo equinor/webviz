@@ -8,6 +8,7 @@ import { Tooltip } from "@equinor/eds-core-react";
 import { Dropdown, MenuButton } from "@mui/base";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem/menuItem";
+import { Badge } from "@lib/components/Badge";
 
 export type DrawerFilterItem<T extends string | number> = {
     label: React.ReactNode;
@@ -97,11 +98,21 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                         {showFilter && (
                             <Dropdown open={open} onOpenChange={handleOpenChange}>
                                 <MenuButton className="p-1 rounded-sm hover:bg-blue-200 focus:outline-blue-600">
-                                    <FilterAlt fontSize="small" />
+                                    <Badge
+                                        badgeContent={selectedFilterItems.length}
+                                        color="bg-blue-500"
+                                        invisible={selectedFilterItems.length === 0}
+                                    >
+                                        <FilterAlt fontSize="small" />
+                                    </Badge>
                                 </MenuButton>
                                 <Menu anchorOrigin="bottom-end">
                                     {props.filterItems?.map((item) => (
-                                        <MenuItem key={item.value} onClick={(e) => handleFilterItemClick(e, item)}>
+                                        <MenuItem
+                                            key={item.value}
+                                            onClick={(e) => handleFilterItemClick(e, item)}
+                                            className="text-sm"
+                                        >
                                             <div className="flex gap-2 items-center">
                                                 <span className="w-6">
                                                     {selectedFilterItems.includes(item.value) && (
