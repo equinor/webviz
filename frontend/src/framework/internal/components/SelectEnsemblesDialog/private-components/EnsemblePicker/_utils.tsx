@@ -1,3 +1,5 @@
+import type React from "react";
+
 import { DateRangePicker } from "@equinor/eds-core-react";
 import { Close } from "@mui/icons-material";
 
@@ -6,6 +8,7 @@ import type { TableColumns } from "@lib/components/Table/types";
 import { TagPicker } from "@lib/components/TagPicker";
 import type { CaseInfo_api } from "src/api/autogen/types.gen";
 
+import { CaseNameAndIdCell } from "./_components";
 import type { CaseRowData } from "./_types";
 import { UserAvatar } from "./userAvatar";
 
@@ -45,12 +48,7 @@ export function makeCaseTableColumns(
             _type: "data",
             columnId: "caseName",
             sizeInPercent: 30,
-            renderData: (value, row) => (
-                <div className="flex items-center gap-1 min-w-0" title={`${value} - ${row.caseId}`}>
-                    <span className="shrink-0">{value}</span>
-                    <span className="text-xs text-slate-500 min-w-0 truncate">- {row.caseId}</span>
-                </div>
-            ),
+            renderData: (value, row) => <CaseNameAndIdCell caseName={value} caseId={row.caseId} />,
             filter: {
                 predicate: (filterValue: string, dataValue: string, _: any, rowData: CaseRowData) =>
                     predicateCaseNameAndIdFilter(filterValue, dataValue, _, rowData),
@@ -139,14 +137,17 @@ export function makeCaseTableColumns(
 }
 
 export function makeCaseRowData(apiData: CaseInfo_api[]): CaseRowData[] {
-    return apiData.map((item) => ({
-        caseId: item.uuid,
-        caseName: item.name,
-        description: item.description,
-        author: item.user,
-        status: item.status,
-        dateUtcMs: item.updatedAtUtcMs,
-    }));
+    // Sort after mapping to prevent mutating the original apiData-array
+    return apiData
+        .map((item) => ({
+            caseId: item.uuid,
+            caseName: item.name,
+            description: item.description,
+            author: item.user,
+            status: item.status,
+            dateUtcMs: item.updatedAtUtcMs,
+        }))
+        .sort((a, b) => b.dateUtcMs - a.dateUtcMs); // Newest first
 }
 
 function predicateCaseNameAndIdFilter(filterValue: string, dataValue: string, _: any, rowData: CaseRowData): boolean {
