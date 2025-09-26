@@ -494,8 +494,7 @@ async def _start_sumo_aggregation_task_async(search_context: SearchContext, sumo
     except (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.HTTPStatusError) as exc:
         if _should_treat_httpx_exception_as_timeout(exc):
             raise ServiceTimeoutError("Submitting task to Sumo aggregation service timed out", Service.SUMO) from exc
-        else:
-            raise ServiceRequestError("Error starting Sumo aggregation task", Service.SUMO) from exc
+        raise ServiceRequestError("Error starting Sumo aggregation task", Service.SUMO) from exc
 
     # When we call aggregate_async() with no_wait=True, we expect the raw httpx.Response object
     # from the underlying POST request to be returned.
