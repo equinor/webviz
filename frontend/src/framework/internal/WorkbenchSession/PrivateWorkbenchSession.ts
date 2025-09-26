@@ -51,8 +51,6 @@ export enum PrivateWorkbenchSessionTopic {
     REALIZATION_FILTER_SET = "RealizationFilterSet",
     ACTIVE_DASHBOARD = "ActiveDashboard",
     DASHBOARDS = "Dashboards",
-    IS_PERSISTED = "IsPersisted",
-    IS_SNAPSHOT = "IsSnapshot",
 }
 
 export type PrivateWorkbenchSessionTopicPayloads = {
@@ -61,8 +59,6 @@ export type PrivateWorkbenchSessionTopicPayloads = {
     [PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET]: RealizationFilterSet;
     [PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD]: Dashboard;
     [PrivateWorkbenchSessionTopic.DASHBOARDS]: Dashboard[];
-    [PrivateWorkbenchSessionTopic.IS_PERSISTED]: boolean;
-    [PrivateWorkbenchSessionTopic.IS_SNAPSHOT]: boolean;
 };
 
 export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenchSessionTopicPayloads> {
@@ -197,10 +193,6 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
                     return this.getActiveDashboard();
                 case PrivateWorkbenchSessionTopic.DASHBOARDS:
                     return this._dashboards;
-                case PrivateWorkbenchSessionTopic.IS_PERSISTED:
-                    return this._isPersisted;
-                case PrivateWorkbenchSessionTopic.IS_SNAPSHOT:
-                    return this._isSnapshot;
                 default:
                     throw new Error(`No snapshot getter implemented for topic ${topic}`);
             }
@@ -219,15 +211,6 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
 
     getDashboards(): Dashboard[] {
         return this._dashboards;
-    }
-
-    getIsPersisted(): boolean {
-        return this._isPersisted;
-    }
-
-    setIsPersisted(val: boolean): void {
-        this._isPersisted = val;
-        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.IS_PERSISTED);
     }
 
     getEnsembleSet(): EnsembleSet {

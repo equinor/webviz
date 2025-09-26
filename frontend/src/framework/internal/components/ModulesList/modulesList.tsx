@@ -14,7 +14,7 @@ import {
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
-import type { Module } from "@framework/Module";
+import { Module } from "@framework/Module";
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
@@ -477,11 +477,6 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         handleHideDetails();
     }
 
-    function handleDevStatesChange(devStates: ModuleDevState[]) {
-        setDevStates(devStates);
-        handleHideDetails();
-    }
-
     function handleShowDetails(moduleName: string, yPos: number) {
         if (showDetailsForModule) {
             setShowDetailsForModule(null);
@@ -529,14 +524,46 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                 onClose={handleClose}
                 title="Add modules"
                 icon={<WebAsset />}
-                showFilter
-                filterPlaceholder="Filter modules..."
-                onFilterChange={handleSearchQueryChange}
-                headerChildren={
-                    <>
-                        <DevStatesFilter onFilterChange={handleDevStatesChange} initialDevStates={devStates} />
-                    </>
-                }
+                showSearch
+                searchInputPlaceholder="Filter modules..."
+                onSearchQueryChange={handleSearchQueryChange}
+                filterItems={[
+                    {
+                        value: ModuleDevState.PROD,
+                        label: (
+                            <>
+                                <span className="text-green-600 flex items-center">
+                                    {makeDevStateIcon(ModuleDevState.PROD)}
+                                </span>
+                                <span className="mt-[0.2rem]">Ready for user testing</span>
+                            </>
+                        ),
+                        initiallySelected: devStates.includes(ModuleDevState.PROD),
+                    },
+                    {
+                        value: ModuleDevState.DEPRECATED,
+                        label: (
+                            <>
+                                <span className="text-orange-600">{makeDevStateIcon(ModuleDevState.DEPRECATED)}</span>
+                                <span className="mt-[0.2rem]">Deprecated</span>
+                            </>
+                        ),
+                        initiallySelected: devStates.includes(ModuleDevState.DEPRECATED),
+                    },
+                    {
+                        value: ModuleDevState.DEV,
+                        label: (
+                            <>
+                                <span className="text-teal-600 inline-block align-middle">
+                                    {makeDevStateIcon(ModuleDevState.DEV)}
+                                </span>
+                                <span className="mt-[0.2rem]">Under development</span>
+                            </>
+                        ),
+                        initiallySelected: devStates.includes(ModuleDevState.DEV),
+                    },
+                ]}
+                onFilterItemSelectionChange={(selectedItems) => setDevStates(selectedItems)}
             >
                 <>
                     {MODULE_CATEGORIES.map((el) => (

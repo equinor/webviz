@@ -43,6 +43,7 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
             <Content workbench={props.workbench} />
         </div>,
     ];
+
     if (rightDrawerContent) {
         sizes = [
             leftSettingsPanelWidth,

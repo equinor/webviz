@@ -4,11 +4,9 @@ import { FilterAlt, Fullscreen, FullscreenExit, History, WebAsset } from "@mui/i
 
 import { GuiState, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
 import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
 import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type RightNavBarProps = {
@@ -16,7 +14,6 @@ type RightNavBarProps = {
 };
 
 export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
-    const workbenchSession = props.workbench.getWorkbenchSession();
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     const [isFullscreen, toggleFullScreen] = useBrowserFullscreen();
@@ -29,7 +26,6 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
         guiMessageBroker,
         GuiState.RightSettingsPanelWidthInPercent,
     );
-    const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     function ensureSettingsPanelIsVisible() {
         if (rightSettingsPanelWidth <= 5) {
@@ -43,16 +39,17 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
     }
 
     function togglePanelContent(targetContent: RightDrawerContent) {
-        if (targetContent === drawerContent) hideSettingsPanel();
-        else {
-            setDrawerContent(targetContent);
-            ensureSettingsPanelIsVisible();
+        if (targetContent === drawerContent) {
+            hideSettingsPanel();
+            return;
         }
+
+        setDrawerContent(targetContent);
+        ensureSettingsPanelIsVisible();
     }
 
     function handleModulesListClick() {
-        ensureSettingsPanelIsVisible();
-        setDrawerContent(RightDrawerContent.ModulesList);
+        togglePanelContent(RightDrawerContent.ModulesList);
     }
 
     function handleRealizationFilterClick() {
@@ -71,10 +68,8 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                 <NavBarButton
                     active={drawerContent === RightDrawerContent.ModulesList}
                     title="Show modules list"
-                    disabledTitle="Modules cannot be added in snapshot mode"
                     icon={<WebAsset fontSize="small" className="size-5" />}
                     onClick={handleModulesListClick}
-                    disabled={isSnapshot}
                 />
                 <NavBarDivider />
                 <NavBarButton

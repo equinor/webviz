@@ -125,7 +125,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         handleModuleClick();
     }
 
-    function handleReceiversClick(e: React.PointerEvent<HTMLDivElement>): void {
+    function handleReceiversClick(e: React.PointerEvent<HTMLButtonElement>): void {
         guiMessageBroker.publishEvent(GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest, {
             moduleInstanceId: props.moduleInstance.getId(),
         });

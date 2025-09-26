@@ -19,6 +19,9 @@ import { createPortal } from "@lib/utils/createPortal";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
+import { Tooltip } from "@equinor/eds-core-react";
 
 export type ModuleInstanceLogProps = {
     workbench: Workbench;
@@ -78,13 +81,15 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
         }
 
         return (
-            <div
-                className="hover:text-slate-500 cursor-pointer mr-2"
-                title="Clear all messages"
-                onClick={handleClearAll}
-            >
-                <ClearAll fontSize="inherit" />
-            </div>
+            <Tooltip title="Clear all messages">
+                <DenseIconButton
+                    className="hover:text-slate-500 cursor-pointer mr-2"
+                    onClick={handleClearAll}
+                    colorScheme={DenseIconButtonColorScheme.DANGER}
+                >
+                    <ClearAll fontSize="inherit" />
+                </DenseIconButton>
+            </Tooltip>
         );
     }
 

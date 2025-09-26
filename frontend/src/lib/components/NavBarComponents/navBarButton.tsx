@@ -50,7 +50,7 @@ function NavBarButtonComponent(
                     ref={ref}
                     className={resolveClassNames(
                         "w-full h-10 text-center px-3!",
-                        active ? "text-cyan-600" : "text-slate-800!",
+                        active ? "bg-blue-500! text-white" : "text-slate-800!",
                     )}
                 >
                     {buttonIcon}

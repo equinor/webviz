@@ -1,4 +1,6 @@
+import { Tooltip } from "@equinor/eds-core-react";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import React from "react";
 
 export enum DenseIconButtonColorScheme {
     DEFAULT = "default",
@@ -15,33 +17,47 @@ const COLOR_SCHEMES: Record<DenseIconButtonColorScheme, string> = {
 };
 
 export type DenseIconButtonProps = {
-    onClick?: () => void;
+    id?: string;
+    onClick?: (e: React.PointerEvent<HTMLButtonElement>) => void;
+    onPointerDown?: (e: React.PointerEvent<HTMLButtonElement>) => void;
+    onPointerUp?: (e: React.PointerEvent<HTMLButtonElement>) => void;
     colorScheme?: DenseIconButtonColorScheme;
     children: React.ReactNode;
     title?: string;
     disabled?: boolean;
+    className?: string;
 };
 
-export function DenseIconButton(props: DenseIconButtonProps): React.ReactNode {
+export const DenseIconButton = React.forwardRef(function DenseIconButton(
+    props: DenseIconButtonProps,
+    ref: React.ForwardedRef<HTMLButtonElement>,
+): React.ReactNode {
     const colorScheme = COLOR_SCHEMES[props.colorScheme ?? DenseIconButtonColorScheme.DEFAULT];
 
-    function handleClick(): void {
+    function handleClick(e: React.PointerEvent<HTMLButtonElement>): void {
         if (props.onClick) {
-            props.onClick();
+            props.onClick(e);
         }
     }
 
     return (
-        <button
-            className={resolveClassNames("p-1 text-sm rounded-sm flex gap-1 items-center", {
-                [colorScheme + "text-gray-600 focus:outline hover:text-gray-900"]: !props.disabled,
-                "text-gray-300": props.disabled,
-            })}
-            disabled={props.disabled}
-            onClick={handleClick}
-            title={props.title}
-        >
-            {props.children}
-        </button>
+        <Tooltip title={props.title}>
+            <button
+                ref={ref}
+                id={props.id}
+                className={resolveClassNames(props.className, "p-1 text-sm rounded-sm flex gap-1 items-center", {
+                    [colorScheme + "text-gray-600 focus:outline hover:text-gray-900"]: !props.disabled,
+                    "text-gray-300": props.disabled,
+                })}
+                disabled={props.disabled}
+                onClick={handleClick}
+                onPointerDown={props.onPointerDown}
+                onPointerUp={props.onPointerUp}
+            >
+                {props.children}
+            </button>
+        </Tooltip>
     );
-}
+});
+
+DenseIconButton.displayName = "DenseIconButton";

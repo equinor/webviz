@@ -37,7 +37,6 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         props.workbench.getGuiMessageBroker(),
         GuiState.LeftSettingsPanelWidthInPercent,
     );
-    const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     function ensureSettingsPanelIsVisible() {
         if (leftSettingsPanelWidth <= 5) {
@@ -81,8 +80,6 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 <NavBarButton
                     active={ensembleDialogOpen}
                     title={"Open ensemble selection dialog"}
-                    disabledTitle="Ensembles cannot be changed in snapshot mode"
-                    disabled={isSnapshot}
                     icon={
                         <Badge
                             invisible={ensembleSet.getEnsembleArray().length === 0 && !loadingEnsembleSet}
@@ -112,21 +109,18 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 />
                 <NavBarButton
                     active={drawerContent === LeftDrawerContent.SyncSettings}
-                    disabled={layoutEmpty || isSnapshot}
                     title="Show sync settings"
-                    disabledTitle="Synced settings cannot be changed in snapshot mode"
                     icon={<Link fontSize="small" className="size-5" />}
                     onClick={handleSyncSettingsClick}
+                    disabled={layoutEmpty}
                 />
 
                 <NavBarDivider />
                 <NavBarButton
                     active={drawerContent === LeftDrawerContent.TemplatesList}
                     title="Show templates list"
-                    disabledTitle="Templates cannot be applied in snapshot mode"
                     icon={<GridView fontSize="small" className="size-5" />}
                     onClick={handleTemplatesListClick}
-                    disabled={isSnapshot}
                 />
 
                 <NavBarDivider />
