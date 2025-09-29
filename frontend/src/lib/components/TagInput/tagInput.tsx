@@ -360,11 +360,11 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
         <>
             <div
                 ref={ref}
-                className="input-comp flex items-center gap-1 border border-gray-300 px-2 py-1 rounded focus-within:outline focus-within:outline-blue-500"
+                className="input-comp flex items-center gap-1 border border-gray-300 px-2 py-1.5 rounded focus-within:outline focus-within:outline-blue-500"
                 onBlur={onRootBlur}
             >
                 <ul
-                    className="grow flex gap-1 flex-wrap"
+                    className="grow flex gap-1 flex-wrap min-w-0 "
                     tabIndex={-1}
                     onFocus={() => innerInputRef.current?.focus()}
                     onCopy={copySelectedTags}
@@ -388,12 +388,22 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
                                   })}
                               </React.Fragment>
                           ))}
-                    <li className="grow flex min-w-0 -my-1">
+                    <li className="relative grow flex -my-1 overflow-hidden">
+                        {/* Invisible spacer-element. Used to  have the input wrap as it's value grows */}
+                        {/* ! Classes that affect size should be present in both this and the input */}
+                        <span
+                            className={`--input-sizer invisible pointer-events-none select-none grow max-w-full py-1 ${props.inputProps?.className}`}
+                            aria-hidden
+                        >
+                            {inputValue}
+                            {/* Zero-space is used to avoid the span collapsing to height 0 if text is empty */}
+                            <wbr />
+                        </span>
                         <input
                             ref={innerInputRef}
                             placeholder={inputPlaceholder}
                             {...omit(props.inputProps, "onValueChange")}
-                            className={`pr-2 py-1 grow outline-none min-w-0 w-0 ${props.inputProps?.className}`}
+                            className={`absolute inset-0 py-1 outline-none min-w-0 ${props.inputProps?.className}`}
                             value={inputValue}
                             // ! Each listener here should emit the event up
                             onChange={handleInputChange}
