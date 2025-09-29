@@ -1,6 +1,6 @@
 import React from "react";
 
-import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { ResizablePanels } from "@lib/components/ResizablePanels";
 
@@ -23,7 +23,7 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
         GuiState.RightSettingsPanelWidthInPercent,
     );
 
-    const [rightDrawerContent] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
+    const rightDrawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
 
     const handleResizablePanelsChange = React.useCallback(
         function handleResizablePanelsChange(sizes: number[]) {
