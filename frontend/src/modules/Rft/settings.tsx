@@ -43,7 +43,7 @@ const timepointOptions = (timePoints: number[]): SelectOption[] => {
     }));
 };
 
-export function Settings({ settingsContext, workbenchSession: workbenchSession }: ModuleSettingsProps<Interfaces>) {
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.EnsembleSet);
     const statusWriter = useSettingsStatusWriter(settingsContext);
 

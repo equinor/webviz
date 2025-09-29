@@ -41,7 +41,7 @@ import {
 import { pvtDataQueriesAtom } from "./atoms/queryAtoms";
 import { DependentVariableSelector } from "./components/DependentVariableSelector/dependentVariableSelector";
 
-export function Settings({ workbenchSession: workbenchSession }: ModuleSettingsProps<Interfaces>) {
+export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.EnsembleSet);
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
 

@@ -44,7 +44,7 @@ import {
 } from "./atoms/derivedAtoms";
 import { vfpTableQueryAtom } from "./atoms/queryAtoms";
 
-export function Settings({ workbenchSession: workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
+export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);
     const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.EnsembleSet);
 

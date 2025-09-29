@@ -1,6 +1,5 @@
 import type React from "react";
 
-import type { JTDDataType } from "ajv/dist/core";
 import type { Getter, Setter } from "jotai";
 
 import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
@@ -71,37 +70,11 @@ export type ModuleViewProps<
     initialSettings?: InitialSettings;
 };
 
-export type ModulePersistence<TSerializedStateDef extends JTDBaseType> = {
-    serializedState: JTDDataType<TSerializedStateDef>;
-    serializeState: (state: JTDDataType<TSerializedStateDef>) => void;
-};
-
 export type InterfaceEffects<TInterfaceType extends InterfaceBaseType> = ((
     getInterfaceValue: <TKey extends keyof TInterfaceType>(key: TKey) => TInterfaceType[TKey],
     setAtomValue: Setter,
     getAtomValue: Getter,
 ) => void)[];
-
-export type JTDBaseType = Record<string, unknown>;
-
-export type ModuleStateBaseSchema = {
-    settings: JTDBaseType;
-    view: JTDBaseType;
-};
-
-export type NoModuleStateSchema = {
-    settings: Record<string, never>;
-    view: Record<string, never>;
-};
-
-export type SerializedModuleState<TSerializedStateDef extends ModuleStateBaseSchema> = {
-    view: JTDDataType<TSerializedStateDef["view"]>;
-    settings: JTDDataType<TSerializedStateDef["settings"]>;
-};
-
-export type MakeReadonly<T> = {
-    readonly [P in keyof T]: T[P];
-};
 
 export type ModuleSettings<
     TInterfaceTypes extends ModuleInterfaceTypes = {

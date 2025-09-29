@@ -33,7 +33,7 @@ import {
     selectedParameterIdentsAtom,
 } from "./atoms/derivedAtoms";
 
-export function Settings({ workbenchSession: workbenchSession }: ModuleSettingsProps<Interfaces>) {
+export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.EnsembleSet);
 
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
