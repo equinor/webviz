@@ -18,6 +18,7 @@ import SensitivityTable from "./components/sensitivityTable";
 import { useResponseChannel } from "./hooks/useResponseChannel";
 import { useSensitivityChart } from "./hooks/useSensitivityChart";
 import { SensitivityDataScaler } from "./utils/sensitivityDataScaler";
+import { useColorSet } from "@framework/WorkbenchSettings";
 
 export const View = ({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const hideZeroY = viewContext.useSettingsToViewInterfaceValue("hideZeroY");
@@ -27,7 +28,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     const sensitivityScaling = viewContext.useSettingsToViewInterfaceValue("sensitivityScaling");
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const colorSet = workbenchSettings.useColorSet();
+    const colorSet = useColorSet(workbenchSettings);
 
     const responseChannelData = useResponseChannel(viewContext, workbenchSession);
 

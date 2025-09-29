@@ -24,7 +24,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
         <>
             <div
                 className={resolveClassNames(
-                    "p-0.5 border-b-2 border-slate-200 z-50 shadow-lg flex flex-row gap-12 px-4 pl-6 items-center min-h-16",
+                    "p-0.5 border-b-2 border-slate-200 z-50 shadow-lg flex flex-row gap-12 px-3 pl-4 items-center min-h-16",
                     {
                         "bg-white": hasActiveSession,
                         "bg-transparent": !hasActiveSession,

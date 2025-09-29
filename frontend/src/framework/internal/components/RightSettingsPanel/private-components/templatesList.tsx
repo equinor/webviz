@@ -115,7 +115,7 @@ export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
         <Drawer
             showSearch
             onSearchQueryChange={handleSearchQueryChange}
-            searchInputPlaceholder="Filter templates..."
+            searchInputPlaceholder="Search templates..."
             title="Select a template"
             icon={<GridView />}
             visible={drawerContent === RightDrawerContent.TemplatesList}
