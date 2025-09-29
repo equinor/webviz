@@ -8,7 +8,6 @@ import type { UnsavedChangesAction } from "./types/unsavedChangesAction";
 
 export enum LeftDrawerContent {
     ModuleSettings = "ModuleSettings",
-    TemplatesList = "TemplatesList",
     SyncSettings = "SyncSettings",
     ColorPaletteSettings = "ColorPaletteSettings",
 }
@@ -17,6 +16,7 @@ export enum RightDrawerContent {
     RealizationFilterSettings = "RealizationFilterSettings",
     ModuleInstanceLog = "ModuleInstanceLog",
     ModulesList = "ModulesList",
+    TemplatesList = "TemplatesList",
 }
 
 export enum GuiState {

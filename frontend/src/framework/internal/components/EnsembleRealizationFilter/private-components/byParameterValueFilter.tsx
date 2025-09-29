@@ -1,5 +1,6 @@
 import React from "react";
 
+import { Tooltip } from "@equinor/eds-core-react";
 import { Add, Delete, Report } from "@mui/icons-material";
 
 import type { EnsembleParameters } from "@framework/EnsembleParameters";
@@ -28,7 +29,6 @@ import {
     createSmartNodeSelectorTagTextListFromParameterIdentStrings,
     createTreeDataNodeListFromParameters,
 } from "../private-utils/smartNodeSelectorUtils";
-import { Tooltip } from "@equinor/eds-core-react";
 
 export type ByParameterValueFilterProps = {
     ensembleParameters: EnsembleParameters; // Should be stable object - both content and reference

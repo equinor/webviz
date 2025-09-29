@@ -1,5 +1,6 @@
-import type { LayoutElement } from "./Dashboard";
-import type { SerializedWorkbenchSession } from "./WorkbenchSessionSerializer";
+import type { LayoutElement } from "../../Dashboard";
+
+import type { SerializedWorkbenchSession } from "./serialization";
 
 export enum WorkbenchSessionSource {
     LOCAL_STORAGE = "localStorage",

@@ -5,16 +5,16 @@ import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunct
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
 import { GuiMessageBroker, GuiState, LeftDrawerContent, RightDrawerContent } from "./GuiMessageBroker";
+import { DashboardTopic } from "./internal/Dashboard";
+import { EnsembleUpdateMonitor } from "./internal/EnsembleUpdateMonitor";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
-import { DashboardTopic } from "./internal/WorkbenchSession/Dashboard";
-import { EnsembleUpdateMonitor } from "./internal/WorkbenchSession/EnsembleUpdateMonitor";
 import {
     PrivateWorkbenchSession,
     PrivateWorkbenchSessionTopic,
 } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
-import { localStorageKeyForSessionId } from "./internal/WorkbenchSession/utils";
-import { loadWorkbenchSessionFromLocalStorage } from "./internal/WorkbenchSession/WorkbenchSessionLoader";
-import { makeWorkbenchSessionLocalStorageString } from "./internal/WorkbenchSession/WorkbenchSessionSerializer";
+import { loadWorkbenchSessionFromLocalStorage } from "./internal/WorkbenchSession/utils/loaders";
+import { localStorageKeyForSessionId } from "./internal/WorkbenchSession/utils/localStorageHelpers";
+import { makeWorkbenchSessionLocalStorageString } from "./internal/WorkbenchSession/utils/serialization";
 import type { Template } from "./TemplateRegistry";
 import { UserCreatedItemsEvent } from "./UserCreatedItems";
 import type { WorkbenchServices } from "./WorkbenchServices";
@@ -163,8 +163,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             return;
         }
 
-        const session = new PrivateWorkbenchSession(this._atomStoreMaster, this._queryClient);
-        session.makeDefaultDashboard();
+        const session = PrivateWorkbenchSession.createEmpty(this._atomStoreMaster, this._queryClient);
 
         await this.setWorkbenchSession(session);
     }
@@ -186,14 +185,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
     getGuiMessageBroker(): GuiMessageBroker {
         return this._guiMessageBroker;
-    }
-
-    beforeDestroy(): void {
-        return;
-    }
-
-    clear(): void {
-        // this._workbenchSession.clear();
     }
 
     applyTemplate(template: Template): void {

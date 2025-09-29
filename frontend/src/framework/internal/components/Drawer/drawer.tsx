@@ -1,14 +1,14 @@
 import React from "react";
 
-import { Check, Close, FilterAlt, Search } from "@mui/icons-material";
-
-import { Input } from "@lib/components/Input";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Tooltip } from "@equinor/eds-core-react";
 import { Dropdown, MenuButton } from "@mui/base";
+import { Check, Close, FilterAlt, Search } from "@mui/icons-material";
+
+import { Badge } from "@lib/components/Badge";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { Input } from "@lib/components/Input";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem/menuItem";
-import { Badge } from "@lib/components/Badge";
 
 export type DrawerFilterItem<T extends string | number> = {
     label: React.ReactNode;

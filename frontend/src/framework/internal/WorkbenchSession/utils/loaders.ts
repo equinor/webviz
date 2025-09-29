@@ -2,9 +2,9 @@ import {
     localStorageKeyForSessionId,
     WORKBENCH_SESSION_LOCAL_STORAGE_KEY_PREFIX,
     WORKBENCH_SESSION_LOCAL_STORAGE_KEY_TEMP,
-} from "./utils";
+} from "./localStorageHelpers";
+import { deserializeFromLocalStorage } from "./serialization";
 import type { WorkbenchSessionDataContainer } from "./WorkbenchSessionDataContainer";
-import { deserializeFromLocalStorage } from "./WorkbenchSessionSerializer";
 
 export async function loadWorkbenchSessionFromLocalStorage(
     sessionId: string | null,

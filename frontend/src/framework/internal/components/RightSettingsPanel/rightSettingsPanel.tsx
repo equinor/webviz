@@ -8,8 +8,9 @@ import { Dialog } from "@lib/components/Dialog";
 
 import { ModulesList } from "../ModulesList";
 
-import { ModuleInstanceLog } from "./private-components/ModuleInstanceLog/moduleInstanceLog";
-import { RealizationFilterSettings } from "./private-components/RealizationFilterSettings";
+import { ModuleInstanceLog } from "./private-components/moduleInstanceLog";
+import { RealizationFilterSettings } from "./private-components/realizationFilterSettings";
+import { TemplatesList } from "./private-components/templatesList";
 
 type RightSettingsPanelProps = { workbench: Workbench };
 
@@ -63,6 +64,7 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
             <ModulesList workbench={props.workbench} onClose={handleOnClose} />
             <RealizationFilterSettings workbench={props.workbench} onClose={handleOnClose} />
             <ModuleInstanceLog workbench={props.workbench} onClose={handleOnClose} />
+            <TemplatesList workbench={props.workbench} onClose={handleOnClose} />
             <Dialog
                 open={dialogOpen}
                 onClose={handleDialogCloseClick}

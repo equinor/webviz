@@ -1,27 +1,27 @@
 import React from "react";
 
+import { Tooltip } from "@equinor/eds-core-react";
 import { CheckCircle, ClearAll, CloudDone, CloudDownload, Error, History, Warning } from "@mui/icons-material";
 
 import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
+import { DashboardTopic } from "@framework/internal/Dashboard";
 import type { LogEntry } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import {
     LogEntryType,
     useStatusControllerStateValue,
 } from "@framework/internal/ModuleInstanceStatusControllerInternal";
-import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
-import { Tooltip } from "@equinor/eds-core-react";
 
 export type ModuleInstanceLogProps = {
     workbench: Workbench;

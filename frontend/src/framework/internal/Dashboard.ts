@@ -6,9 +6,9 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
-import type { AtomStoreMaster } from "../../AtomStoreMaster";
-import type { ModuleInstance, ModuleInstanceFullState } from "../../ModuleInstance";
-import { ModuleRegistry } from "../../ModuleRegistry";
+import type { AtomStoreMaster } from "../AtomStoreMaster";
+import type { ModuleInstance, ModuleInstanceFullState } from "../ModuleInstance";
+import { ModuleRegistry } from "../ModuleRegistry";
 
 export type LayoutElement = {
     moduleInstanceId?: string;

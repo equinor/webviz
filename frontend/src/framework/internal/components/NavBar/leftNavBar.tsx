@@ -1,9 +1,9 @@
 import type React from "react";
 
-import { GridView, Link, List, Palette, Tune } from "@mui/icons-material";
+import { Link, List, Palette, Tune } from "@mui/icons-material";
 
 import { GuiState, LeftDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
-import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
+import { DashboardTopic } from "@framework/internal/Dashboard";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
@@ -44,28 +44,25 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         }
     }
 
+    function togglePanelContent(targetContent: LeftDrawerContent) {
+        setDrawerContent(targetContent);
+        ensureSettingsPanelIsVisible();
+    }
+
     function handleEnsembleClick() {
         setEnsembleDialogOpen(true);
     }
 
     function handleModuleSettingsClick() {
-        ensureSettingsPanelIsVisible();
-        setDrawerContent(LeftDrawerContent.ModuleSettings);
-    }
-
-    function handleTemplatesListClick() {
-        ensureSettingsPanelIsVisible();
-        setDrawerContent(LeftDrawerContent.TemplatesList);
+        togglePanelContent(LeftDrawerContent.ModuleSettings);
     }
 
     function handleSyncSettingsClick() {
-        ensureSettingsPanelIsVisible();
-        setDrawerContent(LeftDrawerContent.SyncSettings);
+        togglePanelContent(LeftDrawerContent.SyncSettings);
     }
 
     function handleColorPaletteSettingsClick() {
-        ensureSettingsPanelIsVisible();
-        setDrawerContent(LeftDrawerContent.ColorPaletteSettings);
+        togglePanelContent(LeftDrawerContent.ColorPaletteSettings);
     }
 
     const layoutEmpty = layout.length === 0;
@@ -97,9 +94,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     }
                     onClick={handleEnsembleClick}
                 />
-
                 <NavBarDivider />
-
                 <NavBarButton
                     active={drawerContent === LeftDrawerContent.ModuleSettings}
                     title="Show module settings"
@@ -114,17 +109,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     onClick={handleSyncSettingsClick}
                     disabled={layoutEmpty}
                 />
-
                 <NavBarDivider />
-                <NavBarButton
-                    active={drawerContent === LeftDrawerContent.TemplatesList}
-                    title="Show templates list"
-                    icon={<GridView fontSize="small" className="size-5" />}
-                    onClick={handleTemplatesListClick}
-                />
-
-                <NavBarDivider />
-
                 <NavBarButton
                     active={drawerContent === LeftDrawerContent.ColorPaletteSettings}
                     title="Show color settings"

@@ -1,5 +1,7 @@
 import React from "react";
 
+import { Tooltip } from "@equinor/eds-core-react";
+import { Dropdown, MenuButton } from "@mui/base";
 import { Close, CloseFullscreen, Error, History, Input, OpenInFull, Output, Warning } from "@mui/icons-material";
 
 import {
@@ -19,16 +21,13 @@ import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Tooltip } from "@equinor/eds-core-react";
-import { Dropdown, MenuButton } from "@mui/base";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import { MenuText } from "@lib/components/MenuText/menuText";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type HeaderProps = {
     workbench: Workbench;
@@ -94,9 +93,6 @@ export const Header: React.FC<HeaderProps> = (props) => {
         [guiMessageBroker, moduleInstanceId],
     );
 
-    const ref = React.useRef<HTMLDivElement>(null);
-    const boundingRect = useElementBoundingRect(ref);
-
     const syncedSettings = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.SYNCED_SETTINGS);
     const title = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.TITLE);
 
@@ -153,7 +149,6 @@ export const Header: React.FC<HeaderProps> = (props) => {
             )}
             onPointerDown={handlePointerDown}
             onDoubleClick={handleDoubleClick}
-            ref={ref}
         >
             <div
                 className={resolveClassNames("absolute -bottom-0.5 left-0 w-full overflow-hidden", {

@@ -14,13 +14,12 @@ import {
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { Module } from "@framework/Module";
+import type { Module} from "@framework/Module";
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import type { DrawPreviewFunc } from "@framework/Preview";
 import type { Workbench } from "@framework/Workbench";
-import { Checkbox } from "@lib/components/Checkbox";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
@@ -231,78 +230,6 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     }
     return makeItem();
 };
-
-type DevStatesFilterProps = {
-    initialDevStates: ModuleDevState[];
-    onFilterChange: (devStates: ModuleDevState[]) => void;
-};
-
-function DevStatesFilter(props: DevStatesFilterProps): React.ReactNode {
-    const [expanded, setExpanded] = React.useState(true);
-    const [devStates, setDevStates] = React.useState<ModuleDevState[]>(props.initialDevStates);
-
-    function toggleExpanded() {
-        setExpanded(!expanded);
-    }
-
-    function handleFilterChange(devState: ModuleDevState) {
-        let newDevStates: ModuleDevState[] = [];
-        if (devStates.includes(devState)) {
-            newDevStates = devStates.filter((state) => state !== devState);
-        } else {
-            newDevStates = [...devStates, devState];
-        }
-        setDevStates(newDevStates);
-        props.onFilterChange(newDevStates);
-    }
-
-    return (
-        <div className="flex flex-col gap-1 text-sm">
-            <div className="flex gap-2 cursor-pointer items-center" onClick={toggleExpanded}>
-                <span className="grow font-bold">Filter by development state</span>
-                {expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
-            </div>
-            {expanded && (
-                <>
-                    <Checkbox
-                        label={
-                            <div className="flex gap-2 items-center">
-                                <span className="text-green-600 flex items-center">
-                                    {makeDevStateIcon(ModuleDevState.PROD)}
-                                </span>
-                                <span className="mt-[0.2rem]">Ready for user testing</span>
-                            </div>
-                        }
-                        onChange={() => handleFilterChange(ModuleDevState.PROD)}
-                        checked={devStates.includes(ModuleDevState.PROD)}
-                    />
-                    <Checkbox
-                        label={
-                            <div className="flex gap-2 items-center">
-                                <span className="text-orange-600">{makeDevStateIcon(ModuleDevState.DEPRECATED)}</span>
-                                <span className="mt-[0.2rem]">Deprecated</span>
-                            </div>
-                        }
-                        onChange={() => handleFilterChange(ModuleDevState.DEPRECATED)}
-                        checked={devStates.includes(ModuleDevState.DEPRECATED)}
-                    />
-                    <Checkbox
-                        label={
-                            <div className="flex gap-2 items-center">
-                                <span className="text-teal-600 inline-block align-middle">
-                                    {makeDevStateIcon(ModuleDevState.DEV)}
-                                </span>
-                                <span className="mt-[0.2rem]">Under development</span>
-                            </div>
-                        }
-                        onChange={() => handleFilterChange(ModuleDevState.DEV)}
-                        checked={devStates.includes(ModuleDevState.DEV)}
-                    />
-                </>
-            )}
-        </div>
-    );
-}
 
 type ModulesListCategoryProps = {
     title: string;

@@ -1,8 +1,10 @@
 import { Ajv } from "ajv/dist/jtd";
 
-import type { PrivateWorkbenchSession, WorkbenchSessionContent } from "./PrivateWorkbenchSession";
-import { objectToJsonString, sessionIdFromLocalStorageKey } from "./utils";
-import { workbenchSessionSchema } from "./workbenchSession.jtd";
+import type { PrivateWorkbenchSession, WorkbenchSessionContent } from "../PrivateWorkbenchSession";
+import { workbenchSessionSchema } from "../workbenchSession.jtd";
+
+import { objectToJsonString } from "./hash";
+import { sessionIdFromLocalStorageKey } from "./localStorageHelpers";
 import { WorkbenchSessionSource, type WorkbenchSessionDataContainer } from "./WorkbenchSessionDataContainer";
 
 export type SerializedWorkbenchSession = {

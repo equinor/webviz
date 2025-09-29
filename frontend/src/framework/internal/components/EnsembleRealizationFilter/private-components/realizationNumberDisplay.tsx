@@ -1,10 +1,10 @@
 import React from "react";
 
+import { Tooltip } from "@equinor/eds-core-react";
 import { isEqual } from "lodash";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Tooltip } from "@equinor/eds-core-react";
 
 export type RealizationNumberDisplayProps = {
     selectedRealizations: readonly number[];

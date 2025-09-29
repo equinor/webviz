@@ -1,6 +1,8 @@
-import { Tooltip } from "@equinor/eds-core-react";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import React from "react";
+
+import { Tooltip } from "@equinor/eds-core-react";
+
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export enum DenseIconButtonColorScheme {
     DEFAULT = "default",

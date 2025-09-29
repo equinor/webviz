@@ -2,16 +2,16 @@ import type { JTDSchemaType } from "ajv/dist/jtd";
 
 import { USER_CREATED_ITEMS_JTD_SCHEMA } from "@framework/UserCreatedItems";
 
+import { DASHBOARD_JTD_SCHEMA } from "../Dashboard";
 import { WORKBENCH_SETTINGS_JTD_SCHEMA } from "../PrivateWorkbenchSettings";
 
-import { DASHBOARD_JTD_SCHEMA } from "./Dashboard";
 import type {
     SerializedDeltaEnsemble,
     SerializedEnsembleSet,
     SerializedRegularEnsemble,
     WorkbenchSessionContent,
 } from "./PrivateWorkbenchSession";
-import type { SerializedWorkbenchSession } from "./WorkbenchSessionSerializer";
+import type { SerializedWorkbenchSession } from "./utils/serialization";
 
 export const regularEnsembleSchema: JTDSchemaType<SerializedRegularEnsemble> = {
     properties: {

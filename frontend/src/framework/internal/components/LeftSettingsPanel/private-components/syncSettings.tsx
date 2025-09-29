@@ -4,7 +4,7 @@ import { Link, PinDrop, Public } from "@mui/icons-material";
 
 import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
+import { DashboardTopic } from "@framework/internal/Dashboard";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { SyncSettingKey } from "@framework/SyncSettings";
 import { SyncSettingsMeta } from "@framework/SyncSettings";

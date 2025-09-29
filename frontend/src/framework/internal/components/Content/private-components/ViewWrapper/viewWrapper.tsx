@@ -1,7 +1,7 @@
 import React from "react";
 
 import { GuiEvent, GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { DashboardTopic } from "@framework/internal/WorkbenchSession/Dashboard";
+import { DashboardTopic } from "@framework/internal/Dashboard";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";

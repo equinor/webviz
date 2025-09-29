@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { FilterAlt, Fullscreen, FullscreenExit, History, WebAsset } from "@mui/icons-material";
+import { FilterAlt, Fullscreen, FullscreenExit, GridView, History, WebAsset } from "@mui/icons-material";
 
 import { GuiState, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
 import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
@@ -52,6 +52,10 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
         togglePanelContent(RightDrawerContent.ModulesList);
     }
 
+    function handleTemplatesListClick() {
+        togglePanelContent(RightDrawerContent.TemplatesList);
+    }
+
     function handleRealizationFilterClick() {
         togglePanelContent(RightDrawerContent.RealizationFilterSettings);
     }
@@ -70,6 +74,12 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                     title="Show modules list"
                     icon={<WebAsset fontSize="small" className="size-5" />}
                     onClick={handleModulesListClick}
+                />
+                <NavBarButton
+                    active={drawerContent === RightDrawerContent.TemplatesList}
+                    title="Show templates list"
+                    icon={<GridView fontSize="small" className="size-5" />}
+                    onClick={handleTemplatesListClick}
                 />
                 <NavBarDivider />
                 <NavBarButton

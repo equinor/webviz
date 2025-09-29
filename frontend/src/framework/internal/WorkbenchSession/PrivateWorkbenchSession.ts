@@ -4,7 +4,7 @@ import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleTimestampsStore } from "@framework/EnsembleTimestampsStore";
 import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
-import { Dashboard, type SerializedDashboard } from "@framework/internal/WorkbenchSession/Dashboard";
+import { Dashboard, type SerializedDashboard } from "@framework/internal/Dashboard";
 import { RealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UserCreatedItems, type SerializedUserCreatedItems } from "@framework/UserCreatedItems";
@@ -17,7 +17,7 @@ import {
 } from "../EnsembleSetLoader";
 import { PrivateWorkbenchSettings, type SerializedWorkbenchSettings } from "../PrivateWorkbenchSettings";
 
-import { type WorkbenchSessionDataContainer } from "./WorkbenchSessionDataContainer";
+import { type WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
 
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
@@ -64,9 +64,6 @@ export type PrivateWorkbenchSessionTopicPayloads = {
 export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenchSessionTopicPayloads> {
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<PrivateWorkbenchSessionTopicPayloads>();
 
-    private _id: string | null = null;
-    private _isPersisted: boolean = false;
-    private _isSnapshot: boolean;
     private _atomStoreMaster: AtomStoreMaster;
     private _queryClient: QueryClient;
     private _dashboards: Dashboard[] = [];
@@ -80,12 +77,11 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     private _isEnsembleSetLoading: boolean = false;
     private _settings: PrivateWorkbenchSettings = new PrivateWorkbenchSettings();
 
-    constructor(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient, isSnapshot = false) {
+    private constructor(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient) {
         this._atomStoreMaster = atomStoreMaster;
         this._queryClient = queryClient;
         this._userCreatedItems = new UserCreatedItems(atomStoreMaster);
         this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, this._realizationFilterSet);
-        this._isSnapshot = isSnapshot;
     }
 
     getWorkbenchSettings(): PrivateWorkbenchSettings {
@@ -119,7 +115,6 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
     }
 
     async loadContent(content: WorkbenchSessionContent): Promise<void> {
-        this._isPersisted = this._id !== null;
         this._activeDashboardId = content.activeDashboardId;
         this._dashboards = content.dashboards.map((s) => {
             const d = new Dashboard(this._atomStoreMaster);
@@ -258,10 +253,16 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         queryClient: QueryClient,
         dataContainer: WorkbenchSessionDataContainer,
     ): Promise<PrivateWorkbenchSession> {
-        const session = new PrivateWorkbenchSession(atomStoreMaster, queryClient, false);
+        const session = new PrivateWorkbenchSession(atomStoreMaster, queryClient);
 
         await session.loadContent(dataContainer.content);
 
+        return session;
+    }
+
+    static createEmpty(atomStoreMaster: AtomStoreMaster, queryClient: QueryClient): PrivateWorkbenchSession {
+        const session = new PrivateWorkbenchSession(atomStoreMaster, queryClient);
+        session.makeDefaultDashboard();
         return session;
     }
 }

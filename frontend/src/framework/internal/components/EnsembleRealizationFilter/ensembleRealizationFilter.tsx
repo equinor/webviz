@@ -10,6 +10,8 @@ import {
     RealizationFilterType,
     RealizationFilterTypeStringMapping,
 } from "@framework/types/realizationFilterTypes";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -19,8 +21,6 @@ import type { ByRealizationNumberFilterSelection } from "./private-components/by
 import { ByRealizationNumberFilter } from "./private-components/byRealizationNumberFilter";
 import { RealizationNumberDisplay } from "./private-components/realizationNumberDisplay";
 import { createBestSuggestedRealizationNumberSelections } from "./private-utils/conversionUtils";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
 
 export type EnsembleRealizationFilterSelections = {
     displayRealizationNumbers: readonly number[]; // For RealizationNumberDisplay
