@@ -12,7 +12,7 @@ import type { Feature } from "geojson";
 import { isEqual } from "lodash";
 
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
-import type { WorkbenchSessionFacade } from "@framework/WorkbenchSession";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -36,7 +36,7 @@ import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 export type ReadoutWrapperProps = {
     views: ViewsTypeExtended;
     layers: DeckGlLayer[];
-    workbenchSession: WorkbenchSessionFacade;
+    workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     workbenchServices: WorkbenchServices;
     deckGlManager: DeckGlInstanceManager;

@@ -11,7 +11,7 @@ import {
 } from "@mui/icons-material";
 import { useAtom } from "jotai";
 
-import type { WorkbenchSessionFacade } from "@framework/WorkbenchSession";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { useColorSet, type WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { Menu } from "@lib/components/Menu";
 import { MenuButton } from "@lib/components/MenuButton";
@@ -39,7 +39,7 @@ import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 
 export type DataProviderManagerWrapperProps = {
     dataProviderManager: DataProviderManager;
-    workbenchSession: WorkbenchSessionFacade;
+    workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
 };
 

@@ -1,4 +1,4 @@
-import type { WorkbenchSessionFacade } from "@framework/WorkbenchSession";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
 import type { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
@@ -8,7 +8,7 @@ import type { MakeAvailableValuesTypeBasedOnCategory } from "./utils";
 
 export type OverriddenValueRepresentationArgs<TValue> = {
     value: TValue;
-    workbenchSession: WorkbenchSessionFacade;
+    workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
 };
 
@@ -19,7 +19,7 @@ export type SettingComponentProps<TValue, TCategory extends SettingCategory> = {
     overriddenValue: TValue | null;
     isOverridden: boolean;
     availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> | null;
-    workbenchSession: WorkbenchSessionFacade;
+    workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     globalSettings: GlobalSettings;
 };

@@ -7,7 +7,7 @@ import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
-import type { WorkbenchSessionFacade } from "@framework/WorkbenchSession";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import {
@@ -162,7 +162,7 @@ export type LayersWrapperProps = {
     layerManager: DataProviderManager;
     preferredViewLayout: PreferredViewLayout;
     viewContext: ViewContext<Interfaces>;
-    workbenchSession: WorkbenchSessionFacade;
+    workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     workbenchServices: WorkbenchServices;
 };

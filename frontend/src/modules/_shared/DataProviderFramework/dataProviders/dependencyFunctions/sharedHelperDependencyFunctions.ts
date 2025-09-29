@@ -4,7 +4,7 @@ import type { WellboreHeader_api } from "@api";
 import { getDrilledWellboreHeadersOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { IntersectionType } from "@framework/types/intersection";
-import type { WorkbenchSessionFacade } from "@framework/WorkbenchSession";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
 import { makeIntersectionPolylineWithSectionLengthsPromise } from "@modules/_shared/Intersection/intersectionPolylineUtils";
 import type {
@@ -20,7 +20,7 @@ import type { IntersectionSettingValue } from "../../settings/implementations/In
 export async function fetchWellboreHeaders(
     ensembleIdent: RegularEnsembleIdent | null,
     abortSignal: AbortSignal,
-    workbenchSession: WorkbenchSessionFacade,
+    workbenchSession: WorkbenchSession,
     queryClient: QueryClient,
 ): Promise<WellboreHeader_api[] | null> {
     if (!ensembleIdent) {
@@ -51,7 +51,7 @@ export async function createIntersectionPolylineWithSectionLengthsForField(
     fieldIdentifier: string | null,
     intersection: IntersectionSettingValue | null,
     wellboreExtensionLength: number,
-    workbenchSession: WorkbenchSessionFacade,
+    workbenchSession: WorkbenchSession,
     queryClient: QueryClient,
 ): Promise<PolylineWithSectionLengths | null> {
     if (!intersection) {

@@ -4,6 +4,7 @@ import { EnsembleTimestampsStore, type EnsembleTimestamps } from "@framework/Ens
 import { globalLog } from "@framework/Log";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { Workbench } from "@framework/Workbench";
+
 import { fetchLatestEnsembleTimestamps } from "./utils/fetchEnsembleTimestamps";
 
 const logger = globalLog.registerLogger("EnsembleUpdateMonitor");

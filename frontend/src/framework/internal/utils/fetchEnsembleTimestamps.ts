@@ -1,6 +1,7 @@
-import { QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
+
 import { postGetTimestampsForEnsemblesOptions, type EnsembleIdent_api, type EnsembleTimestamps_api } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 export type EnsembleTimestampsItem = {
     ensembleIdent: RegularEnsembleIdent;

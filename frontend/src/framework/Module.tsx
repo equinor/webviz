@@ -12,7 +12,7 @@ import type { DrawPreviewFunc } from "./Preview";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceBaseType, InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import type { WorkbenchServices } from "./WorkbenchServices";
-import type { WorkbenchSessionFacade } from "./WorkbenchSession";
+import type { WorkbenchSession } from "./WorkbenchSession";
 import type { WorkbenchSettings } from "./WorkbenchSettings";
 
 export type OnInstanceUnloadFunc = (instanceId: string) => void;
@@ -52,7 +52,7 @@ export type ModuleSettingsProps<
     },
 > = {
     settingsContext: SettingsContext<TInterfaceTypes>;
-    workbenchSession: WorkbenchSessionFacade;
+    workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
@@ -65,7 +65,7 @@ export type ModuleViewProps<
     },
 > = {
     viewContext: ViewContext<TInterfaceTypes>;
-    workbenchSession: WorkbenchSessionFacade;
+    workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;

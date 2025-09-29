@@ -7,7 +7,7 @@ import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { IntersectionType } from "@framework/types/intersection";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
-import type { WorkbenchSessionFacade } from "@framework/WorkbenchSession";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import type { BBox } from "@lib/utils/bbox";
 import { combine } from "@lib/utils/bbox";
@@ -70,7 +70,7 @@ export type DataProvidersWrapperProps = {
     dataProviderManager: DataProviderManager;
     preferredViewLayout: PreferredViewLayout;
     viewContext: ViewContext<Interfaces>;
-    workbenchSession: WorkbenchSessionFacade;
+    workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     workbenchServices: WorkbenchServices;
 };

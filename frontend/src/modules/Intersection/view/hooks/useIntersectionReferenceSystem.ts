@@ -4,7 +4,7 @@ import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 
 import { IntersectionType } from "@framework/types/intersection";
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
-import type { WorkbenchSessionFacade } from "@framework/WorkbenchSession";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 
 import {
@@ -20,7 +20,7 @@ import { useWellboreTrajectoriesQuery } from "./queryHooks";
 export function useCreateIntersectionReferenceSystem(
     intersectionSetting: IntersectionSettingValue | null,
     fieldIdentifier: string | null,
-    workbenchSession: WorkbenchSessionFacade,
+    workbenchSession: WorkbenchSession,
 ): IntersectionReferenceSystem | null {
     // Always call hooks unconditionally
     const isCustomPolyline = intersectionSetting?.type === IntersectionType.CUSTOM_POLYLINE;

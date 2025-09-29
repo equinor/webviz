@@ -3,6 +3,7 @@ import React from "react";
 import { Input } from "@mui/icons-material";
 
 import type { ModuleViewProps } from "@framework/Module";
+import { useColorSet } from "@framework/WorkbenchSettings";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage/contentMessage";
@@ -18,7 +19,6 @@ import SensitivityTable from "./components/sensitivityTable";
 import { useResponseChannel } from "./hooks/useResponseChannel";
 import { useSensitivityChart } from "./hooks/useSensitivityChart";
 import { SensitivityDataScaler } from "./utils/sensitivityDataScaler";
-import { useColorSet } from "@framework/WorkbenchSettings";
 
 export const View = ({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const hideZeroY = viewContext.useSettingsToViewInterfaceValue("hideZeroY");
