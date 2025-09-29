@@ -1,14 +1,14 @@
 import type { QueryClient } from "@tanstack/query-core";
 
-import { postGetTimestampsForEnsemblesOptions, type EnsembleIdent_api } from "@api";
 import { EnsembleTimestampsStore, type EnsembleTimestamps } from "@framework/EnsembleTimestampsStore";
 import { globalLog } from "@framework/Log";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { Workbench } from "@framework/Workbench";
+import { fetchLatestEnsembleTimestamps } from "./utils/fetchEnsembleTimestamps";
 
 const logger = globalLog.registerLogger("EnsembleUpdateMonitor");
 
-const ENSEMBLE_POLLING_INTERVAL = 10000; // 60 seconds
+const ENSEMBLE_POLLING_INTERVAL_MS = 60000; // 60 seconds
 
 export class EnsembleUpdateMonitor {
     private _queryClient: QueryClient;
@@ -65,8 +65,8 @@ export class EnsembleUpdateMonitor {
         const now = Date.now();
         const elapsed = this._lastPollTimestamp ? now - this._lastPollTimestamp : Infinity;
 
-        if (elapsed < ENSEMBLE_POLLING_INTERVAL) {
-            const wait = ENSEMBLE_POLLING_INTERVAL - elapsed;
+        if (elapsed < ENSEMBLE_POLLING_INTERVAL_MS) {
+            const wait = ENSEMBLE_POLLING_INTERVAL_MS - elapsed;
             logger.console?.log(`Polling skipped: only ${elapsed}ms elapsed since last poll. Waiting ${wait}ms...`);
             this._pollingTimeout = setTimeout(() => {
                 this.recursivelyQueueEnsemblePolling();
@@ -84,7 +84,7 @@ export class EnsembleUpdateMonitor {
 
         this._pollingTimeout = setTimeout(() => {
             this.recursivelyQueueEnsemblePolling();
-        }, ENSEMBLE_POLLING_INTERVAL);
+        }, ENSEMBLE_POLLING_INTERVAL_MS);
     }
 
     private async pollForUpdatedEnsembles() {
@@ -124,7 +124,10 @@ export class EnsembleUpdateMonitor {
             }
 
             // Fetch the latest timestamps for all ensembles
-            const latestTimestamps = await this.fetchLatestEnsembleTimestamps(Array.from(allRegularEnsembleIdents));
+            const latestTimestamps = await fetchLatestEnsembleTimestamps(
+                this._queryClient,
+                Array.from(allRegularEnsembleIdents),
+            );
 
             if (latestTimestamps.length !== allRegularEnsembleIdents.size) {
                 console.warn(
@@ -135,8 +138,8 @@ export class EnsembleUpdateMonitor {
             const latestTimestampsMap = new Map<string, EnsembleTimestamps>();
 
             // Update the ensemble timestamps map
-            for (const [ident, timestamps] of latestTimestamps) {
-                latestTimestampsMap.set(ident.toString(), timestamps);
+            for (const item of latestTimestamps) {
+                latestTimestampsMap.set(item.ensembleIdent.toString(), item.timestamps);
             }
 
             // Update the EnsembleTimestampsStore with the latest timestamps
@@ -149,23 +152,6 @@ export class EnsembleUpdateMonitor {
             this._lastPollTimestamp = Date.now();
             this._isRunning = false;
         }
-    }
-
-    private async fetchLatestEnsembleTimestamps(
-        ensembleIdents: RegularEnsembleIdent[],
-    ): Promise<[RegularEnsembleIdent, EnsembleTimestamps][]> {
-        const idents = ensembleIdents.map<EnsembleIdent_api>((ens) => ({
-            caseUuid: ens.getCaseUuid(),
-            ensembleName: ens.getEnsembleName(),
-        }));
-
-        const timestamps = await this._queryClient.fetchQuery({
-            ...postGetTimestampsForEnsemblesOptions({ body: idents }),
-            staleTime: 0,
-            gcTime: 0,
-        });
-
-        return ensembleIdents.map((ident, i) => [ident, timestamps[i]]);
     }
 
     dispose() {

@@ -3,7 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import type { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api, EnsembleTimestamps_api } from "@api";
 import { SensitivityType_api, getEnsembleDetailsOptions, getParametersOptions, getSensitivitiesOptions } from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
-import { type EnsembleTimestamps } from "@framework/EnsembleTimestampsStore";
+import { EnsembleTimestampsStore, type EnsembleTimestamps } from "@framework/EnsembleTimestampsStore";
 
 import type { ContinuousParameter, DiscreteParameter, Parameter } from "../EnsembleParameters";
 import { ParameterType } from "../EnsembleParameters";
@@ -14,6 +14,7 @@ import { RegularEnsemble } from "../RegularEnsemble";
 import type { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
 import { tanstackDebugTimeOverride } from "./utils/debug";
+import { fetchLatestEnsembleTimestamps } from "./utils/fetchEnsembleTimestamps";
 
 type EnsembleApiData = {
     ensembleDetails: EnsembleDetails_api;
@@ -48,9 +49,6 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
     const ensembleIdentsToLoad: RegularEnsembleIdent[] = [];
 
     for (const ensembleSetting of userEnsembleSettings) {
-        if (ensembleSetting.timestamps) {
-            ensembleTimestampMap.set(ensembleSetting.ensembleIdent.toString(), ensembleSetting.timestamps);
-        }
         ensembleIdentsToLoad.push(ensembleSetting.ensembleIdent);
     }
 
@@ -62,6 +60,13 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
             ensembleIdentsToLoad.push(deltaEnsembleSetting.referenceEnsembleIdent);
         }
     }
+
+    // Loading timestamps here in order to make use of caching in the browser
+    const timestamps = await fetchLatestEnsembleTimestamps(queryClient, ensembleIdentsToLoad);
+    for (const item of timestamps) {
+        ensembleTimestampMap.set(item.ensembleIdent.toString(), item.timestamps);
+    }
+    EnsembleTimestampsStore.setAll(ensembleTimestampMap);
 
     // Fetch from back-end
     const ensembleApiDataMap = await loadEnsembleApiDataMapFromBackend(

@@ -5,7 +5,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { ActiveSessionBoundary } from "@framework/internal/components/ActiveSessionBoundary";
 import { LoadingOverlay } from "@framework/internal/components/LoadingOverlay";
-import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
@@ -14,6 +13,8 @@ import { Workbench, WorkbenchTopic } from "@framework/Workbench";
 import "../../../../modules/registerAllModules";
 import "../../../../templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { LeftNavBar } from "../LeftNavBar";
+import { RightNavBar } from "../RightNavBar";
 
 export function WorkbenchWrapper() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
