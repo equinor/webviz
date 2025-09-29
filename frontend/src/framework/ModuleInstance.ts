@@ -9,14 +9,7 @@ import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannel
 import type { InitialSettings } from "./InitialSettings";
 import { ChannelManager } from "./internal/DataChannels/ChannelManager";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
-import type {
-    ImportStatus,
-    Module,
-    ModuleStateBaseSchema,
-    ModuleInterfaceTypes,
-    ModuleSettings,
-    ModuleView,
-} from "./Module";
+import type { ImportStatus, Module, ModuleInterfaceTypes, ModuleSettings, ModuleView } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
@@ -34,7 +27,6 @@ export enum ModuleInstanceTopic {
     SYNCED_SETTINGS = "synced-settings",
     LIFECYCLE_STATE = "state",
     IMPORT_STATUS = "import-status",
-    SERIALIZED_STATE = "serialized-state",
 }
 
 export type ModuleInstanceTopicValueTypes = {
@@ -42,7 +34,6 @@ export type ModuleInstanceTopicValueTypes = {
     [ModuleInstanceTopic.SYNCED_SETTINGS]: SyncSettingKey[];
     [ModuleInstanceTopic.LIFECYCLE_STATE]: ModuleInstanceLifeCycleState;
     [ModuleInstanceTopic.IMPORT_STATUS]: ImportStatus;
-    [ModuleInstanceTopic.SERIALIZED_STATE]: ModuleStateBaseSchema;
 };
 
 export interface ModuleInstanceOptions<TInterfaceTypes extends ModuleInterfaceTypes> {

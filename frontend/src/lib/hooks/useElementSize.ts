@@ -9,7 +9,7 @@ export function useElementSize(ref: React.RefObject<HTMLElement>): Size2D {
         height: ref.current?.offsetHeight ?? 0,
     });
 
-    React.useLayoutEffect(
+    React.useEffect(
         function layoutEffect() {
             let isHidden = false;
             let currentSize = { width: 0, height: 0 };
