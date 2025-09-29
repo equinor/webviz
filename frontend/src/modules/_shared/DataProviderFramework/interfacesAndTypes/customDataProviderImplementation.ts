@@ -1,6 +1,6 @@
 import type { DefaultError, FetchQueryOptions, QueryKey } from "@tanstack/query-core";
 
-import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSessionFacade } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
 import type { GlobalSettings } from "../framework/DataProviderManager/DataProviderManager";
@@ -81,7 +81,7 @@ export type DataProviderInformationAccessors<
      * Access to the workbench session.
      * @returns The workbench session.
      */
-    getWorkbenchSession: () => WorkbenchSession;
+    getWorkbenchSession: () => WorkbenchSessionFacade;
 
     /**
      * Access to the workbench settings.

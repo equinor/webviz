@@ -9,7 +9,7 @@ import {
     IntersectionPolylinesEvent,
     type SerializedIntersectionPolylines,
 } from "./userCreatedItems/IntersectionPolylines";
-import type { WorkbenchSession } from "./WorkbenchSession";
+import type { WorkbenchSessionFacade } from "./WorkbenchSession";
 
 export type SerializedUserCreatedItems = {
     intersectionPolylines: SerializedIntersectionPolylines;
@@ -73,7 +73,7 @@ export class UserCreatedItems {
     }
 }
 
-export function useIntersectionPolylines(workbenchSession: WorkbenchSession): IntersectionPolylines {
+export function useIntersectionPolylines(workbenchSession: WorkbenchSessionFacade): IntersectionPolylines {
     const [storedIntersectionPolylines, setStoredIntersectionPolylines] = React.useState<IntersectionPolylines>(
         workbenchSession.getUserCreatedItems().getIntersectionPolylines(),
     );

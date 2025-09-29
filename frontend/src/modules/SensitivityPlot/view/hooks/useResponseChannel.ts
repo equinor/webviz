@@ -2,7 +2,7 @@ import { KeyKind } from "@framework/DataChannelTypes";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
+import { WorkbenchSessionTopic, type WorkbenchSessionFacade } from "@framework/WorkbenchSession";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import type { Interfaces } from "@modules/SensitivityPlot/interfaces";
 
@@ -22,7 +22,7 @@ export interface ResponseChannelData {
 
 export function useResponseChannel(
     viewContext: ViewContext<Interfaces>,
-    workbenchSession: WorkbenchSession,
+    workbenchSession: WorkbenchSessionFacade,
 ): ResponseChannelData {
     const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.EnsembleSet);
 

@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import { type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import type { EnsembleSet } from "./EnsembleSet";

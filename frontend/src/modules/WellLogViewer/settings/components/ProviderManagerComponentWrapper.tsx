@@ -6,7 +6,7 @@ import { useAtom } from "jotai";
 import { get } from "lodash";
 
 import { WellLogCurveTypeEnum_api } from "@api";
-import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSessionFacade } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
@@ -45,7 +45,7 @@ enum PlotActionIdents {
 }
 
 function usePersistedProviderManager(
-    workbenchSession: WorkbenchSession,
+    workbenchSession: WorkbenchSessionFacade,
     workbenchSettings: WorkbenchSettings,
 ): DataProviderManager | null {
     const queryClient = useQueryClient();
@@ -235,7 +235,7 @@ function checkManagerMove(movedItem: Item, destinationGroup: ItemGroup): boolean
 }
 
 export type ProviderManagerComponentWrapperProps = {
-    workbenchSession: WorkbenchSession;
+    workbenchSession: WorkbenchSessionFacade;
     workbenchSettings: WorkbenchSettings;
 };
 

@@ -134,5 +134,3 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
         </div>
     );
 }
-
-Drawer.displayName = "Drawer";

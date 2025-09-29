@@ -114,6 +114,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                                         <Settings
                                             settingsContext={props.moduleInstance.getContext()}
                                             workbenchSession={
+                                                // The cast here is unfortunate
                                                 props.workbench.getWorkbenchSession() as unknown as WorkbenchSession
                                             }
                                             workbenchServices={props.workbench.getWorkbenchServices()}

@@ -1,7 +1,7 @@
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSessionFacade } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
@@ -352,7 +352,7 @@ export class SettingManager<
 
     valueToRepresentation(
         value: TValue,
-        workbenchSession: WorkbenchSession,
+        workbenchSession: WorkbenchSessionFacade,
         workbenchSettings: WorkbenchSettings,
     ): React.ReactNode {
         if (this._externalController) {

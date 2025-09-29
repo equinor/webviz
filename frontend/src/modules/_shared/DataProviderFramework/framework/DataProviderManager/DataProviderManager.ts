@@ -4,7 +4,7 @@ import { clone, isEqual } from "lodash";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
-import type { EnsembleRealizationFilterFunction, WorkbenchSession } from "@framework/WorkbenchSession";
+import type { EnsembleRealizationFilterFunction, WorkbenchSessionFacade } from "@framework/WorkbenchSession";
 import {
     WorkbenchSessionTopic,
     createEnsembleRealizationFilterFuncForWorkbenchSession,
@@ -52,7 +52,7 @@ export type GlobalSettings = {
  * It does also serve as a provider of the QueryClient and WorkbenchSession.
  */
 export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProviderManagerTopicPayload> {
-    private _workbenchSession: WorkbenchSession;
+    private _workbenchSession: WorkbenchSessionFacade;
     private _workbenchSettings: WorkbenchSettings;
     private _groupDelegate: GroupDelegate;
     private _queryClient: QueryClient;
@@ -64,7 +64,11 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     private _deserializing = false;
     private _groupColorGenerator: Generator<string, string>;
 
-    constructor(workbenchSession: WorkbenchSession, workbenchSettings: WorkbenchSettings, queryClient: QueryClient) {
+    constructor(
+        workbenchSession: WorkbenchSessionFacade,
+        workbenchSettings: WorkbenchSettings,
+        queryClient: QueryClient,
+    ) {
         this._workbenchSession = workbenchSession;
         this._workbenchSettings = workbenchSettings;
         this._queryClient = queryClient;
@@ -155,7 +159,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         this._publishSubscribeDelegate.notifySubscribers(topic);
     }
 
-    getWorkbenchSession(): WorkbenchSession {
+    getWorkbenchSession(): WorkbenchSessionFacade {
         return this._workbenchSession;
     }
 

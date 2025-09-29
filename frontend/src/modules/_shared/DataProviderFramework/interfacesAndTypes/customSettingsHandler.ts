@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/query-core";
 
-import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSessionFacade } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
 import type { Dependency, NoUpdate } from "../delegates/_utils/Dependency";
@@ -73,7 +73,7 @@ export interface DefineDependenciesArgs<
             abortSignal: AbortSignal;
         }) => T,
     ) => Dependency<T, TSettings, TSettingTypes, TKey>;
-    workbenchSession: WorkbenchSession;
+    workbenchSession: WorkbenchSessionFacade;
     workbenchSettings: WorkbenchSettings;
     queryClient: QueryClient;
 }
