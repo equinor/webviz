@@ -78,7 +78,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
         function EnsembleTagOption(props: TagOptionProps): React.ReactNode {
             const ensemble = ensembleSet.findEnsembleByIdentString(props.value);
             const ensembleColor = ensemble ? getEnsembleColor(ensemble) : null;
-            const showFilterBadge = hasActiveRealizationFilter(ensemble);
+            const isRealizationFilterActive = hasActiveRealizationFilter(ensemble);
 
             // Hardcoded for passing to ColorTileWithFilterBadge
             const TAG_OPTION_BACKGROUND_COLOR = props.isFocused ? "bg-blue-100" : "bg-white";
@@ -95,15 +95,17 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
                         <label className="flex size-full px-2 py-1 cursor-pointer gap-2">
                             <Checkbox className="w-full" checked={props.isSelected} onChange={props.onToggle} />
                             {ensembleColor && (
-                                <span className="flex items-center w-6">
+                                <span
+                                    className="flex items-center w-6"
+                                    title={isRealizationFilterActive ? "Realization filter active" : undefined}
+                                >
                                     <ColorTileWithFilterBadge
                                         color={ensembleColor}
-                                        showBadge={showFilterBadge}
+                                        showBadge={isRealizationFilterActive}
                                         badgeClassName={TAG_OPTION_BACKGROUND_COLOR}
                                     />
                                 </span>
                             )}
-
                             <span title={props.label ?? props.value} className="truncate min-w-0">
                                 {props.label ?? props.value}
                             </span>
@@ -119,7 +121,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
         function EnsembleTag(props: TagProps): React.ReactNode {
             const ensemble = ensembleSet.findEnsembleByIdentString(props.tag);
             const ensembleColor = ensemble ? getEnsembleColor(ensemble) : null;
-            const showFilterBadge = hasActiveRealizationFilter(ensemble);
+            const isRealizationFilterActive = hasActiveRealizationFilter(ensemble);
 
             // Hardcoded for passing to ColorTileWithFilterBadge
             const TAG_BACKGROUND_COLOR = "bg-slate-50";
@@ -139,10 +141,13 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
                     onClick={props.onFocus}
                 >
                     {ensembleColor && (
-                        <span className="flex items-center w-6">
+                        <span
+                            className="flex items-center w-6"
+                            title={isRealizationFilterActive ? "Realization filter active" : undefined}
+                        >
                             <ColorTileWithFilterBadge
                                 color={ensembleColor}
-                                showBadge={showFilterBadge}
+                                showBadge={isRealizationFilterActive}
                                 badgeClassName={TAG_BACKGROUND_COLOR}
                             />
                         </span>
