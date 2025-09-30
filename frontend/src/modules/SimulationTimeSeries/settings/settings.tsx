@@ -4,7 +4,7 @@ import { FilterAlt } from "@mui/icons-material";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
-import { EnsembleSelect } from "@framework/components/EnsembleSelect";
+import { EnsemblePicker } from "@framework/components/EnsemblePicker";
 import { ParameterListFilter } from "@framework/components/ParameterListFilter";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { Parameter } from "@framework/EnsembleParameters";
@@ -322,12 +322,12 @@ export function Settings({
                 />
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Ensembles">
-                <EnsembleSelect
+                <EnsemblePicker
                     ensembles={ensembleSet.getEnsembleArray()}
                     value={selectedEnsembleIdents}
                     allowDeltaEnsembles={true}
-                    size={5}
                     onChange={handleEnsembleSelectChange}
+                    workbenchSession={workbenchSession}
                 />
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Vectors">
