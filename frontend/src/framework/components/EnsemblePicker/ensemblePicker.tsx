@@ -79,7 +79,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
             const ensembleColor = ensemble ? getEnsembleColor(ensemble) : null;
             const isRealizationFilterEffective = hasEffectiveRealizationFilter(ensemble);
 
-            // Hardcoded for passing to ColorTileWithFilterBadge
+            // Color const for passing to ColorTileWithBadge
             const TAG_OPTION_BACKGROUND_COLOR = props.isFocused ? "bg-blue-100" : "bg-white";
 
             return (
@@ -127,7 +127,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
             const ensembleColor = ensemble ? getEnsembleColor(ensemble) : null;
             const isRealizationFilterEffective = hasEffectiveRealizationFilter(ensemble);
 
-            // Hardcoded for passing to ColorTileWithFilterBadge
+            // Color const for passing to ColorTileWithBadge
             const TAG_BACKGROUND_COLOR = "bg-slate-50";
 
             return (
