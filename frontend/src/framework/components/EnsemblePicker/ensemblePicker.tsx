@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Close } from "@mui/icons-material";
+import { Close, FilterAlt } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
@@ -10,12 +10,11 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
+import { ColorTileWithBadge } from "@lib/components/ColorTileWithBadge";
 import { IconButton } from "@lib/components/IconButton";
 import type { TagProps } from "@lib/components/TagInput";
 import { TagPicker, type TagOption, type TagOptionProps } from "@lib/components/TagPicker";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
-import { ColorTileWithFilterBadge } from "./private-components/colorTileWithFilterBadge";
 
 export type EnsemblePickerProps = (
     | {
@@ -103,9 +102,10 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
                                             : undefined
                                     }
                                 >
-                                    <ColorTileWithFilterBadge
+                                    <ColorTileWithBadge
                                         color={ensembleColor}
                                         showBadge={isRealizationFilterEffective}
+                                        badgeIcon={FilterAlt}
                                         badgeClassName={TAG_OPTION_BACKGROUND_COLOR}
                                     />
                                 </span>
@@ -151,10 +151,11 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
                                 isRealizationFilterEffective ? "Some realizations are being filtered out" : undefined
                             }
                         >
-                            <ColorTileWithFilterBadge
+                            <ColorTileWithBadge
                                 color={ensembleColor}
                                 showBadge={isRealizationFilterEffective}
                                 badgeClassName={TAG_BACKGROUND_COLOR}
+                                badgeIcon={FilterAlt}
                             />
                         </span>
                     )}

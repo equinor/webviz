@@ -1,25 +1,26 @@
 import type React from "react";
 
-import { FilterAlt } from "@mui/icons-material";
+import type { SvgIconProps } from "@mui/material/SvgIcon";
 
 import { ColorTile } from "@lib/components/ColorTile";
 import type { ColorTileProps } from "@lib/components/ColorTile/colorTile";
 
-export type ColorTileWithFilterBadgeProps = ColorTileProps & {
+export type ColorTileWithBadgeProps = ColorTileProps & {
     showBadge: boolean;
     badgeClassName?: string;
+    badgeIcon: React.ComponentType<SvgIconProps>;
 };
 
-export const ColorTileWithFilterBadge: React.FC<ColorTileWithFilterBadgeProps> = (props) => {
+export const ColorTileWithBadge: React.FC<ColorTileWithBadgeProps> = (props) => {
     return (
         <div className="relative bg-inherit inline-flex items-center mr-4">
             {/* The colored tile */}
             <ColorTile {...props} />
 
-            {/* The filter icon, positioned top-right, with inherited background color via css variable */}
+            {/* The badge icon, positioned top-right, with inherited background color via css variable */}
             {props.showBadge && (
-                <FilterAlt
-                    className={`${props.badgeClassName ?? "bg-white"} absolute -top-1 -right-1.5 rounded-full p-[0.5px]`}
+                <props.badgeIcon
+                    className={`${props.badgeClassName ?? "bg-white"} text-black absolute -top-1 -right-1.5 rounded-full p-[0.5px]`}
                     fontSize="inherit"
                     style={{
                         fontSize: "1rem",
