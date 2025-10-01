@@ -61,8 +61,8 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
         [ensembleSet],
     );
 
-    const hasActiveRealizationFilter = React.useCallback(
-        function hasActiveRealizationFilter(ens: RegularEnsemble | DeltaEnsemble | null): boolean {
+    const hasEffectiveRealizationFilter = React.useCallback(
+        function hasEffectiveRealizationFilter(ens: RegularEnsemble | DeltaEnsemble | null): boolean {
             if (!ens) {
                 return false;
             }
@@ -78,7 +78,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
         function EnsembleTagOption(props: TagOptionProps): React.ReactNode {
             const ensemble = ensembleSet.findEnsembleByIdentString(props.value);
             const ensembleColor = ensemble ? getEnsembleColor(ensemble) : null;
-            const isRealizationFilterActive = hasActiveRealizationFilter(ensemble);
+            const isRealizationFilterEffective = hasEffectiveRealizationFilter(ensemble);
 
             // Hardcoded for passing to ColorTileWithFilterBadge
             const TAG_OPTION_BACKGROUND_COLOR = props.isFocused ? "bg-blue-100" : "bg-white";
@@ -97,11 +97,15 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
                             {ensembleColor && (
                                 <span
                                     className="flex items-center w-6"
-                                    title={isRealizationFilterActive ? "Realization filter active" : undefined}
+                                    title={
+                                        isRealizationFilterEffective
+                                            ? "Some realizations are being filtered out"
+                                            : undefined
+                                    }
                                 >
                                     <ColorTileWithFilterBadge
                                         color={ensembleColor}
-                                        showBadge={isRealizationFilterActive}
+                                        showBadge={isRealizationFilterEffective}
                                         badgeClassName={TAG_OPTION_BACKGROUND_COLOR}
                                     />
                                 </span>
@@ -114,14 +118,14 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
                 </>
             );
         },
-        [ensembleSet, getEnsembleColor, hasActiveRealizationFilter],
+        [ensembleSet, getEnsembleColor, hasEffectiveRealizationFilter],
     );
 
     const EnsembleTag = React.useCallback(
         function EnsembleTag(props: TagProps): React.ReactNode {
             const ensemble = ensembleSet.findEnsembleByIdentString(props.tag);
             const ensembleColor = ensemble ? getEnsembleColor(ensemble) : null;
-            const isRealizationFilterActive = hasActiveRealizationFilter(ensemble);
+            const isRealizationFilterEffective = hasEffectiveRealizationFilter(ensemble);
 
             // Hardcoded for passing to ColorTileWithFilterBadge
             const TAG_BACKGROUND_COLOR = "bg-slate-50";
@@ -143,11 +147,13 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
                     {ensembleColor && (
                         <span
                             className="flex items-center w-6"
-                            title={isRealizationFilterActive ? "Realization filter active" : undefined}
+                            title={
+                                isRealizationFilterEffective ? "Some realizations are being filtered out" : undefined
+                            }
                         >
                             <ColorTileWithFilterBadge
                                 color={ensembleColor}
-                                showBadge={isRealizationFilterActive}
+                                showBadge={isRealizationFilterEffective}
                                 badgeClassName={TAG_BACKGROUND_COLOR}
                             />
                         </span>
@@ -163,7 +169,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
                 </li>
             );
         },
-        [ensembleSet, getEnsembleColor, hasActiveRealizationFilter],
+        [ensembleSet, getEnsembleColor, hasEffectiveRealizationFilter],
     );
 
     const handleSelectionChange = React.useCallback(
