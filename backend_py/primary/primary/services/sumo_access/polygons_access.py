@@ -1,7 +1,6 @@
 import logging
-from io import BytesIO
 from typing import List, Optional
-import pandas as pd
+
 import xtgeo
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects import Polygons
