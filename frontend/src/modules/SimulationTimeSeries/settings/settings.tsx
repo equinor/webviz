@@ -14,7 +14,7 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -326,8 +326,8 @@ export function Settings({
                     ensembles={ensembleSet.getEnsembleArray()}
                     value={selectedEnsembleIdents}
                     allowDeltaEnsembles={true}
+                    ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
                     onChange={handleEnsembleSelectChange}
-                    workbenchSession={workbenchSession}
                 />
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Vectors">

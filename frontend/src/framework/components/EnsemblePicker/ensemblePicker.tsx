@@ -1,20 +1,19 @@
 import React from "react";
 
-import { Close, FilterAlt } from "@mui/icons-material";
-import { isEqual } from "lodash";
-
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
-import { useEnsembleRealizationFilterFunc, useEnsembleSet, type WorkbenchSession } from "@framework/WorkbenchSession";
+import { type EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { ColorTileWithBadge } from "@lib/components/ColorTileWithBadge";
 import { IconButton } from "@lib/components/IconButton";
 import type { TagProps } from "@lib/components/TagInput";
 import { TagPicker, type TagOption, type TagOptionProps } from "@lib/components/TagPicker";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Close, FilterAlt } from "@mui/icons-material";
+import { isEqual } from "lodash";
 
 export type EnsemblePickerProps = (
     | {
@@ -30,14 +29,11 @@ export type EnsemblePickerProps = (
           onChange: (ensembleIdentArray: RegularEnsembleIdent[]) => void;
       }
 ) & {
-    workbenchSession: WorkbenchSession;
+    ensembleRealizationFilterFunction?: EnsembleRealizationFilterFunction;
 };
 
 export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
-    const { onChange, ensembles, value, allowDeltaEnsembles } = props;
-
-    const ensembleSet = useEnsembleSet(props.workbenchSession);
-    const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(props.workbenchSession);
+    const { onChange, ensembles, value, allowDeltaEnsembles, ensembleRealizationFilterFunction } = props;
 
     const optionsArray: TagOption[] = [];
     for (const ens of ensembles) {
@@ -52,31 +48,23 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
         selectedArray.push(ident.toString());
     }
 
-    const getEnsembleColor = React.useCallback(
-        function getEnsembleColor(ens: RegularEnsemble | DeltaEnsemble): string | null {
-            const color = ensembleSet.getEnsemble(ens.getIdent())?.getColor() ?? null;
-            return color;
-        },
-        [ensembleSet],
-    );
-
     const hasEffectiveRealizationFilter = React.useCallback(
         function hasEffectiveRealizationFilter(ens: RegularEnsemble | DeltaEnsemble | null): boolean {
-            if (!ens) {
+            if (!ens || !ensembleRealizationFilterFunction) {
                 return false;
             }
 
             const ensembleRealizations = [...ens.getRealizations()].toSorted();
-            const filteredRealizations = [...filterEnsembleRealizationsFunc(ens.getIdent())].toSorted();
+            const filteredRealizations = [...ensembleRealizationFilterFunction(ens.getIdent())].toSorted();
             return !isEqual(filteredRealizations, ensembleRealizations);
         },
-        [filterEnsembleRealizationsFunc],
+        [ensembleRealizationFilterFunction],
     );
 
     const EnsembleTagOption = React.useCallback(
         function EnsembleTagOption(props: TagOptionProps): React.ReactNode {
-            const ensemble = ensembleSet.findEnsembleByIdentString(props.value);
-            const ensembleColor = ensemble ? getEnsembleColor(ensemble) : null;
+            const ensemble = ensembles.find((ens) => ens.getIdent().toString() === props.value) ?? null;
+            const ensembleColor = ensemble?.getColor() ?? null;
             const isRealizationFilterEffective = hasEffectiveRealizationFilter(ensemble);
 
             // Color const for passing to ColorTileWithBadge
@@ -118,13 +106,13 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
                 </>
             );
         },
-        [ensembleSet, getEnsembleColor, hasEffectiveRealizationFilter],
+        [ensembles, hasEffectiveRealizationFilter],
     );
 
     const EnsembleTag = React.useCallback(
         function EnsembleTag(props: TagProps): React.ReactNode {
-            const ensemble = ensembleSet.findEnsembleByIdentString(props.tag);
-            const ensembleColor = ensemble ? getEnsembleColor(ensemble) : null;
+            const ensemble = ensembles.find((ens) => ens.getIdent().toString() === props.tag) ?? null;
+            const ensembleColor = ensemble?.getColor() ?? null;
             const isRealizationFilterEffective = hasEffectiveRealizationFilter(ensemble);
 
             // Color const for passing to ColorTileWithBadge
@@ -170,7 +158,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
                 </li>
             );
         },
-        [ensembleSet, getEnsembleColor, hasEffectiveRealizationFilter],
+        [ensembles, hasEffectiveRealizationFilter],
     );
 
     const handleSelectionChange = React.useCallback(
