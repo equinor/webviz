@@ -20,7 +20,7 @@ const richDrilledWellTrajectoriesSettings = [
 type RichDrilledWellTrajectoriesSettings = typeof richDrilledWellTrajectoriesSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RichDrilledWellTrajectoriesSettings>;
 export type DrilledWellboreTrajectoriesStoredData = {
-    selectedWellBoreHeaders: EnhancedWellboreHeader_api[];
+    wellboreHeaders: EnhancedWellboreHeader_api[];
 };
 type RichDrilledWellTrajectoriesData = WellboreTrajectory_api[];
 
@@ -126,16 +126,8 @@ export class RichDrilledWellTrajectoriesProvider
         //     return data.time_intervals_iso_str;
         // });
 
-        storedDataUpdater("selectedWellBoreHeaders", ({ getHelperDependency, getLocalSetting }) => {
-            const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
-            const selectedWellbores = getLocalSetting(Setting.SMDA_WELLBORE_HEADERS)?.map(
-                (header) => header.wellboreUuid,
-            );
-            if (!wellboreHeaders || !selectedWellbores) {
-                return [];
-            }
-
-            return wellboreHeaders.filter((wellboreInfo) => selectedWellbores.includes(wellboreInfo.wellboreUuid));
+        storedDataUpdater("wellboreHeaders", ({ getHelperDependency }) => {
+            return getHelperDependency(wellboreHeadersDep);
         });
     }
 }

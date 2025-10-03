@@ -1,19 +1,11 @@
-import type { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
-import { LabelOrientation } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
 import type {
     WellFeature as BaseWellFeature,
     GeoJsonWellProperties as BaseWellProperties,
 } from "@webviz/subsurface-viewer/dist/layers/wells/types";
-import type { Feature } from "geojson";
 
-import type {
-    EnhancedWellboreHeader_api,
-    WellboreCompletionNested_api,
-    WellborePerforationNested_api,
-    WellboreTrajectory_api,
-} from "@api";
-import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
-import { wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
+import type { EnhancedWellboreHeader_api, WellboreTrajectory_api } from "@api";
+import type { WellboreData } from "@modules/2DViewer/view/customDeckGlLayers/AdvancedWellsLayer2";
+import { AdvancedWellsLayer } from "@modules/2DViewer/view/customDeckGlLayers/AdvancedWellsLayer2";
 
 import { Setting } from "../../settings/settingsDefinitions";
 import type { TransformerArgs } from "../VisualizationAssembler";
@@ -31,57 +23,71 @@ export function makeDrilledWellTrajectoriesLayer({
     getData,
     getSetting,
     getStoredData,
-}: TransformerArgs<any, WellboreTrajectory_api[], any>): WellsLayer | null {
+}: TransformerArgs<any, WellboreTrajectory_api[], any>): AdvancedWellsLayer | null {
     const wellboreTrajectories = getData();
-    const selectedWellboreHeaders: EnhancedWellboreHeader_api[] = getStoredData("selectedWellBoreHeaders");
+    const wellboreHeaders: EnhancedWellboreHeader_api[] = getStoredData("wellboreHeaders") ?? [];
     const depthFilter = getSetting(Setting.DEPTH_FILTER);
+    const selectedHeaders: EnhancedWellboreHeader_api[] = getSetting(Setting.SMDA_WELLBORE_HEADERS);
 
     if (!wellboreTrajectories) {
         return null;
     }
 
-    const wellLayerDataFeatures = wellboreTrajectories.map((well) => wellTrajectoryToGeojson(well));
+    // const wellLayerDataFeatures = wellboreTrajectories.map((well) => wellTrajectoryToGeojson(well));
 
-    function getLineStyleWidth(object: Feature): number {
-        if (object.properties && "lineWidth" in object.properties) {
-            return object.properties.lineWidth as number;
-        }
-        return 2;
-    }
+    // function getLineStyleWidth(object: Feature): number {
+    //     if (object.properties && "lineWidth" in object.properties) {
+    //         return object.properties.lineWidth as number;
+    //     }
+    //     return 2;
+    // }
 
-    function getWellHeadStyleWidth(object: Feature): number {
-        if (object.properties && "wellHeadSize" in object.properties) {
-            return object.properties.wellHeadSize as number;
-        }
-        return 1;
-    }
+    // function getWellHeadStyleWidth(object: Feature): number {
+    //     if (object.properties && "wellHeadSize" in object.properties) {
+    //         return object.properties.wellHeadSize as number;
+    //     }
+    //     return 1;
+    // }
 
-    function getColor(object: Feature): [number, number, number, number] {
-        if (object.properties && "color" in object.properties) {
-            return object.properties.color as [number, number, number, number];
-        }
-        return [50, 50, 50, 100];
-    }
+    // function getColor(object: Feature): [number, number, number, number] {
+    //     if (object.properties && "color" in object.properties) {
+    //         return object.properties.color as [number, number, number, number];
+    //     }
+    //     return [50, 50, 50, 100];
+    // }
 
-    const wellsLayer = new AdjustedWellsLayer({
-        id: id,
-        data: {
-            type: "FeatureCollection",
-            features: wellLayerDataFeatures,
-        },
-        refine: false,
-        lineStyle: { width: getLineStyleWidth, color: getColor },
-        wellHeadStyle: { size: getWellHeadStyleWidth, color: getColor },
-        wellLabel: {
-            getSize: 9,
-            background: true,
-            autoPosition: true,
-            orientation: LabelOrientation.HORIZONTAL,
-        },
-        pickable: true,
-        ZIncreasingDownwards: true,
-        outline: false,
-        lineWidthScale: 2,
+    const headersByUuid = new Map(
+        wellboreHeaders.map((h) => {
+            return [h.wellboreUuid, h];
+        }),
+    );
+
+    const wellboreData: WellboreData[] = wellboreTrajectories.map((wt): WellboreData => {
+        const header = headersByUuid.get(wt.wellboreUuid);
+
+        if (!header) throw Error(`Missing header for well ${wt.wellboreUuid}`);
+
+        return {
+            uuid: wt.wellboreUuid,
+            uniqueIdentifier: wt.uniqueWellboreIdentifier,
+            perforations: header.perforations ?? [],
+            screens: header.screens ?? [],
+            purpose: header.wellborePurpose,
+            status: header.wellboreStatus,
+            trajectory: wt,
+            well: {
+                uuid: header.wellUuid,
+                uniqueIdentifier: header.uniqueWellIdentifier,
+                easting: header.wellEasting,
+                northing: header.wellNorthing,
+            },
+        };
+    });
+
+    const wellsLayer = new AdvancedWellsLayer({
+        id,
+        data: wellboreData,
+        isWellboreSelected: (uuid) => selectedHeaders.some((header) => header.wellboreUuid === uuid),
     });
 
     return wellsLayer;

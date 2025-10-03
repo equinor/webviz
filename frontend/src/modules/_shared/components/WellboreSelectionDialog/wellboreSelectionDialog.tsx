@@ -193,11 +193,11 @@ export function WellboreSelectionDialog(props: WellboreSelectionDialogProps): Re
             onClose={props.onClose}
             title="Select Wellbores"
             width="1200px"
-            height="900px"
+            height="80vh"
             showCloseCross
             actions={dialogActions}
         >
-            <div className="flex flex-col h-full" style={{ height: "calc(900px - 140px)" }}>
+            <div className="flex flex-col h-full" style={{ height: "calc(80vh - 140px)" }}>
                 {/* Filter Controls */}
                 <div className="flex-shrink-0 flex flex-col gap-2 mb-4">
                     <FilterControls
