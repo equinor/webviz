@@ -6,14 +6,10 @@ import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { type EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
-import { Checkbox } from "@lib/components/Checkbox";
-import { ColorTileWithBadge } from "@lib/components/ColorTileWithBadge";
-import { IconButton } from "@lib/components/IconButton";
-import type { TagProps } from "@lib/components/TagInput";
-import { TagPicker, type TagOption, type TagOptionProps } from "@lib/components/TagPicker";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Close, FilterAlt } from "@mui/icons-material";
-import { isEqual } from "lodash";
+import { TagPicker, type TagOption } from "@lib/components/TagPicker";
+
+import { EnsembleTag } from "./private-components/ensembleTag";
+import { EnsembleTagOption } from "./private-components/ensembleTagOption";
 
 export type EnsemblePickerProps = (
     | {
@@ -48,119 +44,6 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
         selectedArray.push(ident.toString());
     }
 
-    const hasEffectiveRealizationFilter = React.useCallback(
-        function hasEffectiveRealizationFilter(ens: RegularEnsemble | DeltaEnsemble | null): boolean {
-            if (!ens || !ensembleRealizationFilterFunction) {
-                return false;
-            }
-
-            const ensembleRealizations = [...ens.getRealizations()].toSorted();
-            const filteredRealizations = [...ensembleRealizationFilterFunction(ens.getIdent())].toSorted();
-            return !isEqual(filteredRealizations, ensembleRealizations);
-        },
-        [ensembleRealizationFilterFunction],
-    );
-
-    const EnsembleTagOption = React.useCallback(
-        function EnsembleTagOption(props: TagOptionProps): React.ReactNode {
-            const ensemble = ensembles.find((ens) => ens.getIdent().toString() === props.value) ?? null;
-            const ensembleColor = ensemble?.getColor() ?? null;
-            const isRealizationFilterEffective = hasEffectiveRealizationFilter(ensemble);
-
-            // Color const for passing to ColorTileWithBadge
-            const TAG_OPTION_BACKGROUND_COLOR = props.isFocused ? "bg-blue-100" : "bg-white";
-
-            return (
-                <>
-                    <li
-                        className={`-mx-2 flex items-center ${TAG_OPTION_BACKGROUND_COLOR}`}
-                        style={{
-                            height: props.height,
-                        }}
-                        onMouseMove={props.onHover}
-                    >
-                        <label className="flex size-full px-2 py-1 cursor-pointer gap-2">
-                            <Checkbox className="w-full" checked={props.isSelected} onChange={props.onToggle} />
-                            {ensembleColor && (
-                                <span
-                                    className="flex items-center w-6"
-                                    title={
-                                        isRealizationFilterEffective
-                                            ? "Some realizations are being filtered out"
-                                            : undefined
-                                    }
-                                >
-                                    <ColorTileWithBadge
-                                        color={ensembleColor}
-                                        showBadge={isRealizationFilterEffective}
-                                        badgeIcon={FilterAlt}
-                                        badgeClassName={TAG_OPTION_BACKGROUND_COLOR}
-                                    />
-                                </span>
-                            )}
-                            <span title={props.label ?? props.value} className="truncate min-w-0">
-                                {props.label ?? props.value}
-                            </span>
-                        </label>
-                    </li>
-                </>
-            );
-        },
-        [ensembles, hasEffectiveRealizationFilter],
-    );
-
-    const EnsembleTag = React.useCallback(
-        function EnsembleTag(props: TagProps): React.ReactNode {
-            const ensemble = ensembles.find((ens) => ens.getIdent().toString() === props.tag) ?? null;
-            const ensembleColor = ensemble?.getColor() ?? null;
-            const isRealizationFilterEffective = hasEffectiveRealizationFilter(ensemble);
-
-            // Color const for passing to ColorTileWithBadge
-            const TAG_BACKGROUND_COLOR = "bg-slate-50";
-
-            return (
-                <li
-                    className={resolveClassNames(
-                        `text-sm rounded pl-1 pr-1 py-1 border-1 flex gap-1 items-center relative ${TAG_BACKGROUND_COLOR}`,
-                        {
-                            "outline-1": props.focused,
-                        },
-                    )}
-                    style={{
-                        outlineColor: (props.focused && ensembleColor) || "var(--color-blue-500)",
-                        borderColor: ensembleColor ?? undefined,
-                    }}
-                    onClick={props.onFocus}
-                >
-                    {ensembleColor && (
-                        <span
-                            className="flex items-center w-6"
-                            title={
-                                isRealizationFilterEffective ? "Some realizations are being filtered out" : undefined
-                            }
-                        >
-                            <ColorTileWithBadge
-                                color={ensembleColor}
-                                showBadge={isRealizationFilterEffective}
-                                badgeClassName={TAG_BACKGROUND_COLOR}
-                                badgeIcon={FilterAlt}
-                            />
-                        </span>
-                    )}
-                    <span>{props.label ?? String(props.tag)}</span>
-                    <IconButton className="align-text-bottom" title="Remove tag" size="small" onClick={props.onRemove}>
-                        <Close fontSize="inherit" />
-                    </IconButton>
-
-                    {props.selected && (
-                        <div className="bg-blue-500 opacity-30 absolute left-0 top-0 w-full h-full block z-10 rounded-sm" />
-                    )}
-                </li>
-            );
-        },
-        [ensembles, hasEffectiveRealizationFilter],
-    );
-
     const handleSelectionChange = React.useCallback(
         function handleSelectionChanged(selectedEnsembleIdentStringArray: string[]) {
             const identArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[] = [];
@@ -179,7 +62,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
             if (!allowDeltaEnsembles) {
                 const validIdentArray = identArray.filter((ident) =>
                     isEnsembleIdentOfType(ident, RegularEnsembleIdent),
-                ) as RegularEnsembleIdent[];
+                );
                 onChange(validIdentArray);
                 return;
             }
@@ -193,8 +76,20 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
             selection={selectedArray}
             tagOptions={optionsArray}
             onChange={handleSelectionChange}
-            renderTag={(props) => <EnsembleTag {...props} />}
-            renderTagOption={(props) => <EnsembleTagOption {...props} />}
+            renderTag={(props) => (
+                <EnsembleTag
+                    ensembles={ensembles}
+                    ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                    {...props}
+                />
+            )}
+            renderTagOption={(props) => (
+                <EnsembleTagOption
+                    ensembles={ensembles}
+                    ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                    {...props}
+                />
+            )}
             placeholder="Select ensembles..."
         />
     );
