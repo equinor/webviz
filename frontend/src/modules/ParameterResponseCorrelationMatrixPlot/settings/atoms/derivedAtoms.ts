@@ -57,7 +57,7 @@ export const selectedParameterIdentsAtom = atom((get) => {
             return availableParameterIdents;
         }
 
-        // If 100 or more parameters, select all from the first group name
+        // If MAX_INITIAL_SELECTED_PARAMETERS or more parameters, select all from the first group name
         const firstGroupName = availableParameterIdents.find((param) => param.groupName !== null)?.groupName;
         if (firstGroupName) {
             return availableParameterIdents.filter((param) => param.groupName === firstGroupName);
