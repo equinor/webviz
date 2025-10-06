@@ -94,6 +94,8 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
 
     statusWriter.setLoading(isPending || receiverResponses.some((r) => r.isPending));
     const receiverResponseRevisionNumbers = receiverResponses.map((response) => response.revisionNumber);
+    console.log(receiverResponseRevisionNumbers);
+    console.log(receiverResponses);
     const hasParameterIdentsChanged =
         parameterIdents.length !== prevParameterIdents.length ||
         !parameterIdents.every((ident, index) => ident.equals(prevParameterIdents[index]));
@@ -157,6 +159,19 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                         .map((response) => response.displayName)
                         .join(", ")}`,
                 );
+            }
+
+            // Content when no parameters are selected
+            if (parameterIdents.length === 0) {
+                setContent(
+                    <ContentWarning>
+                        <Warning fontSize="large" className="mb-2" />
+                        No parameters selected or available. Please select parameters in the settings pane. If
+                        parameters are selected but not available, ensure that the connected ensembles have continuous
+                        and varying parameters.
+                    </ContentWarning>,
+                );
+                return;
             }
 
             // Create a map to group responses by ensemble

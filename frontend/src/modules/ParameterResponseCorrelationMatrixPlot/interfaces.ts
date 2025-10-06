@@ -2,12 +2,12 @@ import type { ParameterIdent } from "@framework/EnsembleParameters";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
-    parameterIdentsAtom,
     showLabelsAtom,
     useFixedColorRangeAtom,
     plotTypeAtom,
     correlationSettingsAtom,
 } from "./settings/atoms/baseAtoms";
+import { selectedParameterIdentsAtom } from "./settings/atoms/derivedAtoms";
 import type { PlotType, CorrelationSettings } from "./typesAndEnums";
 
 type SettingsToViewInterface = {
@@ -23,7 +23,7 @@ export type Interfaces = {
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    parameterIdents: (get) => get(parameterIdentsAtom),
+    parameterIdents: (get) => get(selectedParameterIdentsAtom),
     showLabels: (get) => get(showLabelsAtom),
     useFixedColorRange: (get) => get(useFixedColorRangeAtom),
     plotType: (get) => get(plotTypeAtom),

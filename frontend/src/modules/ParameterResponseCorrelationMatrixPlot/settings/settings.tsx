@@ -1,29 +1,29 @@
 import React from "react";
 
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { KeyKind } from "@framework/DataChannelTypes";
 import type { ParameterIdent } from "@framework/EnsembleParameters";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { getContinuousAndNonConstantParameterIdentsInEnsembles } from "@modules/_shared/parameterUnions";
 
 import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
 
 import {
     correlationSettingsAtom,
-    parameterIdentsAtom,
+    userSelectedParameterIdentsAtom,
     plotTypeAtom,
     showLabelsAtom,
     useFixedColorRangeAtom,
+    receivedChannelAtom,
+    hasUserInteractedWithParameterSelectionAtom,
 } from "./atoms/baseAtoms";
+import { availableParameterIdentsAtom, selectedParameterIdentsAtom } from "./atoms/derivedAtoms";
 import { ParametersSelector } from "./components/parameterSelector";
 
 const plotTypesOptions = [
@@ -41,44 +41,54 @@ const plotTypesOptions = [
     },
 ];
 
-export function Settings({ initialSettings, settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
-    const [parameterIdents, setParameterIdents] = useAtom(parameterIdentsAtom);
+export function Settings({ initialSettings, settingsContext }: ModuleSettingsProps<Interfaces>) {
+    const setUserSelectedParameterIdents = useSetAtom(userSelectedParameterIdentsAtom);
+    const setHasUserInteracted = useSetAtom(hasUserInteractedWithParameterSelectionAtom);
+    const selectedParameterIdents = useAtomValue(selectedParameterIdentsAtom);
     const [plotType, setPlotType] = useAtom(plotTypeAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
     const [useFixedColorRange, setUseFixedColorRange] = useAtom(useFixedColorRangeAtom);
     const [correlationSettings, setCorrelationSettings] = useAtom(correlationSettingsAtom);
+    const setReceivedChannel = useSetAtom(receivedChannelAtom);
+    const availableParameterIdents = useAtomValue(availableParameterIdentsAtom);
 
-    useApplyInitialSettingsToState(initialSettings, "parameterIdents", "array", setParameterIdents);
+    useApplyInitialSettingsToState(initialSettings, "userParameterIdents", "array", setUserSelectedParameterIdents);
     useApplyInitialSettingsToState(initialSettings, "showLabels", "boolean", setShowLabels);
     useApplyInitialSettingsToState(initialSettings, "correlationSettings", "object", setCorrelationSettings);
-    const receiverResponse = settingsContext.useChannelReceiver({
+
+    const receiverResponse1 = settingsContext.useChannelReceiver({
         receiverIdString: "channelResponse",
         expectedKindsOfKeys: [KeyKind.REALIZATION],
     });
-
-    const ensembleIdentStringsFromChannels: string[] = React.useMemo(() => {
-        if (receiverResponse.channel && receiverResponse.channel.contents) {
-            return receiverResponse.channel.contents.map((content) => content.metaData.ensembleIdentString);
-        }
-        return [];
-    }, [receiverResponse.channel]);
-
-    const ensembleSet = workbenchSession.getEnsembleSet();
-
-    const regularEnsembleIdentsFromChannels: RegularEnsembleIdent[] = React.useMemo(() => {
-        return ensembleIdentStringsFromChannels.flatMap((id) => {
-            const ensemble = ensembleSet.findEnsembleByIdentString(id);
-            return ensemble instanceof RegularEnsemble ? [RegularEnsembleIdent.fromString(id)] : [];
-        });
-    }, [ensembleIdentStringsFromChannels, ensembleSet]);
-
-    const allParameterIdents = getContinuousAndNonConstantParameterIdentsInEnsembles(
-        ensembleSet,
-        regularEnsembleIdentsFromChannels,
+    const receiverResponse2 = settingsContext.useChannelReceiver({
+        receiverIdString: "channelResponse2",
+        expectedKindsOfKeys: [KeyKind.REALIZATION],
+    });
+    const receiverResponse3 = settingsContext.useChannelReceiver({
+        receiverIdString: "channelResponse3",
+        expectedKindsOfKeys: [KeyKind.REALIZATION],
+    });
+    const receiverResponses = React.useMemo(
+        () => [receiverResponse1, receiverResponse2, receiverResponse3],
+        [receiverResponse1, receiverResponse2, receiverResponse3],
+    );
+    console.log(receiverResponses);
+    React.useEffect(
+        () => {
+            setReceivedChannel(receiverResponses);
+        }, // We only want to listen to revision number changes, but we need the whole channel response to set it
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [
+            receiverResponse1.revisionNumber,
+            receiverResponse2.revisionNumber,
+            receiverResponse3.revisionNumber,
+            setReceivedChannel,
+        ],
     );
 
     function handleParametersChanged(parameterIdents: ParameterIdent[]) {
-        setParameterIdents(parameterIdents);
+        setUserSelectedParameterIdents(parameterIdents);
+        setHasUserInteracted(true);
     }
     function handleShowLabelsChanged(e: React.ChangeEvent<HTMLInputElement>) {
         setShowLabels(e.target.checked);
@@ -168,8 +178,8 @@ export function Settings({ initialSettings, settingsContext, workbenchSession }:
             </CollapsibleGroup>
             <CollapsibleGroup title="Parameter selection" expanded>
                 <ParametersSelector
-                    allParameterIdents={allParameterIdents}
-                    selectedParameterIdents={parameterIdents}
+                    allParameterIdents={availableParameterIdents}
+                    selectedParameterIdents={selectedParameterIdents}
                     onChange={handleParametersChanged}
                 />
             </CollapsibleGroup>
