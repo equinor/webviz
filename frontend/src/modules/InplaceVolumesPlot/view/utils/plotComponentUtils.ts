@@ -39,6 +39,7 @@ export function makePlotData(
     // Maps to store already used colors and position for each key for consistency across subplots
     const keyToColor: Map<string, string> = new Map();
     const boxPlotKeyToPositionMap: Map<string, number> = new Map();
+    const NUM_HISTOGRAM_BINS = 10;
 
     return (table: Table): Partial<PlotData>[] => {
         if (table.getColumn(colorBy) === undefined) {
@@ -72,7 +73,7 @@ export function makePlotData(
             }
 
             if (plotType === PlotType.HISTOGRAM) {
-                data.push(...makeHistogram(title, table, firstResultName, keyColor, 10));
+                data.push(...makeHistogram(title, table, firstResultName, keyColor, NUM_HISTOGRAM_BINS));
             } else if (plotType === PlotType.CONVERGENCE) {
                 data.push(...makeConvergencePlot(title, table, firstResultName, keyColor));
             } else if (plotType === PlotType.DISTRIBUTION) {

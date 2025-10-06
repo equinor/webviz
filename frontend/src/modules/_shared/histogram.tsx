@@ -9,8 +9,8 @@ export function makeHistogramTrace({
     numBins: number;
     color: string;
 }): Partial<PlotData> {
-    const xMin = Math.min(...xValues);
-    const xMax = Math.max(...xValues);
+    const xMin = xValues.reduce((min, v) => Math.min(min, v), Infinity);
+    const xMax = xValues.reduce((max, v) => Math.max(max, v), -Infinity);
     const range = xMax - xMin;
 
     const binSize = range / numBins;
