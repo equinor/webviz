@@ -1,5 +1,7 @@
 import type { Color } from "@deck.gl/core";
+import type { Position3D } from "@webviz/subsurface-viewer/dist/layers/utils/layerTools";
 import type { LineString, Point } from "geojson";
+import { sortedIndex } from "lodash";
 import simplify from "simplify-js";
 
 import type { WellboreTrajectory_api } from "@api";
@@ -173,4 +175,37 @@ export function wellTrajectoryToGeojson(
     };
 
     return geometryCollection;
+}
+
+export function getInterpolatedPositionAtMd(
+    md: number,
+    wellboreTrajectory: WellboreTrajectory_api,
+    invertZ = true,
+): Position3D {
+    const { mdArr, eastingArr, northingArr, tvdMslArr } = wellboreTrajectory;
+
+    // The mdArr is sorted, so we do a binary search to find the relevant trajectory indices
+    const mdIndex = sortedIndex(mdArr, md);
+
+    // Get the real life points before and after the point
+    const nextMd = mdArr[mdIndex];
+    const nextX = eastingArr[mdIndex];
+    const nextY = northingArr[mdIndex];
+    const nextZ = tvdMslArr[mdIndex];
+
+    const prevMd = mdArr[mdIndex - 1];
+    const prevX = eastingArr[mdIndex - 1];
+    const prevY = northingArr[mdIndex - 1];
+    const prevZ = tvdMslArr[mdIndex - 1];
+
+    // Calculate how far along this segment the mdPoint is
+    const ratio = (md - prevMd) / (nextMd - prevMd);
+
+    const dx = nextX - prevX;
+    const dy = nextY - prevY;
+    const dz = nextZ - prevZ;
+
+    const zSign = invertZ ? -1 : 1;
+
+    return [prevX + ratio * dx, prevY + ratio * dy, zSign * (prevZ + ratio * dz)];
 }

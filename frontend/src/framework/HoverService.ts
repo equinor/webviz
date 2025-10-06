@@ -5,7 +5,7 @@ import { throttle } from "lodash";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
 export enum HoverTopic {
-    MD = "hover.md",
+    WELLBORE_MD = "hover.md",
     WELLBORE = "hover.wellbore",
     REALIZATION = "hover.realization",
     TIMESTAMP = "hover.timestamp",
@@ -16,7 +16,7 @@ export enum HoverTopic {
 }
 
 export type HoverData = {
-    [HoverTopic.MD]: number | null;
+    [HoverTopic.WELLBORE_MD]: { wellboreUuid: string; md: number } | null;
     [HoverTopic.WELLBORE]: string | null;
     [HoverTopic.REALIZATION]: number | null;
     [HoverTopic.TIMESTAMP]: number | null;
@@ -43,7 +43,7 @@ export class HoverService {
 
     // Throttling. Each topic is updated with its own throttle method.
     private _topicThrottleMap = new Map<keyof HoverData, ThrottledPublishFunc>();
-    private _dataUpdateThrottleMs = 100;
+    private _dataUpdateThrottleMs = 1000;
 
     // Delegate to handle update notifications
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<HoverData>();
@@ -73,15 +73,17 @@ export class HoverService {
     }
 
     makeSnapshotGetter<T extends keyof HoverData>(topic: T, moduleInstanceId: string): () => HoverData[T] | null {
-        return () => {
-            // ? Should  this be an  opt-in functionality?
-            // ! The module that is currently hovering will always see the data updated immedietally
-            if (this._lastHoveredModule && moduleInstanceId === this._lastHoveredModule) {
-                return this._hoverData[topic] ?? null;
-            } else {
-                return this._throttledHoverData[topic] ?? null;
-            }
-        };
+        return () => this.getTopicValue(topic, moduleInstanceId);
+    }
+
+    getTopicValue<T extends HoverTopic>(topic: T, moduleInstanceId: string): HoverData[T] | null {
+        // ? Should  this be an  opt-in functionality?
+        // ! The module that is currently hovering will always see the data updated immediately
+        if (this._lastHoveredModule && moduleInstanceId === this._lastHoveredModule) {
+            return this._hoverData[topic] ?? null;
+        } else {
+            return this._throttledHoverData[topic] ?? null;
+        }
     }
 
     updateHoverValue<T extends keyof HoverData>(topic: T, newValue: HoverData[T]): void {

@@ -21,10 +21,12 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     return (
         <DataProvidersWrapper
+            moduleInstanceId={props.viewContext.getInstanceIdString()}
             fieldId={fieldId}
             layerManager={layerManager}
             preferredViewLayout={preferredViewLayout}
             viewContext={props.viewContext}
+            hoverService={props.hoverService}
             workbenchSession={props.workbenchSession}
             workbenchSettings={props.workbenchSettings}
             workbenchServices={props.workbenchServices}

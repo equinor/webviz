@@ -2,15 +2,14 @@ import React from "react";
 
 import { GeoJsonLayer } from "@deck.gl/layers";
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import type { MapMouseEvent } from "@webviz/subsurface-viewer";
-import type { Feature } from "geojson";
-import _ from "lodash";
-
 import type { HoverData, HoverService } from "@framework/HoverService";
 import { HoverTopic, useHoverValue, usePublishHoverValue } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { getHoverTopicValuesInEvent } from "@modules/_shared/utils/subsurfaceViewerLayers";
+import type { MapMouseEvent } from "@webviz/subsurface-viewer";
+import type { Feature } from "geojson";
+import _ from "lodash";
 
 import type { BoundingBox3D, BoundingBox2D, SubsurfaceViewerWrapperProps } from "./SubsurfaceViewerWrapper";
 import { SubsurfaceViewerWrapper } from "./SubsurfaceViewerWrapper";
@@ -25,7 +24,7 @@ export type HoverUpdateWrapperProps = {
 
 function useValidMdHover(activeWellbore: string | null, hoverService: HoverService, instanceId: string): number | null {
     const hoveredWellbore = useHoverValue(HoverTopic.WELLBORE, hoverService, instanceId);
-    const hoveredMd = useHoverValue(HoverTopic.MD, hoverService, instanceId);
+    const hoveredMd = useHoverValue(HoverTopic.WELLBORE_MD, hoverService, instanceId);
 
     if (hoveredWellbore !== activeWellbore) return null;
 
@@ -121,7 +120,7 @@ export function HoverUpdateWrapper(props: HoverUpdateWrapperProps): React.ReactN
 
     const setHoveredWorldPos = usePublishHoverValue(HoverTopic.WORLD_POS, hoverService, instanceId);
     const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, hoverService, instanceId);
-    const setHoveredMd = usePublishHoverValue(HoverTopic.MD, hoverService, instanceId);
+    const setHoveredMd = usePublishHoverValue(HoverTopic.WELLBORE_MD, hoverService, instanceId);
 
     const validHoverMd = useValidMdHover(props.wellboreUuid, hoverService, instanceId);
     const validHoverWorldPos = useValidWorldPosHover(props.boundingBox, hoverService, instanceId);
@@ -163,14 +162,14 @@ export function HoverUpdateWrapper(props: HoverUpdateWrapperProps): React.ReactN
         function onViewerHover(mouseEvent: MapMouseEvent) {
             const hoverData = getHoverTopicValuesInEvent(
                 mouseEvent,
-                HoverTopic.MD,
+                HoverTopic.WELLBORE_MD,
                 HoverTopic.WELLBORE,
                 HoverTopic.WORLD_POS,
             );
 
             setHoveredWorldPos(hoverData[HoverTopic.WORLD_POS]);
             setHoveredWellbore(hoverData[HoverTopic.WELLBORE]);
-            setHoveredMd(hoverData[HoverTopic.MD]);
+            setHoveredMd(hoverData[HoverTopic.WELLBORE_MD]);
 
             onViewerHoverExternal?.(mouseEvent);
         },

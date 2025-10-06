@@ -34,6 +34,8 @@ export interface ViewsTypeExtended extends ViewsType {
     viewports: ViewportTypeExtended[];
 }
 
+const PICKING_RADIUS = 20;
+
 export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): React.ReactNode {
     const id = React.useId();
     const mainDivRef = React.useRef<HTMLDivElement>(null);
@@ -48,7 +50,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
     const [hoveredWorldPos, setHoveredWorldPos] = useHover(HoverTopic.WORLD_POS, props.hoverService, props.instanceId);
 
     const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, props.hoverService, props.instanceId);
-    const setHoveredMd = usePublishHoverValue(HoverTopic.MD, props.hoverService, props.instanceId);
+    const setHoveredMd = usePublishHoverValue(HoverTopic.WELLBORE_MD, props.hoverService, props.instanceId);
 
     const handleFitInViewClick = React.useCallback(function handleFitInViewClick() {
         setTriggerHomeCounter((prev) => prev + 1);
@@ -58,14 +60,14 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
         function handleMouseHover(event: MapMouseEvent): void {
             const hoverData = getHoverTopicValuesInEvent(
                 event,
-                HoverTopic.MD,
+                HoverTopic.WELLBORE_MD,
                 HoverTopic.WELLBORE,
                 HoverTopic.WORLD_POS,
             );
 
             setHoveredWorldPos(hoverData[HoverTopic.WORLD_POS]);
             setHoveredWellbore(hoverData[HoverTopic.WELLBORE]);
-            setHoveredMd(hoverData[HoverTopic.MD]);
+            setHoveredMd(hoverData[HoverTopic.WELLBORE_MD]);
         },
         [setHoveredWorldPos, setHoveredWellbore, setHoveredMd],
     );
@@ -96,8 +98,10 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
             const picks = deck.pickMultipleObjects({
                 x: screenX + viewport.x,
                 y: screenY + viewport.y,
-                radius: 5,
+                radius: PICKING_RADIUS,
             });
+
+            console.log("picks", picks);
 
             pickInfoDict[viewport.id] = picks;
         }
@@ -128,7 +132,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 // ! If multipicking is false, double-click re-centering stops working
                 coords={{ visible: false, multiPicking: true, pickDepth: 2 }}
                 triggerHome={triggerHomeCounter}
-                pickingRadius={5}
+                pickingRadius={PICKING_RADIUS}
                 onCameraPositionApplied={() => setCameraPositionSetByAction(null)}
                 onMouseEvent={handleMouseEvent}
             >

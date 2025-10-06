@@ -4,6 +4,7 @@ import { type Layer } from "@deck.gl/core";
 import type { BoundingBox3D } from "@webviz/subsurface-viewer";
 import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
+import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
@@ -158,10 +159,12 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
 );
 
 export type LayersWrapperProps = {
+    moduleInstanceId: string;
     fieldId: string;
     layerManager: DataProviderManager;
     preferredViewLayout: PreferredViewLayout;
     viewContext: ViewContext<Interfaces>;
+    hoverService: HoverService;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     workbenchServices: WorkbenchServices;
@@ -288,12 +291,14 @@ export function DataProvidersWrapper(props: LayersWrapperProps): React.ReactNode
     return (
         <InteractionWrapper
             key={`interaction-wrapper-${props.fieldId}`}
+            moduleInstanceId={props.moduleInstanceId}
             views={views}
             fieldId={props.fieldId}
             layers={finalLayers}
             workbenchSession={props.workbenchSession}
             workbenchSettings={props.workbenchSettings}
             workbenchServices={props.workbenchServices}
+            hoverService={props.hoverService}
             usedPolylineIds={usedPolylineIds}
             assemblerProduct={assemblerProduct}
         />

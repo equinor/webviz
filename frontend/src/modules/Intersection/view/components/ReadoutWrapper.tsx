@@ -38,7 +38,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const [readoutItems, setReadoutItems] = React.useState<ReadoutItem[]>([]);
     // Hover synchronization
     const hoverIsLocal = props.hoverService.getLastHoveredModule() === moduleInstanceId;
-    const [hoveredMd, setHoveredMd] = useHover(HoverTopic.MD, props.hoverService, moduleInstanceId);
+    const [hoveredMd, setHoveredMd] = useHover(HoverTopic.WELLBORE_MD, props.hoverService, moduleInstanceId);
     const [hoveredWellbore, setHoveredWellbore] = useHover(HoverTopic.WELLBORE, props.hoverService, moduleInstanceId);
     const setHoveredWorldPos = usePublishHoverValue(HoverTopic.WORLD_POS, props.hoverService, moduleInstanceId);
 

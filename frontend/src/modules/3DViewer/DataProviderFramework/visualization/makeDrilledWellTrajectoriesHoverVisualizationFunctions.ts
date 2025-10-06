@@ -1,7 +1,7 @@
 import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import type { WellboreTrajectory_api } from "@api";
-import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
+import { HoverTopic } from "@framework/HoverService";
 import { BiconeLayer } from "@modules/3DViewer/customDeckGlLayers/BiconeLayer";
 import type { GeoWellFeature } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import type {
@@ -23,20 +23,20 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
     }
 
     return {
-        "global.hoverMd": (hoveredMd: GlobalTopicDefinitions["global.hoverMd"] | null) => {
+        [HoverTopic.WELLBORE_MD]: (wellboreMd) => {
             const wellboreTrajectory = wellboreTrajectories.find(
-                (wellTrajectory) => wellTrajectory.wellboreUuid === hoveredMd?.wellboreUuid,
+                (wellTrajectory) => wellTrajectory.wellboreUuid === wellboreMd?.wellboreUuid,
             );
 
             let hoveredMdPoint3d: [number, number, number] = [0, 0, 0];
             let normal: [number, number, number] = [0, 0, 1];
             const wellLayerDataFeatures: GeoWellFeature[] = [];
 
-            const visible = hoveredMd !== null && wellboreTrajectory !== undefined;
+            const visible = wellboreMd !== null && wellboreTrajectory !== undefined;
 
             if (visible) {
                 for (const [index, point] of wellboreTrajectory.mdArr.entries()) {
-                    if (point >= hoveredMd.md) {
+                    if (point >= wellboreMd.md) {
                         // Interpolate the coordinates
                         const prevPoint = wellboreTrajectory.mdArr[index - 1];
                         const thisPoint = wellboreTrajectory.mdArr[index];
@@ -48,7 +48,7 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
                         const thisY = wellboreTrajectory.northingArr[index];
                         const thisZ = wellboreTrajectory.tvdMslArr[index];
 
-                        const ratio = (hoveredMd.md - prevPoint) / (thisPoint - prevPoint);
+                        const ratio = (wellboreMd.md - prevPoint) / (thisPoint - prevPoint);
                         const x = prevX + ratio * (thisX - prevX);
                         const y = prevY + ratio * (thisY - prevY);
                         const z = prevZ + ratio * (thisZ - prevZ);
@@ -77,7 +77,7 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
                         features: wellLayerDataFeatures,
                     },
                     refine: false,
-                    lineStyle: { width: 3, color: [255, 0, 0] },
+                    lineStyle: { width: 5, color: [255, 0, 0] },
                     wellHeadStyle: {
                         size: 0,
                     },

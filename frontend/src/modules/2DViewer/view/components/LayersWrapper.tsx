@@ -49,6 +49,8 @@ import type { ViewportTypeExtended, ViewsTypeExtended } from "./SubsurfaceViewer
 import { SubsurfaceViewerWrapper } from "./SubsurfaceViewerWrapper";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
+import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/2DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
+import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
 
 export type LayersWrapperProps = {
     layerManager: DataProviderManager;
@@ -144,6 +146,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     {
         transformToVisualization: makeDrilledWellTrajectoriesLayer,
         transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
+        transformToHoverVisualization: makeDrilledWellTrajectoriesHoverVisualizationFunctions,
     },
 );
 
@@ -153,6 +156,14 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
 
     const assemblerProduct = useVisualizationAssemblerProduct(props.layerManager, VISUALIZATION_ASSEMBLER);
+
+    const hoverVisualizations = useSubscribedProviderHoverVisualizations<VisualizationTarget.DECK_GL>(
+        assemblerProduct,
+        props.hoverService,
+        props.viewContext.getInstanceIdString(),
+    );
+
+    // React.useEffect(() => console.log("new assembler product", [assemblerProduct]));
 
     const globalAnnotations = assemblerProduct.annotations.filter((el) => "colorScale" in el);
 
@@ -173,6 +184,12 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                     deckGlLayers.push(layer);
                 }
             }
+
+            hoverVisualizations.forEach((hoverVisualization) => {
+                if (hoverVisualization.groupId === item.id) {
+                    layerIds.push(...hoverVisualization.hoverVisualizations.map((layer) => layer.id));
+                }
+            });
 
             viewports.push({
                 id: item.id,
@@ -241,6 +258,9 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     deckGlLayers.reverse();
     // We want this one to always be on top
     deckGlLayers.push(highlightLayer);
+    deckGlLayers.push(...hoverVisualizations.flatMap((hvs) => hvs.hoverVisualizations));
+
+    console.log(deckGlLayers);
 
     return (
         <PendingWrapper className="w-full h-full flex flex-col" isPending={numLoadingLayers > 0}>

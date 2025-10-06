@@ -11,6 +11,7 @@ import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/
 import type { Feature } from "geojson";
 import { isEqual } from "lodash";
 
+import type { HoverService } from "@framework/HoverService";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
@@ -34,10 +35,12 @@ import { DeckGlInstanceManagerTopic, type DeckGlInstanceManager } from "../utils
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 
 export type ReadoutWrapperProps = {
+    moduleInstanceId: string;
     views: ViewsTypeExtended;
     layers: DeckGlLayer[];
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
+    hoverService: HoverService;
     workbenchServices: WorkbenchServices;
     deckGlManager: DeckGlInstanceManager;
     verticalScale: number;
@@ -45,6 +48,7 @@ export type ReadoutWrapperProps = {
     deckGlRef: React.RefObject<DeckGLRef | null>;
     children?: React.ReactNode;
     assemblerProduct: AssemblerProduct<VisualizationTarget.DECK_GL, any, any>;
+    onViewerHover?: (mouseEvent: MapMouseEvent) => void;
 };
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
@@ -89,6 +93,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     function handleMouseEvent(event: MapMouseEvent): void {
         if (event.type === "hover") {
+            props.onViewerHover?.(event);
             handleMouseHover(event);
         }
     }

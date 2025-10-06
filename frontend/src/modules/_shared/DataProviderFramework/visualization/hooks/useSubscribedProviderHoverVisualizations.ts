@@ -1,12 +1,11 @@
 import React from "react";
 
-import type { WorkbenchServices } from "@framework/WorkbenchServices";
+import type { HoverData, HoverService, HoverTopic } from "@framework/HoverService";
 
 import {
     VisualizationItemType,
     type AssemblerProduct,
     type DataProviderHoverVisualizationTargetTypes,
-    type HoverTopicDefinitions,
     type HoverVisualizationFunctions,
     type VisualizationGroup,
     type VisualizationTarget,
@@ -19,9 +18,7 @@ export type AssemblerProviderHoverVisualizations<TTarget extends VisualizationTa
 
 type InternalAssemblerProviderHoverVisualizations<TTarget extends VisualizationTarget> = {
     groupId?: string;
-    hoverVisualizations: Partial<
-        Record<keyof HoverTopicDefinitions, DataProviderHoverVisualizationTargetTypes[TTarget][]>
-    >;
+    hoverVisualizations: Partial<Record<HoverTopic, DataProviderHoverVisualizationTargetTypes[TTarget][]>>;
 };
 
 type InternalAssemblerProviderHoverVisualizationFunctions<TTarget extends VisualizationTarget> = {
@@ -31,61 +28,74 @@ type InternalAssemblerProviderHoverVisualizationFunctions<TTarget extends Visual
 
 export function useSubscribedProviderHoverVisualizations<TTarget extends VisualizationTarget>(
     visualizationAssemblerProduct: AssemblerProduct<TTarget, any, any>,
-    workbenchServices: WorkbenchServices,
+    hoverService: HoverService,
+    moduleInstanceId: string,
 ): AssemblerProviderHoverVisualizations<TTarget>[] {
-    const [visualizations, setVisualizations] = React.useState<InternalAssemblerProviderHoverVisualizations<TTarget>[]>(
-        [],
+    const [hoverData, setHoverData] = React.useState<Partial<HoverData>>({});
+
+    const visualizationFunctions = React.useMemo(
+        () => flattenVisualizationFunctionsRecursively(visualizationAssemblerProduct),
+        [visualizationAssemblerProduct],
     );
 
     React.useEffect(
-        function subscribeToWorkbenchServices() {
-            const hoverVisualizationFunctions =
-                flattenVisualizationFunctionsRecursively<TTarget>(visualizationAssemblerProduct);
+        function subscribeToHoverTopics() {
             const unsubscribeFunctions: (() => void)[] = [];
+            const topics = new Set(
+                visualizationFunctions.flatMap((f) => {
+                    return Object.keys(f.hoverVisualizationFunctions) as HoverTopic[];
+                }),
+            );
 
-            let visualizationsArray: InternalAssemblerProviderHoverVisualizations<TTarget>[] =
-                hoverVisualizationFunctions.map((hoverVisualizationFunction) => ({
-                    groupId: hoverVisualizationFunction.groupId,
-                    hoverVisualizations: {},
-                }));
-            setVisualizations(visualizationsArray);
+            for (const topic of topics) {
+                const topicUnsubFunc = hoverService.getPublishSubscribeDelegate().subscribe(topic, () => {
+                    const topicData = hoverService.getTopicValue(topic, moduleInstanceId);
 
-            for (const hoverVisualizationFunction of hoverVisualizationFunctions) {
-                for (const [topic, hoverFunction] of Object.entries(
-                    hoverVisualizationFunction.hoverVisualizationFunctions,
-                )) {
-                    const typedKey = topic as keyof HoverTopicDefinitions;
-                    unsubscribeFunctions.push(
-                        workbenchServices.subscribe(typedKey, (value) => {
-                            const newVisualizations = [...visualizationsArray];
+                    setHoverData((prev) => {
+                        if (prev[topic] === topicData) return prev;
+                        return { ...prev, [topic]: topicData };
+                    });
+                });
 
-                            for (const visualization of newVisualizations) {
-                                if (visualization.groupId === hoverVisualizationFunction.groupId) {
-                                    visualization.hoverVisualizations[typedKey] = hoverFunction(value as any);
-                                }
-                            }
-
-                            visualizationsArray = newVisualizations;
-                            setVisualizations(newVisualizations);
-                        }),
-                    );
-                }
+                unsubscribeFunctions.push(topicUnsubFunc);
             }
 
             return function unsubscribeFromWorkbenchServices() {
                 for (const unsubscribeFunction of unsubscribeFunctions) {
                     unsubscribeFunction();
                 }
-                setVisualizations([]);
+                setHoverData({});
             };
         },
-        [visualizationAssemblerProduct, workbenchServices],
+        [hoverService, moduleInstanceId, visualizationAssemblerProduct, visualizationFunctions],
     );
 
-    return visualizations.map((visualization) => ({
-        groupId: visualization.groupId,
-        hoverVisualizations: Object.values(visualization.hoverVisualizations).flat(),
-    }));
+    return React.useMemo(() => {
+        const visualizations = [] as AssemblerProviderHoverVisualizations<TTarget>[];
+
+        for (const visualizationFunc of visualizationFunctions) {
+            const groupVisualization = [];
+
+            for (const topic in visualizationFunc.hoverVisualizationFunctions) {
+                const typedTopic = topic as HoverTopic;
+                const topicVisualization = visualizationFunc.hoverVisualizationFunctions[typedTopic];
+                const data = hoverData[typedTopic];
+
+                if (topicVisualization && data !== undefined) {
+                    // const typedData = data as Parameters<typeof topicVisualization>[0];
+                    const visualization = topicVisualization(data); // <-- FIXME
+
+                    groupVisualization.push(visualization);
+                }
+            }
+
+            visualizations.push({
+                groupId: visualizationFunc.groupId,
+                hoverVisualizations: groupVisualization.flat(),
+            });
+        }
+        return visualizations;
+    }, [hoverData, visualizationFunctions]);
 }
 
 function flattenVisualizationFunctionsRecursively<TTarget extends VisualizationTarget>(

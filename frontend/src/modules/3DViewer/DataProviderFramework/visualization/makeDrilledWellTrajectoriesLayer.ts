@@ -24,10 +24,11 @@ export function makeDrilledWellTrajectoriesLayer(
     const wellLayerDataFeatures = tempWorkingWellsData.map((well) => wellTrajectoryToGeojson(well));
 
     function getLineStyleWidth(object: Feature): number {
-        if (object.properties && "lineWidth" in object.properties) {
-            return object.properties.lineWidth as number;
-        }
-        return 2;
+        return 10;
+        // if (object.properties && "lineWidth" in object.properties) {
+        //     return object.properties.lineWidth as number;
+        // }
+        // return 2;
     }
 
     function getWellHeadStyleWidth(object: Feature): number {
