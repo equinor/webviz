@@ -6,6 +6,7 @@ import {
     VisualizationItemType,
     type AssemblerProduct,
     type DataProviderHoverVisualizationTargetTypes,
+    type HoverVisualizationFunction,
     type HoverVisualizationFunctions,
     type VisualizationGroup,
     type VisualizationTarget,
@@ -78,12 +79,14 @@ export function useSubscribedProviderHoverVisualizations<TTarget extends Visuali
 
             for (const topic in visualizationFunc.hoverVisualizationFunctions) {
                 const typedTopic = topic as HoverTopic;
-                const topicVisualization = visualizationFunc.hoverVisualizationFunctions[typedTopic];
+                const topicVisualization = visualizationFunc.hoverVisualizationFunctions[typedTopic] as
+                    | HoverVisualizationFunction<TTarget, typeof typedTopic>
+                    | undefined;
+
                 const data = hoverData[typedTopic];
 
                 if (topicVisualization && data !== undefined) {
-                    // const typedData = data as Parameters<typeof topicVisualization>[0];
-                    const visualization = topicVisualization(data); // <-- FIXME
+                    const visualization = topicVisualization(data);
 
                     groupVisualization.push(visualization);
                 }

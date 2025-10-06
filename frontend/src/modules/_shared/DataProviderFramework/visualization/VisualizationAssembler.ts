@@ -154,9 +154,13 @@ export type DataProviderTransformers<
     >;
 };
 
-export type HoverVisualizationFunctions<TTarget extends VisualizationTarget> = Partial<{
-    [K in HoverTopic]: (hoverInfo: HoverData[K]) => DataProviderHoverVisualizationTargetTypes[TTarget][];
-}>;
+export type HoverVisualizationFunctions<TTarget extends VisualizationTarget> = {
+    [K in HoverTopic]?: HoverVisualizationFunction<TTarget, K>[];
+};
+
+export type HoverVisualizationFunction<TTarget extends VisualizationTarget, TTopic extends HoverTopic> = (
+    hoverInfo: HoverData[TTopic],
+) => DataProviderHoverVisualizationTargetTypes[TTarget][];
 
 export type VisualizationTransformer<
     TSettings extends Settings,
