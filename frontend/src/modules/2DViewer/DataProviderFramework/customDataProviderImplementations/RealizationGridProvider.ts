@@ -27,6 +27,7 @@ const realizationGridSettings = [
     Setting.TIME_OR_INTERVAL,
     Setting.SHOW_GRID_LINES,
     Setting.COLOR_SCALE,
+    Setting.OPACITY_PERCENT,
 ] as const;
 export type RealizationGridSettings = typeof realizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationGridSettings>;
@@ -47,6 +48,7 @@ export class RealizationGridProvider
     getDefaultSettingsValues() {
         return {
             [Setting.SHOW_GRID_LINES]: false,
+            [Setting.OPACITY_PERCENT]: 100,
         };
     }
 
