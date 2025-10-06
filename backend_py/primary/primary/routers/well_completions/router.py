@@ -7,6 +7,7 @@ from primary.services.utils.authenticated_user import AuthenticatedUser
 
 from primary.services.sumo_access.well_completions_access import WellCompletionsAccess
 from primary.services.well_completions_assembler.well_completions_assembler import WellCompletionsAssembler
+from primary.utils.query_string_utils import decode_uint_list_str
 
 from . import converters
 from . import schemas
@@ -20,7 +21,7 @@ async def get_well_completions_data(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
-    realization: Annotated[int | list[int] | None, Query( description="Optional realizations to include. Provide single realization or list of realizations. If not specified, all realizations will be returned.")] = None,
+    realizations_encoded_as_uint_list_str: Annotated[int | str | None, Query( description="Optional realizations to include, list encoded as string. If not specified, all realizations will be returned.")] = None,
     # fmt:on
 ) -> schemas.WellCompletionsData:
     access = WellCompletionsAccess.from_ensemble_name(
@@ -29,18 +30,19 @@ async def get_well_completions_data(
 
     well_completions_assembler = WellCompletionsAssembler(well_completions_access=access)
 
+    # Decode realizations if encoded string is provided
+    realizations: list[int] | None = None
+    if isinstance(realizations_encoded_as_uint_list_str, str):
+        realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
+
     # Fetch and initialize table data
-    if isinstance(realization, int):
+    if realizations is not None and len(realizations) == 1:
         await well_completions_assembler.fetch_and_initialize_well_completions_single_realization_table_data_async(
-            realization=realization
-        )
-    elif realization is not None and len(realization) == 1:
-        await well_completions_assembler.fetch_and_initialize_well_completions_single_realization_table_data_async(
-            realization=realization[0]
+            realization=realizations[0]
         )
     else:
         await well_completions_assembler.fetch_and_initialize_well_completions_table_data_async(
-            realizations=realization
+            realizations=realizations
         )
 
     # Create well completions data object

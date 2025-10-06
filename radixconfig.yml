@@ -3,6 +3,8 @@ kind: RadixApplication
 metadata:
   name: webviz
 spec:
+  build:
+    useBuildKit: true
   environments:
     - name: prod
     - name: preprod

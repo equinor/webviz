@@ -2828,9 +2828,9 @@ export type GetWellCompletionsDataData_api = {
          */
         ensemble_name: string;
         /**
-         * Optional realizations to include. Provide single realization or list of realizations. If not specified, all realizations will be returned.
+         * Optional realizations to include, list encoded as string. If not specified, all realizations will be returned.
          */
-        realization?: number | Array<number> | null;
+        realizations_encoded_as_uint_list_str?: number | string | null;
         t?: number;
     };
     url: "/well_completions/well_completions_data/";

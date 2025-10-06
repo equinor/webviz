@@ -17,7 +17,14 @@ export function makeRealizationSurfaceLayer({
 }: TransformerArgs<RealizationSurfaceSettings, RealizationSurfaceData>): MapLayer | null {
     const data = getData();
     const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
-
+    let contours: [number, number] = [-1, -1];
+    const { enabled: contourEnabled, value: contourValue } = getSetting(Setting.CONTOURS) ?? {
+        enabled: false,
+        value: 0,
+    };
+    if (contourEnabled && contourValue !== null) {
+        contours = [0, contourValue];
+    }
     if (!data) {
         return null;
     }
@@ -40,6 +47,8 @@ export function makeRealizationSurfaceLayer({
                 valueMax: data.surfaceData.value_max,
                 denormalize: true,
             }),
+            contours: contours,
+            isContoursDepth: true,
             gridLines: false,
         });
     }
