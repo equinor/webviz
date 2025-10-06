@@ -94,8 +94,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
 
     statusWriter.setLoading(isPending || receiverResponses.some((r) => r.isPending));
     const receiverResponseRevisionNumbers = receiverResponses.map((response) => response.revisionNumber);
-    console.log(receiverResponseRevisionNumbers);
-    console.log(receiverResponses);
+
     const hasParameterIdentsChanged =
         parameterIdents.length !== prevParameterIdents.length ||
         !parameterIdents.every((ident, index) => ident.equals(prevParameterIdents[index]));

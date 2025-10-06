@@ -52,7 +52,12 @@ export function Settings({ initialSettings, settingsContext }: ModuleSettingsPro
     const setReceivedChannel = useSetAtom(receivedChannelAtom);
     const availableParameterIdents = useAtomValue(availableParameterIdentsAtom);
 
-    useApplyInitialSettingsToState(initialSettings, "userParameterIdents", "array", setUserSelectedParameterIdents);
+    useApplyInitialSettingsToState(
+        initialSettings,
+        "userSelectedParameterIdents",
+        "array",
+        setUserSelectedParameterIdents,
+    );
     useApplyInitialSettingsToState(initialSettings, "showLabels", "boolean", setShowLabels);
     useApplyInitialSettingsToState(initialSettings, "correlationSettings", "object", setCorrelationSettings);
 
@@ -72,7 +77,7 @@ export function Settings({ initialSettings, settingsContext }: ModuleSettingsPro
         () => [receiverResponse1, receiverResponse2, receiverResponse3],
         [receiverResponse1, receiverResponse2, receiverResponse3],
     );
-    console.log(receiverResponses);
+
     React.useEffect(
         () => {
             setReceivedChannel(receiverResponses);

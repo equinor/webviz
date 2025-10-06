@@ -41,7 +41,7 @@ export const selectedParameterIdentsAtom = atom((get) => {
     const availableParameterIdents = get(availableParameterIdentsAtom);
     const userParameterIdents: ParameterIdent[] = get(userSelectedParameterIdentsAtom);
     const hasUserInteracted = get(hasUserInteractedWithParameterSelectionAtom);
-
+    const MAX_INITIAL_SELECTED_PARAMETERS = 100;
     // Ensure that the selected parameters are still available
     const filteredUserParameters = userParameterIdents.filter((param) =>
         availableParameterIdents.some(
@@ -52,8 +52,8 @@ export const selectedParameterIdentsAtom = atom((get) => {
     // Only auto-select if user has never interacted with the parameter selection (initial state)
     // Don't auto-select when user has made selections but they became empty through filtering or explicit deselection
     if (!hasUserInteracted && userParameterIdents.length === 0 && availableParameterIdents.length > 0) {
-        // If less than 100 parameters, select all
-        if (availableParameterIdents.length < 100) {
+        // If less than MAX_INITIAL_SELECTED_PARAMETERS parameters, select all
+        if (availableParameterIdents.length < MAX_INITIAL_SELECTED_PARAMETERS) {
             return availableParameterIdents;
         }
 

@@ -65,7 +65,7 @@ const template: Template = {
                 },
             },
             initialSettings: {
-                parameterIdents: [
+                userSelectedParameterIdents: [
                     new ParameterIdent("KVKH_CHANNEL", "GLOBVAR"),
                     new ParameterIdent("KVKH_CREVASSE", "GLOBVAR"),
                     new ParameterIdent("KVKH_US", "GLOBVAR"),
