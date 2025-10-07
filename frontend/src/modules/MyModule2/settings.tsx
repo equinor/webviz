@@ -10,6 +10,7 @@ import { Switch } from "@lib/components/Switch";
 import type { TagProps } from "@lib/components/TagInput";
 import type { TagOption, TagOptionProps } from "@lib/components/TagPicker";
 import { TagPicker } from "@lib/components/TagPicker";
+import { Tooltip } from "@lib/components/Tooltip";
 
 import {
     allowMultiSelectAtom,
@@ -99,6 +100,19 @@ export function Settings(): React.ReactNode {
             <Label text="Multi-select" position="left">
                 <Switch checked={allowMultiSelect} onChange={(e) => setAllowMultiSelect(e.target.checked)} />
             </Label>
+
+            <Tooltip title="This is default delay">
+                <div className="p-1">This text has a tooltip with default delay</div>
+            </Tooltip>
+            <Tooltip title="This is short delay" enterDelay="short">
+                <div className="p-1">This text has a tooltip with short delay</div>
+            </Tooltip>
+            <Tooltip title="This is medium delay" enterDelay="medium">
+                <div className="p-1">This text has a tooltip with medium delay</div>
+            </Tooltip>
+            <Tooltip title="This is long delay" enterDelay="long">
+                <div className="p-1">This text has a tooltip with long delay</div>
+            </Tooltip>
         </>
     );
 }
