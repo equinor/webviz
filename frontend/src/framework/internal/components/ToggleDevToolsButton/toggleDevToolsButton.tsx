@@ -4,9 +4,9 @@ import { BugReport } from "@mui/icons-material";
 
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { Tooltip } from "@lib/components/Tooltip";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Tooltip } from "@equinor/eds-core-react";
 
 export type ToggleDevToolsButtonProps = {
     guiMessageBroker: GuiMessageBroker;

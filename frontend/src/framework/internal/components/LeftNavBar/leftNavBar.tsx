@@ -6,12 +6,12 @@ import { GuiState, LeftDrawerContent, useGuiState } from "@framework/GuiMessageB
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { Badge } from "@lib/components/Badge";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 
 type LeftNavBarProps = {
     workbench: Workbench;

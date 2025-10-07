@@ -1,6 +1,5 @@
 import React from "react";
 
-import { Tooltip } from "@equinor/eds-core-react";
 import { Add, Delete, Report } from "@mui/icons-material";
 
 import type { EnsembleParameters } from "@framework/EnsembleParameters";
@@ -21,6 +20,7 @@ import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/S
 import { SmartNodeSelector } from "@lib/components/SmartNodeSelector";
 import type { SmartNodeSelectorTag } from "@lib/components/SmartNodeSelector/smartNodeSelector";
 import { TagPicker } from "@lib/components/TagPicker";
+import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { createContinuousValueSliderStep } from "../private-utils/sliderUtils";

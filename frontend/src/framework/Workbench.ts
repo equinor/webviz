@@ -18,8 +18,8 @@ import { makeWorkbenchSessionLocalStorageString } from "./internal/WorkbenchSess
 import type { Template } from "./TemplateRegistry";
 import { UserCreatedItemsEvent } from "./UserCreatedItems";
 import type { WorkbenchServices } from "./WorkbenchServices";
-import { WorkbenchSettingsTopic } from "./WorkbenchSettings";
 import { WorkbenchSessionTopic } from "./WorkbenchSession";
+import { WorkbenchSettingsTopic } from "./WorkbenchSettings";
 
 export enum WorkbenchTopic {
     ACTIVE_SESSION = "activeSession",

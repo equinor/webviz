@@ -2,12 +2,12 @@ import React from "react";
 
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
+import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { BaseComponentProps } from "../BaseComponent";
 import { BaseComponent } from "../BaseComponent";
 import { DenseIconButton } from "../DenseIconButton";
-import { Tooltip } from "@equinor/eds-core-react";
 
 export type CollapsibleGroupProps = {
     icon?: React.ReactElement;

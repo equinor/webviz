@@ -1,8 +1,8 @@
 import React from "react";
 
-import { Tooltip } from "@equinor/eds-core-react";
 import { isEqual } from "lodash";
 
+import { Tooltip } from "@lib/components/Tooltip";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

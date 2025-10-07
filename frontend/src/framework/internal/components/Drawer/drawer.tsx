@@ -1,6 +1,5 @@
 import React from "react";
 
-import { Tooltip } from "@equinor/eds-core-react";
 import { Dropdown, MenuButton } from "@mui/base";
 import { Check, Close, FilterAlt, Search } from "@mui/icons-material";
 
@@ -9,6 +8,7 @@ import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Input } from "@lib/components/Input";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem/menuItem";
+import { Tooltip } from "@lib/components/Tooltip";
 
 export type DrawerFilterItem<T extends string | number> = {
     label: React.ReactNode;

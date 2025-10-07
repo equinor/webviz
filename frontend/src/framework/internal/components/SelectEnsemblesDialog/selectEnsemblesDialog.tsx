@@ -8,6 +8,7 @@ import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -25,7 +26,6 @@ import {
 import { EnsemblePicker } from "./private-components/EnsemblePicker";
 import { EnsembleTables } from "./private-components/EnsembleTables";
 import type { InternalDeltaEnsembleSetting, InternalRegularEnsembleSetting } from "./types";
-import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 
 export type SelectEnsemblesDialogProps = {
     workbench: Workbench;

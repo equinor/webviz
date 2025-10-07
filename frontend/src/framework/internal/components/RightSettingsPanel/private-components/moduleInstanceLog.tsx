@@ -1,6 +1,5 @@
 import React from "react";
 
-import { Tooltip } from "@equinor/eds-core-react";
 import { CheckCircle, ClearAll, CloudDone, CloudDownload, Error, History, Warning } from "@mui/icons-material";
 
 import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
@@ -17,6 +16,7 @@ import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
+import { Tooltip } from "@lib/components/Tooltip";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";

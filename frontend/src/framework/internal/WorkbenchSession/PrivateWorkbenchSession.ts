@@ -8,6 +8,7 @@ import { Dashboard, type SerializedDashboard } from "@framework/internal/Dashboa
 import { RealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UserCreatedItems, type SerializedUserCreatedItems } from "@framework/UserCreatedItems";
+import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
 import {
@@ -18,7 +19,6 @@ import {
 import { PrivateWorkbenchSettings, type SerializedWorkbenchSettings } from "../PrivateWorkbenchSettings";
 
 import { type WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
-import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
 
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;

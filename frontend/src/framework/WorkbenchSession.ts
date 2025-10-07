@@ -4,10 +4,10 @@ import { usePublishSubscribeTopicValue, type PublishSubscribe } from "@lib/utils
 
 import type { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import type { EnsembleSet } from "./EnsembleSet";
+import type { WorkbenchSessionTopicPayloads } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { RealizationFilterSet } from "./RealizationFilterSet";
 import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import type { UserCreatedItems } from "./UserCreatedItems";
-import type { WorkbenchSessionTopicPayloads } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
 
 export enum WorkbenchSessionTopic {
     ENSEMBLE_SET = "EnsembleSet",

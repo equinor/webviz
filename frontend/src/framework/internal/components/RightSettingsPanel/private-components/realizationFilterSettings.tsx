@@ -16,8 +16,8 @@ import { getEnsembleIdentFromString } from "@framework/utils/ensembleIdentUtils"
 import { countTrueValues } from "@framework/utils/objectUtils";
 import { areParameterIdentStringToValueSelectionMapCandidatesEqual } from "@framework/utils/realizationFilterTypesUtils";
 import type { Workbench } from "@framework/Workbench";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 export type RealizationFilterSettingsProps = { workbench: Workbench; onClose: () => void };
 

@@ -1,6 +1,5 @@
 import React from "react";
 
-import { Tooltip } from "@equinor/eds-core-react";
 import { Dropdown, MenuButton } from "@mui/base";
 import { Close, CloseFullscreen, Error, History, Input, OpenInFull, Output, Warning } from "@mui/icons-material";
 
@@ -26,6 +25,7 @@ import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/dens
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import { MenuText } from "@lib/components/MenuText/menuText";
+import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

@@ -1,6 +1,5 @@
 import React from "react";
 
-import { Tooltip } from "@equinor/eds-core-react";
 import { Dropdown, MenuButton } from "@mui/base";
 import { AccountCircle, Login, Logout } from "@mui/icons-material";
 
@@ -11,6 +10,7 @@ import { Menu } from "@lib/components/Menu";
 import { MenuDivider } from "@lib/components/MenuDivider";
 import { MenuItem } from "@lib/components/MenuItem";
 import { MenuText } from "@lib/components/MenuText/menuText";
+import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 

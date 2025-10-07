@@ -1,7 +1,6 @@
 import React from "react";
 
-import { Tooltip } from "@equinor/eds-core-react";
-
+import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { Button } from "../Button";
