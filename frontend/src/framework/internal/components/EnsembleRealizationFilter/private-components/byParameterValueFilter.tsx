@@ -265,9 +265,10 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         if (isArrayOfStrings(valueSelection) && isArrayOfStrings(parameter.values)) {
             const uniqueValues = Array.from(new Set([...parameter.values]));
             return (
-                <TagPicker<string>
-                    value={[...valueSelection]}
-                    tags={uniqueValues.map((elm) => {
+                <TagPicker
+                    showListAsSelectionCount
+                    selection={[...valueSelection]}
+                    tagOptions={uniqueValues.map((elm) => {
                         return { label: elm, value: elm };
                     })}
                     onChange={(value) => handleDiscreteParameterValueSelectionChange(parameterIdentString, value)}
@@ -278,12 +279,15 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         if (isArrayOfNumbers(valueSelection) && isArrayOfNumbers(parameter.values)) {
             const uniqueValues = Array.from(new Set([...parameter.values]));
             return (
-                <TagPicker<number>
-                    value={valueSelection.map((elm) => elm)}
-                    tags={uniqueValues.map((elm) => {
-                        return { label: elm.toString(), value: elm };
+                <TagPicker
+                    showListAsSelectionCount
+                    selection={valueSelection.map((elm) => String(elm))}
+                    tagOptions={uniqueValues.map((elm) => {
+                        return { label: String(elm), value: String(elm) };
                     })}
-                    onChange={(value) => handleDiscreteParameterValueSelectionChange(parameterIdentString, value)}
+                    onChange={(value) =>
+                        handleDiscreteParameterValueSelectionChange(parameterIdentString, value.map(Number))
+                    }
                 />
             );
         }
