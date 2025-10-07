@@ -2,8 +2,9 @@ import { makeHistogramTrace } from "@modules/_shared/histogram";
 import { computeQuantile } from "@modules/_shared/utils/math/statistics";
 import type { Layout, PlotType } from "plotly.js";
 
-import type { ParameterDataArr, EnsembleParameterRealizationsAndValues } from "../../typesAndEnums";
 import { ParameterDistributionPlotType } from "../../typesAndEnums";
+
+import type { EnsembleParameterRealizationsAndValues, EnsembleSetParameterArray } from "./ensembleSetParamaterArray";
 
 export interface TraceGenerationOptions {
     plotType: ParameterDistributionPlotType;
@@ -196,7 +197,10 @@ export function generateLayoutForParameter({
 /**
  * Generates all traces for a single parameter based on plot type and options
  */
-export function generateTracesForParameter(parameterData: ParameterDataArr, options: TraceGenerationOptions): any[] {
+export function generateTracesForParameter(
+    parameterData: EnsembleSetParameterArray,
+    options: TraceGenerationOptions,
+): any[] {
     const { plotType, showIndividualRealizationValues, showPercentilesAndMeanLines } = options;
     const traces: any[] = [];
 

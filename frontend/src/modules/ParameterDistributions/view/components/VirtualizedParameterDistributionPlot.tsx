@@ -3,13 +3,13 @@ import { useState, useEffect, useCallback, useRef } from "react";
 
 import { Plot } from "@modules/_shared/components/Plot";
 
-import type { ParameterDataArr } from "../../typesAndEnums";
 import { ParameterDistributionPlotType } from "../../typesAndEnums";
+import type { EnsembleSetParameterArray } from "../utils/ensembleSetParamaterArray";
 import { generateLayoutForParameter, generateTracesForParameter } from "../utils/plotUtils";
 import type { TraceGenerationOptions } from "../utils/plotUtils";
 
 type ParameterDistributionPlotProps = {
-    dataArr: ParameterDataArr[];
+    dataArr: EnsembleSetParameterArray[];
     plotType: ParameterDistributionPlotType;
     showIndividualRealizationValues: boolean;
     showPercentilesAndMeanLines: boolean;
@@ -26,7 +26,7 @@ function SingleParameterPlot({
     width,
     height,
 }: {
-    parameterData: ParameterDataArr;
+    parameterData: EnsembleSetParameterArray;
     plotType: ParameterDistributionPlotType;
     showIndividualRealizationValues: boolean;
     showPercentilesAndMeanLines: boolean;

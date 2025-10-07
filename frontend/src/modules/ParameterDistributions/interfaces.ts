@@ -7,8 +7,15 @@ import {
     showIndividualRealizationValuesAtom,
     showPercentilesAndMeanLinesAtom,
 } from "./settings/atoms/baseAtoms";
-import { selectedEnsembleIdentsAtom, selectedParameterIdentsAtom } from "./settings/atoms/derivedAtoms";
-import type { ParameterDistributionPlotType } from "./typesAndEnums";
+import {
+    selectedEnsembleIdentsAtom,
+    selectedEnsembleModeAtom,
+    selectedParameterDistributionSortingMethodAtom,
+    selectedParameterIdentsAtom,
+    selectedPosteriorEnsembleIdentAtom,
+    selectedPriorEnsembleIdentAtom,
+} from "./settings/atoms/derivedAtoms";
+import type { EnsembleMode, ParameterDistributionPlotType, ParameterDistributionSortingMethod } from "./typesAndEnums";
 
 type SettingsToViewInterface = {
     selectedVisualizationType: ParameterDistributionPlotType;
@@ -16,6 +23,10 @@ type SettingsToViewInterface = {
     showPercentilesAndMeanLines: boolean;
     selectedEnsembleIdents: RegularEnsembleIdent[];
     selectedParameterIdents: ParameterIdent[];
+    ensembleMode: EnsembleMode;
+    parameterSortingMethod: ParameterDistributionSortingMethod;
+    priorEnsembleIdent: RegularEnsembleIdent | null;
+    posteriorEnsembleIdent: RegularEnsembleIdent | null;
 };
 
 export type Interfaces = {
@@ -37,5 +48,17 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     },
     selectedParameterIdents: (get) => {
         return get(selectedParameterIdentsAtom);
+    },
+    priorEnsembleIdent: (get) => {
+        return get(selectedPriorEnsembleIdentAtom);
+    },
+    posteriorEnsembleIdent: (get) => {
+        return get(selectedPosteriorEnsembleIdentAtom);
+    },
+    ensembleMode: (get) => {
+        return get(selectedEnsembleModeAtom);
+    },
+    parameterSortingMethod: (get) => {
+        return get(selectedParameterDistributionSortingMethodAtom);
     },
 };

@@ -1,12 +1,18 @@
-import { atom } from "jotai";
-
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
+import { EnsembleMode, ParameterDistributionSortingMethod } from "@modules/ParameterDistributions/typesAndEnums";
+import { atom } from "jotai";
 
 import {
     showConstantParametersAtom,
     userSelectedEnsembleIdentsAtom,
+    userSelectedEnsembleModeAtom,
     userSelectedParameterIdentsAtom,
+    userSelectedParameterSortingMethodAtom,
+    userSelectedPosteriorEnsembleIdentAtom,
+    userSelectedPriorEnsembleIdentAtom,
 } from "./baseAtoms";
 
 export const selectedEnsembleIdentsAtom = atom((get) => {
@@ -74,4 +80,43 @@ export const selectedParameterIdentsAtom = atom((get) => {
     return userSelectedParameterIdents.filter((ident) =>
         intersectedParameterIdents.some((intersectIdent) => intersectIdent.equals(ident)),
     );
+});
+
+export const selectedPriorEnsembleIdentAtom = atom<RegularEnsembleIdent | null>((get) => {
+    const ensembleSet = get(EnsembleSetAtom);
+    const userSelectedEnsembleIdent = get(userSelectedPriorEnsembleIdentAtom);
+
+    const validEnsembleIdent = fixupRegularEnsembleIdent(userSelectedEnsembleIdent, ensembleSet);
+    return validEnsembleIdent;
+});
+
+export const selectedPosteriorEnsembleIdentAtom = atom<RegularEnsembleIdent | null>((get) => {
+    const ensembleSet = get(EnsembleSetAtom);
+    const userSelectedEnsembleIdent = get(userSelectedPosteriorEnsembleIdentAtom);
+
+    if (!ensembleSet?.hasAnyRegularEnsembles()) {
+        return null;
+    }
+
+    if (userSelectedEnsembleIdent && ensembleSet.hasEnsemble(userSelectedEnsembleIdent)) {
+        return userSelectedEnsembleIdent;
+    }
+
+    return ensembleSet.getRegularEnsembleArray().at(-1)?.getIdent() || null;
+});
+export const selectedEnsembleModeAtom = atom((get) => {
+    const userSelectedEnsembleMode = get(userSelectedEnsembleModeAtom);
+    const ensembleSet = get(EnsembleSetAtom);
+    if (ensembleSet.getRegularEnsembleArray().length <= 1) {
+        return EnsembleMode.INDEPENDENT;
+    }
+    return userSelectedEnsembleMode;
+});
+export const selectedParameterDistributionSortingMethodAtom = atom((get) => {
+    const userSelectedParameterSortingMethod = get(userSelectedParameterSortingMethodAtom);
+    const ensembleMode = get(selectedEnsembleModeAtom);
+    if (ensembleMode === EnsembleMode.INDEPENDENT) {
+        return ParameterDistributionSortingMethod.ALPHABETICAL;
+    }
+    return userSelectedParameterSortingMethod;
 });
