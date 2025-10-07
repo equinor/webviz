@@ -61,11 +61,11 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
         sensitivityDataScaler,
     );
 
-    let instanceTitle = "Tornado chart";
+    let instanceTitle = "Sensitivity chart";
     if (computedSensitivityResponseDataset) {
-        if (displayComponentType === DisplayComponentType.TornadoChart) {
-            instanceTitle = `Tornado chart for ${computedSensitivityResponseDataset.responseName}`;
-        } else if (displayComponentType === DisplayComponentType.Table) {
+        if (displayComponentType === DisplayComponentType.SENSITIVITY_CHART) {
+            instanceTitle = `Sensitivity chart for ${computedSensitivityResponseDataset.responseName}`;
+        } else if (displayComponentType === DisplayComponentType.SENSITIVITY_TABLE) {
             instanceTitle = `Sensitivity table for ${computedSensitivityResponseDataset.responseName}`;
         }
     }
@@ -94,7 +94,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
             return <ContentInfo>No sensitivities available</ContentInfo>;
         }
 
-        if (displayComponentType === DisplayComponentType.TornadoChart) {
+        if (displayComponentType === DisplayComponentType.SENSITIVITY_CHART) {
             if (!sensitivityChartBuilder) {
                 return <ContentInfo>No chart data available</ContentInfo>;
             }
@@ -103,7 +103,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
             );
         }
 
-        if (displayComponentType === DisplayComponentType.Table) {
+        if (displayComponentType === DisplayComponentType.SENSITIVITY_TABLE) {
             return (
                 <div className="text-sm">
                     <SensitivityTable
