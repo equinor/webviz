@@ -125,7 +125,7 @@ export function Settings({
                             value={displayComponentType}
                             options={[
                                 {
-                                    label: "Sensitivity chart(Tornado)",
+                                    label: "Sensitivity chart (Tornado)",
                                     value: DisplayComponentType.SENSITIVITY_CHART,
                                 },
                                 {
