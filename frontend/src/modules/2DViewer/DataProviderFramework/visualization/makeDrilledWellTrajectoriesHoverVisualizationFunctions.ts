@@ -24,8 +24,6 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
         return {};
     }
 
-    console.log("HERE?=???");
-
     return {
         [HoverTopic.WELLBORE_MD]: (wellboreMd) => {
             console.log("here");

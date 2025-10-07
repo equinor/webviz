@@ -77,7 +77,7 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
                         features: wellLayerDataFeatures,
                     },
                     refine: false,
-                    lineStyle: { width: 5, color: [255, 0, 0] },
+                    lineStyle: { width: 3, color: [255, 0, 0] },
                     wellHeadStyle: {
                         size: 0,
                     },

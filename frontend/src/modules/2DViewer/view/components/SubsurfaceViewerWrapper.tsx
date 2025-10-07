@@ -101,8 +101,6 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 radius: PICKING_RADIUS,
             });
 
-            console.log("picks", picks);
-
             pickInfoDict[viewport.id] = picks;
         }
 

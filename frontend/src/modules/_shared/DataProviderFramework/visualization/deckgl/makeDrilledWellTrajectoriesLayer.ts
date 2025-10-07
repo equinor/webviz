@@ -76,8 +76,6 @@ export function makeDrilledWellTrajectoriesLayer({
         pickable: true,
         ZIncreasingDownwards: true,
         outline: false,
-        // TODO: Remove; picking is hard for small lines and pickRadius doesn't work
-        lineWidthScale: 20,
     });
 
     return wellsLayer;
