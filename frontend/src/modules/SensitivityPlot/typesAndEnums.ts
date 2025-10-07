@@ -1,6 +1,6 @@
 export enum DisplayComponentType {
-    TornadoChart = "tornado-chart",
-    Table = "table",
+    SENSITIVITY_CHART = "sensitivity-chart",
+    SENSITIVITY_TABLE = "sensitivity-table",
 }
 export type SelectedSensitivity = {
     // selectedEnsemble: Ensemble,
