@@ -1,9 +1,10 @@
+import { atom } from "jotai";
+
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 import { EnsembleMode, ParameterDistributionSortingMethod } from "@modules/ParameterDistributions/typesAndEnums";
-import { atom } from "jotai";
 
 import {
     showConstantParametersAtom,

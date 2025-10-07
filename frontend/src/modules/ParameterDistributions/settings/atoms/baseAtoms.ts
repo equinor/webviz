@@ -1,3 +1,5 @@
+import { atom } from "jotai";
+
 import type { ParameterIdent } from "@framework/EnsembleParameters";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
@@ -7,7 +9,6 @@ import {
     ParameterDistributionPlotType,
     ParameterDistributionSortingMethod,
 } from "@modules/ParameterDistributions/typesAndEnums";
-import { atom } from "jotai";
 
 export const userSelectedEnsembleModeAtom = atom<EnsembleMode>(EnsembleMode.INDEPENDENT);
 export const userSelectedParameterSortingMethodAtom = atom<ParameterDistributionSortingMethod>(
