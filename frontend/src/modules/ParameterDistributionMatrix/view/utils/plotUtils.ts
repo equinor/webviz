@@ -137,6 +137,7 @@ export function createHistogramTrace(ensembleData: EnsembleParameterRealizations
         xValues: ensembleData.values,
         numBins: numBins,
         color: ensembleData.ensembleColor,
+        showPercentageInBar: false,
     });
 
     return {
@@ -173,6 +174,7 @@ export function generateLayoutForParameter({
             xanchor: "center",
             yanchor: "top",
         },
+        barmode: "overlay",
         xaxis: {
             title: title,
             mirror: true,

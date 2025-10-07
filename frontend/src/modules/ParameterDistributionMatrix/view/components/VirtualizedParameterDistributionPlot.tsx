@@ -72,7 +72,7 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
     const numColumns = Math.min(Math.ceil(Math.sqrt(numSubplots)), maxColumns);
     const numRows = Math.ceil(numSubplots / numColumns);
     const plotWidth = Math.floor(props.width / numColumns) - PLOT_MARGIN;
-    const plotHeight = FIXED_PLOT_HEIGHT;
+    const plotHeight = Math.max(FIXED_PLOT_HEIGHT, props.height / numRows) - PLOT_MARGIN;
 
     // Intersection Observer for virtualization
     useEffect(() => {
