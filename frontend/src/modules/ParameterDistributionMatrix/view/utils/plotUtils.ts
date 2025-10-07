@@ -169,6 +169,7 @@ export function generateLayoutForParameter({
             text: title,
             x: 0.5,
             y: 0.95,
+            font: { size: 10 },
             xanchor: "center",
             yanchor: "top",
         },
