@@ -169,7 +169,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     function handleUpdateRegularEnsemble(updatedItem: InternalRegularEnsembleSetting) {
         setSelectedRegularEnsembles((prev) => {
-            return prev.map((el) => (el.ensembleIdent.equals(updatedItem) ? updatedItem : el));
+            return prev.map((el) => (el.ensembleIdent.equals(updatedItem.ensembleIdent) ? updatedItem : el));
         });
     }
 
