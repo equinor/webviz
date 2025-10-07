@@ -66,8 +66,11 @@ export const intersectedParameterIdentsAtom = atom((get) => {
 export const selectedParameterIdentsAtom = atom((get) => {
     const intersectedParameterIdents = get(intersectedParameterIdentsAtom);
     const userSelectedParameterIdents = get(userSelectedParameterIdentsAtom);
+    // If unset (initial) use all parameters
     if (!userSelectedParameterIdents) return intersectedParameterIdents;
+    // If empty (e.g. user has switched group or unselected all, keep empty)
     if (userSelectedParameterIdents.length === 0) return [];
+
     return userSelectedParameterIdents.filter((ident) =>
         intersectedParameterIdents.some((intersectIdent) => intersectIdent.equals(ident)),
     );

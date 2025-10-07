@@ -32,7 +32,6 @@ function SingleParameterPlot({
     showPercentilesAndMeanLines: boolean;
     width: number;
     height: number;
-    addedLegendNames: Set<string>;
 }): React.ReactElement {
     const showRugTraces =
         plotType === ParameterDistributionPlotType.DISTRIBUTION_PLOT && showIndividualRealizationValues;
@@ -74,8 +73,6 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
     const numRows = Math.ceil(numSubplots / numColumns);
     const plotWidth = Math.floor(props.width / numColumns) - PLOT_MARGIN;
     const plotHeight = FIXED_PLOT_HEIGHT;
-
-    const addedLegendNames = useState(() => new Set<string>())[0];
 
     // Intersection Observer for virtualization
     useEffect(() => {
@@ -142,7 +139,6 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
                             showPercentilesAndMeanLines={props.showPercentilesAndMeanLines}
                             width={plotWidth - 8} // Account for border
                             height={plotHeight - 8}
-                            addedLegendNames={addedLegendNames}
                         />
                     ) : (
                         <div
@@ -163,7 +159,7 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
         }
 
         return items;
-    }, [numSubplots, numColumns, plotWidth, plotHeight, visibleIndices, props, addedLegendNames]);
+    }, [numSubplots, numColumns, plotWidth, plotHeight, visibleIndices, props]);
 
     // Initialize visible plots (first few in viewport)
     useEffect(() => {

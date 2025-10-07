@@ -205,10 +205,12 @@ export function generateTracesForParameter(parameterData: ParameterDataArr, opti
             // Add main distribution trace
             const distributionTrace = createDistributionTrace(ensembleData);
             traces.push(distributionTrace);
-
+            const yPosition = 0;
             // Add percentile and mean markers if enabled
             if (showPercentilesAndMeanLines) {
-                traces.push(...createQuantileAndMeanMarkerTraces(ensembleData.values, 0, ensembleData.ensembleColor));
+                traces.push(
+                    ...createQuantileAndMeanMarkerTraces(ensembleData.values, yPosition, ensembleData.ensembleColor),
+                );
             }
 
             // Add rug plot for individual realizations if enabled
@@ -241,7 +243,7 @@ export function generateTracesForParameter(parameterData: ParameterDataArr, opti
 
             // Add percentile and mean markers if enabled
             if (showPercentilesAndMeanLines) {
-                const yPosition = Math.max(...ensembleData.values.map(() => 0)) + 1;
+                const yPosition = 1;
                 traces.push(
                     ...createQuantileAndMeanMarkerTraces(ensembleData.values, yPosition, ensembleData.ensembleColor),
                 );
