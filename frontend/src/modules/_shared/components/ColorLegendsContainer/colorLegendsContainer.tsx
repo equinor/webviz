@@ -3,10 +3,61 @@ import React from "react";
 import type { ColorScale } from "@lib/utils/ColorScale";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
+import { formatNumberWithoutTrailingZeros } from "@modules/_shared/utils/numberFormatting";
 import type { ColorScaleWithName } from "@modules_shared/utils/ColorScaleWithName";
 
 import type { ColorScaleWithId } from "./colorScaleWithId";
+
+/**
+ * Calculates nice round tick values within the given range
+ */
+function calculateNiceTickValues(min: number, max: number, maxTicks: number): number[] {
+    if (min === max) return [min];
+
+    const range = max - min;
+
+    // Calculate nice step size
+    const rawStep = range / (maxTicks - 1);
+    const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    const normalizedStep = rawStep / magnitude;
+
+    let niceStep: number;
+    if (normalizedStep <= 1) {
+        niceStep = 1 * magnitude;
+    } else if (normalizedStep <= 2) {
+        niceStep = 2 * magnitude;
+    } else if (normalizedStep <= 5) {
+        niceStep = 5 * magnitude;
+    } else {
+        niceStep = 10 * magnitude;
+    }
+
+    // Calculate nice min and max
+    const niceMin = Math.floor(min / niceStep) * niceStep;
+    const niceMax = Math.ceil(max / niceStep) * niceStep;
+
+    // Generate tick values
+    const ticks: number[] = [];
+    for (let tick = niceMin; tick <= niceMax; tick += niceStep) {
+        // Round to avoid floating point precision issues (e.g., 0 showing as 3.88e-16)
+        const roundedTick = Math.round(tick / niceStep) * niceStep;
+
+        // Only include ticks within the actual data range
+        if (roundedTick >= min && roundedTick <= max) {
+            ticks.push(roundedTick);
+        }
+    }
+
+    // Always include min and max if they're not already included
+    if (ticks.length === 0 || ticks[0] > min) {
+        ticks.unshift(min);
+    }
+    if (ticks[ticks.length - 1] < max) {
+        ticks.push(max);
+    }
+
+    return ticks;
+}
 
 const STYLE_CONSTANTS = {
     lineWidth: 6,
@@ -39,77 +90,78 @@ function makeMarkers(
     barHeight: number,
 ): React.ReactNode[] {
     const sectionHeight = Math.abs(sectionBottom - sectionTop);
-
     const minMarkerHeight = STYLE_CONSTANTS.fontSize + 4 * STYLE_CONSTANTS.textGap;
     const maxNumMarkers = Math.floor(sectionHeight / minMarkerHeight);
 
-    // Odd number of markers makes sure the midpoint in each section is shown which is preferable
-    const numMarkers = maxNumMarkers % 2 === 0 ? maxNumMarkers - 1 : maxNumMarkers;
-    const markerDistance = sectionHeight / (numMarkers + 1);
+    // Calculate the value range for this section
+    const sectionRelTop = (sectionTop - barTop) / barHeight;
+    const sectionRelBottom = (sectionBottom - barTop) / barHeight;
+    const sectionMinValue = colorScale.getMin() + (colorScale.getMax() - colorScale.getMin()) * (1 - sectionRelBottom);
+    const sectionMaxValue = colorScale.getMin() + (colorScale.getMax() - colorScale.getMin()) * (1 - sectionRelTop);
+
+    // Get nice tick values for this section
+    const tickValues = calculateNiceTickValues(sectionMinValue, sectionMaxValue, maxNumMarkers);
 
     const markers: React.ReactNode[] = [];
 
-    let currentLocalY = sectionTop - barTop + markerDistance;
-    for (let i = 0; i < numMarkers; i++) {
-        const relValue = 1 - currentLocalY / barHeight;
-        const value = colorScale.getMin() + (colorScale.getMax() - colorScale.getMin()) * relValue;
+    for (let i = 0; i < tickValues.length; i++) {
+        const value = tickValues[i];
 
-        const globalY = barTop + currentLocalY;
+        // Calculate position based on value
+        const relValue = (value - colorScale.getMin()) / (colorScale.getMax() - colorScale.getMin());
+        const currentLocalY = barHeight * (1 - relValue);
 
-        markers.push(
-            <line
-                key={`${sectionTop}-${i}-marker`}
-                x1={left}
-                y1={globalY + 1}
-                x2={left + STYLE_CONSTANTS.lineWidth}
-                y2={globalY + 1}
-                stroke={STYLE_CONSTANTS.lineColor}
-                strokeWidth="1"
-            />,
-        );
-        markers.push(
-            <text
-                key={`${sectionTop}-${i}-text`}
-                x={left + STYLE_CONSTANTS.lineWidth + STYLE_CONSTANTS.textGap}
-                y={globalY + 4}
-                fontSize="10"
-                style={TEXT_STYLE}
-            >
-                {formatNumber(value)}
-            </text>,
-        );
+        // Only draw markers that are within the section bounds
+        if (currentLocalY >= sectionTop - barTop && currentLocalY <= sectionBottom - barTop) {
+            const globalY = barTop + currentLocalY;
 
-        currentLocalY += markerDistance;
+            markers.push(
+                <line
+                    key={`${sectionTop}-${value}-marker`}
+                    x1={left}
+                    y1={globalY + 1}
+                    x2={left + STYLE_CONSTANTS.lineWidth}
+                    y2={globalY + 1}
+                    stroke={STYLE_CONSTANTS.lineColor}
+                    strokeWidth="1"
+                />,
+            );
+            markers.push(
+                <text
+                    key={`${sectionTop}-${value}-text`}
+                    x={left + STYLE_CONSTANTS.lineWidth + STYLE_CONSTANTS.textGap}
+                    y={globalY + 4}
+                    fontSize="10"
+                    style={TEXT_STYLE}
+                >
+                    {formatNumberWithoutTrailingZeros(value)}
+                </text>,
+            );
+        }
     }
     return markers;
 }
 
 function makeDiscreteMarkers(colorScale: ColorScale, left: number, top: number, barHeight: number): React.ReactNode[] {
     const minMarkerHeight = STYLE_CONSTANTS.fontSize + 2 * STYLE_CONSTANTS.textGap;
+    const maxNumMarkers = Math.floor(barHeight / minMarkerHeight);
 
-    const numSteps = colorScale.getNumSteps();
-    let markerDistance = barHeight / numSteps;
-
-    while (markerDistance < minMarkerHeight) {
-        markerDistance += barHeight / numSteps;
-    }
-
-    let steps = Math.floor(barHeight / markerDistance);
-    if (Math.abs(barHeight - steps * markerDistance) < minMarkerHeight) {
-        steps--;
-    }
+    // Get nice tick values within the color scale range
+    const tickValues = calculateNiceTickValues(colorScale.getMin(), colorScale.getMax(), maxNumMarkers);
 
     const markers: React.ReactNode[] = [];
-    let currentLocalY = markerDistance;
-    for (let i = 0; i < steps; i++) {
-        const relValue = 1 - currentLocalY / barHeight;
-        const value = colorScale.getMin() + (colorScale.getMax() - colorScale.getMin()) * relValue;
 
+    for (let i = 0; i < tickValues.length; i++) {
+        const value = tickValues[i];
+
+        // Calculate position based on value
+        const relValue = (value - colorScale.getMin()) / (colorScale.getMax() - colorScale.getMin());
+        const currentLocalY = barHeight * (1 - relValue);
         const globalY = top + currentLocalY;
 
         markers.push(
             <line
-                key={`${top}-${i}-marker`}
+                key={`${top}-${value}-marker`}
                 x1={left}
                 y1={globalY + 1}
                 x2={left + STYLE_CONSTANTS.lineWidth}
@@ -120,17 +172,15 @@ function makeDiscreteMarkers(colorScale: ColorScale, left: number, top: number, 
         );
         markers.push(
             <text
-                key={`${top}-${i}-text`}
+                key={`${top}-${value}-text`}
                 x={left + STYLE_CONSTANTS.lineWidth + STYLE_CONSTANTS.textGap}
                 y={globalY + 4}
                 fontSize="10"
                 style={TEXT_STYLE}
             >
-                {formatNumber(value)}
+                {formatNumberWithoutTrailingZeros(value)}
             </text>,
         );
-
-        currentLocalY += markerDistance;
     }
 
     return markers;
@@ -174,7 +224,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
             fontSize="10"
             style={TEXT_STYLE}
         >
-            {formatNumber(props.colorScale.getMax())}
+            {formatNumberWithoutTrailingZeros(props.colorScale.getMax())}
         </text>,
     );
 
@@ -231,7 +281,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
                     fontSize="10"
                     style={TEXT_STYLE}
                 >
-                    {formatNumber(props.colorScale.getDivMidPoint())}
+                    {formatNumberWithoutTrailingZeros(props.colorScale.getDivMidPoint())}
                 </text>,
             );
 
@@ -278,7 +328,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
             fontSize="10"
             style={TEXT_STYLE}
         >
-            {formatNumber(props.colorScale.getMin())}
+            {formatNumberWithoutTrailingZeros(props.colorScale.getMin())}
         </text>,
     );
 
