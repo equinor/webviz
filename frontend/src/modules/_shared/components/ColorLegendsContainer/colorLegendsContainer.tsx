@@ -3,61 +3,11 @@ import React from "react";
 import type { ColorScale } from "@lib/utils/ColorScale";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { generateNiceAxisTicks, type AxisTickOptions } from "@modules/_shared/utils/axisUtils";
 import { formatNumberWithoutTrailingZeros } from "@modules/_shared/utils/numberFormatting";
 import type { ColorScaleWithName } from "@modules_shared/utils/ColorScaleWithName";
 
 import type { ColorScaleWithId } from "./colorScaleWithId";
-
-/**
- * Calculates nice round tick values within the given range
- */
-function calculateNiceTickValues(min: number, max: number, maxTicks: number): number[] {
-    if (min === max) return [min];
-
-    const range = max - min;
-
-    // Calculate nice step size
-    const rawStep = range / (maxTicks - 1);
-    const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
-    const normalizedStep = rawStep / magnitude;
-
-    let niceStep: number;
-    if (normalizedStep <= 1) {
-        niceStep = 1 * magnitude;
-    } else if (normalizedStep <= 2) {
-        niceStep = 2 * magnitude;
-    } else if (normalizedStep <= 5) {
-        niceStep = 5 * magnitude;
-    } else {
-        niceStep = 10 * magnitude;
-    }
-
-    // Calculate nice min and max
-    const niceMin = Math.floor(min / niceStep) * niceStep;
-    const niceMax = Math.ceil(max / niceStep) * niceStep;
-
-    // Generate tick values
-    const ticks: number[] = [];
-    for (let tick = niceMin; tick <= niceMax; tick += niceStep) {
-        // Round to avoid floating point precision issues (e.g., 0 showing as 3.88e-16)
-        const roundedTick = Math.round(tick / niceStep) * niceStep;
-
-        // Only include ticks within the actual data range
-        if (roundedTick >= min && roundedTick <= max) {
-            ticks.push(roundedTick);
-        }
-    }
-
-    // Always include min and max if they're not already included
-    if (ticks.length === 0 || ticks[0] > min) {
-        ticks.unshift(min);
-    }
-    if (ticks[ticks.length - 1] < max) {
-        ticks.push(max);
-    }
-
-    return ticks;
-}
 
 const STYLE_CONSTANTS = {
     lineWidth: 6,
@@ -99,8 +49,14 @@ function makeMarkers(
     const sectionMinValue = colorScale.getMin() + (colorScale.getMax() - colorScale.getMin()) * (1 - sectionRelBottom);
     const sectionMaxValue = colorScale.getMin() + (colorScale.getMax() - colorScale.getMin()) * (1 - sectionRelTop);
 
-    // Get nice tick values for this section
-    const tickValues = calculateNiceTickValues(sectionMinValue, sectionMaxValue, maxNumMarkers);
+    // Get nice tick values for this section with spacing constraints
+    const minTickSpacing = STYLE_CONSTANTS.fontSize + STYLE_CONSTANTS.textGap;
+    const options: AxisTickOptions = {
+        minTickSpacing,
+        availableSpace: sectionHeight,
+        prioritizeBoundaries: true,
+    };
+    const tickValues = generateNiceAxisTicks(sectionMinValue, sectionMaxValue, maxNumMarkers, options);
 
     const markers: React.ReactNode[] = [];
 
@@ -146,8 +102,14 @@ function makeDiscreteMarkers(colorScale: ColorScale, left: number, top: number, 
     const minMarkerHeight = STYLE_CONSTANTS.fontSize + 2 * STYLE_CONSTANTS.textGap;
     const maxNumMarkers = Math.floor(barHeight / minMarkerHeight);
 
-    // Get nice tick values within the color scale range
-    const tickValues = calculateNiceTickValues(colorScale.getMin(), colorScale.getMax(), maxNumMarkers);
+    // Get nice tick values within the color scale range with spacing constraints
+    const minTickSpacing = STYLE_CONSTANTS.fontSize + STYLE_CONSTANTS.textGap;
+    const options: AxisTickOptions = {
+        minTickSpacing,
+        availableSpace: barHeight,
+        prioritizeBoundaries: true,
+    };
+    const tickValues = generateNiceAxisTicks(colorScale.getMin(), colorScale.getMax(), maxNumMarkers, options);
 
     const markers: React.ReactNode[] = [];
 
