@@ -8,17 +8,10 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import type { SelectOption } from "@lib/components/Select";
-import { Select } from "@lib/components/Select";
-import { PlotType } from "@modules/DistributionPlot/typesAndEnums";
 import { ParametersSelector } from "@modules/ParameterResponseCorrelationMatrixPlot/settings/components/parameterSelector";
 
 import type { Interfaces } from "../interfaces";
-import {
-    MAX_PARAMETERS,
-    ParameterDistributionPlotType,
-    ParameterDistributionPlotTypeEnumToStringMapping,
-} from "../typesAndEnums";
+import { ParameterDistributionPlotType, ParameterDistributionPlotTypeEnumToStringMapping } from "../typesAndEnums";
 
 import {
     selectedVisualizationTypeAtom,

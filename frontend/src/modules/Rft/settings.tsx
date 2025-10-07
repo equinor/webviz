@@ -12,7 +12,6 @@ import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
-
 import type { Interfaces } from "./interfaces";
 import {
     userSelectedEnsembleIdentAtom,

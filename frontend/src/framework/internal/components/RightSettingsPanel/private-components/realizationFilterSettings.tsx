@@ -16,8 +16,8 @@ import { getEnsembleIdentFromString } from "@framework/utils/ensembleIdentUtils"
 import { countTrueValues } from "@framework/utils/objectUtils";
 import { areParameterIdentStringToValueSelectionMapCandidatesEqual } from "@framework/utils/realizationFilterTypesUtils";
 import type { Workbench } from "@framework/Workbench";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
-
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 export type RealizationFilterSettingsProps = { workbench: Workbench; onClose: () => void };
 
@@ -25,7 +25,10 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
     const drawerContent = useGuiValue(guiMessageBroker, GuiState.RightDrawerContent);
     const rightSettingsPanelWidth = useGuiValue(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
-    const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
+    const ensembleSet = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        WorkbenchSessionTopic.ENSEMBLE_SET,
+    );
     const realizationFilterSet = props.workbench.getWorkbenchSession().getRealizationFilterSet();
     const [, setNumberOfUnsavedRealizationFilters] = useGuiState(
         guiMessageBroker,
@@ -301,7 +304,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                 visible={drawerContent === RightDrawerContent.RealizationFilterSettings}
                 onClose={handleFilterSettingsClose}
             >
-                <div className="flex flex-col p-2 gap-4 overflow-y-auto">
+                <div className="flex flex-col p-2 gap-2 overflow-y-auto">
                     <div className="grow space-y-4">
                         {ensembleSet.getEnsembleArray().map((ensemble) => {
                             const ensembleIdent = ensemble.getIdent();

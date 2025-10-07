@@ -23,4 +23,3 @@ export const ParameterDistributionPlotTypeEnumToStringMapping = {
     [ParameterDistributionPlotType.BOX_PLOT]: "Box Plot",
     [ParameterDistributionPlotType.HISTOGRAM]: "Histogram",
 };
-export const MAX_PARAMETERS = 10000;
