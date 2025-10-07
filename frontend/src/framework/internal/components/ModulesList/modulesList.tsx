@@ -12,16 +12,14 @@ import {
 } from "@mui/icons-material";
 
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
-import { GuiEvent, GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
-import type { Module } from "@framework/Module";
+import type { Module} from "@framework/Module";
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import type { DrawPreviewFunc } from "@framework/Preview";
 import type { Workbench } from "@framework/Workbench";
-import { Checkbox } from "@lib/components/Checkbox";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
@@ -56,7 +54,6 @@ type ModulesListItemProps = {
     displayName: string;
     description: string | null;
     drawPreviewFunc: DrawPreviewFunc | null;
-    relContainer: HTMLDivElement | null;
     guiMessageBroker: GuiMessageBroker;
     onShowDetails: (moduleName: string, yPos: number) => void;
     onHover: (moduleName: string, yPos: number) => void;
@@ -129,10 +126,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             }
 
             if (dragging) {
-                const rect = props.relContainer?.getBoundingClientRect();
-                if (rect) {
-                    setDragPosition(subtractVec2(subtractVec2(vec2FromPointerEvent(e), rect), pointerToElementDiff));
-                }
+                setDragPosition(subtractVec2(vec2FromPointerEvent(e), pointerToElementDiff));
             }
         };
 
@@ -160,7 +154,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             }
             removeDraggingEventListeners();
         };
-    }, [props.relContainer, props.guiMessageBroker, props.name, onDraggingStart]);
+    }, [props.guiMessageBroker, props.name, onDraggingStart]);
 
     function handleShowDetails(e: React.MouseEvent<HTMLDivElement>) {
         e.stopPropagation();
@@ -192,9 +186,8 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
         return <div className="border bg-slate-200 border-slate-300 flex items-center justify-center w-full h-full" />;
     }
 
-    return (
-        <>
-            {isDragged && <div ref={ref} className="bg-blue-300 w-full h-12" />}
+    function makeItem() {
+        return (
             <div
                 ref={isDragged ? undefined : ref}
                 className={resolveClassNames(
@@ -207,7 +200,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 style={makeStyle(isDragged, dragSize, dragPosition)}
                 onMouseOver={handleHover}
             >
-                <div ref={ref} className="px-2 flex items-center h-full text-sm gap-2" title={props.displayName}>
+                <div className="px-2 flex items-center h-full text-sm gap-2" title={props.displayName}>
                     <div className="h-12 w-12 min-w-12 overflow-hidden p-1 shrink-0">{makePreviewImage()}</div>
                     <span className="grow text-ellipsis whitespace-nowrap overflow-hidden">{props.displayName}</span>
                     <span
@@ -224,81 +217,19 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                     </span>
                 </div>
             </div>
-        </>
-    );
-};
-
-type DevStatesFilterProps = {
-    initialDevStates: ModuleDevState[];
-    onFilterChange: (devStates: ModuleDevState[]) => void;
-};
-
-function DevStatesFilter(props: DevStatesFilterProps): React.ReactNode {
-    const [expanded, setExpanded] = React.useState(false);
-    const [devStates, setDevStates] = React.useState<ModuleDevState[]>(props.initialDevStates);
-
-    function toggleExpanded() {
-        setExpanded(!expanded);
+        );
     }
 
-    function handleFilterChange(devState: ModuleDevState) {
-        let newDevStates: ModuleDevState[] = [];
-        if (devStates.includes(devState)) {
-            newDevStates = devStates.filter((state) => state !== devState);
-        } else {
-            newDevStates = [...devStates, devState];
-        }
-        setDevStates(newDevStates);
-        props.onFilterChange(newDevStates);
+    if (isDragged) {
+        return (
+            <>
+                <div ref={ref} className="bg-blue-300 w-full h-12" />
+                {createPortal(makeItem())}
+            </>
+        );
     }
-
-    return (
-        <div className="flex flex-col gap-1 text-sm">
-            <div className="flex gap-2 cursor-pointer items-center" onClick={toggleExpanded}>
-                <span className="grow font-bold">Filter by development state</span>
-                {expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
-            </div>
-            {expanded && (
-                <>
-                    <Checkbox
-                        label={
-                            <div className="flex gap-2 items-center">
-                                <span className="text-green-600 flex items-center">
-                                    {makeDevStateIcon(ModuleDevState.PROD)}
-                                </span>
-                                <span className="mt-[0.2rem]">Ready for user testing</span>
-                            </div>
-                        }
-                        onChange={() => handleFilterChange(ModuleDevState.PROD)}
-                        checked={devStates.includes(ModuleDevState.PROD)}
-                    />
-                    <Checkbox
-                        label={
-                            <div className="flex gap-2 items-center">
-                                <span className="text-orange-600">{makeDevStateIcon(ModuleDevState.DEPRECATED)}</span>
-                                <span className="mt-[0.2rem]">Deprecated</span>
-                            </div>
-                        }
-                        onChange={() => handleFilterChange(ModuleDevState.DEPRECATED)}
-                        checked={devStates.includes(ModuleDevState.DEPRECATED)}
-                    />
-                    <Checkbox
-                        label={
-                            <div className="flex gap-2 items-center">
-                                <span className="text-teal-600 inline-block align-middle">
-                                    {makeDevStateIcon(ModuleDevState.DEV)}
-                                </span>
-                                <span className="mt-[0.2rem]">Under development</span>
-                            </div>
-                        }
-                        onChange={() => handleFilterChange(ModuleDevState.DEV)}
-                        checked={devStates.includes(ModuleDevState.DEV)}
-                    />
-                </>
-            )}
-        </div>
-    );
-}
+    return makeItem();
+};
 
 type ModulesListCategoryProps = {
     title: string;
@@ -437,9 +368,9 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
     );
 }
 
-type ModulesListProps = {
+export type ModulesListProps = {
     workbench: Workbench;
-    relContainer: HTMLDivElement | null;
+    onClose: () => void;
 };
 
 const MODULE_CATEGORIES: { category: ModuleCategory; label: string }[] = [
@@ -458,8 +389,7 @@ if (isDevMode()) {
 }
 
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
-    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.LeftDrawerContent);
-    const moduleInstances = useModuleInstances(props.workbench);
+    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
 
     const ref = React.useRef<HTMLDivElement>(null);
     const boundingClientRect = useElementBoundingRect(ref);
@@ -471,11 +401,6 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
 
     function handleSearchQueryChange(e: React.ChangeEvent<HTMLInputElement>) {
         setSearchQuery(e.target.value);
-        handleHideDetails();
-    }
-
-    function handleDevStatesChange(devStates: ModuleDevState[]) {
-        setDevStates(devStates);
         handleHideDetails();
     }
 
@@ -500,13 +425,13 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         setDetailsPosY(yPos);
     }
 
-    function handleNotificationClick() {
-        props.workbench.getGuiMessageBroker().setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
-    }
-
     const handleDraggingStart = React.useCallback(function handleDraggingStart() {
         setShowDetailsForModule(null);
     }, []);
+
+    function handleClose() {
+        props.onClose();
+    }
 
     const filteredModules = Object.values(ModuleRegistry.getRegisteredModules())
         .filter((mod) => devStates.includes(mod.getDevState()))
@@ -517,23 +442,55 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         left = boundingClientRect.left + boundingClientRect.width + 10;
     }
 
-    const visible = drawerContent === LeftDrawerContent.ModulesList;
+    const visible = drawerContent === RightDrawerContent.ModulesList;
 
     return (
-        <div ref={ref} className={resolveClassNames("w-full h-full", { hidden: !visible })}>
+        <div ref={ref} className={resolveClassNames("w-full h-full relative", { hidden: !visible })}>
             <Drawer
                 visible
+                onClose={handleClose}
                 title="Add modules"
                 icon={<WebAsset />}
-                showFilter
-                filterPlaceholder="Filter modules..."
-                onFilterChange={handleSearchQueryChange}
-                headerChildren={
-                    <>
-                        <Notification onClick={handleNotificationClick} visible={moduleInstances.length > 0} />
-                        <DevStatesFilter onFilterChange={handleDevStatesChange} initialDevStates={devStates} />
-                    </>
-                }
+                showSearch
+                searchInputPlaceholder="Search modules..."
+                onSearchQueryChange={handleSearchQueryChange}
+                filterItems={[
+                    {
+                        value: ModuleDevState.PROD,
+                        label: (
+                            <>
+                                <span className="text-green-600 flex items-center">
+                                    {makeDevStateIcon(ModuleDevState.PROD)}
+                                </span>
+                                <span className="mt-[0.2rem]">Ready for user testing</span>
+                            </>
+                        ),
+                        initiallySelected: devStates.includes(ModuleDevState.PROD),
+                    },
+                    {
+                        value: ModuleDevState.DEPRECATED,
+                        label: (
+                            <>
+                                <span className="text-orange-600">{makeDevStateIcon(ModuleDevState.DEPRECATED)}</span>
+                                <span className="mt-[0.2rem]">Deprecated</span>
+                            </>
+                        ),
+                        initiallySelected: devStates.includes(ModuleDevState.DEPRECATED),
+                    },
+                    {
+                        value: ModuleDevState.DEV,
+                        label: (
+                            <>
+                                <span className="text-teal-600 inline-block align-middle">
+                                    {makeDevStateIcon(ModuleDevState.DEV)}
+                                </span>
+                                <span className="mt-[0.2rem]">Under development</span>
+                            </>
+                        ),
+                        initiallySelected: devStates.includes(ModuleDevState.DEV),
+                    },
+                ]}
+                onFilterItemSelectionChange={(selectedItems) => setDevStates(selectedItems)}
             >
                 <>
                     {MODULE_CATEGORIES.map((el) => (
@@ -542,7 +499,6 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                                 .filter((mod) => mod.getCategory() === el.category)
                                 .map((mod) => (
                                     <ModulesListItem
-                                        relContainer={props.relContainer}
                                         key={mod.getName()}
                                         name={mod.getName()}
                                         devState={mod.getDevState()}
@@ -572,23 +528,3 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         </div>
     );
 };
-
-type NotificationProps = {
-    visible: boolean;
-    onClick: () => void;
-};
-
-function Notification(props: NotificationProps): React.ReactNode {
-    if (!props.visible) {
-        return null;
-    }
-    return (
-        <div
-            className="bg-green-600 hover:bg-green-500 p-2 mb-4 text-sm cursor-pointer text-white"
-            onClick={props.onClick}
-        >
-            <p className="font-bold mb-1">Done editing?</p>
-            Click here or on a module header to start using your dashboard.
-        </div>
-    );
-}

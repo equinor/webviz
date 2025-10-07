@@ -2,7 +2,7 @@ import React from "react";
 
 import { GridView } from "@mui/icons-material";
 
-import { GuiState, LeftDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
+import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import type { Template } from "@framework/TemplateRegistry";
@@ -87,6 +87,7 @@ const TemplatesListItem: React.FC<TemplatesListItemProps> = (props) => {
 
 type TemplatesListProps = {
     workbench: Workbench;
+    onClose?: () => void;
 };
 
 /*
@@ -95,10 +96,7 @@ type TemplatesListProps = {
     I will skip it for now and come back to it when it becomes a problem.
 */
 export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
-    const [drawerContent, setDrawerContent] = useGuiState(
-        props.workbench.getGuiMessageBroker(),
-        GuiState.LeftDrawerContent,
-    );
+    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
     const [searchQuery, setSearchQuery] = React.useState("");
 
     const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,17 +109,17 @@ export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
             return;
         }
         props.workbench.applyTemplate(template);
-        setDrawerContent(LeftDrawerContent.ModuleSettings);
     };
 
     return (
         <Drawer
-            showFilter
-            onFilterChange={handleSearchQueryChange}
-            filterPlaceholder="Filter templates..."
+            showSearch
+            onSearchQueryChange={handleSearchQueryChange}
+            searchInputPlaceholder="Search templates..."
             title="Select a template"
             icon={<GridView />}
-            visible={drawerContent === LeftDrawerContent.TemplatesList}
+            visible={drawerContent === RightDrawerContent.TemplatesList}
+            onClose={props.onClose}
         >
             {Object.keys(TemplateRegistry.getRegisteredTemplates())
                 .filter((templName) => templName.toLowerCase().includes(searchQuery.toLowerCase()))

@@ -17,7 +17,6 @@ import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select } from "@lib/components/Select";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
-
 import type { Interfaces } from "../interfaces";
 import { FrequencyEnumToStringMapping, NodeTypeEnumToStringMapping } from "../types";
 
@@ -42,7 +41,6 @@ import {
     selectedNodeKeyAtom,
     selectedRealizationNumberAtom,
 } from "./atoms/derivedAtoms";
-
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);

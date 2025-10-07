@@ -370,7 +370,7 @@ export function Settings({
                     })}
                     onChange={(_, value) => handleVisualizationModeChange(value)}
                 />
-                <div className="mt-6 p-2 rounded-md outline outline-1 outline-slate-300">
+                <div className="mt-6 p-2 rounded-md outline-1 outline-slate-300">
                     <div
                         className={resolveClassNames("", {
                             hidden: visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS,

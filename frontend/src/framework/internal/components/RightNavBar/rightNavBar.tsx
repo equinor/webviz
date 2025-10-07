@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { FilterAlt, Fullscreen, FullscreenExit, History } from "@mui/icons-material";
+import { FilterAlt, Fullscreen, FullscreenExit, GridView, History, WebAsset } from "@mui/icons-material";
 
 import { GuiState, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
 import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
@@ -39,11 +39,21 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
     }
 
     function togglePanelContent(targetContent: RightDrawerContent) {
-        if (targetContent === drawerContent) hideSettingsPanel();
-        else {
-            setDrawerContent(targetContent);
-            ensureSettingsPanelIsVisible();
+        if (targetContent === drawerContent) {
+            hideSettingsPanel();
+            return;
         }
+
+        setDrawerContent(targetContent);
+        ensureSettingsPanelIsVisible();
+    }
+
+    function handleModulesListClick() {
+        togglePanelContent(RightDrawerContent.ModulesList);
+    }
+
+    function handleTemplatesListClick() {
+        togglePanelContent(RightDrawerContent.TemplatesList);
     }
 
     function handleRealizationFilterClick() {
@@ -56,11 +66,22 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
 
     return (
         <div
-            className={resolveClassNames(
-                "bg-white p-2 border-r-2 border-slate-200 z-50 shadow-lg flex flex-col w-[4.5rem]",
-            )}
+            className={resolveClassNames("bg-white p-2 border-r-2 border-slate-200 z-50 shadow-lg flex flex-col w-16")}
         >
             <div className="flex flex-col gap-2 grow">
+                <NavBarButton
+                    active={drawerContent === RightDrawerContent.ModulesList}
+                    title="Show modules list"
+                    icon={<WebAsset fontSize="small" className="size-5" />}
+                    onClick={handleModulesListClick}
+                />
+                <NavBarButton
+                    active={drawerContent === RightDrawerContent.TemplatesList}
+                    title="Show templates list"
+                    icon={<GridView fontSize="small" className="size-5" />}
+                    onClick={handleTemplatesListClick}
+                />
+                <NavBarDivider />
                 <NavBarButton
                     active={drawerContent === RightDrawerContent.RealizationFilterSettings}
                     title={`Open realization filter panel${
@@ -84,9 +105,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                     title="Open module history"
                     onClick={handleModuleInstanceLogClick}
                 />
-
                 <NavBarDivider />
-
                 <NavBarButton
                     active={isFullscreen}
                     icon={<Fullscreen fontSize="small" className="size-5 mr-2" />}

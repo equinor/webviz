@@ -9,7 +9,6 @@ import { IncludeExcludeFilter } from "@framework/types/realizationFilterTypes";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 
-
 import {
     makeRealizationNumberSelectionsFromRealizationPickerTags,
     makeRealizationPickerTagsFromRealizationNumberSelections,
@@ -121,6 +120,7 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
                     ]}
                     onChange={(_, value) => handleIncludeExcludeFilterChange(value)}
                     disabled={props.disabled}
+                    direction="horizontal"
                 />
             </Label>
             <Label text="Pick Realization Numbers">
