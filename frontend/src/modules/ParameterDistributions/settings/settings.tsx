@@ -10,7 +10,7 @@ import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { ParametersSelector } from "@modules/ParameterResponseCorrelationMatrixPlot/settings/components/parameterSelector";
+import { ParametersSelector } from "@modules/_shared/components/ParameterSelector";
 
 import type { Interfaces } from "../interfaces";
 import {
