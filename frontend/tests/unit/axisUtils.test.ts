@@ -1,5 +1,7 @@
+import { describe, expect, test } from "vitest"
+
 import { generateNiceAxisTicks, type AxisTickOptions } from "@modules/_shared/utils/axisUtils";
-import { describe, expect, test } from "vitest";
+
 
 describe("generateNiceAxisTicks", () => {
     describe("basic functionality", () => {

@@ -38,7 +38,7 @@ export function generateNiceAxisTicks(min: number, max: number, maxTicks: number
     const actualMin = Math.min(min, max);
     const actualMax = Math.max(min, max);
     const range = actualMax - actualMin;
-
+    const MIN_TICK_WITH_BOUNDARIES = 2; // Minimum ticks to ensure min/max is included
     // Apply spacing constraints if provided
     let effectiveMaxTicks = maxTicks;
     if (options?.minTickSpacing && options?.availableSpace) {
@@ -46,9 +46,8 @@ export function generateNiceAxisTicks(min: number, max: number, maxTicks: number
         const maxTicksFromSpacing = Math.floor(options.availableSpace / options.minTickSpacing) + 1;
         effectiveMaxTicks = Math.min(maxTicks, maxTicksFromSpacing);
 
-        // Ensure at least 2 ticks (min and max) if space allows
-        if (effectiveMaxTicks < 2 && options.availableSpace >= options.minTickSpacing) {
-            effectiveMaxTicks = 2;
+        if (effectiveMaxTicks < MIN_TICK_WITH_BOUNDARIES && options.availableSpace >= options.minTickSpacing) {
+            effectiveMaxTicks = MIN_TICK_WITH_BOUNDARIES;
         }
     }
 
