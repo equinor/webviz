@@ -1,13 +1,13 @@
 import type React from "react";
 
-import { Close } from "@mui/icons-material";
-
 import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 import { IconButton } from "@lib/components/IconButton";
 import type { TagProps } from "@lib/components/TagInput";
+import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Close } from "@mui/icons-material";
 
 import { isEnsembleRealizationFilterEffective } from "../private-utils/realizationFilterUtil";
 
@@ -53,9 +53,11 @@ export function EnsembleTag(props: EnsembleTagProps): React.ReactNode {
                 />
             )}
             <span>{props.label ?? String(props.tag)}</span>
-            <IconButton className="align-text-bottom" title="Remove ensemble" size="small" onClick={props.onRemove}>
-                <Close fontSize="inherit" />
-            </IconButton>
+            <Tooltip title="Remove ensemble" enterDelay="medium">
+                <IconButton className="align-text-bottom" size="small" onClick={props.onRemove}>
+                    <Close fontSize="inherit" />
+                </IconButton>
+            </Tooltip>
 
             {props.selected && (
                 <div className="bg-blue-500 opacity-30 absolute left-0 top-0 w-full h-full block z-10 rounded-sm" />

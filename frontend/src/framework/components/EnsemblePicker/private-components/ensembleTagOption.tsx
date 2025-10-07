@@ -5,6 +5,7 @@ import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import type { TagOptionProps } from "@lib/components/TagPicker";
+import { Tooltip } from "@lib/components/Tooltip";
 
 import { isEnsembleRealizationFilterEffective } from "../private-utils/realizationFilterUtil";
 
@@ -46,9 +47,9 @@ export function EnsembleTagOption(props: EnsembleTagOptionProps): React.ReactNod
                             badgeClassName={TAG_OPTION_BACKGROUND_COLOR}
                         />
                     )}
-                    <span title={props.label ?? props.value} className="truncate min-w-0">
-                        {props.label ?? props.value}
-                    </span>
+                    <Tooltip title={props.label ?? props.value} enterDelay="long">
+                        <span className="truncate min-w-0">{props.label ?? props.value}</span>
+                    </Tooltip>
                 </label>
             </li>
         </>

@@ -1,6 +1,6 @@
-import { FilterAlt } from "@mui/icons-material";
-
 import { ColorTileWithBadge } from "@lib/components/ColorTileWithBadge";
+import { Tooltip } from "@lib/components/Tooltip";
+import { FilterAlt } from "@mui/icons-material";
 
 export function EnsembleColorTile({
     ensembleColor,
@@ -12,16 +12,18 @@ export function EnsembleColorTile({
     badgeClassName?: string;
 }): React.ReactNode {
     return (
-        <span
-            className="flex items-center w-6"
+        <Tooltip
             title={isRealizationFilterEffective ? "Some realizations are being filtered out" : undefined}
+            enterDelay="medium"
         >
-            <ColorTileWithBadge
-                color={ensembleColor}
-                showBadge={isRealizationFilterEffective}
-                badgeIcon={FilterAlt}
-                badgeClassName={badgeClassName}
-            />
-        </span>
+            <span className="flex items-center w-6">
+                <ColorTileWithBadge
+                    color={ensembleColor}
+                    showBadge={isRealizationFilterEffective}
+                    badgeIcon={FilterAlt}
+                    badgeClassName={badgeClassName}
+                />
+            </span>
+        </Tooltip>
     );
 }
