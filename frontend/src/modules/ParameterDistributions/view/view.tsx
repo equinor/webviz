@@ -9,7 +9,7 @@ import type { Interfaces } from "../interfaces";
 import { EnsembleMode, ParameterDistributionSortingMethod } from "../typesAndEnums";
 
 import { VirtualizedParameterDistributionPlot } from "./components/VirtualizedParameterDistributionPlot";
-import { makeEnsembleSetParameterArray } from "./utils/ensembleSetParamaterArray";
+import { makeEnsembleSetParameterArray } from "./utils/ensembleSetParameterArray";
 import { sortParametersAlphabetically, sortPriorPosteriorParametersByVariance } from "./utils/parameterSorting";
 
 export function View(props: ModuleViewProps<Interfaces>) {

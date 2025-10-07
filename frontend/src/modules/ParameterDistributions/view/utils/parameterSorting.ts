@@ -1,4 +1,4 @@
-import type { EnsembleSetParameterArray } from "./ensembleSetParamaterArray";
+import type { EnsembleSetParameterArray } from "./ensembleSetParameterArray";
 
 export function sortParametersAlphabetically(
     parameterDataArray: EnsembleSetParameterArray[],

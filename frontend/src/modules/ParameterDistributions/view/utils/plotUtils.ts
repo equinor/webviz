@@ -4,7 +4,7 @@ import type { Layout, PlotType } from "plotly.js";
 
 import { ParameterDistributionPlotType } from "../../typesAndEnums";
 
-import type { EnsembleParameterRealizationsAndValues, EnsembleSetParameterArray } from "./ensembleSetParamaterArray";
+import type { EnsembleParameterRealizationsAndValues, EnsembleSetParameterArray } from "./ensembleSetParameterArray";
 
 export interface TraceGenerationOptions {
     plotType: ParameterDistributionPlotType;

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Plot } from "@modules/_shared/components/Plot";
 
 import { ParameterDistributionPlotType } from "../../typesAndEnums";
-import type { EnsembleSetParameterArray } from "../utils/ensembleSetParamaterArray";
+import type { EnsembleSetParameterArray } from "../utils/ensembleSetParameterArray";
 import { generateLayoutForParameter, generateTracesForParameter } from "../utils/plotUtils";
 import type { TraceGenerationOptions } from "../utils/plotUtils";
 
