@@ -7,6 +7,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
 import type { Interfaces } from "../interfaces";
 
@@ -27,7 +28,9 @@ export const View = ({ viewContext, workbenchSettings, workbenchServices }: Modu
     const setUserSelectedTimestampUtcMs = useSetAtom(userSelectedActiveTimestampUtcMsAtom);
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
     const vectorSpecification = useAtomValue(vectorSpecificationAtom);
-
+    const descriptiveVectorName = vectorSpecification
+        ? simulationVectorDescription(vectorSpecification?.vectorName)
+        : "";
     const subscribedHoverTimestampUtcMs = useSubscribedValue("global.hoverTimestamp", workbenchServices);
 
     useMakeViewStatusWriterMessages(statusWriter);
@@ -65,7 +68,7 @@ export const View = ({ viewContext, workbenchSettings, workbenchServices }: Modu
         <div className="w-full h-full" ref={wrapperDivRef}>
             <TimeSeriesChart
                 traceDataArr={traceDataArr}
-                title={vectorSpecification?.vectorName ?? ""}
+                title={descriptiveVectorName}
                 uirevision={vectorSpecification?.vectorName}
                 activeTimestampUtcMs={activeTimestampUtcMs ?? undefined}
                 hoveredTimestampUtcMs={subscribedHoverTimestampUtcMs?.timestampUtcMs ?? undefined}

@@ -55,7 +55,7 @@ const template: Template = {
                 },
             },
             initialSettings: {
-                displayComponentType: DisplayComponentType.TornadoChart,
+                displayComponentType: DisplayComponentType.SENSITIVITY_CHART,
             },
         },
         {
@@ -76,7 +76,7 @@ const template: Template = {
                 },
             },
             initialSettings: {
-                displayComponentType: DisplayComponentType.Table,
+                displayComponentType: DisplayComponentType.SENSITIVITY_TABLE,
             },
         },
     ],

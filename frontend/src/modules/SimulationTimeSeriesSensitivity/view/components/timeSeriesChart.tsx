@@ -75,7 +75,7 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
         width: props.width,
         height: props.height,
         xaxis: { type: "date" },
-        title: props.title,
+        title: { text: props.title },
         legend: { orientation: "h", valign: "bottom" },
         margin: { t: 50, b: 100, r: 0 },
         shapes: [],
