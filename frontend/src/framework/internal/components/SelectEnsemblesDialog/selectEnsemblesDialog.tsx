@@ -25,6 +25,7 @@ import {
 import { EnsemblePicker } from "./private-components/EnsemblePicker";
 import { EnsembleTables } from "./private-components/EnsembleTables";
 import type { InternalDeltaEnsembleSetting, InternalRegularEnsembleSetting } from "./types";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 
 export type SelectEnsemblesDialogProps = {
     workbench: Workbench;
@@ -43,7 +44,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     const workbenchSession = props.workbench.getWorkbenchSession();
 
-    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ENSEMBLE_SET);
+    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const isEnsembleSetLoading = usePublishSubscribeTopicValue(
         props.workbench.getWorkbenchSession(),
         PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING,
@@ -52,15 +53,26 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const colorSet = useColorSet(props.workbench.getWorkbenchSession().getWorkbenchSettings());
     const currentHash = makeHashFromSelectedEnsembles(selectedRegularEnsembles, selectedDeltaEnsembles);
 
+    const setEnsembleStatesFromEnsembleSet = React.useCallback(
+        function setEnsembleStatesFromEnsembleSet() {
+            if (!ensembleSet) {
+                return;
+            }
+
+            const regularEnsembles = makeRegularEnsembleSettingsFromEnsembleSet(ensembleSet);
+            const deltaEnsembles = makeDeltaEnsembleSettingsFromEnsembleSet(ensembleSet);
+
+            setSelectedRegularEnsembles(regularEnsembles);
+            setSelectedDeltaEnsembles(deltaEnsembles);
+            setHash(makeHashFromSelectedEnsembles(regularEnsembles, deltaEnsembles));
+        },
+        [ensembleSet],
+    );
+
+    // Initialize states from ensemble set
     if (!isEqual(prevEnsembleSet, ensembleSet)) {
         setPrevEnsembleSet(ensembleSet);
-
-        const regularEnsembles = makeRegularEnsembleSettingsFromEnsembleSet(ensembleSet);
-        const deltaEnsembles = makeDeltaEnsembleSettingsFromEnsembleSet(ensembleSet);
-
-        setSelectedRegularEnsembles(regularEnsembles);
-        setSelectedDeltaEnsembles(deltaEnsembles);
-        setHash(makeHashFromSelectedEnsembles(regularEnsembles, deltaEnsembles));
+        setEnsembleStatesFromEnsembleSet();
     }
 
     const nextEnsembleColor = React.useMemo(() => {
@@ -81,6 +93,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     function handleClose() {
         setConfirmCancel(false);
         setIsOpen(false);
+        setEnsembleStatesFromEnsembleSet();
     }
 
     function handleCancel() {

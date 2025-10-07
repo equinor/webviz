@@ -40,18 +40,18 @@ export function makeHashFromSelectedEnsembles(
     selectedDeltaEnsembles: InternalDeltaEnsembleSetting[],
 ): string {
     const regularHash = selectedRegularEnsembles
-        .map((item) => item.ensembleIdent.toString())
-        .sort()
+        .map((item) => `${item.customName}~@@~${item.ensembleIdent.toString()}~@@~${item.color}`)
         .join(",");
 
     const deltaHash = selectedDeltaEnsembles
-        .map((item) => makeHashFromDeltaEnsemble(item))
-        .sort()
+        .map((item) => `${item.customName}~@@~${makeHashFromDeltaEnsemble(item)}~@@~${item.color}`)
         .join(",");
 
     return `${regularHash}|${deltaHash}`;
 }
 
 export function makeHashFromDeltaEnsemble(deltaEnsemble: InternalDeltaEnsembleSetting): string {
-    return `${deltaEnsemble.comparisonEnsembleIdent.toString()}~&&~${deltaEnsemble.referenceEnsembleIdent.toString()}`;
+    const comparisonEnsembleIdentString = deltaEnsemble.comparisonEnsembleIdent?.toString() ?? "null";
+    const referenceEnsembleIdentString = deltaEnsemble.referenceEnsembleIdent?.toString() ?? "null";
+    return `${comparisonEnsembleIdentString}~&&~${referenceEnsembleIdentString}`;
 }

@@ -164,7 +164,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 {devToolsVisible && (
                     <span
                         title={props.moduleInstance.getId()}
-                        className="font-light ml-2 mr-1 text-ellipsis whitespace-nowrap overflow-hidden min-w-0"
+                        className="font-light text-xs ml-2 mr-1 text-ellipsis whitespace-nowrap overflow-hidden min-w-0"
                     >
                         {props.moduleInstance.getId()}
                     </span>
@@ -175,10 +175,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                             title={`This module syncs its "${SyncSettingsMeta[setting].name}" setting on the current page.`}
                             key={setting}
                         >
-                            <span
-                                key={setting}
-                                className="flex items-center justify-center rounded-sm p-1 leading-none bg-indigo-700 text-white ml-1 text-xs mr-1 cursor-help"
-                            >
+                            <span className="flex items-center justify-center rounded-sm p-1 leading-none bg-indigo-700 text-white ml-1 text-xs mr-1 cursor-help">
                                 {SyncSettingsMeta[setting].abbreviation}
                             </span>
                         </Tooltip>

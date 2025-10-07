@@ -41,7 +41,7 @@ const SurfaceTimeTypeEnumToStringMapping = {
 };
 //-----------------------------------------------------------------------------------------------------------
 export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
-    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
+    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<RegularEnsembleIdent | null>(null);
     const [timeType, setTimeType] = React.useState<SurfaceTimeType>(SurfaceTimeType.None);
 

@@ -18,7 +18,7 @@ import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriter
 import { useTableBuilder } from "./hooks/useTableBuilder";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
-    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
+    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const statusWriter = useViewStatusWriter(props.viewContext);
 
     const divRef = React.useRef<HTMLDivElement>(null);

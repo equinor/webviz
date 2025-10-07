@@ -8,12 +8,11 @@ import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import type { Wellbore } from "@framework/types/wellbore";
-import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { usePolygonsDataQueryByAddress } from "@modules/_shared/Polygons";
 import { useFieldWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
@@ -75,7 +74,7 @@ export function View({
         annotation3D: `${myInstanceIdStr} -- annotation3D`,
     };
 
-    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.EnsembleSet);
+    const ensembleSet = useEnsembleSet(workbenchSession);
 
     const meshSurfAddr = viewContext.useSettingsToViewInterfaceValue("meshSurfaceAddress");
     const propertySurfAddr = viewContext.useSettingsToViewInterfaceValue("propertySurfaceAddress");

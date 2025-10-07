@@ -20,7 +20,7 @@ import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
-    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
+    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const queryClient = useQueryClient();
 
     const [dataProviderManager, setDataProviderManager] = useAtom(dataProviderManagerAtom);

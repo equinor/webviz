@@ -47,7 +47,7 @@ import {
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
-    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
+    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const tableDefinitionsQueryResult = useAtomValue(tableDefinitionsQueryAtom);
     const tableDefinitionsAccessor = useAtomValue(tableDefinitionsAccessorAtom);
 

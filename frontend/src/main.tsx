@@ -50,9 +50,7 @@ root.render(
         <GlobalErrorBoundary>
             <AuthProvider>
                 <CustomQueryClientProvider>
-                    <>
-                        <App />
-                    </>
+                    <App />
                 </CustomQueryClientProvider>
             </AuthProvider>
         </GlobalErrorBoundary>

@@ -9,7 +9,7 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
-import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Button } from "@lib/components/Button";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -20,7 +20,6 @@ import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import type { PolygonsAddress } from "@modules/_shared/Polygons";
 import { PolygonsDirectory, usePolygonsDirectoryQuery } from "@modules/_shared/Polygons";
 import {
@@ -73,7 +72,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const myInstanceIdStr = settingsContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap settings`);
 
-    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.EnsembleSet);
+    const ensembleSet = useEnsembleSet(workbenchSession);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<RegularEnsembleIdent | null>(null);
     const [selectedMeshSurfaceName, setSelectedMeshSurfaceName] = React.useState<string | null>(null);
     const [selectedMeshSurfaceAttribute, setSelectedMeshSurfaceAttribute] = React.useState<string | null>(null);

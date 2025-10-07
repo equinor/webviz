@@ -10,7 +10,7 @@ export function useElementSize(ref: React.RefObject<HTMLElement>): Size2D {
     });
 
     React.useEffect(
-        function layoutEffect() {
+        function observeSizeEffect() {
             let isHidden = false;
             let currentSize = { width: 0, height: 0 };
             const handleResize = (): void => {

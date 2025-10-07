@@ -4,13 +4,12 @@ import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { Interfaces } from "../interfaces";
 import {
@@ -34,7 +33,7 @@ import {
 } from "./atoms/derivedAtoms";
 
 export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
-    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.EnsembleSet);
+    const ensembleSet = useEnsembleSet(workbenchSession);
 
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
     const setSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);

@@ -3,7 +3,7 @@ export function objectToJsonString(obj: unknown): string {
         return JSON.stringify(obj, null, 2);
     } catch (error) {
         console.error("Failed to convert object to JSON string. Offending object:", obj, "Error:", error);
-        throw error; // or return fallback JSON string like '{}'
+        throw error;
     }
 }
 

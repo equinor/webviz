@@ -9,7 +9,6 @@ import { GuiEvent, GuiState, RightDrawerContent, useGuiState, useGuiValue } from
 import { Drawer } from "@framework/internal/components/Drawer";
 import type { EnsembleRealizationFilterSelections } from "@framework/internal/components/EnsembleRealizationFilter";
 import { EnsembleRealizationFilter } from "@framework/internal/components/EnsembleRealizationFilter";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
 import { areUnsortedArraysEqual } from "@framework/utils/arrayUtils";
@@ -18,6 +17,7 @@ import { countTrueValues } from "@framework/utils/objectUtils";
 import { areParameterIdentStringToValueSelectionMapCandidatesEqual } from "@framework/utils/realizationFilterTypesUtils";
 import type { Workbench } from "@framework/Workbench";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 
 export type RealizationFilterSettingsProps = { workbench: Workbench; onClose: () => void };
 
@@ -27,7 +27,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     const rightSettingsPanelWidth = useGuiValue(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
     const ensembleSet = usePublishSubscribeTopicValue(
         props.workbench.getWorkbenchSession(),
-        PrivateWorkbenchSessionTopic.ENSEMBLE_SET,
+        WorkbenchSessionTopic.ENSEMBLE_SET,
     );
     const realizationFilterSet = props.workbench.getWorkbenchSession().getRealizationFilterSet();
     const [, setNumberOfUnsavedRealizationFilters] = useGuiState(

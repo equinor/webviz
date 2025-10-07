@@ -20,11 +20,13 @@ import { ColorSet } from "@lib/utils/ColorSet";
 import { usePublishSubscribeTopicValue, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 export enum WorkbenchSettingsTopic {
-    SelectedColorPalettes = "SelectedColorPalettes",
+    SELECTED_COLOR_PALETTE_IDS = "SelectedColorPaletteIds",
+    SELECTED_STEPS = "SelectedSteps",
 }
 
 export type WorkbenchSettingsTopicPayloads = {
-    [WorkbenchSettingsTopic.SelectedColorPalettes]: Record<ColorPaletteType, ColorPalette[]>;
+    [WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS]: Record<ColorPaletteType, string>;
+    [WorkbenchSettingsTopic.SELECTED_STEPS]: Record<ColorScaleDiscreteSteps, number>;
 };
 
 export enum ColorPaletteType {
@@ -53,7 +55,7 @@ export interface WorkbenchSettings extends PublishSubscribe<WorkbenchSettingsTop
 export function useColorSet(workbenchSettings: WorkbenchSettings): ColorSet {
     const selectedColorPalettes = usePublishSubscribeTopicValue(
         workbenchSettings,
-        WorkbenchSettingsTopic.SelectedColorPalettes,
+        WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS,
     );
     const [colorSet, setColorSet] = React.useState<ColorSet>(
         new ColorSet(workbenchSettings.getSelectedColorPalette(ColorPaletteType.Categorical)),
@@ -75,8 +77,9 @@ export function useDiscreteColorScale(
 ): ColorScale {
     const selectedColorPalettes = usePublishSubscribeTopicValue(
         workbenchSettings,
-        WorkbenchSettingsTopic.SelectedColorPalettes,
+        WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS,
     );
+    const steps = usePublishSubscribeTopicValue(workbenchSettings, WorkbenchSettingsTopic.SELECTED_STEPS);
 
     const optionsWithDefaults: ColorScaleOptions = {
         type: ColorScaleType.Discrete,
@@ -86,15 +89,15 @@ export function useDiscreteColorScale(
                 : ColorPaletteType.ContinuousDiverging,
         ),
         gradientType: options.gradientType,
-        steps: workbenchSettings.getSteps()[
+        steps: steps[
             options.gradientType === ColorScaleGradientType.Sequential
                 ? ColorScaleDiscreteSteps.Sequential
                 : ColorScaleDiscreteSteps.Diverging
         ],
     };
 
-    const divergingSteps = workbenchSettings.getSteps()[ColorScaleDiscreteSteps.Diverging];
-    const sequentialSteps = workbenchSettings.getSteps()[ColorScaleDiscreteSteps.Sequential];
+    const divergingSteps = steps[ColorScaleDiscreteSteps.Diverging];
+    const sequentialSteps = steps[ColorScaleDiscreteSteps.Sequential];
 
     const [adjustedOptions, setAdjustedOptions] = React.useState<ColorScaleOptions>(optionsWithDefaults);
 
@@ -137,8 +140,9 @@ export function useContinuousColorScale(
 ): ColorScale {
     const selectedColorPalettes = usePublishSubscribeTopicValue(
         workbenchSettings,
-        WorkbenchSettingsTopic.SelectedColorPalettes,
+        WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS,
     );
+    const steps = usePublishSubscribeTopicValue(workbenchSettings, WorkbenchSettingsTopic.SELECTED_STEPS);
 
     const optionsWithDefaults: ColorScaleOptions = {
         type: ColorScaleType.Continuous,
@@ -148,7 +152,7 @@ export function useContinuousColorScale(
                 : ColorPaletteType.ContinuousDiverging,
         ),
         gradientType: options.gradientType,
-        steps: workbenchSettings.getSteps()[
+        steps: steps[
             options.gradientType === ColorScaleGradientType.Sequential
                 ? ColorScaleDiscreteSteps.Sequential
                 : ColorScaleDiscreteSteps.Diverging

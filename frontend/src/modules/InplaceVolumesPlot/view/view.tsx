@@ -21,7 +21,7 @@ import { useBuildPlotAndTable } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
-    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
+    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const statusWriter = useViewStatusWriter(props.viewContext);
     const colorSet = useColorSet(props.workbenchSettings);
 

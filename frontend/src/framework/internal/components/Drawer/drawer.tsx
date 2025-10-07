@@ -71,7 +71,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
 
     return (
         <div className={`flex flex-col bg-white min-h-0 h-full${props.visible ? "" : " hidden"}`}>
-            <div className="flex justify-center items-center p-2 bg-slate-100 h-10">
+            <div className="flex justify-center items-center p-2 bg-slate-100 h-10 shadow-sm">
                 {props.icon && React.cloneElement(props.icon, { fontSize: "small", className: "mr-2" })}
                 <span className="font-bold grow p-0 text-sm">{props.title}</span>
                 {props.actions}

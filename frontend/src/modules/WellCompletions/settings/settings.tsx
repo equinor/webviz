@@ -10,7 +10,7 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { Button } from "@lib/components/Button";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -22,7 +22,6 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Switch } from "@lib/components/Switch";
 import type { ColorSet } from "@lib/utils/ColorSet";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { Interfaces } from "../interfaces";
 import {
@@ -65,7 +64,7 @@ export const Settings = ({
     workbenchServices,
     workbenchSettings,
 }: ModuleSettingsProps<Interfaces>) => {
-    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.EnsembleSet);
+    const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
     const stratigraphyColorSet = useColorSet(workbenchSettings);
 

@@ -1,27 +1,28 @@
 import React from "react";
 
-import { type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import { usePublishSubscribeTopicValue, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import type { EnsembleSet } from "./EnsembleSet";
 import type { RealizationFilterSet } from "./RealizationFilterSet";
 import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import type { UserCreatedItems } from "./UserCreatedItems";
+import type { WorkbenchSessionTopicPayloads } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
 
 export enum WorkbenchSessionTopic {
-    EnsembleSet = "EnsembleSet",
-    RealizationFilterSet = "RealizationFilterSet",
+    ENSEMBLE_SET = "EnsembleSet",
+    REALIZATION_FILTER_SET = "RealizationFilterSet",
 }
-
-export type WorkbenchSessionTopicPayloads = {
-    [WorkbenchSessionTopic.EnsembleSet]: EnsembleSet;
-    [WorkbenchSessionTopic.RealizationFilterSet]: RealizationFilterSet;
-};
 
 export interface WorkbenchSession extends PublishSubscribe<WorkbenchSessionTopicPayloads> {
     getEnsembleSet: () => EnsembleSet;
     getRealizationFilterSet: () => RealizationFilterSet;
     getUserCreatedItems: () => UserCreatedItems;
+}
+
+// Keeping the old function for convenience and backwards compatibility - it has to be decided later if it should be removed.
+export function useEnsembleSet(workbenchSession: WorkbenchSession): EnsembleSet {
+    return usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
 }
 
 export function createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession: WorkbenchSession) {
@@ -59,7 +60,7 @@ export function useEnsembleRealizationFilterFunc(
 
             const unsubscribeFunc = workbenchSession
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(WorkbenchSessionTopic.RealizationFilterSet)(
+                .makeSubscriberFunction(WorkbenchSessionTopic.REALIZATION_FILTER_SET)(
                 () => handleEnsembleRealizationFilterSetChanged,
             );
             return unsubscribeFunc;

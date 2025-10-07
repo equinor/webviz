@@ -25,7 +25,7 @@ import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 import { DataProviderManagerWrapper } from "./components/dataProviderManagerWrapper";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
-    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
+    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const queryClient = useQueryClient();
     const colorSet = useColorSet(props.workbenchSettings);
 

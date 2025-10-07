@@ -8,7 +8,7 @@ import { Dashboard, type SerializedDashboard } from "@framework/internal/Dashboa
 import { RealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UserCreatedItems, type SerializedUserCreatedItems } from "@framework/UserCreatedItems";
-import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
 import {
     loadMetadataFromBackendAndCreateEnsembleSet,
@@ -18,6 +18,7 @@ import {
 import { PrivateWorkbenchSettings, type SerializedWorkbenchSettings } from "../PrivateWorkbenchSettings";
 
 import { type WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
+import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
 
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
@@ -46,23 +47,21 @@ export type WorkbenchSessionContent = {
 };
 
 export enum PrivateWorkbenchSessionTopic {
-    ENSEMBLE_SET = "EnsembleSet",
     IS_ENSEMBLE_SET_LOADING = "EnsembleSetLoadingState",
-    REALIZATION_FILTER_SET = "RealizationFilterSet",
     ACTIVE_DASHBOARD = "ActiveDashboard",
     DASHBOARDS = "Dashboards",
 }
 
-export type PrivateWorkbenchSessionTopicPayloads = {
+export type WorkbenchSessionTopicPayloads = {
+    [WorkbenchSessionTopic.ENSEMBLE_SET]: EnsembleSet;
+    [WorkbenchSessionTopic.REALIZATION_FILTER_SET]: { filterSet: RealizationFilterSet };
     [PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING]: boolean;
-    [PrivateWorkbenchSessionTopic.ENSEMBLE_SET]: EnsembleSet;
-    [PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET]: RealizationFilterSet;
     [PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD]: Dashboard;
     [PrivateWorkbenchSessionTopic.DASHBOARDS]: Dashboard[];
 };
 
-export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenchSessionTopicPayloads> {
-    private _publishSubscribeDelegate = new PublishSubscribeDelegate<PrivateWorkbenchSessionTopicPayloads>();
+export class PrivateWorkbenchSession implements WorkbenchSession {
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<WorkbenchSessionTopicPayloads>();
 
     private _atomStoreMaster: AtomStoreMaster;
     private _queryClient: QueryClient;
@@ -165,24 +164,24 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         this._ensembleSet = set;
         // Await the update of the EnsembleTimestampsStore with the latest timestamps before notifying any subscribers
         this._atomStoreMaster.setAtomValue(EnsembleSetAtom, set);
-        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ENSEMBLE_SET);
-        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET);
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.ENSEMBLE_SET);
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.REALIZATION_FILTER_SET);
     }
 
     getPublishSubscribeDelegate() {
         return this._publishSubscribeDelegate;
     }
 
-    makeSnapshotGetter<T extends PrivateWorkbenchSessionTopic>(
+    makeSnapshotGetter<T extends keyof WorkbenchSessionTopicPayloads>(
         topic: T,
-    ): () => PrivateWorkbenchSessionTopicPayloads[T] {
+    ): () => WorkbenchSessionTopicPayloads[T] {
         const snapshotGetter = (): any => {
             switch (topic) {
                 case PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING:
                     return this._isEnsembleSetLoading;
-                case PrivateWorkbenchSessionTopic.ENSEMBLE_SET:
+                case WorkbenchSessionTopic.ENSEMBLE_SET:
                     return this._ensembleSet;
-                case PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET:
+                case WorkbenchSessionTopic.REALIZATION_FILTER_SET:
                     return this._wrappedRealizationFilterSet;
                 case PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD:
                     return this.getActiveDashboard();
@@ -227,7 +226,7 @@ export class PrivateWorkbenchSession implements PublishSubscribe<PrivateWorkbenc
         this._wrappedRealizationFilterSet = {
             filterSet: this._realizationFilterSet,
         };
-        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET);
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.REALIZATION_FILTER_SET);
     }
 
     makeDefaultDashboard(): void {

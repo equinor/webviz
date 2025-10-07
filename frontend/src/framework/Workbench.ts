@@ -19,6 +19,7 @@ import type { Template } from "./TemplateRegistry";
 import { UserCreatedItemsEvent } from "./UserCreatedItems";
 import type { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSettingsTopic } from "./WorkbenchSettings";
+import { WorkbenchSessionTopic } from "./WorkbenchSession";
 
 export enum WorkbenchTopic {
     ACTIVE_SESSION = "activeSession",
@@ -215,7 +216,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             "workbench-session",
             this._workbenchSession
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(PrivateWorkbenchSessionTopic.ENSEMBLE_SET)(() => {
+                .makeSubscriberFunction(WorkbenchSessionTopic.ENSEMBLE_SET)(() => {
                 this.schedulePullFullSessionState();
             }),
         );
@@ -224,7 +225,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             "workbench-session",
             this._workbenchSession
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(PrivateWorkbenchSessionTopic.REALIZATION_FILTER_SET)(() => {
+                .makeSubscriberFunction(WorkbenchSessionTopic.REALIZATION_FILTER_SET)(() => {
                 this.schedulePullFullSessionState();
             }),
         );
@@ -234,7 +235,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             this._workbenchSession
                 .getWorkbenchSettings()
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(WorkbenchSettingsTopic.SelectedColorPalettes)(() => {
+                .makeSubscriberFunction(WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS)(() => {
                 this.schedulePullFullSessionState();
             }),
         );

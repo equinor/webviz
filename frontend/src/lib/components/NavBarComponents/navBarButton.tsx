@@ -34,7 +34,7 @@ function NavBarButtonComponent(
     props: NavBarButtonProps & ButtonProps,
     ref: React.ForwardedRef<HTMLDivElement>,
 ): React.ReactNode {
-    const { icon, activeIcon, active, disabledTitle, ...baseProps } = props;
+    const { icon, activeIcon, active, disabledTitle, title, ...baseProps } = props;
 
     let buttonIcon: React.ReactNode;
 
@@ -42,7 +42,7 @@ function NavBarButtonComponent(
     else buttonIcon = icon;
 
     return (
-        <Tooltip title={props.disabled ? disabledTitle : props.title} placement="right">
+        <Tooltip title={props.disabled ? disabledTitle : title} placement="right">
             {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
             <span>
                 <Button

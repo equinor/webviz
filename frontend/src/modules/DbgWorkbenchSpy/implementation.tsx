@@ -26,7 +26,7 @@ export function WorkbenchSpySettings() {
 
 //-----------------------------------------------------------------------------------------------------------
 export function WorkbenchSpyView(props: ModuleViewProps<Interfaces>) {
-    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.EnsembleSet);
+    const ensembleSet = usePublishSubscribeTopicValue(props.workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const [hoverRealization, hoverRealization_TS] = useServiceValueWithTS(
         "global.hoverRealization",
         props.workbenchServices,

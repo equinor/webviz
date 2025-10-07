@@ -15,7 +15,6 @@ import {
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
-import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -91,7 +90,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
             style={{ contain: "content" }}
         >
             <ErrorBoundary moduleInstance={props.moduleInstance}>
-                <div className="flex justify-center items-center p-2 bg-slate-100 h-10">
+                <div className="flex justify-center items-center p-2 bg-slate-100 h-10 shadow-sm">
                     <SettingsIcon fontSize="small" className="mr-2" />{" "}
                     <span
                         title={props.moduleInstance.getTitle()}
@@ -113,10 +112,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                                     <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
                                         <Settings
                                             settingsContext={props.moduleInstance.getContext()}
-                                            workbenchSession={
-                                                // The cast here is unfortunate
-                                                props.workbench.getWorkbenchSession() as unknown as WorkbenchSession
-                                            }
+                                            workbenchSession={props.workbench.getWorkbenchSession()}
                                             workbenchServices={props.workbench.getWorkbenchServices()}
                                             workbenchSettings={props.workbench
                                                 .getWorkbenchSession()

@@ -24,7 +24,7 @@ export function useResponseChannel(
     viewContext: ViewContext<Interfaces>,
     workbenchSession: WorkbenchSession,
 ): ResponseChannelData {
-    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.EnsembleSet);
+    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
 
     const responseReceiver = viewContext.useChannelReceiver({
         receiverIdString: "response",

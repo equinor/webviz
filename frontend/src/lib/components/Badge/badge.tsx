@@ -34,7 +34,7 @@ export const Badge: React.FC<BadgeProps> = (props) => {
                         "[&.MuiBadge-invisible]:invisible",
                     ),
                     style: {
-                        fontSize: "0.6rem",
+                        fontSize: "0.65rem",
                         lineHeight: "1",
                         transform: "scale(1) translate(50%, -50%)",
                         transformOrigin: "100% 0%",

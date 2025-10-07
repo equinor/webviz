@@ -11,6 +11,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { NavBarButton, NavBarDivider } from "@lib/components/NavBarComponents";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 
 type LeftNavBarProps = {
     workbench: Workbench;
@@ -18,7 +19,7 @@ type LeftNavBarProps = {
 
 export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     const workbenchSession = props.workbench.getWorkbenchSession();
-    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ENSEMBLE_SET);
+    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
     const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
     const layout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.Layout);
     const [ensembleDialogOpen, setEnsembleDialogOpen] = useGuiState(

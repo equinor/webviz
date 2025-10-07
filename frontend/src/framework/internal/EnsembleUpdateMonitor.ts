@@ -2,7 +2,7 @@ import type { QueryClient } from "@tanstack/query-core";
 
 import { EnsembleTimestampsStore, type EnsembleTimestamps } from "@framework/EnsembleTimestampsStore";
 import { globalLog } from "@framework/Log";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { Workbench } from "@framework/Workbench";
 
 import { fetchLatestEnsembleTimestamps } from "./utils/fetchEnsembleTimestamps";
@@ -104,18 +104,18 @@ export class EnsembleUpdateMonitor {
                 return;
             }
 
-            const allRegularEnsembleIdents: Set<RegularEnsembleIdent> = new Set(
+            const allRegularEnsembleIdents: Set<string> = new Set(
                 workbenchSession
                     .getEnsembleSet()
                     .getRegularEnsembleArray()
-                    .map((ens) => ens.getIdent()),
+                    .map((ens) => ens.getIdent().toString()),
             );
 
             // Collect all delta ensembles' reference and comparison ensembles
             const deltaEnsembles = workbenchSession.getEnsembleSet().getDeltaEnsembleArray();
             for (const deltaEnsemble of deltaEnsembles) {
-                allRegularEnsembleIdents.add(deltaEnsemble.getComparisonEnsembleIdent());
-                allRegularEnsembleIdents.add(deltaEnsemble.getReferenceEnsembleIdent());
+                allRegularEnsembleIdents.add(deltaEnsemble.getComparisonEnsembleIdent().toString());
+                allRegularEnsembleIdents.add(deltaEnsemble.getReferenceEnsembleIdent().toString());
             }
 
             // If there are no ensembles to check, we can exit early
@@ -127,7 +127,7 @@ export class EnsembleUpdateMonitor {
             // Fetch the latest timestamps for all ensembles
             const latestTimestamps = await fetchLatestEnsembleTimestamps(
                 this._queryClient,
-                Array.from(allRegularEnsembleIdents),
+                Array.from(allRegularEnsembleIdents).map((id) => RegularEnsembleIdent.fromString(id)),
             );
 
             if (latestTimestamps.length !== allRegularEnsembleIdents.size) {
