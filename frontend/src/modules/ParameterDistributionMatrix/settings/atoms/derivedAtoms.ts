@@ -2,8 +2,6 @@ import { atom } from "jotai";
 
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { MAX_PARAMETERS } from "@modules/ParameterDistributionMatrix/typesAndEnums";
-
 
 import {
     showConstantParametersAtom,
@@ -68,7 +66,8 @@ export const intersectedParameterIdentsAtom = atom((get) => {
 export const selectedParameterIdentsAtom = atom((get) => {
     const intersectedParameterIdents = get(intersectedParameterIdentsAtom);
     const userSelectedParameterIdents = get(userSelectedParameterIdentsAtom);
-    if (userSelectedParameterIdents.length === 0) return intersectedParameterIdents.slice(0, MAX_PARAMETERS);
+    if (!userSelectedParameterIdents) return intersectedParameterIdents;
+    if (userSelectedParameterIdents.length === 0) return [];
     return userSelectedParameterIdents.filter((ident) =>
         intersectedParameterIdents.some((intersectIdent) => intersectIdent.equals(ident)),
     );

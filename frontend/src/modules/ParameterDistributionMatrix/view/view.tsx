@@ -9,11 +9,10 @@ import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSess
 import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-
 import type { Interfaces } from "../interfaces";
 import type { ParameterDataArr } from "../typesAndEnums";
 
-import { ParameterDistributionPlot } from "./components/ParameterDistributionPlot";
+import { VirtualizedParameterDistributionPlot } from "./components/VirtualizedParameterDistributionPlot";
 
 export function View(props: ModuleViewProps<Interfaces>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -40,14 +39,14 @@ export function View(props: ModuleViewProps<Interfaces>) {
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            <ParameterDistributionPlot
+            <VirtualizedParameterDistributionPlot
                 dataArr={parameterDataArr}
                 plotType={selectedVisualizationType}
                 showIndividualRealizationValues={showIndividualRealizationValues}
                 showPercentilesAndMeanLines={showPercentilesAndMeanLines}
                 width={wrapperDivSize.width}
                 height={wrapperDivSize.height}
-            ></ParameterDistributionPlot>
+            ></VirtualizedParameterDistributionPlot>
         </div>
     );
 }

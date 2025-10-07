@@ -15,10 +15,12 @@ export type ParameterDataArr = {
 export enum ParameterDistributionPlotType {
     DISTRIBUTION_PLOT = "distribution",
     BOX_PLOT = "box",
+    HISTOGRAM = "histogram",
 }
 
 export const ParameterDistributionPlotTypeEnumToStringMapping = {
     [ParameterDistributionPlotType.DISTRIBUTION_PLOT]: "Distribution Plot",
     [ParameterDistributionPlotType.BOX_PLOT]: "Box Plot",
+    [ParameterDistributionPlotType.HISTOGRAM]: "Histogram",
 };
-export const MAX_PARAMETERS = 56;
+export const MAX_PARAMETERS = 10000;

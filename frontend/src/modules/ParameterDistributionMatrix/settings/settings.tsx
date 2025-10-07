@@ -1,7 +1,7 @@
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
-import { ParameterIdent } from "@framework/EnsembleParameters";
+import type { ParameterIdent } from "@framework/EnsembleParameters";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -10,7 +10,8 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-
+import { PlotType } from "@modules/DistributionPlot/typesAndEnums";
+import { ParametersSelector } from "@modules/ParameterResponseCorrelationMatrixPlot/settings/components/parameterSelector";
 
 import type { Interfaces } from "../interfaces";
 import {
@@ -33,7 +34,6 @@ import {
     selectedParameterIdentsAtom,
 } from "./atoms/derivedAtoms";
 
-
 export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
 
@@ -54,11 +54,8 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
         setSelectedEnsembleIdents(ensembleIdents);
     }
 
-    function handleParameterIdentsChange(parameterIdentStrings: string[]) {
-        const parameterIdents = parameterIdentStrings.map((parameterIdentString) =>
-            ParameterIdent.fromString(parameterIdentString),
-        );
-        setSelectedParameterIdents(parameterIdents.slice(0, MAX_PARAMETERS));
+    function handleParameterIdentsChange(parameterIdents: ParameterIdent[]) {
+        setSelectedParameterIdents(parameterIdents);
     }
     function handleShowConstantParametersChange() {
         setShowConstantParameters((prev) => !prev);
@@ -89,6 +86,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                     {"Show additional data"}
                     <Checkbox
                         label="Individual realization values"
+                        disabled={selectedVisualizationType === ParameterDistributionPlotType.HISTOGRAM}
                         checked={showIndividualRealizationValues}
                         onChange={handleShowIndividualRealizationValuesChange}
                     />
@@ -108,29 +106,19 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                     multiple={true}
                 />
             </CollapsibleGroup>
-            <CollapsibleGroup title="Parameters" expanded>
+
+            <CollapsibleGroup title="Parameter selection" expanded>
                 <Checkbox
                     label="Show nonvarying parameters"
                     checked={showConstantParameters}
                     onChange={handleShowConstantParametersChange}
                 />
-                {`${MAX_PARAMETERS} parameters max`}
-                <Select
-                    multiple={true}
-                    options={makeParameterIdentsOptions(intersectedParameterIdents)}
-                    value={selectedParameterIdents.map((parameterIdent) => parameterIdent.toString())}
+                <ParametersSelector
+                    allParameterIdents={intersectedParameterIdents}
+                    selectedParameterIdents={selectedParameterIdents}
                     onChange={handleParameterIdentsChange}
-                    size={20}
-                    filter={true}
-                ></Select>
+                />
             </CollapsibleGroup>
         </div>
     );
-}
-
-function makeParameterIdentsOptions(parameterIdents: ParameterIdent[]): SelectOption[] {
-    return parameterIdents.map((ident) => ({
-        value: ident.toString(),
-        label: ident.groupName ? `${ident.groupName}:${ident.name}` : ident.name,
-    }));
 }
