@@ -126,9 +126,6 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
                         top: row * plotHeight,
                         width: plotWidth,
                         height: plotHeight,
-                        // border: "1px solid #ddd",
-                        // borderRadius: "4px",
-                        // backgroundColor: isVisible ? "transparent" : "#f5f5f5",
                     }}
                 >
                     {isVisible ? (
@@ -137,7 +134,7 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
                             plotType={props.plotType}
                             showIndividualRealizationValues={props.showIndividualRealizationValues}
                             showPercentilesAndMeanLines={props.showPercentilesAndMeanLines}
-                            width={plotWidth} // Account for border
+                            width={plotWidth}
                             height={plotHeight - 8}
                         />
                     ) : (
@@ -147,7 +144,6 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
                                 alignItems: "center",
                                 justifyContent: "center",
                                 height: "100%",
-                                // color: "#666",
                                 fontSize: "14px",
                             }}
                         >
@@ -180,7 +176,6 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
                 width: props.width,
                 height: props.height,
                 overflow: "auto",
-
                 position: "relative",
             }}
         >

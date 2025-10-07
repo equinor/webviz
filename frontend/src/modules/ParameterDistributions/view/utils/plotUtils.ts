@@ -201,59 +201,74 @@ export function generateTracesForParameter(
     parameterData: EnsembleSetParameterArray,
     options: TraceGenerationOptions,
 ): any[] {
-    const { plotType, showIndividualRealizationValues, showPercentilesAndMeanLines } = options;
+    const { plotType } = options;
     const traces: any[] = [];
-
     parameterData.ensembleParameterRealizationAndValues.forEach((ensembleData, index) => {
         if (plotType === ParameterDistributionPlotType.DISTRIBUTION_PLOT) {
-            // Add main distribution trace
-            const distributionTrace = createDistributionTrace(ensembleData);
-            traces.push(distributionTrace);
-            const yPosition = 0;
-            // Add percentile and mean markers if enabled
-            if (showPercentilesAndMeanLines) {
-                traces.push(
-                    ...createQuantileAndMeanMarkerTraces(ensembleData.values, yPosition, ensembleData.ensembleColor),
-                );
-            }
-
-            // Add rug plot for individual realizations if enabled
-            if (showIndividualRealizationValues) {
-                const yPosition = -0.1 - index * 0.1;
-                const rugTrace = createRugTrace(ensembleData, yPosition);
-                traces.push(rugTrace);
-            }
+            traces.push(...generateDistributionPlotTraces(ensembleData, index, options));
         } else if (plotType === ParameterDistributionPlotType.BOX_PLOT) {
-            const verticalPosition = index * 3;
-
-            // Add main box trace
-            const boxTrace = createBoxTrace(ensembleData, verticalPosition, showIndividualRealizationValues);
-            traces.push(boxTrace);
-
-            // Add percentile and mean markers if enabled
-            if (showPercentilesAndMeanLines) {
-                traces.push(
-                    ...createQuantileAndMeanMarkerTraces(
-                        ensembleData.values,
-                        verticalPosition,
-                        ensembleData.ensembleColor,
-                    ),
-                );
-            }
+            traces.push(...generateBoxPlotTraces(ensembleData, index, options));
         } else if (plotType === ParameterDistributionPlotType.HISTOGRAM) {
-            // Add main histogram trace
-            const histogramTrace = createHistogramTrace(ensembleData);
-            traces.push(histogramTrace);
-
-            // Add percentile and mean markers if enabled
-            if (showPercentilesAndMeanLines) {
-                const yPosition = 1;
-                traces.push(
-                    ...createQuantileAndMeanMarkerTraces(ensembleData.values, yPosition, ensembleData.ensembleColor),
-                );
-            }
+            traces.push(...generateHistogramTraces(ensembleData, options));
         }
     });
-
+    return traces;
+}
+function generateDistributionPlotTraces(
+    ensembleData: EnsembleParameterRealizationsAndValues,
+    index: number,
+    options: TraceGenerationOptions,
+): any[] {
+    const { showIndividualRealizationValues, showPercentilesAndMeanLines } = options;
+    const traces: any[] = [];
+    // Add main distribution trace
+    const distributionTrace = createDistributionTrace(ensembleData);
+    traces.push(distributionTrace);
+    const yPosition = 0;
+    // Add percentile and mean markers if enabled
+    if (showPercentilesAndMeanLines) {
+        traces.push(...createQuantileAndMeanMarkerTraces(ensembleData.values, yPosition, ensembleData.ensembleColor));
+    }
+    // Add rug plot for individual realizations if enabled
+    if (showIndividualRealizationValues) {
+        const rugYPosition = -0.1 - index * 0.1;
+        const rugTrace = createRugTrace(ensembleData, rugYPosition);
+        traces.push(rugTrace);
+    }
+    return traces;
+}
+function generateBoxPlotTraces(
+    ensembleData: EnsembleParameterRealizationsAndValues,
+    index: number,
+    options: TraceGenerationOptions,
+): any[] {
+    const { showIndividualRealizationValues, showPercentilesAndMeanLines } = options;
+    const traces: any[] = [];
+    const verticalPosition = index * 3;
+    // Add main box trace
+    const boxTrace = createBoxTrace(ensembleData, verticalPosition, showIndividualRealizationValues);
+    traces.push(boxTrace);
+    // Add percentile and mean markers if enabled
+    if (showPercentilesAndMeanLines) {
+        traces.push(
+            ...createQuantileAndMeanMarkerTraces(ensembleData.values, verticalPosition, ensembleData.ensembleColor),
+        );
+    }
+    return traces;
+}
+function generateHistogramTraces(
+    ensembleData: EnsembleParameterRealizationsAndValues,
+    options: TraceGenerationOptions,
+): any[] {
+    const { showPercentilesAndMeanLines } = options;
+    const traces: any[] = [];
+    // Add main histogram trace
+    const histogramTrace = createHistogramTrace(ensembleData);
+    traces.push(histogramTrace);
+    // Add percentile and mean markers if enabled
+    if (showPercentilesAndMeanLines) {
+        const yPosition = 1;
+        traces.push(...createQuantileAndMeanMarkerTraces(ensembleData.values, yPosition, ensembleData.ensembleColor));
+    }
     return traces;
 }
