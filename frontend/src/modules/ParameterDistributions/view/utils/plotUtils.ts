@@ -180,8 +180,7 @@ export function generateLayoutForParameter({
             mirror: true,
             showline: true,
             zeroline: false,
-            linewidth: 1,
-            linecolor: "black",
+            linecolor: "white",
             type: xAxisIsLogarithmic ? "log" : "linear",
         },
         yaxis: {
@@ -190,8 +189,7 @@ export function generateLayoutForParameter({
             zeroline: showZeroLine,
             mirror: true,
             showline: true,
-            linewidth: 1,
-            linecolor: "black",
+            linecolor: "white",
         },
     };
 }

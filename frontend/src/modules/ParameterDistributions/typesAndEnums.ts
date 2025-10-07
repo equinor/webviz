@@ -13,13 +13,13 @@ export type ParameterDataArr = {
 };
 
 export enum ParameterDistributionPlotType {
+    HISTOGRAM = "histogram",
     DISTRIBUTION_PLOT = "distribution",
     BOX_PLOT = "box",
-    HISTOGRAM = "histogram",
 }
 
 export const ParameterDistributionPlotTypeEnumToStringMapping = {
+    [ParameterDistributionPlotType.HISTOGRAM]: "Histogram",
     [ParameterDistributionPlotType.DISTRIBUTION_PLOT]: "Distribution Plot",
     [ParameterDistributionPlotType.BOX_PLOT]: "Box Plot",
-    [ParameterDistributionPlotType.HISTOGRAM]: "Histogram",
 };

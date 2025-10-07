@@ -4,13 +4,13 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import type { Interfaces } from "./interfaces";
 import { preview } from "./preview";
 
-export const MODULE_NAME = "ParameterDistributionMatrix";
+export const MODULE_NAME = "ParameterDistributions";
 
-const description = "Plotting of parameter distributions";
+const description = "Shows the sampled parameter distributions used by ERT";
 
 ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,
-    defaultTitle: "Parameter Distribution Matrix",
+    defaultTitle: "Parameter Distributions",
     category: ModuleCategory.MAIN,
     devState: ModuleDevState.PROD,
     description,
