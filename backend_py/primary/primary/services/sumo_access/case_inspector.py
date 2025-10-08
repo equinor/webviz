@@ -140,3 +140,10 @@ class CaseInspector:
         case = await self._get_or_create_case_context_async()
         field_identifiers = await case.fieldidentifiers_async
         return field_identifiers
+
+    async def get_standard_results_in_ensemble_async(self, ensemble_name: str) -> list[str]:
+        """Retrieve the standard results for a specific ensemble"""
+        case = await self._get_or_create_case_context_async()
+        ensemble = case.filter(ensemble=ensemble_name)
+        standard_results = await ensemble.standard_results_async
+        return standard_results
