@@ -1,10 +1,9 @@
-import type { JTDSchemaType } from "ajv/dist/core";
-import { v4 } from "uuid";
-
 import { InitialSettings } from "@framework/InitialSettings";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import type { JTDSchemaType } from "ajv/dist/core";
+import { v4 } from "uuid";
 
 import type { AtomStoreMaster } from "../AtomStoreMaster";
 import type { ModuleInstance, ModuleInstanceFullState } from "../ModuleInstance";
@@ -157,7 +156,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this.clearLayout();
 
         template.moduleInstances.forEach((el) => {
-            this.makeAndAddModuleInstance(el.moduleName, { ...el.layout, moduleName: el.moduleName });
+            this.makeAndAddModuleInstance(el.moduleName);
         });
 
         for (let i = 0; i < this._moduleInstances.length; i++) {
@@ -290,17 +289,20 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
     }
 
-    makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
+    makeAndAddModuleInstance(moduleName: string): ModuleInstance<any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
         }
 
-        const moduleInstance = module.makeInstance(v4());
-        this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
+        const id = v4();
+        this._atomStoreMaster.makeAtomStoreForModuleInstance(id);
+        const moduleInstance = module.makeInstance(id);
         this._moduleInstances = [...this._moduleInstances, moduleInstance];
+        if (this._moduleInstances.length === 1) {
+            this._activeModuleInstanceId = moduleInstance.getId();
+        }
 
-        this._layout = [...this._layout, { ...layout, moduleInstanceId: moduleInstance.getId() }];
         this._activeModuleInstanceId = moduleInstance.getId();
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.Layout);
