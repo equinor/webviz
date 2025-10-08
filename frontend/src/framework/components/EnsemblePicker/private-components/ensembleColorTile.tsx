@@ -1,6 +1,7 @@
+import { FilterAlt } from "@mui/icons-material";
+
 import { ColorTileWithBadge } from "@lib/components/ColorTileWithBadge";
 import { Tooltip } from "@lib/components/Tooltip";
-import { FilterAlt } from "@mui/icons-material";
 
 export function EnsembleColorTile({
     ensembleColor,

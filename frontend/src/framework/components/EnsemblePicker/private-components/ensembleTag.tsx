@@ -1,5 +1,7 @@
 import type React from "react";
 
+import { Close } from "@mui/icons-material";
+
 import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
@@ -7,11 +9,10 @@ import { IconButton } from "@lib/components/IconButton";
 import type { TagProps } from "@lib/components/TagInput";
 import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Close } from "@mui/icons-material";
 
 import { isEnsembleRealizationFilterEffective } from "../private-utils/realizationFilterUtil";
 
-import { EnsembleColorTile } from "./ensembleColorTIle";
+import { EnsembleColorTile } from "./ensembleColorTile";
 
 export type EnsembleTagProps = TagProps & {
     ensembles: readonly (RegularEnsemble | DeltaEnsemble)[] | readonly RegularEnsemble[];

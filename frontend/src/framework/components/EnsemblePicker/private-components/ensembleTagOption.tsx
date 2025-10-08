@@ -9,7 +9,7 @@ import { Tooltip } from "@lib/components/Tooltip";
 
 import { isEnsembleRealizationFilterEffective } from "../private-utils/realizationFilterUtil";
 
-import { EnsembleColorTile } from "./ensembleColorTIle";
+import { EnsembleColorTile } from "./ensembleColorTile";
 
 export type EnsembleTagOptionProps = TagOptionProps & {
     ensembles: readonly (RegularEnsemble | DeltaEnsemble)[];
