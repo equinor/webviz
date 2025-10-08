@@ -157,7 +157,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                     <ViewWrapperPlaceholder width={props.width} height={props.height} x={props.x} y={props.y} />
                 </>
             )}
-            {/* ! Show a placeholder while dragging modules around, since resizing module content while dragging might be costly */}
+            {/* ! Show a placeholder while dragging modules around/resizing, since resizing module content while dragging might be costly */}
             {props.changingLayout && (
                 <div
                     className={resolveClassNames("absolute box-border", { "p-0.5": !props.isMinimized })}
@@ -180,12 +180,13 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 className={resolveClassNames("absolute box-border contain-content", {
                     "p-0.5": !props.isMinimized,
                     invisible: props.changingLayout,
+                    "z-10": props.isMaximized,
                 })}
                 style={{
-                    width: prevWidth,
-                    height: prevHeight,
-                    left: prevX,
-                    top: prevY,
+                    width: props.isMaximized ? "100%" : prevWidth,
+                    height: props.isMaximized ? "100%" : prevHeight,
+                    left: props.isMaximized ? "0px" : prevX,
+                    top: props.isMaximized ? "0px" : prevY,
                 }}
             >
                 <div
