@@ -1,5 +1,8 @@
 import React, { type CSSProperties } from "react";
 
+import { WebAsset } from "@mui/icons-material";
+import { v4 } from "uuid";
+
 import { GuiEvent } from "@framework/GuiMessageBroker";
 import { DashboardTopic, type LayoutElement } from "@framework/internal/Dashboard";
 import type { ModuleInstance } from "@framework/ModuleInstance";
@@ -8,8 +11,6 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import type { Vec2 } from "@lib/utils/vec2";
-import { WebAsset } from "@mui/icons-material";
-import { v4 } from "uuid";
 
 import { ViewWrapper } from "../Content/private-components/ViewWrapper";
 import { ViewWrapperPlaceholder } from "../Content/private-components/viewWrapperPlaceholder";
@@ -142,7 +143,6 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
         [trueLayout, controller, isPreviewing],
     );
 
-    // keep the single instance's bindings fresh
     React.useEffect(
         function updateBindings() {
             controller.updateBindings(bindings);
@@ -150,10 +150,13 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
         [controller, bindings],
     );
 
-    React.useEffect(() => {
-        controller.attach();
-        return () => controller.detach();
-    }, [controller]);
+    React.useEffect(
+        function attachController() {
+            controller.attach();
+            return () => controller.detach();
+        },
+        [controller],
+    );
 
     React.useEffect(
         function makeGuiSubscriptions() {

@@ -201,9 +201,6 @@ export class LayoutController {
 
         logger.console?.log("Starting drag", dragSource);
 
-        // Ensure we have a preview root node
-        this.ensurePreviewRootNode();
-
         // Compute offset so the card doesn't jump
         const localPointerDown = this._bindings.toLocalPx(dragSource.pointerDownClientPos);
         const localElementTopLeft = this._bindings.toLocalPx(dragSource.elementPos);
@@ -297,6 +294,9 @@ export class LayoutController {
             if (distance < MANHATTAN_LENGTH) {
                 return; // not far enough to start dragging
             }
+
+            // Ensure we have a preview root node
+            this.ensurePreviewRootNode();
 
             logger.console?.log("Transitioning to drag mode");
 
