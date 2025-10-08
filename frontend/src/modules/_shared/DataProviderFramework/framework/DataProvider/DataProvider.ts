@@ -403,10 +403,10 @@ export class DataProvider<
         const accessors = this.makeAccessors();
 
         this._scopedQueryController.cancelActiveFetch();
-        if (this._onFetchCancelFn) {
-            this._onFetchCancelFn();
-            this._onFetchCancelFn = () => {};
-        }
+
+        // Let the custom data provider implementation cancel anything connected to the previous fetch.
+        this._onFetchCancelFn();
+        this._onFetchCancelFn = () => {};
 
         this.invalidateValueRange();
         this.setProgressMessage(null);
@@ -455,7 +455,8 @@ export class DataProvider<
             }
             this.setStatus(DataProviderStatus.ERROR);
         } finally {
-            this._onFetchCancelFn?.();
+            this._onFetchCancelFn();
+            this._onFetchCancelFn = () => {};
             this.setProgressMessage(null);
         }
     }
