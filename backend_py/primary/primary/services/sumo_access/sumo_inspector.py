@@ -1,12 +1,10 @@
 from typing import List
 import logging
 
-import asyncio
 from pydantic import BaseModel
 
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
-from webviz_pkg.core_utils.timestamp_utils import iso_str_to_timestamp_utc_ms
 
 from .sumo_client_factory import create_sumo_client
 
@@ -130,44 +128,63 @@ class SumoInspector:
         case_info_arr: list[CaseInfo] = []
 
         for case_bucket in case_buckets:
-            case_uuid = case_bucket["key"]
-            description = get_all_buckets_key_as_list(case_bucket, "description")
-            case_timestamp_max = get_number_value_for_key(case_bucket, "timestamp_max")
-            status = get_all_buckets_key_as_list(case_bucket, "status")
-            user = get_single_bucket_key_as_str(case_bucket, "user")
-            case_name = get_single_bucket_key_as_str(case_bucket, "name")
-
-            ensemble_buckets = case_bucket.get("ensemble_names", {}).get("buckets", [])
-
-            ensemble_info_arr: list[EnsembleInfo] = []
-            for ensemble_bucket in ensemble_buckets:
-                ensemble_name = ensemble_bucket["key"]
-                realizations_count = get_number_value_for_key(ensemble_bucket, "realizations_count")
-                standard_result = get_all_buckets_key_as_list(ensemble_bucket, "standard_result")
-                if realizations_count is not None:
-                    ensemble_info = EnsembleInfo(
-                        name=ensemble_name,
-                        realization_count=realizations_count,
-                        standard_results=standard_result,
-                    )
-                    ensemble_info_arr.append(ensemble_info)
-
-            case_info = CaseInfo(
-                uuid=case_uuid,
-                name=case_name,
-                status=status[0] if status else "unknown",  # Default to "unknown" if no status is found
-                user=user,
-                updated_at_utc_ms=case_timestamp_max,
-                description=description[0] if description else "",
-                ensembles=ensemble_info_arr,
-            )
-
+            case_info = _create_case_info_from_case_bucket(case_bucket)
             case_info_arr.append(case_info)
 
         return case_info_arr
 
 
-def get_all_buckets_key_as_list(obj: dict, key: str) -> list[str]:
+def _create_case_info_from_case_bucket(case_bucket: dict) -> CaseInfo:
+    """
+    Create CaseInfo object from a case bucket dictionary obtained from SUMO search aggregation response.
+    """
+    case_uuid = case_bucket["key"]
+    description = _get_all_buckets_key_as_list(case_bucket, "description")
+    case_timestamp_max = _get_number_value_for_key(case_bucket, "timestamp_max")
+    status = _get_all_buckets_key_as_list(case_bucket, "status")
+    user = _get_single_bucket_key_as_str(case_bucket, "user")
+    case_name = _get_single_bucket_key_as_str(case_bucket, "name")
+
+    ensemble_buckets = case_bucket.get("ensemble_names", {}).get("buckets", [])
+
+    ensemble_info_arr: list[EnsembleInfo] = []
+    for ensemble_bucket in ensemble_buckets:
+        ensemble_info = _create_ensemble_info_from_ensemble_bucket(ensemble_bucket)
+        if ensemble_info:
+            ensemble_info_arr.append(ensemble_info)
+
+    return CaseInfo(
+        uuid=case_uuid,
+        name=case_name,
+        status=status[0] if status else "unknown",  # Default to "unknown" if no status is found
+        user=user,
+        updated_at_utc_ms=case_timestamp_max,
+        description=description[0] if description else "",
+        ensembles=ensemble_info_arr,
+    )
+
+
+def _create_ensemble_info_from_ensemble_bucket(ensemble_bucket: dict) -> EnsembleInfo | None:
+    """
+    Create EnsembleInfo object from an ensemble bucket dictionary obtained from SUMO search aggregation response.
+    Returns None if the ensemble does not have a valid realization count.
+    """
+
+    ensemble_name = ensemble_bucket["key"]
+    realizations_count = _get_number_value_for_key(ensemble_bucket, "realizations_count")
+
+    if realizations_count is None:
+        return None
+
+    standard_result = _get_all_buckets_key_as_list(ensemble_bucket, "standard_result")
+    return EnsembleInfo(
+        name=ensemble_name,
+        realization_count=realizations_count,
+        standard_results=standard_result,
+    )
+
+
+def _get_all_buckets_key_as_list(obj: dict, key: str) -> list[str]:
     """
     Get all bucket keys as a list of strings from a dictionary.
     If the key does not exist or the value is not a list, return an empty list.
@@ -176,7 +193,7 @@ def get_all_buckets_key_as_list(obj: dict, key: str) -> list[str]:
     return [bucket.get("key", "") for bucket in buckets if isinstance(bucket, dict)]
 
 
-def get_single_bucket_key_as_str(obj: dict, key: str) -> str:
+def _get_single_bucket_key_as_str(obj: dict, key: str) -> str:
     """
     Get a single bucket key as a string from a dictionary.
     If the key does not exist or the value is not a string, return an empty string.
@@ -187,7 +204,7 @@ def get_single_bucket_key_as_str(obj: dict, key: str) -> str:
     raise ValueError(f"Expected a single bucket for key '{key}', but found: {buckets}")
 
 
-def get_number_value_for_key(obj: dict, key: str) -> int:
+def _get_number_value_for_key(obj: dict, key: str) -> int:
     """
     Get value for key in a dictionary as an integer.
 
