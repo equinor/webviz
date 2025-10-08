@@ -39,8 +39,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     // Hover synchronization
     const hoverIsLocal = props.hoverService.getLastHoveredModule() === moduleInstanceId;
     const [hoveredMd, setHoveredMd] = useHover(HoverTopic.WELLBORE_MD, props.hoverService, moduleInstanceId);
-    const [hoveredWellbore, setHoveredWellbore] = useHover(HoverTopic.WELLBORE, props.hoverService, moduleInstanceId);
-    const setHoveredWorldPos = usePublishHoverValue(HoverTopic.WORLD_POS, props.hoverService, moduleInstanceId);
+    const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, props.hoverService, moduleInstanceId);
 
     const formatEsvLayout = React.useCallback(
         function formatEsvLayout(item: EsvReadoutItem, index: number): ReadoutItem {
@@ -52,18 +51,14 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const publishHoverEvent = React.useCallback(
         function publishHoverEvent(md: number | null): void {
             if (md !== null && props.referenceSystem) {
-                const [x, y] = props.referenceSystem.getPosition(md);
-                const [, z] = props.referenceSystem.project(md);
-                // ! We need to flip z since reference system increases downwards
-                setHoveredWorldPos({ x, y, z: -z });
+                setHoveredWellbore(props.wellboreHeaderUuid);
+                setHoveredMd({ md, wellboreUuid: props.wellboreHeaderUuid! });
             } else {
-                setHoveredWorldPos(null);
+                setHoveredWellbore(null);
+                setHoveredMd(null);
             }
-
-            setHoveredWellbore(props.wellboreHeaderUuid);
-            setHoveredMd(md);
         },
-        [props.referenceSystem, props.wellboreHeaderUuid, setHoveredMd, setHoveredWellbore, setHoveredWorldPos],
+        [props.referenceSystem, props.wellboreHeaderUuid, setHoveredMd, setHoveredWellbore],
     );
 
     const handleReadoutItemsChange = React.useCallback(
@@ -80,8 +75,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     const highlightItems: HighlightItem[] = [];
 
-    if (props.referenceSystem && !hoverIsLocal && hoveredMd && hoveredWellbore === props.wellboreHeaderUuid) {
-        const point = props.referenceSystem.project(hoveredMd);
+    if (props.referenceSystem && !hoverIsLocal && hoveredMd && hoveredMd.wellboreUuid === props.wellboreHeaderUuid) {
+        const point = props.referenceSystem.project(hoveredMd.md);
         highlightItems.push({
             point: [point[0], point[1]],
             color: "red",

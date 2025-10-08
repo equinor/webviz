@@ -1,17 +1,21 @@
-import { ScatterplotLayer } from "@deck.gl/layers";
-import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
-// import { sortedIndex } from "lodash";
+import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { GL } from "@luma.gl/constants";
+import type { Position3D } from "@webviz/subsurface-viewer/dist/layers/utils/layerTools";
 
 import type { WellboreTrajectory_api } from "@api";
 import { HoverTopic } from "@framework/HoverService";
-// import { BiconeLayer } from "@modules/3DViewer/customDeckGlLayers/BiconeLayer";
-// import type { GeoWellFeature } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
+import type { GeoWellFeature } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import type {
     HoverVisualizationFunctions,
     TransformerArgs,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { getInterpolatedPositionAtMd, wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
+
+function findWellboreTrajectory(uuid: string | null | undefined, trajectories: WellboreTrajectory_api[]) {
+    if (!uuid) return undefined;
+    return trajectories.find(({ wellboreUuid }) => wellboreUuid === uuid);
+}
 
 export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
     args: TransformerArgs<any, WellboreTrajectory_api[], any>,
@@ -25,95 +29,63 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
     }
 
     return {
-        [HoverTopic.WELLBORE_MD]: (wellboreMd) => {
-            console.log("here");
+        [HoverTopic.WELLBORE]: (wellboreUuid) => {
+            const trajectoryData: GeoWellFeature[] = [];
+            const wellboreTrajectory = findWellboreTrajectory(wellboreUuid, wellboreTrajectories);
 
-            if (!wellboreMd) return [];
-
-            const wellboreTrajectory = wellboreTrajectories.find(
-                (wellTrajectory) => wellTrajectory.wellboreUuid === wellboreMd.wellboreUuid,
-            );
-
-            const visible = wellboreMd !== null && wellboreTrajectory !== undefined;
-
-            if (!visible) return [];
+            if (wellboreTrajectory) {
+                trajectoryData.push(wellTrajectoryToGeojson(wellboreTrajectory));
+            }
 
             return [
-                new WellsLayer({
+                new GeoJsonLayer({
                     id: `${id}-hovered-well`,
                     data: {
                         type: "FeatureCollection",
-                        features: [wellTrajectoryToGeojson(wellboreTrajectory)],
+                        features: trajectoryData,
                     },
-                    refine: false,
-                    lineStyle: { width: 5, color: [255, 0, 0] },
-                    wellHeadStyle: {
-                        size: 0,
-                    },
+                    getLineWidth: 5,
+                    lineWidthMinPixels: 5,
+                    lineBillboard: true,
+                    getLineColor: [255, 0, 0],
+
                     pickable: false,
-                    wellNameVisible: false,
-                    ZIncreasingDownwards: true,
-                    visible: visible,
-                    depthTest: false,
+                    visible: trajectoryData.length > 0,
+                    autoHighlight: false,
+                    parameters: { [GL.DEPTH_TEST]: false },
                 }),
+            ];
+        },
+
+        [HoverTopic.WELLBORE_MD]: (hoverData) => {
+            const mdPointData: Position3D[] = [];
+            if (hoverData?.md) {
+                const wellboreTrajectory = findWellboreTrajectory(hoverData?.wellboreUuid, wellboreTrajectories);
+                if (wellboreTrajectory) {
+                    mdPointData.push(getInterpolatedPositionAtMd(hoverData.md, wellboreTrajectory));
+                }
+            }
+
+            return [
                 new ScatterplotLayer({
                     id: `${id}-hovered-md-point`,
-                    data: [getInterpolatedPositionAtMd(wellboreMd.md, wellboreTrajectory)],
-                    getFillColor: [255, 0, 0],
-                    radiusMinPixels: 20,
-                    // getPosition: (d) => d,
+                    data: mdPointData,
+                    getRadius: 2,
+                    radiusMinPixels: 8,
+                    getLineWidth: 0.1,
+                    lineWidthMinPixels: 1,
+                    getFillColor: [255, 0, 0, 180],
+                    getPosition: (d) => d,
+
+                    stroked: true,
+                    depthTest: false,
+                    pickable: false,
+                    billboard: true,
+                    autoHighlight: false,
+                    visible: mdPointData.length > 0,
+                    parameters: { [GL.DEPTH_TEST]: false },
                 }),
-                // new BiconeLayer({
-                //     id: `${id}-hovered-md-point`,
-                //     centerPoint: hoveredMdPoint3d,
-                //     radius: 20,
-                //     height: 10,
-                //     normalVector: normal,
-                //     numberOfSegments: 32,
-                //     color: [255, 0, 0],
-                //     opacity: 1,
-                //     visible: visible,
-                //     sizeUnits: "pixels",
-                //     minSizeInMeters: 0,
-                //     maxSizeInMeters: 200,
-                //     depthTest: false,
-                // }),
             ];
-
-            // if (visible) {
-            //     for (const [index, point] of wellboreTrajectory.mdArr.entries()) {
-            //         if (point >= wellboreMd.md) {
-            //             // Interpolate the coordinates
-            //             const prevPoint = wellboreTrajectory.mdArr[index - 1];
-            //             const thisPoint = wellboreTrajectory.mdArr[index];
-
-            //             const prevX = wellboreTrajectory.eastingArr[index - 1];
-            //             const prevY = wellboreTrajectory.northingArr[index - 1];
-            //             const prevZ = wellboreTrajectory.tvdMslArr[index - 1];
-            //             const thisX = wellboreTrajectory.eastingArr[index];
-            //             const thisY = wellboreTrajectory.northingArr[index];
-            //             const thisZ = wellboreTrajectory.tvdMslArr[index];
-
-            //             const ratio = (wellboreMd.md - prevPoint) / (thisPoint - prevPoint);
-            //             const x = prevX + ratio * (thisX - prevX);
-            //             const y = prevY + ratio * (thisY - prevY);
-            //             const z = prevZ + ratio * (thisZ - prevZ);
-            //             hoveredMdPoint3d = [x, y, -z];
-
-            //             const dx = thisX - prevX;
-            //             const dy = thisY - prevY;
-            //             const dz = thisZ - prevZ;
-
-            //             const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-            //             normal = length === 0 ? [0, 0, 1] : [dx / length, dy / length, -dz / length];
-
-            //             break;
-            //         }
-            //     }
-
-            //     wellLayerDataFeatures.push(wellTrajectoryToGeojson(wellboreTrajectory));
-            // }
         },
     };
 }

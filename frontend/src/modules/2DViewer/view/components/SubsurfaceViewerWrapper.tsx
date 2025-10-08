@@ -11,7 +11,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
-import { getHoverTopicValuesInEvent } from "@modules/_shared/utils/subsurfaceViewerLayers";
+import { getHoverDataInPicks } from "@modules/_shared/utils/subsurfaceViewerLayers";
 
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import { Toolbar } from "./Toolbar";
@@ -44,11 +44,11 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
 
     const [cameraPositionSetByAction, setCameraPositionSetByAction] = React.useState<ViewStateType | null>(null);
     const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
+    const [pickingInfoPerView, setPickingInfoPerView] = React.useState<Record<string, PickingInfo[]>>({});
 
     const [numRows] = props.views.layout;
 
     const [hoveredWorldPos, setHoveredWorldPos] = useHover(HoverTopic.WORLD_POS, props.hoverService, props.instanceId);
-
     const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, props.hoverService, props.instanceId);
     const setHoveredMd = usePublishHoverValue(HoverTopic.WELLBORE_MD, props.hoverService, props.instanceId);
 
@@ -56,39 +56,13 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
         setTriggerHomeCounter((prev) => prev + 1);
     }, []);
 
-    const handleMouseHover = React.useCallback(
-        function handleMouseHover(event: MapMouseEvent): void {
-            const hoverData = getHoverTopicValuesInEvent(
-                event,
-                HoverTopic.WELLBORE_MD,
-                HoverTopic.WELLBORE,
-                HoverTopic.WORLD_POS,
-            );
-
-            setHoveredWorldPos(hoverData[HoverTopic.WORLD_POS]);
-            setHoveredWellbore(hoverData[HoverTopic.WELLBORE]);
-            setHoveredMd(hoverData[HoverTopic.WELLBORE_MD]);
-        },
-        [setHoveredWorldPos, setHoveredWellbore, setHoveredMd],
-    );
-
-    const handleMouseEvent = React.useCallback(
-        function handleMouseEvent(event: MapMouseEvent): void {
-            if (event.type === "hover") {
-                handleMouseHover(event);
-            }
-        },
-        [handleMouseHover],
-    );
-
-    const pickingInfoPerView = React.useMemo(() => {
-        if (!deckGlRef.current?.deck?.isInitialized) return {};
+    const pickAtWorldPosition = React.useCallback(function pickAtWorldPosition(x?: number, y?: number) {
+        if (!deckGlRef.current?.deck?.isInitialized) return;
 
         const deck = deckGlRef.current?.deck;
         const deckViewports = deck?.getViewports();
-        const { x, y } = hoveredWorldPos ?? {};
 
-        if (!deck || !deckViewports?.length || !x || !y) return {};
+        if (!deck || !deckViewports?.length || !x || !y) return;
 
         const pickInfoDict: Record<string, PickingInfo[]> = {};
 
@@ -99,13 +73,71 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 x: screenX + viewport.x,
                 y: screenY + viewport.y,
                 radius: PICKING_RADIUS,
+                depth: 4,
             });
 
             pickInfoDict[viewport.id] = picks;
         }
 
+        setPickingInfoPerView(pickInfoDict);
         return pickInfoDict;
-    }, [hoveredWorldPos]);
+    }, []);
+
+    React.useEffect(
+        function applyHoverServiceChangeEffect() {
+            if (hoveredWorldPos) {
+                pickAtWorldPosition(hoveredWorldPos.x, hoveredWorldPos.y);
+            } else {
+                setPickingInfoPerView({});
+            }
+        },
+        [hoveredWorldPos, pickAtWorldPosition],
+    );
+
+    const handleMouseHover = React.useCallback(
+        function handleMouseHover(event: MapMouseEvent): void {
+            const pickWithCoordinates = event.infos.find((pick) => pick.coordinate?.length);
+
+            if (pickWithCoordinates) {
+                const newPickInfoDict = pickAtWorldPosition(
+                    pickWithCoordinates.coordinate![0],
+                    pickWithCoordinates.coordinate![1],
+                );
+
+                if (newPickInfoDict) {
+                    const allPicks = Object.values(newPickInfoDict).flat();
+
+                    const hoverData = getHoverDataInPicks(
+                        allPicks,
+                        HoverTopic.WORLD_POS,
+                        HoverTopic.WELLBORE,
+                        HoverTopic.WELLBORE_MD,
+                    );
+
+                    setHoveredWorldPos(hoverData[HoverTopic.WORLD_POS] ?? null);
+                    setHoveredWellbore(hoverData[HoverTopic.WELLBORE] ?? null);
+                    setHoveredMd(hoverData[HoverTopic.WELLBORE_MD] ?? null);
+                }
+
+                // Emit to hover system
+            } else {
+                setHoveredWorldPos(null);
+                setHoveredWellbore(null);
+                setHoveredMd(null);
+                setPickingInfoPerView({});
+            }
+        },
+        [pickAtWorldPosition, setHoveredWorldPos, setHoveredWellbore, setHoveredMd],
+    );
+
+    const handleMouseEvent = React.useCallback(
+        function handleMouseEvent(event: MapMouseEvent): void {
+            if (event.type === "hover") {
+                handleMouseHover(event);
+            }
+        },
+        [handleMouseHover],
+    );
 
     return (
         <div ref={mainDivRef} className="h-full w-full">
@@ -130,7 +162,6 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 // ! If multipicking is false, double-click re-centering stops working
                 coords={{ visible: false, multiPicking: true, pickDepth: 2 }}
                 triggerHome={triggerHomeCounter}
-                pickingRadius={PICKING_RADIUS}
                 onCameraPositionApplied={() => setCameraPositionSetByAction(null)}
                 onMouseEvent={handleMouseEvent}
             >

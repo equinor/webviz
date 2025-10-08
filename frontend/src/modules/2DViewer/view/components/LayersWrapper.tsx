@@ -13,6 +13,7 @@ import * as bbox from "@lib/utils/bbox";
 import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { ObservedSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurfaceProvider";
 import { RealizationGridProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
+import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/2DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
 import { makeObservedSurfaceLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeObservedSurfaceLayer";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
@@ -37,6 +38,7 @@ import { makeRealizationGridLayer } from "@modules/_shared/DataProviderFramework
 import { makeRealizationPolygonsLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationPolygonsLayer";
 import { makeRealizationSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationSurfaceLayer";
 import { makeStatisticalSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeStatisticalSurfaceLayer";
+import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import {
     VisualizationAssembler,
@@ -49,8 +51,6 @@ import type { ViewportTypeExtended, ViewsTypeExtended } from "./SubsurfaceViewer
 import { SubsurfaceViewerWrapper } from "./SubsurfaceViewerWrapper";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
-import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/2DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
-import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
 
 export type LayersWrapperProps = {
     layerManager: DataProviderManager;
@@ -67,8 +67,7 @@ function bboxToBound2d(box: bbox.BBox | null): BoundingBox2D | undefined {
     return [box.min.x, box.min.y, box.max.x, box.max.y];
 }
 
-// TODO: Combine with DPF's hover-layer functionality
-function useHighlightLayer(
+function useCrosshairLayer(
     boundingBox: bbox.BBox | null,
     hoverService: HoverService,
     instanceId: string,
@@ -163,14 +162,17 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         props.viewContext.getInstanceIdString(),
     );
 
-    // React.useEffect(() => console.log("new assembler product", [assemblerProduct]));
-
     const globalAnnotations = assemblerProduct.annotations.filter((el) => "colorScale" in el);
+    const globalVisualizations = hoverVisualizations.find(({ groupId }) => groupId === "")?.hoverVisualizations ?? [];
 
     const viewports: ViewportTypeExtended[] = [];
     const deckGlLayers: Layer<any>[] = [];
     const globalColorScales = globalAnnotations.filter((el) => "colorScale" in el);
-    const globalLayerIds: string[] = ["placeholder", HOVER_CROSSHAIR_LAYER_ID];
+    const globalLayerIds: string[] = [
+        "placeholder",
+        HOVER_CROSSHAIR_LAYER_ID,
+        ...globalVisualizations.map(({ id }) => id),
+    ];
 
     for (const item of assemblerProduct.children) {
         if (item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW) {
@@ -248,7 +250,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         statusWriter.addError(message);
     }
 
-    const highlightLayer = useHighlightLayer(
+    const crossHairLayer = useCrosshairLayer(
         prevBoundingBox,
         props.hoverService,
         props.viewContext.getInstanceIdString(),
@@ -256,11 +258,9 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     deckGlLayers.push(new PlaceholderLayer({ id: "placeholder" }));
     deckGlLayers.reverse();
-    // We want this one to always be on top
-    deckGlLayers.push(highlightLayer);
+    // We want these to always be on top
+    deckGlLayers.push(crossHairLayer);
     deckGlLayers.push(...hoverVisualizations.flatMap((hvs) => hvs.hoverVisualizations));
-
-    console.log(deckGlLayers);
 
     return (
         <PendingWrapper className="w-full h-full flex flex-col" isPending={numLoadingLayers > 0}>

@@ -4,6 +4,8 @@ import { throttle } from "lodash";
 
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
+const HOVER_UPDATE_THROTTLE_MS = 100;
+
 export enum HoverTopic {
     WELLBORE_MD = "hover.md",
     WELLBORE = "hover.wellbore",
@@ -26,24 +28,21 @@ export type HoverData = {
     [HoverTopic.WORLD_POS]: { x?: number; y?: number; z?: number } | null;
 };
 
-// Possible future functionality
-// - Some system to get derived "hovers"? A hovered wellbore implies a Well, which implies a field, and so on...
+type ThrottledPublishFunc = _.DebouncedFunc<<T extends keyof HoverData>(topic: T, newValue: HoverData[T]) => void>;
 
-export type ThrottledPublishFunc = _.DebouncedFunc<
-    <T extends keyof HoverData>(topic: T, newValue: HoverData[T]) => void
->;
-
+/**
+ * Service to manage hover data across the application. Contains two different data sets, one that is updated immediately, and one that is updated at a throttled interval.
+ */
 export class HoverService {
-    // Currently available hover-data. The two objects are updated at different rates, but will contain the same data
-    // when the system is not actively hovering
+    // Currently available hover-data. The two objects are updated at different rates,
+    // but will contain the same data when the system is not actively hovering
     private _hoverData: Partial<HoverData> = {};
     private _throttledHoverData: Partial<HoverData> = {};
-
     private _lastHoveredModule: string | null = null;
 
     // Throttling. Each topic is updated with its own throttle method.
     private _topicThrottleMap = new Map<keyof HoverData, ThrottledPublishFunc>();
-    private _dataUpdateThrottleMs = 1000;
+    private _dataUpdateThrottleMs = HOVER_UPDATE_THROTTLE_MS;
 
     // Delegate to handle update notifications
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<HoverData>();
@@ -68,14 +67,19 @@ export class HoverService {
         this.getPublishSubscribeDelegate().notifySubscribers(topic);
     }
 
+    /**
+     * @returns The publish-subscribe delegate used by this service
+     */
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<HoverData> {
         return this._publishSubscribeDelegate;
     }
 
-    makeSnapshotGetter<T extends keyof HoverData>(topic: T, moduleInstanceId: string): () => HoverData[T] | null {
-        return () => this.getTopicValue(topic, moduleInstanceId);
-    }
-
+    /**
+     * Gets the current value for a given topic. If the requesting module is the one currently hovering, it will get the latest data immediately, otherwise it will get the latest throttled data.
+     * @param topic The HoverTopic to get the value for
+     * @param moduleInstanceId The id of the module requesting the value.
+     * @returns The latest or throttled value for the given topic
+     */
     getTopicValue<T extends HoverTopic>(topic: T, moduleInstanceId: string): HoverData[T] | null {
         // ? Should  this be an  opt-in functionality?
         // ! The module that is currently hovering will always see the data updated immediately
@@ -86,7 +90,24 @@ export class HoverService {
         }
     }
 
-    updateHoverValue<T extends keyof HoverData>(topic: T, newValue: HoverData[T]): void {
+    /**
+     * Wraps {@link getTopicValue} in callback function that can be used with React's useSyncExternalStore.
+     * @param topic The HoverTopic to get the value for
+     * @param moduleInstanceId The id of the module requesting the value.
+     * @returns A function that gets the latest value for the given topic
+     */
+    makeSnapshotGetter<T extends keyof HoverData>(topic: T, moduleInstanceId: string): () => HoverData[T] | null {
+        return () => this.getTopicValue(topic, moduleInstanceId);
+    }
+
+    /**
+     * Updates a topic's hover data
+     * @param topic The HoverTopic to update
+     * @param newValue The new value for the topic
+     */
+    updateHoverValue<T extends keyof HoverData>(topic: T, newValue: HoverData[T], moduleInstanceId: string): void {
+        this._lastHoveredModule = moduleInstanceId;
+
         this._hoverData[topic] = newValue;
         this._getOrCreateTopicThrottleMethod(topic)(topic, newValue);
 
@@ -94,26 +115,34 @@ export class HoverService {
         this.getPublishSubscribeDelegate().notifySubscribers(topic);
     }
 
-    setLastHoveredModule(moduleInstanceId: string | null) {
-        if (this._lastHoveredModule === moduleInstanceId) return;
-
-        this._lastHoveredModule = moduleInstanceId;
-    }
-
+    /**
+     * Gets the id of the module that last updated hover data
+     * @returns The id of the module that last updated hover data, or null if no module has updated hover data yet
+     */
     getLastHoveredModule(): string | null {
         return this._lastHoveredModule;
     }
 
-    // ? Currently, the md and wellbore hovers are "cleared" when the module implementer sets them to null.
-    // ? Should there be a more explicit way to stop hovering?
-    // endHoverEffect(): void {
-    //     this.#lastHoveredModule = null
-    //     this.#hoverData = {}
-    //     this.#throttledHoverData = {}
-    //     // notify subscribers...
-    // }
+    /**
+     * Flushes throttled updates for topics, publishing updates immediately.
+     * @param topics The topics to flush. If none are provided, all topics will be flushed.
+     */
+    flushTopics(...topics: HoverTopic[]) {
+        if (!topics.length) topics = Object.values(HoverTopic);
+
+        for (const topic of topics) {
+            this._topicThrottleMap.get(topic)?.flush();
+        }
+    }
 }
 
+/**
+ * Hook for letting a dashboard module sync to a hover topic value
+ * @param topic The topic to sync to
+ * @param hoverService The hover service instance to use
+ * @param moduleInstanceId The id of the module using this hook
+ * @returns The current (possibly throttled) value for the given topic
+ */
 export function useHoverValue<T extends keyof HoverData>(
     topic: T,
     hoverService: HoverService,
@@ -127,6 +156,13 @@ export function useHoverValue<T extends keyof HoverData>(
     return latestValue;
 }
 
+/**
+ * Hook for letting dashboard modules update a hover topic value
+ * @param topic The topic to update
+ * @param hoverService The hover service instance to use
+ * @param moduleInstanceId The id of the module using this hook
+ * @returns A stable callback function that updates the given topic with a new value
+ */
 export function usePublishHoverValue<T extends keyof HoverData>(
     topic: T,
     hoverService: HoverService,
@@ -134,13 +170,19 @@ export function usePublishHoverValue<T extends keyof HoverData>(
 ): (v: HoverData[T]) => void {
     return React.useCallback(
         function updateHoverValue(newValue: HoverData[T]) {
-            hoverService.setLastHoveredModule(moduleInstanceId);
-            hoverService.updateHoverValue(topic, newValue);
+            hoverService.updateHoverValue(topic, newValue, moduleInstanceId);
         },
         [hoverService, moduleInstanceId, topic],
     );
 }
 
+/**
+ * Combined hook for getting and setting hover topic values
+ * @param topic The topic to get and set
+ * @param hoverService The hover service instance to use
+ * @param moduleInstanceId The id of the module using this hook
+ * @returns A value/setter tuple for the given topic. The value will be throttled
+ */
 export function useHover<T extends keyof HoverData>(
     topic: T,
     hoverService: HoverService,

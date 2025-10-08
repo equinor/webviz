@@ -1,5 +1,5 @@
-import type { Layer } from "@deck.gl/core";
-import type { LayerPickInfo, MapMouseEvent } from "@webviz/subsurface-viewer";
+import type { Layer, PickingInfo } from "@deck.gl/core";
+import type { LayerPickInfo } from "@webviz/subsurface-viewer";
 import { ColormapLayer, Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 import type { Feature, GeometryCollection } from "geojson";
 import _ from "lodash";
@@ -56,6 +56,7 @@ function getTopicHoverDataFromPicks<TTopic extends keyof HoverData>(
 
             const mdReadout = sanitizeMdReadout(mdProperty?.value);
 
+            if (!wellboreUuid || !mdReadout) return null;
             return { wellboreUuid, md: mdReadout } as HoverData[TTopic];
         }
         case HoverTopic.WELLBORE: {
@@ -91,15 +92,14 @@ type MappedHoverData<T extends readonly HoverTopic[]> = {
     [Key in T[number]]: HoverData[Key];
 };
 
-// ? I dont fully understand why, but TTopic is needed to make MappedHoverData **only** contain the topics present in the params
-export function getHoverTopicValuesInEvent<TTopic extends keyof HoverData>(
-    mapMouseEvent: MapMouseEvent,
+export function getHoverDataInPicks<TTopic extends keyof HoverData>(
+    pickingInfoArr: PickingInfo[],
     ...topics: TTopic[]
 ): MappedHoverData<typeof topics> {
     const values = {} as MappedHoverData<typeof topics>;
 
     topics.forEach((topic) => {
-        const topicInfo = getTopicHoverDataFromPicks(topic, mapMouseEvent.infos);
+        const topicInfo = getTopicHoverDataFromPicks(topic, pickingInfoArr);
 
         // TODO: Better typing here? This seems clunky
         (values[topic] as HoverData[typeof topic]) = topicInfo;

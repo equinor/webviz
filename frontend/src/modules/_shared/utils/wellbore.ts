@@ -1,7 +1,7 @@
 import type { Color } from "@deck.gl/core";
 import type { Position3D } from "@webviz/subsurface-viewer/dist/layers/utils/layerTools";
 import type { LineString, Point } from "geojson";
-import { sortedIndex } from "lodash";
+import { clamp, sortedIndex } from "lodash";
 import simplify from "simplify-js";
 
 import type { WellboreTrajectory_api } from "@api";
@@ -177,26 +177,53 @@ export function wellTrajectoryToGeojson(
     return geometryCollection;
 }
 
+/**
+ * Gets the trajectory array index for a given MD so that `mdArr[i-1] <= md <= mdArr[i]`.
+ * @throws if the trajectory has no points.
+ * @param md Measured Depth to find the trajectory index for.
+ * @param wellboreTrajectory The wellbore trajectory to search within.
+ * @returns an index in the range [1, mdArr.length - 1]
+ */
+export function getTrajectoryIndexForMd(md: number, wellboreTrajectory: WellboreTrajectory_api) {
+    const { mdArr } = wellboreTrajectory;
+
+    if (!mdArr.length) throw Error(`Expected trajectory to be at least one point, got 0 points`);
+
+    // Ensure we only deal with valid MD values
+    md = clamp(md, 0, mdArr.at(-1) ?? 0);
+
+    // The mdArr is sorted, so we do a binary search to find the relevant trajectory indices
+    const index = sortedIndex(mdArr, md);
+
+    // sortedIndex will return 0 if md is exactly the same as the first element, but we want to avoid index-1 being undefined
+    return Math.max(index, 1);
+}
+
+/**
+ * Interpolates the 3D position at a given MD value along the wellbore trajectory.
+ * @param md Measured Depth to interpolate the position for.
+ * @param wellboreTrajectory The wellbore trajectory to interpolate within.
+ * @param preComputedTrajectoryIndex (optional) If provided, this index will be used for interpolation instead of calculating it again.
+ * @returns
+ */
 export function getInterpolatedPositionAtMd(
     md: number,
     wellboreTrajectory: WellboreTrajectory_api,
-    invertZ = true,
+    preComputedTrajectoryIndex?: number,
 ): Position3D {
     const { mdArr, eastingArr, northingArr, tvdMslArr } = wellboreTrajectory;
-
-    // The mdArr is sorted, so we do a binary search to find the relevant trajectory indices
-    const mdIndex = sortedIndex(mdArr, md);
+    const trajectoryIndex = preComputedTrajectoryIndex ?? getTrajectoryIndexForMd(md, wellboreTrajectory);
 
     // Get the real life points before and after the point
-    const nextMd = mdArr[mdIndex];
-    const nextX = eastingArr[mdIndex];
-    const nextY = northingArr[mdIndex];
-    const nextZ = tvdMslArr[mdIndex];
+    const nextMd = mdArr[trajectoryIndex];
+    const nextX = eastingArr[trajectoryIndex];
+    const nextY = northingArr[trajectoryIndex];
+    const nextZ = tvdMslArr[trajectoryIndex];
 
-    const prevMd = mdArr[mdIndex - 1];
-    const prevX = eastingArr[mdIndex - 1];
-    const prevY = northingArr[mdIndex - 1];
-    const prevZ = tvdMslArr[mdIndex - 1];
+    const prevMd = mdArr[trajectoryIndex - 1];
+    const prevX = eastingArr[trajectoryIndex - 1];
+    const prevY = northingArr[trajectoryIndex - 1];
+    const prevZ = tvdMslArr[trajectoryIndex - 1];
 
     // Calculate how far along this segment the mdPoint is
     const ratio = (md - prevMd) / (nextMd - prevMd);
@@ -205,7 +232,37 @@ export function getInterpolatedPositionAtMd(
     const dy = nextY - prevY;
     const dz = nextZ - prevZ;
 
-    const zSign = invertZ ? -1 : 1;
+    return [prevX + ratio * dx, prevY + ratio * dy, prevZ + ratio * dz];
+}
 
-    return [prevX + ratio * dx, prevY + ratio * dy, zSign * (prevZ + ratio * dz)];
+/**
+ * Interpolates the normal vector at a given MD value along the wellbore trajectory.
+ * @param md Measured Depth to interpolate the normal for.
+ * @param wellboreTrajectory The wellbore trajectory to interpolate within.
+ * @param preComputedTrajectoryIndex (optional) If provided, this index will be used for interpolation instead of calculating it again.
+ * @returns A normalized vector representing the direction of the wellbore at the given MD.
+ */
+export function getInterpolatedNormalAtMd(
+    md: number,
+    wellboreTrajectory: WellboreTrajectory_api,
+    preComputedTrajectoryIndex?: number,
+): [number, number, number] {
+    const { eastingArr, northingArr, tvdMslArr } = wellboreTrajectory;
+    const trajectoryIndex = preComputedTrajectoryIndex ?? getTrajectoryIndexForMd(md, wellboreTrajectory);
+
+    const nextX = eastingArr[trajectoryIndex];
+    const nextY = northingArr[trajectoryIndex];
+    const nextZ = tvdMslArr[trajectoryIndex];
+
+    const prevX = eastingArr[trajectoryIndex - 1];
+    const prevY = northingArr[trajectoryIndex - 1];
+    const prevZ = tvdMslArr[trajectoryIndex - 1];
+
+    const dx = nextX - prevX;
+    const dy = nextY - prevY;
+    const dz = nextZ - prevZ;
+
+    const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+    return length === 0 ? [0, 0, 1] : [dx / length, dy / length, -dz / length];
 }

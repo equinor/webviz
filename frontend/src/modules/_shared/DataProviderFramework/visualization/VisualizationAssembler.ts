@@ -155,7 +155,7 @@ export type DataProviderTransformers<
 };
 
 export type HoverVisualizationFunctions<TTarget extends VisualizationTarget> = {
-    [K in HoverTopic]?: HoverVisualizationFunction<TTarget, K>[];
+    [K in HoverTopic]?: HoverVisualizationFunction<TTarget, K>;
 };
 
 export type HoverVisualizationFunction<TTarget extends VisualizationTarget, TTopic extends HoverTopic> = (
@@ -328,10 +328,6 @@ export class VisualizationAssembler<
 
                 accumulatedData = product.accumulatedData;
                 aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
-                hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
-                    hoverVisualizationFunctions,
-                    product.hoverVisualizationFunctions,
-                );
                 numLoadingDataProviders += product.numLoadingDataProviders;
                 numDataProviders += product.numDataProviders;
                 maybeApplyBoundingBox(product.combinedBoundingBox);

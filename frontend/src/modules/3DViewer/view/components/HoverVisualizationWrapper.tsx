@@ -6,7 +6,7 @@ import { cloneDeep } from "lodash";
 import { HoverTopic, usePublishHoverValue } from "@framework/HoverService";
 import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { getHoverTopicValuesInEvent } from "@modules/_shared/utils/subsurfaceViewerLayers";
+import { getHoverDataInPicks } from "@modules/_shared/utils/subsurfaceViewerLayers";
 
 import { ReadoutWrapper, type ReadoutWrapperProps } from "./ReadoutWrapper";
 
@@ -27,23 +27,24 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
 
     const adjustedLayersWithHoverVisualizations = [...(props.layers ?? [])];
     const adjustedViewportsWithHoverVisualizations = cloneDeep(props.views?.viewports ?? []);
+    const globalVisualizations = hoverVisualizations.find(({ groupId }) => groupId === "")?.hoverVisualizations ?? [];
 
     for (const hoverVisualization of hoverVisualizations) {
         for (const viewport of adjustedViewportsWithHoverVisualizations) {
             if (hoverVisualization.groupId === viewport.id) {
-                viewport.layerIds = [
-                    ...(viewport.layerIds ?? []),
-                    ...hoverVisualization.hoverVisualizations.map((v) => v.id),
-                ];
-                adjustedLayersWithHoverVisualizations.push(...hoverVisualization.hoverVisualizations);
+                const hoverLayers = [...hoverVisualization.hoverVisualizations, ...globalVisualizations];
+                const hoverLayerIds = hoverLayers.map((layer) => layer.id);
+
+                viewport.layerIds = viewport.layerIds?.concat(...hoverLayerIds);
+                adjustedLayersWithHoverVisualizations.push(...hoverLayers);
             }
         }
     }
 
     const handleViewerHover = React.useCallback(
         function handleViewerHover(mouseEvent: MapMouseEvent) {
-            const hoverData = getHoverTopicValuesInEvent(
-                mouseEvent,
+            const hoverData = getHoverDataInPicks(
+                mouseEvent.infos,
                 HoverTopic.WELLBORE_MD,
                 HoverTopic.WELLBORE,
                 HoverTopic.WORLD_POS,

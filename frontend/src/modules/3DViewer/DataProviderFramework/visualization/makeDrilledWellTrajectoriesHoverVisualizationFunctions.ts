@@ -9,7 +9,12 @@ import type {
     TransformerArgs,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
+import {
+    getInterpolatedNormalAtMd,
+    getInterpolatedPositionAtMd,
+    getTrajectoryIndexForMd,
+    wellTrajectoryToGeojson,
+} from "@modules/_shared/utils/wellbore";
 
 export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
     args: TransformerArgs<any, WellboreTrajectory_api[], any>,
@@ -23,49 +28,14 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
     }
 
     return {
-        [HoverTopic.WELLBORE_MD]: (wellboreMd) => {
-            const wellboreTrajectory = wellboreTrajectories.find(
-                (wellTrajectory) => wellTrajectory.wellboreUuid === wellboreMd?.wellboreUuid,
-            );
-
-            let hoveredMdPoint3d: [number, number, number] = [0, 0, 0];
-            let normal: [number, number, number] = [0, 0, 1];
+        [HoverTopic.WELLBORE]: (wellboreUuid) => {
             const wellLayerDataFeatures: GeoWellFeature[] = [];
 
-            const visible = wellboreMd !== null && wellboreTrajectory !== undefined;
+            const wellboreTrajectory = wellboreTrajectories.find(
+                (wellTrajectory) => wellTrajectory.wellboreUuid === wellboreUuid,
+            );
 
-            if (visible) {
-                for (const [index, point] of wellboreTrajectory.mdArr.entries()) {
-                    if (point >= wellboreMd.md) {
-                        // Interpolate the coordinates
-                        const prevPoint = wellboreTrajectory.mdArr[index - 1];
-                        const thisPoint = wellboreTrajectory.mdArr[index];
-
-                        const prevX = wellboreTrajectory.eastingArr[index - 1];
-                        const prevY = wellboreTrajectory.northingArr[index - 1];
-                        const prevZ = wellboreTrajectory.tvdMslArr[index - 1];
-                        const thisX = wellboreTrajectory.eastingArr[index];
-                        const thisY = wellboreTrajectory.northingArr[index];
-                        const thisZ = wellboreTrajectory.tvdMslArr[index];
-
-                        const ratio = (wellboreMd.md - prevPoint) / (thisPoint - prevPoint);
-                        const x = prevX + ratio * (thisX - prevX);
-                        const y = prevY + ratio * (thisY - prevY);
-                        const z = prevZ + ratio * (thisZ - prevZ);
-                        hoveredMdPoint3d = [x, y, -z];
-
-                        const dx = thisX - prevX;
-                        const dy = thisY - prevY;
-                        const dz = thisZ - prevZ;
-
-                        const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-                        normal = length === 0 ? [0, 0, 1] : [dx / length, dy / length, -dz / length];
-
-                        break;
-                    }
-                }
-
+            if (wellboreTrajectory) {
                 wellLayerDataFeatures.push(wellTrajectoryToGeojson(wellboreTrajectory));
             }
 
@@ -82,11 +52,33 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
                         size: 0,
                     },
                     pickable: false,
+                    autoHighlight: false,
                     wellNameVisible: false,
                     ZIncreasingDownwards: true,
-                    visible: visible,
+                    visible: wellLayerDataFeatures.length > 0,
                     depthTest: false,
                 }),
+            ];
+        },
+        [HoverTopic.WELLBORE_MD]: (hoverData) => {
+            const wellboreTrajectory = wellboreTrajectories.find(
+                (wellTrajectory) => wellTrajectory.wellboreUuid === hoverData?.wellboreUuid,
+            );
+
+            let hoveredMdPoint3d: [number, number, number] = [0, 0, 0];
+            let normal: [number, number, number] = [0, 0, 1];
+
+            const visible = hoverData !== null && wellboreTrajectory !== undefined;
+
+            if (visible) {
+                const trajectoryIndex = getTrajectoryIndexForMd(hoverData.md, wellboreTrajectory);
+
+                normal = getInterpolatedNormalAtMd(hoverData.md, wellboreTrajectory, trajectoryIndex);
+                hoveredMdPoint3d = getInterpolatedPositionAtMd(hoverData.md, wellboreTrajectory, trajectoryIndex);
+                hoveredMdPoint3d[2] *= -1; // Invert z-axis
+            }
+
+            return [
                 new BiconeLayer({
                     id: `${id}-hovered-md-point`,
                     centerPoint: hoveredMdPoint3d,
@@ -97,6 +89,8 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
                     color: [255, 0, 0],
                     opacity: 1,
                     visible: visible,
+                    autoHighlight: false,
+                    pickable: false,
                     sizeUnits: "pixels",
                     minSizeInMeters: 0,
                     maxSizeInMeters: 200,

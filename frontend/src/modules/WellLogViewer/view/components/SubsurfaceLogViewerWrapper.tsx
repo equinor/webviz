@@ -12,7 +12,7 @@ import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-
 import { isNaN } from "lodash";
 
 import type { WellboreHeader_api } from "@api";
-import { HoverTopic, useHover } from "@framework/HoverService";
+import { HoverTopic, useHover, usePublishHoverValue } from "@framework/HoverService";
 import type { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
@@ -121,6 +121,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     const [wellLogReadout, setWellLogReadout] = React.useState<Info[]>([]);
 
     const [hoveredWellboreMd, setHoveredWellboreMd] = useHover(HoverTopic.WELLBORE_MD, hoverService, moduleInstanceId);
+    const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, hoverService, moduleInstanceId);
 
     const isHoveringThisWellbore = hoveredWellboreMd?.wellboreUuid === wellboreUuid && hoveredWellboreMd.md != null;
 
@@ -134,11 +135,13 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
             // An md of null implies we've stopped hovering this wellbore
             if (md === null || wellboreUuid === null) {
                 setHoveredWellboreMd(null);
+                setHoveredWellbore(null);
             } else {
                 setHoveredWellboreMd({ md, wellboreUuid });
+                setHoveredWellbore(wellboreUuid);
             }
         },
-        [setHoveredWellboreMd, wellboreUuid],
+        [setHoveredWellbore, setHoveredWellboreMd, wellboreUuid],
     );
 
     // Set up global vertical scale synchronization
