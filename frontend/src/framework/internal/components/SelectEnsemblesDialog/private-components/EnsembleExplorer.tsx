@@ -10,19 +10,19 @@ import { Label } from "@lib/components/Label";
 import { Select, type SelectOption } from "@lib/components/Select";
 import { useValidState } from "@lib/hooks/useValidState";
 
-import type { InternalRegularEnsembleSetting } from "../../types";
+import type { InternalRegularEnsembleSetting } from "../types";
 
-import { CaseExplorer, type CaseSelection } from "./CaseExplorer";
+import { CaseExplorer, type CaseSelection } from "./CaseExplorer/CaseExplorer";
 
-export type EnsemblePickerProps = {
+export type EnsembleExplorerProps = {
     nextEnsembleColor: string;
     selectedEnsembles: UserEnsembleSetting[];
-    pickButtonLabel?: string;
-    onPickEnsemble: (newEnsemble: InternalRegularEnsembleSetting) => void;
+    selectButtonLabel?: string;
+    onSelectEnsemble: (newEnsemble: InternalRegularEnsembleSetting) => void;
     onRequestClose?: () => void;
 };
 
-export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
+export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode {
     const [selectedCaseName, setSelectedCaseName] = React.useState<string>("");
     const [selectedCaseUuid, setSelectedCaseUuid] = React.useState<string>("");
     const [selectedCaseEnsembles, setSelectedCaseEnsembles] = React.useState<EnsembleInfo_api[] | null>(null);
@@ -65,7 +65,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
         if (ensembleAlreadySelected) return;
         if (!selectedEnsemble) return;
 
-        props.onPickEnsemble({
+        props.onSelectEnsemble({
             ensembleIdent: new RegularEnsembleIdent(selectedCaseUuid, selectedEnsembleName),
             caseName: selectedCaseName,
             color: props.nextEnsembleColor,
@@ -103,7 +103,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
                 >
                     {ensembleAlreadySelected
                         ? "Ensemble already selected"
-                        : (props.pickButtonLabel ?? "Select Ensemble")}
+                        : (props.selectButtonLabel ?? "Select Ensemble")}
                 </Button>
             </div>
         </div>

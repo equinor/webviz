@@ -8,9 +8,8 @@ import type { TableColumns } from "@lib/components/Table/types";
 import { TagPicker } from "@lib/components/TagPicker";
 import type { CaseInfo_api } from "src/api/autogen/types.gen";
 
-import { CaseNameAndIdCell } from "./_components";
+import { CaseNameAndIdCell, UserAvatar } from "./_components";
 import type { CaseRowData } from "./_types";
-import { UserAvatar } from "./userAvatar";
 
 // TODO: Replace with util for date when introduces in Anders' PR
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
