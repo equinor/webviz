@@ -1,5 +1,5 @@
 
-FROM golang:1.21 AS build-stage
+FROM golang:1.23 AS build-stage
 
 RUN useradd --create-home --uid 1234 appuser
 USER 1234
@@ -22,7 +22,7 @@ RUN ls -slatr
 
 
 # Which image should we use for deployment?
-FROM golang:1.21 AS runtime-stage
+FROM golang:1.23 AS runtime-stage
 
 RUN useradd --create-home --uid 1234 appuser
 USER 1234
