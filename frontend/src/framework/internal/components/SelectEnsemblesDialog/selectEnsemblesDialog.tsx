@@ -26,11 +26,11 @@ import {
     makeUserEnsembleSettingsFromInternal,
     makeValidUserDeltaEnsembleSettingsFromInternal,
 } from "./_utils";
-import { EnsemblePicker } from "./private-components/EnsemblePicker/EnsemblePicker";
+import { EnsembleExplorer } from "./private-components/EnsembleExplorer";
 import { EnsembleTables } from "./private-components/EnsembleTables/EnsembleTables";
 import type { EnsembleIdentWithCaseName, InternalDeltaEnsembleSetting, InternalRegularEnsembleSetting } from "./types";
 
-enum EnsemblePickerMode {
+enum EnsembleExplorerMode {
     ADD_REGULAR_ENSEMBLE = "addRegularEnsemble",
     SELECT_OTHER_COMPARISON_ENSEMBLE = "selectOtherComparisonEnsemble",
     SELECT_OTHER_REFERENCE_ENSEMBLE = "selectOtherReferenceEnsemble",
@@ -46,8 +46,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.EnsembleDialogOpen);
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
 
-    const [showEnsemblePicker, setShowEnsemblePicker] = React.useState<boolean>(false);
-    const [ensemblePickerMode, setEnsemblePickerMode] = React.useState<EnsemblePickerMode | null>(null);
+    const [showEnsembleExplorer, setShowEnsembleExplorer] = React.useState<boolean>(false);
+    const [ensembleExplorerMode, setEnsembleExplorerMode] = React.useState<EnsembleExplorerMode | null>(null);
 
     const [deltaEnsembleUuidToEdit, setDeltaEnsembleUuidToEdit] = React.useState<string>("");
     const [selectedRegularEnsembles, setSelectedRegularEnsembles] = React.useState<InternalRegularEnsembleSetting[]>(
@@ -114,9 +114,9 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             setEnsembleStatesFromEnsembleSet();
             setConfirmCancel(false);
             setIsOpen(false);
-            setShowEnsemblePicker(false);
+            setShowEnsembleExplorer(false);
         },
-        [setEnsembleStatesFromEnsembleSet, setConfirmCancel, setIsOpen, setShowEnsemblePicker],
+        [setEnsembleStatesFromEnsembleSet, setConfirmCancel, setIsOpen, setShowEnsembleExplorer],
     );
 
     function handleCancel() {
@@ -159,13 +159,13 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         return false;
     }
 
-    function handleCloseEnsemblePicker() {
-        setShowEnsemblePicker(false);
-        setEnsemblePickerMode(null);
+    function handleCloseEnsembleExplorer() {
+        setShowEnsembleExplorer(false);
+        setEnsembleExplorerMode(null);
     }
 
-    function handlePickEnsemble(newItem: InternalRegularEnsembleSetting) {
-        if (ensemblePickerMode === EnsemblePickerMode.ADD_REGULAR_ENSEMBLE) {
+    function handleSelectEnsemble(newItem: InternalRegularEnsembleSetting) {
+        if (ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE) {
             addSelectedRegularEnsemble(newItem);
             return;
         }
@@ -189,15 +189,15 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             ]);
         }
 
-        const pickComparison = ensemblePickerMode === EnsemblePickerMode.SELECT_OTHER_COMPARISON_ENSEMBLE;
-        const pickReference = ensemblePickerMode === EnsemblePickerMode.SELECT_OTHER_REFERENCE_ENSEMBLE;
+        const selectComparison = ensembleExplorerMode === EnsembleExplorerMode.SELECT_OTHER_COMPARISON_ENSEMBLE;
+        const selectReference = ensembleExplorerMode === EnsembleExplorerMode.SELECT_OTHER_REFERENCE_ENSEMBLE;
 
         const editedDeltaEnsemble = {
             ...deltaEnsembleToEdit,
-            comparisonEnsembleIdent: pickComparison
+            comparisonEnsembleIdent: selectComparison
                 ? newItem.ensembleIdent
                 : (deltaEnsembleToEdit.comparisonEnsembleIdent ?? null),
-            referenceEnsembleIdent: pickReference
+            referenceEnsembleIdent: selectReference
                 ? newItem.ensembleIdent
                 : (deltaEnsembleToEdit.referenceEnsembleIdent ?? null),
         };
@@ -205,8 +205,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         setSelectedDeltaEnsembles((prev) => {
             return prev.map((ens) => (ens.uuid === editedDeltaEnsemble.uuid ? editedDeltaEnsemble : ens));
         });
-        setShowEnsemblePicker(false);
-        setEnsemblePickerMode(null);
+        setShowEnsembleExplorer(false);
+        setEnsembleExplorerMode(null);
     }
 
     function addSelectedRegularEnsemble(newItem: InternalRegularEnsembleSetting) {
@@ -229,9 +229,9 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         }
     }
 
-    function handlePickRegularEnsemble() {
-        setEnsemblePickerMode(EnsemblePickerMode.ADD_REGULAR_ENSEMBLE);
-        setShowEnsemblePicker(true);
+    function handleExploreRegularEnsemble() {
+        setEnsembleExplorerMode(EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE);
+        setShowEnsembleExplorer(true);
     }
 
     function handleUpdateRegularEnsemble(updatedItem: InternalRegularEnsembleSetting) {
@@ -270,9 +270,9 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     return ens;
                 }
 
-                setEnsemblePickerMode(EnsemblePickerMode.SELECT_OTHER_COMPARISON_ENSEMBLE);
+                setEnsembleExplorerMode(EnsembleExplorerMode.SELECT_OTHER_COMPARISON_ENSEMBLE);
                 setDeltaEnsembleUuidToEdit(item.uuid);
-                setShowEnsemblePicker(true);
+                setShowEnsembleExplorer(true);
                 return item;
             }),
         );
@@ -285,9 +285,9 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     return ens;
                 }
 
-                setEnsemblePickerMode(EnsemblePickerMode.SELECT_OTHER_REFERENCE_ENSEMBLE);
+                setEnsembleExplorerMode(EnsembleExplorerMode.SELECT_OTHER_REFERENCE_ENSEMBLE);
                 setDeltaEnsembleUuidToEdit(item.uuid);
-                setShowEnsemblePicker(true);
+                setShowEnsembleExplorer(true);
                 return item;
             }),
         );
@@ -333,30 +333,30 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     }
 
     const dialogTitle: React.ReactNode = React.useMemo(() => {
-        if (showEnsemblePicker) {
-            let pickerTitle = "Add Ensemble";
-            if (ensemblePickerMode === EnsemblePickerMode.SELECT_OTHER_REFERENCE_ENSEMBLE) {
-                pickerTitle = "Select Reference Ensemble";
-            } else if (ensemblePickerMode === EnsemblePickerMode.SELECT_OTHER_COMPARISON_ENSEMBLE) {
-                pickerTitle = "Select Comparison Ensemble";
+        if (showEnsembleExplorer) {
+            let explorerTitle = "Add Ensemble";
+            if (ensembleExplorerMode === EnsembleExplorerMode.SELECT_OTHER_REFERENCE_ENSEMBLE) {
+                explorerTitle = "Select Reference Ensemble";
+            } else if (ensembleExplorerMode === EnsembleExplorerMode.SELECT_OTHER_COMPARISON_ENSEMBLE) {
+                explorerTitle = "Select Comparison Ensemble";
             }
 
             return (
                 <div className="flex items-center space-x-1">
                     <span
                         className="pl-2 text-slate-400 hover:bg-gray-100 hover:text-slate-500 rounded-md cursor-pointer"
-                        onClick={handleCloseEnsemblePicker}
+                        onClick={handleCloseEnsembleExplorer}
                     >
                         Selected Ensembles
                         <ChevronRight />
                     </span>
-                    <span className="text-black"> {pickerTitle}</span>
+                    <span className="text-black"> {explorerTitle}</span>
                 </div>
             );
         }
 
         return <div className="pl-2">Selected Ensembles</div>;
-    }, [showEnsemblePicker, ensemblePickerMode]);
+    }, [showEnsembleExplorer, ensembleExplorerMode]);
 
     const hasAnyChanges = hash !== currentHash;
     return (
@@ -393,24 +393,24 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     </div>
                 }
                 drawer={{
-                    open: showEnsemblePicker,
-                    onClose: handleCloseEnsemblePicker,
+                    open: showEnsembleExplorer,
+                    onClose: handleCloseEnsembleExplorer,
                     width: "85%",
                     content: (
-                        <EnsemblePicker
+                        <EnsembleExplorer
                             nextEnsembleColor={nextEnsembleColor}
                             selectedEnsembles={
-                                ensemblePickerMode === EnsemblePickerMode.ADD_REGULAR_ENSEMBLE
+                                ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
                                     ? selectedRegularEnsembles
                                     : []
                             }
-                            onPickEnsemble={handlePickEnsemble}
-                            pickButtonLabel={
-                                ensemblePickerMode === EnsemblePickerMode.ADD_REGULAR_ENSEMBLE
+                            onSelectEnsemble={handleSelectEnsemble}
+                            selectButtonLabel={
+                                ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
                                     ? "Add Ensemble"
                                     : "Select Ensemble"
                             }
-                            onRequestClose={handleCloseEnsemblePicker}
+                            onRequestClose={handleCloseEnsembleExplorer}
                         />
                     ),
                 }}
@@ -421,7 +421,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         selectedRegularEnsembles={selectedRegularEnsembles}
                         selectedDeltaEnsembles={selectedDeltaEnsembles}
                         selectableEnsemblesForDelta={selectableEnsemblesForDelta}
-                        onAddRegularEnsemble={handlePickRegularEnsemble}
+                        onAddRegularEnsemble={handleExploreRegularEnsemble}
                         onUpdateRegularEnsemble={handleUpdateRegularEnsemble}
                         onRemoveRegularEnsemble={handleRemoveRegularEnsemble}
                         onMoveRegularEnsemble={handleMoveRegularEnsemble}
