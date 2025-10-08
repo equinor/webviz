@@ -77,15 +77,13 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             "workbenchSession",
             this._workbenchSession
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(WorkbenchSessionTopic.ENSEMBLE_SET)(() =>
-                this.handleEnsembleSetChanged.bind(this),
-            ),
+                .makeSubscriberFunction(WorkbenchSessionTopic.ENSEMBLE_SET)(this.handleEnsembleSetChanged.bind(this)),
         );
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "workbenchSession",
             this._workbenchSession
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(WorkbenchSessionTopic.REALIZATION_FILTER_SET)(() =>
+                .makeSubscriberFunction(WorkbenchSessionTopic.REALIZATION_FILTER_SET)(
                 this.handleRealizationFilterSetChanged.bind(this),
             ),
         );
