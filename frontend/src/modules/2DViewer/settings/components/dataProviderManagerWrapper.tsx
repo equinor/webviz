@@ -30,12 +30,12 @@ import { RealizationSurfaceProvider } from "@modules/_shared/DataProviderFramewo
 import { StatisticalSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/StatisticalSurfaceProvider";
 import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
+import { ContextBoundary } from "@modules/_shared/DataProviderFramework/framework/ContextBoundary/ContextBoundary";
 import { DataProvider } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
 import { DataProviderManagerComponent } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManagerComponent";
 import { DeltaSurface } from "@modules/_shared/DataProviderFramework/framework/DeltaSurface/DeltaSurface";
 import { Group } from "@modules/_shared/DataProviderFramework/framework/Group/Group";
-import { SettingsGroup } from "@modules/_shared/DataProviderFramework/framework/SettingsGroup/SettingsGroup";
 import { SharedSetting } from "@modules/_shared/DataProviderFramework/framework/SharedSetting/SharedSetting";
 import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/GroupRegistry";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
@@ -68,8 +68,8 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "delta-surface":
                 groupDelegate.prependChild(new DeltaSurface("Delta surface", props.dataProviderManager));
                 return;
-            case "settings-group":
-                groupDelegate.prependChild(new SettingsGroup("Settings group", props.dataProviderManager));
+            case "context-boundary":
+                groupDelegate.prependChild(new ContextBoundary("Context boundary", props.dataProviderManager));
                 return;
             case "color-scale":
                 groupDelegate.prependChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
@@ -202,9 +202,9 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
         }
 
         groupActions.children.push({
-            identifier: "settings-group",
+            identifier: "context-boundary",
             icon: <SettingsApplications fontSize="small" />,
-            label: "Settings group",
+            label: "Context boundary",
         });
 
         actions.push(groupActions);
@@ -273,9 +273,9 @@ const INITIAL_ACTIONS: ActionGroup[] = [
                 label: "View",
             },
             {
-                identifier: "settings-group",
+                identifier: "context-boundary",
                 icon: <SettingsApplications fontSize="small" />,
-                label: "Settings group",
+                label: "Context boundary",
             },
         ],
     },
