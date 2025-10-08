@@ -5,8 +5,9 @@ import { useAtomValue, useSetAtom } from "jotai";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
+import { useColorSet } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
-
+import { simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
 import type { Interfaces } from "../interfaces";
 
@@ -18,7 +19,6 @@ import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriter
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { useTimeSeriesChartTracesDataArrayBuilder } from "./hooks/useTimeSeriesChartTracesDataArrayBuilder";
 
-
 export const View = ({ viewContext, workbenchSettings, workbenchServices }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
@@ -28,13 +28,15 @@ export const View = ({ viewContext, workbenchSettings, workbenchServices }: Modu
     const setUserSelectedTimestampUtcMs = useSetAtom(userSelectedActiveTimestampUtcMsAtom);
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
     const vectorSpecification = useAtomValue(vectorSpecificationAtom);
-
+    const descriptiveVectorName = vectorSpecification
+        ? simulationVectorDescription(vectorSpecification?.vectorName)
+        : "";
     const subscribedHoverTimestampUtcMs = useSubscribedValue("global.hoverTimestamp", workbenchServices);
 
     useMakeViewStatusWriterMessages(statusWriter);
     usePublishToDataChannels(viewContext);
 
-    const colorSet = workbenchSettings.useColorSet();
+    const colorSet = useColorSet(workbenchSettings);
     const traceDataArr = useTimeSeriesChartTracesDataArrayBuilder(colorSet);
 
     function handleHoverInChart(hoverInfo: TimeSeriesChartHoverInfo | null) {
@@ -66,7 +68,7 @@ export const View = ({ viewContext, workbenchSettings, workbenchServices }: Modu
         <div className="w-full h-full" ref={wrapperDivRef}>
             <TimeSeriesChart
                 traceDataArr={traceDataArr}
-                title={vectorSpecification?.vectorName ?? ""}
+                title={descriptiveVectorName}
                 uirevision={vectorSpecification?.vectorName}
                 activeTimestampUtcMs={activeTimestampUtcMs ?? undefined}
                 hoveredTimestampUtcMs={subscribedHoverTimestampUtcMs?.timestampUtcMs ?? undefined}

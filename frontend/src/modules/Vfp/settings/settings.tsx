@@ -13,7 +13,6 @@ import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
-
 import type { Interfaces } from "../interfaces";
 import { PressureOption, VfpParam, VfpType } from "../types";
 import { VfpDataAccessor } from "../utils/vfpDataAccessor";
@@ -43,7 +42,6 @@ import {
     selectedWfrIndicesAtom,
 } from "./atoms/derivedAtoms";
 import { vfpTableQueryAtom } from "./atoms/queryAtoms";
-
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);

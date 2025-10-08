@@ -28,12 +28,10 @@ import {
     useRealizationSurfacesMetadataQuery,
 } from "@modules/_shared/Surface";
 
-
 import type { Interfaces } from "../interfaces";
 import { AggregationDropdown } from "../UiComponents";
 
 import { surfaceAddressAtom } from "./atoms/baseAtoms";
-
 
 const SurfaceTimeTypeEnumToStringMapping = {
     [SurfaceTimeType.None]: "Static",

@@ -5,7 +5,7 @@ import type { SelectedSensitivity } from "@modules/SensitivityPlot/typesAndEnums
 import { DisplayComponentType, SensitivityScaling } from "@modules/SensitivityPlot/typesAndEnums";
 import { ColorBy } from "@modules/SensitivityPlot/view/components/sensitivityChartFigure";
 
-export const displayComponentTypeAtom = atom<DisplayComponentType>(DisplayComponentType.TornadoChart);
+export const displayComponentTypeAtom = atom<DisplayComponentType>(DisplayComponentType.SENSITIVITY_CHART);
 export const referenceSensitivityNameAtom = atom<string | null>(null);
 export const sensitivityNamesAtom = atom<string[]>([]);
 export const responseChannelNameAtom = atom<string | null>(null);

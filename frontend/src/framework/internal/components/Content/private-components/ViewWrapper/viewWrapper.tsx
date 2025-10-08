@@ -1,9 +1,12 @@
 import React from "react";
 
 import { GuiEvent, GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { DashboardTopic } from "@framework/internal/Dashboard";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
 import { pointRelativeToDomRect } from "@lib/utils/geometry";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 import { subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
@@ -17,7 +20,6 @@ import { ViewContent } from "./private-components/viewContent";
 type ViewWrapperProps = {
     isMaximized?: boolean;
     isMinimized?: boolean;
-    isActive: boolean;
     moduleInstance: ModuleInstance<any>;
     workbench: Workbench;
     width: number;
@@ -30,10 +32,17 @@ type ViewWrapperProps = {
 };
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
+    const dashboard = usePublishSubscribeTopicValue(
+        props.workbench.getWorkbenchSession(),
+        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
+    );
     const [prevWidth, setPrevWidth] = React.useState<number>(props.width);
     const [prevHeight, setPrevHeight] = React.useState<number>(props.height);
     const [prevX, setPrevX] = React.useState<number>(props.x);
     const [prevY, setPrevY] = React.useState<number>(props.y);
+
+    const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ActiveModuleInstanceId);
+    const isActive = props.moduleInstance.getId() === activeModuleInstanceId;
 
     const ref = React.useRef<HTMLDivElement>(null);
     const [drawerContent, setDrawerContent] = useGuiState(
@@ -99,8 +108,8 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         if (drawerContent !== LeftDrawerContent.SyncSettings) {
             setDrawerContent(LeftDrawerContent.ModuleSettings);
         }
-        if (props.isActive) return;
-        props.workbench.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, props.moduleInstance.getId());
+        if (isActive) return;
+        dashboard.setActiveModuleInstanceId(props.moduleInstance.getId());
     }
 
     function handlePointerDown() {
@@ -113,16 +122,10 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             return;
         }
         pointerDown.current = false;
-        if (drawerContent === LeftDrawerContent.ModulesList) {
-            if (!timeRef.current || Date.now() - timeRef.current < 800) {
-                handleModuleClick();
-            }
-            return;
-        }
         handleModuleClick();
     }
 
-    function handleReceiversClick(e: React.PointerEvent<HTMLDivElement>): void {
+    function handleReceiversClick(e: React.PointerEvent<HTMLButtonElement>): void {
         guiMessageBroker.publishEvent(GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest, {
             moduleInstanceId: props.moduleInstance.getId(),
         });
@@ -131,7 +134,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     }
 
     const showAsActive =
-        props.isActive && [LeftDrawerContent.ModuleSettings, LeftDrawerContent.SyncSettings].includes(drawerContent);
+        isActive && [LeftDrawerContent.ModuleSettings, LeftDrawerContent.SyncSettings].includes(drawerContent);
 
     function makeHeader() {
         return (

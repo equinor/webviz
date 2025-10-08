@@ -10,7 +10,8 @@ import {
     RealizationFilterType,
     RealizationFilterTypeStringMapping,
 } from "@framework/types/realizationFilterTypes";
-import { Button } from "@lib/components/Button";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -210,20 +211,18 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     }
 
     const activeStyleClasses = {
-        "ring-3 shadow-lg": true,
+        ring: true,
         "ring-blue-400 shadow-blue-400": !props.hasUnsavedSelections,
         "ring-orange-400 shadow-orange-400": props.hasUnsavedSelections,
     };
     const inactiveStyleClasses = {
         "cursor-pointer ring-2": true,
         "[--ring-opacity:100%]": !props.isAnotherFilterActive,
-        "[--ring-opacity:50%] group hover:shadow-md hover:[--ring-opacity:75%] transition-opacity":
-            props.isAnotherFilterActive,
-        "ring-gray-300/(--ring-opacity) shadow-gray-300 ": !props.hasUnsavedSelections,
-        "ring-orange-400/(--ring-opacity) shadow-orange-400": props.hasUnsavedSelections,
-        "hover:shadow-blue-400 hover:shadow-lg shadow-md": !props.isAnotherFilterActive && props.hasUnsavedSelections,
-        "hover:ring-blue-400/(--ring-opacity) hover:shadow-blue-400 hover:shadow-md":
-            !props.isAnotherFilterActive && !props.hasUnsavedSelections,
+        "[--ring-opacity:50%] group hover:[--ring-opacity:75%] transition-opacity": props.isAnotherFilterActive,
+        "ring-gray-300/(--ring-opacity) hover:ring-blue-200": !props.hasUnsavedSelections,
+        "ring-orange-400/(--ring-opacity)": props.hasUnsavedSelections,
+        "hover:shadow-blue-400": !props.isAnotherFilterActive && props.hasUnsavedSelections,
+        "hover:ring-blue-400/(--ring-opacity)": !props.isAnotherFilterActive && !props.hasUnsavedSelections,
     };
     const mainDivStyleClasses = props.isActive ? activeStyleClasses : inactiveStyleClasses;
 
@@ -232,13 +231,13 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
             className={resolveClassNames("rounded-md", mainDivStyleClasses)}
             title={!props.isActive ? "Click to open filter" : undefined}
         >
-            <div className="flex justify-center items-center bg-slate-100 h-12 rounded-tl-md rounded-tr-md">
+            <div className="flex justify-center items-center bg-slate-100 rounded-tl-md rounded-tr-md p-1">
                 <div
                     className={resolveClassNames(
                         "grow h-full pl-2 flex items-center cursor-pointer font-bold text-sm text-ellipsis overflow-hidden whitespace-nowrap",
                         {
                             "pr-2": !props.hasUnsavedSelections,
-                            "opacity-20 group-hover:opacity-75 transition-opacity duration-100":
+                            "opacity-50 group-hover:opacity-75 transition-opacity duration-100":
                                 !props.isActive && props.isAnotherFilterActive,
                         },
                     )}
@@ -247,33 +246,28 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                 >
                     {props.ensembleName}
                 </div>
-                <div
-                    className={resolveClassNames("flex h-full items-center gap-1 pr-2 bg-amber-50", {
-                        hidden: !props.hasUnsavedSelections,
-                    })}
-                >
-                    <Button
-                        title="Apply changes"
-                        variant="contained"
+                <div className={resolveClassNames("flex h-full items-center gap-1 pr-2")}>
+                    <DenseIconButton
+                        colorScheme={DenseIconButtonColorScheme.SUCCESS}
                         disabled={!props.hasUnsavedSelections}
-                        size="small"
-                        startIcon={<Check fontSize="small" />}
                         onClick={handleApplyClick}
-                    />
-                    <Button
-                        title="Discard changes"
-                        color="danger"
-                        variant="contained"
+                        title={props.hasUnsavedSelections ? "Apply changes" : "No changes to apply"}
+                    >
+                        <Check fontSize="small" />
+                    </DenseIconButton>
+                    <DenseIconButton
+                        colorScheme={DenseIconButtonColorScheme.DANGER}
                         disabled={!props.hasUnsavedSelections}
-                        size="small"
-                        startIcon={<Clear fontSize="small" />}
                         onClick={handleDiscardClick}
-                    />
+                        title={props.hasUnsavedSelections ? "Discard changes" : "No changes to discard"}
+                    >
+                        <Clear fontSize="small" />
+                    </DenseIconButton>
                 </div>
             </div>
             <div
                 className={resolveClassNames({
-                    "opacity-20 group-hover:opacity-75 transition-opacity duration-100":
+                    "opacity-30 group-hover:opacity-75 transition-opacity duration-100":
                         !props.isActive && props.isAnotherFilterActive,
                 })}
                 onClickCapture={handleBodyOnClickCapture}
@@ -303,6 +297,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                                         };
                                     })}
                                     onChange={(_, value) => handleActiveFilterTypeChange(value)}
+                                    direction="horizontal"
                                 />
                             </Label>
                             <div

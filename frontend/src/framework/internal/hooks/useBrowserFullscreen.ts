@@ -3,30 +3,38 @@ import React from "react";
 export function useBrowserFullscreen(): [boolean, () => void] {
     const [isFullscreen, setIsFullscreen] = React.useState(false);
 
-    const enterFullscreen = React.useCallback((element?: HTMLElement) => {
+    const toggleFullscreen = React.useCallback(function toggleFullscreen() {
         if (!document.fullscreenEnabled) return console.warn("Fullscreen not allowed");
+        if (document.fullscreenElement) return document.exitFullscreen();
 
-        const el = element ?? document.body;
-        el.requestFullscreen();
+        document.body.requestFullscreen();
     }, []);
 
-    const exitFullscreen = React.useCallback(() => {
-        document.exitFullscreen();
-    }, []);
+    React.useEffect(
+        function setupFullscreenListeners() {
+            // ! The browsers (chrome and firefox at-least) are for some reason not actually using
+            // ! the Fullscreen API when the user presses their fullscreen key, causing 'fullscreenElement'
+            // ! to not be set. As a workaround, we manually call the API ourselves
+            function handleFullscreenKey(evt: KeyboardEvent) {
+                if (evt.code !== "F11") return;
 
-    const toggleFullscreen = React.useCallback(() => {
-        if (document.fullscreenElement) exitFullscreen();
-        else enterFullscreen();
-    }, [enterFullscreen, exitFullscreen]);
+                evt.preventDefault();
+                toggleFullscreen();
+            }
 
-    React.useEffect(function setupFullscreenListener() {
-        function handleFullscreenChange() {
-            setIsFullscreen(document.fullscreenElement != null);
-        }
+            function handleFullscreenChange() {
+                setIsFullscreen(document.fullscreenElement != null);
+            }
 
-        document.addEventListener("fullscreenchange", handleFullscreenChange);
-        return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-    });
+            document.addEventListener("keydown", handleFullscreenKey);
+            document.addEventListener("fullscreenchange", handleFullscreenChange);
+            return function removeFullscreenListeners() {
+                document.removeEventListener("keydown", handleFullscreenKey);
+                document.removeEventListener("fullscreenchange", handleFullscreenChange);
+            };
+        },
+        [toggleFullscreen],
+    );
 
     return [isFullscreen, toggleFullscreen];
 }

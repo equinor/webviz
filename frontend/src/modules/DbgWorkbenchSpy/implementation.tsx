@@ -9,7 +9,6 @@ import type { AllTopicDefinitions, WorkbenchServices } from "@framework/Workbenc
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Button } from "@lib/components/Button";
 
-
 import type { Interfaces } from "./interfaces";
 
 export const triggeredRefreshCounterAtom = atom<number>(0);

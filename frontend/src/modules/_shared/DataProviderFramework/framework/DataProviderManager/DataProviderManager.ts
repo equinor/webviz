@@ -6,17 +6,17 @@ import type { IntersectionPolyline } from "@framework/userCreatedItems/Intersect
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
 import type { EnsembleRealizationFilterFunction, WorkbenchSession } from "@framework/WorkbenchSession";
 import {
-    WorkbenchSessionEvent,
+    WorkbenchSessionTopic,
     createEnsembleRealizationFilterFuncForWorkbenchSession,
 } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorPaletteType } from "@framework/WorkbenchSettings";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
-import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
 import { type SerializedDataProviderManager, SerializedType } from "../../interfacesAndTypes/serialization";
 
@@ -60,7 +60,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     private _itemDelegate: ItemDelegate;
     private _dataRevision: number = 0;
     private _globalSettings: Partial<GlobalSettings>;
-    private _subscriptionsHandler = new UnsubscribeHandlerDelegate();
+    private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
     private _deserializing = false;
     private _groupColorGenerator: Generator<string, string>;
 
@@ -73,28 +73,30 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
 
         this._globalSettings = this.initializeGlobalSettings();
 
-        this._subscriptionsHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "workbenchSession",
-            this._workbenchSession.subscribe(
-                WorkbenchSessionEvent.EnsembleSetChanged,
+            this._workbenchSession
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(WorkbenchSessionTopic.ENSEMBLE_SET)(() =>
                 this.handleEnsembleSetChanged.bind(this),
             ),
         );
-        this._subscriptionsHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "workbenchSession",
-            this._workbenchSession.subscribe(
-                WorkbenchSessionEvent.RealizationFilterSetChanged,
+            this._workbenchSession
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(WorkbenchSessionTopic.REALIZATION_FILTER_SET)(() =>
                 this.handleRealizationFilterSetChanged.bind(this),
             ),
         );
-        this._subscriptionsHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "workbenchSession",
             this._workbenchSession
                 .getUserCreatedItems()
                 .getIntersectionPolylines()
                 .subscribe(IntersectionPolylinesEvent.CHANGE, this.handleIntersectionPolylinesChanged.bind(this)),
         );
-        this._subscriptionsHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "groupDelegate",
             this._groupDelegate
                 .getPublishSubscribeDelegate()
@@ -102,7 +104,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
                 this.publishTopic(DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE);
             }),
         );
-        this._subscriptionsHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "groupDelegate",
             this._groupDelegate
                 .getPublishSubscribeDelegate()
@@ -190,7 +192,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
 
     beforeDestroy() {
         this._groupDelegate.beforeDestroy();
-        this._subscriptionsHandler.unsubscribeAll();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
     }
 
     serializeState(): SerializedDataProviderManager {

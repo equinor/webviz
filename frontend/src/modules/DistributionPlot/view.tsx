@@ -7,6 +7,7 @@ import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes"
 import { KeyKind } from "@framework/DataChannelTypes";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { useColorSet, useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
@@ -53,8 +54,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     const statusWriter = useViewStatusWriter(viewContext);
 
-    const colorSet = workbenchSettings.useColorSet();
-    const seqColorScale = workbenchSettings.useContinuousColorScale({
+    const colorSet = useColorSet(workbenchSettings);
+    const seqColorScale = useContinuousColorScale(workbenchSettings, {
         gradientType: ColorScaleGradientType.Sequential,
     });
 
@@ -170,6 +171,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     sharedYAxes: false,
                     verticalSpacing: 100 / (wrapperDivSize.height - 50),
                     horizontalSpacing: 0.2 / numCols,
+
                     margin: {
                         t: 0,
                         r: 20,
@@ -197,10 +199,17 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
                         const patch: Partial<Layout> = {
                             [`xaxis${cellIndex + 1}`]: {
-                                title: makeTitleFromChannelContent(data),
+                                title: {
+                                    text: makeTitleFromChannelContent(data),
+                                },
+                                tickangle: 0,
+                                tickson: "boundaries",
+                                ticklabeloverflow: "hide past div",
                             },
                             [`yaxis${cellIndex + 1}`]: {
-                                title: "Percent",
+                                title: {
+                                    text: "Percentage (%)",
+                                },
                             },
                         };
                         figure.updateLayout(patch);

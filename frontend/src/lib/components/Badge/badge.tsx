@@ -19,7 +19,7 @@ export const Badge: React.FC<BadgeProps> = (props) => {
                         props.color || "bg-blue-500",
                         "rounded-full",
                         "text-white",
-                        "h-5",
+                        "h-4",
                         "absolute",
                         "right-0",
                         "top-0",
@@ -27,14 +27,14 @@ export const Badge: React.FC<BadgeProps> = (props) => {
                         "place-content-center",
                         "items-center",
                         "font-bold",
-                        "min-w-[1.25rem]",
+                        "min-w-[1rem]",
                         "box-border",
 
                         // Refer to MuI state class to hide badge when prop.invisible = true
                         "[&.MuiBadge-invisible]:invisible",
                     ),
                     style: {
-                        fontSize: "0.75rem",
+                        fontSize: "0.65rem",
                         lineHeight: "1",
                         transform: "scale(1) translate(50%, -50%)",
                         transformOrigin: "100% 0%",

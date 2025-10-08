@@ -3,6 +3,7 @@ import React from "react";
 import { Input } from "@mui/icons-material";
 
 import type { ModuleViewProps } from "@framework/Module";
+import { useColorSet } from "@framework/WorkbenchSettings";
 import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage/contentMessage";
@@ -27,7 +28,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     const sensitivityScaling = viewContext.useSettingsToViewInterfaceValue("sensitivityScaling");
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const colorSet = workbenchSettings.useColorSet();
+    const colorSet = useColorSet(workbenchSettings);
 
     const responseChannelData = useResponseChannel(viewContext, workbenchSession);
 
@@ -61,11 +62,11 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
         sensitivityDataScaler,
     );
 
-    let instanceTitle = "Tornado chart";
+    let instanceTitle = "Sensitivity chart";
     if (computedSensitivityResponseDataset) {
-        if (displayComponentType === DisplayComponentType.TornadoChart) {
-            instanceTitle = `Tornado chart for ${computedSensitivityResponseDataset.responseName}`;
-        } else if (displayComponentType === DisplayComponentType.Table) {
+        if (displayComponentType === DisplayComponentType.SENSITIVITY_CHART) {
+            instanceTitle = `Sensitivity chart for ${computedSensitivityResponseDataset.responseName}`;
+        } else if (displayComponentType === DisplayComponentType.SENSITIVITY_TABLE) {
             instanceTitle = `Sensitivity table for ${computedSensitivityResponseDataset.responseName}`;
         }
     }
@@ -94,7 +95,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
             return <ContentInfo>No sensitivities available</ContentInfo>;
         }
 
-        if (displayComponentType === DisplayComponentType.TornadoChart) {
+        if (displayComponentType === DisplayComponentType.SENSITIVITY_CHART) {
             if (!sensitivityChartBuilder) {
                 return <ContentInfo>No chart data available</ContentInfo>;
             }
@@ -103,7 +104,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
             );
         }
 
-        if (displayComponentType === DisplayComponentType.Table) {
+        if (displayComponentType === DisplayComponentType.SENSITIVITY_TABLE) {
             return (
                 <div className="text-sm">
                     <SensitivityTable

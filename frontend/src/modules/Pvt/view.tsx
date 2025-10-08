@@ -6,6 +6,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useColorSet } from "@framework/WorkbenchSettings";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
@@ -17,7 +18,7 @@ import { PvtDataAccessor } from "./utils/PvtDataAccessor";
 import { PvtPlotBuilder } from "./utils/PvtPlotBuilder";
 
 export function View({ viewContext, workbenchSettings, workbenchSession }: ModuleViewProps<Interfaces>) {
-    const colorSet = workbenchSettings.useColorSet();
+    const colorSet = useColorSet(workbenchSettings);
     const statusWriter = useViewStatusWriter(viewContext);
     const ensembleSet = useEnsembleSet(workbenchSession);
 
