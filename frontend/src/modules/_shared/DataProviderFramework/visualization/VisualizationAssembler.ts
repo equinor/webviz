@@ -1,8 +1,8 @@
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 
+import type { HoverData, HoverTopic } from "@framework/HoverService";
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
-import type { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
 import * as bbox from "@lib/utils/bbox";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
@@ -154,21 +154,13 @@ export type DataProviderTransformers<
     >;
 };
 
-type KeysMatching<T, Pattern extends string> = {
-    [K in keyof T]: K extends Pattern ? K : never;
-}[keyof T];
-
-type PickMatching<T, Pattern extends string> = {
-    [K in KeysMatching<T, Pattern>]: T[K];
+export type HoverVisualizationFunctions<TTarget extends VisualizationTarget> = {
+    [K in HoverTopic]?: HoverVisualizationFunction<TTarget, K>;
 };
 
-export type HoverTopicDefinitions = PickMatching<GlobalTopicDefinitions, `global.hover${string}`>;
-
-export type HoverVisualizationFunctions<TTarget extends VisualizationTarget> = Partial<{
-    [K in keyof HoverTopicDefinitions]: (
-        hoverInfo: HoverTopicDefinitions[K],
-    ) => DataProviderHoverVisualizationTargetTypes[TTarget][];
-}>;
+export type HoverVisualizationFunction<TTarget extends VisualizationTarget, TTopic extends HoverTopic> = (
+    hoverInfo: HoverData[TTopic],
+) => DataProviderHoverVisualizationTargetTypes[TTarget][];
 
 export type VisualizationTransformer<
     TSettings extends Settings,
@@ -336,10 +328,6 @@ export class VisualizationAssembler<
 
                 accumulatedData = product.accumulatedData;
                 aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
-                hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
-                    hoverVisualizationFunctions,
-                    product.hoverVisualizationFunctions,
-                );
                 numLoadingDataProviders += product.numLoadingDataProviders;
                 numDataProviders += product.numDataProviders;
                 maybeApplyBoundingBox(product.combinedBoundingBox);
@@ -590,7 +578,7 @@ export class VisualizationAssembler<
         const merged: HoverVisualizationFunctions<TTarget> = { ...base };
 
         for (const key in additional) {
-            const typedKey = key as keyof HoverTopicDefinitions;
+            const typedKey = key as HoverTopic;
             const baseFn = base[typedKey];
             const additionalFn = additional[typedKey];
 

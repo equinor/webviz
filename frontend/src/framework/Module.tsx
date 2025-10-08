@@ -3,6 +3,7 @@ import type React from "react";
 import type { Getter, Setter } from "jotai";
 
 import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
+import type { HoverService } from "./HoverService";
 import type { InitialSettings } from "./InitialSettings";
 import type { SettingsContext, ViewContext } from "./ModuleContext";
 import type { ModuleDataTagId } from "./ModuleDataTags";
@@ -66,6 +67,7 @@ export type ModuleViewProps<
     viewContext: ViewContext<TInterfaceTypes>;
     workbenchSession: WorkbenchSession;
     workbenchServices: WorkbenchServices;
+    hoverService: HoverService;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
 };
