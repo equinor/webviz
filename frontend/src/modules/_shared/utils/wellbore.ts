@@ -1,5 +1,5 @@
 import type { Color } from "@deck.gl/core";
-import type { Position3D } from "@webviz/subsurface-viewer/dist/layers/utils/layerTools";
+import type { Point3D } from "@webviz/subsurface-viewer";
 import type { LineString, Point } from "geojson";
 import { clamp, sortedIndex } from "lodash";
 import simplify from "simplify-js";
@@ -210,7 +210,7 @@ export function getInterpolatedPositionAtMd(
     md: number,
     wellboreTrajectory: WellboreTrajectory_api,
     preComputedTrajectoryIndex?: number,
-): Position3D {
+): Point3D {
     const { mdArr, eastingArr, northingArr, tvdMslArr } = wellboreTrajectory;
     const trajectoryIndex = preComputedTrajectoryIndex ?? getTrajectoryIndexForMd(md, wellboreTrajectory);
 

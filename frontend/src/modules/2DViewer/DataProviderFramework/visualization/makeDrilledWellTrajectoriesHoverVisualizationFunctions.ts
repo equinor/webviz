@@ -1,6 +1,6 @@
 import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { GL } from "@luma.gl/constants";
-import type { Position3D } from "@webviz/subsurface-viewer/dist/layers/utils/layerTools";
+import type { Point3D } from "@webviz/subsurface-viewer";
 
 import type { WellboreTrajectory_api } from "@api";
 import { HoverTopic } from "@framework/HoverService";
@@ -58,7 +58,7 @@ export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
         },
 
         [HoverTopic.WELLBORE_MD]: (hoverData) => {
-            const mdPointData: Position3D[] = [];
+            const mdPointData: Point3D[] = [];
             if (hoverData?.md) {
                 const wellboreTrajectory = findWellboreTrajectory(hoverData?.wellboreUuid, wellboreTrajectories);
                 if (wellboreTrajectory) {
