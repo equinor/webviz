@@ -53,7 +53,13 @@ export function makeCaseTableColumns(
                     predicateCaseNameAndIdFilter(filterValue, dataValue, _, rowData),
             },
         },
-        { label: "Description", _type: "data", columnId: "description", sizeInPercent: 20 },
+        {
+            label: "Description",
+            _type: "data",
+            columnId: "description",
+            sizeInPercent: 25,
+            showTooltip: true,
+        },
         {
             label: "Author",
             _type: "data",
@@ -101,7 +107,7 @@ export function makeCaseTableColumns(
             label: "Status",
             _type: "data",
             columnId: "status",
-            sizeInPercent: 15,
+            sizeInPercent: 10,
             filter: {
                 render: (props) => (
                     <TagPicker
