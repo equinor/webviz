@@ -242,7 +242,7 @@ export class StatisticalSurfaceProvider
         getWorkbenchSession,
         fetchQuery,
         setProgressMessage,
-        onFetchCancel,
+        onFetchCancelOrFinish,
     }: FetchDataParams<StatisticalSurfaceSettings, StatisticalSurfaceData>): Promise<StatisticalSurfaceData> {
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         let filteredRealizations = getStoredData("realizations") ?? [];
@@ -318,7 +318,7 @@ export class StatisticalSurfaceProvider
             setProgressMessage(progressMessage);
         }
         const unsubscribe = lroProgressBus.subscribe(hashKey(queryKey), handleTaskProgress);
-        onFetchCancel(() => {
+        onFetchCancelOrFinish(() => {
             unsubscribe();
         });
 

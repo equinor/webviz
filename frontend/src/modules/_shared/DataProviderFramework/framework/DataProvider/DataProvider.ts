@@ -130,7 +130,7 @@ export class DataProvider<
     private _progressMessage: string | null = null;
     private _scopedQueryController: ScopedQueryController;
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
-    private _onFetchCancelFn: () => void = () => {};
+    private _onFetchCancelOrFinishFn: () => void = () => {};
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
         const {
@@ -381,9 +381,6 @@ export class DataProvider<
             getData: () => this._data,
             getWorkbenchSession: () => this._dataProviderManager.getWorkbenchSession(),
             getWorkbenchSettings: () => this._dataProviderManager.getWorkbenchSettings(),
-            setProgressMessage: (message: string | null) => {
-                this.setProgressMessage(message);
-            },
         };
     }
 
@@ -405,15 +402,15 @@ export class DataProvider<
         this._scopedQueryController.cancelActiveFetch();
 
         // Let the custom data provider implementation cancel anything connected to the previous fetch.
-        this._onFetchCancelFn();
-        this._onFetchCancelFn = () => {};
+        this._onFetchCancelOrFinishFn();
+        this._onFetchCancelOrFinishFn = () => {};
 
         this.invalidateValueRange();
         this.setProgressMessage(null);
         this.setStatus(DataProviderStatus.LOADING);
 
-        const onFetchCancel = (fnc: () => void) => {
-            this._onFetchCancelFn = fnc;
+        const onFetchCancelOrFinish = (fnc: () => void) => {
+            this._onFetchCancelOrFinishFn = fnc;
         };
 
         try {
@@ -422,7 +419,7 @@ export class DataProvider<
                 fetchQuery: <TQueryFnData, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = QueryKey>(
                     options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
                 ) => this._scopedQueryController.fetchQuery<TQueryFnData, TError, TData, TQueryKey>(options),
-                onFetchCancel,
+                onFetchCancelOrFinish,
                 setProgressMessage: (message) => this.setProgressMessage(message),
             });
 
@@ -455,8 +452,8 @@ export class DataProvider<
             }
             this.setStatus(DataProviderStatus.ERROR);
         } finally {
-            this._onFetchCancelFn();
-            this._onFetchCancelFn = () => {};
+            this._onFetchCancelOrFinishFn();
+            this._onFetchCancelOrFinishFn = () => {};
             this.setProgressMessage(null);
         }
     }
