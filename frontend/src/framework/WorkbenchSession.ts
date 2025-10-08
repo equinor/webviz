@@ -61,7 +61,7 @@ export function useEnsembleRealizationFilterFunc(
             const unsubscribeFunc = workbenchSession
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(WorkbenchSessionTopic.REALIZATION_FILTER_SET)(
-                () => handleEnsembleRealizationFilterSetChanged,
+                handleEnsembleRealizationFilterSetChanged,
             );
             return unsubscribeFunc;
         },
