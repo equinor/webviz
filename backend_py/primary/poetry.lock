@@ -116,14 +116,14 @@ typing-extensions = ">=4.0.0"
 
 [[package]]
 name = "azure-monitor-opentelemetry"
-version = "1.8.0"
+version = "1.8.1"
 description = "Microsoft Azure Monitor Opentelemetry Distro Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "azure_monitor_opentelemetry-1.8.0-py3-none-any.whl", hash = "sha256:b57846a4a325f580d47f24b3f9e7b165b2d8d9524e53618ec941ec133e2d4b09"},
-    {file = "azure_monitor_opentelemetry-1.8.0.tar.gz", hash = "sha256:25623a69e208e6fdf869c0fbfd98c4b2661a7eb412d098b632e7bbd047921fe1"},
+    {file = "azure_monitor_opentelemetry-1.8.1-py3-none-any.whl", hash = "sha256:bebca6af9d81ddc52df59b281a5acc84182bbf1cbccd6f843a2074f6e283947e"},
+    {file = "azure_monitor_opentelemetry-1.8.1.tar.gz", hash = "sha256:9b93b62868775d74db60d9e997cfccc5898260c5de23278d7e99cce3764e9fda"},
 ]
 
 [package.dependencies]
@@ -138,7 +138,7 @@ opentelemetry-instrumentation-requests = ">=0.57b0,<1.0"
 opentelemetry-instrumentation-urllib = ">=0.57b0,<1.0"
 opentelemetry-instrumentation-urllib3 = ">=0.57b0,<1.0"
 opentelemetry-resource-detector-azure = ">=0.1.5,<0.2.0"
-opentelemetry-sdk = ">=1.36.0,<1.37.0"
+opentelemetry-sdk = ">=1.36,<2.0"
 
 [[package]]
 name = "azure-monitor-opentelemetry-exporter"
@@ -160,6 +160,23 @@ msrest = ">=0.6.10"
 opentelemetry-api = ">=1.35,<2.0"
 opentelemetry-sdk = ">=1.35,<2.0"
 psutil = ">=5.9,<8"
+
+[[package]]
+name = "azure-servicebus"
+version = "7.14.2"
+description = "Microsoft Azure Service Bus Client Library for Python"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "azure_servicebus-7.14.2-py3-none-any.whl", hash = "sha256:154bdde487ae3bd581fd49d207da4892091d9b61ab95f4cd4deab6dd4bb4649a"},
+    {file = "azure_servicebus-7.14.2.tar.gz", hash = "sha256:4014b7ac882e0d9ff876a3302818607e1a640b93e9d482073d639f5b04266e5c"},
+]
+
+[package.dependencies]
+azure-core = ">=1.28.0"
+isodate = ">=0.6.0"
+typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "bandit"
@@ -4099,4 +4116,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "ee1d388f86aad9d159740fb4b180b39a09e66324997a8685917b6a2b126658cf"
+content-hash = "9ef951e99cc5d15bda05d92478d57c966803c61e875d4e11ea09aedd5e2deefb"

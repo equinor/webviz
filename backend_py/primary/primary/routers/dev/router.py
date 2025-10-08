@@ -271,3 +271,38 @@ async def get_ri_isect(
     )
 
     return "OK"
+
+
+import os
+from azure.servicebus.aio import ServiceBusClient
+from azure.servicebus import ServiceBusMessage
+from primary.middleware.add_browser_cache import no_cache
+
+
+@router.get("/sb/{msg_text}")
+@no_cache
+async def get_send_sb_msg(
+    # fmt:off
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    msg_text: Annotated[str, Path(description="The string to sen")],
+    count: Annotated[int, Query(description="Number of messages to send")] = 1,
+    # fmt:on
+) -> str:
+
+    LOGGER.info(f"About to send message on service bus {msg_text=}")
+
+    connection_string = os.environ["SERVICEBUS_CONNECTION_STRING"]
+    queue_name = "test-queue"
+    # LOGGER.debug(f"{connection_string=}")
+
+    async with ServiceBusClient.from_connection_string(conn_str=connection_string) as client:
+        sender = client.get_queue_sender(queue_name=queue_name)
+        async with sender:
+            for _ in range(count):
+                msg = ServiceBusMessage(msg_text)
+                await sender.send_messages(msg)
+                LOGGER.info(f"Sent message on service bus {msg.message_id=}")
+
+    LOGGER.info(f"Sent {count} message(s) with {msg_text=} on service queue {queue_name}")
+    return f"Sent {count} message(s) with {msg_text=} on service queue {queue_name}"
+

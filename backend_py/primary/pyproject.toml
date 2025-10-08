@@ -25,12 +25,13 @@ pandas = { version = "^2.0.1", extras = ["performance"] }
 httpx = "^0.28.1"
 fmu-sumo = "^2.5.0"
 sumo-wrapper-python = "^1.1.2"
-azure-monitor-opentelemetry = "^1.6.13"
+azure-monitor-opentelemetry = "^1.8.1"
 opentelemetry-instrumentation-httpx = "*"
 opentelemetry-instrumentation-redis = "*"
 requests-toolbelt = "^1.0.0"
 pottery = "^3.0.0"
 xtgeo = "^4.11.0"
+azure-servicebus = "^7.14.2"
 core_utils = { path = "../libs/core_utils", develop = true }
 server_schemas = { path = "../libs/server_schemas", develop = true }
 
