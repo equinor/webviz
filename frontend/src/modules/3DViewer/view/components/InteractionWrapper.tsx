@@ -3,11 +3,12 @@ import React from "react";
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
 import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
-import { converter } from "culori";
+import { converter, formatHex } from "culori";
 
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
+import { useColorSet } from "@framework/WorkbenchSettings";
 
 import { DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
 import { type Polyline, PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";
@@ -26,14 +27,29 @@ export type InteractionWrapperProps = Omit<
     usedPolylineIds: string[];
 };
 
-function convertPolylines(polylines: Polyline[], fieldId: string): IntersectionPolyline[] {
-    return polylines.map((polyline) => ({
-        id: polyline.id,
-        name: polyline.name,
-        color: polyline.color,
-        path: polyline.path,
-        fieldId,
-    }));
+function convertIntersectionPolylinesToPolylines(polylines: IntersectionPolyline[]): Polyline[] {
+    return polylines.map((polyline) => {
+        const color = converter("rgb")(polyline.color);
+        return {
+            id: polyline.id,
+            name: polyline.name,
+            color: color ? [color.r * 255, color.g * 255, color.b * 255] : [0, 0, 0],
+            path: polyline.path,
+        };
+    });
+}
+
+function convertPolylinesToIntersectionPolylines(polylines: Polyline[], fieldId: string): IntersectionPolyline[] {
+    return polylines.map((polyline) => {
+        const color = converter("rgb")(`rgb(${polyline.color[0]}, ${polyline.color[1]}, ${polyline.color[2]})`);
+        return {
+            id: polyline.id,
+            name: polyline.name,
+            color: color ? formatHex(color) : "#000000",
+            path: polyline.path,
+            fieldId,
+        };
+    });
 }
 
 export function InteractionWrapper(props: InteractionWrapperProps): React.ReactNode {
@@ -48,7 +64,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
     const deckGlManagerRef = React.useRef<DeckGlInstanceManager>(new DeckGlInstanceManager(deckGlRef.current));
     const polylinesPluginRef = React.useRef<PolylinesPlugin>(new PolylinesPlugin(deckGlManagerRef.current));
 
-    const colorSet = props.workbenchSettings.useColorSet();
+    const colorSet = useColorSet(props.workbenchSettings);
 
     const colorArray = React.useMemo((): [number, number, number][] => {
         return colorSet.getColorArray().map((c) => {
@@ -86,7 +102,9 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             deckGlManagerRef.current = manager;
 
             const polylinesPlugin = new PolylinesPlugin(manager, colorGenerator());
-            polylinesPlugin.setPolylines([...intersectionPolylines.getPolylines()]);
+            polylinesPlugin.setPolylines(
+                convertIntersectionPolylinesToPolylines([...intersectionPolylines.getPolylines()]),
+            );
             manager.addPlugin(polylinesPlugin);
             polylinesPluginRef.current = polylinesPlugin;
 
@@ -95,7 +113,9 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 .makeSubscriberFunction(PolylinesPluginTopic.EDITING_POLYLINE_ID)(() => {
                 const editingId = polylinesPlugin.getCurrentEditingPolylineId();
                 if (editingId == null) {
-                    intersectionPolylines.setPolylines(convertPolylines(polylinesPlugin.getPolylines(), props.fieldId));
+                    intersectionPolylines.setPolylines(
+                        convertPolylinesToIntersectionPolylines(polylinesPlugin.getPolylines(), props.fieldId),
+                    );
                 } else {
                     const current = polylinesPlugin.getPolylines().find((p) => p.id === editingId);
                     setActivePolylineName(current?.name);
@@ -105,7 +125,9 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             const unsubscribeFromIntersectionPolylines = intersectionPolylines.subscribe(
                 IntersectionPolylinesEvent.CHANGE,
                 () => {
-                    polylinesPlugin.setPolylines([...intersectionPolylines.getPolylines()]);
+                    polylinesPlugin.setPolylines(
+                        convertIntersectionPolylinesToPolylines([...intersectionPolylines.getPolylines()]),
+                    );
                 },
             );
 

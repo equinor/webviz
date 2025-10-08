@@ -8,6 +8,7 @@ import { isDevMode } from "@lib/utils/devMode";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import { ScopedQueryController } from "@lib/utils/ScopedQueryController";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import {
@@ -15,7 +16,6 @@ import {
     SettingsContextDelegateTopic,
     SettingsContextStatus,
 } from "../../delegates/SettingsContextDelegate";
-import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
@@ -114,7 +114,8 @@ export class DataProvider<
     private _settingsContextDelegate: SettingsContextDelegate<TSettings, TSettingTypes, TStoredData, TSettingKey>;
     private _itemDelegate: ItemDelegate;
     private _dataProviderManager: DataProviderManager;
-    private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
+    private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
+        new UnsubscribeFunctionsManagerDelegate();
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<DataProviderPayloads<TData>>();
     private _status: DataProviderStatus = DataProviderStatus.IDLE;
     private _data: TData | null = null;
@@ -155,7 +156,7 @@ export class DataProvider<
             dataProviderManager,
         );
 
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "settings-context",
             this._settingsContextDelegate
                 .getPublishSubscribeDelegate()
@@ -164,7 +165,7 @@ export class DataProvider<
             }),
         );
 
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "settings-context",
             this._settingsContextDelegate
                 .getPublishSubscribeDelegate()
@@ -456,7 +457,7 @@ export class DataProvider<
 
     beforeDestroy(): void {
         this._settingsContextDelegate.beforeDestroy();
-        this._unsubscribeHandler.unsubscribeAll();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
         this._scopedQueryController.cancelActiveFetch();
         if (this._debounceTimeout) {
             clearTimeout(this._debounceTimeout);

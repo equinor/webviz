@@ -1,86 +1,58 @@
 import type { PlotData } from "plotly.js";
 
-function nFormatter(num: number, digits: number): string {
-    const lookup = [
-        { value: 1, symbol: "" },
-        { value: 1e3, symbol: "k" },
-        { value: 1e6, symbol: "M" },
-        { value: 1e9, symbol: "B" },
-        { value: 1e12, symbol: "T" },
-        { value: 1e15, symbol: "P" },
-        { value: 1e18, symbol: "E" },
-    ];
-    const rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
-    const item = lookup
-        .slice()
-        .reverse()
-        .find(function (item) {
-            return num >= item.value;
-        });
-    return item ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0";
-}
-
-export type HistogramBinRange = { from: number; to: number };
-
-export function makeHistogramBinRangesFromValuesArray({
-    xValuesArray,
-    numBins,
-}: {
-    xValuesArray: number[][];
-    numBins: number;
-}): HistogramBinRange[] {
-    const xMin = Math.min(...xValuesArray.map((el) => Math.min(...el)));
-    const xMax = Math.max(...xValuesArray.map((el) => Math.max(...el)));
-    return makeHistogramBinRangesFromMinAndMaxValues({ xMin, xMax, numBins });
-}
-
-export function makeHistogramBinRangesFromMinAndMaxValues({
-    xMin,
-    xMax,
-    numBins,
-}: {
-    xMin: number;
-    xMax: number;
-    numBins: number;
-}): HistogramBinRange[] {
-    const binSize = (xMax - xMin) / numBins;
-    const bins: { from: number; to: number }[] = Array.from({ length: numBins }, (_, i) => ({
-        from: xMin + i * binSize,
-        to: xMin + (i + 1) * binSize,
-    }));
-    bins[bins.length - 1].to = xMax + 1e-6; // make sure the last bin includes the max value
-    return bins;
-}
-
 export function makeHistogramTrace({
     xValues,
     numBins,
-    bins,
     color,
 }: {
     xValues: number[];
-    numBins?: number;
-    bins?: { from: number; to: number }[];
+    numBins: number;
     color: string;
 }): Partial<PlotData> {
-    if (!bins) {
-        if (!numBins) {
-            throw new Error("Either bins or numBins must be provided");
-        }
-        bins = makeHistogramBinRangesFromValuesArray({ xValuesArray: [xValues], numBins });
-    }
-    const binValues: number[] = bins.map((range) => xValues.filter((el) => el >= range.from && el < range.to).length);
-    const binStrings = bins.map((range) => `${nFormatter(range.from, 2)}-${nFormatter(range.to, 2)}`);
+    const xMin = xValues.reduce((min, v) => Math.min(min, v), Infinity);
+    const xMax = xValues.reduce((max, v) => Math.max(max, v), -Infinity);
+    const range = xMax - xMin;
 
+    const binSize = range / numBins;
+
+    // Add epsilon to ensure the last bin includes the maximum value
+    // This is necessary because Plotly's histogram bins are [start, end) intervals
+    // EPSILON_MULTIPLIER is set to 1e-6 to ensure the epsilon added to the bin range is a small fraction of the bin size.
+    // This value is chosen to be large enough to reliably include the maximum value in the last bin, accounting for floating-point rounding errors,
+    // but small enough to avoid noticeably altering the bin boundaries for typical data ranges.
+    const EPSILON_MULTIPLIER = 1e-6;
+    // MIN_EPSILON is set to 1e-10 as a lower bound to prevent epsilon from being zero or too small to have any effect,
+    // which could occur if the bin size is extremely small. This helps maintain robustness for very small data ranges.
+    const MIN_EPSILON = 1e-10;
+    const epsilon = Math.max(binSize * EPSILON_MULTIPLIER, MIN_EPSILON);
+    const end = xMax + epsilon;
+
+    // Adjust binSize to maintain exactly numBins
+    const adjustedBinSize = (range + epsilon) / numBins;
     const trace: Partial<PlotData> = {
-        x: binStrings,
-        y: binValues,
+        x: xValues,
+        type: "histogram",
+
         marker: {
-            size: 5,
             color: color,
+            line: {
+                color: "black",
+                width: 1,
+            },
         },
         showlegend: false,
-        type: "bar",
+
+        histnorm: "percent",
+        xbins: {
+            start: xMin,
+            end: end,
+            size: adjustedBinSize,
+        },
+
+        autobinx: false,
+        hovertemplate: "Range: %{x}<br>Percentage: %{y:.2f}%<extra></extra>",
+        texttemplate: "%{y:.1f}%",
+        textposition: "outside",
     };
 
     return trace;

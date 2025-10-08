@@ -32,7 +32,6 @@ import {
 } from "@modules/_shared/Surface";
 import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
 
-
 import type { Interfaces } from "../interfaces";
 
 import {
@@ -44,7 +43,6 @@ import {
     viewSettingsAtom,
 } from "./atoms/baseAtoms";
 import { AggregationSelector } from "./components/aggregationSelector";
-
 
 //-----------------------------------------------------------------------------------------------------------
 type LabelledCheckboxProps = {

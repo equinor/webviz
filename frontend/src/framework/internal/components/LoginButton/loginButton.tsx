@@ -7,7 +7,10 @@ import { postLogout } from "@api";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Menu } from "@lib/components/Menu";
+import { MenuDivider } from "@lib/components/MenuDivider";
 import { MenuItem } from "@lib/components/MenuItem";
+import { MenuText } from "@lib/components/MenuText/menuText";
+import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 
@@ -39,7 +42,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
         console.debug("Logging out...");
         await postLogout();
         console.debug("Redirecting to login screen...");
-        window.location.href = "/";
+        window.location.reload();
     }
 
     function makeIcon() {
@@ -97,20 +100,19 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
 
     return (
         <Dropdown>
-            <MenuButton
-                className={resolveClassNames(
-                    props.className ?? "",
-                    "w-full inline-flex items-center min-w-0 px-4 py-2 font-medium rounded-md hover:bg-indigo-100",
-                )}
-            >
-                <span className="flex items-center gap-2" title={makeText()}>
+            <Tooltip title={makeText()} placement="bottom">
+                <MenuButton
+                    className={resolveClassNames(
+                        props.className ?? "",
+                        "items-center p-2 font-medium rounded-md hover:bg-indigo-100",
+                    )}
+                >
                     {makeIcon()}
-                    <span className="overflow-hidden text-ellipsis min-w-0 whitespace-nowrap" ref={textRef}>
-                        {props.showText && text}
-                    </span>
-                </span>
-            </MenuButton>
+                </MenuButton>
+            </Tooltip>
             <Menu anchorOrigin="bottom-start">
+                <MenuText>{text}</MenuText>
+                <MenuDivider />
                 <MenuItem onClick={handleLogout}>
                     <Logout fontSize="small" className="mr-2" />
                     Sign out

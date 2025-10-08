@@ -367,7 +367,7 @@ export class VisualizationAssembler<
                     continue;
                 }
 
-                const dataProviderObjects = this.makeDataProviderObjects(child, injectedData);
+                const dataProviderObjects = this.makeDataProviderObjects(child, accumulatedData, injectedData);
 
                 if (!dataProviderObjects.visualization) {
                     continue;
@@ -404,6 +404,7 @@ export class VisualizationAssembler<
 
     private makeDataProviderObjects(
         dataProvider: DataProvider<any, any, any>,
+        initialAccumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
     ): DataProviderObjects<TTarget, TAccumulatedData> {
         if (this._cachedDataProviderVisualizationsMap.has(dataProvider.getItemDelegate().getId())) {
@@ -420,7 +421,7 @@ export class VisualizationAssembler<
         );
         const annotations = this.makeDataProviderAnnotations(dataProvider, injectedData);
         const boundingBox = this.makeDataProviderBoundingBox(dataProvider);
-        const accumulatedData = this.accumulateDataProviderData(dataProvider, {} as TAccumulatedData, injectedData);
+        const accumulatedData = this.accumulateDataProviderData(dataProvider, initialAccumulatedData, injectedData);
 
         const objects: DataProviderObjects<TTarget, TAccumulatedData> = {
             visualization,

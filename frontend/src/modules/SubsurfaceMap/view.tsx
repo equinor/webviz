@@ -9,13 +9,13 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import type { Wellbore } from "@framework/types/wellbore";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { usePolygonsDataQueryByAddress } from "@modules/_shared/Polygons";
 import { useFieldWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
-
 
 import {
     createAxesLayer,
@@ -87,7 +87,7 @@ export function View({
     const [viewportBounds, setviewPortBounds] = React.useState<[number, number, number, number] | undefined>(undefined);
     const syncedSettingKeys = viewContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
-    const surfaceColorScale = workbenchSettings.useContinuousColorScale({
+    const surfaceColorScale = useContinuousColorScale(workbenchSettings, {
         gradientType: ColorScaleGradientType.Sequential,
     });
     const colorTables = createContinuousColorScaleForMap(surfaceColorScale);

@@ -7,7 +7,8 @@ import {
     type UpdateParameters,
 } from "@deck.gl/core";
 import type { ExtendedLayerProps, LayerPickInfo } from "@webviz/subsurface-viewer";
-import type { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
+import type { ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/layers/utils/layerTools";
+import type { BoundingBox3D } from "@webviz/subsurface-viewer/dist/utils";
 
 import * as vec3 from "@lib/utils/vec3";
 
