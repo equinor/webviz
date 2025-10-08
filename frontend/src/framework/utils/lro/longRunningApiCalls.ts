@@ -1,14 +1,13 @@
 import React from "react";
 
+import { client } from "@api";
+import type { LroFailureResp_api, LroInProgressResp_api, HttpValidationError_api } from "@api";
+import { lroProgressBus } from "@framework/LroProgressBus";
 import type { RequestResult } from "@hey-api/client-axios";
 import type { QueryFunctionContext } from "@tanstack/query-core";
 import type { UseQueryOptions } from "@tanstack/react-query";
 import { hashKey } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-
-import type { LroFailureResp_api, LroInProgressResp_api, HttpValidationError_api } from "@api";
-import { client } from "@api";
-import { lroProgressBus } from "@framework/LroProgressBus";
 
 import type { BackoffStrategy } from "./backoffStrategies/BackoffStrategy";
 import { FixedBackoffStrategy } from "./backoffStrategies/FixedBackoffStrategy";
@@ -24,6 +23,134 @@ export class LroError extends Error {
         this.name = "LroError";
         Object.setPrototypeOf(this, new.target.prototype);
     }
+}
+
+/**
+ * Wraps a long-running query function to handle polling and progress updates.
+ *
+ * @param options - The options for the long-running query. Consisting of:
+ * - queryFn: The query function to execute the long-running operation.
+ * - queryFnArgs: The arguments to pass to the query function.
+ * - queryKey: The query key to use for React Query.
+ * - delayBetweenPollsSecs: The delay between polling attempts in seconds. Default is 1 second.
+ * - maxTotalDurationSecs: The maximum total duration to poll before timing out in seconds. Default is 60 seconds.
+ * @returns
+ */
+export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly unknown[]>({
+    queryFn,
+    queryFnArgs,
+    queryKey,
+    delayBetweenPollsSecs = 1,
+    maxTotalDurationSecs = 60,
+}: WrapLongRunningQueryArgs<TArgs, TData> & { queryKey: TQueryKey }): UseQueryOptions<TData, Error, TData, TQueryKey> {
+    const busKey = hashKey(queryKey);
+
+    return {
+        queryKey,
+        meta: {
+            lroBusKey: busKey,
+        },
+        queryFn: async (ctx: QueryFunctionContext<TQueryKey>) => {
+            const signal = ctx.signal;
+
+            try {
+                const response = await queryFn({ ...queryFnArgs, signal, throwOnError: false });
+
+                if (response.error) {
+                    lroProgressBus.remove(busKey);
+                    const axiosError = new AxiosError(
+                        response.message,
+                        response.code,
+                        response.config,
+                        response.request,
+                        response.response,
+                    );
+                    throw new LroError("Initial request failed", undefined, response.code, { cause: axiosError });
+                }
+
+                const data = response.data;
+
+                if (data.status === "success") {
+                    lroProgressBus.remove(busKey);
+                    if (data.result === undefined) {
+                        throw new LroError("Missing result in successful response", data);
+                    }
+                    return data.result;
+                }
+
+                if (data.status === "failure") {
+                    lroProgressBus.remove(busKey);
+                    throw new LroError(data.error?.message || "Unknown LRO error", data, (data as any)?.error?.code);
+                }
+
+                if (data.status === "in_progress" && data.task_id) {
+                    lroProgressBus.publish(busKey, data.progress_message ?? null);
+
+                    return pollUntilDone<TData>({
+                        busKey,
+                        pollResource: data.poll_url
+                            ? {
+                                  resourceType: "url",
+                                  url: data.poll_url,
+                                  taskId: data.task_id,
+                              }
+                            : {
+                                  resourceType: "queryFn",
+                                  queryFn,
+                                  options: { ...queryFnArgs },
+                              },
+                        delayBetweenPollsSecs,
+                        maxTotalDurationSecs,
+                        signal,
+                        taskId: data.task_id,
+                    });
+                }
+
+                lroProgressBus.remove(busKey);
+                throw new LroError("Invalid response status or missing poll_url", data);
+            } catch (e) {
+                lroProgressBus.remove(busKey);
+                if (signal?.aborted) {
+                    if (!(e instanceof DOMException && e.name === "AbortError")) {
+                        throw new DOMException("Aborted", "AbortError");
+                    }
+                }
+                throw e;
+            }
+        },
+    };
+}
+
+/*
+ * A hook to subscribe to long-running operation progress messages.
+ * It uses the LroProgressBus to get the last progress message for the given query key.
+ * The optional callback is called whenever the progress message changes.
+ */
+export function useLroProgress(
+    queryKey: readonly unknown[],
+    callback?: (message: string | null) => void,
+): string | null {
+    const serializedKey = hashKey(queryKey);
+    const prevProgressMessage = React.useRef<string | null>(null);
+    const getSnapshot = React.useCallback(() => lroProgressBus.getLast(serializedKey) ?? null, [serializedKey]);
+
+    const progressMessage = React.useSyncExternalStore(
+        (onStoreChange) => lroProgressBus.subscribe(serializedKey, onStoreChange),
+        getSnapshot,
+        getSnapshot,
+    );
+
+    React.useEffect(
+        function maybeCallCallbackOnMessageChange() {
+            if (progressMessage !== prevProgressMessage.current) {
+                callback?.(progressMessage);
+                prevProgressMessage.current = progressMessage;
+            }
+        },
+        [progressMessage, callback],
+    );
+
+    return progressMessage;
 }
 
 type LongRunningApiResponse<TData> =
@@ -197,122 +324,4 @@ async function pollUntilDone<T>(options: {
     } finally {
         lroProgressBus.remove(options.busKey);
     }
-}
-
-export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly unknown[]>({
-    queryFn,
-    queryFnArgs,
-    queryKey,
-    delayBetweenPollsSecs = 1,
-    maxTotalDurationSecs = 60,
-}: WrapLongRunningQueryArgs<TArgs, TData> & { queryKey: TQueryKey }): UseQueryOptions<TData, Error, TData, TQueryKey> {
-    const busKey = hashKey(queryKey);
-
-    return {
-        queryKey,
-        meta: {
-            lroBusKey: busKey,
-        },
-        queryFn: async (ctx: QueryFunctionContext<TQueryKey>) => {
-            const signal = ctx.signal;
-
-            try {
-                const response = await queryFn({ ...queryFnArgs, signal, throwOnError: false });
-
-                if (response.error) {
-                    lroProgressBus.remove(busKey);
-                    const axiosError = new AxiosError(
-                        response.message,
-                        response.code,
-                        response.config,
-                        response.request,
-                        response.response,
-                    );
-                    throw new LroError("Initial request failed", undefined, response.code, { cause: axiosError });
-                }
-
-                const data = response.data;
-
-                if (data.status === "success") {
-                    lroProgressBus.remove(busKey);
-                    if (data.result === undefined) {
-                        throw new LroError("Missing result in successful response", data);
-                    }
-                    return data.result;
-                }
-
-                if (data.status === "failure") {
-                    lroProgressBus.remove(busKey);
-                    throw new LroError(data.error?.message || "Unknown LRO error", data, (data as any)?.error?.code);
-                }
-
-                if (data.status === "in_progress" && data.task_id) {
-                    // Do we need task_id?
-                    lroProgressBus.publish(busKey, data.progress_message ?? null);
-
-                    return pollUntilDone<TData>({
-                        busKey,
-                        pollResource: data.poll_url
-                            ? {
-                                  resourceType: "url",
-                                  url: data.poll_url,
-                                  taskId: data.task_id,
-                              }
-                            : {
-                                  resourceType: "queryFn",
-                                  queryFn,
-                                  options: { ...queryFnArgs },
-                              },
-                        delayBetweenPollsSecs,
-                        maxTotalDurationSecs,
-                        signal,
-                        taskId: data.task_id,
-                    });
-                }
-
-                lroProgressBus.remove(busKey);
-                throw new LroError("Invalid response status or missing poll_url", data);
-            } catch (e) {
-                lroProgressBus.remove(busKey);
-                if (signal?.aborted) {
-                    if (!(e instanceof DOMException && e.name === "AbortError")) {
-                        throw new DOMException("Aborted", "AbortError");
-                    }
-                }
-                throw e;
-            }
-        },
-    };
-}
-
-/*
- * A hook to subscribe to long-running operation progress messages.
- * It uses the LroProgressBus to get the last progress message for the given query key.
- * The optional callback is called whenever the progress message changes.
- */
-export function useLroProgress(
-    queryKey: readonly unknown[],
-    callback?: (message: string | null) => void,
-): string | null {
-    const serializedKey = hashKey(queryKey);
-    const prevProgressMessage = React.useRef<string | null>(null);
-    const getSnapshot = React.useCallback(() => lroProgressBus.getLast(serializedKey) ?? null, [serializedKey]);
-
-    const progressMessage = React.useSyncExternalStore(
-        (onStoreChange) => lroProgressBus.subscribe(serializedKey, onStoreChange),
-        getSnapshot,
-        getSnapshot,
-    );
-
-    React.useEffect(
-        function maybeCallCallbackOnMessageChange() {
-            if (progressMessage !== prevProgressMessage.current) {
-                callback?.(progressMessage);
-                prevProgressMessage.current = progressMessage;
-            }
-        },
-        [progressMessage, callback],
-    );
-
-    return progressMessage;
 }

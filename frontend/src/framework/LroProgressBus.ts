@@ -5,9 +5,8 @@ export interface ProgressCallback {
 /**
  * A bus for long-running operation progress messages.
  * It allows any consumer to subscribe to progress messages for a specific serialized query key.
- * To serialize the query key, use the `serializeQueryKey` function.
+ * To serialize the query key, use ReactQuery's `hashKey` function.
  * The progress messages are stored in a map, and the bus notifies subscribers when a new message is published.
- * The bus also allows for a TTL (time-to-live) for the messages, after which the messages are removed.
  */
 class LroProgressBus {
     private _subscribersMap: Map<string, Set<ProgressCallback>> = new Map();
