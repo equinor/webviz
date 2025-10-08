@@ -15,7 +15,8 @@ import {
     selectedPosteriorEnsembleIdentAtom,
     selectedPriorEnsembleIdentAtom,
 } from "./settings/atoms/derivedAtoms";
-import type { EnsembleMode, ParameterDistributionPlotType, ParameterDistributionSortingMethod } from "./typesAndEnums";
+import type { EnsembleMode, ParameterDistributionPlotType } from "./typesAndEnums";
+import type { ParameterSortMethod } from "./view/utils/parameterSorting";
 
 type SettingsToViewInterface = {
     selectedVisualizationType: ParameterDistributionPlotType;
@@ -24,7 +25,7 @@ type SettingsToViewInterface = {
     selectedEnsembleIdents: RegularEnsembleIdent[];
     selectedParameterIdents: ParameterIdent[];
     ensembleMode: EnsembleMode;
-    parameterSortingMethod: ParameterDistributionSortingMethod;
+    parameterSortingMethod: ParameterSortMethod;
     priorEnsembleIdent: RegularEnsembleIdent | null;
     posteriorEnsembleIdent: RegularEnsembleIdent | null;
 };

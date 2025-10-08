@@ -1,5 +1,3 @@
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import type { ParameterIdent } from "@framework/EnsembleParameters";
@@ -11,6 +9,7 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { ParametersSelector } from "@modules/_shared/components/ParameterSelector";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import type { Interfaces } from "../interfaces";
 import {
@@ -18,9 +17,9 @@ import {
     EnsembleModeEnumToStringMapping,
     ParameterDistributionPlotType,
     ParameterDistributionPlotTypeEnumToStringMapping,
-    ParameterDistributionSortingMethod,
     ParameterDistributionSortingMethodEnumToStringMapping,
 } from "../typesAndEnums";
+import { ParameterSortMethod } from "../view/utils/parameterSorting";
 
 import {
     userSelectedEnsembleModeAtom,
@@ -33,6 +32,7 @@ import {
     userSelectedPosteriorEnsembleIdentAtom,
     userSelectedPriorEnsembleIdentAtom,
     userSelectedParameterSortingMethodAtom,
+    showLogParametersAtom,
 } from "./atoms/baseAtoms";
 import {
     intersectedParameterIdentsAtom,
@@ -53,7 +53,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
     const setSelectedParameterIdents = useSetAtom(userSelectedParameterIdentsAtom);
     const selectedParameterIdents = useAtomValue(selectedParameterIdentsAtom);
     const [showConstantParameters, setShowConstantParameters] = useAtom(showConstantParametersAtom);
-
+    const [showLogParameters, setShowLogParameters] = useAtom(showLogParametersAtom);
     const [selectedVisualizationType, setSelectedVisualizationType] = useAtom(selectedVisualizationTypeAtom);
     const setSelectedEnsembleMode = useSetAtom(userSelectedEnsembleModeAtom);
     const selectedEnsembleMode = useAtomValue(selectedEnsembleModeAtom);
@@ -77,6 +77,9 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
     }
     function handleShowConstantParametersChange() {
         setShowConstantParameters((prev) => !prev);
+    }
+    function handleShowLogParametersChange() {
+        setShowLogParameters((prev) => !prev);
     }
 
     function handleShowIndividualRealizationValuesChange(_: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
@@ -105,17 +108,15 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                     </Label>
                     <Label text="Parameter sort method:">
                         <Dropdown
-                            options={Object.values(ParameterDistributionSortingMethod).map(
-                                (type: ParameterDistributionSortingMethod) => {
-                                    return {
-                                        value: type,
-                                        label: ParameterDistributionSortingMethodEnumToStringMapping[type],
-                                        disabled:
-                                            selectedEnsembleMode === EnsembleMode.INDEPENDENT &&
-                                            type === ParameterDistributionSortingMethod.VARIANCE,
-                                    };
-                                },
-                            )}
+                            options={Object.values(ParameterSortMethod).map((type: ParameterSortMethod) => {
+                                return {
+                                    value: type,
+                                    label: ParameterDistributionSortingMethodEnumToStringMapping[type],
+                                    disabled:
+                                        selectedEnsembleMode === EnsembleMode.INDEPENDENT &&
+                                        type !== ParameterSortMethod.ALPHABETICAL,
+                                };
+                            })}
                             value={selectedParameterDistributionSortingMethod}
                             onChange={setSelectedParameterDistributionSortingMethod}
                         />
@@ -189,6 +190,11 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                     label="Show nonvarying parameters"
                     checked={showConstantParameters}
                     onChange={handleShowConstantParametersChange}
+                />
+                <Checkbox
+                    label="Show LOG parameters"
+                    checked={showLogParameters}
+                    onChange={handleShowLogParametersChange}
                 />
                 <ParametersSelector
                     allParameterIdents={intersectedParameterIdents}

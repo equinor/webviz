@@ -1,13 +1,14 @@
-import { atom } from "jotai";
-
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
-import { EnsembleMode, ParameterDistributionSortingMethod } from "@modules/ParameterDistributions/typesAndEnums";
+import { EnsembleMode } from "@modules/ParameterDistributions/typesAndEnums";
+import { ParameterSortMethod } from "@modules/ParameterDistributions/view/utils/parameterSorting";
+import { atom } from "jotai";
 
 import {
     showConstantParametersAtom,
+    showLogParametersAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedEnsembleModeAtom,
     userSelectedParameterIdentsAtom,
@@ -32,6 +33,7 @@ export const intersectedParameterIdentsAtom = atom((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
     const showConstantParameters = get(showConstantParametersAtom);
+    const showLogParameters = get(showLogParametersAtom);
 
     if (selectedEnsembleIdents.length === 0) return [];
 
@@ -42,13 +44,14 @@ export const intersectedParameterIdentsAtom = atom((get) => {
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
         if (!ensemble) continue;
 
-        const parameters = ensemble
+        let parameters = ensemble
             .getParameters()
             .getParameterArr()
             .filter(
                 (parameter) =>
                     (showConstantParameters || !parameter.isConstant) && parameter.type === ParameterType.CONTINUOUS,
             );
+        !showLogParameters && (parameters = parameters.filter((parameter) => !parameter.groupName?.includes("LOG"))); // Only include non-log parameters unless showLogParameters is true
         const identArr: ParameterIdent[] = [];
         for (const parameter of parameters) {
             identArr.push(new ParameterIdent(parameter.name, parameter.groupName));
@@ -117,7 +120,7 @@ export const selectedParameterDistributionSortingMethodAtom = atom((get) => {
     const userSelectedParameterSortingMethod = get(userSelectedParameterSortingMethodAtom);
     const ensembleMode = get(selectedEnsembleModeAtom);
     if (ensembleMode === EnsembleMode.INDEPENDENT) {
-        return ParameterDistributionSortingMethod.ALPHABETICAL;
+        return ParameterSortMethod.ALPHABETICAL;
     }
     return userSelectedParameterSortingMethod;
 });

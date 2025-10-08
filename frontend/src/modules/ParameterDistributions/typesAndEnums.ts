@@ -1,3 +1,5 @@
+import { ParameterSortMethod } from "./view/utils/parameterSorting";
+
 export enum ParameterDistributionPlotType {
     HISTOGRAM = "histogram",
     DISTRIBUTION_PLOT = "distribution",
@@ -14,15 +16,12 @@ export enum EnsembleMode {
     INDEPENDENT = "independent",
     PRIOR_POSTERIOR = "prior-posterior",
 }
-export enum ParameterDistributionSortingMethod {
-    ALPHABETICAL = "alphabetical",
-    VARIANCE = "variance",
-    NONE = "none",
-}
+
 export const ParameterDistributionSortingMethodEnumToStringMapping = {
-    [ParameterDistributionSortingMethod.ALPHABETICAL]: "Alphabetical",
-    [ParameterDistributionSortingMethod.VARIANCE]: "Prior-Posterior Variance",
-    [ParameterDistributionSortingMethod.NONE]: "No sorting",
+    [ParameterSortMethod.ALPHABETICAL]: "Alphabetical",
+    [ParameterSortMethod.VARIANCE]: "Prior-Posterior Variance",
+    [ParameterSortMethod.ENTROPY]: "Prior-Posterior Entropy (Shannon)",
+    [ParameterSortMethod.KL_DIVERGENCE]: "Prior-Posterior KL Divergence",
 };
 export const EnsembleModeEnumToStringMapping = {
     [EnsembleMode.INDEPENDENT]: "Independent",

@@ -6,11 +6,11 @@ import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import type { Interfaces } from "../interfaces";
-import { EnsembleMode, ParameterDistributionSortingMethod } from "../typesAndEnums";
+import { EnsembleMode } from "../typesAndEnums";
 
 import { VirtualizedParameterDistributionPlot } from "./components/VirtualizedParameterDistributionPlot";
 import { makeEnsembleSetParameterArray } from "./utils/ensembleSetParameterArray";
-import { sortParametersAlphabetically, sortPriorPosteriorParametersByVariance } from "./utils/parameterSorting";
+import { sortPriorPosteriorParameters } from "./utils/parameterSorting";
 
 export function View(props: ModuleViewProps<Interfaces>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -44,14 +44,8 @@ export function View(props: ModuleViewProps<Interfaces>) {
         parameterIdents,
         filterEnsembleRealizationsFunc,
     );
-    if (parameterSortingMethod === ParameterDistributionSortingMethod.ALPHABETICAL) {
-        ensembleSetParameterArray = sortParametersAlphabetically(ensembleSetParameterArray);
-    } else if (
-        parameterSortingMethod === ParameterDistributionSortingMethod.VARIANCE &&
-        ensembleMode === EnsembleMode.PRIOR_POSTERIOR
-    ) {
-        ensembleSetParameterArray = sortPriorPosteriorParametersByVariance(ensembleSetParameterArray);
-    }
+
+    ensembleSetParameterArray = sortPriorPosteriorParameters(ensembleSetParameterArray, parameterSortingMethod);
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
