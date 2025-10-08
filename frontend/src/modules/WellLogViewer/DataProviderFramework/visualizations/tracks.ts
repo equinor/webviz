@@ -5,7 +5,7 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import type {
     DataProviderVisualization,
     GroupPropsCollectorArgs,
-    VisualizationGroup,
+    BranchContent,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
@@ -43,7 +43,7 @@ export function collectContinuousTrackConfig(args: ContinuousTrackCollectorArgs)
     };
 }
 
-export type TrackVisualizationGroup = VisualizationGroup<
+export type TrackVisualizationGroup = BranchContent<
     VisualizationTarget.WSC_WELL_LOG,
     { [GroupType.WELL_LOG_TRACK_CONT]: TemplateTrack },
     never,
@@ -51,7 +51,7 @@ export type TrackVisualizationGroup = VisualizationGroup<
 >;
 
 export function isTrackGroup(
-    item: VisualizationGroup<any, any, any, any> | DataProviderVisualization<any, any>,
+    item: BranchContent<any, any, any, any> | DataProviderVisualization<any, any>,
 ): item is TrackVisualizationGroup {
     if (item.itemType !== VisualizationItemType.GROUP) return false;
 

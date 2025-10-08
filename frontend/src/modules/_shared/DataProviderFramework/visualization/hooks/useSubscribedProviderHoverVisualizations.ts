@@ -8,7 +8,7 @@ import {
     type DataProviderHoverVisualizationTargetTypes,
     type HoverTopicDefinitions,
     type HoverVisualizationFunctions,
-    type VisualizationGroup,
+    type BranchContent,
     type VisualizationTarget,
 } from "../VisualizationAssembler";
 
@@ -89,13 +89,13 @@ export function useSubscribedProviderHoverVisualizations<TTarget extends Visuali
 }
 
 function flattenVisualizationFunctionsRecursively<TTarget extends VisualizationTarget>(
-    visualizationGroup: VisualizationGroup<TTarget> | AssemblerProduct<TTarget, any, any>,
+    visualizationGroup: BranchContent<TTarget> | AssemblerProduct<TTarget, any, any>,
 ): InternalAssemblerProviderHoverVisualizationFunctions<TTarget>[] {
     const visualizationFunctions: InternalAssemblerProviderHoverVisualizationFunctions<TTarget>[] = [];
     if (visualizationGroup.hoverVisualizationFunctions) {
         visualizationFunctions.push({
             groupId: Object.hasOwn(visualizationGroup, "id")
-                ? (visualizationGroup as VisualizationGroup<TTarget>).id
+                ? (visualizationGroup as BranchContent<TTarget>).id
                 : undefined,
             hoverVisualizationFunctions: visualizationGroup.hoverVisualizationFunctions,
         });

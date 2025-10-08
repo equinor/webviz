@@ -3,7 +3,7 @@ import { Setting } from "@modules/_shared/DataProviderFramework/settings/setting
 import {
     type DataProviderVisualization,
     type TransformerArgs,
-    type VisualizationGroup,
+    type BranchContent,
     VisualizationItemType,
     type VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
@@ -31,7 +31,7 @@ export function makeWellPickCollections(args: WellpickTransformerArgs): WellPick
 export type WellPickVisualization = DataProviderVisualization<VisualizationTarget.WSC_WELL_LOG, WellPickDataCollection>;
 
 export function isWellPickVisualization(
-    item: VisualizationGroup<any, any, any, any> | DataProviderVisualization<any, any>,
+    item: BranchContent<any, any, any, any> | DataProviderVisualization<any, any>,
 ): item is WellPickVisualization {
     return (
         item.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION &&

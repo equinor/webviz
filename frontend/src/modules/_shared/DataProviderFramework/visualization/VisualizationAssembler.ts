@@ -24,7 +24,7 @@ import type {
     CustomGroupImplementation,
     CustomGroupImplementationWithSettings,
 } from "../interfacesAndTypes/customGroupImplementation";
-import { instanceofItemGroup } from "../interfacesAndTypes/entities";
+import { instanceofItemGroup, type ItemGroup } from "../interfacesAndTypes/entities";
 import type { StoredData } from "../interfacesAndTypes/sharedTypes";
 import type { SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
 import type { SettingTypes, Settings } from "../settings/settingsDefinitions";
@@ -90,13 +90,13 @@ export type VisualizationGroupMetadata<TGroupType extends GroupType> = {
     name: string;
 };
 
-export type VisualizationGroup<
+export type BranchContent<
     TTarget extends VisualizationTarget,
     TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
     TAccumulatedData extends Record<string, any> = Record<string, never>,
     TGroupType extends GroupType = GroupType,
 > = VisualizationGroupMetadata<TGroupType> & {
-    children: (VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> | DataProviderVisualization<TTarget>)[];
+    children: (BranchContent<TTarget, TCustomGroupProps, TAccumulatedData> | DataProviderVisualization<TTarget>)[];
     annotations: Annotation[];
     aggregatedErrorMessages: (StatusMessage | string)[];
     combinedBoundingBox: bbox.BBox | null;
@@ -218,7 +218,7 @@ export type AssemblerProduct<
     TTarget extends VisualizationTarget,
     TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
     TAccumulatedData extends Record<string, any> = Record<string, never>,
-> = Omit<VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>, keyof VisualizationGroupMetadata<any>>;
+> = Omit<BranchContent<TTarget, TCustomGroupProps, TAccumulatedData>, keyof VisualizationGroupMetadata<any>>;
 
 export type CustomGroupPropsMap = Partial<Record<GroupType, Record<string, any>>>;
 
@@ -293,6 +293,7 @@ export class VisualizationAssembler<
     ): AssemblerProduct<TTarget, TCustomGroupProps, TAccumulatedData> {
         return this.makeRecursively(
             dataProviderManager.getGroupDelegate(),
+            [],
             options?.initialAccumulatedData ?? ({} as TAccumulatedData),
             options?.injectedData,
         );
@@ -300,11 +301,12 @@ export class VisualizationAssembler<
 
     private makeRecursively(
         groupDelegate: GroupDelegate,
+        inheritedDataProviders: DataProvider<any, any, any>[],
         accumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
-    ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
+    ): BranchContent<TTarget, TCustomGroupProps, TAccumulatedData> {
         const children: (
-            | VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>
+            | BranchContent<TTarget, TCustomGroupProps, TAccumulatedData>
             | DataProviderVisualization<TTarget>
         )[] = [];
         const annotations: Annotation[] = [];
@@ -313,6 +315,9 @@ export class VisualizationAssembler<
         let numLoadingDataProviders = 0;
         let numDataProviders = 0;
         let combinedBoundingBox: bbox.BBox | null = null;
+
+        const itemGroups: ItemGroup[] = [];
+        const dataProviders: DataProvider<any, any, any>[] = [];
 
         const maybeApplyBoundingBox = (boundingBox: bbox.BBox | null) => {
             if (boundingBox) {
@@ -332,68 +337,85 @@ export class VisualizationAssembler<
             }
 
             if (instanceofItemGroup(child)) {
-                const product = this.makeRecursively(child.getGroupDelegate(), accumulatedData, injectedData);
-
-                accumulatedData = product.accumulatedData;
-                aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
-                hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
-                    hoverVisualizationFunctions,
-                    product.hoverVisualizationFunctions,
-                );
-                numLoadingDataProviders += product.numLoadingDataProviders;
-                numDataProviders += product.numDataProviders;
-                maybeApplyBoundingBox(product.combinedBoundingBox);
-
-                if (child instanceof Group) {
-                    const group = this.makeGroup(child, product);
-
-                    children.push(group);
-                    continue;
-                } else {
-                    annotations.push(...product.annotations);
-                }
-
-                children.push(...product.children);
+                itemGroups.push(child);
             }
 
             if (child instanceof DataProvider) {
-                numDataProviders++;
-
-                if (child.getStatus() === DataProviderStatus.LOADING) {
-                    numLoadingDataProviders++;
-                }
-
-                if (child.getStatus() === DataProviderStatus.INVALID_SETTINGS) {
-                    continue;
-                }
-
-                if (child.getStatus() === DataProviderStatus.ERROR) {
-                    const error = child.getError();
-                    if (error) {
-                        aggregatedErrorMessages.push(error);
-                    }
-                    continue;
-                }
-
-                if (child.getData() === null) {
-                    continue;
-                }
-
-                const dataProviderObjects = this.makeDataProviderObjects(child, accumulatedData, injectedData);
-
-                if (!dataProviderObjects.visualization) {
-                    continue;
-                }
-
-                maybeApplyBoundingBox(dataProviderObjects.boundingBox);
-                children.push(dataProviderObjects.visualization);
-                annotations.push(...dataProviderObjects.annotations);
-                hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
-                    hoverVisualizationFunctions,
-                    dataProviderObjects.hoverVisualizationFunctions,
-                );
-                accumulatedData = dataProviderObjects.accumulatedData ?? accumulatedData;
+                dataProviders.push(child);
             }
+        }
+
+        for (const itemGroup of itemGroups) {
+            const product = this.makeRecursively(
+                itemGroup.getGroupDelegate(),
+                [...inheritedDataProviders, ...dataProviders],
+                accumulatedData,
+                injectedData,
+            );
+
+            accumulatedData = product.accumulatedData;
+            aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
+            hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
+                hoverVisualizationFunctions,
+                product.hoverVisualizationFunctions,
+            );
+            numLoadingDataProviders += product.numLoadingDataProviders;
+            numDataProviders += product.numDataProviders;
+            maybeApplyBoundingBox(product.combinedBoundingBox);
+
+            if (itemGroup instanceof Group) {
+                const group = this.makeGroup(itemGroup, product);
+
+                children.push(group);
+                continue;
+            }
+
+            annotations.push(...product.annotations);
+
+            children.push(...product.children);
+        }
+
+        for (const child of [...dataProviders, ...inheritedDataProviders]) {
+            if (children.some((el) => el.id === child.getItemDelegate().getId())) {
+                continue;
+            }
+
+            numDataProviders++;
+
+            if (child.getStatus() === DataProviderStatus.LOADING) {
+                numLoadingDataProviders++;
+            }
+
+            if (child.getStatus() === DataProviderStatus.INVALID_SETTINGS) {
+                continue;
+            }
+
+            if (child.getStatus() === DataProviderStatus.ERROR) {
+                const error = child.getError();
+                if (error) {
+                    aggregatedErrorMessages.push(error);
+                }
+                continue;
+            }
+
+            if (child.getData() === null) {
+                continue;
+            }
+
+            const dataProviderObjects = this.makeDataProviderObjects(child, accumulatedData, injectedData);
+
+            if (!dataProviderObjects.visualization) {
+                continue;
+            }
+
+            maybeApplyBoundingBox(dataProviderObjects.boundingBox);
+            children.push(dataProviderObjects.visualization);
+            annotations.push(...dataProviderObjects.annotations);
+            hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
+                hoverVisualizationFunctions,
+                dataProviderObjects.hoverVisualizationFunctions,
+            );
+            accumulatedData = dataProviderObjects.accumulatedData ?? accumulatedData;
         }
 
         return {
@@ -456,8 +478,8 @@ export class VisualizationAssembler<
         TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     >(
         group: Group<TSettings>,
-        product: VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData, GroupType>,
-    ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
+        product: BranchContent<TTarget, TCustomGroupProps, TAccumulatedData, GroupType>,
+    ): BranchContent<TTarget, TCustomGroupProps, TAccumulatedData> {
         const func = this._groupCustomPropsCollectors.get(group.getGroupType());
 
         return {

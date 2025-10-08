@@ -194,7 +194,10 @@ export function DataProvidersWrapper(props: LayersWrapperProps): React.ReactNode
                 if (child.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
                     const layer = child.visualization;
                     layerIds.push(layer.id);
-                    deckGlLayers.push(layer);
+                    if (!globalLayerIds.includes(layer.id)) {
+                        deckGlLayers.push(layer);
+                        globalLayerIds.push(layer.id);
+                    }
                 }
             }
             viewports.push({
@@ -206,9 +209,6 @@ export function DataProvidersWrapper(props: LayersWrapperProps): React.ReactNode
                 layerIds,
                 colorScales,
             });
-        } else if (item.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
-            deckGlLayers.push(item.visualization);
-            globalLayerIds.push(item.visualization.id);
         }
     }
 
@@ -217,7 +217,7 @@ export function DataProvidersWrapper(props: LayersWrapperProps): React.ReactNode
         showLabel: false,
         viewports: viewports.map((viewport) => ({
             ...viewport,
-            layerIds: [...globalLayerIds, ...viewport.layerIds!],
+            layerIds: [...viewport.layerIds!],
             colorScales: [...globalColorScales, ...viewport.colorScales!],
         })),
     };
