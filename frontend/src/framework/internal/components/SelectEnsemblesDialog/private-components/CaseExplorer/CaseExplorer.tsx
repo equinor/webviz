@@ -15,6 +15,7 @@ import { Switch } from "@lib/components/Switch";
 import { Table } from "@lib/components/Table";
 import type { TableFilters } from "@lib/components/Table/types";
 import { TagPicker } from "@lib/components/TagPicker";
+import { Tooltip } from "@lib/components/Tooltip";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
 
@@ -223,30 +224,32 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         />
                     </QueryStateWrapper>
                 </Label>
-                <Label text="Case" position="left" wrapperClassName="grow">
-                    <div className="flex flex-row gap-4 items-center">
-                        <QueryStateWrapper
-                            queryResult={casesQuery}
-                            className="h-full flex-1 min-h-0"
-                            errorComponent={<div className="text-red-500">Error loading cases</div>}
-                            loadingComponent={<CircularProgress />}
-                        >
-                            <TagPicker
-                                className="bg-white"
-                                placeholder="Filter by Standard Results..."
-                                selection={selectedStandardResults}
-                                tagOptions={casesStandardResults.map((elm) => ({ label: elm, value: elm }))}
-                                onChange={(value) => setSelectedStandardResults([...value])}
-                            />
-                        </QueryStateWrapper>
-                        <Label position="left" text="Official" title="Show only cases marked as official">
-                            <Switch checked={showOnlyOfficialCases} onChange={handleOfficialCasesSwitchChange} />
-                        </Label>
-                        <Label position="left" text="My cases" title="Show only my cases" labelClassName="grow">
+                <div className="grow flex flex-row gap-4 items-center">
+                    <Label position="left" text="Show my cases only">
+                        <Tooltip title="Show only my cases" enterDelay="medium">
                             <Switch checked={showOnlyMyCases} onChange={handleCasesByMeChange} />
-                        </Label>
-                    </div>
-                </Label>
+                        </Tooltip>
+                    </Label>
+                    <Label position="left" text="Show official cases only">
+                        <Tooltip title="Show only cases marked as official" enterDelay="medium">
+                            <Switch checked={showOnlyOfficialCases} onChange={handleOfficialCasesSwitchChange} />
+                        </Tooltip>
+                    </Label>
+                    <QueryStateWrapper
+                        queryResult={casesQuery}
+                        className="h-full flex-1 min-h-0"
+                        errorComponent={<div className="text-red-500">Error loading cases</div>}
+                        loadingComponent={<CircularProgress />}
+                    >
+                        <TagPicker
+                            className="bg-white"
+                            placeholder="Filter cases by Standard Results..."
+                            selection={selectedStandardResults}
+                            tagOptions={casesStandardResults.map((elm) => ({ label: elm, value: elm }))}
+                            onChange={(value) => setSelectedStandardResults([...value])}
+                        />
+                    </QueryStateWrapper>
+                </div>
             </div>
             <PendingWrapper
                 className="grow min-h-0"

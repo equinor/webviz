@@ -56,18 +56,12 @@ export function RegularEnsembleRow(props: RegularEnsembleRowProps): React.ReactN
                     />
                 </td>
                 <td className="p-2">
-                    <div
-                        className="text-ellipsis overflow-hidden whitespace-nowrap"
-                        title={props.ensembleSetting.caseName}
-                    >
+                    <div className="truncate" title={props.ensembleSetting.caseName}>
                         {props.ensembleSetting.caseName}
                     </div>
                 </td>
                 <td className="p-2">
-                    <div
-                        className="text-ellipsis overflow-hidden whitespace-nowrap"
-                        title={props.ensembleSetting.ensembleIdent.getEnsembleName()}
-                    >
+                    <div className="truncate" title={props.ensembleSetting.ensembleIdent.getEnsembleName()}>
                         {props.ensembleSetting.ensembleIdent.getEnsembleName()}
                     </div>
                 </td>

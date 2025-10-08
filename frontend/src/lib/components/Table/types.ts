@@ -14,6 +14,7 @@ export type DataColumn<TData extends Record<string, any>, TK extends keyof TData
 
     filter?: boolean | CustomColumnFilter<TData, TK>;
 
+    showTooltip?: boolean;
     formatValue?: (value: TData[TK], entry: TData) => string;
     formatStyle?: (value: TData[TK], entry: TData) => React.CSSProperties;
     renderData?: (value: TData[TK], entry: TData) => React.ReactNode;
@@ -90,6 +91,7 @@ export type FilterCellDef<TData extends Record<string, any>> = {
 export type DataCellDef<TData extends Record<string, any>, TK extends keyof TData> = {
     columnId: keyof TData;
     colGroupIndex: number;
+    showTooltip?: boolean;
     format?: (value: TData[TK], entry: TData) => string;
     style?: (value: TData[TK], entry: TData) => React.CSSProperties;
     render?: (value: TData[TK], entry: TData) => React.ReactNode;

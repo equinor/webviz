@@ -121,6 +121,7 @@ function doRecursivelyBuildTableCellDefinitions<TData extends Record<string, any
             dataCells.push({
                 columnId: tableColumn.columnId,
                 colGroupIndex: headerCells[0].length,
+                showTooltip: tableColumn.showTooltip,
                 format: tableColumn.formatValue,
                 filter: filterPredicate,
                 style: tableColumn.formatStyle,

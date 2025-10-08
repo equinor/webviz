@@ -66,14 +66,16 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
                 const style = cellDef.style?.(dataValue, row);
                 const formattedData = cellDef?.format?.(dataValue, row);
 
+                const cellData = formattedData ?? dataValue;
+
                 return (
                     <td
                         key={String(cellDef.columnId)}
                         className=" border-slate-200 p-1 whitespace-nowrap truncate"
-                        title={formattedData}
+                        title={cellDef.showTooltip ? cellData : undefined}
                         style={{ height: props.height, ...style }}
                     >
-                        {cellDef.render?.(dataValue, row) ?? formattedData ?? dataValue}
+                        {cellDef.render?.(dataValue, row) ?? cellData}
                     </td>
                 );
             })}
