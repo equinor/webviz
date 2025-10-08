@@ -1,11 +1,10 @@
 import React from "react";
 
-import { Check } from "@mui/icons-material";
+import { Check, ChevronRight } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import type { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
@@ -17,15 +16,25 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 
 import { LoadingOverlay } from "../LoadingOverlay";
 
+import { useResponsiveDialogHeightPercent } from "./_hooks";
 import {
     makeDeltaEnsembleSettingsFromEnsembleSet,
     makeHashFromDeltaEnsemble,
     makeHashFromSelectedEnsembles,
+    makeSelectableEnsemblesForDeltaFromEnsembleSet,
     makeRegularEnsembleSettingsFromEnsembleSet,
+    makeUserEnsembleSettingsFromInternal,
+    makeValidUserDeltaEnsembleSettingsFromInternal,
 } from "./_utils";
-import { EnsemblePicker } from "./private-components/EnsemblePicker";
-import { EnsembleTables } from "./private-components/EnsembleTables";
-import type { InternalDeltaEnsembleSetting, InternalRegularEnsembleSetting } from "./types";
+import { EnsemblePicker } from "./private-components/EnsemblePicker/EnsemblePicker";
+import { EnsembleTables } from "./private-components/EnsembleTables/EnsembleTables";
+import type { EnsembleIdentWithCaseName, InternalDeltaEnsembleSetting, InternalRegularEnsembleSetting } from "./types";
+
+enum EnsemblePickerMode {
+    ADD_REGULAR_ENSEMBLE = "addRegularEnsemble",
+    SELECT_OTHER_COMPARISON_ENSEMBLE = "selectOtherComparisonEnsemble",
+    SELECT_OTHER_REFERENCE_ENSEMBLE = "selectOtherReferenceEnsemble",
+}
 
 export type SelectEnsemblesDialogProps = {
     workbench: Workbench;
@@ -37,10 +46,19 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.EnsembleDialogOpen);
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
 
+    const [showEnsemblePicker, setShowEnsemblePicker] = React.useState<boolean>(false);
+    const [ensemblePickerMode, setEnsemblePickerMode] = React.useState<EnsemblePickerMode | null>(null);
+
+    const [deltaEnsembleUuidToEdit, setDeltaEnsembleUuidToEdit] = React.useState<string>("");
     const [selectedRegularEnsembles, setSelectedRegularEnsembles] = React.useState<InternalRegularEnsembleSetting[]>(
         [],
     );
     const [selectedDeltaEnsembles, setSelectedDeltaEnsembles] = React.useState<InternalDeltaEnsembleSetting[]>([]);
+
+    // List of selectable ensembles available for comparison or reference in delta ensembles
+    const [selectableEnsemblesForDelta, setSelectableEnsemblesForDelta] = React.useState<EnsembleIdentWithCaseName[]>(
+        [],
+    );
 
     const workbenchSession = props.workbench.getWorkbenchSession();
 
@@ -50,24 +68,24 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING,
     );
 
+    const dialogHeightPercent = useResponsiveDialogHeightPercent();
     const colorSet = useColorSet(props.workbench.getWorkbenchSession().getWorkbenchSettings());
     const currentHash = makeHashFromSelectedEnsembles(selectedRegularEnsembles, selectedDeltaEnsembles);
 
-    const setEnsembleStatesFromEnsembleSet = React.useCallback(
-        function setEnsembleStatesFromEnsembleSet() {
-            if (!ensembleSet) {
-                return;
-            }
+    const setEnsembleStatesFromEnsembleSet = React.useCallback(() => {
+        if (!ensembleSet) {
+            return;
+        }
 
-            const regularEnsembles = makeRegularEnsembleSettingsFromEnsembleSet(ensembleSet);
-            const deltaEnsembles = makeDeltaEnsembleSettingsFromEnsembleSet(ensembleSet);
+        const regularEnsembles = makeRegularEnsembleSettingsFromEnsembleSet(ensembleSet);
+        const deltaEnsembles = makeDeltaEnsembleSettingsFromEnsembleSet(ensembleSet);
+        const selectableEnsembles = makeSelectableEnsemblesForDeltaFromEnsembleSet(ensembleSet);
 
-            setSelectedRegularEnsembles(regularEnsembles);
-            setSelectedDeltaEnsembles(deltaEnsembles);
-            setHash(makeHashFromSelectedEnsembles(regularEnsembles, deltaEnsembles));
-        },
-        [ensembleSet],
-    );
+        setSelectedRegularEnsembles(regularEnsembles);
+        setSelectedDeltaEnsembles(deltaEnsembles);
+        setSelectableEnsemblesForDelta(selectableEnsembles);
+        setHash(makeHashFromSelectedEnsembles(regularEnsembles, deltaEnsembles));
+    }, [ensembleSet]);
 
     // Initialize states from ensemble set
     if (!isEqual(prevEnsembleSet, ensembleSet)) {
@@ -90,11 +108,16 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         return colorSet.getColor(usedColors.length % colorSet.getColorArray().length);
     }, [selectedDeltaEnsembles, selectedRegularEnsembles, colorSet]);
 
-    function handleClose() {
-        setConfirmCancel(false);
-        setIsOpen(false);
-        setEnsembleStatesFromEnsembleSet();
-    }
+    const handleClose = React.useCallback(
+        function handleClose() {
+            // Reset states when discard/close
+            setEnsembleStatesFromEnsembleSet();
+            setConfirmCancel(false);
+            setIsOpen(false);
+            setShowEnsemblePicker(false);
+        },
+        [setEnsembleStatesFromEnsembleSet, setConfirmCancel, setIsOpen, setShowEnsemblePicker],
+    );
 
     function handleCancel() {
         if (currentHash === hash) {
@@ -105,37 +128,14 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     }
 
     function handleApplyEnsembleSelection() {
-        // Highlight invalid delta ensembles?
         if (selectedDeltaEnsembles.some((elm) => !elm.comparisonEnsembleIdent || !elm.referenceEnsembleIdent)) {
             return;
         }
 
-        const validDeltaEnsembles: UserDeltaEnsembleSetting[] = [];
-        for (const deltaEnsemble of selectedDeltaEnsembles) {
-            if (!deltaEnsemble.comparisonEnsembleIdent || !deltaEnsemble.referenceEnsembleIdent) {
-                continue;
-            }
+        const regularEnsembleSettings = makeUserEnsembleSettingsFromInternal(selectedRegularEnsembles);
+        const deltaEnsembleSettings = makeValidUserDeltaEnsembleSettingsFromInternal(selectedDeltaEnsembles);
 
-            // Ensure no duplicate delta ensembles
-            if (
-                validDeltaEnsembles.some(
-                    (elm) =>
-                        isEqual(elm.comparisonEnsembleIdent, deltaEnsemble.comparisonEnsembleIdent) &&
-                        isEqual(elm.referenceEnsembleIdent, deltaEnsemble.referenceEnsembleIdent),
-                )
-            ) {
-                continue;
-            }
-
-            validDeltaEnsembles.push({
-                comparisonEnsembleIdent: deltaEnsemble.comparisonEnsembleIdent,
-                referenceEnsembleIdent: deltaEnsemble.referenceEnsembleIdent,
-                color: deltaEnsemble.color,
-                customName: deltaEnsemble.customName,
-            });
-        }
-
-        workbenchSession.loadAndSetupEnsembleSet(selectedRegularEnsembles, validDeltaEnsembles).then(() => {
+        workbenchSession.loadAndSetupEnsembleSet(regularEnsembleSettings, deltaEnsembleSettings).then(() => {
             setIsOpen(false);
         });
     }
@@ -159,39 +159,98 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         return false;
     }
 
-    function handleAddRegularEnsemble(newItem: InternalRegularEnsembleSetting) {
+    function handleCloseEnsemblePicker() {
+        setShowEnsemblePicker(false);
+        setEnsemblePickerMode(null);
+    }
+
+    function handlePickEnsemble(newItem: InternalRegularEnsembleSetting) {
+        if (ensemblePickerMode === EnsemblePickerMode.ADD_REGULAR_ENSEMBLE) {
+            addSelectedRegularEnsemble(newItem);
+            return;
+        }
+
+        const deltaEnsembleToEdit = selectedDeltaEnsembles.find((el) => el.uuid === deltaEnsembleUuidToEdit);
+        if (!deltaEnsembleToEdit) {
+            throw new Error("Could not find delta ensemble to edit from current uuid to edit.");
+        }
+
+        // Add to selectable ensembles if not already among selected or selectable ensembles
+        if (
+            !selectedRegularEnsembles.some((el) => el.ensembleIdent.equals(newItem.ensembleIdent)) &&
+            !selectableEnsemblesForDelta.some((el) => el.ensembleIdent.equals(newItem.ensembleIdent))
+        ) {
+            setSelectableEnsemblesForDelta((prev) => [
+                ...prev,
+                {
+                    ensembleIdent: newItem.ensembleIdent,
+                    caseName: newItem.caseName,
+                },
+            ]);
+        }
+
+        const pickComparison = ensemblePickerMode === EnsemblePickerMode.SELECT_OTHER_COMPARISON_ENSEMBLE;
+        const pickReference = ensemblePickerMode === EnsemblePickerMode.SELECT_OTHER_REFERENCE_ENSEMBLE;
+
+        const editedDeltaEnsemble = {
+            ...deltaEnsembleToEdit,
+            comparisonEnsembleIdent: pickComparison
+                ? newItem.ensembleIdent
+                : (deltaEnsembleToEdit.comparisonEnsembleIdent ?? null),
+            referenceEnsembleIdent: pickReference
+                ? newItem.ensembleIdent
+                : (deltaEnsembleToEdit.referenceEnsembleIdent ?? null),
+        };
+
+        setSelectedDeltaEnsembles((prev) => {
+            return prev.map((ens) => (ens.uuid === editedDeltaEnsemble.uuid ? editedDeltaEnsemble : ens));
+        });
+        setShowEnsemblePicker(false);
+        setEnsemblePickerMode(null);
+    }
+
+    function addSelectedRegularEnsemble(newItem: InternalRegularEnsembleSetting) {
         if (selectedRegularEnsembles.some((el) => el.ensembleIdent.equals(newItem.ensembleIdent))) {
             return;
         }
 
+        // Add to selected regular ensembles
         setSelectedRegularEnsembles((prev) => [...prev, newItem]);
+
+        // Add to list of selectable ensembles if not already present
+        if (!selectableEnsemblesForDelta.some((el) => el.ensembleIdent.equals(newItem.ensembleIdent))) {
+            setSelectableEnsemblesForDelta((prev) => [
+                ...prev,
+                {
+                    ensembleIdent: newItem.ensembleIdent,
+                    caseName: newItem.caseName,
+                },
+            ]);
+        }
+    }
+
+    function handlePickRegularEnsemble() {
+        setEnsemblePickerMode(EnsemblePickerMode.ADD_REGULAR_ENSEMBLE);
+        setShowEnsemblePicker(true);
     }
 
     function handleUpdateRegularEnsemble(updatedItem: InternalRegularEnsembleSetting) {
-        setSelectedRegularEnsembles((prev) => {
-            return prev.map((el) => (el.ensembleIdent.equals(updatedItem.ensembleIdent) ? updatedItem : el));
+        const updatedRegularEnsembles = selectedRegularEnsembles.map((el) => {
+            if (el.ensembleIdent.equals(updatedItem.ensembleIdent)) {
+                return {
+                    ...el,
+                    customName: updatedItem.customName,
+                    color: updatedItem.color,
+                };
+            }
+            return el;
         });
+
+        setSelectedRegularEnsembles(updatedRegularEnsembles);
     }
 
-    function handleRemoveRegularEnsemble(removedItem: UserEnsembleSetting) {
+    function handleRemoveRegularEnsemble(removedItem: InternalRegularEnsembleSetting) {
         setSelectedRegularEnsembles((prev) => prev.filter((el) => !el.ensembleIdent.equals(removedItem.ensembleIdent)));
-
-        removeEnsembleFromDeltaEnsembles(removedItem);
-    }
-
-    function removeEnsembleFromDeltaEnsembles(removedEnsemble: UserEnsembleSetting) {
-        setSelectedDeltaEnsembles((prev) => {
-            return prev.map((deltaEnsemble) => {
-                const { comparisonEnsembleIdent, referenceEnsembleIdent } = deltaEnsemble;
-                if (comparisonEnsembleIdent && comparisonEnsembleIdent.equals(removedEnsemble.ensembleIdent)) {
-                    return { ...deltaEnsemble, comparisonEnsemble: null };
-                }
-                if (referenceEnsembleIdent && referenceEnsembleIdent.equals(removedEnsemble.ensembleIdent)) {
-                    return { ...deltaEnsemble, referenceEnsemble: null };
-                }
-                return deltaEnsemble;
-            });
-        });
     }
 
     function handleAddDeltaEnsemble(newItem: InternalDeltaEnsembleSetting) {
@@ -204,8 +263,66 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         });
     }
 
+    function handleOnRequestOtherComparisonEnsemble(item: InternalDeltaEnsembleSetting) {
+        setSelectedDeltaEnsembles((prev) =>
+            prev.map((ens) => {
+                if (ens.uuid !== item.uuid) {
+                    return ens;
+                }
+
+                setEnsemblePickerMode(EnsemblePickerMode.SELECT_OTHER_COMPARISON_ENSEMBLE);
+                setDeltaEnsembleUuidToEdit(item.uuid);
+                setShowEnsemblePicker(true);
+                return item;
+            }),
+        );
+    }
+
+    function handleOnRequestOtherReferenceEnsemble(item: InternalDeltaEnsembleSetting) {
+        setSelectedDeltaEnsembles((prev) =>
+            prev.map((ens) => {
+                if (ens.uuid !== item.uuid) {
+                    return ens;
+                }
+
+                setEnsemblePickerMode(EnsemblePickerMode.SELECT_OTHER_REFERENCE_ENSEMBLE);
+                setDeltaEnsembleUuidToEdit(item.uuid);
+                setShowEnsemblePicker(true);
+                return item;
+            }),
+        );
+    }
+
     function handleRemoveDeltaEnsemble(removedItem: InternalDeltaEnsembleSetting) {
         setSelectedDeltaEnsembles((prev) => prev.filter((i) => i.uuid !== removedItem.uuid));
+    }
+
+    function handleMoveRegularEnsemble(movedEnsemble: InternalRegularEnsembleSetting, newIndex: number) {
+        const currentIndex = selectedRegularEnsembles.findIndex((el) =>
+            el.ensembleIdent.equals(movedEnsemble.ensembleIdent),
+        );
+        if (currentIndex === -1 || currentIndex === newIndex) {
+            return;
+        }
+
+        const newOrder = [...selectedRegularEnsembles];
+        newOrder.splice(currentIndex, 1);
+        newOrder.splice(newIndex, 0, movedEnsemble);
+
+        setSelectedRegularEnsembles(newOrder);
+    }
+
+    function handleMoveDeltaEnsemble(movedEnsemble: InternalDeltaEnsembleSetting, newIndex: number) {
+        const currentIndex = selectedDeltaEnsembles.findIndex((el) => el.uuid === movedEnsemble.uuid);
+        if (currentIndex === -1 || currentIndex === newIndex) {
+            return;
+        }
+
+        const newOrder = [...selectedDeltaEnsembles];
+        newOrder.splice(currentIndex, 1);
+        newOrder.splice(newIndex, 0, movedEnsemble);
+
+        setSelectedDeltaEnsembles(newOrder);
     }
 
     function makeApplyButtonStartIcon() {
@@ -215,24 +332,51 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         return <Check fontSize="small" />;
     }
 
-    const hasAnyChanges = hash !== currentHash;
+    const dialogTitle: React.ReactNode = React.useMemo(() => {
+        if (showEnsemblePicker) {
+            let pickerTitle = "Add Ensemble";
+            if (ensemblePickerMode === EnsemblePickerMode.SELECT_OTHER_REFERENCE_ENSEMBLE) {
+                pickerTitle = "Select Reference Ensemble";
+            } else if (ensemblePickerMode === EnsemblePickerMode.SELECT_OTHER_COMPARISON_ENSEMBLE) {
+                pickerTitle = "Select Comparison Ensemble";
+            }
 
+            return (
+                <div className="flex items-center space-x-1">
+                    <span
+                        className="pl-2 text-slate-400 hover:bg-gray-100 hover:text-slate-500 rounded-md cursor-pointer"
+                        onClick={handleCloseEnsemblePicker}
+                    >
+                        Selected Ensembles
+                        <ChevronRight />
+                    </span>
+                    <span className="text-black"> {pickerTitle}</span>
+                </div>
+            );
+        }
+
+        return <div className="pl-2">Selected Ensembles</div>;
+    }, [showEnsemblePicker, ensemblePickerMode]);
+
+    const hasAnyChanges = hash !== currentHash;
     return (
         <>
             <Dialog
                 open={isOpen}
                 onClose={handleCancel}
-                title="Select ensembles"
+                title={dialogTitle}
                 modal
+                showCloseCross
                 width={"75%"}
                 minWidth={800}
-                height={"75"}
+                height={`${dialogHeightPercent}%`}
+                minHeight={600}
                 actions={
                     <div className="flex gap-4">
                         <Button onClick={handleClose} color="danger" disabled={isEnsembleSetLoading || !hasAnyChanges}>
                             Discard changes
                         </Button>
-                        <div title={hasDuplicateDeltaEnsembles() ? "Duplicate Delta Ensembles (blue rows)" : ""}>
+                        <div title={hasDuplicateDeltaEnsembles() ? "Duplicate Delta Ensembles (marked blue)" : ""}>
                             <Button
                                 onClick={handleApplyEnsembleSelection}
                                 disabled={
@@ -248,26 +392,46 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         </div>
                     </div>
                 }
-                showCloseCross
-            >
-                <div className="flex gap-4 max-w-full">
-                    <EnsemblePicker
-                        nextEnsembleColor={nextEnsembleColor}
-                        selectedEnsembles={selectedRegularEnsembles}
-                        onAddEnsemble={handleAddRegularEnsemble}
-                    />
-                    <div className="flex flex-col grow max-h-full gap-4 p-4">
-                        <EnsembleTables
+                drawer={{
+                    open: showEnsemblePicker,
+                    onClose: handleCloseEnsemblePicker,
+                    width: "85%",
+                    content: (
+                        <EnsemblePicker
                             nextEnsembleColor={nextEnsembleColor}
-                            regularEnsembles={selectedRegularEnsembles}
-                            deltaEnsembles={selectedDeltaEnsembles}
-                            onAddDeltaEnsemble={handleAddDeltaEnsemble}
-                            onUpdateDeltaEnsemble={handleUpdateDeltaEnsemble}
-                            onRemoveDeltaEnsemble={handleRemoveDeltaEnsemble}
-                            onUpdateRegularEnsemble={handleUpdateRegularEnsemble}
-                            onRemoveRegularEnsemble={handleRemoveRegularEnsemble}
+                            selectedEnsembles={
+                                ensemblePickerMode === EnsemblePickerMode.ADD_REGULAR_ENSEMBLE
+                                    ? selectedRegularEnsembles
+                                    : []
+                            }
+                            onPickEnsemble={handlePickEnsemble}
+                            pickButtonLabel={
+                                ensemblePickerMode === EnsemblePickerMode.ADD_REGULAR_ENSEMBLE
+                                    ? "Add Ensemble"
+                                    : "Select Ensemble"
+                            }
+                            onRequestClose={handleCloseEnsemblePicker}
                         />
-                    </div>
+                    ),
+                }}
+            >
+                <div className="relative flex flex-col w-full h-full">
+                    <EnsembleTables
+                        nextEnsembleColor={nextEnsembleColor}
+                        selectedRegularEnsembles={selectedRegularEnsembles}
+                        selectedDeltaEnsembles={selectedDeltaEnsembles}
+                        selectableEnsemblesForDelta={selectableEnsemblesForDelta}
+                        onAddRegularEnsemble={handlePickRegularEnsemble}
+                        onUpdateRegularEnsemble={handleUpdateRegularEnsemble}
+                        onRemoveRegularEnsemble={handleRemoveRegularEnsemble}
+                        onMoveRegularEnsemble={handleMoveRegularEnsemble}
+                        onCreateDeltaEnsemble={handleAddDeltaEnsemble}
+                        onUpdateDeltaEnsemble={handleUpdateDeltaEnsemble}
+                        onRemoveDeltaEnsemble={handleRemoveDeltaEnsemble}
+                        onMoveDeltaEnsemble={handleMoveDeltaEnsemble}
+                        onRequestOtherComparisonEnsemble={handleOnRequestOtherComparisonEnsemble}
+                        onRequestOtherReferenceEnsemble={handleOnRequestOtherReferenceEnsemble}
+                    />
                 </div>
                 {isEnsembleSetLoading && <LoadingOverlay text="Loading ensembles..." />}
             </Dialog>
