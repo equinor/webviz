@@ -14,6 +14,9 @@ import type {
     GetEnsembleDetailsData_api,
     GetEnsembleDetailsResponse_api,
     GetEnsembleDetailsError_api,
+    PostRefreshFingerprintsForEnsemblesData_api,
+    PostRefreshFingerprintsForEnsemblesResponse_api,
+    PostRefreshFingerprintsForEnsemblesError_api,
     PostGetTimestampsForEnsemblesData_api,
     PostGetTimestampsForEnsemblesResponse_api,
     PostGetTimestampsForEnsemblesError_api,
@@ -263,6 +266,27 @@ export const getEnsembleDetails = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetEnsembleDetailsResponse_api, GetEnsembleDetailsError_api, ThrowOnError>({
         ...options,
         url: "/cases/{case_uuid}/ensembles/{ensemble_name}",
+    });
+};
+
+/**
+ * Post Refresh Fingerprints For Ensembles
+ * Retrieves fingerprints for a list of ensembles
+ */
+export const postRefreshFingerprintsForEnsembles = <ThrowOnError extends boolean = false>(
+    options: Options<PostRefreshFingerprintsForEnsemblesData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).post<
+        PostRefreshFingerprintsForEnsemblesResponse_api,
+        PostRefreshFingerprintsForEnsemblesError_api,
+        ThrowOnError
+    >({
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options?.headers,
+        },
+        url: "/ensembles/refresh_fingerprints",
     });
 };
 
