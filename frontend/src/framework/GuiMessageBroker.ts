@@ -31,6 +31,7 @@ export enum GuiState {
     NumberOfUnsavedRealizationFilters = "numberOfUnsavedRealizationFilters",
     IsLoadingSession = "isLoadingSession",
     EnsembleDialogOpen = "ensembleDialogOpen",
+    ModuleQuickSwitchDockVisible = "moduleQuickSwitchDockVisible",
 }
 
 export enum GuiEvent {
@@ -97,6 +98,7 @@ type GuiStateValueTypes = {
     [GuiState.NumberOfUnsavedRealizationFilters]: number;
     [GuiState.IsLoadingSession]: boolean;
     [GuiState.EnsembleDialogOpen]: boolean;
+    [GuiState.ModuleQuickSwitchDockVisible]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -111,6 +113,7 @@ defaultStates.set(GuiState.NumberOfUnsavedRealizationFilters, 0);
 defaultStates.set(GuiState.IsLoadingSession, false);
 defaultStates.set(GuiState.EditDataChannelConnections, false);
 defaultStates.set(GuiState.EnsembleDialogOpen, false);
+defaultStates.set(GuiState.ModuleQuickSwitchDockVisible, true);
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelWidthInPercent,
@@ -118,6 +121,7 @@ const persistentStates: GuiState[] = [
     GuiState.RightSettingsPanelWidthInPercent,
     GuiState.RightDrawerContent,
     GuiState.NumberOfUnsavedRealizationFilters,
+    GuiState.ModuleQuickSwitchDockVisible,
 ];
 
 export class GuiMessageBroker {

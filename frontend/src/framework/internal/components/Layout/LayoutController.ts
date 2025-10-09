@@ -91,7 +91,7 @@ type HoverTarget = {
 const HOVER_DWELL_MS = 500; // wait this long on same edge before previewing
 const EXIT_DWELL_MS = 500; // wait this long after leaving edge before clearing preview
 const PREVIEW_STICKY_PAD_PX = 10; // px padding around the preview to keep it visible when moving away from the edge
-const RESIZE_SNAP_STEP = 0.01; // 1% steps (tune to taste)
+const RESIZE_SNAP_STEP = 0.01; // 1% steps
 const RESIZE_MIN_TILE_SIZE: Size2D = { width: 200, height: 200 }; // minimum tile size in px
 
 const logger = globalLog.registerLogger("LayoutController");

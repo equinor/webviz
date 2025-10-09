@@ -72,7 +72,7 @@ export function LayoutOverlay(props: LayoutOverlayProps) {
     );
 
     const minDim = Math.min(hovered.rect.width, hovered.rect.height);
-    const ARROW_PX = Math.max(8, Math.min(20, Math.floor(minDim * 0.35)));
+    const arrowSize = Math.max(8, Math.min(20, Math.floor(minDim * 0.35)));
 
     return (
         <div
@@ -83,27 +83,25 @@ export function LayoutOverlay(props: LayoutOverlayProps) {
                 width: rect.width,
                 height: rect.height,
                 zIndex: props.zIndex + 1,
-                // NB: using inline style for layout control is fine here
-                // since this is a transient overlay.
                 display: "flex",
                 flexDirection: isRowDirection ? "row" : "column",
             }}
             aria-hidden
         >
-            {edgeType === LayoutNodeEdgeType.LEFT && <Arrow direction="left" size={ARROW_PX} />}
-            {edgeType === LayoutNodeEdgeType.TOP && <Arrow direction="top" size={ARROW_PX} />}
-            {edgeType === LayoutNodeEdgeType.RIGHT && <Arrow direction="right" size={ARROW_PX} />}
-            {edgeType === LayoutNodeEdgeType.BOTTOM && <Arrow direction="bottom" size={ARROW_PX} />}
+            {edgeType === LayoutNodeEdgeType.LEFT && <Arrow direction="left" size={arrowSize} />}
+            {edgeType === LayoutNodeEdgeType.TOP && <Arrow direction="top" size={arrowSize} />}
+            {edgeType === LayoutNodeEdgeType.RIGHT && <Arrow direction="right" size={arrowSize} />}
+            {edgeType === LayoutNodeEdgeType.BOTTOM && <Arrow direction="bottom" size={arrowSize} />}
             {edgeType === LayoutNodeEdgeType.VERTICAL && (
                 <>
-                    <Arrow direction="left" size={ARROW_PX} />
-                    <Arrow direction="right" size={ARROW_PX} />
+                    <Arrow direction="left" size={arrowSize} />
+                    <Arrow direction="right" size={arrowSize} />
                 </>
             )}
             {edgeType === LayoutNodeEdgeType.HORIZONTAL && (
                 <>
-                    <Arrow direction="top" size={ARROW_PX} />
-                    <Arrow direction="bottom" size={ARROW_PX} />
+                    <Arrow direction="top" size={arrowSize} />
+                    <Arrow direction="bottom" size={arrowSize} />
                 </>
             )}
         </div>

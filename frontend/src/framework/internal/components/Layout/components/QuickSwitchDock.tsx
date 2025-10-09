@@ -1,10 +1,12 @@
 import React from "react";
 
+import { ArrowLeftRounded, ArrowRightRounded, WebAsset } from "@mui/icons-material";
+
 import type { LayoutElement } from "@framework/internal/Dashboard";
 import { Button } from "@lib/components/Button";
 import { IconButton } from "@lib/components/IconButton";
+import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { ArrowLeftRounded, ArrowRightRounded, WebAsset } from "@mui/icons-material";
 
 export type QuickSwitchDockProps = {
     isOpen: boolean;
@@ -14,6 +16,8 @@ export type QuickSwitchDockProps = {
 };
 
 export function QuickSwitchDock(props: QuickSwitchDockProps) {
+    const { onActiveModuleChange } = props;
+
     const [visible, setVisible] = React.useState<boolean>(false);
 
     const scrollerRef = React.useRef<HTMLDivElement>(null);
@@ -37,9 +41,9 @@ export function QuickSwitchDock(props: QuickSwitchDockProps) {
             if (!id) {
                 return;
             }
-            props.onActiveModuleChange(id);
+            onActiveModuleChange(id);
         },
-        [activeModuleInstanceIndex, props.layoutElements, props.onActiveModuleChange],
+        [activeModuleInstanceIndex, props.layoutElements, onActiveModuleChange],
     );
 
     const handleNextModuleInstanceClick = React.useCallback(
@@ -52,16 +56,16 @@ export function QuickSwitchDock(props: QuickSwitchDockProps) {
             if (!id) {
                 return;
             }
-            props.onActiveModuleChange(id);
+            onActiveModuleChange(id);
         },
-        [activeModuleInstanceIndex, props.layoutElements, props.onActiveModuleChange],
+        [activeModuleInstanceIndex, props.layoutElements, onActiveModuleChange],
     );
 
     const handleModuleInstanceClick = React.useCallback(
         function handleModuleInstanceClick(moduleInstanceId: string) {
-            props.onActiveModuleChange(moduleInstanceId);
+            onActiveModuleChange(moduleInstanceId);
         },
-        [props.onActiveModuleChange],
+        [onActiveModuleChange],
     );
 
     function handleToggleVisibilityClick() {
@@ -82,59 +86,64 @@ export function QuickSwitchDock(props: QuickSwitchDockProps) {
 
     return (
         <div className="absolute flex-col items-center justify-items-center w-full z-20 bottom-2 bg-transparent">
-            <div
-                className="bg-white p-2 flex items-center gap-1 rounded-t-md border border-b-0 border-gray-300 -mb-[0.125rem] z-20 relative"
-                onClick={handleToggleVisibilityClick}
-            >
-                <ArrowLeftRounded fontSize="inherit" />
-                <WebAsset fontSize="inherit" />
-                <ArrowRightRounded fontSize="inherit" />
-            </div>
+            <Tooltip title={visible ? "Hide quick switch dock" : "Show quick switch dock"} placement="top">
+                <div
+                    className="bg-white p-2 flex items-center gap-1 rounded-t-md border border-b-0 border-gray-300 -mb-[0.125rem] z-20 relative hover:bg-blue-100 cursor-pointer"
+                    onClick={handleToggleVisibilityClick}
+                >
+                    <ArrowLeftRounded fontSize="inherit" />
+                    <WebAsset fontSize="inherit" />
+                    <ArrowRightRounded fontSize="inherit" />
+                </div>
+            </Tooltip>
             <div
                 className={resolveClassNames(
                     "bg-white p-2 flex items-center gap-2 border border-gray-300 rounded shadow-md z-10 w-4/6",
                     { hidden: !visible },
                 )}
             >
-                <IconButton onClick={handlePreviousModuleInstanceClick}>
-                    <ArrowLeftRounded />
-                </IconButton>
+                <Tooltip title="Previous module" placement="top">
+                    <IconButton onClick={handlePreviousModuleInstanceClick}>
+                        <ArrowLeftRounded />
+                    </IconButton>
+                </Tooltip>
 
                 <div className="relative grow overflow-x-auto overflow-y-hidden flex whitespace-nowrap gap-2">
-                    {/*
-                    <div className="pointer-events-none absolute left-0 top-0 h-full w-6 bg-gradient-to-r from-white to-transparent" />
-                    <div className="pointer-events-none absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-white to-transparent" />
-                    */}
                     <div
                         ref={scrollerRef}
                         className="grow overflow-x-auto overflow-y-hidden flex whitespace-nowrap gap-2"
                     >
                         {props.layoutElements
                             .filter((el) => el.moduleInstanceId)
-                            .map((el, index) => {
-                                const tabIndex = index === activeModuleInstanceIndex ? 0 : -1;
-
+                            .map((el) => {
                                 return (
-                                    <Button
-                                        ref={(node: HTMLDivElement | null) =>
-                                            (chipRefs.current[el.moduleInstanceId!] = node)
-                                        }
+                                    <Tooltip
                                         key={el.moduleInstanceId ?? el.moduleName}
-                                        onClick={() => handleModuleInstanceClick(el.moduleInstanceId!)}
-                                        variant={el.maximized ? "contained" : "outlined"}
-                                        role="tab"
-                                        tabIndex={tabIndex}
-                                        size="medium"
+                                        title={`Show "${el.moduleName}" module`}
+                                        placement="top"
+                                        enterDelay="medium"
                                     >
-                                        {props.getModuleInstanceName(el.moduleInstanceId!)}
-                                    </Button>
+                                        <Button
+                                            ref={(node: HTMLDivElement | null) =>
+                                                (chipRefs.current[el.moduleInstanceId!] = node)
+                                            }
+                                            onClick={() => handleModuleInstanceClick(el.moduleInstanceId!)}
+                                            variant={el.maximized ? "contained" : "outlined"}
+                                            role="tab"
+                                            size="medium"
+                                        >
+                                            {props.getModuleInstanceName(el.moduleInstanceId!)}
+                                        </Button>
+                                    </Tooltip>
                                 );
                             })}
                     </div>
                 </div>
-                <IconButton onClick={handleNextModuleInstanceClick}>
-                    <ArrowRightRounded />
-                </IconButton>
+                <Tooltip title="Next module" placement="top">
+                    <IconButton onClick={handleNextModuleInstanceClick}>
+                        <ArrowRightRounded />
+                    </IconButton>
+                </Tooltip>
             </div>
         </div>
     );

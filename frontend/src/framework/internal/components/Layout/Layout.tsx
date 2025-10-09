@@ -45,7 +45,7 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
     // Temp layout for preview (controller drives this)
     const [previewLayout, setPreviewLayout] = React.useState<LayoutElement[] | null>(null);
 
-    const [rootNode, setRootNode] = React.useState<LayoutNode>(() => makeLayoutNodes(trueLayout));
+    const [rootNode, setRootNode] = React.useState<LayoutNode>(makeLayoutNodes(trueLayout));
 
     // Drag overlay visuals
     const [draggingModuleId, setDraggingModuleId] = React.useState<string | null>(null);
@@ -162,12 +162,12 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
         function makeGuiSubscriptions() {
             const unsubHeader = guiMessageBroker.subscribeToEvent(
                 GuiEvent.ModuleHeaderPointerDown,
-                (payload: {
+                function handleStartDrag(payload: {
                     moduleInstanceId: string;
-                    elementPosition: Vec2; // client coords
+                    elementPosition: Vec2;
                     elementSize: Size2D;
-                    pointerPosition: Vec2; // client coords
-                }) => {
+                    pointerPosition: Vec2;
+                }) {
                     controller.startDrag({
                         kind: DragSourceKind.EXISTING,
                         id: payload.moduleInstanceId,
@@ -180,12 +180,12 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
 
             const unsubNew = guiMessageBroker.subscribeToEvent(
                 GuiEvent.NewModulePointerDown,
-                (payload: {
+                function handleNewModule(payload: {
                     moduleName: string;
-                    elementPosition: Vec2; // client coords (tray item)
+                    elementPosition: Vec2; // client coords
                     elementSize: Size2D;
                     pointerPosition: Vec2; // client coords
-                }) => {
+                }) {
                     const tempId = v4();
                     controller.startDrag({
                         kind: DragSourceKind.NEW,
@@ -200,23 +200,16 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
 
             const unsubRemove = guiMessageBroker.subscribeToEvent(
                 GuiEvent.RemoveModuleInstanceRequest,
-                (payload: { moduleInstanceId: string }) => {
+                function handleModuleRemove(payload: { moduleInstanceId: string }) {
                     const current = (previewLayout ?? trueLayout) as LayoutElement[];
 
-                    // 2) Remove the element and repack to fill 100%
+                    // Remove the element and repack to fill 100%
                     const remaining = current.filter((el) => el.moduleInstanceId !== payload.moduleInstanceId);
                     const adjusted = makeLayoutNodes(remaining).toLayout();
 
-                    // 3) Optimistic preview to avoid flicker (optional but nice)
-                    setPreviewLayout(adjusted);
-
-                    // 4) Do the actual cleanup (channels, stores, etc.)
+                    // Actual cleanup
                     dashboard.removeModuleInstance(payload.moduleInstanceId);
-
-                    // 5) Override Dashboard's naive filtered layout with our adjusted one
                     dashboard.setLayout(adjusted);
-
-                    // 6) Clear temp — trueLayout now equals `adjusted`
                     setPreviewLayout(null);
                 },
             );
