@@ -326,11 +326,14 @@ from primary.middleware.add_browser_cache import no_cache
 @no_cache
 async def get_send_sb_msg(
     # fmt:off
+    response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     msg_text: Annotated[str, Path(description="The string to sen")],
     count: Annotated[int, Query(description="Number of messages to send")] = 1,
     # fmt:on
 ) -> str:
+
+    perf_metrics = ResponsePerfMetrics(response)
 
     LOGGER.info(f"About to send message on service bus {msg_text=}")
 
@@ -339,13 +342,19 @@ async def get_send_sb_msg(
     # LOGGER.debug(f"{connection_string=}")
 
     async with ServiceBusClient.from_connection_string(conn_str=connection_string) as client:
+        perf_metrics.record_elapsed("create-client")
+
         sender = client.get_queue_sender(queue_name=queue_name)
+        perf_metrics.record_elapsed("get-sender")
+
         async with sender:
             for _ in range(count):
                 msg = ServiceBusMessage(msg_text)
                 await sender.send_messages(msg)
                 LOGGER.info(f"Sent message on service bus {msg.message_id=}")
 
-    LOGGER.info(f"Sent {count} message(s) with {msg_text=} on service queue {queue_name}")
-    return f"Sent {count} message(s) with {msg_text=} on service queue {queue_name}"
+        perf_metrics.record_elapsed("send")
+
+    LOGGER.info(f"Sent {count} message(s) with {msg_text=} on service queue {queue_name} in {perf_metrics.to_string()}")
+    return f"Sent {count} message(s) with {msg_text=} on service queue {queue_name} in {perf_metrics.to_string()}"
 

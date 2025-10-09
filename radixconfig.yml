@@ -180,6 +180,7 @@ spec:
               - name: WEBVIZ-SERVICEBUS-NAMESPACE-SENDLISTEN-CONN-STRING
                 envVar: SERVICEBUS_CONNECTION_STRING
               - name: WEBVIZ-SERVICEBUS-NAMESPACE-MANAGE-CONN-STRING
+                envVar: SERVICEBUS_MANAGE_CONNECTION_STRING
       resources:
         requests:
           memory: 200Mi
@@ -196,7 +197,7 @@ spec:
               queueName: test-queue
               messageCount: 1
               activationMessageCount: 0
-              connectionFromEnv: WEBVIZ-SERVICEBUS-NAMESPACE-MANAGE-CONN-STRING
+              connectionFromEnv: SERVICEBUS_MANAGE_CONNECTION_STRING
       environmentConfig:
         - environment: dev
           secretRefs:
