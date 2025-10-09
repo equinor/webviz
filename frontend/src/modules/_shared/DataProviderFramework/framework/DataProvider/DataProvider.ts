@@ -196,7 +196,7 @@ export class DataProvider<
         return this._settingsErrorMessages;
     }
 
-    handleSettingsAndStoredDataChange(): void {
+    private handleSettingsAndStoredDataChange(): void {
         if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
             this.setStatus(DataProviderStatus.LOADING);
             return;
@@ -209,6 +209,11 @@ export class DataProvider<
         }
 
         let refetchRequired = false;
+
+        // Cancel any resources related to the last ongoing fetch.
+        // This must be done independent of whether a refetch is required or not.
+        // Otherwise, long running fetches might not get cancelled when they are no longer needed.
+        this.tidyUpFetchRelatedResources();
 
         if (this._customDataProviderImpl.doSettingsChangesRequireDataRefetch) {
             refetchRequired = this._customDataProviderImpl.doSettingsChangesRequireDataRefetch(
@@ -266,7 +271,7 @@ export class DataProvider<
         }, 10);
     }
 
-    handleSettingsStatusChange(): void {
+    private handleSettingsStatusChange(): void {
         const status = this._settingsContextDelegate.getStatus();
         if (status === SettingsContextStatus.INVALID_SETTINGS) {
             this._error = "Invalid settings";
@@ -384,7 +389,13 @@ export class DataProvider<
         };
     }
 
-    async maybeRefetchData(): Promise<void> {
+    private tidyUpFetchRelatedResources(): void {
+        this._scopedQueryController.cancelActiveFetch();
+        this._onFetchCancelOrFinishFn();
+        this._onFetchCancelOrFinishFn = () => {};
+    }
+
+    private async maybeRefetchData(): Promise<void> {
         const thisTransactionId = this._currentTransactionId;
 
         const queryClient = this.getQueryClient();
@@ -398,12 +409,6 @@ export class DataProvider<
         }
 
         const accessors = this.makeAccessors();
-
-        this._scopedQueryController.cancelActiveFetch();
-
-        // Let the custom data provider implementation cancel anything connected to the previous fetch.
-        this._onFetchCancelOrFinishFn();
-        this._onFetchCancelOrFinishFn = () => {};
 
         this.invalidateValueRange();
         this.setProgressMessage(null);
