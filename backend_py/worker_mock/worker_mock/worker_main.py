@@ -14,7 +14,7 @@ LOGGER = logging.getLogger(__name__)
 if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
     from azure.monitor.opentelemetry import configure_azure_monitor
 
-    LOGGER.info("IIIIIIII Configuring Azure Monitor telemetry for worker")
+    LOGGER.info("Configuring Azure Monitor telemetry for worker")
 
     # Due to our default log level of DEBUG, these loggers become quite noisy, so limit them to INFO or WARNING
     logging.getLogger("urllib3").setLevel(logging.INFO)
@@ -32,7 +32,7 @@ if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
     #     },
     # )
 else:
-    LOGGER.warning("IIIIIIII Skipping telemetry configuration for worker, APPLICATIONINSIGHTS_CONNECTION_STRING env variable not set.")
+    LOGGER.warning("Skipping telemetry configuration for worker, APPLICATIONINSIGHTS_CONNECTION_STRING env variable not set.")
 
 
 from opentelemetry.propagate import extract
@@ -41,8 +41,6 @@ from opentelemetry import trace
 
 from azure.servicebus.aio import ServiceBusClient, ServiceBusReceiver
 from azure.servicebus import ServiceBusReceivedMessage
-
-
 
 
 
@@ -83,8 +81,8 @@ async def main_async() -> int:
 
     queue_name = TEST_QUEUE_NAME
 
-    LOGGER.info(f"{connection_string=}")
-    LOGGER.info(f"{queue_name=}")
+    #LOGGER.info(f"{connection_string=}")
+    #LOGGER.info(f"{queue_name=}")
 
 
     async with ServiceBusClient.from_connection_string(conn_str=connection_string, retry_total=10) as client:
@@ -98,24 +96,28 @@ async def main_async() -> int:
 
             msg: ServiceBusReceivedMessage
             async for msg in receiver:
-                LOGGER.info(f"Got message repr: {repr(msg)=}")
+                # LOGGER.info(f"Got message repr: {repr(msg)=}")
                 
-                LOGGER.info(f"{type(msg.application_properties)=}")
+                # LOGGER.info(f"{type(msg.application_properties)=}")
                 LOGGER.info(f"{msg.application_properties=}")
 
                 props = getattr(msg, "application_properties", {})  # could be bytes
                 carrier = _normalize_sb_props(props)
-                LOGGER.info(f"{carrier=}")
+                # LOGGER.info(f"{carrier=}")
 
                 parent_ctx = extract(carrier)
-                LOGGER.info(f"Got message parent context: {parent_ctx=}")
+                # LOGGER.info(f"Got message parent context: {parent_ctx=}")
 
                 tracer = trace.get_tracer(__name__)
-                with tracer.start_as_current_span("process_message", context=parent_ctx):
+                with tracer.start_as_current_span("process_my_message", context=parent_ctx):
 
                     body_bytes = b"".join(msg.body)
                     body_text = body_bytes.decode("utf-8")
                     LOGGER.info(f"Got message: [{msg.message_id=}, {msg.sequence_number=}]: {body_text=}")
+
+                    # Sleep a bit to simulate work
+                    LOGGER.info(f"Sleeping 5 seconds to simulate work... [{msg.message_id=}, {msg.sequence_number=}]: {body_text=}")
+                    await asyncio.sleep(5.0)
 
                     if body_text == "exit":
                         LOGGER.info("Exiting as requested by message")
@@ -128,7 +130,8 @@ async def main_async() -> int:
                         raise RuntimeError("Intentional crash triggered by 'crash' message")
 
                     await receiver.complete_message(msg)
-            
+                    LOGGER.info(f"Fake processing done [{msg.message_id=}, {msg.sequence_number=}]: {body_text=}")
+
             LOGGER.info("No more messages (timeout).")
 
 

@@ -20,7 +20,6 @@ def setup_azure_monitor_telemetry(fastapi_app: FastAPI) -> None:
         enable_live_metrics=True,
         logging_formatter=logging.Formatter("[%(name)s]: %(message)s"),
         instrumentation_options={
-            #"azure_sdk": {"enabled": False},
             "django": {"enabled": False},
             "flask": {"enabled": False},
             "psycopg2": {"enabled": False},
