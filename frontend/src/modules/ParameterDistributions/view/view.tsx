@@ -50,6 +50,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
             <VirtualizedParameterDistributionPlot
+                key={`param-plots-${ensembleSetParameterArray.length}`}
                 dataArr={ensembleSetParameterArray}
                 plotType={visualizationType}
                 showIndividualRealizationValues={showIndividualRealizationValues}

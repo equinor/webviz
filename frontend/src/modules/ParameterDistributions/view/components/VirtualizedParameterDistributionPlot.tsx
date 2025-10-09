@@ -1,6 +1,7 @@
 import type React from "react";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 
+import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 
 import { ParameterDistributionPlotType } from "../../typesAndEnums";
@@ -69,29 +70,31 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
     // Calculate grid dimensions
     const numSubplots = props.dataArr.length;
     const maxColumns = Math.max(1, Math.floor(props.width / MINIMUM_PIXEL_SIZE));
-    const numColumns = Math.min(Math.ceil(Math.sqrt(numSubplots)), maxColumns);
-    const numRows = Math.ceil(numSubplots / numColumns);
-    const plotWidth = Math.floor(props.width / numColumns) - PLOT_MARGIN;
-    const plotHeight = Math.max(FIXED_PLOT_HEIGHT, props.height / numRows) - PLOT_MARGIN;
+    const numColumns = numSubplots > 0 ? Math.min(Math.ceil(Math.sqrt(numSubplots)), maxColumns) : 1;
+    const numRows = numSubplots > 0 ? Math.ceil(numSubplots / numColumns) : 0;
+    const plotWidth = numSubplots > 0 ? Math.floor(props.width / numColumns) - PLOT_MARGIN : 0;
+    const plotHeight = numSubplots > 0 ? Math.max(FIXED_PLOT_HEIGHT, props.height / numRows) - PLOT_MARGIN : 0;
 
     // Intersection Observer for virtualization
     useEffect(() => {
-        if (!containerRef.current) return;
+        if (!containerRef.current || numSubplots === 0) return;
 
         const observer = new IntersectionObserver(
             (entries) => {
-                const newVisibleIndices = new Set(visibleIndices);
+                setVisibleIndices((prevVisibleIndices) => {
+                    const newVisibleIndices = new Set(prevVisibleIndices);
 
-                entries.forEach((entry) => {
-                    const index = parseInt(entry.target.getAttribute("data-index") || "0");
-                    if (entry.isIntersecting) {
-                        newVisibleIndices.add(index);
-                    } else {
-                        newVisibleIndices.delete(index);
-                    }
+                    entries.forEach((entry) => {
+                        const index = parseInt(entry.target.getAttribute("data-index") || "0");
+                        if (entry.isIntersecting) {
+                            newVisibleIndices.add(index);
+                        } else {
+                            newVisibleIndices.delete(index);
+                        }
+                    });
+
+                    return newVisibleIndices;
                 });
-
-                setVisibleIndices(newVisibleIndices);
             },
             {
                 root: containerRef.current,
@@ -100,16 +103,23 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
             },
         );
 
-        // Observe all plot containers
-        const plotContainers = containerRef.current.querySelectorAll("[data-index]");
-        plotContainers.forEach((container) => observer.observe(container));
+        // Observe all plot containers after a brief delay to ensure DOM is ready
+        const timeoutId = setTimeout(() => {
+            if (containerRef.current) {
+                const plotContainers = containerRef.current.querySelectorAll("[data-index]");
+                plotContainers.forEach((container) => observer.observe(container));
+            }
+        }, 0);
 
-        return () => observer.disconnect();
-    }, [visibleIndices]);
+        return () => {
+            observer.disconnect();
+            clearTimeout(timeoutId);
+        };
+    }, [numSubplots, PLOT_LOADING_PLACEHOLDER_SIZE]);
 
     // Render grid with virtualized plots
-    const renderGrid = useCallback(() => {
-        const items = [];
+    const gridItems = useMemo(() => {
+        const items: React.ReactElement[] = [];
 
         for (let i = 0; i < numSubplots; i++) {
             const row = Math.floor(i / numColumns);
@@ -160,14 +170,21 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
     // Initialize visible plots (first few in viewport)
     useEffect(() => {
         const initialVisible = new Set<number>();
-        const plotsPerView = Math.ceil(props.height / plotHeight) * numColumns;
 
-        for (let i = 0; i < Math.min(plotsPerView + numColumns, numSubplots); i++) {
-            initialVisible.add(i);
+        if (numSubplots > 0) {
+            const plotsPerView = Math.ceil(props.height / Math.max(plotHeight, 1)) * numColumns;
+            for (let i = 0; i < Math.min(plotsPerView + numColumns, numSubplots); i++) {
+                initialVisible.add(i);
+            }
         }
 
         setVisibleIndices(initialVisible);
     }, [props.height, plotHeight, numColumns, numSubplots]);
+
+    // If no parameters, show ContentWarning
+    if (numSubplots === 0) {
+        return <ContentWarning>No parameters selected. Please check your settings</ContentWarning>;
+    }
 
     return (
         <div
@@ -186,7 +203,7 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
                     height: numRows * plotHeight,
                 }}
             >
-                {renderGrid()}
+                {gridItems}
             </div>
         </div>
     );

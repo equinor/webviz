@@ -1,3 +1,5 @@
+import { sortBy } from "lodash";
+
 import type { EnsembleSetParameterArray } from "./ensembleSetParameterArray";
 
 export function sortParametersAlphabetically(
@@ -28,13 +30,10 @@ export function sortPriorPosteriorParameters(
         [ParameterSortMethod.KL_DIVERGENCE]: calculateKLDivergence,
     };
 
-    const calculateScore = metricFunctions[sortMethod];
+    const metricFunction = metricFunctions[sortMethod];
 
-    return [...parameterDataArray].sort((a, b) => {
-        const scoreA = calculateScore(a);
-        const scoreB = calculateScore(b);
-        return scoreB - scoreA;
-    });
+    // sortBy sorts in ascending order, so we reverse to get highest scores first
+    return sortBy(parameterDataArray, metricFunction).reverse();
 }
 
 function calculateVarianceReduction(parameterData: EnsembleSetParameterArray): number {

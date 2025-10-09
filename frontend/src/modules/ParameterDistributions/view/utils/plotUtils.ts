@@ -1,7 +1,6 @@
-import type { Layout, PlotType } from "plotly.js";
-
 import { makeHistogramTrace } from "@modules/_shared/histogram";
 import { computeQuantile } from "@modules/_shared/utils/math/statistics";
+import type { Layout, PlotData, PlotType } from "plotly.js";
 
 import { ParameterDistributionPlotType } from "../../typesAndEnums";
 
@@ -20,12 +19,12 @@ export function createQuantileAndMeanMarkerTraces(
     parameterValues: number[],
     yPosition: number,
     ensembleColor: string | undefined,
-): any[] {
+): Partial<PlotData>[] {
     const p90 = computeQuantile(parameterValues, 0.9);
     const p10 = computeQuantile(parameterValues, 0.1);
     const mean = parameterValues.reduce((a, b) => a + b, 0) / parameterValues.length;
 
-    const p10Trace = {
+    const p10Trace: Partial<PlotData> = {
         x: [p10],
         y: [yPosition],
         type: "scatter",
@@ -35,7 +34,7 @@ export function createQuantileAndMeanMarkerTraces(
         marker: { color: ensembleColor, symbol: "x", size: 10 },
     };
 
-    const meanTrace = {
+    const meanTrace: Partial<PlotData> = {
         x: [mean],
         y: [yPosition],
         type: "scatter",
@@ -45,7 +44,7 @@ export function createQuantileAndMeanMarkerTraces(
         marker: { color: ensembleColor, symbol: "x", size: 10 },
     };
 
-    const p90Trace = {
+    const p90Trace: Partial<PlotData> = {
         x: [p90],
         y: [yPosition],
         type: "scatter",
@@ -64,7 +63,7 @@ export function createQuantileAndMeanMarkerTraces(
 export function createDistributionTrace(ensembleData: EnsembleParameterRealizationsAndValues): any {
     return {
         x: ensembleData.values,
-        type: "violin" as PlotType,
+        type: "violin",
         spanmode: "hard",
         name: ensembleData.ensembleDisplayName,
         legendgroup: ensembleData.ensembleDisplayName,
@@ -201,9 +200,9 @@ export function generateLayoutForParameter({
 export function generateTracesForParameter(
     parameterData: EnsembleSetParameterArray,
     options: TraceGenerationOptions,
-): any[] {
+): Partial<PlotData>[] {
     const { plotType } = options;
-    const traces: any[] = [];
+    const traces: Partial<PlotData>[] = [];
     parameterData.ensembleParameterRealizationAndValues.forEach((ensembleData, index) => {
         if (plotType === ParameterDistributionPlotType.DISTRIBUTION_PLOT) {
             traces.push(...generateDistributionPlotTraces(ensembleData, index, options));
@@ -219,9 +218,9 @@ function generateDistributionPlotTraces(
     ensembleData: EnsembleParameterRealizationsAndValues,
     index: number,
     options: TraceGenerationOptions,
-): any[] {
+): Partial<PlotData>[] {
     const { showIndividualRealizationValues, showPercentilesAndMeanLines } = options;
-    const traces: any[] = [];
+    const traces: Partial<PlotData>[] = [];
     // Add main distribution trace
     const distributionTrace = createDistributionTrace(ensembleData);
     traces.push(distributionTrace);
@@ -242,9 +241,9 @@ function generateBoxPlotTraces(
     ensembleData: EnsembleParameterRealizationsAndValues,
     index: number,
     options: TraceGenerationOptions,
-): any[] {
+): Partial<PlotData>[] {
     const { showIndividualRealizationValues, showPercentilesAndMeanLines } = options;
-    const traces: any[] = [];
+    const traces: Partial<PlotData>[] = [];
     const verticalPosition = index * 3;
     // Add main box trace
     const boxTrace = createBoxTrace(ensembleData, verticalPosition, showIndividualRealizationValues);
@@ -260,9 +259,9 @@ function generateBoxPlotTraces(
 function generateHistogramTraces(
     ensembleData: EnsembleParameterRealizationsAndValues,
     options: TraceGenerationOptions,
-): any[] {
+): Partial<PlotData>[] {
     const { showPercentilesAndMeanLines } = options;
-    const traces: any[] = [];
+    const traces: Partial<PlotData>[] = [];
     // Add main histogram trace
     const histogramTrace = createHistogramTrace(ensembleData);
     traces.push(histogramTrace);
