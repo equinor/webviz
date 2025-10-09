@@ -188,7 +188,7 @@ spec:
         limits:
           memory: 200Mi
       horizontalScaling:
-        minReplicas: 1
+        minReplicas: 0
         maxReplicas: 10
         triggers:
           - name: my-azure-sb-trigger

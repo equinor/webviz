@@ -342,10 +342,10 @@ async def get_send_sb_msg(
     # LOGGER.debug(f"{connection_string=}")
 
     async with ServiceBusClient.from_connection_string(conn_str=connection_string) as client:
-        perf_metrics.record_elapsed("create-client")
+        perf_metrics.record_lap("create-client")
 
         sender = client.get_queue_sender(queue_name=queue_name)
-        perf_metrics.record_elapsed("get-sender")
+        perf_metrics.record_lap("get-sender")
 
         async with sender:
             for _ in range(count):
@@ -353,7 +353,7 @@ async def get_send_sb_msg(
                 await sender.send_messages(msg)
                 LOGGER.info(f"Sent message on service bus {msg.message_id=}")
 
-        perf_metrics.record_elapsed("send")
+        perf_metrics.record_lap("send")
 
     LOGGER.info(f"Sent {count} message(s) with {msg_text=} on service queue {queue_name} in {perf_metrics.to_string()}")
     return f"Sent {count} message(s) with {msg_text=} on service queue {queue_name} in {perf_metrics.to_string()}"
