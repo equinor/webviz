@@ -2,12 +2,11 @@ import type React from "react";
 
 import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import type { TagOptionProps } from "@lib/components/TagPicker";
 import { Tooltip } from "@lib/components/Tooltip";
-
-import { isEnsembleRealizationFilterEffective } from "../private-utils/realizationFilterUtil";
 
 import { EnsembleColorTile } from "./ensembleColorTile";
 

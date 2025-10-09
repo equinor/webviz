@@ -1,12 +1,12 @@
 import React from "react";
 
 import { FilterAlt } from "@mui/icons-material";
-import { isEqual } from "lodash";
 
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import { type EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 import { ColorTileWithBadge } from "@lib/components/ColorTileWithBadge";
 import type { DropdownOption, DropdownProps } from "@lib/components/Dropdown";
@@ -34,13 +34,7 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
 
     const hasEffectiveRealizationFilter = React.useCallback(
         function hasEffectiveRealizationFilter(ens: RegularEnsemble | DeltaEnsemble | null): boolean {
-            if (!ens || !ensembleRealizationFilterFunction) {
-                return false;
-            }
-
-            const ensembleRealizations = [...ens.getRealizations()].toSorted();
-            const filteredRealizations = [...ensembleRealizationFilterFunction(ens.getIdent())].toSorted();
-            return !isEqual(filteredRealizations, ensembleRealizations);
+            return isEnsembleRealizationFilterEffective(ens, ensembleRealizationFilterFunction);
         },
         [ensembleRealizationFilterFunction],
     );

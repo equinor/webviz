@@ -33,6 +33,7 @@ export type SelectProps<TValue = string> = {
     placeholder?: string;
     filter?: boolean;
     size?: number;
+    optionHeight?: number;
     multiple?: boolean;
     width?: string | number;
     debounceTimeMs?: number;
@@ -435,7 +436,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                 )}
                 <div
                     className="overflow-y-auto border border-gray-300 rounded-md w-full bg-white input-comp"
-                    style={{ height: sizeWithDefault * 24 + 2 }}
+                    style={{ height: sizeWithDefault * (props.optionHeight ?? 24) + 2 }}
                     ref={virtualizationRef}
                     tabIndex={0}
                 >
@@ -447,7 +448,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     <Virtualization
                         containerRef={virtualizationRef}
                         items={filteredOptions}
-                        itemSize={24}
+                        itemSize={props.optionHeight ?? 24}
                         onScroll={handleVirtualizationScroll}
                         renderItem={(option, index) => {
                             return (
@@ -471,7 +472,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                                         },
                                     )}
                                     onClick={(e) => handleOptionClick(e, option, index)}
-                                    style={{ height: 24 }}
+                                    style={{ height: props.optionHeight ?? 24 }}
                                 >
                                     {option.adornment}
                                     <span

@@ -4,7 +4,7 @@ import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { RadioGroup } from "@lib/components/RadioGroup";
@@ -100,10 +100,11 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
             <CollapsibleGroup title="Ensembles" expanded>
                 <EnsembleSelect
                     ensembles={ensembleSet.getRegularEnsembleArray()}
-                    onChange={handleEnsembleSelectionChange}
+                    ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
                     value={selectedEnsembleIdents}
                     size={5}
                     multiple={true}
+                    onChange={handleEnsembleSelectionChange}
                 />
             </CollapsibleGroup>
             <CollapsibleGroup title="Parameters" expanded>
