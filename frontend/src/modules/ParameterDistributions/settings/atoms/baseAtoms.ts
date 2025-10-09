@@ -1,10 +1,11 @@
+import { atom } from "jotai";
+
 import type { ParameterIdent } from "@framework/EnsembleParameters";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 import { areEnsembleIdentListsEqual, areEnsembleIdentsEqual } from "@framework/utils/ensembleIdentUtils";
 import { EnsembleMode, ParameterDistributionPlotType } from "@modules/ParameterDistributions/typesAndEnums";
 import { ParameterSortMethod } from "@modules/ParameterDistributions/view/utils/parameterSorting";
-import { atom } from "jotai";
 
 export const userSelectedEnsembleModeAtom = atom<EnsembleMode>(EnsembleMode.INDEPENDENT);
 export const userSelectedParameterSortingMethodAtom = atom<ParameterSortMethod>(ParameterSortMethod.ALPHABETICAL);
