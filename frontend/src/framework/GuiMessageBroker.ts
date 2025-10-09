@@ -29,6 +29,7 @@ export enum GuiState {
     RightSettingsPanelWidthInPercent = "rightSettingsPanelWidthInPercent",
     AppInitialized = "appInitialized",
     NumberOfUnsavedRealizationFilters = "numberOfUnsavedRealizationFilters",
+    NumberOfEffectiveRealizationFilters = "numberOfEffectiveRealizationFilters",
     IsLoadingSession = "isLoadingSession",
     EnsembleDialogOpen = "ensembleDialogOpen",
 }
@@ -95,6 +96,7 @@ type GuiStateValueTypes = {
     [GuiState.RightSettingsPanelWidthInPercent]: number;
     [GuiState.AppInitialized]: boolean;
     [GuiState.NumberOfUnsavedRealizationFilters]: number;
+    [GuiState.NumberOfEffectiveRealizationFilters]: number;
     [GuiState.IsLoadingSession]: boolean;
     [GuiState.EnsembleDialogOpen]: boolean;
 };
@@ -108,6 +110,7 @@ defaultStates.set(GuiState.DevToolsVisible, isDevMode());
 defaultStates.set(GuiState.RightSettingsPanelWidthInPercent, 0);
 defaultStates.set(GuiState.AppInitialized, false);
 defaultStates.set(GuiState.NumberOfUnsavedRealizationFilters, 0);
+defaultStates.set(GuiState.NumberOfEffectiveRealizationFilters, 0);
 defaultStates.set(GuiState.IsLoadingSession, false);
 defaultStates.set(GuiState.EditDataChannelConnections, false);
 defaultStates.set(GuiState.EnsembleDialogOpen, false);
@@ -118,6 +121,7 @@ const persistentStates: GuiState[] = [
     GuiState.RightSettingsPanelWidthInPercent,
     GuiState.RightDrawerContent,
     GuiState.NumberOfUnsavedRealizationFilters,
+    GuiState.NumberOfEffectiveRealizationFilters,
 ];
 
 export class GuiMessageBroker {
