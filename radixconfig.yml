@@ -185,6 +185,16 @@ spec:
           cpu: 200m
         limits:
           memory: 200Mi
+      horizontalScaling:
+        minReplicas: 1
+        maxReplicas: 4
+        triggers:
+          - name: azure-sb
+            azureServiceBus:
+              queueName: test-queue
+              messageCount: 1
+              activationMessageCount: 0
+              connectionFromEnv: SERVICEBUS_CONNECTION_STRING
       environmentConfig:
         - environment: review
           secretRefs:
