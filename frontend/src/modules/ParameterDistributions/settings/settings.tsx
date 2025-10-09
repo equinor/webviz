@@ -1,4 +1,4 @@
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import React from "react";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
@@ -11,6 +11,8 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { ParametersSelector } from "@modules/_shared/components/ParameterSelector";
+import { Info } from "@mui/icons-material";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import type { Interfaces } from "../interfaces";
 import {
@@ -44,10 +46,13 @@ import {
     selectedEnsembleModeAtom,
     selectedParameterDistributionSortingMethodAtom,
 } from "./atoms/derivedAtoms";
+import { ParameterSortingInfoDialog } from "./components/ParameterSortingInfoDialog";
 
 export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const hasMultipleRegularEnsembles = ensembleSet.getRegularEnsembleArray().length > 1;
+    const [isInfoDialogOpen, setIsInfoDialogOpen] = React.useState(false);
+    const infoButtonRef = React.useRef<HTMLDivElement>(null);
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
     const setSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
     const intersectedParameterIdents = useAtomValue(intersectedParameterIdentsAtom);
@@ -108,19 +113,29 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                         />
                     </Label>
                     <Label text="Parameter sort method:">
-                        <Dropdown
-                            options={Object.values(ParameterSortMethod).map((type: ParameterSortMethod) => {
-                                return {
-                                    value: type,
-                                    label: ParameterDistributionSortingMethodEnumToStringMapping[type],
-                                    disabled:
-                                        selectedEnsembleMode === EnsembleMode.INDEPENDENT &&
-                                        type !== ParameterSortMethod.ALPHABETICAL,
-                                };
-                            })}
-                            value={selectedParameterDistributionSortingMethod}
-                            onChange={setSelectedParameterDistributionSortingMethod}
-                        />
+                        <div className="flex items-center gap-2">
+                            <Dropdown
+                                options={Object.values(ParameterSortMethod).map((type: ParameterSortMethod) => {
+                                    return {
+                                        value: type,
+                                        label: ParameterDistributionSortingMethodEnumToStringMapping[type],
+                                        disabled:
+                                            selectedEnsembleMode === EnsembleMode.INDEPENDENT &&
+                                            type !== ParameterSortMethod.ALPHABETICAL,
+                                    };
+                                })}
+                                value={selectedParameterDistributionSortingMethod}
+                                onChange={setSelectedParameterDistributionSortingMethod}
+                            />
+                            <div
+                                ref={infoButtonRef}
+                                className="text-blue-500 hover:text-blue-700 cursor-pointer"
+                                onClick={() => setIsInfoDialogOpen(!isInfoDialogOpen)}
+                                title="Learn more about sorting methods"
+                            >
+                                <Info fontSize="small" />
+                            </div>
+                        </div>
                     </Label>
                     {selectedEnsembleMode === EnsembleMode.INDEPENDENT && (
                         <Label wrapperClassName="mt-2" text="Select ensembles:">
@@ -203,6 +218,12 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                     onChange={handleParameterIdentsChange}
                 />
             </CollapsibleGroup>
+
+            <ParameterSortingInfoDialog
+                isOpen={isInfoDialogOpen}
+                onClose={() => setIsInfoDialogOpen(false)}
+                anchorElement={infoButtonRef.current}
+            />
         </div>
     );
 }
