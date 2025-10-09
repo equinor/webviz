@@ -2,6 +2,7 @@ import type React from "react";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 
 import type {
     CustomSettingImplementation,
@@ -37,6 +38,7 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, S
             return (
                 <EnsembleDropdown
                     ensembles={ensembles}
+                    ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
                     value={!props.isOverridden ? props.value : props.overriddenValue}
                     onChange={props.onValueChange}
                     disabled={props.isOverridden}
