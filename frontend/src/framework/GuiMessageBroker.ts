@@ -32,6 +32,7 @@ export enum GuiState {
     IsLoadingSession = "isLoadingSession",
     EnsembleDialogOpen = "ensembleDialogOpen",
     ModuleQuickSwitchDockVisible = "moduleQuickSwitchDockVisible",
+    ResizingLayout = "resizingLayout",
 }
 
 export enum GuiEvent {
@@ -99,6 +100,7 @@ type GuiStateValueTypes = {
     [GuiState.IsLoadingSession]: boolean;
     [GuiState.EnsembleDialogOpen]: boolean;
     [GuiState.ModuleQuickSwitchDockVisible]: boolean;
+    [GuiState.ResizingLayout]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -114,6 +116,7 @@ defaultStates.set(GuiState.IsLoadingSession, false);
 defaultStates.set(GuiState.EditDataChannelConnections, false);
 defaultStates.set(GuiState.EnsembleDialogOpen, false);
 defaultStates.set(GuiState.ModuleQuickSwitchDockVisible, true);
+defaultStates.set(GuiState.ResizingLayout, false);
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelWidthInPercent,
@@ -266,4 +269,12 @@ export function useGuiState<T extends GuiState>(
 export function useGuiValue<T extends GuiState>(guiMessageBroker: GuiMessageBroker, state: T): GuiStateValueTypes[T] {
     const [stateValue] = useGuiState(guiMessageBroker, state);
     return stateValue;
+}
+
+export function useSetGuiValue<T extends GuiState>(
+    guiMessageBroker: GuiMessageBroker,
+    state: T,
+): (value: GuiStateValueTypes[T] | ((prev: GuiStateValueTypes[T]) => GuiStateValueTypes[T])) => void {
+    const [, stateSetter] = useGuiState(guiMessageBroker, state);
+    return stateSetter;
 }

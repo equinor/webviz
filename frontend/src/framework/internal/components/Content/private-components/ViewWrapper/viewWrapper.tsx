@@ -62,6 +62,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     );
 
     const [, setEditDataChannelConnections] = useGuiState(guiMessageBroker, GuiState.EditDataChannelConnections);
+    const resizingLayout = useGuiValue(guiMessageBroker, GuiState.ResizingLayout);
 
     const timeRef = React.useRef<number | null>(null);
     const pointerDown = React.useRef<boolean>(false);
@@ -158,7 +159,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 </>
             )}
             {/* ! Show a placeholder while dragging modules around/resizing, since resizing module content while dragging might be costly */}
-            {props.changingLayout && (
+            {(props.changingLayout || resizingLayout) && (
                 <div
                     className={resolveClassNames("absolute box-border", { "p-0.5": !props.isMinimized })}
                     style={{
@@ -212,7 +213,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                     {makeHeader()}
                     <div
                         className={resolveClassNames("grow overflow-auto h-0", {
-                            hidden: props.changingLayout || props.isMinimized,
+                            hidden: props.changingLayout || props.isMinimized || resizingLayout,
                         })}
                         onClick={handleModuleClick}
                     >
