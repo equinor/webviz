@@ -210,9 +210,6 @@ export class DataProvider<
 
         let refetchRequired = false;
 
-        // Cancel any resources related to the last ongoing fetch.
-        // This must be done independent of whether a refetch is required or not.
-        // Otherwise, long running fetches might not get cancelled when they are no longer needed.
         this.tidyUpFetchRelatedResources();
 
         if (this._customDataProviderImpl.doSettingsChangesRequireDataRefetch) {
@@ -390,6 +387,7 @@ export class DataProvider<
     }
 
     private tidyUpFetchRelatedResources(): void {
+        // Cancel any resources related to the last ongoing fetch.
         this._scopedQueryController.cancelActiveFetch();
         this._onFetchCancelOrFinishFn();
         this._onFetchCancelOrFinishFn = () => {};
