@@ -5,6 +5,7 @@ import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -18,8 +19,6 @@ import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 
 import { DataProviderStatus, DataProviderTopic } from "./DataProvider";
 import type { DataProvider } from "./DataProvider";
-
-
 
 export type DataProviderComponentProps = {
     dataProvider: DataProvider<any, any>;
@@ -91,37 +90,53 @@ type EndActionProps = {
 
 function EndActions(props: EndActionProps): React.ReactNode {
     const status = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.STATUS);
+    const progressMessage = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.PROGRESS_MESSAGE);
     const isSubordinated = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.SUBORDINATED);
 
     function makeStatus(): React.ReactNode {
         if (isSubordinated) {
             return (
-                <div title="Subordinated">
+                <Tooltip title="Subordinated">
                     <Difference fontSize="small" />
-                </div>
+                </Tooltip>
             );
         }
         if (status === DataProviderStatus.LOADING) {
             return (
-                <div title="Loading">
-                    <CircularProgress size="extra-small" />
-                </div>
+                <Tooltip title={progressMessage ?? "Loading"}>
+                    <div className="flex gap-2 min-w-0 items-center">
+                        <span className="overflow-hidden whitespace-nowrap min-w-0 text-ellipsis">
+                            {progressMessage}
+                        </span>
+                        <CircularProgress size="extra-small" />
+                    </div>
+                </Tooltip>
             );
         }
         if (status === DataProviderStatus.ERROR) {
             const error = props.dataProvider.getError();
+            if (!error) {
+                return (
+                    <Tooltip title="Error">
+                        <Error className="text-red-700 p-0.5" fontSize="small" />
+                    </Tooltip>
+                );
+            }
+
             if (typeof error === "string") {
                 return (
-                    <div title={error} className="text-red-700 p-0.5">
-                        <Error fontSize="small" />
-                    </div>
+                    <Tooltip title={error}>
+                        <div className="text-red-700 p-0.5">
+                            <Error fontSize="small" />
+                        </div>
+                    </Tooltip>
                 );
             } else {
                 const statusMessage = error as StatusMessage;
                 return (
-                    <div title={statusMessage.message}>
+                    <Tooltip title={statusMessage.message}>
                         <Error className="text-red-700 p-0.5" fontSize="small" />
-                    </div>
+                    </Tooltip>
                 );
             }
         }
@@ -141,16 +156,16 @@ function EndActions(props: EndActionProps): React.ReactNode {
             errorMessage += "\nPlease check the settings.";
 
             return (
-                <div title={errorMessage}>
+                <Tooltip title={errorMessage}>
                     <Block className="text-red-700 p-0.5" fontSize="small" />
-                </div>
+                </Tooltip>
             );
         }
         if (status === DataProviderStatus.SUCCESS) {
             return (
-                <div title="Successfully loaded">
+                <Tooltip title="Successfully loaded">
                     <CheckCircle className="text-green-700 p-0.5" fontSize="small" />
-                </div>
+                </Tooltip>
             );
         }
         return null;

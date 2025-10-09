@@ -1,5 +1,5 @@
 
-FROM golang:1.21
+FROM golang:1.23
 
 RUN useradd --create-home --uid 1234 appuser
 USER 1234
