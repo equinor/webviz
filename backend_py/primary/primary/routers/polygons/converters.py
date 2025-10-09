@@ -8,7 +8,7 @@ from . import schemas
 
 def to_api_polygons_data(poly_data: list[PolygonData]) -> List[schemas.PolygonData]:
     """
-    Create API PolygonsData from xtgeo polygons
+    Create a list of API PolygonData objects from a list of PolygonData.
     """
     polydata: List[schemas.PolygonData] = []
     for polygon in poly_data:
