@@ -52,7 +52,7 @@ spec:
                 envVar: WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
               - name: WEBVIZ-DB-CONN-STRING
                 envVar: WEBVIZ_DB_CONNECTION_STRING
-              - name: WEBVIZ-SERVICEBUS-CONNECTIONSTRING
+              - name: WEBVIZ-SERVICEBUS-NAMESPACE-SENDLISTEN-CONN-STRING
                 envVar: SERVICEBUS_CONNECTION_STRING
       variables:
         UVICORN_PORT: 5000
@@ -177,19 +177,18 @@ spec:
         azureKeyVaults:
           - name: webviz
             items:
-              - name: WEBVIZ-SERVICEBUS-CONNECTIONSTRING
+              - name: WEBVIZ-SERVICEBUS-NAMESPACE-SENDLISTEN-CONN-STRING
                 envVar: SERVICEBUS_CONNECTION_STRING
+              - name: WEBVIZ-SERVICEBUS-NAMESPACE-MANAGE-CONN-STRING
       resources:
         requests:
           memory: 200Mi
-          cpu: 200m
+          cpu: 100m
         limits:
           memory: 200Mi
-      secrets:
-        - DBG_SERVICE_BUS_CONNECTION_STRING
       horizontalScaling:
         minReplicas: 1
-        maxReplicas: 4
+        maxReplicas: 10
         triggers:
           - name: my-azure-sb-trigger
             azureServiceBus:
@@ -197,17 +196,8 @@ spec:
               queueName: test-queue
               messageCount: 1
               activationMessageCount: 0
-              connectionFromEnv: DBG_SERVICE_BUS_CONNECTION_STRING
+              connectionFromEnv: WEBVIZ-SERVICEBUS-NAMESPACE-MANAGE-CONN-STRING
       environmentConfig:
-        - environment: review
-          secretRefs:
-            azureKeyVaults:
-              - name: webviz
-                items:
-                  - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
-                    envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
-          variables:
-            OTEL_RESOURCE_ATTRIBUTES: service.name=worker-mock, service.namespace=review
         - environment: dev
           secretRefs:
             azureKeyVaults:
