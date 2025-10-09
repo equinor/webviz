@@ -348,12 +348,15 @@ async def get_send_sb_msg(
         perf_metrics.record_lap("get-sender")
 
         async with sender:
-            for _ in range(count):
+            for i in range(count):
                 msg = ServiceBusMessage(msg_text)
                 await sender.send_messages(msg)
-                LOGGER.info(f"Sent message on service bus {msg.message_id=}")
+                LOGGER.info(f"Sent message {i} on service bus {msg.message_id=}")
+                if i == 0:
+                    perf_metrics.record_lap("send-first-msg")
 
-        perf_metrics.record_lap("send")
+            if count > 1:
+                perf_metrics.record_lap("send-remaining-msgs")
 
     LOGGER.info(f"Sent {count} message(s) with {msg_text=} on service queue {queue_name} in {perf_metrics.to_string()}")
     return f"Sent {count} message(s) with {msg_text=} on service queue {queue_name} in {perf_metrics.to_string()}"
