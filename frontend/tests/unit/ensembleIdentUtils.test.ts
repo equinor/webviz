@@ -10,7 +10,6 @@ import {
     isEnsembleIdentOfType,
 } from "@framework/utils/ensembleIdentUtils";
 
-
 describe("Ensemble ident utility functions", () => {
     const REGULAR_ENSEMBLE_IDENT_1 = new RegularEnsembleIdent(
         "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa",
@@ -149,6 +148,21 @@ describe("Ensemble ident utility functions", () => {
             [REGULAR_ENSEMBLE_IDENT_1, REGULAR_ENSEMBLE_IDENT_2],
         );
         expect(result).toBe(false);
+    });
+
+    test("should return false when one list is null and the other has elements", () => {
+        const result = areEnsembleIdentListsEqual([REGULAR_ENSEMBLE_IDENT_1, DELTA_ENSEMBLE_IDENT_1], null);
+        expect(result).toBe(false);
+    });
+
+    test("should return false when one list is null and the other is empty", () => {
+        const result = areEnsembleIdentListsEqual([], null);
+        expect(result).toBe(false);
+    });
+
+    test("should return true when both lists are null", () => {
+        const result = areEnsembleIdentListsEqual(null, null);
+        expect(result).toBe(true);
     });
 
     test("should return true for RegularEnsembleIdent type", () => {
