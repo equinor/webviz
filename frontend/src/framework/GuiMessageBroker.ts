@@ -8,8 +8,6 @@ import type { UnsavedChangesAction } from "./types/unsavedChangesAction";
 
 export enum LeftDrawerContent {
     ModuleSettings = "ModuleSettings",
-    ModulesList = "ModulesList",
-    TemplatesList = "TemplatesList",
     SyncSettings = "SyncSettings",
     ColorPaletteSettings = "ColorPaletteSettings",
 }
@@ -17,19 +15,22 @@ export enum LeftDrawerContent {
 export enum RightDrawerContent {
     RealizationFilterSettings = "RealizationFilterSettings",
     ModuleInstanceLog = "ModuleInstanceLog",
+    ModulesList = "ModulesList",
+    TemplatesList = "TemplatesList",
 }
 
 export enum GuiState {
     LeftDrawerContent = "leftDrawerContent",
     RightDrawerContent = "rightDrawerContent",
     LeftSettingsPanelWidthInPercent = "leftSettingsPanelWidthInPercent",
-    ActiveModuleInstanceId = "activeModuleInstanceId",
     DataChannelConnectionLayerVisible = "dataChannelConnectionLayerVisible",
     DevToolsVisible = "devToolsVisible",
     EditDataChannelConnections = "editDataChannelConnections",
     RightSettingsPanelWidthInPercent = "rightSettingsPanelWidthInPercent",
     AppInitialized = "appInitialized",
     NumberOfUnsavedRealizationFilters = "numberOfUnsavedRealizationFilters",
+    IsLoadingSession = "isLoadingSession",
+    EnsembleDialogOpen = "ensembleDialogOpen",
 }
 
 export enum GuiEvent {
@@ -88,25 +89,28 @@ type GuiStateValueTypes = {
     [GuiState.LeftDrawerContent]: LeftDrawerContent;
     [GuiState.RightDrawerContent]: RightDrawerContent | undefined;
     [GuiState.LeftSettingsPanelWidthInPercent]: number;
-    [GuiState.ActiveModuleInstanceId]: string;
     [GuiState.DataChannelConnectionLayerVisible]: boolean;
     [GuiState.DevToolsVisible]: boolean;
     [GuiState.EditDataChannelConnections]: boolean;
     [GuiState.RightSettingsPanelWidthInPercent]: number;
     [GuiState.AppInitialized]: boolean;
     [GuiState.NumberOfUnsavedRealizationFilters]: number;
+    [GuiState.IsLoadingSession]: boolean;
+    [GuiState.EnsembleDialogOpen]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
 defaultStates.set(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
 defaultStates.set(GuiState.RightDrawerContent, undefined);
 defaultStates.set(GuiState.LeftSettingsPanelWidthInPercent, 30);
-defaultStates.set(GuiState.ActiveModuleInstanceId, "");
 defaultStates.set(GuiState.DataChannelConnectionLayerVisible, false);
 defaultStates.set(GuiState.DevToolsVisible, isDevMode());
 defaultStates.set(GuiState.RightSettingsPanelWidthInPercent, 0);
 defaultStates.set(GuiState.AppInitialized, false);
 defaultStates.set(GuiState.NumberOfUnsavedRealizationFilters, 0);
+defaultStates.set(GuiState.IsLoadingSession, false);
+defaultStates.set(GuiState.EditDataChannelConnections, false);
+defaultStates.set(GuiState.EnsembleDialogOpen, false);
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelWidthInPercent,

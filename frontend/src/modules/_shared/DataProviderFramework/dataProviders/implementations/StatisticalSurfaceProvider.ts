@@ -1,12 +1,17 @@
+import type { Options } from "@hey-api/client-axios";
+import { hashKey } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
-import type { SurfaceDataPng_api } from "@api";
+import type { SurfaceDataPng_api, GetStatisticalSurfaceDataHybridData_api } from "@api";
 import {
     SurfaceStatisticFunction_api,
     SurfaceTimeType_api,
     getRealizationSurfacesMetadataOptions,
-    getSurfaceDataOptions,
+    getStatisticalSurfaceDataHybrid,
+    getStatisticalSurfaceDataHybridQueryKey,
 } from "@api";
+import { lroProgressBus } from "@framework/LroProgressBus";
+import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
@@ -22,7 +27,7 @@ import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataT
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
-const statisicalSurfaceSettings = [
+const statisticalSurfaceSettings = [
     Setting.ENSEMBLE,
     Setting.STATISTIC_FUNCTION,
     Setting.SENSITIVITY,
@@ -32,8 +37,7 @@ const statisicalSurfaceSettings = [
     Setting.COLOR_SCALE,
     Setting.CONTOURS,
 ] as const;
-
-export type StatisticalSurfaceSettings = typeof statisicalSurfaceSettings;
+export type StatisticalSurfaceSettings = typeof statisticalSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<StatisticalSurfaceSettings>;
 
 export enum SurfaceDataFormat {
@@ -57,7 +61,7 @@ export class StatisticalSurfaceProvider
             StatisticalSurfaceStoredData
         >
 {
-    settings = statisicalSurfaceSettings;
+    settings = statisticalSurfaceSettings;
 
     private _dataFormat: SurfaceDataFormat;
 
@@ -237,10 +241,9 @@ export class StatisticalSurfaceProvider
         getStoredData,
         getWorkbenchSession,
         fetchQuery,
+        setProgressMessage,
+        onFetchCancelOrFinish,
     }: FetchDataParams<StatisticalSurfaceSettings, StatisticalSurfaceData>): Promise<StatisticalSurfaceData> {
-        let surfaceAddress: FullSurfaceAddress | null = null;
-        const addrBuilder = new SurfaceAddressBuilder();
-
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         let filteredRealizations = getStoredData("realizations") ?? [];
         const surfaceName = getSetting(Setting.SURFACE_NAME);
@@ -251,10 +254,13 @@ export class StatisticalSurfaceProvider
 
         const workbenchSession = getWorkbenchSession();
 
-        if (ensembleIdent && surfaceName && attribute) {
+        let surfaceAddress: FullSurfaceAddress | null = null;
+        if (ensembleIdent && surfaceName && attribute && statisticFunction) {
+            const addrBuilder = new SurfaceAddressBuilder();
             addrBuilder.withEnsembleIdent(ensembleIdent);
             addrBuilder.withName(surfaceName);
             addrBuilder.withAttribute(attribute);
+            addrBuilder.withStatisticFunction(statisticFunction);
 
             const currentEnsemble = workbenchSession.getEnsembleSet().findEnsemble(ensembleIdent);
 
@@ -281,20 +287,39 @@ export class StatisticalSurfaceProvider
                 addrBuilder.withTimeOrInterval(timeOrInterval);
             }
 
-            if (statisticFunction) {
-                addrBuilder.withStatisticFunction(statisticFunction);
-            }
             surfaceAddress = addrBuilder.buildStatisticalAddress();
         }
 
         const surfAddrStr = surfaceAddress ? encodeSurfAddrStr(surfaceAddress) : null;
 
-        const queryOptions = getSurfaceDataOptions({
+        const apiFunctionArgs: Options<GetStatisticalSurfaceDataHybridData_api, false> = {
             query: {
-                surf_addr_str: surfAddrStr ?? "",
+                surf_addr_str: surfAddrStr ?? "NO_SURF_ADDR",
                 data_format: this._dataFormat,
                 resample_to_def_str: null,
             },
+        };
+        const queryKey = getStatisticalSurfaceDataHybridQueryKey(apiFunctionArgs);
+
+        // For now use just a fixed delay and max duration in seconds
+        // Maybe later extend delay/backoff to include:
+        //  * backoff: none, linear, exponential
+        //  * maxDelayS - maximum delay for linear or exponential backoff
+        //  * jitter
+        const queryOptions = wrapLongRunningQuery({
+            queryFn: getStatisticalSurfaceDataHybrid,
+            queryFnArgs: apiFunctionArgs,
+            queryKey: queryKey,
+            delayBetweenPollsSecs: 1.0,
+            maxTotalDurationSecs: 120,
+        });
+
+        function handleTaskProgress(progressMessage: string | null) {
+            setProgressMessage(progressMessage);
+        }
+        const unsubscribe = lroProgressBus.subscribe(hashKey(queryKey), handleTaskProgress);
+        onFetchCancelOrFinish(() => {
+            unsubscribe();
         });
 
         const promise = fetchQuery({ ...queryOptions }).then((data) => ({

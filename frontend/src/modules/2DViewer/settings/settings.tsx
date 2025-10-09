@@ -39,6 +39,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 fieldIdentifier,
                 preferredViewLayout,
             };
+
             window.localStorage.setItem(
                 `${props.settingsContext.getInstanceIdString()}-settings`,
                 JSON.stringify(serializedState),
@@ -52,6 +53,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             const serializedState = window.localStorage.getItem(
                 `${props.settingsContext.getInstanceIdString()}-settings`,
             );
+
             if (!serializedState) {
                 return;
             }

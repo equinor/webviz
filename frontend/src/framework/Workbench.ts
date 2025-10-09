@@ -1,119 +1,182 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import { postGetTimestampsForEnsemblesOptions, type EnsembleIdent_api, type EnsembleTimestamps_api } from "@api";
+import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
-import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
-import { InitialSettings } from "./InitialSettings";
-import { loadMetadataFromBackendAndCreateEnsembleSet } from "./internal/EnsembleSetLoader";
+import { GuiMessageBroker, GuiState, LeftDrawerContent, RightDrawerContent } from "./GuiMessageBroker";
+import { DashboardTopic } from "./internal/Dashboard";
+import { EnsembleUpdateMonitor } from "./internal/EnsembleUpdateMonitor";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
-import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
-import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
-import { ImportState } from "./Module";
-import type { ModuleInstance } from "./ModuleInstance";
-import { ModuleRegistry } from "./ModuleRegistry";
-import type { RegularEnsemble } from "./RegularEnsemble";
-import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
+import {
+    PrivateWorkbenchSession,
+    PrivateWorkbenchSessionTopic,
+} from "./internal/WorkbenchSession/PrivateWorkbenchSession";
+import { loadWorkbenchSessionFromLocalStorage } from "./internal/WorkbenchSession/utils/loaders";
+import { localStorageKeyForSessionId } from "./internal/WorkbenchSession/utils/localStorageHelpers";
+import { makeWorkbenchSessionLocalStorageString } from "./internal/WorkbenchSession/utils/serialization";
 import type { Template } from "./TemplateRegistry";
-import { isEnsembleOutdated } from "./utils/ensembleTimestampUtils";
+import { UserCreatedItemsEvent } from "./UserCreatedItems";
 import type { WorkbenchServices } from "./WorkbenchServices";
+import { WorkbenchSessionTopic } from "./WorkbenchSession";
+import { WorkbenchSettingsTopic } from "./WorkbenchSettings";
 
-export enum WorkbenchEvents {
-    LayoutChanged = "LayoutChanged",
-    ModuleInstancesChanged = "ModuleInstancesChanged",
+export enum WorkbenchTopic {
+    ACTIVE_SESSION = "activeSession",
+    HAS_ACTIVE_SESSION = "hasActiveSession",
 }
 
-export type LayoutElement = {
-    moduleInstanceId?: string;
-    moduleName: string;
-    relX: number;
-    relY: number;
-    relHeight: number;
-    relWidth: number;
-    minimized?: boolean;
-    maximized?: boolean;
+export type WorkbenchTopicPayloads = {
+    [WorkbenchTopic.ACTIVE_SESSION]: PrivateWorkbenchSession | null;
+    [WorkbenchTopic.HAS_ACTIVE_SESSION]: boolean;
 };
+export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<WorkbenchTopicPayloads>();
 
-export type UserEnsembleSetting = {
-    ensembleIdent: RegularEnsembleIdent;
-    customName: string | null;
-    color: string;
-    timestamps: EnsembleTimestamps_api | null;
-};
-
-export type UserDeltaEnsembleSetting = {
-    comparisonEnsembleIdent: RegularEnsembleIdent;
-    referenceEnsembleIdent: RegularEnsembleIdent;
-    customName: string | null;
-    color: string;
-};
-
-export type StoredUserEnsembleSetting = {
-    ensembleIdent: string;
-    customName: string | null;
-    color: string;
-    timestamps: EnsembleTimestamps_api | null;
-};
-
-export type StoredUserDeltaEnsembleSetting = {
-    comparisonEnsembleIdent: string;
-    referenceEnsembleIdent: string;
-    customName: string | null;
-    color: string;
-};
-
-function ensembleToUserSettings(ensemble: RegularEnsemble): UserEnsembleSetting {
-    return {
-        color: ensemble.getColor(),
-        customName: ensemble.getCustomName(),
-        ensembleIdent: ensemble.getIdent(),
-        timestamps: ensemble.getTimestamps(),
-    };
-}
-
-const ENSEMBLE_POLLING_INTERVAL = 60000; // 1 minute
-
-export class Workbench {
-    private _moduleInstances: ModuleInstance<any>[];
-    private _workbenchSession: WorkbenchSessionPrivate;
+    private _workbenchSession: PrivateWorkbenchSession | null = null;
     private _workbenchServices: PrivateWorkbenchServices;
-    private _workbenchSettings: PrivateWorkbenchSettings;
     private _guiMessageBroker: GuiMessageBroker;
-    private _subscribersMap: { [key: string]: Set<() => void> };
-    private _layout: LayoutElement[];
-    private _perModuleRunningInstanceNumber: Record<string, number>;
     private _atomStoreMaster: AtomStoreMaster;
+    private _queryClient: QueryClient;
+    private _ensembleUpdateMonitor: EnsembleUpdateMonitor;
+    private _isInitialized: boolean = false;
+    private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
+    private _pullDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
+    private _pullInProgress = false;
+    private _pullCounter = 0;
 
-    constructor() {
-        this._moduleInstances = [];
+    constructor(queryClient: QueryClient) {
+        this._queryClient = queryClient;
         this._atomStoreMaster = new AtomStoreMaster();
-        this._workbenchSession = new WorkbenchSessionPrivate(this._atomStoreMaster);
         this._workbenchServices = new PrivateWorkbenchServices(this);
-        this._workbenchSettings = new PrivateWorkbenchSettings();
         this._guiMessageBroker = new GuiMessageBroker();
-        this._subscribersMap = {};
-        this._layout = [];
-        this._perModuleRunningInstanceNumber = {};
+        this._ensembleUpdateMonitor = new EnsembleUpdateMonitor(queryClient, this);
     }
 
-    loadLayoutFromLocalStorage(): boolean {
-        const layoutString = localStorage.getItem("layout");
-        if (!layoutString) return false;
-
-        const layout = JSON.parse(layoutString) as LayoutElement[];
-        this.makeLayout(layout);
-        return true;
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<WorkbenchTopicPayloads> {
+        return this._publishSubscribeDelegate;
     }
 
-    getLayout(): LayoutElement[] {
-        return this._layout;
+    makeSnapshotGetter<T extends WorkbenchTopic>(topic: T): () => WorkbenchTopicPayloads[T] {
+        const snapshotGetter = (): any => {
+            if (topic === WorkbenchTopic.ACTIVE_SESSION) {
+                return this._workbenchSession;
+            }
+            if (topic === WorkbenchTopic.HAS_ACTIVE_SESSION) {
+                return this._workbenchSession !== null;
+            }
+            throw new Error(`No snapshot getter implemented for topic ${topic}`);
+        };
+        return snapshotGetter;
+    }
+
+    getQueryClient(): QueryClient {
+        return this._queryClient;
+    }
+
+    async initialize() {
+        if (this._isInitialized) {
+            console.info(
+                "Workbench is already initialized. This might happen in strict mode due to useEffects being called multiple times.",
+            );
+            return;
+        }
+
+        this._isInitialized = true;
+
+        const key = localStorageKeyForSessionId("default");
+        const hasSessionInLocalStorage = window.localStorage.getItem(key) !== null;
+        if (hasSessionInLocalStorage) {
+            await this.openSessionFromLocalStorage("default", true);
+        } else {
+            await this.startNewSession();
+        }
+
+        if (!this._workbenchSession) {
+            throw new Error("Failed to initialize workbench session.");
+        }
+    }
+
+    discardLocalStorageSession(snapshotId: string | null, unloadSession = true): void {
+        const key = localStorageKeyForSessionId(snapshotId);
+        localStorage.removeItem(key);
+
+        if (!unloadSession) {
+            return;
+        }
+
+        this._workbenchSession = null;
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
+    }
+
+    async openSessionFromLocalStorage(snapshotId: string | null, forceOpen = false): Promise<void> {
+        if (this._workbenchSession && !forceOpen) {
+            console.warn("A workbench session is already active. Please close it before opening a new one.");
+            return;
+        }
+
+        const sessionData = await loadWorkbenchSessionFromLocalStorage(snapshotId);
+        if (!sessionData) {
+            console.warn("No workbench session found in local storage.");
+            return;
+        }
+
+        const session = await PrivateWorkbenchSession.fromDataContainer(
+            this._atomStoreMaster,
+            this._queryClient,
+            sessionData,
+        );
+
+        await this.setWorkbenchSession(session);
+        this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
+    }
+
+    private async setWorkbenchSession(session: PrivateWorkbenchSession): Promise<void> {
+        try {
+            if (session.getEnsembleSet().getEnsembleArray().length === 0) {
+                this._guiMessageBroker.setState(GuiState.EnsembleDialogOpen, true);
+            }
+
+            this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
+
+            if (session.getActiveDashboard().getLayout().length === 0) {
+                this._guiMessageBroker.setState(GuiState.RightDrawerContent, RightDrawerContent.ModulesList);
+                if (this._guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) === 0) {
+                    this._guiMessageBroker.setState(GuiState.RightSettingsPanelWidthInPercent, 20);
+                }
+            }
+
+            this._workbenchSession = session;
+            this.subscribeToSessionChanges();
+            await this._ensembleUpdateMonitor.pollImmediately();
+            this._ensembleUpdateMonitor.startPolling();
+            this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
+            this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.ACTIVE_SESSION);
+        } catch (error) {
+            console.error("Failed to hydrate workbench session:", error);
+            throw new Error("Could not load workbench session from data container.");
+        }
+    }
+
+    async startNewSession(): Promise<void> {
+        if (this._workbenchSession) {
+            console.warn("A workbench session is already active. Please close it before starting a new one.");
+            return;
+        }
+
+        const session = PrivateWorkbenchSession.createEmpty(this._atomStoreMaster, this._queryClient);
+
+        await this.setWorkbenchSession(session);
     }
 
     getAtomStoreMaster(): AtomStoreMaster {
         return this._atomStoreMaster;
     }
 
-    getWorkbenchSession(): WorkbenchSessionPrivate {
+    getWorkbenchSession(): PrivateWorkbenchSession {
+        if (!this._workbenchSession) {
+            throw new Error("Workbench session has not been started. Call startNewSession() first.");
+        }
         return this._workbenchSession;
     }
 
@@ -121,397 +184,159 @@ export class Workbench {
         return this._workbenchServices;
     }
 
-    getWorkbenchSettings(): PrivateWorkbenchSettings {
-        return this._workbenchSettings;
-    }
-
     getGuiMessageBroker(): GuiMessageBroker {
         return this._guiMessageBroker;
     }
 
-    private notifySubscribers(event: WorkbenchEvents): void {
-        const subscribers = this._subscribersMap[event];
-        if (!subscribers) return;
-
-        subscribers.forEach((subscriber) => {
-            subscriber();
-        });
-    }
-
-    subscribe(event: WorkbenchEvents, cb: () => void) {
-        const subscribersSet = this._subscribersMap[event] || new Set();
-        subscribersSet.add(cb);
-        this._subscribersMap[event] = subscribersSet;
-        return () => {
-            subscribersSet.delete(cb);
-        };
-    }
-
-    getModuleInstances(): ModuleInstance<any>[] {
-        return this._moduleInstances;
-    }
-
-    getModuleInstance(id: string): ModuleInstance<any> | undefined {
-        return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
-    }
-
-    private getNextModuleInstanceNumber(moduleName: string): number {
-        if (moduleName in this._perModuleRunningInstanceNumber) {
-            this._perModuleRunningInstanceNumber[moduleName] += 1;
-        } else {
-            this._perModuleRunningInstanceNumber[moduleName] = 1;
-        }
-        return this._perModuleRunningInstanceNumber[moduleName];
-    }
-
-    makeLayout(layout: LayoutElement[]): void {
-        this._moduleInstances = [];
-        this.setLayout(layout);
-        layout.forEach((element, index: number) => {
-            const module = ModuleRegistry.getModule(element.moduleName);
-            if (!module) {
-                throw new Error(`Module ${element.moduleName} not found`);
-            }
-
-            module.setWorkbench(this);
-            const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
-            this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
-            this._moduleInstances.push(moduleInstance);
-            this._layout[index] = { ...this._layout[index], moduleInstanceId: moduleInstance.getId() };
-            this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
-            this.notifySubscribers(WorkbenchEvents.LayoutChanged);
-        });
-    }
-
-    resetModuleInstanceNumbers(): void {
-        this._perModuleRunningInstanceNumber = {};
-    }
-
-    clearLayout(): void {
-        for (const moduleInstance of this._moduleInstances) {
-            const manager = moduleInstance.getChannelManager();
-            manager.unregisterAllChannels();
-            manager.unregisterAllReceivers();
-        }
-        this._moduleInstances = [];
-        this._layout = [];
-        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
-        this.notifySubscribers(WorkbenchEvents.LayoutChanged);
-    }
-
-    makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
-        const module = ModuleRegistry.getModule(moduleName);
-        if (!module) {
-            throw new Error(`Module ${moduleName} not found`);
+    applyTemplate(template: Template): void {
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session.");
         }
 
-        module.setWorkbench(this);
-
-        const moduleInstance = module.makeInstance(this.getNextModuleInstanceNumber(module.getName()));
-        this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
-        this._moduleInstances.push(moduleInstance);
-
-        this._layout.push({ ...layout, moduleInstanceId: moduleInstance.getId() });
-        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
-        this.notifySubscribers(WorkbenchEvents.LayoutChanged);
-        this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, moduleInstance.getId());
-        return moduleInstance;
+        const dashboard = this._workbenchSession.getActiveDashboard();
+        dashboard.applyTemplate(template);
     }
 
-    removeModuleInstance(moduleInstanceId: string): void {
-        const moduleInstance = this.getModuleInstance(moduleInstanceId);
-
-        if (moduleInstance) {
-            const manager = moduleInstance.getChannelManager();
-
-            moduleInstance.unload();
-            manager.unregisterAllChannels();
-            manager.unregisterAllReceivers();
+    private subscribeToSessionChanges() {
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to subscribe to changes.");
         }
 
-        this._moduleInstances = this._moduleInstances.filter((el) => el.getId() !== moduleInstanceId);
-
-        this._atomStoreMaster.removeAtomStoreForModuleInstance(moduleInstanceId);
-
-        const newLayout = this._layout.filter((el) => el.moduleInstanceId !== moduleInstanceId);
-        this.setLayout(newLayout);
-        const activeModuleInstanceId = this.getGuiMessageBroker().getState(GuiState.ActiveModuleInstanceId);
-        if (activeModuleInstanceId === moduleInstanceId) {
-            this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, "");
-        }
-        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
-    }
-
-    setLayout(layout: LayoutElement[]): void {
-        this._layout = layout;
-
-        const modifiedLayout = layout.map((el) => {
-            return { ...el, moduleInstanceId: undefined };
-        });
-        localStorage.setItem("layout", JSON.stringify(modifiedLayout));
-        this.notifySubscribers(WorkbenchEvents.LayoutChanged);
-    }
-
-    maybeMakeFirstModuleInstanceActive(): void {
-        const activeModuleInstanceId = this.getGuiMessageBroker().getState(GuiState.ActiveModuleInstanceId);
-        if (!this._moduleInstances.some((el) => el.getId() === activeModuleInstanceId)) {
-            const newActiveModuleInstanceId =
-                this._moduleInstances
-                    .filter((el) => el.getImportState() === ImportState.Imported)
-                    .at(0)
-                    ?.getId() || "";
-            this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, newActiveModuleInstanceId);
-        }
-    }
-
-    async initWorkbenchFromLocalStorage(queryClient: QueryClient): Promise<void> {
-        const storedUserEnsembleSettings = this.maybeLoadEnsembleSettingsFromLocalStorage();
-        const storedUserDeltaEnsembleSettings = this.maybeLoadDeltaEnsembleSettingsFromLocalStorage();
-
-        if (!storedUserEnsembleSettings && !storedUserDeltaEnsembleSettings) {
-            return;
-        }
-
-        await this.loadAndSetupEnsembleSetInSession(
-            queryClient,
-            storedUserEnsembleSettings ?? [],
-            storedUserDeltaEnsembleSettings ?? [],
-        );
-
-        this.beginEnsembleUpdatePolling(queryClient);
-    }
-
-    async storeSettingsInLocalStorageAndLoadAndSetupEnsembleSetInSession(
-        queryClient: QueryClient,
-        userEnsembleSettings: UserEnsembleSetting[],
-        userDeltaEnsembleSettings: UserDeltaEnsembleSetting[],
-    ): Promise<void> {
-        this.storeEnsembleSetInLocalStorage(userEnsembleSettings);
-        this.storeDeltaEnsembleSetInLocalStorage(userDeltaEnsembleSettings);
-
-        await this.loadAndSetupEnsembleSetInSession(queryClient, userEnsembleSettings, userDeltaEnsembleSettings);
-    }
-
-    private async loadAndSetupEnsembleSetInSession(
-        queryClient: QueryClient,
-        userEnsembleSettings: UserEnsembleSetting[],
-        userDeltaEnsembleSettings: UserDeltaEnsembleSetting[],
-    ): Promise<void> {
-        console.debug("loadAndSetupEnsembleSetInSession - starting load");
-        this._workbenchSession.setEnsembleSetLoadingState(true);
-        const newEnsembleSet = await loadMetadataFromBackendAndCreateEnsembleSet(
-            queryClient,
-            userEnsembleSettings,
-            userDeltaEnsembleSettings,
-        );
-        console.debug("loadAndSetupEnsembleSetInSession - loading done");
-        console.debug("loadAndSetupEnsembleSetInSession - publishing");
-        this._workbenchSession.setEnsembleSetLoadingState(false);
-        this._workbenchSession.setEnsembleSet(newEnsembleSet);
-    }
-
-    private _pollingEnabled = false;
-    private _waitingPollingRun?: NodeJS.Timeout;
-
-    /**
-     * Starts a background polling routine, that repeats at a set interval.
-     * @param queryClient The QueryClient to use for fetching ensemble timestamps.
-     */
-    beginEnsembleUpdatePolling(queryClient: QueryClient) {
-        if (this._pollingEnabled) return;
-
-        // This shouldn't happen, but we check just in case
-        if (this._waitingPollingRun) {
-            console.warn("Found a waiting polling call, even though polling was disabled");
-            clearTimeout(this._waitingPollingRun);
-        }
-
-        // Start polling
-        console.debug("checkForEnsembleUpdate - initializing...");
-        this._pollingEnabled = true;
-        this.recursivelyQueueEnsemblePolling(queryClient);
-    }
-
-    stopEnsembleUpdatePolling() {
-        clearTimeout(this._waitingPollingRun);
-        this._waitingPollingRun = undefined;
-        this._pollingEnabled = false;
-    }
-
-    private async recursivelyQueueEnsemblePolling(queryClient: QueryClient) {
-        if (!this._pollingEnabled) return;
-
-        await this.pollForEnsembleChange(queryClient);
-
-        // Checking the variable again in case polling was disabled *during* the async call
-        if (!this._pollingEnabled) return;
-
-        console.debug("checkForEnsembleUpdate - queuing next...");
-        this._waitingPollingRun = setTimeout(async () => {
-            this.recursivelyQueueEnsemblePolling(queryClient);
-        }, ENSEMBLE_POLLING_INTERVAL);
-    }
-
-    private async pollForEnsembleChange(queryClient: QueryClient) {
-        console.debug("checkForEnsembleUpdate - fetching...");
-
-        const regularEnsembleSet = this._workbenchSession.getEnsembleSet().getRegularEnsembleArray();
-
-        const latestTimestamps = await this.getLatestEnsembleTimestamps(queryClient, regularEnsembleSet);
-
-        const newSettings = latestTimestamps.reduce((acc, [ens, ts]) => {
-            if (!isEnsembleOutdated(ens, ts)) return acc;
-
-            return acc.concat({
-                ...ensembleToUserSettings(ens),
-                timestamps: ts,
-            });
-        }, [] as UserEnsembleSetting[]);
-
-        if (newSettings.length) {
-            this.updateExistingUserEnsembleSettings(queryClient, newSettings);
-        }
-
-        console.debug("checkForEnsembleUpdate - done...");
-    }
-
-    private async getLatestEnsembleTimestamps(
-        queryClient: QueryClient,
-        ensembles: readonly RegularEnsemble[],
-    ): Promise<[RegularEnsemble, EnsembleTimestamps_api][]> {
-        const idents = ensembles.map<EnsembleIdent_api>((ens) => ({
-            caseUuid: ens.getCaseUuid(),
-            ensembleName: ens.getEnsembleName(),
-        }));
-
-        const timestamps = await queryClient.fetchQuery({
-            ...postGetTimestampsForEnsemblesOptions({ body: idents }),
-            staleTime: 0,
-            gcTime: 0,
-        });
-
-        return ensembles.map((ens, i) => [ens, timestamps[i]]);
-    }
-
-    private async updateExistingUserEnsembleSettings(queryClient: QueryClient, newSettings: UserEnsembleSetting[]) {
-        if (newSettings.length === 0) return;
-
-        const existingEnsembleSettings = this.maybeLoadEnsembleSettingsFromLocalStorage() ?? [];
-        const existingDeltaEnsembleSettings = this.maybeLoadDeltaEnsembleSettingsFromLocalStorage() ?? [];
-
-        const newEnsembleSettings = existingEnsembleSettings.map((el) => {
-            const newSetting = newSettings.find((newEl) => newEl.ensembleIdent.equals(el.ensembleIdent));
-            if (newSetting) return newSetting;
-            return el;
-        });
-
-        await this.storeSettingsInLocalStorageAndLoadAndSetupEnsembleSetInSession(
-            queryClient,
-            newEnsembleSettings,
-            existingDeltaEnsembleSettings,
-        );
-    }
-
-    private storeEnsembleSetInLocalStorage(ensembleSettingsToStore: UserEnsembleSetting[]): void {
-        const ensembleSettingsArrayToStore: StoredUserEnsembleSetting[] = ensembleSettingsToStore.map((el) => ({
-            ...el,
-            ensembleIdent: el.ensembleIdent.toString(),
-        }));
-        localStorage.setItem("userEnsembleSettings", JSON.stringify(ensembleSettingsArrayToStore));
-    }
-
-    private storeDeltaEnsembleSetInLocalStorage(deltaEnsembleSettingsToStore: UserDeltaEnsembleSetting[]): void {
-        const deltaEnsembleSettingsArrayToStore: StoredUserDeltaEnsembleSetting[] = deltaEnsembleSettingsToStore.map(
-            (el) => ({
-                ...el,
-                comparisonEnsembleIdent: el.comparisonEnsembleIdent.toString(),
-                referenceEnsembleIdent: el.referenceEnsembleIdent.toString(),
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "workbench-session",
+            this._workbenchSession
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(PrivateWorkbenchSessionTopic.DASHBOARDS)(() => {
+                this.schedulePullFullSessionState();
+                this.subscribeToDashboardUpdates();
             }),
         );
-        localStorage.setItem("userDeltaEnsembleSettings", JSON.stringify(deltaEnsembleSettingsArrayToStore));
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "workbench-session",
+            this._workbenchSession
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(WorkbenchSessionTopic.ENSEMBLE_SET)(() => {
+                this.schedulePullFullSessionState();
+            }),
+        );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "workbench-session",
+            this._workbenchSession
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(WorkbenchSessionTopic.REALIZATION_FILTER_SET)(() => {
+                this.schedulePullFullSessionState();
+            }),
+        );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "workbench-session",
+            this._workbenchSession
+                .getWorkbenchSettings()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS)(() => {
+                this.schedulePullFullSessionState();
+            }),
+        );
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "workbench-session",
+            this._workbenchSession
+                .getUserCreatedItems()
+                .subscribe(UserCreatedItemsEvent.INTERSECTION_POLYLINES_CHANGE, () => {
+                    this.schedulePullFullSessionState();
+                }),
+        );
+
+        this.subscribeToDashboardUpdates();
     }
 
-    maybeLoadEnsembleSettingsFromLocalStorage(): UserEnsembleSetting[] | null {
-        const ensembleSettingsString = localStorage.getItem("userEnsembleSettings");
-        if (!ensembleSettingsString) return null;
-
-        const ensembleSettingsArray = JSON.parse(ensembleSettingsString) as StoredUserEnsembleSetting[];
-        const parsedEnsembleSettingsArray: UserEnsembleSetting[] = ensembleSettingsArray.map((el) => ({
-            ...el,
-            ensembleIdent: RegularEnsembleIdent.fromString(el.ensembleIdent),
-        }));
-
-        return parsedEnsembleSettingsArray;
-    }
-
-    maybeLoadDeltaEnsembleSettingsFromLocalStorage(): UserDeltaEnsembleSetting[] | null {
-        const deltaEnsembleSettingsString = localStorage.getItem("userDeltaEnsembleSettings");
-        if (!deltaEnsembleSettingsString) return null;
-
-        const deltaEnsembleSettingsArray = JSON.parse(deltaEnsembleSettingsString) as StoredUserDeltaEnsembleSetting[];
-        const parsedDeltaEnsembleSettingsArray: UserDeltaEnsembleSetting[] = deltaEnsembleSettingsArray.map((el) => ({
-            ...el,
-            comparisonEnsembleIdent: RegularEnsembleIdent.fromString(el.comparisonEnsembleIdent),
-            referenceEnsembleIdent: RegularEnsembleIdent.fromString(el.referenceEnsembleIdent),
-        }));
-
-        return parsedDeltaEnsembleSettingsArray;
-    }
-
-    applyTemplate(template: Template): void {
-        this.clearLayout();
-
-        const newLayout = template.moduleInstances.map((el) => {
-            return { ...el.layout, moduleName: el.moduleName };
-        });
-
-        this.makeLayout(newLayout);
-
-        for (let i = 0; i < this._moduleInstances.length; i++) {
-            const moduleInstance = this._moduleInstances[i];
-            const templateModule = template.moduleInstances[i];
-            if (templateModule.syncedSettings) {
-                for (const syncSettingKey of templateModule.syncedSettings) {
-                    moduleInstance.addSyncedSetting(syncSettingKey);
-                }
-            }
-
-            const initialSettings: Record<string, unknown> = templateModule.initialSettings || {};
-
-            if (templateModule.dataChannelsToInitialSettingsMapping) {
-                for (const propName of Object.keys(templateModule.dataChannelsToInitialSettingsMapping)) {
-                    const dataChannel = templateModule.dataChannelsToInitialSettingsMapping[propName];
-
-                    const moduleInstanceIndex = template.moduleInstances.findIndex(
-                        (el) => el.instanceRef === dataChannel.listensToInstanceRef,
-                    );
-                    if (moduleInstanceIndex === -1) {
-                        throw new Error("Could not find module instance for data channel");
-                    }
-
-                    const listensToModuleInstance = this._moduleInstances[moduleInstanceIndex];
-                    const channel = listensToModuleInstance.getChannelManager().getChannel(dataChannel.channelIdString);
-                    if (!channel) {
-                        throw new Error("Could not find channel");
-                    }
-
-                    const receiver = moduleInstance.getChannelManager().getReceiver(propName);
-
-                    if (!receiver) {
-                        throw new Error("Could not find receiver");
-                    }
-
-                    receiver.subscribeToChannel(channel, "All");
-                }
-            }
-
-            moduleInstance.setInitialSettings(new InitialSettings(initialSettings));
-
-            if (i === 0) {
-                this.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, moduleInstance.getId());
-            }
+    private subscribeToDashboardUpdates() {
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to subscribe to dashboard updates.");
         }
 
-        this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("dashboards");
+
+        const dashboards = this._workbenchSession.getDashboards();
+
+        for (const dashboard of dashboards) {
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "dashboards",
+                dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.Layout)(() => {
+                    this.schedulePullFullSessionState();
+                }),
+            );
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "dashboards",
+                dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.ModuleInstances)(() => {
+                    this.schedulePullFullSessionState();
+                }),
+            );
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "dashboards",
+                dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.ActiveModuleInstanceId)(
+                    () => {
+                        this.schedulePullFullSessionState();
+                    },
+                ),
+            );
+        }
+    }
+
+    private schedulePullFullSessionState(delay: number = 200) {
+        this.maybeClearPullDebounceTimeout();
+
+        this._pullDebounceTimeout = setTimeout(() => {
+            this._pullDebounceTimeout = null;
+            this.pullFullSessionState();
+        }, delay);
+    }
+
+    private maybeClearPullDebounceTimeout() {
+        if (this._pullDebounceTimeout) {
+            clearTimeout(this._pullDebounceTimeout);
+            this._pullDebounceTimeout = null;
+        }
+    }
+
+    private async pullFullSessionState({ immediate = false } = {}): Promise<boolean> {
+        if (!this._workbenchSession) {
+            console.warn("No active workbench session to pull state from.");
+            return false;
+        }
+
+        if (this._pullInProgress && !immediate) {
+            // Do not allow concurrent pulls – let debounce handle retries
+            return false;
+        }
+
+        this._pullInProgress = true;
+        const localPullId = ++this._pullCounter;
+
+        try {
+            // Only apply if it's still the latest pull
+            if (localPullId !== this._pullCounter) {
+                return false;
+            }
+
+            this.persistToLocalStorage();
+
+            return true;
+        } catch (error) {
+            console.error("Failed to pull full session state:", error);
+            return false;
+        } finally {
+            this._pullInProgress = false;
+        }
+    }
+
+    private persistToLocalStorage() {
+        const key = localStorageKeyForSessionId("default");
+
+        if (this._workbenchSession) {
+            localStorage.setItem(key, makeWorkbenchSessionLocalStorageString(this._workbenchSession));
+        }
     }
 }

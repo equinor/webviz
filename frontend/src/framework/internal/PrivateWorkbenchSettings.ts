@@ -1,11 +1,21 @@
-import type { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import type { ColorPalette } from "@lib/utils/ColorPalette";
-import type { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import type { JTDSchemaType } from "ajv/dist/core";
 
-export enum WorkbenchSettingsEvents {
-    ColorPalettesChanged = "ColorPalettesChanged",
-}
+import {
+    defaultColorPalettes,
+    defaultContinuousDivergingColorPalettes,
+    defaultContinuousSequentialColorPalettes,
+} from "@framework/utils/colorPalettes";
+import {
+    ColorPaletteType,
+    ColorScaleDiscreteSteps,
+    WorkbenchSettingsTopic,
+    type WorkbenchSettings,
+    type WorkbenchSettingsTopicPayloads,
+} from "@framework/WorkbenchSettings";
+import type { ColorPalette } from "@lib/utils/ColorPalette";
+import { ColorScale, ColorScaleGradientType, ColorScaleType, type ColorScaleOptions } from "@lib/utils/ColorScale";
+import { ColorSet } from "@lib/utils/ColorSet";
+import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
 export type UseDiscreteColorScaleOptions = {
     gradientType: ColorScaleGradientType;
@@ -15,12 +25,86 @@ export type UseContinuousColorScaleOptions = {
     gradientType: ColorScaleGradientType;
 };
 
-export class PrivateWorkbenchSettings extends WorkbenchSettings {
+export type SerializedWorkbenchSettings = {
+    selectedColorPalettes: Record<ColorPaletteType, string>;
+    discreteColorScaleSteps: Record<ColorScaleDiscreteSteps, number>;
+};
+
+export const WORKBENCH_SETTINGS_JTD_SCHEMA: JTDSchemaType<SerializedWorkbenchSettings> = {
+    properties: {
+        selectedColorPalettes: {
+            properties: {
+                [ColorPaletteType.Categorical]: { type: "string" },
+                [ColorPaletteType.ContinuousDiverging]: { type: "string" },
+                [ColorPaletteType.ContinuousSequential]: { type: "string" },
+            },
+        },
+        discreteColorScaleSteps: {
+            properties: {
+                [ColorScaleDiscreteSteps.Sequential]: { type: "int32" },
+                [ColorScaleDiscreteSteps.Diverging]: { type: "int32" },
+            },
+        },
+    },
+} as const;
+
+export class PrivateWorkbenchSettings implements WorkbenchSettings {
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<WorkbenchSettingsTopicPayloads>();
+
+    private _colorPalettes: Record<ColorPaletteType, ColorPalette[]>;
+    private _selectedColorPalettes: Record<ColorPaletteType, string>;
+    private _steps: Record<ColorScaleDiscreteSteps, number>;
+
     constructor() {
-        super();
+        this._colorPalettes = {
+            [ColorPaletteType.Categorical]: defaultColorPalettes,
+            [ColorPaletteType.ContinuousSequential]: defaultContinuousSequentialColorPalettes,
+            [ColorPaletteType.ContinuousDiverging]: defaultContinuousDivergingColorPalettes,
+        };
+        this._selectedColorPalettes = {
+            [ColorPaletteType.Categorical]: defaultColorPalettes[0].getId(),
+            [ColorPaletteType.ContinuousSequential]: defaultContinuousSequentialColorPalettes[0].getId(),
+            [ColorPaletteType.ContinuousDiverging]: defaultContinuousDivergingColorPalettes[0].getId(),
+        };
+
+        this._steps = {
+            [ColorScaleDiscreteSteps.Sequential]: 10,
+            [ColorScaleDiscreteSteps.Diverging]: 10,
+        };
 
         this.loadSelectedColorPaletteIdsFromLocalStorage();
         this.loadStepsFromLocalStorage();
+    }
+
+    serializeState(): SerializedWorkbenchSettings {
+        return {
+            selectedColorPalettes: this._selectedColorPalettes,
+            discreteColorScaleSteps: this._steps,
+        };
+    }
+
+    deserializeState(serializedState: SerializedWorkbenchSettings): void {
+        this._selectedColorPalettes = serializedState.selectedColorPalettes;
+        this._steps = serializedState.discreteColorScaleSteps;
+    }
+
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<WorkbenchSettingsTopicPayloads> {
+        return this._publishSubscribeDelegate;
+    }
+
+    makeSnapshotGetter<T extends WorkbenchSettingsTopic>(topic: T): () => WorkbenchSettingsTopicPayloads[T] {
+        const snapshotGetter = (): WorkbenchSettingsTopicPayloads[T] => {
+            if (topic === WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS) {
+                return this._selectedColorPalettes as WorkbenchSettingsTopicPayloads[T];
+            }
+            if (topic === WorkbenchSettingsTopic.SELECTED_STEPS) {
+                return this._steps as WorkbenchSettingsTopicPayloads[T];
+            }
+
+            throw new Error(`No snapshot getter for topic ${topic}`);
+        };
+
+        return snapshotGetter;
     }
 
     private loadSelectedColorPaletteIdsFromLocalStorage(): void {
@@ -41,7 +125,7 @@ export class PrivateWorkbenchSettings extends WorkbenchSettings {
             }
         }
 
-        this.notifySubscribers(WorkbenchSettingsEvents.ColorPalettesChanged);
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS);
     }
 
     private loadStepsFromLocalStorage(): void {
@@ -55,7 +139,7 @@ export class PrivateWorkbenchSettings extends WorkbenchSettings {
 
         this._steps = steps;
 
-        this.notifySubscribers(WorkbenchSettingsEvents.ColorPalettesChanged);
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS);
     }
 
     private storeSelectedColorPaletteIdsToLocalStorage(): void {
@@ -66,15 +150,6 @@ export class PrivateWorkbenchSettings extends WorkbenchSettings {
         localStorage.setItem("discreteColorScaleSteps", JSON.stringify(this._steps));
     }
 
-    private notifySubscribers(event: WorkbenchSettingsEvents): void {
-        const subscribers = this._subscribersMap[event];
-        if (!subscribers) return;
-
-        subscribers.forEach((subscriber) => {
-            subscriber();
-        });
-    }
-
     getSelectedColorPalette(type: ColorPaletteType): ColorPalette {
         const colorPalette = this._colorPalettes[type].find((el) => el.getId() === this._selectedColorPalettes[type]);
         if (!colorPalette) {
@@ -83,30 +158,31 @@ export class PrivateWorkbenchSettings extends WorkbenchSettings {
         return colorPalette;
     }
 
+    getColorPalettes(): Record<ColorPaletteType, ColorPalette[]> {
+        return this._colorPalettes;
+    }
+
     getSelectedColorPaletteIds(): Record<ColorPaletteType, string> {
         return this._selectedColorPalettes;
     }
 
     setSelectedColorPaletteId(type: ColorPaletteType, id: string): void {
-        this._selectedColorPalettes[type] = id;
+        this._selectedColorPalettes = {
+            ...this._selectedColorPalettes,
+            [type]: id,
+        };
         this.storeSelectedColorPaletteIdsToLocalStorage();
-        this.notifySubscribers(WorkbenchSettingsEvents.ColorPalettesChanged);
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS);
     }
 
-    getSteps(): {
-        [ColorScaleDiscreteSteps.Sequential]: number;
-        [ColorScaleDiscreteSteps.Diverging]: number;
-    } {
+    getSteps(): Record<ColorScaleDiscreteSteps, number> {
         return this._steps;
     }
 
-    setSteps(steps: {
-        [ColorScaleDiscreteSteps.Sequential]: number;
-        [ColorScaleDiscreteSteps.Diverging]: number;
-    }): void {
+    setSteps(steps: Record<ColorScaleDiscreteSteps, number>): void {
         this._steps = steps;
         this.storeStepsToLocalStorage();
-        this.notifySubscribers(WorkbenchSettingsEvents.ColorPalettesChanged);
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSettingsTopic.SELECTED_STEPS);
     }
 
     getStepsForType(type: ColorScaleDiscreteSteps.Diverging | ColorScaleDiscreteSteps.Sequential): number {
@@ -114,8 +190,53 @@ export class PrivateWorkbenchSettings extends WorkbenchSettings {
     }
 
     setStepsForType(type: ColorScaleDiscreteSteps.Diverging | ColorScaleDiscreteSteps.Sequential, steps: number): void {
-        this._steps[type] = steps;
+        this._steps = {
+            ...this._steps,
+            [type]: steps,
+        };
         this.storeStepsToLocalStorage();
-        this.notifySubscribers(WorkbenchSettingsEvents.ColorPalettesChanged);
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSettingsTopic.SELECTED_STEPS);
+    }
+
+    makeColorSet(): ColorSet {
+        return new ColorSet(this.getSelectedColorPalette(ColorPaletteType.Categorical));
+    }
+
+    makeDiscreteColorScale(options: { gradientType: ColorScaleGradientType }): ColorScale {
+        const optionsWithDefaults: ColorScaleOptions = {
+            type: ColorScaleType.Discrete,
+            colorPalette: this.getSelectedColorPalette(
+                options.gradientType === ColorScaleGradientType.Sequential
+                    ? ColorPaletteType.ContinuousSequential
+                    : ColorPaletteType.ContinuousDiverging,
+            ),
+            gradientType: options.gradientType,
+            steps: this.getSteps()[
+                options.gradientType === ColorScaleGradientType.Sequential
+                    ? ColorScaleDiscreteSteps.Sequential
+                    : ColorScaleDiscreteSteps.Diverging
+            ],
+        };
+
+        return new ColorScale(optionsWithDefaults);
+    }
+
+    makeContinuousColorScale(options: { gradientType: ColorScaleGradientType }): ColorScale {
+        const optionsWithDefaults: ColorScaleOptions = {
+            type: ColorScaleType.Continuous,
+            colorPalette: this.getSelectedColorPalette(
+                options.gradientType === ColorScaleGradientType.Sequential
+                    ? ColorPaletteType.ContinuousSequential
+                    : ColorPaletteType.ContinuousDiverging,
+            ),
+            gradientType: options.gradientType,
+            steps: this.getSteps()[
+                options.gradientType === ColorScaleGradientType.Sequential
+                    ? ColorScaleDiscreteSteps.Sequential
+                    : ColorScaleDiscreteSteps.Diverging
+            ],
+        };
+
+        return new ColorScale(optionsWithDefaults);
     }
 }
