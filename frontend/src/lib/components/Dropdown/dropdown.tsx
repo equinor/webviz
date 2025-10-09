@@ -46,7 +46,7 @@ export type DropdownProps<TValue = string> = {
 } & BaseComponentProps;
 
 const MIN_HEIGHT = 200;
-const OPTION_HEIGHT = 32;
+const OPTION_HEIGHT = 34;
 const DEFAULT_POPOVER_MAX_WIDTH = 500;
 
 type DropdownRect = {
@@ -478,7 +478,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
         const adornment = selectedOption?.adornment || selectedOption?.parent?.adornment;
 
         if (!adornment) return null;
-        return <span className="align-sub max-h-5 max-w-5 overflow-hidden">{adornment}</span>;
+        return <span className="align-sub inline-flex items-center max-h-6 max-w-6 overflow-hidden">{adornment}</span>;
     }
 
     function handleSelectPreviousOption() {
@@ -647,9 +647,9 @@ function OptionItem<TValue>(props: OptionProps<TValue>): React.ReactNode {
             onClick={() => !props.disabled && props.onSelect(props.value)}
         >
             {props.adornment && (
-                <div className="max-w-5 max-h-5 overflow-hidden flex-shrink-0 inline-flex">{props.adornment}</div>
+                <div className="max-w-8 max-h-8 overflow-hidden flex-shrink-0 inline-flex">{props.adornment}</div>
             )}
-            <div className="truncate">{props.label}</div>
+            <div className="truncate max-h-8">{props.label}</div>
         </li>
     );
 }
