@@ -77,9 +77,7 @@ class PolygonsAccess:
 
         # Keep backward compatibility for older datasets
         if all(col in poly_df.columns for col in ["X", "Y", "Z", "ID"]):
-            poly_df = poly_df.rename(
-                columns={"X": "X_UTME", "Y": "Y_UTMN", "Z": "Z_TVDSS", "ID": "POLY_ID"}
-            )
+            poly_df = poly_df.rename(columns={"X": "X_UTME", "Y": "Y_UTMN", "Z": "Z_TVDSS", "ID": "POLY_ID"})
             poly_df["NAME"] = "NO_NAME_IN_METADATA"
             is_valid = True
 
