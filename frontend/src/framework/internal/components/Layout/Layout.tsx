@@ -268,34 +268,28 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
         [controller, bindings, viewportSize, anyModuleMaximized, isPreviewing],
     );
 
-    const convertLayoutRectToRealRect = React.useCallback(function convertLayoutRectToRealRect(
-        el: LayoutElement,
-        size: Size2D,
-    ) {
+    function convertLayoutRectToRealRect(el: LayoutElement, size: Size2D) {
         return {
             x: el.relX * size.width,
             y: el.relY * size.height,
             width: el.relWidth * size.width,
             height: el.relHeight * size.height,
         };
-    }, []);
+    }
 
-    const computeModuleLayoutProps = React.useCallback(
-        (instance: ModuleInstance<any>) => {
-            const el = layoutElements.find((le) => le.moduleInstanceId === instance.getId());
-            if (!el) return null;
-            const rect = convertLayoutRectToRealRect(el, viewportSize);
-            return {
-                x: rect.x,
-                y: rect.y,
-                width: rect.width,
-                height: rect.height,
-                isMaximized: el.maximized,
-                isMinimized: el.minimized,
-            };
-        },
-        [layoutElements, viewportSize, convertLayoutRectToRealRect],
-    );
+    function computeModuleLayoutProps(instance: ModuleInstance<any>) {
+        const el = layoutElements.find((le) => le.moduleInstanceId === instance.getId());
+        if (!el) return null;
+        const rect = convertLayoutRectToRealRect(el, viewportSize);
+        return {
+            x: rect.x,
+            y: rect.y,
+            width: rect.width,
+            height: rect.height,
+            isMaximized: el.maximized,
+            isMinimized: el.minimized,
+        };
+    }
 
     const onContainerPointerLeave = React.useCallback(function onContainerPointerLeave() {
         setCursor("default");
