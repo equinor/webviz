@@ -1,6 +1,7 @@
+import type { Layout, PlotData } from "plotly.js";
+
 import { makeHistogramTrace } from "@modules/_shared/histogram";
 import { computeQuantile } from "@modules/_shared/utils/math/statistics";
-import type { Layout, PlotData, PlotType } from "plotly.js";
 
 import { ParameterDistributionPlotType } from "../../typesAndEnums";
 

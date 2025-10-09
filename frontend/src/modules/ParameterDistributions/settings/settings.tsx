@@ -1,5 +1,8 @@
 import React from "react";
 
+import { Info } from "@mui/icons-material";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import type { ParameterIdent } from "@framework/EnsembleParameters";
@@ -11,8 +14,6 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { ParametersSelector } from "@modules/_shared/components/ParameterSelector";
-import { Info } from "@mui/icons-material";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import type { Interfaces } from "../interfaces";
 import {
