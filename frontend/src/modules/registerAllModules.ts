@@ -8,7 +8,7 @@ import "./InplaceVolumesPlot/registerModule";
 import "./InplaceVolumesTable/registerModule";
 import "./Intersection/registerModule";
 import "./Map/registerModule";
-import "./ParameterDistributionMatrix/registerModule";
+import "./ParameterDistributions/registerModule";
 import "./ParameterResponseCorrelationParallelCoordsPlot/registerModule";
 import "./ParameterResponseCorrelationBarPlot/registerModule";
 import "./ParameterResponseCorrelationMatrixPlot/registerModule";

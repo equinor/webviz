@@ -4,10 +4,12 @@ export function makeHistogramTrace({
     xValues,
     numBins,
     color,
+    showPercentageInBar,
 }: {
     xValues: number[];
     numBins: number;
     color: string;
+    showPercentageInBar?: boolean;
 }): Partial<PlotData> {
     const xMin = xValues.reduce((min, v) => Math.min(min, v), Infinity);
     const xMax = xValues.reduce((max, v) => Math.max(max, v), -Infinity);
@@ -43,6 +45,7 @@ export function makeHistogramTrace({
         showlegend: false,
 
         histnorm: "percent",
+
         xbins: {
             start: xMin,
             end: end,
@@ -51,9 +54,11 @@ export function makeHistogramTrace({
 
         autobinx: false,
         hovertemplate: "Range: %{x}<br>Percentage: %{y:.2f}%<extra></extra>",
-        texttemplate: "%{y:.1f}%",
-        textposition: "outside",
     };
+    if (showPercentageInBar) {
+        trace.texttemplate = "%{y:.1f}%";
+        trace.textposition = "outside";
+    }
 
     return trace;
 }
