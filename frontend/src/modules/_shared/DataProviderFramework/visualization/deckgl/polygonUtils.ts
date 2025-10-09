@@ -1,5 +1,6 @@
-import type { PolygonData_api } from "@api";
 import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
+
+import type { PolygonData_api } from "@api";
 
 export enum LabelPositionType {
     CENTROID = "centroid",

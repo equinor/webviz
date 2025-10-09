@@ -1,9 +1,10 @@
-import type { PolygonData_api } from "@api";
 import type { CompositeLayerProps, FilterContext, Layer, UpdateParameters } from "@deck.gl/core";
 import { CompositeLayer } from "@deck.gl/core";
 import { GeoJsonLayer, TextLayer } from "@deck.gl/layers";
 import { parseHex, type Rgb } from "culori";
 import type { FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
+
+import type { PolygonData_api } from "@api";
 
 import {
     createPolygonFeatureCollection,
