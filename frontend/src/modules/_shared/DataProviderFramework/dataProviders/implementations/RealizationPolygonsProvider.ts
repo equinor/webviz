@@ -15,6 +15,7 @@ const realizationPolygonsSettings = [
     Setting.REALIZATION,
     Setting.POLYGONS_ATTRIBUTE,
     Setting.POLYGONS_NAME,
+    Setting.POLYGON_VISUALIZATION,
 ] as const;
 export type RealizationPolygonsSettings = typeof realizationPolygonsSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationPolygonsSettings>;

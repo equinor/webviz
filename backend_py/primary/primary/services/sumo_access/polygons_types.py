@@ -10,3 +10,11 @@ class PolygonsMeta(BaseModel):
     tagname: str
     content: SumoContent
     is_stratigraphic: bool
+
+
+class PolygonData(BaseModel):
+    x_arr: list[float]
+    y_arr: list[float]
+    z_arr: list[float]
+    poly_id: int | str
+    name: str

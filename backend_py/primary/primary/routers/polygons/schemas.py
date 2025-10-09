@@ -38,3 +38,4 @@ class PolygonData(BaseModel):
     y_arr: List[float]
     z_arr: List[float]
     poly_id: int | str
+    name: str
