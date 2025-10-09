@@ -12,7 +12,7 @@ function layoutElementToRect(layoutElement: LayoutElement): Rect2D {
     };
 }
 
-export const LAYOUT_BOX_DROP_MARGIN = 25;
+export const LAYOUT_BOX_DROP_MARGIN = 5;
 export const LAYOUT_BOX_RESIZE_MARGIN = 5;
 export const EDGE_DROP_WEIGHT = 50;
 export const EDGE_RESIZE_WEIGHT = 5;
@@ -112,23 +112,11 @@ export class LayoutNode {
         const absoluteHeight = absoluteRect.height * realSizeFactor.height;
 
         const lvl = this._level;
-        const parentLvl = this._parent?._level ?? lvl;
 
-        let mxLvl = parentLvl;
-        if (this._parent === null || this._parent._layoutDirection === LayoutDirection.HORIZONTAL) {
-            mxLvl = lvl;
-        }
+        // margins in px based on own depth only
+        const rawMx = LAYOUT_BOX_DROP_MARGIN * lvl;
+        const rawMy = LAYOUT_BOX_DROP_MARGIN * lvl;
 
-        let myLvl = parentLvl;
-        if (this._parent === null || this._parent._layoutDirection !== LayoutDirection.HORIZONTAL) {
-            myLvl = lvl;
-        }
-
-        // raw margins in px
-        const rawMx = LAYOUT_BOX_DROP_MARGIN * mxLvl;
-        const rawMy = LAYOUT_BOX_DROP_MARGIN * myLvl;
-
-        // clamp so we never invert the rect; also cap to a fraction to stay sane
         const marginX = Math.min(rawMx, Math.max(0, (absoluteWidth - MIN_FRAME_PX) / 2));
         const marginY = Math.min(rawMy, Math.max(0, (absoluteHeight - MIN_FRAME_PX) / 2));
 
@@ -632,7 +620,7 @@ export class LayoutNode {
                 this._parent._layoutDirection === LayoutDirection.HORIZONTAL ||
                 this._parent._layoutDirection === LayoutDirection.MAIN
             ) {
-                const th = clampThickness(rect.height * 0.25, "y");
+                const th = clampThickness(rect.height * 0.3, "y");
                 edges.push({
                     rect: { x: rect.x, y: rect.y, width: rect.width, height: th },
                     edge: LayoutNodeEdgeType.TOP,
@@ -646,7 +634,7 @@ export class LayoutNode {
                 this._parent._layoutDirection === LayoutDirection.VERTICAL ||
                 this._parent._layoutDirection === LayoutDirection.MAIN
             ) {
-                const tw = clampThickness(rect.width * 0.25, "x");
+                const tw = clampThickness(rect.width * 0.3, "x");
                 edges.push({
                     rect: { x: rect.x, y: rect.y, width: tw, height: rect.height },
                     edge: LayoutNodeEdgeType.LEFT,
@@ -890,19 +878,22 @@ export class LayoutNode {
 
     private positionToIndex(position: number, ignoreBoxes: LayoutNode[]): number {
         if (this._layoutDirection === LayoutDirection.HORIZONTAL) {
-            const elementsBeforePosition = this._children.filter(
-                (child) => !ignoreBoxes.includes(child) && child._rectRelativeToParent.x < position,
-            );
+            const elementsBeforePosition = this._children.filter((child) => {
+                if (ignoreBoxes.includes(child)) return false;
+                const abs = child.getAbsoluteRect();
+                return abs.x < position;
+            });
             return elementsBeforePosition.length;
         }
         if (this._layoutDirection === LayoutDirection.VERTICAL) {
-            const elementsBeforePosition = this._children.filter(
-                (child) => !ignoreBoxes.includes(child) && child._rectRelativeToParent.y < position,
-            );
+            const elementsBeforePosition = this._children.filter((child) => {
+                if (ignoreBoxes.includes(child)) return false;
+                const abs = child.getAbsoluteRect();
+                return abs.y < position;
+            });
             return elementsBeforePosition.length;
         }
-
-        return position;
+        return 0;
     }
 
     moveLayoutElement(source: LayoutNode, destination: LayoutNode, edge: LayoutNodeEdge): void {

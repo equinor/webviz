@@ -82,6 +82,8 @@ export function LayoutOverlay(props: LayoutOverlayProps) {
                 top: rect.y,
                 width: rect.width,
                 height: rect.height,
+                minWidth: arrowSize * 4,
+                minHeight: arrowSize * 4,
                 zIndex: props.zIndex + 1,
                 display: "flex",
                 flexDirection: isRowDirection ? "row" : "column",
@@ -114,19 +116,17 @@ type ArrowProps = {
 };
 
 function Arrow(props: ArrowProps) {
-    const arrowStyle = {
-        width: props.size,
-        height: props.size,
-        borderColor: "black",
-    } as const;
-
     const borderWidth = Math.max(1, Math.floor(props.size / 4));
 
     return (
         <div
-            className={`rotate-45`}
+            className="transform rotate-45"
             style={{
-                ...arrowStyle,
+                width: props.size,
+                height: props.size,
+                boxSizing: "border-box",
+                borderStyle: "solid",
+                borderColor: "black",
                 ...(props.direction === "left" && { borderLeftWidth: borderWidth, borderBottomWidth: borderWidth }),
                 ...(props.direction === "right" && { borderTopWidth: borderWidth, borderRightWidth: borderWidth }),
                 ...(props.direction === "top" && { borderTopWidth: borderWidth, borderLeftWidth: borderWidth }),

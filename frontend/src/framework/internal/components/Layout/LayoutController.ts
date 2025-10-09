@@ -124,6 +124,8 @@ export class LayoutController {
     private _cancelTimerId: ReturnType<typeof setTimeout> | null = null;
     private _phase: Phase = Phase.IDLE;
 
+    private _isAttached: boolean = false;
+
     // Bound handler refs (single stable references for add/remove)
     private _boundOnPointerMove: (e: PointerEvent) => void;
     private _boundOnPointerUp: (e: PointerEvent) => void;
@@ -142,10 +144,16 @@ export class LayoutController {
     }
 
     attach() {
+        if (this._isAttached) {
+            logger.console?.log("Already attached");
+            return;
+        }
+
+        this._isAttached = true;
         logger.console?.log("Attaching event listeners");
         document.addEventListener("pointermove", this._boundOnPointerMove, { passive: false });
-        document.addEventListener("pointerup", this._boundOnPointerUp, { passive: false });
-        document.addEventListener("pointercancel", this._boundOnPointerCancel, { passive: false });
+        document.addEventListener("pointerup", this._boundOnPointerUp);
+        document.addEventListener("pointercancel", this._boundOnPointerCancel);
         document.addEventListener("keydown", this._boundOnKeyDown);
     }
 
@@ -155,6 +163,8 @@ export class LayoutController {
         document.removeEventListener("pointerup", this._boundOnPointerUp);
         document.removeEventListener("pointercancel", this._boundOnPointerCancel);
         document.removeEventListener("keydown", this._boundOnKeyDown);
+
+        this._isAttached = false;
 
         this.cancelInteraction();
     }
@@ -177,13 +187,13 @@ export class LayoutController {
         this._bindings.setTempLayout(this._previewRootNode.toLayout());
     }
 
-    /** Ensure we have a frozen preview root. Push an initial snapshot to the view. */
+    /** Ensure we have a preview root. Push an initial snapshot to the view. */
     private ensurePreviewRootNode(): LayoutNode | null {
         if (!this._previewRootNode) {
             this._previewRootNode = this._activeRootNode ? this._activeRootNode.clone() : null;
             if (this._previewRootNode) {
                 // Push first preview snapshot
-                this._bindings.setRootNode(this._previewRootNode);
+                this._bindings.setRootNode(this._previewRootNode.clone());
                 this._bindings.setTempLayout(this._previewRootNode.toLayout());
             }
         }
@@ -201,7 +211,7 @@ export class LayoutController {
 
         logger.console?.log("Starting drag", dragSource);
 
-        // Compute offset so the card doesn't jump
+        // Compute offset so the module doesn't jump
         const localPointerDown = this._bindings.toLocalPx(dragSource.pointerDownClientPos);
         const localElementTopLeft = this._bindings.toLocalPx(dragSource.elementPos);
         const pointerOffset = {
@@ -244,6 +254,16 @@ export class LayoutController {
     updateBindings(next: LayoutControllerBindings) {
         logger.console?.log("Updating bindings");
         this._bindings = next;
+
+        // if we're dragging or resizing, `toLocalPx` may have changed, so update the preview
+        if (this._mode.kind === ModeKind.DRAG) {
+            const local = this._bindings.toLocalPx(this._mode.lastClientPos);
+            this.updateDragPosition();
+            this.queueDragPreview(local);
+        } else if (this._mode.kind === ModeKind.RESIZE) {
+            const local = this._bindings.toLocalPx(this._mode.lastClientPos);
+            this.queueResizePreview(local);
+        }
     }
 
     cancelInteraction() {
@@ -256,6 +276,7 @@ export class LayoutController {
         this._mode = { kind: ModeKind.IDLE };
         this._hoverTarget = null;
         this._hoverLocalPos = null;
+        this._previewRootNode = null;
         this._bindings.setTempLayout(null);
         this._bindings.setDragAndClientPosition(null, null);
         this._bindings.setDraggingModuleId(null);
@@ -327,6 +348,7 @@ export class LayoutController {
             if (this.isOutOfViewport(local)) {
                 logger.console?.log("Pointer moved out of viewport, cancelling interaction");
 
+                // NOTE: we do not cancel everything here, so not using cancelInteraction()
                 this._bindings.setTempLayout(null);
                 this._bindings.setDragAndClientPosition(null, null);
                 this._hoverTarget = null;
@@ -334,6 +356,8 @@ export class LayoutController {
                 this.clearHoverTimer();
                 this.clearCancelTimer();
                 this._previewRootNode = null;
+
+                this.setPhase(Phase.HOVER);
 
                 return;
             }
@@ -415,13 +439,12 @@ export class LayoutController {
     private onPointerUp() {
         if (this._mode.kind === ModeKind.IDLE) return;
 
-        // 1) Unlock cursor immediately (visual feedback)
+        // Unlock cursor immediately (visual feedback)
         this._bindings.setCursor("default");
 
         if (this._mode.kind === ModeKind.DRAG) {
             const source = this._mode.source;
 
-            // --- Decide what to commit BEFORE clearing hover/temp state ---
             let toCommit: LayoutElement[] | null = this._previewRootNode?.toLayout() ?? null;
 
             // If no preview yet (never promoted) but we're in HOVER,
@@ -430,30 +453,10 @@ export class LayoutController {
                 toCommit = this.synthesizeHoverPreviewLayout();
             }
 
-            /*
-
-            // NEW module empty-dashboard fallback (unchanged)
-            if (isDragSourceKindNew(source) && (!toCommit || toCommit.length === 0) && this._hoverTarget) {
-                const empty = !this._activeRootNode || this._activeRootNode.getChildren().length === 0;
-                if (empty) {
-                    toCommit = [
-                        {
-                            relX: 0,
-                            relY: 0,
-                            relWidth: 1,
-                            relHeight: 1,
-                            moduleInstanceId: source.id,
-                            moduleName: source.moduleName,
-                        },
-                    ];
-                }
-            }
-                */
-
-            // --- Now clear UI state ---
+            // Clear UI state
             this.clearHoverTimer();
             this.clearCancelTimer();
-            // (DON'T null _hoverLocalPos before synthesize; we did synthesis above)
+
             this._hoverTarget = null;
             this._hoverLocalPos = null;
 
@@ -461,7 +464,7 @@ export class LayoutController {
             this._bindings.setDraggingModuleId(null);
             this._bindings.setTempPlaceholderId(null);
 
-            // --- Commit ---
+            // Commit
             if (isDragSourceKindNew(source)) {
                 if (toCommit && toCommit.length) {
                     this._bindings.createModuleAndCommit(source.moduleName, toCommit, source.id);
@@ -485,11 +488,11 @@ export class LayoutController {
             this._bindings.setTempLayout(null);
         }
 
-        // 5) Exit preview mode (single place)
+        // Exit preview mode (single place)
         this._previewRootNode = null;
         this.setIsPreviewing(false);
 
-        // 6) Controller housekeeping
+        // Controller housekeeping
         this.cancelAnyScheduledFrame();
         this._mode = { kind: ModeKind.IDLE };
         this.setPhase(Phase.IDLE);
@@ -558,6 +561,7 @@ export class LayoutController {
                 this._previewRootNode = pre;
                 this.pushPreviewRootNode();
             }
+            this.setPhase(Phase.PREVIEW);
             return;
         }
 
@@ -589,7 +593,7 @@ export class LayoutController {
                     logger.console?.log("Pointer over preview placeholder, clearing cancel timer");
                     this.clearCancelTimer();
                 } else {
-                    logger.console?.log("Pointer over preview placeholder, arming cancel timer");
+                    logger.console?.log("Pointer not over preview placeholder, arming cancel timer");
                     this.armCancelTimer();
                 }
             }
@@ -597,10 +601,6 @@ export class LayoutController {
         }
 
         logger.console?.log("Pointer over edge", edge, "in container", container.pathFromRoot());
-
-        // Over a valid edge
-        // this.clearHoverTimer();
-        // this.clearCancelTimer();
 
         const key = { containerPath: container.pathFromRoot(), edge: edge };
         const same =
@@ -721,6 +721,7 @@ export class LayoutController {
         this._previewRootNode = pre;
         this.updateDragPosition();
         this.pushPreviewRootNode();
+        this.setPhase(Phase.PREVIEW);
     }
 
     private cancelPreviewForHoverExit() {

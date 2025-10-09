@@ -35,14 +35,13 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
 
     // DOM refs / size
     const containerRef = React.useRef<HTMLDivElement>(null);
-    const rootRef = React.useRef<HTMLDivElement>(null);
     const viewportSize = useElementSize(containerRef);
 
     // Dashboard topics
     const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances);
     const trueLayout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.Layout);
 
-    // Temp layout for preview (controller drives this)
+    // Temp layout for preview (driven by controller)
     const [previewLayout, setPreviewLayout] = React.useState<LayoutElement[] | null>(null);
 
     const [rootNode, setRootNode] = React.useState<LayoutNode>(makeLayoutNodes(trueLayout));
@@ -136,9 +135,11 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
         function updateLayout() {
             controller.setCommittedLayout(trueLayout);
 
+            /*
             if (!isPreviewing) {
                 setRootNode(makeLayoutNodes(trueLayout));
             }
+            */
         },
         [trueLayout, controller, isPreviewing],
     );
@@ -201,6 +202,8 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
             const unsubRemove = guiMessageBroker.subscribeToEvent(
                 GuiEvent.RemoveModuleInstanceRequest,
                 function handleModuleRemove(payload: { moduleInstanceId: string }) {
+                    controller.cancelInteraction();
+
                     const current = (previewLayout ?? trueLayout) as LayoutElement[];
 
                     // Remove the element and repack to fill 100%
@@ -223,8 +226,8 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
         [guiMessageBroker, controller, dashboard, previewLayout, trueLayout],
     );
 
-    const onContainerPointerMove = React.useCallback(
-        function onContainerPointerMove(e: React.PointerEvent) {
+    const handleContainerPointerMove = React.useCallback(
+        function handleContainerPointerMove(e: React.PointerEvent) {
             if (!rootNodeRef.current || isPreviewing) return;
             const local = bindings.toLocalPx({ x: e.clientX, y: e.clientY });
             const hit = rootNodeRef.current.hitTestDivider(local, viewportSize);
@@ -236,8 +239,8 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
         [bindings, viewportSize, cursor, isPreviewing],
     );
 
-    const onContainerPointerDown = React.useCallback(
-        function onContainerPointerDown(e: React.PointerEvent) {
+    const handleContainerPointerDown = React.useCallback(
+        function handleContainerPointerDown(e: React.PointerEvent) {
             if (anyModuleMaximized || isPreviewing) return;
             if (!rootNodeRef.current) return;
             const clientPos = { x: e.clientX, y: e.clientY };
@@ -261,15 +264,6 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
         [controller, bindings, viewportSize, anyModuleMaximized, isPreviewing],
     );
 
-    function convertLayoutRectToRealRect(el: LayoutElement, size: Size2D) {
-        return {
-            x: el.relX * size.width,
-            y: el.relY * size.height,
-            width: el.relWidth * size.width,
-            height: el.relHeight * size.height,
-        };
-    }
-
     function computeModuleLayoutProps(instance: ModuleInstance<any>) {
         const el = layoutElements.find((le) => le.moduleInstanceId === instance.getId());
         if (!el) return null;
@@ -284,9 +278,12 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
         };
     }
 
-    const onContainerPointerLeave = React.useCallback(function onContainerPointerLeave() {
-        setCursor("default");
-    }, []);
+    const handleContainerPointerLeave = React.useCallback(
+        function onContainerPointerLeave() {
+            if (!isPreviewing) setCursor("default");
+        },
+        [isPreviewing],
+    );
 
     const handleFullscreenModuleChange = React.useCallback(
         function handleFullscreenModuleChange(moduleInstanceId: string) {
@@ -307,14 +304,14 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
     );
 
     return (
-        <div ref={rootRef} className="flex flex-col h-full w-full max-w-full">
+        <div className="flex flex-col h-full w-full max-w-full">
             <div
                 ref={containerRef}
                 className="relative grow"
                 style={anyModuleMaximized ? undefined : { cursor }}
-                onPointerMoveCapture={onContainerPointerMove}
-                onPointerLeave={onContainerPointerLeave}
-                onPointerDownCapture={onContainerPointerDown}
+                onPointerMoveCapture={handleContainerPointerMove}
+                onPointerLeave={handleContainerPointerLeave}
+                onPointerDownCapture={handleContainerPointerDown}
             >
                 {/* Edges / sashes hover highlights */}
                 {rootNode && (
@@ -385,3 +382,12 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
         </div>
     );
 };
+
+function convertLayoutRectToRealRect(el: LayoutElement, size: Size2D) {
+    return {
+        x: el.relX * size.width,
+        y: el.relY * size.height,
+        width: el.relWidth * size.width,
+        height: el.relHeight * size.height,
+    };
+}
