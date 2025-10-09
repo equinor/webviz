@@ -90,13 +90,13 @@ export type VisualizationGroupMetadata<TGroupType extends GroupType> = {
     name: string;
 };
 
-export type BranchContent<
+export type VisualizationGroup<
     TTarget extends VisualizationTarget,
     TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
     TAccumulatedData extends Record<string, any> = Record<string, never>,
     TGroupType extends GroupType = GroupType,
 > = VisualizationGroupMetadata<TGroupType> & {
-    children: (BranchContent<TTarget, TCustomGroupProps, TAccumulatedData> | DataProviderVisualization<TTarget>)[];
+    children: (VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> | DataProviderVisualization<TTarget>)[];
     annotations: Annotation[];
     aggregatedErrorMessages: (StatusMessage | string)[];
     combinedBoundingBox: bbox.BBox | null;
@@ -218,7 +218,7 @@ export type AssemblerProduct<
     TTarget extends VisualizationTarget,
     TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
     TAccumulatedData extends Record<string, any> = Record<string, never>,
-> = Omit<BranchContent<TTarget, TCustomGroupProps, TAccumulatedData>, keyof VisualizationGroupMetadata<any>>;
+> = Omit<VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>, keyof VisualizationGroupMetadata<any>>;
 
 export type CustomGroupPropsMap = Partial<Record<GroupType, Record<string, any>>>;
 
@@ -304,9 +304,9 @@ export class VisualizationAssembler<
         inheritedDataProviders: DataProvider<any, any, any>[],
         accumulatedData: TAccumulatedData,
         injectedData?: TInjectedData,
-    ): BranchContent<TTarget, TCustomGroupProps, TAccumulatedData> {
+    ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
         const children: (
-            | BranchContent<TTarget, TCustomGroupProps, TAccumulatedData>
+            | VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData>
             | DataProviderVisualization<TTarget>
         )[] = [];
         const annotations: Annotation[] = [];
@@ -478,8 +478,8 @@ export class VisualizationAssembler<
         TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     >(
         group: Group<TSettings>,
-        product: BranchContent<TTarget, TCustomGroupProps, TAccumulatedData, GroupType>,
-    ): BranchContent<TTarget, TCustomGroupProps, TAccumulatedData> {
+        product: VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData, GroupType>,
+    ): VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> {
         const func = this._groupCustomPropsCollectors.get(group.getGroupType());
 
         return {

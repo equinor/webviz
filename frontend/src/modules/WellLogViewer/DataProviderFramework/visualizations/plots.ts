@@ -9,7 +9,7 @@ import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProvide
 import type {
     DataProviderVisualization,
     TransformerArgs,
-    BranchContent,
+    VisualizationGroup,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import { VisualizationItemType } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
@@ -175,7 +175,7 @@ export function plotDataAccumulator(
 }
 
 export type PlotVisualization = DataProviderVisualization<VisualizationTarget.WSC_WELL_LOG, TemplatePlot>;
-export type DiffVisualizationGroup = BranchContent<
+export type DiffVisualizationGroup = VisualizationGroup<
     VisualizationTarget.WSC_WELL_LOG,
     never,
     never,
@@ -183,13 +183,13 @@ export type DiffVisualizationGroup = BranchContent<
 >;
 
 export function isDiffPlotGroup(
-    item: BranchContent<any, any, any, any> | DataProviderVisualization<any, any>,
+    item: VisualizationGroup<any, any, any, any> | DataProviderVisualization<any, any>,
 ): item is DiffVisualizationGroup {
     return item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.WELL_LOG_DIFF_GROUP;
 }
 
 export function isPlotVisualization(
-    item: BranchContent<any, any, any, any> | DataProviderVisualization<any, any>,
+    item: VisualizationGroup<any, any, any, any> | DataProviderVisualization<any, any>,
 ): item is PlotVisualization {
     if (item.itemType !== VisualizationItemType.DATA_PROVIDER_VISUALIZATION) return false;
 
