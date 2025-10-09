@@ -1298,6 +1298,38 @@ export type GetEnsembleDetailsResponses_api = {
 
 export type GetEnsembleDetailsResponse_api = GetEnsembleDetailsResponses_api[keyof GetEnsembleDetailsResponses_api];
 
+export type PostRefreshFingerprintsForEnsemblesData_api = {
+    /**
+     * Ensembles to refresh and get fingerprints for, specified as pairs of caseUuid,ensembleName
+     */
+    body: Array<EnsembleIdent_api>;
+    path?: never;
+    query?: {
+        t?: number;
+    };
+    url: "/ensembles/refresh_fingerprints";
+};
+
+export type PostRefreshFingerprintsForEnsemblesErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type PostRefreshFingerprintsForEnsemblesError_api =
+    PostRefreshFingerprintsForEnsemblesErrors_api[keyof PostRefreshFingerprintsForEnsemblesErrors_api];
+
+export type PostRefreshFingerprintsForEnsemblesResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<string | null>;
+};
+
+export type PostRefreshFingerprintsForEnsemblesResponse_api =
+    PostRefreshFingerprintsForEnsemblesResponses_api[keyof PostRefreshFingerprintsForEnsemblesResponses_api];
+
 export type PostGetTimestampsForEnsemblesData_api = {
     /**
      * A list of ensemble idents (aka; case uuid and ensemble name)

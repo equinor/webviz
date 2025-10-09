@@ -2,14 +2,16 @@ from typing import List
 import asyncio
 
 
-from fastapi import APIRouter, Depends, Path, Query, Body
+from fastapi import APIRouter, Depends, Path, Query, Body, Response
 
 
 from primary.auth.auth_helper import AuthHelper
 from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.sumo_access.sumo_inspector import SumoInspector
+from primary.services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.middleware.add_browser_cache import no_cache
+from primary.utils.response_perf_metrics import ResponsePerfMetrics
 
 from . import schemas
 
@@ -112,6 +114,42 @@ async def get_ensemble_details(
             dataUpdatedAtUtcMs=timestamps.data_updated_at_utc_ms,
         ),
     )
+
+
+@router.post("/ensembles/refresh_fingerprints")
+@no_cache
+async def post_refresh_fingerprints_for_ensembles(
+    # fmt:off
+    response: Response,
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    ensemble_idents: list[schemas.EnsembleIdent] = Body(description="Ensembles to refresh and get fingerprints for, specified as pairs of caseUuid,ensembleName"),
+    # fmt:on
+) -> list[str | None]:
+    """
+    Retrieves fingerprints for a list of ensembles
+    """
+    perf_metrics = ResponsePerfMetrics(response)
+
+    # !!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!
+    # Maybe refresh_fingerprints is a better name than query_fingerprints since we will force refresh of the fingerprints
+
+    fingerprinter = get_sumo_fingerprinter_for_user(authenticated_user=authenticated_user, cache_ttl_s=120)
+
+    tasks: list[asyncio.Task] = []
+    for ident in ensemble_idents:
+        tasks.append(fingerprinter.calc_and_store_ensemble_fp_async(ident.caseUuid, ident.ensembleName))
+
+    raw_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    ret_fingerprints: list[str | None] = []
+    for res in raw_results:
+        if isinstance(res, Exception):
+            ret_fingerprints.append(None)
+        else:
+            ret_fingerprints.append(res)
+
+    return ret_fingerprints
 
 
 @router.post("/ensembles/get_timestamps")

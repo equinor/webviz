@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import { postGetTimestampsForEnsemblesOptions, type EnsembleIdent_api, type EnsembleTimestamps_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { postRefreshFingerprintsForEnsemblesOptions } from "@api";
 
 export type EnsembleTimestampsItem = {
     ensembleIdent: RegularEnsembleIdent;
@@ -22,6 +23,14 @@ export async function fetchLatestEnsembleTimestamps(
         staleTime: 0,
         gcTime: 0,
     });
+
+    const fingerprints = await queryClient.fetchQuery({
+        ...postRefreshFingerprintsForEnsemblesOptions({ body: idents }),
+        staleTime: 0,
+        gcTime: 0,
+    });
+
+    console.log("Fetched ensemble fingerprints:", { fingerprints });
 
     return ensembleIdents.map((ident, i) => ({
         ensembleIdent: ident,

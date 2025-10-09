@@ -9,6 +9,7 @@ import {
     getCases,
     getEnsembles,
     getEnsembleDetails,
+    postRefreshFingerprintsForEnsembles,
     postGetTimestampsForEnsembles,
     getVectorList,
     getDeltaEnsembleVectorList,
@@ -85,6 +86,9 @@ import type {
     GetCasesData_api,
     GetEnsemblesData_api,
     GetEnsembleDetailsData_api,
+    PostRefreshFingerprintsForEnsemblesData_api,
+    PostRefreshFingerprintsForEnsemblesError_api,
+    PostRefreshFingerprintsForEnsemblesResponse_api,
     PostGetTimestampsForEnsemblesData_api,
     PostGetTimestampsForEnsemblesError_api,
     PostGetTimestampsForEnsemblesResponse_api,
@@ -273,6 +277,47 @@ export const getEnsembleDetailsOptions = (options: Options<GetEnsembleDetailsDat
         },
         queryKey: getEnsembleDetailsQueryKey(options),
     });
+};
+
+export const postRefreshFingerprintsForEnsemblesQueryKey = (
+    options: Options<PostRefreshFingerprintsForEnsemblesData_api>,
+) => [createQueryKey("postRefreshFingerprintsForEnsembles", options)];
+
+export const postRefreshFingerprintsForEnsemblesOptions = (
+    options: Options<PostRefreshFingerprintsForEnsemblesData_api>,
+) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await postRefreshFingerprintsForEnsembles({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: postRefreshFingerprintsForEnsemblesQueryKey(options),
+    });
+};
+
+export const postRefreshFingerprintsForEnsemblesMutation = (
+    options?: Partial<Options<PostRefreshFingerprintsForEnsemblesData_api>>,
+) => {
+    const mutationOptions: UseMutationOptions<
+        PostRefreshFingerprintsForEnsemblesResponse_api,
+        AxiosError<PostRefreshFingerprintsForEnsemblesError_api>,
+        Options<PostRefreshFingerprintsForEnsemblesData_api>
+    > = {
+        mutationFn: async (localOptions) => {
+            const { data } = await postRefreshFingerprintsForEnsembles({
+                ...options,
+                ...localOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
 };
 
 export const postGetTimestampsForEnsemblesQueryKey = (options: Options<PostGetTimestampsForEnsemblesData_api>) => [

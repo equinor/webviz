@@ -20,10 +20,10 @@ async def determine_surf_task_fingerprint_async(
     # For how long should we cache the ensemble fingerprint?
     # The TTL for fingerprints should be aligned with the polling interval we use for busting the client side browser cache.
     # Actually, the backend code that provides data for the the client side browser caching should probably go via the very same SumoFingerprinter cache.
-    fingerprinter = get_sumo_fingerprinter_for_user(authenticated_user=authenticated_user, cache_ttl_s=30)
+    fingerprinter = get_sumo_fingerprinter_for_user(authenticated_user=authenticated_user, cache_ttl_s=60)
 
     # Note that we limit the ensemble portion of the fingerprint to surfaces
-    ensemble_fp = await fingerprinter.get_or_calc_ensemble_fp_async(addr.case_uuid, addr.ensemble_name, "surface")
+    ensemble_fp = await fingerprinter.get_or_calc_ensemble_fp_async(addr.case_uuid, addr.ensemble_name, None)
 
     # Note that we include the ensemble fingerprint in the task hash/fingerprint
     task_fp = sha256((addr.to_addr_str() + ensemble_fp).encode()).hexdigest()
