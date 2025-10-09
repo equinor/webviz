@@ -70,14 +70,20 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
     // Calculate grid dimensions
     const numSubplots = props.dataArr.length;
     const maxColumns = Math.max(1, Math.floor(props.width / MINIMUM_PIXEL_SIZE));
-    const numColumns = Math.min(Math.ceil(Math.sqrt(numSubplots || 1)), maxColumns);
-    const numRows = Math.ceil((numSubplots || 1) / numColumns);
+
+    // Handle edge case where numSubplots < 1 to prevent NaN/Infinity values
+    // Note: We can't early return with ContentWarning here due to React hooks rules -
+    // all hooks (useEffect, useMemo) must be called in the same order on every render.
+    // So we need to ensure safe values for calculations and defer the ContentWarning check until after hooks.
+    const safeNumSubplots = Math.max(1, numSubplots);
+    const numColumns = Math.min(Math.ceil(Math.sqrt(safeNumSubplots)), maxColumns);
+    const numRows = Math.ceil(safeNumSubplots / numColumns);
     const plotWidth = Math.floor(props.width / numColumns) - PLOT_MARGIN;
     const plotHeight = Math.max(FIXED_PLOT_HEIGHT, props.height / numRows) - PLOT_MARGIN;
 
     // Intersection Observer for virtualization
     useEffect(() => {
-        if (!containerRef.current || numSubplots === 0) return;
+        if (!containerRef.current || numSubplots < 1) return;
 
         const observer = new IntersectionObserver(
             (entries) => {
