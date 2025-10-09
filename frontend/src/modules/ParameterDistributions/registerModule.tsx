@@ -6,7 +6,9 @@ import { preview } from "./preview";
 
 export const MODULE_NAME = "ParameterDistributions";
 
-const description = "Shows the sampled parameter distributions used by ERT";
+const description =
+    "Shows parameter distributions from ensemble runs. When comparing prior and posterior ensembles, " +
+    "advanced sorting options help identify which parameters were most updated by data assimilation.";
 
 ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,
