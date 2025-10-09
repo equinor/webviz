@@ -189,8 +189,9 @@ spec:
         minReplicas: 1
         maxReplicas: 4
         triggers:
-          - name: azure-sb
+          - name: my-azure-sb-trigger
             azureServiceBus:
+              namespace: webviz-test
               queueName: test-queue
               messageCount: 1
               activationMessageCount: 0
