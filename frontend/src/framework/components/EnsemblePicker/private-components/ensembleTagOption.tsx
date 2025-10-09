@@ -27,12 +27,12 @@ export function EnsembleTagOption(props: EnsembleTagOptionProps): React.ReactNod
     );
 
     // Color const for passing to ColorTileWithBadge
-    const TAG_OPTION_BACKGROUND_COLOR = props.isFocused ? "bg-blue-100" : "bg-white";
+    const tagOptionBackgroundColor = props.isFocused ? "bg-blue-100" : "bg-white";
 
     return (
         <>
             <li
-                className={`-mx-2 flex items-center ${TAG_OPTION_BACKGROUND_COLOR}`}
+                className={`-mx-2 flex items-center ${tagOptionBackgroundColor}`}
                 style={{
                     height: props.height,
                 }}
@@ -44,7 +44,7 @@ export function EnsembleTagOption(props: EnsembleTagOptionProps): React.ReactNod
                         <EnsembleColorTile
                             ensembleColor={ensembleColor}
                             isRealizationFilterEffective={isRealizationFilterEffective}
-                            badgeClassName={TAG_OPTION_BACKGROUND_COLOR}
+                            badgeClassName={tagOptionBackgroundColor}
                         />
                     )}
                     <Tooltip title={props.label ?? props.value} enterDelay="long">

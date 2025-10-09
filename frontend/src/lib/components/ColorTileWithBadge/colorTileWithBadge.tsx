@@ -17,7 +17,7 @@ export const ColorTileWithBadge: React.FC<ColorTileWithBadgeProps> = (props) => 
             {/* The colored tile */}
             <ColorTile {...props} />
 
-            {/* The badge icon, positioned top-right, with inherited background color via css variable */}
+            {/* The badge icon, positioned top-right */}
             {props.showBadge && (
                 <props.badgeIcon
                     className={`${props.badgeClassName ?? "bg-white"} text-black absolute -top-1 -right-1.5 rounded-full p-px`}
