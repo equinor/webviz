@@ -15,6 +15,16 @@ LOGGER = logging.getLogger(__name__)
 
 
 class PolygonsAccess:
+    """
+    Access class for retrieving sets of polygons from Sumo.
+
+    This class handles polygons stored as individual items in dataio/sumo.
+    In practice these are polygon sets, such as fault networks, where each
+    polygon object in Sumo contains multiple geometrically distinct polygons
+    grouped by POLY_ID. The polygons are defined in UTM coordinates
+    (X_UTME, Y_UTMN, Z_TVDSS).
+    """
+
     def __init__(self, sumo_client: SumoClient, case_uuid: str, ensemble_name: str):
         self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
@@ -78,7 +88,6 @@ class PolygonsAccess:
         # Keep backward compatibility for older datasets
         if all(col in poly_df.columns for col in ["X", "Y", "Z", "ID"]):
             poly_df = poly_df.rename(columns={"X": "X_UTME", "Y": "Y_UTMN", "Z": "Z_TVDSS", "ID": "POLY_ID"})
-            poly_df["NAME"] = "NO_NAME_IN_METADATA"
             is_valid = True
 
         if not is_valid:
@@ -90,6 +99,7 @@ class PolygonsAccess:
         polydata: list[PolygonData] = []
         has_name = "NAME" in poly_df.columns
         for poly_id, pol_dframe in poly_df.groupby("POLY_ID"):
+            # Pick up individual polygons name from the data if it exist, if not encourage users to provide it!
             name = pol_dframe["NAME"].iloc[0] if has_name else "NO_NAME_IN_METADATA"
             polydata.append(
                 PolygonData(
