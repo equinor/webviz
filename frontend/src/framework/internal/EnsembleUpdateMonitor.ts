@@ -9,7 +9,9 @@ import { fetchLatestEnsembleTimestamps } from "./utils/fetchEnsembleTimestamps";
 
 const logger = globalLog.registerLogger("EnsembleUpdateMonitor");
 
-const ENSEMBLE_POLLING_INTERVAL_MS = 60000; // 60 seconds
+// Polling interval for ensemble fingerprints is 5 minutes
+//const ENSEMBLE_POLLING_INTERVAL_MS = 5*60*1000;
+const ENSEMBLE_POLLING_INTERVAL_MS = 10*1000; // For testing, set to 10 seconds
 
 export class EnsembleUpdateMonitor {
     private _queryClient: QueryClient;
