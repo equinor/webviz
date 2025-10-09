@@ -1080,6 +1080,8 @@ export enum WellLogCurveTypeEnum_api {
 }
 
 export type WellboreCasing_api = {
+    wellboreUuid: string;
+    uniqueWellboreIdentifier: string;
     itemType: string;
     diameterNumeric: number;
     diameterInner: number;
@@ -1093,6 +1095,8 @@ export type WellboreCasing_api = {
 };
 
 export type WellboreCompletion_api = {
+    wellboreUuid: string;
+    uniqueWellboreIdentifier: string;
     mdTop: number;
     mdBottom: number;
     tvdTop: number | null;
@@ -1142,6 +1146,8 @@ export type WellboreLogCurveHeader_api = {
 };
 
 export type WellborePerforation_api = {
+    wellboreUuid: string;
+    uniqueWellboreIdentifier: string;
     mdTop: number;
     mdBottom: number;
     tvdTop: number;
@@ -3160,9 +3166,9 @@ export type GetWellboreCompletionsData_api = {
     path?: never;
     query: {
         /**
-         * Wellbore uuid
+         * List of wellbore uuids
          */
-        wellbore_uuid: string;
+        wellbore_uuids: Array<string>;
         t?: number;
     };
     url: "/well/wellbore_completions/";
@@ -3191,9 +3197,9 @@ export type GetWellboreCasingsData_api = {
     path?: never;
     query: {
         /**
-         * Wellbore uuid
+         * List of wellbore uuids
          */
-        wellbore_uuid: string;
+        wellbore_uuids: Array<string>;
         t?: number;
     };
     url: "/well/wellbore_casings/";
@@ -3222,9 +3228,9 @@ export type GetWellborePerforationsData_api = {
     path?: never;
     query: {
         /**
-         * Wellbore uuid
+         * List of wellbore uuids
          */
-        wellbore_uuid: string;
+        wellbore_uuids: Array<string>;
         t?: number;
     };
     url: "/well/wellbore_perforations/";
