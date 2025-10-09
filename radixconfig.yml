@@ -185,11 +185,11 @@ spec:
           cpu: 200m
         limits:
           memory: 200Mi
+      secrets:
+        - DBG_SERVICE_BUS_CONNECTION_STRING
       horizontalScaling:
         minReplicas: 1
         maxReplicas: 4
-        secrets:
-          - DBG_SERVICE_BUS_CONNECTION_STRING
         triggers:
           - name: my-azure-sb-trigger
             azureServiceBus:
