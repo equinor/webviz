@@ -2,6 +2,7 @@ import type React from "react";
 import { useEffect, useRef } from "react";
 
 import { Close } from "@mui/icons-material";
+import { createPortal } from "react-dom";
 
 export type ParameterSortingInfoDialogProps = {
     isOpen: boolean;
@@ -37,24 +38,26 @@ export function ParameterSortingInfoDialog({
 
     // Calculate position relative to anchor element
     const baseStyle: React.CSSProperties = {
-        position: "absolute",
-        zIndex: 1000,
+        position: "fixed",
+        zIndex: 9999,
         backgroundColor: "white",
+        border: "1px solid #e5e7eb",
+        borderRadius: "8px",
+        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+        minWidth: "320px",
+        maxWidth: "400px",
     };
 
-    let style = baseStyle;
-    if (anchorElement) {
-        const rect = anchorElement.getBoundingClientRect();
-        style = {
-            ...baseStyle,
-            top: rect.top,
-            left: rect.left,
-        };
-    }
+    // Position relative to anchor element
+    const rect = anchorElement?.getBoundingClientRect();
+    const style: React.CSSProperties = {
+        ...baseStyle,
+        top: rect ? rect.bottom + 4 : 100,
+        left: rect ? rect.left : 100,
+    };
 
-    return (
+    const dialogContent = (
         <div ref={dialogRef} style={style}>
-            {/* Header with title and close button */}
             <div className="flex justify-between items-center p-4 border-b border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-800">Parameter Sorting Methods</h3>
                 <button onClick={onClose} className="text-gray-400 hover:text-gray-600 cursor-pointer" title="Close">
@@ -103,4 +106,6 @@ export function ParameterSortingInfoDialog({
             </div>
         </div>
     );
+
+    return createPortal(dialogContent, document.body);
 }

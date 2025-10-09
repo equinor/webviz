@@ -12,6 +12,7 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
+import { IconButton } from "@lib/components/IconButton";
 import { Label } from "@lib/components/Label";
 import { ParametersSelector } from "@modules/_shared/components/ParameterSelector";
 
@@ -53,7 +54,11 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
     const ensembleSet = useEnsembleSet(workbenchSession);
     const hasMultipleRegularEnsembles = ensembleSet.getRegularEnsembleArray().length > 1;
     const [isInfoDialogOpen, setIsInfoDialogOpen] = React.useState(false);
-    const infoButtonRef = React.useRef<HTMLDivElement>(null);
+    const infoButtonRef = React.useRef<HTMLButtonElement>(null);
+
+    const handleInfoButtonClick = React.useCallback(() => {
+        setIsInfoDialogOpen(true);
+    }, []);
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
     const setSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
     const intersectedParameterIdents = useAtomValue(intersectedParameterIdentsAtom);
@@ -114,28 +119,30 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                         />
                     </Label>
                     <Label text="Parameter sort method:">
-                        <div className="flex items-center gap-2">
-                            <Dropdown
-                                options={Object.values(ParameterSortMethod).map((type: ParameterSortMethod) => {
-                                    return {
-                                        value: type,
-                                        label: ParameterDistributionSortingMethodEnumToStringMapping[type],
-                                        disabled:
-                                            selectedEnsembleMode === EnsembleMode.INDEPENDENT &&
-                                            type !== ParameterSortMethod.ALPHABETICAL,
-                                    };
-                                })}
-                                value={selectedParameterDistributionSortingMethod}
-                                onChange={setSelectedParameterDistributionSortingMethod}
-                            />
-                            <div
-                                ref={infoButtonRef}
-                                className="text-blue-500 hover:text-blue-700 cursor-pointer"
-                                onClick={() => setIsInfoDialogOpen(!isInfoDialogOpen)}
-                                title="Learn more about sorting methods"
-                            >
-                                <Info fontSize="small" />
+                        <div className="flex items-center gap-3">
+                            <div className="flex-1 min-w-0">
+                                <Dropdown
+                                    options={Object.values(ParameterSortMethod).map((type: ParameterSortMethod) => {
+                                        return {
+                                            value: type,
+                                            label: ParameterDistributionSortingMethodEnumToStringMapping[type],
+                                            disabled:
+                                                selectedEnsembleMode === EnsembleMode.INDEPENDENT &&
+                                                type !== ParameterSortMethod.ALPHABETICAL,
+                                        };
+                                    })}
+                                    value={selectedParameterDistributionSortingMethod}
+                                    onChange={setSelectedParameterDistributionSortingMethod}
+                                />
                             </div>
+                            <IconButton
+                                ref={infoButtonRef}
+                                color="primary"
+                                size="small"
+                                onClick={handleInfoButtonClick}
+                            >
+                                <Info fontSize="inherit" />
+                            </IconButton>
                         </div>
                     </Label>
                     {selectedEnsembleMode === EnsembleMode.INDEPENDENT && (
