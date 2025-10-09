@@ -188,6 +188,8 @@ spec:
       horizontalScaling:
         minReplicas: 1
         maxReplicas: 4
+        secrets:
+          - DBG_SERVICE_BUS_CONNECTION_STRING
         triggers:
           - name: my-azure-sb-trigger
             azureServiceBus:
@@ -195,7 +197,7 @@ spec:
               queueName: test-queue
               messageCount: 1
               activationMessageCount: 0
-              connectionFromEnv: SERVICEBUS_CONNECTION_STRING
+              connectionFromEnv: DBG_SERVICE_BUS_CONNECTION_STRING
       environmentConfig:
         - environment: review
           secretRefs:
