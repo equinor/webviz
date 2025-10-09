@@ -233,24 +233,34 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     const mainDivStyleClasses = props.isActive ? activeStyleClasses : inactiveStyleClasses;
 
     return (
-        <div
-            className={resolveClassNames("rounded-md", mainDivStyleClasses)}
-            title={!props.isActive ? "Click to open filter" : undefined}
-        >
-            <div className="flex justify-center items-center bg-slate-100 rounded-tl-md rounded-tr-md p-1">
+        <div className={resolveClassNames("rounded-md", mainDivStyleClasses)}>
+            <div className="flex justify-center items-center bg-slate-100 rounded-tl-md rounded-tr-md">
                 <div
-                    className={resolveClassNames(
-                        "grow h-full pl-2 flex items-center cursor-pointer font-bold text-sm text-ellipsis overflow-hidden whitespace-nowrap",
-                        {
-                            "pr-2": !props.hasUnsavedSelections,
-                            "opacity-50 group-hover:opacity-75 transition-opacity duration-100":
-                                !props.isActive && props.isAnotherFilterActive,
-                        },
-                    )}
-                    title={props.isActive ? `Ensemble: ${props.ensembleName}` : undefined}
+                    className={resolveClassNames("flex h-full items-center flex-grow group p-2", {
+                        "opacity-50 group-hover:opacity-75 transition-opacity duration-100":
+                            !props.isActive && props.isAnotherFilterActive,
+                    })}
                     onClick={handleHeaderOnClick}
                 >
-                    {props.ensembleName}
+                    <div
+                        className="grow h-full pl-2 flex items-center cursor-pointer font-bold text-sm text-ellipsis overflow-hidden whitespace-nowrap"
+                        title={props.isActive ? `Ensemble: ${props.ensembleName}` : "Click to open filter"}
+                    >
+                        {props.ensembleName}
+                    </div>
+                    <div
+                        className={resolveClassNames("flex h-full items-center gap-3 pr-1 justify-center cursor-help", {
+                            hidden: !areRealizationsFiltered,
+                            "cursor-pointer": !props.isActive,
+                        })}
+                    >
+                        <FilterAlt
+                            titleAccess={`Some realizations are being filtered out${!props.isActive ? "\n(Click to open filter)" : ""}`}
+                            fontSize="small"
+                            className="text-green-600"
+                        />
+                        <div className="bg-slate-400 w-px self-stretch" />
+                    </div>
                 </div>
                 <div className={resolveClassNames("flex h-full items-center gap-1 pr-2")}>
                     <DenseIconButton
@@ -276,6 +286,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                     "opacity-30 group-hover:opacity-75 transition-opacity duration-100":
                         !props.isActive && props.isAnotherFilterActive,
                 })}
+                title={!props.isActive ? "Click to open filter" : undefined}
                 onClickCapture={handleBodyOnClickCapture}
             >
                 <div className="flex flex-col gap-2 p-2">
