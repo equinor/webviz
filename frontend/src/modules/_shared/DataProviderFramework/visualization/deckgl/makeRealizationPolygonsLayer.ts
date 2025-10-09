@@ -1,4 +1,7 @@
+import { hasUncaughtExceptionCaptureCallback } from "node:process";
+
 import { GeoJsonLayer } from "@deck.gl/layers";
+import { parseHex, type Rgb } from "culori";
 import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
 
 import type { PolygonData_api } from "@api";
@@ -8,6 +11,7 @@ import type {
     RealizationPolygonsData,
     RealizationPolygonsSettings,
 } from "../../dataProviders/implementations/RealizationPolygonsProvider";
+import { Setting } from "../../settings/settingsDefinitions";
 
 function zipCoords(xArr: readonly number[], yArr: readonly number[], zArr: readonly number[]): number[][] {
     const coords: number[][] = [];
@@ -34,12 +38,16 @@ export function makeRealizationPolygonsLayer({
     id,
     name,
     getData,
+    getSetting,
 }: TransformerArgs<RealizationPolygonsSettings, RealizationPolygonsData>): GeoJsonLayer | null {
     const polygonsData = getData();
 
     if (!polygonsData) {
         return null;
     }
+    const visualizationSettings = getSetting(Setting.POLYGON_VISUALIZATION);
+    const hexColor = visualizationSettings?.color;
+    const rgbColor = hexColor ? (parseHex(hexColor) as Rgb) : undefined;
 
     const features: Feature<Geometry, GeoJsonProperties>[] = polygonsData.map((polygon) => {
         return polygonsToGeojson(polygon);
@@ -48,13 +56,17 @@ export function makeRealizationPolygonsLayer({
         type: "FeatureCollection",
         features: features,
     };
+    console.log(polygonsData);
 
     return new GeoJsonLayer({
         id,
         name,
         data: data,
-        filled: false,
-        lineWidthMinPixels: 2,
+        filled: visualizationSettings?.fill,
+        getLineColor: rgbColor ? [rgbColor.r * 255, rgbColor.g * 255, rgbColor.b * 255, 255] : undefined,
+        getFillColor: rgbColor ? [rgbColor.r * 255, rgbColor.g * 255, rgbColor.b * 255, 255] : undefined,
+        lineWidthMinPixels: visualizationSettings?.lineThickness,
+
         parameters: {
             depthTest: false,
         },
