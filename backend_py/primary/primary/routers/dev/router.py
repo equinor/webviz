@@ -328,7 +328,7 @@ async def get_send_sb_msg(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    msg_text: Annotated[str, Path(description="The string to sen")],
+    msg_text: Annotated[str, Path(description="The string to send")],
     count: Annotated[int, Query(description="Number of messages to send")] = 1,
     # fmt:on
 ) -> str:
