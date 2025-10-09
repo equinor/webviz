@@ -26,6 +26,7 @@ import {
     getRealizationSurfacesMetadata,
     getObservedSurfacesMetadata,
     getSurfaceData,
+    getStatisticalSurfaceDataHybrid,
     postGetSurfaceIntersection,
     postGetSampleSurfaceInPoints,
     getDeltaSurfaceData,
@@ -107,6 +108,7 @@ import type {
     GetRealizationSurfacesMetadataData_api,
     GetObservedSurfacesMetadataData_api,
     GetSurfaceDataData_api,
+    GetStatisticalSurfaceDataHybridData_api,
     PostGetSurfaceIntersectionData_api,
     PostGetSurfaceIntersectionError_api,
     PostGetSurfaceIntersectionResponse_api,
@@ -663,6 +665,25 @@ export const getSurfaceDataOptions = (options: Options<GetSurfaceDataData_api>) 
             return data;
         },
         queryKey: getSurfaceDataQueryKey(options),
+    });
+};
+
+export const getStatisticalSurfaceDataHybridQueryKey = (options: Options<GetStatisticalSurfaceDataHybridData_api>) => [
+    createQueryKey("getStatisticalSurfaceDataHybrid", options),
+];
+
+export const getStatisticalSurfaceDataHybridOptions = (options: Options<GetStatisticalSurfaceDataHybridData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getStatisticalSurfaceDataHybrid({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getStatisticalSurfaceDataHybridQueryKey(options),
     });
 };
 

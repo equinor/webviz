@@ -2,9 +2,9 @@ import React from "react";
 
 import { isEqual } from "lodash";
 
+import { Tooltip } from "@lib/components/Tooltip";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
 
 export type RealizationNumberDisplayProps = {
     selectedRealizations: readonly number[];
@@ -61,21 +61,24 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
                 rowElements = [];
             }
             const realizationDiv = (
-                <div
+                <Tooltip
                     title={isCurrentRealizationAvailable ? `real-${realization}` : `real-${realization} (unavailable)`}
                     key={realization}
-                    className={resolveClassNames(
-                        `${realizationDivSizeClass} rounded-full aspect-square flex justify-center items-center hover:outline-2 hover:outline-blue-300`,
-                        {
-                            "bg-green-600": isRealizationSelected,
-                            "bg-gray-400": !isRealizationSelected && isCurrentRealizationAvailable,
-                            "bg-gray-300": !isRealizationSelected && !isCurrentRealizationAvailable,
-                            "cursor-pointer": !props.disableOnClick && isCurrentRealizationAvailable,
-                            "cursor-not-allowed": !props.disableOnClick && !isCurrentRealizationAvailable,
-                        },
-                    )}
-                    onClick={isClickDisabled ? undefined : () => handleRealizationElementClick(realization)}
-                />
+                >
+                    <div
+                        className={resolveClassNames(
+                            `${realizationDivSizeClass} rounded-full aspect-square flex justify-center items-center hover:outline-2 hover:outline-blue-300`,
+                            {
+                                "bg-green-600": isRealizationSelected,
+                                "bg-gray-400": !isRealizationSelected && isCurrentRealizationAvailable,
+                                "bg-gray-300": !isRealizationSelected && !isCurrentRealizationAvailable,
+                                "cursor-pointer": !props.disableOnClick && isCurrentRealizationAvailable,
+                                "cursor-not-allowed": !props.disableOnClick && !isCurrentRealizationAvailable,
+                            },
+                        )}
+                        onClick={isClickDisabled ? undefined : () => handleRealizationElementClick(realization)}
+                    />
+                </Tooltip>
             );
             rowElements.push(realizationDiv);
 

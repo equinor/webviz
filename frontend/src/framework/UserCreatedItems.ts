@@ -1,17 +1,29 @@
 import React from "react";
 
+import type { JTDSchemaType } from "ajv/dist/core";
+
 import type { AtomStoreMaster } from "./AtomStoreMaster";
-import { IntersectionPolylines, IntersectionPolylinesEvent } from "./userCreatedItems/IntersectionPolylines";
+import {
+    INTERSECTION_POLYLINES_JTD_SCHEMA,
+    IntersectionPolylines,
+    IntersectionPolylinesEvent,
+    type SerializedIntersectionPolylines,
+} from "./userCreatedItems/IntersectionPolylines";
 import type { WorkbenchSession } from "./WorkbenchSession";
 
-export interface UserCreatedItemSet {
-    serialize(): string;
-    populateFromData(data: string): void;
-}
+export type SerializedUserCreatedItems = {
+    intersectionPolylines: SerializedIntersectionPolylines;
+};
 
 export enum UserCreatedItemsEvent {
     INTERSECTION_POLYLINES_CHANGE = "IntersectionPolylinesChange",
 }
+
+export const USER_CREATED_ITEMS_JTD_SCHEMA: JTDSchemaType<SerializedUserCreatedItems> = {
+    properties: {
+        intersectionPolylines: INTERSECTION_POLYLINES_JTD_SCHEMA,
+    },
+} as const;
 
 export class UserCreatedItems {
     private _intersectionPolylines: IntersectionPolylines;
@@ -22,6 +34,16 @@ export class UserCreatedItems {
         this._intersectionPolylines.subscribe(IntersectionPolylinesEvent.CHANGE, () => {
             this.notifySubscribers(UserCreatedItemsEvent.INTERSECTION_POLYLINES_CHANGE);
         });
+    }
+
+    serializeState(): SerializedUserCreatedItems {
+        return {
+            intersectionPolylines: this._intersectionPolylines.serializeState(),
+        };
+    }
+
+    deserializeState(serializedState: SerializedUserCreatedItems): void {
+        this._intersectionPolylines.deserializeState(serializedState.intersectionPolylines);
     }
 
     subscribe(event: UserCreatedItemsEvent.INTERSECTION_POLYLINES_CHANGE, cb: () => void): () => void {
@@ -47,7 +69,7 @@ export class UserCreatedItems {
     }
 
     isEqual(other: UserCreatedItems): boolean {
-        return this._intersectionPolylines.serialize() === other._intersectionPolylines.serialize();
+        return this._intersectionPolylines.serializeState() === other._intersectionPolylines.serializeState();
     }
 }
 

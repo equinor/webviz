@@ -1,6 +1,6 @@
 import React from "react";
 
-import { AddCircle, Delete, Report } from "@mui/icons-material";
+import { Add, Delete, Report } from "@mui/icons-material";
 
 import type { EnsembleParameters } from "@framework/EnsembleParameters";
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
@@ -20,6 +20,7 @@ import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/S
 import { SmartNodeSelector } from "@lib/components/SmartNodeSelector";
 import type { SmartNodeSelectorTag } from "@lib/components/SmartNodeSelector/smartNodeSelector";
 import { TagPicker } from "@lib/components/TagPicker";
+import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { createContinuousValueSliderStep } from "../private-utils/sliderUtils";
@@ -303,7 +304,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         const displayParameterName = createSmartNodeSelectorTagTextFromParameterIdentString(parameterIdentString);
 
         return (
-            <div key={parameterIdentString} className="grow border  rounded-md p-2">
+            <div key={parameterIdentString} className="grow border rounded-md p-2">
                 <div className="flex flex-col gap-2 ">
                     <div className="flex flex-row items-center gap-2">
                         <div
@@ -317,7 +318,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                             colorScheme={DenseIconButtonColorScheme.DANGER}
                             onClick={() => handleRemoveButtonClick(parameterIdentString)}
                         >
-                            <Delete fontSize="small" />
+                            <Delete fontSize="inherit" />
                         </DenseIconButton>
                     </div>
                     <div className="flex items-center">
@@ -381,15 +382,17 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                             caseInsensitiveMatching={true}
                         />
                     </div>
-                    <div className="grow-0" title={addButtonText ?? undefined}>
-                        <Button
-                            variant="contained"
-                            disabled={isAddButtonDisabled}
-                            endIcon={<AddCircle />}
-                            onClick={handleAddSelectedParametersClick}
-                        >
-                            Add
-                        </Button>
+                    <div className="grow-0">
+                        <Tooltip title={addButtonText ?? ""}>
+                            <Button
+                                variant="contained"
+                                disabled={isAddButtonDisabled}
+                                onClick={handleAddSelectedParametersClick}
+                                className="h-full"
+                            >
+                                <Add fontSize="small" />
+                            </Button>
+                        </Tooltip>
                     </div>
                 </div>
             </div>

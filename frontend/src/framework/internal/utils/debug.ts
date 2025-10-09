@@ -13,6 +13,30 @@ export function debugFlagIsEnabled(flag: string) {
 }
 
 /**
+ * Gets a stored debug setting value
+ * @param setting a debug setting key
+ * @returns the value of the debug setting, or null if not set
+ */
+export function getDebugSetting(setting: string): string | null {
+    const storedSetting = localStorage.getItem(DEBUG_FLAG_PREFIX + setting);
+    if (storedSetting === null) return null;
+    return storedSetting;
+}
+
+/**
+ * Sets a debug setting value
+ * @param setting a debug setting key
+ * @param value the value to set, or null to remove the setting
+ */
+export function setDebugSetting(setting: string, value: string | null) {
+    if (value === null) {
+        localStorage.removeItem(DEBUG_FLAG_PREFIX + setting);
+    } else {
+        localStorage.setItem(DEBUG_FLAG_PREFIX + setting, value);
+    }
+}
+
+/**
  * Passes a given time, unless the `disable-tanstack-cache` debug flag is true
  * @param time time (ms) that the cache is valid for
  * @returns the given time, or 0 if the debug flag is enabled

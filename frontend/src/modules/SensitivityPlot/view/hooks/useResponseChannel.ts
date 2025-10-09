@@ -2,8 +2,8 @@ import { KeyKind } from "@framework/DataChannelTypes";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { WorkbenchSession } from "@framework/WorkbenchSession";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import type { Interfaces } from "@modules/SensitivityPlot/interfaces";
 
 export interface EnsembleResponse {
@@ -24,7 +24,7 @@ export function useResponseChannel(
     viewContext: ViewContext<Interfaces>,
     workbenchSession: WorkbenchSession,
 ): ResponseChannelData {
-    const ensembleSet = useEnsembleSet(workbenchSession);
+    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
 
     const responseReceiver = viewContext.useChannelReceiver({
         receiverIdString: "response",

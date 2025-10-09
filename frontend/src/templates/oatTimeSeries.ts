@@ -20,8 +20,8 @@ const template: Template = {
             syncedSettings: [SyncSettingKey.ENSEMBLE],
         },
         {
-            instanceRef: "TornadoChartInstance",
-            moduleName: "TornadoChart",
+            instanceRef: "SensitivityPlotInstance",
+            moduleName: "SensitivityPlot",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,

@@ -31,10 +31,15 @@ export class ApiErrorHelper {
     }
 
     static fromError(error: Error): ApiErrorHelper | null {
-        if (!(error instanceof AxiosError)) {
-            return null;
+        if (error instanceof AxiosError) {
+            return new ApiErrorHelper(error);
         }
-        return new ApiErrorHelper(error);
+
+        if (error.cause && error.cause instanceof AxiosError) {
+            return new ApiErrorHelper(error.cause);
+        }
+
+        return null;
     }
 
     private extractInfoFromErrorBody(apiError: AxiosError): void {
@@ -73,9 +78,6 @@ export class ApiErrorHelper {
         if (!("type" in error) || !("message" in error)) {
             return;
         }
-
-        this._type = JSON.stringify(error.type);
-        this._message = JSON.stringify(error.message);
     }
 
     hasError(): boolean {

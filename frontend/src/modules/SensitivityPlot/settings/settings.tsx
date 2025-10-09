@@ -125,12 +125,12 @@ export function Settings({
                             value={displayComponentType}
                             options={[
                                 {
-                                    label: "Tornado chart",
-                                    value: DisplayComponentType.TornadoChart,
+                                    label: "Sensitivity chart (Tornado)",
+                                    value: DisplayComponentType.SENSITIVITY_CHART,
                                 },
                                 {
-                                    label: "Table",
-                                    value: DisplayComponentType.Table,
+                                    label: "Sensitivity Table",
+                                    value: DisplayComponentType.SENSITIVITY_TABLE,
                                 },
                             ]}
                             onChange={setDisplayComponentType}
@@ -178,7 +178,7 @@ export function Settings({
                         onChange={handleHideZeroYChange}
                         label="Hide sensitivities without impact"
                     />
-                    {displayComponentType === DisplayComponentType.TornadoChart && (
+                    {displayComponentType === DisplayComponentType.SENSITIVITY_CHART && (
                         <>
                             <Checkbox
                                 checked={showRealizationPoints}

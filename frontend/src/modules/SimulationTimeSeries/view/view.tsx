@@ -7,6 +7,7 @@ import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ModuleViewProps } from "@framework/Module";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { useColorSet, useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
@@ -43,8 +44,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const setActiveTimestampUtcMs = useSetAtom(userSelectedActiveTimestampUtcMsAtom);
 
     // Color palettes
-    const colorSet = workbenchSettings.useColorSet();
-    const parameterColorScale = workbenchSettings.useContinuousColorScale({
+    const colorSet = useColorSet(workbenchSettings);
+    const parameterColorScale = useContinuousColorScale(workbenchSettings, {
         gradientType: ColorScaleGradientType.Diverging,
     });
     const vectorHexColorMap: VectorHexColorMap = {};

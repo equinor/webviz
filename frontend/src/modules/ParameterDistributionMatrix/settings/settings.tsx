@@ -11,7 +11,6 @@ import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 
-
 import type { Interfaces } from "../interfaces";
 import {
     MAX_PARAMETERS,
@@ -32,7 +31,6 @@ import {
     selectedEnsembleIdentsAtom,
     selectedParameterIdentsAtom,
 } from "./atoms/derivedAtoms";
-
 
 export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
