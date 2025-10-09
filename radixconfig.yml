@@ -168,8 +168,15 @@ spec:
             averageUtilization: 80
 
 
+
     - name: worker-mock
       dockerFileName: ./backend_py/worker_mock/Dockerfile
+      secretRefs:
+        azureKeyVaults:
+          - name: webviz
+            items:
+              - name: WEBVIZ-SERVICEBUS-CONNECTIONSTRING
+                envVar: SERVICEBUS_CONNECTION_STRING
       resources:
         requests:
           memory: 200Mi
@@ -195,6 +202,7 @@ spec:
                     envVar: APPLICATIONINSIGHTS_CONNECTION_STRING
           variables:
             OTEL_RESOURCE_ATTRIBUTES: service.name=worker-mock, service.namespace=dev
+
 
 
     - name: redis-user-session
