@@ -70,10 +70,10 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
     // Calculate grid dimensions
     const numSubplots = props.dataArr.length;
     const maxColumns = Math.max(1, Math.floor(props.width / MINIMUM_PIXEL_SIZE));
-    const numColumns = numSubplots > 0 ? Math.min(Math.ceil(Math.sqrt(numSubplots)), maxColumns) : 1;
-    const numRows = numSubplots > 0 ? Math.ceil(numSubplots / numColumns) : 0;
-    const plotWidth = numSubplots > 0 ? Math.floor(props.width / numColumns) - PLOT_MARGIN : 0;
-    const plotHeight = numSubplots > 0 ? Math.max(FIXED_PLOT_HEIGHT, props.height / numRows) - PLOT_MARGIN : 0;
+    const numColumns = Math.min(Math.ceil(Math.sqrt(numSubplots || 1)), maxColumns);
+    const numRows = Math.ceil((numSubplots || 1) / numColumns);
+    const plotWidth = Math.floor(props.width / numColumns) - PLOT_MARGIN;
+    const plotHeight = Math.max(FIXED_PLOT_HEIGHT, props.height / numRows) - PLOT_MARGIN;
 
     // Intersection Observer for virtualization
     useEffect(() => {
