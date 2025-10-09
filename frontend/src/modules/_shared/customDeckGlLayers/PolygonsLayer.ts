@@ -85,7 +85,7 @@ export class PolygonsLayer extends CompositeLayer<PolygonsLayerProps> {
             );
         }
 
-        // Text labels layer -if enabled
+        // Text labels layer - if enabled
         if (this._textData.length > 0 && visualizationSettings?.showLabels) {
             // Calculate label color
             const labelRgbColor = visualizationSettings?.labelColor
