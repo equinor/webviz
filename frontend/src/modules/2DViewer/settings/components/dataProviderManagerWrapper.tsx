@@ -303,6 +303,11 @@ const ACTIONS: ActionGroup[] = [
                         icon: <Icon data={surface_layer} fontSize="small" />,
                         label: "Realization Surface",
                     },
+                    {
+                        label: "Delta surface",
+                        identifier: "delta-surface",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
+                    },
                 ],
             },
             {

@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@lib/components/Button";
 import type { PolygonVisualizationSpec } from "@modules/_shared/components/PolygonVisualizationDialog";
 import { PolygonVisualizationDialog } from "@modules/_shared/components/PolygonVisualizationDialog";
+import { LabelPositionType } from "@modules/_shared/DataProviderFramework/visualization/deckgl/polygonUtils";
 
 import type {
     CustomSettingImplementation,
@@ -17,9 +18,14 @@ type ValueType = PolygonVisualizationSpec | null;
 
 export class PolygonVisualizationSetting implements CustomSettingImplementation<ValueType, SettingCategory.STATIC> {
     defaultValue: ValueType = {
-        color: "#007079",
+        color: "#000000",
         lineThickness: 2,
+        lineOpacity: 1,
         fill: false,
+        fillOpacity: 0.5,
+        showLabels: false,
+        labelPosition: LabelPositionType.CENTROID,
+        labelColor: "#FFFFFF",
     };
 
     getIsStatic(): boolean {
@@ -29,13 +35,26 @@ export class PolygonVisualizationSetting implements CustomSettingImplementation<
     isValueValid(value: ValueType): boolean {
         if (!value) return false;
 
+        const validLabelPositions = Object.values(LabelPositionType);
+
         return (
             typeof value.color === "string" &&
             /^#[0-9A-Fa-f]{6}$/.test(value.color) &&
             typeof value.lineThickness === "number" &&
             value.lineThickness >= 0.5 &&
             value.lineThickness <= 10 &&
-            typeof value.fill === "boolean"
+            typeof value.lineOpacity === "number" &&
+            value.lineOpacity >= 0 &&
+            value.lineOpacity <= 1 &&
+            typeof value.fill === "boolean" &&
+            typeof value.fillOpacity === "number" &&
+            value.fillOpacity >= 0 &&
+            value.fillOpacity <= 1 &&
+            typeof value.showLabels === "boolean" &&
+            typeof value.labelPosition === "string" &&
+            validLabelPositions.includes(value.labelPosition as LabelPositionType) &&
+            typeof value.labelColor === "string" &&
+            /^#[0-9A-Fa-f]{6}$/.test(value.labelColor)
         );
     }
 
@@ -70,9 +89,14 @@ export class PolygonVisualizationSetting implements CustomSettingImplementation<
             const [dialogOpen, setDialogOpen] = React.useState(false);
 
             const currentValue = props.value ?? {
-                color: "#000",
+                color: "#007079",
                 lineThickness: 2,
+                lineOpacity: 1,
                 fill: false,
+                fillOpacity: 0.5,
+                showLabels: false,
+                labelPosition: LabelPositionType.CENTROID,
+                labelColor: "#FFFFFF",
             };
 
             function handleOpenDialog() {
