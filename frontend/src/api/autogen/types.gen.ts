@@ -77,6 +77,8 @@ export type CaseInfo_api = {
     status: string;
     user: string;
     updatedAtUtcMs: number;
+    description: string;
+    ensembles: Array<EnsembleInfo_api>;
 };
 
 export type Completions_api = {
@@ -120,6 +122,7 @@ export type EnsembleDetails_api = {
     realizations: Array<number>;
     stratigraphicColumnIdentifier: string;
     timestamps: EnsembleTimestamps_api;
+    standardResults: Array<string>;
 };
 
 export type EnsembleIdent_api = {
@@ -130,7 +133,7 @@ export type EnsembleIdent_api = {
 export type EnsembleInfo_api = {
     name: string;
     realizationCount: number;
-    timestamps: EnsembleTimestamps_api;
+    standardResults: Array<string>;
 };
 
 /**
@@ -1229,38 +1232,6 @@ export type GetCasesResponses_api = {
 };
 
 export type GetCasesResponse_api = GetCasesResponses_api[keyof GetCasesResponses_api];
-
-export type GetEnsemblesData_api = {
-    body?: never;
-    path: {
-        /**
-         * Sumo case uuid
-         */
-        case_uuid: string;
-    };
-    query?: {
-        t?: number;
-    };
-    url: "/cases/{case_uuid}/ensembles";
-};
-
-export type GetEnsemblesErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type GetEnsemblesError_api = GetEnsemblesErrors_api[keyof GetEnsemblesErrors_api];
-
-export type GetEnsemblesResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: Array<EnsembleInfo_api>;
-};
-
-export type GetEnsemblesResponse_api = GetEnsemblesResponses_api[keyof GetEnsemblesResponses_api];
 
 export type GetEnsembleDetailsData_api = {
     body?: never;
