@@ -21,7 +21,7 @@ export function ParametersSelector({
     selectedParameterIdents,
     onChange,
 }: ParametersSelectorProps): React.ReactNode {
-    const [autoSelectAllOnGroupChange, setAutoSelectAllOnGroupChange] = React.useState<boolean>(false);
+    const [autoSelectAllOnGroupChange, setAutoSelectAllOnGroupChange] = React.useState<boolean>(true);
 
     const [selectedGroupFilterValues, setSelectedGroupFilterValues] = React.useState<string[]>(() => {
         if (selectedParameterIdents.length > 0) {
@@ -30,38 +30,27 @@ export function ParametersSelector({
         return [];
     });
 
-
-
     const handleGroupChange = (newlySelectedGroupFilterStrings: string[]) => {
         setSelectedGroupFilterValues(newlySelectedGroupFilterStrings);
 
         if (newlySelectedGroupFilterStrings.length === 0) {
             onChange([]);
-        } else {
+        } else if (autoSelectAllOnGroupChange) {
             const parametersThatMatchNewGroups = allParameterIdents.filter((p) =>
                 newlySelectedGroupFilterStrings.some(
                     (groupValue) => groupValue === (p.groupName ?? GroupType.NO_GROUP),
                 ),
             );
-
-            let newSelectedParameters: ParameterIdent[] = [];
-
-            if (autoSelectAllOnGroupChange) {
-                newSelectedParameters = parametersThatMatchNewGroups;
-            } else {
-                newSelectedParameters = selectedParameterIdents.filter((p) =>
-                    parametersThatMatchNewGroups.some((pg) => pg.equals(p)),
-                );
-            }
-
-            onChange(newSelectedParameters);
+            onChange(parametersThatMatchNewGroups);
         }
+        // If autoSelectAllOnGroupChange is false, don't change the selected parameters
+        // Just let the UI filter what's shown, but keep the current selection
     };
 
     const handleParameterChange = (selectedValues: string[]) => {
         onChange(selectedValues.map((s) => ParameterIdent.fromString(s)));
     };
-    
+
     const groupSelectOptions: SelectOption[] = Array.from(
         new Set(allParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP)),
     ).map((groupName) => ({
@@ -90,6 +79,7 @@ export function ParametersSelector({
                     onChange={handleGroupChange}
                     multiple={true}
                     size={Math.min(10, groupSelectOptions.length > 0 ? groupSelectOptions.length : 1)}
+                    showQuickSelectButtons
                 />
             </Label>
             <Label text="Select Parameter(s)">
