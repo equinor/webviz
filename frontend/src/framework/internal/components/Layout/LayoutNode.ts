@@ -1,6 +1,11 @@
 import type { LayoutElement } from "@framework/internal/Dashboard";
 import type { Rect2D, Size2D } from "@lib/utils/geometry";
-import { outerRectContainsInnerRect, rectContainsPoint } from "@lib/utils/geometry";
+import {
+    outerRectContainsInnerRect,
+    quadrilateralContainsPoint,
+    rectContainsPoint,
+    triangleContainsPoint,
+} from "@lib/utils/geometry";
 import type { Vec2 } from "@lib/utils/vec2";
 
 function layoutElementToRect(layoutElement: LayoutElement): Rect2D {
@@ -12,12 +17,12 @@ function layoutElementToRect(layoutElement: LayoutElement): Rect2D {
     };
 }
 
-export const LAYOUT_BOX_DROP_MARGIN = 5;
-export const LAYOUT_BOX_RESIZE_MARGIN = 5;
-export const EDGE_DROP_WEIGHT = 50;
-export const EDGE_RESIZE_WEIGHT = 5;
+export const LAYOUT_BOX_DROP_MARGIN = 15;
+export const LAYOUT_BOX_RESIZE_MARGIN = 15;
+export const EDGE_DROP_WEIGHT = 15;
+export const EDGE_RESIZE_WEIGHT = 15;
 export const MIN_FRAME_PX = 4; // minimal inner frame to keep overlays visible
-export const MIN_EDGE_PX = 6; // minimal thickness for drop/resize edges
+export const MIN_EDGE_PX = 20; // minimal thickness for drop/resize edges
 
 const EPSILON = 1e-6;
 
@@ -57,16 +62,55 @@ export enum LayoutAxis {
     VERTICAL = "vertical",
 }
 
+export enum EdgeShapeType {
+    TRIANGLE = "triangle",
+    QUADRILATERAL = "quadrilateral",
+}
+
+export type Triangle = {
+    p1: Vec2;
+    p2: Vec2;
+    p3: Vec2;
+};
+
+export type Quadrilateral = {
+    p1: Vec2;
+    p2: Vec2;
+    p3: Vec2;
+    p4: Vec2;
+};
+
+export type EdgeShape =
+    | {
+          type: EdgeShapeType.TRIANGLE;
+          shape: Triangle;
+      }
+    | {
+          type: EdgeShapeType.QUADRILATERAL;
+          shape: Quadrilateral;
+      };
+
 export type LayoutNodeEdge =
     | {
           edge: Exclude<LayoutNodeEdgeType, LayoutNodeEdgeType.HORIZONTAL | LayoutNodeEdgeType.VERTICAL>;
-          rect: Rect2D;
+          shape: EdgeShape;
       }
     | {
           position: number;
           edge: LayoutNodeEdgeType.HORIZONTAL | LayoutNodeEdgeType.VERTICAL;
-          rect: Rect2D;
+          shape: EdgeShape;
       };
+
+function edgeContainsPoint(edge: LayoutNodeEdge, point: Vec2): boolean {
+    if (edge.shape.type === EdgeShapeType.QUADRILATERAL) {
+        const { p1, p2, p3, p4 } = edge.shape.shape;
+        return quadrilateralContainsPoint(p1, p2, p3, p4, point);
+    } else if (edge.shape.type === EdgeShapeType.TRIANGLE) {
+        const { p1, p2, p3 } = edge.shape.shape;
+        return triangleContainsPoint(p1, p2, p3, point);
+    }
+    return false;
+}
 
 export class LayoutNode {
     private _rectRelativeToParent: Rect2D;
@@ -105,13 +149,37 @@ export class LayoutNode {
         return this._moduleInstanceId;
     }
 
+    getInsetLevel(): number {
+        let lvl = 0;
+        const directions: Set<LayoutDirection> = new Set([this._layoutDirection]);
+        let parent = this._parent;
+        let direction = this._layoutDirection;
+
+        while (parent) {
+            directions.add(parent._layoutDirection);
+            if (
+                directions.size === 2 ||
+                parent._layoutDirection === direction ||
+                ![LayoutDirection.HORIZONTAL, LayoutDirection.VERTICAL].includes(parent._layoutDirection) ||
+                ![LayoutDirection.HORIZONTAL, LayoutDirection.VERTICAL].includes(direction)
+            ) {
+                lvl++;
+                directions.clear();
+            }
+
+            direction = parent._layoutDirection;
+            parent = parent._parent;
+        }
+        return lvl;
+    }
+
     getRectWithMargin(realSizeFactor: Size2D): Rect2D {
         const absoluteRect = this.getAbsoluteRect();
 
         const absoluteWidth = absoluteRect.width * realSizeFactor.width;
         const absoluteHeight = absoluteRect.height * realSizeFactor.height;
 
-        const lvl = this._level;
+        const lvl = this.getInsetLevel();
 
         // margins in px based on own depth only
         const rawMx = LAYOUT_BOX_DROP_MARGIN * lvl;
@@ -560,6 +628,7 @@ export class LayoutNode {
             if (this._children.length === 1 && this._children[0]._children.length === 0) {
                 this.convertWrapperToSingleLayout();
             }
+            this.normalizeUpwards();
         } else if (this._parent) {
             this._parent.removeChild(this);
         }
@@ -607,15 +676,68 @@ export class LayoutNode {
         return found;
     }
 
-    getEdgeRects(realSize: Size2D, edgeWeight: number, edgeMargin: number): LayoutNodeEdge[] {
-        const rect = this.getRectWithMargin(realSize);
+    makeEdges(realSize: Size2D, edgeWeight: number, edgeMargin: number): LayoutNodeEdge[] {
+        const outerRect = this.getRectWithMargin(realSize);
+        const innerRect = outerRect;
         const edges: LayoutNodeEdge[] = [];
 
         const clampThickness = (t: number, axis: "x" | "y") =>
-            Math.max(MIN_EDGE_PX, Math.min(t, axis === "x" ? rect.width : rect.height));
+            Math.max(MIN_EDGE_PX, Math.min(t, axis === "x" ? innerRect.width : innerRect.height));
 
-        // SINGLE child: fractional bands; clamp those too
+        const topLeft = { x: innerRect.x, y: innerRect.y };
+        const topRight = { x: innerRect.x + innerRect.width, y: innerRect.y };
+        const bottomLeft = { x: innerRect.x, y: innerRect.y + innerRect.height };
+        const bottomRight = { x: innerRect.x + innerRect.width, y: innerRect.y + innerRect.height };
+        const midPoint = { x: innerRect.x + innerRect.width / 2, y: innerRect.y + innerRect.height / 2 };
+
         if (this._layoutDirection === LayoutDirection.SINGLE && this._parent) {
+            edges.push(
+                {
+                    edge: LayoutNodeEdgeType.LEFT,
+                    shape: {
+                        type: EdgeShapeType.TRIANGLE,
+                        shape: {
+                            p1: topLeft,
+                            p2: bottomLeft,
+                            p3: midPoint,
+                        },
+                    },
+                },
+                {
+                    edge: LayoutNodeEdgeType.RIGHT,
+                    shape: {
+                        type: EdgeShapeType.TRIANGLE,
+                        shape: {
+                            p1: topRight,
+                            p2: bottomRight,
+                            p3: midPoint,
+                        },
+                    },
+                },
+                {
+                    edge: LayoutNodeEdgeType.TOP,
+                    shape: {
+                        type: EdgeShapeType.TRIANGLE,
+                        shape: {
+                            p1: topLeft,
+                            p2: topRight,
+                            p3: midPoint,
+                        },
+                    },
+                },
+                {
+                    edge: LayoutNodeEdgeType.BOTTOM,
+                    shape: {
+                        type: EdgeShapeType.TRIANGLE,
+                        shape: {
+                            p1: bottomLeft,
+                            p2: bottomRight,
+                            p3: midPoint,
+                        },
+                    },
+                },
+            );
+            /*
             if (
                 this._parent._layoutDirection === LayoutDirection.HORIZONTAL ||
                 this._parent._layoutDirection === LayoutDirection.MAIN
@@ -644,14 +766,131 @@ export class LayoutNode {
                     edge: LayoutNodeEdgeType.RIGHT,
                 });
             }
+            */
+
+            return edges;
         }
 
+        if (this._layoutDirection === LayoutDirection.MAIN) {
+            edges.push(
+                {
+                    edge: LayoutNodeEdgeType.LEFT,
+                    shape: {
+                        type: EdgeShapeType.TRIANGLE,
+                        shape: {
+                            p1: topLeft,
+                            p2: bottomLeft,
+                            p3: midPoint,
+                        },
+                    },
+                },
+                {
+                    edge: LayoutNodeEdgeType.RIGHT,
+                    shape: {
+                        type: EdgeShapeType.TRIANGLE,
+                        shape: {
+                            p1: topRight,
+                            p2: bottomRight,
+                            p3: midPoint,
+                        },
+                    },
+                },
+                {
+                    edge: LayoutNodeEdgeType.TOP,
+                    shape: {
+                        type: EdgeShapeType.TRIANGLE,
+                        shape: {
+                            p1: topLeft,
+                            p2: topRight,
+                            p3: midPoint,
+                        },
+                    },
+                },
+                {
+                    edge: LayoutNodeEdgeType.BOTTOM,
+                    shape: {
+                        type: EdgeShapeType.TRIANGLE,
+                        shape: {
+                            p1: bottomLeft,
+                            p2: bottomRight,
+                            p3: midPoint,
+                        },
+                    },
+                },
+            );
+        }
+
+        if (this._layoutDirection === LayoutDirection.HORIZONTAL && this._children.length > 0) {
+            edges.push(
+                {
+                    edge: LayoutNodeEdgeType.LEFT,
+                    shape: {
+                        type: EdgeShapeType.QUADRILATERAL,
+                        shape: {
+                            p1: { x: outerRect.x, y: outerRect.y },
+                            p2: { x: outerRect.x + edgeWeight, y: outerRect.y + edgeWeight },
+                            p3: { x: outerRect.x + edgeWeight, y: outerRect.y + outerRect.height - edgeWeight },
+                            p4: { x: outerRect.x, y: outerRect.y + outerRect.height },
+                        },
+                    },
+                },
+                {
+                    edge: LayoutNodeEdgeType.RIGHT,
+                    shape: {
+                        type: EdgeShapeType.QUADRILATERAL,
+                        shape: {
+                            p1: { x: outerRect.x + outerRect.width - edgeWeight, y: outerRect.y + edgeWeight },
+                            p2: { x: outerRect.x + outerRect.width, y: outerRect.y },
+                            p3: { x: outerRect.x + outerRect.width, y: outerRect.y + outerRect.height },
+                            p4: {
+                                x: outerRect.x + outerRect.width - edgeWeight,
+                                y: outerRect.y + outerRect.height - edgeWeight,
+                            },
+                        },
+                    },
+                },
+            );
+        }
+
+        if (this._layoutDirection === LayoutDirection.VERTICAL && this._children.length > 0) {
+            edges.push(
+                {
+                    edge: LayoutNodeEdgeType.TOP,
+                    shape: {
+                        type: EdgeShapeType.QUADRILATERAL,
+                        shape: {
+                            p1: { x: outerRect.x, y: outerRect.y },
+                            p2: { x: outerRect.x + edgeWeight, y: outerRect.y + edgeWeight },
+                            p3: { x: outerRect.x + outerRect.width - edgeWeight, y: outerRect.y + edgeWeight },
+                            p4: { x: outerRect.x + outerRect.width, y: outerRect.y },
+                        },
+                    },
+                },
+                {
+                    edge: LayoutNodeEdgeType.BOTTOM,
+                    shape: {
+                        type: EdgeShapeType.QUADRILATERAL,
+                        shape: {
+                            p1: { x: outerRect.x + edgeWeight, y: outerRect.y + outerRect.height - edgeWeight },
+                            p2: { x: outerRect.x, y: outerRect.y + outerRect.height },
+                            p3: { x: outerRect.x + outerRect.width, y: outerRect.y + outerRect.height },
+                            p4: {
+                                x: outerRect.x + outerRect.width - edgeWeight,
+                                y: outerRect.y + outerRect.height - edgeWeight,
+                            },
+                        },
+                    },
+                },
+            );
+        }
+
+        /*
         // Container edges
         if (this._layoutDirection === LayoutDirection.HORIZONTAL) {
             const t = clampThickness(edgeWeight, "x");
             edges.push(
                 {
-                    rect: { x: rect.x + rect.width - t, y: rect.y, width: t, height: rect.height },
+                    shape: { x: rect.x + rect.width - t, y: rect.y, width: t, height: rect.height },
                     edge: LayoutNodeEdgeType.RIGHT,
                 },
                 { rect: { x: rect.x, y: rect.y, width: t, height: rect.height }, edge: LayoutNodeEdgeType.LEFT },
@@ -660,18 +899,19 @@ export class LayoutNode {
         if (this._layoutDirection === LayoutDirection.VERTICAL) {
             const t = clampThickness(edgeWeight, "y");
             edges.push(
-                { rect: { x: rect.x, y: rect.y, width: rect.width, height: t }, edge: LayoutNodeEdgeType.TOP },
+                { shape: { x: rect.x, y: rect.y, width: rect.width, height: t }, edge: LayoutNodeEdgeType.TOP },
                 {
                     rect: { x: rect.x, y: rect.y + rect.height - t, width: rect.width, height: t },
                     edge: LayoutNodeEdgeType.BOTTOM,
                 },
             );
         }
+        */
 
         // Sashes between children — base their span on our safe rect,
         // and trim a bit but never below MIN_EDGE_PX
-        const trimY = Math.min(edgeMargin * this._level, Math.max(0, rect.height / 4));
-        const trimX = Math.min(edgeMargin * this._level, Math.max(0, rect.width / 4));
+        const trimY = Math.min(edgeMargin * this._level, Math.max(0, innerRect.height / 4));
+        const trimX = Math.min(edgeMargin * this._level, Math.max(0, innerRect.width / 4));
 
         if (this._layoutDirection === LayoutDirection.HORIZONTAL) {
             const t = clampThickness(edgeWeight, "x");
@@ -679,11 +919,14 @@ export class LayoutNode {
                 const child = this._children[i];
                 const abs = child.getAbsoluteRect();
                 edges.push({
-                    rect: {
-                        x: abs.x * realSize.width - t / 2,
-                        y: rect.y + trimY,
-                        width: t,
-                        height: Math.max(MIN_EDGE_PX, rect.height - 2 * trimY),
+                    shape: {
+                        type: EdgeShapeType.QUADRILATERAL,
+                        shape: {
+                            p1: { x: abs.x * realSize.width - t / 2, y: innerRect.y + trimY },
+                            p2: { x: abs.x * realSize.width - t / 2 + t, y: innerRect.y + trimY },
+                            p3: { x: abs.x * realSize.width - t / 2 + t, y: innerRect.y + innerRect.height - trimY },
+                            p4: { x: abs.x * realSize.width - t / 2, y: innerRect.y + innerRect.height - trimY },
+                        },
                     },
                     edge: LayoutNodeEdgeType.VERTICAL,
                     position: abs.x,
@@ -697,11 +940,20 @@ export class LayoutNode {
                 const child = this._children[i];
                 const abs = child.getAbsoluteRect();
                 edges.push({
-                    rect: {
-                        x: rect.x + trimX,
-                        y: abs.y * realSize.height - t / 2,
-                        width: Math.max(MIN_EDGE_PX, rect.width - 2 * trimX),
-                        height: t,
+                    shape: {
+                        type: EdgeShapeType.QUADRILATERAL,
+                        shape: {
+                            p1: { x: innerRect.x, y: abs.y * realSize.height - t / 2 },
+                            p2: {
+                                x: innerRect.x,
+                                y: abs.y * realSize.height - t / 2 + t,
+                            },
+                            p3: {
+                                x: innerRect.x + innerRect.width,
+                                y: abs.y * realSize.height - t / 2 + t,
+                            },
+                            p4: { x: innerRect.x + innerRect.width, y: abs.y * realSize.height - t / 2 },
+                        },
                     },
                     edge: LayoutNodeEdgeType.HORIZONTAL,
                     position: abs.y,
@@ -713,8 +965,8 @@ export class LayoutNode {
     }
 
     findEdgeContainingPoint(point: Vec2, realSize: Size2D, draggedModuleInstanceId: string): LayoutNodeEdge | null {
-        const edgeRects = this.getEdgeRects(realSize, EDGE_DROP_WEIGHT, LAYOUT_BOX_DROP_MARGIN);
-        const edge = edgeRects.find((edgeRect) => rectContainsPoint(edgeRect.rect, point));
+        const edgeRects = this.makeEdges(realSize, EDGE_DROP_WEIGHT, LAYOUT_BOX_DROP_MARGIN);
+        const edge = edgeRects.find((edge) => edgeContainsPoint(edge, point));
         if (!edge) {
             return null;
         }
@@ -833,6 +1085,8 @@ export class LayoutNode {
             preview.moveLayoutElement(dragged, layoutBox, edge);
         }
 
+        preview.normalizeDeep();
+
         return preview;
     }
 
@@ -901,6 +1155,8 @@ export class LayoutNode {
             return;
         }
 
+        const oldParent = source._parent;
+
         if (edge.edge === LayoutNodeEdgeType.LEFT || edge.edge === LayoutNodeEdgeType.TOP) {
             if (destination._layoutDirection === LayoutDirection.SINGLE) {
                 const layoutType =
@@ -953,6 +1209,10 @@ export class LayoutNode {
             }
             return;
         }
+
+        // Normalize both the destination chain and the old parent chain
+        destination.normalizeUpwards();
+        if (oldParent && oldParent !== destination) oldParent.normalizeUpwards();
     }
 
     addLayoutElement(newBox: LayoutNode, destination: LayoutNode, edge: LayoutNodeEdge): void {
@@ -987,6 +1247,8 @@ export class LayoutNode {
             newBox._parent = destination;
             return;
         }
+
+        destination.normalizeUpwards();
     }
 
     removeLayoutElement(moduleInstanceId: string): void {
@@ -1141,14 +1403,13 @@ export class LayoutNode {
             }
 
             // then test our own dividers
-            const edges = this.getEdgeRects(viewport, EDGE_RESIZE_WEIGHT, LAYOUT_BOX_RESIZE_MARGIN);
+            const edges = this.makeEdges(viewport, EDGE_RESIZE_WEIGHT, LAYOUT_BOX_RESIZE_MARGIN);
 
             // vertical dividers exist when we're HORIZONTAL (columns)
             if (this._layoutDirection === LayoutDirection.HORIZONTAL) {
                 const verticals = edges.filter((e) => e.edge === LayoutNodeEdgeType.VERTICAL);
                 for (let idx = 0; idx < verticals.length; idx++) {
-                    const r = verticals[idx].rect;
-                    if (rectContainsPoint(r, pointLocalPx)) {
+                    if (edgeContainsPoint(verticals[idx], pointLocalPx)) {
                         return { containerPath: this.pathFromRoot(), axis: LayoutAxis.VERTICAL, index: idx + 1 };
                     }
                 }
@@ -1158,8 +1419,7 @@ export class LayoutNode {
             if (this._layoutDirection === LayoutDirection.VERTICAL) {
                 const horizontals = edges.filter((e) => e.edge === LayoutNodeEdgeType.HORIZONTAL);
                 for (let idx = 0; idx < horizontals.length; idx++) {
-                    const r = horizontals[idx].rect;
-                    if (rectContainsPoint(r, pointLocalPx)) {
+                    if (edgeContainsPoint(horizontals[idx], pointLocalPx)) {
                         return { containerPath: this.pathFromRoot(), axis: LayoutAxis.HORIZONTAL, index: idx + 1 };
                     }
                 }
@@ -1167,6 +1427,174 @@ export class LayoutNode {
         }
 
         return null;
+    }
+
+    /** Return true if this node is a split container (HORIZONTAL or VERTICAL). */
+    private isContainer(): boolean {
+        return (
+            this._layoutDirection === LayoutDirection.HORIZONTAL || this._layoutDirection === LayoutDirection.VERTICAL
+        );
+    }
+
+    /** Remove any empty child containers (recursively) and convert to SINGLE if 1 useful child remains. */
+    private pruneEmptyContainers(): void {
+        if (!this.isContainer()) return;
+
+        // Remove empty children entirely
+        this._children = this._children.filter((c) => c._moduleInstanceId || c._children.length > 0);
+
+        // If any child is a container with no children after prune, drop it
+        this._children = this._children.filter((c) => !(c.isContainer() && c._children.length === 0));
+
+        // If no children left and we aren't root, let parent remove us in its pass
+        if (this._children.length === 0) return;
+
+        // If exactly one child remains, adopt it appropriately
+        if (this._children.length === 1) {
+            const only = this._children[0];
+
+            // If child's a container with same direction, flatten (handled below)
+            if (!only.isContainer()) {
+                // Leaf: become SINGLE leaf
+                this._moduleInstanceId = only._moduleInstanceId;
+                this._moduleName = only._moduleName;
+                this._isWrapper = false;
+                this._layoutDirection = LayoutDirection.SINGLE;
+                this._children = [];
+                return;
+            }
+        }
+    }
+
+    /** If a child is a container with the same layoutDirection, pull its children up (flatten). */
+    private flattenSameDirectionChildren(): void {
+        if (!this.isContainer()) return;
+
+        const sameDir = this._layoutDirection;
+        const flattened: LayoutNode[] = [];
+
+        for (const child of this._children) {
+            if (child.isContainer() && child._layoutDirection === sameDir) {
+                // Pull up grandchildren, remap their rects from child's 0..1 into this child's rect
+                const base = child._rectRelativeToParent; // relative to "this"
+                for (const gc of child._children) {
+                    // Map gc rect (relative to child) into this
+                    const r = {
+                        x: base.x + gc._rectRelativeToParent.x * base.width,
+                        y: base.y + gc._rectRelativeToParent.y * base.height,
+                        width: gc._rectRelativeToParent.width * base.width,
+                        height: gc._rectRelativeToParent.height * base.height,
+                    };
+                    gc._rectRelativeToParent = r;
+                    gc._parent = this;
+                    flattened.push(gc);
+                }
+            } else {
+                flattened.push(child);
+            }
+        }
+
+        this._children = flattened;
+    }
+
+    /** Normalize child spans so they are contiguous and sum to 1 along the split axis. */
+    private normalizeSpans(): void {
+        if (!this.isContainer() || this._children.length === 0) return;
+
+        const horizontal = this._layoutDirection === LayoutDirection.HORIZONTAL;
+        let total = 0;
+
+        for (const ch of this._children) {
+            total += horizontal ? ch._rectRelativeToParent.width : ch._rectRelativeToParent.height;
+        }
+        if (total <= 0) {
+            // even split
+            const even = 1 / this._children.length;
+            let cursor = 0;
+            for (const ch of this._children) {
+                if (horizontal) {
+                    ch._rectRelativeToParent = { x: cursor, y: 0, width: even, height: 1 };
+                    cursor += even;
+                } else {
+                    ch._rectRelativeToParent = { x: 0, y: cursor, width: 1, height: even };
+                    cursor += even;
+                }
+            }
+            return;
+        }
+
+        // Normalize and make contiguous
+        let cursor = 0;
+        for (let i = 0; i < this._children.length; i++) {
+            const ch = this._children[i];
+            if (horizontal) {
+                const w = ch._rectRelativeToParent.width / total;
+                const width = i === this._children.length - 1 ? 1 - cursor : w; // last child takes remainder
+                ch._rectRelativeToParent = { x: cursor, y: 0, width, height: 1 };
+                cursor += width;
+            } else {
+                const h = ch._rectRelativeToParent.height / total;
+                const height = i === this._children.length - 1 ? 1 - cursor : h;
+                ch._rectRelativeToParent = { x: 0, y: cursor, width: 1, height };
+                cursor += height;
+            }
+        }
+    }
+
+    /** If this node is SINGLE, ensure it has no children; if a container ends up with one leaf, unwrap it. */
+    private enforceLeafVsContainer(): void {
+        if (this._layoutDirection === LayoutDirection.SINGLE) {
+            this._children = [];
+            this._isWrapper = false;
+            return;
+        }
+        if (this.isContainer() && this._children.length === 1 && !this._children[0].isContainer()) {
+            // container with one leaf -> become leaf in place
+            const only = this._children[0];
+            this._moduleInstanceId = only._moduleInstanceId;
+            this._moduleName = only._moduleName;
+            this._layoutDirection = LayoutDirection.SINGLE;
+            this._isWrapper = false;
+            this._children = [];
+        }
+    }
+
+    /** Run a full normalization pass on this subtree, bottom-up. */
+    normalizeDeep(): void {
+        for (const ch of this._children) ch.normalizeDeep();
+
+        // local fixes
+        this.pruneEmptyContainers();
+        this.flattenSameDirectionChildren();
+        this.enforceLeafVsContainer();
+
+        // If still a container, normalize spans & re-level / re-parent metadata
+        if (this.isContainer() && this._children.length > 0) {
+            this.normalizeSpans();
+            for (const ch of this._children) {
+                ch._parent = this;
+                ch._level = this._level + 1;
+            }
+        }
+    }
+
+    /** Normalize up the chain to the root (useful after a local move/insert/remove). */
+    private normalizeUpwards(): void {
+        let n: LayoutNode | null = this;
+        while (n) {
+            // local pass
+            n.pruneEmptyContainers();
+            n.flattenSameDirectionChildren();
+            n.enforceLeafVsContainer();
+            if (n.isContainer() && n._children.length > 0) {
+                n.normalizeSpans();
+                for (const ch of n._children) {
+                    ch._parent = n;
+                    ch._level = n._level + 1;
+                }
+            }
+            n = n._parent;
+        }
     }
 }
 

@@ -82,8 +82,6 @@ export function LayoutOverlay(props: LayoutOverlayProps) {
                 top: rect.y,
                 width: rect.width,
                 height: rect.height,
-                minWidth: arrowSize * 4,
-                minHeight: arrowSize * 4,
                 zIndex: props.zIndex + 1,
                 display: "flex",
                 flexDirection: isRowDirection ? "row" : "column",

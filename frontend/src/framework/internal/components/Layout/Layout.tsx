@@ -26,6 +26,7 @@ import {
 } from "./LayoutController";
 import type { LayoutNode } from "./LayoutNode";
 import { makeLayoutNodes } from "./LayoutNode";
+import { DebugEdges } from "./components/DebugEdges";
 
 export type LayoutProps = { workbench: Workbench };
 
@@ -134,12 +135,6 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
     React.useEffect(
         function updateLayout() {
             controller.setCommittedLayout(trueLayout);
-
-            /*
-            if (!isPreviewing) {
-                setRootNode(makeLayoutNodes(trueLayout));
-            }
-            */
         },
         [trueLayout, controller, isPreviewing],
     );
@@ -315,13 +310,24 @@ export const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
             >
                 {/* Edges / sashes hover highlights */}
                 {rootNode && (
-                    <LayoutOverlay
-                        active={draggingModuleId}
-                        root={rootNode}
-                        realSize={viewportSize}
-                        zIndex={1}
-                        pointer={pointerPos ?? { x: -1, y: -1 }}
-                    />
+                    <>
+                        <LayoutOverlay
+                            active={draggingModuleId}
+                            root={rootNode}
+                            realSize={viewportSize}
+                            zIndex={1}
+                            pointer={pointerPos ?? { x: -1, y: -1 }}
+                        />
+                        {
+                            <DebugEdges
+                                root={rootNode}
+                                realSize={viewportSize}
+                                zIndex={2}
+                                pointer={pointerPos}
+                                draggingModuleInstanceId={draggingModuleId}
+                            />
+                        }
+                    </>
                 )}
 
                 {/* Modules */}

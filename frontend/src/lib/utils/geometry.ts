@@ -98,6 +98,17 @@ export function rectContainsPoint(rect: Rect2D, point: Vec2): boolean {
     return point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height;
 }
 
+export function triangleContainsPoint(p1: Vec2, p2: Vec2, p3: Vec2, point: Vec2): boolean {
+    const area = 0.5 * (-p2.y * p3.x + p1.y * (-p2.x + p3.x) + p1.x * (p2.y - p3.y) + p2.x * p3.y);
+    const s = (1 / (2 * area)) * (p1.y * p3.x - p1.x * p3.y + (p3.y - p1.y) * point.x + (p1.x - p3.x) * point.y);
+    const t = (1 / (2 * area)) * (p1.x * p2.y - p1.y * p2.x + (p1.y - p2.y) * point.x + (p2.x - p1.x) * point.y);
+    return s >= 0 && t >= 0 && s + t <= 1;
+}
+
+export function quadrilateralContainsPoint(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, point: Vec2): boolean {
+    return triangleContainsPoint(p1, p2, p3, point) || triangleContainsPoint(p1, p3, p4, point);
+}
+
 export function scaleRectAroundCenter(rect: Rect2D, factor: number): Rect2D {
     return {
         x: rect.x - (rect.width * factor - rect.width) / 2,
