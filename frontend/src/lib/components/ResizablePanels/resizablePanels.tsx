@@ -6,7 +6,6 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 
-
 export type ResizablePanelsProps = {
     id: string;
     direction: "horizontal" | "vertical";
@@ -15,52 +14,13 @@ export type ResizablePanelsProps = {
     sizesInPercent?: number[];
     onSizesChange?: (sizesInPercent: number[]) => void;
     visible?: boolean[];
+    hideContentWhileResizing?: boolean;
+    onResizeStart?: () => void;
+    onResizeEnd?: () => void;
 };
 
-function loadConfigurationFromLocalStorage(id: string): number[] | undefined {
-    const configuration = localStorage.getItem(`resizable-panels-${id}`);
-    if (configuration) {
-        return JSON.parse(configuration);
-    }
-    return undefined;
-}
-
-function storeConfigurationInLocalStorage(id: string, sizes: number[]) {
-    localStorage.setItem(`resizable-panels-${id}`, JSON.stringify(sizes));
-}
-
-type DragBarProps = {
-    direction: "horizontal" | "vertical";
-    index: number;
-    isDragging: boolean;
-};
-
-const DragBar: React.FC<DragBarProps> = (props) => {
-    return (
-        <div
-            className={resolveClassNames(
-                "relative z-40 transition-colors ease-in-out duration-100 hover:bg-sky-500 outline-sky-500 hover:outline-2 touch-none",
-                {
-                    "bg-sky-500 outline-2 outline-sky-500": props.isDragging,
-                    "border-transparent bg-gray-300": !props.isDragging,
-                    "cursor-ew-resize w-px": props.direction === "horizontal",
-                    "cursor-ns-resize h-px": props.direction === "vertical",
-                },
-            )}
-        >
-            <div
-                data-handle={props.index}
-                className={resolveClassNames("z-40 touch-none absolute bg-transparent", {
-                    "cursor-ew-resize w-1 -left-0.25 top-0 h-full": props.direction === "horizontal",
-                    "cursor-ns-resize h-2 left-0 -top-0.25 w-full": props.direction === "vertical",
-                })}
-            />
-        </div>
-    );
-};
-
-export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
-    const { onSizesChange } = props;
+export function ResizablePanels(props: ResizablePanelsProps) {
+    const { onSizesChange, onResizeStart, onResizeEnd } = props;
 
     if (props.minSizes && props.minSizes.length !== props.children.length) {
         throw new Error("minSizes must have the same length as children");
@@ -85,6 +45,7 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
     const [draggingIndex, setDraggingIndex] = React.useState<number>(0);
     const [sizes, setSizes] = React.useState<number[]>(getInitialSizes);
     const [prevSizes, setPrevSizes] = React.useState<number[]>(sizes);
+    const [minSizes, setMinSizes] = React.useState<number[]>(props.minSizes || []);
     const [prevNumChildren, setPrevNumChildren] = React.useState<number>(props.children.length);
 
     const resizablePanelsRef = React.useRef<HTMLDivElement | null>(null);
@@ -97,160 +58,180 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
         setPrevSizes(props.sizesInPercent);
     }
 
+    if (props.minSizes && !isEqual(props.minSizes, minSizes)) {
+        setMinSizes(props.minSizes);
+    }
+
     if (props.children.length !== prevNumChildren) {
         individualPanelRefs.current = individualPanelRefs.current.slice(0, props.children.length);
         setPrevNumChildren(props.children.length);
     }
 
-    React.useEffect(() => {
-        let changedSizes: number[] = [];
-        let dragging = false;
-        let index = 0;
+    React.useEffect(
+        function mainEffect() {
+            let changedSizes: number[] = [];
+            let dragging = false;
+            let index = 0;
 
-        function handlePointerDown(e: PointerEvent) {
-            if (e.target instanceof HTMLElement && e.target.dataset.handle) {
-                index = parseInt(e.target.dataset.handle, 10);
-                setDraggingIndex(index);
-                dragging = true;
-                setIsDragging(true);
+            function handlePointerDown(e: PointerEvent) {
+                if (e.target instanceof HTMLElement && e.target.dataset.handle) {
+                    index = parseInt(e.target.dataset.handle, 10);
+                    setDraggingIndex(index);
+                    dragging = true;
+                    setIsDragging(true);
+                    e.preventDefault();
+
+                    addEventListeners();
+
+                    onResizeStart?.();
+                }
+            }
+
+            function handlePointerMove(e: PointerEvent) {
+                if (!dragging) {
+                    return;
+                }
+
+                // Prevent any scrolling on touch devices
                 e.preventDefault();
+                e.stopPropagation();
 
-                addEventListeners();
-            }
-        }
+                let totalSize = 0;
+                const containerBoundingRect = resizablePanelsRef.current?.getBoundingClientRect();
+                if (props.direction === "horizontal") {
+                    totalSize = containerBoundingRect?.width || 0;
+                } else if (props.direction === "vertical") {
+                    totalSize = containerBoundingRect?.height || 0;
+                }
 
-        function handlePointerMove(e: PointerEvent) {
-            if (!dragging) {
-                return;
-            }
+                const firstElementBoundingRect = individualPanelRefs.current[index]?.getBoundingClientRect();
+                const secondElementBoundingRect = individualPanelRefs.current[index + 1]?.getBoundingClientRect();
 
-            // Prevent any scrolling on touch devices
-            e.preventDefault();
-            e.stopPropagation();
+                if (containerBoundingRect && firstElementBoundingRect && secondElementBoundingRect) {
+                    const cursorWithinBounds: Vec2 = {
+                        x: Math.max(
+                            containerBoundingRect.left,
+                            Math.min(e.clientX, containerBoundingRect.left + containerBoundingRect.width),
+                        ),
+                        y: Math.max(
+                            containerBoundingRect.top,
+                            Math.min(e.clientY, containerBoundingRect.top + containerBoundingRect.height),
+                        ),
+                    };
 
-            let totalSize = 0;
-            const containerBoundingRect = resizablePanelsRef.current?.getBoundingClientRect();
-            if (props.direction === "horizontal") {
-                totalSize = containerBoundingRect?.width || 0;
-            } else if (props.direction === "vertical") {
-                totalSize = containerBoundingRect?.height || 0;
-            }
+                    setSizes((prev) => {
+                        const minSizesToggleVisibilityValue =
+                            100 * (props.direction === "horizontal" ? 50 / totalWidth : 50 / totalHeight);
 
-            const firstElementBoundingRect = individualPanelRefs.current[index]?.getBoundingClientRect();
-            const secondElementBoundingRect = individualPanelRefs.current[index + 1]?.getBoundingClientRect();
-
-            if (containerBoundingRect && firstElementBoundingRect && secondElementBoundingRect) {
-                const cursorWithinBounds: Vec2 = {
-                    x: Math.max(
-                        containerBoundingRect.left,
-                        Math.min(e.clientX, containerBoundingRect.left + containerBoundingRect.width),
-                    ),
-                    y: Math.max(
-                        containerBoundingRect.top,
-                        Math.min(e.clientY, containerBoundingRect.top + containerBoundingRect.height),
-                    ),
-                };
-
-                setSizes((prev) => {
-                    const minSizesToggleVisibilityValue =
-                        100 * (props.direction === "horizontal" ? 50 / totalWidth : 50 / totalHeight);
-
-                    const newSizes = prev.map((size, i) => {
-                        if (i === index) {
-                            let newSize = cursorWithinBounds.x - firstElementBoundingRect.left;
-                            if (props.direction === "vertical") {
-                                newSize = cursorWithinBounds.y - firstElementBoundingRect.top;
+                        const newSizes = prev.map((size, i) => {
+                            if (i === index) {
+                                let newSize = cursorWithinBounds.x - firstElementBoundingRect.left;
+                                if (props.direction === "vertical") {
+                                    newSize = cursorWithinBounds.y - firstElementBoundingRect.top;
+                                }
+                                return Math.max((newSize / totalSize) * 100, 0);
                             }
-                            return Math.max((newSize / totalSize) * 100, 0);
-                        }
-                        if (i === index + 1) {
-                            let newSize =
-                                secondElementBoundingRect.right -
-                                Math.max(firstElementBoundingRect.left, cursorWithinBounds.x);
-                            if (props.direction === "vertical") {
-                                newSize =
-                                    secondElementBoundingRect.bottom -
-                                    Math.max(firstElementBoundingRect.top, cursorWithinBounds.y);
+                            if (i === index + 1) {
+                                let newSize =
+                                    secondElementBoundingRect.right -
+                                    Math.max(firstElementBoundingRect.left, cursorWithinBounds.x);
+                                if (props.direction === "vertical") {
+                                    newSize =
+                                        secondElementBoundingRect.bottom -
+                                        Math.max(firstElementBoundingRect.top, cursorWithinBounds.y);
+                                }
+                                return Math.max((newSize / totalSize) * 100, 0);
                             }
-                            return Math.max((newSize / totalSize) * 100, 0);
-                        }
-                        return size;
-                    }) as number[];
+                            return size;
+                        }) as number[];
 
-                    const adjustedSizes: number[] = [...newSizes];
+                        const adjustedSizes: number[] = [...newSizes];
 
-                    for (let i = 0; i < newSizes.length; i++) {
-                        const minSizeInPercent = ((props.minSizes?.at(i) || 0) / totalWidth) * 100;
+                        for (let i = 0; i < newSizes.length; i++) {
+                            const minSizeInPercent = ((minSizes?.at(i) || 0) / totalWidth) * 100;
 
-                        if (props.visible?.at(i) === false) {
-                            adjustedSizes[i] = 0;
-                            if (i < newSizes.length - 1) {
-                                adjustedSizes[i + 1] = adjustedSizes[i + 1] + newSizes[i];
-                            } else {
-                                adjustedSizes[i - 1] = adjustedSizes[i - 1] + newSizes[i];
+                            if (props.visible?.at(i) === false) {
+                                adjustedSizes[i] = 0;
+                                if (i < newSizes.length - 1) {
+                                    adjustedSizes[i + 1] = adjustedSizes[i + 1] + newSizes[i];
+                                } else {
+                                    adjustedSizes[i - 1] = adjustedSizes[i - 1] + newSizes[i];
+                                }
                             }
-                        }
-                        if (newSizes[i] < minSizesToggleVisibilityValue) {
-                            adjustedSizes[i] = 0;
-                            if (i < newSizes.length - 1) {
-                                adjustedSizes[i + 1] = adjustedSizes[i + 1] + newSizes[i];
-                            } else {
-                                adjustedSizes[i - 1] = adjustedSizes[i - 1] + newSizes[i];
-                            }
-                        } else if (newSizes[i] < minSizeInPercent) {
-                            adjustedSizes[i] = minSizeInPercent;
+                            if (newSizes[i] < minSizesToggleVisibilityValue) {
+                                adjustedSizes[i] = 0;
+                                if (i < newSizes.length - 1) {
+                                    adjustedSizes[i + 1] = adjustedSizes[i + 1] + newSizes[i];
+                                } else {
+                                    adjustedSizes[i - 1] = adjustedSizes[i - 1] + newSizes[i];
+                                }
+                            } else if (newSizes[i] < minSizeInPercent) {
+                                adjustedSizes[i] = minSizeInPercent;
 
-                            if (i < newSizes.length - 1) {
-                                adjustedSizes[i + 1] = newSizes[i + 1] + newSizes[i] - minSizeInPercent;
-                            } else {
-                                adjustedSizes[i - 1] = adjustedSizes[i - 1] + newSizes[i] - minSizeInPercent;
+                                if (i < newSizes.length - 1) {
+                                    adjustedSizes[i + 1] = newSizes[i + 1] + newSizes[i] - minSizeInPercent;
+                                } else {
+                                    adjustedSizes[i - 1] = adjustedSizes[i - 1] + newSizes[i] - minSizeInPercent;
+                                }
                             }
                         }
-                    }
 
-                    changedSizes = adjustedSizes;
+                        changedSizes = adjustedSizes;
 
-                    return adjustedSizes;
-                });
+                        return adjustedSizes;
+                    });
+                }
             }
-        }
 
-        function handlePointerUp() {
-            if (!dragging) {
-                return;
+            function handlePointerUp() {
+                if (!dragging) {
+                    return;
+                }
+                if (changedSizes) {
+                    storeConfigurationInLocalStorage(props.id, changedSizes);
+                }
+                dragging = false;
+                setIsDragging(false);
+                if (onSizesChange) {
+                    onSizesChange(changedSizes);
+                }
+                removeEventListeners();
+                onResizeEnd?.();
             }
-            if (changedSizes) {
-                storeConfigurationInLocalStorage(props.id, changedSizes);
+
+            function addEventListeners() {
+                document.addEventListener("pointermove", handlePointerMove);
+                document.addEventListener("pointerup", handlePointerUp);
+                window.addEventListener("blur-sm", handlePointerUp);
             }
-            dragging = false;
-            setIsDragging(false);
-            if (onSizesChange) {
-                onSizesChange(changedSizes);
+
+            function removeEventListeners() {
+                document.removeEventListener("pointermove", handlePointerMove);
+                document.removeEventListener("pointerup", handlePointerUp);
+                window.removeEventListener("blur-sm", handlePointerUp);
             }
-            removeEventListeners();
-        }
 
-        function addEventListeners() {
-            document.addEventListener("pointermove", handlePointerMove);
-            document.addEventListener("pointerup", handlePointerUp);
-            window.addEventListener("blur-sm", handlePointerUp);
-        }
+            document.addEventListener("pointerdown", handlePointerDown);
 
-        function removeEventListeners() {
-            document.removeEventListener("pointermove", handlePointerMove);
-            document.removeEventListener("pointerup", handlePointerUp);
-            window.removeEventListener("blur-sm", handlePointerUp);
-        }
+            return () => {
+                document.removeEventListener("pointerdown", handlePointerDown);
+                removeEventListeners();
+            };
+        },
+        [
+            props.direction,
+            props.id,
+            minSizes,
+            onSizesChange,
+            totalWidth,
+            totalHeight,
+            props.visible,
+            onResizeStart,
+            onResizeEnd,
+        ],
+    );
 
-        document.addEventListener("pointerdown", handlePointerDown);
-
-        return () => {
-            document.removeEventListener("pointerdown", handlePointerDown);
-            removeEventListeners();
-        };
-    }, [props.direction, props.id, props.minSizes, onSizesChange, totalWidth, totalHeight, props.visible]);
-
-    function maybeMakeDragBar(index: number) {
+    function maybeMakeDragBar(index: number): React.ReactNode {
         if (index < props.children.length - 1) {
             return (
                 <DragBar direction={props.direction} index={index} isDragging={isDragging && draggingIndex === index} />
@@ -339,6 +320,46 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
             ))}
         </div>
     );
+}
+
+function loadConfigurationFromLocalStorage(id: string): number[] | undefined {
+    const configuration = localStorage.getItem(`resizable-panels-${id}`);
+    if (configuration) {
+        return JSON.parse(configuration);
+    }
+    return undefined;
+}
+
+function storeConfigurationInLocalStorage(id: string, sizes: number[]) {
+    localStorage.setItem(`resizable-panels-${id}`, JSON.stringify(sizes));
+}
+
+type DragBarProps = {
+    direction: "horizontal" | "vertical";
+    index: number;
+    isDragging: boolean;
 };
 
-ResizablePanels.displayName = "ResizablePanels";
+const DragBar: React.FC<DragBarProps> = (props) => {
+    return (
+        <div
+            className={resolveClassNames(
+                "relative z-40 transition-colors ease-in-out duration-100 hover:bg-sky-500 outline-sky-500 hover:outline-2 touch-none",
+                {
+                    "bg-sky-500 outline-2 outline-sky-500": props.isDragging,
+                    "border-transparent bg-gray-300": !props.isDragging,
+                    "cursor-ew-resize w-px": props.direction === "horizontal",
+                    "cursor-ns-resize h-px": props.direction === "vertical",
+                },
+            )}
+        >
+            <div
+                data-handle={props.index}
+                className={resolveClassNames("z-40 touch-none absolute bg-transparent", {
+                    "cursor-ew-resize w-1 -left-0.25 top-0 h-full": props.direction === "horizontal",
+                    "cursor-ns-resize h-2 left-0 -top-0.25 w-full": props.direction === "vertical",
+                })}
+            />
+        </div>
+    );
+};
