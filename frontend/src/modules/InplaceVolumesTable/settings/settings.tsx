@@ -159,6 +159,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         <InplaceVolumesFilterComponent
             ensembleSet={ensembleSet}
             settingsContext={props.settingsContext}
+            workbenchSession={props.workbenchSession}
             workbenchServices={props.workbenchServices}
             isPending={tableDefinitionsQueryResult.isLoading}
             availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}

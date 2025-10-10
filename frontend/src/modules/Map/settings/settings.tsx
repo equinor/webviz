@@ -9,7 +9,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Input } from "@lib/components/Input";
@@ -236,6 +236,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
                 <EnsembleDropdown
                     ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={computedEnsembleIdent}
+                    ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
                     onChange={handleEnsembleSelectionChange}
                 />
             </Label>

@@ -10,7 +10,7 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { Button } from "@lib/components/Button";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -196,6 +196,7 @@ export const Settings = ({
                 <EnsembleDropdown
                     ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={selectedEnsembleIdent}
+                    ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
                     onChange={handleEnsembleSelectionChange}
                 />
             </CollapsibleGroup>

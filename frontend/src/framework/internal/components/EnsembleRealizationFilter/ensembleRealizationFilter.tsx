@@ -1,6 +1,7 @@
 import React from "react";
 
-import { Check, Clear } from "@mui/icons-material";
+import { Check, Clear, FilterAlt } from "@mui/icons-material";
+import { isEqual } from "lodash";
 
 import type { EnsembleParameters } from "@framework/EnsembleParameters";
 import { RealizationFilter } from "@framework/RealizationFilter";
@@ -23,7 +24,7 @@ import { RealizationNumberDisplay } from "./private-components/realizationNumber
 import { createBestSuggestedRealizationNumberSelections } from "./private-utils/conversionUtils";
 
 export type EnsembleRealizationFilterSelections = {
-    displayRealizationNumbers: readonly number[]; // For RealizationNumberDisplay
+    filteredRealizations: readonly number[]; // Array of currently filtered realization numbers
     realizationNumberSelections: readonly RealizationNumberSelection[] | null; // For ByRealizationNumberFilter
     parameterIdentStringToValueSelectionReadonlyMap: ReadonlyMap<string, ParameterValueSelection> | null; // For ByParameterValueFilter
     filterType: RealizationFilterType;
@@ -69,6 +70,11 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         actualInitialRealizationNumberSelections = props.selections.realizationNumberSelections;
     }
 
+    const areRealizationsFiltered = !isEqual(
+        props.selections.filteredRealizations.toSorted(),
+        props.availableEnsembleRealizations.toSorted(),
+    );
+
     function handleRealizationNumberFilterChanged(selection: ByRealizationNumberFilterSelection) {
         if (!onFilterChange) {
             return;
@@ -83,7 +89,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
 
         onFilterChange({
             ...props.selections,
-            displayRealizationNumbers: realizationNumberArray,
+            filteredRealizations: realizationNumberArray,
             realizationNumberSelections: selection.realizationNumberSelections,
             includeOrExcludeFilter: selection.includeOrExcludeFilter,
         });
@@ -105,7 +111,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
 
         onFilterChange({
             ...props.selections,
-            displayRealizationNumbers: realizationNumberArray,
+            filteredRealizations: realizationNumberArray,
             parameterIdentStringToValueSelectionReadonlyMap: newParameterIdentStringToValueSelectionMap,
         });
     }
@@ -140,7 +146,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         onFilterChange({
             ...props.selections,
             filterType: newFilterType,
-            displayRealizationNumbers: realizationNumberArray,
+            filteredRealizations: realizationNumberArray,
         });
     }
 
@@ -166,7 +172,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
 
         onFilterChange({
             ...props.selections,
-            displayRealizationNumbers: displayRealizationNumbers,
+            filteredRealizations: displayRealizationNumbers,
             realizationNumberSelections: newRealizationNumberSelections,
         });
     }
@@ -227,24 +233,34 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     const mainDivStyleClasses = props.isActive ? activeStyleClasses : inactiveStyleClasses;
 
     return (
-        <div
-            className={resolveClassNames("rounded-md", mainDivStyleClasses)}
-            title={!props.isActive ? "Click to open filter" : undefined}
-        >
-            <div className="flex justify-center items-center bg-slate-100 rounded-tl-md rounded-tr-md p-1">
+        <div className={resolveClassNames("rounded-md", mainDivStyleClasses)}>
+            <div className="flex justify-center items-center bg-slate-100 rounded-tl-md rounded-tr-md">
                 <div
-                    className={resolveClassNames(
-                        "grow h-full pl-2 flex items-center cursor-pointer font-bold text-sm text-ellipsis overflow-hidden whitespace-nowrap",
-                        {
-                            "pr-2": !props.hasUnsavedSelections,
-                            "opacity-50 group-hover:opacity-75 transition-opacity duration-100":
-                                !props.isActive && props.isAnotherFilterActive,
-                        },
-                    )}
-                    title={props.isActive ? `Ensemble: ${props.ensembleName}` : undefined}
+                    className={resolveClassNames("flex h-full items-center flex-grow group p-2", {
+                        "opacity-50 group-hover:opacity-75 transition-opacity duration-100":
+                            !props.isActive && props.isAnotherFilterActive,
+                    })}
                     onClick={handleHeaderOnClick}
                 >
-                    {props.ensembleName}
+                    <div
+                        className="grow h-full pl-2 flex items-center cursor-pointer font-bold text-sm text-ellipsis overflow-hidden whitespace-nowrap"
+                        title={props.isActive ? `Ensemble: ${props.ensembleName}` : "Click to open filter"}
+                    >
+                        {props.ensembleName}
+                    </div>
+                    <div
+                        className={resolveClassNames("flex h-full items-center gap-3 pr-1 justify-center cursor-help", {
+                            hidden: !areRealizationsFiltered,
+                            "cursor-pointer": !props.isActive,
+                        })}
+                    >
+                        <FilterAlt
+                            titleAccess={`Some realizations are being filtered out${!props.isActive ? "\n(Click to open filter)" : ""}`}
+                            fontSize="small"
+                            className="text-green-600"
+                        />
+                        <div className="bg-slate-400 w-px self-stretch" />
+                    </div>
                 </div>
                 <div className={resolveClassNames("flex h-full items-center gap-1 pr-2")}>
                     <DenseIconButton
@@ -270,12 +286,13 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                     "opacity-30 group-hover:opacity-75 transition-opacity duration-100":
                         !props.isActive && props.isAnotherFilterActive,
                 })}
+                title={!props.isActive ? "Click to open filter" : undefined}
                 onClickCapture={handleBodyOnClickCapture}
             >
                 <div className="flex flex-col gap-2 p-2">
                     <div className="border p-2 rounded-md">
                         <RealizationNumberDisplay
-                            selectedRealizations={props.selections.displayRealizationNumbers}
+                            selectedRealizations={props.selections.filteredRealizations}
                             availableRealizations={props.availableEnsembleRealizations}
                             showAsCompact={!props.isActive}
                             disableOnClick={
