@@ -12,7 +12,8 @@ export type PlotProps = {
 } & PlotParams;
 
 const DEFAULT_CONFIG: Partial<Plotly.Config> = {
-    modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "resetScale2d"],
+    modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "autoScale2d", "pan2d", "zoom2d", "lasso2d", "select2d"],
+
     displaylogo: false,
     responsive: true,
     displayModeBar: "hover",
@@ -22,6 +23,17 @@ const DEFAULT_LAYOUT: Partial<Plotly.Layout> = {
     // By default, we try to keep the ui changes stable
     uirevision: "revision_stable",
     modebar: { orientation: "v" },
+    legend: {
+        x: 0.98,
+        y: 0,
+        xanchor: "right",
+        yanchor: "top",
+        bgcolor: "rgba(255, 255, 255, 0.8)",
+        bordercolor: "#ccc",
+        borderwidth: 1,
+        orientation: "h",
+        font: { size: 10 },
+    },
 };
 
 /**
