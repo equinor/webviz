@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Info } from "@mui/icons-material";
+import { Help, Info } from "@mui/icons-material";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
@@ -141,7 +141,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                 size="small"
                                 onClick={handleInfoButtonClick}
                             >
-                                <Info fontSize="inherit" />
+                                <Help fontSize="inherit" />
                             </IconButton>
                         </div>
                     </Label>
