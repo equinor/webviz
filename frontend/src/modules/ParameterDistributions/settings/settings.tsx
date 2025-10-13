@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Help, Info } from "@mui/icons-material";
+import { Help } from "@mui/icons-material";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
