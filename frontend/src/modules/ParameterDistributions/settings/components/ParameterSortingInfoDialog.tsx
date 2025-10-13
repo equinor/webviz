@@ -73,14 +73,6 @@ export function ParameterSortingInfoDialog({
                 </div>
 
                 <div>
-                    <h4 className="font-semibold text-gray-800 mb-1">Variance Reduction</h4>
-                    <p className="text-sm text-gray-600">
-                        Shows parameters where the spread of values decreased the most from prior to posterior. High
-                        percentage = values became more tightly clustered.
-                    </p>
-                </div>
-
-                <div>
                     <h4 className="font-semibold text-gray-800 mb-1">Entropy Reduction</h4>
                     <p className="text-sm text-gray-600">
                         Shows parameters where uncertainty decreased the most from prior to posterior. High percentage =

@@ -19,7 +19,6 @@ export enum EnsembleMode {
 
 export const ParameterDistributionSortingMethodEnumToStringMapping = {
     [ParameterSortMethod.ALPHABETICAL]: "Alphabetical",
-    [ParameterSortMethod.VARIANCE]: "Prior-Posterior Variance Reduction",
     [ParameterSortMethod.ENTROPY]: "Prior-Posterior Entropy Reduction",
     [ParameterSortMethod.KL_DIVERGENCE]: "Prior-Posterior KL Divergence",
 };

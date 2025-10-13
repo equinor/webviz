@@ -9,7 +9,6 @@ export function sortParametersAlphabetically(
 }
 export enum ParameterSortMethod {
     ALPHABETICAL = "alphabetical",
-    VARIANCE = "variance",
     ENTROPY = "entropy",
     KL_DIVERGENCE = "kl",
 }
@@ -25,7 +24,6 @@ export function sortPriorPosteriorParameters(
     }
 
     const metricFunctions = {
-        [ParameterSortMethod.VARIANCE]: calculateVarianceReduction,
         [ParameterSortMethod.ENTROPY]: calculateEntropyReduction,
         [ParameterSortMethod.KL_DIVERGENCE]: calculateKLDivergence,
     };
@@ -36,29 +34,6 @@ export function sortPriorPosteriorParameters(
     return sortBy(parameterDataArray, metricFunction).reverse();
 }
 
-function calculateVarianceReduction(parameterData: EnsembleSetParameterArray): number {
-    if (parameterData.ensembleParameterRealizationAndValues.length !== 2) {
-        return 0;
-    }
-
-    const [prior, posterior] = parameterData.ensembleParameterRealizationAndValues;
-
-    const priorVariance = calculateVariance(prior.values);
-    const posteriorVariance = calculateVariance(posterior.values);
-
-    if (priorVariance === 0) return 0;
-
-    // Return percentage of variance reduction
-    return ((priorVariance - posteriorVariance) / priorVariance) * 100;
-}
-function calculateVariance(values: number[]): number {
-    if (values.length === 0) return 0;
-
-    const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
-    const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
-
-    return variance;
-}
 function calculateEntropyReduction(parameterData: EnsembleSetParameterArray): number {
     if (parameterData.ensembleParameterRealizationAndValues.length !== 2) {
         return 0;
