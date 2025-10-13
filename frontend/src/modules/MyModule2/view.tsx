@@ -1,11 +1,7 @@
 import React from "react";
 
-import { useQuery } from "@tanstack/react-query";
 import { inRange } from "lodash";
 
-import { getUserInfoOptions } from "@api";
-import { UserAvatar } from "@framework/internal/components/UserAvatar";
-import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import type { ModuleViewProps } from "@framework/Module";
 import { Button } from "@lib/components/Button";
 import { Table } from "@lib/components/Table";
@@ -183,35 +179,8 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
         setTableFilterState(newFilter);
     }
 
-    const { userInfo } = useAuthProvider();
-
-    // const isSelf = userInfo && props.ownerId === userInfo.user_id;
-
-    const userInfoQuery = useQuery({ ...getUserInfoOptions({ path: { user_id_or_email: userInfo?.user_id ?? "" } }) });
-
-    const name = userInfoQuery.data?.principal_name;
-    const fullName = userInfoQuery.data?.display_name;
-
     return (
         <div className="h-full w-full flex flex-col">
-            <div className="flex gap-1 items-center text-base italic text-gray-500">
-                <UserAvatar size="large" userIdent="nonexistant" className="shrink-0 inline" />
-                <UserAvatar size="medium" userIdent="nonexistant" className="shrink-0 inline" />
-                <UserAvatar size="medium-small" userIdent="nonexistant" className="shrink-0 inline" />
-                <UserAvatar size="small" userIdent="nonexistant" className="shrink-0 inline" />
-                <UserAvatar size="extra-small" userIdent="nonexistant" className="shrink-0 inline" />
-
-                <UserAvatar size="large" userIdent={userInfo?.user_id ?? ""} className="shrink-0 inline" />
-                <UserAvatar size="medium" userIdent={userInfo?.user_id ?? ""} className="shrink-0 inline" />
-                <UserAvatar size="medium-small" userIdent={userInfo?.user_id ?? ""} className="shrink-0 inline" />
-                <UserAvatar size="small" userIdent={userInfo?.user_id ?? ""} className="shrink-0 inline" />
-                <UserAvatar size="extra-small" userIdent={userInfo?.user_id ?? ""} className="shrink-0 inline" />
-
-                <span className="truncate">
-                    {fullName} [{name}]
-                </span>
-            </div>
-
             <h3 className="mt-6 font-extrabold text-lg">New (controlled)</h3>
 
             <div className="flex">
