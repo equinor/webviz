@@ -1,4 +1,4 @@
-import type { Layout, PlotData } from "plotly.js";
+import type { BoxPlotData, Layout, PlotData } from "plotly.js";
 
 import { makeHistogramTrace } from "@modules/_shared/histogram";
 import { computeQuantile } from "@modules/_shared/utils/math/statistics";
@@ -61,10 +61,11 @@ export function createQuantileAndMeanMarkerTraces(
 /**
  * Creates a distribution plot trace (violin plot) for an ensemble
  */
-export function createDistributionTrace(ensembleData: EnsembleParameterRealizationsAndValues): any {
+export function createDistributionTrace(ensembleData: EnsembleParameterRealizationsAndValues): Partial<PlotData> {
     return {
         x: ensembleData.values,
         type: "violin",
+        // @ts-expect-error - missing arguments in the plotly types
         spanmode: "hard",
         name: ensembleData.ensembleDisplayName,
         legendgroup: ensembleData.ensembleDisplayName,
@@ -83,17 +84,22 @@ export function createDistributionTrace(ensembleData: EnsembleParameterRealizati
 /**
  * Creates a rug plot trace for individual realization values
  */
-export function createRugTrace(ensembleData: EnsembleParameterRealizationsAndValues, yPosition: number): any {
+export function createRugTrace(
+    ensembleData: EnsembleParameterRealizationsAndValues,
+    yPosition: number,
+): Partial<PlotData> {
     const hoverText = ensembleData.values.map((_, i) => `Realization: ${ensembleData.realizations[i]}`);
     const yValues = ensembleData.values.map(() => yPosition);
 
     return {
         x: ensembleData.values,
         y: yValues,
+        // @ts-expect-error - missing arguments in the plotly types
         type: "rug",
         name: ensembleData.ensembleDisplayName,
         legendgroup: ensembleData.ensembleDisplayName,
         hovertext: hoverText,
+        // @ts-expect-error - missing arguments in the plotly types
         hoverinfo: "x+text+name",
         mode: "markers",
         marker: { color: ensembleData.ensembleColor, symbol: "line-ns-open" },
@@ -108,7 +114,7 @@ export function createBoxTrace(
     ensembleData: EnsembleParameterRealizationsAndValues,
     verticalPosition: number,
     showIndividualRealizationValues: boolean,
-): any {
+): Partial<BoxPlotData> {
     const hoverText = ensembleData.values.map((_, i) => `Realization: ${ensembleData.realizations[i]}`);
 
     return {
@@ -119,6 +125,7 @@ export function createBoxTrace(
         marker: { color: ensembleData.ensembleColor },
         showlegend: false,
         y0: verticalPosition,
+        // @ts-expect-error - missing arguments in the plotly types
         hoverinfo: "x+text+name",
         hovertext: hoverText,
         meanline_visible: true,
@@ -133,7 +140,7 @@ export function createBoxTrace(
 /**
  * Creates a histogram trace for an ensemble
  */
-export function createHistogramTrace(ensembleData: EnsembleParameterRealizationsAndValues): any {
+export function createHistogramTrace(ensembleData: EnsembleParameterRealizationsAndValues): Partial<PlotData> {
     const numBins = Math.min(20, Math.max(5, Math.floor(Math.sqrt(ensembleData.values.length))));
     const histogramTrace = makeHistogramTrace({
         xValues: ensembleData.values,
