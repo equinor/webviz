@@ -73,15 +73,14 @@ export function ParameterSortingInfoDialog({
                         <h4 className="font-semibold text-gray-800 mb-1">KL Divergence</h4>
                         <p className="text-sm text-gray-600">
                             Shows parameters where the distribution changed the most (spread, location, or shape). High
-                            value = parameter updated significantly by observations.
+                            value = parameter distribution shape and/or location changed significantly.
                         </p>
                     </div>
 
                     <div className="bg-blue-50 p-3 rounded">
                         <p className="text-xs text-blue-700">
-                            <strong>Note:</strong> Prior-posterior sorting methods are only available when comparing
-                            exactly two ensembles (prior and posterior). For independent ensemble mode, only
-                            alphabetical sorting is available.
+                            <strong>Note:</strong> For independent ensemble mode, only alphabetical sorting is
+                            available.
                         </p>
                     </div>
                 </div>
