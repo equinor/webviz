@@ -110,7 +110,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
             id: el.uuid,
             values: [
                 { label: el.name },
-                { label: el.user, adornment: <UserAvatar key={el.uuid} userEmail={`${el.user}@equinor.com`} /> },
+                { label: el.user, adornment: <UserAvatar key={el.uuid} userIdent={`${el.user}@equinor.com`} /> },
                 { label: el.status },
             ],
         })) ?? [];
