@@ -118,7 +118,20 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             onChange={setSelectedEnsembleMode}
                         />
                     </Label>
-                    <Label text="Parameter sort method:">
+                    <Label
+                        wrapperClassName="mt-2"
+                        text="Parameter sort method:"
+                        endAdornment={
+                            <IconButton
+                                ref={infoButtonRef}
+                                color="primary"
+                                size="small"
+                                onClick={handleInfoButtonClick}
+                            >
+                                <Help fontSize="inherit" />
+                            </IconButton>
+                        }
+                    >
                         <div className="flex items-center gap-3">
                             <div className="flex-1 min-w-0">
                                 <Dropdown
@@ -135,14 +148,6 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                     onChange={setSelectedParameterDistributionSortingMethod}
                                 />
                             </div>
-                            <IconButton
-                                ref={infoButtonRef}
-                                color="primary"
-                                size="small"
-                                onClick={handleInfoButtonClick}
-                            >
-                                <Help fontSize="inherit" />
-                            </IconButton>
                         </div>
                     </Label>
                     {selectedEnsembleMode === EnsembleMode.INDEPENDENT && (
