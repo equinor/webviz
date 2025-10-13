@@ -60,8 +60,8 @@ export function WorkbenchWrapper() {
             <TopBar workbench={workbench} />
             <ActiveSessionBoundary workbench={workbench}>
                 <SelectEnsemblesDialog workbench={workbench} />
+                {content}
             </ActiveSessionBoundary>
-            {content}
             <ToggleDevToolsButton guiMessageBroker={workbench.getGuiMessageBroker()} />
         </>
     );

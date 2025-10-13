@@ -1,5 +1,9 @@
+import { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import React from "react";
+
+export const ActiveSessionContext = React.createContext<PrivateWorkbenchSession | null>(null);
 
 export type ActiveSessionBoundaryProps = {
     children?: React.ReactNode;
@@ -7,11 +11,19 @@ export type ActiveSessionBoundaryProps = {
 };
 
 export function ActiveSessionBoundary(props: ActiveSessionBoundaryProps): React.ReactNode {
-    const hasActiveSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.HAS_ACTIVE_SESSION);
+    const activeSession = usePublishSubscribeTopicValue(props.workbench, WorkbenchTopic.ACTIVE_SESSION);
 
-    if (!hasActiveSession) {
+    if (!activeSession) {
         return null;
     }
 
-    return props.children;
+    return <ActiveSessionContext.Provider value={activeSession}>{props.children}</ActiveSessionContext.Provider>;
+}
+
+export function useActiveSession(): PrivateWorkbenchSession {
+    const context = React.useContext(ActiveSessionContext);
+    if (!context) {
+        throw new Error("useActiveSession must be used within an ActiveSessionBoundary");
+    }
+    return context;
 }

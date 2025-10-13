@@ -1,10 +1,10 @@
 import React from "react";
 
-import { rectContainsPoint, type Rect2D, type Size2D } from "@lib/utils/geometry";
+import { rectContainsPoint, type Size2D } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
 
-import { LayoutNodeEdgeType, type LayoutNode } from "../LayoutNode";
+import { EdgeShapeType, LayoutNodeEdgeType, type LayoutNode } from "../LayoutNode";
 
 function flatten(node: LayoutNode): LayoutNode[] {
     return [node, ...node.getChildren().flatMap(flatten)];
@@ -59,20 +59,43 @@ export function LayoutOverlay(props: LayoutOverlayProps) {
     }
 
     // Compute hovered edge and rect once for the active box.
-    const hovered = activeBox.findEdgeContainingPoint(props.pointer!, props.realSize, props.active!);
-    const edgeType = hovered?.edge;
-    const rect: Rect2D | undefined = hovered?.rect;
-
-    if (!edgeType || !rect) {
+    const hoveredEdge = activeBox.findEdgeContainingPoint(props.pointer!, props.realSize, props.active!);
+    if (!hoveredEdge) {
         return null;
     }
 
+    const edgeType = hoveredEdge.edge;
     const isRowDirection = [LayoutNodeEdgeType.LEFT, LayoutNodeEdgeType.RIGHT, LayoutNodeEdgeType.VERTICAL].includes(
         edgeType,
     );
 
-    const minDim = Math.min(hovered.rect.width, hovered.rect.height);
-    const arrowSize = Math.max(8, Math.min(20, Math.floor(minDim * 0.35)));
+    const arrowSize = 20;
+    let midPoint = { x: 0, y: 0 };
+    if (hoveredEdge.shape.type === EdgeShapeType.TRIANGLE) {
+        const { p1, p2, p3 } = hoveredEdge.shape.shape;
+        midPoint = { x: (p1.x + p2.x + p3.x) / 3, y: (p1.y + p2.y + p3.y) / 3 };
+    }
+    if (hoveredEdge.shape.type === EdgeShapeType.QUADRILATERAL) {
+        const { p1, p2, p3, p4 } = hoveredEdge.shape.shape;
+        midPoint = { x: (p1.x + p2.x + p3.x + p4.x) / 4, y: (p1.y + p2.y + p3.y + p4.y) / 4 };
+    }
+
+    const activeBoxRect = activeBox.getRectWithMargin(props.realSize);
+
+    let rect = {
+        x: midPoint.x - activeBoxRect.width / 2,
+        y: midPoint.y - activeBoxRect.height / 4,
+        width: activeBoxRect.width,
+        height: activeBoxRect.height / 2,
+    };
+    if (isRowDirection) {
+        rect = {
+            x: midPoint.x - activeBoxRect.width / 4,
+            y: midPoint.y - activeBoxRect.height / 2,
+            width: activeBoxRect.width / 2,
+            height: activeBoxRect.height,
+        };
+    }
 
     return (
         <div

@@ -127,25 +127,29 @@ export function addMarginToRect(rect: Rect2D, margin: number): Rect2D {
     };
 }
 
-export function outerRectContainsInnerRect(outerRect: Rect3D, innerRect: Rect3D): boolean;
-export function outerRectContainsInnerRect(outerRect: Rect2D, innerRect: Rect2D): boolean;
-export function outerRectContainsInnerRect(outerRect: Rect2D | Rect3D, innerRect: Rect2D | Rect3D): boolean {
+export function outerRectContainsInnerRect(outerRect: Rect3D, innerRect: Rect3D, epsilon?: number): boolean;
+export function outerRectContainsInnerRect(outerRect: Rect2D, innerRect: Rect2D, epsilon?: number): boolean;
+export function outerRectContainsInnerRect(
+    outerRect: Rect2D | Rect3D,
+    innerRect: Rect2D | Rect3D,
+    epsilon: number = 0,
+): boolean {
     if ("depth" in outerRect && "depth" in innerRect) {
         return (
-            outerRect.x <= innerRect.x &&
-            outerRect.y <= innerRect.y &&
-            outerRect.z <= innerRect.z &&
-            outerRect.x + outerRect.width >= innerRect.x + innerRect.width &&
-            outerRect.y + outerRect.height >= innerRect.y + innerRect.height &&
-            outerRect.z + outerRect.depth >= innerRect.z + innerRect.depth
+            outerRect.x - epsilon <= innerRect.x &&
+            outerRect.y - epsilon <= innerRect.y &&
+            outerRect.z - epsilon <= innerRect.z &&
+            outerRect.x + outerRect.width + epsilon >= innerRect.x + innerRect.width &&
+            outerRect.y + outerRect.height + epsilon >= innerRect.y + innerRect.height &&
+            outerRect.z + outerRect.depth + epsilon >= innerRect.z + innerRect.depth
         );
     }
 
     return (
-        outerRect.x <= innerRect.x &&
-        outerRect.y <= innerRect.y &&
-        outerRect.x + outerRect.width >= innerRect.x + innerRect.width &&
-        outerRect.y + outerRect.height >= innerRect.y + innerRect.height
+        outerRect.x - epsilon <= innerRect.x &&
+        outerRect.y - epsilon <= innerRect.y &&
+        outerRect.x + outerRect.width + epsilon >= innerRect.x + innerRect.width &&
+        outerRect.y + outerRect.height + epsilon >= innerRect.y + innerRect.height
     );
 }
 
