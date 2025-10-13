@@ -3,8 +3,9 @@ import type React from "react";
 import { DateRangePicker } from "@equinor/eds-core-react";
 import { Close } from "@mui/icons-material";
 
+import { IconButton } from "@lib/components/IconButton";
 import { Input } from "@lib/components/Input";
-import type { TableColumns } from "@lib/components/Table/types";
+import type { ColumnFilterImplementationProps, TableColumns } from "@lib/components/Table/types";
 import { TagPicker } from "@lib/components/TagPicker";
 import type { CaseInfo_api } from "src/api/autogen/types.gen";
 
@@ -47,10 +48,13 @@ export function makeCaseTableColumns(
             _type: "data",
             columnId: "caseName",
             sizeInPercent: 30,
-            renderData: (value, row) => <CaseNameAndIdCell caseName={value} caseId={row.caseId} />,
+            renderData: (value, context) => (
+                <CaseNameAndIdCell caseName={value} caseId={context.entry.caseId} cellRowSelected={context.selected} />
+            ),
             filter: {
-                predicate: (filterValue: string, dataValue: string, _: any, rowData: CaseRowData) =>
-                    predicateCaseNameAndIdFilter(filterValue, dataValue, _, rowData),
+                predicate: (filterValue, dataValue, _, context) =>
+                    predicateCaseNameAndIdFilter(filterValue, dataValue, context.entry.caseId),
+                render: (props) => filterInput(props),
             },
         },
         {
@@ -59,6 +63,7 @@ export function makeCaseTableColumns(
             columnId: "description",
             sizeInPercent: 25,
             showTooltip: true,
+            filter: { render: (props) => filterInput(props) },
         },
         {
             label: "Author",
@@ -66,34 +71,11 @@ export function makeCaseTableColumns(
             columnId: "author",
             sizeInPercent: 15,
             filter: {
-                render: (props) => (
-                    // NOTE: Awaiting disable parameter for filter in table code, until then copy of defaultFilter input is render here
-                    <Input
-                        type="text"
-                        value={props.value ?? ""}
-                        disabled={disabledFilterComponents.disableAuthorComponent}
-                        placeholder="Filter ..."
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            props.onFilterChange(e.target.value || null)
-                        }
-                        endAdornment={
-                            <div
-                                className="cursor-pointer text-gray-600 hover:text-gray-500 text-sm"
-                                onClick={() => props.onFilterChange(null)}
-                            >
-                                <Close fontSize="inherit" />
-                            </div>
-                        }
-                        wrapperStyle={{
-                            fontWeight: "normal",
-                            fontSize: "0.25rem",
-                        }}
-                    />
-                ),
+                render: (props) => filterInput(props, disabledFilterComponents.disableAuthorComponent),
             },
-            renderData: (value, row) => (
+            renderData: (value, context) => (
                 <div className="p-1 flex justify-center">
-                    <UserAvatar key={row.caseId} userEmail={`${value}@equinor.com`} />
+                    <UserAvatar key={context.entry.caseId} userEmail={`${value}@equinor.com`} />
                     <span
                         className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap w-full block"
                         title={value}
@@ -130,7 +112,7 @@ export function makeCaseTableColumns(
             filter: {
                 render: (props) => (
                     <DateRangePicker
-                        className='overflow-hidden [&_[class*="Icon"]]:h-3.5'
+                        className="overflow-hidden border border-gray-300 rounded focus-within:border-indigo-500 webviz-eds-date-range-picker --compact"
                         {...props}
                         onChange={props.onFilterChange}
                     />
@@ -155,8 +137,8 @@ export function makeCaseRowData(apiData: CaseInfo_api[]): CaseRowData[] {
         .sort((a, b) => b.dateUtcMs - a.dateUtcMs); // Newest first
 }
 
-function predicateCaseNameAndIdFilter(filterValue: string, dataValue: string, _: any, rowData: CaseRowData): boolean {
-    const caseNameAndId = `${dataValue} - ${rowData.caseId}`.toLowerCase();
+function predicateCaseNameAndIdFilter(filterValue: string, dataValue: string, caseId: string): boolean {
+    const caseNameAndId = `${dataValue} - ${caseId}`.toLowerCase();
     filterValue = filterValue.toLowerCase();
 
     // Case name and id is full string, check if filterValue is a substring
@@ -173,4 +155,37 @@ function predicateStatusSelection(filterValues: string[], dataValue: string): bo
 
 function predicateDateRangePick(dateRange: { from: Date; to: Date }, dataValue: number): boolean {
     return dataValue >= dateRange.from.getTime() && dataValue <= dateRange.to.getTime();
+}
+
+/**
+ * This is copy of default filter render component from Table, with added possibility to disable the input
+ * and adjusted wrapper class name to fit adjust the height to match the other filter components in the case table.
+ *
+ * Note: End-adornment is similar to the one in TagInput for consistency in table.
+ */
+function filterInput(props: ColumnFilterImplementationProps<string>, disableFilter?: boolean): React.ReactNode {
+    const value = props.value ?? "";
+
+    if (value && typeof value !== "string")
+        throw Error(`Default filter expects string value, but received type '${typeof value}'`);
+
+    return (
+        <Input
+            type="text"
+            wrapperClassName="!py-2"
+            value={value}
+            disabled={disableFilter}
+            placeholder="Filter ..."
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => props.onFilterChange(e.target.value || null)}
+            endAdornment={
+                <IconButton
+                    className="align-middle focus:outline-2 outline-blue-300"
+                    title="Clear filter"
+                    onClick={() => props.onFilterChange(null)}
+                >
+                    <Close fontSize="inherit" />
+                </IconButton>
+            }
+        />
+    );
 }

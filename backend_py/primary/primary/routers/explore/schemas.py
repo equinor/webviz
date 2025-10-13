@@ -40,5 +40,5 @@ class EnsembleDetails(BaseModel):
     caseUuid: str
     realizations: Sequence[int]
     stratigraphicColumnIdentifier: str
-    timestamps: EnsembleTimestamps  # TODO: Replace with single timestamp (new logic for finding "newest")
+    timestamps: EnsembleTimestamps
     standardResults: Sequence[str]

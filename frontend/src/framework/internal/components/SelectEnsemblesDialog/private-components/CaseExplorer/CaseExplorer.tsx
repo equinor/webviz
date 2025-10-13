@@ -264,6 +264,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         <Table
                             rowIdentifier="caseId"
                             height={"100%"}
+                            rowHeight={38}
                             numPendingRows={!casesQuery.data ? "fill" : undefined}
                             columns={caseTableColumns}
                             rows={caseRowData}

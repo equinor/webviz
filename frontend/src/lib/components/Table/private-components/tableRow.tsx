@@ -63,8 +63,8 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
                     );
 
                 const dataValue = row[cellDef.columnId];
-                const style = cellDef.style?.(dataValue, row);
-                const formattedData = cellDef?.format?.(dataValue, row);
+                const style = cellDef.style?.(dataValue, { entry: row, selected: props.selected });
+                const formattedData = cellDef?.format?.(dataValue, { entry: row, selected: props.selected });
 
                 const cellData = formattedData ?? dataValue;
 
@@ -75,7 +75,7 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
                         title={cellDef.showTooltip ? cellData : undefined}
                         style={{ height: props.height, ...style }}
                     >
-                        {cellDef.render?.(dataValue, row) ?? cellData}
+                        {cellDef.render?.(dataValue, { entry: row, selected: props.selected }) ?? cellData}
                     </td>
                 );
             })}
