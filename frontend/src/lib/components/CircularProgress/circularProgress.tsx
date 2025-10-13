@@ -1,5 +1,5 @@
-import type { SizeName } from "@framework/utils/getNamedSizeClass";
-import { getSizeClass } from "@framework/utils/getNamedSizeClass";
+import type { SizeName } from "@lib/utils/componentSize";
+import { getSizeClass } from "@lib/utils/componentSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { OptionalValues } from "../_component-utils/components";

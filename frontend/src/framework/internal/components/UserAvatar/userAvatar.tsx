@@ -6,9 +6,9 @@ import { useQuery } from "@tanstack/react-query";
 
 import type { GraphUserPhoto_api } from "@api";
 import { getUserPhotoOptions } from "@api";
-import type { SizeName } from "@framework/utils/getNamedSizeClass";
-import { getSizeClass } from "@framework/utils/getNamedSizeClass";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import type { SizeName } from "@lib/utils/componentSize";
+import { getSizeClass } from "@lib/utils/componentSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type UserAvatarProps = {
