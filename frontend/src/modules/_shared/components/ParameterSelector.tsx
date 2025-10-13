@@ -21,7 +21,7 @@ export function ParametersSelector({
     selectedParameterIdents,
     onChange,
 }: ParametersSelectorProps): React.ReactNode {
-    const [autoSelectAllOnGroupChange, setAutoSelectAllOnGroupChange] = React.useState<boolean>(false);
+    const [autoSelectAllOnGroupChange, setAutoSelectAllOnGroupChange] = React.useState<boolean>(true);
 
     const [selectedGroupFilterValues, setSelectedGroupFilterValues] = React.useState<string[]>(() => {
         if (selectedParameterIdents.length > 0) {
@@ -29,8 +29,6 @@ export function ParametersSelector({
         }
         return [];
     });
-
-
 
     const handleGroupChange = (newlySelectedGroupFilterStrings: string[]) => {
         setSelectedGroupFilterValues(newlySelectedGroupFilterStrings);
@@ -61,7 +59,7 @@ export function ParametersSelector({
     const handleParameterChange = (selectedValues: string[]) => {
         onChange(selectedValues.map((s) => ParameterIdent.fromString(s)));
     };
-    
+
     const groupSelectOptions: SelectOption[] = Array.from(
         new Set(allParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP)),
     ).map((groupName) => ({
@@ -90,6 +88,7 @@ export function ParametersSelector({
                     onChange={handleGroupChange}
                     multiple={true}
                     size={Math.min(10, groupSelectOptions.length > 0 ? groupSelectOptions.length : 1)}
+                    showQuickSelectButtons
                 />
             </Label>
             <Label text="Select Parameter(s)">
