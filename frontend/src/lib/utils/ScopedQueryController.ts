@@ -6,13 +6,14 @@ import type {
     RefetchOptions,
     RefetchQueryFilters,
 } from "@tanstack/react-query";
-import { QueryObserver, hashKey } from "@tanstack/react-query";
+import { CancelledError, QueryObserver, hashKey } from "@tanstack/react-query";
 
 type RefetchArgs = RefetchOptions & RefetchQueryFilters;
 
 type Entry = {
     observer: QueryObserver<any, any, any, any, any>;
     unsubscribe?: () => void;
+    reject?: (err: unknown) => void;
 };
 
 export class ScopedQueryController {
@@ -26,11 +27,11 @@ export class ScopedQueryController {
     /** Cancel the active fetch for a specific key (or all if none provided). */
     cancelActiveFetch(queryKey?: QueryKey): void {
         if (!queryKey) {
-            this.cleanupAll();
+            this.cleanupAll(true);
             return;
         }
         const hash = hashKey(queryKey);
-        this.cleanupEntry(hash);
+        this.cleanupEntry(hash, true);
     }
 
     /**
@@ -46,17 +47,19 @@ export class ScopedQueryController {
         const { staleWhileRevalidate = false, refetchArgs, ...observerOpts } = options;
         const keyHash = hashKey(observerOpts.queryKey as QueryKey);
 
-        this.cleanupEntry(keyHash);
+        this.cleanupEntry(keyHash, true);
 
         const observer = new QueryObserver<TQueryFnData, TError, TData, TData, TQueryKey>(
             this._queryClient,
-            observerOpts as any,
+            observerOpts as FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
         );
 
         const entry: Entry = { observer };
         this._entries.set(keyHash, entry);
 
         return new Promise<TData>((resolve, reject) => {
+            entry.reject = reject;
+
             const finish = (fn: () => void) => {
                 // Only finish if this is still the active entry for this key
                 const current = this._entries.get(keyHash);
@@ -79,9 +82,13 @@ export class ScopedQueryController {
                 if (!initial.isStale || staleWhileRevalidate) {
                     // Return now; optionally refresh in background
                     if (initial.isStale && staleWhileRevalidate) {
-                        observer.refetch(refetchArgs).catch(() => {
-                            // Fire-and-forget but avoid unhandled rejection after cleanup/destroy
+                        // resolve now, but don't cleanup until refetch ends
+                        observer.refetch(refetchArgs).finally(() => {
+                            const current = this._entries.get(keyHash);
+                            if (current && current.observer === observer) this.cleanupEntry(keyHash);
                         });
+                        resolve(initial.data as TData);
+                        return;
                     }
                     finish(() => resolve(initial.data as TData));
                     return;
@@ -113,28 +120,50 @@ export class ScopedQueryController {
                 }
             });
 
-            observer.refetch(refetchArgs).catch((err) => {
+            try {
+                observer.refetch(refetchArgs).catch((err) => {
+                    finish(() => reject(err as TError));
+                });
+            } catch (err) {
                 finish(() => reject(err as TError));
-            });
+            }
         });
     }
 
     /** Clean up everything (all keys). */
-    private cleanupAll() {
+    private cleanupAll(rejectPending = false) {
         for (const hash of Array.from(this._entries.keys())) {
-            this.cleanupEntry(hash);
+            this.cleanupEntry(hash, rejectPending);
         }
     }
 
     /** Clean up one entry by hash. */
-    private cleanupEntry(hash: string) {
+    private cleanupEntry(hash: string, rejectPending = false) {
         const entry = this._entries.get(hash);
+
         if (!entry) return;
-        if (entry.unsubscribe) {
-            entry.unsubscribe();
-            entry.unsubscribe = undefined;
+
+        try {
+            entry.unsubscribe?.();
+        } catch {
+            // Ignore
         }
-        entry.observer.destroy();
+        entry.unsubscribe = undefined;
+
+        try {
+            entry.observer.destroy();
+        } catch {
+            // Ignore
+        }
+
+        if (rejectPending) {
+            try {
+                entry.reject?.(new CancelledError());
+            } catch {
+                // Ignore
+            }
+        }
+
         this._entries.delete(hash);
     }
 }

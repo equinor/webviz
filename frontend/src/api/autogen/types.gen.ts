@@ -378,6 +378,27 @@ export type InplaceVolumesTableDefinition_api = {
     indicesWithValues: Array<InplaceVolumesIndexWithValues_api>;
 };
 
+export type LroErrorInfo_api = {
+    message: string;
+};
+
+export type LroFailureResp_api = {
+    status: "failure";
+    error: LroErrorInfo_api;
+};
+
+export type LroInProgressResp_api = {
+    status: "in_progress";
+    task_id: string;
+    poll_url?: string | null;
+    progress_message?: string | null;
+};
+
+export type LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api = {
+    status: "success";
+    result: SurfaceDataFloat_api | SurfaceDataPng_api;
+};
+
 export type NetworkNode_api = {
     node_type: "Group" | "Well";
     node_label: string;
@@ -2043,6 +2064,47 @@ export type GetSurfaceDataResponses_api = {
 };
 
 export type GetSurfaceDataResponse_api = GetSurfaceDataResponses_api[keyof GetSurfaceDataResponses_api];
+
+export type GetStatisticalSurfaceDataHybridData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Surface address string, supported address type is *STAT*
+         */
+        surf_addr_str: string;
+        /**
+         * Format of binary data in the response
+         */
+        data_format?: "float" | "png";
+        /**
+         * Definition of the surface onto which the data should be resampled. *SurfaceDef_api* object properties encoded as a `KeyValStr` string.
+         */
+        resample_to_def_str?: string | null;
+        t?: number;
+    };
+    url: "/surface/statistical_surface_data/hybrid";
+};
+
+export type GetStatisticalSurfaceDataHybridErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetStatisticalSurfaceDataHybridError_api =
+    GetStatisticalSurfaceDataHybridErrors_api[keyof GetStatisticalSurfaceDataHybridErrors_api];
+
+export type GetStatisticalSurfaceDataHybridResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api | LroInProgressResp_api | LroFailureResp_api;
+};
+
+export type GetStatisticalSurfaceDataHybridResponse_api =
+    GetStatisticalSurfaceDataHybridResponses_api[keyof GetStatisticalSurfaceDataHybridResponses_api];
 
 export type PostGetSurfaceIntersectionData_api = {
     body: BodyPostGetSurfaceIntersection_api;
