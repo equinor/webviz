@@ -16,7 +16,6 @@ import {
     ModeKind,
     type LayoutControllerBindings,
 } from "./controllers/LayoutController";
-import { makeLayoutTreeFromLayout, type LayoutNode } from "./controllers/LayoutNode";
 import { DebugOverlay } from "./debug/DebugOverlay";
 import { EmptyLayout } from "./private-components/EmptyLayout";
 import { convertLayoutRectToRealRect } from "./utils/layout";
@@ -33,7 +32,6 @@ export function Layout(props: LayoutProps) {
     const viewportRect = useElementBoundingRect(viewportRef);
 
     const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances);
-    const dashboardLayout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.Layout);
 
     const layoutControllerBindings = React.useMemo(
         function makeBindings() {
@@ -57,10 +55,8 @@ export function Layout(props: LayoutProps) {
 
     const layoutControllerMode = usePublishSubscribeTopicValue(layoutController, LayoutControllerTopic.MODE);
 
-    const previewLayout = null;
-
-    const actualLayout = dashboardLayout;
-    const [layoutRoot, setLayoutRoot] = React.useState<LayoutNode>(makeLayoutTreeFromLayout(actualLayout));
+    const layout = usePublishSubscribeTopicValue(layoutController, LayoutControllerTopic.LAYOUT);
+    const layoutTree = usePublishSubscribeTopicValue(layoutController, LayoutControllerTopic.LAYOUT_TREE);
 
     React.useEffect(
         function updateBindings() {
@@ -75,18 +71,20 @@ export function Layout(props: LayoutProps) {
             <EmptyLayout visible={moduleInstances.length === 0} />
 
             {/* Debug overlay */}
-            <DebugOverlay
-                enabled={true}
-                root={layoutRoot}
-                realSize={viewportRect ? viewportRect : { width: 0, height: 0 }}
-                draggingModuleInstanceId={
-                    layoutControllerMode.kind === ModeKind.DRAGGING ? layoutControllerMode.source.id : null
-                }
-            />
+            {layoutTree && (
+                <DebugOverlay
+                    enabled={true}
+                    root={layoutTree}
+                    realSize={viewportRect ? viewportRect : { width: 0, height: 0 }}
+                    draggingModuleInstanceId={
+                        layoutControllerMode.kind === ModeKind.DRAGGING ? layoutControllerMode.source.id : null
+                    }
+                />
+            )}
 
             {/* Actual layout */}
             {moduleInstances.map((instance) => {
-                const layoutProps = computeModuleInstanceLayoutProps(instance, actualLayout, viewportRect);
+                const layoutProps = computeModuleInstanceLayoutProps(instance, layout, viewportRect);
                 if (!layoutProps) return null;
 
                 const isDragged =

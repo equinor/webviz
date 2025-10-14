@@ -1,11 +1,12 @@
 import { GuiEvent, type GuiEventPayloads, type GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { DashboardTopic, type Dashboard, type LayoutElement } from "@framework/internal/Dashboard";
-import { MANHATTAN_LENGTH, type Rect2D, type Size2D } from "@lib/utils/geometry";
+import { MANHATTAN_LENGTH, rectContainsPoint, type Rect2D, type Size2D } from "@lib/utils/geometry";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 import { point2Distance, type Vec2 } from "@lib/utils/vec2";
 
 import { makeLayoutTreeFromLayout, type LayoutNode } from "./LayoutNode";
+import { v4 } from "uuid";
 
 export enum ModeKind {
     IDLE = "IDLE",
@@ -51,12 +52,14 @@ export type Mode =
 export enum LayoutControllerTopic {
     MODE = "MODE",
     LAYOUT = "LAYOUT",
+    LAYOUT_TREE = "LAYOUT_TREE",
     CURSOR = "CURSOR",
 }
 
 export type LayoutControllerPayloads = {
     [LayoutControllerTopic.MODE]: Mode;
     [LayoutControllerTopic.LAYOUT]: LayoutElement[];
+    [LayoutControllerTopic.LAYOUT_TREE]: LayoutNode | null;
     [LayoutControllerTopic.CURSOR]: string | null;
 };
 
@@ -79,6 +82,9 @@ export class LayoutController implements PublishSubscribe<LayoutControllerPayloa
 
     // Layout tree
     private _layoutTree: LayoutNode | null = null;
+    private _previewLayoutTree: LayoutNode | null = null;
+
+    private _layout: LayoutElement[] = [];
 
     // We need stable references for the event listeners to be able to remove them later
     private _boundHandlePointerMove = this.handlePointerMove.bind(this);
@@ -111,7 +117,13 @@ export class LayoutController implements PublishSubscribe<LayoutControllerPayloa
                 return this._mode;
             }
             if (topic === LayoutControllerTopic.LAYOUT) {
-                return []; // Placeholder, actual layout should be fetched from the dashboard
+                return this._layout; // Placeholder, actual layout should be fetched from the dashboard
+            }
+            if (topic === LayoutControllerTopic.LAYOUT_TREE) {
+                if (this._previewLayoutTree) {
+                    return this._previewLayoutTree;
+                }
+                return this._layoutTree;
             }
             if (topic === LayoutControllerTopic.CURSOR) {
                 return null; // Placeholder, actual cursor state should be managed
@@ -187,6 +199,20 @@ export class LayoutController implements PublishSubscribe<LayoutControllerPayloa
         });
     }
 
+    private handleNewModulePointerDown(payload: GuiEventPayloads[GuiEvent.NewModulePointerDown]) {
+        const tempId = v4();
+        this.startDragging({
+            kind: DragSourceKind.NEW,
+            id: tempId,
+            moduleName: payload.moduleName,
+            elementPos: payload.elementPosition,
+            elementSize: payload.elementSize,
+            pointerDownClientPos: payload.pointerPosition,
+        });
+    }
+
+    private handleRemoveModuleInstanceRequest(payload: GuiEventPayloads[GuiEvent.RemoveModuleInstanceRequest]) {}
+
     private startDragging(dragSource: DragSource) {
         const localPointerDown = this.transformClientToLocalCoordinates(dragSource.pointerDownClientPos);
         const localElementPos = this.transformClientToLocalCoordinates(dragSource.elementPos);
@@ -224,10 +250,6 @@ export class LayoutController implements PublishSubscribe<LayoutControllerPayloa
         document.removeEventListener("pointercancel", this._boundHandlePointerCancel);
         document.removeEventListener("keydown", this._boundHandleKeyDown);
     }
-
-    private handleNewModulePointerDown(payload: GuiEventPayloads[GuiEvent.NewModulePointerDown]) {}
-
-    private handleRemoveModuleInstanceRequest(payload: GuiEventPayloads[GuiEvent.RemoveModuleInstanceRequest]) {}
 
     private handlePointerMove(event: PointerEvent) {
         // When idleing, we ignore pointer moves
@@ -273,16 +295,98 @@ export class LayoutController implements PublishSubscribe<LayoutControllerPayloa
                 y: localPointerPos.y - this._mode.pointerOffset.y,
             };
 
+            if (this.isOutOfViewport(localPointerPos)) {
+                this.cancelPreview();
+                return;
+            }
+
             this.setMode({
                 kind: ModeKind.DRAGGING,
                 source: this._mode.source,
                 pointerOffset: this._mode.pointerOffset,
                 dragPosition,
             });
+
+            this.updateDraggingPreview();
         }
     }
 
+    private isOutOfViewport(pos: Vec2): boolean {
+        const viewportRect = this._bindings.getViewportRect();
+        if (!viewportRect) {
+            return false;
+        }
+
+        return !rectContainsPoint(viewportRect, pos);
+    }
+
+    private cancelPreview() {
+        this._previewLayoutTree = null;
+        this._layout = this._dashboard.getLayout();
+        this._publishSubscribeDelegate.notifySubscribers(LayoutControllerTopic.LAYOUT);
+        this._publishSubscribeDelegate.notifySubscribers(LayoutControllerTopic.LAYOUT_TREE);
+    }
+
+    private updateDraggingPreview() {
+        if (!this._layoutTree) {
+            return;
+        }
+
+        if (this._mode.kind !== ModeKind.DRAGGING) {
+            return;
+        }
+
+        const dragPosition = this._mode.dragPosition;
+        const viewportRect = this._bindings.getViewportRect();
+        if (!viewportRect) {
+            return;
+        }
+
+        const preview = this._layoutTree.makePreviewLayout(
+            dragPosition,
+            { width: viewportRect.width, height: viewportRect.height },
+            this._mode.source.id,
+            this._mode.source.kind === DragSourceKind.EXISTING ? false : true,
+        );
+
+        if (!preview) {
+            return;
+        }
+
+        this._previewLayoutTree = preview;
+        this._layout = preview.toLayout();
+        this._publishSubscribeDelegate.notifySubscribers(LayoutControllerTopic.LAYOUT);
+        this._publishSubscribeDelegate.notifySubscribers(LayoutControllerTopic.LAYOUT_TREE);
+    }
+
     private handlePointerUp(event: PointerEvent) {
+        if (this._mode.kind === ModeKind.DRAGGING && this._previewLayoutTree) {
+            // Commit the preview layout to the dashboard
+            const newLayout = this._previewLayoutTree.toLayout();
+            if (this._mode.source.kind === DragSourceKind.NEW) {
+                const instance = this._dashboard.makeAndAddModuleInstance(this._mode.source.moduleName);
+                const patched = newLayout.map((el) => {
+                    if (this._mode.kind === ModeKind.DRAGGING && el.moduleInstanceId === this._mode.source.id) {
+                        return {
+                            ...el,
+                            moduleInstanceId: instance.getId(),
+                            moduleName: instance.getModule().getName(),
+                        };
+                    }
+                    return el;
+                });
+                this._dashboard.setLayout(patched);
+            } else {
+                this._dashboard.setLayout(newLayout);
+            }
+
+            this._previewLayoutTree = null;
+            this._layout = newLayout;
+            this._layoutTree = makeLayoutTreeFromLayout(newLayout);
+            this._publishSubscribeDelegate.notifySubscribers(LayoutControllerTopic.LAYOUT);
+            this._publishSubscribeDelegate.notifySubscribers(LayoutControllerTopic.LAYOUT_TREE);
+        }
+
         // On pointer up, we return to IDLE mode
         this.setMode({ kind: ModeKind.IDLE });
 

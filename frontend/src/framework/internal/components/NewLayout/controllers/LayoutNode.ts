@@ -1,8 +1,10 @@
 import type { LayoutElement } from "@framework/internal/Dashboard";
 import {
     outerRectContainsInnerRect,
+    quadrilateralContainsPoint,
     rectContainsPoint,
     scaleRectIndividually,
+    triangleContainsPoint,
     type Rect2D,
     type Size2D,
 } from "@lib/utils/geometry";
@@ -56,7 +58,7 @@ export type Edge =
           shape: EdgeShape;
       };
 
-export enum ContainerType {
+export enum NodeType {
     HORIZONTAL_BRANCH = "horizontal-branch",
     VERTICAL_BRANCH = "vertical-branch",
     LEAF = "leaf",
@@ -65,20 +67,20 @@ export enum ContainerType {
 
 type LayoutNodeOptions = {
     occupiedRelativeRect: Rect2D;
-    type: ContainerType;
+    type: NodeType;
     parent?: LayoutNode | null;
     children?: LayoutNode[];
     level?: number;
 };
 
 type LeafMetadata = {
-    moduleInstanceId: string | undefined;
-    moduleName: string;
+    moduleInstanceId?: string;
+    moduleName?: string;
 };
 
 export class LayoutNode {
     private _occupiedRelativeRect: Rect2D;
-    private _type: ContainerType;
+    private _type: NodeType;
     private _parent: LayoutNode | null;
     private _children: LayoutNode[];
     private _level: number = 0;
@@ -105,12 +107,25 @@ export class LayoutNode {
         return this._type;
     }
 
+    setType(type: NodeType) {
+        this._type = type;
+    }
+
     getParent() {
         return this._parent;
     }
 
+    setParent(parent: LayoutNode | null) {
+        this._parent = parent;
+    }
+
     getChildren() {
         return this._children;
+    }
+
+    setChildren(children: LayoutNode[]) {
+        this._children = children;
+        this.relayoutChildren();
     }
 
     getLevel() {
@@ -131,6 +146,10 @@ export class LayoutNode {
 
     getMetadata() {
         return this._metadata;
+    }
+
+    setMetadata(metadata: LeafMetadata) {
+        this._metadata = metadata;
     }
 
     toString(): string {
@@ -158,10 +177,10 @@ export class LayoutNode {
             const singleElement = elements[0];
 
             // If this is the root, we have to make at least one leaf
-            if (this._type === ContainerType.ROOT) {
+            if (this._type === NodeType.ROOT) {
                 const leaf = new LayoutNode({
                     occupiedRelativeRect: layoutElementToRect(singleElement),
-                    type: ContainerType.LEAF,
+                    type: NodeType.LEAF,
                     parent: this,
                     level: this._level + 1,
                 });
@@ -201,7 +220,7 @@ export class LayoutNode {
             for (const segment of segments) {
                 const childNode = new LayoutNode({
                     occupiedRelativeRect: segment.rect,
-                    type: ContainerType.VERTICAL_BRANCH,
+                    type: NodeType.VERTICAL_BRANCH,
                     parent: this,
                     level: this._level + 1,
                 });
@@ -222,7 +241,7 @@ export class LayoutNode {
             for (const segment of segments) {
                 const childNode = new LayoutNode({
                     occupiedRelativeRect: segment.rect,
-                    type: ContainerType.HORIZONTAL_BRANCH,
+                    type: NodeType.HORIZONTAL_BRANCH,
                     parent: this,
                     level: this._level + 1,
                 });
@@ -234,7 +253,7 @@ export class LayoutNode {
     }
 
     private relayoutChildren() {
-        if (this._type === ContainerType.LEAF) {
+        if (this._type === NodeType.LEAF) {
             return;
         }
 
@@ -242,7 +261,7 @@ export class LayoutNode {
             return;
         }
 
-        const isHorizontalBranch = this._type === ContainerType.HORIZONTAL_BRANCH;
+        const isHorizontalBranch = this._type === NodeType.HORIZONTAL_BRANCH;
 
         const existingChildren: LayoutNode[] = [];
         const newChildren: LayoutNode[] = [];
@@ -323,7 +342,7 @@ export class LayoutNode {
     }
 
     removeModuleInstanceNode(moduleInstanceId: string) {
-        if (this._type === ContainerType.LEAF) {
+        if (this._type === NodeType.LEAF) {
             if (this._metadata?.moduleInstanceId === moduleInstanceId) {
                 if (this._parent) {
                     this._parent.removeChild(this);
@@ -360,18 +379,18 @@ export class LayoutNode {
         this.relayoutChildren();
     }
 
-    findNodeContainingPoint(point: Vec2): LayoutNode | undefined {
-        const rect = this.getOccupiedRelativeRect();
+    findNodeContainingPoint(point: Vec2, viewportSize: Size2D): LayoutNode | undefined {
+        const rect = this.calcAbsoluteRectWithLevelMargins(viewportSize, 10);
         if (!rectContainsPoint(rect, point)) {
             return undefined;
         }
 
-        if (this._type === ContainerType.LEAF) {
+        if (this._type === NodeType.LEAF) {
             return this;
         }
 
         for (const child of this._children) {
-            const found = child.findNodeContainingPoint(point);
+            const found = child.findNodeContainingPoint(point, viewportSize);
             if (found) {
                 return found;
             }
@@ -380,7 +399,17 @@ export class LayoutNode {
         return undefined;
     }
 
-    private calcAbsoluteRect(absoluteSize: Size2D): Rect2D {
+    findEdgeContainingPoint(point: Vec2, viewportSize: Size2D): Edge | undefined {
+        const edges = this.makeEdges(viewportSize);
+        const edge = edges.find((edge) => edgeContainsPoint(edge, point));
+        if (!edge) {
+            return undefined;
+        }
+
+        return edge;
+    }
+
+    calcAbsoluteRect(absoluteSize: Size2D): Rect2D {
         const relativeRect = this.getOccupiedRelativeRect();
         return scaleRectIndividually(relativeRect, absoluteSize.width, absoluteSize.height);
     }
@@ -404,7 +433,7 @@ export class LayoutNode {
 
     private getInsetLevel(): number {
         let lvl = 0;
-        const directions: Set<ContainerType> = new Set([this.getType()]);
+        const directions: Set<NodeType> = new Set([this.getType()]);
         let parent = this.getParent();
         let type = this.getType();
 
@@ -413,8 +442,8 @@ export class LayoutNode {
             if (
                 directions.size === 2 ||
                 parent.getType() === type ||
-                ![ContainerType.HORIZONTAL_BRANCH, ContainerType.VERTICAL_BRANCH].includes(parent.getType()) ||
-                ![ContainerType.HORIZONTAL_BRANCH, ContainerType.VERTICAL_BRANCH].includes(type)
+                ![NodeType.HORIZONTAL_BRANCH, NodeType.VERTICAL_BRANCH].includes(parent.getType()) ||
+                ![NodeType.HORIZONTAL_BRANCH, NodeType.VERTICAL_BRANCH].includes(type)
             ) {
                 lvl++;
                 directions.clear();
@@ -436,7 +465,7 @@ export class LayoutNode {
         const bottomRight: Vec2 = { x: rect.x + rect.width, y: rect.y + rect.height };
         const center: Vec2 = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
 
-        if (this.getType() === ContainerType.LEAF) {
+        if (this.getType() === NodeType.LEAF) {
             edges.push(
                 {
                     edge: EdgeType.LEFT,
@@ -542,7 +571,7 @@ export class LayoutNode {
             return edges;
         }
 
-        if (this.getType() === ContainerType.VERTICAL_BRANCH) {
+        if (this.getType() === NodeType.VERTICAL_BRANCH) {
             for (let i = 1; i < this._children.length; i++) {
                 const child = this._children[i];
                 const childRect = child.calcAbsoluteRect(absoluteSize);
@@ -561,7 +590,7 @@ export class LayoutNode {
                     edge: EdgeType.VERTICAL_IN_BETWEEN,
                 });
             }
-        } else if (this.getType() === ContainerType.HORIZONTAL_BRANCH) {
+        } else if (this.getType() === NodeType.HORIZONTAL_BRANCH) {
             for (let i = 1; i < this._children.length; i++) {
                 const child = this._children[i];
                 const childRect = child.calcAbsoluteRect(absoluteSize);
@@ -584,12 +613,234 @@ export class LayoutNode {
 
         return edges;
     }
+
+    clone(parent: LayoutNode | null = null): LayoutNode {
+        const rect = this.getOccupiedRelativeRect();
+        const clone = new LayoutNode({
+            occupiedRelativeRect: { ...rect },
+            type: this.getType(),
+            parent,
+            level: this.getLevel(),
+        });
+
+        clone._isNew = this._isNew;
+        clone._metadata = this._metadata ? { ...this._metadata } : null;
+        clone._children = this._children.map((child) => child.clone(clone));
+
+        return clone;
+    }
+
+    toLayout(): LayoutElement[] {
+        const elements: LayoutElement[] = [];
+
+        if (this._type === NodeType.LEAF) {
+            const relativeRect = this.getOccupiedRelativeRect();
+            elements.push({
+                moduleInstanceId: this._metadata?.moduleInstanceId,
+                moduleName: this._metadata?.moduleName ?? "unknown",
+                relX: relativeRect.x,
+                relY: relativeRect.y,
+                relWidth: relativeRect.width,
+                relHeight: relativeRect.height,
+            });
+        } else {
+            for (const child of this._children) {
+                const childElements = child.toLayout();
+                elements.push(...childElements);
+            }
+        }
+
+        return elements;
+    }
+
+    private convertLeafToBranch(newType: NodeType) {
+        if (this.getType() !== NodeType.LEAF) {
+            throw new Error("Can only convert leaf nodes to branches");
+        }
+
+        // Clone this node to preserve its properties
+        const nodeClone = this.clone(this);
+        nodeClone.setLevel(this.getLevel() + 1);
+
+        // Convert this node to the new branch type
+        this._type = newType;
+        this._metadata = null;
+        this._children = [nodeClone];
+
+        // Relayout the new branch
+        this.relayoutChildren();
+    }
+
+    prependChild(child: LayoutNode) {
+        this._children.unshift(child);
+        child.setParent(this);
+        child.setLevel(this.getLevel() + 1);
+        this.relayoutChildren();
+    }
+
+    appendChild(child: LayoutNode) {
+        this._children.push(child);
+        child.setParent(this);
+        child.setLevel(this.getLevel() + 1);
+        this.relayoutChildren();
+    }
+
+    insertChildAt(child: LayoutNode, index: number) {
+        this._children.splice(index, 0, child);
+        child.setParent(this);
+        child.setLevel(this.getLevel() + 1);
+        this.relayoutChildren();
+    }
+
+    private positionToIndex(position: number, ignoreBoxes: LayoutNode[] = []): number {
+        if (this._type === NodeType.HORIZONTAL_BRANCH) {
+            const elementsBeforePosition = this._children.filter((child) => {
+                if (ignoreBoxes.includes(child)) return false;
+                const abs = child.getOccupiedRelativeRect();
+                return abs.x < position;
+            });
+            return elementsBeforePosition.length;
+        }
+        if (this._type === NodeType.VERTICAL_BRANCH) {
+            const elementsBeforePosition = this._children.filter((child) => {
+                if (ignoreBoxes.includes(child)) return false;
+                const abs = child.getOccupiedRelativeRect();
+                return abs.y < position;
+            });
+            return elementsBeforePosition.length;
+        }
+        return 0;
+    }
+
+    private insertNodeAtEdge(edge: Edge, newNode: LayoutNode) {
+        // When this is a leaf, we need to convert it to a branch
+        if (this.getType() === NodeType.LEAF) {
+            let newBranchType: NodeType = NodeType.VERTICAL_BRANCH;
+            if (edge.edge === EdgeType.LEFT || edge.edge === EdgeType.RIGHT) {
+                newBranchType = NodeType.HORIZONTAL_BRANCH;
+            }
+            this.convertLeafToBranch(newBranchType);
+        }
+        newNode.setIsNew(true);
+
+        if (edge.edge === EdgeType.LEFT || edge.edge === EdgeType.TOP) {
+            this.prependChild(newNode);
+            return;
+        }
+        if (edge.edge === EdgeType.RIGHT || edge.edge === EdgeType.BOTTOM) {
+            this.appendChild(newNode);
+            return;
+        }
+
+        if (edge.edge === EdgeType.VERTICAL_IN_BETWEEN || edge.edge === EdgeType.HORIZONTAL_IN_BETWEEN) {
+            const index = this.positionToIndex(edge.position);
+            this.insertChildAt(newNode, index);
+            return;
+        }
+    }
+
+    private moveNode(source: LayoutNode, destination: LayoutNode, edge: Edge) {
+        if (source === destination) {
+            return;
+        }
+
+        const oldParent = source.getParent();
+
+        oldParent?.removeChild(source);
+        destination.insertNodeAtEdge(edge, source);
+    }
+
+    private findNodeContainingModuleInstance(moduleInstanceId: string): LayoutNode | null {
+        if (this._metadata?.moduleInstanceId === moduleInstanceId) {
+            return this;
+        }
+
+        let found: LayoutNode | null = null;
+        this._children.every((child) => {
+            found = child.findNodeContainingModuleInstance(moduleInstanceId);
+            if (found) {
+                return false;
+            }
+            return true;
+        });
+
+        return found;
+    }
+
+    makePreviewLayout(
+        pointerPos: Vec2,
+        viewportSize: Size2D,
+        draggedModuleInstanceId: string,
+        isNewModuleInstance: boolean,
+    ): LayoutNode | null {
+        // Should only be called from root node
+        if (this._parent) {
+            return null;
+        }
+
+        const previewClone = this.clone();
+
+        // New module instance
+        if (isNewModuleInstance && previewClone.getChildren().length === 0) {
+            const draggedNode = new LayoutNode({
+                occupiedRelativeRect: { x: 0, y: 0, width: 1, height: 1 },
+                type: NodeType.LEAF,
+                parent: previewClone,
+                level: previewClone.getLevel() + 1,
+            });
+
+            draggedNode.setIsNew(true);
+            draggedNode.setMetadata({
+                moduleInstanceId: draggedModuleInstanceId,
+            });
+
+            previewClone._children.push(draggedNode);
+
+            return previewClone;
+        }
+
+        // Find node under pointer
+        const hoveredNode = previewClone.findNodeContainingPoint(pointerPos, viewportSize);
+        if (!hoveredNode) {
+            return null;
+        }
+
+        // Find the edge under pointer
+        const hoveredEdge = hoveredNode.findEdgeContainingPoint(pointerPos, viewportSize);
+        if (!hoveredEdge) {
+            return null;
+        }
+
+        if (isNewModuleInstance) {
+            const draggedNode = new LayoutNode({
+                occupiedRelativeRect: { x: 0, y: 0, width: 1, height: 1 },
+                type: NodeType.LEAF,
+                parent: null,
+                level: 0,
+            });
+            draggedNode.setIsNew(true);
+            draggedNode.setMetadata({
+                moduleInstanceId: draggedModuleInstanceId,
+            });
+            hoveredNode.insertNodeAtEdge(hoveredEdge, draggedNode);
+            return previewClone;
+        }
+
+        // Existing module instance
+        const draggedNode = previewClone.findNodeContainingModuleInstance(draggedModuleInstanceId);
+        if (!draggedNode) {
+            return null;
+        }
+        previewClone.moveNode(draggedNode, hoveredNode, hoveredEdge);
+
+        return previewClone;
+    }
 }
 
 export function makeLayoutTreeFromLayout(layout: LayoutElement[]): LayoutNode {
     const root = new LayoutNode({
         occupiedRelativeRect: { x: 0, y: 0, width: 1, height: 1 },
-        type: ContainerType.ROOT,
+        type: NodeType.ROOT,
     });
     root.makeChildrenFromLayoutElements(layout);
 
@@ -775,4 +1026,15 @@ function dedupeWithEpsilon(sortedNumbers: number[], epsilon: number = EPSILON): 
         }
     }
     return result;
+}
+
+function edgeContainsPoint(edge: Edge, point: Vec2): boolean {
+    if (edge.shape.type === EdgeShapeType.QUADRILATERAL) {
+        const { p1, p2, p3, p4 } = edge.shape.points;
+        return quadrilateralContainsPoint(p1, p2, p3, p4, point);
+    } else if (edge.shape.type === EdgeShapeType.TRIANGLE) {
+        const { p1, p2, p3 } = edge.shape.points;
+        return triangleContainsPoint(p1, p2, p3, point);
+    }
+    return false;
 }

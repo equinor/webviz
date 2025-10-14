@@ -24,7 +24,7 @@ export function DebugOverlay(props: DebugOverlayProps) {
     }
 
     return (
-        <svg className="absolute inset-0 w-full h-full pointer-events-none z-20" aria-hidden>
+        <svg className="absolute inset-0 w-full h-full pointer-events-none z-20 opacity-30" aria-hidden>
             {nodes.map((node) => {
                 const rect = node.getOccupiedRelativeRect();
                 const absoluteRect = {
