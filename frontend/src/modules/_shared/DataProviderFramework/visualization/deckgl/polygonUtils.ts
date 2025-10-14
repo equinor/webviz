@@ -1,3 +1,4 @@
+import { rgb, type Rgb } from "culori";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 
 import type { PolygonData_api } from "@api";
@@ -172,4 +173,20 @@ export function createTextLabelData(
             name: polygon.name || "Unnamed",
         };
     });
+}
+
+export function calculateLuminanceFromRgb(rgbColor: Rgb): number {
+    // Calculate relative luminance
+    // https://en.wikipedia.org/wiki/Relative_luminance
+    return 0.2126 * rgbColor.r + 0.7152 * rgbColor.g + 0.0722 * rgbColor.b;
+}
+
+export function calculateBackgroundColorFromLuminance(luminance: number): Rgb {
+    // Return black or white based on luminance threshold
+    return luminance > 0.5 ? { mode: "rgb", r: 0, g: 0, b: 0 } : { mode: "rgb", r: 1, g: 1, b: 1 };
+}
+
+export function calculateBackgroundColorForColor(rgbColor: Rgb): Rgb {
+    const luminance = calculateLuminanceFromRgb(rgbColor);
+    return calculateBackgroundColorFromLuminance(luminance);
 }

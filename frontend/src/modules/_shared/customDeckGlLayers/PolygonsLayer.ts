@@ -7,6 +7,7 @@ import type { FeatureCollection, Geometry } from "geojson";
 import type { PolygonData_api } from "@api";
 
 import {
+    calculateBackgroundColorForColor,
     createPolygonFeatureCollection,
     createTextLabelData,
     LabelPositionType,
@@ -29,7 +30,7 @@ export class PolygonsLayer extends CompositeLayer<PolygonsLayerProps> {
     filterSubLayer(context: FilterContext): boolean {
         // Dont show labels when zoomed out (maybe reduce to -5?)
         if (context.layer.id.includes("labels")) {
-            return context.viewport.zoom > -6;
+            return context.viewport.zoom > -5;
         }
         return true;
     }
@@ -92,10 +93,16 @@ export class PolygonsLayer extends CompositeLayer<PolygonsLayerProps> {
             // Calculate label color
             const labelRgbColor = visualizationSettings?.labelColor
                 ? (parseHex(visualizationSettings.labelColor) as Rgb)
-                : undefined;
-            const labelColor = labelRgbColor
-                ? [labelRgbColor.r * 255, labelRgbColor.g * 255, labelRgbColor.b * 255, 255]
-                : [255, 255, 255, 255]; // Default to white
+                : ({ r: 1, g: 1, b: 1, mode: "rgb" } as Rgb); // Default to white
+            const labelColor = [labelRgbColor.r * 255, labelRgbColor.g * 255, labelRgbColor.b * 255, 255];
+
+            const backgroundRgbColor = calculateBackgroundColorForColor(labelRgbColor);
+            const backgroundColor = [
+                backgroundRgbColor.r * 255,
+                backgroundRgbColor.g * 255,
+                backgroundRgbColor.b * 255,
+                150,
+            ];
 
             layers.push(
                 new TextLayer(
@@ -112,13 +119,15 @@ export class PolygonsLayer extends CompositeLayer<PolygonsLayerProps> {
                         getSize: 12,
                         sdf: true,
                         sizeScale: 1,
-                        sizeUnits: "meters",
-                        sizeMinPixels: 10,
-                        sizeMaxPixels: 24,
+                        sizeUnits: "pixels",
+                        sizeMinPixels: 4,
+                        sizeMaxPixels: 12,
                         getAlignmentBaseline: "center",
                         getTextAnchor: "middle",
                         getPosition: (d: TextLabelData) => d.coordinates,
                         getText: (d: TextLabelData) => d.name,
+                        backgroundColor: backgroundColor,
+                        backgroundPadding: [2, 1, 2, 1],
                     }),
                 ),
             );
