@@ -1,14 +1,60 @@
 import type { LayoutElement } from "@framework/internal/Dashboard";
-import { outerRectContainsInnerRect, type Rect2D } from "@lib/utils/geometry";
+import {
+    outerRectContainsInnerRect,
+    rectContainsPoint,
+    scaleRectIndividually,
+    type Rect2D,
+    type Size2D,
+} from "@lib/utils/geometry";
+import type { Vec2 } from "@lib/utils/vec2";
 
 export enum EdgeType {
     LEFT = "left",
     RIGHT = "right",
     TOP = "top",
     BOTTOM = "bottom",
-    VERTICAL_IN_BETWEEN = "vertical",
-    HORIZONTAL_IN_BETWEEN = "horizontal",
+    VERTICAL_IN_BETWEEN = "vertical-in-between",
+    HORIZONTAL_IN_BETWEEN = "horizontal-in-between",
 }
+
+export enum EdgeShapeType {
+    TRIANGLE = "triangle",
+    QUADRILATERAL = "quadrilateral",
+}
+
+export type Triangle = {
+    p1: Vec2;
+    p2: Vec2;
+    p3: Vec2;
+};
+
+export type Quadrilateral = {
+    p1: Vec2;
+    p2: Vec2;
+    p3: Vec2;
+    p4: Vec2;
+};
+
+export type EdgeShape =
+    | {
+          type: EdgeShapeType.TRIANGLE;
+          points: Triangle;
+      }
+    | {
+          type: EdgeShapeType.QUADRILATERAL;
+          points: Quadrilateral;
+      };
+
+export type Edge =
+    | {
+          edge: Exclude<EdgeType, EdgeType.HORIZONTAL_IN_BETWEEN | EdgeType.VERTICAL_IN_BETWEEN>;
+          shape: EdgeShape;
+      }
+    | {
+          position: number;
+          edge: EdgeType.HORIZONTAL_IN_BETWEEN | EdgeType.VERTICAL_IN_BETWEEN;
+          shape: EdgeShape;
+      };
 
 export enum ContainerType {
     HORIZONTAL_BRANCH = "horizontal-branch",
@@ -81,6 +127,10 @@ export class LayoutNode {
 
     setIsNew(isNew: boolean) {
         this._isNew = isNew;
+    }
+
+    getMetadata() {
+        return this._metadata;
     }
 
     toString(): string {
@@ -308,6 +358,231 @@ export class LayoutNode {
 
         // Otherwise, we just need to relayout the remaining children
         this.relayoutChildren();
+    }
+
+    findNodeContainingPoint(point: Vec2): LayoutNode | undefined {
+        const rect = this.getOccupiedRelativeRect();
+        if (!rectContainsPoint(rect, point)) {
+            return undefined;
+        }
+
+        if (this._type === ContainerType.LEAF) {
+            return this;
+        }
+
+        for (const child of this._children) {
+            const found = child.findNodeContainingPoint(point);
+            if (found) {
+                return found;
+            }
+        }
+
+        return undefined;
+    }
+
+    private calcAbsoluteRect(absoluteSize: Size2D): Rect2D {
+        const relativeRect = this.getOccupiedRelativeRect();
+        return scaleRectIndividually(relativeRect, absoluteSize.width, absoluteSize.height);
+    }
+
+    private calcAbsoluteRectWithLevelMargins(absoluteSize: Size2D, marginPerLevel: number): Rect2D {
+        const relativeRect = this.getOccupiedRelativeRect();
+        const insetLevel = this.getInsetLevel();
+
+        const absoluteRect = scaleRectIndividually(relativeRect, absoluteSize.width, absoluteSize.height);
+
+        const marginX = insetLevel * marginPerLevel;
+        const marginY = insetLevel * marginPerLevel;
+
+        return {
+            x: absoluteRect.x + marginX,
+            y: absoluteRect.y + marginY,
+            width: Math.max(0, absoluteRect.width - 2 * marginX),
+            height: Math.max(0, absoluteRect.height - 2 * marginY),
+        };
+    }
+
+    private getInsetLevel(): number {
+        let lvl = 0;
+        const directions: Set<ContainerType> = new Set([this.getType()]);
+        let parent = this.getParent();
+        let type = this.getType();
+
+        while (parent) {
+            directions.add(parent.getType());
+            if (
+                directions.size === 2 ||
+                parent.getType() === type ||
+                ![ContainerType.HORIZONTAL_BRANCH, ContainerType.VERTICAL_BRANCH].includes(parent.getType()) ||
+                ![ContainerType.HORIZONTAL_BRANCH, ContainerType.VERTICAL_BRANCH].includes(type)
+            ) {
+                lvl++;
+                directions.clear();
+            }
+
+            type = parent.getType();
+            parent = parent.getParent();
+        }
+        return lvl;
+    }
+
+    makeEdges(absoluteSize: Size2D, edgeWeightPx: number = 10): Edge[] {
+        const edges: Edge[] = [];
+        const rect = this.calcAbsoluteRectWithLevelMargins(absoluteSize, edgeWeightPx);
+
+        const topLeft: Vec2 = { x: rect.x, y: rect.y };
+        const topRight: Vec2 = { x: rect.x + rect.width, y: rect.y };
+        const bottomLeft: Vec2 = { x: rect.x, y: rect.y + rect.height };
+        const bottomRight: Vec2 = { x: rect.x + rect.width, y: rect.y + rect.height };
+        const center: Vec2 = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+
+        if (this.getType() === ContainerType.LEAF) {
+            edges.push(
+                {
+                    edge: EdgeType.LEFT,
+                    shape: {
+                        type: EdgeShapeType.TRIANGLE,
+                        points: {
+                            p1: topLeft,
+                            p2: bottomLeft,
+                            p3: center,
+                        },
+                    },
+                },
+                {
+                    edge: EdgeType.RIGHT,
+                    shape: {
+                        type: EdgeShapeType.TRIANGLE,
+                        points: {
+                            p1: topRight,
+                            p2: bottomRight,
+                            p3: center,
+                        },
+                    },
+                },
+                {
+                    edge: EdgeType.TOP,
+                    shape: {
+                        type: EdgeShapeType.TRIANGLE,
+                        points: {
+                            p1: topLeft,
+                            p2: topRight,
+                            p3: center,
+                        },
+                    },
+                },
+                {
+                    edge: EdgeType.BOTTOM,
+                    shape: {
+                        type: EdgeShapeType.TRIANGLE,
+                        points: {
+                            p1: bottomLeft,
+                            p2: bottomRight,
+                            p3: center,
+                        },
+                    },
+                },
+            );
+
+            return edges;
+        } else {
+            edges.push(
+                {
+                    edge: EdgeType.LEFT,
+                    shape: {
+                        type: EdgeShapeType.QUADRILATERAL,
+                        points: {
+                            p1: topLeft,
+                            p2: bottomLeft,
+                            p3: { x: bottomLeft.x + edgeWeightPx, y: bottomLeft.y - edgeWeightPx },
+                            p4: { x: topLeft.x + edgeWeightPx, y: topLeft.y + edgeWeightPx },
+                        },
+                    },
+                },
+                {
+                    edge: EdgeType.RIGHT,
+                    shape: {
+                        type: EdgeShapeType.QUADRILATERAL,
+                        points: {
+                            p1: topRight,
+                            p2: bottomRight,
+                            p3: { x: bottomRight.x - edgeWeightPx, y: bottomRight.y - edgeWeightPx },
+                            p4: { x: topRight.x - edgeWeightPx, y: topRight.y + edgeWeightPx },
+                        },
+                    },
+                },
+                {
+                    edge: EdgeType.TOP,
+                    shape: {
+                        type: EdgeShapeType.QUADRILATERAL,
+                        points: {
+                            p1: topLeft,
+                            p2: topRight,
+                            p3: { x: topRight.x - edgeWeightPx, y: topRight.y + edgeWeightPx },
+                            p4: { x: topLeft.x + edgeWeightPx, y: topLeft.y + edgeWeightPx },
+                        },
+                    },
+                },
+                {
+                    edge: EdgeType.BOTTOM,
+                    shape: {
+                        type: EdgeShapeType.QUADRILATERAL,
+                        points: {
+                            p1: bottomLeft,
+                            p2: bottomRight,
+                            p3: { x: bottomRight.x - edgeWeightPx, y: bottomRight.y - edgeWeightPx },
+                            p4: { x: bottomLeft.x + edgeWeightPx, y: bottomLeft.y - edgeWeightPx },
+                        },
+                    },
+                },
+            );
+        }
+
+        if (this._children.length <= 1) {
+            return edges;
+        }
+
+        if (this.getType() === ContainerType.VERTICAL_BRANCH) {
+            for (let i = 1; i < this._children.length; i++) {
+                const child = this._children[i];
+                const childRect = child.calcAbsoluteRect(absoluteSize);
+                const position = childRect.x;
+                edges.push({
+                    shape: {
+                        type: EdgeShapeType.QUADRILATERAL,
+                        points: {
+                            p1: { x: position - edgeWeightPx / 2, y: rect.y },
+                            p2: { x: position + edgeWeightPx / 2, y: rect.y },
+                            p3: { x: position + edgeWeightPx / 2, y: rect.y + rect.height },
+                            p4: { x: position - edgeWeightPx / 2, y: rect.y + rect.height },
+                        },
+                    },
+                    position,
+                    edge: EdgeType.VERTICAL_IN_BETWEEN,
+                });
+            }
+        } else if (this.getType() === ContainerType.HORIZONTAL_BRANCH) {
+            for (let i = 1; i < this._children.length; i++) {
+                const child = this._children[i];
+                const childRect = child.calcAbsoluteRect(absoluteSize);
+                const position = childRect.y;
+                edges.push({
+                    shape: {
+                        type: EdgeShapeType.QUADRILATERAL,
+                        points: {
+                            p1: { x: rect.x, y: position - edgeWeightPx / 2 },
+                            p2: { x: rect.x + rect.width, y: position - edgeWeightPx / 2 },
+                            p3: { x: rect.x + rect.width, y: position + edgeWeightPx / 2 },
+                            p4: { x: rect.x, y: position + edgeWeightPx / 2 },
+                        },
+                    },
+                    position,
+                    edge: EdgeType.HORIZONTAL_IN_BETWEEN,
+                });
+            }
+        }
+
+        return edges;
     }
 }
 

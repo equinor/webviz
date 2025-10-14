@@ -11,12 +11,18 @@ const DELAY_MS_MAP: Record<NonNullable<TooltipProps["enterDelay"]>, number> = {
 export type TooltipProps = Omit<EdsTooltipProps, "enterDelay"> & {
     /** Delay before showing the tooltip, undefined results in default of eds Tooltip */
     enterDelay?: "short" | "medium" | "long";
+    visible?: boolean;
 };
 
 export const Tooltip = React.forwardRef<HTMLDivElement, TooltipProps>(function DelayedTooltip(
-    { enterDelay, ...rest },
+    { enterDelay, visible, ...rest },
     ref,
 ) {
     const enterDelayMs = enterDelay ? DELAY_MS_MAP[enterDelay] : undefined;
+
+    if (!visible) {
+        return rest.children;
+    }
+
     return <EdsTooltip ref={ref} {...rest} enterDelay={enterDelayMs} />;
 });

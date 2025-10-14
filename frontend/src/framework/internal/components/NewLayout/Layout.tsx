@@ -1,18 +1,25 @@
-import { type Workbench } from "@framework/Workbench";
-import { useActiveDashboard } from "../ActiveDashboardBoundary";
 import React from "react";
-import { useElementSize } from "@lib/hooks/useElementSize";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+
 import { DashboardTopic, type LayoutElement } from "@framework/internal/Dashboard";
-import { EmptyLayout } from "./private-components/EmptyLayout";
 import type { ModuleInstance } from "@framework/ModuleInstance";
-import { convertLayoutRectToRealRect } from "./utils/layout";
-import { ViewWrapper } from "../Content/private-components/ViewWrapper";
-import type { Vec2 } from "@lib/utils/vec2";
+import { type Workbench } from "@framework/Workbench";
+import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import type { Size2D } from "@lib/utils/geometry";
-import { DebugOverlay } from "./debug/DebugOverlay";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+
+import { useActiveDashboard } from "../ActiveDashboardBoundary";
+import { ViewWrapper } from "../Content/private-components/ViewWrapper";
+
+import {
+    LayoutController,
+    LayoutControllerTopic,
+    ModeKind,
+    type LayoutControllerBindings,
+} from "./controllers/LayoutController";
 import { makeLayoutTreeFromLayout, type LayoutNode } from "./controllers/LayoutNode";
-import { GuiEvent } from "@framework/GuiMessageBroker";
+import { DebugOverlay } from "./debug/DebugOverlay";
+import { EmptyLayout } from "./private-components/EmptyLayout";
+import { convertLayoutRectToRealRect } from "./utils/layout";
 
 export type LayoutProps = {
     workbench: Workbench;
@@ -23,35 +30,43 @@ export function Layout(props: LayoutProps) {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     const viewportRef = React.useRef<HTMLDivElement>(null);
-    const viewportSize = useElementSize(viewportRef);
+    const viewportRect = useElementBoundingRect(viewportRef);
 
     const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ModuleInstances);
     const dashboardLayout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.Layout);
 
+    const layoutControllerBindings = React.useMemo(
+        function makeBindings() {
+            const bindings: LayoutControllerBindings = {
+                getViewportRect: () => {
+                    if (!viewportRect) {
+                        return { x: 0, y: 0, width: 0, height: 0 };
+                    }
+                    return viewportRect;
+                },
+            };
+            return bindings;
+        },
+        [viewportRect],
+    );
+
+    const layoutControllerRef = React.useRef<LayoutController>(
+        new LayoutController(guiMessageBroker, dashboard, layoutControllerBindings),
+    );
+    const layoutController = layoutControllerRef.current;
+
+    const layoutControllerMode = usePublishSubscribeTopicValue(layoutController, LayoutControllerTopic.MODE);
+
     const previewLayout = null;
 
     const actualLayout = dashboardLayout;
-
-    const [draggingModuleId, setDraggingModuleId] = React.useState<string | null>(null);
-    const [dragPosition, setDragPosition] = React.useState<Vec2 | null>(null);
     const [layoutRoot, setLayoutRoot] = React.useState<LayoutNode>(makeLayoutTreeFromLayout(actualLayout));
 
     React.useEffect(
-        function makeGuiSubscriptions() {
-            const unsubscribeFromRemoveRequest = guiMessageBroker.subscribeToEvent(
-                GuiEvent.RemoveModuleInstanceRequest,
-                function handleRemoveModuleInstanceRequest(event) {
-                    layoutRoot.removeModuleInstanceNode(event.moduleInstanceId);
-                    dashboard.removeModuleInstance(event.moduleInstanceId);
-                    setLayoutRoot(makeLayoutTreeFromLayout(dashboard.getLayout()));
-                },
-            );
-
-            return function cleanup() {
-                unsubscribeFromRemoveRequest();
-            };
+        function updateBindings() {
+            layoutController.updateBindings(layoutControllerBindings);
         },
-        [dashboard, guiMessageBroker],
+        [layoutController, layoutControllerBindings],
     );
 
     return (
@@ -60,14 +75,23 @@ export function Layout(props: LayoutProps) {
             <EmptyLayout visible={moduleInstances.length === 0} />
 
             {/* Debug overlay */}
-            <DebugOverlay enabled={true} root={layoutRoot} realSize={viewportSize} />
+            <DebugOverlay
+                enabled={true}
+                root={layoutRoot}
+                realSize={viewportRect ? viewportRect : { width: 0, height: 0 }}
+                draggingModuleInstanceId={
+                    layoutControllerMode.kind === ModeKind.DRAGGING ? layoutControllerMode.source.id : null
+                }
+            />
 
             {/* Actual layout */}
             {moduleInstances.map((instance) => {
-                const layoutProps = computeModuleInstanceLayoutProps(instance, actualLayout, viewportSize);
+                const layoutProps = computeModuleInstanceLayoutProps(instance, actualLayout, viewportRect);
                 if (!layoutProps) return null;
 
-                const isDragged = draggingModuleId === instance.getId();
+                const isDragged =
+                    layoutControllerMode.kind === ModeKind.DRAGGING &&
+                    layoutControllerMode.source.id === instance.getId();
 
                 return (
                     <ViewWrapper
@@ -75,8 +99,15 @@ export function Layout(props: LayoutProps) {
                         moduleInstance={instance}
                         workbench={props.workbench}
                         isDragged={isDragged}
-                        dragPosition={dragPosition ?? { x: 0, y: 0 }}
-                        changingLayout={!!draggingModuleId || !!previewLayout}
+                        dragPosition={
+                            layoutControllerMode.kind === ModeKind.DRAGGING
+                                ? layoutControllerMode.dragPosition
+                                : { x: 0, y: 0 }
+                        }
+                        changingLayout={
+                            layoutControllerMode.kind === ModeKind.DRAGGING ||
+                            layoutControllerMode.kind === ModeKind.RESIZING
+                        }
                         {...layoutProps}
                     />
                 );
