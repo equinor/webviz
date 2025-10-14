@@ -10,10 +10,10 @@ export const MODULE_NAME: string = "2DViewer";
 ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,
     category: ModuleCategory.MAIN,
-    devState: ModuleDevState.DEV,
+    devState: ModuleDevState.PROD,
     defaultTitle: "2D Viewer",
     preview,
-    description: "Generic 2D viewer for co-visualization of spatial data.",
+    description: "Generic 2D viewer for surfaces, reservoir grids and wells.",
     dataTagIds: [
         ModuleDataTagId.SURFACE,
         ModuleDataTagId.DRILLED_WELLS,
