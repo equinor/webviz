@@ -10,13 +10,13 @@ import "./DataProviderFramework/registerAllDataProviders";
 
 export const MODULE_NAME = "3DViewer";
 
-const description = "Generic 3D viewer for grid, surfaces, and wells.";
+const description = "Generic 3D viewer for reservoir grids, surfaces, seismic and wells.";
 
 ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,
     defaultTitle: "3D Viewer",
     category: ModuleCategory.MAIN,
-    devState: ModuleDevState.DEV,
+    devState: ModuleDevState.PROD,
     description,
     preview,
     dataTagIds: [
