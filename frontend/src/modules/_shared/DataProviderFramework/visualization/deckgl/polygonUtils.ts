@@ -1,4 +1,4 @@
-import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
+import type { Feature, FeatureCollection, Geometry } from "geojson";
 
 import type { PolygonData_api } from "@api";
 
@@ -23,6 +23,10 @@ export type PolygonVisualizationSettings = {
     showLabels?: boolean;
     labelPosition?: LabelPositionType;
     labelColor?: string;
+};
+export type PolygonFeatureProperties = {
+    name: string;
+    polyId: string;
 };
 
 /**
@@ -125,8 +129,8 @@ export function calculateLabelPosition(
 /**
  * Convert PolygonData_api to GeoJSON feature
  */
-export function polygonsToGeojson(polygons: PolygonData_api): Feature<Geometry, GeoJsonProperties> {
-    const data: Feature<Geometry, GeoJsonProperties> = {
+export function polygonsToGeojson(polygons: PolygonData_api): Feature<Geometry, PolygonFeatureProperties> {
+    const data: Feature<Geometry, PolygonFeatureProperties> = {
         type: "Feature",
         geometry: {
             type: "Polygon",
@@ -134,7 +138,7 @@ export function polygonsToGeojson(polygons: PolygonData_api): Feature<Geometry, 
         },
         properties: {
             name: polygons.name || "Unnamed",
-            poly_id: polygons.poly_id,
+            polyId: polygons.poly_id as string,
         },
     };
     return data;
@@ -145,8 +149,8 @@ export function polygonsToGeojson(polygons: PolygonData_api): Feature<Geometry, 
  */
 export function createPolygonFeatureCollection(
     data: PolygonData_api[],
-): FeatureCollection<Geometry, GeoJsonProperties> {
-    const features: Feature<Geometry, GeoJsonProperties>[] = data.map(polygonsToGeojson);
+): FeatureCollection<Geometry, PolygonFeatureProperties> {
+    const features: Feature<Geometry, PolygonFeatureProperties>[] = data.map(polygonsToGeojson);
 
     return {
         type: "FeatureCollection",

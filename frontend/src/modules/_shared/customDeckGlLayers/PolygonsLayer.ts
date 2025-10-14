@@ -2,7 +2,7 @@ import type { CompositeLayerProps, FilterContext, Layer, UpdateParameters } from
 import { CompositeLayer } from "@deck.gl/core";
 import { GeoJsonLayer, TextLayer } from "@deck.gl/layers";
 import { parseHex, type Rgb } from "culori";
-import type { FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
+import type { FeatureCollection, Geometry } from "geojson";
 
 import type { PolygonData_api } from "@api";
 
@@ -10,6 +10,7 @@ import {
     createPolygonFeatureCollection,
     createTextLabelData,
     LabelPositionType,
+    type PolygonFeatureProperties,
     type PolygonVisualizationSettings,
     type TextLabelData,
 } from "../DataProviderFramework/visualization/deckgl/polygonUtils";
@@ -22,7 +23,7 @@ export type PolygonsLayerProps = {
 
 export class PolygonsLayer extends CompositeLayer<PolygonsLayerProps> {
     static layerName: string = "PolygonsLayer";
-    private _polygonData: FeatureCollection<Geometry, GeoJsonProperties> | null = null;
+    private _polygonData: FeatureCollection<Geometry, PolygonFeatureProperties> | null = null;
     private _textData: TextLabelData[] = [];
 
     filterSubLayer(context: FilterContext): boolean {
@@ -108,8 +109,6 @@ export class PolygonsLayer extends CompositeLayer<PolygonsLayerProps> {
                             fontSize: 24,
                             sdf: true,
                         },
-                        outlineColor: [0, 0, 0],
-                        outlineWidth: 1,
                         getSize: 12,
                         sdf: true,
                         sizeScale: 1,
