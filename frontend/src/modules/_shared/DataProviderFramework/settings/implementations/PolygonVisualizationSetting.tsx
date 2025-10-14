@@ -1,8 +1,8 @@
 import React from "react";
 
-import { Button } from "@lib/components/Button";
-import type { PolygonVisualizationSpec } from "@modules/_shared/components/PolygonVisualizationDialog";
-import { PolygonVisualizationDialog } from "@modules/_shared/components/PolygonVisualizationDialog";
+import { SettingConfigButton } from "@lib/components/SettingConfigButton/settingConfigButton";
+import type { PolygonVisualizationSpec } from "@modules/_shared/components/PolygonVisualizationForm";
+import { PolygonVisualizationForm } from "@modules/_shared/components/PolygonVisualizationForm";
 import { LabelPositionType } from "@modules/_shared/DataProviderFramework/visualization/deckgl/polygonUtils";
 
 import type {
@@ -18,7 +18,7 @@ type ValueType = PolygonVisualizationSpec | null;
 
 export class PolygonVisualizationSetting implements CustomSettingImplementation<ValueType, SettingCategory.STATIC> {
     defaultValue: ValueType = {
-        color: "#000000",
+        color: "#007079",
         lineThickness: 2,
         lineOpacity: 1,
         fill: false,
@@ -83,59 +83,44 @@ export class PolygonVisualizationSetting implements CustomSettingImplementation<
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.STATIC>) => React.ReactNode {
+        const fixupFunc = this.fixupValue.bind(this);
+
         return function PolygonVisualizationSettingComponent(
             props: SettingComponentProps<ValueType, SettingCategory.STATIC>,
         ) {
-            const [dialogOpen, setDialogOpen] = React.useState(false);
+            const currentValue = fixupFunc(props.value);
 
-            const currentValue = props.value ?? {
-                color: "#007079",
-                lineThickness: 2,
-                lineOpacity: 1,
-                fill: false,
-                fillOpacity: 0.5,
-                showLabels: false,
-                labelPosition: LabelPositionType.CENTROID,
-                labelColor: "#FFFFFF",
-            };
+            const [localFormValue, setLocalFormValue] = React.useState<PolygonVisualizationSpec | null>(null);
 
-            function handleOpenDialog() {
-                setDialogOpen(true);
+            function handleConfigOpen() {
+                setLocalFormValue(currentValue);
             }
 
-            function handleCloseDialog() {
-                setDialogOpen(false);
+            function handleApplyConfig() {
+                props.onValueChange(localFormValue);
             }
 
-            function handleValueChange(newValue: PolygonVisualizationSpec) {
-                props.onValueChange(newValue);
+            function handleDiscardConfig() {
+                setLocalFormValue(null);
             }
 
             return (
-                <>
-                    <Button onClick={handleOpenDialog} variant="outlined" size="small">
-                        <div className="flex items-center gap-2">
-                            <div
-                                className="w-4 h-4 border rounded-sm"
-                                style={{
-                                    backgroundColor: currentValue.fill ? currentValue.color : "transparent",
-                                    borderColor: currentValue.color,
-                                    borderWidth: `${Math.max(1, currentValue.lineThickness / 2)}px`,
-                                }}
-                            />
-                            <span>
-                                {currentValue.lineThickness}px {currentValue.fill ? "filled" : "outline"}
-                            </span>
-                        </div>
-                    </Button>
-
-                    <PolygonVisualizationDialog
-                        open={dialogOpen}
-                        onClose={handleCloseDialog}
-                        value={currentValue}
-                        onChange={handleValueChange}
-                    />
-                </>
+                <SettingConfigButton
+                    className="w-full"
+                    size="medium"
+                    formTitle="Polygon Visualization Settings"
+                    title="Configure visualization"
+                    formContent={
+                        localFormValue && (
+                            <PolygonVisualizationForm value={localFormValue} onChange={setLocalFormValue} />
+                        )
+                    }
+                    onOpen={handleConfigOpen}
+                    onDiscard={handleDiscardConfig}
+                    onApply={handleApplyConfig}
+                >
+                    <VisualizationPreview value={currentValue} />
+                </SettingConfigButton>
             );
         };
     }
@@ -147,18 +132,26 @@ export class PolygonVisualizationSetting implements CustomSettingImplementation<
 
         return (
             <div className="flex items-center gap-2 text-xs">
-                <div
-                    className="w-4 h-4 border rounded-sm"
-                    style={{
-                        backgroundColor: value.fill ? value.color : "transparent",
-                        borderColor: value.color,
-                        borderWidth: `${Math.max(1, value.lineThickness / 2)}px`,
-                    }}
-                />
-                <span>
-                    {value.lineThickness}px {value.fill ? "filled" : "outline"}
-                </span>
+                <VisualizationPreview value={value} />
             </div>
         );
     }
+}
+
+function VisualizationPreview({ value }: { value: PolygonVisualizationSpec }) {
+    return (
+        <>
+            <div
+                className="size-5 border rounded-sm"
+                style={{
+                    backgroundColor: value.fill ? value.color : "transparent",
+                    borderColor: value.color,
+                    borderWidth: `${Math.max(2, value.lineThickness / 2)}px`,
+                }}
+            />
+            <span className="shrink truncate">
+                {value.lineThickness}px {value.fill ? "filled" : "outline"}
+            </span>
+        </>
+    );
 }
