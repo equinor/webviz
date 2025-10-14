@@ -1,4 +1,6 @@
-import type React from "react";
+import React from "react";
+
+import { isNaN } from "lodash";
 
 import { ColorSelect } from "@lib/components/ColorSelect";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -40,20 +42,18 @@ export function PolygonVisualizationForm(props: PolygonVisualizationFormProps) {
         }
     }
 
-    function handleLineOpacityChange(event: Event, value: number | number[]) {
-        const numValue = Array.isArray(value) ? value[0] : value;
-        const newValue = { ...props.value, lineOpacity: numValue };
+    function handleLineOpacityChange(newOpacity: number) {
+        const newValue = { ...props.value, lineOpacity: newOpacity };
         props.onChange(newValue);
     }
 
-    function handleFillChange(e: React.ChangeEvent<HTMLInputElement>) {
+    function handleFillEnabledChange(e: React.ChangeEvent<HTMLInputElement>) {
         const newValue = { ...props.value, fill: e.target.checked };
         props.onChange(newValue);
     }
 
-    function handleFillOpacityChange(event: Event, value: number | number[]) {
-        const numValue = Array.isArray(value) ? value[0] : value;
-        const newValue = { ...props.value, fillOpacity: numValue };
+    function handleFillOpacityChange(newOpacity: number) {
+        const newValue = { ...props.value, fillOpacity: newOpacity };
         props.onChange(newValue);
     }
 
@@ -79,92 +79,148 @@ export function PolygonVisualizationForm(props: PolygonVisualizationFormProps) {
         { value: LabelPositionType.LAST_POINT, label: "Last point" },
     ];
 
+    const baseId = React.useId();
+    const ids = {
+        lineWidth: `line_width_${baseId}`,
+        lineOpacity: `line_opacity_${baseId}`,
+        fillEnable: `fill_enable_${baseId}`,
+        fillOpacity: `fill_opacity_${baseId}`,
+        labelEnable: `label_enable_${baseId}`,
+        labelPosition: `label_position_${baseId}`,
+        labelColor: `label_color_${baseId}`,
+    };
+
     return (
-        <div className="flex flex-col gap-6 p-4">
-            <div>
-                <Label text="Color" position="left">
-                    <ColorSelect onChange={handleColorChange} value={props.value.color} dense />
-                </Label>
-            </div>
+        <div className="flex flex-col gap-6 p-4 ">
+            <Label text="Polygon color" position="left" labelClassName="text-base! text-gray-700">
+                <ColorSelect onChange={handleColorChange} value={props.value.color} dense />
+            </Label>
 
-            <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">Line Settings</h4>
+            <div className="grid grid-cols-[auto_1fr] gap-2 items-center content-start">
+                {/* --- Line settings --- */}
+                <h4 className="col-span-2 font-bold">Line</h4>
 
-                <div className="flex items-center gap-4 mb-3">
-                    <div className="flex-1">
-                        <Label text="Width" position="left">
-                            <Input
-                                type="number"
-                                min={0.5}
-                                max={10}
-                                step={0.1}
-                                value={props.value.lineThickness.toString()}
-                                onValueChange={handleLineThicknessChange}
-                                style={{ width: "80px" }}
-                            />
-                        </Label>
-                    </div>
-                    <div className="flex-1">
-                        <Label text="Opacity" position="left">
-                            <Slider
-                                min={0}
-                                max={1}
-                                step={0.1}
-                                value={props.value.lineOpacity}
-                                onChange={handleLineOpacityChange}
-                            />
-                        </Label>
-                    </div>
-                </div>
-            </div>
-
-            <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">Fill Settings</h4>
-
-                <div className="mb-3">
-                    <Label text="Enable Fill" position="left">
-                        <Switch checked={props.value.fill} onChange={handleFillChange} />
-                    </Label>
+                <label className="text-sm text-gray-500 leading-tight" htmlFor={ids.lineWidth}>
+                    Width
+                </label>
+                <div>
+                    <Input
+                        id={ids.lineWidth}
+                        type="number"
+                        min={0.5}
+                        max={10}
+                        step={0.1}
+                        value={props.value.lineThickness.toString()}
+                        onValueChange={handleLineThicknessChange}
+                        style={{ width: "80px" }}
+                    />
                 </div>
 
-                {props.value.fill && (
-                    <div>
-                        <Label text="Fill Opacity" position="left">
-                            <Slider
-                                min={0}
-                                max={1}
-                                step={0.1}
-                                value={props.value.fillOpacity}
-                                onChange={handleFillOpacityChange}
-                            />
-                        </Label>
-                    </div>
-                )}
+                <label className="text-sm text-gray-500 leading-tight" htmlFor={ids.lineOpacity}>
+                    Opacity
+                </label>
+                <OpacitySlider
+                    id={ids.lineOpacity}
+                    value={props.value.lineOpacity}
+                    onValueChange={handleLineOpacityChange}
+                />
+
+                {/* --- Fill settings --- */}
+                <h4 className="col-span-2 flex gap-2 items-center font-bold mt-5">
+                    <label htmlFor={ids.fillEnable}>Fill</label>
+                    <Switch
+                        id={ids.fillEnable}
+                        size="small"
+                        checked={props.value.fill}
+                        onChange={handleFillEnabledChange}
+                    />
+                </h4>
+
+                <label className="text-sm text-gray-500 leading-tight" htmlFor={ids.fillOpacity}>
+                    Opacity
+                </label>
+                <OpacitySlider
+                    disabled={!props.value.fill}
+                    id={ids.fillOpacity}
+                    value={props.value.fillOpacity}
+                    onValueChange={handleFillOpacityChange}
+                />
+
+                {/* --- Label settings --- */}
+                <h4 className="col-span-2 flex gap-2 items-center font-bold mt-5 ">
+                    <label htmlFor={ids.labelEnable}>Label</label>
+                    <Switch
+                        id={ids.labelEnable}
+                        size="small"
+                        checked={props.value.showLabels}
+                        onChange={handleShowLabelsChange}
+                    />
+                </h4>
+
+                <label className="text-sm text-gray-500 leading-tight" htmlFor={ids.labelPosition}>
+                    Position
+                </label>
+                <Dropdown
+                    disabled={!props.value.showLabels}
+                    id={ids.labelPosition}
+                    options={labelPositionOptions}
+                    value={props.value.labelPosition}
+                    onChange={handleLabelPositionChange}
+                />
+
+                <label className="text-sm text-gray-500 leading-tight" htmlFor={ids.labelColor}>
+                    Color
+                </label>
+                <ColorSelect
+                    id={ids.labelColor}
+                    value={props.value.labelColor}
+                    disabled={!props.value.showLabels}
+                    onChange={handleLabelColorChange}
+                />
             </div>
+        </div>
+    );
+}
 
-            <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">Label Settings</h4>
+function OpacitySlider(props: {
+    id: string;
+    value: number;
+    disabled?: boolean;
+    onValueChange: (newValue: number) => void;
+}) {
+    // Need to round to avoid occasional floating point errors
+    const valuePercent = Math.round(props.value * 100);
 
-                <div className="mb-3">
-                    <Label text="Show Labels" position="left">
-                        <Switch checked={props.value.showLabels} onChange={handleShowLabelsChange} />
-                    </Label>
-                </div>
-
-                {props.value.showLabels && (
-                    <div className="flex flex-col gap-3">
-                        <Label text="Label Position" position="left">
-                            <Dropdown
-                                options={labelPositionOptions}
-                                value={props.value.labelPosition}
-                                onChange={handleLabelPositionChange}
-                            />
-                        </Label>
-                        <Label text="Label Color" position="left">
-                            <ColorSelect onChange={handleLabelColorChange} value={props.value.labelColor} dense />
-                        </Label>
-                    </div>
-                )}
+    return (
+        <div className="flex gap-1 w-full items-center">
+            <div className="w-full gorw">
+                <Slider
+                    disabled={props.disabled}
+                    value={props.value}
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    onChange={(_, v) => props.onValueChange(v as number)}
+                />
+            </div>
+            <div className="max-w-0 min-w-16">
+                <Input
+                    id={props.id}
+                    value={valuePercent}
+                    type="number"
+                    disabled={props.disabled}
+                    min={0}
+                    max={100}
+                    step={1}
+                    onChange={(evt) => {
+                        const number = Number(evt.target.value);
+                        if (isNaN(number)) {
+                            props.onValueChange(0);
+                        } else {
+                            props.onValueChange(number / 100);
+                        }
+                    }}
+                />
             </div>
         </div>
     );
