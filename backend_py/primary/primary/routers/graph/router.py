@@ -19,7 +19,7 @@ router = APIRouter()
 @router.get("/user_info/{user_id_or_email}")
 async def get_user_info(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    user_id_or_email: str = Path(description="User email, id or 'me' for the authenticated user"),
+    user_id_or_email: str = Path(description="User email, graph-id or 'me' for the authenticated user"),
 ) -> schemas.GraphUser | None:
     if not authenticated_user.has_graph_access_token():
         raise AuthorizationError("User can't access Graph API", Service.GENERAL)
@@ -53,10 +53,10 @@ async def get_user_info(
 async def get_user_photo(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    user_id_or_email: str = Query(description="User email or 'me' for the authenticated user"),
+    user_id_or_email: str = Query(description="User email, graph-id, or 'me' for the authenticated user"),
     # fmt:on
 ) -> schemas.GraphUserPhoto:
-    """Get username, display name and avatar from Microsoft Graph API for a given user email"""
+    """Get username, display name and avatar from Microsoft Graph API for a given user email or graph identity"""
 
     user_photo = schemas.GraphUserPhoto(
         avatar_b64str=None,

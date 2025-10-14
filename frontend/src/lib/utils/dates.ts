@@ -26,7 +26,6 @@ export function formatDate(timestamp: Date | number, formatOptions?: Intl.DateTi
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
 
     const options: Intl.DateTimeFormatOptions = formatOptions ?? {
-        // weekday: "long",
         year: "numeric",
         month: "2-digit",
         day: "numeric",
