@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import List
+from typing import List, Coroutine, Any
 
 from fastapi import APIRouter, Depends, Path, Query, Body, Response
 
@@ -134,20 +134,20 @@ async def post_refresh_fingerprints_for_ensembles(
     # Given that currently we will have the frontend call this endpoint every 5 minutes, a TTL of 5 minutes seems reasonable
     fingerprinter = get_sumo_fingerprinter_for_user(authenticated_user=authenticated_user, cache_ttl_s=5 * 60)
 
-    tasks: list[asyncio.Task] = []
+    coros_arr: list[Coroutine[Any, Any, str]] = []
     for ident in ensemble_idents:
-        tasks.append(fingerprinter.calc_and_store_ensemble_fp_async(ident.caseUuid, ident.ensembleName))
+        coros_arr.append(fingerprinter.calc_and_store_ensemble_fp_async(ident.caseUuid, ident.ensembleName))
 
-    raw_results = await asyncio.gather(*tasks, return_exceptions=True)
+    raw_results = await asyncio.gather(*coros_arr, return_exceptions=True)
     perf_metrics.record_lap("calc-and-write-fingerprints")
 
     ret_fingerprints: list[str | None] = []
     for res in raw_results:
-        if isinstance(res, Exception):
+        if isinstance(res, str):
+            ret_fingerprints.append(res)
+        else:
             LOGGER.warning(f"Unable to calculate fingerprint for ensemble {ident}: {res}")
             ret_fingerprints.append(None)
-        else:
-            ret_fingerprints.append(res)
 
     LOGGER.debug(f"Calculated and refreshed {len(ret_fingerprints)} fingerprints in: {perf_metrics.to_string()}")
 
