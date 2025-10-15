@@ -106,7 +106,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
             updatedHasUnsavedChangesMap[ensembleIdentString] = false;
             updatedSelectionsMap[ensembleIdentString] = {
-                filteredRealizations: realizationFilter.getFilteredRealizations(),
+                realizationNumbers: realizationFilter.getFilteredRealizations(),
                 realizationNumberSelections: realizationFilter.getRealizationNumberSelections(),
                 parameterIdentStringToValueSelectionReadonlyMap:
                     realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
@@ -179,7 +179,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                 const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
 
                 resetSelectionsMap[ensembleIdentString] = {
-                    filteredRealizations: realizationFilter.getFilteredRealizations(),
+                    realizationNumbers: realizationFilter.getFilteredRealizations(),
                     realizationNumberSelections: realizationFilter.getRealizationNumberSelections(),
                     parameterIdentStringToValueSelectionReadonlyMap:
                         realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
@@ -262,7 +262,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         setEnsembleIdentStringToRealizationFilterSelectionsMap({
             ...ensembleIdentStringToRealizationFilterSelectionsMap,
             [ensembleIdentString]: {
-                filteredRealizations: realizationFilter.getFilteredRealizations(),
+                realizationNumbers: realizationFilter.getFilteredRealizations(),
                 realizationNumberSelections: realizationFilter.getRealizationNumberSelections(),
                 parameterIdentStringToValueSelectionReadonlyMap:
                     realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
@@ -339,6 +339,9 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
                             const selections =
                                 ensembleIdentStringToRealizationFilterSelectionsMap[ensembleIdent.toString()];
+                            const currentFilteredRealizations = realizationFilterSet
+                                .getRealizationFilterForEnsembleIdent(ensembleIdent)
+                                .getFilteredRealizations();
 
                             if (!selections) {
                                 return null;
@@ -347,6 +350,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                                 <EnsembleRealizationFilter
                                     key={ensembleIdent.toString()}
                                     ensembleName={ensemble.getCustomName() ?? ensemble.getDisplayName()}
+                                    filteredRealizationNumbers={currentFilteredRealizations}
                                     selections={selections}
                                     hasUnsavedSelections={
                                         ensembleIdentStringHasUnsavedChangesMap[ensembleIdent.toString()]
