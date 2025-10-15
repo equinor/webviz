@@ -4,13 +4,12 @@ import { Close } from "@mui/icons-material";
 
 import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 import { IconButton } from "@lib/components/IconButton";
 import type { TagProps } from "@lib/components/TagInput";
 import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
-import { isEnsembleRealizationFilterEffective } from "../private-utils/realizationFilterUtil";
 
 import { EnsembleColorTile } from "./ensembleColorTile";
 

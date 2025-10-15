@@ -8,7 +8,7 @@ import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import type { ParameterIdent } from "@framework/EnsembleParameters";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -52,7 +52,8 @@ import { ParameterSortingInfoDialog } from "./components/ParameterSortingInfoDia
 
 export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const hasMultipleRegularEnsembles = ensembleSet.getRegularEnsembleArray().length > 1;
+    const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
+
     const [isInfoDialogOpen, setIsInfoDialogOpen] = React.useState(false);
     const infoButtonRef = React.useRef<HTMLButtonElement>(null);
 
@@ -100,6 +101,8 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
     function handleShowPercentilesAndMeanLinesChange(_: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
         setShowPercentilesAndMeanLines(checked);
     }
+
+    const hasMultipleRegularEnsembles = ensembleSet.getRegularEnsembleArray().length > 1;
 
     return (
         <div className="flex flex-col gap-2">
@@ -154,10 +157,11 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                         <Label wrapperClassName="mt-2" text="Select ensembles:">
                             <EnsembleSelect
                                 ensembles={ensembleSet.getRegularEnsembleArray()}
-                                onChange={handleEnsembleSelectionChange}
+                                ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
                                 value={selectedEnsembleIdents}
                                 size={5}
                                 multiple={true}
+                                onChange={handleEnsembleSelectionChange}
                             />
                         </Label>
                     )}
