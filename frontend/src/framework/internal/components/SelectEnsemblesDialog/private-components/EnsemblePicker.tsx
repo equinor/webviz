@@ -20,9 +20,8 @@ import type { TableSelectOption } from "@lib/components/TableSelect";
 import { TableSelect } from "@lib/components/TableSelect";
 import { useValidState } from "@lib/hooks/useValidState";
 
+import { UserAvatar } from "../../UserAvatar";
 import type { InternalRegularEnsembleSetting } from "../types";
-
-import { UserAvatar } from "./userAvatar";
 
 export type EnsemblePickerProps = {
     nextEnsembleColor: string;
@@ -111,7 +110,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): React.ReactNode {
             id: el.uuid,
             values: [
                 { label: el.name },
-                { label: el.user, adornment: <UserAvatar key={el.uuid} userEmail={`${el.user}@equinor.com`} /> },
+                { label: el.user, adornment: <UserAvatar key={el.uuid} userIdent={`${el.user}@equinor.com`} /> },
                 { label: el.status },
             ],
         })) ?? [];
