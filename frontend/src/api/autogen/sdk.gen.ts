@@ -185,6 +185,9 @@ import type {
     GetPolygonsDataData_api,
     GetPolygonsDataResponse_api,
     GetPolygonsDataError_api,
+    GetUserInfoData_api,
+    GetUserInfoResponse_api,
+    GetUserInfoError_api,
     GetUserPhotoData_api,
     GetUserPhotoResponse_api,
     GetUserPhotoError_api,
@@ -1206,8 +1209,18 @@ export const getPolygonsData = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get User Info
+ */
+export const getUserInfo = <ThrowOnError extends boolean = false>(options: Options<GetUserInfoData_api, ThrowOnError>) => {
+    return (options?.client ?? client).get<GetUserInfoResponse_api, GetUserInfoError_api, ThrowOnError>({
+        ...options,
+        url: "/graph/user_info/{user_id_or_email}",
+    });
+};
+
+/**
  * Get User Photo
- * Get username, display name and avatar from Microsoft Graph API for a given user email
+ * Get username, display name and avatar from Microsoft Graph API for a given user email or graph identity
  */
 export const getUserPhoto = <ThrowOnError extends boolean = false>(
     options: Options<GetUserPhotoData_api, ThrowOnError>,

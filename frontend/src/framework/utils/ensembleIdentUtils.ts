@@ -36,10 +36,14 @@ export function areEnsembleIdentsEqual(
  * Check if two lists of ensemble idents are equal.
  */
 export function areEnsembleIdentListsEqual(
-    a: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
-    b: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
+    a: (RegularEnsembleIdent | DeltaEnsembleIdent)[] | null,
+    b: (RegularEnsembleIdent | DeltaEnsembleIdent)[] | null,
 ): boolean {
-    if (a.length !== b.length) {
+    // Will compare list references or if both are null
+    if (a === b) {
+        return true;
+    }
+    if (!a || !b || a.length !== b.length) {
         return false;
     }
     for (let i = 0; i < a.length; i++) {
