@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/query-core";
 
-import { EnsembleFingerprintsStore, type EnsembleTimestamps } from "@framework/EnsembleFingerprintsStore";
+import { EnsembleFingerprintsStore } from "@framework/EnsembleFingerprintsStore";
 import { globalLog } from "@framework/Log";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { Workbench } from "@framework/Workbench";
@@ -126,29 +126,32 @@ export class EnsembleUpdateMonitor {
                 return;
             }
 
-            // Fetch the latest timestamps for all ensembles
-            const latestTimestamps = await fetchLatestEnsembleFingerprints(
+            // Fetch the latest fingerprints for all ensembles
+            const latestFingerprints = await fetchLatestEnsembleFingerprints(
                 this._queryClient,
                 Array.from(allRegularEnsembleIdents).map((id) => RegularEnsembleIdent.fromString(id)),
             );
 
-            if (latestTimestamps.length !== allRegularEnsembleIdents.size) {
+            if (latestFingerprints.length !== allRegularEnsembleIdents.size) {
                 console.warn(
-                    `Expected ${allRegularEnsembleIdents.size} timestamps, received ${latestTimestamps.length}.`,
+                    `Expected ${allRegularEnsembleIdents.size} fingerprints, received ${latestFingerprints.length}.`,
                 );
             }
 
-            const latestTimestampsMap = new Map<string, EnsembleTimestamps>();
+            const latestFingerprintsMap = new Map<string, string>();
 
-            // Update the ensemble timestamps map
-            for (const item of latestTimestamps) {
-                latestTimestampsMap.set(item.ensembleIdent.toString(), item.timestamps);
+            // Update the ensemble fingerprints map
+            for (const item of latestFingerprints) {
+                if (item.fingerprint === null) {
+                    continue;
+                }
+                latestFingerprintsMap.set(item.ensembleIdent.toString(), item.fingerprint);
             }
 
-            // Update the EnsembleTimestampsStore with the latest timestamps
-            EnsembleFingerprintsStore.setAll(latestTimestampsMap);
+            // Update the EnsembleFingerprintsStore with the latest fingerprints
+            EnsembleFingerprintsStore.setAll(latestFingerprintsMap);
 
-            logger.console?.log(`checkForEnsembleUpdate - fetched and updated timestamps for ensembles.`);
+            logger.console?.log(`checkForEnsembleUpdate - fetched and updated fingerprints for ensembles.`);
         } catch (error) {
             console.error(`Error during ensemble polling:`, error);
         } finally {
