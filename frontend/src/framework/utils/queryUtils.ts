@@ -1,7 +1,7 @@
 import { EnsembleFingerprintsStore } from "@framework/EnsembleFingerprintsStore";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
-export function makeTimestampQueryParam(...ensembleIdents: RegularEnsembleIdent[]): { t?: number } {
+export function makeFingerprintQueryParam(...ensembleIdents: RegularEnsembleIdent[]): { t?: number } {
     // If no ensembles are provided, return an empty object
     if (ensembleIdents.length === 0) {
         return {};
