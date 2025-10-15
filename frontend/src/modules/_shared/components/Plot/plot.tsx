@@ -89,8 +89,8 @@ export function Plot(props: PlotProps): React.ReactNode {
     }
 
     return React.useMemo(() => {
-        const layoutWithDefaults = _.defaults({}, stableLayout, DEFAULT_LAYOUT);
-        const configWithDefaults = _.defaults({}, stableConfig, DEFAULT_CONFIG);
+        const layoutWithDefaults = _.merge({}, DEFAULT_LAYOUT, stableLayout);
+        const configWithDefaults = _.merge({}, DEFAULT_CONFIG, stableConfig);
 
         return (
             <BasePlot data={stableData} layout={layoutWithDefaults} config={configWithDefaults} {...stableOtherProps} />
