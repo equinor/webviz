@@ -642,14 +642,15 @@ function OptionItem<TValue>(props: OptionProps<TValue>): React.ReactNode {
                 "pl-4": props.isInGroup,
             })}
             style={{ height: OPTION_HEIGHT }}
-            title={props.label}
             onPointerMove={() => props.onPointerOver(props.value)}
             onClick={() => !props.disabled && props.onSelect(props.value)}
         >
             {props.adornment && (
                 <div className="max-w-8 max-h-8 overflow-hidden flex-shrink-0 inline-flex">{props.adornment}</div>
             )}
-            <div className="truncate max-h-8">{props.label}</div>
+            <div className="truncate max-h-8" title={props.label}>
+                {props.label}
+            </div>
         </li>
     );
 }
