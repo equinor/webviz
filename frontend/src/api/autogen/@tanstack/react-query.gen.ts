@@ -42,6 +42,7 @@ import {
     getGridSurface,
     getGridParameter,
     postGetPolylineIntersection,
+    getLaunchUserService,
     getRealizationFlowNetwork,
     getTableData,
     getWellCompletionsData,
@@ -130,6 +131,7 @@ import type {
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionError_api,
     PostGetPolylineIntersectionResponse_api,
+    GetLaunchUserServiceData_api,
     GetRealizationFlowNetworkData_api,
     GetTableDataData_api,
     GetWellCompletionsDataData_api,
@@ -1024,6 +1026,25 @@ export const postGetPolylineIntersectionMutation = (options?: Partial<Options<Po
         },
     };
     return mutationOptions;
+};
+
+export const getLaunchUserServiceQueryKey = (options: Options<GetLaunchUserServiceData_api>) => [
+    createQueryKey("getLaunchUserService", options),
+];
+
+export const getLaunchUserServiceOptions = (options: Options<GetLaunchUserServiceData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getLaunchUserService({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getLaunchUserServiceQueryKey(options),
+    });
 };
 
 export const getRealizationFlowNetworkQueryKey = (options: Options<GetRealizationFlowNetworkData_api>) => [

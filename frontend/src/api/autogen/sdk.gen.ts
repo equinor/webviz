@@ -113,6 +113,9 @@ import type {
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionResponse_api,
     PostGetPolylineIntersectionError_api,
+    GetLaunchUserServiceData_api,
+    GetLaunchUserServiceResponse_api,
+    GetLaunchUserServiceError_api,
     GetRealizationFlowNetworkData_api,
     GetRealizationFlowNetworkResponse_api,
     GetRealizationFlowNetworkError_api,
@@ -833,6 +836,18 @@ export const postGetPolylineIntersection = <ThrowOnError extends boolean = false
             ...options?.headers,
         },
         url: "/grid3d/get_polyline_intersection",
+    });
+};
+
+/**
+ * Get Launch User Service
+ */
+export const getLaunchUserService = <ThrowOnError extends boolean = false>(
+    options: Options<GetLaunchUserServiceData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetLaunchUserServiceResponse_api, GetLaunchUserServiceError_api, ThrowOnError>({
+        ...options,
+        url: "/grid3d/info_on_running_user_service",
     });
 };
 

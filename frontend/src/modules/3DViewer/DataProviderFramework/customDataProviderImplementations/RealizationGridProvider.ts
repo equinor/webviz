@@ -17,6 +17,15 @@ import {
     type GridSurface_trans,
 } from "@modules/_shared/utils/queryDataTransforms";
 
+
+import type { Options } from "@hey-api/client-axios";
+import type { GetLaunchUserServiceData_api } from "@api";
+import { getLaunchUserService, getLaunchUserServiceQueryKey } from "@api";
+import { lroProgressBus } from "@framework/LroProgressBus";
+import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
+import { hashKey } from "@tanstack/react-query";
+
+
 const realizationGridSettings = [
     Setting.ENSEMBLE,
     Setting.REALIZATION,
@@ -78,7 +87,7 @@ export class RealizationGridProvider
         return [data.gridParameterData.min_grid_prop_value, data.gridParameterData.max_grid_prop_value];
     }
 
-    fetchData({ getSetting, fetchQuery }: FetchDataParams<RealizationGridSettings, RealizationGridData>): Promise<{
+    fetchData({ getSetting, fetchQuery, setProgressMessage, onFetchCancelOrFinish }: FetchDataParams<RealizationGridSettings, RealizationGridData>): Promise<{
         gridSurfaceData: GridSurface_trans;
         gridParameterData: GridMappedProperty_trans;
     }> {
@@ -96,8 +105,11 @@ export class RealizationGridProvider
             throw new Error("Grid ranges are not set");
         }
 
+        const instanceStr = "Sig3DViewer"
+
         const gridParameterOptions = getGridParameterOptions({
             query: {
+                instance_str: instanceStr,
                 case_uuid: ensembleIdent?.getCaseUuid() ?? "",
                 ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
                 grid_name: gridName ?? "",
@@ -115,6 +127,7 @@ export class RealizationGridProvider
 
         const gridSurfaceOptions = getGridSurfaceOptions({
             query: {
+                instance_str: instanceStr,
                 case_uuid: ensembleIdent?.getCaseUuid() ?? "",
                 ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
                 grid_name: gridName ?? "",
@@ -132,7 +145,36 @@ export class RealizationGridProvider
 
         const gridSurfacePromise = fetchQuery(gridSurfaceOptions).then(transformGridSurface);
 
-        return Promise.all([gridSurfacePromise, gridParameterPromise]).then(([gridSurfaceData, gridParameterData]) => ({
+
+        const apiFunctionArgs: Options<GetLaunchUserServiceData_api, false> = {
+            query: {
+                instance_str: instanceStr,
+            },
+        };
+        const queryKey = getLaunchUserServiceQueryKey(apiFunctionArgs);
+
+        const queryOptions = wrapLongRunningQuery({
+            queryFn: getLaunchUserService,
+            queryFnArgs: apiFunctionArgs,
+            queryKey: queryKey,
+            delayBetweenPollsSecs: 1.0,
+            maxTotalDurationSecs: 120,
+        });
+
+        function handleTaskProgress(progressMessage: string | null) {
+            console.log("!!!!!PROGRESS:", progressMessage);
+        }
+
+        const unsubscribe = lroProgressBus.subscribe(hashKey(queryKey), handleTaskProgress);
+        onFetchCancelOrFinish(() => {
+            unsubscribe();
+        });
+
+        const promise = fetchQuery({ ...queryOptions }).then((data) => {
+            console.log("!!!!DONE", data);
+        });
+
+        return Promise.all([promise, gridSurfacePromise, gridParameterPromise]).then(([notUsed, gridSurfaceData, gridParameterData]) => ({
             gridSurfaceData,
             gridParameterData,
         }));

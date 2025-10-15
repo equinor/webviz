@@ -60,6 +60,22 @@ class UserSessionManager:
         self._user_id = user_id
         self._username = username
 
+    async def get_session_status_async(self, user_component: UserComponent, instance_str: str | None) -> SessionRunState | None:
+        timer = PerfTimer()
+        LOGGER.debug(
+            f"Get session status for : {user_component=}, {instance_str=}, {self._username=}, {self._user_id=}"
+        )
+
+        session_def = _USER_SESSION_DEFS[user_component]
+        effective_instance_str = instance_str if instance_str else "DEFAULT"
+
+        session_dir = UserSessionDirectory(self._user_id)
+        session_info = session_dir.get_session_info(session_def.job_component_name, effective_instance_str)
+        if not session_info:
+            return None
+        
+        return session_info.run_state
+
     async def get_or_create_session_async(self, user_component: UserComponent, instance_str: str | None) -> str | None:
         timer = PerfTimer()
         LOGGER.debug(
@@ -288,7 +304,9 @@ async def _create_new_session(
         else:
             LOGGER.debug("Running locally, will not create a radix job")
             new_radix_job_name = job_component_name
+            await asyncio.sleep(5);
             session_info_updater.set_state_waiting(new_radix_job_name)
+            await asyncio.sleep(5);
 
         LOGGER.debug(f"lock status, {distributed_lock.locked()=}")
 

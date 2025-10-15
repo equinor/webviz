@@ -56,6 +56,7 @@ async def get_grid_models_info(
 # pylint: disable=too-many-arguments
 async def get_grid_surface(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    instance_str: Annotated[str, Query(description="Component instance string")],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     grid_name: Annotated[str, Query(description="Grid name")],
@@ -71,7 +72,7 @@ async def get_grid_surface(
 
     perf_metrics = PerfMetrics()
 
-    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid, instance_str)
     perf_metrics.record_lap("create-service")
 
     ijk_index_filter = IJKIndexFilter(min_i=i_min, max_i=i_max, min_j=j_min, max_j=j_max, min_k=k_min, max_k=k_max)
@@ -107,14 +108,13 @@ async def get_grid_surface(
 # pylint: disable=too-many-arguments
 async def get_grid_parameter(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    instance_str: Annotated[str, Query(description="Component instance string")],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     grid_name: Annotated[str, Query(description="Grid name")],
     parameter_name: Annotated[str, Query(description="Grid parameter")],
     realization_num: Annotated[int, Query(description="Realization")],
-    parameter_time_or_interval_str: Annotated[
-        Optional[str], Query(description="Time point or time interval string")
-    ] = None,
+    parameter_time_or_interval_str: Annotated[Optional[str], Query(description="Time point or time interval string")] = None,
     i_min: Annotated[int, Query(description="Min i index")] = 0,
     i_max: Annotated[int, Query(description="Max i index")] = -1,
     j_min: Annotated[int, Query(description="Min j index")] = 0,
@@ -128,7 +128,7 @@ async def get_grid_parameter(
 
     ijk_index_filter = IJKIndexFilter(min_i=i_min, max_i=i_max, min_j=j_min, max_j=j_max, min_k=k_min, max_k=k_max)
 
-    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid, instance_str)
     perf_metrics.record_lap("create-service")
 
     mapped_grid_properties = await grid_service.get_mapped_grid_properties_async(
@@ -159,19 +159,18 @@ async def get_grid_parameter(
 @router.post("/get_polyline_intersection")
 async def post_get_polyline_intersection(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    instance_str: Annotated[str, Query(description="Component instance string")],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     grid_name: Annotated[str, Query(description="Grid name")],
     parameter_name: Annotated[str, Query(description="Grid parameter")],
     realization_num: Annotated[int, Query(description="Realization")],
-    parameter_time_or_interval_str: Annotated[
-        Optional[str], Query(description="Time point or time interval string")
-    ] = None,
+    parameter_time_or_interval_str: Annotated[Optional[str], Query(description="Time point or time interval string")] = None,
     polyline_utm_xy: list[float] = Body(embed=True),
 ) -> PolylineIntersection:
     perf_metrics = PerfMetrics()
 
-    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid, instance_str)
     perf_metrics.record_lap("create-service")
 
     polyline_intersection = await grid_service.get_polyline_intersection_async(
@@ -187,6 +186,40 @@ async def post_get_polyline_intersection(
     LOGGER.debug(f"------------------ GRID3D - get_polyline_intersection took: {perf_metrics.to_string_s()}")
 
     return polyline_intersection
+
+
+
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
+from primary.services.user_session_manager.user_session_manager import UserComponent, UserSessionManager, SessionRunState
+from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp
+
+
+@router.get("/info_on_running_user_service")
+async def get_launch_user_service(
+    # fmt:off
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    instance_str: Annotated[str | None, Query(description="Component instance string")],
+    # fmt:on
+) -> LroSuccessResp[str] | LroInProgressResp | LroFailureResp:
+
+    LOGGER.debug(f"Entering launch_user_service endpoint")
+
+    session_manager = UserSessionManager(authenticated_user.get_user_id(), authenticated_user.get_username())
+    session_run_state: SessionRunState | None = await session_manager.get_session_status_async(UserComponent.GRID3D_RI, instance_str)
+
+    if session_run_state == SessionRunState.RUNNING:
+        return LroSuccessResp(status="success", result="RUNNING")
+    
+    return LroInProgressResp(
+        status="in_progress",
+        task_id="DummyTaskId",
+        progress_message=f"User service GRID3D_RI is in state {session_run_state.value if session_run_state else 'UNKNOWN'}",
+        poll_url=None
+    )
+
+
 
 
 def _hack_ensure_b64_property_array_is_float(
