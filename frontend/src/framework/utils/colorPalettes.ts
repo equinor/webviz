@@ -8,7 +8,12 @@ import { ColorPalette } from "@lib/utils/ColorPalette";
  * Matplotlib palettes (Tab10, Viridis, Plasma, Inferno, Cividis, Coolwarm, Seismic):
  * Part of the matplotlib project. https://matplotlib.org/
  */
-
+/**
+ * Turbo colormap:
+ * Created by Anton Mikhailov at Google Research.
+ * Licensed under the Apache License 2.0.
+ * https://ai.googleblog.com/2019/08/turbo-improved-rainbow-colormap-for.html
+ */
 export const defaultColorPalettes = [
     new ColorPalette({
         name: "Tab10 (Matplotlib default)",
@@ -76,6 +81,27 @@ export const defaultContinuousSequentialColorPalettes = [
         name: "Cividis",
         colors: ["#00224e", "#123570", "#3b496c", "#575d6d", "#707173", "#8a8678", "#a59c74", "#c3b369", "#e1cc55"],
         id: "cividis",
+    }),
+    new ColorPalette({
+        name: "Turbo",
+        colors: [
+            "#30123b",
+            "#4145ab",
+            "#4675ed",
+            "#39a2fc",
+            "#1bcfd4",
+            "#24eca6",
+            "#61fc6c",
+            "#a4fc3b",
+            "#d1e834",
+            "#f3c63a",
+            "#fe9b2d",
+            "#f36315",
+            "#d93806",
+            "#b11901",
+            "#7a0402",
+        ],
+        id: "turbo",
     }),
     new ColorPalette({
         name: "Blues",
