@@ -1,11 +1,8 @@
 import React from "react";
 
-import { AccountCircle, ContentCopy, Done } from "@mui/icons-material";
+import { ContentCopy, Done } from "@mui/icons-material";
 
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
-import { useUserInfoQuery } from "./_queries";
 
 type CaseNameAndIdCellProps = {
     caseName: string;
@@ -17,10 +14,12 @@ export function CaseNameAndIdCell(props: CaseNameAndIdCellProps): React.ReactNod
     const [copied, setCopied] = React.useState(false);
 
     function handleCopyClick(event: React.MouseEvent) {
+        event.stopPropagation();
+
         if (copied) {
             return;
         }
-        event.stopPropagation();
+
         navigator.clipboard.writeText(`${props.caseId}`);
         setCopied(true);
     }
@@ -58,33 +57,5 @@ export function CaseNameAndIdCell(props: CaseNameAndIdCellProps): React.ReactNod
                 {!copied ? <ContentCopy fontSize="inherit" /> : <Done fontSize="inherit" />}
             </button>
         </div>
-    );
-}
-
-type UserAvatarProps = {
-    userEmail: string;
-};
-
-export function UserAvatar(props: UserAvatarProps): React.ReactNode {
-    const userInfo = useUserInfoQuery(props.userEmail);
-
-    if (userInfo.isFetching) {
-        return <CircularProgress size="medium-small" className="mr-1" />;
-    }
-
-    if (userInfo.data?.avatar_b64str) {
-        return (
-            <img
-                src={`data:image/png;base64,${userInfo.data.avatar_b64str}`}
-                alt="Avatar"
-                className="w-5 h-5 rounded-full mr-1"
-                title={props.userEmail}
-            />
-        );
-    }
-    return (
-        <span title={props.userEmail}>
-            <AccountCircle className="w-5 h-5 mr-1" />
-        </span>
     );
 }

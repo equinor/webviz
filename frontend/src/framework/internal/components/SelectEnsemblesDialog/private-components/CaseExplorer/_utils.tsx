@@ -3,23 +3,16 @@ import type React from "react";
 import { DateRangePicker } from "@equinor/eds-core-react";
 import { Close } from "@mui/icons-material";
 
+import { UserAvatar } from "@framework/internal/components/UserAvatar";
 import { IconButton } from "@lib/components/IconButton";
 import { Input } from "@lib/components/Input";
 import type { ColumnFilterImplementationProps, TableColumns } from "@lib/components/Table/types";
 import { TagPicker } from "@lib/components/TagPicker";
+import { formatDate } from "@lib/utils/dates";
 import type { CaseInfo_api } from "src/api/autogen/types.gen";
 
-import { CaseNameAndIdCell, UserAvatar } from "./_components";
+import { CaseNameAndIdCell } from "./_components";
 import type { CaseRowData } from "./_types";
-
-// TODO: Replace with util for date when introduces in Anders' PR
-const DATE_FORMAT: Intl.DateTimeFormatOptions = {
-    day: "numeric",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-};
 
 export function storeStateInLocalStorage(stateName: string, value: string) {
     localStorage.setItem(stateName, value);
@@ -74,8 +67,8 @@ export function makeCaseTableColumns(
                 render: (props) => filterInput(props, disabledFilterComponents.disableAuthorComponent),
             },
             renderData: (value, context) => (
-                <div className="p-1 flex justify-center">
-                    <UserAvatar key={context.entry.caseId} userEmail={`${value}@equinor.com`} />
+                <div className="flex justify-center gap-1">
+                    <UserAvatar key={context.entry.caseId} userIdent={`${value}@equinor.com`} />
                     <span
                         className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap w-full block"
                         title={value}
@@ -108,7 +101,7 @@ export function makeCaseTableColumns(
             _type: "data",
             columnId: "dateUtcMs",
             sizeInPercent: 20,
-            formatValue: (value) => new Date(value).toLocaleDateString(undefined, DATE_FORMAT),
+            formatValue: (value) => formatDate(value),
             filter: {
                 render: (props) => (
                     <DateRangePicker
@@ -172,7 +165,6 @@ function filterInput(props: ColumnFilterImplementationProps<string>, disableFilt
     return (
         <Input
             type="text"
-            wrapperClassName="!py-2"
             value={value}
             disabled={disableFilter}
             placeholder="Filter ..."
