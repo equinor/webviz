@@ -1,16 +1,14 @@
 import React from "react";
 
-import { FilterAlt } from "@mui/icons-material";
-
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import { type EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
-import { ColorTileWithBadge } from "@lib/components/ColorTileWithBadge";
 import type { DropdownOption, DropdownProps } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
+
+import { EnsembleColorTile } from "../EnsembleColorTile";
 
 export type EnsembleDropdownProps = (
     | {
@@ -31,13 +29,6 @@ export type EnsembleDropdownProps = (
 
 export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
     const { onChange, ensembles, allowDeltaEnsembles, value, ensembleRealizationFilterFunction, ...rest } = props;
-
-    const hasEffectiveRealizationFilter = React.useCallback(
-        function hasEffectiveRealizationFilter(ens: RegularEnsemble | DeltaEnsemble | null): boolean {
-            return isEnsembleRealizationFilterEffective(ens, ensembleRealizationFilterFunction);
-        },
-        [ensembleRealizationFilterFunction],
-    );
 
     const handleSelectionChange = React.useCallback(
         function handleSelectionChange(selectedEnsembleIdentStr: string) {
@@ -67,13 +58,11 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
             value: ens.getIdent().toString(),
             label: ens.getDisplayName(),
             adornment: (
-                <span className="flex items-center w-7 h-7 ">
-                    <ColorTileWithBadge
-                        color={ens.getColor()}
-                        badgeIcon={FilterAlt}
-                        showBadge={hasEffectiveRealizationFilter(ens)}
-                    />
-                </span>
+                <EnsembleColorTile
+                    ensemble={ens}
+                    ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                    wrapperClassName="w-7 h-7"
+                />
             ),
         });
     }

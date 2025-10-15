@@ -1,14 +1,12 @@
 import type React from "react";
 
+import { EnsembleColorTile } from "@framework/components/EnsembleColorTile/ensembleColorTile";
 import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
-import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import type { TagOptionProps } from "@lib/components/TagPicker";
 import { Tooltip } from "@lib/components/Tooltip";
-
-import { EnsembleColorTile } from "./ensembleColorTile";
 
 export type EnsembleTagOptionProps = TagOptionProps & {
     ensembles: readonly (RegularEnsemble | DeltaEnsemble)[];
@@ -19,11 +17,6 @@ export function EnsembleTagOption(props: EnsembleTagOptionProps): React.ReactNod
     const { ensembleRealizationFilterFunction } = props;
 
     const ensemble = props.ensembles.find((ens) => ens.getIdent().toString() === props.value) ?? null;
-    const ensembleColor = ensemble?.getColor() ?? null;
-    const isRealizationFilterEffective = isEnsembleRealizationFilterEffective(
-        ensemble,
-        ensembleRealizationFilterFunction,
-    );
 
     // Color const for passing to ColorTileWithBadge
     const tagOptionBackgroundColor = props.isFocused ? "bg-blue-100" : "bg-white";
@@ -39,10 +32,11 @@ export function EnsembleTagOption(props: EnsembleTagOptionProps): React.ReactNod
             >
                 <label className="flex size-full px-2 py-1 cursor-pointer gap-2">
                     <Checkbox className="w-full" checked={props.isSelected} onChange={props.onToggle} />
-                    {ensembleColor && (
+                    {ensemble && (
                         <EnsembleColorTile
-                            ensembleColor={ensembleColor}
-                            isRealizationFilterEffective={isRealizationFilterEffective}
+                            ensemble={ensemble}
+                            ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                            wrapperClassName="w-6 h-6"
                             badgeClassName={tagOptionBackgroundColor}
                         />
                     )}
