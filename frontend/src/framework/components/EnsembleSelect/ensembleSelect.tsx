@@ -9,7 +9,6 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
-// import { ColorTile } from "@lib/components/ColorTile";
 import { ColorTileWithBadge } from "@lib/components/ColorTileWithBadge";
 import type { SelectOption, SelectProps } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
