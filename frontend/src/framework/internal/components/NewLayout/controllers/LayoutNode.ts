@@ -78,6 +78,8 @@ type LeafMetadata = {
     moduleName?: string;
 };
 
+export const TEMP_MODULE_INSTANCE_ID = "TEMP_MODULE_INSTANCE_ID";
+
 export class LayoutNode {
     private _occupiedRelativeRect: Rect2D;
     private _type: NodeType;
@@ -193,6 +195,7 @@ export class LayoutNode {
                 moduleInstanceId: singleElement.moduleInstanceId,
                 moduleName: singleElement.moduleName,
             };
+            this._type = NodeType.LEAF;
             return;
         }
 
@@ -228,6 +231,21 @@ export class LayoutNode {
                 children.push(childNode);
             }
             this._children = children;
+
+            if (this._type === NodeType.ROOT) {
+                const branch = new LayoutNode({
+                    occupiedRelativeRect: this._occupiedRelativeRect,
+                    type: NodeType.HORIZONTAL_BRANCH,
+                    parent: this,
+                    level: this._level + 1,
+                    children: this._children,
+                });
+                this._children.forEach((c) => {
+                    c.setParent(branch);
+                    c.setLevel(branch.getLevel() + 1);
+                });
+                this._children = [branch];
+            }
         }
         if (chooseHorizontalDirection || (tie && horizontalCuts.length > 0)) {
             const segments = buildHorizontalSegments(elements, rect, horizontalCuts);
@@ -249,6 +267,21 @@ export class LayoutNode {
                 children.push(childNode);
             }
             this._children = children;
+
+            if (this._type === NodeType.ROOT) {
+                const branch = new LayoutNode({
+                    occupiedRelativeRect: this._occupiedRelativeRect,
+                    type: NodeType.VERTICAL_BRANCH,
+                    parent: this,
+                    level: this._level + 1,
+                    children: this._children,
+                });
+                this._children.forEach((c) => {
+                    c.setParent(branch);
+                    c.setLevel(branch.getLevel() + 1);
+                });
+                this._children = [branch];
+            }
         }
     }
 
@@ -371,6 +404,7 @@ export class LayoutNode {
             const onlyChild = this._children[0];
             onlyChild._parent = this._parent;
             onlyChild.setLevel(this._level);
+            onlyChild.setOccupiedRelativeRect(this._occupiedRelativeRect);
             this._parent._children = this._parent._children.map((c) => (c === this ? onlyChild : c));
             return;
         }
@@ -772,7 +806,7 @@ export class LayoutNode {
         viewportSize: Size2D,
         draggedModuleInstanceId: string,
         isNewModuleInstance: boolean,
-    ): LayoutNode | null {
+    ): { root: LayoutNode; hoveredNode: LayoutNode; hoveredEdge: Edge | null } | null {
         // Should only be called from root node
         if (this._parent) {
             return null;
@@ -796,7 +830,7 @@ export class LayoutNode {
 
             previewClone._children.push(draggedNode);
 
-            return previewClone;
+            return { root: previewClone, hoveredNode: previewClone, hoveredEdge: null };
         }
 
         // Find node under pointer
@@ -812,6 +846,15 @@ export class LayoutNode {
         }
 
         if (isNewModuleInstance) {
+            if (draggedModuleInstanceId === hoveredNode.getMetadata()?.moduleInstanceId) {
+                return null;
+            }
+            const currentNode = previewClone.findNodeContainingModuleInstance(draggedModuleInstanceId);
+            if (currentNode) {
+                previewClone.moveNode(currentNode, hoveredNode, hoveredEdge);
+                return { root: previewClone, hoveredNode, hoveredEdge };
+            }
+
             const draggedNode = new LayoutNode({
                 occupiedRelativeRect: { x: 0, y: 0, width: 1, height: 1 },
                 type: NodeType.LEAF,
@@ -823,7 +866,7 @@ export class LayoutNode {
                 moduleInstanceId: draggedModuleInstanceId,
             });
             hoveredNode.insertNodeAtEdge(hoveredEdge, draggedNode);
-            return previewClone;
+            return { root: previewClone, hoveredNode, hoveredEdge };
         }
 
         // Existing module instance
@@ -833,7 +876,7 @@ export class LayoutNode {
         }
         previewClone.moveNode(draggedNode, hoveredNode, hoveredEdge);
 
-        return previewClone;
+        return { root: previewClone, hoveredNode, hoveredEdge };
     }
 }
 

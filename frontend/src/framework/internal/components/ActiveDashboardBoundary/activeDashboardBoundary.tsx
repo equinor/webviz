@@ -1,8 +1,10 @@
-import type { Dashboard } from "@framework/internal/Dashboard";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import React from "react";
-import { useActiveSession } from "../ActiveSessionBoundary/activeSessionBoundary";
+
+import type { Dashboard } from "@framework/internal/Dashboard";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+
+import { useActiveSession } from "../ActiveSessionBoundary/activeSessionBoundary";
 
 export const ActiveDashboardContext = React.createContext<Dashboard | null>(null);
 
