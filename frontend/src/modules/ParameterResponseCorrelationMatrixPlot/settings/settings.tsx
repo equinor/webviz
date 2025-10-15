@@ -10,6 +10,7 @@ import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
+import { ParametersSelector } from "@modules/_shared/components/ParameterSelector";
 
 import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
@@ -24,7 +25,6 @@ import {
     hasUserInteractedWithParameterSelectionAtom,
 } from "./atoms/baseAtoms";
 import { availableParameterIdentsAtom, selectedParameterIdentsAtom } from "./atoms/derivedAtoms";
-import { ParametersSelector } from "./components/parameterSelector";
 
 const plotTypesOptions = [
     {

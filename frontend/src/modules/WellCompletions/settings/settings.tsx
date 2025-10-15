@@ -11,6 +11,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useColorSet } from "@framework/WorkbenchSettings";
 import { Button } from "@lib/components/Button";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { DiscreteSlider } from "@lib/components/DiscreteSlider";
@@ -21,7 +22,6 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Switch } from "@lib/components/Switch";
 import type { ColorSet } from "@lib/utils/ColorSet";
-
 
 import type { Interfaces } from "../interfaces";
 import {
@@ -58,7 +58,6 @@ import {
 } from "./atoms/derivedAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
-
 export const Settings = ({
     settingsContext,
     workbenchSession,
@@ -67,7 +66,7 @@ export const Settings = ({
 }: ModuleSettingsProps<Interfaces>) => {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
-    const stratigraphyColorSet = workbenchSettings.useColorSet();
+    const stratigraphyColorSet = useColorSet(workbenchSettings);
 
     const setSyncedEnsembleIdents = useSetAtom(syncedEnsembleIdentsAtom);
     const setSelectedStratigraphyColorSet = useSetAtom(selectedStratigraphyColorSetAtom);
