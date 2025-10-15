@@ -170,17 +170,19 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             <Label wrapperClassName="mt-2" text="Select prior ensemble:">
                                 <EnsembleDropdown
                                     ensembles={ensembleSet.getRegularEnsembleArray()}
-                                    onChange={setSelectedPriorEnsembleIdent}
+                                    ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
                                     value={selectedPriorEnsembleIdent}
                                     placeholder="Select prior ensemble"
+                                    onChange={setSelectedPriorEnsembleIdent}
                                 />
                             </Label>
                             <Label wrapperClassName="mt-2" text="Select posterior ensemble:">
                                 <EnsembleDropdown
                                     ensembles={ensembleSet.getRegularEnsembleArray()}
-                                    onChange={setSelectedPosteriorEnsembleIdent}
+                                    ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
                                     value={selectedPosteriorEnsembleIdent}
                                     placeholder="Select posterior ensemble"
+                                    onChange={setSelectedPosteriorEnsembleIdent}
                                 />
                             </Label>
                         </>
@@ -235,7 +237,6 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                     onChange={handleParameterIdentsChange}
                 />
             </CollapsibleGroup>
-
             <ParameterSortingInfoDialog
                 isOpen={isInfoDialogOpen}
                 onClose={() => setIsInfoDialogOpen(false)}
