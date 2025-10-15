@@ -1,6 +1,6 @@
 import React from "react";
 
-import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiState, useGuiState, useGuiValue, useSetGuiValue } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { ResizablePanels } from "@lib/components/ResizablePanels";
 
@@ -24,6 +24,7 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
     );
 
     const rightDrawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
+    const setResizingLayout = useSetGuiValue(props.workbench.getGuiMessageBroker(), GuiState.ResizingLayout);
 
     const handleResizablePanelsChange = React.useCallback(
         function handleResizablePanelsChange(sizes: number[]) {
@@ -33,6 +34,20 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
             }
         },
         [setLeftSettingsPanelWidth, setRightSettingsPanelWidth],
+    );
+
+    const handleResizeStart = React.useCallback(
+        function handleResizeStart() {
+            setResizingLayout(true);
+        },
+        [setResizingLayout],
+    );
+
+    const handleResizeEnd = React.useCallback(
+        function handleResizeEnd() {
+            setResizingLayout(false);
+        },
+        [setResizingLayout],
     );
 
     let sizes: number[];
@@ -63,6 +78,8 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
             sizesInPercent={sizes}
             minSizes={minSizes}
             onSizesChange={handleResizablePanelsChange}
+            onResizeStart={handleResizeStart}
+            onResizeEnd={handleResizeEnd}
         >
             {panels}
         </ResizablePanels>

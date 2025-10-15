@@ -158,7 +158,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 <div className="bg-blue-600 animate-linear-indefinite h-0.5 w-full rounded-sm" />
             </div>
             <div className="grow flex items-center text-sm font-bold min-w-0 p-1.5">
-                <Tooltip title={title}>
+                <Tooltip title={title} visible={!props.isDragged}>
                     <span className="grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0">{title}</span>
                 </Tooltip>
                 {devToolsVisible && (
