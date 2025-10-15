@@ -3735,7 +3735,7 @@ export type GetUserInfoData_api = {
     body?: never;
     path: {
         /**
-         * User email, id or 'me' for the authenticated user
+         * User email, graph-id or 'me' for the authenticated user
          */
         user_id_or_email: string;
     };
@@ -3768,7 +3768,7 @@ export type GetUserPhotoData_api = {
     path?: never;
     query: {
         /**
-         * User email or 'me' for the authenticated user
+         * User email, graph-id, or 'me' for the authenticated user
          */
         user_id_or_email: string;
         t?: number;

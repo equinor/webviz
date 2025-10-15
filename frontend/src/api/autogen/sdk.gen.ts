@@ -1196,7 +1196,7 @@ export const getUserInfo = <ThrowOnError extends boolean = false>(options: Optio
 
 /**
  * Get User Photo
- * Get username, display name and avatar from Microsoft Graph API for a given user email
+ * Get username, display name and avatar from Microsoft Graph API for a given user email or graph identity
  */
 export const getUserPhoto = <ThrowOnError extends boolean = false>(
     options: Options<GetUserPhotoData_api, ThrowOnError>,
