@@ -219,16 +219,15 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
 
     const activeStyleClasses = {
         ring: true,
-        "ring-blue-400 shadow-blue-400": !props.hasUnsavedSelections,
-        "ring-orange-400 shadow-orange-400": props.hasUnsavedSelections,
+        "ring-blue-400": !props.hasUnsavedSelections,
+        "ring-orange-400": props.hasUnsavedSelections,
     };
     const inactiveStyleClasses = {
-        "cursor-pointer ring-2": true,
+        "cursor-pointer ring hover:ring-2": true,
         "[--ring-opacity:100%]": !props.isAnotherFilterActive,
         "[--ring-opacity:50%] group hover:[--ring-opacity:75%] transition-opacity": props.isAnotherFilterActive,
         "ring-gray-300/(--ring-opacity) hover:ring-blue-200": !props.hasUnsavedSelections,
         "ring-orange-400/(--ring-opacity)": props.hasUnsavedSelections,
-        "hover:shadow-blue-400": !props.isAnotherFilterActive && props.hasUnsavedSelections,
         "hover:ring-blue-400/(--ring-opacity)": !props.isAnotherFilterActive && !props.hasUnsavedSelections,
     };
     const mainDivStyleClasses = props.isActive ? activeStyleClasses : inactiveStyleClasses;
