@@ -5,9 +5,11 @@ import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
-import { ColorTile } from "@lib/components/ColorTile";
+import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 import type { SelectOption, SelectProps } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
+
+import { EnsembleColorTile } from "../EnsembleColorTile";
 
 export type EnsembleSelectProps = (
     | {
@@ -24,11 +26,14 @@ export type EnsembleSelectProps = (
           value: RegularEnsembleIdent[];
           onChange: (ensembleIdentArray: RegularEnsembleIdent[]) => void;
       }
-) &
-    Omit<SelectProps<string>, "options" | "value" | "onChange">;
+) & { ensembleRealizationFilterFunction?: EnsembleRealizationFilterFunction } & Omit<
+        SelectProps<string>,
+        "options" | "value" | "onChange"
+    >;
 
 export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
-    const { onChange, ensembles, value, allowDeltaEnsembles, multiple, ...rest } = props;
+    const { onChange, ensembles, value, allowDeltaEnsembles, multiple, ensembleRealizationFilterFunction, ...rest } =
+        props;
 
     const handleSelectionChange = React.useCallback(
         function handleSelectionChanged(selectedEnsembleIdentStringArray: string[]) {
@@ -63,9 +68,11 @@ export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
             value: ens.getIdent().toString(),
             label: ens.getDisplayName(),
             adornment: (
-                <span className="w-5">
-                    <ColorTile color={ens.getColor()} />
-                </span>
+                <EnsembleColorTile
+                    ensemble={ens}
+                    ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                    wrapperClassName="w-6 h-6"
+                />
             ),
         });
     }
@@ -81,6 +88,7 @@ export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
         <Select
             options={optionsArray}
             value={selectedArray}
+            optionHeight={30}
             onChange={handleSelectionChange}
             multiple={isMultiple}
             {...rest}
