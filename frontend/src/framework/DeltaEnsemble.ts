@@ -117,4 +117,12 @@ export class DeltaEnsemble {
     getReferenceEnsembleIdent(): RegularEnsembleIdent {
         return this._referenceEnsemble.getIdent();
     }
+
+    getComparisonEnsembleCaseName(): string {
+        return this._comparisonEnsemble.getCaseName();
+    }
+
+    getReferenceEnsembleCaseName(): string {
+        return this._referenceEnsemble.getCaseName();
+    }
 }
