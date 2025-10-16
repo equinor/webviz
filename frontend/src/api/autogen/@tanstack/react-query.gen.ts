@@ -9,7 +9,6 @@ import {
     getCases,
     getEnsembleDetails,
     postRefreshFingerprintsForEnsembles,
-    postGetTimestampsForEnsembles,
     getVectorList,
     getDeltaEnsembleVectorList,
     getRealizationsVectorData,
@@ -88,9 +87,6 @@ import type {
     PostRefreshFingerprintsForEnsemblesData_api,
     PostRefreshFingerprintsForEnsemblesError_api,
     PostRefreshFingerprintsForEnsemblesResponse_api,
-    PostGetTimestampsForEnsemblesData_api,
-    PostGetTimestampsForEnsemblesError_api,
-    PostGetTimestampsForEnsemblesResponse_api,
     GetVectorListData_api,
     GetDeltaEnsembleVectorListData_api,
     GetRealizationsVectorDataData_api,
@@ -293,45 +289,6 @@ export const postRefreshFingerprintsForEnsemblesMutation = (
     > = {
         mutationFn: async (localOptions) => {
             const { data } = await postRefreshFingerprintsForEnsembles({
-                ...options,
-                ...localOptions,
-                throwOnError: true,
-            });
-            return data;
-        },
-    };
-    return mutationOptions;
-};
-
-export const postGetTimestampsForEnsemblesQueryKey = (options: Options<PostGetTimestampsForEnsemblesData_api>) => [
-    createQueryKey("postGetTimestampsForEnsembles", options),
-];
-
-export const postGetTimestampsForEnsemblesOptions = (options: Options<PostGetTimestampsForEnsemblesData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await postGetTimestampsForEnsembles({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: postGetTimestampsForEnsemblesQueryKey(options),
-    });
-};
-
-export const postGetTimestampsForEnsemblesMutation = (
-    options?: Partial<Options<PostGetTimestampsForEnsemblesData_api>>,
-) => {
-    const mutationOptions: UseMutationOptions<
-        PostGetTimestampsForEnsemblesResponse_api,
-        AxiosError<PostGetTimestampsForEnsemblesError_api>,
-        Options<PostGetTimestampsForEnsemblesData_api>
-    > = {
-        mutationFn: async (localOptions) => {
-            const { data } = await postGetTimestampsForEnsembles({
                 ...options,
                 ...localOptions,
                 throwOnError: true,

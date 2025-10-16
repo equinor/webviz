@@ -14,9 +14,6 @@ import type {
     PostRefreshFingerprintsForEnsemblesData_api,
     PostRefreshFingerprintsForEnsemblesResponse_api,
     PostRefreshFingerprintsForEnsemblesError_api,
-    PostGetTimestampsForEnsemblesData_api,
-    PostGetTimestampsForEnsemblesResponse_api,
-    PostGetTimestampsForEnsemblesError_api,
     GetVectorListData_api,
     GetVectorListResponse_api,
     GetVectorListError_api,
@@ -274,27 +271,6 @@ export const postRefreshFingerprintsForEnsembles = <ThrowOnError extends boolean
             ...options?.headers,
         },
         url: "/ensembles/refresh_fingerprints",
-    });
-};
-
-/**
- * Post Get Timestamps For Ensembles
- * Fetches ensemble timestamps for a list of ensembles
- */
-export const postGetTimestampsForEnsembles = <ThrowOnError extends boolean = false>(
-    options: Options<PostGetTimestampsForEnsemblesData_api, ThrowOnError>,
-) => {
-    return (options?.client ?? client).post<
-        PostGetTimestampsForEnsemblesResponse_api,
-        PostGetTimestampsForEnsemblesError_api,
-        ThrowOnError
-    >({
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...options?.headers,
-        },
-        url: "/ensembles/get_timestamps",
     });
 };
 
