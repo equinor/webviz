@@ -18,6 +18,7 @@ export type GlobalTopicDefinitions = {
     "global.infoMessage": string;
     "global.hoverRealization": { realization: number } | null;
     "global.hoverTimestamp": { timestampUtcMs: number } | null;
+    /** @deprecated use `global.hover.md` and `global.hover.wellbore` instead to delegate to hover-service */
     "global.hoverMd": { wellboreUuid: string; md: number } | null;
     "global.hoverZone": { zoneName: string } | null;
     "global.hoverRegion": { regionName: string } | null;
@@ -88,7 +89,7 @@ export class WorkbenchServices {
         };
     }
 
-    publishGlobalData<T extends keyof GlobalTopicDefinitions>(
+    publishGlobalData<T extends keyof AllTopicDefinitions>(
         topic: T,
         value: TopicDefinitionsType<T>,
         publisherId?: string,
@@ -116,6 +117,7 @@ export class WorkbenchServices {
         if (!subscribersSet) {
             return;
         }
+
         for (const { subscriberId, callbackFn } of subscribersSet) {
             if (subscriberId === undefined || publisherId === undefined || subscriberId !== publisherId) {
                 callbackFn(value);

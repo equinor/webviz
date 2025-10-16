@@ -20,7 +20,6 @@ import { MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE } from "../constants";
 
 import { COLOR_TABLES } from "./logViewerColors";
 
-
 type DataRowAccumulatorMap = Record<number, SafeWellLogDataRow>;
 
 // As per the well log json curve header definition

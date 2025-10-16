@@ -68,7 +68,6 @@ export enum Setting {
     TIME_OR_INTERVAL = "timeOrInterval",
     WELLBORE_EXTENSION_LENGTH = "wellboreExtensionLength",
     WELLBORE_PICKS = "wellborePicks",
-    WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
 }
 
 export const settingCategories = {
@@ -107,7 +106,6 @@ export const settingCategories = {
     [Setting.TIME_OR_INTERVAL]: SettingCategory.SINGLE_SELECT,
     [Setting.WELLBORE_EXTENSION_LENGTH]: SettingCategory.NUMBER,
     [Setting.WELLBORE_PICKS]: SettingCategory.MULTI_SELECT,
-    [Setting.WELLBORE_PICK_IDENTIFIER]: SettingCategory.SINGLE_SELECT,
 } as const;
 
 export type SettingCategories = typeof settingCategories;
@@ -152,7 +150,6 @@ export type SettingTypes = {
     [Setting.TIME_OR_INTERVAL]: string | null;
     [Setting.WELLBORE_EXTENSION_LENGTH]: number | null;
     [Setting.WELLBORE_PICKS]: WellborePick_api[] | null;
-    [Setting.WELLBORE_PICK_IDENTIFIER]: string | null;
 };
 
 export type PossibleSettingsForCategory<TCategory extends SettingCategory> = {
