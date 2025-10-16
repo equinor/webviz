@@ -41,6 +41,8 @@ import {
     getGridSurface,
     getGridParameter,
     postGetPolylineIntersection,
+    getInfoOnRunningUserServiceHybrid,
+    getStatusOfUserService,
     getRealizationFlowNetwork,
     getTableData,
     getWellCompletionsData,
@@ -129,6 +131,8 @@ import type {
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionError_api,
     PostGetPolylineIntersectionResponse_api,
+    GetInfoOnRunningUserServiceHybridData_api,
+    GetStatusOfUserServiceData_api,
     GetRealizationFlowNetworkData_api,
     GetTableDataData_api,
     GetWellCompletionsDataData_api,
@@ -1007,6 +1011,44 @@ export const postGetPolylineIntersectionMutation = (options?: Partial<Options<Po
         },
     };
     return mutationOptions;
+};
+
+export const getInfoOnRunningUserServiceHybridQueryKey = (options: Options<GetInfoOnRunningUserServiceHybridData_api>) => [
+    createQueryKey("getInfoOnRunningUserServiceHybrid", options),
+];
+
+export const getInfoOnRunningUserServiceHybridOptions = (options: Options<GetInfoOnRunningUserServiceHybridData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getInfoOnRunningUserServiceHybrid({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getInfoOnRunningUserServiceHybridQueryKey(options),
+    });
+};
+
+export const getStatusOfUserServiceQueryKey = (options: Options<GetStatusOfUserServiceData_api>) => [
+    createQueryKey("getStatusOfUserService", options),
+];
+
+export const getStatusOfUserServiceOptions = (options: Options<GetStatusOfUserServiceData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getStatusOfUserService({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getStatusOfUserServiceQueryKey(options),
+    });
 };
 
 export const getRealizationFlowNetworkQueryKey = (options: Options<GetRealizationFlowNetworkData_api>) => [

@@ -326,6 +326,7 @@ export class IntersectionRealizationGridProvider
 
         const queryOptions = postGetPolylineIntersectionOptions({
             query: {
+                instance_str: "SigIntersectionRealizationGridProvider",
                 case_uuid: ensembleIdent.getCaseUuid(),
                 ensemble_name: ensembleIdent.getEnsembleName(),
                 grid_name: gridName,

@@ -409,6 +409,11 @@ export type LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api = {
     result: SurfaceDataFloat_api | SurfaceDataPng_api;
 };
 
+export type LroSuccessRespStr_api = {
+    status: "success";
+    result: string;
+};
+
 export type NetworkNode_api = {
     node_type: "Group" | "Well";
     node_label: string;
@@ -2579,6 +2584,10 @@ export type GetGridSurfaceData_api = {
     path?: never;
     query: {
         /**
+         * Component instance string
+         */
+        instance_str: string;
+        /**
          * Sumo case uuid
          */
         case_uuid: string;
@@ -2645,6 +2654,10 @@ export type GetGridParameterData_api = {
     body?: never;
     path?: never;
     query: {
+        /**
+         * Component instance string
+         */
+        instance_str: string;
         /**
          * Sumo case uuid
          */
@@ -2721,6 +2734,10 @@ export type PostGetPolylineIntersectionData_api = {
     path?: never;
     query: {
         /**
+         * Component instance string
+         */
+        instance_str: string;
+        /**
          * Sumo case uuid
          */
         case_uuid: string;
@@ -2768,6 +2785,70 @@ export type PostGetPolylineIntersectionResponses_api = {
 
 export type PostGetPolylineIntersectionResponse_api =
     PostGetPolylineIntersectionResponses_api[keyof PostGetPolylineIntersectionResponses_api];
+
+export type GetInfoOnRunningUserServiceHybridData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Component instance string
+         */
+        instance_str: string | null;
+        t?: number;
+    };
+    url: "/grid3d/info_on_running_user_service_hybrid";
+};
+
+export type GetInfoOnRunningUserServiceHybridErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetInfoOnRunningUserServiceHybridError_api =
+    GetInfoOnRunningUserServiceHybridErrors_api[keyof GetInfoOnRunningUserServiceHybridErrors_api];
+
+export type GetInfoOnRunningUserServiceHybridResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: LroSuccessRespStr_api | LroInProgressResp_api | LroFailureResp_api;
+};
+
+export type GetInfoOnRunningUserServiceHybridResponse_api =
+    GetInfoOnRunningUserServiceHybridResponses_api[keyof GetInfoOnRunningUserServiceHybridResponses_api];
+
+export type GetStatusOfUserServiceData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Component instance string
+         */
+        instance_str: string | null;
+        t?: number;
+    };
+    url: "/grid3d/status_of_user_service";
+};
+
+export type GetStatusOfUserServiceErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetStatusOfUserServiceError_api = GetStatusOfUserServiceErrors_api[keyof GetStatusOfUserServiceErrors_api];
+
+export type GetStatusOfUserServiceResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type GetStatusOfUserServiceResponse_api = GetStatusOfUserServiceResponses_api[keyof GetStatusOfUserServiceResponses_api];
 
 export type GetRealizationFlowNetworkData_api = {
     body?: never;

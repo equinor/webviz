@@ -98,8 +98,10 @@ export class RealizationGridProvider
         const kMin = layerIndex || 0;
         const kMax = layerIndex || 0;
 
+        const instanceStr = "Sig2DViewer"
         const gridParameterOptions = getGridParameterOptions({
             query: {
+                instance_str: instanceStr,
                 case_uuid: ensembleIdent?.getCaseUuid() ?? "",
                 ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
                 grid_name: gridName ?? "",
@@ -117,6 +119,7 @@ export class RealizationGridProvider
 
         const gridSurfaceOptions = getGridSurfaceOptions({
             query: {
+                instance_str: instanceStr,
                 case_uuid: ensembleIdent?.getCaseUuid() ?? "",
                 ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
                 grid_name: gridName ?? "",
