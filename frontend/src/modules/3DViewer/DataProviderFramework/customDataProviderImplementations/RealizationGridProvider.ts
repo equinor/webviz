@@ -19,11 +19,15 @@ import {
 
 
 import type { Options } from "@hey-api/client-axios";
-import type { GetLaunchUserServiceData_api } from "@api";
-import { getLaunchUserService, getLaunchUserServiceQueryKey } from "@api";
 import { lroProgressBus } from "@framework/LroProgressBus";
 import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { hashKey } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
+
+import type { GetInfoOnRunningUserServiceHybridData_api } from "@api";
+import { getInfoOnRunningUserServiceHybrid, getInfoOnRunningUserServiceHybridQueryKey } from "@api";
+
+import { getStatusOfUserService, getStatusOfUserServiceOptions } from "@api";
 
 
 const realizationGridSettings = [
@@ -146,38 +150,77 @@ export class RealizationGridProvider
         const gridSurfacePromise = fetchQuery(gridSurfaceOptions).then(transformGridSurface);
 
 
-        const apiFunctionArgs: Options<GetLaunchUserServiceData_api, false> = {
+
+        const controller = new AbortController();
+
+        const serviceStatusOptions = getStatusOfUserServiceOptions({
             query: {
                 instance_str: instanceStr,
             },
-        };
-        const queryKey = getLaunchUserServiceQueryKey(apiFunctionArgs);
+            // Should this work???? Doesn't seem to have any effect...
+            signal: controller.signal
+        }); 
 
-        const queryOptions = wrapLongRunningQuery({
-            queryFn: getLaunchUserService,
-            queryFnArgs: apiFunctionArgs,
-            queryKey: queryKey,
-            delayBetweenPollsSecs: 1.0,
-            maxTotalDurationSecs: 120,
-        });
+        async function monitorLoop(signal: AbortSignal): Promise<void> {
+            console.log("entering monitor loop...");
+            while (!signal.aborted) {
+                try {
+                    // Can we pass abort signal to fetchQuery???
+                    const res = await fetchQuery(serviceStatusOptions);
 
-        function handleTaskProgress(progressMessage: string | null) {
-            console.log("!!!!!PROGRESS:", progressMessage);
+                    console.log("monitor res:", res);
+                    setProgressMessage(`Service: ${res}`);
+                } 
+                catch (err: any) {
+                    if (signal.aborted || err?.name === "AbortError") {
+                        console.log("stopping quietly on abort during fetch");
+                        break;
+                    }
+                    console.warn("monitor fetch failed:", err);
+                }
+
+                try {
+                    await abortableSleep(10, signal);
+                } 
+                catch {
+                    // aborted during sleep
+                    console.log("stopping quietly on abort during sleep");
+                    break;
+                }
+            }
+            console.log("leaving monitor loop");
         }
 
-        const unsubscribe = lroProgressBus.subscribe(hashKey(queryKey), handleTaskProgress);
+        const monitorPromise = monitorLoop(controller.signal);
+
         onFetchCancelOrFinish(() => {
-            unsubscribe();
+            console.log("fetch was cancelled or finished, sending abort to monitor");
+            controller.abort();
         });
 
-        const promise = fetchQuery({ ...queryOptions }).then((data) => {
-            console.log("!!!!DONE", data);
-        });
+        return Promise.all([gridSurfacePromise, gridParameterPromise])
+            .then(([gridSurfaceData, gridParameterData]) => {
+                return {gridSurfaceData,gridParameterData};
+            })
+            .finally(() => {
+                console.log("fetch done, stopping monitor");
+                controller.abort();
 
-        return Promise.all([promise, gridSurfacePromise, gridParameterPromise]).then(([notUsed, gridSurfaceData, gridParameterData]) => ({
-            gridSurfaceData,
-            gridParameterData,
-        }));
+                // swallow AbortErrors from monitor
+                monitorPromise.catch(() => {
+                    // nothing
+                    console.log("swallow monitor aborted");
+                }); 
+            });
+
+
+
+
+
+        // return Promise.all([gridSurfacePromise, gridParameterPromise]).then(([gridSurfaceData, gridParameterData]) => ({
+        //     gridSurfaceData,
+        //     gridParameterData,
+        // }));
     }
 
     areCurrentSettingsValid({
@@ -316,4 +359,24 @@ export class RealizationGridProvider
             return availableTimeOrIntervals;
         });
     }
+}
+
+
+function abortableSleep(ms: number, signal: AbortSignal): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        const t = window.setTimeout(resolve, ms);
+
+        if (signal.aborted) {
+            clearTimeout(t);
+            reject(new DOMException("Aborted", "AbortError"));
+            return;
+        }
+
+        const onAbort = () => {
+            clearTimeout(t);
+            reject(new DOMException("Aborted", "AbortError"));
+        };
+
+        signal.addEventListener("abort", onAbort, { once: true });
+    });
 }

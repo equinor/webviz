@@ -189,14 +189,14 @@ async def post_get_polyline_intersection(
 
 
 
-
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
 from primary.services.user_session_manager.user_session_manager import UserComponent, UserSessionManager, SessionRunState
 from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp
 
 
-@router.get("/info_on_running_user_service")
-async def get_launch_user_service(
+@router.get("/info_on_running_user_service_hybrid")
+async def get_info_on_running_user_service_hybrid(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
@@ -204,7 +204,7 @@ async def get_launch_user_service(
     # fmt:on
 ) -> LroSuccessResp[str] | LroInProgressResp | LroFailureResp:
 
-    LOGGER.debug(f"Entering launch_user_service endpoint")
+    LOGGER.debug(f"Entering info_on_running_user_service_hybrid endpoint")
 
     session_manager = UserSessionManager(authenticated_user.get_user_id(), authenticated_user.get_username())
     session_run_state: SessionRunState | None = await session_manager.get_session_status_async(UserComponent.GRID3D_RI, instance_str)
@@ -218,6 +218,28 @@ async def get_launch_user_service(
         progress_message=f"User service GRID3D_RI is in state {session_run_state.value if session_run_state else 'UNKNOWN'}",
         poll_url=None
     )
+
+
+@router.get("/status_of_user_service")
+async def get_status_of_user_service(
+    # fmt:off
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    instance_str: Annotated[str | None, Query(description="Component instance string")],
+    # fmt:on
+) -> str:
+
+    LOGGER.debug(f"Entering status_of_user_service endpoint")
+
+    session_manager = UserSessionManager(authenticated_user.get_user_id(), authenticated_user.get_username())
+    session_run_state: SessionRunState | None = await session_manager.get_session_status_async(UserComponent.GRID3D_RI, instance_str)
+
+    # Sleep for a while to simulate a long-running operation
+    await asyncio.sleep(2)
+
+    if session_run_state is None:
+        return "NOT_RUNNING"
+    
+    return session_run_state.value
 
 
 

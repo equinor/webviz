@@ -113,9 +113,12 @@ import type {
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionResponse_api,
     PostGetPolylineIntersectionError_api,
-    GetLaunchUserServiceData_api,
-    GetLaunchUserServiceResponse_api,
-    GetLaunchUserServiceError_api,
+    GetInfoOnRunningUserServiceHybridData_api,
+    GetInfoOnRunningUserServiceHybridResponse_api,
+    GetInfoOnRunningUserServiceHybridError_api,
+    GetStatusOfUserServiceData_api,
+    GetStatusOfUserServiceResponse_api,
+    GetStatusOfUserServiceError_api,
     GetRealizationFlowNetworkData_api,
     GetRealizationFlowNetworkResponse_api,
     GetRealizationFlowNetworkError_api,
@@ -840,14 +843,30 @@ export const postGetPolylineIntersection = <ThrowOnError extends boolean = false
 };
 
 /**
- * Get Launch User Service
+ * Get Info On Running User Service Hybrid
  */
-export const getLaunchUserService = <ThrowOnError extends boolean = false>(
-    options: Options<GetLaunchUserServiceData_api, ThrowOnError>,
+export const getInfoOnRunningUserServiceHybrid = <ThrowOnError extends boolean = false>(
+    options: Options<GetInfoOnRunningUserServiceHybridData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).get<GetLaunchUserServiceResponse_api, GetLaunchUserServiceError_api, ThrowOnError>({
+    return (options?.client ?? client).get<
+        GetInfoOnRunningUserServiceHybridResponse_api,
+        GetInfoOnRunningUserServiceHybridError_api,
+        ThrowOnError
+    >({
         ...options,
-        url: "/grid3d/info_on_running_user_service",
+        url: "/grid3d/info_on_running_user_service_hybrid",
+    });
+};
+
+/**
+ * Get Status Of User Service
+ */
+export const getStatusOfUserService = <ThrowOnError extends boolean = false>(
+    options: Options<GetStatusOfUserServiceData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetStatusOfUserServiceResponse_api, GetStatusOfUserServiceError_api, ThrowOnError>({
+        ...options,
+        url: "/grid3d/status_of_user_service",
     });
 };
 

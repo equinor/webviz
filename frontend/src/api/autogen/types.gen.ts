@@ -2807,7 +2807,7 @@ export type PostGetPolylineIntersectionResponses_api = {
 export type PostGetPolylineIntersectionResponse_api =
     PostGetPolylineIntersectionResponses_api[keyof PostGetPolylineIntersectionResponses_api];
 
-export type GetLaunchUserServiceData_api = {
+export type GetInfoOnRunningUserServiceHybridData_api = {
     body?: never;
     path?: never;
     query: {
@@ -2817,26 +2817,59 @@ export type GetLaunchUserServiceData_api = {
         instance_str: string | null;
         t?: number;
     };
-    url: "/grid3d/info_on_running_user_service";
+    url: "/grid3d/info_on_running_user_service_hybrid";
 };
 
-export type GetLaunchUserServiceErrors_api = {
+export type GetInfoOnRunningUserServiceHybridErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type GetLaunchUserServiceError_api = GetLaunchUserServiceErrors_api[keyof GetLaunchUserServiceErrors_api];
+export type GetInfoOnRunningUserServiceHybridError_api =
+    GetInfoOnRunningUserServiceHybridErrors_api[keyof GetInfoOnRunningUserServiceHybridErrors_api];
 
-export type GetLaunchUserServiceResponses_api = {
+export type GetInfoOnRunningUserServiceHybridResponses_api = {
     /**
      * Successful Response
      */
     200: LroSuccessRespStr_api | LroInProgressResp_api | LroFailureResp_api;
 };
 
-export type GetLaunchUserServiceResponse_api = GetLaunchUserServiceResponses_api[keyof GetLaunchUserServiceResponses_api];
+export type GetInfoOnRunningUserServiceHybridResponse_api =
+    GetInfoOnRunningUserServiceHybridResponses_api[keyof GetInfoOnRunningUserServiceHybridResponses_api];
+
+export type GetStatusOfUserServiceData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Component instance string
+         */
+        instance_str: string | null;
+        t?: number;
+    };
+    url: "/grid3d/status_of_user_service";
+};
+
+export type GetStatusOfUserServiceErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetStatusOfUserServiceError_api = GetStatusOfUserServiceErrors_api[keyof GetStatusOfUserServiceErrors_api];
+
+export type GetStatusOfUserServiceResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type GetStatusOfUserServiceResponse_api = GetStatusOfUserServiceResponses_api[keyof GetStatusOfUserServiceResponses_api];
 
 export type GetRealizationFlowNetworkData_api = {
     body?: never;
