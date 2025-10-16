@@ -352,7 +352,9 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
             className="absolute bg-white border border-gray-300 shadow-lg p-4 z-50 w-96 text-sm flex gap-4"
             style={style}
         >
-            <div>{previewFunc && previewFunc(64, 64)}</div>
+            <svg width={64} height={64} viewBox={`0 0 ${64} ${64}`}>
+                {previewFunc?.(64, 64)}
+            </svg>
             <div className="grow">
                 <div className="flex items-center">
                     <span className="font-bold grow">{props.module.getDefaultTitle()}</span>
