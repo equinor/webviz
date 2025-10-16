@@ -183,11 +183,6 @@ export type EnsembleSensitivityCase_api = {
     realizations: Array<number>;
 };
 
-export type EnsembleTimestamps_api = {
-    caseUpdatedAtUtcMs: number;
-    dataUpdatedAtUtcMs: number;
-};
-
 export type FenceMeshSection_api = {
     vertices_uz_b64arr: B64FloatArray_api;
     poly_indices_b64arr: B64UintArray_api;
@@ -1307,38 +1302,6 @@ export type PostRefreshFingerprintsForEnsemblesResponses_api = {
 
 export type PostRefreshFingerprintsForEnsemblesResponse_api =
     PostRefreshFingerprintsForEnsemblesResponses_api[keyof PostRefreshFingerprintsForEnsemblesResponses_api];
-
-export type PostGetTimestampsForEnsemblesData_api = {
-    /**
-     * A list of ensemble idents (aka; case uuid and ensemble name)
-     */
-    body: Array<EnsembleIdent_api>;
-    path?: never;
-    query?: {
-        zCacheBust?: string;
-    };
-    url: "/ensembles/get_timestamps";
-};
-
-export type PostGetTimestampsForEnsemblesErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type PostGetTimestampsForEnsemblesError_api =
-    PostGetTimestampsForEnsemblesErrors_api[keyof PostGetTimestampsForEnsemblesErrors_api];
-
-export type PostGetTimestampsForEnsemblesResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: Array<EnsembleTimestamps_api>;
-};
-
-export type PostGetTimestampsForEnsemblesResponse_api =
-    PostGetTimestampsForEnsemblesResponses_api[keyof PostGetTimestampsForEnsemblesResponses_api];
 
 export type GetVectorListData_api = {
     body?: never;
