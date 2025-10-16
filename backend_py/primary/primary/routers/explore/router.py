@@ -50,35 +50,20 @@ async def get_cases(
             status=ci.status,
             user=ci.user,
             updatedAtUtcMs=ci.updated_at_utc_ms,
+            description=ci.description,
+            ensembles=[
+                schemas.EnsembleInfo(
+                    name=ei.name,
+                    realizationCount=ei.realization_count,
+                    standardResults=ei.standard_results,
+                )
+                for ei in ci.ensembles
+            ],
         )
         for ci in case_info_arr
     ]
 
     return ret_arr
-
-
-@router.get("/cases/{case_uuid}/ensembles")
-@no_cache
-async def get_ensembles(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Path(description="Sumo case uuid"),
-) -> List[schemas.EnsembleInfo]:
-    """Get list of ensembles for a case"""
-
-    case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
-    ensemble_info_arr = await case_inspector.get_ensembles_async()
-
-    return [
-        schemas.EnsembleInfo(
-            name=ens_info.name,
-            realizationCount=ens_info.realization_count,
-            timestamps=schemas.EnsembleTimestamps(
-                caseUpdatedAtUtcMs=ens_info.timestamps.case_updated_at_utc_ms,
-                dataUpdatedAtUtcMs=ens_info.timestamps.data_updated_at_utc_ms,
-            ),
-        )
-        for ens_info in ensemble_info_arr
-    ]
 
 
 @router.get("/cases/{case_uuid}/ensembles/{ensemble_name}")
@@ -96,6 +81,7 @@ async def get_ensemble_details(
     field_identifiers = await case_inspector.get_field_identifiers_async()
     stratigraphic_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
     timestamps = await case_inspector.get_ensemble_timestamps_async(ensemble_name)
+    standard_results = await case_inspector.get_standard_results_in_ensemble_async(ensemble_name)
 
     if len(field_identifiers) != 1:
         raise NotImplementedError("Multiple field identifiers not supported")
@@ -111,6 +97,7 @@ async def get_ensemble_details(
             caseUpdatedAtUtcMs=timestamps.case_updated_at_utc_ms,
             dataUpdatedAtUtcMs=timestamps.data_updated_at_utc_ms,
         ),
+        standardResults=standard_results,
     )
 
 
