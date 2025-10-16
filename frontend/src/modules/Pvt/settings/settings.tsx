@@ -128,6 +128,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
             <CollapsibleGroup title="Ensembles" expanded>
                 <EnsembleSelect
                     ensembles={ensembleSet.getRegularEnsembleArray()}
+                    ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
                     onChange={handleEnsembleSelectionChange}
                     value={selectedEnsembleIdents}
                     size={5}

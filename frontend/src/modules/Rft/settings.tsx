@@ -89,6 +89,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                 <EnsembleDropdown
                     ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={selectedEnsembleIdent}
+                    ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
                     onChange={handleEnsembleSelectionChange}
                 />
             </CollapsibleGroup>

@@ -2,7 +2,7 @@ import type React from "react";
 
 import { FilterAlt, Fullscreen, FullscreenExit, GridView, History, WebAsset } from "@mui/icons-material";
 
-import { GuiState, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
+import { GuiState, RightDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
 import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
@@ -18,13 +18,14 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
 
     const [isFullscreen, toggleFullScreen] = useBrowserFullscreen();
     const [drawerContent, setDrawerContent] = useGuiState(guiMessageBroker, GuiState.RightDrawerContent);
-    const [numberOfUnsavedRealizationFilters] = useGuiState(
-        guiMessageBroker,
-        GuiState.NumberOfUnsavedRealizationFilters,
-    );
     const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
         guiMessageBroker,
         GuiState.RightSettingsPanelWidthInPercent,
+    );
+    const numberOfUnsavedRealizationFilters = useGuiValue(guiMessageBroker, GuiState.NumberOfUnsavedRealizationFilters);
+    const numberOfEffectiveRealizationFilters = useGuiValue(
+        guiMessageBroker,
+        GuiState.NumberOfEffectiveRealizationFilters,
     );
 
     function ensureSettingsPanelIsVisible() {
@@ -71,38 +72,34 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
             <div className="flex flex-col gap-2 grow">
                 <NavBarButton
                     active={drawerContent === RightDrawerContent.ModulesList}
-                    title="Show modules list"
+                    tooltip="Show modules list"
                     icon={<WebAsset fontSize="small" className="size-5" />}
                     onClick={handleModulesListClick}
                 />
                 <NavBarButton
                     active={drawerContent === RightDrawerContent.TemplatesList}
-                    title="Show templates list"
+                    tooltip="Show templates list"
                     icon={<GridView fontSize="small" className="size-5" />}
                     onClick={handleTemplatesListClick}
                 />
                 <NavBarDivider />
                 <NavBarButton
                     active={drawerContent === RightDrawerContent.RealizationFilterSettings}
-                    title={`Open realization filter panel${
-                        numberOfUnsavedRealizationFilters === 0 ? "" : " (unsaved changes)"
-                    }`}
-                    icon={
-                        <Badge
-                            badgeContent="!"
-                            color="bg-orange-500"
-                            invisible={numberOfUnsavedRealizationFilters === 0}
-                        >
-                            <FilterAlt fontSize="small" className="size-5 mr-2" />
-                        </Badge>
-                    }
+                    tooltip={RealizationFilterButtonTooltip(
+                        numberOfUnsavedRealizationFilters,
+                        numberOfEffectiveRealizationFilters,
+                    )}
+                    icon={RealizationFilterButtonIcon(
+                        numberOfUnsavedRealizationFilters,
+                        numberOfEffectiveRealizationFilters,
+                    )}
                     onClick={handleRealizationFilterClick}
                 />
 
                 <NavBarButton
                     icon={<History fontSize="small" className="size-5 mr-2" />}
                     active={drawerContent === RightDrawerContent.ModuleInstanceLog}
-                    title="Open module history"
+                    tooltip="Open module history"
                     onClick={handleModuleInstanceLogClick}
                 />
                 <NavBarDivider />
@@ -110,10 +107,51 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                     active={isFullscreen}
                     icon={<Fullscreen fontSize="small" className="size-5 mr-2" />}
                     activeIcon={<FullscreenExit fontSize="small" className="size-5 mr-2" />}
-                    title="Fullscreen application (F11)"
+                    tooltip="Fullscreen application (F11)"
                     onClick={toggleFullScreen}
                 />
             </div>
         </div>
     );
 };
+
+function RealizationFilterButtonTooltip(
+    numberOfUnsavedRealizationFilters: number,
+    numberOfEffectiveRealizationFilters: number,
+): React.ReactNode {
+    return (
+        <div>
+            Open realization filter panel
+            {numberOfUnsavedRealizationFilters ? (
+                <>
+                    <br />
+                    {`* ${numberOfUnsavedRealizationFilters} unsaved filter${
+                        numberOfUnsavedRealizationFilters > 1 ? "s" : ""
+                    }`}
+                </>
+            ) : numberOfEffectiveRealizationFilters ? (
+                <>
+                    <br />
+                    {`* ${numberOfEffectiveRealizationFilters} effective filter${
+                        numberOfEffectiveRealizationFilters > 1 ? "s" : ""
+                    }`}
+                </>
+            ) : null}
+        </div>
+    );
+}
+
+function RealizationFilterButtonIcon(
+    numberOfUnsavedRealizationFilters: number,
+    numberOfEffectiveRealizationFilters: number,
+): React.ReactNode {
+    return (
+        <Badge
+            badgeContent={numberOfUnsavedRealizationFilters ? "!" : numberOfEffectiveRealizationFilters || undefined}
+            color={numberOfUnsavedRealizationFilters ? "bg-orange-500" : "bg-blue-500"}
+            invisible={!numberOfUnsavedRealizationFilters && !numberOfEffectiveRealizationFilters}
+        >
+            <FilterAlt fontSize="small" className="size-5 mr-2" />
+        </Badge>
+    );
+}
