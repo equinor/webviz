@@ -77,6 +77,8 @@ export type CaseInfo_api = {
     status: string;
     user: string;
     updatedAtUtcMs: number;
+    description: string;
+    ensembles: Array<EnsembleInfo_api>;
 };
 
 export type Completions_api = {
@@ -120,6 +122,7 @@ export type EnsembleDetails_api = {
     realizations: Array<number>;
     stratigraphicColumnIdentifier: string;
     timestamps: EnsembleTimestamps_api;
+    standardResults: Array<string>;
 };
 
 export type EnsembleIdent_api = {
@@ -130,7 +133,7 @@ export type EnsembleIdent_api = {
 export type EnsembleInfo_api = {
     name: string;
     realizationCount: number;
-    timestamps: EnsembleTimestamps_api;
+    standardResults: Array<string>;
 };
 
 /**
@@ -237,6 +240,13 @@ export enum Gfr_api {
     OGR = "OGR",
     MMW = "MMW",
 }
+
+export type GraphUser_api = {
+    id: string;
+    principal_name: string;
+    display_name: string;
+    email: string;
+};
 
 export type GraphUserPhoto_api = {
     avatar_b64str?: string | null;
@@ -929,6 +939,7 @@ export enum UnitType_api {
 }
 
 export type UserInfo_api = {
+    user_id: string;
     username: string;
     display_name?: string | null;
     avatar_b64str?: string | null;
@@ -1230,38 +1241,6 @@ export type GetCasesResponses_api = {
 };
 
 export type GetCasesResponse_api = GetCasesResponses_api[keyof GetCasesResponses_api];
-
-export type GetEnsemblesData_api = {
-    body?: never;
-    path: {
-        /**
-         * Sumo case uuid
-         */
-        case_uuid: string;
-    };
-    query?: {
-        t?: number;
-    };
-    url: "/cases/{case_uuid}/ensembles";
-};
-
-export type GetEnsemblesErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type GetEnsemblesError_api = GetEnsemblesErrors_api[keyof GetEnsemblesErrors_api];
-
-export type GetEnsemblesResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: Array<EnsembleInfo_api>;
-};
-
-export type GetEnsemblesResponse_api = GetEnsemblesResponses_api[keyof GetEnsemblesResponses_api];
 
 export type GetEnsembleDetailsData_api = {
     body?: never;
@@ -3724,14 +3703,46 @@ export type GetPolygonsDataResponses_api = {
 
 export type GetPolygonsDataResponse_api = GetPolygonsDataResponses_api[keyof GetPolygonsDataResponses_api];
 
+export type GetUserInfoData_api = {
+    body?: never;
+    path: {
+        /**
+         * User email, graph-id or 'me' for the authenticated user
+         */
+        user_id_or_email: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/graph/user_info/{user_id_or_email}";
+};
+
+export type GetUserInfoErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetUserInfoError_api = GetUserInfoErrors_api[keyof GetUserInfoErrors_api];
+
+export type GetUserInfoResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: GraphUser_api | null;
+};
+
+export type GetUserInfoResponse_api = GetUserInfoResponses_api[keyof GetUserInfoResponses_api];
+
 export type GetUserPhotoData_api = {
     body?: never;
     path?: never;
     query: {
         /**
-         * User email or 'me' for the authenticated user
+         * User email, graph-id, or 'me' for the authenticated user
          */
-        user_email: string;
+        user_id_or_email: string;
         t?: number;
     };
     url: "/graph/user_photo/";
