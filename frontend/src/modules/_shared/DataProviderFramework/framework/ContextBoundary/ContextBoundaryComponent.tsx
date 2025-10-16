@@ -1,8 +1,7 @@
 import React from "react";
 
-import { SettingsApplications } from "@mui/icons-material";
-
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { SettingsApplications } from "@mui/icons-material";
 
 import type { ActionGroup } from "../../Actions";
 import { Actions } from "../../Actions";
@@ -15,13 +14,13 @@ import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllB
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
-export type SettingsGroupComponentProps = {
+export type ContextBoundaryComponentProps = {
     group: ItemGroup;
     makeActionsForGroup: (group: ItemGroup) => ActionGroup[];
     onActionClick?: (actionIdentifier: string, group: ItemGroup) => void;
 };
 
-export function SettingsGroupComponent(props: SettingsGroupComponentProps): React.ReactNode {
+export function ContextBoundaryComponent(props: ContextBoundaryComponentProps): React.ReactNode {
     const { makeActionsForGroup } = props;
 
     const children = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.CHILDREN);
@@ -63,7 +62,7 @@ export function SettingsGroupComponent(props: SettingsGroupComponentProps): Reac
             }}
             startAdornment={<SettingsApplications fontSize="inherit" />}
             endAdornment={<>{makeEndAdornment()}</>}
-            contentWhenEmpty={<EmptyContent>Drag an item inside to add it to this settings group.</EmptyContent>}
+            contentWhenEmpty={<EmptyContent>Drag an item inside to add it to this context boundary.</EmptyContent>}
             expanded={isExpanded}
         >
             {children.map((child: Item) =>
