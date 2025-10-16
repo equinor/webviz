@@ -29,22 +29,37 @@ export function ParametersSelector({
         }
         return [];
     });
-
+    React.useEffect(() => {
+        if (selectedGroupFilterValues.length === 0 && selectedParameterIdents.length > 0) {
+            setSelectedGroupFilterValues(
+                Array.from(new Set(selectedParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP))),
+            );
+        }
+    }, [selectedParameterIdents, selectedGroupFilterValues]);
     const handleGroupChange = (newlySelectedGroupFilterStrings: string[]) => {
         setSelectedGroupFilterValues(newlySelectedGroupFilterStrings);
 
         if (newlySelectedGroupFilterStrings.length === 0) {
             onChange([]);
-        } else if (autoSelectAllOnGroupChange) {
+        } else {
             const parametersThatMatchNewGroups = allParameterIdents.filter((p) =>
                 newlySelectedGroupFilterStrings.some(
                     (groupValue) => groupValue === (p.groupName ?? GroupType.NO_GROUP),
                 ),
             );
-            onChange(parametersThatMatchNewGroups);
+
+            let newSelectedParameters: ParameterIdent[] = [];
+
+            if (autoSelectAllOnGroupChange) {
+                newSelectedParameters = parametersThatMatchNewGroups;
+            } else {
+                newSelectedParameters = selectedParameterIdents.filter((p) =>
+                    parametersThatMatchNewGroups.some((pg) => pg.equals(p)),
+                );
+            }
+
+            onChange(newSelectedParameters);
         }
-        // If autoSelectAllOnGroupChange is false, don't change the selected parameters
-        // Just let the UI filter what's shown, but keep the current selection
     };
 
     const handleParameterChange = (selectedValues: string[]) => {
