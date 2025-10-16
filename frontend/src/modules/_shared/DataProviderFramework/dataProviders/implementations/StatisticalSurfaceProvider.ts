@@ -12,6 +12,7 @@ import {
 } from "@api";
 import { lroProgressBus } from "@framework/LroProgressBus";
 import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
@@ -153,6 +154,7 @@ export class StatisticalSurfaceProvider
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),

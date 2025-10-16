@@ -2,6 +2,7 @@ import { isEqual } from "lodash";
 
 import type { PolygonData_api } from "@api";
 import { getPolygonsDataOptions, getPolygonsDirectoryOptions } from "@api";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import type {
     CustomDataProviderImplementation,
     FetchDataParams,
@@ -74,6 +75,7 @@ export class RealizationPolygonsProvider
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),
@@ -130,6 +132,7 @@ export class RealizationPolygonsProvider
                 realization_num: realizationNum ?? 0,
                 name: polygonsName ?? "",
                 attribute: polygonsAttribute ?? "",
+                ...makeCacheBustingQueryParam(ensembleIdent ?? null),
             },
         });
 

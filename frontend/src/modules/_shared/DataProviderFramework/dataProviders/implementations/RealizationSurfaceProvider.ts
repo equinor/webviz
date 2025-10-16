@@ -7,6 +7,7 @@ import {
     getRealizationSurfacesMetadataOptions,
     getSurfaceDataOptions,
 } from "@api";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
@@ -144,6 +145,7 @@ export class RealizationSurfaceProvider
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),

@@ -3,21 +3,23 @@ import { useQuery } from "@tanstack/react-query";
 
 import type { PolygonData_api, PolygonsMeta_api } from "@api";
 import { getPolygonsData, getPolygonsDataQueryKey, getPolygonsDirectoryOptions } from "@api";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
 import type { PolygonsAddress } from "./polygonsAddress";
 
 export function usePolygonsDirectoryQuery(
-    caseUuid: string | undefined,
-    ensembleName: string | undefined,
+    ensembleIdent: RegularEnsembleIdent | null,
 ): UseQueryResult<PolygonsMeta_api[]> {
     return useQuery({
         ...getPolygonsDirectoryOptions({
             query: {
-                case_uuid: caseUuid ?? "",
-                ensemble_name: ensembleName ?? "",
+                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+                ...makeCacheBustingQueryParam(ensembleIdent ?? null),
             },
         }),
-        enabled: Boolean(caseUuid && ensembleName),
+        enabled: Boolean(ensembleIdent),
     });
 }
 
@@ -44,6 +46,9 @@ export function usePolygonsDataQueryByAddress(
                 realization_num: polygonsAddress.realizationNum,
                 name: polygonsAddress.name,
                 attribute: polygonsAddress.attribute,
+                ...makeCacheBustingQueryParam(
+                    new RegularEnsembleIdent(polygonsAddress.caseUuid, polygonsAddress.ensemble),
+                ),
             },
         });
         queryFn = async () => {
@@ -54,6 +59,12 @@ export function usePolygonsDataQueryByAddress(
                     realization_num: polygonsAddress.realizationNum,
                     name: polygonsAddress.name,
                     attribute: polygonsAddress.attribute,
+                    ...makeCacheBustingQueryParam(
+                        RegularEnsembleIdent.caseUuidAndEnsembleNameToString(
+                            polygonsAddress.caseUuid,
+                            polygonsAddress.ensemble,
+                        ),
+                    ),
                 },
                 throwOnError: true,
             });

@@ -7,6 +7,7 @@ import {
     postGetSampleSurfaceInPointsOptions,
 } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
@@ -167,6 +168,7 @@ export class SurfacesPerRealizationValuesProvider
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),
@@ -289,6 +291,7 @@ export class SurfacesPerRealizationValuesProvider
                     surface_name: surfaceName,
                     surface_attribute: attribute,
                     realization_nums: realizations ?? [],
+                    ...makeCacheBustingQueryParam(ensembleIdent),
                 },
                 body: {
                     sample_points: {
