@@ -1,7 +1,7 @@
 import { atomWithQuery } from "jotai-tanstack-query";
 
 import { getVfpTableNamesOptions, getVfpTableOptions } from "@api";
-
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
 import { selectedEnsembleIdentAtom, selectedRealizationNumberAtom, selectedVfpTableNameAtom } from "./derivedAtoms";
 
@@ -17,6 +17,7 @@ export const vfpTableQueryAtom = atomWithQuery((get) => {
                 ensemble_name: selectedEnsembleIdent?.getEnsembleName() ?? "",
                 realization: selectedRealizationNumber ?? 0,
                 vfp_table_name: selectedVfpTableName ?? "",
+                ...makeCacheBustingQueryParam(selectedEnsembleIdent),
             },
         }),
         enabled: Boolean(
@@ -39,6 +40,7 @@ export const vfpTableNamesQueryAtom = atomWithQuery((get) => {
                 case_uuid: selectedEnsembleIdent?.getCaseUuid() ?? "",
                 ensemble_name: selectedEnsembleIdent?.getEnsembleName() ?? "",
                 realization: selectedRealizationNumber ?? 0,
+                ...makeCacheBustingQueryParam(selectedEnsembleIdent),
             },
         }),
         enabled: Boolean(

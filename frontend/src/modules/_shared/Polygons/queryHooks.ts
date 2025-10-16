@@ -1,8 +1,8 @@
-import type { QueryFunction, QueryKey, UseQueryResult } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 
 import type { PolygonData_api, PolygonsMeta_api } from "@api";
-import { getPolygonsData, getPolygonsDataQueryKey, getPolygonsDirectoryOptions } from "@api";
+import { getPolygonsDataOptions, getPolygonsDirectoryOptions } from "@api";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
@@ -26,56 +26,21 @@ export function usePolygonsDirectoryQuery(
 export function usePolygonsDataQueryByAddress(
     polygonsAddress: PolygonsAddress | null,
 ): UseQueryResult<PolygonData_api[]> {
-    function dummyApiCall(): Promise<PolygonData_api[]> {
-        return new Promise((_resolve, reject) => {
-            reject(null);
-        });
-    }
-
-    let queryKey: QueryKey | null = null;
-    let queryFn: QueryFunction<PolygonData_api[]> | null = null;
-
-    if (!polygonsAddress) {
-        queryKey = ["getPolygonsData_DUMMY_ALWAYS_DISABLED"];
-        queryFn = dummyApiCall;
-    } else {
-        queryKey = getPolygonsDataQueryKey({
-            query: {
-                case_uuid: polygonsAddress.caseUuid,
-                ensemble_name: polygonsAddress.ensemble,
-                realization_num: polygonsAddress.realizationNum,
-                name: polygonsAddress.name,
-                attribute: polygonsAddress.attribute,
-                ...makeCacheBustingQueryParam(
-                    new RegularEnsembleIdent(polygonsAddress.caseUuid, polygonsAddress.ensemble),
-                ),
-            },
-        });
-        queryFn = async () => {
-            const { data } = await getPolygonsData({
-                query: {
-                    case_uuid: polygonsAddress.caseUuid,
-                    ensemble_name: polygonsAddress.ensemble,
-                    realization_num: polygonsAddress.realizationNum,
-                    name: polygonsAddress.name,
-                    attribute: polygonsAddress.attribute,
-                    ...makeCacheBustingQueryParam(
-                        RegularEnsembleIdent.caseUuidAndEnsembleNameToString(
-                            polygonsAddress.caseUuid,
-                            polygonsAddress.ensemble,
-                        ),
-                    ),
-                },
-                throwOnError: true,
-            });
-
-            return data;
-        };
-    }
+    const queryOptions = getPolygonsDataOptions({
+        query: {
+            case_uuid: polygonsAddress?.caseUuid ?? "",
+            ensemble_name: polygonsAddress?.ensemble ?? "",
+            realization_num: polygonsAddress?.realizationNum ?? 0,
+            name: polygonsAddress?.name ?? "",
+            attribute: polygonsAddress?.attribute ?? "",
+            ...makeCacheBustingQueryParam(
+                polygonsAddress ? new RegularEnsembleIdent(polygonsAddress.caseUuid, polygonsAddress.ensemble) : null,
+            ),
+        },
+    });
 
     return useQuery({
-        queryKey: queryKey,
-        queryFn: queryFn,
+        ...queryOptions,
         enabled: Boolean(polygonsAddress),
     });
 }
