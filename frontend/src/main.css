@@ -87,14 +87,11 @@ body {
 
 .webviz-eds-date-range-picker {
     &.--compact [class*="Icon"] {
-        height: calc(var(--spacing) * 3.5) /* Adjust size of icon for compact view*/;
+        /* Adjust size of icon for compact view*/
+        @apply h-3.5;
     }
     & [class*="FieldWrapper__StyledInputFieldWrapper"] {
-        /*Disable eds box shadow*/
-        --tw-shadow: 0 0 #0000;
-        box-shadow:
-            var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow),
-            var(--tw-shadow) !important;
+        @apply shadow-none!;
     }
     --eds_interactive_primary__resting: var(--color-gray-600); /* Override eds icon color */
     --eds_ui_background__light: white; /* Override eds background color */
