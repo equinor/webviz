@@ -69,7 +69,7 @@ class SumoFingerprinter:
         cached_fp = await self._redis_client.get(redis_key)
         perf_metrics.record_lap("redis-get")
         if cached_fp is not None:
-            LOGGER.debug(f"get_or_calc_ensemble_fp_async() - from cache in: {perf_metrics.to_string()} [{cached_fp=}]")
+            # LOGGER.debug(f"get_or_calc_ensemble_fp_async() - from cache in: {perf_metrics.to_string()} [{cached_fp=}]")
             return cached_fp
 
         new_fp = await calc_ensemble_fp_async(self._sumo_client, case_uuid, ensemble_name, None)
@@ -79,7 +79,7 @@ class SumoFingerprinter:
         asyncio.create_task(self._redis_client.set(name=redis_key, value=new_fp, ex=self._cache_ttl_s))
         perf_metrics.record_lap("schedule-redis-set")
 
-        LOGGER.debug(f"get_or_calc_ensemble_fp_async() - calculated in: {perf_metrics.to_string()} [{new_fp=}]")
+        # LOGGER.debug(f"get_or_calc_ensemble_fp_async() - calculated in: {perf_metrics.to_string()} [{new_fp=}]")
         return new_fp
 
     async def calc_and_store_ensemble_fp_async(self, case_uuid: str, ensemble_name: str) -> str:
@@ -98,7 +98,7 @@ class SumoFingerprinter:
         await self._redis_client.set(name=redis_key, value=new_fp, ex=self._cache_ttl_s)
         perf_metrics.record_lap("redis-set")
 
-        LOGGER.debug(f"calc_and_store_ensemble_fp_async() - calculated in: {perf_metrics.to_string()} [{new_fp=}]")
+        # LOGGER.debug(f"calc_and_store_ensemble_fp_async() - calculated in: {perf_metrics.to_string()} [{new_fp=}]")
         return new_fp
 
     def _make_full_redis_key(self, case_uuid: str, ensemble_name: str) -> str:
