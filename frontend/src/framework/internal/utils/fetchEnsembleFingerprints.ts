@@ -1,35 +1,36 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import { postGetTimestampsForEnsemblesOptions, type EnsembleIdent_api, type EnsembleTimestamps_api } from "@api";
+import { type EnsembleIdent_api } from "@api";
+import { postRefreshFingerprintsForEnsemblesOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
-export type EnsembleTimestampsItem = {
+export type EnsembleFingerprintItem = {
     ensembleIdent: RegularEnsembleIdent;
-    timestamps: EnsembleTimestamps_api;
+    fingerprint: string | null;
 };
 
-export async function fetchLatestEnsembleTimestamps(
+export async function fetchLatestEnsembleFingerprints(
     queryClient: QueryClient,
     ensembleIdents: RegularEnsembleIdent[],
-): Promise<EnsembleTimestampsItem[]> {
+): Promise<EnsembleFingerprintItem[]> {
     const idents = ensembleIdents.map<EnsembleIdent_api>((ens) => ({
         caseUuid: ens.getCaseUuid(),
         ensembleName: ens.getEnsembleName(),
     }));
 
     try {
-        const timestamps = await queryClient.fetchQuery({
-            ...postGetTimestampsForEnsemblesOptions({ body: idents }),
+        const fingerprints = await queryClient.fetchQuery({
+            ...postRefreshFingerprintsForEnsemblesOptions({ body: idents }),
             staleTime: 0,
             gcTime: 0,
         });
 
         return ensembleIdents.map((ident, i) => ({
             ensembleIdent: ident,
-            timestamps: timestamps[i],
+            fingerprint: fingerprints[i],
         }));
     } catch (error) {
-        console.error("Error fetching ensemble timestamps:", error);
+        console.error("Error fetching latest ensemble fingerprints:", error);
         return [];
     }
 }

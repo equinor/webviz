@@ -57,14 +57,14 @@ class SumoFingerprinter:
         self._redis_client = redis_client
         self._cache_ttl_s = cache_ttl_s
 
-    async def get_or_calc_ensemble_fp_async(self, case_uuid: str, ensemble_name: str, class_name: str | None) -> str:
+    async def get_or_calc_ensemble_fp_async(self, case_uuid: str, ensemble_name: str) -> str:
         """
         Get from cache or calculate the fingerprint string for contents of an ensemble.
         See calc_ensemble_fp_async() for details.
         """
         perf_metrics = PerfMetrics()
 
-        redis_key = self._make_full_redis_key(case_uuid=case_uuid, ensemble_name=ensemble_name, class_name=class_name)
+        redis_key = self._make_full_redis_key(case_uuid=case_uuid, ensemble_name=ensemble_name)
 
         cached_fp = await self._redis_client.get(redis_key)
         perf_metrics.record_lap("redis-get")
@@ -72,7 +72,7 @@ class SumoFingerprinter:
             # LOGGER.debug(f"get_or_calc_ensemble_fp_async() - from cache in: {perf_metrics.to_string()} [{cached_fp=}]")
             return cached_fp
 
-        new_fp = await calc_ensemble_fp_async(self._sumo_client, case_uuid, ensemble_name, class_name)
+        new_fp = await calc_ensemble_fp_async(self._sumo_client, case_uuid, ensemble_name, None)
         perf_metrics.record_lap("calc-fp")
 
         # Schedule the Redis set call, but don't await it
@@ -82,10 +82,27 @@ class SumoFingerprinter:
         # LOGGER.debug(f"get_or_calc_ensemble_fp_async() - calculated in: {perf_metrics.to_string()} [{new_fp=}]")
         return new_fp
 
-    def _make_full_redis_key(self, case_uuid: str, ensemble_name: str, class_name: str | None) -> str:
-        return (
-            f"{_REDIS_KEY_PREFIX}:user:{self._user_id}:case:{case_uuid}:ens:{ensemble_name}:class:{class_name or 'ALL'}"
-        )
+    async def calc_and_store_ensemble_fp_async(self, case_uuid: str, ensemble_name: str) -> str:
+        """
+        Calculate and unconditionally store fingerprint string for contents of an ensemble, also returning the result.
+        This method does not check the cache first, it will always calculate a new fingerprint and write it to the cache.
+        See calc_ensemble_fp_async() for details.
+        """
+        perf_metrics = PerfMetrics()
+
+        redis_key = self._make_full_redis_key(case_uuid=case_uuid, ensemble_name=ensemble_name)
+
+        new_fp = await calc_ensemble_fp_async(self._sumo_client, case_uuid, ensemble_name, None)
+        perf_metrics.record_lap("calc-fp")
+
+        await self._redis_client.set(name=redis_key, value=new_fp, ex=self._cache_ttl_s)
+        perf_metrics.record_lap("redis-set")
+
+        # LOGGER.debug(f"calc_and_store_ensemble_fp_async() - calculated in: {perf_metrics.to_string()} [{new_fp=}]")
+        return new_fp
+
+    def _make_full_redis_key(self, case_uuid: str, ensemble_name: str) -> str:
+        return f"{_REDIS_KEY_PREFIX}:user:{self._user_id}:case:{case_uuid}:ens:{ensemble_name}"
 
 
 def get_sumo_fingerprinter_for_user(authenticated_user: AuthenticatedUser, cache_ttl_s: int) -> SumoFingerprinter:
