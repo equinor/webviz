@@ -4,7 +4,7 @@ import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
-import { makeFingerprintQueryParam } from "@framework/utils/queryUtils";
+import { makeFingerprintQueryParam as makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
 import { selectedEnsembleIdentsAtom } from "./derivedAtoms";
 
@@ -20,7 +20,7 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
                 queryFn: async () => {
                     const { data } = await getVectorList({
                         query: {
-                            ...makeFingerprintQueryParam(ensembleIdent),
+                            ...makeCacheBustingQueryParam(ensembleIdent),
                             case_uuid: ensembleIdent.getCaseUuid(),
                             ensemble_name: ensembleIdent.getEnsembleName(),
                             include_derived_vectors: true,

@@ -1,7 +1,7 @@
 import type { QueryClient } from "@tanstack/query-core";
 
 import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
-import { EnsembleFingerprintsStore } from "@framework/EnsembleFingerprintsStore";
+import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
 import { Dashboard, type SerializedDashboard } from "@framework/internal/Dashboard";
@@ -240,7 +240,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this._dashboards = [];
         this._activeDashboardId = null;
         this._ensembleSet = new EnsembleSet([]);
-        EnsembleFingerprintsStore.clear();
+        EnsembleFingerprintStore.clear();
     }
 
     beforeDestroy(): void {

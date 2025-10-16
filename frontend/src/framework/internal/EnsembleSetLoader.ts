@@ -3,8 +3,8 @@ import type { QueryClient } from "@tanstack/react-query";
 import type { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api, EnsembleTimestamps_api } from "@api";
 import { SensitivityType_api, getEnsembleDetailsOptions, getParametersOptions, getSensitivitiesOptions } from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
-import { EnsembleFingerprintsStore } from "@framework/EnsembleFingerprintsStore";
-import { hashStringTo64BitInt } from "@framework/utils/queryUtils";
+import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
+import { calcFnv1aHash } from "@lib/utils/hashUtils";
 
 import type { ContinuousParameter, DiscreteParameter, Parameter } from "../EnsembleParameters";
 import { ParameterType } from "../EnsembleParameters";
@@ -15,7 +15,7 @@ import { RegularEnsemble } from "../RegularEnsemble";
 import type { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
 import { tanstackDebugTimeOverride } from "./utils/debug";
-import { fetchLatestEnsembleFingerprints } from "./utils/fetchEnsembleTimestamps";
+import { fetchLatestEnsembleFingerprints } from "./utils/fetchEnsembleFingerprints";
 
 type EnsembleApiData = {
     ensembleDetails: EnsembleDetails_api;
@@ -71,7 +71,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         }
         ensembleFingerprintsMap.set(item.ensembleIdent.toString(), item.fingerprint);
     }
-    EnsembleFingerprintsStore.setAll(ensembleFingerprintsMap);
+    EnsembleFingerprintStore.setAll(ensembleFingerprintsMap);
 
     // Fetch from back-end
     const ensembleApiDataMap = await loadEnsembleApiDataMapFromBackend(
@@ -205,12 +205,12 @@ async function loadEnsembleApiDataMapFromBackend(
         const ensembleName = ensembleIdent.getEnsembleName();
         const fingerprint = ensembleFingerprintsMap.get(ensembleIdent.toString());
 
-        const fingerprintHash = fingerprint ? hashStringTo64BitInt(fingerprint) : undefined;
+        const fingerprintHash = fingerprint ? calcFnv1aHash(fingerprint) : undefined;
 
         const ensembleDetailsPromise = queryClient.fetchQuery({
             ...getEnsembleDetailsOptions({
                 // ! We've assumed that these data are only affected by the case timestamp
-                query: { t: fingerprintHash },
+                query: { f: fingerprintHash },
                 path: {
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
@@ -225,7 +225,7 @@ async function loadEnsembleApiDataMapFromBackend(
             ...getParametersOptions({
                 query: {
                     // ? These are only affected by the "data" timestamp, right?
-                    t: fingerprintHash,
+                    f: fingerprintHash,
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
                 },
@@ -239,7 +239,7 @@ async function loadEnsembleApiDataMapFromBackend(
             ...getSensitivitiesOptions({
                 query: {
                     // ! We've assumed that these data are only affected by the case timestamp
-                    t: hashStringTo64BitInt(fingerprint ?? ""),
+                    f: fingerprintHash,
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
                 },

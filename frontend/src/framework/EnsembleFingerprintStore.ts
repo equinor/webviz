@@ -1,6 +1,6 @@
 import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 
-class EnsembleFingerprintsStoreImpl {
+class EnsembleFingerprintStoreImpl {
     private _fingerprints: Map<string, string> = new Map();
 
     setAll(fingerprints: Map<string, string>) {
@@ -32,4 +32,4 @@ class EnsembleFingerprintsStoreImpl {
     }
 }
 
-export const EnsembleFingerprintsStore = new EnsembleFingerprintsStoreImpl();
+export const EnsembleFingerprintStore = new EnsembleFingerprintStoreImpl();

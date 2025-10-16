@@ -1,17 +1,16 @@
 import type { QueryClient } from "@tanstack/query-core";
 
-import { EnsembleFingerprintsStore } from "@framework/EnsembleFingerprintsStore";
+import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import { globalLog } from "@framework/Log";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { Workbench } from "@framework/Workbench";
 
-import { fetchLatestEnsembleFingerprints } from "./utils/fetchEnsembleTimestamps";
+import { fetchLatestEnsembleFingerprints } from "./utils/fetchEnsembleFingerprints";
 
 const logger = globalLog.registerLogger("EnsembleUpdateMonitor");
 
 // Polling interval for ensemble fingerprints is 5 minutes
-//const ENSEMBLE_POLLING_INTERVAL_MS = 5*60*1000;
-const ENSEMBLE_POLLING_INTERVAL_MS = 10 * 1000; // For testing, set to 10 seconds
+const ENSEMBLE_POLLING_INTERVAL_MS = 5 * 60 * 1000;
 
 export class EnsembleUpdateMonitor {
     private _queryClient: QueryClient;
@@ -149,7 +148,7 @@ export class EnsembleUpdateMonitor {
             }
 
             // Update the EnsembleFingerprintsStore with the latest fingerprints
-            EnsembleFingerprintsStore.setAll(latestFingerprintsMap);
+            EnsembleFingerprintStore.setAll(latestFingerprintsMap);
 
             logger.console?.log(`checkForEnsembleUpdate - fetched and updated fingerprints for ensembles.`);
         } catch (error) {
