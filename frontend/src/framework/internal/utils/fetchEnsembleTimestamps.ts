@@ -17,14 +17,19 @@ export async function fetchLatestEnsembleTimestamps(
         ensembleName: ens.getEnsembleName(),
     }));
 
-    const timestamps = await queryClient.fetchQuery({
-        ...postGetTimestampsForEnsemblesOptions({ body: idents }),
-        staleTime: 0,
-        gcTime: 0,
-    });
+    try {
+        const timestamps = await queryClient.fetchQuery({
+            ...postGetTimestampsForEnsemblesOptions({ body: idents }),
+            staleTime: 0,
+            gcTime: 0,
+        });
 
-    return ensembleIdents.map((ident, i) => ({
-        ensembleIdent: ident,
-        timestamps: timestamps[i],
-    }));
+        return ensembleIdents.map((ident, i) => ({
+            ensembleIdent: ident,
+            timestamps: timestamps[i],
+        }));
+    } catch (error) {
+        console.error("Error fetching ensemble timestamps:", error);
+        return [];
+    }
 }

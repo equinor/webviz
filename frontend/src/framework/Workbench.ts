@@ -109,25 +109,33 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
     }
 
-    async openSessionFromLocalStorage(snapshotId: string | null, forceOpen = false): Promise<void> {
+    async openSessionFromLocalStorage(sessionId: string | null, forceOpen = false): Promise<void> {
         if (this._workbenchSession && !forceOpen) {
             console.warn("A workbench session is already active. Please close it before opening a new one.");
             return;
         }
 
-        const sessionData = await loadWorkbenchSessionFromLocalStorage(snapshotId);
-        if (!sessionData) {
-            console.warn("No workbench session found in local storage.");
-            return;
+        try {
+            const sessionData = await loadWorkbenchSessionFromLocalStorage(sessionId);
+            if (!sessionData) {
+                console.warn("No workbench session found in local storage.");
+                return;
+            }
+
+            const session = await PrivateWorkbenchSession.fromDataContainer(
+                this._atomStoreMaster,
+                this._queryClient,
+                sessionData,
+            );
+
+            await this.setWorkbenchSession(session);
+        } catch (error) {
+            console.error("Failed to load workbench session from local storage:", error);
+            if (confirm("Could not load workbench session from local storage. Discard corrupted session?")) {
+                this.discardLocalStorageSession(sessionId, false);
+                this.startNewSession();
+            }
         }
-
-        const session = await PrivateWorkbenchSession.fromDataContainer(
-            this._atomStoreMaster,
-            this._queryClient,
-            sessionData,
-        );
-
-        await this.setWorkbenchSession(session);
         this._guiMessageBroker.setState(GuiState.IsLoadingSession, false);
     }
 
