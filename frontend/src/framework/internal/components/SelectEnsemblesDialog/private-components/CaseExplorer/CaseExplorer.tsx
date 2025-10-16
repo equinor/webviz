@@ -1,10 +1,7 @@
 import React from "react";
 
-import { CircularProgress } from "@equinor/eds-core-react";
-import { useQuery } from "@tanstack/react-query";
-import { isEqual } from "lodash";
-
 import { getCasesOptions, getFieldsOptions, type EnsembleInfo_api } from "@api";
+import { CircularProgress } from "@equinor/eds-core-react";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { tanstackDebugTimeOverride } from "@framework/internal/utils/debug";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -18,6 +15,8 @@ import { TagPicker } from "@lib/components/TagPicker";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
+import { useQuery } from "@tanstack/react-query";
+import { isEqual } from "lodash";
 
 import {
     makeCaseRowData,

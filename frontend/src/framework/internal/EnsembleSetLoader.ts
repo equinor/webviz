@@ -210,7 +210,7 @@ async function loadEnsembleApiDataMapFromBackend(
         const ensembleDetailsPromise = queryClient.fetchQuery({
             ...getEnsembleDetailsOptions({
                 // ! We've assumed that these data are only affected by the case timestamp
-                query: { f: fingerprintHash },
+                query: { cacheBusting: fingerprintHash },
                 path: {
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
@@ -225,7 +225,7 @@ async function loadEnsembleApiDataMapFromBackend(
             ...getParametersOptions({
                 query: {
                     // ? These are only affected by the "data" timestamp, right?
-                    f: fingerprintHash,
+                    cacheBusting: fingerprintHash,
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
                 },
@@ -239,7 +239,7 @@ async function loadEnsembleApiDataMapFromBackend(
             ...getSensitivitiesOptions({
                 query: {
                     // ! We've assumed that these data are only affected by the case timestamp
-                    f: fingerprintHash,
+                    cacheBusting: fingerprintHash,
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
                 },
