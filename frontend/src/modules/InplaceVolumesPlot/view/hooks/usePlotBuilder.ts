@@ -47,7 +47,7 @@ export function useBuildPlotAndTable(
 
     const table = makeTableFromApiData(aggregatedTableDataQueries.tablesData);
 
-    let title = `${plotTypeToStringMapping[plotType]} plot of mean/p10/p90`;
+    let title = `${plotTypeToStringMapping[plotType]} plot`;
     if (firstResultName) {
         title += ` for ${firstResultName}`;
     }

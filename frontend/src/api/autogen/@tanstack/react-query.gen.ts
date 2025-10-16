@@ -7,7 +7,6 @@ import type { AxiosError } from "axios";
 import {
     getFields,
     getCases,
-    getEnsembles,
     getEnsembleDetails,
     postRefreshFingerprintsForEnsembles,
     postGetTimestampsForEnsembles,
@@ -85,7 +84,6 @@ import {
 import type {
     GetFieldsData_api,
     GetCasesData_api,
-    GetEnsemblesData_api,
     GetEnsembleDetailsData_api,
     PostRefreshFingerprintsForEnsemblesData_api,
     PostRefreshFingerprintsForEnsemblesError_api,
@@ -242,23 +240,6 @@ export const getCasesOptions = (options: Options<GetCasesData_api>) => {
             return data;
         },
         queryKey: getCasesQueryKey(options),
-    });
-};
-
-export const getEnsemblesQueryKey = (options: Options<GetEnsemblesData_api>) => [createQueryKey("getEnsembles", options)];
-
-export const getEnsemblesOptions = (options: Options<GetEnsemblesData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getEnsembles({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getEnsemblesQueryKey(options),
     });
 };
 
