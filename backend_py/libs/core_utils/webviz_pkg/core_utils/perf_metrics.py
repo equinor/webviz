@@ -14,6 +14,10 @@ class PerfMetrics:
         """Records metric with a duration since the last lap"""
         self.set_metric(metric_name, self._perf_timer.lap_ms())
 
+    def record_lap_no_reset(self, metric_name: str) -> None:
+        """Records metric with a duration since the last lap. Does not reset the internal lap timer"""
+        self.set_metric(metric_name, self._perf_timer.lap_ms(reset_lap_timer=False))
+
     def record_elapsed(self, metric_name: str) -> None:
         """Records metric with a duration since the start"""
         self.set_metric(metric_name, self._perf_timer.elapsed_ms())

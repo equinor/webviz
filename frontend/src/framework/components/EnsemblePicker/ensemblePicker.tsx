@@ -1,0 +1,96 @@
+import React from "react";
+
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
+import { type EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
+import { TagPicker, type TagOption } from "@lib/components/TagPicker";
+
+import { EnsembleTag } from "./private-components/ensembleTag";
+import { EnsembleTagOption } from "./private-components/ensembleTagOption";
+
+export type EnsemblePickerProps = (
+    | {
+          ensembles: readonly (RegularEnsemble | DeltaEnsemble)[];
+          allowDeltaEnsembles: true;
+          value: (RegularEnsembleIdent | DeltaEnsembleIdent)[];
+          onChange: (ensembleIdentArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[]) => void;
+      }
+    | {
+          ensembles: readonly RegularEnsemble[];
+          allowDeltaEnsembles?: false | undefined;
+          value: RegularEnsembleIdent[];
+          onChange: (ensembleIdentArray: RegularEnsembleIdent[]) => void;
+      }
+) & {
+    ensembleRealizationFilterFunction?: EnsembleRealizationFilterFunction;
+};
+
+export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
+    const { onChange, ensembles, value, allowDeltaEnsembles, ensembleRealizationFilterFunction } = props;
+
+    const optionsArray: TagOption[] = [];
+    for (const ens of ensembles) {
+        optionsArray.push({
+            value: ens.getIdent().toString(),
+            label: ens.getDisplayName(),
+        });
+    }
+
+    const selectedArray: string[] = [];
+    for (const ident of value) {
+        selectedArray.push(ident.toString());
+    }
+
+    const handleSelectionChange = React.useCallback(
+        function handleSelectionChanged(selectedEnsembleIdentStringArray: string[]) {
+            const identArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[] = [];
+            for (const identStr of selectedEnsembleIdentStringArray) {
+                const foundEnsemble = ensembles.find((ens) => ens.getIdent().toString() === identStr);
+                if (!foundEnsemble) {
+                    throw new Error(`Ensemble not found: ${identStr}`);
+                }
+                if (!allowDeltaEnsembles && foundEnsemble instanceof DeltaEnsemble) {
+                    throw new Error(`Invalid ensemble selection: ${identStr}. Got delta ensemble when not allowed.`);
+                }
+                identArray.push(foundEnsemble.getIdent());
+            }
+
+            // Filter to match the correct return type before calling onChange
+            if (!allowDeltaEnsembles) {
+                const validIdentArray = identArray.filter((ident) =>
+                    isEnsembleIdentOfType(ident, RegularEnsembleIdent),
+                );
+                onChange(validIdentArray);
+                return;
+            }
+            onChange(identArray);
+        },
+        [allowDeltaEnsembles, ensembles, onChange],
+    );
+
+    return (
+        <TagPicker
+            selection={selectedArray}
+            tagOptions={optionsArray}
+            onChange={handleSelectionChange}
+            renderTag={(props) => (
+                <EnsembleTag
+                    ensembles={ensembles}
+                    ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                    {...props}
+                />
+            )}
+            renderTagOption={(props) => (
+                <EnsembleTagOption
+                    ensembles={ensembles}
+                    ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                    {...props}
+                />
+            )}
+            placeholder="Select ensembles..."
+        />
+    );
+}

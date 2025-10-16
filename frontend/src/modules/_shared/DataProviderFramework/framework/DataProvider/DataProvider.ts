@@ -130,6 +130,7 @@ export class DataProvider<
     private _progressMessage: string | null = null;
     private _scopedQueryController: ScopedQueryController;
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
+    private _onFetchCancelOrFinishFn: () => void = () => {};
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
         const {
@@ -195,7 +196,7 @@ export class DataProvider<
         return this._settingsErrorMessages;
     }
 
-    handleSettingsAndStoredDataChange(): void {
+    private handleSettingsAndStoredDataChange(): void {
         if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
             this.setStatus(DataProviderStatus.LOADING);
             return;
@@ -208,6 +209,8 @@ export class DataProvider<
         }
 
         let refetchRequired = false;
+
+        this.tidyUpFetchRelatedResources();
 
         if (this._customDataProviderImpl.doSettingsChangesRequireDataRefetch) {
             refetchRequired = this._customDataProviderImpl.doSettingsChangesRequireDataRefetch(
@@ -265,7 +268,7 @@ export class DataProvider<
         }, 10);
     }
 
-    handleSettingsStatusChange(): void {
+    private handleSettingsStatusChange(): void {
         const status = this._settingsContextDelegate.getStatus();
         if (status === SettingsContextStatus.INVALID_SETTINGS) {
             this._error = "Invalid settings";
@@ -383,7 +386,14 @@ export class DataProvider<
         };
     }
 
-    async maybeRefetchData(): Promise<void> {
+    private tidyUpFetchRelatedResources(): void {
+        // Cancel any resources related to the last ongoing fetch.
+        this._scopedQueryController.cancelActiveFetch();
+        this._onFetchCancelOrFinishFn();
+        this._onFetchCancelOrFinishFn = () => {};
+    }
+
+    private async maybeRefetchData(): Promise<void> {
         const thisTransactionId = this._currentTransactionId;
 
         const queryClient = this.getQueryClient();
@@ -398,11 +408,13 @@ export class DataProvider<
 
         const accessors = this.makeAccessors();
 
-        this._scopedQueryController.cancelActiveFetch();
-
         this.invalidateValueRange();
-        this.setStatus(DataProviderStatus.LOADING);
         this.setProgressMessage(null);
+        this.setStatus(DataProviderStatus.LOADING);
+
+        const onFetchCancelOrFinish = (fnc: () => void) => {
+            this._onFetchCancelOrFinishFn = fnc;
+        };
 
         try {
             this._data = await this._customDataProviderImpl.fetchData({
@@ -410,6 +422,7 @@ export class DataProvider<
                 fetchQuery: <TQueryFnData, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = QueryKey>(
                     options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
                 ) => this._scopedQueryController.fetchQuery<TQueryFnData, TError, TData, TQueryKey>(options),
+                onFetchCancelOrFinish,
                 setProgressMessage: (message) => this.setProgressMessage(message),
             });
 
@@ -434,9 +447,17 @@ export class DataProvider<
             if (apiError) {
                 this._error = apiError.makeStatusMessage();
             } else {
-                this._error = error.message;
+                if (typeof error === "string") {
+                    this._error = error;
+                } else if (error instanceof Error) {
+                    this._error = error.message;
+                }
             }
             this.setStatus(DataProviderStatus.ERROR);
+        } finally {
+            this._onFetchCancelOrFinishFn();
+            this._onFetchCancelOrFinishFn = () => {};
+            this.setProgressMessage(null);
         }
     }
 

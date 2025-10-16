@@ -32,8 +32,8 @@ export const statisticsSelectionAtom = atom<StatisticsSelection>({
     FanchartStatisticsSelection: Object.values(FanchartStatisticOption),
 });
 
-export const userSelectedEnsembleIdentsAtom = atomWithCompare<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>(
-    [],
+export const userSelectedEnsembleIdentsAtom = atomWithCompare<(RegularEnsembleIdent | DeltaEnsembleIdent)[] | null>(
+    null,
     areEnsembleIdentListsEqual,
 );
 

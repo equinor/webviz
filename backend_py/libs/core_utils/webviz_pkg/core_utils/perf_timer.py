@@ -19,7 +19,7 @@ class PerfTimer:
         time_now = time.perf_counter()
         elapsed = time_now - self._lap_s
 
-        if (reset_lap_timer):
+        if reset_lap_timer:
             self._lap_s = time_now
 
         return elapsed
