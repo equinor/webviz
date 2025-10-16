@@ -1,8 +1,8 @@
 import type React from "react";
 
 import { AccountCircle } from "@mui/icons-material";
-import type { UseQueryResult } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
 
 import type { GraphUserPhoto_api } from "@api";
 import { getUserPhotoOptions } from "@api";
