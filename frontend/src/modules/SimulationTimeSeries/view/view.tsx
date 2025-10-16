@@ -116,7 +116,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     layout={plotBuilder.makePlotLayout()}
                 />
             ) : (
-                <ContentError>One or more queries have an error state.</ContentError>
+                <ContentError>One or more queries have an error state. See the log for details.</ContentError>
             )}
         </div>
     );
