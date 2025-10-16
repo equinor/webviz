@@ -7,14 +7,23 @@ export function makeCacheBustingQueryParam(...ensembleIdents: (RegularEnsembleId
 } {
     // If no ensembles are provided, return an empty object
     if (ensembleIdents.length === 0) {
-        return {};
+        throw new Error("makeCacheBustingQueryParam requires at least one ensemble ident");
     }
 
-    // Filter out null or undefined idents
-    const filteredEnsembleIdents = ensembleIdents.filter((ident) => ident !== null && ident !== undefined);
-
     // Get the ensemble fingerprints from the EnsembleFingerprintsStore
-    const ensembleFingerprints = EnsembleFingerprintStore.getFingerprints(...filteredEnsembleIdents);
+    const ensembleFingerprints: string[] = [];
+    for (const ident of ensembleIdents) {
+        if (!ident) {
+            return {
+                zCacheBust: "INVALID_CACHE_BUSTING_PARAM_NO_ENSEMBLE",
+            };
+        }
+        const fingerprint = EnsembleFingerprintStore.getFingerprintFromEnsembleIdentString(ident.toString());
+        if (!fingerprint) {
+            throw new Error(`Missing fingerprint for ensemble ident: ${ident}`);
+        }
+        ensembleFingerprints.push(fingerprint);
+    }
 
     // Make concatenated 64bit hash of all fingerprints
     ensembleFingerprints.sort();
