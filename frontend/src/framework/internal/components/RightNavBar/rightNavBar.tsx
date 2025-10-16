@@ -2,7 +2,7 @@ import type React from "react";
 
 import { FilterAlt, Fullscreen, FullscreenExit, GridView, History, WebAsset } from "@mui/icons-material";
 
-import { GuiState, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
+import { GuiState, RightDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
 import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
@@ -18,17 +18,14 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
 
     const [isFullscreen, toggleFullScreen] = useBrowserFullscreen();
     const [drawerContent, setDrawerContent] = useGuiState(guiMessageBroker, GuiState.RightDrawerContent);
-    const [numberOfUnsavedRealizationFilters] = useGuiState(
-        guiMessageBroker,
-        GuiState.NumberOfUnsavedRealizationFilters,
-    );
-    const [numberOfEffectiveRealizationFilters] = useGuiState(
-        guiMessageBroker,
-        GuiState.NumberOfEffectiveRealizationFilters,
-    );
     const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
         guiMessageBroker,
         GuiState.RightSettingsPanelWidthInPercent,
+    );
+    const numberOfUnsavedRealizationFilters = useGuiValue(guiMessageBroker, GuiState.NumberOfUnsavedRealizationFilters);
+    const numberOfEffectiveRealizationFilters = useGuiValue(
+        guiMessageBroker,
+        GuiState.NumberOfEffectiveRealizationFilters,
     );
 
     function ensureSettingsPanelIsVisible() {
