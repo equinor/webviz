@@ -123,11 +123,11 @@ async def post_refresh_fingerprints_for_ensembles(
     perf_metrics.record_lap("calc-and-write-fingerprints")
 
     ret_fingerprints: list[str | None] = []
-    for raw_res, ident in zip(raw_results, ensemble_idents):
+    for i, raw_res in enumerate(raw_results):
         if isinstance(raw_res, str):
             ret_fingerprints.append(raw_res)
         else:
-            LOGGER.warning(f"Unable to calculate fingerprint for ensemble {ident}: {raw_res}")
+            LOGGER.warning(f"Unable to calculate fingerprint for ensemble {ensemble_idents[i]}: {raw_res}")
             ret_fingerprints.append(None)
 
     LOGGER.debug(f"Calculated and refreshed {len(ret_fingerprints)} fingerprints in: {perf_metrics.to_string()}")
