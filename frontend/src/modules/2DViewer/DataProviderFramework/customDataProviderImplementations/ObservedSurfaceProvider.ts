@@ -2,6 +2,7 @@ import { isEqual } from "lodash";
 
 import type { SurfaceDataPng_api } from "@api";
 import { SurfaceTimeType_api, getObservedSurfacesMetadataOptions, getSurfaceDataOptions } from "@api";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
@@ -94,6 +95,7 @@ export class ObservedSurfaceProvider
                 ...getObservedSurfacesMetadataOptions({
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid(),
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),
