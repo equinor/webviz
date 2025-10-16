@@ -274,7 +274,7 @@ export const getEnsembleDetails = <ThrowOnError extends boolean = false>(
 
 /**
  * Post Refresh Fingerprints For Ensembles
- * Retrieves fingerprints for a list of ensembles
+ * Retrieves freshly calculated fingerprints for a list of ensembles
  */
 export const postRefreshFingerprintsForEnsembles = <ThrowOnError extends boolean = false>(
     options: Options<PostRefreshFingerprintsForEnsemblesData_api, ThrowOnError>,
