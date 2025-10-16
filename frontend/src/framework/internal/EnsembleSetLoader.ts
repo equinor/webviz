@@ -4,6 +4,7 @@ import type { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_ap
 import { SensitivityType_api, getEnsembleDetailsOptions, getParametersOptions, getSensitivitiesOptions } from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { EnsembleFingerprintsStore } from "@framework/EnsembleFingerprintsStore";
+import { hashStringTo64BitInt } from "@framework/utils/queryUtils";
 
 import type { ContinuousParameter, DiscreteParameter, Parameter } from "../EnsembleParameters";
 import { ParameterType } from "../EnsembleParameters";
@@ -15,7 +16,6 @@ import type { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
 import { tanstackDebugTimeOverride } from "./utils/debug";
 import { fetchLatestEnsembleFingerprints } from "./utils/fetchEnsembleTimestamps";
-import { hashStringTo64BitInt } from "@framework/utils/queryUtils";
 
 type EnsembleApiData = {
     ensembleDetails: EnsembleDetails_api;
@@ -205,10 +205,12 @@ async function loadEnsembleApiDataMapFromBackend(
         const ensembleName = ensembleIdent.getEnsembleName();
         const fingerprint = ensembleFingerprintsMap.get(ensembleIdent.toString());
 
+        const fingerprintHash = fingerprint ? hashStringTo64BitInt(fingerprint) : undefined;
+
         const ensembleDetailsPromise = queryClient.fetchQuery({
             ...getEnsembleDetailsOptions({
                 // ! We've assumed that these data are only affected by the case timestamp
-                query: { t: hashStringTo64BitInt(fingerprint ?? "") },
+                query: { t: fingerprintHash },
                 path: {
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
@@ -223,7 +225,7 @@ async function loadEnsembleApiDataMapFromBackend(
             ...getParametersOptions({
                 query: {
                     // ? These are only affected by the "data" timestamp, right?
-                    t: hashStringTo64BitInt(fingerprint ?? ""),
+                    t: fingerprintHash,
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
                 },
