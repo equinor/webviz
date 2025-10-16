@@ -7,6 +7,7 @@ import {
     postGetSurfaceIntersectionOptions,
 } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
@@ -163,6 +164,7 @@ export class RealizationSurfacesProvider
                     query: {
                         case_uuid: ensembleIdent.getCaseUuid(),
                         ensemble_name: ensembleIdent.getEnsembleName(),
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     signal: abortSignal,
                 }),
@@ -280,6 +282,7 @@ export class RealizationSurfacesProvider
                         realization_num: realization,
                         name: surfaceName,
                         attribute: attribute,
+                        ...makeCacheBustingQueryParam(ensembleIdent),
                     },
                     body: {
                         cumulative_length_polyline: {

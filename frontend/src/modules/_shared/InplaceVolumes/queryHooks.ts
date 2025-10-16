@@ -7,6 +7,7 @@ import type {
 } from "@api";
 import { postGetAggregatedPerRealizationTableDataOptions, postGetAggregatedStatisticalTableDataOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import type {
     InplaceVolumesStatisticalTableData,
@@ -65,6 +66,7 @@ export function useGetAggregatedStatisticalTableDataQueries(
                     result_names: resultNames,
                     group_by_indices: validGroupByIndices,
                     realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
+                    ...makeCacheBustingQueryParam(source.ensembleIdent),
                 },
                 body: {
                     indices_with_values: indicesWithValues,
@@ -146,6 +148,7 @@ export function useGetAggregatedPerRealizationTableDataQueries(
                     result_names: resultNames,
                     group_by_indices: validGroupByIndices,
                     realizations_encoded_as_uint_list_str: validRealizationsEncodedAsUintListStr,
+                    ...makeCacheBustingQueryParam(source.ensembleIdent),
                 },
                 body: {
                     indices_with_values: indicesWithValues,

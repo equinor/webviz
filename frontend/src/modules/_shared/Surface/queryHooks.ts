@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 
 import type { SurfaceDataPng_api, SurfaceDef_api, SurfaceMetaSet_api } from "@api";
 import { getObservedSurfacesMetadataOptions, getRealizationSurfacesMetadataOptions, getSurfaceDataOptions } from "@api";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { encodePropertiesAsKeyValStr } from "@lib/utils/queryStringUtils";
 
 import type { SurfaceDataFloat_trans } from "./queryDataTransforms";
@@ -18,6 +20,9 @@ export function useRealizationSurfacesMetadataQuery(
             query: {
                 case_uuid: caseUuid ?? "",
                 ensemble_name: ensembleName ?? "",
+                ...makeCacheBustingQueryParam(
+                    caseUuid && ensembleName ? new RegularEnsembleIdent(caseUuid, ensembleName) : null,
+                ),
             },
         }),
         enabled: Boolean(caseUuid && ensembleName),

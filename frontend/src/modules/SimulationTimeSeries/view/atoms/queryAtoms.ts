@@ -15,6 +15,7 @@ import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import { showHistoricalAtom } from "@modules/SimulationTimeSeries/settings/atoms/baseAtoms";
 import type {
@@ -67,6 +68,7 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
                             vector_name: vectorSpecification.vectorName,
                             resampling_frequency: resampleFrequency,
                             realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                            ...makeCacheBustingQueryParam(vectorSpecification.ensembleIdent),
                         },
                         throwOnError: true,
                     });
@@ -116,6 +118,10 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
                             vector_name: vectorSpecification.vectorName,
                             resampling_frequency: resampleFrequency ?? Frequency_api.YEARLY,
                             realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                            ...makeCacheBustingQueryParam(
+                                vectorSpecification.ensembleIdent.getComparisonEnsembleIdent(),
+                                vectorSpecification.ensembleIdent.getReferenceEnsembleIdent(),
+                            ),
                         },
                         throwOnError: true,
                     });
@@ -179,6 +185,7 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
                             vector_name: vectorSpecification.vectorName,
                             resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
                             realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                            ...makeCacheBustingQueryParam(vectorSpecification.ensembleIdent),
                         },
                         throwOnError: true,
                     });
@@ -228,6 +235,10 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
                             vector_name: vectorSpecification.vectorName,
                             resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
                             realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                            ...makeCacheBustingQueryParam(
+                                vectorSpecification.ensembleIdent.getComparisonEnsembleIdent(),
+                                vectorSpecification.ensembleIdent.getReferenceEnsembleIdent(),
+                            ),
                         },
                         throwOnError: true,
                     });
@@ -290,6 +301,7 @@ export const regularEnsembleHistoricalVectorDataQueriesAtom = atomWithQueries((g
                         ensemble_name: vectorSpecification.ensembleIdent.getEnsembleName(),
                         non_historical_vector_name: vectorSpecification.vectorName,
                         resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
+                        ...makeCacheBustingQueryParam(vectorSpecification.ensembleIdent),
                     },
                     throwOnError: true,
                 });

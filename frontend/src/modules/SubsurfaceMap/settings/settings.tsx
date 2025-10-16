@@ -210,10 +210,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     }
 
     // Polygon
-    const polygonsDirectoryQuery = usePolygonsDirectoryQuery(
-        computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName(),
-    );
+    const polygonsDirectoryQuery = usePolygonsDirectoryQuery(computedEnsembleIdent);
 
     const polygonsDirectory = new PolygonsDirectory(
         polygonsDirectoryQuery.data
