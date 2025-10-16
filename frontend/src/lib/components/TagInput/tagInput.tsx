@@ -4,6 +4,8 @@ import { Close } from "@mui/icons-material";
 import { inRange, omit } from "lodash";
 import { Key } from "ts-key-enum";
 
+import { Tooltip } from "@lib/components/Tooltip";
+
 import { IconButton } from "../IconButton";
 
 import { DefaultTag } from "./private-components/DefaultTag";
@@ -360,7 +362,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
         <>
             <div
                 ref={ref}
-                className="input-comp flex items-center gap-1 border border-gray-300 px-2 py-1.5 rounded focus-within:outline focus-within:outline-blue-500"
+                className="input-comp flex items-center gap-1 bg-white border border-gray-300 px-2 py-1.5 rounded focus-within:outline focus-within:outline-blue-500"
                 onBlur={onRootBlur}
             >
                 <ul
@@ -413,13 +415,11 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
                         />
                     </li>
                 </ul>
-                <IconButton
-                    className="align-middle focus:outline-2 outline-blue-300"
-                    title="Clear selection"
-                    onClick={clearTags}
-                >
-                    <Close fontSize="inherit" />
-                </IconButton>
+                <Tooltip title="Clear selection" enterDelay="medium" placement="right">
+                    <IconButton className="align-middle focus:outline-2 outline-blue-300" onClick={clearTags}>
+                        <Close fontSize="inherit" />
+                    </IconButton>
+                </Tooltip>
             </div>
         </>
     );

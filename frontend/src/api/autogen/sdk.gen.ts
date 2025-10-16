@@ -8,9 +8,6 @@ import type {
     GetCasesData_api,
     GetCasesResponse_api,
     GetCasesError_api,
-    GetEnsemblesData_api,
-    GetEnsemblesResponse_api,
-    GetEnsemblesError_api,
     GetEnsembleDetailsData_api,
     GetEnsembleDetailsResponse_api,
     GetEnsembleDetailsError_api,
@@ -188,6 +185,9 @@ import type {
     GetPolygonsDataData_api,
     GetPolygonsDataResponse_api,
     GetPolygonsDataError_api,
+    GetUserInfoData_api,
+    GetUserInfoResponse_api,
+    GetUserInfoError_api,
     GetUserPhotoData_api,
     GetUserPhotoResponse_api,
     GetUserPhotoError_api,
@@ -243,19 +243,6 @@ export const getCases = <ThrowOnError extends boolean = false>(options: Options<
     return (options?.client ?? client).get<GetCasesResponse_api, GetCasesError_api, ThrowOnError>({
         ...options,
         url: "/cases",
-    });
-};
-
-/**
- * Get Ensembles
- * Get list of ensembles for a case
- */
-export const getEnsembles = <ThrowOnError extends boolean = false>(
-    options: Options<GetEnsemblesData_api, ThrowOnError>,
-) => {
-    return (options?.client ?? client).get<GetEnsemblesResponse_api, GetEnsemblesError_api, ThrowOnError>({
-        ...options,
-        url: "/cases/{case_uuid}/ensembles",
     });
 };
 
@@ -1216,8 +1203,18 @@ export const getPolygonsData = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get User Info
+ */
+export const getUserInfo = <ThrowOnError extends boolean = false>(options: Options<GetUserInfoData_api, ThrowOnError>) => {
+    return (options?.client ?? client).get<GetUserInfoResponse_api, GetUserInfoError_api, ThrowOnError>({
+        ...options,
+        url: "/graph/user_info/{user_id_or_email}",
+    });
+};
+
+/**
  * Get User Photo
- * Get username, display name and avatar from Microsoft Graph API for a given user email
+ * Get username, display name and avatar from Microsoft Graph API for a given user email or graph identity
  */
 export const getUserPhoto = <ThrowOnError extends boolean = false>(
     options: Options<GetUserPhotoData_api, ThrowOnError>,

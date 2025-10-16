@@ -7,7 +7,6 @@ import type { AxiosError } from "axios";
 import {
     getFields,
     getCases,
-    getEnsembles,
     getEnsembleDetails,
     postGetTimestampsForEnsembles,
     getVectorList,
@@ -67,6 +66,7 @@ import {
     postGetSeismicFence,
     getPolygonsDirectory,
     getPolygonsData,
+    getUserInfo,
     getUserPhoto,
     getObservations,
     getTableDefinition,
@@ -85,7 +85,6 @@ import {
 import type {
     GetFieldsData_api,
     GetCasesData_api,
-    GetEnsemblesData_api,
     GetEnsembleDetailsData_api,
     PostGetTimestampsForEnsemblesData_api,
     PostGetTimestampsForEnsemblesError_api,
@@ -159,6 +158,7 @@ import type {
     PostGetSeismicFenceResponse_api,
     GetPolygonsDirectoryData_api,
     GetPolygonsDataData_api,
+    GetUserInfoData_api,
     GetUserPhotoData_api,
     GetObservationsData_api,
     GetTableDefinitionData_api,
@@ -240,23 +240,6 @@ export const getCasesOptions = (options: Options<GetCasesData_api>) => {
             return data;
         },
         queryKey: getCasesQueryKey(options),
-    });
-};
-
-export const getEnsemblesQueryKey = (options: Options<GetEnsemblesData_api>) => [createQueryKey("getEnsembles", options)];
-
-export const getEnsemblesOptions = (options: Options<GetEnsemblesData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getEnsembles({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getEnsemblesQueryKey(options),
     });
 };
 
@@ -1520,6 +1503,23 @@ export const getPolygonsDataOptions = (options: Options<GetPolygonsDataData_api>
             return data;
         },
         queryKey: getPolygonsDataQueryKey(options),
+    });
+};
+
+export const getUserInfoQueryKey = (options: Options<GetUserInfoData_api>) => [createQueryKey("getUserInfo", options)];
+
+export const getUserInfoOptions = (options: Options<GetUserInfoData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getUserInfo({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getUserInfoQueryKey(options),
     });
 };
 

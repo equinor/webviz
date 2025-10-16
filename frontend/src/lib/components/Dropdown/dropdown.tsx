@@ -35,7 +35,7 @@ export type DropdownProps<TValue = string> = {
     id?: string;
     wrapperId?: string;
     options: DropdownOptionOrGroup<TValue>[];
-    value?: TValue;
+    value?: TValue | null;
     filter?: boolean;
     width?: string | number;
     showArrows?: boolean;
@@ -46,7 +46,7 @@ export type DropdownProps<TValue = string> = {
 } & BaseComponentProps;
 
 const MIN_HEIGHT = 200;
-const OPTION_HEIGHT = 32;
+const OPTION_HEIGHT = 34;
 const DEFAULT_POPOVER_MAX_WIDTH = 500;
 
 type DropdownRect = {
@@ -55,6 +55,7 @@ type DropdownRect = {
     right?: number;
     width: number;
     height: number;
+
     minWidth: number;
 };
 
@@ -147,7 +148,6 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
 
     const popoverMaxWidthOrDefault = props.popoverMaxWidth ?? DEFAULT_POPOVER_MAX_WIDTH;
 
-    const valueWithDefault = props.value ?? null;
     const [prevValue, setPrevValue] = React.useState<TValue | null>(props.value ?? null);
 
     const [filter, setFilter] = React.useState<string | null>(null);
@@ -182,27 +182,28 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
 
     const inputBoundingRect = useElementBoundingRect(inputWrapperRef);
 
+    const isExternallyControlled = props.value !== undefined;
+    const selectedValue = isExternallyControlled ? (props.value as TValue | null) : selection;
+
+    // Value changed externally, update indexes to match the new value
+    if (isExternallyControlled && !_.isEqual(selectedValue, prevValue)) {
+        setSelection(selectedValue);
+        setPrevValue(selectedValue);
+        setSelectionIndex(allOptionsWithSeparators.findIndex((option) => isOptionOfValue(option, selectedValue)));
+    }
+
     // Sets the currently focused item as the selected item
     const setOptionIndexWithFocusToCurrentSelection = React.useCallback(
         function handleFilteredOptionsChange() {
-            const index = filteredOptionsWithSeparators.findIndex((option) =>
-                isOptionOfValue(option, valueWithDefault),
-            );
+            const index = filteredOptionsWithSeparators.findIndex((option) => isOptionOfValue(option, selectedValue));
 
             setSelectionIndex(index);
             setOptionIndexWithFocus(index);
         },
-        [filteredOptionsWithSeparators, valueWithDefault],
+        [filteredOptionsWithSeparators, selectedValue],
     );
 
     const firstItemIsGroupTitle = allOptionsWithSeparators[selectionIndex]?.type === ItemType.GROUP_TITLE;
-
-    // Value changed externally, update indexes to match the new value
-    if (!_.isEqual(prevValue, valueWithDefault)) {
-        setSelection(valueWithDefault);
-        setPrevValue(valueWithDefault);
-        setSelectionIndex(allOptionsWithSeparators.findIndex((option) => isOptionOfValue(option, valueWithDefault)));
-    }
 
     // Filter string changed
     if (filter !== prevFilter) {
@@ -313,7 +314,9 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
 
                 setDropdownRect((prev) => ({ ...newDropdownRect, width: prev.width }));
 
-                const selectedIndex = filteredOptionsWithSeparators.findIndex((opt) => isOptionOfValue(opt, selection));
+                const selectedIndex = filteredOptionsWithSeparators.findIndex((opt) =>
+                    isOptionOfValue(opt, selectedValue),
+                );
                 const selectedIndexOrDefault = selectedIndex !== -1 ? selectedIndex : 0;
                 const visibleOptions = Math.round(preferredHeight / OPTION_HEIGHT / 2);
 
@@ -324,7 +327,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
         [
             inputBoundingRect,
             filteredOptionsWithSeparators,
-            selection,
+            selectedValue,
             dropdownRect.width,
             popoverMaxWidthOrDefault,
             setOptionIndexWithFocusToCurrentSelection,
@@ -355,12 +358,14 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
 
     const handleOptionClick = React.useCallback(
         function handleOptionClick(value: TValue) {
-            setSelection(value);
-            setSelectionIndex(allOptionsWithSeparators.findIndex((option) => isOptionOfValue(option, value)));
+            if (!isExternallyControlled) {
+                setSelection(value);
+                setSelectionIndex(allOptionsWithSeparators.findIndex((option) => isOptionOfValue(option, value)));
+            }
             closePopover();
             handleOnChange(value);
         },
-        [allOptionsWithSeparators, handleOnChange, closePopover],
+        [allOptionsWithSeparators, isExternallyControlled, handleOnChange, closePopover],
     );
 
     React.useEffect(
@@ -462,7 +467,8 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
         if (dropdownVisible && filter !== null) {
             return filter;
         }
-        return allOptionsWithSeparators.find((opt) => isOptionOfValue(opt, selection))?.label || "";
+
+        return allOptionsWithSeparators.find((opt) => isOptionOfValue(opt, selectedValue))?.label || "";
     }
 
     function makeInputAdornment() {
@@ -471,14 +477,14 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
         }
 
         const selectedOption = allOptionsWithSeparators.find((opt): opt is OptionItem<TValue> =>
-            isOptionOfValue(opt, selection),
+            isOptionOfValue(opt, selectedValue),
         );
 
         // Prioritize own adornment, fallback to parent group, if any
         const adornment = selectedOption?.adornment || selectedOption?.parent?.adornment;
 
         if (!adornment) return null;
-        return <span className="align-sub max-h-5 max-w-5 overflow-hidden">{adornment}</span>;
+        return <span className="align-sub inline-flex items-center max-h-6 max-w-6 overflow-hidden">{adornment}</span>;
     }
 
     function handleSelectPreviousOption() {
@@ -510,7 +516,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
             return (
                 <OptionItem
                     key={`${item.value}`}
-                    isSelected={_.isEqual(selection, item.value)}
+                    isSelected={_.isEqual(selectedValue, item.value)}
                     isFocused={optionIndexWithFocus === index}
                     isInGroup={!!item.parent}
                     {...item}
@@ -530,8 +536,8 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
                         ref={inputWrapperRef}
                         inputRef={inputRef}
                         error={
-                            !!selection &&
-                            !allOptionsWithSeparators.find((option) => isOptionOfValue(option, selection)) &&
+                            selectedValue !== null &&
+                            !allOptionsWithSeparators.find((option) => isOptionOfValue(option, selectedValue)) &&
                             allOptionsWithSeparators.length > 0
                         }
                         startAdornment={makeInputAdornment()}
@@ -642,14 +648,15 @@ function OptionItem<TValue>(props: OptionProps<TValue>): React.ReactNode {
                 "pl-4": props.isInGroup,
             })}
             style={{ height: OPTION_HEIGHT }}
-            title={props.label}
             onPointerMove={() => props.onPointerOver(props.value)}
             onClick={() => !props.disabled && props.onSelect(props.value)}
         >
             {props.adornment && (
-                <div className="max-w-5 max-h-5 overflow-hidden flex-shrink-0 inline-flex">{props.adornment}</div>
+                <div className="max-w-8 max-h-8 overflow-hidden flex-shrink-0 inline-flex">{props.adornment}</div>
             )}
-            <div className="truncate">{props.label}</div>
+            <div className="truncate max-h-8" title={props.label}>
+                {props.label}
+            </div>
         </li>
     );
 }
