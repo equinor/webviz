@@ -29,7 +29,13 @@ export function ParametersSelector({
         }
         return [];
     });
-
+    React.useEffect(() => {
+        if (selectedGroupFilterValues.length === 0 && selectedParameterIdents.length > 0) {
+            setSelectedGroupFilterValues(
+                Array.from(new Set(selectedParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP))),
+            );
+        }
+    }, [selectedParameterIdents, selectedGroupFilterValues]);
     const handleGroupChange = (newlySelectedGroupFilterStrings: string[]) => {
         setSelectedGroupFilterValues(newlySelectedGroupFilterStrings);
 
