@@ -1,8 +1,8 @@
 import type { QueryClient } from "@tanstack/query-core";
 
 import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
-import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleFingerprintsStore } from "@framework/EnsembleFingerprintsStore";
+import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
 import { Dashboard, type SerializedDashboard } from "@framework/internal/Dashboard";
 import { RealizationFilterSet } from "@framework/RealizationFilterSet";
