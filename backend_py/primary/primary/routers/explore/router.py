@@ -70,7 +70,6 @@ async def get_cases(
 
 
 @router.get("/cases/{case_uuid}/ensembles/{ensemble_name}")
-@no_cache
 async def get_ensemble_details(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
@@ -83,7 +82,6 @@ async def get_ensemble_details(
     realizations = await case_inspector.get_realizations_in_ensemble_async(ensemble_name)
     field_identifiers = await case_inspector.get_field_identifiers_async()
     stratigraphic_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
-    timestamps = await case_inspector.get_ensemble_timestamps_async(ensemble_name)
     standard_results = await case_inspector.get_standard_results_in_ensemble_async(ensemble_name)
 
     if len(field_identifiers) != 1:
@@ -96,10 +94,6 @@ async def get_ensemble_details(
         realizations=realizations,
         fieldIdentifier=field_identifiers[0],
         stratigraphicColumnIdentifier=stratigraphic_column_identifier,
-        timestamps=schemas.EnsembleTimestamps(
-            caseUpdatedAtUtcMs=timestamps.case_updated_at_utc_ms,
-            dataUpdatedAtUtcMs=timestamps.data_updated_at_utc_ms,
-        ),
         standardResults=standard_results,
     )
 

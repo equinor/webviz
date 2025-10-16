@@ -1,7 +1,8 @@
+import type { QueryClient } from "@tanstack/react-query";
+
 import { type EnsembleIdent_api } from "@api";
 import { postRefreshFingerprintsForEnsemblesOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { QueryClient } from "@tanstack/react-query";
 
 export type EnsembleFingerprintItem = {
     ensembleIdent: RegularEnsembleIdent;

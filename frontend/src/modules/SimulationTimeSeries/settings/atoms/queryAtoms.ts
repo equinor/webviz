@@ -20,10 +20,10 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
                 queryFn: async () => {
                     const { data } = await getVectorList({
                         query: {
-                            ...makeCacheBustingQueryParam(ensembleIdent),
                             case_uuid: ensembleIdent.getCaseUuid(),
                             ensemble_name: ensembleIdent.getEnsembleName(),
                             include_derived_vectors: true,
+                            ...makeCacheBustingQueryParam(ensembleIdent),
                         },
                         throwOnError: true,
                     });
@@ -55,6 +55,10 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
                             reference_case_uuid: referenceEnsembleIdent.getCaseUuid(),
                             reference_ensemble_name: referenceEnsembleIdent.getEnsembleName(),
                             include_derived_vectors: true,
+                            ...makeCacheBustingQueryParam(
+                                ensembleIdent.getComparisonEnsembleIdent(),
+                                ensembleIdent.getReferenceEnsembleIdent(),
+                            ),
                         },
                         throwOnError: true,
                     });

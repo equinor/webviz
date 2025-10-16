@@ -2,7 +2,7 @@ import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { calcFnv1aHash } from "@lib/utils/hashUtils";
 
-export function makeFingerprintQueryParam(...ensembleIdents: RegularEnsembleIdent[]): { cacheBusting?: string } {
+export function makeFingerprintQueryParam(...ensembleIdents: RegularEnsembleIdent[]): { zCacheBust?: string } {
     // If no ensembles are provided, return an empty object
     if (ensembleIdents.length === 0) {
         return {};
@@ -16,5 +16,5 @@ export function makeFingerprintQueryParam(...ensembleIdents: RegularEnsembleIden
     const hash = calcFnv1aHash(ensembleFingerprints.join(""));
 
     // Return the fingerprint query param
-    return { cacheBusting: hash };
+    return { zCacheBust: hash };
 }
