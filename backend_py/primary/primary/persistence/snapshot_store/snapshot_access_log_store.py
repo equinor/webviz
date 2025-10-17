@@ -3,42 +3,47 @@ from datetime import datetime, timezone
 from typing import Any
 
 
-from primary.services.database_access.container_access import ContainerAccess
-from primary.services.database_access.database_access_exceptions import DatabaseAccessError, DatabaseAccessNotFoundError
+from primary.persistence.cosmosdb.cosmos_container import CosmosContainer
+from primary.persistence.cosmosdb.exceptions import DatabaseAccessError, DatabaseAccessNotFoundError
 from primary.services.service_exceptions import Service, ServiceRequestError
 
-from ..query_collation_options import QueryCollationOptions
-from .models import SnapshotAccessLogDocument
-from .util import make_access_log_item_id
+from primary.persistence.cosmosdb.query_collation_options import QueryCollationOptions
+from .documents import SnapshotAccessLogDocument
+from .utils import make_access_log_item_id
 
-from .snapshot_access import SnapshotAccess
+from .snapshot_store import SnapshotStore
 
 
 LOGGER = logging.getLogger(__name__)
 
+"""
+Snapshot Access Log Store handles logging of snapshot visits by users.
+It allows for creating, updating, and retrieving access logs for snapshots.
+"""
 
-class SnapshotLogAccess:
+
+class SnapshotAccessLogStore:
     DATABASE_NAME = "persistence"
     CONTAINER_NAME = "snapshot_access_logs"
 
-    def __init__(self, user_id: str, container_access: ContainerAccess[SnapshotAccessLogDocument]):
+    def __init__(self, user_id: str, container: CosmosContainer[SnapshotAccessLogDocument]):
         self._user_id = user_id
-        self._container_access = container_access
+        self._container = container
 
     @classmethod
-    def create(cls, user_id: str) -> "SnapshotLogAccess":
-        container_access = ContainerAccess.create(cls.DATABASE_NAME, cls.CONTAINER_NAME, SnapshotAccessLogDocument)
+    def create(cls, user_id: str) -> "SnapshotAccessLogStore":
+        container = CosmosContainer.create(cls.DATABASE_NAME, cls.CONTAINER_NAME, SnapshotAccessLogDocument)
 
-        return cls(user_id, container_access)
+        return cls(user_id, container)
 
-    async def __aenter__(self) -> "SnapshotLogAccess":
+    async def __aenter__(self) -> "SnapshotAccessLogStore":
         return self
 
     async def __aexit__(
         self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object | None
     ) -> None:
         # Clean up if needed (e.g., closing DB connections)
-        await self._container_access.close_async()
+        await self._container.close_async()
 
     async def update_log_async(self, snapshot_id: str, changes: dict[str, Any]) -> None:
         try:
@@ -46,7 +51,7 @@ class SnapshotLogAccess:
 
             updated_item = existing.model_copy(update=changes)
 
-            await self._container_access.update_item_async(snapshot_id, updated_item)
+            await self._container.update_item_async(snapshot_id, updated_item)
         except DatabaseAccessError as e:
             raise ServiceRequestError(f"Failed to update access log: {str(e)}", Service.DATABASE) from e
 
@@ -62,13 +67,13 @@ class SnapshotLogAccess:
             if search_options:
                 query = f"{query} {search_options}"
 
-            return await self._container_access.query_items_async(query, params)  # type: ignore[arg-type]
+            return await self._container.query_items_async(query, params)  # type: ignore[arg-type]
         except DatabaseAccessError as e:
             raise ServiceRequestError(f"Failed to get access logs: {str(e)}", Service.DATABASE) from e
 
     async def create_access_log_async(self, snapshot_id: str, snapshot_owner_id: str) -> SnapshotAccessLogDocument:
         try:
-            snapshots = SnapshotAccess.create(self._user_id)
+            snapshots = SnapshotStore.create(self._user_id)
 
             snapshot_meta = await snapshots.get_snapshot_metadata_async(snapshot_id, snapshot_owner_id)
 
@@ -79,8 +84,6 @@ class SnapshotLogAccess:
                 snapshot_metadata=snapshot_meta,
             )
 
-            _inserted_id = await self._container_access.insert_item_async(new_log)
-
             return new_log
         except DatabaseAccessError as e:
             raise ServiceRequestError(f"Failed to create access log: {str(e)}", Service.DATABASE) from e
@@ -88,7 +91,7 @@ class SnapshotLogAccess:
     async def get_access_log_async(self, snapshot_id: str) -> SnapshotAccessLogDocument:
         item_id = make_access_log_item_id(snapshot_id, self._user_id)
 
-        return await self._container_access.get_item_async(item_id, partition_key=self._user_id)
+        return await self._container.get_item_async(item_id, partition_key=self._user_id)
 
     async def get_existing_or_new_log_item_async(
         self, snapshot_id: str, snapshot_owner_id: str
@@ -115,7 +118,7 @@ class SnapshotLogAccess:
             if not log.first_visited_at:
                 log.first_visited_at = timestamp
 
-            await self._container_access.update_item_async(log.id, log)
+            await self._container.update_item_async(log.id, log)
 
             return log
         except DatabaseAccessError as e:

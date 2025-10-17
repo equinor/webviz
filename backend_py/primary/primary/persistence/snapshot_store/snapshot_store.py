@@ -2,13 +2,13 @@ from typing import Optional, List
 from datetime import datetime, timezone
 from nanoid import generate
 
-from primary.services.database_access.snapshot_access.models import SnapshotDocument
-from primary.services.database_access._utils import hash_json_string, cast_query_params
+from .documents import SnapshotDocument
+from primary.persistence._utils import hash_sha256, cast_query_params
 from primary.services.service_exceptions import Service, ServiceRequestError
-from primary.services.database_access.query_collation_options import QueryCollationOptions, SortDirection
-from primary.services.database_access.container_access import ContainerAccess
-from primary.services.database_access.database_access_exceptions import DatabaseAccessError, DatabaseAccessNotFoundError
-from primary.services.database_access.error_converter import raise_service_error_from_database_access
+from primary.persistence.cosmosdb.query_collation_options import QueryCollationOptions, SortDirection
+from primary.persistence.cosmosdb.cosmos_container import CosmosContainer
+from primary.persistence.cosmosdb.exceptions import DatabaseAccessError, DatabaseAccessNotFoundError
+from primary.persistence.cosmosdb.error_converter import raise_service_error_from_database_access
 
 from .types import (
     NewSnapshot,
@@ -21,35 +21,39 @@ from .types import (
 # Util dict to handle case insensitive collation
 CASING_FIELD_LOOKUP: dict[SnapshotSortBy | None, SnapshotSortBy] = {SnapshotSortBy.TITLE_LOWER: SnapshotSortBy.TITLE}
 
+"""
+Snapshot Store handles CRUD operations for snapshots.
+"""
 
-class SnapshotAccess:
+
+class SnapshotStore:
     CONTAINER_NAME = "snapshots"
     DATABASE_NAME = "persistence"
 
     def __init__(
         self,
         user_id: str,
-        container_access: ContainerAccess[SnapshotDocument],
+        container: CosmosContainer[SnapshotDocument],
     ):
         self.user_id = user_id
-        self.container_access = container_access
+        self.container = container
 
-    async def __aenter__(self) -> "SnapshotAccess":
+    async def __aenter__(self) -> "SnapshotStore":
         return self
 
     async def __aexit__(
         self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object | None
     ) -> None:
-        await self.container_access.close_async()
+        await self.container.close_async()
 
     @classmethod
-    def create(cls, user_id: str) -> "SnapshotAccess":
-        container_access = ContainerAccess.create(cls.DATABASE_NAME, cls.CONTAINER_NAME, SnapshotDocument)
-        return cls(user_id, container_access)
+    def create(cls, user_id: str) -> "SnapshotStore":
+        container = CosmosContainer.create(cls.DATABASE_NAME, cls.CONTAINER_NAME, SnapshotDocument)
+        return cls(user_id, container)
 
     async def get_snapshot_by_id_async(self, snapshot_id: str) -> SnapshotDocument:
         try:
-            document = await self.container_access.get_item_async(item_id=snapshot_id, partition_key=snapshot_id)
+            document = await self.container.get_item_async(item_id=snapshot_id, partition_key=snapshot_id)
 
             return document
         except DatabaseAccessNotFoundError as e:
@@ -63,7 +67,7 @@ class SnapshotAccess:
         try:
             query = "SELECT * FROM c WHERE c.owner_id = @owner_id"
             params = cast_query_params([{"name": "@owner_id", "value": self.user_id}])
-            items = await self.container_access.query_items_async(query=query, parameters=params)
+            items = await self.container.query_items_async(query=query, parameters=params)
             return [self._to_metadata_summary(item) for item in items]
         except DatabaseAccessError as e:
             raise_service_error_from_database_access(e)
@@ -95,15 +99,15 @@ class SnapshotAccess:
             if search_options:
                 query = f"{query} {search_options}"
 
-            items = await self.container_access.query_items_async(query=query, parameters=params)
+            items = await self.container.query_items_async(query=query, parameters=params)
 
             return [self._to_metadata_summary(item) for item in items]
         except DatabaseAccessError as e:
             raise_service_error_from_database_access(e)
 
-    async def get_snapshot_metadata_async(self, snapshot_id: str, owner_id: Optional[str] = None) -> SnapshotMetadata:
+    async def get_snapshot_metadata_async(self, snapshot_id: str) -> SnapshotMetadata:
         try:
-            document = await self.container_access.get_item_async(snapshot_id, partition_key=snapshot_id)
+            document = await self.container.get_item_async(snapshot_id, partition_key=snapshot_id)
             return document.metadata
         except DatabaseAccessError as e:
             raise_service_error_from_database_access(e)
@@ -122,23 +126,23 @@ class SnapshotAccess:
                     description=new_snapshot.description,
                     created_at=now,
                     updated_at=now,
-                    hash=hash_json_string(new_snapshot.content),
+                    hash=hash_sha256(new_snapshot.content),
                 ),
                 content=new_snapshot.content,
             )
 
-            return await self.container_access.insert_item_async(snapshot)
+            return await self.container.insert_item_async(snapshot)
         except DatabaseAccessError as e:
             raise_service_error_from_database_access(e)
 
     async def delete_snapshot_async(self, snapshot_id: str) -> None:
         await self._assert_ownership_async(snapshot_id)
-        await self.container_access.delete_item_async(snapshot_id, partition_key=snapshot_id)
+        await self.container.delete_item_async(snapshot_id, partition_key=snapshot_id)
 
     async def _assert_ownership_async(self, snapshot_id: str) -> SnapshotDocument:
         """Assert that the user owns the snapshot with the given ID."""
         try:
-            document = await self.container_access.get_item_async(item_id=snapshot_id, partition_key=snapshot_id)
+            document = await self.container.get_item_async(item_id=snapshot_id, partition_key=snapshot_id)
         except DatabaseAccessError as e:
             raise_service_error_from_database_access(e)
 
