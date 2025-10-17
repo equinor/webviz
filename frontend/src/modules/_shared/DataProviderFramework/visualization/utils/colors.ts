@@ -30,11 +30,13 @@ export function makeColorMapFunctionFromColorScale(
     }
 
     const specialColor = options?.specialColor;
+    // Min and max are only used if denormalize is true and when denormalize is true,
+    // min and max values must be provided. So, this is just a fallback to avoid any errors.
+    const valueMax = options?.valueMax ?? 1;
+    const valueMin = options?.valueMin ?? 0;
 
     return (value: number) => {
-        const nonNormalizedValue = options?.denormalize
-            ? value * (options.valueMax - options.valueMin) + options.valueMin
-            : value;
+        const nonNormalizedValue = options?.denormalize ? value * (valueMax - valueMin) + valueMin : value;
         let interpolatedColor = localColorScale.getColorForValue(nonNormalizedValue);
 
         if (
