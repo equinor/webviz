@@ -22,11 +22,11 @@ export function makeColorMapFunctionFromColorScale(
     const localColorScale = colorScaleSpec.colorScale.clone();
 
     if (options && !colorScaleSpec.areBoundariesUserDefined) {
-        if (options.midPoint === undefined) {
-            localColorScale.setRange(options.valueMin, options.valueMax);
-        } else {
-            localColorScale.setRangeAndMidPoint(options.valueMin, options.valueMax, options.midPoint);
+        let midPoint = options.midPoint;
+        if (midPoint === undefined) {
+            midPoint = (options.valueMin + options.valueMax) / 2;
         }
+        localColorScale.setRangeAndMidPoint(options.valueMin, options.valueMax, midPoint);
     }
 
     const specialColor = options?.specialColor;
