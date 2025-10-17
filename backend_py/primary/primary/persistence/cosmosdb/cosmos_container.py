@@ -1,11 +1,15 @@
 import logging
-from typing import Any, Dict, Generic, List, Optional, Sequence, Type, TypeVar, NoReturn
+from types import TracebackType
+from typing import Any, Dict, Generic, List, Optional, Sequence, Type, TypeVar
 from azure.cosmos.aio import ContainerProxy
 from azure.cosmos import exceptions
 from pydantic import BaseModel, ValidationError
 
+from primary.services.service_exceptions import Service, ServiceRequestError
+
 from .cosmos_database import CosmosDatabase
 from .exceptions import (
+    DatabaseAccessError,
     DatabaseAccessNotFoundError,
     DatabaseAccessConflictError,
     DatabaseAccessPreconditionFailedError,
@@ -52,13 +56,15 @@ class CosmosContainer(Generic[T]):
         logger.debug("[CosmosContainer] Created for container '%s' in database '%s'", container_name, database_name)
         return cls(database_name, container_name, database, container, validation_model)
 
-    async def __aenter__(self):  # pylint: disable=C9001
+    async def __aenter__(self) -> "CosmosContainer[T]":  # pylint: disable=C9001
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):  # pylint: disable=C9001
+    async def __aexit__(
+        self, exc_type: type[BaseException], exc_val: BaseException, exc_tb: TracebackType
+    ) -> None:  # pylint: disable=C9001
         await self.close_async()
 
-    def _raise_exception(self, op: str, exc: exceptions.CosmosHttpResponseError) -> NoReturn:
+    def _make_exception(self, op: str, exc: exceptions.CosmosHttpResponseError) -> DatabaseAccessError:
         """Map Cosmos error to a data-access exception with rich context and re-raise."""
         headers = getattr(exc, "headers", {}) or {}
         status = getattr(exc, "status_code", None)
@@ -91,31 +97,21 @@ class CosmosContainer(Generic[T]):
         )
 
         if status == 404:
-            raise DatabaseAccessNotFoundError(
-                msg, status_code=status, sub_status=substatus, activity_id=activity_id
-            ) from exc
+            return DatabaseAccessNotFoundError(msg, status_code=status, sub_status=substatus, activity_id=activity_id)
         if status == 409:
-            raise DatabaseAccessConflictError(
-                msg, status_code=status, sub_status=substatus, activity_id=activity_id
-            ) from exc
+            return DatabaseAccessConflictError(msg, status_code=status, sub_status=substatus, activity_id=activity_id)
         if status == 412:
-            raise DatabaseAccessPreconditionFailedError(
+            return DatabaseAccessPreconditionFailedError(
                 msg, status_code=status, sub_status=substatus, activity_id=activity_id
-            ) from exc
+            )
         if status in (401, 403):
-            raise DatabaseAccessPermissionError(
-                msg, status_code=status, sub_status=substatus, activity_id=activity_id
-            ) from exc
+            return DatabaseAccessPermissionError(msg, status_code=status, sub_status=substatus, activity_id=activity_id)
         if status in (429, 503):
             # Typically retryable
-            raise DatabaseAccessThrottledError(
-                msg, status_code=status, sub_status=substatus, activity_id=activity_id
-            ) from exc
+            return DatabaseAccessThrottledError(msg, status_code=status, sub_status=substatus, activity_id=activity_id)
 
         # Fallback
-        raise DatabaseAccessTransportError(
-            msg, status_code=status, sub_status=substatus, activity_id=activity_id
-        ) from exc
+        return DatabaseAccessTransportError(msg, status_code=status, sub_status=substatus, activity_id=activity_id)
 
     async def query_items_async(self, query: str, parameters: Optional[List[Dict[str, object]]] = None) -> List[T]:
         try:
@@ -129,7 +125,7 @@ class CosmosContainer(Generic[T]):
             logger.error("[CosmosContainer] Validation error in '%s': %s", self._container_name, validation_error)
             raise
         except exceptions.CosmosHttpResponseError as error:
-            self._raise_exception("query_items_async", error)
+            raise self._make_exception("query_items_async", error)
 
     async def get_item_async(self, item_id: str, partition_key: str) -> T:
         try:
@@ -139,10 +135,11 @@ class CosmosContainer(Generic[T]):
             logger.error("[CosmosContainer] Validation error in '%s': %s", self._container_name, validation_error)
             raise
         except exceptions.CosmosHttpResponseError as error:
-            self._raise_exception("get_item_async", error)
+            raise self._make_exception("get_item_async", error) from error
 
     async def insert_item_async(self, item: T) -> str:
         try:
+            # mypy: ignore: Argument 1 to "model_validate" has incompatible type "T"; expected "BaseModel"
             item = self._validation_model.model_validate(item).model_dump(by_alias=True, mode="json")
             result = await self._container.upsert_item(item)
             return result["id"]
@@ -150,34 +147,34 @@ class CosmosContainer(Generic[T]):
             logger.error("[CosmosContainer] Validation error in '%s': %s", self._container_name, validation_error)
             raise
         except exceptions.CosmosHttpResponseError as error:
-            self._raise_exception("insert_item_async", error)
+            raise self._make_exception("insert_item_async", error) from error
 
-    async def delete_item_async(self, item_id: str, partition_key: str):
+    async def delete_item_async(self, item_id: str, partition_key: str) -> None:
         try:
             await self._container.delete_item(item=item_id, partition_key=partition_key)
             logger.debug("[CosmosContainer] Deleted item '%s' from '%s'", item_id, self._container_name)
         except exceptions.CosmosHttpResponseError as error:
-            self._raise_exception("delete_item_async", error)
+            raise self._make_exception("delete_item_async", error) from error
 
-    async def update_item_async(self, item_id: str, updated_item: T):
+    async def update_item_async(self, item_id: str, updated_item: T) -> None:
         try:
             validated = self._validation_model.model_validate(updated_item).model_dump(by_alias=True, mode="json")
             await self._container.upsert_item(validated)
             logger.debug("[CosmosContainer] Updated item '%s' in '%s'", item_id, self._container_name)
         except ValidationError as validation_error:
             logger.error("[CosmosContainer] Validation error in '%s': %s", self._container_name, validation_error)
-            raise
+            raise validation_error
         except exceptions.CosmosHttpResponseError as error:
-            self._raise_exception("update_item_async", error)
+            raise self._make_exception("update_item_async", error) from error
 
     async def patch_item_async(
         self,
         item_id: str,
         partition_key: str,
-        patch_operations: Sequence[Dict[str, object]],
+        patch_operations: list[dict],
         *,
         filter_predicate: str | None = None,
-    ):
+    ) -> None:
         try:
             await self._container.patch_item(
                 item=item_id,
@@ -188,12 +185,12 @@ class CosmosContainer(Generic[T]):
             )
             logger.debug("[CosmosContainer] Patched item '%s' in '%s'", item_id, self._container_name)
         except exceptions.CosmosHttpResponseError as error:
-            self._raise_exception("patch_item_async", error)
+            raise self._make_exception("patch_item_async", error) from error
 
     async def query_projection_async(
         self,
         query: str,
-        parameters: Optional[List[Dict[str, object]]] = None,
+        parameters: Optional[List[dict]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Run a query that returns raw dicts (no Pydantic validation), useful for
@@ -206,12 +203,10 @@ class CosmosContainer(Generic[T]):
             )
             return [item async for item in items_iterable]
         except exceptions.CosmosHttpResponseError as error:
-            self._raise_exception("query_items_async", error)
+            raise self._make_exception("query_items_async", error) from error
 
-    async def close_async(self):
+    async def close_async(self) -> None:
         """Close the container."""
         if self._database:
             logger.debug("[CosmosContainer] Closing container '%s/%s'", self._database_name, self._container_name)
             await self._database.close_async()
-            self._database = None
-        self._container = None

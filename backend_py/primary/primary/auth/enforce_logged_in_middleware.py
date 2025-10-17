@@ -48,7 +48,7 @@ class EnforceLoggedInMiddleware:
 
         # Look for root_path path as specified when initializing FastAPI
         # If there is one, strip it out before comparing paths
-        root_path = request.scope.get("root_path", "")
+        root_path = scope.get("root_path", "")
         if root_path:
             path_to_check = path_to_check.replace(root_path, "")
 
