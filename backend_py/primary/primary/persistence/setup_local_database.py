@@ -32,11 +32,11 @@ COSMOS_SCHEMA: List[Dict[str, Any]] = [
 def wait_for_emulator(uri: str, key: str, retries: int = 50, delay: int = 10) -> CosmosClient:
     probe_url = f"{uri.rstrip('/')}/_explorer/emulator.pem"
     # pylint: disable=protected-access
-    context = ssl._create_unverified_context()
+    context = ssl._create_unverified_context()  # nosec
 
     for attempt in range(retries):
         try:
-            with urllib.request.urlopen(probe_url, context=context) as response:
+            with urllib.request.urlopen(probe_url, context=context) as response:  # nosec
                 if response.status == 200:
                     LOGGER.info("✅ Emulator HTTPS endpoint is up. Proceeding to create CosmosClient.")
                     break
