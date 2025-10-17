@@ -39,7 +39,9 @@ DataProviderRegistry.registerDataProvider(DataProviderType.REALIZATION_SURFACE_3
 ]);
 DataProviderRegistry.registerDataProvider(DataProviderType.REALIZATION_POLYGONS, RealizationPolygonsProvider);
 DataProviderRegistry.registerDataProvider(DataProviderType.REALIZATION_SURFACE, RealizationSurfaceProvider);
-DataProviderRegistry.registerDataProvider(DataProviderType.STATISTICAL_SURFACE, StatisticalSurfaceProvider);
+DataProviderRegistry.registerDataProvider(DataProviderType.STATISTICAL_SURFACE, StatisticalSurfaceProvider, [
+    SurfaceDataFormat.FLOAT,
+]);
 DataProviderRegistry.registerDataProvider(
     DataProviderType.INTERSECTION_REALIZATION_GRID,
     IntersectionRealizationGridProvider,

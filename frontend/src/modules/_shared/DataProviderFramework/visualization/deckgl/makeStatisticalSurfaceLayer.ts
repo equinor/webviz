@@ -1,4 +1,4 @@
-import { ColormapLayer, Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { ColormapLayer, MapLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import type { SurfaceDef_api } from "@api";
 import { degreesToRadians } from "@lib/utils/geometry";
@@ -39,7 +39,7 @@ export function makeStatisticalSurfaceLayer({
     getSetting,
 }: TransformerArgs<StatisticalSurfaceSettings, StatisticalSurfaceData, StatisticalSurfaceStoredData>):
     | ColormapLayer
-    | Grid3DLayer
+    | MapLayer
     | null {
     const data = getData();
     const colorScaleSpec = getSetting(Setting.COLOR_SCALE);
@@ -49,18 +49,26 @@ export function makeStatisticalSurfaceLayer({
     }
 
     if (data.format === SurfaceDataFormat.FLOAT) {
-        return new Grid3DLayer({
+        return new MapLayer({
             id,
             name,
-            data: data.surfaceData.valuesFloat32Arr,
-            parameters: {
-                depthWriteEnabled: false,
+            meshData: data.surfaceData.valuesFloat32Arr,
+            frame: {
+                origin: [data.surfaceData.surface_def.origin_utm_x, data.surfaceData.surface_def.origin_utm_y],
+                count: [data.surfaceData.surface_def.npoints_x, data.surfaceData.surface_def.npoints_y],
+                increment: [data.surfaceData.surface_def.inc_x, data.surfaceData.surface_def.inc_y],
+                rotDeg: data.surfaceData.surface_def.rot_deg,
             },
+            valueRange: [data.surfaceData.value_min, data.surfaceData.value_max],
+            colorMapRange: [data.surfaceData.value_min, data.surfaceData.value_max],
             colorMapFunction: makeColorMapFunctionFromColorScale(colorScaleSpec, {
                 valueMin: data.surfaceData.value_min,
                 valueMax: data.surfaceData.value_max,
                 denormalize: true,
             }),
+            // contours: getSetting(Setting.CONTOURS)?.enabled,
+            isContoursDepth: true,
+            gridLines: false,
         });
     }
 

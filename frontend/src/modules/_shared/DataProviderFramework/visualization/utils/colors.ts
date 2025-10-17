@@ -29,12 +29,12 @@ export function makeColorMapFunctionFromColorScale(
         }
     }
 
-    const valueMin = localColorScale.getMin();
-    const valueMax = localColorScale.getMax();
     const specialColor = options?.specialColor;
 
     return (value: number) => {
-        const nonNormalizedValue = options?.denormalize ? value * (valueMax - valueMin) + valueMin : value;
+        const nonNormalizedValue = options?.denormalize
+            ? value * (options.valueMax - options.valueMin) + options.valueMin
+            : value;
         let interpolatedColor = localColorScale.getColorForValue(nonNormalizedValue);
 
         if (
