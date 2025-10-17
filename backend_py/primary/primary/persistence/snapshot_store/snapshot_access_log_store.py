@@ -75,7 +75,7 @@ class SnapshotAccessLogStore:
         try:
             snapshots = SnapshotStore.create(self._user_id)
 
-            snapshot_meta = await snapshots.get_snapshot_metadata_async(snapshot_id, snapshot_owner_id)
+            snapshot_meta = await snapshots.get_snapshot_metadata_async(snapshot_id)
 
             new_log = SnapshotAccessLogDocument(
                 visitor_id=self._user_id,

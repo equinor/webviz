@@ -2,7 +2,6 @@ from typing import Any, List
 from datetime import datetime, timezone
 from nanoid import generate
 
-from .documents import SessionDocument
 from primary.persistence._utils import hash_sha256, cast_query_params
 from primary.services.service_exceptions import Service, ServiceRequestError
 from primary.persistence.cosmosdb.cosmos_container import CosmosContainer
@@ -19,6 +18,8 @@ from primary.persistence.cosmosdb.exceptions import (
 )
 from primary.persistence.cosmosdb.error_converter import raise_service_error_from_database_access
 
+from .documents import SessionDocument
+
 # Util dict to handle case insensitive collation
 CASING_FIELD_LOOKUP: dict[SessionSortBy | None, SessionSortBy] = {SessionSortBy.TITLE_LOWER: SessionSortBy.TITLE}
 
@@ -28,7 +29,7 @@ Session Access handles CRUD operations for user sessions.
 """
 
 
-class SessionAccess:
+class SessionStore:
     CONTAINER_NAME = "sessions"
     DATABASE_NAME = "persistence"
 
@@ -36,7 +37,7 @@ class SessionAccess:
         self.user_id = user_id
         self.session_container = session_container
 
-    async def __aenter__(self) -> "SessionAccess":
+    async def __aenter__(self) -> "SessionStore":
         return self
 
     async def __aexit__(
@@ -45,9 +46,9 @@ class SessionAccess:
         await self.session_container.close_async()
 
     @classmethod
-    def create(cls, user_id: str) -> "SessionAccess":
-        session_container_access = CosmosContainer.create(cls.DATABASE_NAME, cls.CONTAINER_NAME, SessionDocument)
-        return cls(user_id=user_id, session_container_access=session_container_access)
+    def create(cls, user_id: str) -> "SessionStore":
+        session_container = CosmosContainer.create(cls.DATABASE_NAME, cls.CONTAINER_NAME, SessionDocument)
+        return cls(user_id=user_id, session_container=session_container)
 
     async def get_session_by_id_async(self, session_id: str) -> SessionDocument:
         try:
@@ -73,7 +74,7 @@ class SessionAccess:
         offset: int | None,
     ) -> List[SessionMetadataWithId]:
         try:
-            sort_by_lowercase = sort_by in CASING_FIELD_LOOKUP.keys()
+            sort_by_lowercase = sort_by in CASING_FIELD_LOOKUP
             sort_by = CASING_FIELD_LOOKUP.get(sort_by, sort_by)
 
             collation_options = QueryCollationOptions(
