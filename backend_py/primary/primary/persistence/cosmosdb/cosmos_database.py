@@ -1,4 +1,5 @@
 from types import TracebackType
+from typing import Optional, Type
 from azure.cosmos.aio import CosmosClient, ContainerProxy
 from azure.cosmos import exceptions
 
@@ -29,7 +30,7 @@ class CosmosDatabase:
         return self
 
     async def __aexit__(
-        self, exc_type: type[BaseException], exc_val: BaseException, exc_tb: TracebackType
+        self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
     ) -> None:  # pylint: disable=C9001
         await self.close_async()
 

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional, Type
 from datetime import datetime, timezone
 from nanoid import generate
 
@@ -42,7 +42,7 @@ class SnapshotStore:
         return self
 
     async def __aexit__(
-        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object | None
+        self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[object]
     ) -> None:
         await self.container.close_async()
 

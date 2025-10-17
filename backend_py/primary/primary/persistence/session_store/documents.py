@@ -3,7 +3,7 @@ from primary.persistence.session_store.types import SessionMetadata
 
 
 class SessionDocument(BaseModel):
-    id: str
+    id: str  # Partition key
     owner_id: str
     metadata: SessionMetadata
     content: str

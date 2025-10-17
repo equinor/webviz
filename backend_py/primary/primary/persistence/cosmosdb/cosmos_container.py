@@ -1,11 +1,9 @@
 import logging
 from types import TracebackType
-from typing import Any, Dict, Generic, List, Optional, Sequence, Type, TypeVar
+from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 from azure.cosmos.aio import ContainerProxy
 from azure.cosmos import exceptions
 from pydantic import BaseModel, ValidationError
-
-from primary.services.service_exceptions import Service, ServiceRequestError
 
 from .cosmos_database import CosmosDatabase
 from .exceptions import (
@@ -29,7 +27,6 @@ It allows for querying, inserting, updating, and deleting items in the container
 It uses a Pydantic model for item validation and serialization.
 
 It is designed to be used with asynchronous context management, ensuring proper resource cleanup.
-It raises ServiceRequestError for any issues encountered during operations, providing a clear error message.
 """
 
 
@@ -60,7 +57,7 @@ class CosmosContainer(Generic[T]):
         return self
 
     async def __aexit__(
-        self, exc_type: type[BaseException], exc_val: BaseException, exc_tb: TracebackType
+        self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
     ) -> None:  # pylint: disable=C9001
         await self.close_async()
 
@@ -139,9 +136,8 @@ class CosmosContainer(Generic[T]):
 
     async def insert_item_async(self, item: T) -> str:
         try:
-            # mypy: ignore: Argument 1 to "model_validate" has incompatible type "T"; expected "BaseModel"
-            item = self._validation_model.model_validate(item).model_dump(by_alias=True, mode="json")
-            result = await self._container.upsert_item(item)
+            body: Dict[str, Any] = self._validation_model.model_validate(item).model_dump(by_alias=True, mode="json")
+            result = await self._container.create_item(body)
             return result["id"]
         except ValidationError as validation_error:
             logger.error("[CosmosContainer] Validation error in '%s': %s", self._container_name, validation_error)
@@ -156,14 +152,19 @@ class CosmosContainer(Generic[T]):
         except exceptions.CosmosHttpResponseError as error:
             raise self._make_exception("delete_item_async", error) from error
 
-    async def update_item_async(self, item_id: str, updated_item: T) -> None:
+    async def update_item_async(self, item_id: str, partition_key: str, updated_item: T) -> None:
         try:
             validated = self._validation_model.model_validate(updated_item).model_dump(by_alias=True, mode="json")
-            await self._container.upsert_item(validated)
+
+            if validated.get("id") and validated["id"] != item_id:
+                raise ValueError(f"id mismatch: payload id {validated['id']} != path id {item_id}")
+
+            await self._container.replace_item(item=item_id, body=validated, partition_key=partition_key)
+
             logger.debug("[CosmosContainer] Updated item '%s' in '%s'", item_id, self._container_name)
         except ValidationError as validation_error:
             logger.error("[CosmosContainer] Validation error in '%s': %s", self._container_name, validation_error)
-            raise validation_error
+            raise
         except exceptions.CosmosHttpResponseError as error:
             raise self._make_exception("update_item_async", error) from error
 
@@ -203,7 +204,7 @@ class CosmosContainer(Generic[T]):
             )
             return [item async for item in items_iterable]
         except exceptions.CosmosHttpResponseError as error:
-            raise self._make_exception("query_items_async", error) from error
+            raise self._make_exception("query_projection_async", error) from error
 
     async def close_async(self) -> None:
         """Close the container."""

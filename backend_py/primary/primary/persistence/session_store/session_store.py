@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Optional, Type
 from datetime import datetime, timezone
 from nanoid import generate
 
@@ -41,7 +41,7 @@ class SessionStore:
         return self
 
     async def __aexit__(
-        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object | None
+        self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[object]
     ) -> None:
         await self.session_container.close_async()
 
@@ -154,7 +154,9 @@ class SessionStore:
 
             updated_session = existing.model_copy(update=document_update_dict)
 
-            await self.session_container.update_item_async(session_id, updated_session)
+            await self.session_container.update_item_async(
+                item_id=session_id, partition_key=self.user_id, updated_item=updated_session
+            )
 
             return updated_session
         except DatabaseAccessError as e:
