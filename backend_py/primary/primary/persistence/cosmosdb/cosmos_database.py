@@ -1,3 +1,4 @@
+from types import TracebackType
 from azure.cosmos.aio import CosmosClient, ContainerProxy
 from azure.cosmos import exceptions
 
@@ -24,31 +25,29 @@ class CosmosDatabase:
         self = cls(database_name, client)
         return self
 
-    async def __aenter__(self):  # pylint: disable=C9001
+    async def __aenter__(self) -> "CosmosDatabase":  # pylint: disable=C9001
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):  # pylint: disable=C9001
+    async def __aexit__(
+        self, exc_type: type[BaseException], exc_val: BaseException, exc_tb: TracebackType
+    ) -> None:  # pylint: disable=C9001
         await self.close_async()
 
-    def _raise_exception(self, message: str):
-        raise ServiceRequestError(f"CosmosDatabase ({self._database_name}): {message}", Service.DATABASE)
+    def _make_exception(self, message: str) -> ServiceRequestError:
+        return ServiceRequestError(f"CosmosDatabase ({self._database_name}): {message}", Service.DATABASE)
 
     def get_container(self, container_name: str) -> ContainerProxy:
         if not self._client or not self._database:
-            self._raise_exception("Database client is not initialized or already closed.")
+            raise self._make_exception("Database client is not initialized or already closed.")
         if not container_name or not isinstance(container_name, str):
-            self._raise_exception("Invalid container name.")
+            raise self._make_exception("Invalid container name.")
 
         try:
             container = self._database.get_container_client(container_name)
             return container
         except exceptions.CosmosHttpResponseError as error:
-            self._raise_exception(f"Unable to access container '{container_name}': {error.message}")
+            raise self._make_exception(f"Unable to access container '{container_name}': {error.message}") from error
 
-        return None  # unreachable; satisfies pylint R1710
-
-    async def close_async(self):
+    async def close_async(self) -> None:
         if self._client:
             await self._client.close()
-            self._client = None
-        self._database = None

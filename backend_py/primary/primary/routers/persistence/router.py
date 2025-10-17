@@ -7,7 +7,7 @@ from fastapi.responses import HTMLResponse
 
 from primary.persistence.session_store.session_store import SessionStore
 from primary.persistence.session_store.types import NewSession, SessionSortBy, SessionUpdate
-from primary.persistence.tasks import mark_logs_deleted_task
+from primary.persistence.tasks.mark_logs_deleted_task import mark_logs_deleted_task
 from primary.persistence.snapshot_store.snapshot_store import SnapshotStore
 from primary.persistence.snapshot_store.snapshot_access_log_store import SnapshotAccessLogStore
 from primary.persistence.cosmosdb.query_collation_options import QueryCollationOptions, SortDirection
@@ -204,10 +204,10 @@ async def delete_snapshot(
 
 
 @router.get("/snapshot_preview/{snapshot_id}", response_class=HTMLResponse)
-async def snapshot_preview(snapshot_id: str, request: Request):
-    access = await SnapshotStore.create("")
-    async with access:
-        metadata = await access.get_snapshot_metadata(snapshot_id)
+async def snapshot_preview(snapshot_id: str, request: Request) -> str:
+    snapshot_store = SnapshotStore.create("")
+    async with snapshot_store:
+        metadata = await snapshot_store.get_snapshot_metadata_async(snapshot_id)
         if not metadata:
             raise HTTPException(status_code=404, detail="Snapshot metadata not found")
 

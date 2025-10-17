@@ -1,5 +1,5 @@
-from primary.persistence.snapshot_store.types import Snapshot, SnapshotMetadata, SnapshotMetadataWithId
-from primary.persistence.snapshot_store.documents import SnapshotAccessLogDocument
+from primary.persistence.snapshot_store.types import SnapshotMetadata, SnapshotMetadataWithId
+from primary.persistence.snapshot_store.documents import SnapshotAccessLogDocument, SnapshotDocument
 from primary.persistence.session_store.documents import SessionDocument
 from primary.persistence.session_store.types import SessionMetadata, SessionMetadataWithId
 from . import schemas
@@ -60,7 +60,7 @@ def to_api_snapshot_metadata(metadata: SnapshotMetadata) -> schemas.SnapshotMeta
     )
 
 
-def to_api_snapshot(snapshot: Snapshot) -> schemas.Snapshot:
+def to_api_snapshot(snapshot: SnapshotDocument) -> schemas.Snapshot:
     return schemas.Snapshot(
         id=snapshot.id,
         metadata=to_api_snapshot_metadata(snapshot.metadata),

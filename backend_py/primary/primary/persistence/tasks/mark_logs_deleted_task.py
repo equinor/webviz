@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime, timezone
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Sequence
 
 from primary.persistence.cosmosdb.cosmos_container import CosmosContainer
 from primary.persistence.snapshot_store.documents import SnapshotAccessLogDocument
@@ -18,7 +18,7 @@ async def mark_logs_deleted_task(snapshot_id: str) -> None:
     Marks all access-log docs for the given snapshot_id as deleted (PATCH /snapshot_deleted = true).
     Runs with bounded concurrency and is idempotent/safe to re-run.
     """
-    container_access: CosmosContainer[SnapshotAccessLogDocument] = CosmosContainer.create(
+    container: CosmosContainer[SnapshotAccessLogDocument] = CosmosContainer.create(
         DATABASE_NAME, CONTAINER_NAME, SnapshotAccessLogDocument
     )
 
@@ -31,7 +31,7 @@ async def mark_logs_deleted_task(snapshot_id: str) -> None:
         )
         params = [{"name": "@sid", "value": snapshot_id}]
 
-        rows: List[Dict[str, Any]] = await container_access.query_projection_async(query, params)
+        rows: List[Dict[str, Any]] = await container.query_projection_async(query, params)
 
         if not rows:
             LOGGER.info("No snapshot_access_logs to update for snapshot '%s'.", snapshot_id)
@@ -39,7 +39,7 @@ async def mark_logs_deleted_task(snapshot_id: str) -> None:
 
         deleted_at = datetime.now(timezone.utc).isoformat()
 
-        operations = [
+        operations: List[dict] = [
             {"op": "set", "path": "/snapshot_deleted", "value": True},
             {"op": "set", "path": "/snapshot_deleted_at", "value": deleted_at},
         ]
@@ -50,7 +50,7 @@ async def mark_logs_deleted_task(snapshot_id: str) -> None:
         async def _patch_one(rec: Dict[str, Any]) -> bool:
             async with sem:
                 try:
-                    await container_access.patch_item_async(
+                    await container.patch_item_async(
                         item_id=rec["id"],
                         partition_key=rec["visitor_id"],  # /visitor_id is the PK
                         patch_operations=operations,
@@ -76,4 +76,4 @@ async def mark_logs_deleted_task(snapshot_id: str) -> None:
         )
 
     finally:
-        await container_access.close_async()
+        await container.close_async()
