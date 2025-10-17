@@ -73,7 +73,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     {props.showCloseCross && (
                         <div
                             className="hover:text-slate-500 cursor-pointer ml-4"
-                            onPointerDown={handleClose}
+                            onClick={handleClose}
                             title="Close dialog"
                         >
                             <Close width={24} />
