@@ -7,7 +7,7 @@ from typing import Any, cast
 # UTF-8 before hashing. The output is a hexadecimal string representation of the hash.
 #
 # It is important that this function returns the same hash as the JavaScript version
-def hash_json_string(json_string: str) -> str:
+def hash_sha256(json_string: str) -> str:
     data = json_string.encode("utf-8")  # Matches TextEncoder behavior
     hash_bytes = hashlib.sha256(data).digest()
     hash_hex = "".join(f"{b:02x}" for b in hash_bytes)

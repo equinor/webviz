@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 import logging
 from typing import Any, Dict, List
 
-from primary.services.database_access.container_access import ContainerAccess
-from primary.services.database_access.snapshot_access.models import SnapshotAccessLogDocument
+from primary.persistence.cosmosdb.cosmos_container import CosmosContainer
+from primary.persistence.snapshot_store.documents import SnapshotAccessLogDocument
 from primary.services.service_exceptions import ServiceRequestError
 
 LOGGER = logging.getLogger(__name__)
@@ -13,12 +13,12 @@ DATABASE_NAME = "persistence"
 CONTAINER_NAME = "snapshot_access_logs"
 
 
-async def mark_logs_deleted_worker(snapshot_id: str) -> None:
+async def mark_logs_deleted_task(snapshot_id: str) -> None:
     """
     Marks all access-log docs for the given snapshot_id as deleted (PATCH /snapshot_deleted = true).
     Runs with bounded concurrency and is idempotent/safe to re-run.
     """
-    container_access: ContainerAccess[SnapshotAccessLogDocument] = ContainerAccess.create(
+    container_access: CosmosContainer[SnapshotAccessLogDocument] = CosmosContainer.create(
         DATABASE_NAME, CONTAINER_NAME, SnapshotAccessLogDocument
     )
 

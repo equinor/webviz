@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from primary.services.database_access.session_access.types import SessionMetadata
+from primary.persistence.session_store.types import SessionMetadata
 
 
 class SessionDocument(BaseModel):

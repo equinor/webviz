@@ -2,34 +2,39 @@ from typing import Any, List
 from datetime import datetime, timezone
 from nanoid import generate
 
-from primary.services.database_access.session_access.model import SessionDocument
-from primary.services.database_access._utils import hash_json_string, cast_query_params
+from .documents import SessionDocument
+from primary.persistence._utils import hash_sha256, cast_query_params
 from primary.services.service_exceptions import Service, ServiceRequestError
-from primary.services.database_access.container_access import ContainerAccess
-from primary.services.database_access.query_collation_options import QueryCollationOptions, SortDirection
-from primary.services.database_access.session_access.types import (
+from primary.persistence.cosmosdb.cosmos_container import CosmosContainer
+from primary.persistence.cosmosdb.query_collation_options import QueryCollationOptions, SortDirection
+from primary.persistence.session_store.types import (
     NewSession,
     SessionMetadataWithId,
     SessionMetadata,
     SessionUpdate,
     SessionSortBy,
 )
-from primary.services.database_access.database_access_exceptions import (
+from primary.persistence.cosmosdb.exceptions import (
     DatabaseAccessError,
 )
-from primary.services.database_access.error_converter import raise_service_error_from_database_access
+from primary.persistence.cosmosdb.error_converter import raise_service_error_from_database_access
 
 # Util dict to handle case insensitive collation
 CASING_FIELD_LOOKUP: dict[SessionSortBy | None, SessionSortBy] = {SessionSortBy.TITLE_LOWER: SessionSortBy.TITLE}
+
+
+"""
+Session Access handles CRUD operations for user sessions.
+"""
 
 
 class SessionAccess:
     CONTAINER_NAME = "sessions"
     DATABASE_NAME = "persistence"
 
-    def __init__(self, user_id: str, session_container_access: ContainerAccess[SessionDocument]):
+    def __init__(self, user_id: str, session_container: CosmosContainer[SessionDocument]):
         self.user_id = user_id
-        self.session_container_access = session_container_access
+        self.session_container = session_container
 
     async def __aenter__(self) -> "SessionAccess":
         return self
@@ -37,18 +42,16 @@ class SessionAccess:
     async def __aexit__(
         self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object | None
     ) -> None:
-        await self.session_container_access.close_async()
+        await self.session_container.close_async()
 
     @classmethod
     def create(cls, user_id: str) -> "SessionAccess":
-        session_container_access = ContainerAccess.create(cls.DATABASE_NAME, cls.CONTAINER_NAME, SessionDocument)
+        session_container_access = CosmosContainer.create(cls.DATABASE_NAME, cls.CONTAINER_NAME, SessionDocument)
         return cls(user_id=user_id, session_container_access=session_container_access)
 
     async def get_session_by_id_async(self, session_id: str) -> SessionDocument:
         try:
-            document = await self.session_container_access.get_item_async(
-                item_id=session_id, partition_key=self.user_id
-            )
+            document = await self.session_container.get_item_async(item_id=session_id, partition_key=self.user_id)
             return document
         except DatabaseAccessError as e:
             raise_service_error_from_database_access(e)
@@ -57,7 +60,7 @@ class SessionAccess:
         try:
             query = "SELECT * FROM c WHERE c.owner_id = @owner_id"
             params = cast_query_params([{"name": "@owner_id", "value": self.user_id}])
-            items = await self.session_container_access.query_items_async(query=query, parameters=params)
+            items = await self.session_container.query_items_async(query=query, parameters=params)
             return [self._to_metadata_summary(item) for item in items]
         except DatabaseAccessError as e:
             raise_service_error_from_database_access(e)
@@ -88,7 +91,7 @@ class SessionAccess:
             if search_options:
                 query = f"{query} {search_options}"
 
-            items = await self.session_container_access.query_items_async(query=query, parameters=params)
+            items = await self.session_container.query_items_async(query=query, parameters=params)
 
             return [self._to_metadata_summary(item) for item in items]
         except DatabaseAccessError as e:
@@ -114,17 +117,17 @@ class SessionAccess:
                     created_at=now,
                     updated_at=now,
                     version=1,
-                    hash=hash_json_string(new_session.content),
+                    hash=hash_sha256(new_session.content),
                 ),
                 content=new_session.content,
             )
-            return await self.session_container_access.insert_item_async(session)
+            return await self.session_container.insert_item_async(session)
         except DatabaseAccessError as e:
             raise_service_error_from_database_access(e)
 
     async def delete_session_async(self, session_id: str) -> None:
         await self._assert_ownership_async(session_id)
-        await self.session_container_access.delete_item_async(session_id, partition_key=self.user_id)
+        await self.session_container.delete_item_async(session_id, partition_key=self.user_id)
 
     async def update_session_async(self, session_id: str, session_update: SessionUpdate) -> SessionDocument:
         try:
@@ -143,14 +146,14 @@ class SessionAccess:
             metadata_update_dict.update({"version": existing.metadata.version + 1})
 
             if session_update.content:
-                metadata_update_dict.update({"hash": hash_json_string(session_update.content)})
+                metadata_update_dict.update({"hash": hash_sha256(session_update.content)})
 
             updated_metadata = existing.metadata.model_copy(update=metadata_update_dict)
             document_update_dict.update({"metadata": updated_metadata})
 
             updated_session = existing.model_copy(update=document_update_dict)
 
-            await self.session_container_access.update_item_async(session_id, updated_session)
+            await self.session_container.update_item_async(session_id, updated_session)
 
             return updated_session
         except DatabaseAccessError as e:
@@ -158,7 +161,7 @@ class SessionAccess:
 
     async def _assert_ownership_async(self, session_id: str) -> SessionDocument:
         try:
-            session = await self.session_container_access.get_item_async(item_id=session_id, partition_key=self.user_id)
+            session = await self.session_container.get_item_async(item_id=session_id, partition_key=self.user_id)
         except DatabaseAccessError as e:
             raise_service_error_from_database_access(e)
 
