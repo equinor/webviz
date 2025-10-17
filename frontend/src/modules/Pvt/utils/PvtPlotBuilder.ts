@@ -328,7 +328,6 @@ export class PvtPlotBuilder {
                 title: {
                     text: legendTitle,
                 },
-                orientation: "v",
             },
         });
     }
