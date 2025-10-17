@@ -113,14 +113,14 @@ async def delete_session(session_id: str, user: AuthenticatedUser = Depends(Auth
         await access.delete_session_async(session_id)
 
 
-@router.get("/recent_snapshots", response_model=list[schemas.SnapshotStoreLog])
+@router.get("/recent_snapshots", response_model=list[schemas.SnapshotAccessLog])
 async def get_recent_snapshots(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     sort_by: Optional[SnapshotAccessLogSortBy] = Query(None, description="Sort the result by"),
     sort_direction: Optional[SortDirection] = Query(None, description="Sort direction: 'asc' or 'desc'"),
     limit: Optional[int] = Query(None, ge=1, le=100, description="Limit the number of results"),
     offset: Optional[int] = Query(None, ge=0, description="The offset of the results"),
-) -> list[schemas.SnapshotStoreLog]:
+) -> list[schemas.SnapshotAccessLog]:
     async with SnapshotAccessLogStore.create(user.get_user_id()) as log_access:
         collation_options = QueryCollationOptions(sort_by=sort_by, sort_dir=sort_direction, limit=limit, offset=offset)
 

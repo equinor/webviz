@@ -1,6 +1,6 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, ValidationInfo
-from pydantic import computed_field, field_validator
+from pydantic import BaseModel, ConfigDict
+from pydantic import computed_field
 
 
 from .types import SnapshotMetadata

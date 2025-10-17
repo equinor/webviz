@@ -1,8 +1,7 @@
-from typing import Optional, List
+from typing import List
 from datetime import datetime, timezone
 from nanoid import generate
 
-from .documents import SnapshotDocument
 from primary.persistence._utils import hash_sha256, cast_query_params
 from primary.services.service_exceptions import Service, ServiceRequestError
 from primary.persistence.cosmosdb.query_collation_options import QueryCollationOptions, SortDirection
@@ -10,6 +9,7 @@ from primary.persistence.cosmosdb.cosmos_container import CosmosContainer
 from primary.persistence.cosmosdb.exceptions import DatabaseAccessError, DatabaseAccessNotFoundError
 from primary.persistence.cosmosdb.error_converter import raise_service_error_from_database_access
 
+from .documents import SnapshotDocument
 from .types import (
     NewSnapshot,
     SnapshotMetadata,
