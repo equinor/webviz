@@ -118,6 +118,19 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             viewports: adjustedViewports,
             layout: props.views?.layout ?? [1, 1],
         },
+        lights: {
+            pointLights: [
+                {
+                    position: [0, 0, 1],
+                    intensity: 0.0,
+                },
+            ],
+            headLight: {
+                intensity: 1.0,
+                color: [255, 255, 255],
+            },
+            ambientLight: { intensity: 1.5, color: [255, 255, 255] },
+        },
         verticalScale: props.verticalScale,
         scale: {
             visible: true,
