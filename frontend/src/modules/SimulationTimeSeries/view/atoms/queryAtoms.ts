@@ -329,6 +329,7 @@ export const regularEnsembleHistoricalVectorDataQueriesAtom = atomWithQueries((g
                 isFetching: results.some((result) => result.isFetching),
                 isError: results.some((result) => result.isError),
                 vectorsWithHistoricalData,
+                errors: Array.from(new Set(results.filter((result) => result.isError).map((result) => result.error))),
             };
         },
     };
@@ -400,11 +401,11 @@ export const vectorObservationsQueriesAtom = atomWithQueries((get) => {
                     });
                 }
             });
-
             return {
                 isFetching: results.some((result) => result.isFetching),
                 isError: results.some((result) => result.isError),
                 ensembleVectorObservationDataMap: combinedResult,
+                errors: Array.from(new Set(results.filter((result) => result.isError).map((result) => result.error))),
             };
         },
     };
