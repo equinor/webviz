@@ -25,6 +25,7 @@ function ButtonComponent(props: ButtonProps, ref: React.ForwardedRef<HTMLDivElem
     const classNames = [
         "inline-flex",
         "items-center",
+        "gap-2",
         ...(props.size === "medium"
             ? ["px-2", "py-1"]
             : props.size === "small"
@@ -71,14 +72,6 @@ function ButtonComponent(props: ButtonProps, ref: React.ForwardedRef<HTMLDivElem
 
     classNames.push(props.className ?? "");
 
-    const adjustedChildren = (
-        <div className="flex items-center gap-2">
-            {startIcon}
-            {children}
-            {endIcon}
-        </div>
-    );
-
     return (
         <BaseComponent disabled={disabled} ref={ref}>
             <ButtonUnstyled
@@ -90,7 +83,9 @@ function ButtonComponent(props: ButtonProps, ref: React.ForwardedRef<HTMLDivElem
                     },
                 }}
             >
-                {adjustedChildren}
+                {startIcon}
+                {children}
+                {endIcon}
             </ButtonUnstyled>
         </BaseComponent>
     );

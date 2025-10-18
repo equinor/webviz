@@ -446,6 +446,7 @@ export type PolygonData_api = {
     y_arr: Array<number>;
     z_arr: Array<number>;
     poly_id: number | string;
+    name: string;
 };
 
 /**
