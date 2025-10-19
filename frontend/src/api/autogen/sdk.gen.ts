@@ -110,9 +110,12 @@ import type {
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionResponse_api,
     PostGetPolylineIntersectionError_api,
-    GetInfoOnRunningUserServiceHybridData_api,
-    GetInfoOnRunningUserServiceHybridResponse_api,
-    GetInfoOnRunningUserServiceHybridError_api,
+    GetKillServiceData_api,
+    GetKillServiceResponse_api,
+    GetKillServiceError_api,
+    GetStartServiceData_api,
+    GetStartServiceResponse_api,
+    GetStartServiceError_api,
     GetStatusOfUserServiceData_api,
     GetStatusOfUserServiceResponse_api,
     GetStatusOfUserServiceError_api,
@@ -830,18 +833,26 @@ export const postGetPolylineIntersection = <ThrowOnError extends boolean = false
 };
 
 /**
- * Get Info On Running User Service Hybrid
+ * Get Kill Service
  */
-export const getInfoOnRunningUserServiceHybrid = <ThrowOnError extends boolean = false>(
-    options: Options<GetInfoOnRunningUserServiceHybridData_api, ThrowOnError>,
+export const getKillService = <ThrowOnError extends boolean = false>(
+    options: Options<GetKillServiceData_api, ThrowOnError>,
 ) => {
-    return (options?.client ?? client).get<
-        GetInfoOnRunningUserServiceHybridResponse_api,
-        GetInfoOnRunningUserServiceHybridError_api,
-        ThrowOnError
-    >({
+    return (options?.client ?? client).get<GetKillServiceResponse_api, GetKillServiceError_api, ThrowOnError>({
         ...options,
-        url: "/grid3d/info_on_running_user_service_hybrid",
+        url: "/grid3d/kill_service",
+    });
+};
+
+/**
+ * Get Start Service
+ */
+export const getStartService = <ThrowOnError extends boolean = false>(
+    options: Options<GetStartServiceData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetStartServiceResponse_api, GetStartServiceError_api, ThrowOnError>({
+        ...options,
+        url: "/grid3d/start_service",
     });
 };
 

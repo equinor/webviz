@@ -102,6 +102,7 @@ class UserGrid3dService:
     async def create_async(cls, authenticated_user: AuthenticatedUser, case_uuid: str, component_instance_str: str | None) -> "UserGrid3dService":
         perf_metrics = PerfMetrics()
 
+        component_instance_str = component_instance_str or "DEFAULT"
         session_manager = UserSessionManager(authenticated_user.get_user_id(), authenticated_user.get_username())
         session_base_url = await session_manager.get_or_create_session_async(UserComponent.GRID3D_RI, component_instance_str)
         if session_base_url is None:

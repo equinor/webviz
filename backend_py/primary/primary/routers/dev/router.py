@@ -203,7 +203,7 @@ async def get_usersession_dirlist(
         job_component_name = _USER_SESSION_DEFS[user_component].job_component_name
 
     session_dir = UserSessionDirectory(authenticated_user.get_user_id())
-    session_info_arr = session_dir.get_session_info_arr(job_component_name)
+    session_info_arr = await session_dir.get_session_info_arr_async(job_component_name)
 
     LOGGER.debug("======================")
     for session_info in session_info_arr:
@@ -226,9 +226,9 @@ async def get_usersession_dirdel(
         job_component_name = _USER_SESSION_DEFS[user_component].job_component_name
 
     session_dir = UserSessionDirectory(authenticated_user.get_user_id())
-    session_dir.delete_session_info(job_component_name)
+    await session_dir.delete_session_info_async(job_component_name)
 
-    session_info_arr = session_dir.get_session_info_arr(None)
+    session_info_arr = await session_dir.get_session_info_arr_async(None)
     LOGGER.debug("======================")
     for session_info in session_info_arr:
         LOGGER.debug(f"{session_info=}")

@@ -41,7 +41,8 @@ import {
     getGridSurface,
     getGridParameter,
     postGetPolylineIntersection,
-    getInfoOnRunningUserServiceHybrid,
+    getKillService,
+    getStartService,
     getStatusOfUserService,
     getRealizationFlowNetwork,
     getTableData,
@@ -131,7 +132,8 @@ import type {
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionError_api,
     PostGetPolylineIntersectionResponse_api,
-    GetInfoOnRunningUserServiceHybridData_api,
+    GetKillServiceData_api,
+    GetStartServiceData_api,
     GetStatusOfUserServiceData_api,
     GetRealizationFlowNetworkData_api,
     GetTableDataData_api,
@@ -1013,14 +1015,14 @@ export const postGetPolylineIntersectionMutation = (options?: Partial<Options<Po
     return mutationOptions;
 };
 
-export const getInfoOnRunningUserServiceHybridQueryKey = (options: Options<GetInfoOnRunningUserServiceHybridData_api>) => [
-    createQueryKey("getInfoOnRunningUserServiceHybrid", options),
+export const getKillServiceQueryKey = (options: Options<GetKillServiceData_api>) => [
+    createQueryKey("getKillService", options),
 ];
 
-export const getInfoOnRunningUserServiceHybridOptions = (options: Options<GetInfoOnRunningUserServiceHybridData_api>) => {
+export const getKillServiceOptions = (options: Options<GetKillServiceData_api>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getInfoOnRunningUserServiceHybrid({
+            const { data } = await getKillService({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -1028,7 +1030,26 @@ export const getInfoOnRunningUserServiceHybridOptions = (options: Options<GetInf
             });
             return data;
         },
-        queryKey: getInfoOnRunningUserServiceHybridQueryKey(options),
+        queryKey: getKillServiceQueryKey(options),
+    });
+};
+
+export const getStartServiceQueryKey = (options: Options<GetStartServiceData_api>) => [
+    createQueryKey("getStartService", options),
+];
+
+export const getStartServiceOptions = (options: Options<GetStartServiceData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getStartService({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getStartServiceQueryKey(options),
     });
 };
 

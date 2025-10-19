@@ -24,9 +24,6 @@ import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { hashKey } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 
-import type { GetInfoOnRunningUserServiceHybridData_api } from "@api";
-import { getInfoOnRunningUserServiceHybrid, getInfoOnRunningUserServiceHybridQueryKey } from "@api";
-
 import { getStatusOfUserService, getStatusOfUserServiceOptions } from "@api";
 
 
@@ -166,7 +163,7 @@ export class RealizationGridProvider
             while (!signal.aborted) {
                 try {
                     // Can we pass abort signal to fetchQuery???
-                    const res = await fetchQuery(serviceStatusOptions);
+                    const res = await fetchQuery({...serviceStatusOptions, gcTime:0, staleTime:0});
 
                     console.log("monitor res:", res);
                     setProgressMessage(`Service: ${res}`);

@@ -114,7 +114,9 @@ async def get_grid_parameter(
     grid_name: Annotated[str, Query(description="Grid name")],
     parameter_name: Annotated[str, Query(description="Grid parameter")],
     realization_num: Annotated[int, Query(description="Realization")],
-    parameter_time_or_interval_str: Annotated[Optional[str], Query(description="Time point or time interval string")] = None,
+    parameter_time_or_interval_str: Annotated[
+        Optional[str], Query(description="Time point or time interval string")
+    ] = None,
     i_min: Annotated[int, Query(description="Min i index")] = 0,
     i_max: Annotated[int, Query(description="Max i index")] = -1,
     j_min: Annotated[int, Query(description="Min j index")] = 0,
@@ -165,7 +167,9 @@ async def post_get_polyline_intersection(
     grid_name: Annotated[str, Query(description="Grid name")],
     parameter_name: Annotated[str, Query(description="Grid parameter")],
     realization_num: Annotated[int, Query(description="Realization")],
-    parameter_time_or_interval_str: Annotated[Optional[str], Query(description="Time point or time interval string")] = None,
+    parameter_time_or_interval_str: Annotated[
+        Optional[str], Query(description="Time point or time interval string")
+    ] = None,
     polyline_utm_xy: list[float] = Body(embed=True),
 ) -> PolylineIntersection:
     perf_metrics = PerfMetrics()
@@ -188,60 +192,69 @@ async def post_get_polyline_intersection(
     return polyline_intersection
 
 
-
 import asyncio
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
-from primary.services.user_session_manager.user_session_manager import UserComponent, UserSessionManager, SessionRunState
-from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp
-
-
-@router.get("/info_on_running_user_service_hybrid")
-async def get_info_on_running_user_service_hybrid(
-    # fmt:off
-    response: Response,
-    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    instance_str: Annotated[str | None, Query(description="Component instance string")],
-    # fmt:on
-) -> LroSuccessResp[str] | LroInProgressResp | LroFailureResp:
-
-    LOGGER.debug(f"Entering info_on_running_user_service_hybrid endpoint")
-
-    session_manager = UserSessionManager(authenticated_user.get_user_id(), authenticated_user.get_username())
-    session_run_state: SessionRunState | None = await session_manager.get_session_status_async(UserComponent.GRID3D_RI, instance_str)
-
-    if session_run_state == SessionRunState.RUNNING:
-        return LroSuccessResp(status="success", result="RUNNING")
-    
-    return LroInProgressResp(
-        status="in_progress",
-        task_id="DummyTaskId",
-        progress_message=f"User service GRID3D_RI is in state {session_run_state.value if session_run_state else 'UNKNOWN'}",
-        poll_url=None
-    )
+from fastapi import APIRouter, Depends, HTTPException, Query, Body, status
+from primary.services.user_session_manager.user_session_manager import (
+    UserComponent,
+    UserSessionManager,
+    SessionRunState,
+)
+from primary.middleware.add_browser_cache import no_cache
 
 
 @router.get("/status_of_user_service")
+@no_cache
 async def get_status_of_user_service(
     # fmt:off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     instance_str: Annotated[str | None, Query(description="Component instance string")],
     # fmt:on
 ) -> str:
-
-    LOGGER.debug(f"Entering status_of_user_service endpoint")
-
+    instance_str = instance_str or "DEFAULT"
     session_manager = UserSessionManager(authenticated_user.get_user_id(), authenticated_user.get_username())
-    session_run_state: SessionRunState | None = await session_manager.get_session_status_async(UserComponent.GRID3D_RI, instance_str)
+    session_run_state = await session_manager.get_session_status_async(UserComponent.GRID3D_RI, instance_str)
 
     # Sleep for a while to simulate a long-running operation
     await asyncio.sleep(2)
 
     if session_run_state is None:
         return "NOT_RUNNING"
-    
+
     return session_run_state.value
 
 
+@router.get("/kill_service")
+@no_cache
+async def get_kill_service(
+    # fmt:off
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    instance_str: Annotated[str | None, Query(description="Component instance string")],
+    # fmt:on
+) -> str:
+
+    LOGGER.debug(f"Entering kill_service endpoint")
+
+    instance_str = instance_str or "DEFAULT"
+    session_manager = UserSessionManager(authenticated_user.get_user_id(), authenticated_user.get_username())
+    kill_ok = await session_manager.delete_session_async(UserComponent.GRID3D_RI, instance_str)
+
+    return "KILLED" if kill_ok else "NOT_KILLED"
+
+
+@router.get("/start_service")
+@no_cache
+async def get_start_service(
+    # fmt:off
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    instance_str: Annotated[str | None, Query(description="Component instance string")],
+    # fmt:on
+) -> str:
+
+    LOGGER.debug(f"Entering start_service endpoint")
+
+    session_manager = UserSessionManager(authenticated_user.get_user_id(), authenticated_user.get_username())
+
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Not implemented")
 
 
 def _hack_ensure_b64_property_array_is_float(
