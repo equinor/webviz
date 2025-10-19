@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 from enum import Enum
 
-import redis
+import redis.asyncio as redis
 
 from primary import config
 
@@ -55,13 +55,13 @@ class SessionInfoUpdater:
         self._job_component_name = job_component_name
         self._instance_str = instance_str
 
-    def delete_all_state(self) -> None:
+    async def delete_all_state_async(self) -> None:
         hash_name = self._make_hash_name()
-        self._redis_client.delete(hash_name)
+        await self._redis_client.delete(hash_name)
 
-    def set_state_creating(self) -> None:
+    async def set_state_creating_async(self) -> None:
         hash_name = self._make_hash_name()
-        self._redis_client.hset(
+        await self._redis_client.hset(
             name=hash_name,
             mapping={
                 "state": SessionRunState.CREATING_RADIX_JOB,
@@ -69,9 +69,9 @@ class SessionInfoUpdater:
             },
         )
 
-    def set_state_waiting(self, radix_job_name: str) -> None:
+    async def set_state_waiting_async(self, radix_job_name: str) -> None:
         hash_name = self._make_hash_name()
-        self._redis_client.hset(
+        await self._redis_client.hset(
             name=hash_name,
             mapping={
                 "state": SessionRunState.WAITING_TO_COME_ONLINE,
@@ -79,9 +79,9 @@ class SessionInfoUpdater:
             },
         )
 
-    def set_state_running(self) -> None:
+    async def set_state_running_async(self) -> None:
         hash_name = self._make_hash_name()
-        self._redis_client.hset(
+        await self._redis_client.hset(
             name=hash_name,
             mapping={
                 "state": SessionRunState.RUNNING,
@@ -108,10 +108,10 @@ class UserSessionDirectory:
         self._user_id = user_id
         self._redis_client = redis.Redis.from_url(config.REDIS_USER_SESSION_URL, decode_responses=True)
 
-    def get_session_info(self, job_component_name: str, instance_str: str) -> SessionInfo | None:
+    async def get_session_info_async(self, job_component_name: str, instance_str: str) -> SessionInfo | None:
         addr = JobAddress(user_id=self._user_id, job_component_name=job_component_name, instance_str=instance_str)
         hash_name = _encode_redis_hash_name_str(addr)
-        value_dict = self._redis_client.hgetall(name=hash_name)
+        value_dict = await self._redis_client.hgetall(name=hash_name)
         if not value_dict:
             return None
 
@@ -128,7 +128,7 @@ class UserSessionDirectory:
             radix_job_name=radix_job_name,
         )
 
-    def get_session_info_arr(self, job_component_name: str | None) -> list[SessionInfo]:
+    async def get_session_info_arr_async(self, job_component_name: str | None) -> list[SessionInfo]:
         if job_component_name is None:
             job_component_name = "*"
 
@@ -136,20 +136,23 @@ class UserSessionDirectory:
         LOGGER.debug(f"Redis scan pattern pattern {pattern=}")
 
         ret_list: list[SessionInfo] = []
-        for key in self._redis_client.scan_iter(pattern):
+        async for key in self._redis_client.scan_iter(pattern):
             LOGGER.debug(f"{key=}")
             job_address = _decode_redis_hash_name_str(key)
             if job_address.user_id != self._user_id:
                 raise ValueError(f"Unexpected key format, mismatch in user_id {key=}")
             matched_job_component_name = job_address.job_component_name
             matched_instance_str = job_address.instance_str
-            job_info = self.get_session_info(matched_job_component_name, matched_instance_str)
+            job_info = await self.get_session_info_async(matched_job_component_name, matched_instance_str)
             if job_info is not None:
                 ret_list.append(job_info)
 
         return ret_list
 
-    def delete_session_info(self, job_component_name: str | None) -> None:
+    # To delete!!!!!!!!!!!!!
+    # To delete!!!!!!!!!!!!!
+    # To delete!!!!!!!!!!!!!
+    async def delete_session_info_async(self, job_component_name: str | None) -> None:
         if job_component_name is None:
             job_component_name = "*"
 
@@ -157,16 +160,21 @@ class UserSessionDirectory:
         LOGGER.debug(f"Redis scan pattern pattern {pattern=}")
 
         key_list = []
-        for key in self._redis_client.scan_iter(pattern):
+        async for key in self._redis_client.scan_iter(pattern):
             LOGGER.debug(f"{key=}")
             key_list.append(key)
 
-        self._redis_client.delete(*key_list)
+        await self._redis_client.delete(*key_list)
 
     def make_lock_key(self, job_component_name: str, instance_str: str) -> str:
         addr = JobAddress(user_id=self._user_id, job_component_name=job_component_name, instance_str=instance_str)
         hash_name = _encode_redis_hash_name_str(addr)
         return f"{hash_name}:lock"
+
+    def make_abort_channel_name(self, job_component_name: str, instance_str: str) -> str:
+        addr = JobAddress(user_id=self._user_id, job_component_name=job_component_name, instance_str=instance_str)
+        hash_name = _encode_redis_hash_name_str(addr)
+        return f"{hash_name}:abort"
 
     def create_session_info_updater(self, job_component_name: str, instance_str: str) -> SessionInfoUpdater:
         return SessionInfoUpdater(

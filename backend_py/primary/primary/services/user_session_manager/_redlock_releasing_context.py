@@ -1,8 +1,9 @@
 import logging
 from contextlib import AbstractContextManager
+from contextlib import AbstractAsyncContextManager
 from types import TracebackType
 
-from pottery import Redlock
+from pottery import Redlock, AIORedlock
 
 LOGGER = logging.getLogger(__name__)
 
@@ -30,3 +31,22 @@ class RedlockReleasingContext(AbstractContextManager):
         #     self._acquired_lock.release()
         # except ReleaseUnlockedLock:
         #     pass
+
+
+
+class AsyncRedlockReleasingContext(AbstractAsyncContextManager[AIORedlock]):
+    def __init__(self, acquired_lock: AIORedlock) -> None:
+        self._acquired_lock: AIORedlock = acquired_lock
+
+    async def __aenter__(self) -> AIORedlock:
+        LOGGER.debug("AsyncRedlockReleasingContext.__aenter__()")
+        return self._acquired_lock
+
+    async def __aexit__(
+        self, _exc_type: type[BaseException] | None, _exc_value: BaseException | None, _traceback: TracebackType | None
+    ) -> bool | None:
+        LOGGER.debug("AsyncRedlockReleasingContext.__aexit__() - releasing lock")
+        await self._acquired_lock.release()
+
+        # Don't suppress exceptions
+        return False
