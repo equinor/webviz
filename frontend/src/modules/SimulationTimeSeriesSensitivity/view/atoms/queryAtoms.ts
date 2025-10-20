@@ -7,6 +7,7 @@ import {
     getStatisticalVectorDataPerSensitivityOptions,
 } from "@api";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
+import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import {
     resamplingFrequencyAtom,
@@ -14,7 +15,6 @@ import {
     showStatisticsAtom,
     vectorSpecificationAtom,
 } from "@modules/SimulationTimeSeriesSensitivity/view/atoms/baseAtoms";
-
 
 export const vectorDataQueryAtom = atomWithQuery((get) => {
     const vectorSpecification = get(vectorSpecificationAtom);
@@ -33,6 +33,7 @@ export const vectorDataQueryAtom = atomWithQuery((get) => {
             vector_name: vectorSpecification?.vectorName ?? "",
             resampling_frequency: resampleFrequency,
             realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+            ...makeCacheBustingQueryParam(vectorSpecification?.ensembleIdent ?? null),
         },
     });
     return { ...queryOptions, enabled: !!vectorSpecification };
@@ -59,6 +60,7 @@ export const statisticalVectorSensitivityDataQueryAtom = atomWithQuery((get) => 
             resampling_frequency: fallbackStatisticsResampleFrequency,
             statistic_functions: undefined,
             realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+            ...makeCacheBustingQueryParam(vectorSpecification?.ensembleIdent ?? null),
         },
     });
     return { ...queryOptions, enabled: !!(showStatistics && vectorSpecification) };
@@ -75,6 +77,7 @@ export const historicalVectorDataQueryAtom = atomWithQuery((get) => {
             ensemble_name: vectorSpecification?.ensembleIdent.getEnsembleName() ?? "",
             non_historical_vector_name: vectorSpecification?.vectorName ?? "",
             resampling_frequency: resampleFrequency,
+            ...makeCacheBustingQueryParam(vectorSpecification?.ensembleIdent ?? null),
         },
     });
 

@@ -1,9 +1,10 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import type { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api, EnsembleTimestamps_api } from "@api";
+import type { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api, } from "@api";
 import { SensitivityType_api, getEnsembleDetailsOptions, getParametersOptions, getSensitivitiesOptions } from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
-import { EnsembleTimestampsStore, type EnsembleTimestamps } from "@framework/EnsembleTimestampsStore";
+import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
+import { calcFnv1aHash } from "@lib/utils/hashUtils";
 
 import type { ContinuousParameter, DiscreteParameter, Parameter } from "../EnsembleParameters";
 import { ParameterType } from "../EnsembleParameters";
@@ -14,7 +15,7 @@ import { RegularEnsemble } from "../RegularEnsemble";
 import type { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
 import { tanstackDebugTimeOverride } from "./utils/debug";
-import { fetchLatestEnsembleTimestamps } from "./utils/fetchEnsembleTimestamps";
+import { fetchLatestEnsembleFingerprints } from "./utils/fetchEnsembleFingerprints";
 
 type EnsembleApiData = {
     ensembleDetails: EnsembleDetails_api;
@@ -29,7 +30,6 @@ export type UserEnsembleSetting = {
     ensembleIdent: RegularEnsembleIdent;
     customName: string | null;
     color: string;
-    timestamps?: EnsembleTimestamps_api;
 };
 
 export type UserDeltaEnsembleSetting = {
@@ -45,34 +45,47 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
     userDeltaEnsembleSettings: UserDeltaEnsembleSetting[],
 ): Promise<EnsembleSet> {
     // Get ensemble idents to load
-    const ensembleTimestampMap = new Map<string, EnsembleTimestamps>();
+    const ensembleFingerprintsMap = new Map<string, string>();
     const ensembleIdentsToLoad: RegularEnsembleIdent[] = [];
+    const uniqueIdentSet = new Set<string>();
 
     for (const ensembleSetting of userEnsembleSettings) {
         ensembleIdentsToLoad.push(ensembleSetting.ensembleIdent);
+        uniqueIdentSet.add(ensembleSetting.ensembleIdent.toString());
     }
 
     for (const deltaEnsembleSetting of userDeltaEnsembleSettings) {
-        if (!ensembleIdentsToLoad.includes(deltaEnsembleSetting.comparisonEnsembleIdent)) {
+        const comparisonIdentString = deltaEnsembleSetting.comparisonEnsembleIdent.toString();
+        if (!uniqueIdentSet.has(comparisonIdentString)) {
             ensembleIdentsToLoad.push(deltaEnsembleSetting.comparisonEnsembleIdent);
+            uniqueIdentSet.add(comparisonIdentString);
         }
-        if (!ensembleIdentsToLoad.includes(deltaEnsembleSetting.referenceEnsembleIdent)) {
+        const referenceIdentString = deltaEnsembleSetting.referenceEnsembleIdent.toString();
+        if (!uniqueIdentSet.has(referenceIdentString)) {
             ensembleIdentsToLoad.push(deltaEnsembleSetting.referenceEnsembleIdent);
+            uniqueIdentSet.add(referenceIdentString);
         }
     }
 
-    // Loading timestamps here in order to make use of caching in the browser
-    const timestamps = await fetchLatestEnsembleTimestamps(queryClient, ensembleIdentsToLoad);
-    for (const item of timestamps) {
-        ensembleTimestampMap.set(item.ensembleIdent.toString(), item.timestamps);
+    // Loading fingerprints here in order to make use of caching in the browser
+    const fingerprints = await fetchLatestEnsembleFingerprints(queryClient, ensembleIdentsToLoad);
+    for (const item of fingerprints) {
+        if (!item.fingerprint) {
+            console.warn(
+                "No fingerprint found for ensemble, will not use cache-busting:",
+                item.ensembleIdent.toString(),
+            );
+            continue;
+        }
+        ensembleFingerprintsMap.set(item.ensembleIdent.toString(), item.fingerprint);
     }
-    EnsembleTimestampsStore.setAll(ensembleTimestampMap);
+    EnsembleFingerprintStore.setAll(ensembleFingerprintsMap);
 
     // Fetch from back-end
     const ensembleApiDataMap = await loadEnsembleApiDataMapFromBackend(
         queryClient,
         ensembleIdentsToLoad,
-        ensembleTimestampMap,
+        ensembleFingerprintsMap,
     );
 
     // Create regular ensembles
@@ -185,7 +198,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
 async function loadEnsembleApiDataMapFromBackend(
     queryClient: QueryClient,
     ensembleIdents: RegularEnsembleIdent[],
-    ensembleTimestampMap: Map<string, EnsembleTimestamps>,
+    ensembleFingerprintsMap: Map<string, string>,
 ): Promise<EnsembleIdentStringToEnsembleApiDataMap> {
     console.debug("loadEnsembleIdentStringToApiDataMapFromBackend", ensembleIdents);
     const STALE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
@@ -198,12 +211,13 @@ async function loadEnsembleApiDataMapFromBackend(
     for (const ensembleIdent of ensembleIdents) {
         const caseUuid = ensembleIdent.getCaseUuid();
         const ensembleName = ensembleIdent.getEnsembleName();
-        const timestamps = ensembleTimestampMap.get(ensembleIdent.toString());
+        const fingerprint = ensembleFingerprintsMap.get(ensembleIdent.toString());
+
+        const fingerprintHash = fingerprint ? calcFnv1aHash(fingerprint) : undefined;
 
         const ensembleDetailsPromise = queryClient.fetchQuery({
             ...getEnsembleDetailsOptions({
-                // ! We've assumed that these data are only affected by the case timestamp
-                query: { t: timestamps?.caseUpdatedAtUtcMs ?? Date.now() },
+                query: { zCacheBust: fingerprintHash },
                 path: {
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
@@ -217,10 +231,9 @@ async function loadEnsembleApiDataMapFromBackend(
         const parametersPromise = queryClient.fetchQuery({
             ...getParametersOptions({
                 query: {
-                    // ? These are only affected by the "data" timestamp, right?
-                    t: timestamps?.dataUpdatedAtUtcMs ?? Date.now(),
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
+                    zCacheBust: fingerprintHash,
                 },
             }),
             gcTime: CACHE_TIME,
@@ -231,10 +244,9 @@ async function loadEnsembleApiDataMapFromBackend(
         const sensitivitiesPromise = queryClient.fetchQuery({
             ...getSensitivitiesOptions({
                 query: {
-                    // ! We've assumed that these data are only affected by the case timestamp
-                    t: timestamps?.dataUpdatedAtUtcMs ?? Date.now(),
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
+                    zCacheBust: fingerprintHash,
                 },
             }),
             gcTime: CACHE_TIME,
