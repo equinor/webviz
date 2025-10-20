@@ -77,7 +77,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         ensemblesWithoutParameter.push(...selectedDeltaEnsembles);
     }
 
-    useMakeViewStatusWriterMessages(viewContext, statusWriter, parameterDisplayName, ensemblesWithoutParameter);
+    useMakeViewStatusWriterMessages(statusWriter, parameterDisplayName, ensemblesWithoutParameter);
     usePublishToDataChannels(viewContext, subplotOwner, vectorHexColorMap);
 
     const handleClickInChart = React.useCallback(
