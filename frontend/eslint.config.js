@@ -43,7 +43,7 @@ export default eslintTypescript.config(
     // ! Make sure prettier is *after* other plugins, so it can override
     configPrettier,
 
-    { ignores: ["scripts/", "playwright/", "coverage/", "dist/"] },
+    { ignores: ["scripts/", "playwright/", "coverage/", "dist/", "src/api/"] },
 
     // Other configs  -------------------------------------------------------------------
     {
