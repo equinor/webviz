@@ -16,13 +16,13 @@ from .snapshot_store import SnapshotStore
 
 LOGGER = logging.getLogger(__name__)
 
-"""
-Snapshot Access Log Store handles logging of snapshot visits by users.
-It allows for creating, updating, and retrieving access logs for snapshots.
-"""
-
 
 class SnapshotAccessLogStore:
+    """
+    SnapshotAccessLogStore handles logging of snapshot visits by users.
+    It allows for creating, updating, and retrieving access logs for snapshots.
+    """
+
     DATABASE_NAME = "persistence"
     CONTAINER_NAME = "snapshot_access_logs"
 

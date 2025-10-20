@@ -1,9 +1,7 @@
-import html
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 
 from primary.persistence.session_store.session_store import SessionStore
 from primary.persistence.session_store.types import NewSession, SessionSortBy, SessionUpdate

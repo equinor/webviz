@@ -21,16 +21,16 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
 
-"""
-CosmosContainer provides access to a specific container in a Cosmos DB database.
-It allows for querying, inserting, updating, and deleting items in the container.
-It uses a Pydantic model for item validation and serialization.
-
-It is designed to be used with asynchronous context management, ensuring proper resource cleanup.
-"""
-
 
 class CosmosContainer(Generic[T]):
+    """
+    CosmosContainer provides access to a specific container in a Cosmos DB database.
+    It allows for querying, inserting, updating, and deleting items in the container.
+    It uses a Pydantic model for item validation and serialization.
+
+    It is designed to be used with asynchronous context management, ensuring proper resource cleanup.
+    """
+
     def __init__(
         self,
         database_name: str,
@@ -53,12 +53,12 @@ class CosmosContainer(Generic[T]):
         logger.debug("[CosmosContainer] Created for container '%s' in database '%s'", container_name, database_name)
         return cls(database_name, container_name, database, container, validation_model)
 
-    async def __aenter__(self) -> "CosmosContainer[T]":  # pylint: disable=C9001
+    async def __aenter__(self) -> "CosmosContainer[T]":
         return self
 
     async def __aexit__(
         self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
-    ) -> None:  # pylint: disable=C9001
+    ) -> None:
         await self.close_async()
 
     def _make_exception(self, op: str, exc: exceptions.CosmosHttpResponseError) -> DatabaseAccessError:

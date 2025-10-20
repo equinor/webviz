@@ -24,12 +24,11 @@ from .documents import SessionDocument
 CASING_FIELD_LOOKUP: dict[SessionSortBy | None, SessionSortBy] = {SessionSortBy.TITLE_LOWER: SessionSortBy.TITLE}
 
 
-"""
-Session Access handles CRUD operations for user sessions.
-"""
-
-
 class SessionStore:
+    """
+    SessionStore handles CRUD operations for user sessions.
+    """
+
     CONTAINER_NAME = "sessions"
     DATABASE_NAME = "persistence"
 

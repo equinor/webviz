@@ -21,12 +21,12 @@ from .types import (
 # Util dict to handle case insensitive collation
 CASING_FIELD_LOOKUP: dict[SnapshotSortBy | None, SnapshotSortBy] = {SnapshotSortBy.TITLE_LOWER: SnapshotSortBy.TITLE}
 
-"""
-Snapshot Store handles CRUD operations for snapshots.
-"""
-
 
 class SnapshotStore:
+    """
+    SnapshotStore handles CRUD operations for snapshots.
+    """
+
     CONTAINER_NAME = "snapshots"
     DATABASE_NAME = "persistence"
 

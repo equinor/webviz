@@ -8,6 +8,13 @@ from primary.services.service_exceptions import Service, ServiceRequestError
 
 
 class CosmosDatabase:
+    """
+    CosmosDatabase provides access to a Cosmos DB database.
+    It allows for getting container proxies within the database.
+
+    It is designed to be used with asynchronous context management, ensuring proper resource cleanup.
+    """
+
     def __init__(self, database_name: str, client: CosmosClient):
         self._database_name = database_name
         self._client = client
@@ -26,12 +33,12 @@ class CosmosDatabase:
         self = cls(database_name, client)
         return self
 
-    async def __aenter__(self) -> "CosmosDatabase":  # pylint: disable=C9001
+    async def __aenter__(self) -> "CosmosDatabase":
         return self
 
     async def __aexit__(
         self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
-    ) -> None:  # pylint: disable=C9001
+    ) -> None:
         await self.close_async()
 
     def _make_exception(self, message: str) -> ServiceRequestError:
