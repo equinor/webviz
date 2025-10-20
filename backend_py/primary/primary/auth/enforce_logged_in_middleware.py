@@ -45,13 +45,19 @@ class EnforceLoggedInMiddleware:
         perf_metrics = PerfMetrics()
 
         path_to_check = scope.get("path", "")
+
+        # Look for root_path path as specified when initializing FastAPI
+        # If there is one, strip it out before comparing paths
         root_path = scope.get("root_path", "")
         if root_path:
             path_to_check = path_to_check.replace(root_path, "")
 
         path_is_protected = True
-        if path_to_check in ["/login", "/auth-callback"] + self._unprotected_paths:
-            path_is_protected = False
+
+        for unprotected in ["/login", "/auth-callback"] + self._unprotected_paths:
+            if path_to_check.startswith(unprotected):
+                path_is_protected = False
+                break
 
         if path_is_protected:
             request = Request(scope, receive)

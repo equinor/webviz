@@ -201,3 +201,40 @@ async def delete_snapshot(
     # and consistency is not critical, we can afford to do this in the background and without
     # a safety net. We can later consider adding this to a queue for better reliability.
     background_tasks.add_task(mark_logs_deleted_task, snapshot_id=snapshot_id)
+
+
+@router.get("/snapshot_preview/{snapshot_id}", response_class=HTMLResponse)
+async def snapshot_preview(snapshot_id: str, request: Request) -> str:
+    snapshot_store = SnapshotStore.create("")
+    async with snapshot_store:
+        metadata = await snapshot_store.get_snapshot_metadata_async(snapshot_id)
+        if not metadata:
+            raise HTTPException(status_code=404, detail="Snapshot metadata not found")
+
+        base_url = get_external_base_url(request)
+        snapshot_url = f"{base_url}/snapshot/{snapshot_id}"
+
+        title = html.escape(metadata.title)
+        description = html.escape(metadata.description or "No description available")
+
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta charset="utf-8" />
+        <meta property="og:title" content="{title}" />
+        <meta property="og:description" content="{description}" />
+        <meta property="og:url" content="{snapshot_url}" />
+        <meta property="og:type" content="website" />
+        </head>
+        <body>
+        Redirecting… <script>window.location = "{snapshot_url}";</script>
+        </body>
+        </html>
+        """
+
+
+def get_external_base_url(request: Request) -> str:
+    forwarded_proto = request.headers.get("x-forwarded-proto", "http")
+    forwarded_host = request.headers.get("x-forwarded-host", request.headers.get("host", "localhost"))
+    return f"{forwarded_proto}://{forwarded_host}"

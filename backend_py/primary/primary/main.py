@@ -139,7 +139,7 @@ app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total-ex
 
 # Add out custom middleware to enforce that user is logged in
 # Also redirects to /login endpoint for some select paths
-unprotected_paths = ["/logout", "/logged_in_user", "/alive", "/openapi.json"]
+unprotected_paths = ["/logout", "/logged_in_user", "/alive", "/openapi.json", "/persistence/snapshot_preview"]
 paths_redirected_to_login = ["/", "/alive_protected"]
 
 app.add_middleware(
