@@ -14,7 +14,7 @@ import {
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
-import type { Module} from "@framework/Module";
+import type { Module } from "@framework/Module";
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
@@ -289,7 +289,7 @@ function makeDevStateIcon(devState: ModuleDevState): React.ReactNode {
 
 type DetailsPopupProps = {
     module: Module<any>;
-    left: number;
+    right: number;
     top: number;
     onClose: () => void;
 };
@@ -338,7 +338,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
         return tags;
     }
 
-    const style: React.CSSProperties = { left: props.left };
+    const style: React.CSSProperties = { right: props.right };
     if (props.top > window.innerHeight / 2) {
         style.bottom = window.innerHeight - props.top - convertRemToPixels(3);
     } else {
@@ -352,7 +352,9 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
             className="absolute bg-white border border-gray-300 shadow-lg p-4 z-50 w-96 text-sm flex gap-4"
             style={style}
         >
-            <div>{previewFunc && previewFunc(64, 64)}</div>
+            <svg width={64} height={64} viewBox={`0 0 ${64} ${64}`}>
+                {previewFunc?.(64, 64)}
+            </svg>
             <div className="grow">
                 <div className="flex items-center">
                     <span className="font-bold grow">{props.module.getDefaultTitle()}</span>
@@ -437,9 +439,9 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         .filter((mod) => devStates.includes(mod.getDevState()))
         .filter((mod) => mod.getDefaultTitle().toLowerCase().includes(searchQuery.toLowerCase()));
 
-    let left = 0;
+    let right = 0;
     if (boundingClientRect) {
-        left = boundingClientRect.left + boundingClientRect.width + 10;
+        right = window.innerWidth - boundingClientRect.left + 10;
     }
 
     const visible = drawerContent === RightDrawerContent.ModulesList;
@@ -521,7 +523,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                     <DetailsPopup
                         module={ModuleRegistry.getModule(showDetailsForModule)}
                         onClose={handleHideDetails}
-                        left={left}
+                        right={right}
                         top={detailsPosY}
                     />,
                 )}

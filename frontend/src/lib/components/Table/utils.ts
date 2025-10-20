@@ -12,6 +12,7 @@ import type {
     TableColumns,
     TableDataWithKey,
     LoadedDataWithKey,
+    TContext,
 } from "./types";
 
 export function isColumnGroupDef<TData extends Record<string, any>>(
@@ -41,13 +42,13 @@ function recursivelyCalcDepth<TData extends Record<string, any>>(
     return maxDepth;
 }
 
-export function defaultDataFilterPredicate<TData extends Record<string, any | null>, TKey extends keyof TData>(
+export function defaultDataFilterPredicate<TData extends Record<string, any>, TKey extends keyof TData>(
     filterValue: string,
     columnData: TData[TKey],
     dataDefinition: DataCellDef<TData, TKey>,
-    entry: TData,
+    context: TContext<TData>,
 ) {
-    const formattedData = dataDefinition.format?.(columnData, entry) ?? columnData ?? "";
+    const formattedData = dataDefinition.format?.(columnData, context) ?? columnData ?? "";
 
     const lowerValue = String(formattedData).toLowerCase();
     const filterString = filterValue.toLowerCase();
@@ -121,6 +122,7 @@ function doRecursivelyBuildTableCellDefinitions<TData extends Record<string, any
             dataCells.push({
                 columnId: tableColumn.columnId,
                 colGroupIndex: headerCells[0].length,
+                showTooltip: tableColumn.showTooltip,
                 format: tableColumn.formatValue,
                 filter: filterPredicate,
                 style: tableColumn.formatStyle,

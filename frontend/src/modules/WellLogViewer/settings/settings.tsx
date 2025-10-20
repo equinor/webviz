@@ -16,7 +16,7 @@ import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { InterfaceTypes } from "../interfaces";
 
@@ -86,7 +86,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
 
     // Error messages
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
-    const wellboreHeadersErrorStatus = usePropagateApiErrorToStatusWriter(wellboreHeaders, statusWriter) ?? "";
+    const wellboreHeadersErrorStatus = usePropagateQueryErrorToStatusWriter(wellboreHeaders, statusWriter) ?? "";
 
     React.useEffect(() => {
         providerManager?.updateGlobalSetting("fieldId", selectedField);

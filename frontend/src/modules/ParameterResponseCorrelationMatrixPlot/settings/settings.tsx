@@ -12,6 +12,7 @@ import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
+import { ParametersSelector } from "@modules/_shared/components/ParameterSelector";
 import { getContinuousAndNonConstantParameterIdentsInEnsembles } from "@modules/_shared/parameterUnions";
 
 import type { Interfaces } from "../interfaces";
@@ -24,7 +25,6 @@ import {
     showLabelsAtom,
     useFixedColorRangeAtom,
 } from "./atoms/baseAtoms";
-import { ParametersSelector } from "./components/parameterSelector";
 
 const plotTypesOptions = [
     {

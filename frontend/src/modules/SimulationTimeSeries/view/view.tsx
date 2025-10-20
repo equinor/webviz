@@ -77,7 +77,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         ensemblesWithoutParameter.push(...selectedDeltaEnsembles);
     }
 
-    useMakeViewStatusWriterMessages(viewContext, statusWriter, parameterDisplayName, ensemblesWithoutParameter);
+    useMakeViewStatusWriterMessages(statusWriter, parameterDisplayName, ensemblesWithoutParameter);
     usePublishToDataChannels(viewContext, subplotOwner, vectorHexColorMap);
 
     const handleClickInChart = React.useCallback(
@@ -116,7 +116,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     layout={plotBuilder.makePlotLayout()}
                 />
             ) : (
-                <ContentError>One or more queries have an error state.</ContentError>
+                <ContentError>One or more queries have an error state. See the log for details.</ContentError>
             )}
         </div>
     );

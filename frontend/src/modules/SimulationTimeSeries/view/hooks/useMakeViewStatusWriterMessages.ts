@@ -2,51 +2,69 @@ import { useAtomValue } from "jotai";
 
 import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import type { ViewContext } from "@framework/ModuleContext";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { ViewStatusWriter } from "@framework/StatusWriter";
-import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
+import {
+    usePropagateAllApiErrorsToStatusWriter,
+    usePropagateQueryErrorsToStatusWriter,
+} from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
-import { showObservationsAtom } from "../atoms/baseAtoms";
-import { queryIsFetchingAtom, realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "../atoms/derivedAtoms";
-import { vectorObservationsQueriesAtom, regularEnsembleHistoricalVectorDataQueriesAtom } from "../atoms/queryAtoms";
+import { showHistoricalAtom, showObservationsAtom, vectorSpecificationsAtom } from "../atoms/baseAtoms";
+import { queryIsFetchingAtom } from "../atoms/derivedAtoms";
+import {
+    vectorObservationsQueriesAtom,
+    regularEnsembleHistoricalVectorDataQueriesAtom,
+    vectorDataQueriesAtom,
+    vectorStatisticsQueriesAtom,
+} from "../atoms/queryAtoms";
 
 export function useMakeViewStatusWriterMessages(
-    viewContext: ViewContext<Interfaces>,
     statusWriter: ViewStatusWriter,
     parameterDisplayName: string | null,
     ensemblesWithoutParameter: (RegularEnsemble | DeltaEnsemble)[],
 ) {
+    const vectorSpecifications = useAtomValue(vectorSpecificationsAtom);
     const ensembleSet = useAtomValue(EnsembleSetAtom);
+    const showHistorical = useAtomValue(showHistoricalAtom);
     const showObservations = useAtomValue(showObservationsAtom);
-
+    const vectorRealizationsQueries = useAtomValue(vectorDataQueriesAtom);
+    const vectorStatisticsQueries = useAtomValue(vectorStatisticsQueriesAtom);
+    const vectorHistoricalQueries = useAtomValue(regularEnsembleHistoricalVectorDataQueriesAtom);
     const vectorObservationsQueries = useAtomValue(vectorObservationsQueriesAtom);
     const isQueryFetching = useAtomValue(queryIsFetchingAtom);
-    const hasHistoricalVectorQueryError = useAtomValue(regularEnsembleHistoricalVectorDataQueriesAtom).isError;
-    const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
-    const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
 
     statusWriter.setLoading(isQueryFetching);
-    if (hasRealizationsQueryError) {
-        statusWriter.addError("One or more realization data queries have an error state.");
-    }
-    if (hasStatisticsQueryError) {
-        statusWriter.addError("One or more statistics data queries have an error state.");
-    }
-    if (hasHistoricalVectorQueryError) {
-        statusWriter.addWarning("One or more historical data queries have an error state.");
-    }
-    if (vectorObservationsQueries.isError) {
-        statusWriter.addWarning("One or more vector observation queries have an error state.");
+
+    // Query errors
+    usePropagateQueryErrorsToStatusWriter(vectorRealizationsQueries, statusWriter);
+    usePropagateQueryErrorsToStatusWriter(vectorStatisticsQueries, statusWriter);
+    usePropagateAllApiErrorsToStatusWriter(vectorHistoricalQueries?.errors ?? [], statusWriter);
+    usePropagateAllApiErrorsToStatusWriter(vectorObservationsQueries?.errors ?? [], statusWriter);
+
+    // Warning for vectors without historical data (not query error, but history vector does not exist)
+    if (showHistorical) {
+        for (const vectorSpec of vectorSpecifications) {
+            if (!vectorSpec.hasHistoricalVector) {
+                const ensembleName =
+                    ensembleSet.findEnsemble(vectorSpec.ensembleIdent)?.getDisplayName() ??
+                    vectorSpec.ensembleIdent.toString();
+                statusWriter.addWarning(
+                    `Vector ${vectorSpec.vectorName} for \`${ensembleName}\` has no historical data.`,
+                );
+            }
+        }
     }
 
-    vectorObservationsQueries.ensembleVectorObservationDataMap.forEach((ensembleObservationData, ensembleIdent) => {
-        if (showObservations && !ensembleObservationData.hasSummaryObservations) {
-            const ensembleName = ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString();
-            statusWriter.addWarning(`${ensembleName} has no observations.`);
-            return;
+    // Warning for ensembles without observations
+    if (showObservations) {
+        for (const [ensembleIdent, observationData] of vectorObservationsQueries.ensembleVectorObservationDataMap) {
+            if (!observationData.hasSummaryObservations) {
+                const ensembleName =
+                    ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString();
+                statusWriter.addWarning(`\`${ensembleName}\` has no observations.`);
+            }
         }
-    });
+    }
 
     // Set warning for ensembles without selected parameter when coloring is enabled
     if (parameterDisplayName) {

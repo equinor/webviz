@@ -9,6 +9,7 @@ import { BaseComponent } from "../BaseComponent";
 
 export type InputProps = InputUnstyledProps & {
     wrapperStyle?: React.CSSProperties;
+    wrapperClassName?: string;
     min?: number;
     max?: number;
     step?: number;
@@ -21,6 +22,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
     const {
         startAdornment,
         endAdornment,
+        wrapperClassName,
         wrapperStyle,
         value: propsValue,
         onValueChange,
@@ -139,6 +141,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
             disabled={props.disabled}
             ref={ref}
             className={resolveClassNames(
+                wrapperClassName,
                 "flex",
                 "justify-center",
                 "gap-2",
