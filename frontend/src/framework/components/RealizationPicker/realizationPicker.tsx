@@ -1,7 +1,6 @@
 import React from "react";
 
 import { inRange, isEqual, range } from "lodash";
-import { v4 } from "uuid";
 
 import { missingNumbers } from "@framework/utils/numberUtils";
 import type { BaseComponentProps } from "@lib/components/BaseComponent";
@@ -9,16 +8,17 @@ import { BaseComponent } from "@lib/components/BaseComponent";
 import { TagInput } from "@lib/components/TagInput/tagInput";
 import { pluralize } from "@lib/utils/strings";
 
-import type { RealizationNumberLimits, Selection } from "./_utils";
+import type { RealizationNumberLimits } from "./_utils";
 import { realizationSelectionToText, sanitizeRangeInput, textToRealizationSelection } from "./_utils";
 import { RealizationRangeTag } from "./RealizationRangeTag";
-function getRangeOfSelection(selection: Selection): [start: number, end: number] {
-    const [start, possibleEnd] = selection.value.split("-");
+
+function getRangeOfSelection(selection: string): [start: number, end: number] {
+    const [start, possibleEnd] = selection.split("-");
 
     return [parseFloat(start), parseFloat(possibleEnd ?? start)];
 }
 
-function calcUniqueSelections(selections: readonly Selection[], limits: RealizationNumberLimits): number[] {
+function calcUniqueSelections(selections: readonly string[], limits: RealizationNumberLimits): number[] {
     const uniqueSelections = new Set<number>();
 
     selections.forEach((selection) => {
@@ -58,12 +58,10 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
 
     const [selectedRealizations, setSelectedRealizations] = React.useState<number[]>([]);
     const [currentInputValue, setCurrentInputValue] = React.useState<string>("");
-    const [selections, setSelections] = React.useState<Selection[]>(() => {
+
+    const [selections, setSelections] = React.useState<string[]>(() => {
         if (!props.initialRangeTags) return [];
-        return props.initialRangeTags.map((rangeTag) => ({
-            id: v4(),
-            value: rangeTag,
-        }));
+        return [...props.initialRangeTags];
     });
 
     const [prevSelectedRangeTags, setPrevSelectedRangeTags] = React.useState<string[]>(() => {
@@ -82,21 +80,10 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
 
     if (props.selectedRangeTags !== undefined && !isEqual(props.selectedRangeTags, prevSelectedRangeTags)) {
         setPrevSelectedRangeTags(props.selectedRangeTags ? [...props.selectedRangeTags] : []);
-
-        const existingValues = selections.map(({ value }) => value);
-
-        // We lose track of the selection ids once they're emitted. If we see values that match the current
-        // selection, we assume it's a local change, and don't regenerate the selection array
-        if (!isEqual(props.selectedRangeTags, existingValues)) {
-            const newSelections =
-                props.selectedRangeTags?.map((rangeTag) => {
-                    return { value: rangeTag, id: v4() };
-                }) ?? [];
-            setSelections(newSelections);
-        }
+        setSelections(props.selectedRangeTags ? [...props.selectedRangeTags] : []);
     }
 
-    function handleSelectionsChange(newSelections: Selection[]) {
+    function handleSelectionsChange(newSelections: string[]) {
         if (debounceTimeout.current) {
             clearTimeout(debounceTimeout.current);
         }
@@ -106,12 +93,12 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
         setSelectedRealizations(newUniqueSelections);
 
         debounceTimeout.current = setTimeout(() => {
-            if (props.onChange) {
-                props.onChange({
-                    selectedRealizations: newUniqueSelections,
-                    selectedRangeTags: newSelections.map((s) => s.value),
-                });
-            }
+            if (!props.onChange) return;
+
+            props.onChange({
+                selectedRealizations: newUniqueSelections,
+                selectedRangeTags: newSelections,
+            });
         }, props.debounceTimeMs || 0);
     }
 
@@ -130,7 +117,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
         }
     }
 
-    async function handleCopyTags(selectedTags: Selection[]) {
+    async function handleCopyTags(selectedTags: string[]) {
         const stringifiedSelections = realizationSelectionToText(selectedTags);
 
         if (stringifiedSelections) {
@@ -146,7 +133,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
         }
     }
 
-    function handleTagsChange(newTags: Selection[]) {
+    function handleTagsChange(newTags: string[]) {
         setSelections(newTags);
         handleSelectionsChange(newTags);
     }
@@ -164,13 +151,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
                     onPaste: handlePaste,
                 }}
                 renderTag={(tagProps) => {
-                    return (
-                        <RealizationRangeTag
-                            key={tagProps.tag.id}
-                            realizationNumberLimits={realizationNumberLimits}
-                            {...tagProps}
-                        />
-                    );
+                    return <RealizationRangeTag realizationNumberLimits={realizationNumberLimits} {...tagProps} />;
                 }}
             />
 

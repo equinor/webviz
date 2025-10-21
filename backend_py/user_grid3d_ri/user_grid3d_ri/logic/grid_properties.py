@@ -81,7 +81,7 @@ class GridPropertiesExtractor:
         if not self._is_discrete:
             ret_arr = np.nan_to_num(ret_arr, nan=0)
 
-        return ret_arr.astype(np.float32).tolist()
+        return ret_arr.astype(float).tolist()
 
     def get_min_global_val(self) -> float | int:
         return self._min_global_prop_val

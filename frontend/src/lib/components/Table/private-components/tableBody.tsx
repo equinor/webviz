@@ -59,7 +59,7 @@ export function TableBody<T extends Record<string, any>>(props: TableBodyProps<T
                     // Multi-select: Add the row
                     newSelection = [...previousSelection, entry._key];
                 } else if (previousSelection.length > 1) {
-                    // Single-select: Going from multi-select to single, we always select the clickedd row
+                    // Single-select: Going from multi-select to single, we always select the clicked row
                     newSelection = [entry._key];
                 } else {
                     // Single-select: Toggle select/unselect for a one item

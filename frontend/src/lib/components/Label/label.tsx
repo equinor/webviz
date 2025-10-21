@@ -14,6 +14,7 @@ export type LabelProps = {
     childrenWrapperClassName?: string;
     synced?: boolean;
     position?: "above" | "left" | "right";
+    endAdornment?: React.ReactNode;
 };
 
 export const Label: React.FC<LabelProps> = (props) => {
@@ -36,19 +37,21 @@ export const Label: React.FC<LabelProps> = (props) => {
                     "mb-1",
                     "text-gray-500",
                     "leading-tight",
+                    "gap-1",
                     props.labelClassName ?? "",
                 )}
                 htmlFor={props.children.props.id ?? id.current}
             >
                 {props.synced && (
                     <span
-                        className="bg-indigo-700 w-5 h-5 flex justify-center items-center rounded-sm mr-2"
+                        className="bg-indigo-700 w-5 h-5 flex justify-center items-center rounded-sm mr-1"
                         title={`"${props.text}" is synced on the current page`}
                     >
                         <Link fontSize="small" className="text-white" />
                     </span>
                 )}
                 {props.text}
+                {props.endAdornment}
             </label>
             <div
                 className={resolveClassNames(props.childrenWrapperClassName ?? "", {

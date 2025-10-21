@@ -8,6 +8,7 @@ import { isDevMode } from "@lib/utils/devMode";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import { ScopedQueryController } from "@lib/utils/ScopedQueryController";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import {
@@ -15,7 +16,6 @@ import {
     SettingsContextDelegateTopic,
     SettingsContextStatus,
 } from "../../delegates/SettingsContextDelegate";
-import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import type {
     CustomDataProviderImplementation,
     DataProviderInformationAccessors,
@@ -114,7 +114,8 @@ export class DataProvider<
     private _settingsContextDelegate: SettingsContextDelegate<TSettings, TSettingTypes, TStoredData, TSettingKey>;
     private _itemDelegate: ItemDelegate;
     private _dataProviderManager: DataProviderManager;
-    private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
+    private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
+        new UnsubscribeFunctionsManagerDelegate();
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<DataProviderPayloads<TData>>();
     private _status: DataProviderStatus = DataProviderStatus.IDLE;
     private _data: TData | null = null;
@@ -129,6 +130,7 @@ export class DataProvider<
     private _progressMessage: string | null = null;
     private _scopedQueryController: ScopedQueryController;
     private _debounceTimeout: ReturnType<typeof setTimeout> | null = null;
+    private _onFetchCancelOrFinishFn: () => void = () => {};
 
     constructor(params: DataProviderParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
         const {
@@ -155,7 +157,7 @@ export class DataProvider<
             dataProviderManager,
         );
 
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "settings-context",
             this._settingsContextDelegate
                 .getPublishSubscribeDelegate()
@@ -164,7 +166,7 @@ export class DataProvider<
             }),
         );
 
-        this._unsubscribeHandler.registerUnsubscribeFunction(
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             "settings-context",
             this._settingsContextDelegate
                 .getPublishSubscribeDelegate()
@@ -172,6 +174,10 @@ export class DataProvider<
                 this.handleSettingsStatusChange();
             }),
         );
+    }
+
+    getRevisionNumber(): number {
+        return this._revisionNumber;
     }
 
     areCurrentSettingsValid(): boolean {
@@ -190,7 +196,7 @@ export class DataProvider<
         return this._settingsErrorMessages;
     }
 
-    handleSettingsAndStoredDataChange(): void {
+    private handleSettingsAndStoredDataChange(): void {
         if (this._settingsContextDelegate.getStatus() === SettingsContextStatus.LOADING) {
             this.setStatus(DataProviderStatus.LOADING);
             return;
@@ -203,6 +209,8 @@ export class DataProvider<
         }
 
         let refetchRequired = false;
+
+        this.tidyUpFetchRelatedResources();
 
         if (this._customDataProviderImpl.doSettingsChangesRequireDataRefetch) {
             refetchRequired = this._customDataProviderImpl.doSettingsChangesRequireDataRefetch(
@@ -260,7 +268,7 @@ export class DataProvider<
         }, 10);
     }
 
-    handleSettingsStatusChange(): void {
+    private handleSettingsStatusChange(): void {
         const status = this._settingsContextDelegate.getStatus();
         if (status === SettingsContextStatus.INVALID_SETTINGS) {
             this._error = "Invalid settings";
@@ -378,7 +386,14 @@ export class DataProvider<
         };
     }
 
-    async maybeRefetchData(): Promise<void> {
+    private tidyUpFetchRelatedResources(): void {
+        // Cancel any resources related to the last ongoing fetch.
+        this._scopedQueryController.cancelActiveFetch();
+        this._onFetchCancelOrFinishFn();
+        this._onFetchCancelOrFinishFn = () => {};
+    }
+
+    private async maybeRefetchData(): Promise<void> {
         const thisTransactionId = this._currentTransactionId;
 
         const queryClient = this.getQueryClient();
@@ -393,11 +408,13 @@ export class DataProvider<
 
         const accessors = this.makeAccessors();
 
-        this._scopedQueryController.cancelActiveFetch();
-
         this.invalidateValueRange();
-        this.setStatus(DataProviderStatus.LOADING);
         this.setProgressMessage(null);
+        this.setStatus(DataProviderStatus.LOADING);
+
+        const onFetchCancelOrFinish = (fnc: () => void) => {
+            this._onFetchCancelOrFinishFn = fnc;
+        };
 
         try {
             this._data = await this._customDataProviderImpl.fetchData({
@@ -405,6 +422,7 @@ export class DataProvider<
                 fetchQuery: <TQueryFnData, TError = Error, TData = TQueryFnData, TQueryKey extends QueryKey = QueryKey>(
                     options: FetchQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
                 ) => this._scopedQueryController.fetchQuery<TQueryFnData, TError, TData, TQueryKey>(options),
+                onFetchCancelOrFinish,
                 setProgressMessage: (message) => this.setProgressMessage(message),
             });
 
@@ -429,9 +447,17 @@ export class DataProvider<
             if (apiError) {
                 this._error = apiError.makeStatusMessage();
             } else {
-                this._error = error.message;
+                if (typeof error === "string") {
+                    this._error = error;
+                } else if (error instanceof Error) {
+                    this._error = error.message;
+                }
             }
             this.setStatus(DataProviderStatus.ERROR);
+        } finally {
+            this._onFetchCancelOrFinishFn();
+            this._onFetchCancelOrFinishFn = () => {};
+            this.setProgressMessage(null);
         }
     }
 
@@ -452,7 +478,7 @@ export class DataProvider<
 
     beforeDestroy(): void {
         this._settingsContextDelegate.beforeDestroy();
-        this._unsubscribeHandler.unsubscribeAll();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
         this._scopedQueryController.cancelActiveFetch();
         if (this._debounceTimeout) {
             clearTimeout(this._debounceTimeout);

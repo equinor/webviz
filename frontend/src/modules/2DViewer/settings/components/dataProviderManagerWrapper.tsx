@@ -14,7 +14,7 @@ import {
 import { useAtom } from "jotai";
 
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
-import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { useColorSet, type WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { Menu } from "@lib/components/Menu";
 import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
@@ -22,12 +22,12 @@ import { MenuItem } from "@lib/components/MenuItem";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { ObservedSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/ObservedSurfaceProvider";
-import { RealizationSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/RealizationSurfaceProvider";
-import { StatisticalSurfaceProvider } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/StatisticalSurfaceProvider";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
 import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes";
+import { RealizationSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationSurfaceProvider";
+import { StatisticalSurfaceProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/StatisticalSurfaceProvider";
 import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
 import { DataProvider } from "@modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider";
@@ -52,7 +52,7 @@ export type LayerManagerComponentWrapperProps = {
 };
 
 export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperProps): React.ReactNode {
-    const colorSet = props.workbenchSettings.useColorSet();
+    const colorSet = useColorSet(props.workbenchSettings);
     const [preferredViewLayout, setPreferredViewLayout] = useAtom(preferredViewLayoutAtom);
 
     const groupDelegate = props.dataProviderManager.getGroupDelegate();
@@ -85,7 +85,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "statistical-surface":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
-                        CustomDataProviderType.STATISTICAL_SURFACE,
+                        DataProviderType.STATISTICAL_SURFACE,
                         props.dataProviderManager,
                     ),
                 );
@@ -93,7 +93,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "realization-surface":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
-                        CustomDataProviderType.REALIZATION_SURFACE,
+                        DataProviderType.REALIZATION_SURFACE,
                         props.dataProviderManager,
                     ),
                 );
@@ -101,7 +101,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "realization-polygons":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
-                        CustomDataProviderType.REALIZATION_POLYGONS,
+                        DataProviderType.REALIZATION_POLYGONS,
                         props.dataProviderManager,
                     ),
                 );
@@ -125,7 +125,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "realization-grid":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
-                        CustomDataProviderType.REALIZATION_GRID,
+                        CustomDataProviderType.REALIZATION_GRID_2D,
                         props.dataProviderManager,
                     ),
                 );
@@ -370,11 +370,6 @@ const ACTIONS: ActionGroup[] = [
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Date",
             },
-        ],
-    },
-    {
-        label: "Utilities",
-        children: [
             {
                 identifier: "color-scale",
                 icon: <Icon data={color_palette} fontSize="small" />,

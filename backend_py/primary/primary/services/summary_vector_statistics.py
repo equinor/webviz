@@ -1,9 +1,10 @@
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, cast
 
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 from pydantic import BaseModel
+
 
 from .utils.arrow_helpers import (
     create_float_downcasting_schema,
@@ -107,13 +108,15 @@ def compute_vector_statistics(
 
     unique_realizations: List[int] = []
     if "REAL" in summary_vector_table.column_names:
-        unique_realizations = summary_vector_table.column("REAL").unique().to_pylist()
+        # ! We assume the list never has None-values
+        unique_realizations = cast(list[int], summary_vector_table.column("REAL").unique().to_pylist())
 
     values_dict: Dict[StatisticFunction, List[float]] = {}
     column_names = statistics_table.column_names
     for stat_func in StatisticFunction:
         if stat_func.value in column_names:
-            values_dict[stat_func] = statistics_table.column(stat_func.value).to_pylist()
+            # ! We assume the list never has None-values
+            values_dict[stat_func] = cast(list[float], statistics_table.column(stat_func.value).to_pylist())
 
     ret_data = VectorStatistics(
         realizations=unique_realizations,
