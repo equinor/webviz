@@ -211,7 +211,7 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
             <div className="mt-4 gap-5 grid grid-cols-2">
                 <Dropdown value={value} options={options} onChange={setValue} />
 
-                <TagPicker tags={options} value={[]} />
+                <TagPicker tagOptions={options} selection={[]} />
 
                 <Select size={6} options={options} onChange={setValue} />
 
