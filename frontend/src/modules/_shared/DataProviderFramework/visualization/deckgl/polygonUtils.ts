@@ -1,4 +1,4 @@
-import { rgb, type Rgb } from "culori";
+import { type Rgb } from "culori";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 
 import type { PolygonData_api } from "@api";
