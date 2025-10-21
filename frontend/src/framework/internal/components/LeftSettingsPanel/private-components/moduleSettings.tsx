@@ -24,7 +24,7 @@ import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
 
 type ModuleSettingsProps = {
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     workbench: Workbench;
 };
 

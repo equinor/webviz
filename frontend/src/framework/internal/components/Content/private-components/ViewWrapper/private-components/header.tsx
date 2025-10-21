@@ -33,7 +33,7 @@ export type HeaderProps = {
     workbench: Workbench;
     isMaximized?: boolean;
     isMinimized?: boolean;
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     isDragged: boolean;
     onPointerDown?: (event: React.PointerEvent<HTMLDivElement>) => void;
     onReceiversClick?: (event: React.PointerEvent<HTMLButtonElement>) => void;
@@ -232,7 +232,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
 type StatusIndicatorProps = {
     workbench: Workbench;
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     isMinimized?: boolean;
 };
 

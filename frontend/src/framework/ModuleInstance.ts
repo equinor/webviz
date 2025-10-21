@@ -1,6 +1,8 @@
 import type { ErrorInfo } from "react";
 import React from "react";
 
+import type { JTDDataType } from "ajv/dist/core";
+import { Ajv } from "ajv/dist/jtd";
 import type { Atom } from "jotai";
 import { atom } from "jotai";
 import { atomEffect } from "jotai-effect";
@@ -9,11 +11,21 @@ import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannel
 import type { InitialSettings } from "./InitialSettings";
 import { ChannelManager } from "./internal/DataChannels/ChannelManager";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
-import type { ImportStatus, Module, ModuleInterfaceTypes, ModuleSettings, ModuleView } from "./Module";
+import type {
+    ImportStatus,
+    Module,
+    ModuleInterfaceTypes,
+    ModuleSettings,
+    ModuleStateBaseSchema,
+    ModuleView,
+    SerializedModuleState,
+} from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import { UniDirectionalModuleComponentsInterface } from "./UniDirectionalModuleComponentsInterface";
+
+const ajv = new Ajv();
 
 export enum ModuleInstanceLifeCycleState {
     INITIALIZING,
@@ -27,6 +39,7 @@ export enum ModuleInstanceTopic {
     SYNCED_SETTINGS = "synced-settings",
     LIFECYCLE_STATE = "state",
     IMPORT_STATUS = "import-status",
+    SERIALIZED_STATE = "serialized-state",
 }
 
 export type ModuleInstanceTopicValueTypes = {
@@ -34,14 +47,23 @@ export type ModuleInstanceTopicValueTypes = {
     [ModuleInstanceTopic.SYNCED_SETTINGS]: SyncSettingKey[];
     [ModuleInstanceTopic.LIFECYCLE_STATE]: ModuleInstanceLifeCycleState;
     [ModuleInstanceTopic.IMPORT_STATUS]: ImportStatus;
+    [ModuleInstanceTopic.SERIALIZED_STATE]: ModuleStateBaseSchema;
 };
 
-export interface ModuleInstanceOptions<TInterfaceTypes extends ModuleInterfaceTypes> {
-    module: Module<TInterfaceTypes>;
+export interface ModuleInstanceOptions<
+    TInterfaceTypes extends ModuleInterfaceTypes,
+    TSerializedStateSchema extends ModuleStateBaseSchema,
+> {
+    module: Module<TInterfaceTypes, TSerializedStateSchema>;
     id: string;
     channelDefinitions: ChannelDefinition[] | null;
     channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
 }
+
+type StringifiedSerializedModuleState = {
+    settings?: string;
+    view?: string;
+};
 
 export type ModuleInstanceFullState = {
     id: string;
@@ -53,16 +75,20 @@ export type ModuleInstanceFullState = {
         contentIdStrings: string[];
     }[];
     syncedSettingKeys: SyncSettingKey[];
+    serializedState: StringifiedSerializedModuleState | null;
 };
 
-export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
+export class ModuleInstance<
+    TInterfaceTypes extends ModuleInterfaceTypes,
+    TSerializedStateSchema extends ModuleStateBaseSchema,
+> {
     private _id: string;
     private _title: string;
     private _initialized: boolean = false;
     private _moduleInstanceState: ModuleInstanceLifeCycleState = ModuleInstanceLifeCycleState.INITIALIZING;
     private _fatalError: { err: Error; errInfo: ErrorInfo } | null = null;
     private _syncedSettingKeys: SyncSettingKey[] = [];
-    private _module: Module<TInterfaceTypes>;
+    private _module: Module<TInterfaceTypes, TSerializedStateSchema>;
     private _context: ModuleContext<TInterfaceTypes> | null = null;
     private _subscribers: Map<keyof ModuleInstanceTopicValueTypes, Set<() => void>> = new Map();
     private _initialSettings: InitialSettings | null = null;
@@ -76,8 +102,9 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     > | null = null;
     private _settingsToViewInterfaceEffectsAtom: Atom<void> | null = null;
     private _viewToSettingsInterfaceEffectsAtom: Atom<void> | null = null;
+    private _serializedState: SerializedModuleState<TSerializedStateSchema> | null = null;
 
-    constructor(options: ModuleInstanceOptions<TInterfaceTypes>) {
+    constructor(options: ModuleInstanceOptions<TInterfaceTypes, TSerializedStateSchema>) {
         this._id = options.id;
         this._title = options.module.getDefaultTitle();
         this._module = options.module;
@@ -98,11 +125,61 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
         }
     }
 
+    setSerializedState(serializedState: SerializedModuleState<TSerializedStateSchema>): void {
+        this._serializedState = serializedState;
+    }
+
+    getSerializedState(): SerializedModuleState<TSerializedStateSchema> | null {
+        return this._serializedState;
+    }
+
+    deserializeSerializedState(raw: StringifiedSerializedModuleState): void {
+        const schema = this._module.getSerializedStateSchema();
+        if (!schema) {
+            return; // No schema defined, cannot deserialize
+        }
+
+        let parsedSettings: unknown;
+        let parsedView: unknown;
+        try {
+            parsedSettings = raw.settings ? JSON.parse(raw.settings) : undefined;
+            parsedView = raw.view ? JSON.parse(raw.view) : undefined;
+        } catch (e) {
+            console.warn(`Invalid JSON in module state for ${this._module.getName()}:`, e);
+            this._serializedState = null;
+            return;
+        }
+
+        const validateSettings = ajv.compile(schema.settings);
+        const validateView = ajv.compile(schema.view);
+
+        const isSettingsValid = parsedSettings === undefined || validateSettings(parsedSettings);
+        const isViewValid = parsedView === undefined || validateView(parsedView);
+
+        if (!isSettingsValid || !isViewValid) {
+            console.warn(`Validation failed for ${this._module.getName()}`, {
+                settingsErrors: validateSettings.errors,
+                viewErrors: validateView.errors,
+            });
+            this._serializedState = null;
+            return;
+        }
+
+        this._serializedState = {
+            settings: parsedSettings as JTDDataType<TSerializedStateSchema["settings"]>,
+            view: parsedView as JTDDataType<TSerializedStateSchema["view"]>,
+        };
+    }
+
     setFullState(fullState: ModuleInstanceFullState): void {
         this._syncedSettingKeys = fullState.syncedSettingKeys;
 
         this._id = fullState.id;
         this._title = fullState.name;
+
+        if (fullState.serializedState) {
+            this.deserializeSerializedState(fullState.serializedState);
+        }
     }
 
     getFullState(): ModuleInstanceFullState {
@@ -119,7 +196,27 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
                     contentIdStrings: receiver.getContentIdStrings(),
                 })),
             syncedSettingKeys: this._syncedSettingKeys,
+            serializedState: {
+                settings: JSON.stringify(this._serializedState?.settings ?? ""),
+                view: JSON.stringify(this._serializedState?.view ?? ""),
+            },
         };
+    }
+
+    serializeSettingsState(state: JTDDataType<TSerializedStateSchema["settings"]>): void {
+        this._serializedState = {
+            ...(this._serializedState ?? ({} as SerializedModuleState<TSerializedStateSchema>)),
+            settings: state,
+        };
+        this.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE);
+    }
+
+    serializeViewState(state: JTDDataType<TSerializedStateSchema["view"]>): void {
+        this._serializedState = {
+            ...(this._serializedState ?? ({} as SerializedModuleState<TSerializedStateSchema>)),
+            view: state,
+        };
+        this.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE);
     }
 
     getUniDirectionalSettingsToViewInterface(): UniDirectionalModuleComponentsInterface<
@@ -333,7 +430,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
         return snapshotGetter;
     }
 
-    getModule(): Module<TInterfaceTypes> {
+    getModule(): Module<TInterfaceTypes, TSerializedStateSchema> {
         return this._module;
     }
 
@@ -400,7 +497,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
 }
 
 export function useModuleInstanceTopicValue<T extends ModuleInstanceTopic>(
-    moduleInstance: ModuleInstance<any>,
+    moduleInstance: ModuleInstance<any, any>,
     topic: T,
 ): ModuleInstanceTopicValueTypes[T] {
     const value = React.useSyncExternalStore<ModuleInstanceTopicValueTypes[T]>(

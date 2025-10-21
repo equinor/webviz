@@ -50,6 +50,13 @@ const moduleInstanceSchema: JTDSchemaType<ModuleInstanceStateAndLayoutInfo> = {
     properties: {
         id: { type: "string" },
         name: { type: "string" },
+        serializedState: {
+            optionalProperties: {
+                view: { type: "string" },
+                settings: { type: "string" },
+            },
+            nullable: true,
+        },
         syncedSettingKeys: {
             elements: {
                 enum: Object.values(SyncSettingKey),
@@ -93,7 +100,7 @@ export enum DashboardTopic {
 
 export type DashboardTopicPayloads = {
     [DashboardTopic.Layout]: LayoutElement[];
-    [DashboardTopic.ModuleInstances]: ModuleInstance<any>[];
+    [DashboardTopic.ModuleInstances]: ModuleInstance<any, any>[];
     [DashboardTopic.ActiveModuleInstanceId]: string | null;
 };
 
@@ -104,7 +111,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     private _name: string;
     private _description?: string;
     private _layout: LayoutElement[] = [];
-    private _moduleInstances: ModuleInstance<any>[] = [];
+    private _moduleInstances: ModuleInstance<any, any>[] = [];
     private _activeModuleInstanceId: string | null = null;
     private _atomStoreMaster: AtomStoreMaster;
 
@@ -204,7 +211,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
     }
 
-    getModuleInstances(): ModuleInstance<any>[] {
+    getModuleInstances(): ModuleInstance<any, any>[] {
         return this._moduleInstances;
     }
 
@@ -284,13 +291,13 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.Layout);
     }
 
-    registerModuleInstance(moduleInstance: ModuleInstance<any>): void {
+    registerModuleInstance(moduleInstance: ModuleInstance<any, any>): void {
         this._moduleInstances = [...this._moduleInstances, moduleInstance];
         this._atomStoreMaster.makeAtomStoreForModuleInstance(moduleInstance.getId());
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
     }
 
-    makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
+    makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any, any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
@@ -330,7 +337,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.ModuleInstances);
     }
 
-    getModuleInstance(id: string): ModuleInstance<any> | undefined {
+    getModuleInstance(id: string): ModuleInstance<any, any> | undefined {
         return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
     }
 

@@ -10,6 +10,7 @@ import type {
     SerializedEnsembleSet,
     SerializedRegularEnsemble,
     WorkbenchSessionContent,
+    WorkbenchSessionMetadata,
 } from "./PrivateWorkbenchSession";
 import type { SerializedWorkbenchSession } from "./utils/serialization";
 
@@ -41,6 +42,19 @@ export const ensembleSetSchema: JTDSchemaType<SerializedEnsembleSet> = {
     },
 } as const;
 
+export const workbenchSessionMetadataSchema: JTDSchemaType<WorkbenchSessionMetadata> = {
+    properties: {
+        title: { type: "string" },
+        createdAt: { type: "float64" },
+        updatedAt: { type: "float64" },
+        lastModifiedMs: { type: "float64" },
+    },
+    optionalProperties: {
+        description: { type: "string" },
+        hash: { type: "string" },
+    },
+} as const;
+
 export const workbenchSessionContentSchema: JTDSchemaType<WorkbenchSessionContent> = {
     properties: {
         activeDashboardId: { type: "string", nullable: true },
@@ -55,6 +69,7 @@ export const workbenchSessionContentSchema: JTDSchemaType<WorkbenchSessionConten
 
 export const workbenchSessionSchema: JTDSchemaType<SerializedWorkbenchSession> = {
     properties: {
+        metadata: workbenchSessionMetadataSchema,
         content: workbenchSessionContentSchema,
     },
 } as const;

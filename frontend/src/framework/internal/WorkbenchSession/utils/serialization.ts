@@ -1,16 +1,24 @@
 import { Ajv } from "ajv/dist/jtd";
 
-import type { PrivateWorkbenchSession, WorkbenchSessionContent } from "../PrivateWorkbenchSession";
-import { workbenchSessionSchema } from "../workbenchSession.jtd";
+import type { SessionDocument_api, Snapshot_api } from "@api";
+
+import type {
+    PrivateWorkbenchSession,
+    WorkbenchSessionContent,
+    WorkbenchSessionMetadata,
+} from "../PrivateWorkbenchSession";
+import { workbenchSessionContentSchema, workbenchSessionSchema } from "../workbenchSession.jtd";
 
 import { objectToJsonString } from "./hash";
 import { sessionIdFromLocalStorageKey } from "./localStorageHelpers";
 import { WorkbenchSessionSource, type WorkbenchSessionDataContainer } from "./WorkbenchSessionDataContainer";
 
 export type SerializedWorkbenchSession = {
+    metadata: WorkbenchSessionMetadata;
     content: WorkbenchSessionContent;
 };
 const ajv = new Ajv();
+const validateContent = ajv.compile(workbenchSessionContentSchema);
 const validateFull = ajv.compile(workbenchSessionSchema);
 
 export function deserializeFromLocalStorage(key: string): WorkbenchSessionDataContainer | null {
@@ -24,12 +32,61 @@ export function deserializeFromLocalStorage(key: string): WorkbenchSessionDataCo
     }
 
     const session: WorkbenchSessionDataContainer = {
+        metadata: parsed.metadata,
         content: parsed.content,
         id: sessionIdFromLocalStorageKey(key) ?? undefined,
         source: WorkbenchSessionSource.LOCAL_STORAGE,
     };
 
     return session;
+}
+
+export function deserializeSessionFromBackend(raw: SessionDocument_api): WorkbenchSessionDataContainer {
+    const parsed = JSON.parse(raw.content);
+    if (!validateContent(parsed)) {
+        throw new Error(`Backend session validation failed ${validateContent.errors}`);
+    }
+
+    const session: WorkbenchSessionDataContainer = {
+        metadata: {
+            title: raw.metadata.title,
+            description: raw.metadata.description ?? undefined,
+            createdAt: new Date(raw.metadata.createdAt).getTime(),
+            updatedAt: new Date(raw.metadata.updatedAt).getTime(),
+            hash: raw.metadata.hash,
+            lastModifiedMs: new Date(raw.metadata.updatedAt).getTime(), // Fallback to now if not provided
+        },
+        content: parsed,
+        id: raw.id,
+        source: WorkbenchSessionSource.BACKEND,
+        isSnapshot: false,
+    };
+
+    return session;
+}
+
+export function deserializeSnapshotFromBackend(raw: Snapshot_api): WorkbenchSessionDataContainer {
+    const parsed = JSON.parse(raw.content);
+    if (!validateContent(parsed)) {
+        throw new Error(`Backend session validation failed ${validateContent.errors}`);
+    }
+
+    const snapshot: WorkbenchSessionDataContainer = {
+        id: raw.id,
+        isSnapshot: true,
+        source: WorkbenchSessionSource.BACKEND,
+        metadata: {
+            title: raw.metadata.title,
+            description: raw.metadata.description ?? undefined,
+            createdAt: new Date(raw.metadata.createdAt).getTime(),
+            updatedAt: new Date(raw.metadata.updatedAt).getTime(),
+            hash: raw.metadata.hash,
+            lastModifiedMs: new Date().getTime(), // Fallback to now if not provided
+        },
+        content: parsed,
+    };
+
+    return snapshot;
 }
 
 export function makeWorkbenchSessionStateString(session: PrivateWorkbenchSession): string {

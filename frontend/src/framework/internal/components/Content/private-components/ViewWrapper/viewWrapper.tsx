@@ -20,7 +20,7 @@ import { ViewContent } from "./private-components/viewContent";
 type ViewWrapperProps = {
     isMaximized?: boolean;
     isMinimized?: boolean;
-    moduleInstance: ModuleInstance<any>;
+    moduleInstance: ModuleInstance<any, any>;
     workbench: Workbench;
     width: number;
     height: number;
