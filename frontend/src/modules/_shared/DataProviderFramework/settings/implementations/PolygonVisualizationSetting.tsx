@@ -49,10 +49,11 @@ export class PolygonVisualizationSetting implements CustomSettingImplementation<
             if (this.isValueValid(parsed)) {
                 return parsed;
             }
+            return this.defaultValue;
         } catch {
             // Invalid JSON, fall back to default
+            return this.defaultValue;
         }
-        return this.defaultValue;
     }
 
     fixupValue(value: ValueType): NonNullable<ValueType> {

@@ -116,6 +116,7 @@ export class PolygonsLayer extends CompositeLayer<PolygonsLayerProps> {
                             fontSize: 24,
                             sdf: true,
                         },
+
                         getSize: 12,
                         sdf: true,
                         sizeScale: 1,
@@ -128,6 +129,7 @@ export class PolygonsLayer extends CompositeLayer<PolygonsLayerProps> {
                         getText: (d: TextLabelData) => d.name,
                         backgroundColor: backgroundColor,
                         backgroundPadding: [2, 1, 2, 1],
+                        parameters: { depthTest: false },
                     }),
                 ),
             );
