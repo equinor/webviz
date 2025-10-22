@@ -203,6 +203,8 @@ export class PvtPlotBuilder {
                         color = colors[pvtNumIndex];
                     }
 
+                    const legendGroupIndex = colorBy === ColorBy.PVT_NUM ? pvtNumIndex : collectionIndex;
+
                     for (const [dependentVariable, dependentVariableMap] of groupedTracesMaps) {
                         const row = Math.floor(i / 2) + 1;
                         const col = (i % 2) + 1;
@@ -221,6 +223,7 @@ export class PvtPlotBuilder {
                                 },
                                 name: "",
                                 showlegend: false,
+                                legendgroup: `group-${legendGroupIndex}`,
                                 hovertemplate: this.makeHoverTemplate(
                                     dependentVariable,
                                     tracePointDataArray.map((el) => el.ratio),
@@ -244,6 +247,7 @@ export class PvtPlotBuilder {
                                 color,
                             },
                             showlegend: false,
+                            legendgroup: `group-${legendGroupIndex}`,
                             hovertemplate: "",
                         };
 
@@ -271,7 +275,7 @@ export class PvtPlotBuilder {
                                 line: {
                                     color,
                                 },
-                                legendgroup: `group-${colorBy === ColorBy.PVT_NUM ? pvtNumIndex : collectionIndex}`,
+                                legendgroup: `group-${legendGroupIndex}`,
                                 showlegend: true,
                             });
                         }
