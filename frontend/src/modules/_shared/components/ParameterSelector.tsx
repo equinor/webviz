@@ -22,13 +22,9 @@ export function ParametersSelector({
     onChange,
 }: ParametersSelectorProps): React.ReactNode {
     const [autoSelectAllOnGroupChange, setAutoSelectAllOnGroupChange] = React.useState<boolean>(true);
+    const [userHasInteracted, setUserHasInteracted] = React.useState<boolean>(false);
+    const [selectedGroupFilterValues, setSelectedGroupFilterValues] = React.useState<string[]>([]);
 
-    const [selectedGroupFilterValues, setSelectedGroupFilterValues] = React.useState<string[]>(() => {
-        if (selectedParameterIdents.length > 0) {
-            return Array.from(new Set(selectedParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP)));
-        }
-        return [];
-    });
     React.useEffect(() => {
         if (selectedGroupFilterValues.length === 0 && selectedParameterIdents.length > 0) {
             setSelectedGroupFilterValues(
@@ -36,11 +32,19 @@ export function ParametersSelector({
             );
         }
     }, [selectedParameterIdents, selectedGroupFilterValues]);
+
+    React.useEffect(() => {
+        if (!userHasInteracted && allParameterIdents.length > 0) {
+            const allGroups = Array.from(new Set(allParameterIdents.map((p) => p.groupName ?? GroupType.NO_GROUP)));
+            setSelectedGroupFilterValues(allGroups);
+            onChange(allParameterIdents);
+        }
+    }, [allParameterIdents, userHasInteracted, onChange]);
     const handleGroupChange = (newlySelectedGroupFilterStrings: string[]) => {
         setSelectedGroupFilterValues(newlySelectedGroupFilterStrings);
 
         if (newlySelectedGroupFilterStrings.length === 0) {
-            onChange([]);
+            handleChange([]);
         } else {
             const parametersThatMatchNewGroups = allParameterIdents.filter((p) =>
                 newlySelectedGroupFilterStrings.some(
@@ -56,14 +60,20 @@ export function ParametersSelector({
                 newSelectedParameters = selectedParameterIdents.filter((p) =>
                     parametersThatMatchNewGroups.some((pg) => pg.equals(p)),
                 );
+                if (newSelectedParameters.length === 0 && parametersThatMatchNewGroups.length > 0) {
+                    newSelectedParameters = [parametersThatMatchNewGroups[0]];
+                }
             }
 
-            onChange(newSelectedParameters);
+            handleChange(newSelectedParameters);
         }
     };
-
+    const handleChange = (newlySelectedParameters: ParameterIdent[]) => {
+        !userHasInteracted && setUserHasInteracted(true);
+        onChange(newlySelectedParameters);
+    };
     const handleParameterChange = (selectedValues: string[]) => {
-        onChange(selectedValues.map((s) => ParameterIdent.fromString(s)));
+        handleChange(selectedValues.map((s) => ParameterIdent.fromString(s)));
     };
 
     const groupSelectOptions: SelectOption[] = Array.from(

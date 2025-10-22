@@ -57,7 +57,7 @@ export class ParameterCorrelationMatrixFigure {
             showlegend: false,
             font: {
                 family: "Roboto, sans-serif",
-                size: 12,
+                size: 10,
                 color: "#333",
             },
         });
@@ -78,11 +78,11 @@ export class ParameterCorrelationMatrixFigure {
         };
         // Always show response labels
         if (this._forceShowYAxisLabels) {
-            margin.l = 200;
+            margin.l = 100;
         }
         if (this._showLabels) {
-            margin.l = 200;
-            margin.b = 200;
+            margin.l = 100;
+            margin.b = 100;
         }
         this._figure.updateLayout({
             margin: margin,

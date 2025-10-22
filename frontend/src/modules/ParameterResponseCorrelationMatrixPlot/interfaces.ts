@@ -6,8 +6,8 @@ import {
     useFixedColorRangeAtom,
     plotTypeAtom,
     correlationSettingsAtom,
+    selectedParameterIdentsAtom,
 } from "./settings/atoms/baseAtoms";
-import { selectedParameterIdentsAtom } from "./settings/atoms/derivedAtoms";
 import type { PlotType, CorrelationSettings } from "./typesAndEnums";
 
 type SettingsToViewInterface = {

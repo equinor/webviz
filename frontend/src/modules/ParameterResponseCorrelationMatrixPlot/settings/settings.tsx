@@ -17,14 +17,13 @@ import { PlotType } from "../typesAndEnums";
 
 import {
     correlationSettingsAtom,
-    userSelectedParameterIdentsAtom,
     plotTypeAtom,
     showLabelsAtom,
     useFixedColorRangeAtom,
     receivedChannelAtom,
-    hasUserInteractedWithParameterSelectionAtom,
+    selectedParameterIdentsAtom,
 } from "./atoms/baseAtoms";
-import { availableParameterIdentsAtom, selectedParameterIdentsAtom } from "./atoms/derivedAtoms";
+import { availableParameterIdentsAtom } from "./atoms/derivedAtoms";
 
 const plotTypesOptions = [
     {
@@ -42,9 +41,7 @@ const plotTypesOptions = [
 ];
 
 export function Settings({ initialSettings, settingsContext }: ModuleSettingsProps<Interfaces>) {
-    const setUserSelectedParameterIdents = useSetAtom(userSelectedParameterIdentsAtom);
-    const setHasUserInteracted = useSetAtom(hasUserInteractedWithParameterSelectionAtom);
-    const selectedParameterIdents = useAtomValue(selectedParameterIdentsAtom);
+    const [selectedParameterIdents, setSelectedParameterIdents] = useAtom(selectedParameterIdentsAtom);
     const [plotType, setPlotType] = useAtom(plotTypeAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
     const [useFixedColorRange, setUseFixedColorRange] = useAtom(useFixedColorRangeAtom);
@@ -52,12 +49,7 @@ export function Settings({ initialSettings, settingsContext }: ModuleSettingsPro
     const setReceivedChannel = useSetAtom(receivedChannelAtom);
     const availableParameterIdents = useAtomValue(availableParameterIdentsAtom);
 
-    useApplyInitialSettingsToState(
-        initialSettings,
-        "userSelectedParameterIdents",
-        "array",
-        setUserSelectedParameterIdents,
-    );
+    useApplyInitialSettingsToState(initialSettings, "selectedParameterIdents", "array", setSelectedParameterIdents);
     useApplyInitialSettingsToState(initialSettings, "showLabels", "boolean", setShowLabels);
     useApplyInitialSettingsToState(initialSettings, "correlationSettings", "object", setCorrelationSettings);
 
@@ -92,8 +84,7 @@ export function Settings({ initialSettings, settingsContext }: ModuleSettingsPro
     );
 
     function handleParametersChanged(parameterIdents: ParameterIdent[]) {
-        setUserSelectedParameterIdents(parameterIdents);
-        setHasUserInteracted(true);
+        setSelectedParameterIdents(parameterIdents);
     }
     function handleShowLabelsChanged(e: React.ChangeEvent<HTMLInputElement>) {
         setShowLabels(e.target.checked);
