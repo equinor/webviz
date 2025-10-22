@@ -16,6 +16,11 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 
 import { LeftNavBar } from "../LeftNavBar";
 import { RightNavBar } from "../RightNavBar";
+import { SaveSessionDialog } from "../SaveSessionDialog";
+import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
+import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
+import { EditSessionDialog } from "../EditSessionDialog";
+import { MultiSessionsRecoveryDialog } from "../MultiSessionsRecoveryDialog";
 
 export function WorkbenchWrapper() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
@@ -60,7 +65,12 @@ export function WorkbenchWrapper() {
             <TopBar workbench={workbench} />
             <ActiveSessionBoundary workbench={workbench}>
                 <SelectEnsemblesDialog workbench={workbench} />
+                <SaveSessionDialog workbench={workbench} />
+                <CreateSnapshotDialog workbench={workbench} />
+                <ActiveSessionRecoveryDialog workbench={workbench} />
+                <EditSessionDialog workbench={workbench} />
             </ActiveSessionBoundary>
+            <MultiSessionsRecoveryDialog workbench={workbench} />
             {content}
             <ToggleDevToolsButton guiMessageBroker={workbench.getGuiMessageBroker()} />
         </>

@@ -1,6 +1,7 @@
 import React from "react";
 
 import { createRoot } from "react-dom/client";
+import { ToastContainer } from "react-toastify";
 
 import { client } from "@api";
 import { AuthProvider } from "@framework/internal/providers/AuthProvider";
@@ -50,7 +51,10 @@ root.render(
         <GlobalErrorBoundary>
             <AuthProvider>
                 <CustomQueryClientProvider>
-                    <App />
+                    <>
+                        <ToastContainer stacked newestOnTop limit={3} position="bottom-right" />
+                        <App />
+                    </>
                 </CustomQueryClientProvider>
             </AuthProvider>
         </GlobalErrorBoundary>

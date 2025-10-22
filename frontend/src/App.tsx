@@ -3,10 +3,12 @@ import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
 
 import { WorkbenchWrapper } from "./framework/internal/components/WorkbenchWrapper/workbenchWrapper";
+import { GlobalConfirmationDialog } from "@framework/internal/components/GlobalConfirmationDialog";
 
 function App() {
     return (
         <div className="bg-gray-100">
+            <GlobalConfirmationDialog />
             <AuthenticationBoundary>
                 <WorkbenchWrapper />
             </AuthenticationBoundary>
