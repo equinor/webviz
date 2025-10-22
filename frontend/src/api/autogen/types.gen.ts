@@ -1071,6 +1071,14 @@ export type WellCompletionsZone_api = {
     subzones?: Array<WellCompletionsZone_api> | null;
 };
 
+export type WellInjectionData_api = {
+    wellboreUuid: string;
+    startDate: string;
+    endDate: string;
+    waterInjection: number;
+    gasInjection: number;
+};
+
 export enum WellLogCurveSourceEnum_api {
     SSDL_WELL_LOG = "ssdl.well_log",
     SMDA_GEOLOGY = "smda.geology",
@@ -1083,6 +1091,16 @@ export enum WellLogCurveTypeEnum_api {
     DISCRETE = "discrete",
     FLAG = "flag",
 }
+
+export type WellProductionData_api = {
+    wellboreUuid: string;
+    wellboreUwi: string;
+    startDate: string;
+    endDate: string;
+    oilProductionSm3: number;
+    gasProductionSm3: number;
+    waterProductionM3: number;
+};
 
 export type WellboreCasing_api = {
     itemType: string;
@@ -3695,6 +3713,84 @@ export type GetPolygonsDataResponses_api = {
 };
 
 export type GetPolygonsDataResponse_api = GetPolygonsDataResponses_api[keyof GetPolygonsDataResponses_api];
+
+export type GetProductionDataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Official field identifier
+         */
+        field_identifier: string;
+        /**
+         * Start date in YYYY-MM-DD
+         */
+        start_date: string;
+        /**
+         * End date in YYYY-MM-DD
+         */
+        end_date: string;
+        zCacheBust?: string;
+    };
+    url: "/flow_data/production-data/";
+};
+
+export type GetProductionDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetProductionDataError_api = GetProductionDataErrors_api[keyof GetProductionDataErrors_api];
+
+export type GetProductionDataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellProductionData_api>;
+};
+
+export type GetProductionDataResponse_api = GetProductionDataResponses_api[keyof GetProductionDataResponses_api];
+
+export type GetInjectionDataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Official field identifier
+         */
+        field_identifier: string;
+        /**
+         * Start date in YYYY-MM-DD
+         */
+        start_date: string;
+        /**
+         * End date in YYYY-MM-DD
+         */
+        end_date: string;
+        zCacheBust?: string;
+    };
+    url: "/flow_data/injection-data/";
+};
+
+export type GetInjectionDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetInjectionDataError_api = GetInjectionDataErrors_api[keyof GetInjectionDataErrors_api];
+
+export type GetInjectionDataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellInjectionData_api>;
+};
+
+export type GetInjectionDataResponse_api = GetInjectionDataResponses_api[keyof GetInjectionDataResponses_api];
 
 export type GetUserInfoData_api = {
     body?: never;
