@@ -142,7 +142,6 @@ export class PvtPlotBuilder {
 
         const tableCollections = this._pvtDataAccessor.getTableCollections();
 
-        this.addLegendTitle(colorBy);
         const colors = this.makeColorsArray(colorBy, colorSet, pvtNums.length, tableCollections.length);
 
         let pvtNumIndex = 0;
@@ -221,6 +220,7 @@ export class PvtPlotBuilder {
                                     color,
                                 },
                                 name: "",
+                                legendgroup: `group-${collectionIndex}`,
                                 showlegend: false,
                                 hovertemplate: this.makeHoverTemplate(
                                     dependentVariable,
@@ -245,6 +245,7 @@ export class PvtPlotBuilder {
                                 color,
                             },
                             showlegend: false,
+                            legendgroup: `group-${collectionIndex}`,
                             hovertemplate: "",
                         };
 
@@ -257,23 +258,23 @@ export class PvtPlotBuilder {
                         ) {
                             let traceLegendName = "";
                             if (colorBy === ColorBy.PVT_NUM) {
-                                traceLegendName = table.pvtnum.toString();
+                                traceLegendName = `PVTNum - ${table.pvtnum.toString()}`;
                             } else {
                                 traceLegendName = `${this._makeEnsembleDisplayNameFunc(
                                     tableCollection.ensembleIdent,
-                                )} - ${tableCollection.realization}`;
+                                )} (real ${tableCollection.realization})`;
                             }
 
                             figure.addTrace({
                                 x: [null],
                                 y: [null],
-                                mode: "lines",
+                                mode: "lines+markers",
                                 name: traceLegendName,
                                 line: {
                                     color,
                                 },
+                                legendgroup: `group-${collectionIndex}`,
                                 showlegend: true,
-                                visible: "legendonly",
                             });
                         }
 
@@ -312,23 +313,6 @@ export class PvtPlotBuilder {
                 ratioString = `Rv: <b>${ratio}</b><br>`;
             }
             return `Pressure: <b>%{x}</b><br>${nameY}: <b>%{y}</b><br>${ratioString}PVTNum: <b>${pvtNum}</b><br>Ensemble: <b>${ensembleDisplayName}</b> Realization: <b>${realization}</b>`;
-        });
-    }
-
-    private addLegendTitle(colorBy: ColorBy) {
-        const figure = this.getFigureAndAssertValidity();
-
-        let legendTitle = "Ens - Real";
-        if (colorBy === ColorBy.PVT_NUM) {
-            legendTitle = "PVTNum";
-        }
-
-        figure.updateLayout({
-            legend: {
-                title: {
-                    text: legendTitle,
-                },
-            },
         });
     }
 
