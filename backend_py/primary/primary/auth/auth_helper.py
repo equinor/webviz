@@ -72,8 +72,6 @@ class AuthHelper:
         request.session.clear()
 
         all_scopes_list = config.GRAPH_SCOPES.copy()
-        # for value in config.RESOURCE_SCOPES_DICT.values():
-        #     all_scopes_list.extend(value)
 
         if "CODESPACE_NAME" in os.environ:
             # Developer is using GitHub codespace, so we use the GitHub codespace port forward URL
@@ -86,7 +84,7 @@ class AuthHelper:
         flow_dict = cca.initiate_auth_code_flow(scopes=all_scopes_list, redirect_uri=redirect_uri)
 
         request.session["flow"] = flow_dict
-        print(flow_dict)
+
         # If a final redirect url was specified, store it in session storage so we can
         # redirect once we get the auth callback. Note that the redirect_url_after_login
         # query parameter is base64 encoded
