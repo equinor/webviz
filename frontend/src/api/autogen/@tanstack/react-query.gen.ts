@@ -76,6 +76,8 @@ import type {
     PostGetSeismicFenceResponse_api,
     GetPolygonsDirectoryData_api,
     GetPolygonsDataData_api,
+    GetProductionDataData_api,
+    GetInjectionDataData_api,
     GetUserInfoData_api,
     GetUserPhotoData_api,
     GetObservationsData_api,
@@ -152,6 +154,8 @@ import {
     postGetSeismicFence,
     getPolygonsDirectory,
     getPolygonsData,
+    getProductionData,
+    getInjectionData,
     getUserInfo,
     getUserPhoto,
     getObservations,
@@ -1462,6 +1466,44 @@ export const getPolygonsDataOptions = (options: Options<GetPolygonsDataData_api>
             return data;
         },
         queryKey: getPolygonsDataQueryKey(options),
+    });
+};
+
+export const getProductionDataQueryKey = (options: Options<GetProductionDataData_api>) => [
+    createQueryKey("getProductionData", options),
+];
+
+export const getProductionDataOptions = (options: Options<GetProductionDataData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getProductionData({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getProductionDataQueryKey(options),
+    });
+};
+
+export const getInjectionDataQueryKey = (options: Options<GetInjectionDataData_api>) => [
+    createQueryKey("getInjectionData", options),
+];
+
+export const getInjectionDataOptions = (options: Options<GetInjectionDataData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getInjectionData({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getInjectionDataQueryKey(options),
     });
 };
 

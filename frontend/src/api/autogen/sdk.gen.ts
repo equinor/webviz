@@ -178,6 +178,12 @@ import type {
     GetPolygonsDataData_api,
     GetPolygonsDataResponse_api,
     GetPolygonsDataError_api,
+    GetProductionDataData_api,
+    GetProductionDataResponse_api,
+    GetProductionDataError_api,
+    GetInjectionDataData_api,
+    GetInjectionDataResponse_api,
+    GetInjectionDataError_api,
     GetUserInfoData_api,
     GetUserInfoResponse_api,
     GetUserInfoError_api,
@@ -1164,6 +1170,32 @@ export const getPolygonsData = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetPolygonsDataResponse_api, GetPolygonsDataError_api, ThrowOnError>({
         ...options,
         url: "/polygons/polygons_data/",
+    });
+};
+
+/**
+ * Get Production Data
+ * Get allocated production per well in the time interval
+ */
+export const getProductionData = <ThrowOnError extends boolean = false>(
+    options: Options<GetProductionDataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetProductionDataResponse_api, GetProductionDataError_api, ThrowOnError>({
+        ...options,
+        url: "/flow_data/production-data/",
+    });
+};
+
+/**
+ * Get Injection Data
+ * Get allocated injection per well in the time interval
+ */
+export const getInjectionData = <ThrowOnError extends boolean = false>(
+    options: Options<GetInjectionDataData_api, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<GetInjectionDataResponse_api, GetInjectionDataError_api, ThrowOnError>({
+        ...options,
+        url: "/flow_data/injection-data/",
     });
 };
 
