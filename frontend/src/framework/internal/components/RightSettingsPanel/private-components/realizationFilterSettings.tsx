@@ -34,6 +34,10 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         guiMessageBroker,
         GuiState.NumberOfUnsavedRealizationFilters,
     );
+    const [, setNumberOfEffectiveRealizationFilters] = useGuiState(
+        guiMessageBroker,
+        GuiState.NumberOfEffectiveRealizationFilters,
+    );
 
     const [activeFilterEnsembleIdent, setActiveFilterEnsembleIdent] = React.useState<
         RegularEnsembleIdent | DeltaEnsembleIdent | null
@@ -54,6 +58,17 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     if (rightSettingsPanelWidth < 5 && activeFilterEnsembleIdent !== null) {
         setActiveFilterEnsembleIdent(null);
     }
+
+    // Count ensembles where realizations are being filtered out
+    const countEffectiveFilters = React.useCallback(
+        function countEffectiveFilters() {
+            return ensembleSet.getEnsembleArray().filter((ens) => {
+                const filter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ens.getIdent());
+                return !isEqual(filter.getFilteredRealizations().toSorted(), ens.getRealizations().toSorted());
+            }).length;
+        },
+        [ensembleSet, realizationFilterSet],
+    );
 
     // Create new maps if ensembles are added or removed
     const ensembleIdentStrings = ensembleSet.getEnsembleArray().map((ensemble) => ensemble.getIdent().toString());
@@ -91,7 +106,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
             updatedHasUnsavedChangesMap[ensembleIdentString] = false;
             updatedSelectionsMap[ensembleIdentString] = {
-                displayRealizationNumbers: realizationFilter.getFilteredRealizations(),
+                realizationNumbers: realizationFilter.getFilteredRealizations(),
                 realizationNumberSelections: realizationFilter.getRealizationNumberSelections(),
                 parameterIdentStringToValueSelectionReadonlyMap:
                     realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
@@ -102,6 +117,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         setEnsembleIdentStringHasUnsavedChangesMap(updatedHasUnsavedChangesMap);
         setEnsembleIdentStringToRealizationFilterSelectionsMap(updatedSelectionsMap);
         setNumberOfUnsavedRealizationFilters(countTrueValues(updatedHasUnsavedChangesMap));
+        setNumberOfEffectiveRealizationFilters(countEffectiveFilters());
     }
 
     const handleApplyAllClick = React.useCallback(
@@ -134,6 +150,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
             setEnsembleIdentStringHasUnsavedChangesMap(resetHasUnsavedChangesMap);
             setNumberOfUnsavedRealizationFilters(0);
+            setNumberOfEffectiveRealizationFilters(countEffectiveFilters());
 
             // Notify subscribers of change.
             props.workbench.getWorkbenchSession().notifyAboutEnsembleRealizationFilterChange();
@@ -142,6 +159,8 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             ensembleIdentStringToRealizationFilterSelectionsMap,
             realizationFilterSet,
             setNumberOfUnsavedRealizationFilters,
+            setNumberOfEffectiveRealizationFilters,
+            countEffectiveFilters,
             props.workbench,
         ],
     );
@@ -160,7 +179,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                 const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
 
                 resetSelectionsMap[ensembleIdentString] = {
-                    displayRealizationNumbers: realizationFilter.getFilteredRealizations(),
+                    realizationNumbers: realizationFilter.getFilteredRealizations(),
                     realizationNumberSelections: realizationFilter.getRealizationNumberSelections(),
                     parameterIdentStringToValueSelectionReadonlyMap:
                         realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
@@ -173,11 +192,14 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             setEnsembleIdentStringToRealizationFilterSelectionsMap(resetSelectionsMap);
             setEnsembleIdentStringHasUnsavedChangesMap(resetHasUnsavedChangesMap);
             setNumberOfUnsavedRealizationFilters(0);
+            setNumberOfEffectiveRealizationFilters(countEffectiveFilters());
         },
         [
             ensembleIdentStringToRealizationFilterSelectionsMap,
             realizationFilterSet,
             setNumberOfUnsavedRealizationFilters,
+            setNumberOfEffectiveRealizationFilters,
+            countEffectiveFilters,
         ],
     );
 
@@ -228,6 +250,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         const newHasUnsavedChangesMap = { ...ensembleIdentStringHasUnsavedChangesMap, [ensembleIdentString]: false };
         setEnsembleIdentStringHasUnsavedChangesMap(newHasUnsavedChangesMap);
         setNumberOfUnsavedRealizationFilters(countTrueValues(newHasUnsavedChangesMap));
+        setNumberOfEffectiveRealizationFilters(countEffectiveFilters());
 
         // Notify subscribers of change.
         props.workbench.getWorkbenchSession().notifyAboutEnsembleRealizationFilterChange();
@@ -239,7 +262,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         setEnsembleIdentStringToRealizationFilterSelectionsMap({
             ...ensembleIdentStringToRealizationFilterSelectionsMap,
             [ensembleIdentString]: {
-                displayRealizationNumbers: realizationFilter.getFilteredRealizations(),
+                realizationNumbers: realizationFilter.getFilteredRealizations(),
                 realizationNumberSelections: realizationFilter.getRealizationNumberSelections(),
                 parameterIdentStringToValueSelectionReadonlyMap:
                     realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
@@ -252,6 +275,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         const newHasUnsavedChangesMap = { ...ensembleIdentStringHasUnsavedChangesMap, [ensembleIdentString]: false };
         setEnsembleIdentStringHasUnsavedChangesMap(newHasUnsavedChangesMap);
         setNumberOfUnsavedRealizationFilters(countTrueValues(newHasUnsavedChangesMap));
+        setNumberOfEffectiveRealizationFilters(countEffectiveFilters());
     }
 
     function handleFilterChange(
@@ -284,6 +308,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         };
         setEnsembleIdentStringHasUnsavedChangesMap(newHasUnsavedChangesMap);
         setNumberOfUnsavedRealizationFilters(countTrueValues(newHasUnsavedChangesMap));
+        setNumberOfEffectiveRealizationFilters(countEffectiveFilters());
     }
 
     function handleSetActiveEnsembleRealizationFilter(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) {
@@ -314,6 +339,9 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
                             const selections =
                                 ensembleIdentStringToRealizationFilterSelectionsMap[ensembleIdent.toString()];
+                            const currentFilteredRealizations = realizationFilterSet
+                                .getRealizationFilterForEnsembleIdent(ensembleIdent)
+                                .getFilteredRealizations();
 
                             if (!selections) {
                                 return null;
@@ -322,6 +350,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                                 <EnsembleRealizationFilter
                                     key={ensembleIdent.toString()}
                                     ensembleName={ensemble.getCustomName() ?? ensemble.getDisplayName()}
+                                    filteredRealizationNumbers={currentFilteredRealizations}
                                     selections={selections}
                                     hasUnsavedSelections={
                                         ensembleIdentStringHasUnsavedChangesMap[ensembleIdent.toString()]

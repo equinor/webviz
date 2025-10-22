@@ -9,7 +9,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Input } from "@lib/components/Input";
@@ -18,7 +18,7 @@ import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import type { FullSurfaceAddress } from "@modules/_shared/Surface";
 import {
     SurfaceAddressBuilder,
@@ -67,8 +67,8 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     );
     const observedSurfacesMetaQuery = useObservedSurfacesMetadataQuery(computedEnsembleIdent?.getCaseUuid());
 
-    usePropagateApiErrorToStatusWriter(realizationSurfacesMetaQuery, statusWriter);
-    usePropagateApiErrorToStatusWriter(observedSurfacesMetaQuery, statusWriter);
+    usePropagateQueryErrorToStatusWriter(realizationSurfacesMetaQuery, statusWriter);
+    usePropagateQueryErrorToStatusWriter(observedSurfacesMetaQuery, statusWriter);
 
     const surfaceDirectory = new SurfaceDirectory({
         realizationMetaSet: realizationSurfacesMetaQuery.data,
@@ -236,6 +236,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
                 <EnsembleDropdown
                     ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={computedEnsembleIdent}
+                    ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
                     onChange={handleEnsembleSelectionChange}
                 />
             </Label>

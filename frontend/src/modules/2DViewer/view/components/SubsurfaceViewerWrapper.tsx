@@ -106,6 +106,19 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                         top: 10,
                     },
                 }}
+                lights={{
+                    pointLights: [
+                        {
+                            position: [0, 0, 1],
+                            intensity: 0.0,
+                        },
+                    ],
+                    headLight: {
+                        intensity: 0.0,
+                        color: [255, 255, 255],
+                    },
+                    ambientLight: { intensity: 2.9, color: [255, 255, 255] },
+                }}
                 // Hide the built in readout box
                 // ! If multipicking is false, double-click re-centering stops working
                 coords={{ visible: false, multiPicking: true, pickDepth: 2 }}

@@ -22,16 +22,18 @@ export function makeColorMapFunctionFromColorScale(
     const localColorScale = colorScaleSpec.colorScale.clone();
 
     if (options && !colorScaleSpec.areBoundariesUserDefined) {
-        if (options.midPoint === undefined) {
-            localColorScale.setRange(options.valueMin, options.valueMax);
-        } else {
-            localColorScale.setRangeAndMidPoint(options.valueMin, options.valueMax, options.midPoint);
+        let midPoint = options.midPoint;
+        if (midPoint === undefined) {
+            midPoint = (options.valueMin + options.valueMax) / 2;
         }
+        localColorScale.setRangeAndMidPoint(options.valueMin, options.valueMax, midPoint);
     }
 
-    const valueMin = localColorScale.getMin();
-    const valueMax = localColorScale.getMax();
     const specialColor = options?.specialColor;
+    // Min and max are only used if denormalize is true and when denormalize is true,
+    // min and max values must be provided. So, this is just a fallback to avoid any errors.
+    const valueMax = options?.valueMax ?? 1;
+    const valueMin = options?.valueMin ?? 0;
 
     return (value: number) => {
         const nonNormalizedValue = options?.denormalize ? value * (valueMax - valueMin) + valueMin : value;
