@@ -17,7 +17,7 @@ export const handler: Plugin.Handler<Config> = ({ context, plugin }) => {
             location: "query",
             explode: false,
             name: cacheKey,
-            schema: { type: "number" },
+            schema: { type: "string" },
             style: "form",
         };
     }
