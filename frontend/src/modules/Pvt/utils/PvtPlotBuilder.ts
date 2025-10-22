@@ -258,11 +258,11 @@ export class PvtPlotBuilder {
                         ) {
                             let traceLegendName = "";
                             if (colorBy === ColorBy.PVT_NUM) {
-                                traceLegendName = table.pvtnum.toString();
+                                traceLegendName = `PVTNum - ${table.pvtnum.toString()}`;
                             } else {
                                 traceLegendName = `${this._makeEnsembleDisplayNameFunc(
                                     tableCollection.ensembleIdent,
-                                )} (${tableCollection.realization})`;
+                                )} (real ${tableCollection.realization})`;
                             }
 
                             figure.addTrace({
