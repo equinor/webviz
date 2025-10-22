@@ -6,7 +6,7 @@ import type {
     ModuleCategory,
     ModuleDevState,
     ModuleInterfaceTypes,
-    ModuleStateBaseSchema,
+    ModuleComponentsStateBase,
     NoModuleStateSchema,
     OnInstanceUnloadFunc,
 } from "./Module";
@@ -50,7 +50,7 @@ export class ModuleRegistry {
 
     static registerModule<
         TInterfaceTypes extends ModuleInterfaceTypes,
-        TSerializedStateDef extends ModuleStateBaseSchema = NoModuleStateSchema,
+        TSerializedStateDef extends ModuleComponentsStateBase = NoModuleStateSchema,
     >(options: RegisterModuleOptions<TSerializedStateDef>): Module<TInterfaceTypes, TSerializedStateDef> {
         const module = new Module<TInterfaceTypes, TSerializedStateDef>({
             name: options.moduleName,
@@ -71,7 +71,7 @@ export class ModuleRegistry {
 
     static initModule<
         TInterfaceTypes extends ModuleInterfaceTypes,
-        TSerializedStateDef extends ModuleStateBaseSchema = NoModuleStateSchema,
+        TSerializedStateDef extends ModuleComponentsStateBase = NoModuleStateSchema,
     >(
         moduleName: string,
         options: {
