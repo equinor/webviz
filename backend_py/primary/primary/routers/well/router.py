@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Query
 
 from primary.services.smda_access.drogon import DrogonSmdaAccess
 from primary.services.smda_access import SmdaAccess
+from primary.services.pdm_access.pdm_access import PDMAccess
 from primary.services.smda_access import GeologyAccess as SmdaGeologyAccess
 from primary.services.service_exceptions import NoDataError
 

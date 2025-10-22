@@ -19,7 +19,7 @@ from primary.services.utils.authenticated_user import AuthenticatedUser
 LOGGER = logging.getLogger(__name__)
 
 # Alias for the literal that lists the resource names we use
-_ResourceName: TypeAlias = Literal["graph", "sumo", "smda", "ssdl"]
+_ResourceName: TypeAlias = Literal["graph", "sumo", "smda", "ssdl", "pdm"]
 
 
 class _TokenEntry(BaseModel):
@@ -39,6 +39,7 @@ class _UserAuthInfo(BaseModel):
         sumo_token_entry = self.access_tokens.get("sumo")
         smda_token_entry = self.access_tokens.get("smda")
         ssdl_token_entry = self.access_tokens.get("ssdl")
+        pdm_token_entry = self.access_tokens.get("pdm")
 
         authenticated_user_obj = AuthenticatedUser(
             user_id=self.user_id,
@@ -48,6 +49,7 @@ class _UserAuthInfo(BaseModel):
                 "sumo_access_token": sumo_token_entry.token if sumo_token_entry else None,
                 "smda_access_token": smda_token_entry.token if smda_token_entry else None,
                 "ssdl_access_token": ssdl_token_entry.token if ssdl_token_entry else None,
+                "pdm_access_token": pdm_token_entry.token if pdm_token_entry else None,
             },
         )
 
@@ -58,7 +60,11 @@ class AuthHelper:
     def __init__(self) -> None:
         self.router = APIRouter()
         self.router.add_api_route(path="/login", endpoint=self._login_route, methods=["GET"])
-        self.router.add_api_route(path="/auth-callback", endpoint=self._authorized_callback_route, methods=["GET"])
+        self.router.add_api_route(
+            path="/auth-callback",
+            endpoint=self._authorized_callback_route,
+            methods=["GET"],
+        )
 
     @no_cache
     async def _login_route(self, request: Request, redirect_url_after_login: Optional[str] = None) -> RedirectResponse:
@@ -66,8 +72,8 @@ class AuthHelper:
         request.session.clear()
 
         all_scopes_list = config.GRAPH_SCOPES.copy()
-        for value in config.RESOURCE_SCOPES_DICT.values():
-            all_scopes_list.extend(value)
+        # for value in config.RESOURCE_SCOPES_DICT.values():
+        #     all_scopes_list.extend(value)
 
         if "CODESPACE_NAME" in os.environ:
             # Developer is using GitHub codespace, so we use the GitHub codespace port forward URL
@@ -80,7 +86,7 @@ class AuthHelper:
         flow_dict = cca.initiate_auth_code_flow(scopes=all_scopes_list, redirect_uri=redirect_uri)
 
         request.session["flow"] = flow_dict
-
+        print(flow_dict)
         # If a final redirect url was specified, store it in session storage so we can
         # redirect once we get the auth callback. Note that the redirect_url_after_login
         # query parameter is base64 encoded
@@ -112,7 +118,10 @@ class AuthHelper:
             )
 
             if "error" in token_dict:
-                return Response(f"Error validating redirected auth response, error: {token_dict['error']}", 400)
+                return Response(
+                    f"Error validating redirected auth response, error: {token_dict['error']}",
+                    400,
+                )
 
             _save_token_cache_in_session(request, token_cache)
 
@@ -127,7 +136,9 @@ class AuthHelper:
         return Response("Login OK")
 
     @staticmethod
-    def get_authenticated_user(request_with_session: Request) -> Optional[AuthenticatedUser]:
+    def get_authenticated_user(
+        request_with_session: Request,
+    ) -> Optional[AuthenticatedUser]:
         perf_metrics = PerfMetrics()
 
         # We may already have created and stored the AuthenticatedUser object in the request's state
@@ -311,7 +322,9 @@ def _acquire_refreshed_identity_and_tokens(
     return new_auth_info
 
 
-def _create_msal_confidential_client_app(token_cache: msal.TokenCache) -> msal.ConfidentialClientApplication:
+def _create_msal_confidential_client_app(
+    token_cache: msal.TokenCache,
+) -> msal.ConfidentialClientApplication:
     authority = f"https://login.microsoftonline.com/{config.TENANT_ID}"
     return msal.ConfidentialClientApplication(
         client_id=config.CLIENT_ID,
@@ -322,7 +335,9 @@ def _create_msal_confidential_client_app(token_cache: msal.TokenCache) -> msal.C
     )
 
 
-def _load_user_auth_info_from_session(request_with_session: Request) -> _UserAuthInfo | None:
+def _load_user_auth_info_from_session(
+    request_with_session: Request,
+) -> _UserAuthInfo | None:
     serialized_user_auth_info = request_with_session.session.get("user_auth_info")
     if not serialized_user_auth_info:
         return None
@@ -339,7 +354,9 @@ def _save_user_auth_info_in_session(request_with_session: Request, user_auth_inf
     request_with_session.session["user_auth_info"] = user_auth_info.model_dump_json()
 
 
-def _load_token_cache_from_session(request_with_session: Request) -> msal.SerializableTokenCache:
+def _load_token_cache_from_session(
+    request_with_session: Request,
+) -> msal.SerializableTokenCache:
     token_cache = msal.SerializableTokenCache()
 
     serialized_token_cache = request_with_session.session.get("token_cache")
