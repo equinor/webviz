@@ -220,7 +220,6 @@ export class PvtPlotBuilder {
                                     color,
                                 },
                                 name: "",
-                                legendgroup: `group-${collectionIndex}`,
                                 showlegend: false,
                                 hovertemplate: this.makeHoverTemplate(
                                     dependentVariable,
@@ -245,7 +244,6 @@ export class PvtPlotBuilder {
                                 color,
                             },
                             showlegend: false,
-                            legendgroup: `group-${collectionIndex}`,
                             hovertemplate: "",
                         };
 
@@ -273,7 +271,7 @@ export class PvtPlotBuilder {
                                 line: {
                                     color,
                                 },
-                                legendgroup: `group-${collectionIndex}`,
+                                legendgroup: `group-${colorBy === ColorBy.PVT_NUM ? pvtNumIndex : collectionIndex}`,
                                 showlegend: true,
                             });
                         }
