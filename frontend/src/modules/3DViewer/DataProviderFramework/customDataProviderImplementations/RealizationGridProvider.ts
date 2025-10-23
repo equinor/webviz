@@ -1,5 +1,4 @@
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
-import { NO_UPDATE } from "@modules/_shared/DataProviderFramework/delegates/_utils/Dependency";
 import type {
     AreSettingsValidArgs,
     CustomDataProviderImplementation,
@@ -234,12 +233,20 @@ export class RealizationGridProvider
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!gridName || !data) {
-                return NO_UPDATE;
+                return [
+                    [0, 1, 0],
+                    [0, 1, 0],
+                    [0, 1, 0],
+                ];
             }
 
             const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
             if (!gridDimensions) {
-                return NO_UPDATE;
+                return [
+                    [0, 1, 0],
+                    [0, 1, 0],
+                    [0, 1, 0],
+                ];
             }
 
             return [
