@@ -97,7 +97,15 @@ type PersistableFixableAtomOptionsWithPrecompute<TValue, TPrecomputedValue> = {
      */
     areEqualFunction?: (a: TValue, b: TValue) => boolean;
 
+    /**
+     * A function to precompute any necessary data based on the current value. This data is then
+     * passed to the isValid and fixup functions to help them make decisions.
+     *
+     * @param options - The options containing the current value and Jotai getter.
+     * @returns
+     */
     precomputeFunction: (options: { value: TValue | undefined; get: Getter }) => TPrecomputedValue;
+
     /**
      * A function to validate whether the given value is valid in the current application context.
      * Called whenever the atom is read to determine if a persisted value is still valid.
