@@ -1,15 +1,16 @@
 import type { QueryClient } from "@tanstack/query-core";
 
-import { EnsembleTimestampsStore, type EnsembleTimestamps } from "@framework/EnsembleTimestampsStore";
+import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import { globalLog } from "@framework/Log";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { Workbench } from "@framework/Workbench";
 
-import { fetchLatestEnsembleTimestamps } from "./utils/fetchEnsembleTimestamps";
+import { fetchLatestEnsembleFingerprints } from "./utils/fetchEnsembleFingerprints";
 
 const logger = globalLog.registerLogger("EnsembleUpdateMonitor");
 
-const ENSEMBLE_POLLING_INTERVAL_MS = 60000; // 60 seconds
+// Polling interval for ensemble fingerprints is 5 minutes
+const ENSEMBLE_POLLING_INTERVAL_MS = 5 * 60 * 1000;
 
 export class EnsembleUpdateMonitor {
     private _queryClient: QueryClient;
@@ -124,29 +125,32 @@ export class EnsembleUpdateMonitor {
                 return;
             }
 
-            // Fetch the latest timestamps for all ensembles
-            const latestTimestamps = await fetchLatestEnsembleTimestamps(
+            // Fetch the latest fingerprints for all ensembles
+            const latestFingerprints = await fetchLatestEnsembleFingerprints(
                 this._queryClient,
                 Array.from(allRegularEnsembleIdents).map((id) => RegularEnsembleIdent.fromString(id)),
             );
 
-            if (latestTimestamps.length !== allRegularEnsembleIdents.size) {
+            if (latestFingerprints.length !== allRegularEnsembleIdents.size) {
                 console.warn(
-                    `Expected ${allRegularEnsembleIdents.size} timestamps, received ${latestTimestamps.length}.`,
+                    `Expected ${allRegularEnsembleIdents.size} fingerprints, received ${latestFingerprints.length}.`,
                 );
             }
 
-            const latestTimestampsMap = new Map<string, EnsembleTimestamps>();
+            const latestFingerprintsMap = new Map<string, string>();
 
-            // Update the ensemble timestamps map
-            for (const item of latestTimestamps) {
-                latestTimestampsMap.set(item.ensembleIdent.toString(), item.timestamps);
+            // Update the ensemble fingerprints map
+            for (const item of latestFingerprints) {
+                if (item.fingerprint === null) {
+                    continue;
+                }
+                latestFingerprintsMap.set(item.ensembleIdent.toString(), item.fingerprint);
             }
 
-            // Update the EnsembleTimestampsStore with the latest timestamps
-            EnsembleTimestampsStore.setAll(latestTimestampsMap);
+            // Update the EnsembleFingerprintsStore with the latest fingerprints
+            EnsembleFingerprintStore.setAll(latestFingerprintsMap);
 
-            logger.console?.log(`checkForEnsembleUpdate - fetched and updated timestamps for ensembles.`);
+            logger.console?.log(`checkForEnsembleUpdate - fetched and updated fingerprints for ensembles.`);
         } catch (error) {
             console.error(`Error during ensemble polling:`, error);
         } finally {
