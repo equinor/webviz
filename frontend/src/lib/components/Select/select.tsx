@@ -11,10 +11,9 @@ import { Button } from "../Button";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
 
-enum KeyModifier {
-    SHIFT = "shift",
-    CONTROL = "control",
-}
+import { useKeepFocusedListItemInView } from "./useKeepFocusedListItemInView";
+import { useOptInControlledValue } from "./useOptInControlledValue";
+import { useSelectableItemList } from "./useSelectableItemList";
 
 export type SelectOption<TValue = string> = {
     value: TValue;
@@ -42,37 +41,39 @@ export type SelectProps<TValue = string> = {
 
 const noMatchingOptionsText = "No matching options";
 
-function ensureKeyboardSelectionInView(prevViewStartIndex: number, keyboardFocusIndex: number, viewSize: number) {
-    if (keyboardFocusIndex >= prevViewStartIndex + viewSize) {
-        return Math.max(0, keyboardFocusIndex - viewSize + 1);
-    }
-    if (keyboardFocusIndex <= prevViewStartIndex) {
-        return keyboardFocusIndex;
-    }
-    return prevViewStartIndex;
-}
-
 function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React.ForwardedRef<HTMLDivElement>) {
     const { onChange } = props;
 
     const sizeWithDefault = props.size ?? 1;
     const multipleWithDefault = props.multiple ?? false;
     const filterWithDefault = props.filter ?? false;
+    const noOptionsText = props.placeholder ?? "No options";
+
+    const virtualizationRef = React.useRef<HTMLDivElement>(null);
 
     const [filterString, setFilterString] = React.useState<string>("");
     const [hasFocus, setHasFocus] = React.useState<boolean>(false);
     const [options, setOptions] = React.useState<SelectOption<TValue>[]>(props.options);
     const [filteredOptions, setFilteredOptions] = React.useState<SelectOption<TValue>[]>(props.options);
     const [selectionAnchor, setSelectionAnchor] = React.useState<number | null>(null);
-    const [selectedOptionValues, setSelectedOptionValues] = React.useState<TValue[]>([]);
-    const [prevPropsValue, setPrevPropsValue] = React.useState<TValue[] | undefined>(undefined);
-    const [currentFocusIndex, setCurrentFocusIndex] = React.useState<number>(0);
-    const [virtualizationStartIndex, setVirtualizationStartIndex] = React.useState<number>(0);
 
-    const virtualizationRef = React.useRef<HTMLDivElement>(null);
-    const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [selectedOptionValues, setSelectedOptionValues, changeDebouncer] = useOptInControlledValue(
+        [],
+        props.value,
+        onChange,
+        props.debounceTimeMs,
+    );
 
-    const noOptionsText = props.placeholder ?? "No options";
+    const [currentFocusIndex, setCurrentFocusIndex] = useSelectableItemList({
+        selectedValues: selectedOptionValues,
+        listElementRef: virtualizationRef,
+        items: filteredOptions,
+        pageSize: sizeWithDefault,
+        multiple: multipleWithDefault,
+        onSelectionChange: setSelectedOptionValues,
+    });
+
+    const [scrollStartIndex, setScrollStartIndex] = useKeepFocusedListItemInView(currentFocusIndex, sizeWithDefault);
 
     if (!isEqual(props.options, options)) {
         const newOptions = [...props.options];
@@ -80,103 +81,9 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
         filterOptions(newOptions, filterString);
     }
 
-    if (!isEqual(props.value, prevPropsValue)) {
-        const firstValueIndex = filteredOptions.findIndex((option) => option.value === props.value?.[0]);
-        setSelectionAnchor(firstValueIndex !== -1 ? firstValueIndex : null);
-        setPrevPropsValue(props.value ? [...props.value] : undefined);
-        setSelectedOptionValues(props.value ? [...props.value] : []);
-    }
-
-    const handleOnChange = React.useCallback(
-        function handleOnChange(values: TValue[]) {
-            if (!onChange) {
-                return;
-            }
-
-            if (debounceTimerRef.current) {
-                clearTimeout(debounceTimerRef.current);
-            }
-
-            if (!props.debounceTimeMs) {
-                onChange(values);
-                return;
-            }
-
-            debounceTimerRef.current = setTimeout(() => {
-                onChange(values);
-            }, props.debounceTimeMs);
-        },
-        [onChange, props.debounceTimeMs],
-    );
-
-    React.useEffect(function handleMount() {
-        return function handleUnmount() {
-            if (debounceTimerRef.current) {
-                clearTimeout(debounceTimerRef.current);
-            }
-        };
-    }, []);
-
     React.useEffect(
         function addKeyboardEventListeners() {
             const refCurrent = virtualizationRef.current;
-
-            function makeKeyboardSelection(index: number, modifiers: KeyModifier[]) {
-                if (filteredOptions[index].disabled) {
-                    return;
-                }
-
-                if (!multipleWithDefault) {
-                    const newSelectedOptions = [filteredOptions[index].value];
-                    setSelectedOptionValues(newSelectedOptions);
-                    setSelectionAnchor(null);
-                    handleOnChange(newSelectedOptions);
-                }
-
-                let newSelectedOptions: TValue[] = [filteredOptions[index].value];
-
-                if (modifiers.includes(KeyModifier.CONTROL) && !modifiers.includes(KeyModifier.SHIFT)) {
-                    return;
-                }
-
-                if (modifiers.includes(KeyModifier.SHIFT) && selectionAnchor !== null) {
-                    const start = Math.min(index, selectionAnchor);
-                    const end = Math.max(index, selectionAnchor);
-                    newSelectedOptions = filteredOptions.slice(start, end + 1).map((option) => option.value);
-                }
-
-                if (!modifiers.includes(KeyModifier.CONTROL) && !modifiers.includes(KeyModifier.SHIFT)) {
-                    setSelectionAnchor(index);
-                }
-
-                handleOnChange(newSelectedOptions);
-
-                setSelectedOptionValues(newSelectedOptions);
-            }
-
-            function addKeyboardSelection(index: number) {
-                if (filteredOptions[index].disabled) {
-                    return;
-                }
-
-                if (!multipleWithDefault) {
-                    const newSelectedOptions = [filteredOptions[index].value];
-                    setSelectedOptionValues(newSelectedOptions);
-                    setSelectionAnchor(null);
-                    handleOnChange(newSelectedOptions);
-                }
-
-                setSelectionAnchor(index);
-
-                let newSelectedOptions: TValue[] = [];
-                if (selectedOptionValues.includes(filteredOptions[index].value)) {
-                    newSelectedOptions = selectedOptionValues.filter((value) => value !== filteredOptions[index].value);
-                } else {
-                    newSelectedOptions = [...selectedOptionValues, filteredOptions[index].value];
-                }
-                setSelectedOptionValues(newSelectedOptions);
-                handleOnChange(newSelectedOptions);
-            }
 
             function handleFocus() {
                 setHasFocus(true);
@@ -184,97 +91,18 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
 
             function handleBlur() {
                 setHasFocus(false);
-            }
-
-            function handleKeyDown(e: KeyboardEvent) {
-                const modifiers: KeyModifier[] = [];
-                if (e.shiftKey) {
-                    modifiers.push(KeyModifier.SHIFT);
-                }
-                if (e.ctrlKey) {
-                    modifiers.push(KeyModifier.CONTROL);
-                }
-                if (e.key === "ArrowUp") {
-                    e.preventDefault();
-                    const newIndex = Math.max(0, currentFocusIndex - 1);
-                    setCurrentFocusIndex(newIndex);
-
-                    setVirtualizationStartIndex((prev) =>
-                        ensureKeyboardSelectionInView(prev, newIndex, sizeWithDefault),
-                    );
-                    makeKeyboardSelection(newIndex, modifiers);
-                }
-
-                if (e.key === "ArrowDown") {
-                    e.preventDefault();
-                    const newIndex = Math.min(filteredOptions.length - 1, currentFocusIndex + 1);
-                    setCurrentFocusIndex(newIndex);
-                    setVirtualizationStartIndex((prev) =>
-                        ensureKeyboardSelectionInView(prev, newIndex, sizeWithDefault),
-                    );
-                    makeKeyboardSelection(newIndex, modifiers);
-                }
-
-                if (e.key === " " && e.ctrlKey) {
-                    e.preventDefault();
-                    addKeyboardSelection(currentFocusIndex);
-                }
-
-                if (e.key === "PageDown") {
-                    e.preventDefault();
-                    const newIndex = Math.min(filteredOptions.length - 1, currentFocusIndex + sizeWithDefault);
-                    setCurrentFocusIndex(newIndex);
-                    setVirtualizationStartIndex((prev) =>
-                        ensureKeyboardSelectionInView(prev, newIndex, sizeWithDefault),
-                    );
-                    makeKeyboardSelection(newIndex, modifiers);
-                }
-
-                if (e.key === "PageUp") {
-                    e.preventDefault();
-                    const newIndex = Math.max(0, currentFocusIndex - sizeWithDefault);
-                    setCurrentFocusIndex(newIndex);
-                    setVirtualizationStartIndex((prev) =>
-                        ensureKeyboardSelectionInView(prev, newIndex, sizeWithDefault),
-                    );
-                    makeKeyboardSelection(newIndex, modifiers);
-                }
-
-                if (e.key === "Home") {
-                    e.preventDefault();
-                    setCurrentFocusIndex(0);
-                    setVirtualizationStartIndex(0);
-                    makeKeyboardSelection(0, modifiers);
-                }
-
-                if (e.key === "End") {
-                    e.preventDefault();
-                    const newIndex = filteredOptions.length - 1;
-                    setCurrentFocusIndex(newIndex);
-                    setVirtualizationStartIndex(Math.max(0, newIndex - sizeWithDefault + 1));
-                    makeKeyboardSelection(newIndex, modifiers);
-                }
+                changeDebouncer.flush(); // Blur means user is done selecting, so we can apply it immediately;
             }
 
             refCurrent?.addEventListener("focus", handleFocus);
-            refCurrent?.addEventListener("blur-sm", handleBlur);
-            refCurrent?.addEventListener("keydown", handleKeyDown);
+            refCurrent?.addEventListener("blur", handleBlur);
 
             return function removeKeyboardEventListeners() {
                 refCurrent?.removeEventListener("focus", handleFocus);
-                refCurrent?.removeEventListener("blur-sm", handleBlur);
-                refCurrent?.removeEventListener("keydown", handleKeyDown);
+                refCurrent?.removeEventListener("blur", handleBlur);
             };
         },
-        [
-            currentFocusIndex,
-            filteredOptions,
-            sizeWithDefault,
-            multipleWithDefault,
-            handleOnChange,
-            selectionAnchor,
-            selectedOptionValues,
-        ],
+        [filteredOptions, sizeWithDefault, multipleWithDefault, selectionAnchor, changeDebouncer],
     );
 
     function handleOptionClick(e: React.MouseEvent<HTMLDivElement>, option: SelectOption<TValue>, index: number) {
@@ -286,7 +114,6 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
 
         if (!multipleWithDefault) {
             setSelectedOptionValues([option.value]);
-            handleOnChange([option.value]);
             return;
         }
 
@@ -307,14 +134,11 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
             setSelectionAnchor(index);
         }
 
-        handleOnChange(newSelectedOptions);
-
         setSelectedOptionValues(newSelectedOptions);
     }
 
     function filterOptions(options: SelectOption<TValue>[], filterString: string) {
         let newCurrentKeyboardFocusIndex = 0;
-        let newVirtualizationStartIndex = 0;
 
         let currentlySelectedOption = filteredOptions[currentFocusIndex]?.value;
         if (selectedOptionValues.length > 0) {
@@ -332,12 +156,10 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
             );
             if (firstSelectedOptionIndex !== -1) {
                 newCurrentKeyboardFocusIndex = firstSelectedOptionIndex;
-                newVirtualizationStartIndex = firstSelectedOptionIndex;
             }
         }
 
         setCurrentFocusIndex(newCurrentKeyboardFocusIndex);
-        setVirtualizationStartIndex(newVirtualizationStartIndex);
         setSelectionAnchor(newFilteredOptions.findIndex((option) => option.value === selectedOptionValues[0]));
     }
 
@@ -416,9 +238,12 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                         </div>
                     )}
                     <Virtualization
+                        direction="vertical"
+                        startIndex={scrollStartIndex}
                         containerRef={virtualizationRef}
                         items={filteredOptions}
                         itemSize={props.optionHeight ?? 24}
+                        onStartIndexChange={setScrollStartIndex}
                         renderItem={(option, index) => {
                             return (
                                 <div
@@ -437,7 +262,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                                                 selectedOptionValues.includes(option.value),
                                             "pointer-events-none": option.disabled,
                                             "text-gray-400": option.disabled,
-                                            outline: index === currentFocusIndex && hasFocus,
+                                            "outline -outline-offset-1": index === currentFocusIndex && hasFocus,
                                         },
                                     )}
                                     onClick={(e) => handleOptionClick(e, option, index)}
@@ -453,8 +278,6 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                                 </div>
                             );
                         }}
-                        direction="vertical"
-                        startIndex={virtualizationStartIndex}
                     />
                 </div>
             </div>

@@ -1,10 +1,8 @@
 import React from "react";
 
-import { debounce, isEqual } from "lodash";
+import { debounce, defaults, isEqual } from "lodash";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
-
-import { withDefaults } from "../_component-utils/components";
 
 export type VirtualizationProps<T = any> = {
     /** The HTML tag to use for the generated spacer elements */
@@ -38,9 +36,11 @@ const defaultProps = {
     overscan: 1,
 };
 
-type VisibleItemsRange = { start: number; end: number };
+export type VisibleItemsRange = { start: number; end: number };
 
-export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, (props) => {
+export function Virtualization<T>(actualProps: VirtualizationProps<T>) {
+    const props = defaults({}, actualProps, defaultProps);
+
     const { onStartIndexChange, onRangeComputed } = props;
 
     const containerSize = useElementSize(props.containerRef);
@@ -55,40 +55,42 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
         return { head: props.overscan, tail: props.overscan };
     }, [props.overscan]);
 
-    // Items visible within the scroll container
+    // Items visible within the scroll container. Floating numbers imply the item is partially visible
     const [visibleItemsRange, setVisibleItemsRange] = React.useState<VisibleItemsRange>({
-        start: props.startIndex,
+        start: props.startIndex ?? 0,
         end: 0,
     });
 
+    const itemRenderRange = React.useMemo(() => {
+        // A partially visible item is still rendered (0.5,9,6 -> 0, 9)
+        const firstItemIndex = Math.floor(visibleItemsRange.start);
+        const lastItemIndex = Math.floor(visibleItemsRange.end);
+
+        return {
+            start: Math.max(0, firstItemIndex - overscanAmount.head),
+            end: Math.min(props.items.length - 1, lastItemIndex + overscanAmount.tail),
+        };
+    }, [overscanAmount.head, overscanAmount.tail, props.items.length, visibleItemsRange.end, visibleItemsRange.start]);
+
     const placeholderSizes = React.useMemo(() => {
-        const hiddenItemsStart = visibleItemsRange.start - overscanAmount.head;
-        const hiddenItemsEnd = props.items.length - visibleItemsRange.end - overscanAmount.tail - 1;
+        const hiddenItemsStart = itemRenderRange.start;
+        const hiddenItemsEnd = props.items.length - 1 - itemRenderRange.end;
 
         return {
             start: Math.max(0, hiddenItemsStart) * props.itemSize,
             end: Math.max(0, hiddenItemsEnd) * props.itemSize,
         };
-    }, [
-        props.itemSize,
-        props.items.length,
-        overscanAmount.head,
-        overscanAmount.tail,
-        visibleItemsRange.end,
-        visibleItemsRange.start,
-    ]);
-
-    const itemRenderRange = React.useMemo(() => {
-        return {
-            start: Math.max(0, visibleItemsRange.start - overscanAmount.head),
-            end: Math.min(props.items.length, visibleItemsRange.end + overscanAmount.tail),
-        };
-    }, [overscanAmount.head, overscanAmount.tail, props.items.length, visibleItemsRange.end, visibleItemsRange.start]);
+    }, [itemRenderRange.end, itemRenderRange.start, props.itemSize, props.items.length]);
 
     const updateVirtualizationRange = React.useCallback(
         function updateVirtualizationRange(newRange: VisibleItemsRange) {
-            setVisibleItemsRange(newRange);
-            onRangeComputed?.(newRange.start, newRange.end);
+            const newRenderRange = {
+                start: Math.max(0, newRange.start),
+                end: Math.min(props.items.length - 1, newRange.end),
+            };
+
+            setVisibleItemsRange(newRenderRange);
+            onRangeComputed?.(newRenderRange.start, newRenderRange.end);
 
             // Avoid retriggering programmatic index changes
             if (!isProgrammaticScroll.current) onStartIndexChange?.(newRange.start);
@@ -96,7 +98,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
             lastScrolledRange.current = newRange;
             isProgrammaticScroll.current = false;
         },
-        [onRangeComputed, onStartIndexChange],
+        [onRangeComputed, onStartIndexChange, props.items.length],
     );
 
     React.useLayoutEffect(
@@ -135,8 +137,8 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
                 const scrollPosition = isVertical ? currentContainer.scrollTop : currentContainer.scrollLeft;
                 const size = isVertical ? containerSize.height : containerSize.width;
 
-                const startIndex = Math.floor(scrollPosition / props.itemSize);
-                const endIndex = Math.ceil((scrollPosition + size) / props.itemSize) - 1;
+                const startIndex = scrollPosition / props.itemSize;
+                const endIndex = (scrollPosition + size) / props.itemSize;
 
                 const newRange = {
                     start: startIndex,
@@ -205,6 +207,6 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
                 React.createElement(props.placeholderComponent, { style: makeStyle(placeholderSizes.end) })}
         </>
     );
-});
+}
 
 Virtualization.displayName = "Virtualization";
