@@ -18,7 +18,7 @@ type ValueType = PolygonVisualizationSpec | null;
 
 export class PolygonVisualizationSetting implements CustomSettingImplementation<ValueType, SettingCategory.STATIC> {
     defaultValue: ValueType = {
-        color: "#000",
+        color: "#000000",
         lineThickness: 2,
         lineOpacity: 1,
         fill: false,
