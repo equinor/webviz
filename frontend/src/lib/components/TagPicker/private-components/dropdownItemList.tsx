@@ -1,5 +1,6 @@
 import React from "react";
 
+import type { VirtualizationProps } from "@lib/components/Virtualization/virtualization";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -13,8 +14,7 @@ export type DropdownItemListProps<T> = {
     optionHeight: number;
     dropdownMaxHeight: number;
     itemFocusIndex?: number;
-    renderItem?: (item: T, index: number) => React.ReactNode;
-};
+} & Pick<VirtualizationProps<T>, "makeKey" | "renderItem">;
 
 type DropdownRect = {
     left?: number;
@@ -137,14 +137,14 @@ export function DropdownItemListComponent<T>(
                 itemSize={props.optionHeight}
                 containerRef={innerDropdownRef}
                 startIndex={virtualizerStartIndex}
+                makeKey={(item, idx) => {
+                    if (props.makeKey) return props.makeKey(item, idx);
+                    return String(item) + idx;
+                }}
                 renderItem={(item, idx) => {
                     if (props.renderItem) return props.renderItem(item, idx);
 
-                    return (
-                        <li key={String(item) + idx} style={{ height: props.optionHeight }}>
-                            {String(item)}
-                        </li>
-                    );
+                    return <li style={{ height: props.optionHeight }}>{String(item)}</li>;
                 }}
             />
         </ul>,
