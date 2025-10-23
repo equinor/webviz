@@ -1,5 +1,6 @@
 import React from "react";
 
+import { Help, Warning } from "@mui/icons-material";
 import { cloneDeep, isEqual } from "lodash";
 
 import type { InplaceVolumesIndexWithValues_api } from "@api";
@@ -14,8 +15,11 @@ import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framew
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { ErrorWrapper } from "@lib/components/ErrorWrapper";
+import { IconButton } from "@lib/components/IconButton";
+import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
+import { Tooltip } from "@lib/components/Tooltip";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
@@ -243,11 +247,35 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
             <PendingWrapper isPending={props.isPending ?? false} errorMessage={props.errorMessage}>
                 <div className="flex flex-col gap-2">{props.additionalSettings}</div>
                 <div className="flex flex-col gap-2">
-                    <CollapsibleGroup title="Inplace volumes table names" expanded>
+                    <CollapsibleGroup title="Table sources" expanded>
                         <ErrorWrapper
                             isError={tableSourceOptions.length === 0 && !props.isPending}
                             message={"No table names"}
                         >
+                            <div className="flex">
+                                <Label wrapperClassName="mb-2 flex-1" position="left" text="Allow table intersections">
+                                    <Checkbox
+                                        checked={props.selectedAllowIndicesValuesIntersection}
+                                        onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
+                                    />
+                                </Label>
+                                <Tooltip
+                                    title={
+                                        <>
+                                            When active allows comparison of tables where available zones, regions,
+                                            facies, fluids or responses differs.
+                                            <br />
+                                            Only the <b>intersection</b> of options will then be available for
+                                            filtering. <br />
+                                            Identifiers not present in all tables will be <b>filtered out</b>.
+                                        </>
+                                    }
+                                >
+                                    <IconButton color="danger" size="small">
+                                        <Warning className="mr-2" fontSize="medium" />
+                                    </IconButton>
+                                </Tooltip>
+                            </div>
                             <Select
                                 options={tableSourceOptions}
                                 value={tableNames}
@@ -257,15 +285,8 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                             />
                         </ErrorWrapper>
                     </CollapsibleGroup>
-                    <CollapsibleGroup title="Index filters" expanded>
+                    <CollapsibleGroup title="Filters">
                         <div className="flex flex-col gap-2">
-                            <div className="flex flex-row items-center gap-2">
-                                <div className="grow">Allow intersection of values</div>
-                                <Checkbox
-                                    checked={props.selectedAllowIndicesValuesIntersection}
-                                    onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
-                                />
-                            </div>
                             <ErrorWrapper
                                 isError={!props.areCurrentlySelectedTablesComparable}
                                 message={"Selected tables are not comparable due to mismatching index columns"}

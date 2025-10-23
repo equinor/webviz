@@ -133,7 +133,6 @@ export function useGetAggregatedPerRealizationTableDataQueries(
 
     const eachIndexHasValues = indicesWithValues.every((index) => index.values.length > 0);
     const validGroupByIndices = groupByIndices.length === 0 ? null : groupByIndices;
-
     const queries = uniqueSources.map((source) => {
         const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
         const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;

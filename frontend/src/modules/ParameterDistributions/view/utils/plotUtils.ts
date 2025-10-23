@@ -153,27 +153,19 @@ export function createHistogramTrace(ensembleData: EnsembleParameterRealizations
         ...histogramTrace,
         name: ensembleData.ensembleDisplayName,
         showlegend: false,
-        opacity: 0.7,
     };
 }
 
 export function generateLayoutForParameter({
-    width,
-    height,
     title,
     xAxisIsLogarithmic,
     showZeroLine,
 }: {
-    width: number;
-    height: number;
     title: string;
     xAxisIsLogarithmic: boolean;
     showZeroLine: boolean;
 }): Partial<Layout> {
     return {
-        width: width,
-        height: height,
-
         margin: { l: 50, r: 10, b: 50, t: 50 },
         title: {
             text: title,

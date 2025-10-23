@@ -37,6 +37,7 @@ export function makeHistogramTrace({
 
         marker: {
             color: color,
+            opacity: 0.8,
             line: {
                 color: "black",
                 width: 1,
