@@ -244,19 +244,18 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                     itemFocusIndex={focusedItemIndex}
                     dropdownMaxHeight={DROPDOWN_MAX_HEIGHT}
                     emptyListText={props.tagOptions.length === 0 ? NO_TAGS_TEXT : NO_MATCHING_TAGS_TEXT}
-                    renderItem={(option, index) => (
-                        <React.Fragment key={index}>
-                            {renderTagOptionOrDefault({
-                                value: option.value,
-                                label: option.label,
-                                isSelected: selection.includes(option.value),
-                                isFocused: focusedItemIndex === index,
-                                height: TAG_OPTION_HEIGHT,
-                                onToggle: () => handleToggleTag(option.value),
-                                onHover: () => setFocusedItemIndex(index),
-                            })}
-                        </React.Fragment>
-                    )}
+                    makeKey={(option) => option.value}
+                    renderItem={(option, index) =>
+                        renderTagOptionOrDefault({
+                            value: option.value,
+                            label: option.label,
+                            isSelected: selection.includes(option.value),
+                            isFocused: focusedItemIndex === index,
+                            height: TAG_OPTION_HEIGHT,
+                            onToggle: () => handleToggleTag(option.value),
+                            onHover: () => setFocusedItemIndex(index),
+                        })
+                    }
                 />
             )}
         </BaseComponent>

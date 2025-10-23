@@ -244,10 +244,10 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                         items={filteredOptions}
                         itemSize={props.optionHeight ?? 24}
                         onStartIndexChange={setScrollStartIndex}
+                        makeKey={(option) => String(option.value)}
                         renderItem={(option, index) => {
                             return (
                                 <div
-                                    key={option.value}
                                     className={resolveClassNames(
                                         "cursor-pointer",
                                         "pl-2",

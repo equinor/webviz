@@ -12,6 +12,8 @@ export type VirtualizationProps<T = any> = {
     /** The list of items to virtualize */
     items: Array<T>;
 
+    /** Optional function to generate a react-key for items. If not provided, the item's index will be used */
+    makeKey?: (item: T, index: number) => string | number;
     /** Callback for rendering items in the list. The rendered item's size should match `props.itemSize` */
     renderItem: (item: T, index: number) => React.ReactNode;
     /** The pixel size of each rendered item */
@@ -34,6 +36,7 @@ const defaultProps = {
     placeholderComponent: "div" as React.ElementType,
     startIndex: 0,
     overscan: 1,
+    makeKey: (_: unknown, index: number) => index,
 };
 
 export type VisibleItemsRange = { start: number; end: number };
@@ -200,9 +203,12 @@ export function Virtualization<T>(actualProps: VirtualizationProps<T>) {
         <>
             {placeholderSizes.start > 0 &&
                 React.createElement(props.placeholderComponent, { style: makeStyle(placeholderSizes.start) })}
-            {props.items
-                .slice(itemRenderRange.start, itemRenderRange.end + 1)
-                .map((item, index) => props.renderItem(item, index + itemRenderRange.start))}
+            {props.items.slice(itemRenderRange.start, itemRenderRange.end + 1).map((item, index) => (
+                <React.Fragment key={props.makeKey(item, index + itemRenderRange.start)}>
+                    {props.renderItem(item, index + itemRenderRange.start)}
+                </React.Fragment>
+            ))}
+
             {placeholderSizes.end > 0 &&
                 React.createElement(props.placeholderComponent, { style: makeStyle(placeholderSizes.end) })}
         </>

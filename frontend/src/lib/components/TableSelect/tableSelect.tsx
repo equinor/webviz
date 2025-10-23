@@ -324,10 +324,10 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
                         containerRef={ref}
                         items={filteredOptions}
                         itemSize={24}
-                        renderItem={(option: TableSelectOption, index: number) => {
+                        makeKey={(option) => option.id}
+                        renderItem={(option, index) => {
                             return (
                                 <div
-                                    key={option.id}
                                     className={resolveClassNames(
                                         "cursor-pointer",
                                         "flex",

@@ -92,9 +92,9 @@ export function TableBody<T extends Record<string, any>>(props: TableBodyProps<T
                 items={props.rows}
                 itemSize={props.rowHeight}
                 onRangeComputed={props.onVisibleRowRangeChange}
+                makeKey={(row) => row._key}
                 renderItem={(row, rowIndex) => (
                     <TableRow
-                        key={row._key}
                         row={row}
                         selectionEnabled={props.selectable}
                         height={props.rowHeight}

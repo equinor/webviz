@@ -608,7 +608,6 @@ export function TableComponent(
 
         return (
             <tr
-                key={row.id}
                 className={`group/tr ${
                     props.highlightFilter && props.highlightFilter(row.values) ? "bg-blue-100 " : ""
                 }`}
@@ -638,6 +637,7 @@ export function TableComponent(
                         placeholderComponent="tr"
                         items={filteredData}
                         itemSize={ROW_HEIGHT_PX}
+                        makeKey={(row) => row.id}
                         renderItem={makeDataRow}
                     />
                 </tbody>

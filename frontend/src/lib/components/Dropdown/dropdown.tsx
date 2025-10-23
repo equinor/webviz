@@ -511,11 +511,10 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
 
     function renderItem(item: OptionOrTitle<TValue>, index: number) {
         if (item.type === ItemType.GROUP_TITLE) {
-            return <GroupTitle key={`${item.label}-${index}`} {...item} />;
+            return <GroupTitle {...item} />;
         } else {
             return (
                 <OptionItem
-                    key={`${item.value}`}
                     isSelected={_.isEqual(selectedValue, item.value)}
                     isFocused={optionIndexWithFocus === index}
                     isInGroup={!!item.parent}
@@ -525,6 +524,11 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
                 />
             );
         }
+    }
+
+    function makeItemKey(item: OptionOrTitle<TValue>, index: number) {
+        if (item.type === ItemType.GROUP_TITLE) return `${item.label}-${index}`;
+        return `${item.value}`;
     }
 
     return (
@@ -614,6 +618,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
                                     itemSize={OPTION_HEIGHT}
                                     containerRef={dropdownRef}
                                     startIndex={startIndex}
+                                    makeKey={makeItemKey}
                                     renderItem={renderItem}
                                 />
                             </ul>
