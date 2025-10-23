@@ -1,10 +1,9 @@
 import React from "react";
 
-import { inRange, range } from "lodash";
+import { inRange } from "lodash";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { Button } from "@lib/components/Button";
-import { Dropdown } from "@lib/components/Dropdown";
 import { Select } from "@lib/components/Select";
 import { Table } from "@lib/components/Table";
 import type {
@@ -14,8 +13,6 @@ import type {
     TableColumns,
 } from "@lib/components/Table/types";
 import { SortDirection } from "@lib/components/Table/types";
-import type { TableSelectOption } from "@lib/components/TableSelect";
-import { TableSelect } from "@lib/components/TableSelect";
 import { TagPicker } from "@lib/components/TagPicker";
 import { ToggleButton } from "@lib/components/ToggleButton";
 
@@ -167,7 +164,7 @@ function Tags(props: { tags: string[] }): React.ReactNode {
             
 */
 export const View = (props: ModuleViewProps<Interfaces>) => {
-    const itemsRange = range(0, 30);
+    // const itemsRange = React.useMemo(() => range(0, 30), []);
 
     const alternateColColors = props.viewContext.useSettingsToViewInterfaceValue("alternateColColors");
     const allowMultiSelect = props.viewContext.useSettingsToViewInterfaceValue("allowMultiSelect");
@@ -179,7 +176,6 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
     const [tableSortingState, setTableSortingState] = React.useState<TableSorting>([]);
     const [tableFilterState, setTableFilterState] = React.useState<TableFilters>({});
 
-    const [selectedRows, setSelectedRows] = React.useState<string[]>([]);
     const [hoveredItem, setHoveredItem] = React.useState<string | null>(null);
     const [collatedData, setCollatedData] = React.useState<typeof tableData>([]);
 
@@ -192,30 +188,48 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
         setTableFilterState(newFilter);
     }
 
-    const options = itemsRange.map((n) => ({
-        label: "Item " + n,
-        value: "item_" + n,
-    }));
+    const options = React.useMemo(
+        () =>
+            tableData.map((t, idx) => ({
+                value: t.id,
+                label: t.id,
+                disabled: idx % 5 === 0,
+            })),
+        [tableData],
+    );
 
-    const tableSelectOptions: TableSelectOption[] = itemsRange.map((n) => ({
-        id: "item_" + n,
-        values: [{ label: "ipsum" + n }, { label: "bar" + n }],
-    }));
-
-    const [value, setValue] = React.useState<string | string[] | null>(null);
+    const [value, setValue] = React.useState<string[]>([]);
 
     return (
         <div className="h-full w-full flex flex-col">
-            <h2>{value ?? "Nothing selected"}</h2>
-
             <div className="mt-4 gap-5 grid grid-cols-2">
-                <Dropdown value={value} options={options} onChange={setValue} />
+                <div>
+                    <p className="font-semibold text-sm ">Not debounced</p>
+                    <Select
+                        value={value}
+                        multiple={allowMultiSelect}
+                        size={6.5}
+                        options={options}
+                        onChange={setValue}
+                    />
+                </div>
 
-                <TagPicker tagOptions={options} selection={[]} />
+                <div>
+                    <p className="font-semibold text-sm ">Debounced</p>
 
-                <Select size={6} options={options} onChange={setValue} />
+                    <Select
+                        debounceTimeMs={1000}
+                        value={value}
+                        multiple={allowMultiSelect}
+                        size={6.5}
+                        options={options}
+                        onChange={setValue}
+                    />
+                </div>
 
-                <TableSelect size={6} options={tableSelectOptions} headerLabels={["lorem", "foo"]} />
+                <TagPicker selection={value} tagOptions={options} onChange={setValue} />
+
+                <h2>{value.length ? value : "Nothing selected"}</h2>
             </div>
 
             <h3 className="mt-6 font-extrabold text-lg">New (controlled)</h3>
@@ -254,6 +268,7 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
 
             <Table
                 rowIdentifier="id"
+                selectedRows={value}
                 height={"50%"}
                 numPendingRows={fillPendingData ? "fill" : numPending}
                 columns={TABLE_COLUMNS}
@@ -267,7 +282,7 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
                 multiSelect={allowMultiSelect}
                 onSortingChange={setTableSortingState}
                 onFiltersChange={handleFilterUpdate}
-                onSelectedRowsChange={setSelectedRows}
+                onSelectedRowsChange={setValue}
                 onRowHover={setHoveredItem}
                 onDataCollated={setCollatedData}
                 onVisibleRowRangeChange={(start, end) => setScrollRange([start, end])}
@@ -278,7 +293,7 @@ export const View = (props: ModuleViewProps<Interfaces>) => {
                 <span>Valid rows: {collatedData.length} </span>
                 <span className="text-center">[{scrollRange?.join(", ")}]</span>
 
-                <span className="text-right">{selectedRows?.length ?? 0} row(s) selected</span>
+                <span className="text-right">{value?.length ?? 0} row(s) selected</span>
             </div>
         </div>
     );
