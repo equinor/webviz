@@ -16,7 +16,7 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 
 import { LoadingOverlay } from "../LoadingOverlay";
 
-import { useResponsiveDialogHeightPercent } from "./_hooks";
+import { useResponsiveDialogSizePercent } from "./_hooks";
 import {
     makeDeltaEnsembleSettingsFromEnsembleSet,
     makeHashFromDeltaEnsemble,
@@ -68,7 +68,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         PrivateWorkbenchSessionTopic.IS_ENSEMBLE_SET_LOADING,
     );
 
-    const dialogHeightPercent = useResponsiveDialogHeightPercent();
+    const dialogSizePercent = useResponsiveDialogSizePercent();
     const colorSet = useColorSet(props.workbench.getWorkbenchSession().getWorkbenchSettings());
     const currentHash = makeHashFromSelectedEnsembles(selectedRegularEnsembles, selectedDeltaEnsembles);
 
@@ -359,6 +359,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     }, [showEnsembleExplorer, ensembleExplorerMode]);
 
     const hasAnyChanges = hash !== currentHash;
+
     return (
         <>
             <Dialog
@@ -367,9 +368,10 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 title={dialogTitle}
                 modal
                 showCloseCross
-                width={"75%"}
+                width={`${dialogSizePercent.width}%`}
+                height={`${dialogSizePercent.height}%`}
+                maxWidth={"100%"}
                 minWidth={800}
-                height={`${dialogHeightPercent}%`}
                 minHeight={600}
                 actions={
                     <div className="flex gap-4">
