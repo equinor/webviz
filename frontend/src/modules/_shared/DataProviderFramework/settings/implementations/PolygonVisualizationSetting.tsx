@@ -35,7 +35,19 @@ export class PolygonVisualizationSetting implements CustomSettingImplementation<
     isValueValid(value: ValueType): boolean {
         if (!value) return false;
 
-        return true;
+        const validLabelPositions = Object.values(LabelPositionType);
+
+        return (
+            /^#[0-9A-Fa-f]{6}$/.test(value.color) &&
+            value.lineThickness >= 0.5 &&
+            value.lineThickness <= 10 &&
+            value.lineOpacity >= 0 &&
+            value.lineOpacity <= 1 &&
+            value.fillOpacity >= 0 &&
+            value.fillOpacity <= 1 &&
+            validLabelPositions.includes(value.labelPosition as LabelPositionType) &&
+            /^#[0-9A-Fa-f]{6}$/.test(value.labelColor)
+        );
     }
 
     serializeValue(value: ValueType): string {
