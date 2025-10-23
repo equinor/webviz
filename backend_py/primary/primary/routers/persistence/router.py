@@ -35,7 +35,7 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/sessions", response_model=List[schemas.SessionMetadataWithId])
+@router.get("/sessions")
 @no_cache
 async def get_sessions_metadata(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -56,7 +56,7 @@ async def get_sessions_metadata(
         return [to_api_session_metadata_summary(item) for item in items]
 
 
-@router.get("/sessions/{session_id}", response_model=schemas.SessionDocument)
+@router.get("/sessions/{session_id}")
 @no_cache
 async def get_session(
     session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
@@ -69,7 +69,7 @@ async def get_session(
         return to_api_session_record(session)
 
 
-@router.get("/sessions/metadata/{session_id}", response_model=schemas.SessionMetadata)
+@router.get("/sessions/metadata/{session_id}")
 @no_cache
 async def get_session_metadata(
     session_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
@@ -82,7 +82,7 @@ async def get_session_metadata(
         return to_api_session_metadata(metadata)
 
 
-@router.post("/sessions", response_model=str)
+@router.post("/sessions")
 async def create_session(
     session: NewSession, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> str:
@@ -111,7 +111,7 @@ async def delete_session(session_id: str, user: AuthenticatedUser = Depends(Auth
         await access.delete_session_async(session_id)
 
 
-@router.get("/recent_snapshots", response_model=list[schemas.SnapshotAccessLog])
+@router.get("/recent_snapshots")
 async def get_recent_snapshots(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     sort_by: Optional[SnapshotAccessLogSortBy] = Query(None, description="Sort the result by"),
@@ -127,7 +127,7 @@ async def get_recent_snapshots(
         return [to_api_snapshot_access_log(log) for log in recent_logs]
 
 
-@router.get("/snapshots", response_model=List[schemas.SnapshotMetadata])
+@router.get("/snapshots")
 @no_cache
 async def get_snapshots_metadata(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -143,7 +143,7 @@ async def get_snapshots_metadata(
         return [to_api_snapshot_metadata_summary(item) for item in items]
 
 
-@router.get("/snapshots/{snapshot_id}", response_model=schemas.Snapshot)
+@router.get("/snapshots/{snapshot_id}")
 @no_cache
 async def get_snapshot(
     snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
@@ -159,7 +159,7 @@ async def get_snapshot(
         return to_api_snapshot(snapshot)
 
 
-@router.get("/snapshots/metadata/{snapshot_id}", response_model=schemas.SnapshotMetadata)
+@router.get("/snapshots/metadata/{snapshot_id}")
 @no_cache
 async def get_snapshot_metadata(
     snapshot_id: str, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
@@ -170,7 +170,7 @@ async def get_snapshot_metadata(
         return to_api_snapshot_metadata(metadata)
 
 
-@router.post("/snapshots", response_model=str)
+@router.post("/snapshots")
 async def create_snapshot(
     session: NewSnapshot, user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user)
 ) -> str:

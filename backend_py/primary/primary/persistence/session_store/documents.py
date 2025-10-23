@@ -28,8 +28,11 @@ class SessionMetadata(BaseModel):
 
         return self.description.lower()
 
+
 class SessionDocument(BaseModel):
-    id: str  # id of the session document - has to be at top level - also used as partition key
+    # id of the session document - has to be at top level - also used as partition key
+    id: str
+
     owner_id: str
     metadata: SessionMetadata
     content: str

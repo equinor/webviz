@@ -5,8 +5,12 @@ from primary.persistence.snapshot_store.utils import make_access_log_item_id
 
 
 class SessionMetadata(BaseModel):
+    id: str
+    ownerId: str
+
     title: str
     description: Optional[str]
+
     createdAt: str
     updatedAt: str
     version: int
