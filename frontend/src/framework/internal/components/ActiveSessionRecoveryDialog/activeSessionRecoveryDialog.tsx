@@ -1,11 +1,11 @@
 import React from "react";
 
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { loadAllWorkbenchSessionsFromLocalStorage } from "@framework/internal/WorkbenchSession/utils/loaders";
 import {
     extractLayout,
     type WorkbenchSessionDataContainer,
-} from "@framework/internal/WorkbenchSession/WorkbenchSessionDataContainer";
-import { loadAllWorkbenchSessionsFromLocalStorage } from "@framework/internal/WorkbenchSession/WorkbenchSessionLoader";
+} from "@framework/internal/WorkbenchSession/utils/WorkbenchSessionDataContainer";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";

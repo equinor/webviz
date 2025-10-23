@@ -2,25 +2,25 @@ import React from "react";
 
 import { Icon, Typography } from "@equinor/eds-core-react";
 import { category } from "@equinor/eds-icons";
+import { Dropdown, MenuButton } from "@mui/base";
+import { AddLink, ArrowDropDown, Category, Close, Edit, Link, Lock, Refresh, Save, SaveAs } from "@mui/icons-material";
 
 import FmuLogo from "@assets/fmu.svg";
 
+import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+import { WorkbenchSessionPersistenceServiceTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionPersistenceService";
 import { WorkbenchTopic, type Workbench } from "@framework/Workbench";
+import { Button } from "@lib/components/Button";
+import type { ButtonProps } from "@lib/components/Button/button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { Menu } from "@lib/components/Menu";
+import { MenuItem } from "@lib/components/MenuItem";
+import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { LoginButton } from "../LoginButton";
-import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
-import { Tooltip } from "@lib/components/Tooltip";
-import { AddLink, ArrowDropDown, Category, Close, Edit, Link, Lock, Refresh, Save, SaveAs } from "@mui/icons-material";
-import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { WorkbenchSessionPersistenceServiceTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionPersistenceService";
-import { Dropdown, MenuButton } from "@mui/base";
-import { Menu } from "@lib/components/Menu";
-import { MenuItem } from "@lib/components/MenuItem";
-import { Button } from "@lib/components/Button";
-import type { ButtonProps } from "@lib/components/Button/button";
-import { CircularProgress } from "@lib/components/CircularProgress";
 
 export type TopBarProps = {
     workbench: Workbench;

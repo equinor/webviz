@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/query-core";
+
 import {
     createSession,
     createSnapshot,
@@ -8,7 +10,6 @@ import {
     type NewSession_api,
     type SessionUpdate_api,
 } from "@api";
-import type { QueryClient } from "@tanstack/query-core";
 
 export async function createSessionWithCacheUpdate(
     queryClient: QueryClient,

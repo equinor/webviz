@@ -11,7 +11,7 @@ import {
 import type { ModuleInstance, PartialSerializedModuleState } from "@framework/ModuleInstance";
 import { isPersistableAtom, Source } from "@framework/utils/atomUtils";
 
-import { hashJsonString, objectToJsonString } from "./WorkbenchSession/utils/hash";
+import { hashSessionContentString, objectToJsonString } from "./WorkbenchSession/utils/hash";
 
 type StringifiedSerializedModuleComponentsState = {
     settings?: string;
@@ -132,7 +132,7 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
             view: serializedView,
         } as TSerializedState;
 
-        const newHash = await hashJsonString(objectToJsonString(newSerializedState));
+        const newHash = await hashSessionContentString(objectToJsonString(newSerializedState));
 
         if (newHash !== this._lastSerializedHash) {
             this._serializedState = newSerializedState;

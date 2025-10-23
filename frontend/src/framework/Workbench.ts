@@ -4,9 +4,9 @@ import { isAxiosError } from "axios";
 import { getRecentSnapshotsQueryKey } from "@api";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 
-import { AtomStoreMaster } from "./AtomStoreMaster";
 import { ConfirmationService } from "./ConfirmationService";
 import { GuiMessageBroker, GuiState, LeftDrawerContent, RightDrawerContent } from "./GuiMessageBroker";
+import { Dashboard } from "./internal/Dashboard";
 import { EnsembleUpdateMonitor } from "./internal/EnsembleUpdateMonitor";
 import { NavigationObserver } from "./internal/NavigationObserver";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
@@ -45,7 +45,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
     private _workbenchSession: PrivateWorkbenchSession | null = null;
     private _workbenchServices: PrivateWorkbenchServices;
     private _guiMessageBroker: GuiMessageBroker;
-    private _atomStoreMaster: AtomStoreMaster;
     private _queryClient: QueryClient;
     private _workbenchSessionPersistenceService: WorkbenchSessionPersistenceService;
     private _navigationObserver: NavigationObserver;
@@ -54,7 +53,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
     constructor(queryClient: QueryClient) {
         this._queryClient = queryClient;
-        this._atomStoreMaster = new AtomStoreMaster();
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._guiMessageBroker = new GuiMessageBroker();
         this._ensembleUpdateMonitor = new EnsembleUpdateMonitor(queryClient, this);
@@ -220,11 +218,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         try {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
             const snapshotData = await loadSnapshotFromBackend(this._queryClient, snapshotId);
-            const snapshot = await PrivateWorkbenchSession.fromDataContainer(
-                this._atomStoreMaster,
-                this._queryClient,
-                snapshotData,
-            );
+            const snapshot = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, snapshotData);
             await this.setWorkbenchSession(snapshot);
             if (this.getGuiMessageBroker().getState(GuiState.LeftDrawerContent) !== LeftDrawerContent.ModuleSettings) {
                 this._guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
@@ -318,11 +312,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
                 return;
             }
 
-            const session = await PrivateWorkbenchSession.fromDataContainer(
-                this._atomStoreMaster,
-                this._queryClient,
-                sessionData,
-            );
+            const session = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, sessionData);
 
             await this.setWorkbenchSession(session);
             this._guiMessageBroker.setState(GuiState.MultiSessionsRecoveryDialogOpen, false);
@@ -351,11 +341,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
 
         try {
             const sessionData = await loadWorkbenchSessionFromBackend(this._queryClient, sessionId);
-            const session = await PrivateWorkbenchSession.fromDataContainer(
-                this._atomStoreMaster,
-                this._queryClient,
-                sessionData,
-            );
+            const session = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, sessionData);
             await this.setWorkbenchSession(session);
         } catch (error) {
             console.error("Failed to load session from backend:", error);
@@ -469,7 +455,7 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
             return;
         }
 
-        const session = PrivateWorkbenchSession.createEmpty(this._atomStoreMaster, this._queryClient);
+        const session = PrivateWorkbenchSession.createEmpty(this._queryClient);
 
         await this.setWorkbenchSession(session);
     }
@@ -595,10 +581,6 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
     }
 
-    getAtomStoreMaster(): AtomStoreMaster {
-        return this._atomStoreMaster;
-    }
-
     getWorkbenchSession(): PrivateWorkbenchSession {
         if (!this._workbenchSession) {
             throw new Error("Workbench session has not been started. Call startNewSession() first.");
@@ -614,12 +596,28 @@ export class Workbench implements PublishSubscribe<WorkbenchTopicPayloads> {
         return this._guiMessageBroker;
     }
 
-    applyTemplate(template: Template): void {
-        if (!this._workbenchSession) {
-            throw new Error("No active workbench session.");
+    beforeDestroy(): void {
+        this._navigationObserver.beforeDestroy();
+    }
+
+    clear(): void {
+        // this._workbenchSession.clear();
+    }
+
+    async makeSessionFromTemplate(template: Template): Promise<void> {
+        if (this._workbenchSession) {
+            this._workbenchSession.clear();
         }
 
-        const dashboard = this._workbenchSession.getActiveDashboard();
-        dashboard.applyTemplate(template);
+        await this.startNewSession();
+
+        if (!this._workbenchSession) {
+            throw new Error("No active workbench session to apply the template to.");
+        }
+
+        const dashboard = await Dashboard.fromTemplate(template, this._workbenchSession.getAtomStoreMaster());
+        this._workbenchSession.setDashboards([dashboard]);
+
+        this._publishSubscribeDelegate.notifySubscribers(WorkbenchTopic.HAS_ACTIVE_SESSION);
     }
 }

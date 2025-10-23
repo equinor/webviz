@@ -29,11 +29,9 @@ type ModuleSettingsProps = {
 };
 
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
+    const workbenchSession = props.workbench.getWorkbenchSession();
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
-    const dashboard = usePublishSubscribeTopicValue(
-        props.workbench.getWorkbenchSession(),
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
-    );
+    const dashboard = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
 
     const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ActiveModuleInstanceId);
 
@@ -41,7 +39,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         props.moduleInstance,
         ModuleInstanceTopic.LIFECYCLE_STATE,
     );
-    const atomStore = props.workbench.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
+    const atomStore = workbenchSession.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
 
     if (importState !== ImportStatus.Imported || !props.moduleInstance.isInitialized()) {
         return null;

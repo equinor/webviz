@@ -121,7 +121,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 if (isNewModule && moduleName) {
                     const layoutElement = currentLayout.find((el) => el.moduleInstanceId === pointerDownElementId);
                     if (layoutElement) {
-                        const instance = dashboard.makeAndAddModuleInstance(moduleName, layoutElement);
+                        const instance = dashboard.makeAndAddModuleInstance(moduleName);
+                        dashboard.setLayout(currentLayout);
                         layoutElement.moduleInstanceId = instance.getId();
                         layoutElement.moduleName = instance.getName();
                     }

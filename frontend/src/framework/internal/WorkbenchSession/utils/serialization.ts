@@ -91,12 +91,17 @@ export function deserializeSnapshotFromBackend(raw: Snapshot_api): WorkbenchSess
 
 export function makeWorkbenchSessionStateString(session: PrivateWorkbenchSession): string {
     return objectToJsonString({
+        metadata: {
+            title: session.getMetadata().title,
+            description: session.getMetadata().description,
+        },
         content: session.getContent(),
     });
 }
 
 export function makeWorkbenchSessionLocalStorageString(session: PrivateWorkbenchSession): string {
     return objectToJsonString({
+        metadata: session.getMetadata(),
         content: session.getContent(),
     });
 }

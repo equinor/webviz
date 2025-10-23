@@ -25,13 +25,14 @@ type ViewContentProps = {
 };
 
 export const ViewContent = React.memo((props: ViewContentProps) => {
+    const workbenchSession = props.workbench.getWorkbenchSession();
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
     const moduleInstanceLifeCycleState = useModuleInstanceTopicValue(
         props.moduleInstance,
         ModuleInstanceTopic.LIFECYCLE_STATE,
     );
 
-    const atomStore = props.workbench.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
+    const atomStore = workbenchSession.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
 
     const handleModuleInstanceReload = React.useCallback(
         function handleModuleInstanceReload() {

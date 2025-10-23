@@ -3,7 +3,7 @@ import React from "react";
 import { AddLink } from "@mui/icons-material";
 
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/SnapshotUrlService";
+import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";

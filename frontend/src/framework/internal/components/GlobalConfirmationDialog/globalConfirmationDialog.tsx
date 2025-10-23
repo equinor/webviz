@@ -1,6 +1,6 @@
 import React from "react";
 
-import { type ConfirmOptions, confirmationService } from "@framework/ConfirmationService";
+import { type ConfirmOptions, ConfirmationService } from "@framework/ConfirmationService";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 
@@ -9,14 +9,14 @@ export function GlobalConfirmationDialog(): React.ReactNode {
     const [options, setOptions] = React.useState<ConfirmOptions<any>>();
 
     React.useEffect(function onMount() {
-        confirmationService.setShowDialogCallback((options) => {
+        ConfirmationService.setShowDialogCallback((options) => {
             setOptions(options);
             setVisible(true);
         });
     }, []);
 
     function handleAction(actionId: string) {
-        confirmationService.resolve(actionId);
+        ConfirmationService.resolve(actionId);
         setVisible(false);
     }
 

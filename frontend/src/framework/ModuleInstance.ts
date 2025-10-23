@@ -5,11 +5,12 @@ import type { Atom } from "jotai";
 import { atom } from "jotai";
 import { atomEffect } from "jotai-effect";
 
+import type { AtomStoreMaster } from "./AtomStoreMaster";
 import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import type { InitialSettings } from "./InitialSettings";
 import type { Dashboard } from "./internal/Dashboard";
 import { ChannelManager, type SerializedDataChannelReceiverSubscription } from "./internal/DataChannels/ChannelManager";
-import type { ModuleInstanceSerializer } from "./internal/ModuleInstanceSerializer";
+import { ModuleInstanceSerializer } from "./internal/ModuleInstanceSerializer";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
 import type {
     ImportStatus,
@@ -18,6 +19,7 @@ import type {
     ModuleSettings,
     ModuleComponentsStateBase,
     ModuleView,
+    ModuleComponentSerializationFunctions,
 } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import type { SyncSettingKey } from "./SyncSettings";
@@ -52,6 +54,7 @@ export interface ModuleInstanceOptions<
     TSerializedState extends ModuleComponentsStateBase,
 > {
     module: Module<TInterfaceTypes, TSerializedState>;
+    atomStoreMaster: AtomStoreMaster;
     id: string;
     channelDefinitions: ChannelDefinition[] | null;
     channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
@@ -102,6 +105,7 @@ export class ModuleInstance<
     > | null = null;
     private _settingsToViewInterfaceEffectsAtom: Atom<void> | null = null;
     private _viewToSettingsInterfaceEffectsAtom: Atom<void> | null = null;
+    private _atomStoreMaster: AtomStoreMaster;
 
     private _dashboard: Dashboard | null = null;
     private _serializer: ModuleInstanceSerializer<TSerializedStateSchema> | null = null;
@@ -112,6 +116,7 @@ export class ModuleInstance<
         this._id = options.id;
         this._title = options.module.getDefaultTitle();
         this._module = options.module;
+        this._atomStoreMaster = options.atomStoreMaster;
 
         this._channelManager = new ChannelManager(this._id);
 
@@ -211,6 +216,22 @@ export class ModuleInstance<
         this._context = new ModuleContext<TInterfaceTypes>(this);
         this._initialized = true;
         this.setModuleInstanceState(ModuleInstanceLifeCycleState.OK);
+    }
+
+    makeSerializer(serializationFunctions: ModuleComponentSerializationFunctions<TSerializedStateSchema> | null): void {
+        if (serializationFunctions) {
+            this._serializer = new ModuleInstanceSerializer<TSerializedStateSchema>(
+                this,
+                this._atomStoreMaster.getAtomStoreForModuleInstance(this._id),
+                this._module.getSerializedStateSchema(),
+                serializationFunctions,
+                this.handleStateChange.bind(this),
+            );
+        }
+    }
+
+    handleStateChange(): void {
+        this.notifySubscribers(ModuleInstanceTopic.SERIALIZED_STATE);
     }
 
     makeSettingsToViewInterface(

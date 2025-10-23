@@ -7,7 +7,7 @@ import { getSessionMetadataOptions } from "@api";
 import {
     isPersisted,
     type WorkbenchSessionDataContainer,
-} from "@framework/internal/WorkbenchSession/WorkbenchSessionDataContainer";
+} from "@framework/internal/WorkbenchSession/utils/WorkbenchSessionDataContainer";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";

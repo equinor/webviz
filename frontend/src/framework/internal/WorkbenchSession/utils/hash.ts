@@ -7,9 +7,13 @@ export function objectToJsonString(obj: unknown): string {
     }
 }
 
-export async function hashJsonString(jsonString: string): Promise<string> {
+/*
+This function computes a SHA-256 hash of the given string and returns it as a hex string.
+NOTE: This function needs to be in sync with the backend implementation to ensure consistent hashing.
+*/
+export async function hashSessionContentString(string: string): Promise<string> {
     const encoder = new TextEncoder();
-    const data = encoder.encode(jsonString);
+    const data = encoder.encode(string);
 
     const hashBuffer = await crypto.subtle.digest("SHA-256", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));

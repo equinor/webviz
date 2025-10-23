@@ -1,8 +1,8 @@
 import React from "react";
 
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import type { WorkbenchSessionDataContainer } from "@framework/internal/WorkbenchSession/WorkbenchSessionDataContainer";
-import { loadAllWorkbenchSessionsFromLocalStorage } from "@framework/internal/WorkbenchSession/WorkbenchSessionLoader";
+import { loadAllWorkbenchSessionsFromLocalStorage } from "@framework/internal/WorkbenchSession/utils/loaders";
+import type { WorkbenchSessionDataContainer } from "@framework/internal/WorkbenchSession/utils/WorkbenchSessionDataContainer";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";

@@ -1,3 +1,5 @@
+import { toast } from "react-toastify";
+
 import { getSessionMetadataOptions, getSessionsMetadataQueryKey } from "@api";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import {
@@ -11,14 +13,13 @@ import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { WorkbenchSettingsTopic } from "@framework/WorkbenchSettings";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
-import { toast } from "react-toastify";
 
 import {
     createSessionWithCacheUpdate,
     createSnapshotWithCacheUpdate,
     updateSessionWithCacheUpdate,
 } from "./utils/crudHelpers";
-import { hashJsonString, objectToJsonString } from "./utils/hash";
+import { hashSessionContentString, objectToJsonString } from "./utils/hash";
 import { localStorageKeyForSessionId } from "./utils/localStorageHelpers";
 import { makeWorkbenchSessionLocalStorageString, makeWorkbenchSessionStateString } from "./utils/serialization";
 
@@ -76,7 +77,7 @@ export class WorkbenchSessionPersistenceService
         }
 
         this._currentStateString = makeWorkbenchSessionStateString(this._workbenchSession);
-        this._currentHash = await hashJsonString(this._currentStateString);
+        this._currentHash = await hashSessionContentString(this._currentStateString);
         this._lastPersistedMs = session.getMetadata().updatedAt;
         this._lastModifiedMs = session.getMetadata().lastModifiedMs;
 
@@ -341,7 +342,7 @@ export class WorkbenchSessionPersistenceService
         try {
             const oldHash = this._currentHash;
             const newStateString = makeWorkbenchSessionStateString(this._workbenchSession);
-            const newHash = await hashJsonString(newStateString);
+            const newHash = await hashSessionContentString(newStateString);
 
             // Only apply if it's still the latest pull
             if (localPullId !== this._pullCounter) {
