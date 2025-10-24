@@ -6,6 +6,8 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { Virtualization } from "../../Virtualization";
 
+const DEFAULT_RECT_MIN_WIDTH = 120;
+
 export type DropdownItemListProps<T> = {
     anchorElRef: React.RefObject<HTMLElement>;
     items: T[];
@@ -13,6 +15,7 @@ export type DropdownItemListProps<T> = {
     optionHeight: number;
     dropdownMaxHeight: number;
     itemFocusIndex?: number;
+    minWidth?: number;
     renderItem?: (item: T, index: number) => React.ReactNode;
 };
 
@@ -72,8 +75,9 @@ export function DropdownItemListComponent<T>(
             // 9 added to accommodate for border + padding in the list container
             const dropdownHeight = Math.min(listLength + 1, props.dropdownMaxHeight);
 
-            const newDropdownRect: Partial<DropdownRect> = {
-                minWidth: anchorRect.width,
+            const newDropdownRect: DropdownRect = {
+                minWidth: props.minWidth ?? DEFAULT_RECT_MIN_WIDTH,
+                width: anchorRect.width,
                 height: dropdownHeight,
             };
 
@@ -103,9 +107,9 @@ export function DropdownItemListComponent<T>(
             }
 
             setDropdownFlipped(isFlipped);
-            setDropdownRect((prev) => ({ ...newDropdownRect, width: prev.width }) as DropdownRect);
+            setDropdownRect(newDropdownRect);
         },
-        [anchorRect, bodyRect, props.dropdownMaxHeight, props.items.length, props.optionHeight],
+        [anchorRect, bodyRect, props.dropdownMaxHeight, props.items.length, props.minWidth, props.optionHeight],
     );
 
     return createPortal(

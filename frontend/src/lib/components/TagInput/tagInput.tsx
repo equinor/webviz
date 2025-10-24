@@ -367,7 +367,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
                 onClick={() => innerInputRef.current?.focus()}
             >
                 <ul
-                    className="grow flex gap-1 flex-wrap min-w-0 "
+                    className="grow flex gap-1 flex-wrap min-w-0"
                     tabIndex={-1}
                     onFocus={() => innerInputRef.current?.focus()}
                     onCopy={copySelectedTags}

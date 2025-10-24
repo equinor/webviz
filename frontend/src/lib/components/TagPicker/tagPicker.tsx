@@ -31,6 +31,7 @@ export type TagPickerProps<TValue extends string = string> = {
     placeholder?: string;
     showListAsSelectionCount?: boolean;
     debounceTimeMs?: number;
+    dropdownMinWidth?: number;
     renderTagOption?: (props: TagOptionProps) => React.ReactNode;
     onChange?: (newSelection: TValue[]) => void;
 } & Pick<TagInputProps, "renderTag" | "inputProps"> &
@@ -249,6 +250,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                     itemFocusIndex={focusedItemIndex}
                     dropdownMaxHeight={DROPDOWN_MAX_HEIGHT}
                     emptyListText={props.tagOptions.length === 0 ? NO_TAGS_TEXT : NO_MATCHING_TAGS_TEXT}
+                    minWidth={props.dropdownMinWidth}
                     renderItem={(option, index) => (
                         <React.Fragment key={index}>
                             {renderTagOptionOrDefault({

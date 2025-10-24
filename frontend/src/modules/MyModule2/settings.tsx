@@ -49,24 +49,27 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>):
         <>
             <div className="mb-4">
                 <div className="mb-2 text-xs">Selected: {tagSelection.join(", ") || "none"}</div>
-                <Label text="Standard picker">
-                    <TagPicker
-                        placeholder="Select tags"
-                        tagOptions={tags}
-                        selection={tagSelection}
-                        onChange={setTagSelection}
-                    />
-                </Label>
 
-                <Label text="X/N selected" wrapperClassName="mt-2">
-                    <TagPicker
-                        placeholder="Select tags"
-                        tagOptions={tags}
-                        selection={tagSelection}
-                        showListAsSelectionCount
-                        onChange={setTagSelection}
-                    />
-                </Label>
+                <div className="grid grid-cols-[0.7fr_0.3fr] gap-2 ">
+                    <Label text="Standard picker">
+                        <TagPicker
+                            placeholder="Select tags"
+                            tagOptions={tags}
+                            selection={tagSelection}
+                            onChange={setTagSelection}
+                        />
+                    </Label>
+
+                    <Label text="X/N selected">
+                        <TagPicker
+                            placeholder="Select tags"
+                            tagOptions={tags}
+                            selection={tagSelection}
+                            showListAsSelectionCount
+                            onChange={setTagSelection}
+                        />
+                    </Label>
+                </div>
             </div>
 
             <EnsemblePicker
