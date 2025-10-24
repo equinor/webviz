@@ -27,7 +27,7 @@ export function EnsembleTag(props: EnsembleTagProps): React.ReactNode {
     return (
         <li
             className={resolveClassNames(
-                `text-sm rounded pl-1 pr-1 py-1 border-1 flex gap-1 items-center relative ${TAG_BACKGROUND_COLOR}`,
+                `text-sm rounded pl-1 pr-1 py-1 border-1 flex gap-1 items-center relative overflow-x-hidden ${TAG_BACKGROUND_COLOR}`,
                 {
                     "outline-1": props.focused,
                 },
@@ -42,11 +42,11 @@ export function EnsembleTag(props: EnsembleTagProps): React.ReactNode {
                 <EnsembleColorTile
                     ensemble={ensemble}
                     ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
-                    wrapperClassName="w-6 h-6"
+                    wrapperClassName="w-5"
                     badgeClassName={TAG_BACKGROUND_COLOR}
                 />
             )}
-            <span>{props.label ?? String(props.tag)}</span>
+            <span className="truncate whitespace-normal">{props.label ?? String(props.tag)}</span>
             <Tooltip title="Remove ensemble" enterDelay="medium">
                 <IconButton className="align-text-bottom" size="small" onClick={props.onRemove}>
                     <Close fontSize="inherit" />

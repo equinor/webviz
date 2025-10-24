@@ -6,6 +6,8 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { Virtualization } from "../../Virtualization";
 
+const DEFAULT_RECT_MIN_WIDTH = 120;
+
 export type DropdownItemListProps<T> = {
     anchorElRef: React.RefObject<HTMLElement>;
     items: T[];
@@ -13,6 +15,7 @@ export type DropdownItemListProps<T> = {
     optionHeight: number;
     dropdownMaxHeight: number;
     itemFocusIndex?: number;
+    minWidth?: number;
     renderItem?: (item: T, index: number) => React.ReactNode;
 };
 
@@ -52,13 +55,12 @@ export function DropdownItemListComponent<T>(
         if (!innerDropdownRef.current) return;
 
         const virtualizationTopIndex = Math.round(innerDropdownRef.current.scrollTop / props.optionHeight);
-        const virtualizationBottomIndex =
-            virtualizationTopIndex + (props.dropdownMaxHeight - 8) / props.optionHeight - 1;
+        const virtualizationBottomIndex = virtualizationTopIndex + props.dropdownMaxHeight / props.optionHeight - 1;
 
         if (props.itemFocusIndex < virtualizationTopIndex) {
             return props.itemFocusIndex;
         } else if (props.itemFocusIndex >= virtualizationBottomIndex) {
-            return Math.max(0, props.itemFocusIndex - (props.dropdownMaxHeight - 8) / props.optionHeight + 1);
+            return Math.max(0, props.itemFocusIndex - props.dropdownMaxHeight / props.optionHeight + 1);
         }
     }, [props.dropdownMaxHeight, props.itemFocusIndex, props.optionHeight]);
 
@@ -71,10 +73,11 @@ export function DropdownItemListComponent<T>(
             let isFlipped = false;
 
             // 9 added to accommodate for border + padding in the list container
-            const dropdownHeight = Math.min(listLength + 9, props.dropdownMaxHeight);
+            const dropdownHeight = Math.min(listLength + 1, props.dropdownMaxHeight);
 
-            const newDropdownRect: Partial<DropdownRect> = {
-                minWidth: anchorRect.width,
+            const newDropdownRect: DropdownRect = {
+                minWidth: props.minWidth ?? DEFAULT_RECT_MIN_WIDTH,
+                width: anchorRect.width,
                 height: dropdownHeight,
             };
 
@@ -93,7 +96,7 @@ export function DropdownItemListComponent<T>(
                 newDropdownRect.top = anchorRect.y + anchorRect.height;
                 newDropdownRect.height = Math.min(
                     dropdownHeight,
-                    window.innerHeight - anchorRect.y - anchorRect.height - 4,
+                    window.innerHeight - anchorRect.y - anchorRect.height,
                 );
             }
 
@@ -104,15 +107,15 @@ export function DropdownItemListComponent<T>(
             }
 
             setDropdownFlipped(isFlipped);
-            setDropdownRect((prev) => ({ ...newDropdownRect, width: prev.width }) as DropdownRect);
+            setDropdownRect(newDropdownRect);
         },
-        [anchorRect, bodyRect, props.dropdownMaxHeight, props.items.length, props.optionHeight],
+        [anchorRect, bodyRect, props.dropdownMaxHeight, props.items.length, props.minWidth, props.optionHeight],
     );
 
     return createPortal(
         <ul
             className={resolveClassNames(
-                "absolute bg-white border border-gray-300 rounded-md shadow-md overflow-y-auto z-50 box-border gap-1 px-2 py-1",
+                "absolute bg-white border border-gray-300 rounded-md shadow-md overflow-y-auto z-50 box-border gap-1 px-2",
                 {
                     "border-t-0 rounded-t-none": !dropdownFlipped,
                     "border-b-0 rounded-b-none": dropdownFlipped,

@@ -12,8 +12,8 @@ import { useDebouncedStateEmit, useOnScreenChangeHandler } from "./hooks";
 import { DefaultTagOption, type TagOptionProps } from "./private-components/defaultTagOption";
 import { DropdownItemList } from "./private-components/dropdownItemList";
 
-const DROPDOWN_MAX_HEIGHT = 200;
 const TAG_OPTION_HEIGHT = 32;
+const DROPDOWN_MAX_HEIGHT = TAG_OPTION_HEIGHT * 6;
 
 const NO_MATCHING_TAGS_TEXT = "No matching options";
 const NO_TAGS_TEXT = "No options";
@@ -31,9 +31,10 @@ export type TagPickerProps<TValue extends string = string> = {
     placeholder?: string;
     showListAsSelectionCount?: boolean;
     debounceTimeMs?: number;
+    dropdownMinWidth?: number;
     renderTagOption?: (props: TagOptionProps) => React.ReactNode;
     onChange?: (newSelection: TValue[]) => void;
-} & Pick<TagInputProps, "renderTag"> &
+} & Pick<TagInputProps, "renderTag" | "inputProps"> &
     BaseComponentProps;
 
 export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactElement {
@@ -82,8 +83,12 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
 
     // Reset the dropdown item focus whenever filtered tags change, as the focused item likely went away.
     if (prevFilteredTags !== filteredTags) {
+        const prevFocusedTag = prevFilteredTags[focusedItemIndex];
+        // Avoid iterating a potentially long list if no item is focused
+        const newFocusedIndex = prevFocusedTag ? filteredTags.findIndex((t) => t.value === prevFocusedTag.value) : -1;
+
         setPrevFilteredTags(filteredTags);
-        setFocusedItemIndex(-1);
+        setFocusedItemIndex(newFocusedIndex);
     }
 
     // --- Callbacks
@@ -232,6 +237,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                     onValueChange: setInputValue,
                     onFocus: handleInputFocus,
                     onKeyDown: handleInputKeyDown,
+                    ...props.inputProps,
                 }}
             />
 
@@ -244,6 +250,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                     itemFocusIndex={focusedItemIndex}
                     dropdownMaxHeight={DROPDOWN_MAX_HEIGHT}
                     emptyListText={props.tagOptions.length === 0 ? NO_TAGS_TEXT : NO_MATCHING_TAGS_TEXT}
+                    minWidth={props.dropdownMinWidth}
                     renderItem={(option, index) => (
                         <React.Fragment key={index}>
                             {renderTagOptionOrDefault({
