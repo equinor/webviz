@@ -148,14 +148,17 @@ class SessionStore:
             filter_list = filters or []
             filter_list.insert(0, Filter("owner_id", self._user_id))
 
+            use_page_based = page_token is not None or page_size is not None
+
             # Build query with collation options
             collation_options = QueryCollationOptions(
                 sort_lowercase=sort_lowercase,
                 sort_dir=sort_direction,
                 sort_by=sort_by.value if sort_by else None,
-                offset=offset,
-                limit=limit,
+                offset=None if use_page_based else offset,
+                limit=None if use_page_based else limit,
                 filters=filter_list,
+                document_model=SessionDocument,
             )
 
             query = "SELECT * FROM c"
@@ -166,12 +169,12 @@ class SessionStore:
                 query = f"{query} {search_options}"
 
             # Use page-based pagination if continuation_token or page_size is provided
-            if page_token is not None or page_size is not None:
+            if use_page_based:
                 return await self._session_container.query_items_by_page_token_async(
                     query=query,
                     parameters=params,
                     page_size=page_size,
-                    continuation_token=page_token,
+                    page_token=page_token,
                 )
             else:
                 # Otherwise, return all items (respecting limit/offset)

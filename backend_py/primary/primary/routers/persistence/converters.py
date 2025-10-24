@@ -36,7 +36,7 @@ def to_api_session_metadata(session: SessionDocument) -> schemas.SessionMetadata
 
 def to_api_session(document: SessionDocument) -> schemas.Session:
     return schemas.Session(
-        metadata=to_api_session_metadata(document.metadata),
+        metadata=to_api_session_metadata(document),
         content=document.content,
     )
 
