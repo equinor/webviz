@@ -422,6 +422,18 @@ export type NetworkNode_api = {
     children: Array<NetworkNode_api>;
 };
 
+export type NewSession_api = {
+    title: string;
+    description: string | null;
+    content: string;
+};
+
+export type NewSnapshot_api = {
+    title: string;
+    description: string | null;
+    content: string;
+};
+
 export enum NodeType_api {
     PROD = "prod",
     INJ = "inj",
@@ -705,6 +717,95 @@ export type SeismicSliceData_api = {
 export enum SensitivityType_api {
     MONTECARLO = "montecarlo",
     SCENARIO = "scenario",
+}
+
+export type SessionDocument_api = {
+    id: string;
+    ownerId: string;
+    metadata: SessionMetadata_api;
+    content: string;
+};
+
+export type SessionMetadata_api = {
+    title: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
+    version: number;
+    hash: string;
+};
+
+export type SessionMetadataUpdate_api = {
+    title?: string;
+    description?: string | null;
+};
+
+export type SessionMetadataWithId_api = {
+    title: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
+    version: number;
+    hash: string;
+    id: string;
+};
+
+export enum SessionSortBy_api {
+    CREATED_AT = "created_at",
+    UPDATED_AT = "updated_at",
+    TITLE = "title",
+    TITLE_LOWER = "title_lower",
+}
+
+export type SessionUpdate_api = {
+    id: string;
+    metadata?: SessionMetadataUpdate_api;
+    content?: string;
+};
+
+export type Snapshot_api = {
+    id: string;
+    metadata: SnapshotMetadata_api;
+    content: string;
+};
+
+export type SnapshotAccessLog_api = {
+    visitorId: string;
+    snapshotId: string;
+    visits: number;
+    firstVisitedAt: string | null;
+    lastVisitedAt: string | null;
+    snapshotDeleted: boolean;
+    snapshotMetadata: SnapshotMetadata_api;
+};
+
+export enum SnapshotAccessLogSortBy_api {
+    VISITS = "visits",
+    LAST_VISITED_AT = "last_visited_at",
+    SNAPSHOT_METADATA_TITLE = "snapshot_metadata.title",
+    SNAPSHOT_METADATA_TITLE_LOWER = "snapshot_metadata.title__lower",
+    SNAPSHOT_METADATA_CREATED_AT = "snapshot_metadata.created_at",
+}
+
+export type SnapshotMetadata_api = {
+    ownerId: string;
+    title: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
+    hash: string;
+};
+
+export enum SnapshotSortBy_api {
+    CREATED_AT = "created_at",
+    UPDATED_AT = "updated_at",
+    TITLE = "title",
+    TITLE_LOWER = "title_lower",
+}
+
+export enum SortDirection_api {
+    ASC = "asc",
+    DESC = "desc",
 }
 
 export enum StatisticFunction_api {
@@ -3963,6 +4064,410 @@ export type GetVfpTableResponses_api = {
 };
 
 export type GetVfpTableResponse_api = GetVfpTableResponses_api[keyof GetVfpTableResponses_api];
+
+export type GetSessionsMetadataData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Sort the result by
+         */
+        sort_by?: SessionSortBy_api | null;
+        /**
+         * Sort direction: 'asc' or 'desc'
+         */
+        sort_direction?: SortDirection_api | null;
+        /**
+         * Limit the number of results
+         */
+        limit?: number;
+        page?: number;
+        t?: number;
+    };
+    url: "/persistence/sessions";
+};
+
+export type GetSessionsMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSessionsMetadataError_api = GetSessionsMetadataErrors_api[keyof GetSessionsMetadataErrors_api];
+
+export type GetSessionsMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<SessionMetadataWithId_api>;
+};
+
+export type GetSessionsMetadataResponse_api = GetSessionsMetadataResponses_api[keyof GetSessionsMetadataResponses_api];
+
+export type CreateSessionData_api = {
+    body: NewSession_api;
+    path?: never;
+    query?: {
+        t?: number;
+    };
+    url: "/persistence/sessions";
+};
+
+export type CreateSessionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type CreateSessionError_api = CreateSessionErrors_api[keyof CreateSessionErrors_api];
+
+export type CreateSessionResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type CreateSessionResponse_api = CreateSessionResponses_api[keyof CreateSessionResponses_api];
+
+export type DeleteSessionData_api = {
+    body?: never;
+    path: {
+        session_id: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/persistence/sessions/{session_id}";
+};
+
+export type DeleteSessionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type DeleteSessionError_api = DeleteSessionErrors_api[keyof DeleteSessionErrors_api];
+
+export type DeleteSessionResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetSessionData_api = {
+    body?: never;
+    path: {
+        session_id: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/persistence/sessions/{session_id}";
+};
+
+export type GetSessionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSessionError_api = GetSessionErrors_api[keyof GetSessionErrors_api];
+
+export type GetSessionResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SessionDocument_api;
+};
+
+export type GetSessionResponse_api = GetSessionResponses_api[keyof GetSessionResponses_api];
+
+export type UpdateSessionData_api = {
+    body: SessionUpdate_api;
+    path: {
+        session_id: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/persistence/sessions/{session_id}";
+};
+
+export type UpdateSessionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type UpdateSessionError_api = UpdateSessionErrors_api[keyof UpdateSessionErrors_api];
+
+export type UpdateSessionResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SessionDocument_api;
+};
+
+export type UpdateSessionResponse_api = UpdateSessionResponses_api[keyof UpdateSessionResponses_api];
+
+export type GetSessionMetadataData_api = {
+    body?: never;
+    path: {
+        session_id: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/persistence/sessions/metadata/{session_id}";
+};
+
+export type GetSessionMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSessionMetadataError_api = GetSessionMetadataErrors_api[keyof GetSessionMetadataErrors_api];
+
+export type GetSessionMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SessionMetadata_api;
+};
+
+export type GetSessionMetadataResponse_api = GetSessionMetadataResponses_api[keyof GetSessionMetadataResponses_api];
+
+export type GetRecentSnapshotsData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Sort the result by
+         */
+        sort_by?: SnapshotAccessLogSortBy_api | null;
+        /**
+         * Sort direction: 'asc' or 'desc'
+         */
+        sort_direction?: SortDirection_api | null;
+        /**
+         * Limit the number of results
+         */
+        limit?: number | null;
+        /**
+         * The offset of the results
+         */
+        offset?: number | null;
+        t?: number;
+    };
+    url: "/persistence/recent_snapshots";
+};
+
+export type GetRecentSnapshotsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetRecentSnapshotsError_api = GetRecentSnapshotsErrors_api[keyof GetRecentSnapshotsErrors_api];
+
+export type GetRecentSnapshotsResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<SnapshotAccessLog_api>;
+};
+
+export type GetRecentSnapshotsResponse_api = GetRecentSnapshotsResponses_api[keyof GetRecentSnapshotsResponses_api];
+
+export type GetSnapshotsMetadataData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Sort the result by
+         */
+        sort_by?: SnapshotSortBy_api | null;
+        /**
+         * Sort direction: 'asc' or 'desc'
+         */
+        sort_direction?: SortDirection_api | null;
+        /**
+         * Limit the number of results
+         */
+        limit?: number | null;
+        t?: number;
+    };
+    url: "/persistence/snapshots";
+};
+
+export type GetSnapshotsMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSnapshotsMetadataError_api = GetSnapshotsMetadataErrors_api[keyof GetSnapshotsMetadataErrors_api];
+
+export type GetSnapshotsMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<SnapshotMetadata_api>;
+};
+
+export type GetSnapshotsMetadataResponse_api = GetSnapshotsMetadataResponses_api[keyof GetSnapshotsMetadataResponses_api];
+
+export type CreateSnapshotData_api = {
+    body: NewSnapshot_api;
+    path?: never;
+    query?: {
+        t?: number;
+    };
+    url: "/persistence/snapshots";
+};
+
+export type CreateSnapshotErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type CreateSnapshotError_api = CreateSnapshotErrors_api[keyof CreateSnapshotErrors_api];
+
+export type CreateSnapshotResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type CreateSnapshotResponse_api = CreateSnapshotResponses_api[keyof CreateSnapshotResponses_api];
+
+export type DeleteSnapshotData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/persistence/snapshots/{snapshot_id}";
+};
+
+export type DeleteSnapshotErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type DeleteSnapshotError_api = DeleteSnapshotErrors_api[keyof DeleteSnapshotErrors_api];
+
+export type DeleteSnapshotResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetSnapshotData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/persistence/snapshots/{snapshot_id}";
+};
+
+export type GetSnapshotErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSnapshotError_api = GetSnapshotErrors_api[keyof GetSnapshotErrors_api];
+
+export type GetSnapshotResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Snapshot_api;
+};
+
+export type GetSnapshotResponse_api = GetSnapshotResponses_api[keyof GetSnapshotResponses_api];
+
+export type GetSnapshotMetadataData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/persistence/snapshots/metadata/{snapshot_id}";
+};
+
+export type GetSnapshotMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetSnapshotMetadataError_api = GetSnapshotMetadataErrors_api[keyof GetSnapshotMetadataErrors_api];
+
+export type GetSnapshotMetadataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SnapshotMetadata_api;
+};
+
+export type GetSnapshotMetadataResponse_api = GetSnapshotMetadataResponses_api[keyof GetSnapshotMetadataResponses_api];
+
+export type SnapshotPreviewData_api = {
+    body?: never;
+    path: {
+        snapshot_id: string;
+    };
+    query?: {
+        t?: number;
+    };
+    url: "/persistence/snapshot_preview/{snapshot_id}";
+};
+
+export type SnapshotPreviewErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type SnapshotPreviewError_api = SnapshotPreviewErrors_api[keyof SnapshotPreviewErrors_api];
+
+export type SnapshotPreviewResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: string;
+};
+
+export type SnapshotPreviewResponse_api = SnapshotPreviewResponses_api[keyof SnapshotPreviewResponses_api];
 
 export type LoginRouteData_api = {
     body?: never;
