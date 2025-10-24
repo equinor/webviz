@@ -1,6 +1,7 @@
+from primary.persistence.snapshot_store.types import NewSnapshot
 from primary.persistence.snapshot_store.documents import SnapshotAccessLogDocument, SnapshotDocument
 from primary.persistence.session_store.documents import SessionDocument
-from primary.persistence.session_store.types import NewSession, SessionUpdate
+from primary.persistence.session_store.types import NewSession, SessionMetadataUpdate, SessionUpdate
 from . import schemas
 
 
@@ -14,8 +15,10 @@ def from_api_new_session(api_session: schemas.NewSession) -> NewSession:
 
 def from_api_session_update(api_update: schemas.SessionUpdate) -> SessionUpdate:
     return SessionUpdate(
-        title=api_update.title,
-        description=api_update.description,
+        metadata=SessionMetadataUpdate(
+            title=api_update.title,
+            description=api_update.description,
+        ),
         content=api_update.content,
     )
 
@@ -40,8 +43,8 @@ def to_api_session(document: SessionDocument) -> schemas.Session:
     )
 
 
-def from_api_new_snapshot(api_snapshot: schemas.NewSnapshot) -> NewSession:
-    return NewSession(
+def from_api_new_snapshot(api_snapshot: schemas.NewSnapshot) -> NewSnapshot:
+    return NewSnapshot(
         title=api_snapshot.title,
         description=api_snapshot.description,
         content=api_snapshot.content,
@@ -66,6 +69,17 @@ def to_api_snapshot(snapshot: SnapshotDocument) -> schemas.Snapshot:
     )
 
 
+def to_api_access_log_snapshot_metadata(access_log: SnapshotAccessLogDocument) -> schemas.SnapshotMetadata:
+    return schemas.SnapshotMetadata(
+        id=access_log.snapshot_id,
+        ownerId=access_log.snapshot_owner_id,
+        title=access_log.snapshot_metadata.title,
+        description=access_log.snapshot_metadata.description,
+        createdAt=access_log.snapshot_metadata.created_at.isoformat(),
+        content_hash=access_log.snapshot_metadata.content_hash,
+    )
+
+
 def to_api_snapshot_access_log(access_log: SnapshotAccessLogDocument) -> schemas.SnapshotAccessLog:
     return schemas.SnapshotAccessLog(
         visitorId=access_log.visitor_id,
@@ -74,5 +88,5 @@ def to_api_snapshot_access_log(access_log: SnapshotAccessLogDocument) -> schemas
         firstVisitedAt=access_log.first_visited_at.isoformat() if access_log.first_visited_at else None,
         lastVisitedAt=access_log.last_visited_at.isoformat() if access_log.last_visited_at else None,
         snapshotDeleted=access_log.snapshot_deleted,
-        snapshotMetadata=to_api_snapshot_metadata(access_log.snapshot_metadata),
+        snapshotMetadata=to_api_access_log_snapshot_metadata(access_log),
     )

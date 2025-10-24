@@ -9,10 +9,9 @@ from primary.persistence.cosmosdb.cosmos_container import CosmosContainer
 from primary.persistence.cosmosdb.exceptions import DatabaseAccessError, DatabaseAccessNotFoundError
 from primary.persistence.cosmosdb.error_converter import raise_service_error_from_database_access
 
-from .documents import SnapshotDocument
+from .documents import SnapshotDocument, SnapshotMetadata
 from .types import (
     NewSnapshot,
-    SnapshotMetadata,
     SnapshotSortBy,
 )
 
@@ -181,10 +180,10 @@ class SnapshotStore:
                     page_size=page_size,
                     page_token=page_token,
                 )
-            else:
-                # Otherwise, return all items (respecting limit/offset)
-                items = await self._snapshot_container.query_items_async(query=query, parameters=params)
-                return items, None
+
+            # Otherwise, return all items (respecting limit/offset)
+            items = await self._snapshot_container.query_items_async(query=query, parameters=params)
+            return items, None
 
         except DatabaseAccessError as e:
             raise_service_error_from_database_access(e)

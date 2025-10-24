@@ -1,9 +1,6 @@
 from typing import Optional
-from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, ConfigDict, computed_field
-
-from primary.persistence.snapshot_store.documents import SnapshotMetadata
+from pydantic import BaseModel, ConfigDict
 
 
 class NewSnapshot(BaseModel):
@@ -27,17 +24,6 @@ class NewSnapshot(BaseModel):
     title: str
     description: Optional[str] = None
     content: str
-
-    model_config = ConfigDict(extra="forbid")
-
-
-class SnapshotAccessLogUpdate(BaseModel):
-    snapshot_deleted: Optional[bool] = None
-    snapshot_deleted_at: Optional[datetime] = None
-    snapshot_metadata: Optional[SnapshotMetadata] = None
-    visits: Optional[int] = None
-    first_visited_at: Optional[datetime] = None
-    last_visited_at: Optional[datetime] = None
 
     model_config = ConfigDict(extra="forbid")
 

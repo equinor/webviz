@@ -1,14 +1,14 @@
 import logging
-from typing import List, Optional
+from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Query
 
 from primary.persistence.session_store.session_store import SessionStore
 from primary.persistence.session_store.types import SessionSortBy
 from primary.persistence.tasks.mark_logs_deleted_task import mark_logs_deleted_task
 from primary.persistence.snapshot_store.snapshot_store import SnapshotStore
 from primary.persistence.snapshot_store.snapshot_access_log_store import SnapshotAccessLogStore
-from primary.persistence.cosmosdb.query_collation_options import Filter, QueryCollationOptions, SortDirection
+from primary.persistence.cosmosdb.query_collation_options import Filter, SortDirection
 from primary.persistence.snapshot_store.types import (
     SnapshotAccessLogSortBy,
     SnapshotSortBy,
@@ -128,6 +128,7 @@ async def delete_session(session_id: str, user: AuthenticatedUser = Depends(Auth
 
 
 @router.get("/visited_snapshots")
+# pylint: disable=too-many-arguments
 async def get_visited_snapshots(
     user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     # ! Must be named "cursor" or "page" to make hey-api generate infinite-queries
@@ -160,7 +161,7 @@ async def get_visited_snapshots(
         if filter_last_visited_to:
             filters.append(Filter("last_visited_at", filter_last_visited_to, "LESS", "_to"))
 
-        (items, cont_token) = await log_store.get_many_async(
+        (items, cont_token) = await log_store.get_many_for_user_async(
             page_token=cursor,
             page_size=page_size,
             sort_by=sort_by,

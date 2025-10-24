@@ -1,7 +1,10 @@
 import hashlib
-from typing import Any, cast
+from typing import Any, TypeVar, cast
 
 from azure.core.async_paging import AsyncPageIterator, AsyncItemPaged
+
+
+T = TypeVar("T")
 
 
 # Utility function to hash a JSON string using SHA-256

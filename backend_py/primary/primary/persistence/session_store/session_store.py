@@ -176,10 +176,10 @@ class SessionStore:
                     page_size=page_size,
                     page_token=page_token,
                 )
-            else:
-                # Otherwise, return all items (respecting limit/offset)
-                items = await self._session_container.query_items_async(query=query, parameters=params)
-                return items, None
+
+            # Otherwise, return all items (respecting limit/offset)
+            items = await self._session_container.query_items_async(query=query, parameters=params)
+            return items, None
 
         except DatabaseAccessError as err:
             raise_service_error_from_database_access(err)

@@ -172,14 +172,14 @@ class CosmosContainer(Generic[T]):
         except exceptions.CosmosHttpResponseError as error:
             raise self._make_exception("delete_item_async", error) from error
 
-    async def update_item_async(self, item_id: str, partition_key: str, updated_item: T) -> None:
+    async def update_item_async(self, item_id: str, updated_item: T) -> None:
         try:
             validated = self._validation_model.model_validate(updated_item).model_dump(by_alias=True, mode="json")
 
             if validated.get("id") and validated["id"] != item_id:
                 raise ValueError(f"id mismatch: payload id {validated['id']} != path id {item_id}")
 
-            await self._container.replace_item(item=item_id, body=validated, partition_key=partition_key)
+            await self._container.replace_item(item=item_id, body=validated)
 
             logger.debug("[CosmosContainer] Updated item '%s' in '%s'", item_id, self._container_name)
         except ValidationError as validation_error:

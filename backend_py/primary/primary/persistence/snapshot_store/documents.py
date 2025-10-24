@@ -1,10 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
-from pydantic import computed_field
-
-
-from .types import SnapshotMetadata
+from pydantic import BaseModel, ConfigDict, computed_field
 
 from .utils import make_access_log_item_id
 
