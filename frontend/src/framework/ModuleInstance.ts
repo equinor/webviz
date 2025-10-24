@@ -216,6 +216,8 @@ export class ModuleInstance<
         this._context = new ModuleContext<TInterfaceTypes>(this);
         this._initialized = true;
         this.setModuleInstanceState(ModuleInstanceLifeCycleState.OK);
+        this.deserialize();
+        this.applyTemplateState();
     }
 
     makeSerializer(serializationFunctions: ModuleComponentSerializationFunctions<TSerializedStateSchema> | null): void {

@@ -153,9 +153,7 @@ class SessionStore:
 
             updated_session = existing.model_copy(update=document_update_dict)
 
-            await self.session_container.update_item_async(
-                item_id=session_id, partition_key=self.user_id, updated_item=updated_session
-            )
+            await self.session_container.update_item_async(item_id=session_id, updated_item=updated_session)
 
             return updated_session
         except DatabaseAccessError as e:

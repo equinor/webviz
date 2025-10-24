@@ -310,6 +310,7 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
             channelDefinitions: this._channelDefinitions,
             channelReceiverDefinitions: this._channelReceiverDefinitions,
         });
+        atomStoreMaster.makeAtomStoreForModuleInstance(id);
         this._moduleInstances.push(instance);
         this.maybeImportSelf();
         return instance;

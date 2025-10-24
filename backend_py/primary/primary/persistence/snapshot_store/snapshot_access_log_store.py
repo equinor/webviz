@@ -51,7 +51,7 @@ class SnapshotAccessLogStore:
 
             updated_item = existing.model_copy(update=changes)
 
-            await self._container.update_item_async(snapshot_id, snapshot_id, updated_item)
+            await self._container.update_item_async(snapshot_id, updated_item)
         except DatabaseAccessError as e:
             raise ServiceRequestError(f"Failed to update access log: {str(e)}", Service.DATABASE) from e
 
@@ -118,7 +118,7 @@ class SnapshotAccessLogStore:
             if not log.first_visited_at:
                 log.first_visited_at = timestamp
 
-            await self._container.update_item_async(item_id=log.id, partition_key=self._user_id, updated_item=log)
+            await self._container.update_item_async(item_id=log.id, updated_item=log)
 
             return log
         except DatabaseAccessError as e:
