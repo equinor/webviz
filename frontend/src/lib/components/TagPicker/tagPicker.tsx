@@ -82,8 +82,12 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
 
     // Reset the dropdown item focus whenever filtered tags change, as the focused item likely went away.
     if (prevFilteredTags !== filteredTags) {
+        const prevFocusedTag = prevFilteredTags[focusedItemIndex];
+        // Avoid iterating a potentially long list if no item is focused
+        const newFocusedIndex = prevFocusedTag ? filteredTags.findIndex((t) => t.value === prevFocusedTag.value) : -1;
+
         setPrevFilteredTags(filteredTags);
-        setFocusedItemIndex(-1);
+        setFocusedItemIndex(newFocusedIndex);
     }
 
     // --- Callbacks
