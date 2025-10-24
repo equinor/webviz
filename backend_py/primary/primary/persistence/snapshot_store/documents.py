@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel, ConfigDict
 from pydantic import computed_field
 
@@ -6,6 +7,27 @@ from pydantic import computed_field
 from .types import SnapshotMetadata
 
 from .utils import make_access_log_item_id
+
+
+class SnapshotMetadata(BaseModel):
+    title: str
+    description: Optional[str] = None
+    created_at: datetime
+    content_hash: str
+
+    # Computed lowercase fields for case-insensitive collation
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def title__lower(self) -> str:
+        return self.title.lower()
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def description__lower(self) -> str | None:
+        if self.description is None:
+            return None
+
+        return self.description.lower()
 
 
 class SnapshotDocument(BaseModel):

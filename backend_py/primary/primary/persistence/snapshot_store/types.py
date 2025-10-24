@@ -1,54 +1,45 @@
 from typing import Optional
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, ConfigDict, computed_field
 
-
-class SnapshotUserEditableMetadata(BaseModel):
-    title: str
-    description: Optional[str] = None
-
-    # Computed lowercase fields for case-insensitive collation
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def title__lower(self) -> str:
-        return self.title.lower()
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def description__lower(self) -> str | None:
-        if self.description is None:
-            return None
-
-        return self.description.lower()
-
-
-class SnapshotMetadataInternal(BaseModel):
-    owner_id: str
-    created_at: datetime
-    updated_at: datetime
-    hash: str
-
-
-class SnapshotMetadata(SnapshotUserEditableMetadata, SnapshotMetadataInternal):
-    pass
-
-
-class Snapshot(BaseModel):
-    id: str
-    owner_id: str
-    metadata: SnapshotMetadata
-    content: str
-
-
-class SnapshotMetadataWithId(SnapshotMetadata):
-    id: str
+from primary.persistence.snapshot_store.documents import SnapshotMetadata
 
 
 class NewSnapshot(BaseModel):
+    """
+    Model for creating a new snapshot.
+    Only includes user-provided fields. All other fields are managed by the store:
+    - id: Auto-generated (8 character nanoid)
+    - owner_id: Set from user context
+    - metadata.created_at: Set to current time
+    - metadata.content_hash: Computed from content
+
+    Usage:
+        new_snapshot = NewSnapshot(
+            title="My Snapshot",
+            description="Optional description",
+            content="snapshot content here"
+        )
+        snapshot_id = await store.create_async(new_snapshot)
+    """
+
     title: str
-    description: Optional[str]
+    description: Optional[str] = None
     content: str
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class SnapshotAccessLogUpdate(BaseModel):
+    snapshot_deleted: Optional[bool] = None
+    snapshot_deleted_at: Optional[datetime] = None
+    snapshot_metadata: Optional[SnapshotMetadata] = None
+    visits: Optional[int] = None
+    first_visited_at: Optional[datetime] = None
+    last_visited_at: Optional[datetime] = None
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class SnapshotSortBy(str, Enum):

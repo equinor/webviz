@@ -1,70 +1,81 @@
-from datetime import datetime
 from enum import Enum
 from typing import Optional
-
-from pydantic import BaseModel, computed_field
-from pydantic.json_schema import SkipJsonSchema
-
-
-class SessionUserEditableMetadata(BaseModel):
-    title: str
-    description: Optional[str] = None
-
-    # Computed lowercase fields for case-insensitive collation
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def title__lower(self) -> str:
-        return self.title.lower()
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def description__lower(self) -> str | None:
-        if self.description is None:
-            return None
-
-        return self.description.lower()
-
-
-class SessionMetadataInternal(BaseModel):
-    created_at: datetime
-    updated_at: datetime
-    hash: str
-    version: int
-
-
-class SessionMetadata(SessionUserEditableMetadata, SessionMetadataInternal):
-    pass
-
-
-class SessionMetadataWithId(SessionMetadata):
-    id: str
-
-
-# SkipJsonSchema is so the field is optional, but not nullable
-class SessionMetadataUpdate(BaseModel):
-    title: str | SkipJsonSchema[None] = None
-    description: str | None = None
-
-
-class SessionUpdate(BaseModel):
-    id: str
-    metadata: SessionMetadataUpdate | SkipJsonSchema[None] = None
-    content: str | SkipJsonSchema[None] = None
-
-
-class NewSession(BaseModel):
-    title: str
-    description: Optional[str]
-    content: str
+from pydantic import BaseModel, ConfigDict
 
 
 class SessionSortBy(str, Enum):
-    CREATED_AT = "created_at"
-    UPDATED_AT = "updated_at"
-    TITLE = "title"
-    TITLE_LOWER = "title_lower"
+    CREATED_AT = "metadata.created_at"
+    UPDATED_AT = "metadata.updated_at"
+    TITLE = "metadata.title"
 
 
-class SessionSortDirection(str, Enum):
-    ASC = "asc"
-    DESC = "desc"
+class NewSession(BaseModel):
+    """
+    Model for creating a new session.
+    Only includes user-provided fields. All other fields are managed by the store:
+    - id: Auto-generated
+    - owner_id: Set from user context
+    - metadata.created_at: Set to current time
+    - metadata.updated_at: Set to current time
+    - metadata.hash: Computed from content
+    - metadata.version: Set to 1
+
+    Usage:
+        new_session = NewSession(
+            title="My Session",
+            description="Optional description",
+            content="session content here"
+        )
+        session_id = await store.create_async(new_session)
+    """
+
+    title: str
+    description: str | None = None
+    content: str
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class SessionMetadataUpdate(BaseModel):
+    """
+    Defines which metadata fields can be updated by users.
+    Only publicly editable fields are included.
+    Internal fields (created_at, updated_at, hash, version) are managed by the store.
+    """
+
+    title: Optional[str] = None
+    description: Optional[str | None] = None
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class SessionUpdate(BaseModel):
+    """
+    Defines which SessionDocument fields can be updated.
+    All fields are optional to support partial updates.
+
+    Fields NOT included (managed by store):
+    - id: Cannot be changed
+    - owner_id: Cannot be changed
+    - metadata.created_at: Set on creation only
+    - metadata.updated_at: Automatically updated by store
+    - metadata.hash: Automatically computed by store
+    - metadata.version: Automatically incremented by store
+
+    Usage:
+        # Update just the title
+        update = SessionUpdate(metadata=SessionMetadataUpdate(title="New Title"))
+        await store.update_async(session_id, update)
+
+        # Update content and description
+        update = SessionUpdate(
+            content="new content here",
+            metadata=SessionMetadataUpdate(description="Updated description")
+        )
+        await store.update_async(session_id, update)
+    """
+
+    content: Optional[str] = None
+    metadata: Optional[SessionMetadataUpdate] = None
+
+    model_config = ConfigDict(extra="forbid")

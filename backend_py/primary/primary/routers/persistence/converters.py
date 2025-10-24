@@ -1,69 +1,68 @@
 from primary.persistence.snapshot_store.types import SnapshotMetadata, SnapshotMetadataWithId
 from primary.persistence.snapshot_store.documents import SnapshotAccessLogDocument, SnapshotDocument
 from primary.persistence.session_store.documents import SessionDocument
-from primary.persistence.session_store.types import SessionMetadata, SessionMetadataWithId
+from primary.persistence.session_store.types import NewSession, SessionUpdate
 from . import schemas
 
 
-def to_api_session_metadata_summary(metadata: SessionMetadataWithId) -> schemas.SessionMetadataWithId:
-    return schemas.SessionMetadataWithId(
-        id=metadata.id,
-        title=metadata.title,
-        description=metadata.description,
-        createdAt=metadata.created_at.isoformat(),
-        updatedAt=metadata.updated_at.isoformat(),
-        version=metadata.version,
-        hash=metadata.hash,
+def from_api_new_session(api_session: schemas.NewSession) -> NewSession:
+    return NewSession(
+        title=api_session.title,
+        description=api_session.description,
+        content=api_session.content,
     )
 
 
-def to_api_session_metadata(metadata: SessionMetadata) -> schemas.SessionMetadata:
+def from_api_session_update(api_update: schemas.SessionUpdate) -> SessionUpdate:
+    return SessionUpdate(
+        title=api_update.title,
+        description=api_update.description,
+        content=api_update.content,
+    )
+
+
+def to_api_session_metadata(session: SessionDocument) -> schemas.SessionMetadata:
     return schemas.SessionMetadata(
-        title=metadata.title,
-        description=metadata.description,
-        createdAt=metadata.created_at.isoformat(),
-        updatedAt=metadata.updated_at.isoformat(),
-        version=metadata.version,
-        hash=metadata.hash,
+        id=session.id,
+        ownerId=session.owner_id,
+        title=session.metadata.title,
+        description=session.metadata.description,
+        createdAt=session.metadata.created_at.isoformat(),
+        updatedAt=session.metadata.updated_at.isoformat(),
+        version=session.metadata.version,
+        content_hash=session.metadata.content_hash,
     )
 
 
-def to_api_session_record(document: SessionDocument) -> schemas.SessionDocument:
-    return schemas.SessionDocument(
-        id=document.id,
-        ownerId=document.owner_id,
+def to_api_session(document: SessionDocument) -> schemas.Session:
+    return schemas.Session(
         metadata=to_api_session_metadata(document.metadata),
         content=document.content,
     )
 
 
-def to_api_snapshot_metadata_summary(metadata: SnapshotMetadataWithId) -> schemas.SnapshotMetadataWithId:
-    return schemas.SnapshotMetadataWithId(
-        id=metadata.id,
-        ownerId=metadata.owner_id,
-        title=metadata.title,
-        description=metadata.description,
-        createdAt=metadata.created_at.isoformat(),
-        updatedAt=metadata.updated_at.isoformat(),
-        hash=metadata.hash,
+def from_api_new_snapshot(api_snapshot: schemas.NewSnapshot) -> NewSession:
+    return NewSession(
+        title=api_snapshot.title,
+        description=api_snapshot.description,
+        content=api_snapshot.content,
     )
 
 
-def to_api_snapshot_metadata(metadata: SnapshotMetadata) -> schemas.SnapshotMetadata:
+def to_api_snapshot_metadata(snapshot: SnapshotDocument) -> schemas.SnapshotMetadata:
     return schemas.SnapshotMetadata(
-        ownerId=metadata.owner_id,
-        title=metadata.title,
-        description=metadata.description,
-        createdAt=metadata.created_at.isoformat(),
-        updatedAt=metadata.updated_at.isoformat(),
-        hash=metadata.hash,
+        id=snapshot.id,
+        ownerId=snapshot.owner_id,
+        title=snapshot.metadata.title,
+        description=snapshot.metadata.description,
+        createdAt=snapshot.metadata.created_at.isoformat(),
+        content_hash=snapshot.metadata.content_hash,
     )
 
 
 def to_api_snapshot(snapshot: SnapshotDocument) -> schemas.Snapshot:
     return schemas.Snapshot(
-        id=snapshot.id,
-        metadata=to_api_snapshot_metadata(snapshot.metadata),
+        metadata=to_api_snapshot_metadata(snapshot),
         content=snapshot.content,
     )
 

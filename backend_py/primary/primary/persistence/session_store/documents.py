@@ -1,6 +1,5 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict
-from primary.persistence.session_store.types import SessionMetadata
 
 
 class SessionMetadata(BaseModel):
@@ -11,7 +10,7 @@ class SessionMetadata(BaseModel):
     # Internal fields not editable by user
     created_at: datetime
     updated_at: datetime
-    hash: str
+    content_hash: str
     version: int
 
     # Computed lowercase fields for case-insensitive collation
