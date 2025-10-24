@@ -1,4 +1,3 @@
-from primary.persistence.snapshot_store.types import SnapshotMetadata, SnapshotMetadataWithId
 from primary.persistence.snapshot_store.documents import SnapshotAccessLogDocument, SnapshotDocument
 from primary.persistence.session_store.documents import SessionDocument
 from primary.persistence.session_store.types import NewSession, SessionUpdate
