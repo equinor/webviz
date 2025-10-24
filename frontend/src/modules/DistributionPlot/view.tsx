@@ -336,17 +336,17 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
                 let cellIndex = 0;
 
-                receiverX.channel.contents.forEach((contentRow, rowIndex, rowArr) => {
+                receiverX.channel.contents.forEach((contentXRow, rowIndex, rowArr) => {
                     if (!receiverY.channel) {
                         return;
                     }
 
                     const numRows = rowArr.length;
-                    receiverY.channel.contents.forEach((contentCol, colIndex) => {
+                    receiverY.channel.contents.forEach((contentYCol, colIndex) => {
                         cellIndex++;
 
-                        const dataX = contentCol;
-                        const dataY = contentRow;
+                        const dataX = contentXRow;
+                        const dataY = contentYCol;
 
                         const xValues: number[] = [];
                         const yValues: number[] = [];
@@ -354,8 +354,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                         const realizations: number[] = [];
 
                         let color = colorSet.getFirstColor();
-                        const preferredColorX = contentRow.metaData.preferredColor;
-                        const preferredColorY = contentCol.metaData.preferredColor;
+                        const preferredColorX = contentXRow.metaData.preferredColor;
+                        const preferredColorY = contentYCol.metaData.preferredColor;
 
                         if (preferredColorX && preferredColorY) {
                             if (preferredColorX === preferredColorY) {
@@ -408,8 +408,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                             type: "scattergl",
                             hovertemplate: realizations.map((real) =>
                                 dataColor
-                                    ? makeHoverTextWithColor(contentCol, contentRow, dataColor, real)
-                                    : makeHoverText(contentCol, contentRow, real),
+                                    ? makeHoverTextWithColor(contentXRow, contentYCol, dataColor, real)
+                                    : makeHoverText(contentXRow, contentYCol, real),
                             ),
                         };
 
@@ -419,7 +419,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                             const patch: Partial<Layout> = {
                                 [`xaxis${cellIndex}`]: {
                                     title: {
-                                        text: makeTitleFromChannelContent(contentCol),
+                                        text: makeTitleFromChannelContent(contentXRow),
                                         font,
                                     },
                                 },
@@ -430,7 +430,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                             const patch: Partial<Layout> = {
                                 [`yaxis${cellIndex}`]: {
                                     title: {
-                                        text: makeTitleFromChannelContent(contentRow),
+                                        text: makeTitleFromChannelContent(contentYCol),
                                         font,
                                     },
                                 },
