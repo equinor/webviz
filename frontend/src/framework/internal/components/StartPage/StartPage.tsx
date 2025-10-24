@@ -6,6 +6,7 @@ import { Button } from "@lib/components/Button";
 
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";
+import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 
 Icon.add({ dashboard, category, folder_open, github, external_link });
 
@@ -14,8 +15,17 @@ export type StartPageProps = {
 };
 
 export function StartPage(props: StartPageProps) {
+    const [, setIsOpenTemplatesDialog] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.TemplatesDialogOpen,
+    );
+
     function handleNewSession() {
         props.workbench.startNewSession();
+    }
+
+    function handleOpenTemplatesDialog() {
+        setIsOpenTemplatesDialog(true);
     }
 
     return (
@@ -40,7 +50,7 @@ export function StartPage(props: StartPageProps) {
                             placement="right"
                             title="Start from a template to quickly set up a session with predefined settings and data."
                         >
-                            <Button variant="text">
+                            <Button variant="text" onClick={handleOpenTemplatesDialog}>
                                 <Icon name="dashboard" />
                                 Start from template...
                             </Button>

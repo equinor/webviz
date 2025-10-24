@@ -5,10 +5,10 @@ import { ModuleDataTags, type ModuleDataTagId } from "@framework/ModuleDataTags"
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { TemplateRegistry, type Template } from "@framework/TemplateRegistry";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 import { Input } from "@lib/components/Input";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Button } from "@lib/components/Button";
 
 export type TemplatesDialogProps = {
     workbench: Workbench;
@@ -40,7 +40,7 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
         setIsOpen(false);
     }
 
-    function handleTemplateApply(selectedTemplate: Template) {
+    function applyTemplate(selectedTemplate: Template) {
         props.workbench.makeSessionFromTemplate(selectedTemplate);
         setIsOpen(false);
     }
@@ -68,7 +68,15 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
                         </div>
                         <div className="overflow-y-auto grow min-h-0">
                             {TemplateRegistry.getRegisteredTemplates()
-                                .filter((templ) => templ.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                                .filter(
+                                    (templ) =>
+                                        templ.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                        templ.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                        extractModuleDataTagIds(templ).some((tagId) => {
+                                            const tag = ModuleDataTags.find((el) => el.id === tagId);
+                                            return tag?.name.toLowerCase().includes(searchQuery.toLowerCase());
+                                        }),
+                                )
                                 .map((templ) => (
                                     <TemplatesListItem
                                         template={templ}
@@ -79,8 +87,25 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
                                 ))}
                         </div>
                     </div>
-                    <div className="min-w-[280px] w-[280px] flex flex-col max-h-full overflow-y-auto">
-                        <TemplateDetails template={template} onApply={handleTemplateApply} />
+                    <div className="relative min-w-[280px] w-[280px] h-full">
+                        <div className="w-full flex flex-col h-full max-h-full overflow-y-auto border-l border-gray-200 bg-gray-50">
+                            <TemplateDetails template={template} onApply={applyTemplate} />
+                            <div className="min-h-32" />
+                        </div>
+                        {template && (
+                            <div className="bottom-0 h-32 absolute w-full left-1">
+                                <div className="w-full h-12 bg-gradient-to-t from-white to-transparent" />
+                                <div className="w-full h-20 p-4 bg-white">
+                                    <Button
+                                        onClick={() => applyTemplate(template)}
+                                        disabled={!template}
+                                        variant="contained"
+                                    >
+                                        Use this template
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -94,14 +119,8 @@ type TemplateDetailsProps = {
 };
 
 function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
-    function handleUseButtonClick() {
-        if (props.template) {
-            props.onApply(props.template);
-        }
-    }
-
     return (
-        <div className="flex flex-col gap-4 bg-gray-50 p-4 h-full border-l border-gray-200">
+        <div className="flex flex-col gap-4 p-4">
             {!props.template ? (
                 <div className="flex h-full text-gray-500 text-sm justify-center items-center">
                     Select a template to see its details
@@ -109,9 +128,6 @@ function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
             ) : (
                 <>
                     <div className="font-bold text-lg">{props.template.name}</div>
-                    <Button onClick={handleUseButtonClick} disabled={!props.template} variant="contained" size="small">
-                        Use this template
-                    </Button>
                     <div className="mt-4">{drawTemplatePreview(props.template, 180, 150)}</div>
                     <div className="text-sm text-gray-600">{props.template.description}</div>
                     <div>
