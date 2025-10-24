@@ -101,7 +101,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                 !tagInputRef.current?.contains(evt.relatedTarget as Node) &&
                 !dropdownRef.current?.contains(evt.relatedTarget as Node)
             ) {
-                // setDropdownVisible(false);
+                setDropdownVisible(false);
                 flushDebounce();
             }
         },
