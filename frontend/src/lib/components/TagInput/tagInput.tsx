@@ -364,6 +364,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
                 ref={ref}
                 className="input-comp flex items-center gap-1 bg-white border border-gray-300 px-2 py-1.5 rounded focus-within:outline focus-within:outline-blue-500"
                 onBlur={onRootBlur}
+                onClick={() => innerInputRef.current?.focus()}
             >
                 <ul
                     className="grow flex gap-1 flex-wrap min-w-0 "
@@ -394,7 +395,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
                         {/* Invisible spacer-element. Used to  have the input wrap as it's value grows */}
                         {/* ! Classes that affect size should be present in both this and the input */}
                         <span
-                            className={`--input-sizer invisible pointer-events-none select-none grow max-w-full  ${props.inputProps?.className ?? ""}`}
+                            className={`--input-sizer invisible pointer-events-none select-none grow max-w-full min-w-2  ${props.inputProps?.className ?? ""}`}
                             aria-hidden
                         >
                             {inputValue}
