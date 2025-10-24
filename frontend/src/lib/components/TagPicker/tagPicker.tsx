@@ -12,8 +12,8 @@ import { useDebouncedStateEmit, useOnScreenChangeHandler } from "./hooks";
 import { DefaultTagOption, type TagOptionProps } from "./private-components/defaultTagOption";
 import { DropdownItemList } from "./private-components/dropdownItemList";
 
-const DROPDOWN_MAX_HEIGHT = 200;
 const TAG_OPTION_HEIGHT = 32;
+const DROPDOWN_MAX_HEIGHT = TAG_OPTION_HEIGHT * 6;
 
 const NO_MATCHING_TAGS_TEXT = "No matching options";
 const NO_TAGS_TEXT = "No options";
@@ -101,7 +101,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                 !tagInputRef.current?.contains(evt.relatedTarget as Node) &&
                 !dropdownRef.current?.contains(evt.relatedTarget as Node)
             ) {
-                setDropdownVisible(false);
+                // setDropdownVisible(false);
                 flushDebounce();
             }
         },
