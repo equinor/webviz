@@ -21,6 +21,8 @@ export type DialogProps = {
     onClose?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
     width?: string | number;
     height?: string | number;
+    maxWidth?: string | number;
+    maxHeight?: string | number;
     minWidth?: string | number;
     minHeight?: string | number;
     actions?: React.ReactNode;
@@ -56,15 +58,17 @@ export const Dialog: React.FC<DialogProps> = (props) => {
             {/* Main dialog */}
             <div
                 ref={dialogRef}
-                className={
-                    "fixed left-1/2 top-1/2 border rounded-sm bg-white shadow-sm min-w-lg max-w-[75vw] pointer-events-auto flex flex-col overflow-hidden"
-                }
+                className={resolveClassNames(
+                    "fixed left-1/2 top-1/2 border rounded-sm bg-white shadow-sm min-w-lg max-w-[75vw] pointer-events-auto flex flex-col overflow-hidden",
+                )}
                 style={{
                     transform: `translate(-50%, -50%)`,
                     height: props.height,
                     width: props.width,
                     minWidth: props.minWidth,
                     minHeight: props.minHeight,
+                    maxWidth: props.maxWidth,
+                    maxHeight: props.maxHeight,
                 }}
             >
                 {/* Header */}
