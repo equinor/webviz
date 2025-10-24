@@ -42,7 +42,7 @@ export function EnsembleTag(props: EnsembleTagProps): React.ReactNode {
                 <EnsembleColorTile
                     ensemble={ensemble}
                     ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
-                    wrapperClassName="w-6 h-6"
+                    wrapperClassName="w-5"
                     badgeClassName={TAG_BACKGROUND_COLOR}
                 />
             )}

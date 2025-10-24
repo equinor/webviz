@@ -390,11 +390,11 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
                                   })}
                               </React.Fragment>
                           ))}
-                    <li className="relative grow flex -my-1 overflow-hidden">
+                    <li className="relative grow flex overflow-hidden">
                         {/* Invisible spacer-element. Used to  have the input wrap as it's value grows */}
                         {/* ! Classes that affect size should be present in both this and the input */}
                         <span
-                            className={`--input-sizer invisible pointer-events-none select-none grow max-w-full py-1 ${props.inputProps?.className}`}
+                            className={`--input-sizer invisible pointer-events-none select-none grow max-w-full  ${props.inputProps?.className ?? ""}`}
                             aria-hidden
                         >
                             {inputValue}
@@ -405,7 +405,7 @@ function TagInputComponent(props: TagInputProps, ref: React.ForwardedRef<HTMLDiv
                             ref={innerInputRef}
                             placeholder={inputPlaceholder}
                             {...omit(props.inputProps, "onValueChange")}
-                            className={`absolute inset-0 py-1 outline-none min-w-0 ${props.inputProps?.className}`}
+                            className={`absolute inset-0 outline-none min-w-0 ${props.inputProps?.className ?? ""}`}
                             value={inputValue}
                             // ! Each listener here should emit the event up
                             onChange={handleInputChange}

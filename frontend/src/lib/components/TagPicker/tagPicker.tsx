@@ -33,7 +33,7 @@ export type TagPickerProps<TValue extends string = string> = {
     debounceTimeMs?: number;
     renderTagOption?: (props: TagOptionProps) => React.ReactNode;
     onChange?: (newSelection: TValue[]) => void;
-} & Pick<TagInputProps, "renderTag"> &
+} & Pick<TagInputProps, "renderTag" | "inputProps"> &
     BaseComponentProps;
 
 export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactElement {
@@ -236,6 +236,7 @@ export function TagPickerComponent(props: TagPickerProps, ref: React.ForwardedRe
                     onValueChange: setInputValue,
                     onFocus: handleInputFocus,
                     onKeyDown: handleInputKeyDown,
+                    ...props.inputProps,
                 }}
             />
 

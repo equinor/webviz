@@ -75,6 +75,10 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
         <TagPicker
             selection={selectedArray}
             tagOptions={optionsArray}
+            inputProps={{
+                // Makes input size match tag height
+                className: "border border-transparent py-0.5",
+            }}
             onChange={handleSelectionChange}
             renderTag={(props) => (
                 <EnsembleTag
