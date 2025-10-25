@@ -99,8 +99,8 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
             if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
                 setContent(
                     <ContentWarning>
-                        <Warning fontSize="large" className="mb-2" />
-                        Ensemble not found. Please select a valid ensemble.
+                        <p>A selected ensemble is not a regular ensemble.</p>
+                        <p>Unable to compute parameter correlations.</p>
                     </ContentWarning>,
                 );
                 return;

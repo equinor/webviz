@@ -151,7 +151,13 @@ export function View({ viewContext, workbenchSession, workbenchServices }: Modul
                     const ensembleIdentString = responseChannelData.metaData.ensembleIdentString;
                     const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
                     if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
-                        continue;
+                        setContent(
+                            <ContentWarning>
+                                <p>A selected ensemble is not a regular ensemble.</p>
+                                <p>Unable to compute parameter correlations.</p>
+                            </ContentWarning>,
+                        );
+                        return;
                     }
                     const continuousParameters = getVaryingContinuousParameters(ensemble);
                     if (!continuousParameters) {

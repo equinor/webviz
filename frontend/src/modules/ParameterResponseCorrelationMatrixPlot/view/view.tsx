@@ -193,6 +193,18 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 showLabels,
                 useFixedColorRange,
             });
+            for (const ensembleIdentString of receiveResponsesPerEnsembleIdent.keys()) {
+                const ensemble = ensembleSet.findEnsembleByIdentString(ensembleIdentString);
+                if (!ensemble || !(ensemble instanceof RegularEnsemble)) {
+                    setContent(
+                        <ContentWarning>
+                            <p>A selected ensemble is not a regular ensemble.</p>
+                            <p>Unable to compute parameter correlations.</p>
+                        </ContentWarning>,
+                    );
+                    return;
+                }
+            }
             fillParameterCorrelationMatrixFigure(
                 figure,
                 parameterIdents,
