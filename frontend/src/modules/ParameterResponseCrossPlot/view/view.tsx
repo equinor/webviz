@@ -128,9 +128,7 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
             });
 
             if (ensembleParametersMap.size === 0) {
-                setContent(
-                    <ContentWarning>Parameter not found. Click here and select a parameter to plot.</ContentWarning>,
-                );
+                setContent(<ContentWarning>Parameter not found. Please select a parameter to plot.</ContentWarning>);
                 return;
             }
 
