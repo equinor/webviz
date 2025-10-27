@@ -79,13 +79,11 @@ class SnapshotAccessLogStore:
         Get multiple access logs with support for pagination, sorting, filtering, and limits.
 
         Args:
-            page_token: Token for pagination (if using page-based pagination) - this has precedence over offset/limit
-            page_size: Number of items per page (for page-based pagination) - this has precedence over offset/limit
+            page_token: Token for pagination (if using page-based pagination)
+            page_size: Number of items per page (for page-based pagination)
             sort_by: Field name to sort by (e.g., "snapshot_metadata.title")
             sort_direction: Direction to sort (ASC or DESC)
             sort_lowercase: Whether to use case-insensitive sorting
-            limit: Maximum number of items to return (for offset-based pagination)
-            offset: Number of items to skip (for offset-based pagination)
             filters: List of filters to apply
 
         Returns:
