@@ -7,7 +7,7 @@ from typing import List, Literal
 import httpx
 from pydantic import BaseModel, TypeAdapter
 
-from webviz_pkg.core_utils.time_countdown import TimeCountdown
+from webviz_core_utils.time_countdown import TimeCountdown
 
 LOGGER = logging.getLogger(__name__)
 

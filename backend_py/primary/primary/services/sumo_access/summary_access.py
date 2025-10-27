@@ -4,7 +4,7 @@ from typing import List, Optional, Sequence, Tuple, Set
 import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
-from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_core_utils.perf_timer import PerfTimer
 
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from primary.services.utils.otel_span_tracing import otel_span_decorator

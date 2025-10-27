@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from sumo.wrapper import SumoClient
 
-from webviz_pkg.core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.perf_metrics import PerfMetrics
 
 
 LOGGER = logging.getLogger(__name__)

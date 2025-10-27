@@ -10,7 +10,7 @@ import starsessions
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, ValidationError
-from webviz_pkg.core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.perf_metrics import PerfMetrics
 
 from primary import config
 from primary.middleware.add_browser_cache import no_cache

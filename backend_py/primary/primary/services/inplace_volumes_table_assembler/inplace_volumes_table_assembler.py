@@ -41,7 +41,7 @@ from ._utils.inplace_volumes_df_utils import (
 
 
 import logging
-from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_core_utils.perf_timer import PerfTimer
 
 LOGGER = logging.getLogger(__name__)
 

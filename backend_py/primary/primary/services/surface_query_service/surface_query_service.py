@@ -5,7 +5,7 @@ import httpx
 import numpy as np
 from fmu.sumo.explorer.objects import SearchContext
 from pydantic import BaseModel
-from webviz_pkg.core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.perf_metrics import PerfMetrics
 
 from primary import config
 from primary.services.sumo_access.sumo_blob_access import get_sas_token_and_blob_base_uri_for_case_async

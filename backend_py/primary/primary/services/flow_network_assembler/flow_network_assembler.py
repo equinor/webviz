@@ -8,7 +8,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.compute as pc
 
-from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_core_utils.perf_timer import PerfTimer
 
 from primary.services.service_exceptions import InvalidDataError, NoDataError, Service
 from primary.services.sumo_access.summary_access import Frequency, SummaryAccess, VectorMetadata

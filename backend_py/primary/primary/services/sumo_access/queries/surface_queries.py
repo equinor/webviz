@@ -3,7 +3,7 @@ import logging
 from dataclasses import dataclass
 
 from sumo.wrapper import SumoClient
-from webviz_pkg.core_utils.timestamp_utils import timestamp_utc_ms_to_iso_str_strip_tz
+from webviz_core_utils.timestamp_utils import timestamp_utc_ms_to_iso_str_strip_tz
 
 LOGGER = logging.getLogger(__name__)
 

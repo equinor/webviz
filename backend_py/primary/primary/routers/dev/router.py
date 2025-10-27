@@ -6,7 +6,7 @@ from typing import Annotated, Literal
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Response
 
-from webviz_pkg.core_utils.background_tasks import run_in_background_task
+from webviz_core_utils.background_tasks import run_in_background_task
 
 from primary.auth.auth_helper import AuthenticatedUser, AuthHelper
 from primary.services.user_session_manager.user_session_manager import UserSessionManager

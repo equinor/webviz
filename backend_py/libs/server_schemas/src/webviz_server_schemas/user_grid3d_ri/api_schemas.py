@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from webviz_pkg.core_utils.b64 import B64FloatArray, B64UintArray, B64IntArray
+from webviz_core_utils.b64 import B64FloatArray, B64UintArray, B64IntArray
 
 
 class BoundingBox3D(BaseModel):

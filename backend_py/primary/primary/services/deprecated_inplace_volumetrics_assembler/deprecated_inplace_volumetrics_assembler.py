@@ -4,7 +4,7 @@ import logging
 import pyarrow as pa
 import polars as pl
 
-from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_core_utils.perf_timer import PerfTimer
 
 from primary.services.sumo_access.deprecated_inplace_volumetrics_access import (
     DEPRECATED_InplaceVolumetricsAccess,

@@ -4,9 +4,9 @@ from typing import Annotated, List, Optional
 import numpy as np
 from fastapi import APIRouter, Depends, Query, Body
 
-from webviz_pkg.core_utils.perf_metrics import PerfMetrics
-from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32, b64_decode_int_array
-from webviz_pkg.core_utils.b64 import B64FloatArray, B64IntArray
+from webviz_core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.b64 import b64_encode_float_array_as_float32, b64_decode_int_array
+from webviz_core_utils.b64 import B64FloatArray, B64IntArray
 
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper

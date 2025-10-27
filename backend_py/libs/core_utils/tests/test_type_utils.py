@@ -1,6 +1,6 @@
 import pytest
 
-from webviz_pkg.core_utils.type_utils import expect_type
+from webviz_core_utils.type_utils import expect_type
 
 
 def test_expect_type() -> None:

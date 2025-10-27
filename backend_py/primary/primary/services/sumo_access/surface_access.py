@@ -11,8 +11,8 @@ from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.explorer import SumoClient, SearchContext
 from fmu.sumo.explorer.objects import Surface
 
-from webviz_pkg.core_utils.exponential_backoff_timer import ExponentialBackoffTimer
-from webviz_pkg.core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.exponential_backoff_timer import ExponentialBackoffTimer
+from webviz_core_utils.perf_metrics import PerfMetrics
 from primary.services.utils.otel_span_tracing import otel_span_decorator, start_otel_span, start_otel_span_async
 from primary.services.utils.statistic_function import StatisticFunction
 from primary.services.utils.surface_helpers import are_all_surface_values_undefined

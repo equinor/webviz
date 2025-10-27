@@ -4,8 +4,8 @@ from typing import Annotated, List, Optional, Literal
 
 import xtgeo
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
-from webviz_pkg.core_utils.perf_metrics import PerfMetrics
-from webviz_pkg.core_utils.type_utils import expect_type
+from webviz_core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.type_utils import expect_type
 
 from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.sumo_access.surface_access import SurfaceAccess
@@ -442,7 +442,7 @@ def _resample_and_convert_to_surface_data_response(
     xtgeo_surf: xtgeo.RegularSurface,
     resample_to: schemas.SurfaceDef | None,
     data_format: Literal["float", "png"],
-    perf_metrics: PerfMetrics,
+    perf_metrics: ResponsePerfMetrics,
 ) -> schemas.SurfaceDataFloat | schemas.SurfaceDataPng:
     """
     Helper to do both resampling (if any) and conversion to API response format.

@@ -3,7 +3,7 @@
 import logging
 from enum import StrEnum
 
-from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_core_utils.perf_timer import PerfTimer
 
 from .smda_access import SmdaAccess
 from .types import WellboreGeoHeader, WellboreGeoData

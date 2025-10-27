@@ -4,7 +4,7 @@ import logging
 import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects import Table
-from webviz_pkg.core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.perf_metrics import PerfMetrics
 
 from primary.services.service_exceptions import (
     InvalidDataError,

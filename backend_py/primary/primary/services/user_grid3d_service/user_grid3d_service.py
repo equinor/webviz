@@ -7,11 +7,11 @@ from numpy.typing import NDArray
 from pydantic import BaseModel
 from sumo.wrapper import SumoClient
 
-from webviz_pkg.core_utils.b64 import B64FloatArray, B64IntArray, B64UintArray
-from webviz_pkg.core_utils.b64 import b64_decode_float_array_to_list, b64_decode_int_array
-from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32
-from webviz_pkg.core_utils.perf_metrics import PerfMetrics, make_metrics_string_s
-from webviz_pkg.server_schemas.user_grid3d_ri import api_schemas as server_api_schemas
+from webviz_core_utils.b64 import B64FloatArray, B64IntArray, B64UintArray
+from webviz_core_utils.b64 import b64_decode_float_array_to_list, b64_decode_int_array
+from webviz_core_utils.b64 import b64_encode_float_array_as_float32
+from webviz_core_utils.perf_metrics import PerfMetrics, make_metrics_string_s
+from webviz_server_schemas.user_grid3d_ri import api_schemas as server_api_schemas
 
 from primary.auth.auth_helper import AuthenticatedUser
 from primary.services.service_exceptions import Service

@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from fmu.sumo.explorer.explorer import SumoClient
 from fmu.sumo.explorer.objects import Case, SearchContext
 
-from webviz_pkg.core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.perf_metrics import PerfMetrics
 from primary.services.service_exceptions import (
     Service,
     NoDataError,

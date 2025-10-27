@@ -5,8 +5,8 @@ from dataclasses import dataclass
 
 import redis.asyncio as redis
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
-from webviz_pkg.core_utils.perf_metrics import PerfMetrics
-from webviz_pkg.core_utils.timestamp_utils import timestamp_utc_ms_to_iso_str
+from webviz_core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.timestamp_utils import timestamp_utc_ms_to_iso_str
 
 from primary.services.utils.authenticated_user import AuthenticatedUser
 

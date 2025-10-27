@@ -4,7 +4,7 @@ import logging
 from pydantic import BaseModel
 
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
-from webviz_pkg.core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.perf_metrics import PerfMetrics
 
 from .sumo_client_factory import create_sumo_client
 

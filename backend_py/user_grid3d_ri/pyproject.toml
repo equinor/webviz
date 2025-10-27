@@ -17,8 +17,8 @@ uvicorn = "^0.35.0"
 httpx = "^0.28.1"
 psutil = "^5.9.5"
 pydantic = "^2.3.0"
-numpy = "^1.24.1"
-xtgeo = "^3.8.0"
+numpy = "^2.2.0"
+xtgeo = "^4.11.0"
 diskcache = "^5.6.3"
 aiofiles = "^23.2.1"
 azure-storage-blob = { version = "12.19.1", extras = ["aio"] }
@@ -32,8 +32,8 @@ protobuf = "^4.25.3"
 grpcio = "^1.62.1"
 grpcio-tools = "^1.62.1"
 
-core_utils = { path = "../libs/core_utils", develop = true }
-server_schemas = { path = "../libs/server_schemas", develop = true }
+webviz-core-utils = { path = "../libs/core_utils", develop = true }
+webviz-server-schemas = { path = "../libs/server_schemas", develop = true }
 
 [tool.poetry.group.dev.dependencies]
 types-aiofiles = "^23.2.0"

@@ -3,7 +3,7 @@ import base64
 import numpy as np
 import xtgeo
 from numpy.typing import NDArray
-from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32
+from webviz_core_utils.b64 import b64_encode_float_array_as_float32
 
 from primary.services.smda_access.types import StratigraphicSurface
 from primary.services.sumo_access.surface_types import SurfaceMetaSet

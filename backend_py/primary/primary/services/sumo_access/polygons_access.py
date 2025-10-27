@@ -5,7 +5,7 @@ from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects import Polygons
 
 
-from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_core_utils.perf_timer import PerfTimer
 from primary.services.service_exceptions import Service, InvalidDataError, NoDataError, MultipleDataMatchesError
 from .generic_types import SumoContent
 from .polygons_types import PolygonsMeta, PolygonData

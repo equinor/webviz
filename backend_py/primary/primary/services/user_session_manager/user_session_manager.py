@@ -7,9 +7,9 @@ from typing import Tuple
 import httpx
 from pottery import Redlock
 
-from webviz_pkg.core_utils.background_tasks import run_in_background_task
-from webviz_pkg.core_utils.perf_timer import PerfTimer
-from webviz_pkg.core_utils.time_countdown import TimeCountdown
+from webviz_core_utils.background_tasks import run_in_background_task
+from webviz_core_utils.perf_timer import PerfTimer
+from webviz_core_utils.time_countdown import TimeCountdown
 
 from ._radix_helpers import IS_ON_RADIX_PLATFORM, RadixResourceRequests, RadixJobApi
 from ._redlock_releasing_context import RedlockReleasingContext

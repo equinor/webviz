@@ -1,6 +1,6 @@
 import logging
 from fastapi import APIRouter, Depends, Query
-from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_core_utils.perf_timer import PerfTimer
 from primary.auth.auth_helper import AuthHelper
 
 from primary.services.flow_network_assembler.flow_network_assembler import FlowNetworkAssembler

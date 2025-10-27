@@ -5,7 +5,7 @@ import pandas as pd
 import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
-from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_core_utils.perf_timer import PerfTimer
 from primary.services.service_exceptions import InvalidDataError, Service
 
 from ._arrow_table_loader import ArrowTableLoader
