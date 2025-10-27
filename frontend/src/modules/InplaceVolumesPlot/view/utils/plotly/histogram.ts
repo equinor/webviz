@@ -1,7 +1,8 @@
+import type { Dash, PlotData } from "plotly.js";
+
 import { makeHistogramTrace } from "@modules/_shared/histogram";
 import { computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
-import type { Dash, PlotData } from "plotly.js";
 
 export type PlotlyHistogramTracesOptions = {
     title: string;
@@ -99,7 +100,7 @@ function createStatisticLinesForHistogram(
             showlegend: false,
             name: label,
             legendgroup: title,
-            hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${formatNumber(value)}<extra></extra>`,
+            hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${value ? formatNumber(value) : ""}<extra></extra>`,
             hoverlabel: { bgcolor: "white", font: { size: 12, color: "black" } },
         };
 
