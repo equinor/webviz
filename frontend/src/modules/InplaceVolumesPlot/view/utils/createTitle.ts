@@ -1,5 +1,5 @@
 import { InplaceVolumesSelectorMapping } from "@modules/_shared/InplaceVolumes/types";
-import { PlotType, plotTypeToStringMapping } from "@modules/InplaceVolumesPlot/typesAndEnums";
+import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
 import { inplaceVolumeAbbreviations } from "./abbrevations";
 export function makeInplaceVolumesPlotTitle(
@@ -16,5 +16,6 @@ export function makeInplaceVolumesPlotTitle(
     if (groupByName) {
         title += ` per ${InplaceVolumesSelectorMapping[groupByName] ?? groupByName}`;
     }
+
     return title;
 }

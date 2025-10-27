@@ -69,7 +69,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     // we don't want to show that the module is pending, but rather immediately show the error message that the tables are not comparable.
     // The query is still fetching, but we don't want to show the pending state.
     const isPending = aggregatedTableDataQueries.isFetching && areSelectedTablesComparable;
-    console.log(plots);
+
     return (
         <div ref={divRef} className="w-full h-full relative">
             <PendingWrapper isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>

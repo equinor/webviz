@@ -1,14 +1,23 @@
 import type { PlotData } from "plotly.js";
 
-export function makeScatterPlot(
-    title: string,
-    xValues: number[],
-    yValues: number[],
-    realizations: string[],
-    color: string,
-    xAxisLabel: string,
-    yAxisLabel: string,
-): Partial<PlotData>[] {
+export type PlotlyScatterTracesOptions = {
+    title: string;
+    xValues: number[];
+    yValues: number[];
+    realizations: string[];
+    color: string;
+    xAxisLabel: string;
+    yAxisLabel: string;
+};
+export function makePlotlyScatterTraces({
+    title,
+    xValues,
+    yValues,
+    realizations,
+    color,
+    xAxisLabel,
+    yAxisLabel,
+}: PlotlyScatterTracesOptions): Partial<PlotData>[] {
     return [
         {
             x: xValues,
@@ -19,8 +28,8 @@ export function makeScatterPlot(
             mode: "markers",
             marker: { color, size: 5 },
             type: "scatter",
-            hovertemplate: `${xAxisLabel} = <b>%{x}</b> <br>${yAxisLabel} = <b>%{y}</b> <br>Realization = <b>%{text}</b> <extra></extra>`,
             hoverlabel: { bgcolor: "white", font: { size: 12, color: "black" } },
+            hovertemplate: `${xAxisLabel} = <b>%{x}</b> <br>${yAxisLabel} = <b>%{y}</b> <br>Realization = <b>%{text}</b> <extra></extra>`,
         },
     ];
 }

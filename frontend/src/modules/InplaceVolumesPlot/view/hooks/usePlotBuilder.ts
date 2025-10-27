@@ -60,7 +60,7 @@ export function useBuildPlotAndTable(
 
     // Filter out rows where the response is 0 if the option is enabled
     if (hideConstants) {
-        table = table.filterRows((row) => row[firstResultName] !== 0);
+        table = table.filterRows((row) => row[firstResultName] !== 0 && row[firstResultName] != null);
     }
     let resultNameOrSelectorName: string | null = null;
     if (plotType === PlotType.BAR && selectorColumn) {
