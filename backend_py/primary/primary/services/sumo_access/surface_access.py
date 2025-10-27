@@ -466,14 +466,12 @@ class SurfaceAccess:
             return xtgeo_surf
 
         if task_state.status == "failed":
-            LOGGER.error(f"Statistical surface job failed, {task_state.nested_job_status=} ({sumo_task_id=})")
+            LOGGER.error(f"Statistical surface job failed, {task_state.status=} ({sumo_task_id=})")
             return ExpectedError(message=f"Statistical surface aggregation job failed ({sumo_task_id=})")
 
         # Assume that the job is still in progress
-        LOGGER.debug(
-            f"Polled surface job ({task_state.status=}, {task_state.nested_job_status=}) took: {perf_metrics.to_string()} ({sumo_task_id=})"
-        )
-        return InProgress(progress_message=f"{task_state.nested_job_status}")
+        LOGGER.debug(f"Polled surface job ({task_state.status=}) took: {perf_metrics.to_string()} ({sumo_task_id=})")
+        return InProgress(progress_message=f"{task_state.status}")
 
     def _make_real_surf_log_str(self, real_num: int, name: str, attribute: str, date_str: str | None) -> str:
         addr_str = f"N={name}, A={attribute}, R={real_num}, D={date_str}, C={self._case_uuid}, E={self._ensemble_name}"
@@ -516,7 +514,6 @@ async def _start_sumo_aggregation_task_async(search_context: SearchContext, sumo
 @dataclass(frozen=True)
 class _SumoTaskState:
     status: str  # The main status of the Sumo task. Observed values: running, succeeded, failed
-    nested_job_status: str  # The status of the nested (radix) job, presumably the raw radix statuses (Waiting, Stopping, Stopped, Active, Running, Succeeded, Failed)
     result_url: str | None  # The URL to the result of the task, if available
 
 
@@ -543,11 +540,9 @@ async def _poll_sumo_aggregation_task_state_async(sumo_client: SumoClient, sumo_
     # LOGGER.debug("-----")
 
     status = poll_resp_dict["_source"]["status"]
-    nested_job_status = poll_resp_dict["_source"]["parameters"]["jobStatuses"][0]["status"]
     result_url = poll_resp_dict["_source"].get("result_url")
     return _SumoTaskState(
         status=status,
-        nested_job_status=nested_job_status,
         result_url=result_url,
     )
 
